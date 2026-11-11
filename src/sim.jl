@@ -843,7 +843,7 @@ function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
     # The model's door does the writes and boundary zero, which publishes
     # through `settled!`; nothing reads its return there, so the mask is empty
     # (§11.2, §14.5, D-317).
-    init!(sim.model, plan; t0, hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
+    init!(sim.model, plan; t0, hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
     # §11.5's header: the checkpoint at the end of boundary zero, so a throw
     # inside it leaves no header and no trace to hand back (D-274)
     trc = sim.run.trace
@@ -967,7 +967,7 @@ function overlay!(sim::Simulation, condition = set(); trace = true, log = true,
     _open_run!(sim, nothing, Pair{String,Vector{Symbol}}[], nothing, sim.run.frame,
                sim.run.boundary, trace, log, Int(log_every), log_max)
     sim.run.boundary -= 1   # the settling re-publishes the stopped run's last ordinal
-    overlay!(sim.model, plan; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
+    overlay!(sim.model, plan; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
     # §11.5's header: the checkpoint after the settling, so a throw inside it
     # leaves no header and replay needs no knowledge of the overlay (D-429)
     trc = sim.run.trace
@@ -994,7 +994,7 @@ function _enter_checkpoint!(sim::Simulation, cp::Checkpoint, schemas, feed,
     _open_run!(sim, trace_switch ? _detach(cp) : nothing, schemas, feed, cp.frame, cp.boundary,
                trace_switch, log_switch, log_every, log_max)
     sim.run.boundary -= 1
-    _restore_state!(sim.model, cp.state; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0))
+    _restore_state!(sim.model, cp.state; hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[]))
     nothing
 end
 
@@ -1990,13 +1990,12 @@ struct LoopHooks{S<:Simulation} <: FrameHooks
     roster::Vector{RosterEntry}     # the run's copy (§11.3)
     pacer::Union{Nothing,Pacer}     # the run's, `nothing` under `step!` and `init!` (§10.7)
     ignore_mask::Vector{Bool}       # the advance's policy against the requesters (D-316)
-    first_frame::Int                # the advance's first frame, which counts as written (D-447)
 end
 
 # The simulation's own doors pass the claim's gate, which is model.jl's (D-318).
 _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
 
-# Design: §11.2, §11.4, §13.4, §13.5, D-317.
+# Design: §10.2, §11.2, §11.4, §13.4, §13.5, D-317, D-447, D-452.
 # The top hook is the drain. `LoopHooks` is internal, so the method has no
 # docstring on the public `frame_top!` page. It applies the staged input batches
 # at the top of a simulation's frame, before the frame touches any state. A
@@ -2010,15 +2009,12 @@ _claimed_gate(::Model, ::LoopHooks, ::Symbol) = nothing
 # inside the frame's `try`, before the drain records the batch at it: no throw
 # can land between the advance and the guarded sequence, so after any cut frame
 # the index names the cut frame, wherever the clock stands, and the status says
-# it failed. The return is the drain's report (§10.3, D-447): `false` when no
-# batch was applied, so the frame's first step reads the table the last
-# boundary left. The advance's first frame always reports a write, since
-# between two advances a door or a stepping primitive may have written the
-# model outside the loop.
+# it failed. The return is the drain's report (§10.3, D-447, D-452): whether a
+# batch was applied, which is the stepper's discontinuity and a table the
+# frame's first step cannot reuse.
 function frame_top!(hooks::LoopHooks)
-    frame = (hooks.sim.run.frame += 1)
-    wrote = drain!(hooks.sim, hooks.roster)
-    wrote || frame == hooks.first_frame
+    hooks.sim.run.frame += 1
+    drain!(hooks.sim, hooks.roster)
 end
 
 # Design: §11.2, §11.4, §13.4, §13.5, D-317.
@@ -2087,7 +2083,7 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
                    t_end_frame::Int, roster::Vector{RosterEntry}, pacer::Union{Nothing,Pacer})
     plane, control, clock, run = sim.plane, sim.control, sim.model.exec.clock, sim.run
     Δt_frame = sim.model.deployment.Δt_frame
-    hooks = LoopHooks(sim, roster, pacer, ignore_mask, run.frame + 1)   # one per advance (D-317)
+    hooks = LoopHooks(sim, roster, pacer, ignore_mask)   # one per advance (D-317)
     advanced = 0
     requester = _stop_hit(sim, ignore_mask)
     requester === nothing || return (ModelRequestedStop(requester), advanced)
@@ -2109,7 +2105,9 @@ function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
             try
                 # the top hook advances the index, then drains, so a batch taken
                 # at the top of frame `k` is recorded at `k` (§11.5, D-317)
-                hit = frame!(sim.model, run.frame + 1, hooks)
+                # and a frame after the advance's first continues the last one, with
+                # nothing written in between (D-447)
+                hit = run_frame!(sim.model, run.frame + 1, hooks, advanced > 0)
                 # the snapshot the hook sampled is the latest, so the read repeats
                 # it (§13.5, D-317)
                 requester = hit ? _stop_hit(sim, ignore_mask) : nothing

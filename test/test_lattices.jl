@@ -10,14 +10,15 @@ mutable struct LatticeHooks{M} <: FrameHooks
     model::M
     boundaries::Vector{Tuple{Float64,Int,Int}}
 end
-frame_top!(::LatticeHooks) = nothing
+frame_top!(::LatticeHooks) = false
 settled!(hooks::LatticeHooks) =
     (push!(hooks.boundaries, (hooks.model.exec.clock.t, state(hooks.model, "a").n,
                               state(hooks.model, "b").n)); false)
 
-# A recording backend (§10.2): forward Euler that keeps every step length the
-# loop hands it, the scalar's value, and whether that step's first stage found
-# the table fresh (D-447).
+# A recording backend (§10.2, D-452): forward Euler through the seam's
+# protocol, proposing nothing and accepting every attempt, that keeps every step
+# length the loop hands it, the scalar's value, and whether that step's first
+# stage found the table fresh (D-447).
 struct Recorder <: AbstractAlgorithm end
 struct RecorderStepper{T} <: AbstractStepper
     x₀::Vector{T}
@@ -27,14 +28,15 @@ struct RecorderStepper{T} <: AbstractStepper
 end
 bind_stepper(::Recorder, ::Type{T}, n_x::Int) where {T} =
     RecorderStepper{T}(zeros(T, n_x), zeros(T, n_x), Float64[], Bool[])
-function integrate!(stepper::RecorderStepper, model::Model, h)
+propose(::RecorderStepper) = nothing
+checkpoint_stepper(::RecorderStepper) = nothing
+restore_stepper!(::RecorderStepper, ::Nothing) = nothing
+function attempt!(stepper::RecorderStepper, model::Model, h)
     push!(stepper.lengths, ForwardDiff.value(h)); push!(stepper.fresh, model.fresh)
-    x = model.exec.xbuf
-    copyto!(stepper.x₀, x)
+    copyto!(stepper.x₀, model.exec.xbuf)
     evaluate!(model); copyto!(stepper.k₁, model.exec.ẋbuf)
-    x .= stepper.x₀ .+ h .* stepper.k₁
-    model.exec.clock.t += h
-    nothing
+    model.exec.xnext .= stepper.x₀ .+ h .* stepper.k₁
+    true
 end
 startpoint(stepper::RecorderStepper) = (stepper.x₀, stepper.k₁)
 
@@ -54,11 +56,6 @@ localized_split_rig() = Group((; c = Sawtooth(1.0), a = TickCounter());
 # A root input sampled by a ZOH due at 0.07 s, off the frame tops.
 sampled_rig() = Group((; z = ZOH()); input_wires = ("in" => "z/in",),
                       sample_times = (; z = Absolute(Period(7//100))))
-
-# Hooks whose top reports nothing written, the drain's empty report (D-447).
-struct FreshHooks <: FrameHooks end
-frame_top!(::FreshHooks) = false
-settled!(::FreshHooks) = false
 
 # Three stampers on one sawtooth, crossing in the first, second and third steps
 # of frame 4 under `h_max = 1//40`.
@@ -299,9 +296,9 @@ function test_lattices()
         @test [port(s, "a", :n) for s in snapshots] == [0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4]
     end
 
-    @testset "a first stage over a fresh table is the sweep's, bitwise, and the drain's report arms it (§10.3, D-447)" begin
-        # A top that reports nothing written skips the first sweep of every
-        # frame; the trajectory is the one that sweeps.
+    @testset "a first stage over a fresh table is the sweep's, bitwise, and a continued frame whose drain wrote nothing arms it (§10.3, D-447, D-452)" begin
+        # A continued frame whose top wrote nothing skips its first sweep; the
+        # trajectory is the one that sweeps. `frame!` never continues.
         swept = Model(feedback_model(); Δt_frame = 1//50)
         fresh = Model(feedback_model(); Δt_frame = 1//50)
         init!(swept, set(u = (ref = 0.7,)))
@@ -309,7 +306,7 @@ function test_lattices()
         agree = true
         for k in 1:100
             frame!(swept, k)
-            frame!(fresh, k, FreshHooks())
+            run_frame!(fresh, k, NoHooks(), true)
             agree &= state(swept, "plant").q === state(fresh, "plant").q
         end
         @test agree
@@ -323,11 +320,11 @@ function test_lattices()
         step!(sim; frames = 3)
         stage!(sim, "in" => 1.0)
         step!(sim; frames = 2)
-        # the loop's hooks outside an advance, so only the drain reports
-        hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[], 0)
+        # the loop's hooks under frames continued by hand, so only the drain reports
+        hooks = LoopHooks(sim, sim.plane.roster, nothing, Bool[])
         stage!(sim, "in" => 2.0)
-        frame!(sim.model, 6, hooks)
-        frame!(sim.model, 7, hooks)
+        run_frame!(sim.model, 6, hooks, true)
+        run_frame!(sim.model, 7, hooks, true)
         flags = [false, true, true, true, true, true,     # frames 1 to 3, one advance
                  false, true, true, true,                 # frames 4 and 5, the batch at 4
                  false, true, true, true]                 # frames 6 and 7, the batch at 6

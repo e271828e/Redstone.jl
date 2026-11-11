@@ -160,14 +160,17 @@ function _establish_frozen!(seeded_exec::Executor, act::Activation{T},
     nothing
 end
 
-# Design: §10.3, §10.4, §11.2, D-317, D-445, D-447.
+# Design: §10.2, §10.3, §10.4, §11.2, D-317, D-445, D-447, D-452.
 # A subtype is a struct with concrete fields, built once per advance. §11.2's
 # rule that every boundary publishes before integration resumes is a contract
-# on `settled!`. The top hook's `false` is the drain's report that the table is
-# the last boundary's, so the frame's first step may skip its first sweep; any
-# other return is the safe answer, a write. The fresh table after a boundary
-# inside a frame rests on `settled!` writing nothing into the model, a contract
-# the code does not enforce. The simulation's hooks are `LoopHooks` (sim.jl).
+# on `settled!`. The top hook returns whether it wrote a value into the model,
+# which raises the stepper's discontinuity notice and tells the frame its first
+# step cannot reuse the table. Whether the frame continues the last one with
+# nothing written in between is the caller's to say, to `run_frame!` (frame.jl),
+# so the hook reports its own write and nothing else. The fresh table after a
+# boundary inside a frame rests on `settled!` writing nothing into the model, a
+# contract the code does not enforce. The simulation's hooks are `LoopHooks`
+# (sim.jl).
 """
     FrameHooks
 
@@ -179,8 +182,8 @@ and at each settled [boundary](@ref g-boundary).
 functions on it.
 
 - [`frame_top!`](@ref) runs first, before the frame touches any state. It is
-  where external inputs arrive. It returns `false` when it wrote nothing into
-  the model, and any other value counts as a write.
+  where external inputs arrive. It returns whether it wrote a value into the
+  model, as a `Bool`.
 - [`settled!`](@ref) runs at every settled boundary before integration resumes.
   Those boundaries are the end of each integration step, the frame top among
   them, each [localized](@ref g-localized) event time [`t*`](@ref g-t),
@@ -194,10 +197,9 @@ resumes, so a subtype that publishes [snapshots](@ref g-snapshot) does it in
 `settled!`. That method writes neither a [store](@ref g-store), a
 [root input](@ref g-root-input) nor the [signal table](@ref g-signal-table),
 since the next step's first stage reads the table the boundary left. A hook
-that writes into the model does so in `frame_top!` and reports the write.
-A `false` from `frame_top!` lets the frame's first step reuse the
-table the last boundary left, and changes no value. Return it only when nothing
-wrote into the model since that boundary. [`NoHooks`](@ref) does nothing and never abandons, for a model
+that writes into the model does so in `frame_top!` and returns `true`. That
+tells the integration method that its next step starts at a discontinuity,
+which an adaptive method may act on. [`NoHooks`](@ref) does nothing and never abandons, for a model
 stepped on its own. A [`Simulation`](@ref) passes hooks of its own, which apply
 the staged input [batches](@ref g-batch) at the frame top and publish a snapshot
 at each settled boundary.
@@ -221,17 +223,16 @@ struct NoHooks <: FrameHooks end
 
 # Design: §10.4, §13.4, D-317.
 """
-    frame_top!(::NoHooks) -> Nothing
+    frame_top!(::NoHooks) -> Bool
 
 Do nothing at the top of a model's [frame](@ref g-frame), before the frame
-touches any state.
+touches any state, and return `false`.
 
 A model stepped on its own takes no staged inputs, so its frame starts from the
-state as it stands. The model may have been written between two frames, so the
-`nothing` it returns counts as a write. See [`FrameHooks`](@ref) for the
+state as it stands and the hook writes nothing. See [`FrameHooks`](@ref) for the
 contract every method keeps, and [`settled!`](@ref) for the other hook.
 """
-frame_top!(::NoHooks) = nothing
+frame_top!(::NoHooks) = false  # COV_EXCL_LINE
 
 # Design: §10.3, §10.4, §13.4, D-317, D-447.
 """
@@ -417,6 +418,7 @@ function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks
     k = _assert_at_rest(model, :overlay!)
     @atomic :release model.status = :built   # the door's first write (D-441)
     _apply_plan!(model, plan)
+    discontinuity!(model.exec.stepper)       # the overlaid state is a discontinuity (D-452)
     try
         run_boundary!(model, nothing)
     catch err
@@ -583,12 +585,15 @@ end
 # reading post-transition values off the settled table, so a discrete
 # component's cells carry `y[k]` from `s[k]` while `s_update` produces `s[k+1]`.
 # The event phase reports a `FiringBudget` into the model's `frame_diag` (§11.8,
-# D-317).
+# D-317). A boundary where a handler fired or a tick ran raises the stepper's
+# discontinuity notice as it settles, boundary zero's included, so a checkpoint
+# taken there holds what the backend did with it (§10.2, D-452).
 @inline function run_boundary!(model::Model, due)
     _phase!(model.exec.cursor, :project)
     _projects!(model.exec.events, model.exec.xbuf)
-    event_phase!(model, due)
+    fired = event_phase!(model, due)
     run_ticks!(model, due)
+    (fired || due !== nothing) && discontinuity!(model.exec.stepper)
     nothing
 end
 
@@ -662,14 +667,16 @@ exhaustion degrades rather than throwing: the event's further edges at this
 boundary are lost under a `FiringBudget` warning, at most once per event per
 boundary, while every other event iterates untouched. At quiescence the prior
 is updated unconditionally from the final samples — every prior an honest
-observation of a settled boundary.
+observation of a settled boundary. Returns whether any handler fired, which the
+boundary's discontinuity notice reads (D-452).
 """
 function event_phase!(model::Model, tick)
     events, cursor = model.exec.events, model.exec.cursor
     _phase!(cursor, :round, 1)       # §13.4: the boundary sweep is round 1, and the guard
     _round!(model, tick)            # walk and the fire walk of a round carry its index
     n_events = length(events.prior)
-    n_events == 0 && return nothing
+    n_events == 0 && return false
+    fired = false
     copyto!(events.last, events.prior)
     fill!(events.count, 0)
     fill!(events.warned, false)
@@ -701,56 +708,101 @@ function event_phase!(model::Model, tick)
             (eligible && !firing) || (events.last[i] = events.now[i])
         end
         any_fired || break
+        fired = true
         _fire!(events, model.exec.store, model.exec.xbuf)
         cursor.index += 1
         _round!(model, tick)
     end
     copyto!(events.prior, events.last)
-    nothing
+    fired
 end
 
-# --- the stepper seam, framework side (§10.2) ----------------------------------
+# --- the stepper seam, framework side (§10.2, D-452) ----------------------------
 
 """
     integrate!(model, h)
     integrate!(sim, h)
 
-Advance the continuous state from `t` by `h`, delegated across the stepper
-seam to whichever backend the deployment bound (stepper.jl). The seam is never
-entered empty: with no continuous state the step degenerates to advancing `t`,
-the backend is simply not called, and no backend contract has to say what it
-would do at N = 0.
+One step of the continuous state from `t`, offered the length `h`, delegated
+across the stepper seam to whichever backend the deployment bound (stepper.jl).
+The step runs the Model's attempt loop toward `t + h`: a backend that proposes
+nothing takes `h` whole, and a retry after a rejection never passes `t + h`.
+The seam is never entered empty: with no continuous state the step degenerates
+to advancing `t`, the backend is simply not called, and no backend contract has
+to say what it would do at N = 0.
 """
-@inline integrate!(model::Model, h) = integrate_step!(model, h, nothing, false)
+@inline integrate!(model::Model, h) =
+    (integrate_step!(model, h, model.exec.clock.t + h, nothing, false); nothing)
 
-# The frame loop's step (§10.2, §10.3, D-447): `k` is the frame the step lies in,
-# which a nonfinite state's report names, and `fresh` says the table is the last
-# boundary's, which the backend's first `evaluate!` then reads without a sweep.
-# The flag is disarmed after the backend returns, so it never outlives the step.
-@inline function integrate_step!(model::Model, h, k::Union{Nothing,Int}, fresh::Bool)
-    _phase!(model.exec.cursor, :integrate)     # §13.4: `evaluate!` counts the stages from here
-    if isempty(model.exec.xbuf)
-        model.exec.clock.t += h
-    else
-        model.fresh = fresh
-        integrate!(model.exec.stepper, model, h)
-        model.fresh = false
+# Design: §10.2, §10.3, §13.4, D-157, D-447, D-452.
+# The Model's step over the seam: attempts from the clock until the backend
+# accepts one, and the accepted length returned. `h` is the first attempt's
+# length; after a rejection the backend's proposal, clamped to `h_max` and to
+# `t_limit`, the instant no attempt may pass, is the next one's. `k` is the frame the step lies
+# in, which a nonfinite state's report names, and `fresh` says the table is the
+# last boundary's, which the first attempt's first `evaluate!` reads without a
+# sweep. A rejected attempt leaves its stages in the table, so the next one
+# sweeps. An accepted trial is checked before the commit (D-157), and a rejected
+# one is discarded unread: the state buffer takes the step's start back from
+# `startpoint`, the clock its value. The flag is disarmed after each attempt, so
+# it never outlives the step. Nothing bounds the attempts here: the backends in
+# `src/` always accept.
+@inline function integrate_step!(model::Model, h, t_limit, k::Union{Nothing,Int}, fresh::Bool)
+    exec = model.exec
+    cursor, clock = exec.cursor, exec.clock
+    t = clock.t
+    if isempty(exec.xbuf)
+        _phase!(cursor, :integrate)
+        clock.t = t + h
+        return h
     end
-    _check_finite!(model, k)
-    nothing
+    attempt = 0
+    while true
+        attempt += 1
+        _phase!(cursor, :integrate)     # §13.4: `evaluate!` counts the stages from here
+        cursor.attempt = attempt
+        model.fresh = fresh
+        accepted = attempt!(exec.stepper, model, h)
+        model.fresh = false
+        if accepted
+            clock.t = t + h
+            _check_finite!(model, exec.xnext, k)
+            copyto!(exec.xbuf, exec.xnext)
+            return h
+        end
+        copyto!(exec.xbuf, first(startpoint(exec.stepper)))
+        clock.t = t
+        fresh = false
+        h = _clamped(model, propose(exec.stepper), t_limit - t)
+    end
 end
 
-# The boundary's first act (D-157, §13.4): one pass over the flat state buffer,
-# immediately after the backend returns and before anything reads the state —
-# `frame!`'s bare path and every segment of a localized frame alike, which is
-# why the site is the seam's framework side and not the frame loop. `ẋ` does
-# not participate: a nonfinite derivative contaminates its own block's step
-# result within that very step, so this is the same detection with the same
-# attribution, and `ẋ` is integrator scratch besides.
-@inline function _check_finite!(model::Model, k::Union{Nothing,Int})
-    x = model.exec.xbuf
+# A proposal shaped into a step's length (§10.2, D-452): clamped to the bound
+# and to what remains before the instant no step may pass, and that remainder
+# itself when the clamp reaches it, so the step ends on the instant.
+@inline function _clamped(model::Model, proposal::Float64, remaining)
+    cap = min(proposal, model.deployment.h_max)
+    cap < _seconds(remaining) ? oftype(remaining, cap) : remaining
+end
+
+# The clock at the end of a step offered `h` toward `t_next`, of which the
+# backend accepted `h_accepted` from `t` (D-452): `t_next` when it took the whole
+# offer, `t_limit` when a retry was clamped to it, and `t + h_accepted`
+# otherwise, an end that lies on no lattice.
+@inline _step_end(t, h, h_accepted, t_next, t_limit) =
+    h_accepted == h ? oftype(t, t_next) :
+    h_accepted == t_limit - t ? oftype(t, t_limit) : t + h_accepted
+
+# The boundary's first act (D-157, §13.4): one pass over an accepted trial,
+# immediately after the backend returns and before the commit, so nothing reads
+# the state first — `frame!`'s bare path and every segment of a localized frame
+# alike, which is why the site is the seam's framework side and not the frame
+# loop. `ẋ` does not participate: a nonfinite derivative contaminates its own
+# block's step result within that very step, so this is the same detection with
+# the same attribution, and `ẋ` is integrator scratch besides.
+@inline function _check_finite!(model::Model, x::Vector, k::Union{Nothing,Int})
     @inbounds for i in eachindex(x)
-        isfinite(x[i]) || _nonfinite(model, i, k)      # the throw is the cold path
+        isfinite(x[i]) || _nonfinite(model, x, i, k)   # the throw is the cold path
     end
     nothing
 end
@@ -758,18 +810,18 @@ end
 # The owner of `flat_index` and its leaf within that component's block, both
 # read off the layout's `xblocks`. Thrown as a fail-fast `DiagnosticError`, which
 # the catch site's species rule unwraps into the `StepError`'s `cause`.
-@noinline function _nonfinite(model::Model, flat_index::Int, k::Union{Nothing,Int})
+@noinline function _nonfinite(model::Model, x::Vector, flat_index::Int, k::Union{Nothing,Int})
     exec = model.exec
     xblocks = exec.act.layout.xblocks
     owner = findfirst(b -> flat_index in b, xblocks)::Int
-    cursor = exec.cursor                    # the phase stays `:integrate`, but the sweep is the
-    cursor.comp = owner; cursor.fn = :none  # framework's own act between the stages and the
-    cursor.index = 0                        # boundary — no stage of its own, so no ordinal
+    cursor = exec.cursor                    # the phase and the attempt stay the integrate's, but
+    cursor.comp = owner; cursor.fn = :none  # the sweep is the framework's own act between the
+    cursor.index = 0                        # stages and the commit — no stage, so no ordinal
     x_leaf_names = leaf_names(typeof(_keyed(exec.act.decls[owner].x, default_name(x_init))))
     throw(DiagnosticError(NonfiniteState(
         path = model.deployment.build.structure.components[owner].path,
         leaf = x_leaf_names[flat_index - first(xblocks[owner]) + 1],
-        value = exec.xbuf[flat_index],
+        value = x[flat_index],
         t = _seconds(exec.clock.t),
         # the frame-entry index: the frame loop names its frame, since a step may
         # end inside it (D-445); a bare `integrate!` rounds the clock onto the
@@ -903,7 +955,7 @@ function _wrap_step(model::Model, entry_boundary::Int, host::Symbol, err)
     cursor = model.exec.cursor
     StepError(CursorFrame(cursor.comp == 0 ? nothing :
                               model.deployment.build.structure.components[cursor.comp].path,
-                          cursor.fn, cursor.phase, cursor.index),
+                          cursor.fn, cursor.phase, cursor.index, cursor.attempt),
               _seconds(model.exec.clock.t), entry_boundary, host, _species(model, err))
 end
 
@@ -970,12 +1022,13 @@ function _fingerprint(model::Model)
                 copy(exec.events.names))   # the priors' own index, empty off the nominal activation
 end
 
-# Design: §12.6, D-231, D-273, D-274, D-319, D-429.
+# Design: §12.6, D-231, D-273, D-274, D-319, D-429, D-452.
 # The stores are copied by value, being isbits (D-231). A `t*` abandon leaves
 # the clock inside the frame, and the model steps whole frames, so a state taken
 # there would have no next frame to continue on. The state holds the flat state
 # buffer, the `s` and `m` stores and the whole signal table. It also holds the
-# event priors. It holds the clock's `t` and `t₀`, and the fingerprint. A
+# event priors and the stepper's carried state. It holds the clock's `t` and
+# `t₀`, and the fingerprint. A
 # model's state is not a condition and enters no condition expression.
 """
     checkpoint(model::Model{T}) -> ModelState{T}
@@ -1004,9 +1057,9 @@ function checkpoint(model::Model{T}) where {T}
     clock = exec.clock
     s = Any[st === nothing ? nothing : st[] for st in exec.sstores]
     m = Any[st === nothing ? nothing : st[] for st in exec.mstores]
-    checkpoint_stepper(exec.stepper)   # empty for a one-step method (stepper.jl)
     ModelState{T}(copy(exec.xbuf), s, m, capture_stores(exec.store), copy(exec.events.prior),
-                  clock.t, clock.t₀, model.deployment, _fingerprint(model))
+                  checkpoint_stepper(exec.stepper), clock.t, clock.t₀, model.deployment,
+                  _fingerprint(model))
 end
 
 # The rest a `checkpoint` reads and an `overlay!` writes on (§12.6, D-274,

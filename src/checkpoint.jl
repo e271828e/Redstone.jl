@@ -26,9 +26,11 @@ struct Fingerprint
     events::Vector{Tuple{String,Symbol}}
 end
 
-# Design: §12.6, D-038, D-273, D-274, D-319, D-429.
+# Design: §10.2, §12.6, D-038, D-273, D-274, D-319, D-429, D-452.
 # The priors are the one event register that crosses a boundary: `last` equals
-# them at rest. What every frame rewrites before reading it, the derivative
+# them at rest. The stepper's carried state is the value `checkpoint_stepper`
+# returns, immutable, `nothing` for a method that carries none, so it is typed
+# by no backend. What every frame rewrites before reading it, the derivative
 # buffer, the arrival pair and the localization samples, stays out.
 """
     ModelState{T}
@@ -45,6 +47,9 @@ fields hold the state.
 - `table`: the whole [signal table](@ref g-signal-table), every
   [cell](@ref g-cell) buffer copied.
 - `prior`: the event [priors](@ref g-prior).
+- `stepper`: what the integration method carries from one step to the next,
+  such as its next step's length, and `nothing` for a method that carries
+  nothing, `RK4()` and `Heun()` among them.
 - `t` and `t₀`: the clock's time and origin.
 - `deployment`: the [`Deployment`](@ref), compared as a value on restore.
 - `layout`: the [fingerprint](@ref g-fingerprint), compared against the target's
@@ -62,7 +67,8 @@ them. It enters no condition expression and yields none. To write a condition
 onto a model at rest, use [`overlay!`](@ref).
 
 `==` compares identity, on a state and on its `table` and `layout` fields, so
-compare `x`, `s`, `m` and `prior` by value and the table buffer by buffer.
+compare `x`, `s`, `m`, `prior` and `stepper` by value and the table buffer by
+buffer.
 """
 struct ModelState{T}
     x::Vector{T}                     # the flat buffer
@@ -70,6 +76,7 @@ struct ModelState{T}
     m::Vector{Any}                   # likewise for the mode stores
     table::StoreBundle               # the signal table, every cell buffer copied
     prior::Vector{Bool}              # the guard priors
+    stepper::Any                     # the stepper's carried state (§10.2), immutable
     t::T                             # the clock's time
     t₀::Float64                      # the clock's origin
     deployment::Deployment           # compared as a value at restore (§12.7)
@@ -102,9 +109,11 @@ struct Checkpoint
 end
 
 # The inverse: every field copied back into the executor, the clock's `t` and
-# `t₀` written as the state has them. The counters are the run's, which the
-# door opens from the checkpoint (D-317). Nothing is published here and nothing
-# runs, so a caller that publishes owns the ordinal.
+# `t₀` written as the state has them, and the stepper's carried state handed
+# back, with no discontinuity notice, so the next step proposes what the
+# original's did (D-452). The counters are the run's, which the door opens from
+# the checkpoint (D-317). Nothing is published here and nothing runs, so a
+# caller that publishes owns the ordinal.
 function _restore_state!(exec::Executor{T}, model_state::ModelState{T}) where {T}
     copyto!(exec.xbuf, model_state.x)
     _restore_stores!(exec, model_state)
@@ -114,7 +123,7 @@ function _restore_state!(exec::Executor{T}, model_state::ModelState{T}) where {T
     copyto!(exec.events.last, model_state.prior)
     clock = exec.clock
     clock.t, clock.t₀ = model_state.t, model_state.t₀
-    restore_stepper!(exec.stepper, model_state)
+    restore_stepper!(exec.stepper, model_state.stepper)
     nothing
 end
 
@@ -133,11 +142,13 @@ end
 
 # A state for the trace that inherits it (§12.7): every mutable field copied, so
 # nothing the caller still holds is reachable from the new trace. The
-# `Deployment` and the fingerprint are immutable artifacts and ride as they are.
+# `Deployment`, the fingerprint and the stepper's carried state are immutable
+# and ride as they are.
 _detach(model_state::ModelState{T}) where {T} =
     ModelState{T}(copy(model_state.x), copy(model_state.s), copy(model_state.m),
                   capture_stores(model_state.table), copy(model_state.prior),
-                  model_state.t, model_state.t₀, model_state.deployment, model_state.layout)
+                  model_state.stepper, model_state.t, model_state.t₀,
+                  model_state.deployment, model_state.layout)
 _detach(cp::Checkpoint) = Checkpoint(_detach(cp.state), cp.frame, cp.boundary)
 
 # The table's addresses key by key, each named `port.<name>` at its path, with

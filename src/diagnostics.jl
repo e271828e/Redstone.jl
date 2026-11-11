@@ -213,19 +213,24 @@ _seconds(t::ForwardDiff.Dual) = _seconds(ForwardDiff.value(t))
 An immutable copy of the execution cursor at the catch (§13.4): the frame a
 `StepError` carries. `path` is the component's — `""` for a bare-leaf build's
 own root component — and `nothing` where the cursor named none, which the
-rendering drops rather than spelling as the root.
+rendering drops rather than spelling as the root. `attempt` is the step's
+attempt ordinal inside integration, and 0 in every other phase, which the
+four-field form spells (D-452).
 """
 struct CursorFrame
     path::Union{Nothing,String}
     fn::Symbol
     phase::Symbol
     index::Int
+    attempt::Int
 end
+CursorFrame(path, fn::Symbol, phase::Symbol, index::Int) = CursorFrame(path, fn, phase, index, 0)
 
 # A payload value, compared as one: the default for an immutable holding a
 # `String` is egality, which two equal frames built apart would fail.
 Base.:(==)(a::CursorFrame, b::CursorFrame) =
-    a.path == b.path && a.fn === b.fn && a.phase === b.phase && a.index == b.index
+    a.path == b.path && a.fn === b.fn && a.phase === b.phase && a.index == b.index &&
+    a.attempt == b.attempt
 
 """
 §13.4's runtime carrier, `DiagnosticError`'s counterpart: the cursor's frame, the
@@ -253,11 +258,14 @@ diagnostic(carrier::StepError{<:Diagnostic}) = carrier.cause
 
 # The phase, spelled per case (§13.4). The index rides only where one applies:
 # an `:integrate` frame at index 0 is the framework's own act inside the
-# integrate — the nonfinite sweep — and not a stage. A phase this list does not
-# know renders as its own symbol, never as another phase's spelling.
+# integrate — the nonfinite sweep — and not a stage. The attempt rides past the
+# first, so a step its backend accepted at once reads as it always did (D-452).
+# A phase this list does not know renders as its own symbol, never as another
+# phase's spelling.
 _phase_text(cursor::CursorFrame) =
-    cursor.phase === :integrate  ? (cursor.index == 0 ? "integration" :
-                                                  "integration stage $(cursor.index)") :
+    cursor.phase === :integrate  ? string(cursor.index == 0 ? "integration" :
+                                                         "integration stage $(cursor.index)",
+                                          cursor.attempt > 1 ? " in attempt $(cursor.attempt)" : "") :
     cursor.phase === :arrival    ? "arrival sweep" :
     cursor.phase === :validation ? "θ = 0 validation" :
     cursor.phase === :trial      ? "localization trial $(cursor.index)" :

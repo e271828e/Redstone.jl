@@ -20,13 +20,19 @@ mutable struct ExecutionCursor
                      # :guard | :handler | :x_projection | :none
     phase::Symbol    # :drain | :integrate | :arrival | :validation | :trial | :project | :round | :ticks
     index::Int       # the RK stage, the event round, the trial ordinal; 0 where none applies
+    attempt::Int     # the step's attempt ordinal, from 1 inside `:integrate`; 0 elsewhere
 end
-ExecutionCursor() = ExecutionCursor(0, :none, :drain, 0)
+ExecutionCursor() = ExecutionCursor(0, :none, :drain, 0, 0)
 
-"A phase transition: written by the model's own code, never per dispatch (§13.4, D-317)."
+"""
+A phase transition: written by the model's own code, never per dispatch (§13.4,
+D-317). It clears the attempt, which only the Model's attempt loop writes, after
+entering `:integrate` (D-452).
+"""
 @inline function _phase!(cursor::ExecutionCursor, phase::Symbol, index::Int = 0)
     cursor.phase = phase
     cursor.index = index
+    cursor.attempt = 0
     nothing
 end
 

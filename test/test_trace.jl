@@ -1649,8 +1649,8 @@ function trace_checkpoints()
         # checkpoint's too, collected with the fingerprint's mismatches.
         for (t, k) in ((0.25, 3), (0.34, 4), (-0.1, 0))
             off_grid = ModelState(model_state.x, model_state.s, model_state.m,
-                                  model_state.table, model_state.prior, t, model_state.t₀,
-                                  model_state.deployment, model_state.layout)
+                                  model_state.table, model_state.prior, model_state.stepper, t,
+                                  model_state.t₀, model_state.deployment, model_state.layout)
             d = only(diagnostics(failure(() -> restore!(sim, off_grid))))
             @test d isa CheckpointMidFrame && d.frame == k && d.t === t &&
                   d.t_frame === 0.0 + k * 0.1
@@ -1671,8 +1671,8 @@ function trace_checkpoints()
         # one throw carrying both kinds.
         fine_state = checkpoint(fine)
         off_both = ModelState(fine_state.x, fine_state.s, fine_state.m, fine_state.table,
-                              fine_state.prior, 0.025, fine_state.t₀, fine_state.deployment,
-                              fine_state.layout)
+                              fine_state.prior, fine_state.stepper, 0.025, fine_state.t₀,
+                              fine_state.deployment, fine_state.layout)
         err = failure(() -> restore!(sim, off_both))
         @test err isa DiagnosticError && any(d isa CheckpointMismatch for d in diagnostics(err)) &&
               any(d isa CheckpointMidFrame for d in diagnostics(err))

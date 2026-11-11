@@ -3,7 +3,8 @@
 # `repl.jl`: `include` evaluates in the including module, so the same file
 # imports into `RedstoneTests` and into `Main`.
 import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, AbstractComponent,
-    AbstractStepper, bind_stepper, startpoint,
+    AbstractStepper, attempt!, bind_stepper, checkpoint_stepper, discontinuity!, propose,
+    restore_stepper!, startpoint,
     AbstractDevice, AlgebraicCycle, AlreadyAttached, Anchor, ArgumentInvalid,
     AbstractAtRoot, AttachUnknownFace, Authored, BUILD_WARNINGS, BindingContractMismatch,
     Build, BundleFieldError,
@@ -26,7 +27,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
     KINDS, KindCounts, LEGAL_BUNDLE, LINEARIZE_WIDTH, LevelEntry, LevenbergMarquardt, Linearization, LinearizeDual,
     LinearizeTag, LoopError, LoopHooks, MalformedDatum, Marker, MissingInit,
     MissingProbeValue, Model, ModelRequestedStop, ModelState,
-    NO_STOP, NonfiniteState, NotAttached, OutOfClaimEntry, Outputs, PRIMITIVE, Pacer, PacerStatus,
+    NO_STOP, NoHooks, NonfiniteState, NotAttached, OutOfClaimEntry, Outputs, PRIMITIVE, Pacer, PacerStatus,
     PathResolution,
     Period, Pinned, ProbeDual, ProbeTag, ProducedByTwoStages, RK4, RK4Stepper,
     RatesViolation, ReadResolution,
@@ -69,7 +70,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
     override, pace, pace!, path, pause!, paused, peek, pending, period, phase_bodies, port,
     port_views, probe_value, publish!, reads,
     reconstruct, replay!, report!, resolve, resolve_condition, resolve_dest, restore!,
-    resolve_source, resolve_terminal, resume!, retype, retype_entry, retype_value, run!, running,
+    resolve_source, resolve_terminal, resume!, retype, retype_entry, retype_value, run!, run_frame!, running,
     s_init, s_update, sample_times,
     scatter_cell!, series, set, settled!, severity, shutdown!, solve, stage!, stale, state,
     state_events, step!, taps,

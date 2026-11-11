@@ -60,7 +60,17 @@ origin resolves in order. A throw inside the frame writes the status `:inconsist
 arrives as a `StepError` with host `:loop`, an `InterruptException` included.
 Its `boundary` is `k - 1`, the boundary the frame started from.
 """
-function frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks())
+frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) = run_frame!(model, k, hooks, false)
+
+# Design: §10.3, §13.4, D-447, D-452.
+# The frame behind `frame!`. `continued` is the caller's word that nothing wrote
+# the model since the last frame's top boundary, which only the loop running
+# the frames can give: a simulation's advance gives it for every frame after
+# its first, and `frame!` never does. The top hook's `Bool` says whether it
+# wrote a value. A value written raises the stepper's discontinuity notice
+# (D-452), and the table is the last boundary's when the frame is continued and
+# the hook wrote nothing (D-447).
+function run_frame!(model::Model, k::Int, hooks::FrameHooks, continued::Bool)
     _claimed_gate(model, hooks, :frame!)
     last_frame = _last_frame(model)
     k ≤ last_frame ||
@@ -70,10 +80,9 @@ function frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks())
         cursor = model.exec.cursor
         cursor.comp = 0; cursor.fn = :none   # no stale frame for a top-side throw (§13.4)
         _phase!(cursor, :drain)
-        # the top hook's `false` reports nothing written, so the table is the last
-        # boundary's (D-447); anything else is a write
-        fresh = frame_top!(hooks) === false
-        return _frame_steps!(model, k, hooks, fresh)
+        wrote = frame_top!(hooks)
+        wrote && discontinuity!(model.exec.stepper)
+        return _frame_steps!(model, k, hooks, continued && !wrote)
     catch err
         model.fresh = false
         @atomic :release model.status = :inconsistent
@@ -85,13 +94,16 @@ end
 # over the mandatory instants: `origin` is the frame top `tₖ₋₁`'s position and
 # `position` the span's start as an offset from it, both in units, and the next
 # due instant is recomputed only after one is reached. The inner one takes the
-# span's `n = ⌈g / h_max⌉` equal steps, `n` one `cld` over the bound's exact
-# ratio to the unit. A step's exact length is `(units·unit)/n`, so a harmonic
-# bound steps by `h_max` itself and a span of one step by its own length. An
-# interior step end has no position: its clock is the span's start clock plus
-# its count times that length, never accumulated (D-449). Returns `settled!`'s
-# answer at the frame top, and `true` where it abandoned the frame at an
-# earlier boundary.
+# span's steps. A backend that proposes nothing takes `n = ⌈g / h_max⌉` equal
+# steps, `n` one `cld` over the bound's exact ratio to the unit. A step's exact
+# length is `(units·unit)/n`, so a harmonic bound steps by `h_max` itself and a
+# span of one step by its own length. An interior step end has no position: its
+# clock is the span's start clock plus its count times that length, never
+# accumulated (D-449). A backend that proposes a length has it clamped to
+# `h_max` and to the span's end, and an interior end it reaches is the clock
+# plus the accepted length; the span ends at the step that reaches its end
+# (D-452). Returns `settled!`'s answer at the frame top, and `true` where it
+# abandoned the frame at an earlier boundary.
 function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) where {T}
     exec, deployment = model.exec, model.deployment
     lattice, rows = deployment.lattice, deployment.schedule.rows
@@ -108,17 +120,32 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) 
         units = target - position
         steps = cld(units * denominator(lattice.bound), numerator(lattice.bound))
         h = Float64((units * lattice.unit) / steps)
-        for i in 1:steps
-            span_end = i == steps
-            t_next = span_end ? t_to : t_from + i * h
+        i = 0
+        while true
+            i += 1
+            t = exec.clock.t
+            proposal = propose(exec.stepper)
+            if proposal === nothing
+                span_end = i == steps
+                t_next = span_end ? t_to : t_from + i * h
+                h_step = T(h)
+            else
+                remaining = t_to - t
+                h_step = _clamped(model, proposal, remaining)
+                span_end = h_step == remaining
+                t_next = span_end ? oftype(t, t_to) : t + h_step
+            end
             if exec.has_localized
-                (abandoned, localizations) =
-                    _localized_step!(model, t_next, k, hooks, fresh, localizations)
+                (abandoned, localizations, t_end) =
+                    _localized_step!(model, t_next, t_to, k, hooks, fresh, localizations)
                 abandoned && return true
             else
-                integrate_step!(model, T(h), k, fresh)
+                h_accepted = integrate_step!(model, h_step, t_to, k, fresh)
+                t_end = _step_end(t, h_step, h_accepted, t_next, t_to)
             end
-            exec.clock.t = t_next
+            # a rejection may end the step short of where it was offered (D-452)
+            proposal === nothing || (span_end = t_end == t_to)
+            exec.clock.t = t_end
             if span_end && is_due
                 run_boundary!(model, due)
             else
@@ -130,6 +157,7 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) 
             abandon = settled!(hooks)
             (span_end && is_top || abandon) && return abandon
             fresh = true
+            span_end && break
         end
         is_due && ((due, due_at) = _next_due(rows, lattice.base, origin + target))
         position, t_from = target, t_to
@@ -140,22 +168,30 @@ end
 # integrates one segment — the whole step first, then remainder steps from each
 # `t*` — and either returns at the step's end or fires one `t*` boundary and goes
 # around. A segment integrates by the distance from the clock to `t_to`, since
-# its interpolant spans those two instants. The budget counts the frame's
-# localizations, one per `t*` boundary produced, across all its steps: per
-# segment, root-finding runs are already structurally bounded (at most one per
-# declared event), while the segment count is the quantity chattering inflates
-# without bound. Returns whether `settled!` abandoned the frame at a `t*`
-# boundary, and the frame's localization count (D-261, D-317).
-function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::Bool,
-                          localizations::Int)
+# its interpolant spans those two instants. A rejection may shorten the first
+# segment, no further than `t_limit`, the span's end, and the step then ends
+# where the accepted attempt did; a remainder targets the step's end and never a
+# later instant (D-452). The budget counts the frame's localizations, one per
+# `t*` boundary produced, across all its steps: per segment, root-finding runs
+# are already structurally bounded (at most one per declared event), while the
+# segment count is the quantity chattering inflates without bound. Returns
+# whether `settled!` abandoned the frame at a `t*` boundary, the frame's
+# localization count, and the step's end (D-261, D-317).
+function _localized_step!(model::Model, t_to, t_limit, k::Int, hooks::FrameHooks,
+                          fresh::Bool, localizations::Int)
     exec = model.exec
     events, cursor = exec.events, exec.cursor
     n_events = length(events.prior)
     (x₀, _) = startpoint(exec.stepper)         # the seam's retained pair (§10.2):
-    while true                                 # x₀ = x(t_seg) after each integrate!
+    while true                                 # x₀ = x(t_seg) after each attempt
         t_seg = exec.clock.t
         h′ = t_to - t_seg
-        integrate_step!(model, h′, k, fresh)
+        h_accepted = integrate_step!(model, h′, t_limit, k, fresh)
+        if h_accepted != h′
+            t_to = _step_end(t_seg, h′, h_accepted, t_to, t_limit)
+            h′ = h_accepted
+        end
+        t_limit = t_to
         # The arrival sweep at the segment's end — interior, on the raw
         # unprojected state, before any discrete cell refreshes (§10.4): the
         # sweep that closes the integration step is what raises the trigger.
@@ -172,7 +208,7 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
                                   events.σ1[i] ≥ 0
             any_triggered |= events.triggered[i]
         end
-        any_triggered || return (false, localizations)
+        any_triggered || return (false, localizations, t_to)
 
         # Budget exhaustion degrades; it does not throw (§10.4): the remainder
         # step has already completed, and this crossing fires in the coming
@@ -189,10 +225,11 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
                                               model.deployment.localization_budget,
                                               localizations))
             end
-            return (false, localizations)
+            return (false, localizations, t_to)
         end
 
-        copyto!(exec.xnext, exec.xbuf)   # retain xₙ₊₁ before the trials clobber it
+        # xₙ₊₁ stays in the trial buffer the step was committed from (D-452),
+        # which the trials below never write.
 
         # The θ = 0 validation (§10.4): x(t_seg) back into the buffer, one
         # interior sweep, no interpolant — x̂(0) = xₙ identically. σ₀ is the left
@@ -216,7 +253,7 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
         if !remaining
             # epoch-caused only: fall through to the step's end
             copyto!(exec.xbuf, exec.xnext)
-            return (false, localizations)
+            return (false, localizations, t_to)
         end
 
         # ẋₙ₊₁, paid only past a validated trigger (§10.4): one sweep and the
@@ -242,7 +279,7 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
             # boundary's ordinary iteration — one boundary, no zero-length
             # remainder.
             copyto!(exec.xbuf, exec.xnext)
-            return (false, localizations)
+            return (false, localizations, t_to)
         end
 
         # The t* boundary (§10.4): interpolated state in, then the §10.6
@@ -262,7 +299,7 @@ function _localized_step!(model::Model, t_to, k::Int, hooks::FrameHooks, fresh::
         # boundary the frame's last, its remainder abandoned, and reaches the
         # loop as `frame!`'s return (D-261, D-317). The remainder's first stage
         # reads the table this boundary left (D-447).
-        settled!(hooks) && return (true, localizations)
+        settled!(hooks) && return (true, localizations, t_to)
         localizations += 1
         fresh = true
     end

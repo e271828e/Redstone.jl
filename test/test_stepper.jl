@@ -7,6 +7,84 @@
 # scanned at every publication.
 requested_bouncer() = Group((; b = Bouncer(1.0, 0.07), r = requested(false, "never")))
 
+# A backend that rejects on a schedule (§10.2, D-452): Heun's method through the
+# seam's protocol, proposing a standing length `h`. It rejects the attempts whose
+# ordinals over the run `rejected` lists, and every `every`-th one, and proposes
+# `factor` times a rejected length for the retry; after an acceptance it proposes
+# `h` again. Its stages write the state buffer and the clock, so a rejection
+# leaves real scratch for the Model to discard, and under `poison` it fills a
+# rejected trial with `NaN`. It carries its proposal and its attempt count
+# across a frame top, so a restore that dropped them would move the schedule.
+# Under `record` it keeps the clock and the state each attempt found at its
+# start, each accepted length, and the attempt count at which each
+# discontinuity notice arrived.
+struct Scheduled{N} <: AbstractAlgorithm
+    h::Float64
+    rejected::NTuple{N,Int}
+    every::Int
+    factor::Float64
+    poison::Bool
+    record::Bool
+end
+Scheduled(h; rejected = (), every = 0, factor = 1.0, poison = false, record = true) =
+    Scheduled(h, rejected, every, factor, poison, record)
+
+mutable struct ScheduledStepper{T,N} <: AbstractStepper
+    const algorithm::Scheduled{N}
+    const x₀::Vector{T}
+    const k₁::Vector{T}
+    const k₂::Vector{T}
+    proposal::Float64
+    attempts::Int
+    const starts::Vector{Tuple{Float64,Vector{T}}}
+    const lengths::Vector{Float64}
+    const notices::Vector{Int}
+end
+bind_stepper(algorithm::Scheduled{N}, ::Type{T}, n_x::Int) where {T,N} =
+    ScheduledStepper{T,N}(algorithm, zeros(T, n_x), zeros(T, n_x), zeros(T, n_x), algorithm.h, 0,
+                        Tuple{Float64,Vector{T}}[], Float64[], Int[])
+propose(stepper::ScheduledStepper) = stepper.proposal
+discontinuity!(stepper::ScheduledStepper) =
+    (stepper.algorithm.record && push!(stepper.notices, stepper.attempts); nothing)
+startpoint(stepper::ScheduledStepper) = (stepper.x₀, stepper.k₁)
+checkpoint_stepper(stepper::ScheduledStepper) = (stepper.proposal, stepper.attempts)
+restore_stepper!(stepper::ScheduledStepper, (proposal, attempts)::Tuple{Float64,Int}) =
+    (stepper.proposal = proposal; stepper.attempts = attempts; nothing)
+function attempt!(stepper::ScheduledStepper, model::Model, h)
+    exec, algorithm = model.exec, stepper.algorithm
+    x, ẋ, (; x₀, k₁, k₂) = exec.xbuf, exec.ẋbuf, stepper
+    t = exec.clock.t
+    ordinal = (stepper.attempts += 1)
+    algorithm.record && push!(stepper.starts, (ForwardDiff.value(t), copy(x)))
+    copyto!(x₀, x)
+    evaluate!(model); copyto!(k₁, ẋ)
+    x .= x₀ .+ h .* k₁; exec.clock.t = t + h
+    evaluate!(model); copyto!(k₂, ẋ)
+    exec.xnext .= x₀ .+ (h / 2) .* (k₁ .+ k₂)
+    if ordinal in algorithm.rejected || (algorithm.every > 0 && ordinal % algorithm.every == 0)
+        algorithm.poison && fill!(exec.xnext, NaN)
+        stepper.proposal = algorithm.factor * ForwardDiff.value(h)
+        return false
+    end
+    algorithm.record && push!(stepper.lengths, ForwardDiff.value(h))
+    stepper.proposal = algorithm.h
+    true
+end
+
+# The closed loop beside a counter due at 3/32 s, off the 1/8 s frame tops: the
+# plant's derivative reads a cell the sweep computes from its state, and every
+# period is dyadic, so a clock written as the clock plus a length is exact.
+seam_rig() = Group((plant = Plant(), ctl = Gain(4.0), sum = Sum(), a = TickCounter());
+                   local_wires = ("ctl/out" => "plant/u", "sum/e" => "ctl/e",
+                                  "plant/y" => "sum/b"),
+                   input_wires = "ref" => "sum/a",
+                   sample_times = (; a = Absolute(Period(3//32))))
+seam_sim(algorithm) = Simulation(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
+
+# A sawtooth whose stamper crosses inside a step, and whose own wrap does too: a
+# model with localized events.
+stamped() = Group((; src = Sawtooth(1.0), s = Stamper(0.315)); local_wires = ("src/q" => "s/sig",))
+
 function test_stepper()
     @testset "the method is a deployment binding by instance, RK4() the default (§10.2, D-442, D-449)" begin
         sim = Simulation(feedback_model(); Δt_frame = 1//100)
@@ -151,7 +229,7 @@ function test_stepper()
         init!(bouncer_sim; log = false)
         publish_bytes = @ballocated publish!($bouncer_sim, $(bouncer_sim.plane.roster))
         no_mask = Bool[]                    # the advance's argument (D-260, D-261)
-        hooks = LoopHooks(bouncer_sim, bouncer_sim.plane.roster, nothing, no_mask, 0)
+        hooks = LoopHooks(bouncer_sim, bouncer_sim.plane.roster, nothing, no_mask)
         @test @ballocated(frame!($(bouncer_sim.model), 1, $hooks), setup = (init!($bouncer_sim; log = false)), evals = 1) == 2 * publish_bytes
         # One honoured requester adds the scan of its buffer and no allocation
         # (§13.5, D-316).
@@ -159,7 +237,7 @@ function test_stepper()
         init!(requested_sim; log = false)
         requested_bytes = @ballocated publish!($requested_sim, $(requested_sim.plane.roster))
         honoured_mask = Bool[false]
-        requested_hooks = LoopHooks(requested_sim, requested_sim.plane.roster, nothing, honoured_mask, 0)
+        requested_hooks = LoopHooks(requested_sim, requested_sim.plane.roster, nothing, honoured_mask)
         @test @ballocated(frame!($(requested_sim.model), 1, $requested_hooks), setup = (init!($requested_sim; log = false)), evals = 1) == 2 * requested_bytes
     end
 
@@ -168,5 +246,199 @@ function test_stepper()
         init!(dual_model, set(u = (ref = D8(0.7),)))
         frames!(dual_model, 50)                # `run!` to 0.05
         @test state(dual_model, "plant").q isa SVector{2,D8}
+    end
+
+    test_seam_protocol()
+end
+
+# Two logs snapshot by snapshot: the clock bitwise, the counters, the table
+# buffer by buffer.
+same_snapshots(a, b) =
+    length(a) == length(b) &&
+    all(s.t === r.t && s.frame == r.frame && s.boundary == r.boundary && same_table(s.store, r.store)
+        for (s, r) in zip(a, b))
+
+function test_seam_protocol()
+    @testset "a rejected attempt leaves no trace: the retry starts from the step's start, and the run publishes the unrejected one bit for bit (§10.2, §10.3, D-452)" begin
+        # Every third attempt is rejected and retried at the same length. The
+        # rejected attempts ran both stages, so the state buffer, the clock and
+        # the table held their scratch; the drain at frame 3 makes that frame's
+        # first attempt read a written table, and every later step's a fresh one.
+        plain, rejecting = seam_sim(Scheduled(1/16)), seam_sim(Scheduled(1/16; every = 3))
+        for sim in (plain, rejecting)
+            init!(sim, set(u = (ref = 0.7,)))
+            step!(sim; frames = 2)
+            stage!(sim, "ref" => 1.0)
+            step!(sim; frames = 6)
+        end
+        stepper = rejecting.model.exec.stepper
+        @test length(stepper.lengths) == plain.model.exec.stepper.attempts ≥ 2 * stepper.attempts ÷ 3
+        # each retry found the clock and the state its rejected attempt found
+        @test all(stepper.starts[n + 1][1] === stepper.starts[n][1] &&
+                  stepper.starts[n + 1][2] == stepper.starts[n][2]
+                  for n in 3:3:(stepper.attempts - 1))
+        @test stepper.lengths == plain.model.exec.stepper.lengths
+        @test same_snapshots(logged(rejecting), logged(plain))
+        @test state(rejecting, "plant").q === state(plain, "plant").q
+        # A model with localized events: the rejections land in whole steps and
+        # in remainders after `t*` alike.
+        localized = [Simulation(stamped(); Δt_frame = 1//10, algorithm) for algorithm in
+                     (Scheduled(1/40), Scheduled(1/40; every = 3))]
+        for sim in localized
+            init!(sim)
+            run!(sim; t_end = 0.5)
+        end
+        @test modes(localized[1], "s").t_fired ≈ 0.315 atol = 1e-6
+        @test same_snapshots(logged(localized[2]), logged(localized[1]))
+        # A remainder's retry never passes the end of its step (D-446). Over
+        # dyadic periods, attempt 12 is the remainder from the stamper's `t*`
+        # to 11/32, rejected for four times its length, and the retry is
+        # clamped back to it.
+        straight, grown = [Simulation(stamped(); Δt_frame = 1//8, algorithm) for algorithm in
+                           (Scheduled(1/32), Scheduled(1/32; rejected = (12,), factor = 4.0))]
+        for sim in (straight, grown)
+            init!(sim)
+            run!(sim; t_end = 0.5)
+        end
+        @test grown.model.exec.stepper.attempts == straight.model.exec.stepper.attempts + 1 == 18
+        @test same_snapshots(logged(grown), logged(straight))
+    end
+
+    @testset "a proposal is clamped to h_max and to the span's end, a rejection's proposal is the retry's, and a shortened step ends at the clock plus its length (§10.2, §10.5, D-452)" begin
+        # Every period is dyadic, so each clock below is exact. The proposal of
+        # 0.1 is clamped to `h_max = 1/16`. Attempt 2, offered the span's last
+        # 1/32, is rejected for a quarter of it, so the step ends at
+        # 1/16 + 1/128, a boundary on no lattice, and the next step takes the
+        # span's rest to the due instant at 3/32.
+        model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, h_max = 1//16,
+                      algorithm = Scheduled(0.1; rejected = (2,), factor = 0.25))
+        init!(model, set(u = (ref = 0.7,)))
+        hooks = RecordingHooks(model, 0, Float64[], false)
+        frame!(model, 1, hooks)
+        frame!(model, 2, hooks)
+        stepper = model.exec.stepper
+        @test hooks.boundaries == [1/16, 1/16 + 1/128, 3/32, 1/8, 3/16, 1/4]
+        @test stepper.lengths == [1/16, 1/128, 3/128, 1/32, 1/16, 1/16]
+        @test stepper.attempts == 7
+        @test stepper.starts[3] == stepper.starts[2]
+        @test state(model, "a").n == 1 + 2         # the ticks at 3/32 and 3/16, at their instants
+        # A localized event inside a step a rejection shortened still fires at
+        # its crossing.
+        sim = Simulation(stamped(); Δt_frame = 1//10, algorithm = Scheduled(1/40; every = 2, factor = 0.5))
+        init!(sim)
+        run!(sim; t_end = 0.5)
+        @test modes(sim, "s").count == 1
+        @test modes(sim, "s").t_fired ≈ 0.315 atol = 1e-6
+    end
+
+    @testset "the notice reaches the backend where a handler fired, a tick ran, a drain wrote, and at init! and overlay!, never at a restore, and the same under one advance and many (§10.2, §12.6, D-452)" begin
+        # One step a span: frame tops at k/8, ticks every 3/32. The tick at 3/8
+        # lands on a frame top. The notices are recorded as the attempt count
+        # they arrived at: boundary zero's at 0, a tick's after its step, and
+        # frame 4's drain at its top, after the 3/8 tick's.
+        notices = [0, 1, 3, 5, 6, 6, 7, 9, 11, 12]
+        once, stepped = seam_sim(Scheduled(0.2)), seam_sim(Scheduled(0.2))
+        init!(once, set(u = (ref = 0.7,)))
+        step!(once; frames = 3)
+        stage!(once, "ref" => 1.0)
+        step!(once; frames = 3)
+        # the same frames one advance at a time: only a drain that wrote notifies at a top
+        init!(stepped, set(u = (ref = 0.7,)))
+        foreach(_ -> step!(stepped), 1:3)
+        stage!(stepped, "ref" => 1.0)
+        foreach(_ -> step!(stepped), 1:3)
+        @test once.model.exec.stepper.notices == stepped.model.exec.stepper.notices == notices
+        @test same_snapshots(logged(stepped), logged(once))
+        # `overlay!` notifies; a restore hands the carried state back and does not.
+        cp = checkpoint(once)
+        overlay!(once, set(u = (ref = 0.5,)))
+        @test once.model.exec.stepper.notices == [notices; 12]
+        restore!(once, cp)
+        @test once.model.exec.stepper.notices == [notices; 12]
+        # A handler that fires notifies at its boundary: the stamper's `t*`, in
+        # frame 4's one step.
+        sim = Simulation(stamped(); Δt_frame = 1//10, algorithm = Scheduled(0.2))
+        init!(sim)
+        run!(sim; t_end = 0.5)
+        @test sim.model.exec.stepper.notices == [0, 4]
+    end
+
+    @testset "a checkpoint carries the stepper's state, and a restore followed by a step is the unrestored run bit for bit (§12.6, D-274, D-452)" begin
+        # The stepper carries its proposal and its attempt count. A restore that
+        # dropped the count would reject attempts 5 and 9 again.
+        algorithm = Scheduled(1/16; rejected = (5, 9, 14, 20), factor = 0.5)
+        original = seam_sim(algorithm)
+        init!(original, set(u = (ref = 0.7,)))
+        @test trace(original).header.state.stepper == (1/16, 0)
+        step!(original; frames = 3)
+        cp = checkpoint(original)
+        stepper = original.model.exec.stepper
+        @test cp.state.stepper == (stepper.proposal, stepper.attempts) && stepper.attempts > 9
+        attempts_at_cp, accepted_at_cp = stepper.attempts, length(stepper.lengths)
+        step!(original; frames = 4)
+        resumed = seam_sim(algorithm)
+        restore!(resumed, cp)
+        step!(resumed; frames = 4)
+        resumed_stepper = resumed.model.exec.stepper
+        @test resumed_stepper.attempts == stepper.attempts > attempts_at_cp
+        @test resumed_stepper.lengths == stepper.lengths[(accepted_at_cp + 1):end]
+        after = filter(s -> s.boundary ≥ first(logged(resumed)).boundary, logged(original))
+        @test same_snapshots(logged(resumed), after)
+        # The model's own pair: a state taken from a standalone model and
+        # restored into a fresh one.
+        model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
+        init!(model, set(u = (ref = 0.7,)))
+        frames!(model, 3)
+        model_state = checkpoint(model)
+        @test model_state.stepper == (model.exec.stepper.proposal, model.exec.stepper.attempts)
+        twin = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
+        restore!(twin, model_state)
+        frames!(model, 4)
+        frames!(twin, 4)
+        @test state(twin, "plant").q === state(model, "plant").q
+        @test twin.exec.stepper.lengths == model.exec.stepper.lengths[(end - length(twin.exec.stepper.lengths) + 1):end]
+        # The trace's header is detached and replays through the same attempts.
+        replayed = seam_sim(algorithm)
+        init!(replayed, set(u = (ref = 0.7,)))
+        replay!(replayed, trace(original))
+        @test replayed.model.exec.stepper.lengths == stepper.lengths
+        @test same_snapshots(logged(replayed)[2:end], logged(original)[2:end])
+    end
+
+    @testset "a cursor frame names the attempt, rendered past the first (§13.4, D-452)" begin
+        # Attempt 1 offers 0.02, whose second stage at 0.02 is short of the
+        # trip; it is rejected for four times its length, and attempt 2's second
+        # stage, at 0.08, trips.
+        model = Model(fed(Tripwire(0.05), "arm"); Δt_frame = 1//10,
+                      algorithm = Scheduled(0.02; rejected = (1,), factor = 4.0))
+        init!(model, set(u = (in = true,)))
+        err = failure(() -> frame!(model, 1))
+        @test err isa StepError{Tripped}
+        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 2)
+        @test err.t == 0.08 && err.boundary == 0
+        @test occursin("integration stage 2 in attempt 2 of the frame from boundary 0",
+                       sprint(showerror, err))
+    end
+
+    @testset "a rejected trial is discarded unread: a nonfinite one raises nothing (§13.4, D-157, D-452)" begin
+        poisoned, clean = seam_sim(Scheduled(1/16; every = 2, poison = true)),
+                          seam_sim(Scheduled(1/16; every = 2))
+        for sim in (poisoned, clean)
+            init!(sim, set(u = (ref = 0.7,)))
+            step!(sim; frames = 4)
+        end
+        @test lifecycle(poisoned) === :initialized
+        @test same_snapshots(logged(poisoned), logged(clean))
+    end
+
+    @testset "the attempt loop allocates nothing, rejections included (§9.8, D-452)" begin
+        model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32,
+                      algorithm = Scheduled(1/16; every = 2, factor = 0.5, record = false))
+        init!(model, set(u = (ref = 0.7,)))
+        frames!(model, 2)
+        k = Ref(3)
+        attempts = model.exec.stepper.attempts
+        @test @ballocated(frame!($model, k), setup = (k = $k[]; $k[] += 1), evals = 1) == 0
+        @test model.exec.stepper.attempts > attempts
     end
 end

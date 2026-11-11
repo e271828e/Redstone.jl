@@ -12,7 +12,7 @@ mutable struct RecordingHooks{M} <: FrameHooks
     boundaries::Vector{Float64}
     abandon::Bool
 end
-frame_top!(hooks::RecordingHooks) = (hooks.tops += 1; nothing)
+frame_top!(hooks::RecordingHooks) = (hooks.tops += 1; false)
 settled!(hooks::RecordingHooks) =
     (push!(hooks.boundaries, hooks.model.exec.clock.t); hooks.abandon)
 
@@ -261,7 +261,7 @@ function test_localization()
         init!(quiet_standalone)
         frames!(quiet_standalone, 2)
         @test @ballocated(frame!($quiet_standalone, 3)) == 0
-        quiet_hooks = LoopHooks(quiet_sim, quiet_sim.plane.roster, nothing, no_mask, 0)
+        quiet_hooks = LoopHooks(quiet_sim, quiet_sim.plane.roster, nothing, no_mask)
         quiet_bytes = @ballocated publish!($quiet_sim, $(quiet_sim.plane.roster))
         @test @ballocated(frame!($(quiet_sim.model), 3, $quiet_hooks)) == quiet_bytes
 
@@ -274,7 +274,7 @@ function test_localization()
         localizing_sim = Simulation(single(Bouncer(1.0, 0.07)); Δt_frame = 1//10)
         init!(localizing_sim; log = false)
         publish_bytes = @ballocated publish!($localizing_sim, $(localizing_sim.plane.roster))
-        hooks = LoopHooks(localizing_sim, localizing_sim.plane.roster, nothing, no_mask, 0)
+        hooks = LoopHooks(localizing_sim, localizing_sim.plane.roster, nothing, no_mask)
         @test @ballocated(frame!($(localizing_sim.model), 1, $hooks), setup = (init!($localizing_sim; log = false)), evals = 1) == 2 * publish_bytes
         localizing_standalone = Model(localizing_sim.model.deployment)
         @test @ballocated(frame!($localizing_standalone, 1), setup = (init!($localizing_standalone)), evals = 1) == 0

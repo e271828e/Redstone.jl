@@ -43,7 +43,7 @@ state_events(::TopInterrupter) = (cut = StateEvent(top_guard, top_handler),)
 # Hooks whose `settled!` raises an `InterruptException`: a throw after the
 # boundary settled and before the caller saw it, in a frame or a restore.
 struct InterruptingSettle <: FrameHooks end
-frame_top!(::InterruptingSettle) = nothing
+frame_top!(::InterruptingSettle) = false
 settled!(::InterruptingSettle) = throw(InterruptException())
 
 # The self-interrupter under a stop request on its own ramp: the request holds
@@ -234,7 +234,7 @@ function failures_runtime()
         init!(sim, set(u = (in = true,)))
         err = failure(() -> run!(sim; t_end = 5.0))
         @test err isa StepError
-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)  # RK4's half-step evaluation
+        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 1)  # RK4's half-step evaluation, in the first attempt
         @test err.boundary == 0 && err.t == 0.05
         @test err.host === :loop                        # frame one, not boundary zero
         @test err.cause isa Tripped
@@ -404,7 +404,7 @@ function failures_runtime()
         err = failure(() -> frame!(staged, 1))
         @test err isa StepError{InterruptException}
         @test err.host === :loop && err.boundary == 0
-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 4)
+        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 4, 1)
         @test staged.exec.clock.t == 1 * 0.1 && staged.status === :inconsistent
         refused_then_restored(staged, before)
 
@@ -722,7 +722,7 @@ function failures_runtime()
         init!(dual_model, set(u = (in = true,)))
         err = failure(() -> frames!(dual_model, 5))
         @test err isa StepError{Tripped}
-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)
+        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 1)
         @test err.t == 0.05 && err.boundary == 0 && err.host === :loop
         @test dual_model.status === :inconsistent
 
@@ -833,7 +833,7 @@ function failures_pointer_twin()
         # frame's own drain.
         err = reproduction(fed(Tripwire(0.35), "arm"), 3)
         @test err.cause isa Tripped && err.boundary == 3
-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)
+        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 1)
 
         # And the nonfinite species, which the sweep raises rather than model code.
         err = reproduction(diverging(), 1)
@@ -845,7 +845,7 @@ function failures_pointer_twin()
         # still ahead and `step!` re-executes that frame.
         err = reproduction(fed(Tripwire(0.05), "arm"), 0)
         @test err.cause isa Tripped && err.boundary == 0 && err.host === :loop
-        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2)
+        @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 1)
         @test err.t == 0.05                   # inside frame one
         err = reproduction(diverging(), 0)
         @test err.cause isa NonfiniteState && err.boundary == 0 && err.host === :loop

@@ -6,7 +6,7 @@ against the tree at `e6696a7` ([D-431][d-431]): every function named here is the
 implementation's, and the code moves more often than the spec. Function names
 are given without line numbers for that reason; `grep` finds them. The quotes
 of `frame.jl` and the boundary routine follow the span loop of
-[D-449][d-449].*
+[D-449][d-449], and those of the seam its protocol of [D-452][d-452].*
 
 This document follows a single frame through the frame loop and names, at
 each step, the function that performs it. It exists because the spec states
@@ -37,13 +37,12 @@ publishes through two hooks:
 
 ```julia
 # sim.jl, _advance!
-k = (run.frame += 1)
-hit = frame!(sim.model, k, hooks)
+hit = run_frame!(sim.model, run.frame + 1, hooks, advanced > 0)
 requester = hit ? _stop_hit(sim, ignore_mask) : nothing
 
-# frame.jl, inside frame! and _frame_steps!
+# frame.jl, inside run_frame! and _frame_steps!
 _phase!(cursor, :drain)
-fresh = frame_top!(hooks) === false   # drain!, and its report
+wrote = frame_top!(hooks)             # drain!, and whether it wrote a value
 ...                                   # integration, section 2
 exec.clock.t = t_to
 is_due ? run_boundary!(model, due) : run_boundary!(model, nothing)
@@ -84,22 +83,24 @@ a guard here is an edge with no in-frame crossing.
 ## Section 2 — Integration and localization
 
 **`frame!`** computes the span's end from its index, never by accumulation,
-takes the span's equal steps, and picks the path for each:
+asks the backend for a proposal, takes the span's equal steps when there is
+none, and picks the path for each:
 
 ```julia
 t_to = is_top ? _grid_time(model, k) : _tick_time(model, due)   # t₀ + k·Δt_frame
 steps = cld(units * denominator(lattice.bound), numerator(lattice.bound))
 h = Float64((units * lattice.unit) / steps)   # the span's exact equal step
-for i in 1:steps
-    t_next = i == steps ? t_to : t_from + i * h
-    if exec.has_localized
-        (abandoned, localizations) =
-            _localized_step!(model, t_next, k, hooks, fresh, localizations)
-        abandoned && return true
-    else
-        integrate_step!(model, T(h), k, fresh)
-    end
-    ...
+...                                           # for each step i of the span
+proposal = propose(exec.stepper)              # `nothing` for RK4
+span_end = i == steps
+t_next = span_end ? t_to : t_from + i * h
+if exec.has_localized
+    (abandoned, localizations, t_end) =
+        _localized_step!(model, t_next, t_to, k, hooks, fresh, localizations)
+    abandoned && return true
+else
+    h_accepted = integrate_step!(model, T(h), t_to, k, fresh)
+    t_end = _step_end(t, T(h), h_accepted, t_next, t_to)
 end
 ```
 
@@ -110,10 +111,12 @@ model with no localized events takes one bare step. Ours enters
 step first, then a remainder from each `t*`. It returns `true` only when a
 `t*` boundary's `settled!` stops the frame.
 
-**One integration segment.** `integrate_step!(model, h′, k, fresh)` in
-`model.jl` sets the cursor phase to `:integrate` and crosses the stepper seam
-([§10.2][s10-2]) to the backend's `integrate!(::RK4Stepper, model, h)` in
-`stepper.jl`:
+**One integration segment.** `integrate_step!(model, h′, t_limit, k, fresh)`
+in `model.jl` is the `Model`'s attempt loop. It sets the cursor phase to
+`:integrate` and the attempt to 1, and crosses the stepper seam
+([§10.2][s10-2]) to the backend's `attempt!(::RK4Stepper, model, h)` in
+`stepper.jl`, which writes the step's end into the trial buffer `exec.xnext`
+and returns `true`, an acceptance:
 
 ```julia
 copyto!(x₀, x)
@@ -121,7 +124,7 @@ evaluate!(model); copyto!(k₁, ẋ)
 _stage_point!(x, x₀, k₁, h / 2); model.exec.clock.t = t + h / 2
 evaluate!(model); copyto!(k₂, ẋ)
 ...
-x[i] = x₀[i] + (h / 6) * (k₁[i] + 2k₂[i] + 2k₃[i] + k₄[i])
+xtrial[i] = x₀[i] + (h / 6) * (k₁[i] + 2k₂[i] + 2k₃[i] + k₄[i])
 ```
 
 Each RK stage is one `evaluate!`, and evaluating the right-hand side means
@@ -142,9 +145,11 @@ writes the derivative into `ẋbuf`. The controller's output cells are not
 touched at any of the four stages. That is the zero-order hold, by absence
 rather than by a runtime test ([§10.5][s10-5]). When the drain reported nothing
 written, the table is the last boundary's, and the first `evaluate!` runs
-`rhs()` alone ([D-447][d-447]). When the backend returns,
-`integrate_step!` runs `_check_finite!`, which sweeps `x` before
-anything reads it ([§13.4][s13-4]).
+`rhs()` alone ([D-447][d-447]). When the backend accepts,
+`integrate_step!` writes the clock at the step's end, runs `_check_finite!`
+over the trial before anything reads it ([§13.4][s13-4]), and copies the
+trial into the state buffer. RK4 never rejects; a backend that did would
+have the loop put the step's start back and try again.
 
 **Arrival sweep and trigger.** Back in `_localized_step!`, the state is at
 `t₈` in the buffer, and the cursor phase is `:arrival`. One interior sweep
@@ -161,8 +166,8 @@ boundary was not-holding, and it holds now ([§10.4][s10-4]). If nothing trigger
 function returns `false` and the frame goes straight to section 3. Say the
 plant's guard triggered.
 
-**The θ = 0 validation.** The arrival state is first kept in `exec.xnext`.
-The frame-start state is then recovered from the seam's retained
+**The θ = 0 validation.** The arrival state stays in `exec.xnext`, the trial
+the step was committed from. The frame-start state is then recovered from the seam's retained
 `startpoint`, put back in the buffer with the clock at `t_seg`, and swept
 once more under the phase `:validation`:
 
@@ -260,7 +265,7 @@ scans the stop requests on it ([§13.5][s13-5]). If one holds, `settled!` return
 none holds, the localization count increments and the loop turns again.
 
 **The remainder.** The next turn reads `t_seg = t*` off the clock and sets
-`h′ = t₈ − t*`, and `integrate_step!(model, h′, k, fresh)` runs a full RK4 step from the
+`h′ = t₈ − t*`, and `integrate_step!(model, h′, t_limit, k, fresh)` runs a full RK4 step from the
 post-handler state. A one-step method restarts from a new state at no cost,
 which is why the seam admits nothing else ([D-017][d-017]). The arrival sweep at `t₈`
 finds no new edge, `_localized_step!` returns `false`, and `frame!` stamps
@@ -355,6 +360,7 @@ boundary zero has no integrate and no drain.
 [d-431]: ../log.md#d-431--collect-a-stopping-check-over-its-own-unit
 [d-447]: ../log.md#d-447--run-a-steps-first-stage-over-a-fresh-table-as-the-flow-alone
 [d-449]: ../log.md#d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
+[d-452]: ../log.md#d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
 [s10-2]: ../spec.md#102-the-stepper-seam
 [s10-4]: ../spec.md#104-localization-mechanics
 [s10-5]: ../spec.md#105-multi-rate-tick-scheduling

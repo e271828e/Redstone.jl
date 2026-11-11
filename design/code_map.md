@@ -281,7 +281,9 @@ D-438.
 
 - `ModelState{T}`, a model's state as one value (D-274, D-319): the flat
   buffer, the `s` and `m` stores, the signal table with every cell buffer
-  copied, the guard priors, the clock's `t` and `t₀` (a `Float64` like
+  copied, the guard priors, the stepper's carried state `stepper`, the
+  value `checkpoint_stepper` reads, typed `Any` and `nothing` for a
+  fixed-step method (D-452), the clock's `t` and `t₀` (a `Float64` like
   `Δt_frame`), and the fingerprint, the `Deployment` and the structural
   layout `Fingerprint`.
 - `Checkpoint`, a `ModelState{Float64}` beside the run's frame index and
@@ -295,7 +297,8 @@ D-438.
   cursor and the periphery.
 - `_restore_state!` on an executor, taking the state, behind `linearize`'s
   default operating point and under the model's restore door. It is strict
-  about the scalar. `_restore_stores!` is the part of it that writes the `s`
+  about the scalar, and hands the stepper its carried state back through
+  `restore_stepper!` with no discontinuity notice (D-452). `_restore_stores!` is the part of it that writes the `s`
   and `m` stores, shared with `linearize`'s seeded half.
 - `_detach`'s two methods, the state's and the checkpoint's over it.
 - The mismatch namers behind `_check_checkpoint!` (§12.7): `_check_addresses!`
@@ -306,7 +309,8 @@ D-438.
   fingerprint check `_check_checkpoint!` and the model's restore doors, are
   model.jl's (D-317, D-319).
 
-Spec: §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319.
+Spec: §10.2, §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319,
+D-452.
 
 ### `src/conditions.jl`
 
@@ -611,7 +615,9 @@ D-256, D-261, D-268, D-270, D-315.
 - `TierUnreadable` and `StatelessWithoutOutputs` (D-263).
 - `InternalInvariant`.
 - §13.4's runtime trio `CursorFrame`, `StepError` and `NonfiniteState`, whose
-  leaf names a bare state's field `x` (D-438).
+  leaf names a bare state's field `x` (D-438). `CursorFrame` carries the
+  attempt, 0 outside integration, which its four-field form spells, and
+  `_phase_text` renders it past the first (D-452).
 - §12.7's replay trio `CheckpointMismatch`, `ReplaySchemaMismatch` and
   `ReplayUnknownFace` (D-255, D-274).
 - `CheckpointMidFrame` (D-274).
@@ -643,7 +649,7 @@ Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
-D-406, D-437, D-438, D-444, D-445, D-449, D-450.
+D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452.
 
 ### `src/executor.jl`
 
@@ -679,15 +685,18 @@ D-406, D-437, D-438, D-444, D-445, D-449, D-450.
   hands them (D-261).
 - The execution cursor, which every entry stores into. The cursor holds its
   dispatch fields alone, and whether a frame was abandoned is `frame!`'s
-  `Bool` return (§13.5, D-261, D-317).
+  `Bool` return (§13.5, D-261, D-317). Its `attempt` is the step's attempt
+  ordinal, which `_phase!` clears and model.jl's attempt loop writes
+  (D-452).
 
 Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
-D-249, D-255, D-261, D-289, D-317, D-437, D-438.
+D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
 
 ### `src/frame.jl`
 
 - The model's `frame!(model, k, hooks)` (D-317): the top
-  hook, then `_frame_steps!`, inside §13.4's one `try`, whose catch writes
+  hook, whose `true` raises the stepper's discontinuity notice (D-452), then
+  `_frame_steps!`, inside §13.4's one `try`, whose catch writes
   `:inconsistent` and builds the `StepError` with `_wrap_step` for every throw,
   an interrupt included (D-441). The claim's gate and the refusal of a `k`
   past `_last_frame(model)`, the lesser of the `Lattice`'s `max_frame` and
@@ -696,26 +705,34 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
 - `_frame_steps!`, the frame as two nested loops (D-445, D-449). The outer
   one runs over the mandatory instants, the frame tops and the due instants,
   found by integer comparisons over the `Lattice`'s units, each clock
-  written from its own index through model.jl's grid. The inner one takes a
-  span's `cld(units·q, p)` equal steps, `p/q` the bound in units, each of
-  exact length `(units·unit)/n`; an interior step end's clock is the span's
-  start clock plus `i` times that length, never accumulated. The span's last
-  step runs `run_boundary!` with its tick index when due, every other step
-  end with the empty due set. A bare step integrates by its exact length; a
-  localized one by the float distance to its end (§10.5).
+  written from its own index through model.jl's grid. The inner one asks
+  `propose` before each step. Under `nothing` it takes a span's
+  `cld(units·q, p)` equal steps, `p/q` the bound in units, each of exact
+  length `(units·unit)/n`; an interior step end's clock is the span's start
+  clock plus `i` times that length, never accumulated. Under a proposal it
+  clamps the length through model.jl's `_clamped`, and a step a rejection
+  shortened ends where `_step_end` says, the clock plus its length (D-452).
+  The span's last step runs `run_boundary!` with its tick index when due,
+  every other step end with the empty due set. A bare step integrates by its
+  exact length; a localized one by the float distance to its end (§10.5).
 - The next due instant is recomputed after each due boundary, one `mod` per
   schedule row (`_next_due`, model.jl's). Nothing is cached, so nothing needs
   invalidating at a restore, an overlay or `init!`.
-- `_localized_step!`, the localization loop over one step, with the arrival
+- `_localized_step!`, the localization loop over one step, returning the
+  step's end, which a rejection may bring short of the offer but never past
+  the span's end, a remainder never past the step's (D-452). It keeps
+  `xₙ₊₁` in the trial buffer `xnext` the step was committed from, with the arrival
   sweep, the θ = 0 validation, ITP bracketing `_crossing`, `t*` boundaries,
   the remainder step to the step's end, the localization budget counted
   across the frame's steps, and the `ChatteringBudget` degradation, reported
   into the model's diagnostic cell (D-446). The report folds at the next
   frame top and its delta rides the first publication after the fold, which
   under subcycling is that frame's first step end, not its top.
-- The freshness flag (D-447): the frame's first step is fresh when
-  `frame_top!` returned `false`, every later step and every remainder is
-  fresh, and `integrate_step!` arms it.
+- `run_frame!`, the frame behind `frame!`, which takes the caller's word that
+  the frame continues the last one (D-452). The freshness flag (D-447): the
+  frame's first step is fresh when the frame is continued and `frame_top!`
+  returned `false`, every later step and every remainder is fresh, and
+  `integrate_step!` arms it.
 - The cursor's drain/arrival/validation/trial phases. After a boundary at
   which nothing is due the cursor reads the event round, since no ticks
   block runs (D-445).
@@ -724,7 +741,7 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438.
   D-261, D-317).
 
 Spec: §10.2–§10.5, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-255,
-D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450.
+D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450, D-452.
 
 ### `src/leaves.jl`
 
@@ -825,8 +842,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
   dies with the call, and `_establish_frozen!`, the frozen copy over the
   `Outputs`' port list.
 - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
-  no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returning `false`
-  reports nothing written, and `NoHooks`' `nothing` counts as a write (D-447).
+  no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returns whether it
+  wrote a value, which raises the discontinuity notice and denies the frame's
+  first step the table (D-447, D-452).
 - The grid (§10.4, §10.5, D-445): `_grid_time`, frame top `k` from the index
   and `t₀`, and `_tick_time`, a due instant from its base-tick index; neither
   accumulated. An interior step end is frame.jl's (D-449). `_next_due`, the
@@ -851,8 +869,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
     under §13.4's catch and settles it through the hooks (§14.5, D-223);
   - `overlay!`, in the same two methods, whose condition method resolves with
     the stores as the merge bases, `_store_values`, and whose plan method
-    runs the continuing settling under the same catch with host `:overlay`
-    (§12.6, §14.1, D-429);
+    raises the discontinuity notice and runs the continuing settling under
+    the same catch with host `:overlay` (§12.6, §14.1, D-429, D-452);
   - `apply!` on a model, gated under `NoHooks` before the inner
     `_apply_plan!`, which `init!` and the simulation's forwarding method call;
   - `restore!(model, model_state; hooks)`, whose fingerprint check
@@ -868,16 +886,24 @@ soon as nothing in it names a `Simulation` in a signature, and below
   runs the `x_deriv` block alone when `fresh` is set, and clears it (D-447).
 - The one boundary routine `run_boundary!(model, due)` over its due set, a
   tick index, `nothing` or `ESTABLISH`, with `run_ticks!` selecting the
-  ticks block by arity (§10.5, §10.6, D-185, D-445). `boundary!`,
+  ticks block by arity (§10.5, §10.6, D-185, D-445). It raises the
+  stepper's discontinuity notice where a handler fired, which
+  `event_phase!` returns, or its due set is not empty (D-452). `boundary!`,
   `offtick_boundary!` and `boundary_zero!` are thin wrappers over it, and
   `overlay!`'s continuing settling is its empty due set (D-429). Beside it
   `_round!` and the §10.6 event phase `event_phase!`, with its `FiringBudget`
   degradation into the model's diagnostic cell.
-- The seam's framework side `integrate!(model, h)` over `integrate_step!`,
-  which the frame loop calls with its frame index and the freshness flag,
-  and its `isfinite` sweep `_check_finite!`, whose `NonfiniteState` names the
-  loop's frame or, off the loop, the frame top the clock rounds to (§10.2,
-  D-157, D-445).
+- The seam's framework side (§10.2, D-452): `integrate_step!`, the attempt
+  loop, which the frame loop calls with the step's offered length, the
+  instant no attempt may pass, its frame index and the freshness flag, and
+  which returns the accepted length. It counts the attempts into the cursor,
+  commits an accepted trial from `xnext` after the `isfinite` sweep
+  `_check_finite!`, and puts a rejected attempt's start back from
+  `startpoint`. `_clamped` shapes a proposal into a length and `_step_end`
+  writes where a step ended. The bare primitive `integrate!(model, h)` is
+  one step toward `t + h`. `_check_finite!`'s `NonfiniteState` names the
+  loop's frame or, off the loop, the frame top the clock rounds to (D-157,
+  D-445).
 - `warnings(::Model)` (D-250), and the reads `port`, `state` and `modes` on
   the model, which refuse an unknown path through `_component_index` and
   `refuse_path` (D-440).
@@ -896,7 +922,7 @@ soon as nothing in it names a `Simulation` in a signature, and below
 Spec: §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
 §13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
 D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447,
-D-449, D-450.
+D-449, D-450, D-452.
 
 ### `src/precompile.jl`
 
@@ -1100,10 +1126,12 @@ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449.
   whether a batch reached the table, the drain's report (§10.3, D-447).
 - The loop's `LoopHooks`, one per advance, per `init!` and per restore: the
   frame index's advance and the drain at the top (D-441), and publication then the stop sample at every settled
-  boundary (§11.2, §13.5, D-317). Its `first_frame` is the advance's first
-  frame, whose top reports a write whatever the drain found, since a door or
-  a stepping primitive may have written the model between advances; the
-  doors pass 0 (D-447). `FrameHooks` and `NoHooks` are model.jl's.
+  boundary (§11.2, §13.5, D-317). The top returns whether the drain applied
+  a batch, so the discontinuity notice never depends on how a run is split
+  into advances. `_advance!` calls frame.jl's `run_frame!` and tells it that
+  every frame after the advance's first continues the last one, since a door
+  or a stepping primitive may have written the model between advances
+  (D-447, D-452). `FrameHooks` and `NoHooks` are model.jl's.
   The claim's gate has its `LoopHooks` method here, a no-op, so the
   simulation's doors pass (D-318).
 - Publication's `task_state`, read off `run_tasks` by `_status` (§12.2,
@@ -1142,19 +1170,22 @@ Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6
 §14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
 D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
 D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429, D-445,
-D-447, D-450, D-451.
+D-447, D-450, D-451, D-452.
 
 ### `src/stepper.jl`
 
-The seam's backend side: the steppers `RK4Stepper` and `HeunStepper`, each
-bound from its algorithm token by `bind_stepper` at `compile` (D-442), the
-retained `startpoint`, dense output.
-`checkpoint_stepper` and `restore_stepper!` are the checkpoint's hook pair,
-empty for both methods, which hold nothing across a frame top (D-274). The
-seam's framework side, `integrate!(model, h)`, is model.jl's, and the tokens
-are deployment.jl's.
+The seam's backend side (D-452): the protocol's generics `propose`,
+`attempt!`, which returns the backend's verdict, `discontinuity!`, a no-op by
+default, the retained `startpoint` and the generic `dense!`, and the steppers
+`RK4Stepper` and `HeunStepper`, each bound from its algorithm token by
+`bind_stepper` at `compile` (D-442), each proposing `nothing` and accepting
+every attempt, which writes the step's end into the executor's trial buffer
+`xnext`. `checkpoint_stepper` and `restore_stepper!` are the checkpoint pair.
+Neither it nor `propose` has a default, and both steppers carry `nothing`
+(D-274). The seam's framework
+side, `integrate_step!`, is model.jl's, and the tokens are deployment.jl's.
 
-Spec: §10.2, D-017, D-442.
+Spec: §10.2, §12.6, D-017, D-274, D-442, D-452.
 
 ### `src/store.jl`
 
@@ -1280,11 +1311,29 @@ end, the `Int` bound and the clock's resolution at every door. Its fixtures
 are its own:
 
 - `Recorder()`, an `AbstractAlgorithm` defined in the suite, and its
-  `RecorderStepper`, forward Euler through the seam that keeps each step's
-  length and the model's `fresh` flag (§10.2). No backend in `src/` records.
+  `RecorderStepper`, forward Euler through the seam's protocol, proposing
+  nothing and accepting every attempt, that keeps each step's length and the
+  model's `fresh` flag (§10.2, D-452). No backend in `src/` records.
 - `LatticeHooks` and `FreshHooks`, hooks keeping each boundary's counters and
   reporting nothing written at the top (D-317, D-447). The stop test reuses
   `test_lifecycle.jl`'s `ramp_request`.
+
+### `test/test_stepper.jl`
+
+The stepper seam (§10.2, §12.6, §13.4, D-442, D-449, D-452): the method as a
+deployment binding, the step bound, each backend's order, localization under
+either backend, allocation, and the seam's protocol. Its fixtures are its own:
+
+- `Scheduled(h; rejected, every, factor, poison, record)`, an
+  `AbstractAlgorithm` defined in the suite, and its `ScheduledStepper`,
+  Heun's method through the protocol that proposes `h`, rejects attempts on
+  a schedule, proposes `factor` times a rejected length, carries its proposal
+  and its attempt count through the checkpoint pair, and keeps each
+  attempt's start, each accepted length and each notice. No backend in
+  `src/` rejects.
+- `seam_rig()`, a closed loop beside a counter due off the frame tops, every
+  period dyadic, `stamped()`, a model with localized events, and
+  `same_snapshots`, two logs compared bitwise.
 
 ### `test/utils.jl`
 
