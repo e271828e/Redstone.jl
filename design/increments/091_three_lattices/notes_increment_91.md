@@ -162,3 +162,124 @@ the first one raised.
   the model's status alone, and a loop error leaves the stores a settled
   boundary. It may be two vocabularies and no defect; no `pending.md` item
   was written for it.
+
+## On the vocabulary sweep
+
+A third high-tier agent classified 97 occurrences and applied 94 in the
+worktree; the coordinator ruled the rest and committed the sweep as e73c683.
+
+24. **The symbol `:boundary` stays.** `Events`' policy register reads
+    `:boundary | :localized`, `show` prints it, and eleven test lines pin
+    it. It spells "boundary", not the retired name, and its docstring, "a
+    `Bool` guard checked at step boundaries only", is still true. Renaming
+    it is an API change and is open below.
+25. **Three older entries are annotated, none reworded**: D-179, which
+    derives the policy; D-122, which introduced the name; and D-365, whose
+    Position has the policy as its subject. D-314's rename set the
+    precedent of annotating the entries whose argument the rename touches.
+    D-445, written the same night, takes the new term.
+26. **`companions/event_visibility_walkthrough.md`'s capture guard becomes
+    the `Bool` form**, `x.alt >= a.alt_target`. It was written in the sign
+    form under a comment calling it boundary-detected. D-179 makes a sign
+    form localized, and the walkthrough needs both of its events on one
+    boundary, so a rename alone would have kept a false comment over a
+    guard that localizes.
+27. **`tools/gloss_table.md`'s live row is renamed and its dated record of
+    2026-08-15 is left as it stands.**
+
+## Open, for the user (from the sweep)
+
+- **Should `:boundary` in the `Events` register become `:non_localized`?**
+  See ruling 24. The test local `boundary_sim` in `test_blocks.jl` was left
+  for the same answer.
+- **Whether the rename should sweep the log.** `log_rules.md` rule 2 has an
+  exception for a word retired while its concept does not move, used once
+  for D-242. Ruling 7 read this rename as an ordinary one, forward only,
+  as D-172 and D-206 were.
+
+## On the cold review's findings
+
+An independent high-tier agent reviewed c22d79d..e73c683. It found no
+defect in the split's arithmetic, the clock writes or localization per
+step, and ten smaller things. A fixer landed these rulings as one commit.
+
+28. **A `settled!` hook writes nothing into the model: the contract is
+    stated, not enforced.** The reviewer showed a user hook whose
+    `settled!` applies a root input at a `t*` boundary. At c22d79d the
+    remainder's first stage swept and saw the write; now it reads the table
+    the boundary left, and the trajectory differs. §2.2 already forbids an
+    input change inside a frame, so the docstring, §10.3 and D-447 now say
+    that `settled!` writes nothing. Reason for not guarding it in code: the
+    write breaks a law the formalism states, and a guard would be a trait
+    on the hooks' contract that only a rule-breaking hook needs. The
+    alternative, arming freshness inside a frame only for the framework's
+    own hooks, is open below.
+29. **`NonfiniteState`, `CheckpointMidFrame` and two docstrings stop saying
+    "frame top" and `t₀ + k·h`** where a step can now end inside a frame.
+30. **D-081's and D-347's annotations read "superseded in part"**, since
+    each annotated Position changes, and D-444's first Rejected item is
+    marked as a superseded position, D-443's fourth bullet.
+31. **Three tests are added for three surviving mutants**: step points
+    counted from the frame top, which is the user's ruling 1 and was
+    unpinned; a due instant on a step point written from its base-tick
+    index; and `NonfiniteState.boundary` under subcycling. Two survivors
+    are accepted: the lattice in `==`, which only ruling 9's hole could
+    tell apart, and the fresh flag's reset in `frame!`'s catch, which the
+    two backends make unreachable.
+32. **The clock's resolution limit is stated, not policed.** With a base
+    tick of 1e-17 s the reviewer got distinct boundaries whose clocks are
+    one `Float64`. The positions stay exact and ordered. No bound on the
+    unit can prevent it, since the clock's resolution depends on the time,
+    so §10.5 says it. Refusing such a lattice is open below.
+33. **The constructor refuses a lattice it cannot index**, as a collected
+    `DeploymentInvalid` on `Δt_base`. The reviewer got a raw
+    `OverflowError` from two periods a hair apart, and a deployment whose
+    last indexable frame was 1.
+34. **"Step point" gets a glossary entry.** The spec used it 18 times
+    without one.
+35. **`pending.md` points here.** `AGENTS.md` makes it the home of open
+    questions, so the variable-step bullet lists this file's open points.
+36. **D-445's coincidence sentence is corrected.** It said a gap of a few
+    ulps between two scheduled instants "cannot arise", which ruling 32's
+    case contradicts. It now says what the rule gives: two instants that
+    coincide are one boundary, rounding opens no gap between them, and two
+    instants closer than the clock's resolution take one clock value. The
+    entry is this increment's, so it was edited, not annotated.
+37. **The fixer refused one more lattice than ruling 33 named**: a unit
+    whose denominator leaves `Int` while the frame fits. Accepted, under
+    the same diagnostic. The coordinator dropped one guard the fixer's own
+    mutant showed redundant: a frame past `Int` already leaves the last
+    indexable frame at 0.
+38. **Three sites can still raise a raw `OverflowError` on periods of
+    extreme magnitude, and are left.** `bind_schedule`'s
+    `Δt_frame / h`, for example a 4 s frame over a step of 2^-62 s; its
+    `anchor.T / Δt_base`, which predates this increment; and the frame
+    loop's exact piece length, `units * lattice.unit`, whose reduced
+    numerator can leave `Int` when the unit's numerator is not 1. Reason:
+    each needs periods no deployment would write, the review's ruling was
+    scoped to the lattice's constructor, and a general answer is a choice
+    about `Rational{Int}` on the whole deployment surface.
+39. **The delta check found the first wording of ruling 32 false, and it is
+    corrected.** The reviewer verified all ten fixes at 8aa7f9a, killed six
+    more mutants and passed the gate, 9661 of 9661. It then showed that two
+    instants one unit apart can take clocks out of order, not only equal:
+    each is rounded from its own index. With a counter due 1e-17 s before
+    each frame top it got 98 decreasing clock writes in 600 boundaries,
+    and on the localized path a step of negative length, one ulp long,
+    which ran without a throw. §10.5 and D-445 now say "equal, or out of
+    order by an ulp". Nothing guards it. It needs a time more than about
+    2^50 units from the origin: 1e-17 s base ticks, or a 1 µs unit after
+    some thirty-five years of simulated time.
+
+## Open, for the user (from the review)
+
+- **Should the hooks' contract be enforced?** See ruling 28.
+- **Should a lattice finer than the clock be refused, or the clock
+  clamped?** See rulings 32 and 39. This is the one open point with a wrong
+  behavior behind it, a clock that steps back by an ulp and a negative
+  step on the localized path, though only on a lattice of about 2^50
+  positions or more. Two answers: refuse, at `init!` since the origin
+  enters, a run whose positions would pass that count; or write each
+  boundary's clock as the larger of its own value and the last one.
+- **Should the deployment's rational arithmetic be checked throughout?**
+  See ruling 38.

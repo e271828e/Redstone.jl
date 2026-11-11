@@ -233,3 +233,67 @@ arithmetic at its edges; a grep for every surviving `frames_per_tick`,
 log and the records. "Empty is acceptable."
 
 ## The review's record
+
+The arc on top of c22d79d: 35a152c (docs), 5828890 (this brief, the notes
+and the patch), c3e7fae (code), e73c683 (the sweep, with D-448), 8aa7f9a
+(the review's fixes). Nothing is pushed.
+
+**The sweep.** A third high-tier agent classified 97 occurrences and
+applied 94. The coordinator kept the symbol `:boundary` of the `Events`
+register, an API value; annotated D-122, D-179 and D-365; and corrected the
+capture guard of `companions/event_visibility_walkthrough.md` to the `Bool`
+form, since a rename alone left a false comment over a guard that
+localizes. Rulings 24 to 27 of the notes.
+
+**The review**, at e73c683. An independent high-tier agent found no defect
+in the split's integer arithmetic, the clock writes or localization per
+step. Its own bit-identity probe matched c22d79d on 17 records, its split
+oracle on 10 configurations, and its gate passed 9642 of 9642 in 9m11s on
+Julia 1.13.3, with the Documenter build clean and the examples 77 of 77. Of
+its 16 mutants 11 died. Ten findings, each ruled in the notes (28 to 38)
+and fixed in 8aa7f9a by a fixer agent:
+
+- **F1, a `settled!` hook that writes the model.** A user hook applying a
+  root input at a `t*` boundary gave a trajectory that differs from
+  c22d79d's, since the remainder's first stage now reads the table the
+  boundary left. The contract is stated in the docstrings, §10.3, Appendix
+  B and D-447; it is not enforced.
+- **F2, F3, F9, stale text.** `NonfiniteState` and `CheckpointMidFrame`
+  said "frame top" and "`t*` stop", two docstrings said `t₀ + k·h`, and
+  §10.5 named the wrong `Int` bound.
+- **F4, log labels.** D-081's and D-347's annotations read "superseded in
+  part"; D-444's first Rejected item is marked a superseded position.
+- **F5, three missing tests**, for three surviving mutants: step points
+  counted from the frame top, which is the user's ruling and was unpinned
+  (1 failure under its mutant); a due instant on a step point written from
+  its base-tick index (2); `NonfiniteState.boundary` under subcycling (1).
+- **F6, the clock's resolution.** A base tick of 1e-17 s gave distinct
+  boundaries with one clock value. §10.5 states the limit and D-445's
+  coincidence sentence is corrected; nothing polices it.
+- **F7, an unindexable lattice.** Two periods a hair apart raised a raw
+  `OverflowError`. The lattice is computed in `Int128` and refused as a
+  collected `DeploymentInvalid` on `Δt_base`.
+- **F8, "step point"** gets a glossary entry.
+- **F10, `pending.md`** points at the notes' open questions.
+
+**Survivors accepted.** The lattice compared in `==`, which only two exact
+periods rounding to one `Float64` could tell apart; and the fresh flag's
+reset in `frame!`'s catch, which both backends make unreachable by clearing
+the flag in their first evaluation.
+
+**Left open, in the notes.** Three sites that can still raise a raw
+`OverflowError` on periods of extreme magnitude; whether the hooks'
+contract is enforced; whether a lattice finer than the clock is refused;
+and the open points of the prototype and the sweep.
+
+**The delta**, at 8aa7f9a. The reviewer, resumed, found every fix
+resolved but one sentence. Its three earlier mutants now die on the new
+tests, three more of its own on the lattice's constructor and its message
+die too, its bit-identity probe still matches c22d79d but for the reworded
+`NonfiniteState` message, and its gate passed 9661 of 9661 in 9m09s. The
+sentence added for F6 said two instants closer than the clock's resolution
+take one clock value "in order". They can take two, out of order by an ulp,
+and the localized path then integrates a step of negative length one ulp
+long. §10.5 and D-445 are corrected in the commit of this record, and the
+choice between refusing such a lattice and clamping the clock is the notes'
+first open point (ruling 39).

@@ -18478,8 +18478,9 @@ boundary. The bundled rulings:
 - Coincidence is decided on the deployment's exact periods, never by
   comparing computed times, so two instants that coincide are one boundary
   and rounding opens no gap between them. A short exact gap is taken as the
-  step it is, and two instants closer than the clock's resolution take one
-  clock value, in order.
+  step it is. The positions stay ordered; two instants closer than a few
+  times the clock's resolution take clock values equal or out of order by
+  an ulp.
 - The step lands on due instants, not on base ticks. A base tick at which
   nothing is due is no boundary. A boundary at which nothing is due takes
   the empty due set by arity selection ([D-185][d-185]).

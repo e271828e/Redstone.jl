@@ -6420,10 +6420,12 @@ The next due instant after an instant is one modular computation per
 schedule row. It is the first base-tick index
 past the instant that the row's gate admits, and the nearest is the minimum
 over the rows. A short exact gap between a step point and a due instant is a
-short step, never merged into a neighbour. Two scheduled instants closer than
-the clock's `Float64` resolution at that time take the same clock value, in
-order. The step between them keeps its exact length in a model without
-localized events, which integrates by exact lengths, as below.
+short step, never merged into a neighbour. The positions are exact and
+ordered, but the clock has the resolution of a `Float64`. Two scheduled
+instants closer than a few times that resolution at their time take clock
+values that are equal, or out of order by an ulp, since each is rounded from
+its own index. The step between them keeps its exact length in a model
+without localized events, which integrates by exact lengths, as below.
 
 A step's length depends on whether the model has localized events. A step
 in a model without them integrates by its exact length, `h` for an unsplit
