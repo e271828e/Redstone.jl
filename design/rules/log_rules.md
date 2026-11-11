@@ -86,12 +86,15 @@ external tool's behavior (Simulink/MATLAB/Modelica does X; we do Y; because Z).
    superseding entry. **Two exceptions.** Citations: every entry, old ones
    included, cites the CURRENT § numbering — a spec renumbering sweeps the
    whole log's citations, and the log never double-maps old numbering against
-   new. And a pure word substitution: when a word is retired for a concept
-   that does not move (D-242's "register" and "load-bearing"), the
-   substitution sweeps the log too, under rule 7's audit, because every
-   position survives it verbatim and the old word would otherwise mislead
-   each later reader. A rename that moves a concept's boundary still applies
-   forward only.
+   new. And a retired style word: when an ordinary word that names no
+   concept of the design is retired from the prose (D-242's "register" and
+   "load-bearing"), the substitution sweeps the log too, under rule 7's
+   audit, because every position survives it verbatim and the old word would
+   otherwise mislead each later reader. A term is never swept, whether or
+   not its concept moves. A term is a name the design gave a concept, with a
+   glossary entry or an entry that decided it, so it was the vocabulary of
+   its day. Its rename applies forward only, and the entries whose argument
+   it touches are annotated (D-314, D-448).
 3. **Citations are written bare, then linked mechanically.** Write `§5.2`,
    `Appendix B`, `D-037`, ranges as `D-166–D-168`; run
    `julia design/tools/linkify.jl` and it converts them to reference
