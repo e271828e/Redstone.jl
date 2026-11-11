@@ -5798,16 +5798,93 @@ The seam contract has four clauses.
   instants into equal steps ([§10.5][s10-5], [D-449][d-449]). It also
   resumes from a [localized](#g-localized) event time (the crossing instant
   bracketed by root-finding over [trial evaluations](#g-trial-evaluation)).
-- The backend provides dense output on demand over the last completed step.
+- The backend provides dense output on demand over the last accepted step.
   Only event localization needs it ([§10.4][s10-4]), so the backend
   constructs it lazily.
 - The backend uses one-step methods only. Event handlers reset state
   discontinuously, and a one-step method restarts from a new state for free.
   Multistep methods are excluded ([D-017][d-017]).
 - The seam carries what a backend needs across a frame top through a
-  checkpoint hook, empty for a single-step method. A
-  [checkpoint](#g-checkpoint) is the `Model`'s state at a frame top
-  ([§12.6][s12-6], [D-274][d-274]).
+  checkpoint pair. A [checkpoint](#g-checkpoint) is the `Model`'s state at a
+  frame top ([§12.6][s12-6], [D-274][d-274]). **The pair carries an adaptive
+  method's proposal and its controller's memory, and nothing for a
+  fixed-step method** ([D-452][d-452]).
+
+#### The step protocol
+
+One step is split between the `Model` and the backend. The backend knows its
+method and the error of a step. The `Model` knows the instants no step may
+cross, the bound `h_max`, the clock and the boundaries. This part states the
+calls between them, then how a step is shaped and taken. The next part states
+the notice the `Model` sends at a discontinuity.
+
+```julia
+propose(stepper)                    # the length the backend asks for next, or nothing
+attempt!(stepper, model, h)         # one try at a step of length h → accepted
+discontinuity!(stepper)             # the next step starts at a discontinuity
+startpoint(stepper)                 # (xₙ, ẋₙ), kept from the last attempt
+dense!(stepper, x̂, x₁, ẋ₁, θ, h′)    # the interpolant over the last accepted step
+checkpoint_stepper(stepper)         # the carried state; restore_stepper! puts it back
+```
+
+**The `Model` shapes every step's length, and the backend only proposes
+one** ([D-452][d-452]). Before each step, and after each rejected attempt,
+the `Model` asks `propose` for a proposal. A
+fixed-step method proposes nothing, and the `Model` takes the span in equal
+steps no longer than `h_max` ([§10.5][s10-5], [D-449][d-449]). **A proposal
+is clamped to `h_max` and to the span's end** ([D-452][d-452]). A step that
+reaches the span's end ends on that [mandatory instant](#g-mandatory-instant)
+(a frame top or a due instant) and takes its clock. A step that stops short
+ends at its start's clock plus its length, an instant on no lattice.
+
+The backend takes each step in [attempts](#g-attempt) (tries at the step, each
+of which it accepts or rejects). **An attempt writes the step's end into a trial
+buffer, and the `Model` commits it only on acceptance** ([D-452][d-452]).
+The backend reads the step's start from the state buffer. Its stages run the
+sweep, which reads the state buffer, so they write that buffer and the clock
+as scratch. On acceptance the `Model` writes the clock at the step's end,
+checks the trial for a nonfinite value ([§13.4][s13-4]) and copies it into
+the state buffer. On rejection the `Model` puts back the step's start, the
+state `startpoint` kept and the clock as it stood. It then asks for a new
+proposal and offers it, under the same clamp, as the next attempt. The
+rejected stages left their values in the signal table, so the next attempt's
+first evaluation runs the sweep ([§10.3][s10-3]). A method that proposes
+nothing always accepts. The trial buffer is also the `xₙ₊₁` the localization
+loop keeps for its interpolant ([§10.4][s10-4]).
+
+**The `Model` counts the attempts of each step** ([D-452][d-452]). The
+count names the attempt in a cursor frame ([§13.4][s13-4]). The first-cut
+backends accept every attempt, so their steps take one each.
+
+**Neither `propose` nor the checkpoint pair has a default**
+([D-452][d-452]). A backend that forgot `propose` would change the stepping
+rule, and one that forgot the pair would lose its state at a restore, each
+without an error. So every backend states both, and a fixed-step one answers
+`nothing`.
+
+#### The discontinuity notice
+
+A [discontinuity notice](#g-discontinuity-notice) (the `Model`'s word to the
+backend that the next step starts at a discontinuity) lets an adaptive method
+drop history a jump has made stale. **The `Model` raises the notice at every
+boundary where a handler fired or a tick ran, at a frame top whose drain
+wrote a value, and when `overlay!` settles** ([D-452][d-452]). Boundary zero
+runs every tick, so `init!` raises it too. The notice arrives as its boundary
+settles, before a checkpoint can be taken there, so the checkpoint holds what
+the backend did with it. Two notices before a step mean one.
+
+**What the backend does with the notice is its own** ([D-452][d-452]). A
+fixed-step method ignores it. An integral controller may keep its proposal,
+and a proportional-integral controller may clear its history.
+
+**The notice depends on the trajectory alone** ([D-452][d-452]). At a frame
+top only a value the hook wrote raises it, which the hook returns as a `Bool`
+([Appendix B][sB]). The first frame of an advance raises none for being
+first, though its first stage runs the sweep ([§10.3][s10-3]). A stepped
+simulation is therefore bit-identical to the same frames under `run!`
+([§12.6][s12-6]). **A restore raises no notice** ([D-452][d-452]). It
+hands the backend its carried state back, so the restored run proposes what
+the original proposed ([§12.6][s12-6]).
 
 #### Models with no continuous state
 
@@ -5905,9 +5982,13 @@ model) change only at frame tops ([§2.2][s2-2]). **A `settled!` hook writes
 nothing into the model** ([D-447][d-447]). It reads the boundary it settles
 and writes neither a [store](#g-store) (a framework-owned home of `x`, `s`
 or `m`), a root input nor the table. A hook that writes does so in
-`frame_top!` and reports the write. At a frame top the table is fresh when
-the drain wrote nothing, and the first frame of each advance counts as
-written. The flow then reads the cells the sweep would recompute at the
+`frame_top!` and returns `true`. **At a frame top the table is fresh when
+the frame continues the last one and the hook wrote nothing**
+([D-452][d-452]). A frame continues the last one when nothing wrote the
+model between that frame's top boundary and this one. Only the loop running
+the frames knows that, so the caller of the frame says it. An advance says
+it for every frame after its first, and `frame!` never does. The flow then
+reads the cells the sweep would recompute at the
 same state, time, modes and inputs, so the derivative is the sweep's to the
 bit. The rule lives on the framework side of the [stepper seam](#g-seam),
 and a backend's first stage is the same call either way.
@@ -9934,8 +10015,12 @@ nothing advances until `init!`, `restore!` or `replay!` opens a new run, and
 **a `Checkpoint` is the `Model`'s state beside the run's cursor**
 ([D-319][d-319]). `checkpoint(model)` returns the state alone, a
 `ModelState`. It holds the flat buffer, the `s` and `m` stores, the whole
-signal table, the guard priors, `t`, `t₀`, the [fingerprint](#g-fingerprint) (the structural
-layout) and the deployment. It is legal at `:consistent` with the clock on a
+signal table, the guard priors, the stepper's carried state, `t`, `t₀`, the
+[fingerprint](#g-fingerprint) (the structural layout) and the deployment.
+The stepper's carried state is what the backend's checkpoint pair reads,
+`nothing` for a fixed-step method ([§10.2][s10-2], [D-452][d-452]). The
+derivative buffer stays out, as every step rewrites it before reading it. It
+is legal at `:consistent` with the clock on a
 grid top. A frame cut by a throw, an interrupt included, leaves the status
 `:inconsistent`, so no state is read off it ([§13.4][s13-4], [D-441][d-441]).
 `checkpoint(sim)` wraps that state with the run's frame index and
@@ -9954,7 +10039,11 @@ the state's `t` is a frame top `t₀ + k·Δt_frame` of the state's own origin a
 and a state off its grid is `CheckpointMidFrame`. Every mismatch of either kind
 is collected into one throw before any write. The entry point then copies the
 state back, settles the restored boundary through the hooks and writes
-`:consistent` last ([D-318][d-318], [D-319][d-319]). A throw inside the copy or the
+`:consistent` last ([D-318][d-318], [D-319][d-319]). The copy hands the
+backend its carried state back and raises no
+[discontinuity notice](#g-discontinuity-notice) (the `Model`'s word that the
+next step starts at a discontinuity), so the next frame proposes what the
+original's did ([§10.2][s10-2], [D-452][d-452]). A throw inside the copy or the
 settling returns the status to `:built` and arrives as a `StepError` with host
 `:restore`, its pointer the state's frame ([§13.4][s13-4], [D-441][d-441]).
 
@@ -9997,7 +10086,8 @@ totality is asked, since every root input already holds a value.
 **The overlaid state settles through boundary zero's tail with the discrete
 output stages and the `s_update` calls left out** ([§14.5][s14-5], [D-429][d-429]). Projection
 runs, and the sweep and the events iterate to quiescence with the priors
-kept. An overlaid discrete store is therefore the next tick's state, and its
+kept. The overlay is a discontinuity, so the settling raises the stepper's
+notice ([§10.2][s10-2], [D-452][d-452]). An overlaid discrete store is therefore the next tick's state, and its
 held cell stays until that tick ([§14.5][s14-5], [D-273][d-273]). A guard the overlay moves into
 holding fires at the overlay boundary, before the next integrate, and a guard
 already holding does not fire again. The door takes the four recording
@@ -10807,7 +10897,11 @@ execution order) carries. The second is which function is running, one of
 event's predicate), a handler, or `x_projection`. The third is the boundary phase,
 one of the frame-top drain, integration stage *k*, the arrival [sweep](#g-sweep) (one pass
 through the execution order), the θ = 0 validation, a localization trial,
-projection, event round *r*, or the ticks. Maintaining the cursor costs one cheap
+projection, event round *r*, or the ticks. **Inside integration the cursor also
+records the [attempt](#g-attempt) (one try at a step, which the backend accepts or
+rejects), by its ordinal in the step** ([§10.2][s10-2], [D-452][d-452]). A
+rendered frame names the attempt past the first, so a step its backend accepted
+at once reads as it did before attempts existed. Maintaining the cursor costs one cheap
 store per dispatch on a single-tasked executor, with no allocation and no
 exception handlers. It covers every user-code surface uniformly, including the
 forgettable ones. Those are the evaluations of the [RHS](#g-flow) (the continuous
@@ -10818,7 +10912,8 @@ the trial points of ITP or Brent root-finding ([§10.4][s10-4]).
 # the cursor: one mutable field of the executor, overwritten per dispatch
 mutable struct ExecutionCursor
     …    # what it records, per the prose above: component path
-         # (component-list index), which function, and the boundary phase
+         # (component-list index), which function, the boundary phase,
+         # and the attempt inside integration
 end
 ```
 
@@ -10977,13 +11072,15 @@ Divergence is not termination. Dynamics that blow up (ground penetration, an
 unstable gain) produce NaNs that defeat guards. NaN comparisons are false, so no
 declared guard will catch them. An `isfinite` pass over the flat state [buffer](#g-buffer) (the
 contiguous vector backing all continuous state), run by the model after every
-return from the integrator backend, fails fast as `NonfiniteState`, a `StepError`
+accepted attempt, fails fast as `NonfiniteState`, a `StepError`
 species naming the component, the state leaf and the frame-entry boundary. It
 catches diverging models generally, not just post-terminal ones.
 
 **The pass is the boundary's first act** ([D-157][d-157]), and that placement is the whole of
 its value. The pass runs immediately after integrate returns, before
-`x_projection` and before the boundary sweep. Run there, `NonfiniteState` names the
+`x_projection` and before the boundary sweep. **It reads the trial an
+accepted attempt wrote, before the `Model` commits it** ([§10.2][s10-2],
+[D-452][d-452]). A rejected trial is discarded unread. Run there, `NonfiniteState` names the
 component whose own block diverged. Run later, the NaN has already propagated.
 It reaches an innocent downstream component through the ordinary signal path and
 surfaces as that component's lookup-table `DomainError`, or as an `InexactError` in
@@ -14228,14 +14325,18 @@ assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
     ([§10.5][s10-5], [§13.4][s13-4], [D-445][d-445]). It returns
     `true` when a hook abandoned the frame's remainder ([§13.5][s13-5],
     [D-317][d-317]). A `k` whose positions on the lattices leave `Int` is
-    refused as `ArgumentInvalid` with reason `:range`. `FrameHooks` is the hooks' type. `frame_top!(hooks)` runs
-    before the frame touches any state. It returns `false` when it wrote
-    nothing into the model, and any other value counts as a write
-    ([§10.3][s10-3], [D-447][d-447]). `settled!(hooks) → Bool` runs at
+    refused as `ArgumentInvalid` with reason `:range`. `FrameHooks` is the hooks' type. `frame_top!(hooks) → Bool` runs
+    before the frame touches any state. It returns whether it wrote a value
+    into the model. A value written raises the stepper's
+    [discontinuity notice](#g-discontinuity-notice), and the frame's first
+    step then runs its sweep
+    ([§10.2][s10-2], [§10.3][s10-3], [D-447][d-447], [D-452][d-452]).
+    `settled!(hooks) → Bool` runs at
     every settled boundary and writes nothing into the model. `NoHooks()`
-    is the no-op. Its `frame_top!` returns `nothing`, a write, and its
-    `settled!` returns `false`
-    ([D-317][d-317]).
+    is the no-op. Its `frame_top!` and its `settled!` return `false`
+    ([D-317][d-317]). A frame run by `frame!` never reads its top's table as
+    fresh, since only a simulation's advance can say that a frame continues
+    the last one ([§10.3][s10-3]).
   - `port(model, path, name)`, `state(model, path)` and `modes(model, path)`,
     with the `Simulation` forms `port(sim, path, name)`, `state(sim, path)`
     and `modes(sim, path)`. The reads of a [port](#g-port)'s value, a component's state
@@ -15497,6 +15598,14 @@ scope's grid. Anchor 0 is the base grid itself. Anchors join the [deployment](#g
 constraint pool, and relative declarations below one compose against it
 exactly as against the root grid ([§10.5][s10-5], [§9.2][s9-2]).
 
+<a id="g-attempt"></a>**attempt** — one try at an integration step of a given
+length, which the backend accepts or rejects. The backend writes the step's
+end into a trial buffer, and the `Model` commits it only on acceptance. After
+a rejection the `Model` puts the step's start back and offers the backend's
+**proposal**, the length it asks for next, clamped to `h_max` and to the
+[span](#g-mandatory-instant)'s end. A cursor frame names the attempt by its
+ordinal in the step ([§10.2][s10-2], [§13.4][s13-4]).
+
 <a id="g-boundary"></a>**boundary** — a published consistency point, where the
 boundary's [macro-sequence](#g-boundary-sequence) completes and a [snapshot](#g-snapshot) goes out ([§10.6][s10-6]).
 Every [frame](#g-frame) top and every end of an integration step is a boundary.
@@ -15518,6 +15627,14 @@ defaulting to 8. Exhaustion *degrades* rather than throws. Localization
 stops for the rest of the frame, and further crossings fire at the next
 [boundary](#g-boundary), under a `ChatteringBudget` warning naming the event
 ([§10.4][s10-4]).
+
+<a id="g-discontinuity-notice"></a>**discontinuity notice** — the `Model`'s
+word to the integration backend that the next step starts at a
+discontinuity. The `Model` raises it at a [boundary](#g-boundary) where a
+handler fired or a [tick](#g-tick) ran, at a [frame](#g-frame) top whose
+[drain](#g-drain) wrote a value, and when `overlay!` settles. What the
+backend does with it is its own. A restore raises none
+([§10.2][s10-2], [§12.6][s12-6]).
 
 <a id="g-dt_base"></a>**`Δt_base`** — the base [tick](#g-tick) period, in no required ratio to
 `Δt_frame` or `h_max`. It is bound at the `Deployment` constructor from one of three
@@ -16771,6 +16888,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-449]: log.md#d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
 [d-450]: log.md#d-450--refuse-a-run-whose-clock-cannot-order-its-boundaries
 [d-451]: log.md#d-451--discard-a-replaying-advances-late-staging-at-its-halt
+[d-452]: log.md#d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

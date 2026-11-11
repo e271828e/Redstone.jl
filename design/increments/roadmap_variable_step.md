@@ -97,10 +97,14 @@ needs it.
   over one hyperperiod, which took seconds on a fast component under a slow
   frame. No warning is raised when a due instant splits a step.
 - **The seam protocol.** `propose(stepper)`, `attempt!(stepper, model, h)`
-  returning acceptance and the next proposal, `discontinuity!(stepper)`,
-  the retained `startpoint`, the generic `dense!` a backend may override,
-  and the checkpoint pair, no longer empty. The Model owns the clamp, the
-  bounds, the attempt count and the discontinuity notice.
+  returning acceptance, `discontinuity!(stepper)`, the retained
+  `startpoint`, the generic `dense!` a backend may override, and the
+  checkpoint pair, no longer empty. The Model owns the clamp, the bounds,
+  the attempt count and the discontinuity notice. Landed as D-452 with
+  three changes the user ruled on 2026-11-11. `attempt!` returns its verdict
+  alone, and the Model reads `propose` before each step and after each
+  rejection. Neither `propose` nor the checkpoint pair has a default. The
+  attempt writes the trial buffer `xnext`, and the Model commits it.
 - **The discontinuity notice.** Raised at every boundary where a handler
   fired, a tick ran or the drain wrote a value, and at `init!` and
   `overlay!`. What the backend does with it is its own: a fixed-step
@@ -111,6 +115,11 @@ needs it.
   quiescent table is the next step's first-stage table, so the first stage
   runs the `x_deriv` block alone. The drain may report whether it wrote
   anything, extending the saving to every step of a deviceless run.
+  Increment 93 found that the notice and freshness cannot share one report
+  (D-452). Freshness may be denied whenever the caller cannot vouch for the
+  table, and the notice must depend on the trajectory alone. The frame-top
+  hook returns whether it wrote a value, and the caller of a frame says
+  whether it continues the last one.
 - **Strict first-same-as-last reuse is not built.** The arrival derivative
   of a FSAL backend serves the interpolant, so the lazy sweep for `ẋₙ₊₁`
   disappears for that backend.
@@ -123,7 +132,8 @@ needs it.
   differ only in whether the crossing instant is located.
 - **The checkpoint.** `ModelState` gains the stepper's carried state: the
   proposal and the controller's memory, both `Float64`. The derivative
-  buffer stays out; a restore counts as a discontinuity.
+  buffer stays out. A restore counts as a discontinuity for that buffer
+  alone: its first frame runs the sweep, and it raises no notice (D-452).
 - **The `Run`'s counters and the trace's format are unchanged.** The frame
   index counts fixed frames; the boundary ordinal counts more boundaries.
   Replay compares the deployment by value, now with `Δt_frame` and the
@@ -141,17 +151,16 @@ needs it.
 Each names the increment that needs it ruled and the reading recommended
 in discussion.
 
-- **The trial buffer.** Whether `attempt!` writes the state buffer and
-  restores it on rejection, or writes a trial buffer the Model copies on
-  acceptance. Recommended: the trial buffer; the arrival pair and the
-  interpolant already read `xnext`. Increment 3.
 - **The floor.** A frame that reaches `h_min` or spends its attempt budget
   degrades under a new warning kind, accepting the step at the floor, at
   most one report per frame; or throws a `StepError`. Recommended:
-  degrade, by the doctrine of the two existing budgets. Increment 4.
-- **The nonfinite trial.** Inside an attempt, a nonfinite state is a
-  rejection above `h_min` and the existing `NonfiniteState` throw at it.
-  Increment 3.
+  degrade, by the doctrine of the two existing budgets. Increment 4. Until
+  then nothing bounds a step's attempts, and no backend in `src/` rejects
+  one.
+- **The nonfinite trial.** Increment 93 checks an accepted trial before the
+  commit and never a rejected one (D-452). What remains is whether the Model
+  turns a nonfinite accepted trial into a rejection above `h_min`, keeping
+  the `NonfiniteState` throw at it. Increment 4.
 - **What the notice does to the proposal.** After a handler reset, keep the
   proposal and let the controller reject, or shrink it. Recommended: the
   backend's choice, stated per backend. Increment 4.
@@ -190,6 +199,9 @@ in discussion.
   trajectory by ulps. Recommended: a rule by piece, the exact length between
   two instants the Model knows exactly and the float distance from a `t*` or
   an adaptive step end. Increment 4, where the bit-identity invariant ends.
+  The rule also settles an edge increment 93 left: under a proposing backend
+  an interior step end is the clock plus the accepted length, which can round
+  one ulp past the span's end and leave a negative remainder.
 - **Exact periods on the `Deployment`.** Whether it stores and compares
   `Δt_frame`, `Δt_base` and `h_max` as exact rationals, where it compares
   their `Float64` values today. The bound makes the hole easy to reach: at a

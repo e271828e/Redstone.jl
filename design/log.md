@@ -450,6 +450,7 @@ were derived.
 | [D-449][d-449] | Bound the step by `h_max` and take each span in equal steps | ratified |
 | [D-450][d-450] | Refuse a run whose clock cannot order its boundaries | ratified |
 | [D-451][d-451] | Discard a replaying advance's late staging at its halt | ratified |
+| [D-452][d-452] | Split each step between a proposing backend and a shaping Model | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -775,6 +776,12 @@ only); in-house fixed-step RK4/Heun as the sole first-cut backends;
 **Spec.** [§10.1][s10-1], [§10.2][s10-2]
 
 **Rationale.** Recorded only through the rejections below.
+
+Annotation (2026-11-11): the seam's clauses are now a protocol between the
+`Model` and the backend ([D-452][d-452]). Advancing by arbitrary `h` is an attempt the
+backend accepts or rejects, the dense output is over the last accepted step,
+and the checkpoint hook is a pair that carries an adaptive method's proposal
+and memory. The one-step restriction stands.
 
 **Rejected.**
 - *`OrdinaryDiffEq` as substrate with `CallbackSet` choreography:* semantics by
@@ -6117,6 +6124,10 @@ source axis).
 **Spec.** [§8.4][s8-4], [§9.5][s9-5], [§13.4][s13-4]
 
 **Rationale.** A round-5 kernel dry-run finding (finding 13).
+
+Annotation (2026-11-11): the pass reads the trial an accepted attempt wrote,
+before the `Model` commits it, which is still before `project` and the
+boundary sweep ([D-452][d-452]). A rejected trial is discarded unread.
 
 **Rejected.**
 - *Checking after the event phase or after `g`:* sweep and guards run on the
@@ -12273,6 +12284,11 @@ an override of `x` and the root inputs on a checkpoint, lands as `overlay!`
 ([D-429][d-429]) over every store. The danger it named in the discrete tier is met by
 the rest reading: an overlaid store is the next tick's state, and its held
 cell is kept.
+
+Annotation (2026-11-11): the stepper seam's checkpoint hook of the first
+bullet is the checkpoint pair of [D-452][d-452]. A `ModelState` holds the stepper's
+carried state, `nothing` for a fixed-step method, and a restore writes it
+back with no discontinuity notice. The derivative buffer stays out.
 
 **Rejected.**
 - *Two header kinds, the pre-sequence resolved condition for an authored
@@ -18622,6 +18638,12 @@ weighed and rejected. Only a hand-written hooks type on an unclaimed model can
 break it, and a guard would be a trait on the hooks' contract that only a
 hook breaking the rule needs. The contract stays stated and unenforced.
 
+Annotation (2026-11-11): superseded in part by [D-452][d-452]. A frame-top hook returns
+a `Bool`, whether it wrote a value, so the third bullet falls. The first
+frame of an advance is no longer a write the hook reports. The caller of the
+frame says whether it continues the last one, and the table at a frame top is
+fresh when it does and the hook wrote nothing. The rest stands.
+
 **Rejected.**
 - *Freshness inside each backend:* every backend would restate when the
   table is fresh, and the seam's contract would gain a clause a backend can
@@ -18838,6 +18860,117 @@ replay.
   mode ([D-219][d-219]).
 - *Taking them in `run!`'s sweep alone:* `step!` spawns no device task, but a
   harness writer staging from another task meets the same window there.
+
+### D-452 — Split each step between a proposing backend and a shaping Model
+
+**Status.** ratified
+
+**Position.** The stepper seam is a protocol of six calls, and the `Model`
+owns each step's length, its attempts, the commit, the clock and the
+discontinuity notice. The bundled rulings:
+
+- The backend answers `propose(stepper)`, `attempt!(stepper, model, h)`,
+  `discontinuity!(stepper)`, `startpoint`, the generic `dense!` it may
+  override, and the checkpoint pair. A method that proposes nothing takes a
+  span in equal steps ([D-449][d-449]) and always accepts.
+- `attempt!` returns whether the backend accepts, and nothing else. The
+  `Model` reads `propose` before every step and after every rejection.
+- Neither `propose` nor the checkpoint pair has a default. A fixed-step
+  backend answers `nothing` to each.
+- The `Model` clamps a proposal to `h_max` and to the span's end. A step that
+  reaches the span's end takes the mandatory instant's clock, and one that
+  stops short ends at the clock plus its length.
+- An attempt writes the step's end into a trial buffer. On acceptance the
+  `Model` writes the clock, checks the trial for a nonfinite value and copies
+  it into the state buffer. On rejection it puts back the step's start from
+  `startpoint` and the clock, asks for a new proposal and offers it under the
+  same clamp. The next attempt's first evaluation runs the sweep.
+- The `Model` counts the attempts of each step, and the execution cursor
+  records the ordinal inside integration. A rendered cursor frame names it
+  past the first.
+- The `Model` raises the discontinuity notice at every boundary where a
+  handler fired or a tick ran, boundary zero's included, at a frame top whose
+  drain wrote a value, and when `overlay!` settles. It arrives as its boundary
+  settles. What the backend does with it is its own. The first frame of an
+  advance raises none, and neither does a restore.
+- A frame-top hook returns whether it wrote a value, as a `Bool`. A value
+  written raises the notice.
+- At a frame top the table is fresh when the frame continues the last one and
+  the hook wrote nothing. The caller of the frame says whether it continues:
+  an advance for every frame after its first, and `frame!` never.
+- A `ModelState` holds the stepper's carried state, the value its checkpoint
+  pair reads, `nothing` for a fixed-step method. A restore writes it back.
+
+**Spec.** [§10.2][s10-2], [§10.3][s10-3], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix D][sD]
+
+**Rationale.** The backend knows its method and the error of a step. The
+`Model` knows the mandatory instants, the bound, the clock and the
+boundaries. So the length is the backend's to propose and the `Model`'s to
+shape, and the backend never restates an instant the `Model` holds.
+
+The trial buffer gives each step one commit point. The stages run the sweep,
+and the phase bodies close over the state buffer, so a stage point must be
+written there and a rejection puts the step's start back whatever the attempt
+writes. What the trial buffer adds is the order: the nonfinite check reads
+the step's end before the state buffer holds it, and the localization loop's
+retained `xₙ₊₁` is the trial itself. It costs one copy of the state per
+accepted step, and none for a model with localized events, whose loop made
+that copy already.
+
+The notice and freshness ([D-447][d-447]) answer two questions, and each has its own
+owner. The hook knows whether its drain wrote a value. Only the loop running
+the frames knows whether anything else wrote the model since the last frame's
+top boundary. [D-447][d-447] folded both into the hook's one return, where any value
+but `false` counted as a write and the first frame of an advance reported
+one. The notice could not read that return. Raised at the first frame of an
+advance, it would part a stepped simulation from the same frames under `run!`
+([§12.6][s12-6]). Freshness changes no value, so it may be denied whenever the caller
+cannot vouch for the table. The notice changes an adaptive trajectory, so it
+must depend on the trajectory alone. So the hook returns its own write as a
+`Bool`, and the caller passes the frame's continuity as an argument. Raised
+at a restore, the notice would clear a history the original kept. A restore
+still reads no table or derivative it left: its first frame is the first of
+an advance, whose first stage runs the sweep.
+
+The backend keeps its proposal whatever `attempt!` returns, since `propose`
+and the checkpoint read it, and a notice between two steps may change it. So
+`propose` is its one source. A default `propose` would choose the stepping
+rule for a backend that forgot it, and a default checkpoint pair would drop
+its state at every restore, each without an error.
+
+A notice reaches the backend as its boundary settles, so nothing waits for
+the next step and a checkpoint taken at the boundary already holds what the
+backend did with it. A fixed-step method has no floor below its own step, so
+a nonfinite accepted trial throws `NonfiniteState` as before. An adaptive
+method rejects a trial that blew up, so a rejected trial is never checked.
+
+**Rejected.**
+- *The attempt writing the state buffer, the `Model` putting the start back
+  on rejection:* it saves one copy per accepted step, but the check would
+  read a state the stages and the commit share, and the localization loop
+  would copy `xₙ₊₁` out again.
+- *The backend clamping its own proposal:* every backend would restate the
+  mandatory instants and the bound, which the `Model` already holds.
+- *The notice at every frame top whose hook reports a write of any kind:* a
+  stepped simulation would hear notices `run!` does not, and under an
+  adaptive method its trajectory would differ.
+- *A frame-top hook returning three states, `false`, `true` and anything else
+  for a write it cannot name:* the hook would still report, at the first
+  frame of an advance, what its caller knows and it does not, and its return
+  would no longer be one concrete type.
+- *`attempt!` returning the next proposal beside its verdict:* the `Model`
+  reads `propose` before every step, so the returned value would serve only
+  after a rejection, a second source for one fact.
+- *Defaults for the checkpoint pair that carry nothing:* a backend that
+  forgot the pair would lose its state at every restore, and the restored run
+  would part from the original with no error.
+- *A restore as a discontinuity:* a proportional-integral controller would
+  clear the history the original kept, and the restored run would part from
+  it.
+- *A notice held on the `Model` until the next step:* it would be state a
+  checkpoint at that boundary has to carry.
+- *Checking every trial for a nonfinite value:* rejection is how an adaptive
+  method answers a step that blew up.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -19265,6 +19398,7 @@ replay.
 [d-449]: #d-449--bound-the-step-by-h_max-and-take-each-span-in-equal-steps
 [d-450]: #d-450--refuse-a-run-whose-clock-cannot-order-its-boundaries
 [d-451]: #d-451--discard-a-replaying-advances-late-staging-at-its-halt
+[d-452]: #d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

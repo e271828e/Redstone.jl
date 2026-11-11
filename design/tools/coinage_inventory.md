@@ -71,6 +71,8 @@ context wants.
 | state | — | D-250's other criterion word; Appendix D entry `g-state-single-owner` in D.10, bucket A |
 | step point | — | D-444's instant of the method's lattice, `j·h` after a frame top; retired with its Appendix D entry `g-step-point` when D-449 removed the step points |
 | mandatory instant | 14 | D-449's frame top or due instant, which no step crosses, with its **span**; §2.1, §2.2, §9.2, §10.1, §10.5, §10.6, Appendix D; Appendix D entry `g-mandatory-instant`, bucket A from here on |
+| attempt | — | D-452's try at a step, which the backend accepts or rejects, with the backend's **proposal**; §10.2, §13.4, Appendix D; Appendix D entry `g-attempt`, bucket A from here on |
+| discontinuity notice | — | D-452's word from the `Model` to the backend that the next step starts at a discontinuity; §10.2, §12.6, Appendix B, Appendix D; Appendix D entry `g-discontinuity-notice`, bucket A from here on |
 
 The nine rows above are the pipeline redesign's coinages (D-250 through
 D-258). Each went straight to an Appendix D entry, because each names a type
