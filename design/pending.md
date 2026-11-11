@@ -18,11 +18,21 @@ item changes what the spec says, the spec edit is part of the item.
   D-062), so it retires from the prose and from the names. In prose it
   becomes "library component", or "component" where the context says the
   rest. The word's other senses stay: a thread that blocks, a state block,
-  a code block. The module `Redstone.Blocks` with `src/blocks.jl` and the
-  abstract types `LinearBlock`, `DiscreteLinearBlock`, `ControllerBlock`,
-  `PIDBlock` and `LQRTrackerBlock` are renamed, the new names chosen in the
-  session that writes the ruling. The log is not swept, a renamed term
-  applying forward only (`rules/log_rules.md` rule 2). It runs as one
+  a code block. The module `Redstone.Blocks` with `src/blocks.jl` is
+  renamed, `Redstone.Library` the candidate, and the companion
+  `companions/linear_blocks.md` with it. The five abstract parents lose the
+  word and take the `Abstract` prefix the core's other extension points
+  carry. Proposed: `LinearBlock` becomes `AbstractLinearSystem`,
+  `DiscreteLinearBlock` becomes `AbstractDiscreteLinearSystem`,
+  `ControllerBlock` becomes `AbstractController`, `PIDBlock` becomes
+  `AbstractPID` and `LQRTrackerBlock` becomes `AbstractLQRTracker`. "Linear
+  system" is already the phrase of the library's docstrings, and the last
+  two read as `Array <: AbstractArray` does. `AbstractController` is as
+  broad as the name it replaces, while the type carries the two anti-windup
+  axes and their integral-term law, so a narrower name is worth a look. The
+  session that writes the ruling settles the names. The log is not swept,
+  a renamed term applying forward only (`rules/log_rules.md` rule 2). It
+  runs as one
   increment after increment 93, the seam protocol, lands and before the
   arc's next increment starts: the docs commit with the ruling first, then
   a mechanical code stage whose proof is the test suite. It precedes the
