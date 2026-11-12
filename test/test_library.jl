@@ -675,10 +675,10 @@ function pid_cascade(controller; hold = false, tracking = false)
         "actuator/y" => "velocity/u", "velocity/y" => "position/u"]
     hold && push!(wires, "inner/saturation" => "controller/saturation", "engaged/y" => "controller/engaged")
     tracking && push!(wires, "velocity/y" => "controller/v")
-    children = (reference = Step(t_step = 0.5, after = 5.0), controller = controller,
+    kids = (reference = Step(t_step = 0.5, after = 5.0), controller = controller,
               error = Junction{Float64, Float64, 2}(-), inner = LimitedIntegrator(lower = -1.2, upper = 1.2),
               actuator = FirstOrderLag(τ = 0.1), velocity = FirstOrderLag(τ = 1.0), position = Integrator())
-    Group(merge(children, hold ? (engaged = Constant(true),) : (;));
+    Group(merge(kids, hold ? (engaged = Constant(true),) : (;));
           local_wires = Tuple(wires), output_wires = ("position/y" => "y",))
 end
 
@@ -696,9 +696,9 @@ function standby_siblings(controller_a, controller_b, plant; delay)
     delay && push!(wires, "sel/y" => "delay/u")
     haskey(u_types(controller_a), :v) && append!(wires, [command => "a/v", command => "b/v"])
     holding && append!(wires, ["negate/y" => "b/engaged", "free/y" => "a/saturation", "free/y" => "b/saturation"])
-    children = (ref_a = Step(t_step = 0.5, after = 5.0), ref_b = Constant(2.0), a = controller_a, b = controller_b,
+    kids = (ref_a = Step(t_step = 0.5, after = 5.0), ref_b = Constant(2.0), a = controller_a, b = controller_b,
               sel = Switch{Float64}(), plant = plant)
-    Group(merge(children, holding ? (negate = Fn{Bool}(!), free = Constant(Int8(0))) : (;),
+    Group(merge(kids, holding ? (negate = Fn{Bool}(!), free = Constant(Int8(0))) : (;),
                 delay ? (delay = UnitDelay(0.0),) : (;));
           input_wires = ("mode" => (holding ? ("sel/select", "a/engaged", "negate/u") : ("sel/select",)),),
           local_wires = Tuple(wires))
@@ -713,9 +713,9 @@ function discrete_pid_cascade(; hold)
         "reference/y" => "outer/r", "outer/u" => "inner/r", "inner/u" => "plant/u",
         "plant/y" => "outer/y", "plant/y" => "inner/y"]
     hold && push!(wires, "inner/saturated" => "outer/saturation", "engaged/y" => "outer/engaged")
-    children = (reference = Step(t_step = 0.5, after = 5.0), outer = DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold),
+    kids = (reference = Step(t_step = 0.5, after = 5.0), outer = DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold),
               inner = DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0), plant = DiscreteIntegrator())
-    Group(merge(children, hold ? (engaged = Constant(true),) : (;)); local_wires = Tuple(wires))
+    Group(merge(kids, hold ? (engaged = Constant(true),) : (;)); local_wires = Tuple(wires))
 end
 
 # A holding discrete PID, engaged by a constant `true`, driving a discrete
@@ -785,9 +785,9 @@ function tracker_loop(controller; disturbance = SVector(0.0, 0.0), stepped = tru
         "plant/y" => "controller/x", "plant/y" => "controller/z", "controller/u" => "sum/in1",
         "disturbance/y" => "sum/in2", "sum/y" => "plant/u"]
     stepped && push!(wires, "reference/y" => "controller/z_ref")
-    children = (controller = controller, disturbance = Constant(disturbance),
+    kids = (controller = controller, disturbance = Constant(disturbance),
               sum = SumJunction{SVector{2, Float64}, 2}(), plant = tracker_plant())
-    Group(merge(children, stepped ? (reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(1.0, 0.5)),) : (;));
+    Group(merge(kids, stepped ? (reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(1.0, 0.5)),) : (;));
           input_wires = stepped ? () : ("z_ref" => "controller/z_ref",), local_wires = Tuple(wires))
 end
 
@@ -832,12 +832,12 @@ function tracker_cascade(; delay = true, hold = true)
     append!(wires, hold ? ["inner/saturated" => "code/u", "code/out1" => "a/saturation", "code/out1" => "b/saturation"] :
                           ["free/y" => "a/saturation", "free/y" => "b/saturation"])
     outer = DiscretePID(Kp = 0.5, Ki = 0.2, Tt = 0.1, hold = true, tracking = true)
-    children = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
+    kids = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
               a = outer, b = outer, sel = Switch{Float64}(), negate = Fn{Bool}(!),
               level = Constant(0.0), reference = Pack{Float64, 2}(),
               inner = DiscreteLQRTracker(; tracker_gains()..., K_int = zeros(2, 2), u_max = SVector(0.6, Inf)),
               plant = tracker_plant())
-    Group(merge(children, delay ? (delay = UnitDelay(0.0),) : (;), hold ? (code = Unpack{Int8, 2}(),) : (free = Constant(Int8(0)),));
+    Group(merge(kids, delay ? (delay = UnitDelay(0.0),) : (;), hold ? (code = Unpack{Int8, 2}(),) : (free = Constant(Int8(0)),));
           input_wires = ("mode" => ("sel/select", "a/engaged", "negate/u"),), local_wires = Tuple(wires))
 end
 
@@ -1940,7 +1940,7 @@ function test_library()
         @test err isa DiagnosticError
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
-        # The stages are the arms on `AbstractLinearSystem`, picked by `FT`.
+        # The only stages are the arms on `AbstractLinearSystem`, picked by `FT`.
         @test !Redstone.has_stage(y_direct, lag_form())
         @test !Redstone.has_stage(y_state, lead_lag())
     end

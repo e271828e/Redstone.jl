@@ -11165,7 +11165,7 @@ publishes it ([D-316][d-316]). The enum is `@enum StopFlag NO_STOP STOP_REQUESTE
 enum is one leaf, pinned at every activation ([§4.3][s4-3]), and [cells](#g-cell) (typed entries of
 the signal table) are stored per element type ([§9.7][s9-7]), so every request in the
 model lands in one `StopFlag` block. The stop's `Bool` is gathered at the
-boundary of the assembly that owns it, in one visible block. The landing gear
+boundary of the assembly that owns it, in one visible junction. The landing gear
 `Ldg` from the example of [§6.1][s6-1] ORs its three legs through a junction (the
 ownership idiom, [§6.2][s6-2]; the library, [§13.7][s13-7]). It wires the result into a
 `StopRequest` child, described below. No level above it re-exports anything,
@@ -11497,16 +11497,16 @@ A standard component library makes good on the junction promise
 ([§6.2][s6-2]). That promise rests on explicit junctions being *cheap*. A
 junction hand-written per arity per type is not cheap. The junctions, summing
 junctions and Bool gates alike, are the library's seed ([D-062][d-062]). A
-component the library ships is a [library component](#g-library-component),
-with no privilege of its own ([D-453][d-453]).
+component the library ships is a [library component](#g-library-component)
+([D-453][d-453]), with no privilege of its own ([D-062][d-062]).
 
 **A component joins the library's inventory by judgement against three
 guidelines** ([D-313][d-313]). The guidelines ask whether a component is
 domain-agnostic and generally useful, whether it has didactic value, and
 whether its implementation is difficult to get right. None is a requirement.
 They are weighed, not satisfied one by one, and a listed component is built
-whenever wanted. A one-line expression such as a gain earns no library
-component, because a separate component costs a build entry, a cell, a gather
+whenever wanted. A one-line expression such as a gain earns no place in the
+library, because a separate component costs a build entry, a cell, a gather
 and a scatter ([§9.7][s9-7]). Domain components, such as aerodynamics,
 engines or sensors, belong in separate packages built on the framework.
 Simulink's library is a language, while this is a toolbox.

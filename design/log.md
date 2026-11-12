@@ -9141,6 +9141,10 @@ use, which is the by-accident outcome the audit exists to prevent. Nobody is
 inconvenienced meanwhile: the package has no external user, and the
 developer's session pays one `-L` flag.
 
+Annotation (2026-11-12): the library is reached by import from
+`Redstone.Library` since [D-453][d-453]. The library's public standing and the rest
+stand.
+
 **Rejected.**
 - *Export the operator surface now:* decides the list by accident ahead of
   the audit `pending.md` records, and turns a later rename or submodule move into a
@@ -13899,6 +13903,9 @@ alias that is exported or defined in `Main`, where the probe ran. Inside
 typeof(|)}`. The aliases are the spellings an author writes and reads in
 source. Whether they also print by name follows from the exported-name
 audit's ruling on the submodule, and is left to it.
+
+Annotation (2026-11-12): the library is the submodule `Redstone.Library`
+since [D-453][d-453]. The aliases and the rest stand.
 
 **Rejected.**
 - *Three separate types:* three copies of one shape, where the arity-via-type
@@ -19027,10 +19034,11 @@ method rejects a trial that blew up, so a rejected trial is never checked.
 
 **Status.** ratified
 
-**Position.** A component the standard library ships is a library
-component, and the term *block* retires. Its other senses stay: a call that
-blocks, a state block, a code block. The names follow:
+**Position.** The term *block* retires, and a component the standard
+library ships is a library component. The bundled rulings:
 
+- The word's other senses stay: a call that blocks, a state block, a code
+  block.
 - The library is the submodule `Redstone.Library`, in `src/library.jl`.
 - The five abstract parents take the `Abstract` prefix of the core's other
   extension points: `AbstractLinearSystem`, `AbstractDiscreteLinearSystem`,
