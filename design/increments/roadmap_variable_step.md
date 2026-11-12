@@ -1,13 +1,15 @@
 # Roadmap: variable-step integration
 
 The live roadmap for the integration-step update, settled in discussion on
-2026-11-05 and 2026-11-06 and amended on 2026-11-11. It stages the work in
-six increments, names the rulings the discussion settled, and lists the
-decisions each increment still needs. Its `pending.md` bullet carries the
+2026-11-05 and 2026-11-06 and amended on 2026-11-11 and 2026-11-12. It
+stages the work in seven increments, names the rulings the discussion
+settled, and lists the decisions each increment still needs. Its `pending.md` bullet carries the
 state of the work; this file carries the plan. Every number here is a
 reading of the tree at the time of writing, and each brief re-counts what it
 pins. The step bound entered on 2026-11-11 between the second increment and
 the third. It is numbered 2b, so the numbers the records cite still hold.
+Exact periods and the step-length rule entered on 2026-11-12 between the
+third increment and the fourth, numbered 3b for the same reason.
 
 ## What the update is
 
@@ -148,84 +150,119 @@ needs it.
   rewritten as sections; a log position that changes is superseded, not
   annotated.
 
+## Ruled on 2026-11-12
+
+The user closed the decisions that named increment 4, before any prototype
+of it. Each lands in the spec and the log with the increment that builds
+it, 3b or 4 as marked.
+
+- **The cut.** Increment 4 splits in two. Exact periods and the step-length
+  rule need no backend and go first, as 3b. The step-length rule is where
+  the bit-identity invariant ends, since a model with localized events
+  moves by ulps. Alone in an increment, every moved pin has one cause.
+  Increment 4 then moves no existing trajectory, and all its tests are new.
+- **Exact periods on the `Deployment`.** It stores `Δt_frame`, `Δt_base`
+  and `h_max` as `Rational{Int}` and compares and hashes those, where it
+  compared their `Float64` values. The bound made the hole easy to reach: at
+  a 1 s frame, `h_max = 1//3` and `h_max = Rational(1/3)` compared and
+  hashed equal and took 3 and 4 steps per frame, and `replay!` accepted
+  one's recording into the other while the state drifted by 0.014 in five
+  frames. Increment 3b.
+- **One step-length rule, by piece.** A step integrates by the exact length
+  between two instants the Model knows exactly, and by the float distance
+  from a `t*` or an adaptive step end. Before it, a model without localized
+  events integrated by the exact length of the piece and one with them by
+  the float distance to the step's end, so declaring a localized event that
+  never fires moved a trajectory by ulps. Increment 3b.
+- **The bounds are the Model's and sit on the `Deployment`.** `h_min` is an
+  optional keyword beside `h_max`, an exact time through the same door. A
+  proposing method requires it, under the rule that a domain rate is not a
+  framework default. A fixed-step method leaves it unused, as
+  `localization_budget` is in a model with no localized event. The
+  constructor refuses an `h_min` above the resolved `h_max`, and one the
+  clock cannot resolve over the run, as D-450 does for the lattices. The
+  token gains a trait that says whether its method proposes, which the
+  constructor reads. The Model clamps every proposal into
+  `[h_min, h_max]`, so a backend never reads `h_min`. The recommendation
+  had been the instance, as the controller's floor. Its premise fell with
+  the next ruling: the Model must enforce the floor, so the instance would
+  be a place the Model reaches into for a bound it owns. Increment 4.
+- **The floor degrades, and the Model enforces it.** The Model accepts an
+  attempt at or below `h_min` whatever the backend's verdict, since no
+  shorter step is allowed. A step that has spent its attempt budget takes
+  its next attempt at `h_min`. Either files one new warning kind, at most
+  one report per frame, by the doctrine of the two existing budgets.
+  `attempt!` returns a `Bool` alone (D-452), so a backend that forced its
+  own acceptance could not say so. The attempt budget is a keyword of the
+  `Deployment`, counted per step, with a default, beside `firing_budget`
+  and `localization_budget`. Together the two bound what increment 93 left
+  open: a span takes at most `g / h_min` steps and one more, and a step at
+  most its budget of attempts and one more. Rejected: a `StepError` at the
+  floor. Increment 4.
+- **Equal division is the one shaping rule.** Over the distance `r` to the
+  next mandatory instant the Model takes `r / n`, with
+  `n = ⌈r / min(proposal, h_max)⌉`. A fixed-step method is the same rule
+  under an infinite proposal (D-449). The count is capped at `⌊r / h_min⌋`
+  and is at least 1, so division never cuts a step below the floor and a
+  span shorter than `h_min` is one step. Division takes the steps a clamp
+  takes under a constant proposal and leaves no sliver before a scheduled
+  instant, so the last step of about an ulp that increment 93 left cannot
+  occur. It never cuts a proposal to less than half, so the controller
+  recovers in one step, where a sliver would hold its proposal down for
+  several. It can cost one step when the proposal grows inside a span. The
+  prototype checks the case where the cap lengthens a step past its
+  proposal. Increment 4.
+- **A `t*` ends the step under a proposing backend.** The handler's notice
+  is raised, the Model asks `propose`, and the shaping rule runs over the
+  distance to the span's end. A fixed-step method keeps its remainder,
+  offered whole up to the step's end (D-452), so its trajectories do not
+  move. What a backend does with the notice stays its own, stated per
+  backend. Increment 4.
+- **The nonfinite trial needs no new rule of the Model.** A backend treats
+  a nonfinite error estimate as a rejection at its strongest shrink, so its
+  proposal never becomes `NaN`, which the Model would refuse as an internal
+  invariant (D-452). The Model checks accepted trials only, as it does, so
+  `NonfiniteState` is thrown where the Model forces an acceptance at the
+  floor. An overshoot into a singular region recovers, and a model's bug
+  throws a few attempts later. Increment 4.
+- **Projection raises no notice.** `x_projection` writes the state at every
+  boundary, so its notice would precede every step and always clear a
+  controller's memory. Its correction is of the order of the step's error.
+  The spec gains the sentence and D-452 an annotation. Increment 4.
+- **The recorded set's comparison.** The algorithm instance is compared as
+  a whole value for equality and walked field by field for the
+  `CheckpointMismatch` message. Increment 4.
+- **The first adaptive backend.** Bogacki–Shampine 3(2), three evaluations
+  per accepted step under first-same-as-last, its low order what a
+  piecewise-smooth right-hand side under a tick-capped step rewards. It
+  runs under proportional-integral step control from the start, so the
+  stepper's checkpoint field takes its final shape once. The controller's
+  constants are fixed per backend at the standard values, part of the
+  algorithm's identity and never keywords. The elementary controller is the
+  integral gain alone, the setting the convergence test runs at. The error
+  test is `|err| ≤ abstol + reltol·max(|xₙ|, |xₙ₊₁|)` on values only, and
+  the norm is the maximum over the state, so a quiet component never
+  loosens the tolerance of the rest. The instance is
+  `BS3(; reltol = 1e-3, abstol = 1e-6)`, the defaults MATLAB, SciPy and
+  OrdinaryDiffEq share. `reltol` is dimensionless, so the rule on domain
+  quantities does not touch it. `abstol` is in the state's units and has no
+  universal value: a state whose meaningful scale is far below `1e-6`
+  integrates with no control under the default, which the docstring says.
+  A scale declared with the state is the later cure. The token and the
+  stepper stay two types, and the new log entry annotates D-442's
+  rationale, which puts an adaptive backend's bounds on the instance.
+  Increment 4.
+
 ## Open decisions
 
 Each names the increment that needs it ruled and the reading recommended
 in discussion.
 
-- **The floor.** A frame that reaches `h_min` or spends its attempt budget
-  degrades under a new warning kind, accepting the step at the floor, at
-  most one report per frame; or throws a `StepError`. Recommended:
-  degrade, by the doctrine of the two existing budgets. Increment 4. Until
-  then nothing bounds a step's attempts, and no backend in `src/` rejects
-  one. Increment 93's review showed with a stub that a proposal that is
-  zero, negative or below the clock's resolution never ends its span, with
-  every attempt accepted, and that the frame's interrupt mask makes the
-  hang unstoppable. The Model now refuses such a length as an internal
-  invariant (D-452). A proposal that advances by almost nothing still takes
-  steps without a bound, and so does a backend that keeps rejecting. The
-  floor settles both, and it must sit above the clock's resolution over the
-  run, as D-450's bound does for the lattices.
-- **The nonfinite trial.** Increment 93 checks an accepted trial before the
-  commit and never a rejected one (D-452). What remains is whether the Model
-  turns a nonfinite accepted trial into a rejection above `h_min`, keeping
-  the `NonfiniteState` throw at it. Increment 4.
-- **What the notice does to the proposal.** After a handler reset, keep the
-  proposal and let the controller reject, or shrink it. Recommended: the
-  backend's choice, stated per backend. Increment 4. Increment 93 offers the
-  remainder of a step after a `t*` whole, without asking `propose`, so a
-  backend can shrink it only by rejecting. Whether the Model asks there is
-  part of this decision.
-- **Projection and the notice.** `x_projection` writes the state at every
-  boundary and raises no notice, and neither the spec nor D-452 says so.
-  Increment 4.
-- **The recorded set's comparison.** The algorithm instance compared as a
-  whole value for equality, walked field by field for the
-  `CheckpointMismatch` message. Increment 4.
-- **The first adaptive backend.** Bogacki–Shampine 3(2), three
-  evaluations per accepted step under first-same-as-last, its low order
-  what a piecewise-smooth right-hand side under a tick-capped step
-  rewards; the mixed norm
-  `|err| ≤ abstol + reltol·max(|xₙ|, |xₙ₊₁|)` on values only, under
-  proportional-integral step control from the start, so the stepper's
-  checkpoint field takes its final shape once. The controller's constants
-  are fixed per backend at the standard values, part of the algorithm's
-  identity and never keywords; the elementary controller is the integral
-  gain alone, the setting the convergence test runs at. `h_min` required of
-  an adaptive backend, under the rule that a domain rate is not a framework
-  default. Increment 4.
 - **The checkpoint's rest condition.** Frame tops only, or any published
   boundary. Recommended: frame tops for now, relaxed when a sub-step stop
   bites. Deferred.
 - **`localization_tol`'s reference.** `Δt_frame`. The budget stays per
   frame. Increment 2.
-- **Equal division under an adaptive proposal.** Whether the Model shapes an
-  adaptive proposal as it shapes a fixed-step span, taking
-  `r / ⌈r / min(proposal, h_max)⌉` over the distance `r` to the next
-  mandatory instant, or only clamps it. Equal division leaves no sliver
-  before a scheduled instant, and it reaches into the controller's memory.
-  Increment 4.
-- **`h_min`'s home.** The adaptive instance, as the controller's floor, or
-  the `Deployment` beside `h_max`. Recommended: the instance, since a
-  fixed-step method has no use for it. Increment 4.
-- **One step-length rule.** A model without localized events integrates by
-  the exact length of the piece, one with them by the float distance to the
-  step's end, so declaring a localized event that never fires moves a
-  trajectory by ulps. Recommended: a rule by piece, the exact length between
-  two instants the Model knows exactly and the float distance from a `t*` or
-  an adaptive step end. Increment 4, where the bit-identity invariant ends.
-  The rule also settles an edge increment 93 left: under a proposing backend
-  an interior step end is the clock plus the accepted length, which can land
-  a sliver short of the span's end and leave a last step of about an ulp. It
-  cannot pass the span's end, since the length is below the float distance
-  to it.
-- **Exact periods on the `Deployment`.** Whether it stores and compares
-  `Δt_frame`, `Δt_base` and `h_max` as exact rationals, where it compares
-  their `Float64` values today. The bound makes the hole easy to reach: at a
-  1 s frame, `h_max = 1//3` and `h_max = Rational(1/3)` compare and hash
-  equal and take 3 and 4 steps per frame, and `replay!` accepts one's
-  recording into the other while the state drifts by 0.014 in five frames.
-  Increment 4, with the recorded set.
 
 ## The sequence
 
@@ -236,6 +273,8 @@ trajectory is bit-identical to today's, the old trajectories being the
 oracle for the rewritten loop. Increment 2b should move only trajectories
 that increment 91's own tests introduced, those with a bound finer than the
 frame and a due instant inside it. That is an argument, not yet a run.
+Increment 3b ends the invariant for a model with localized events, which
+moves by ulps, and increment 4 moves no existing trajectory.
 
 1. **The deployment surface.** `Deployment(build; Δt_frame, Δt_base,
    algorithm = RK4())`, the step inside the algorithm instance and
@@ -301,13 +340,27 @@ frame and a due instant inside it. That is an argument, not yet a run.
    attempt; a restore followed by a step bit-identical to the unrestored
    run.
 
+3b. **Exact periods and the step-length rule.** The `Deployment` stores
+    `Δt_frame`, `Δt_base` and `h_max` as `Rational{Int}`, with `==` and
+    `hash` over those, and the loop reads `Float64` values derived from
+    them. The localization loop's first segment integrates by the exact
+    length of its step, and a remainder from a `t*` by the float distance.
+    Spec: §9.2, §10.4, §10.5, §12.7. Log: an entry for each ruling. Tests:
+    `h_max = 1//3` and `h_max = Rational(1/3)` at a 1 s frame comparing
+    unequal, and `replay!` refusing one's recording in the other; a
+    localized event that never fires leaving a trajectory bit-identical to
+    the same model without it; every trajectory of a model without
+    localized events bit-identical; each pin that moves named with the ulps
+    it moves by.
+
 4. **The first adaptive backend.** Bogacki–Shampine with its parameters
-   as recorded deployment data, proportional-integral control, the floor's
-   degradation kind, the value-only norm, the descriptor format bump and
-   the inspector's pin. Spec: §2.4's trajectory-fixing list, §10.2's domain
+   as recorded deployment data, proportional-integral control, `h_min` and
+   the attempt budget on the `Deployment`, the shaping rule under a
+   proposal, the floor's degradation kind, the value-only norm, the
+   descriptor format bump and the inspector's pin. Spec: §2.4's trajectory-fixing list, §10.2's domain
    argument reframed, §10.7's cost bound `Δt_frame/h_min`, §11.5, §12.7,
-   §13.9, §14.10's value-norm rule, Appendix C. Log: D-133 annotated, new
-   entries for the floor and the recorded set. Tests, the
+   §13.9, §14.10's value-norm rule, Appendix C. Log: D-133, D-442 and D-452
+   annotated, new entries for the floor and the recorded set. Tests, the
    first one first: a recording replayed from a checkpoint taken mid-run,
    through frames with rejected attempts and sub-step boundaries,
    bit-identical to the original's snapshots; order of convergence on a
@@ -336,6 +389,6 @@ relaxation; the controller's constants as keywords; the adapter.
   a long run needs the overflow guard `_frames_fit` gives frames today.
 - A sliver remainder before a scheduled instant. Under a fixed-step method
   equal division makes none, though the schedule can still put two due
-  instants a unit apart. Under an adaptive method it waits on increment 4's
-  decision on equal division.
+  instants a unit apart. Under an adaptive method equal division makes none
+  either, as ruled on 2026-11-12.
 - The keyword list exists in three copies until increment 1 collapses it.

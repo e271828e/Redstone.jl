@@ -23,13 +23,13 @@ item changes what the spec says, the spec edit is part of the item.
   ends in a boundary; the drain, the control read, the pacer's deadline and
   the trace's ordinal stay at frame tops; `restore!` restores the stepper's
   state and never reseeds it. The plan, the settled rulings and the open
-  decisions are `design/increments/roadmap_variable_step.md`: six
+  decisions are `design/increments/roadmap_variable_step.md`: seven
   increments, the deployment surface first, then the three lattices, the
-  step bound, the seam protocol, the first adaptive backend and the
-  teaching, with every trajectory from before the update bit-identical
-  through the seam protocol. The update changes
-  the deployment keywords, so it precedes the exported-name audit and
-  delays the release.
+  step bound, the seam protocol, exact periods with the step-length rule,
+  the first adaptive backend and the teaching, with every trajectory from
+  before the update bit-identical through the seam protocol. The update
+  changes the deployment keywords, so it precedes the exported-name audit
+  and delays the release.
   - **Landed: the deployment surface**, increment 90 (D-442, D-443,
     `design/increments/090_deployment_surface/`). `Δt_frame` and `Δt_base`
     sit on the `Deployment`, the step rides `algorithm = RK4(h)` and is
@@ -61,14 +61,19 @@ item changes what the spec says, the spec edit is part of the item.
     and the caller of a frame says whether it continues the last one; D-447
     is superseded in part. The `Model` refuses a proposed length that does
     not advance the clock, as an internal invariant. Two things wait for the
-    next increment, and no backend in `src/` reaches either. Nothing bounds
-    a step's attempts or the count of steps in a span, so a backend that
-    keeps rejecting, or proposes steps that advance by almost nothing, holds
-    its frame past an interrupt, since the frame runs masked (§12.4); the
-    floor and the attempt budget are owed. And a proposed step can end a
+    roadmap's increment 4, and no backend in `src/` reaches either. Nothing
+    bounds a step's attempts or the count of steps in a span, so a backend
+    that keeps rejecting, or proposes steps that advance by almost nothing,
+    holds its frame past an interrupt, since the frame runs masked (§12.4);
+    the floor and the attempt budget are owed. And a proposed step can end a
     sliver short of the span's end, leaving a last step of about an ulp,
-    which belongs with the one step-length rule.
-  - **Next: the first adaptive backend**, the roadmap's increment 4.
+    which equal division under a proposal removes, as ruled on 2026-11-12.
+  - **Next: exact periods and the step-length rule**, the roadmap's
+    increment 3b. The user ruled the roadmap's open decisions for
+    increment 4 on 2026-11-12 and cut it in two; the rulings are the
+    roadmap's section "Ruled on 2026-11-12".
+  - **Then: the first adaptive backend**, the roadmap's increment 4, with
+    `h_min` and the attempt budget on the `Deployment`.
   - **Ruled from the three lattices** by the user on 2026-11-11, on the open
     points of `design/increments/091_three_lattices/notes_increment_91.md`:
     - The reconstructed Rejected lists of D-445 to D-447 stand as written.
@@ -88,7 +93,7 @@ item changes what the spec says, the spec edit is part of the item.
     - The steps per frame and the refusal of a lattice finer than the clock
       landed with the step bound (D-449, D-450).
     - Exact periods on the `Deployment` and one step-length rule wait for
-      the roadmap's increment 4, as open decisions there.
+      the roadmap's increment 3b, ruled on 2026-11-12.
 
     The two rejections these rulings owed the log landed with the step
     bound: the cap at the range's end in D-450's Rejected list, and an
