@@ -175,7 +175,7 @@ end
 """
     closed_loop(solution, gains; noise_σ = 0.3)
 
-The aircraft under two controllers and a switch between them, library blocks
+The aircraft under two controllers and a switch between them, library components
 alone in a `Group` of `Group`s (§13.7), under the root inputs `h_ref`, `V_ref`
 and `mode`. `solution` is the trim triple `(θ, δe, δt)` of `level_flight()` and
 `gains` the triple of `lqr_gains`. The root holds the plant beside five groups:
@@ -183,29 +183,30 @@ and `mode`. `solution` is the trim triple `(θ, δe, δt)` of `level_flight()` a
 
 `actuators` passes each control through a `RateLimiter` and a `FirstOrderLag`,
 the elevator at 1 rad/s and 50 ms, the throttle at 0.5 /s and 0.5 s, starting
-at the trim. `pid_controller` is a cascade of four `DiscretePID` blocks that
-flies pitch rate through the elevator, pitch attitude through pitch rate,
+at the trim. `pid_controller` is a cascade of four `DiscretePID` controllers
+that flies pitch rate through the elevator, pitch attitude through pitch rate,
 altitude through pitch attitude and airspeed through the throttle; each outer
-block holds on the `saturated` code of the block inside it, and the two
-innermost read a constant zero code. `lqr_controller` is a `DiscreteLQRTracker`
-over the full state `(V, γ, θ, q, h)`, packed by a `Pack{Float64, 5}`, with the
-command vector `(h, V)`. `sensing` adds Gaussian white noise of `noise_σ` per
-sample to the altitude both controllers read, published as `h_meas`.
+controller holds on the `saturated` code of the controller inside it, and the
+two innermost read a constant zero code. `lqr_controller` is a
+`DiscreteLQRTracker` over the full state `(V, γ, θ, q, h)`, packed by a
+`Pack{Float64, 5}`, with the command vector `(h, V)`. `sensing` adds Gaussian
+white noise of `noise_σ` per sample to the altitude both controllers read,
+published as `h_meas`.
 
 `selection` holds a `Switch` per control, which selects the cascade's command
 while `mode` holds and the tracker's otherwise, and a `UnitDelay` per control
 that holds the selected command one tick old. `mode` is also the cascade's
 `engaged` input and, negated inside `lqr_controller`, the tracker's. Both
 controllers run all the time, and the one not in command tracks the one that
-is: each innermost block of the cascade and the tracker read the delayed
-command as their tracking input, and each outer block of the cascade reads the
-measured variable of the loop inside it (`pid_anti_windup.md`, section 11).
-Every `Tt` is one period, 0.02 s. A block not in command lags the selected
+is: each innermost controller of the cascade and the tracker read the delayed
+command as their tracking input, and each outer controller of the cascade reads
+the measured variable of the loop inside it (`pid_anti_windup.md`, section 11).
+Every `Tt` is one period, 0.02 s. A controller not in command lags the selected
 command by an amount that grows with `Tt` and with the rate at which its own
-law moves, and a block in command pulls a limited integrator back within a
+law moves, and a controller in command pulls a limited integrator back within a
 tick. The switch is therefore bumpless in steady flight. During a maneuver the
 standby lags the command by a few hundredths of a radian, and the switch jumps
-by that lag. Every discrete block runs at 50 Hz.
+by that lag. Every discrete component runs at 50 Hz.
 
 The references and the mode are root inputs, so the run drives them:
 `trimmed(solution)` holds the trim references with the cascade in command, and
@@ -227,7 +228,7 @@ function closed_loop(solution, gains; noise_σ = 0.3)
                               q_ctl = pid(Kp = -0.2, Ki = -0.4, u_min = -0.5, u_max = 0.5),
                               V_ctl = pid(Kp = 0.2, Ki = 0.05, u_min = 0.0, u_max = 1.0),
                               free = Constant(Int8(0)));
-                           # outermost first, each block's hold reading the block inside it
+                           # outermost first, each controller's hold on the one inside it
                            input_wires = ("h_ref" => "h_ctl/r", "h_meas" => "h_ctl/y",
                                           "θ" => ("h_ctl/v", "θ_ctl/y"), "q" => ("θ_ctl/v", "q_ctl/y"),
                                           "δe_prev" => "q_ctl/v",
@@ -297,16 +298,17 @@ end
 The initial condition of `closed_loop` at the trim triple `solution`: the
 plant's pitch angle beside its default level state, the root inputs at the trim
 references with the cascade in command, and the stores of the three
-`DiscretePID` blocks whose integral terms are not zero at trim. Every loop has
-zero error at trim and `Kd = 0`, so a block's output is its integral term
-alone, and the term must hold the trim value of what the block commands: the
-altitude loop's the trim pitch angle, the pitch-rate loop's the trim elevator
-and the airspeed loop's the trim throttle. The attitude loop commands a pitch
-rate, zero at trim, and the tracker carries the trim as parameters, so neither
-needs a seed. `yf`, the derivative filter's state, is set to its fixed point,
-the measurement, which with `Kd = 0` changes nothing. A store overlay merges
-onto `s_init`, so `set(s = (q = solution.θ,))` alone would do; the full
-stores are written for clarity. `longitudinal_aircraft.md`, section 4.
+`DiscretePID` controllers whose integral terms are not zero at trim. Every loop
+has zero error at trim and `Kd = 0`, so a controller's output is its integral
+term alone, and the term must hold the trim value of what the controller
+commands: the altitude loop's the trim pitch angle, the pitch-rate loop's the
+trim elevator and the airspeed loop's the trim throttle. The attitude loop
+commands a pitch rate, zero at trim, and the tracker carries the trim as
+parameters, so neither needs a seed. `yf`, the derivative filter's state, is set
+to its fixed point, the measurement, which with `Kd = 0` changes nothing. A
+store overlay merges onto `s_init`, so `set(s = (q = solution.θ,))` alone would
+do; the full stores are written for clarity. `longitudinal_aircraft.md`,
+section 4.
 """
 trimmed(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0, mode = true)),
                             at("plant", condition(Longitudinal(); θ = solution.θ)),

@@ -1,6 +1,6 @@
-# The precompile workload (§9.7, D-289). A closed loop of library blocks runs
-# through the generic machinery a cold process pays, so the package image
-# carries it. The workload sees the library's blocks alone, so a user's
+# The precompile workload (§9.7, D-289). A closed loop of library components
+# runs through the generic machinery a cold process pays, so the package image
+# carries it. The workload sees the library's components alone, so a user's
 # component types still pay their own stage methods, the chunks they fill and
 # their `Dual` activation. `test/test_precompile.jl` runs `workload` in a fresh
 # process and pins what it compiles.
@@ -15,13 +15,13 @@ The workload's model: a `Step` reference into a `DiscretePID` at 50 Hz, a
 a second-order `TransferFunction` plant whose output is the root output `y`,
 and a `LimitedIntegrator` on that output, for the event machinery.
 """
-workload_loop() = Blocks.Group((
-        reference = Blocks.Step(t_step = 0.5, after = 1.0),
-        controller = Blocks.DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0),
-        actuator = Blocks.FirstOrderLag(τ = 0.05),
-        force = Blocks.SumJunction{Float64, 2}(),
-        plant = Blocks.TransferFunction(num = (1.0,), den = (1.0, 0.6, 1.0)),
-        integral = Blocks.LimitedIntegrator(lower = -0.5, upper = 0.5));
+workload_loop() = Library.Group((
+        reference = Library.Step(t_step = 0.5, after = 1.0),
+        controller = Library.DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0),
+        actuator = Library.FirstOrderLag(τ = 0.05),
+        force = Library.SumJunction{Float64, 2}(),
+        plant = Library.TransferFunction(num = (1.0,), den = (1.0, 0.6, 1.0)),
+        integral = Library.LimitedIntegrator(lower = -0.5, upper = 0.5));
     local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y",
                    "controller/u" => "actuator/u", "actuator/y" => "force/in1",
                    "force/y" => "plant/u", "plant/y" => "integral/u"),

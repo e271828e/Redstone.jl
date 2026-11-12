@@ -18,7 +18,7 @@ is `code_map.md`; what the code still owes the spec is `pending.md`.
   no `test_sim.jl`; `log`, `lifecycle`, `failures`, `localization` and the
   loop halves of `discrete` and `events` assert emergent properties of the
   layers cooperating, which no source file owns. `test_leaves.jl` and
-  `test_blocks.jl` are the two files kept for a source file rather than a
+  `test_library.jl` are the two files kept for a source file rather than a
   property: the leaf walk has no single consumer to own it, and the library
   is user material inside the package, with no property of its own to own
   it.
@@ -154,7 +154,7 @@ Traps the code does not warn about, each hit more than once while building:
 - a fail-fast throw is `DiagnosticError{K}`, read with `diagnostic`, never
   `diagnostics`;
 - **a discrete member traces structurally (§13.8).** A cycle through a
-  discrete stage-2 block is `AlgebraicCycle` `:real` with an empty `dead`,
+  discrete stage-2 component is `AlgebraicCycle` `:real` with an empty `dead`,
   never `:artificial`. A store counter reads `N + 1` after `N` steps, since
   the `t₀` boundary runs the first tick;
 - a keyword default that depends on another keyword, such as `μ = zero(σ)`,
@@ -271,7 +271,7 @@ rulings behind them are `design/reports/20260923_naming_inventory/README.md`.
   or imported, or with a Base function the package calls anywhere in `src/`
   (`pairs`, `count`, `max`, `values`, `only`, `bind`; a Base name the package
   never calls, such as `run` or `schedule`, is free). A package function is
-  free likewise in a module that never imports it: `Redstone.Blocks.held`
+  free likewise in a module that never imports it: `Redstone.Library.held`
   binds no name in `Redstone`, as a user's component file would not. Where
   the natural noun is taken, the local takes a qualifier or a role name. Two
   exceptions, `path` and `build`: a spec noun whose function produces the
@@ -321,7 +321,7 @@ override:
 | `checkpoint` | the row above, plus `discrete events linearize` |
 | `readers`, `conditions`, `trim`, `linearize` | `readers conditions trim linearize` |
 | a new `AbstractComponent` fixture in any test file | add `build`, since `test_build.jl`'s Dual-activation sweep pins the skipped count |
-| `blocks` | `blocks build` |
+| `library` | `library build` |
 | `show` | `show` |
 | `descriptor`, or `src/descriptor.json` | `descriptor` |
 | `precompile` | `precompile` |

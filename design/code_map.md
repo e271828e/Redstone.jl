@@ -19,7 +19,7 @@ The package module: the dependencies and the include order the other files load
 in: leaves, diagnostics, declare, assembly, store, executor, build, tracer,
 readers, deployment, dataplane, checkpoint, trace, roster, bindings, control,
 devices, conditions, model, stepper, frame, trim, linearize, sim, show,
-descriptor, blocks, precompile.
+descriptor, library, precompile.
 The model layer sits between the executor layer and the runtime, by the rule
 in the `src/model.jl` entry.
 
@@ -111,96 +111,6 @@ D-315, D-437, D-438.
   at the root (D-406).
 
 Spec: §11.2, §11.4, §11.6, §14.4.
-
-### `src/blocks.jl`
-
-The standard component library, the submodule `Redstone.Blocks`:
-
-- `Junction`, with the aliases `SumJunction`, `Or`, `And` and, at the fold
-  `pack`, `Pack` (D-311, D-313).
-- `Unpack`, its output names from the generated `unpack_names`, and `Switch`
-  (D-313).
-- `Fn`, the one-input `Junction` with its input bare, its `f` a field typed
-  by a parameter; a `Pinned` output is the struct `Freeze`'s spelling
-  (D-033, D-266, D-312, D-313).
-- `Fields`, its outputs the field names and types of `V`, and `Select`, its
-  dispatch the generated chain `selected_input` over `instances(K)` passed
-  as a `Val` (D-276, D-308, D-313).
-- `Source`, pinned, its `f` fed the time with one `Dual` layer dropped (D-312,
-  D-313).
-- `Constant`, `UnitDelay` and `Freeze` (D-312).
-- `StopRequest` (D-316).
-- The keyword-shape helpers `as_static`, `shape_zero` and `broadcast_keywords`,
-  which every block whose keywords share `V` reads them through,
-  `GaussianWhiteNoise` and the PID's `shape_type` included (§13.7). `as_static`
-  makes the `SArray` of its size of an array keyword of any kind, and warns once
-  past `STATIC_WARN_LENGTH` elements.
-- `Delay{V, K, Taps}`, its taps form `Taps = true` naming the output side
-  `(y, taps)` and reading the ring backwards from the cursor,
-  `DiscreteIntegrator{V, R}`, `DiscreteLimitedIntegrator{V, R}` with the
-  helper `saturation_code`, `RateLimiter` and `Backlash` (D-313, D-437). The
-  reset form `R = true` of both integrators is the level reset in `s_update`
-  (§5.3).
-- `GaussianWhiteNoise`, with the helpers `splitmix` and `gaussian` (D-231,
-  D-313).
-- `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
-  `R = true` adding the `Bool` input `reset` and one non-localized event
-  (D-141), over the helpers `reset_ports` and `signal`, shared with the
-  discrete pair, and `reset_guard`; `LimitedDoubleIntegrator{V, L}`, the
-  stop on the double integral over the named state `(q, v)`, its four events
-  under `limit_events` as `LimitedIntegrator`'s; `FirstOrderLag`, `Step`,
-  `Sequence`, `Relay` and `Comparator` (D-313).
-  `Step`, `Sequence`, `LimitedIntegrator`, `LimitedDoubleIntegrator` and
-  `Comparator` each ship two detection policies, localized and
-  non-localized, selected by the type parameter `L` (D-179).
-  `LimitedIntegrator`, `LimitedDoubleIntegrator`, `Relay` and `Comparator`
-  are over `Float64` and static vectors, with `Int8` modes and, over a vector,
-  events generated per component; the fall of `Relay` and `Comparator` is
-  strict.
-  `LimitedIntegrator` and `LimitedDoubleIntegrator` publish their mode as the
-  output `saturation`, typed by the helper `saturation_type`, shared with
-  `DiscreteLimitedIntegrator` and the PID.
-  Both check their limits through `check_limits`, as
-  `DiscreteLimitedIntegrator` does, and write their hit guards over
-  `first_nonzero`.
-- `ControllerBlock{Hold, Track}`, carrying `axis_ports`, `gated_error` and
-  `correction_reference`, over `PIDBlock{V, Hold, Track, Fixed}` over `Float64`
-  and static vectors, carrying `signal_ports`, `u_types`, `y_types` and
-  `parameters`, over `PID` and `DiscretePID`, with the marker `AsPort`, the
-  roster `PID_PARAMETERS` and the helpers `shape_type`, `fixed_parameters`,
-  `check_tracking`, `check_output_limits`, `check_time_constant`, shared with
-  the trackers and `FirstOrderLag`, and `channel_type` (D-313, D-383, D-384,
-  D-385).
-- `LQRTrackerBlock{NX, NU, NZ, Hold, Track, Fixed}`, a `ControllerBlock`,
-  carrying `signal_ports`, `u_types`, `y_types` and `parameters`, over
-  `LQRTracker` and `DiscreteLQRTracker`, with the roster `LQR_PARAMETERS`, the
-  helpers `parameter_types`, `tracker_sizes` and `check_shapes`, and
-  `fixed_parameters`, `check_tracking` and `check_output_limits` shared with the PID (D-383, D-384,
-  D-385).
-- `StateSpace` with the helper `static_system`, over scalar or `SVector` ports
-  by its matrix shapes, its feedthrough class the type parameter `FT`, and
-  `TransferFunction`, realized by `realize` into a held `StateSpace`
-  (D-313). The helpers `coefficients_from_roots` and `transfer_coefficients`
-  resolve the zero-pole spelling for the three transfer functions, the
-  discretized one forwarding its keywords to the continuous constructor.
-- `DiscreteLinearBlock{FT}` with the accessors `held`, `realization(c, Δt)` and
-  `initial_state`, the held system's `s0` or `x0`,
-  over `DiscreteStateSpace`, `DiscreteTransferFunction`, `DiscretizedStateSpace`
-  and `DiscretizedTransferFunction` (D-313).
-- The anonymous assembly `Group`, with `_entries` (D-184).
-- Every block with one state field or one mode declares it bare, and every
-  stateless block declares `nothing` (§8.2, D-438). Every block with one input
-  or one output declares that contract bare, its face `u` or `y`, the
-  `Junction`'s output, both sides of `Fn` and the inputs of `Fields`, `Unpack`, `LimitedIntegrator`,
-  `LimitedDoubleIntegrator` and `DiscreteLimitedIntegrator` included; a side
-  with two or more ports stays named, as do `Fields`'s outputs at any count,
-  since the fields name them (§13.5, §13.7, D-437).
-
-It reaches the parent through its import list alone, as a user's component
-file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
-includes it last.
-
-Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
 
 ### `src/build.jl`
 
@@ -770,6 +680,96 @@ D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450, D-452.
 Spec: §4.1, §4.3, §4.4, §6.1, §7.1, §7.2, §8.2, §9.5, §13.4, §13.5, D-166,
 D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316, D-438.
 
+### `src/library.jl`
+
+The standard component library, the submodule `Redstone.Library`:
+
+- `Junction`, with the aliases `SumJunction`, `Or`, `And` and, at the fold
+  `pack`, `Pack` (D-311, D-313).
+- `Unpack`, its output names from the generated `unpack_names`, and `Switch`
+  (D-313).
+- `Fn`, the one-input `Junction` with its input bare, its `f` a field typed
+  by a parameter; a `Pinned` output is the struct `Freeze`'s spelling
+  (D-033, D-266, D-312, D-313).
+- `Fields`, its outputs the field names and types of `V`, and `Select`, its
+  dispatch the generated chain `selected_input` over `instances(K)` passed
+  as a `Val` (D-276, D-308, D-313).
+- `Source`, pinned, its `f` fed the time with one `Dual` layer dropped (D-312,
+  D-313).
+- `Constant`, `UnitDelay` and `Freeze` (D-312).
+- `StopRequest` (D-316).
+- The keyword-shape helpers `as_static`, `shape_zero` and `broadcast_keywords`,
+  which every component whose keywords share `V` reads them through,
+  `GaussianWhiteNoise` and the PID's `shape_type` included (§13.7). `as_static`
+  makes the `SArray` of its size of an array keyword of any kind, and warns once
+  past `STATIC_WARN_LENGTH` elements.
+- `Delay{V, K, Taps}`, its taps form `Taps = true` naming the output side
+  `(y, taps)` and reading the ring backwards from the cursor,
+  `DiscreteIntegrator{V, R}`, `DiscreteLimitedIntegrator{V, R}` with the
+  helper `saturation_code`, `RateLimiter` and `Backlash` (D-313, D-437). The
+  reset form `R = true` of both integrators is the level reset in `s_update`
+  (§5.3).
+- `GaussianWhiteNoise`, with the helpers `splitmix` and `gaussian` (D-231,
+  D-313).
+- `Integrator{V, R}` and `LimitedIntegrator{V, L, R}`, their reset form
+  `R = true` adding the `Bool` input `reset` and one non-localized event
+  (D-141), over the helpers `reset_ports` and `signal`, shared with the
+  discrete pair, and `reset_guard`; `LimitedDoubleIntegrator{V, L}`, the
+  stop on the double integral over the named state `(q, v)`, its four events
+  under `limit_events` as `LimitedIntegrator`'s; `FirstOrderLag`, `Step`,
+  `Sequence`, `Relay` and `Comparator` (D-313).
+  `Step`, `Sequence`, `LimitedIntegrator`, `LimitedDoubleIntegrator` and
+  `Comparator` each ship two detection policies, localized and
+  non-localized, selected by the type parameter `L` (D-179).
+  `LimitedIntegrator`, `LimitedDoubleIntegrator`, `Relay` and `Comparator`
+  are over `Float64` and static vectors, with `Int8` modes and, over a vector,
+  events generated per component; the fall of `Relay` and `Comparator` is
+  strict.
+  `LimitedIntegrator` and `LimitedDoubleIntegrator` publish their mode as the
+  output `saturation`, typed by the helper `saturation_type`, shared with
+  `DiscreteLimitedIntegrator` and the PID.
+  Both check their limits through `check_limits`, as
+  `DiscreteLimitedIntegrator` does, and write their hit guards over
+  `first_nonzero`.
+- `AbstractAntiWindupController{Hold, Track}`, carrying `axis_ports`,
+  `gated_error` and `correction_reference`, over
+  `AbstractPID{V, Hold, Track, Fixed}` over `Float64` and static vectors,
+  carrying `signal_ports`, `u_types`, `y_types` and `parameters`, over `PID` and
+  `DiscretePID`, with the marker `AsPort`, the roster `PID_PARAMETERS` and the
+  helpers `shape_type`, `fixed_parameters`, `check_tracking`,
+  `check_output_limits`, `check_time_constant`, shared with the trackers and
+  `FirstOrderLag`, and `channel_type` (D-313, D-383, D-384, D-385).
+- `AbstractLQRTracker{NX, NU, NZ, Hold, Track, Fixed}`, an
+  `AbstractAntiWindupController`, carrying `signal_ports`, `u_types`, `y_types`
+  and `parameters`, over `LQRTracker` and `DiscreteLQRTracker`, with the roster
+  `LQR_PARAMETERS`, the helpers `parameter_types`, `tracker_sizes` and
+  `check_shapes`, and `fixed_parameters`, `check_tracking` and
+  `check_output_limits` shared with the PID (D-383, D-384, D-385).
+- `StateSpace` with the helper `static_system`, over scalar or `SVector` ports
+  by its matrix shapes, its feedthrough class the type parameter `FT`, and
+  `TransferFunction`, realized by `realize` into a held `StateSpace`
+  (D-313). The helpers `coefficients_from_roots` and `transfer_coefficients`
+  resolve the zero-pole spelling for the three transfer functions, the
+  discretized one forwarding its keywords to the continuous constructor.
+- `AbstractDiscreteLinearSystem{FT}` with the accessors `held`,
+  `realization(c, Δt)` and `initial_state`, the held system's `s0` or `x0`,
+  over `DiscreteStateSpace`, `DiscreteTransferFunction`, `DiscretizedStateSpace`
+  and `DiscretizedTransferFunction` (D-313).
+- The anonymous assembly `Group`, with `_entries` (D-184).
+- Every component with one state field or one mode declares it bare, and every
+  stateless component declares `nothing` (§8.2, D-438). Every component with one
+  input or one output declares that contract bare, its face `u` or `y`, the
+  `Junction`'s output, both sides of `Fn` and the inputs of `Fields`, `Unpack`, `LimitedIntegrator`,
+  `LimitedDoubleIntegrator` and `DiscreteLimitedIntegrator` included; a side
+  with two or more ports stays named, as do `Fields`'s outputs at any count,
+  since the fields name them (§13.5, §13.7, D-437).
+
+It reaches the parent through its import list alone, as a user's component
+file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
+includes it last.
+
+Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
+
 ### `src/linearize.jl`
 
 - `Taps` and `taps`, three labeled selector lists with closed membership.
@@ -931,7 +931,7 @@ D-449, D-450, D-452.
 ### `src/precompile.jl`
 
 The precompile workload (§9.7, D-289): `workload_loop`, a closed loop of
-library blocks, and `workload`, its run through the loop's path, `trim!` and
+library components, and `workload`, its run through the loop's path, `trim!` and
 `linearize`. The `@compile_workload` call inside `@setup_workload` runs
 `workload` while the package precompiles, and `test_precompile.jl`'s child
 runs it in a fresh process. Nothing in the package depends on it, so
@@ -1304,7 +1304,7 @@ pinned on purpose, which it must refuse.
 
 The suite's `import Redstone:` list, shared with `repl.jl` — the one place a
 framework name the tests call or extend is admitted. A second line,
-`import Redstone.Blocks:`, admits the library's blocks.
+`import Redstone.Library:`, admits the library's components.
 
 ### `test/test_lattices.jl`
 

@@ -24,8 +24,8 @@ and control, but the formalism is domain-neutral.
 - Initialization, trim and linearization, with exact
   automatic-differentiation Jacobians.
 - Real-time pacing against the wall clock, with pause and resume.
-- A standard block library: integrators and limited integrators, lags, linear
-  systems in `s` and `z`, relays, delays, noise, and PID and LQR tracking
+- A standard component library: integrators and limited integrators, lags,
+  linear systems in `s` and `z`, relays, delays, noise, and PID and LQR tracking
   controllers with anti-windup, hold and bumpless engage.
 - Structured diagnostics from a closed set of kinds, reported where the
   mistake was made.
@@ -54,7 +54,7 @@ using Redstone
 import Redstone: AbstractComponent, x_init, s_init, u_types, y_types,
     y_state, y_direct, x_deriv, s_update,
     Absolute, Hz, Simulation, init!, run!, set, port, state, build
-import Redstone.Blocks: Group
+import Redstone.Library: Group
 
 struct Plant <: AbstractComponent
     ω::Float64
@@ -119,6 +119,6 @@ Redstone has no user manual yet. Its design is written down in full:
 - `design/log.md` records every design decision and the
   alternatives it rejected.
 - `design/companions/` holds worked explainers, among them
-  `library_inventory.md`, the block library and its admission rule.
+  `library_inventory.md`, the standard library and its admission rule.
 - `design/pending.md` is the work order toward the first release.
 

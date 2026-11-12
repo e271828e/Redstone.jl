@@ -1006,8 +1006,9 @@ requested(value, reason) = Group((; src = Constant(value), stop = StopRequest(re
 
 function build_stop_roster()
     @testset "the layout rosters every `StopFlag` port, aligned with its buffer, with its reason (§9.7, §13.5, D-316)" begin
-        # Two blocks in two subtrees and a direct publisher: build order, each
-        # entry at its own offset, the blocks' reasons and the default `""`.
+        # Two `StopRequest`s in two subtrees and a direct publisher:
+        # build order, each entry at its own offset, their reasons and
+        # the default `""`.
         model = Group((; a = requested(true, "a fell"), b = requested(false, "b done"),
                          d = DirectRequester()))
         layout = activation(build(model), Float64).layout

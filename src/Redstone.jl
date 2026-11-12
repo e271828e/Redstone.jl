@@ -31,7 +31,7 @@ include("linearize.jl")
 include("sim.jl")
 include("show.jl")
 include("descriptor.jl")
-include("blocks.jl")
+include("library.jl")
 include("precompile.jl")
 
 end # module Redstone

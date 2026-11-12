@@ -1,15 +1,15 @@
 # --- the standard component library (§13.7, §6.2) -------------------------------
-# The blocks of `Redstone.Blocks`, each built in a model and read off the
+# The components of `Redstone.Library`, each built in a model and read off the
 # snapshot: the junction's contract and its folds, the pack, the unpack and the
-# switch, the function block, the select and the fields block, the source, the
+# switch, `Fn`, the select and `Fields`, the source, the
 # delay, the discrete integrators and the rate limiter, the noise, the time
 # source, the stop-gradient, the stop request, the
 # integrator, the lag, the state space, the transfer function, their discrete
 # twins, the step, the sequence, the limited integrator, the relay, the
-# comparator, the PID and its discrete twin, the PID assembled from blocks, the
-# LQR tracker and its discrete twin, and the loops built from them alone. The
-# models are built at top level, like the fixtures they reuse: `RealEntry`,
-# `PinnedEntry` and `requested` are test_build.jl's.
+# comparator, the PID and its discrete twin, the PID assembled from library
+# components, the LQR tracker and its discrete twin, and the loops built from
+# them alone. The models are built at top level, like the fixtures they reuse:
+# `RealEntry`, `PinnedEntry` and `requested` are test_build.jl's.
 
 # One gate over three `Constant` sources, at the given input values.
 gate_model(gate, (a, b, c)) =
@@ -17,7 +17,7 @@ gate_model(gate, (a, b, c)) =
           local_wires = ("a/y" => "g/in1", "b/y" => "g/in2", "c/y" => "g/in3"))
 
 # A sum over a walking source, a pinned source and a delayed copy of the first.
-blocks_sum_model() =
+sum_model() =
     Group((; r = Ramp(1.0), k = Constant(2.0), d = UnitDelay(0.5), s = SumJunction{Float64,3}());
           local_wires = ("r/out" => "s/in1", "k/y" => "s/in2", "d/y" => "s/in3",
                          "r/out" => "d/u"))
@@ -35,7 +35,7 @@ window_model(K) =
              m = Fn{SVector{K, Float64}, Float64}(window -> sum(window) / K));
           local_wires = ("c/n" => "f/u", "f/y" => "d/u", "d/taps" => "m/u"))
 
-# A block fed by a source, under the given rates.
+# A component fed by a source, under the given rates.
 fed_by(src, c; sample_times = (;)) =
     Group((; k = src, c = c); local_wires = ("k/y" => "c/u",), sample_times = sample_times)
 
@@ -201,32 +201,32 @@ integrator_model(x0, value) =
 
 # An integrator from 0.5 fed by `input`, its `reset` a comparator on three steps
 # summed: high from 0.25 to 0.55 and from 0.85 on.
-pulse_reset_model(localized; block = Integrator(x0 = 0.5, reset = true), input = 1.0) =
+pulse_reset_model(localized; integrator = Integrator(x0 = 0.5, reset = true), input = 1.0) =
     Group((; rise = Step(t_step = 0.25, localized = localized),
              fall = Step(t_step = 0.55, after = -1.0, localized = localized),
              again = Step(t_step = 0.85, localized = localized), pulse = SumJunction{Float64, 3}(),
-             c = Comparator(threshold = 0.5), k = Constant(input), i = block);
+             c = Comparator(threshold = 0.5), k = Constant(input), i = integrator);
           local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "again/y" => "pulse/in3",
                          "pulse/y" => "c/u", "c/y" => "i/reset", "k/y" => "i/u"))
 
-# A discrete block fed by `input`, its `reset` a comparator on two non-localized
-# steps summed: high from `5h` to `7h`.
-discrete_reset_model(block, h; input = 1.0) =
+# A discrete integrator fed by `input`, its `reset` a comparator on two
+# non-localized steps summed: high from `5h` to `7h`.
+discrete_reset_model(integrator, h; input = 1.0) =
     Group((; rise = Step(t_step = 5h, localized = false), fall = Step(t_step = 7h, after = -1.0, localized = false),
              pulse = SumJunction{Float64, 2}(), c = Comparator(threshold = 0.5, localized = false),
-             k = Constant(input), d = block);
+             k = Constant(input), d = integrator);
           local_wires = ("rise/y" => "pulse/in1", "fall/y" => "pulse/in2", "pulse/y" => "c/u",
                          "c/y" => "d/reset", "k/y" => "d/u"))
 
-# A reset-form block in unit feedback from `1`, its `reset` held low.
-reset_feedback_loop(block) =
-    Group((; r = Constant(1.0), f = Constant(false), e = Junction{Float64, Float64, 2}(-), p = block);
-          local_wires = ("r/y" => "e/in1", (block isa DiscreteLimitedIntegrator || block isa LimitedIntegrator ? "p/out" : "p/y") => "e/in2",
+# A reset-form integrator in unit feedback from `1`, its `reset` held low.
+reset_feedback_loop(integrator) =
+    Group((; r = Constant(1.0), f = Constant(false), e = Junction{Float64, Float64, 2}(-), p = integrator);
+          local_wires = ("r/y" => "e/in1", (integrator isa DiscreteLimitedIntegrator || integrator isa LimitedIntegrator ? "p/out" : "p/y") => "e/in2",
                          "e/y" => "p/u", "f/y" => "p/reset"))
 
-# A block under a held `reset` and a constant input.
-held_reset_model(block, value) =
-    Group((; k = Constant(value), r = Constant(true), i = block); local_wires = ("k/y" => "i/u", "r/y" => "i/reset"))
+# An integrator under a held `reset` and a constant input.
+held_reset_model(integrator, value) =
+    Group((; k = Constant(value), r = Constant(true), i = integrator); local_wires = ("k/y" => "i/u", "r/y" => "i/reset"))
 
 # A reset integrator under the root inputs `in` and `reset`.
 reset_root_model() = Group((; c = Integrator(reset = true)); input_wires = ("in" => "c/u", "reset" => "c/reset"))
@@ -243,7 +243,7 @@ vector_lag_model() =
 
 # The two-state state space with two inputs and two outputs, strictly proper
 # unless given a direct term.
-two_state_block(; kwargs...) = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2; 0 1]; kwargs...)
+two_state_system(; kwargs...) = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2; 0 1]; kwargs...)
 
 # Its discrete counterpart, a state space in `z`.
 two_state_discrete(; kwargs...) = DiscreteStateSpace(A = [0.5 0.1; 0 0.8], B = [1 0.5; 0 1], C = [1 2; 0 1]; kwargs...)
@@ -254,12 +254,12 @@ two_state_direct() = [1 0.5; 0.25 2]
 # A scalar state space's arguments, with a direct term.
 scalar_direct() = (A = [-0.5;;], B = [1.0;;], C = [1.0;;], D = [1.0;;])
 
-# A linear block under the root faces `in` and `out`.
-linear_root_model(block) =
-    Group((; c = block); input_wires = ("in" => "c/u",), output_wires = ("c/y" => "out",))
+# A linear system under the root faces `in` and `out`.
+linear_root_model(system) =
+    Group((; c = system); input_wires = ("in" => "c/u",), output_wires = ("c/y" => "out",))
 
 # A unit-feedback loop through a difference junction around a scalar linear
-# block, or around a scalar state space whose direct term is `D`.
+# system, or around a scalar state space whose direct term is `D`.
 feedback_loop(plant) =
     Group((; r = Constant(1.0), e = Junction{Float64, Float64, 2}(-), p = plant);
           local_wires = ("r/y" => "e/in1", "p/y" => "e/in2", "e/y" => "p/u"))
@@ -271,7 +271,7 @@ lag_form() = TransferFunction(num = (1,), den = (0.5, 1))
 lead_lag() = TransferFunction(num = (1, 2), den = (1, 5))
 second_order() = TransferFunction(num = (4,), den = (1, 1.2, 4))
 
-# The lag form beside the lag block at the same time constant, both fed by one
+# The lag form beside `FirstOrderLag` at the same time constant, both fed by one
 # constant.
 lag_pair_model() =
     Group((; k = Constant(1.0), tf = lag_form(), l = FirstOrderLag(τ = 0.5));
@@ -287,8 +287,8 @@ lead_lag_loop() =
 # The hold of the scalar lag `1/(s + 1)` from `x0`.
 scalar_hold(; x0 = 0.0) = DiscretizedStateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], x0 = x0)
 
-# The hold of the transfer function `num / den` beside a continuous block, both
-# fed by one constant, under the given rates.
+# The hold of the transfer function `num / den` beside a continuous component,
+# both fed by one constant, under the given rates.
 hold_pair_model(num, den, continuous; sample_times = (;)) =
     Group((; k = Constant(1.0), d = DiscretizedTransferFunction(num = num, den = den), c = continuous);
           local_wires = ("k/y" => "d/u", "k/y" => "c/u"), sample_times = sample_times)
@@ -299,8 +299,8 @@ step_model(source; x0 = 0.0) = Group((; s = source, i = Integrator(x0 = x0)); lo
 # The step's row of the events product.
 step_events(model) = only(row for row in build(model).events.components if row.path == "s")
 
-# A block's one-state linearization through the root input `in`.
-block_linearization(comp) =
+# A component's one-state linearization through the root input `in`.
+component_linearization(comp) =
     (sim = Simulation(fed(comp); Δt_frame = 1//100);
      init!(sim, set(u = (in = 0.0,)));
      linearize(sim, taps(x = (q = get_state("c"),), u = (in = get_input(:in),))))
@@ -361,7 +361,7 @@ lower_double_limited_model(localized) =
           local_wires = ("s/y" => "li/u",))
 
 # A limited double integrator fed by the ramp `1.05 - t`, which crosses zero
-# at 1.05 with slope `-1`, after the block reaches 0.15 near 0.6.
+# at 1.05 with slope `-1`, after the integrator reaches 0.15 near 0.6.
 ramp_double_limited_model(localized) =
     Group((; k = Constant(-1.0), ramp = Integrator(x0 = 1.05),
              li = LimitedDoubleIntegrator(lower = -2.0, upper = 0.15, localized = localized));
@@ -396,8 +396,9 @@ vector_lower_double_limited_model(localized) =
           local_wires = ("s/y" => "li/u",))
 
 # Saturated by 0.1 under `u = (t - 0.45)(t - 0.52)`, with the dip across the
-# boundary at 0.5, so a non-localized leave frees the block on the limit there and
-# `u` turns outward just after. `side` is `1` for the upper limit, `-1` the lower.
+# boundary at 0.5, so a non-localized leave frees the integrator on the limit
+# there and `u` turns outward just after. `side` is `1` for the upper limit,
+# `-1` the lower.
 dip_across_boundary_model(side, localized; reset = false) =
     Group((; k = Constant(side * 2.0), r1 = Integrator(x0 = -side * 0.97), r2 = Integrator(x0 = side * 0.234),
              flag = Constant(false),
@@ -578,7 +579,7 @@ function pid_linearization(model, inputs)
 end
 
 # A tracking PID whose `v` is a memoryless clamp of its own `u`, the clamp also
-# driving an integrator plant; the continuous block unless given.
+# driving an integrator plant; the continuous PID unless given.
 pid_clamp_loop(controller = PID(Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0, tracking = true)) =
     Group((; reference = Step(t_step = 0.5, after = 5.0), controller = controller,
              sat = Fn{Float64}(v -> clamp(v, -1.0, 1.0)), plant = Integrator());
@@ -596,8 +597,8 @@ scheduled_pid_cycle(name = :Kp) =
                          "controller/u" => "gain/u", "gain/y" => "controller/$name",
                          "controller/u" => "plant/u"))
 
-# The PID's first variant as library blocks, the inspector's example beside
-# the block: the integrator is what splits the stages (§5.4).
+# The PID's first variant as library components, the inspector's example beside
+# the primitive: the integrator is what splits the stages (§5.4).
 pid_assembly(; Kp, Ki, Kd, τd, Tt, u_min, u_max) = Group((
         err = Junction{Float64, Float64, 2}((r, y) -> r - y),
         lag = FirstOrderLag(; τ = τd),
@@ -625,14 +626,14 @@ pid_single_loop(controller; plant = Integrator(), level = 5.0) = Group((
 
 # The single loop over two channels, one per gain set: channel 1 is the loop
 # above at `pid_controller`'s gains, channel 2 the second set's on a reference of 3.
-vector_pid_loop(block_type = PID; plant = Integrator(x0 = SVector(0.0, 0.0))) =
-    pid_single_loop(block_type(; map(SVector, pid_gain_sets()...)...); plant = plant, level = SVector(5.0, 3.0))
+vector_pid_loop(component_type = PID; plant = Integrator(x0 = SVector(0.0, 0.0))) =
+    pid_single_loop(component_type(; map(SVector, pid_gain_sets()...)...); plant = plant, level = SVector(5.0, 3.0))
 
 # `vector_pid_loop` with hold and tracking: `v` is the plant's output, both codes
 # are zero, and channel 1 is engaged while channel 2 is not.
-vector_standby_loop(block_type = PID; plant = Integrator(x0 = SVector(0.0, 0.0))) = Group((
+vector_standby_loop(component_type = PID; plant = Integrator(x0 = SVector(0.0, 0.0))) = Group((
         reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(5.0, 3.0)),
-        controller = block_type(; map(SVector, pid_gain_sets()...)..., hold = true, tracking = true),
+        controller = component_type(; map(SVector, pid_gain_sets()...)..., hold = true, tracking = true),
         free = Constant(SVector{2, Int8}(0, 0)), engaged = Constant(SVector(true, false)), plant = plant);
       local_wires = ("reference/y" => "controller/r", "plant/y" => "controller/y", "plant/y" => "controller/v",
                      "free/y" => "controller/saturation", "engaged/y" => "controller/engaged",
@@ -663,7 +664,7 @@ function pid_servo_loop(controller)
 end
 
 # A cascade: the controller sets a velocity servo's reference and reads the
-# position that integrates the velocity; `hold` wires the inner block's
+# position that integrates the velocity; `hold` wires the inner integrator's
 # saturation into the controller and a constant `true` into its `engaged`,
 # `tracking` the velocity into `v`.
 function pid_cascade(controller; hold = false, tracking = false)
@@ -674,10 +675,10 @@ function pid_cascade(controller; hold = false, tracking = false)
         "actuator/y" => "velocity/u", "velocity/y" => "position/u"]
     hold && push!(wires, "inner/saturation" => "controller/saturation", "engaged/y" => "controller/engaged")
     tracking && push!(wires, "velocity/y" => "controller/v")
-    blocks = (reference = Step(t_step = 0.5, after = 5.0), controller = controller,
+    children = (reference = Step(t_step = 0.5, after = 5.0), controller = controller,
               error = Junction{Float64, Float64, 2}(-), inner = LimitedIntegrator(lower = -1.2, upper = 1.2),
               actuator = FirstOrderLag(τ = 0.1), velocity = FirstOrderLag(τ = 1.0), position = Integrator())
-    Group(merge(blocks, hold ? (engaged = Constant(true),) : (;));
+    Group(merge(children, hold ? (engaged = Constant(true),) : (;));
           local_wires = Tuple(wires), output_wires = ("position/y" => "y",))
 end
 
@@ -695,16 +696,16 @@ function standby_siblings(controller_a, controller_b, plant; delay)
     delay && push!(wires, "sel/y" => "delay/u")
     haskey(u_types(controller_a), :v) && append!(wires, [command => "a/v", command => "b/v"])
     holding && append!(wires, ["negate/y" => "b/engaged", "free/y" => "a/saturation", "free/y" => "b/saturation"])
-    blocks = (ref_a = Step(t_step = 0.5, after = 5.0), ref_b = Constant(2.0), a = controller_a, b = controller_b,
+    children = (ref_a = Step(t_step = 0.5, after = 5.0), ref_b = Constant(2.0), a = controller_a, b = controller_b,
               sel = Switch{Float64}(), plant = plant)
-    Group(merge(blocks, holding ? (negate = Fn{Bool}(!), free = Constant(Int8(0))) : (;),
+    Group(merge(children, holding ? (negate = Fn{Bool}(!), free = Constant(Int8(0))) : (;),
                 delay ? (delay = UnitDelay(0.0),) : (;));
           input_wires = ("mode" => (holding ? ("sel/select", "a/engaged", "negate/u") : ("sel/select",)),),
           local_wires = Tuple(wires))
 end
 
-# A discrete cascade: the outer block's `u` is the inner block's reference, the
-# inner block drives a discrete integrator plant that both measure, and with
+# A discrete cascade: the outer PID's `u` is the inner PID's reference, the
+# inner PID drives a discrete integrator plant that both measure, and with
 # `hold` the inner code reaches the outer hold and a constant `true` its
 # `engaged`.
 function discrete_pid_cascade(; hold)
@@ -712,9 +713,9 @@ function discrete_pid_cascade(; hold)
         "reference/y" => "outer/r", "outer/u" => "inner/r", "inner/u" => "plant/u",
         "plant/y" => "outer/y", "plant/y" => "inner/y"]
     hold && push!(wires, "inner/saturated" => "outer/saturation", "engaged/y" => "outer/engaged")
-    blocks = (reference = Step(t_step = 0.5, after = 5.0), outer = DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold),
+    children = (reference = Step(t_step = 0.5, after = 5.0), outer = DiscretePID(Kp = 0.5, Ki = 0.5, Tt = 1.0, hold = hold),
               inner = DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0), plant = DiscreteIntegrator())
-    Group(merge(blocks, hold ? (engaged = Constant(true),) : (;)); local_wires = Tuple(wires))
+    Group(merge(children, hold ? (engaged = Constant(true),) : (;)); local_wires = Tuple(wires))
 end
 
 # A holding discrete PID, engaged by a constant `true`, driving a discrete
@@ -751,8 +752,8 @@ function switchover_bump(model)
 end
 
 # A cascade run `n` frames at `h = 1//100` from the root inputs `inputs`: after
-# each frame, the inner block's `u_raw` and `saturated`, and the stored `q` of
-# the block `outer`.
+# each frame, the inner PID's `u_raw` and `saturated`, and the stored `q` of
+# the PID `outer`.
 function cascade_frames(model, n; outer = "outer", inputs = (;))
     sim = Simulation(model; Δt_frame = 1//100)
     init!(sim, set(u = inputs))
@@ -784,9 +785,9 @@ function tracker_loop(controller; disturbance = SVector(0.0, 0.0), stepped = tru
         "plant/y" => "controller/x", "plant/y" => "controller/z", "controller/u" => "sum/in1",
         "disturbance/y" => "sum/in2", "sum/y" => "plant/u"]
     stepped && push!(wires, "reference/y" => "controller/z_ref")
-    blocks = (controller = controller, disturbance = Constant(disturbance),
+    children = (controller = controller, disturbance = Constant(disturbance),
               sum = SumJunction{SVector{2, Float64}, 2}(), plant = tracker_plant())
-    Group(merge(blocks, stepped ? (reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(1.0, 0.5)),) : (;));
+    Group(merge(children, stepped ? (reference = Step(t_step = 0.5, before = SVector(0.0, 0.0), after = SVector(1.0, 0.5)),) : (;));
           input_wires = stepped ? () : ("z_ref" => "controller/z_ref",), local_wires = Tuple(wires))
 end
 
@@ -831,16 +832,16 @@ function tracker_cascade(; delay = true, hold = true)
     append!(wires, hold ? ["inner/saturated" => "code/u", "code/out1" => "a/saturation", "code/out1" => "b/saturation"] :
                           ["free/y" => "a/saturation", "free/y" => "b/saturation"])
     outer = DiscretePID(Kp = 0.5, Ki = 0.2, Tt = 0.1, hold = true, tracking = true)
-    blocks = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
+    children = (ref_a = Step(t_step = 0.5, after = 1.5), ref_b = Constant(0.5), measurement = Unpack{Float64, 2}(),
               a = outer, b = outer, sel = Switch{Float64}(), negate = Fn{Bool}(!),
               level = Constant(0.0), reference = Pack{Float64, 2}(),
               inner = DiscreteLQRTracker(; tracker_gains()..., K_int = zeros(2, 2), u_max = SVector(0.6, Inf)),
               plant = tracker_plant())
-    Group(merge(blocks, delay ? (delay = UnitDelay(0.0),) : (;), hold ? (code = Unpack{Int8, 2}(),) : (free = Constant(Int8(0)),));
+    Group(merge(children, delay ? (delay = UnitDelay(0.0),) : (;), hold ? (code = Unpack{Int8, 2}(),) : (free = Constant(Int8(0)),));
           input_wires = ("mode" => ("sel/select", "a/engaged", "negate/u"),), local_wires = Tuple(wires))
 end
 
-function test_blocks()
+function test_library()
     @testset "the junction's arity and port types come from its type (§13.7, D-311)" begin
         @test u_types(Or{3}()) == (in1 = Bool, in2 = Bool, in3 = Bool)
         @test y_types(Or{3}()) == Bool
@@ -868,21 +869,21 @@ function test_blocks()
     end
 
     @testset "the sum adds a walking, a pinned and a delayed cell (§13.7, §6.1)" begin
-        sim = Simulation(blocks_sum_model(); Δt_frame = 1//100)
+        sim = Simulation(sum_model(); Δt_frame = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 3//100)
         cells = (port(sim, "r", :out), port(sim, "k"), port(sim, "d"))
         @test port(sim, "s") == +(cells...)
         @test port(sim, "d") ≈ 1.02 atol = 1e-12    # the ramp one tick back
         # The pinned producers feed the tolerant entries under a `Dual` activation.
-        @test build(blocks_sum_model(); activations = (Float64, LinearizeDual)) isa Build
+        @test build(sum_model(); activations = (Float64, LinearizeDual)) isa Build
     end
 
     @testset "the pack is the junction at a static vector, and linearizes to the identity (§13.7, §14.10, D-311)" begin
         @test u_types(Pack{Float64, 3}()) == (in1 = Float64, in2 = Float64, in3 = Float64)
         @test y_types(Pack{Float64, 3}()) == SVector{3, Float64}
-        @test typeof(Pack{Float64, 2}()) === Junction{Float64, SVector{2, Float64}, 2, typeof(Redstone.Blocks.pack)}
-        @test Pack{Float64, 2}().f === Redstone.Blocks.pack
+        @test typeof(Pack{Float64, 2}()) === Junction{Float64, SVector{2, Float64}, 2, typeof(Redstone.Library.pack)}
+        @test Pack{Float64, 2}().f === Redstone.Library.pack
         @test Redstone.has_stage(y_direct, Pack{Float64, 2}()) && !Redstone.has_stage(y_state, Pack{Float64, 2}())
         sim = Simulation(pack_model(Pack{Float64, 2}()); Δt_frame = 1//10)
         init!(sim, set())
@@ -948,7 +949,7 @@ function test_blocks()
         @test d isa AlgebraicCycle && d.classification === :real
     end
 
-    @testset "the function block publishes `f` of its one bare input, its port types its parameters alone (§13.7, D-033, D-437)" begin
+    @testset "`Fn` publishes `f` of its one bare input, its port types its parameters alone (§13.7, D-033, D-437)" begin
         triple = Fn{Float64}(v -> 3v - 1)
         @test u_types(triple) == Float64 && y_types(triple) == Float64
         @test typeof(Fn{Float64}(abs)) === Fn{Float64, Float64, typeof(abs)}
@@ -1036,7 +1037,7 @@ function test_blocks()
         @test_throws ArgumentError Select{Float64, Enum}()
     end
 
-    @testset "the fields block publishes each field of its struct input as a port, one level deep, walked or held as the field's type (§4.3, §13.7, §8.2, D-276)" begin
+    @testset "`Fields` publishes each field of its struct input as a port, one level deep, walked or held as the field's type (§4.3, §13.7, §8.2, D-276)" begin
         @test u_types(Fields{Course{Float64}}()) == Course{Float64}
         @test y_types(Fields{Course{Float64}}()) == (along = Float64, cross = SVector{2, Float64}, lap = Int, leg = FlightLeg)
         @test y_types(Fields{NestedCourse}()) == (gain = Float64, course = Course{Float64})
@@ -1060,7 +1061,7 @@ function test_blocks()
         @test build(Fields{Course{Float64}}(); activations = (Float64, LinearizeDual)) isa Build
     end
 
-    @testset "the fields block refuses a type with no fields to split: a scalar, a static array, a tuple, a `UnionAll` (§13.7)" begin
+    @testset "`Fields` refuses a type with no fields to split: a scalar, a static array, a tuple, a `UnionAll` (§13.7)" begin
         for V in (Float64, Int, Rational{Int}, SVector{2, Float64}, Tuple{Float64, Int}, @NamedTuple{}, Course)
             @test_throws ArgumentError Fields{V}()
         end
@@ -1100,7 +1101,7 @@ function test_blocks()
         end
     end
 
-    @testset "the stateless blocks' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
+    @testset "the stateless components' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
         for (model, inputs) in
                 (map(model -> (model, (;)),
                      (gate_model(Or{3}(), (true, false, true)), gate_model(And{3}(), (true, false, true)),
@@ -1252,20 +1253,20 @@ function test_blocks()
                 @test code === Int8(0)
             end
         end
-        vector_block = DiscreteLimitedIntegrator(lower = SVector(-0.02, -0.02), upper = SVector(0.03, 0.03))
-        vector_model = fed_by(Constant(SVector(1.0, -1.0)), vector_block)
+        vector_integrator = DiscreteLimitedIntegrator(lower = SVector(-0.02, -0.02), upper = SVector(0.03, 0.03))
+        vector_model = fed_by(Constant(SVector(1.0, -1.0)), vector_integrator)
         vector_sim = Simulation(vector_model; Δt_frame = 1//100)
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 1//10)
         @test port(vector_sim, "c", :out) == SVector(0.03, -0.02)
         @test port(vector_sim, "c", :saturation) === SVector{2, Int8}(1, -1)
-        @test y_types(vector_block) == (out = SVector{2, Float64}, saturation = SVector{2, Int8})
+        @test y_types(vector_integrator) == (out = SVector{2, Float64}, saturation = SVector{2, Int8})
         @test build(vector_model; activations = (Float64, LinearizeDual)) isa Build
-        @test !Redstone.has_stage(y_direct, vector_block)
+        @test !Redstone.has_stage(y_direct, vector_integrator)
     end
 
     @testset "the limited discrete integrator publishes `s0` clamped into its limits at `t₀`, as a reset lands it (§5.3, D-313)" begin
-        at_t₀(block) = (sim = Simulation(Group((; k = Constant(block.s0 .* 0.0), d = block);
+        at_t₀(integrator) = (sim = Simulation(Group((; k = Constant(integrator.s0 .* 0.0), d = integrator);
                                                local_wires = ("k/y" => "d/u",)); Δt_frame = 1//10);
                         init!(sim, set()); sim)
         above = at_t₀(DiscreteLimitedIntegrator(lower = -1, upper = 0.5, s0 = 5.0))
@@ -1279,19 +1280,19 @@ function test_blocks()
         # Inside the limits, and componentwise over an `SArray`.
         inside = at_t₀(DiscreteLimitedIntegrator(lower = -1, upper = 0.5, s0 = 0.25))
         @test port(inside, "d", :out) === 0.25 && port(inside, "d", :saturation) === Int8(0)
-        vector_block = at_t₀(DiscreteLimitedIntegrator(lower = SVector(-1, -1), upper = SVector(0.5, 0.5),
+        vector_integrator = at_t₀(DiscreteLimitedIntegrator(lower = SVector(-1, -1), upper = SVector(0.5, 0.5),
                                                        s0 = SVector(5.0, 0.25)))
-        @test port(vector_block, "d", :out) === SVector(0.5, 0.25)
-        @test port(vector_block, "d", :saturation) === SVector(Int8(1), Int8(0))
+        @test port(vector_integrator, "d", :out) === SVector(0.5, 0.25)
+        @test port(vector_integrator, "d", :saturation) === SVector(Int8(1), Int8(0))
     end
 
     @testset "the discrete integrators' reset is a level: the state lands at the next tick, the output at the reset tick stale (§5.3, D-313)" begin
         h = 1//100
-        for block in (DiscreteIntegrator(s0 = 0.5, reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, s0 = 0.5, reset = true))
-            @test u_types(block) == (u = Float64, reset = Bool)
-            sim = Simulation(discrete_reset_model(block, h); Δt_frame = h)
+        for integrator in (DiscreteIntegrator(s0 = 0.5, reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, s0 = 0.5, reset = true))
+            @test u_types(integrator) == (u = Float64, reset = Bool)
+            sim = Simulation(discrete_reset_model(integrator, h); Δt_frame = h)
             init!(sim, set())
-            out = block isa DiscreteLimitedIntegrator ? (sim -> port(sim, "d", :out)) : (sim -> port(sim, "d"))
+            out = integrator isa DiscreteLimitedIntegrator ? (sim -> port(sim, "d", :out)) : (sim -> port(sim, "d"))
             # The flag rises at `5h`, where the output is still the integral, and
             # falls at `7h`, where the update first sums from `s0` again.
             for (t_plus, reset, value) in ((4h, false, 0.54), (h, true, 0.55), (h, true, 0.5), (h, false, 0.5),
@@ -1300,9 +1301,9 @@ function test_blocks()
                 @test port(sim, "c") === reset
                 @test out(sim) ≈ value atol = 1e-12
             end
-            @test build(discrete_reset_model(block, h); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+            @test build(discrete_reset_model(integrator, h); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
         end
-        # The limited block's reset lands `s0` clamped.
+        # The limited integrator's reset lands `s0` clamped.
         clamped = Simulation(held_reset_model(DiscreteLimitedIntegrator(lower = 0, upper = 1, s0 = 2, reset = true), 1.0); Δt_frame = h)
         init!(clamped, set())
         step!(clamped; t_plus = h)
@@ -1405,10 +1406,10 @@ function test_blocks()
     @testset "the Gaussian white noise is a pure function of its seed and tick, with the moments it claims (§7.3, §2.5, D-231, D-313)" begin
         sim = Simulation(noise_model(GaussianWhiteNoise(seed = 42, σ = 1.0)); Δt_frame = 1//100)
         init!(sim, set())
-        @test port(sim, "c") == Redstone.Blocks.gaussian(42, 0)
-        @test Redstone.Blocks.gaussian(42, 0) ≈ 0.882248906222269 atol = 1e-12
+        @test port(sim, "c") == Redstone.Library.gaussian(42, 0)
+        @test Redstone.Library.gaussian(42, 0) ≈ 0.882248906222269 atol = 1e-12
         samples = [(step!(sim; t_plus = 1//100); port(sim, "c")) for _ in 1:1000]
-        @test samples == [Redstone.Blocks.gaussian(42, k) for k in 1:1000]
+        @test samples == [Redstone.Library.gaussian(42, k) for k in 1:1000]
         # The store counts the ticks run, `t₀`'s included: the next sample's index.
         @test state(sim, "c") === UInt64(1001)
         sample_moments = moments(samples)
@@ -1429,7 +1430,7 @@ function test_blocks()
             step!(vector_sim; t_plus = 1//100)
         end
         @test port(vector_sim, "c") ==
-              SVector(1.0, -1.0) .+ SVector(1.0, 2.0) .* SVector(Redstone.Blocks.gaussian(7, 6), Redstone.Blocks.gaussian(7, 7))
+              SVector(1.0, -1.0) .+ SVector(1.0, 2.0) .* SVector(Redstone.Library.gaussian(7, 6), Redstone.Library.gaussian(7, 7))
         # A matrix is four components in column-major order: sample 3 reads the
         # sub-counters 12 to 15.
         matrix_noise = GaussianWhiteNoise(seed = 7, σ = SMatrix{2, 2}(1.0, 2.0, 3.0, 4.0))
@@ -1440,7 +1441,7 @@ function test_blocks()
             step!(matrix_sim; t_plus = 1//100)
         end
         @test port(matrix_sim, "c") ==
-              SMatrix{2, 2}(1.0, 2.0, 3.0, 4.0) .* SMatrix{2, 2}(ntuple(i -> Redstone.Blocks.gaussian(7, 11 + i), 4))
+              SMatrix{2, 2}(1.0, 2.0, 3.0, 4.0) .* SMatrix{2, 2}(ntuple(i -> Redstone.Library.gaussian(7, 11 + i), 4))
         # A scalar pairs with a vector, `μ` defaults to the scale's zero, and
         # `Float32` widens.
         @test GaussianWhiteNoise(seed = 1, σ = SVector(1.0, 2.0)) isa GaussianWhiteNoise{SVector{2, Float64}}
@@ -1448,8 +1449,8 @@ function test_blocks()
         @test GaussianWhiteNoise(seed = 1, μ = SVector(1.0, 2.0), σ = 1.0).σ == SVector(1.0, 1.0)
         @test GaussianWhiteNoise(seed = 1, σ = 1f0) isa GaussianWhiteNoise{Float64}
         # The first output of a SplitMix64 seeded with zero.
-        @test Redstone.Blocks.splitmix(0, 0) == 0xe220a8397b1dcdaf
-        stream_moments = moments([Redstone.Blocks.gaussian(42, k) for k in 0:999_999])
+        @test Redstone.Library.splitmix(0, 0) == 0xe220a8397b1dcdaf
+        stream_moments = moments([Redstone.Library.gaussian(42, k) for k in 0:999_999])
         @test abs(stream_moments.mean) < 0.005
         @test abs(stream_moments.variance - 1) < 0.01
         @test abs(stream_moments.kurtosis - 3) < 0.05
@@ -1497,8 +1498,8 @@ function test_blocks()
                       fed_by(Constant(SVector(1.0, -1.0)), Delay(K = 50, v0 = SVector(0.0, 0.0), taps = true)),
                       fed_by(Constant(1.0), scalar_hold()),
                       fed_by(Constant(1.0), DiscretizedStateSpace(; scalar_direct()...)),
-                      fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_block())),
-                      fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_block(D = two_state_direct()))),
+                      fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_system())),
+                      fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_system(D = two_state_direct()))),
                       hold_pair_model((1,), (0.5, 1), FirstOrderLag(τ = 0.5)),
                       hold_pair_model((4,), (1, 1.2, 4), second_order()),
                       hold_pair_model((1, 2), (1, 5), FirstOrderLag(τ = 0.5)),
@@ -1581,7 +1582,7 @@ function test_blocks()
     end
 
     @testset "the sum model's phase bodies allocate nothing (§9.8)" begin
-        sim = Simulation(blocks_sum_model(); Δt_frame = 1//100)
+        sim = Simulation(sum_model(); Δt_frame = 1//100)
         bodies = phase_bodies(sim)
         for name in (:sweep_1, :sweep_2, :rhs, :ticks)
             body = bodies[name]
@@ -1601,7 +1602,7 @@ function test_blocks()
         init!(vector_sim, set())
         step!(vector_sim; t_plus = 0.5)
         @test isapprox(state(vector_sim, "i"), SVector(0.5, 0.5); atol = 1e-12)
-        linearization = block_linearization(Integrator())
+        linearization = component_linearization(Integrator())
         @test isapprox(linearization.A, [0.0;;]; atol = 1e-12)
         @test isapprox(linearization.B, [1.0;;]; atol = 1e-12)
     end
@@ -1657,19 +1658,20 @@ function test_blocks()
     end
 
     @testset "the limited integrator's reset lands `x0` with its code: inside free, on or beyond a limit saturated (§3.1, §5.3, §10.6, D-141)" begin
-        block = LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true)
-        @test u_types(block) == (u = Float64, reset = Bool)
-        policies = only(row for row in build(pulse_reset_model(true; block = block)).events.components if row.path == "i").policies
+        integrator = LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true)
+        @test u_types(integrator) == (u = Float64, reset = Bool)
+        policies = only(row for row in build(pulse_reset_model(true; integrator = integrator)).events.components if row.path == "i").policies
         @test length(policies) == 5 && policies.reset === :non_localized
         h = 1//10
-        bracket_width = Simulation(pulse_reset_model(true; block = block); Δt_frame = h).model.deployment.localization_tol * h
+        bracket_width = Simulation(pulse_reset_model(true; integrator = integrator); Δt_frame = h).model.deployment.localization_tol * h
         # At t = 0.2, 0.3, 0.5, 0.8 and 1.0: the resets land as the integrator's,
-        # the block saturates at 0.8, and the second reset frees it from the limit.
+        # the integrator saturates at 0.8, and the second reset frees it from
+        # the limit.
         for (localized, expected, atol) in ((true, (0.7, 0.55, 0.75, 1.0, 0.65), bracket_width),
                                             (false, (0.7, 0.5, 0.7, 1.0, 0.6), 1e-12)),
             leaves_localized in (true, false)
             limited = LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true, localized = leaves_localized)
-            sim = Simulation(pulse_reset_model(localized; block = limited); Δt_frame = h)
+            sim = Simulation(pulse_reset_model(localized; integrator = limited); Δt_frame = h)
             init!(sim, set())
             for (t_plus, x, code) in zip((2h, h, 2h, 3h, 2h), expected, (0, 0, 0, 1, 0))
                 step!(sim; t_plus = t_plus)
@@ -1686,32 +1688,32 @@ function test_blocks()
             step!(held; t_plus = 3h)
             @test state(held, "i") === 1.0 && modes(held, "i") === Int8(1)
         end
-        # A reset arriving while the block sits saturated from t₀ lands `x0`
-        # clamped with its code: no hit event follows to repair either, since
-        # the hit guard held already.
+        # A reset arriving while the integrator sits saturated from t₀ lands
+        # `x0` clamped with its code: no hit event follows to repair either,
+        # since the hit guard held already.
         for x0 in (1.0, 2.0)
-            saturated = Simulation(pulse_reset_model(true; block = LimitedIntegrator(lower = 0, upper = 1, x0 = x0, reset = true)); Δt_frame = h)
+            saturated = Simulation(pulse_reset_model(true; integrator = LimitedIntegrator(lower = 0, upper = 1, x0 = x0, reset = true)); Δt_frame = h)
             init!(saturated, set())
             step!(saturated; t_plus = 3h)
             @test state(saturated, "i") === 1.0 && modes(saturated, "i") === Int8(1)
         end
         for leaves_localized in (true, false)
-            vector_block = LimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1), x0 = SVector(0.5, 2.0),
+            vector_integrator = LimitedIntegrator(lower = SVector(0, 0), upper = SVector(1, 1), x0 = SVector(0.5, 2.0),
                                              reset = true, localized = leaves_localized)
-            @test build(held_reset_model(vector_block, SVector(1.0, 1.0)); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
+            @test build(held_reset_model(vector_integrator, SVector(1.0, 1.0)); activations = (Float64, LinearizeDual, ProbeDual)) isa Build
             # Component 2 lands on its limit under an outward input, so it stays there.
-            vector_sim = Simulation(held_reset_model(vector_block, SVector(1.0, 1.0)); Δt_frame = h)
+            vector_sim = Simulation(held_reset_model(vector_integrator, SVector(1.0, 1.0)); Δt_frame = h)
             init!(vector_sim, at("i", set(x = SVector(0.2, 0.2))))
             @test state(vector_sim, "i") === SVector(0.5, 1.0) && modes(vector_sim, "i") === SVector{2, Int8}(0, 1)
             step!(vector_sim; t_plus = h)
             @test isapprox(state(vector_sim, "i"), SVector(0.6, 1.0); atol = 1e-12) && modes(vector_sim, "i") === SVector{2, Int8}(0, 1)
             # An inward input frees the component its reset landed on the limit.
-            inward = Simulation(held_reset_model(vector_block, SVector(1.0, -1.0)); Δt_frame = h)
+            inward = Simulation(held_reset_model(vector_integrator, SVector(1.0, -1.0)); Δt_frame = h)
             init!(inward, at("i", set(x = SVector(0.2, 0.2))))
             @test modes(inward, "i") === SVector{2, Int8}(0, 0)
         end
         # The reset forms keep their output from stage 1, so they break a loop.
-        for form in (block, DiscreteIntegrator(reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, reset = true))
+        for form in (integrator, DiscreteIntegrator(reset = true), DiscreteLimitedIntegrator(lower = 0, upper = 1, reset = true))
             @test !Redstone.has_stage(y_direct, form)
             @test build(reset_feedback_loop(form)) isa Build
         end
@@ -1720,13 +1722,13 @@ function test_blocks()
     @testset "the reset model's phase bodies and its quiet boundary allocate nothing (§9.8)" begin
         vector_limits = (lower = SVector(0, 0), upper = SVector(1, 1), x0 = SVector(0.5, 0.5))
         for localized in (true, false),
-            (block, input) in ((Integrator(x0 = 0.5, reset = true), 1.0),
+            (integrator, input) in ((Integrator(x0 = 0.5, reset = true), 1.0),
                                (LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true), 1.0),
                                (LimitedIntegrator(lower = 0, upper = 1, x0 = 0.5, reset = true, localized = false), 1.0),
                                (Integrator(x0 = SVector(0.5, 0.5), reset = true), SVector(1.0, -1.0)),
                                (LimitedIntegrator(; vector_limits..., reset = true), SVector(1.0, -1.0)),
                                (LimitedIntegrator(; vector_limits..., reset = true, localized = false), SVector(1.0, -1.0)))
-            sim = Simulation(pulse_reset_model(localized; block = block, input = input); Δt_frame = 1//10)
+            sim = Simulation(pulse_reset_model(localized; integrator = integrator, input = input); Δt_frame = 1//10)
             bodies = phase_bodies(sim)
             for name in (:sweep_1, :sweep_2, :rhs, :ticks)
                 body = bodies[name]
@@ -1756,7 +1758,7 @@ function test_blocks()
         init!(rates_sim, set())
         step!(rates_sim; t_plus = 1.0)
         @test isapprox(state(rates_sim, "l"), SVector(1 - exp(-2), -2 * (1 - exp(-4))); rtol = 1e-7)
-        linearization = block_linearization(FirstOrderLag(τ = 0.5))
+        linearization = component_linearization(FirstOrderLag(τ = 0.5))
         @test isapprox(linearization.A, [-2.0;;]; atol = 1e-12)
         @test isapprox(linearization.B, [2.0;;]; atol = 1e-12)
         # The time constant is made `Float64` whatever the keyword's type.
@@ -1764,7 +1766,7 @@ function test_blocks()
     end
 
     @testset "the state space linearizes to its own matrices at any operating point, over scalar or vector ports (§13.7, §14.10, D-313)" begin
-        sim = Simulation(linear_root_model(two_state_block()); Δt_frame = 1//100)
+        sim = Simulation(linear_root_model(two_state_system()); Δt_frame = 1//100)
         init!(sim, set(u = (in = SVector(1.0, -1.0),)))
         step!(sim; t_plus = 0.3)
         linearization = linearize(sim, taps(x = (q1 = get_state("c", "[1]"), q2 = get_state("c", "[2]")),
@@ -1780,8 +1782,8 @@ function test_blocks()
                                      y = (out1 = get_face("out[1]"), out2 = get_face("out[2]"))))
         @test (headed.A, headed.B, headed.C, headed.D) ==
               (linearization.A, linearization.B, linearization.C, linearization.D)
-        # The state is an `SVector` at every size, so a scalar block's tap takes
-        # an index step.
+        # The state is an `SVector` at every size, so a scalar system's tap
+        # takes an index step.
         scalar_sim = Simulation(fed(StateSpace(A = [-2.0;;], B = [3.0;;], C = [1.0;;])); Δt_frame = 1//100)
         init!(scalar_sim, set(u = (in = 0.0,)))
         scalar_linearization = linearize(scalar_sim, taps(x = (q = get_state("c", "[1]"),),
@@ -1789,10 +1791,10 @@ function test_blocks()
         @test isapprox(scalar_linearization.A, [-2.0;;]; atol = 1e-12)
         @test isapprox(scalar_linearization.B, [3.0;;]; atol = 1e-12)
         # The ports are scalars one wide and `SVector`s wider, by the matrix shapes.
-        scalar_block = StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;])
-        @test u_types(scalar_block) == Float64 && y_types(scalar_block) == Float64
-        @test u_types(two_state_block()) == SVector{2, Float64}
-        @test y_types(two_state_block()) == SVector{2, Float64}
+        scalar_system = StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;])
+        @test u_types(scalar_system) == Float64 && y_types(scalar_system) == Float64
+        @test u_types(two_state_system()) == SVector{2, Float64}
+        @test y_types(two_state_system()) == SVector{2, Float64}
         single_output = StateSpace(A = [-1 0.5; 0 -2], B = [1 0.5; 0 1], C = [1 2])
         @test u_types(single_output) == SVector{2, Float64} && y_types(single_output) == Float64
     end
@@ -1815,27 +1817,27 @@ function test_blocks()
         @test state(sim, "c")[1] ≈ 1 + exp(-1) rtol = 1e-7
         @test port(sim, "c") == state(sim, "c")[1]
         @test build(scalar_model; activations = (Float64, LinearizeDual)) isa Build
-        @test build(fed_by(Constant(SVector(1.0, -1.0)), two_state_block()); activations = (Float64, LinearizeDual)) isa Build
-        @test build(linear_root_model(two_state_block()); activations = (Float64, LinearizeDual)) isa Build
+        @test build(fed_by(Constant(SVector(1.0, -1.0)), two_state_system()); activations = (Float64, LinearizeDual)) isa Build
+        @test build(linear_root_model(two_state_system()); activations = (Float64, LinearizeDual)) isa Build
     end
 
     @testset "the transfer function realizes in controllable canonical form, the direct term split off (§13.7, D-313)" begin
-        for (block, A, B, C, D, parameters) in
+        for (transfer_function, A, B, C, D, parameters) in
                 ((lag_form(), [-2.0;;], [1.0;;], [2.0;;], [0.0;;], (1, false, 1, 2, 1)),
                  (lead_lag(), [-5.0;;], [1.0;;], [-3.0;;], [1.0;;], (1, true, 2, 2, 1)),
                  (second_order(), [0.0 1.0; -4.0 -1.2], [0.0; 1.0;;], [4.0 0.0], [0.0;;], (2, false, 1, 3, 4)))
-            system = Redstone.Blocks.realization(block)
+            system = Redstone.Library.realization(transfer_function)
             @test system.A == A
             @test system.B == B
             @test system.C == C
             @test system.D == D
-            @test typeof(block) === TransferFunction{parameters...}
+            @test typeof(transfer_function) === TransferFunction{parameters...}
         end
         # The class follows the true degree, so a leading zero in `num` is strictly proper.
         @test TransferFunction(num = (0, 1), den = (1, 5)) isa TransferFunction{1, false}
     end
 
-    @testset "the transfer function of the lag matches the lag block (§13.7)" begin
+    @testset "the transfer function of the lag matches `FirstOrderLag` (§13.7)" begin
         sim = Simulation(lag_pair_model(); Δt_frame = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 0.3)
@@ -1892,7 +1894,7 @@ function test_blocks()
         # The lead-lag `(s + 2)/(s + 5)` from its roots.
         zero_pole = TransferFunction(zeros = (-2,), poles = (-5,))
         @test zero_pole.num == lead_lag().num && zero_pole.den == lead_lag().den
-        @test Redstone.Blocks.realization(zero_pole) == Redstone.Blocks.realization(lead_lag())
+        @test Redstone.Library.realization(zero_pole) == Redstone.Library.realization(lead_lag())
         # The second-order `4/(s² + 1.2s + 4)` from its conjugate pair, `zeros` left out.
         pole = -0.6 + sqrt(3.64)im
         resonant = TransferFunction(poles = (pole, conj(pole)), gain = 4)
@@ -1920,7 +1922,7 @@ function test_blocks()
         @test_throws "zeros over" TransferFunction(zeros = (-1, -2), poles = (-3,))
         held_lead_lag = DiscretizedTransferFunction(zeros = (-2,), poles = (-5,))
         @test held_lead_lag.num == (1.0, 2.0) && held_lead_lag.den == (1.0, 5.0)
-        @test Redstone.Blocks.held(held_lead_lag) == Redstone.Blocks.held(DiscretizedTransferFunction(num = (1, 2), den = (1, 5)))
+        @test Redstone.Library.held(held_lead_lag) == Redstone.Library.held(DiscretizedTransferFunction(num = (1, 2), den = (1, 5)))
         for spelling in ((num = (1,), den = (1, 2), poles = (-2,)), (num = (1,), den = (1, 2), gain = 2.0),
                          (zeros = (-1,),), (gain = 2.0,), (;), (poles = (),),
                          (poles = (-1 + 1im, -2),), (zeros = (-1 + 1im, -1 + 1im), poles = (-2, -3)),
@@ -1938,14 +1940,14 @@ function test_blocks()
         @test err isa DiagnosticError
         d = only(diagnostics(err))
         @test d isa AlgebraicCycle && d.classification === :real
-        # The arms on `LinearBlock` are the only stages, picked by `FT`.
+        # The stages are the arms on `AbstractLinearSystem`, picked by `FT`.
         @test !Redstone.has_stage(y_direct, lag_form())
         @test !Redstone.has_stage(y_state, lead_lag())
     end
 
-    @testset "the linear blocks' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
-        for model in (fed_by(Constant(SVector(1.0, -1.0)), two_state_block()),
-                      fed_by(Constant(SVector(1.0, -1.0)), two_state_block(D = two_state_direct())),
+    @testset "the linear systems' phase bodies and their quiet boundaries allocate nothing (§9.8)" begin
+        for model in (fed_by(Constant(SVector(1.0, -1.0)), two_state_system()),
+                      fed_by(Constant(SVector(1.0, -1.0)), two_state_system(D = two_state_direct())),
                       feedback_loop(0.0), fed_by(Constant(1.0), StateSpace(; scalar_direct()...)),
                       fed_by(Constant(1.0), lag_form()), lead_lag_loop(), lag_model(SVector(1.0, -1.0)),
                       vector_lag_model())
@@ -1965,15 +1967,15 @@ function test_blocks()
         end
     end
 
-    @testset "the pair in `z` mirrors the continuous pair over `DiscreteLinearBlock`, with `D` picking the stage (§13.7, §5.3, D-313)" begin
-        block = DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;])
-        @test typeof(block) === DiscreteStateSpace{1, 1, 1, false, 1, 1, 1, 1}
-        sim = Simulation(fed_by(Constant(1.0), block); Δt_frame = 1//100)
+    @testset "the pair in `z` mirrors the continuous pair over `AbstractDiscreteLinearSystem`, with `D` picking the stage (§13.7, §5.3, D-313)" begin
+        system = DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;])
+        @test typeof(system) === DiscreteStateSpace{1, 1, 1, false, 1, 1, 1, 1}
+        sim = Simulation(fed_by(Constant(1.0), system); Δt_frame = 1//100)
         init!(sim, set())
         step!(sim; t_plus = 5//100)
         @test port(sim, "c") == 2(1 - 0.5^5)
-        @test build(fed_by(Constant(1.0), block); activations = (Float64, LinearizeDual)) isa Build
-        @test build(feedback_loop(block)) isa Build
+        @test build(fed_by(Constant(1.0), system); activations = (Float64, LinearizeDual)) isa Build
+        @test build(feedback_loop(system)) isa Build
         err = failure(() -> build(feedback_loop(DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;], D = [1.0;;]))))
         @test err isa DiagnosticError
         d = only(diagnostics(err))
@@ -1994,7 +1996,7 @@ function test_blocks()
 
     @testset "the discrete transfer function realizes in `z`, starts at `G(1) u0` and refuses a pole at `z = 1` with `u0` by tolerance (§13.7, D-313)" begin
         strict = DiscreteTransferFunction(num = (0.5,), den = (1, -0.5))
-        system = Redstone.Blocks.held(strict)
+        system = Redstone.Library.held(strict)
         @test system.A == [0.5;;] && system.B == [1.0;;] && system.C == [0.5;;] && system.D == [0.0;;]
         @test typeof(strict) === DiscreteTransferFunction{1, false, 1, 2, 1}
         sim = Simulation(fed_by(Constant(1.0), strict); Δt_frame = 1//100)
@@ -2004,7 +2006,7 @@ function test_blocks()
         @test build(fed_by(Constant(1.0), strict); activations = (Float64, LinearizeDual)) isa Build
         # The steady state solves `(I - A) q = B u0`, so `out` starts at `G(1) u0`.
         steady = DiscreteTransferFunction(num = (0.5,), den = (1, -0.5), u0 = 2.0)
-        @test Redstone.Blocks.held(steady).s0 == SVector(4.0)
+        @test Redstone.Library.held(steady).s0 == SVector(4.0)
         steady_sim = Simulation(fed_by(Constant(2.0), steady); Δt_frame = 1//100)
         init!(steady_sim, set())
         @test port(steady_sim, "c") == 2.0
@@ -2012,7 +2014,7 @@ function test_blocks()
         @test port(steady_sim, "c") == 2.0
         # At this pole `I - A` differs from `A`, which the pole at 0.5 cannot show.
         slow = DiscreteTransferFunction(num = (0.2,), den = (1, -0.8), u0 = 2.0)
-        @test isapprox(Redstone.Blocks.held(slow).s0, SVector(10.0); atol = 1e-12)
+        @test isapprox(Redstone.Library.held(slow).s0, SVector(10.0); atol = 1e-12)
         slow_sim = Simulation(fed_by(Constant(2.0), slow); Δt_frame = 1//100)
         init!(slow_sim, set())
         @test port(slow_sim, "c") ≈ 2.0 atol = 1e-12
@@ -2038,12 +2040,13 @@ function test_blocks()
         init!(from_x0, set())
         step!(from_x0; t_plus = 1)
         @test port(from_x0, "c") ≈ 1 + exp(-1) atol = 1e-12
-        (; A, B) = Redstone.Blocks.realization(scalar_hold(), 0.01)
+        (; A, B) = Redstone.Library.realization(scalar_hold(), 0.01)
         @test A[1] ≈ exp(-0.01) && B[1] ≈ 1 - exp(-0.01)
-        # The two-state hold against the continuous block it wraps, RK4 at the same h.
-        hold_sim = Simulation(fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_block()));
+        # The two-state hold against the continuous system it wraps, RK4 at the
+        # same h.
+        hold_sim = Simulation(fed_by(Constant(SVector(1.0, -1.0)), DiscretizedStateSpace(two_state_system()));
                               Δt_frame = 1//100)
-        continuous_sim = Simulation(fed_by(Constant(SVector(1.0, -1.0)), two_state_block()); Δt_frame = 1//100)
+        continuous_sim = Simulation(fed_by(Constant(SVector(1.0, -1.0)), two_state_system()); Δt_frame = 1//100)
         for sim in (hold_sim, continuous_sim)
             init!(sim, set())
             step!(sim; t_plus = 3//10)
@@ -2259,7 +2262,7 @@ function test_blocks()
             @test port(sim, "li", :saturation) === modes(sim, "li")
         end
         # The derivative reads the mode, so the Jacobian does too.
-        @test isapprox(block_linearization(LimitedIntegrator(lower = -1.0, upper = 0.5)).B, [1.0;;]; atol = 1e-12)
+        @test isapprox(component_linearization(LimitedIntegrator(lower = -1.0, upper = 0.5)).B, [1.0;;]; atol = 1e-12)
         rig = Simulation(fed(LimitedIntegrator(lower = -1.0, upper = 0.5)); Δt_frame = 1//10)
         init!(rig, set(u = (in = 1.0,)))
         step!(rig; t_plus = 0.7)
@@ -2416,9 +2419,9 @@ function test_blocks()
     end
 
     @testset "the non-localized departure is off by at most `a h² / 2` (§2.3, §10.4)" begin
-        # The block reaches 0.4 at t = 0.5 and leaves it at the input's zero, 1.05,
-        # or at the boundary 1.1: θ = 0.5 and a = 1, so the offset is
-        # a h² (1 - θ)² / 2 = 0.00125.
+        # The integrator reaches 0.4 at t = 0.5 and leaves it at the input's
+        # zero, 1.05, or at the boundary 1.1: θ = 0.5 and a = 1, so the offset
+        # is a h² (1 - θ)² / 2 = 0.00125.
         localized_sim = Simulation(ramp_limited_model(true); Δt_frame = 1//10)
         init!(localized_sim, set())
         step!(localized_sim; t_plus = 3.0)
@@ -2542,8 +2545,8 @@ function test_blocks()
 
     @testset "the limited double integrator arriving against its input saturates and frees at one boundary (§10.6)" begin
         # q = 2t - t² / 2 reaches 0.5 at 2 - √3 with v = √3 and u = -1: the hit
-        # fires in one round and the leave in the next, so the block leaves the
-        # limit from rest, q = 0.5 - (t - 2 + √3)² / 2.
+        # fires in one round and the leave in the next, so the integrator leaves
+        # the limit from rest, q = 0.5 - (t - 2 + √3)² / 2.
         for localized in (true, false)
             rig = Simulation(fed(LimitedDoubleIntegrator(v0 = 2.0, lower = -1.0, upper = 0.5, localized = localized)); Δt_frame = 1//10)
             init!(rig, set(u = (in = -1.0,)))
@@ -2884,9 +2887,9 @@ function test_blocks()
         # weights, above `u_max` and below `u_min`, in both tiers.
         weighted_gains = merge(last(pid_gain_sets()), (b = 0.5, c = 1.0))
         scheduled = NamedTuple{keys(weighted_gains)}(map(_ -> AsPort(), values(weighted_gains)))
-        for block_type in (PID, DiscretePID), u in ((r = 3.0, y = 0.5), (r = -3.0, y = 0.5))
-            @test pid_law(block_type(; scheduled...), x, merge(u, weighted_gains), y) ===
-                  pid_law(block_type(; weighted_gains...), x, u, y)
+        for component_type in (PID, DiscretePID), u in ((r = 3.0, y = 0.5), (r = -3.0, y = 0.5))
+            @test pid_law(component_type(; scheduled...), x, merge(u, weighted_gains), y) ===
+                  pid_law(component_type(; weighted_gains...), x, u, y)
         end
         # The weights: `w = 0.5 - 3`, `u_raw = (1.5 - 0.5) + 0.3 + 0.2 · 2.6 / 0.1`,
         # `ẏf = -2.6 / 0.1`, `q̇ = 0.5 · 2.5 + (1 - 6.5)`; at `b = 1`, `c = 0` the
@@ -2940,7 +2943,7 @@ function test_blocks()
 
     @testset "a tracking input wired from a clamp of the PID's own output closes an artificial cycle (§5.4)" begin
         # `u` is a stage-2 output, so `v` makes a feedthrough edge though only the
-        # derivative reads it. The limits live inside the block for this reason.
+        # derivative reads it. The limits live inside the PID for this reason.
         err = failure(() -> build(pid_clamp_loop()))
         @test err isa DiagnosticError
         d = only(diagnostics(err))
@@ -2998,10 +3001,10 @@ function test_blocks()
                  (true, true, (r = 3.0, y = 0.5, saturation = Int8(0), engaged = true, v = 0.7)))
             u2 = merge(u1, (r = 1.0, y = 2.0), tracking ? (v = -0.3,) : (;))
             u = map(SVector, u1, u2)
-            for block_type in (PID, DiscretePID)
-                first_law = pid_law(block_type(; first_gains..., hold, tracking), x1, u1, y1)
-                second_law = pid_law(block_type(; second_gains..., hold, tracking), x2, u2, y2)
-                vector_law = pid_law(block_type(; stacked_gains..., hold, tracking), x, u, y)
+            for component_type in (PID, DiscretePID)
+                first_law = pid_law(component_type(; first_gains..., hold, tracking), x1, u1, y1)
+                second_law = pid_law(component_type(; second_gains..., hold, tracking), x2, u2, y2)
+                vector_law = pid_law(component_type(; stacked_gains..., hold, tracking), x, u, y)
                 for (first_part, second_part, vector_part) in zip(first_law, second_law, vector_law),
                         name in keys(vector_part)
                     @test vector_part[name] isa SVector{2, typeof(first_part[name])}
@@ -3062,22 +3065,22 @@ function test_blocks()
         @test maximum(abs(sample.q) for sample in corrected) < maximum(abs(sample.q) for sample in uncorrected)
     end
 
-    @testset "the PID assembled from library blocks runs and linearizes as the block (§13.7, §5.4, §8.5)" begin
+    @testset "the PID assembled from library components runs and linearizes as the primitive (§13.7, §5.4, §8.5)" begin
         gains = (Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, Tt = 1.0, u_min = -1.0, u_max = 1.0)
         @test build(pid_single_loop(pid_assembly(; gains...)); activations = (Float64, LinearizeDual)) isa Build
         # One law in another association order. The assembly's integral term is
         # its child `int`, and its `u` a face. At `Tt = 2.0` the division by `Tt`
         # changes the correction.
         for Tt in (1.0, 2.0)
-            block_samples = loop_samples(sim -> (y = port(sim, "", :y), u = port(sim, "controller", :u),
+            primitive_samples = loop_samples(sim -> (y = port(sim, "", :y), u = port(sim, "controller", :u),
                                                  q = state(sim, "controller").q),
                                          pid_single_loop(PID(; gains..., Tt = Tt)), 40)
             assembly_samples = loop_samples(sim -> (y = port(sim, "", :y), u = port(sim, "controller", :u),
                                                     q = state(sim, "controller/int")),
                                             pid_single_loop(pid_assembly(; gains..., Tt = Tt)), 40)
             for name in (:y, :u, :q)
-                @test maximum(abs(getfield(block_sample, name) - getfield(assembly_sample, name))
-                              for (block_sample, assembly_sample) in zip(block_samples, assembly_samples)) ≤ 1e-9
+                @test maximum(abs(getfield(primitive_sample, name) - getfield(assembly_sample, name))
+                              for (primitive_sample, assembly_sample) in zip(primitive_samples, assembly_samples)) ≤ 1e-9
             end
         end
         # Each as the root, its ports as root inputs, at a free operating point.
@@ -3196,15 +3199,15 @@ function test_blocks()
         @test y_types(DiscretePID(Kp = 1.0)) == (u = Float64, u_raw = Float64, saturated = Int8)
         @test y_state(DiscretePID(Kp = 1.0), (; s = (q = 0.0, yf = 0.0, saturated = Int8(-1)))) ==
               (saturated = Int8(-1),)
-        @test PID(Kp = 1.0) isa Redstone.Blocks.PIDBlock{Float64, false, false}
-        @test DiscretePID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true) isa Redstone.Blocks.PIDBlock{Float64, true, true}
-        @test DiscretePID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true) isa Redstone.Blocks.ControllerBlock{true, true}
+        @test PID(Kp = 1.0) isa Redstone.Library.AbstractPID{Float64, false, false}
+        @test DiscretePID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true) isa Redstone.Library.AbstractPID{Float64, true, true}
+        @test DiscretePID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true) isa Redstone.Library.AbstractAntiWindupController{true, true}
         @test Redstone.has_stage(y_direct, DiscretePID(Kp = 1.0))
         @test Redstone.has_stage(y_state, DiscretePID(Kp = 1.0))
     end
 
-    @testset "the discrete PID's loops match the continuous block's, and `Tt = 0` and `τd = 0` are legal (§13.7, D-313)" begin
-        # Peak and settling time beside the continuous block's at the same gains
+    @testset "the discrete PID's loops match the continuous PID's, and `Tt = 0` and `τd = 0` are legal (§13.7, D-313)" begin
+        # Peak and settling time beside the continuous PID's at the same gains
         # and limits: 5.327 at 11.3 on the single loop, 5.931 at 23.6 on the servo,
         # 5.202 at 26.9 on the cascade.
         gains = (Kp = 1.0, Ki = 0.5, Kd = 0.2, τd = 0.1, u_min = -1.0, u_max = 1.0)
@@ -3230,7 +3233,7 @@ function test_blocks()
     end
 
     @testset "a tracking input wired from a clamp of the discrete PID's own output is a real cycle, traced structurally (§5.4, §13.8)" begin
-        # The continuous block's cycle is artificial with the hop named; a discrete
+        # The continuous PID's cycle is artificial with the hop named; a discrete
         # member admits no tracer scalar, so no hop is found dead.
         err = failure(() -> build(pid_clamp_loop(DiscretePID(Kp = 1.0, Ki = 0.5, Kd = 0.2, Tt = 1.0, tracking = true))))
         @test err isa DiagnosticError
@@ -3240,7 +3243,7 @@ function test_blocks()
         @test d.wires == ["controller/u" => "sat/u", "sat/y" => "controller/v"]
     end
 
-    @testset "a tracking block not engaged follows the selected command through a delay and engages without a bump, and the switch without the delay is a cycle (§13.7, §5.4, §13.8, D-385)" begin
+    @testset "a tracking controller not engaged follows the selected command through a delay and engages without a bump, and the switch without the delay is a cycle (§13.7, §5.4, §13.8, D-385)" begin
         # Each sibling's `u` reaches the switch and the switch's output its `v`. A
         # continuous sibling reads `v` in the derivative alone, so its hop is dead;
         # a discrete one traces structurally.
@@ -3293,8 +3296,8 @@ function test_blocks()
         @test limited_frames[end].q ≈ -2.9858991837419993 atol = 1e-9
     end
 
-    @testset "the discrete PID's code reaches an outer block one tick late and stops its integrator (§13.7, §7.3, D-383)" begin
-        # The inner block writes the code at the tick `u_raw` first passes `u_max`
+    @testset "the discrete PID's code reaches an outer controller one tick late and stops its integrator (§13.7, §7.3, D-383)" begin
+        # The inner PID writes the code at the tick `u_raw` first passes `u_max`
         # and publishes it at the next, where the outer update reads it.
         @test build(discrete_pid_cascade(hold = true); activations = (Float64, LinearizeDual)) isa Build
         free, held = (cascade_frames(discrete_pid_cascade(; hold), 3000) for hold in (false, true))
@@ -3318,8 +3321,8 @@ function test_blocks()
               (u = SVector{2, Float64}, u_raw = SVector{2, Float64}, saturated = SVector{2, Int8})
         @test LQRTracker(; tracker_gains()...) isa LQRTracker{2, 2, 2, false, false}
         @test DiscreteLQRTracker(; tracker_gains()..., hold = true) isa
-              Redstone.Blocks.LQRTrackerBlock{2, 2, 2, true, false}
-        @test LQRTracker(; tracker_gains()..., hold = true, tracking = true) isa Redstone.Blocks.ControllerBlock{true, true}
+              Redstone.Library.AbstractLQRTracker{2, 2, 2, true, false}
+        @test LQRTracker(; tracker_gains()..., hold = true, tracking = true) isa Redstone.Library.AbstractAntiWindupController{true, true}
         @test u_types(LQRTracker(; tracker_gains()..., K_fbk = AsPort())).K_fbk === SMatrix{2, 2, Float64, 4}
         @test keys(u_types(LQRTracker(; tracker_gains()..., K_int = AsPort(), u_min = AsPort(),
                                       hold = true, tracking = true))) ==
@@ -3450,8 +3453,8 @@ function test_blocks()
         first_saturated = findfirst(sample -> sample.u_raw[1] > 0.4, samples)
         @test samples[first_saturated].saturated === SVector{2, Int8}(0, 0)
         @test samples[first_saturated + 1].saturated === SVector{2, Int8}(1, 0)
-        for block_type in (LQRTracker, DiscreteLQRTracker)
-            @test build(tracker_loop(block_type(; integral...)); activations = (Float64, LinearizeDual)) isa Build
+        for component_type in (LQRTracker, DiscreteLQRTracker)
+            @test build(tracker_loop(component_type(; integral...)); activations = (Float64, LinearizeDual)) isa Build
         end
     end
 
@@ -3460,8 +3463,8 @@ function test_blocks()
         # derivative alone, so the continuous hop is dead, where a discrete member
         # traces structurally.
         gains = tracker_loop_gains()
-        for block_type in (LQRTracker, DiscreteLQRTracker)
-            d = only(diagnostics(failure(() -> build(tracker_cycle(block_type(; gains...), :z_ref)))))
+        for component_type in (LQRTracker, DiscreteLQRTracker)
+            d = only(diagnostics(failure(() -> build(tracker_cycle(component_type(; gains...), :z_ref)))))
             @test d isa AlgebraicCycle && d.classification === :real
             @test isempty(d.dead)
             @test d.wires == ["controller/u" => "feedback/in1", "feedback/y" => "controller/z_ref"]
@@ -3499,7 +3502,7 @@ function test_blocks()
         @test maximum(k -> free[k].q - held[k].q, stretch) ≈ 0.21385439553190302 atol = 1e-9
     end
 
-    @testset "every keyword constructor builds a `Float64` block from integer keywords, and a flag keyword or a misfit shape refuses one (§7.2)" begin
+    @testset "every keyword constructor builds a `Float64` component from integer keywords, and a flag keyword or a misfit shape refuses one (§7.2)" begin
         @test Integrator(x0 = 1) isa Integrator{Float64}
         @test Integrator(x0 = 1) isa Integrator{Float64, false}
         @test Integrator(x0 = SVector(1, 2), reset = true) isa Integrator{SVector{2, Float64}, true}
@@ -3580,9 +3583,9 @@ function test_blocks()
         @test_throws ArgumentError Sequence(times = (0.25,), values = (0, 1, 2))
         # Keywords sharing `V` broadcast to one shape, so a scalar pairs with a
         # vector; two lengths are Julia's `DimensionMismatch`, as on the PID.
-        for block in (LimitedIntegrator, LimitedDoubleIntegrator, DiscreteLimitedIntegrator)
-            @test block(lower = -1, upper = SVector(1, 2)).lower === SVector(-1.0, -1.0)
-            @test_throws DimensionMismatch block(lower = SVector(-1, -1), upper = SVector(1, 1, 1))
+        for integrator_type in (LimitedIntegrator, LimitedDoubleIntegrator, DiscreteLimitedIntegrator)
+            @test integrator_type(lower = -1, upper = SVector(1, 2)).lower === SVector(-1.0, -1.0)
+            @test_throws DimensionMismatch integrator_type(lower = SVector(-1, -1), upper = SVector(1, 1, 1))
         end
         @test LimitedIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), x0 = 0.5).x0 === SVector(0.5, 0.5)
         @test LimitedDoubleIntegrator(lower = SVector(-1, -1), upper = SVector(1, 1), q0 = 0.5, v0 = 1).v0 === SVector(1.0, 1.0)
@@ -3594,11 +3597,11 @@ function test_blocks()
         @test_throws DimensionMismatch Relay(lower = SVector(0, 0), upper = SVector(1, 1, 1))
         @test_throws DimensionMismatch Step(t_step = 0.25, before = SVector(0, 0), after = SVector(1, 1, 1))
         @test_throws DimensionMismatch Sequence(times = (1,), values = (SVector(0, 0), SVector(1, 1, 1)))
-        for block in (LimitedIntegrator, LimitedDoubleIntegrator, DiscreteLimitedIntegrator)
-            @test_throws ArgumentError block(lower = 1, upper = -1)
-            @test_throws ArgumentError block(lower = 1, upper = 1)
-            @test_throws ArgumentError block(lower = SVector(-1, 1), upper = SVector(1, 0))
-            @test block(lower = SVector(-1, -1), upper = SVector(1, 1)) isa block
+        for integrator_type in (LimitedIntegrator, LimitedDoubleIntegrator, DiscreteLimitedIntegrator)
+            @test_throws ArgumentError integrator_type(lower = 1, upper = -1)
+            @test_throws ArgumentError integrator_type(lower = 1, upper = 1)
+            @test_throws ArgumentError integrator_type(lower = SVector(-1, 1), upper = SVector(1, 0))
+            @test integrator_type(lower = SVector(-1, -1), upper = SVector(1, 1)) isa integrator_type
         end
         @test_throws ArgumentError RateLimiter(rising = 0)
         @test_throws ArgumentError RateLimiter(rising = 1, falling = -1)
@@ -3684,8 +3687,8 @@ function test_blocks()
         # A spelled type parameter has no value to convert.
         @test_throws TypeError Freeze{MVector{2, Float64}}
         # Past `STATIC_WARN_LENGTH` elements the conversion warns, once per session.
-        @test_logs Integrator(x0 = zeros(Redstone.Blocks.STATIC_WARN_LENGTH))
-        @test_logs (:warn, r"513 elements becomes an `SArray`") Integrator(x0 = zeros(Redstone.Blocks.STATIC_WARN_LENGTH + 1))
+        @test_logs Integrator(x0 = zeros(Redstone.Library.STATIC_WARN_LENGTH))
+        @test_logs (:warn, r"513 elements becomes an `SArray`") Integrator(x0 = zeros(Redstone.Library.STATIC_WARN_LENGTH + 1))
         # A `Float32` converts as an `Int` does, one keyword or several.
         @test Integrator(x0 = 1.5f0).x0 === 1.5
         @test Integrator(x0 = SVector(1.5f0, 2f0)).x0 === SVector(1.5, 2.0)
@@ -3723,10 +3726,11 @@ function test_blocks()
         end
     end
 
-    @testset "every block passes the shadowing check from its own module (§8.1, D-246, D-313)" begin
-        # The reason `Blocks` is a submodule: its parent module is `Blocks`, which
-        # reaches the declarations by import alone, as a user's component file
-        # does, so a missing import here would surface as `DeclarationShadowed`.
+    @testset "every library component passes the shadowing check from its own module (§8.1, D-246, D-313)" begin
+        # The reason `Library` is a submodule: its parent module is `Library`,
+        # which reaches the declarations by import alone, as a user's component
+        # file does, so a missing import here would surface as
+        # `DeclarationShadowed`.
         for comp in (Or{3}(), And{2}(), SumJunction{Float64,2}(), Junction{Float64,Float64,2}(max),
                      Pack{Float64, 2}(), Unpack{Float64, 2}(), Switch{Float64}(),
                      Source(sin), Source{Bool}(t -> t >= 0.5),
@@ -3755,7 +3759,7 @@ function test_blocks()
                      PID(Kp = 1.0), PID(Kp = 1.0, hold = true), PID(Kp = 1.0, Tt = 1.0, tracking = true),
                      PID(Kp = 1.0, Tt = 1.0, hold = true, tracking = true),
                      StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], D = [0.0;;]),
-                     StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], D = [1.0;;]), two_state_block(),
+                     StateSpace(A = [-1.0;;], B = [1.0;;], C = [1.0;;], D = [1.0;;]), two_state_system(),
                      lag_form(), lead_lag(), second_order(),
                      DiscreteStateSpace(A = [0.5;;], B = [1.0;;], C = [1.0;;]),
                      DiscreteTransferFunction(num = (0.5,), den = (1, -0.5)), scalar_hold(),
@@ -3773,9 +3777,10 @@ function test_blocks()
                      GaussianWhiteNoise(seed = 1, σ = 1.0),
                      GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0)),
                      Group((; k = Constant(1.0))))
-            @test parentmodule(typeof(comp)) === Redstone.Blocks
+            @test parentmodule(typeof(comp)) === Redstone.Library
             @test isempty(foreign_declarations(comp))
-            # A bare input is no root input, so its block builds under the rig (D-436).
+            # A bare input is no root input, so the component builds under the
+            # rig (D-436).
             @test build(u_types(comp) isa NamedTuple ? comp : fed(comp)) isa Build
         end
     end

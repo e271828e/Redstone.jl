@@ -90,7 +90,7 @@ end
 
 # The diverger and the innocent component downstream of it: `con` reads `div`'s
 # state through the ordinary signal path, so a sweep running later than the
-# integrate would blame the lookup rather than the block that blew up.
+# integrate would blame the lookup rather than the component that blew up.
 diverging() = Group((div = Diverger(), con = Consumer());
                     local_wires = ("div/q" => "con/in",), input_wires = ("in" => "div/arm",))
 
@@ -348,7 +348,7 @@ function failures_runtime()
         @test err.boundary == 0 && err.t == 0.1         # the frame top the integrate landed on
     end
 
-    @testset "a throw in `s_update` or in `x_projection` names its own block (§13.4)" begin
+    @testset "a throw in `s_update` or in `x_projection` names its own component (§13.4)" begin
         sim = Simulation(fed(Sapper(), "sig"); Δt_frame = 1//10)
         init!(sim, set(u = (in = false,)))
         stage!(sim, "in" => true)
@@ -742,7 +742,7 @@ function failures_runtime()
         @test diagnostic(err) === err.cause
     end
 
-    @testset "the sweep names the diverging block, never its downstream (§13.4, D-157)" begin
+    @testset "the sweep names the diverging component, never its downstream (§13.4, D-157)" begin
         sim = Simulation(diverging(); Δt_frame = 1//10)
         init!(sim, set(u = (in = false,)))
         @test step!(sim; t_end = 5.0) == 1

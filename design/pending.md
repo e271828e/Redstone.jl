@@ -12,34 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **Retire the term *block*.** Decided by the user on 2026-11-11, during
-  the inspector's look pass for its increment 8. The word names a component
-  the standard library ships and carries no framework meaning (Appendix D,
-  D-062), so it retires from the prose and from the names. In prose it
-  becomes "library component", or "component" where the context says the
-  rest. The word's other senses stay: a thread that blocks, a state block,
-  a code block. The module `Redstone.Blocks` with `src/blocks.jl` is
-  renamed, `Redstone.Library` the candidate, and the companion
-  `companions/linear_blocks.md` with it. The five abstract parents lose the
-  word and take the `Abstract` prefix the core's other extension points
-  carry. Proposed: `LinearBlock` becomes `AbstractLinearSystem`,
-  `DiscreteLinearBlock` becomes `AbstractDiscreteLinearSystem`,
-  `ControllerBlock` becomes `AbstractController`, `PIDBlock` becomes
-  `AbstractPID` and `LQRTrackerBlock` becomes `AbstractLQRTracker`. "Linear
-  system" is already the phrase of the library's docstrings, and the last
-  two read as `Array <: AbstractArray` does. `AbstractController` is as
-  broad as the name it replaces, while the type carries the two anti-windup
-  axes and their integral-term law, so a narrower name is worth a look. The
-  session that writes the ruling settles the names. The log is not swept,
-  a renamed term applying forward only (`rules/log_rules.md` rule 2). It
-  runs as one
-  increment after increment 93, the seam protocol, lands and before the
-  arc's next increment starts: the docs commit with the ruling first, then
-  a mechanical code stage whose proof is the test suite. It precedes the
-  arc's teaching increment and the tutorial, so both are written in the
-  surviving vocabulary. The inspector follows at its next pin, since a
-  node's `type` carries the module's name: its fixtures regenerate and its
-  icon table's keys change (`RedstoneInspector.jl/design/pending.md`).
 - **Variable-step integration.** The frame and the integration step become
   separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
   no required ratio on the `Deployment`, `N_base` retires, and the step is
@@ -130,7 +102,10 @@ item changes what the spec says, the spec edit is part of the item.
   `PrimitiveFace` and no format bump; the inspector's half, the
   regenerated types and the renames through the frontend and the records,
   lands with its next pin on the core. The same pin moves its six
-  construction sites from `h =` to `Δt_frame =` (D-443).
+  construction sites from `h =` to `Δt_frame =` (D-443), and takes the
+  library's rename to `Redstone.Library` (D-453): a node's `type` carries
+  the module's name, so the fixtures regenerate and the icon table's keys
+  change.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
@@ -288,15 +263,15 @@ breaking user code, and each may benefit from user feedback first.
     Under 1.14 the pause wait is itself a cancellation point, so the case
     does not exist there; whether it is fixed on 1.13 is settled with the
     floor when this item lands.
-- **`Dual` allocation coverage for the library** (§9.8, §13.7). The block
-  allocation testsets in `test_blocks.jl` measure phase bodies at `Float64`
+- **`Dual` allocation coverage for the library** (§9.8, §13.7). The
+  allocation testsets in `test_library.jl` measure phase bodies at `Float64`
   alone; the suite's one `Dual` measurement is `test_executor.jl`'s over
-  `bare_ports_world`. Extend each continuous block's testset with that
+  `bare_ports_world`. Extend each continuous component's testset with that
   test's loop over `(Float64, LinearizeDual)`. A `Dual` model freezes the
   discrete tier and compiles events out, so the sweep covers the continuous
-  blocks' sweep and `x_deriv` bodies and says nothing about the discrete
-  blocks. The standing rule for new blocks is `rules/brief_rules.md`'s,
-  under its library-blocks section.
+  components' sweep and `x_deriv` bodies and says nothing about the discrete
+  ones. The standing rule for new library components is
+  `rules/brief_rules.md`'s, under its section on library components.
 
 ## Deviations
 

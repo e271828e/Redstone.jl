@@ -196,12 +196,12 @@ Diagnostic
 ## The component library
 
 ```@meta
-CurrentModule = Redstone.Blocks
+CurrentModule = Redstone.Library
 ```
 
-The standard library, `Redstone.Blocks`, grouped as the inventory in
-`companions/library_inventory.md` groups it. Every block is reached by import
-from the submodule.
+The standard library, `Redstone.Library`, grouped as the inventory in
+`companions/library_inventory.md` groups it. Every library component is reached
+by import from the submodule.
 
 ### Structure
 
@@ -237,7 +237,7 @@ Integrator
 LimitedIntegrator
 LimitedDoubleIntegrator
 FirstOrderLag
-LinearBlock
+AbstractLinearSystem
 StateSpace
 TransferFunction
 ```
@@ -258,7 +258,7 @@ DiscreteIntegrator
 DiscreteLimitedIntegrator
 RateLimiter
 Backlash
-DiscreteLinearBlock
+AbstractDiscreteLinearSystem
 DiscreteStateSpace
 DiscreteTransferFunction
 DiscretizedStateSpace
@@ -275,11 +275,11 @@ Freeze
 
 ```@docs
 AsPort
-ControllerBlock
-PIDBlock
+AbstractAntiWindupController
+AbstractPID
 PID
 DiscretePID
-LQRTrackerBlock
+AbstractLQRTracker
 LQRTracker
 DiscreteLQRTracker
 ```

@@ -326,8 +326,8 @@ function test_descriptor()
     @testset "a node carries its alias when a const binds its type, and the envelope admits a name (§13.9)" begin
         value = descriptor(build(aliases_model()))
         body = value.build
-        @test node_at(body, "sum").alias == "Redstone.Blocks.SumJunction"
-        @test node_at(body, "pack").alias == "Redstone.Blocks.Pack"
+        @test node_at(body, "sum").alias == "Redstone.Library.SumJunction"
+        @test node_at(body, "pack").alias == "Redstone.Library.Pack"
         @test !haskey(node_at(body, "diff"), :alias)    # a `Junction` over a user function
         @test !haskey(node_at(body, "k"), :alias)
         @test !haskey(node_at(body, ""), :alias)
@@ -374,7 +374,7 @@ function test_descriptor()
         summary = only(node_at(descriptor(build(single(long))).build, "c").parameters)
         @test summary.name == "value" && length(summary.value) == 81 && endswith(summary.value, "…")
         # a `NamedTuple` field opens into one entry per field, named by the dotted path (D-439)
-        pid_root = Group((; c = Redstone.Blocks.DiscretePID(; Kp = 0.01, Ki = 0.001)); input_wires = ("r" => "c/r", "y" => "c/y"))
+        pid_root = Group((; c = Redstone.Library.DiscretePID(; Kp = 0.01, Ki = 0.001)); input_wires = ("r" => "c/r", "y" => "c/y"))
         pid = node_at(descriptor(build(pid_root)).build, "c")
         @test pid.parameters ==
               [(name = "fixed.Kp", value = "0.01"), (name = "fixed.Ki", value = "0.001"), (name = "fixed.Kd", value = "0.0"),
