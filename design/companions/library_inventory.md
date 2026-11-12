@@ -5,7 +5,7 @@
 and [§2.3][s2-3] (events), with decisions [D-311][d-311], [D-312][d-312] and [D-313][d-313]. If this
 document and the spec ever disagree, the spec wins. It was written on
 2026-10-06, when the first tranche was briefed, to keep the reasoning that
-pruned Simulink's base library down to the blocks worth shipping and to
+pruned Simulink's base library down to the components worth shipping and to
 hold the candidates for later tranches.*
 
 ## 1. Why Simulink's granularity does not transfer
@@ -14,10 +14,10 @@ Simulink's base library is large because the diagram is its expression
 language. There is no other way to write `2u + 3` than a Gain and a Bias,
 so Gain, Bias, Abs, Sign, Product, Min/Max, the trigonometric functions,
 the relational and logical operators and type conversion all exist as
-blocks. In Redstone a leaf's stage body is Julia. The block for `2u + 3` is
+blocks. In Redstone a leaf's stage body is Julia. There `2u + 3` is
 one line of `y_direct`, and the same expression as a separate component
 costs a build entry, a cell, a gather and a scatter, plus the
-per-component compile cost [§9.7][s9-7] measures. Shipping those blocks would also
+per-component compile cost [§9.7][s9-7] measures. Shipping those components would also
 teach the diagram-granularity style the design rejects. [§13.7][s13-7]'s phrase is
 "Simulink's library is a language, while this is a toolbox".
 
@@ -40,12 +40,12 @@ A second group disappears for structural reasons:
   Repeating Sequence and From Workspace are `Source{V}(f)`, an interpolant
   included, since a kink owes no event (section 2).
 - Derivative is the filtered form, `TransferFunction(num = (1, 0), den = (τ, 1))`.
-  The unfiltered block has no clean continuous form.
+  The unfiltered derivative has no clean continuous form.
 - Memory is `UnitDelay` on the fastest tier. Holding the previous step's
   value in continuous time is Simulink's hack.
 - Zero-Pole, the first-order, lead-lag and real-zero transfer functions,
   Discrete Filter and Discrete FIR are constructor spellings of the linear
-  blocks. PID 2DOF is the `b` and `c` weights of `PID`.
+  systems. PID 2DOF is the `b` and `c` weights of `PID`.
 - Assertion and the range checks are a `StopRequest`, with a `Comparator`
   (section 3) in front when the check is on a continuous quantity.
 - Counters and the Detect family are discrete one-liners, `s⁺ = mod(s + 1, N)`
@@ -56,14 +56,14 @@ A second group disappears for structural reasons:
 
 ## 2. The admission guidelines
 
-A block joins the inventory by judgement against three guidelines
+A component joins the inventory by judgement against three guidelines
 ([§13.7][s13-7], [D-313][d-313]). None is a requirement. A candidate is
-weighed against them, it need not satisfy all three, and a block that
+weighed against them, it need not satisfy all three, and a component that
 plainly belongs is not argued into them.
 
 - **Domain-agnostic and generally useful.** Aerodynamics, engines and
   sensors belong in packages built on the framework.
-- **Didactic value**, as when a block shows one framework mechanism in a
+- **Didactic value**, as when a component shows one framework mechanism in a
   relatively simple form. The mechanisms worth showing:
   - *Modes and events.* A limited integrator is not a clamp. It is a mode
     (saturated or not) with events for hitting and leaving each limit, and
@@ -72,32 +72,33 @@ plainly belongs is not argued into them.
   - *Tier semantics.* `UnitDelay` moves a signal onto the discrete tier,
     which [§5.5][s5-5] calls a modelling decision. A discrete integrator or
     filter is the same kind of object.
-  - *Activation and pinning.* Every library block walks under `Dual` for
+  - *Activation and pinning.* Every library component walks under `Dual` for
     linearization and trim. A hand-written lag filter that types its
     scratch as `Float64` works at nominal and fails the first `linearize`.
   - *Structure the declaration layer forces.* The junction exists because
     every input takes exactly one wire. Wires name whole ports, so feeding
-    one component of an `SVector` port to a scalar consumer needs a block.
+    one component of an `SVector` port to a scalar consumer needs a library
+    component.
 - **An implementation that is difficult to get right.** The lag filter
   typed at `Float64` is the standing example.
 
 A gain fails the second and the third, and section 1 prices it, so it stays
-out. A listed block is built whenever wanted, with no demonstrating model
+out. A listed component is built whenever wanted, with no demonstrating model
 required. How the limited integrator's exact-zero defect was found, which
-implementation variants were weighed against it, and why the block ships two
-detection policies for its departures is `limited_integrator_variants.md`.
-How the PID's anti-windup design space was weighed, why the block carries
+implementation variants were weighed against it, and why the integrator ships
+two detection policies for its departures is `limited_integrator_variants.md`.
+How the PID's anti-windup design space was weighed, why the PID carries
 two independent ports and what it does not carry is `pid_anti_windup.md`,
 and its section 11 adds standby through the hold's `engaged` input and the
-discrete saturation output. Why the linear system is two blocks, how a transfer function is
-realized and why it takes a steady-state input and no `x0` is
-`linear_blocks.md`. The LQR tracker's derivation, the cascade it serves and
+discrete saturation output. Why the linear system is two components, how a
+transfer function is realized and why it takes a steady-state input and no `x0` is
+`linear_systems.md`. The LQR tracker's derivation, the cascade it serves and
 what it leaves to the design script is `lqr_tracker.md`.
 
 A discontinuity is weighed by whether it jumps or kinks. A jump needs a
 declared event, or it lands inside a step and smears it, a mode made silently
 ([§3.1][s3-1]). A kink needs none, since its error is second order and decays.
-That is why `Step` is a block with a guard while a ramp is `Source{V}(f)`, and
+That is why `Step` is a component with a guard while a ramp is `Source{V}(f)`, and
 why the continuous rate limiter and the clamps stay out while a comparator
 that declares a crossing comes in.
 
@@ -114,17 +115,17 @@ guards on both sides chatters at `lower == upper`; one side is strict.
 
 Status is one of *shipped*, *candidate* (listed, built when wanted), or
 *example first* (built as an example model, promoted only if one form
-proves standard). A block is generic over its port type `V`, in the
+proves standard). A component is generic over its port type `V`, in the
 [D-263][d-263] spelling, unless its ports are fixed by what it is: the `Bool`
-gates and the linear blocks, whose ports follow their matrix shapes. The
-one input or one output a block has is a bare contract, one port whose face
-is the default `u` or `y`, which a wire addresses as `block/u` or `block/y`
+gates and the linear systems, whose ports follow their matrix shapes. The
+one input or one output a component has is a bare contract, one port whose face
+is the default `u` or `y`, which a wire addresses as `child/u` or `child/y`
 ([D-437][d-437]); a side with several ports names them `in1…inN`, and `out1…outN`
-where a block splits one port into `N` ports alike. The bundle reads a bare
+where a component splits one port into `N` ports alike. The bundle reads a bare
 side as `u` or `y`, the value itself. A long mechanism goes in a note under its
 table, which keeps each row on one line of a full-screen editor.
 
-A block with a defaulted parameter, or with more than one, gets a
+A component with a defaulted parameter, or with more than one, gets a
 hand-written keyword constructor, as in `Integrator(; x0 = 0.0)` and
 `Relay(; lower, upper, off = zero(lower), on = one.(lower))`. A positional
 call is easy to get wrong, and [§8.2][s8-2] already makes keyword defaults the
@@ -132,34 +133,34 @@ convention. A parameter with no sensible default is a required keyword.
 Keywords that share a type parameter broadcast to one shape, `Float64` or
 an `SArray` of `Float64`, which is why the constructor is hand-written
 rather than `@kwdef`. A scalar pairs with a vector, and integer and `Float32`
-keywords convert, a block's lone keyword too, as does an array keyword of any
-kind, a plain `Vector` or an `MVector`, which becomes the `SArray` of its
+keywords convert, a component's lone keyword too, as does an array keyword of
+any kind, a plain `Vector` or an `MVector`, which becomes the `SArray` of its
 size; past `STATIC_WARN_LENGTH` elements, 512, the conversion warns once,
 since an `SArray` that large compiles slowly in every stage that touches it
 and runs no faster than a plain array ([§7.1][s7-1]). A uniform vector gain
 spells one keyword as a vector,
 `Kp = @SVector fill(2.0, 3)`, and a scalar limit serves every component of a
 vector integrator. Two lengths are Julia's `DimensionMismatch`. The
-convention is one for every block because only broadcasting pairs the PID's
+convention is one for every component because only broadcasting pairs the PID's
 scalar defaults with a vector `Kp`, where promotion throws. A keyword given
-as `AsPort()` is a port of the block, not a field, and takes no part in the
+as `AsPort()` is a port of the component, not a field, and takes no part in the
 shape. The struct keeps
-its positional constructor. A block with one required parameter, such as
+its positional constructor. A component with one required parameter, such as
 `Constant(value)`, takes it positionally. Its docstring shows the keyword
 form, and its tests call it.
 
-A block's signal types carry the scalar as a type parameter. The walk
+A component's signal types carry the scalar as a type parameter. The walk
 substitutes type parameters and never fields ([§8.2][s8-2], [D-238][d-238]), so a `Float64`
 inside a parameterless struct is pinned whole, and a continuous stage that
 builds such a struct from `Dual`s fails the build's `Dual` probe ([D-307][d-307]).
-Every port type and every `x` leaf type a block ships is therefore
-`Pose{T}` rather than `Pose` with `Float64` fields. A block's own
+Every port type and every `x` leaf type a component ships is therefore
+`Pose{T}` rather than `Pose` with `Float64` fields. A component's own
 parameters, a discrete-tier type, and a value a continuous stage builds
 from pinned data alone need no parameter.
 
 ### Structure
 
-| Block | Status | Mechanism |
+| Component | Status | Mechanism |
 |---|---|---|
 | `Junction{In, Out, N}(f)`, with `SumJunction{V, N}`, `Or{N}`, `And{N}` | shipped | one wire per input; the consumer's consolidated input |
 | `Group` | shipped | the on-the-fly assembly ([§8.5][s8-5], [D-184][d-184]) |
@@ -192,7 +193,7 @@ an enum anyway. `Switch{V}` stays, `Bool` being no `Enum`.
 admitted on didactic value, for the structure the declaration layer forces, as
 the `Junction` is, not as a gain, so section 1's pricing still applies per
 instance. The port types are type parameters and never read off `f` ([D-033][d-033]), so
-a closure's output type is declared. `f` is applied in `y_direct`, so the block
+a closure's output type is declared. `f` is applied in `y_direct`, so the component
 is a stage 2 leaf, and `f` walks under `Dual`, which the probe checks. It is the
 one-input `Junction` with its input bare ([D-437][d-437]), a struct of its own
 since the junction's `in1` is the N-ary spelling. A `Pinned{Y}` is the struct
@@ -208,12 +209,12 @@ splits the static array.
 
 ### Sources
 
-| Block | Status | Mechanism |
+| Component | Status | Mechanism |
 |---|---|---|
 | `Constant(value)` | shipped | the pinned source; the zero-contributor wire and the rig stub |
 | `Step(; t_step, before = 0.0, after = 1.0, localized = true)`, with a guard on the bundle's `t` in either form | shipped | the jump is localized, or lands on a step boundary, by the guard's form, which `localized` picks ([D-179][d-179]) |
 | `Sequence(; times, values, localized = true)`, `N` strictly ascending breakpoints and `N + 1` values | shipped | the breakpoint schedule, `Step` at `N = 1`, covering Signal Builder, Repeating Sequence Stair and a finite pulse train |
-| `Source{V}(f)`, a user function of the nominal `t` | shipped | covers ramps and sines without a block each; pinned ([D-312][d-312]): `t` is the activation scalar, stripped before `f` |
+| `Source{V}(f)`, a user function of the nominal `t` | shipped | covers ramps and sines without a component each; pinned ([D-312][d-312]): `t` is the activation scalar, stripped before `f` |
 | `GaussianWhiteNoise(; seed, μ, σ, psd)`, a discrete Gaussian white noise process, seed as instance data | shipped | a counter-based draw; `σ` per sample, or the two-sided density `psd` read against the bundle's `Δt` as `σ² = psd/Δt` |
 
 **`Sequence`.** A mode counts the breakpoints passed, read by `y_state`. One
@@ -224,7 +225,7 @@ non-localized step or both at or before `t₀`, present no fresh edge after the
 first firing ([§10.6][s10-6]), so an increment would stick one short for good. It is
 not periodic, since a periodic reset is not a time-guard event ([D-362][d-362]). A
 periodic pulse is a discrete counter at its own period, `s⁺ = mod(s + 1, K)`, a
-one-liner and no block.
+one-liner and no component.
 
 **`GaussianWhiteNoise`.** The sample is a pure function of the seed and a tick
 counter, the store's one field ([D-231][d-231]), so the stage draws and no generator
@@ -232,15 +233,15 @@ or workspace is needed.
 
 ### Continuous dynamics
 
-| Block | Status | Mechanism |
+| Component | Status | Mechanism |
 |---|---|---|
 | `Integrator(; x0 = 0.0, reset = false)`, `reset = true` a type parameter adding the `Bool` input `reset` | shipped | walks under `Dual`; the commanded continuous reset as an event ([§3.1][s3-1], [§5.3][s5-3], [D-141][d-141]) |
 | `LimitedIntegrator{V, L, R}` over `Float64` or an `SArray` | shipped | a mode the derivative reads, and four events; departures localized or non-localized, by `L` ([D-179][d-179]); `saturation` published |
 | `LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized = true)` | shipped | position limits on the double integral of its input, the mechanical stop, Simulink's Second-Order Integrator Limited |
 | `FirstOrderLag{V}`, time constant as instance data | shipped | the actuator model and [§5.5][s5-5]'s α-filter idiom |
-| a continuous rate limiter | not admitted | `q̇ = clamp((in - q) / τ, -R, R)` is one line, its kinks are second-order and its offsets decay; the discrete form is the block |
-| `StateSpace(; A, B, C, D, x0)` from any matrices, scalar or `SVector` ports by the matrix shapes | shipped | stored as static ones; `D` picks the stage, so the feedthrough class is a type parameter; `x0` in the user's coordinates; `linear_blocks.md` |
-| `TransferFunction(; num, den, u0)` from coefficient tuples or vectors, one input and one output | shipped | realized to a `StateSpace` at construction; started at rest or at the steady state for `u0`, never from an `x0`; `linear_blocks.md` |
+| a continuous rate limiter | not admitted | `q̇ = clamp((in - q) / τ, -R, R)` is one line, its kinks are second-order and its offsets decay; the discrete form is the library component |
+| `StateSpace(; A, B, C, D, x0)` from any matrices, scalar or `SVector` ports by the matrix shapes | shipped | stored as static ones; `D` picks the stage, so the feedthrough class is a type parameter; `x0` in the user's coordinates; `linear_systems.md` |
+| `TransferFunction(; num, den, u0)` from coefficient tuples or vectors, one input and one output | shipped | realized to a `StateSpace` at construction; started at rest or at the steady state for `u0`, never from an `x0`; `linear_systems.md` |
 | a continuous transport delay | not admitted | a history buffer indexed by the step; `reports/20260809_extensions_charter/report.md` item 4 |
 
 **`Integrator`.** The reset is one non-localized event whose guard reads
@@ -255,7 +256,7 @@ is localized. A `Bool` input is held, never tapped, so the linearization has no
 by contrast.
 
 **`LimitedIntegrator`.** The hit pair of events reads `x - limit` and on the
-limit `u`, so a block freed there presents a fresh edge when its input turns
+limit `u`, so a component freed there presents a fresh edge when its input turns
 outward. The leave pair is gated by the mode and strictly inward input. Modes
 are `Int8` codes, with `4N` per-component events over a vector. `reset = true`
 is the `Integrator`'s reset form, a fifth event on the flag's rising edge whose
@@ -267,10 +268,10 @@ and one inside lands free.
 naming the leaf it starts. It has `LimitedIntegrator`'s mode and four events,
 the hit pair on `q` and the leave pair on the input's sign, and hit handlers
 that write the limit and zero the velocity. Saturated means at rest on the
-limit, so a block that reaches a limit while its input already points back frees
-in the next round of the same boundary and leaves from rest. A hit guard reads
-the first nonzero of `q - limit`, `v` and `u`, so a block freed at rest does not
-hold its predicate and an input turning outward again, even inside the same
+limit, so a component that reaches a limit while its input already points back
+frees in the next round of the same boundary and leaves from rest. A hit guard
+reads the first nonzero of `q - limit`, `v` and `u`, so a component freed at rest does
+not hold its predicate and an input turning outward again, even inside the same
 step, presents a fresh edge ([§2.3][s2-3]), while a slow departure whose `q` rounds back
 onto the limit does not re-fire. A `q0` on a limit with `v0` pointing back in
 starts free and keeps it. Under the non-localized leave `v` carries an
@@ -283,20 +284,20 @@ an example model where its Zeno behaviour shows the event budget ([§10.6][s10-6
 a row.
 
 **`FirstOrderLag`.** For a scalar signal it is the lag form of
-`TransferFunction`, and the block stays for static-array signals, for `x0` in
+`TransferFunction`, and the component stays for static-array signals, for `x0` in
 the signal's own coordinates and for the spelling.
 
 **`TransferFunction`.** The stage arms are shared through the abstract
-`LinearBlock{FT}`, and the class comes from the numerator's degree.
+`AbstractLinearSystem{FT}`, and the class comes from the numerator's degree.
 
 ### Discontinuities
 
-| Block | Status | Mechanism |
+| Component | Status | Mechanism |
 |---|---|---|
 | `Relay{V}` (hysteresis) over `Float64` or an `SArray` | shipped | the reference mode-switching leaf; modes as `Int8` codes, `2N` per-component events over a vector |
 | `Comparator(; threshold, lower, upper, localized = true)`, `threshold` alone or both limits, a `Bool` output | shipped | Hit Crossing, Compare To Constant and the threshold criterion of Simulink's Switch in one; a plain threshold at `lower == upper`, hysteresis between them |
 | Saturation, dead zone | not admitted | one-line clamps; when localization doctrine wants a declared kink, a `Comparator` on the same signal lands the step on it |
-| Quantizer, Coulomb and viscous friction | not admitted | the quantizer belongs on the discrete tier; the friction block is a memoryless sign law |
+| Quantizer, Coulomb and viscous friction | not admitted | the quantizer belongs on the discrete tier; the friction component is a memoryless sign law |
 
 **`Relay`.** The fall is strict as the `Comparator`'s, so `lower == upper` is a
 plain threshold that chatters nowhere.
@@ -318,17 +319,17 @@ and slip modes is a mechanics package's.
 
 ### Discrete tier
 
-| Block | Status | Mechanism |
+| Component | Status | Mechanism |
 |---|---|---|
 | `UnitDelay{V}` | shipped | the tier's native `z⁻¹` ([§10.6][s10-6]) |
 | `DiscreteIntegrator{V, R}` | shipped | tier semantics; forward Euler, its bare output the state from `s0`, so it breaks a loop as `UnitDelay` does; no gain and no limits, as `Integrator` has none |
 | `RateLimiter{V}` | shipped | tier semantics; feedthrough, its bare output following its bare input within `rising Δt` up and `falling Δt` down per tick from `s0`; its `s_update` stores `y` |
 | `Backlash{V}` | shipped | `RateLimiter`'s sibling, admitted on tier semantics as the rate limiter was and priced as the one-liner it is: `y = clamp(s, u - w/2, u + w/2)`, its `s_update` storing `y` |
-| `DiscreteStateSpace` and `DiscreteTransferFunction`, the pair in `z` | shipped | the continuous pair mirrored over `DiscreteLinearBlock{FT}`, `s_update` for `x_deriv`; the period is the scope's and the block cannot check it; `linear_blocks.md`, section 9 |
-| `DiscretizedStateSpace` and `DiscretizedTransferFunction`, from a continuous system | shipped | the zero-order hold taken per tick at the bundle's `Δt`, so the class and the initial condition are the continuous ones; `linear_blocks.md`, section 9 |
-| `DiscreteLimitedIntegrator{V, R}` | shipped | tier semantics by contrast: the continuous block's mode and four events are one `clamp` in `s_update`, with no mode store and no localization |
+| `DiscreteStateSpace` and `DiscreteTransferFunction`, the pair in `z` | shipped | the continuous pair mirrored over `AbstractDiscreteLinearSystem{FT}`, `s_update` for `x_deriv`; the period is the scope's and the component cannot check it; `linear_systems.md`, section 9 |
+| `DiscretizedStateSpace` and `DiscretizedTransferFunction`, from a continuous system | shipped | the zero-order hold taken per tick at the bundle's `Δt`, so the class and the initial condition are the continuous ones; `linear_systems.md`, section 9 |
+| `DiscreteLimitedIntegrator{V, R}` | shipped | tier semantics by contrast: the continuous component's mode and four events are one `clamp` in `s_update`, with no mode store and no localization |
 | `Delay(; K, v0)` | shipped | the tier's `z⁻ᴷ` in a ring store, `K` ticks of the component's own period ([§10.5][s10-5]), one output, `K = 1` the `UnitDelay` in keyword spelling |
-| a trapezoidal or backward-Euler integrator, and Tustin on the discretized pair | not admitted | all three feedthrough, which costs the loop break `DiscreteIntegrator` exists for; a Tustin design arrives discretized, through the pair in `z`; `linear_blocks.md`, section 9.2 |
+| a trapezoidal or backward-Euler integrator, and Tustin on the discretized pair | not admitted | all three feedthrough, which costs the loop break `DiscreteIntegrator` exists for; a Tustin design arrives discretized, through the pair in `z`; `linear_systems.md`, section 9.2 |
 
 **`DiscreteIntegrator`.** `reset = true` adds the `Bool` input `reset`, a level
 reset in `s_update` ([§5.3][s5-3]). The update writes `s0` while the flag reads true, so
@@ -338,7 +339,7 @@ every input a feedthrough edge and costs the loop break, so it is not offered.
 
 **`Backlash`.** The output holds inside a deadband of `width` about itself and
 follows the input at half a width's offset outside it, from `s0` as the previous
-output. The continuous block needs the sign of `u̇`, which no stage sees and
+output. The continuous component needs the sign of `u̇`, which no stage sees and
 Simulink fakes.
 
 **`DiscreteLimitedIntegrator`.** It has `LimitedIntegrator`'s interface,
@@ -348,27 +349,27 @@ off the state from stage 1. The reset is the level form of
 
 ### Stop-gradient
 
-| Block | Status | Mechanism |
+| Component | Status | Mechanism |
 |---|---|---|
 | `Freeze{V}` over `Float64` and `SArray` | shipped | the declared stop-gradient ([D-266][d-266]) |
 | `Freeze` over a struct `V` | not admitted | the strip for one struct is a leaf of the author's, tolerant in and pinned out; the generic allocation-free leafwise map has no user ([D-312][d-312]) |
 
 ### Controllers
 
-| Block | Status | Mechanism |
+| Component | Status | Mechanism |
 |---|---|---|
 | `PID(; Kp, …, hold, tracking)` over `Float64` or an `SArray` | shipped | one law, `q̇ = Ki ε + (ref - u_raw) / Tt`, componentwise over a static vector, with two independent axes, the hold and the tracking reference `v` |
-| `DiscretePID(; Kp, …, hold, tracking)` | shipped | the positional law carried to the discrete tier, the ports, the gate, the reference rule and the parameters shared through `PIDBlock{V, Hold, Track, Fixed}` |
+| `DiscretePID(; Kp, …, hold, tracking)` | shipped | the positional law carried to the discrete tier, the ports, the gate, the reference rule and the parameters shared through `AbstractPID{V, Hold, Track, Fixed}` |
 | `LQRTracker(; K_fbk, K_fwd, …)` | shipped | the LQR tracker about a trim point; inputs `x`, `z` and `z_ref` as static vectors, outputs `u` and `u_raw` from stage 2; gains designed outside, from `trim!` and `linearize`; no saturation output |
-| `DiscreteLQRTracker(; K_fbk, K_fwd, …)` | shipped | the tracker on the discrete tier over `LQRTrackerBlock`, forward Euler on the integrator and the correction's exact step as `DiscretePID` |
+| `DiscreteLQRTracker(; K_fbk, K_fwd, …)` | shipped | the tracker on the discrete tier over `AbstractLQRTracker`, forward Euler on the integrator and the correction's exact step as `DiscretePID` |
 
 **`PID`.** The hold adds the saturation code that gates the integrator by sign
 and the flag `engaged` under which the error is gated off, not engaged taking
 precedence. The tracking reference `v` is what `u_raw` converges to while
-limited or not engaged, so a block not in command follows the selected command
-and engages bumplessly, with the fallback to the own `u` while free. Otherwise
-back-calculation runs against the own limits. The three ports are at the
-output's shape, and `Ki` sits inside the integral. Every parameter is a `V`, and
+limited or not engaged, so a component not in command follows the selected
+command and engages bumplessly, with the fallback to the own `u` while free.
+Otherwise back-calculation runs against the own limits. The three ports are at
+the output's shape, and `Ki` sits inside the integral. Every parameter is a `V`, and
 any of them a port by `AsPort()`. The setpoint weights are `b = 1` and `c = 0`,
 so the derivative acts on the measurement by default. A fixed infinite `Tt` is
 refused with `tracking`. There is no saturation output, since a continuous code
@@ -382,8 +383,8 @@ on the derivative filter so `τd = 0` is the backward difference, and the
 correction's step `1 - e^{-Δt/Tt}` so every `Tt` is stable and `Tt = 0` is
 instant, which makes standby follow exactly. A second output `saturated`, the
 own clamp's `Int8` code written to the store at the tick and published from
-stage 1 at the next, one tick stale, serves an outer block's hold, named apart
-from the hold's input ([D-384][d-384]). See `pid_anti_windup.md`, sections 9 to 11.
+stage 1 at the next, one tick stale, serves an outer component's hold, named
+apart from the hold's input ([D-384][d-384]). See `pid_anti_windup.md`, sections 9 to 11.
 
 **`LQRTracker`.** The law is
 `u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q` with
@@ -400,27 +401,27 @@ a port by `AsPort()`, which is how a gain schedule arrives. See
 loops of a cascade, each channel reaching a scalar consumer through
 `Unpack{Int8, NU}`. See `lqr_tracker.md`, sections 6 and 7.
 
-A flag-gated reset face on a library PI block is sugar over exactly the
+A flag-gated reset face on a library PI component is sugar over exactly the
 edge-triggered reset event of [§5.3][s5-3], which resets a continuous
 component on its input's edge ([D-141][d-141]). [Appendix A][sA] carries the
 continuous-reset contract too.
 
-The PID assembly of library blocks, the first variant as a `Group`, is an
-example model in the tests, the inspector's example beside the block, not a
+The PID assembly of library components, the first variant as a `Group`, is an
+example model in the tests, the inspector's example beside the component, not a
 library row. A tracking leaf wired from a memoryless clamp of its own output
 is refused as an artificial cycle ([§5.4][s5-4]), which is why the limits live inside
-the block.
+the component.
 
-### Additions to shipped blocks
+### Additions to shipped components
 
-Simulink features that are a keyword or an output on a shipped block, not a
+Simulink features that are a keyword or an output on a shipped component, not a
 row:
 
 - Saturation Dynamic, Rate Limiter Dynamic and Dead Zone Dynamic take their
   limits as ports, `AsPort()` on the limits of `RateLimiter`,
   `LimitedIntegrator` and `DiscreteLimitedIntegrator`: not admitted, on
-  2026-11-06. On the discrete blocks the scheduled form is the same one-liner
-  reading its limits off `u`, which a model writes as its own three-line
+  2026-11-06. On the discrete components the scheduled form is the same
+  one-liner reading its limits off `u`, which a model writes as its own three-line
   component, and the cascade case, inner limits set by an outer command, is
   what the controllers' scheduled `u_min` and `u_max` serve. On
   `LimitedIntegrator` a moving limit on a saturated state needs the limit's
@@ -453,17 +454,17 @@ order, each when wanted. A second sweep of Simulink's base library on
 backlash. The comparator, the reset and the schedule shipped first, as
 increment 86 on 2026-11-03, since the first two closed gaps a shipped
 docstring already named, and the limited double integrator as increment 87
-on 2026-11-04, and the structure blocks `Fn`, `Select` and `Fields` as
+on 2026-11-04, and the structure components `Fn`, `Select` and `Fields` as
 increment 88 on 2026-11-05, the day Tustin on the discretized pair and
 `Freeze` over a struct were retired from the candidates, and the discrete
 backlash as a loose commit on 2026-11-06, and the two additions to shipped
-blocks as increment 89 the same day, which closed the list. The example model
-(`examples_inventory.md`) is one
+components as increment 89 the same day, which closed the list. The example
+model (`examples_inventory.md`) is one
 source of further candidates: what it hand-writes
-twice is a block to list. Packaging beyond the `Redstone.Blocks` submodule,
+twice is a component to list. Packaging beyond the `Redstone.Library` submodule,
 a workspace sub-package or a separate repository, is an after-release
 question ([D-313][d-313]).
-The blocks are unexported from `Redstone.Blocks` ([D-226][d-226]), so a model file
+The components are unexported from `Redstone.Library` ([D-226][d-226]), so a model file
 imports the names it uses, and a file that also loads ControlSystems
 qualifies the two they share, `StateSpace` and `TransferFunction`.
 

@@ -451,6 +451,7 @@ were derived.
 | [D-450][d-450] | Refuse a run whose clock cannot order its boundaries | ratified |
 | [D-451][d-451] | Discard a replaying advance's late staging at its halt | ratified |
 | [D-452][d-452] | Split each step between a proposing backend and a shaping Model | ratified |
+| [D-453][d-453] | Retire the term block for the library's components | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -2096,6 +2097,9 @@ Annotation (2026-10-19): predicate selection is `select`, a selector of
 `input_passthrough` and `output_passthrough` ([D-251][d-251]), not a `faces` method.
 The face-route printer is `show(::Structure)` ([D-257][d-257]), not the `Build`
 printer ([§13.7][s13-7]).
+
+Annotation (2026-11-12): the library's components, blocks in the rejection
+below, are library components since [D-453][d-453]. The commitments stand.
 
 **Rejected.**
 - *Framework-privileged library blocks:* schema authority no longer total; the
@@ -14029,6 +14033,10 @@ as one group.
 Annotation (2026-10-08): stop is a stop request since [D-316][d-316], a `StopFlag`
 port, which the library spells `StopRequest`.
 
+Annotation (2026-11-12): a library block is a library component since
+[D-453][d-453], and the library is the submodule `Redstone.Library`. The guidelines
+and the rest stand.
+
 **Rejected.**
 - *A Simulink-sized library:* most of it is one-line expressions, and the
   cost model of [§9.7][s9-7] charges per component.
@@ -14321,6 +14329,9 @@ cell in every snapshot, so the log records when validity broke even on a run
 that continued. Two uses share the mechanism, validity breakdown and
 scenario completion, and the reason string is what tells a reader which; the
 framework never will.
+
+Annotation (2026-11-12): `StopRequest` is in `Redstone.Library` since
+[D-453][d-453]. The spelling and the rest stand.
 
 **Rejected.**
 - *Superseded position — a `Bool` face re-exported to the root and named by
@@ -15937,6 +15948,10 @@ reported up a cascade stands on Foundation Fieldbus alone.
 Annotation (2026-10-14): [D-385][d-385] folds the standby axis into the hold as its
 second input `engaged`, two type parameters in place of three; the tracker,
 the code and the companion rulings stand.
+
+Annotation (2026-11-12): the controller blocks are the controllers since
+[D-453][d-453], and their parents are `AbstractAntiWindupController`, `AbstractPID`
+and `AbstractLQRTracker`. The tracker and the rest stand.
 
 ### D-384 — Publish the discrete controllers' saturation code as `saturated`
 
@@ -17590,6 +17605,9 @@ the envelope `name` joined version one's shape with the visual grammar
 unreleased and the format having no reader to protect; the assembly-face type
 and kind are closed, the client resolving (its answer 4).
 
+Annotation (2026-11-12): the library is `Redstone.Library` since [D-453][d-453], so
+the example base name reads `Redstone.Library.PID`. The reading stands.
+
 **Rejected.**
 - *The table read literally, a closure and an `Array` as `struct`:* captures
   and an array's buffer are implementation, no value a widget edits.
@@ -19005,6 +19023,51 @@ method rejects a trial that blew up, so a rejected trial is never checked.
 - *Checking every trial for a nonfinite value:* rejection is how an adaptive
   method answers a step that blew up.
 
+### D-453 — Retire the term block for the library's components
+
+**Status.** ratified
+
+**Position.** A component the standard library ships is a library
+component, and the term *block* retires. Its other senses stay: a call that
+blocks, a state block, a code block. The names follow:
+
+- The library is the submodule `Redstone.Library`, in `src/library.jl`.
+- The five abstract parents take the `Abstract` prefix of the core's other
+  extension points: `AbstractLinearSystem`, `AbstractDiscreteLinearSystem`,
+  `AbstractAntiWindupController`, `AbstractPID` and `AbstractLQRTracker`.
+- No aliases and no deprecation shims, on [D-220][d-220]'s terms.
+
+**Spec.** [§5.3][s5-3], [§8.2][s8-2], [§9.7][s9-7], [§10.5][s10-5], [§13.5][s13-5], [§13.7][s13-7], [§13.9][s13-9], [§14.2][s14-2], [§14.10][s14-10], [Appendix B][sB],
+[Appendix D][sD]
+
+**Rationale.** The word named a component the standard library ships and
+carried no framework meaning ([D-062][d-062]). A term with no meaning of its own
+sends a reader looking for its difference from *component*, and there is
+none. A reader from Simulink brings a meaning, that a
+block is the unit every model is built from. The framework calls that unit
+a component, and the library's members have no privilege a user's
+component lacks ([D-313][d-313]). "Library component" says the one fact the word
+held, and in most sentences the context says it and "component" suffices.
+
+"Library" is the noun the spec already uses for the thing, so the module's
+name and the prose agree. "Linear system" is already the phrase of the
+library's docstrings. `AbstractPID` and `AbstractLQRTracker` read as `Array
+<: AbstractArray` does. The controllers' parent takes two type parameters,
+the anti-windup axes, and its methods are the gate on the integrator's
+input and the correction's reference that the axes set. The name says what
+it carries.
+
+**Rejected.**
+- *Keeping block:* a second name for a component, and the one a Simulink
+  reader reads as the unit of every model.
+- *`Redstone.Components`:* every model's parts are components, and the
+  module's name would claim the term for the library alone.
+- *`Redstone.Stdlib` or `Redstone.StandardLibrary`:* to a Julia reader both
+  name Julia's standard libraries.
+- *`AbstractController` for the controllers' parent:* it names every
+  controller, while the type holds only those with the two anti-windup
+  axes, and a user's controller without them could not subtype it.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -19432,6 +19495,7 @@ method rejects a trial that blew up, so a rejected trial is never checked.
 [d-450]: #d-450--refuse-a-run-whose-clock-cannot-order-its-boundaries
 [d-451]: #d-451--discard-a-replaying-advances-late-staging-at-its-halt
 [d-452]: #d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
+[d-453]: #d-453--retire-the-term-block-for-the-librarys-components
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

@@ -80,7 +80,7 @@ const ROSTER = ["log.md",
                 "companions/limited_integrator_variants.md",
                 "companions/pid_anti_windup.md",
                 "companions/lqr_tracker.md",
-                "companions/linear_blocks.md",
+                "companions/linear_systems.md",
                 "companions/fused_evaluation_lineage.md"]
 
 # Companions that cite their own numbered sections (the walkthroughs). Only

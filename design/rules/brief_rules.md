@@ -47,8 +47,8 @@ counts, and restates nothing a rules file says. The pipeline it feeds is
   spec-named function is a ruling. `README.md`'s quick start is a component
   file, so a declaration-surface change routes it into scope.
 - Grep every new name across `test/` in both directions: a same-named type
-  silently rebinds a fixture module. The block keeps the name; the fixture
-  is renamed as its own commit before the brief, gate run.
+  silently rebinds a fixture module. The library component keeps the name; the
+  fixture is renamed as its own commit before the brief, gate run.
 - A new declaration says whether it joins the §8.1 family (D-246's check).
   A loop-signature change lists every direct caller. A stage prompt never
   widens a grep the brief scoped. Before moving a file below another in
@@ -60,7 +60,7 @@ counts, and restates nothing a rules file says. The pipeline it feeds is
   class, excerpt and proposed rewrite; the coordinator adjudicates the
   borderline rows; the stage reports a disagreement rather than deviating.
 
-## Library blocks
+## Library components
 
 - An event design in an inventory row is probed against §10.6's
   bookkeeping before the brief; `companions/library_inventory.md` section
@@ -71,13 +71,13 @@ counts, and restates nothing a rules file says. The pipeline it feeds is
 - A handler pin is taken from the state where no other event repairs the
   handler's work: a reset onto a limit pinned from a free start lets the
   hit event clamp and code it, and the handler's own mutants survive. A
-  block that gains a form (a policy, a reset) runs every existing policy
+  component that gains a form (a policy, a reset) runs every existing policy
   of that form; a model whose `localized` reaches only the sources leaves
-  the block's non-localized arm untested.
-- A continuous block's allocation testset measures its phase bodies at
+  the component's non-localized arm untested.
+- A continuous component's allocation testset measures its phase bodies at
   `LinearizeDual` beside `Float64`, by `test_executor.jl`'s loop over the
   two scalars. A `Dual` model freezes the discrete tier and compiles events
-  out, so a discrete block has no bodies to measure there.
+  out, so a discrete component has no bodies to measure there.
 
 ## Prose for agents
 
@@ -101,7 +101,7 @@ counts, and restates nothing a rules file says. The pipeline it feeds is
   claim: sweep the step over a few tick alignments and open the window
   where every alignment reads the same.
 - A diagnostic two raisers share has every sentence checked against each.
-- A new port is probed by building the block alone as a root (D-210). A
+- A new port is probed by building the component alone as a root (D-210). A
   design procedure a companion states, signs included, is checked
   numerically before the docs commit.
 

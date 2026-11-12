@@ -1484,7 +1484,7 @@ They are not a runtime write path.
 **A commanded reset of a discrete component is a same-tick input, consumed in the
 output stage** ([D-089][d-089], [D-342][d-342]). The supervisor publishes `engage` and the latch
 value from its own feedthrough stage. The compensator, here a
-proportional-integral `PI` block, sits topologically after the supervisor and
+proportional-integral `PI` component, sits topologically after the supervisor and
 honors them *this tick*:
 
 ```julia
@@ -2679,7 +2679,7 @@ evaluation of a user function) to a named wiring error at build
 an implementation cannot take them** ([D-266][d-266]). An AD-opaque
 implementation that must participate keeps its entry tolerant and supplies a
 local derivative rule ([§14.10][s14-10]). A walking producer feeds a pinned
-entry through the `Freeze` block ([§13.7][s13-7]).
+entry through the `Freeze` component ([§13.7][s13-7]).
 
 `Int`/`Bool`/enum leaves and abstract reference-typed entries stand as they always
 were, admitting what their declared bound admits. **[Abstract entries](#g-abstract-entry) state
@@ -2732,7 +2732,7 @@ A violation of the walk clause is `WalkingFaceAtFrozenEntry`, naming both
 endpoints, the leaf and both declared leaf types ([Appendix C][sC]). The
 message carries both remedies, "remove the entry's `Pinned` if the consumer
 promotes; feed it from a non-walking source if the freeze is genuine". The
-`Freeze` block is the one-line spelling of the second remedy ([§13.7][s13-7],
+`Freeze` component is the one-line spelling of the second remedy ([§13.7][s13-7],
 [D-266][d-266]).
 
 The walk clause also gives the two sides of a contract their failure
@@ -3470,7 +3470,7 @@ The edges of the container form are fixed by rule.
 
 The *immutable* version of grouping components by plain calls needs no builder
 (`Assembly()` plus `add!`/`connect!`, rejected below). It is already expressible
-under this section's rules. **`Group` expresses it as a single library component**,
+under this section's rules. **`Group` expresses it as a single [library component](#g-library-component)**,
 part of the library ([§13.7][s13-7], [D-184][d-184]). A `NamedTuple` field's elements
 are its children by the container rule, name-transparent so they go by bare key
 ([D-211][d-211]). Its declarations are ordinary functions of the *instance*, free to read
@@ -5574,7 +5574,7 @@ section 4).
 - Activations are lazy ([§9.4][s9-4]), so a session that never linearizes never
   compiles `Dual`.
 - The package's precompile workload bakes the generic machinery into the
-  package image. A closed loop of library blocks runs through `build`,
+  package image. A closed loop of the library's components runs through `build`,
   `Simulation`, `init!`, `step!`, `run!`, the readers, `series`,
   `checkpoint`, `restore!`, `trim!` and `linearize` while the package
   precompiles, which adds about 12 s to its precompilation, 30 MB to its
@@ -6802,7 +6802,7 @@ Coincident ticks give a consumer fresh same-instant reads via topological
 order. That is the idealized synchronous-sampling picture. A phase stagger
 makes the same reads pipelined and deterministically aged instead. That is the
 structural expression of an acquisition pipeline's latency, obtained with no
-delay blocks. The two-tick and seven-tick reads in the example above are the
+delay components. The two-tick and seven-tick reads in the example above are the
 deterministic aging of a stagger, in that model's numbers.
 
 A stagger is also a load-shaping tool under real-time [pacing](#g-pacing) (waits
@@ -11194,7 +11194,7 @@ Its output is consumed by nobody, which [§6.1][s6-1] allows silently ([D-084][d
 discrete children only, so one primitive sits anywhere in the tree ([§10.5][s10-5],
 [D-019][d-019]). Fed by a discrete detector, it sees the tick at the tick's own boundary,
 because the boundary sweep walks the full execution order in topological order
-([§10.5][s10-5], [D-147][d-147]). The block holds no privilege. Any [component](#g-component) (the unit of
+([§10.5][s10-5], [D-147][d-147]). `StopRequest` holds no privilege. Any [component](#g-component) (the unit of
 modeling, a primitive or an assembly of components) may publish a `StopFlag` port
 directly.
 
@@ -11496,32 +11496,33 @@ endpoints in the same slash form.
 A standard component library makes good on the junction promise
 ([§6.2][s6-2]). That promise rests on explicit junctions being *cheap*. A
 junction hand-written per arity per type is not cheap. The junctions, summing
-junctions and Bool gates alike, are the library's seed ([D-062][d-062]). The
-library's components are [blocks](#g-block) (components the standard library
-ships, with no privilege of their own).
+junctions and Bool gates alike, are the library's seed ([D-062][d-062]). A
+component the library ships is a [library component](#g-library-component),
+with no privilege of its own ([D-453][d-453]).
 
-**A block joins the library's inventory by judgement against three guidelines**
-([D-313][d-313]). The guidelines ask whether a block is domain-agnostic and generally
-useful, whether it has didactic value, and whether its implementation is
-difficult to get right. None is a requirement. They are weighed, not satisfied
-one by one, and a listed block is built whenever wanted. A one-line expression
-such as a gain earns no block, because a separate component costs a build entry,
-a cell, a gather and a scatter ([§9.7][s9-7]). Domain components, such as aerodynamics,
+**A component joins the library's inventory by judgement against three
+guidelines** ([D-313][d-313]). The guidelines ask whether a component is
+domain-agnostic and generally useful, whether it has didactic value, and
+whether its implementation is difficult to get right. None is a requirement.
+They are weighed, not satisfied one by one, and a listed component is built
+whenever wanted. A one-line expression such as a gain earns no library
+component, because a separate component costs a build entry, a cell, a gather
+and a scatter ([§9.7][s9-7]). Domain components, such as aerodynamics,
 engines or sensors, belong in separate packages built on the framework.
 Simulink's library is a language, while this is a toolbox.
 
-The spec names a block where a ruling spells it: the `Junction`, with
+The spec names a library component where a ruling spells it: the `Junction`, with
 `SumJunction{V, N}`, `Or{N}` and `And{N}` as its named forms, `UnitDelay{V}`,
 `Constant{V}`, `Freeze{V}` and `StopRequest`. The full inventory, and the Simulink mapping that prunes it, live
 in `companions/library_inventory.md`. `UnitDelay` is the spelling the second
-loop-breaking remedy ([§5.5][s5-5]) needs. `Constant{V}` is the source block ([D-143][d-143]).
+loop-breaking remedy ([§5.5][s5-5]) needs. `Constant{V}` is the source component ([D-143][d-143]).
 `Freeze{V}` is the declared stop-gradient ([D-266][d-266]). `StopRequest` is the library
 spelling of a [stop request](#g-stop-request) (an output port of the framework enum `StopFlag`)
 ([§13.5][s13-5], [D-316][d-316]).
 
-The library is the submodule `Redstone.Blocks`, `Group` included, written
+The library is the submodule `Redstone.Library`, `Group` included, written
 against the extension-only surface ([§8.1][s8-1]) as a user's component file
-is ([D-313][d-313]). A workspace sub-package or a separate repository is an
+is ([D-313][d-313], [D-453][d-453]). A workspace sub-package or a separate repository is an
 after-release question.
 
 One member is admitted by persona. `Group` is the on-the-fly
@@ -11531,7 +11532,7 @@ its declaration-layer treatment lives in [§8.5][s8-5] ([D-184][d-184]). `Group`
 serves the model assembler, for whom topology is data rather than a named
 type. It needs no rule the declaration layer does not already have.
 
-The doctrine is that **library blocks are ordinary components**, with no
+The doctrine is that **a library component is an ordinary component**, with no
 framework privileges and no special vocabulary ([D-062][d-062]). Ordinary
 status is what keeps [schema authority](#g-schema-authority) total
 (declarations define structure; evaluation only checks conformance). That
@@ -11648,23 +11649,23 @@ y_state(c::Constant, _) = c.value              # the value the instance holds
 `Constant` is a stateless continuous primitive, so the tier-transparency argument
 above already covers discrete consumers. No discrete variant is needed
 ([D-143][d-143]). **The primitive is deliberately [pinned](#g-walked) at that
-value's own type** ([D-312][d-312]), because the block's output *is* its
+value's own type** ([D-312][d-312]), because the component's output *is* its
 stored value. A `Constant{Float64}` declares a `Pinned{Float64}` port and
 means it. A constant is never seeded, so it carries zero partials under any
 `Dual` [activation](#g-activation) (the build's typed products at a given
 scalar type), and the pinned port says so where a walking one would promote
 the value and declare less. The honest pin is spelled rather than inferred.
-The same holds for every library block whose output depends on neither its
+The same holds for every library component whose output depends on neither its
 continuous state nor a walking input, such as a step source or a relay, and
 each declares its output pinned ([D-312][d-312], [D-411][d-411]).
 
-Two uses need `Constant` ([D-143][d-143], [D-410][d-410]), though a listed block needs none to be
-built ([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one. There, a
+Two uses need `Constant` ([D-143][d-143], [D-410][d-410]), though a listed component needs none to
+be built ([D-313][d-313]). The zero-contributor configurations ([§6.2][s6-2]) are one. There, a
 required aggregate input has no physical contributor, and the zero total must be
-spelled as a wire. The rig stub below is the other. The block's value is
+spelled as a wire. The rig stub below is the other. The component's value is
 instance data, like junction arity, not an overridable default ([D-143][d-143]). A
 configuration wanting an externally settable source uses a root input ([§11.3][s11-3]),
-which keeps the block from drifting into a back-door input default. A handle
+which keeps the component from drifting into a back-door input default. A handle
 that references bulk data never surfaces as a root input ([D-237][d-237]); a rig holds
 such a handle through a [constant source](#g-constant-source) (a `Constant`, publishing the value its
 instance holds) instead ([§14.9][s14-9], [D-364][d-364]).
@@ -11681,21 +11682,21 @@ y_types(::Freeze{V}) where {V} = Pinned{V}
 y_direct(::Freeze, (; u)) = ForwardDiff.value.(u)   # leafwise strip, by broadcast
 ```
 
-At nominal the strip is the identity, so the block costs one gather and one
+At nominal the strip is the identity, so the component costs one gather and one
 scatter. **`V` is a `Float64` or an `SArray` of `Float64`, constrained at the type**
 ([D-312][d-312], [D-320][d-320]), so a struct-valued freeze is refused at the
 spelling. An author who needs one writes the strip for that struct in a leaf
-of their own, tolerant in and pinned out as the block is. The bound also refuses a `Float32` or an
-`MVector` there, which the build would otherwise refuse later ([§7.1][s7-1]).
-Under a `Dual` activation the block drops the partials, and its output
+of their own, tolerant in and pinned out as `Freeze` is. The bound also refuses a
+`Float32` or an `MVector` there, which the build would otherwise refuse later
+([§7.1][s7-1]). Under a `Dual` activation the component drops the partials, and its output
 satisfies the pinned entry. What the wire then declares is a zero coupling in
 every Jacobian along that path ([D-266][d-266]), the modeling decision
 [§14.10][s14-10] asks an author to state on the page rather than bury
 mid-expression. A sampler
 is the other non-walking source, and it changes the model, holding the value
-between ticks ([§10.5][s10-5]). The block is for a continuous value the consumer cannot
+between ticks ([§10.5][s10-5]). `Freeze` is for a continuous value the consumer cannot
 differentiate through. Where the coupling matters to the Jacobian, the local
-rule ([§14.10][s14-10]) is the answer, not this block.
+rule ([§14.10][s14-10]) is the answer, not this component.
 
 #### The component test rig
 
@@ -11733,7 +11734,7 @@ input_wires(rig::StrutRig) =
 ```
 
 That stub child is typically just a `Constant` holding the test handle, which
-makes it the source block's first shipped instance ([D-143][d-143], [D-410][d-410]). Bespoke
+makes it the source component's first shipped instance ([D-143][d-143], [D-410][d-410]). Bespoke
 stubs remain ordinary components wherever the double must compute something.
 
 The rig adds zero new machinery, because wiring and `except` already exist
@@ -11747,7 +11748,7 @@ The rig is [`design_world`](#g-design_world)'s little sibling
 world for trim and linearization, the rig mounts one component behind its own
 root faces for unit tests and open-loop probing. The machinery is deliberately
 ordinary end to end, with no framework support. That makes the rig, like the
-library blocks, a standing ergonomics test of the declaration rules.
+library's components, a standing ergonomics test of the declaration rules.
 
 ### 13.8 Cycle diagnosis: feedthrough tracing
 
@@ -12004,11 +12005,11 @@ supertype, the method that applies.
 
 **A type is described once, by its qualified base name, and an instance by
 a parameter summary** ([D-432][d-432]). The name joins the type's parent module,
-submodules included, and its unparameterized name, `Redstone.Blocks.PID`,
-which is what its docstring and declaration methods attach to; a `const`
-alias is reported as the type it aliases. The printed types beside it, the
-node's signature and a face's type, are display text as the REPL prints them,
-and the base name is the identity ([D-433][d-433]). The docstring is the one
+submodules included, and its unparameterized name, `Redstone.Library.PID`
+([D-453][d-453]), which is what its docstring and declaration methods attach
+to; a `const` alias is reported as the type it aliases. The printed types beside
+it, the node's signature and a face's type, are display text as the REPL prints
+them, and the base name is the identity ([D-433][d-433]). The docstring is the one
 written on the type itself, or, when the type has none, the first its binding
 holds ([D-433][d-433]). The `types` row holds the docstring as Markdown source and the
 source locations of the declaration methods the type defines, `u_types`,
@@ -12347,8 +12348,8 @@ reaching into one powerplant is defined for the aircraft that hold that
 powerplant ([D-414][d-414]). Ownership alone is convention. It is a fact about who
 maintains the code, and the build cannot see it, so keeping a deep path inside
 an owned subtree is idiomatic rather than machine-checked ([D-065][d-065]). `set`, `at`
-and `combine` are ordinary functions with no privileges, as the blocks of [§13.7][s13-7]
-are ordinary components.
+and `combine` are ordinary functions with no privileges, as the library's
+components ([§13.7][s13-7]) are ordinary.
 
 A `combine` collision is two condition entries on one leaf. **Collisions are
 errors at resolution** ([D-065][d-065]). The error is `DuplicateConditionLeaf`
@@ -13521,7 +13522,7 @@ full-coverage condition `trim!` takes as a keyword). In a full world it is a
 sibling component's root inputs. In a thin rig it is a root input holding an
 isbits [handle](#g-field-handle) (an immutable query object carried on an
 ordinary port). In a thin rig it can also be a [constant
-source](#g-constant-source) (a library component publishing a value its instance
+source](#g-constant-source) (a [library component](#g-library-component) publishing a value its instance
 holds) holding a bulk-data handle ([D-364][d-364]). The problem *receives* its
 handles through the user parameter record ([§14.7][s14-7]), and only queries
 them.
@@ -13837,7 +13838,7 @@ this one component and exact everywhere else. **Linearization keeps this one
 mechanism and no perturbation-based fallback** ([D-266][d-266]). The derivative-free trim
 fallback ([§14.8][s14-8]) would serve problems with no Jacobian columns, a case
 linearization does not have. `handle_walk_walkthrough.md` places the rule beside
-the `Freeze` block ([§13.7][s13-7]) and the pinned input entry.
+the `Freeze` component ([§13.7][s13-7]) and the pinned input entry.
 
 What stays recorded is only the remaining tooling over the schema's declared
 non-participation ([D-426][d-426]). One piece is pinned-face validation by the tap
@@ -14253,13 +14254,14 @@ the handler's `(; x, m)` under the return law ([§5.2][s5-2], [§7.1][s7-1],
 
 #### The component library
 
-The standard library is the submodule `Redstone.Blocks`, and it is public as a
-whole. Every block in the inventory of `companions/library_inventory.md`,
+The standard library is the submodule `Redstone.Library`, and it is public as a
+whole. Every component in the inventory of `companions/library_inventory.md`,
 section 3, is reached by import from the submodule, as the examples do
-([§13.7][s13-7], [D-313][d-313]). The inventory, not this appendix, is the list, since a listed
-block is built whenever wanted, and the API reference renders it. The spec
-names a block only where a ruling spells it ([§13.7][s13-7]). `Group`, the on-the-fly
-assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
+([§13.7][s13-7], [D-313][d-313], [D-453][d-453]). The inventory, not this appendix, is the list, since a
+listed component is built whenever wanted, and the API reference renders it. The
+spec names a [library component](#g-library-component) only where a ruling spells it
+([§13.7][s13-7]). `Group`, the
+on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 
 #### Build
 
@@ -15263,10 +15265,6 @@ never does it, and an unconnected input [port](#g-port) is a build error ([§6.1
 Deriving a passthrough's `except` from the [assembly's](#g-assembly) own wire list would be
 auto-bubbling under another name ([§8.8][s8-8]).
 
-<a id="g-block"></a>**block** — a [component](#g-component) the standard library ships. The word
-carries no framework meaning, and a block has no privilege a user's component
-lacks ([§13.7][s13-7], [D-062][d-062]).
-
 <a id="g-bound-law"></a>**bound law / walk clause** — the two clauses that
 type-check a wire. The bound law requires the producer's declared type at
 [nominal](#g-nominal) to be a subtype of the consumer's input entry, and equal to it for a
@@ -15359,6 +15357,10 @@ against the API's words ([§5.3][s5-3]). `f` is `x_deriv`, `g` is `s_update`, an
 The [bundle](#g-bundle) letters are API names ([§5.2][s5-2]). `h` also names an integration
 step, and `h_max` the deployment's bound on it ([§2.2][s2-2]). `z` appears only in the delay `z⁻¹` ([§3.4][s3-4],
 [§10.6][s10-6]).
+
+<a id="g-library-component"></a>**library component** — a [component](#g-component) the standard
+library ships. The phrase carries no framework meaning, and a library component
+has no privilege a user's component lacks ([§13.7][s13-7], [D-062][d-062], [D-453][d-453]).
 
 <a id="g-local-wire"></a>**local wire** — an entry of `local_wires`, a wire from
 one child's [face](#g-face) to another's, with both ends inside the [assembly's](#g-assembly) boundary. An
@@ -16904,6 +16906,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-450]: log.md#d-450--refuse-a-run-whose-clock-cannot-order-its-boundaries
 [d-451]: log.md#d-451--discard-a-replaying-advances-late-staging-at-its-halt
 [d-452]: log.md#d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
+[d-453]: log.md#d-453--retire-the-term-block-for-the-librarys-components
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

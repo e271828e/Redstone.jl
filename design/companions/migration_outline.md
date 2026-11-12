@@ -80,7 +80,7 @@ worked instance ([Appendix A][sA]).
 Falling-edge consumers negate the `Bool` in their own stage, since the
 library admits no `Not` ([D-311][d-311]).
 Level-pinning and reset-to-an-external-value, which is tracking, are different
-blocks rather than options on this one ([D-141][d-141]).
+components rather than options on this one ([D-141][d-141]).
 
 The gear then wires `strut.wow → frc.reset`. That is the **touchdown** edge,
 with the not-holding → holding semantics ([§2.3][s2-3]),
@@ -100,7 +100,7 @@ migrate **unchanged, flag off**. They are verified reset-free in today's code,
 where the saturation bounds and `int_halted` already handle windup across
 unused phases. Their `f_init!` gain writes become construction-time
 parameters, as `Contact`'s do ([D-089][d-089]). The PI *law* is shared as
-plain pure functions called by the block's stages, which is the
+plain pure functions called by the component's stages, which is the
 laws-as-plain-functions pattern ([D-139][d-139]). `sat_ext` poses the same
 always-on-vs-flag-gated face question, to be decided at reimplementation time
 on the same axis.

@@ -122,7 +122,7 @@ external tool's behavior (Simulink/MATLAB/Modelica does X; we do Y; because Z).
    revisited, first survey which entries have a real documented source; do not
    expand wholesale.
 9. **Implementation policy earns no entry.** The log records design content.
-   A ruling on implementation or process policy, such as how a block is
+   A ruling on implementation or process policy, such as how a component is
    admitted to the library or what order work happens in, gets no new
    `D-nnn`. When an existing entry of that kind changes, it is rewritten in
    place rather than superseded, an exception to rules 1 and 5 made

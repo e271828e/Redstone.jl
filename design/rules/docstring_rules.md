@@ -51,8 +51,8 @@ closed(run::Run) = run.termination !== nothing
 5. **Keywords and arguments are bulleted lists, not tables.** One bullet per
     name, its default in the signature, its meaning in one sentence. A list
     reads in the REPL at any width, where a wide table wraps. A table that is
-    not a keyword list, such as `ControllerBlock`'s case table, stays where a
-    list cannot carry it. Parallel names may share a bullet, as
+    not a keyword list, such as `AbstractAntiWindupController`'s case table, stays
+    where a list cannot carry it. Parallel names may share a bullet, as
     `Linearization`'s `A` to `D`. A slurped `kw...` whose names the caller
     chooses takes prose and no bullet.
 6. **A struct whose fields are public lists them under a lead sentence**, such
@@ -76,8 +76,8 @@ closed(run::Run) = run.termination !== nothing
 9. **A fallback users extend names its argument**, as in
     `init!(dev::AbstractDevice) -> Nothing`, also where the prose refers to it.
     Otherwise the line keeps the method's form, `frame_top!(::NoHooks) -> Nothing`.
-10. **A block with a keyword constructor shows the keyword form only.** The
-    positional constructor the struct keeps gets no line, as
+10. **A library component with a keyword constructor shows the keyword form only.**
+    The positional constructor the struct keeps gets no line, as
     `companions/library_inventory.md` states.
 11. **A forwarded `kw...` is shown as the callee's keywords.**
     `DiscretizedStateSpace(; kwargs...)` shows `StateSpace`'s, so the line
@@ -107,7 +107,7 @@ closed(run::Run) = run.termination !== nothing
     parameters."
 18. **No citation, no history, no defense.** No section, entry, predecessor or
     alternative. "This is not a defect" is a sentence for the log.
-19. **A library block's summary names its class and tier**, "A continuous
+19. **A library component's summary names its class and tier**, "A continuous
     primitive that …", "A discrete primitive that …", and `Group`'s "An
     assembly …". The abstract parents and `AsPort` keep their own forms.
 
@@ -123,10 +123,10 @@ closed(run::Run) = run.termination !== nothing
 22. **Mechanism, a correction, a review finding or an increment's novelty
     enters only where the user needs it to use the call correctly.** How a
     run is paced belongs in `run!`'s docstring because `margin` is a keyword;
-    how the pacer's wait is implemented does not. That a block declares its
-    one port bare belongs in `u_types`'s docstring and the glossary; at the
-    block, the reader needs the port's name and type, which the wire example
-    gives. The rest goes to the comment or the companion.
+    how the pacer's wait is implemented does not. That a library component
+    declares its one port bare belongs in `u_types`'s docstring and the glossary;
+    at the component, the reader needs the port's name and type, which the wire
+    example gives. The rest goes to the comment or the companion.
 23. **A sentence that states a behaviour is checked against the code.** The
     other rules govern form, and a rewrite that keeps every sentence keeps
     every error in them. A claim the code does not show on its face is settled
@@ -158,17 +158,18 @@ closed(run::Run) = run.termination !== nothing
     code-named entry with no API link, such as `should_abort` or `t*`, keeps
     its glossary link.
 28. **Primitive or assembly names the class, continuous or discrete the
-    tier.** "Block" means only that the standard library ships the component.
+    tier.** "Library component" means only that the standard library ships the
+    component.
     "Leaf" names only a leaf of a store, a leaf address or the leaf of a
     condition, never a component.
 29. **No `§`, no `D-nnn`, no FlightCore, no Flight.jl, no companion `*.md`
     pointer.** A docstring cites neither the spec, the log, the predecessor nor
-    a design file such as `linear_blocks.md`. All of it goes to the comment.
+    a design file such as `linear_systems.md`. All of it goes to the comment.
 30. **`Model` is the type; the authored tree is the component tree or the
     root.** As in `spec_rules.md`.
 31. **A type parameter is named in prose only where the docstring defines
     it, in the sentence that first uses it.** The sentence says which values
-    share the type, that it is the block's parameter, and what it may be and
+    share the type, that it is the component's parameter, and what it may be and
     where it comes from: "the state and both ports share one type, the
     parameter `V`, `Float64` or an `SArray` of `Float64`, taken from
     `Float64.(x0)`, an array converted to an `SArray`". A later sentence may

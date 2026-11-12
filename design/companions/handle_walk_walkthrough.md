@@ -3,7 +3,7 @@
 *A companion explainer, not normative text. The ground truth is `spec.md`
 [§4.4][s4-4] (field handles), [§6.1][s6-1] (the two wire clauses), [§8.2][s8-2] (the `Pinned`
 marker and the handle shape rule), [§9.5][s9-5] (the embedding guarantee), [§13.7][s13-7]
-(the `Freeze` block) and [§14.10][s14-10] (the local rule), with decisions [D-237][d-237],
+(the `Freeze` component) and [§14.10][s14-10] (the local rule), with decisions [D-237][d-237],
 [D-263][d-263], [D-264][d-264], [D-265][d-265] and [D-266][d-266]. If this document and the spec ever disagree,
 the spec wins. It was written on 2026-09-25, when the two rulings on the
 marker landed, to keep the worked example that grounded them.*
@@ -158,7 +158,7 @@ and it produced `DeckField{Float64}`. For a scalar the executor would embed
 on the write. So a handle's pin propagates down its chain: every component
 that forwards it pins that output too.
 
-## 4. The legacy consumer, and the `Freeze` block
+## 4. The legacy consumer, and the `Freeze` component
 
 A third actor is a ground-reaction model wrapping a C library that takes
 the terrain as a raw pointer. It cannot take partials, and it says so at the
@@ -177,7 +177,7 @@ for a scalar just as for a handle. A `Dual` can never become a `Float64`
 without discarding its partials, and no lossy cast exists inside the
 framework ([§9.5][s9-5]). The framework does not do the discard at the wire, on
 purpose, because dropping partials is a modelling decision the design wants
-on the page. The `Freeze` block ([§13.7][s13-7]) is that page:
+on the page. The `Freeze` component ([§13.7][s13-7]) is that page:
 
 ```julia
 local_wires(::Rig) = (
@@ -186,7 +186,7 @@ local_wires(::Rig) = (
 )
 ```
 
-At nominal the strip is the identity. Under a `Dual` activation the block
+At nominal the strip is the identity. Under a `Dual` activation the component
 drops the partials, and its output satisfies the pinned entry. What the wire
 now declares is a zero coupling in every Jacobian along that path. If that
 coupling matters to the Jacobian, no adapter fixes it, and section 5 is the

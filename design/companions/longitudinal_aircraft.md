@@ -160,7 +160,7 @@ rides 46 m above and back.
 
 ## 4. The closed loop
 
-The tutorial's fifth layer closes the loop with library blocks alone
+The tutorial's fifth layer closes the loop with library components alone
 ([§13.7][s13-7]), in a `Group` of five groups beside the plant, `sensing`,
 `pid_controller`, `lqr_controller`, `selection` and `actuators`, under the
 root inputs `h_ref`, `V_ref` and `mode`. Each group exports the signals
@@ -180,7 +180,7 @@ plant's plus Gaussian white noise of 0.3 m standard deviation per sample from a
 junction and published as `h_meas`, so the plots show a measurement rather
 than a state.
 
-**The PID cascade**, `pid_controller`. Four `DiscretePID` blocks, each with
+**The PID cascade**, `pid_controller`. Four `DiscretePID`s, each with
 the hold and the tracking axis (`pid_anti_windup.md`, section 4):
 
 | Loop | Reads | Commands | `Kp`, `Ki` | Limits |
@@ -198,10 +198,10 @@ designed as if the loop inside it were ideal. The altitude loop closes
 through `ḣ ≈ V γ`, so one metre of error asks for 0.01 rad of pitch and
 the loop's bandwidth is about 0.5 rad/s.
 
-Each block's hold input is wired from the block inside it: the attitude
+Each PID's hold input is wired from the PID inside it: the attitude
 loop reads the rate loop's `saturated` code and the altitude loop the
 attitude loop's, so an outer integrator stops winding when the inner
-command is on its limit. The two innermost blocks read a constant zero code
+command is on its limit. The two innermost PIDs read a constant zero code
 and back-calculate against their own limits. The chain stays inside the
 group: what crosses its boundary is the references, the measurements, the
 mode, the delayed commands it tracks, and the two commands it publishes as
@@ -209,14 +209,14 @@ mode, the delayed commands it tracks, and the two commands it publishes as
 
 **The initial condition.** `trimmed(solution)` writes the plant's trim
 pitch angle beside its level state, the root inputs at the trim references
-with the cascade in command, and seeds the stores of three of the four PID
-blocks through `at` and `set(s = …)`. A `DiscretePID`'s store
+with the cascade in command, and seeds the stores of three of the four
+PIDs through `at` and `set(s = …)`. A `DiscretePID`'s store
 is `(q, yf, saturated)`, the integral term, the derivative filter's state
 and the clamp code, all zero by default. At trim every loop's error is
 zero: `h_ref = h`, the attitude reference is the altitude loop's output,
 which equals `θ`, the rate reference is the attitude loop's output, which
 equals `q = 0`, and `V_ref = V`. With `b = 1` and `Kd = 0` the law
-`u = Kp (b r − y) + q − Kd d` reduces to `u = q`, so a block sits still only
+`u = Kp (b r − y) + q − Kd d` reduces to `u = q`, so a PID sits still only
 if its integral term already holds the trim value of what it commands. The
 altitude loop's is seeded at `θ`, the pitch-rate loop's at `δe` and the
 airspeed loop's at `δt`; the attitude loop commands a pitch rate, zero at
@@ -225,7 +225,7 @@ trim, and keeps its default. The tracker carries `x_trim`, `u_trim` and
 seeds the rate loop would command zero elevator, the actuator would slew
 away from the trim and the integrators would wind until they found it
 again, a transient of many seconds. `yf` is set to its fixed point, the
-measurement each block reads, 1000 for the altitude loop, 0 for the rate
+measurement each PID reads, 1000 for the altitude loop, 0 for the rate
 loop and 50 for the airspeed loop; with `Kd = 0` it never reaches the
 output, and the seed only spares the filter the start-up jump that
 `pid_anti_windup.md` section 9 lists. A store overlay merges onto `s_init`
@@ -233,13 +233,13 @@ output, and the seed only spares the filter the start-up jump that
 The closed loop then starts at rest at the trim.
 
 Every tracking time constant `Tt` is one period, 0.02 s, the tracker's
-included. A block not in command follows the selected command with a lag
+included. A controller not in command follows the selected command with a lag
 that grows with `Tt` and with the rate at which its own law moves, so a
 short `Tt` keeps the tracker, the altitude loop and the airspeed loop
 within about 0.015 rad of the command once a maneuver's fast part is over,
 and within a few hundredths during it. The pitch-rate
 and attitude loops, whose references move with the measured state, sit a
-few hundredths of a radian off whatever `Tt` is. A block in command
+few hundredths of a radian off whatever `Tt` is. A controller in command
 back-calculates against its limits, and at one period it pulls a limited
 integrator back within a tick.
 
@@ -271,7 +271,7 @@ in command tracks the one that is (`pid_anti_windup.md`, section 11): `mode`
 is the cascade's `engaged` input and, negated, the tracker's, and the selected
 commands leave the group twice, as they are for the actuators and one tick
 old through a `UnitDelay` as `δe_prev` and `δt_prev`, which each innermost
-block of the cascade and the tracker read as their tracking input. The two
+PID of the cascade and the tracker read as their tracking input. The two
 outer loops of the cascade track the measured variable of the loop inside
 them, pitch attitude for the altitude loop and pitch rate for the attitude
 loop, so when the cascade is re-engaged every integrator holds nearly the

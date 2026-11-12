@@ -42,7 +42,7 @@ the pipeline stops only for a design decision. The brief's rules are
   conforms to it. A prototype's readings on unruled seams are put to the
   user with recommendations, and the ratified ones land as a docs commit
   before the code commit.
-- A library block lands as a companion plus its inventory rows, one docs
+- A library component lands as a companion plus its inventory rows, one docs
   commit.
 - When the user delegates overnight, every ruling the coordinator makes
   goes into a `notes_*.md` in the increment's folder with its reason, and

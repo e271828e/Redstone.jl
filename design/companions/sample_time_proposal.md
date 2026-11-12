@@ -501,10 +501,10 @@ topological order — the idealized synchronous-sampling picture. With the offse
 that becomes "pipelined, deterministically 1 ms stale" — which is precisely the
 knob: a real ADC-plus-bus pipeline delivers data some fixed fraction of a sample
 period old, and the offset expresses that latency *structurally*, in the schedule,
-rather than through delay blocks. The second classic use is load shaping under
-real-time pacing ([§10.7][s10-7]): with the stagger, no single 1 ms frame executes both the
-sensor stack and the control stack, so worst-case frame cost is the `max` of the two
-rather than their sum.
+rather than through delay components. The second classic use is load shaping
+under real-time pacing ([§10.7][s10-7]): with the stagger, no single 1 ms frame executes
+both the sensor stack and the control stack, so worst-case frame cost is the `max`
+of the two rather than their sum.
 
 **The merged schedule.** At 7, 47, 87 … ms both `imu` and `gnss` are due — gnss's
 instants are a subset of the scope grid, which imu fully occupies, so they always

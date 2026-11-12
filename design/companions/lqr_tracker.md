@@ -5,16 +5,16 @@
 (the discrete store), [§14.8][s14-8] (trim) and [§14.10][s14-10] (linearization), with decisions
 [D-313][d-313] and [D-383][d-383]. If this document and the spec ever disagree, the spec wins.
 It was written on 2026-10-14, when the tracker was admitted to the library,
-to keep the derivation the block implements, the cascade architecture it
-serves, and the reasoning that chose what the block carries and what it
+to keep the derivation the tracker implements, the cascade architecture it
+serves, and the reasoning that chose what the tracker carries and what it
 leaves to the design script.*
 
-The block descends from the `LQR` model of Flight.jl's FlightPhysics and the
+The tracker descends from the `LQR` model of Flight.jl's FlightPhysics and the
 notes written for it. The law is the same. What the framework replaces is
-everything around the law: how the gains reach the block, how a controller
+everything around the law: how the gains reach the tracker, how a controller
 not in command stays ready, and how saturation is reported up a cascade.
 Section 1 states the problem, section 2 the equilibrium reference and the
-feedforward, section 3 the integral action, section 4 the law the block
+feedforward, section 3 the integral action, section 4 the law the tracker
 implements and its ports, section 5 what FlightPhysics did and what the
 framework does instead, section 6 the saturation code and the cascade,
 section 7 standby and the switchover wiring with the probe's
@@ -55,10 +55,10 @@ is `Δz* = z_ref - z_trim`. The equilibrium `(Δx*, Δu*)` that holds it solves
 ```
 
 The matrix is `(n_x + n_z) × (n_x + n_u)`, so it is square only when
-`n_z = n_u`, one command per control input. That is the case the block is
+`n_z = n_u`, one command per control input. That is the case the tracker is
 designed for. With fewer commands than inputs the equilibrium is
 underdetermined, a minimum-norm choice through a pseudo-inverse is one
-design decision among several, and the block takes no part in it. With the
+design decision among several, and the tracker takes no part in it. With the
 matrix square, it is invertible when `A` and the Schur complement
 `S = D - C A⁻¹ B` are, and the blocks of the inverse that matter are
 
@@ -101,7 +101,7 @@ becomes `u = u_trim + K_fwd Δz* - K_x Δx - K_ξ ξ` with
 `K_fwd = M_22 + K_x M_12`, and a disturbance that shifts the equilibrium is
 absorbed by `ξ`, since the stable closed loop still forces `ξ̇ = 0`.
 
-The block does not integrate `ξ`. It moves `K_ξ` inside the integral,
+The tracker does not integrate `ξ`. It moves `K_ξ` inside the integral,
 
 ```
 u_int = -∫ K_ξ (z_i - z_i*) dτ = ∫ K_int (z_ref - z) dτ
@@ -117,10 +117,10 @@ accumulation and never jumps the command, the grouping `pid_anti_windup.md`
 section 4 chose for the PID's `Ki`. That matters more here than for the PID,
 since every tracker of the C172 is scheduled over airspeed and altitude.
 
-## 4. The law the block implements
+## 4. The law the tracker implements
 
-Two blocks over one supertype, `LQRTrackerBlock{NX, NU, NZ, Hold, Track,
-Fixed}`, mirror `PIDBlock`: `LQRTracker` on the continuous tier and
+Two trackers over one supertype, `AbstractLQRTracker{NX, NU, NZ, Hold, Track,
+Fixed}`, mirror `AbstractPID`: `LQRTracker` on the continuous tier and
 `DiscreteLQRTracker` on the discrete one. The law, on both:
 
 ```
@@ -145,21 +145,21 @@ reference rule apply to it channel by channel, over the same two axes
   converges to it at rate `1/Tt`, so engagement is bumpless; without `v` it
   freezes.
 
-Own windup goes through the correction against the block's own fresh `u`
+Own windup goes through the correction against the tracker's own fresh `u`
 with `Tt`, as for the PID; `Tt = Inf` switches it off and `Tt = 0` is the
 clamping scheme on the discrete tier. The signal ports are `x` at
 `SVector{NX, Float64}` and `z` and `z_ref` at `SVector{NZ, Float64}`, the
 FlightPhysics names, because `z` is a chosen command subset and not the
 measurement the PID's `y` names. The outputs `u` and `u_raw` come from stage
-2 at `SVector{NU, Float64}`, and the discrete block adds `saturated` from
+2 at `SVector{NU, Float64}`, and the discrete tracker adds `saturated` from
 stage 1 (section 6).
 
 The nine parameters are the roster `K_fbk` (`NU × NX`), `K_fwd` and `K_int`
 (`NU × NZ`), `x_trim`, `u_trim`, `z_trim`, and `Tt`, `u_min` and `u_max` per
 channel, broadcast to `SVector{NU}` from a scalar. Any of them may be an
 input port in place of a field by `AsPort()`, the PID's rule, which is how a
-gain schedule reaches the block. The matrices are static with their length
-parameters, the trap `linear_blocks.md` section 4 records; a field declared
+gain schedule reaches the tracker. The matrices are static with their length
+parameters, the trap `linear_systems.md` section 4 records; a field declared
 `SMatrix{NU, NX, Float64}` is abstract and boxes at every sweep.
 
 `u` is a stage-2 output, so every input is a feedthrough edge whether
@@ -186,10 +186,10 @@ transfer, and each has a counterpart the library already ships.
   incoming tracker's integrator and bumped the outer PIDs' integrators by
   hand, inside the control law's sequencing. The hold's `engaged` input
   with the tracking reference replaces both:
-  a block not in command follows the selected command through `v`, so it is
+  a tracker not in command follows the selected command through `v`, so it is
   ready when engaged, with no reset and no sequencing (section 7).
-- **A halt against the block's own previous code.** The integrator stopped
-  when its input pushed further into the block's own saturation, read from
+- **A halt against the tracker's own previous code.** The integrator stopped
+  when its input pushed further into the tracker's own saturation, read from
   the previous tick. Here the own clamp is handled by back-calculation
   against the fresh `u`, and the halt survives as the hold's gate against an
   external code.
@@ -202,18 +202,18 @@ The C172's longitudinal and lateral control laws are cascades: in each
 mode one or more PIDs command a reference to an inner tracker, and the
 tracker reports its saturation to every PID above it, so that an outer
 integrator pushing a channel further into its limit stops. The outer loops
-need the fact "the inner command saturated", known at the inner block at the
+need the fact "the inner command saturated", known at the inner tracker at the
 tick it happens. The actuator model downstream reports a position limit,
 which coincides with the command's only because the tracker's clamp copies
-the actuator's range, and only when the actuator is a moded block that
+the actuator's range, and only when the actuator is a moded component that
 publishes a code at all.
 
-**Tracking alone does not replace the code.** An outer block could follow
+**Tracking alone does not replace the code.** An outer PID could follow
 the achieved value instead, through `v`. Following the actuator position
 couples the outer integrator to the actuator lag during every free
 transient, the `Tt` squeeze of `pid_anti_windup.md` section 3, and that
 companion's cascade table ranks tracking alone as the weakest variant and
-hold with tracking as the best. Following the inner block's `u` meets a
+hold with tracking as the best. Following the inner tracker's `u` meets a
 second problem: `u` is stage 2, so the outer `u` to the inner `z_ref` and the
 inner `u` back to the outer `v` is an algebraic cycle, classified real on the
 discrete tier, and a `UnitDelay` has to break it.
@@ -225,18 +225,18 @@ writes it from `u_raw` against the limits, the `Int8` code `saturation_code`
 produces for the limited integrators, and `y_state` publishes it as
 `saturated` at the next tick. The name is apart from the hold's input
 `saturation` because a root's input and output faces share one name space
-([§8.6][s8-6], [D-210][d-210]), and one name on both would refuse the block alone as a
+([§8.6][s8-6], [D-210][d-210]), and one name on both would refuse the tracker alone as a
 root ([D-384][d-384]). It flips only on a tick boundary, which the gate's doctrine asks for,
 and its publication from stage 1 breaks the cascade cycle structurally. The
 code is one tick stale, as FlightPhysics's was, so an outer integrator takes
-one extra step before the hold engages. The block itself never reads its
+one extra step before the hold engages. The tracker itself never reads its
 own code; its own windup is the correction's. `DiscretePID` publishes the
 same code, so a PID commanding a PID has the same story.
 
-**The continuous block publishes no code.** A continuous code would need a
+**The continuous tracker publishes no code.** A continuous code would need a
 mode and hit and leave events per channel, the `LimitedIntegrator` pattern
 at `4N` events and a localization per crossing, for a consumer that does
-not exist: the continuous block's use is to close the loop in the continuous
+not exist: the continuous tracker's use is to close the loop in the continuous
 domain so `linearize` recovers the designed closed loop. Guards may read `y`,
 so the moded variant is feasible if a continuous cascade ever wants it.
 
@@ -271,12 +271,12 @@ and the selected command goes down to the plant and back to every sibling's
 depends on each input, and sibling 1's `u` reaches the `Switch` and the
 `Switch` output reaches sibling 1's `v`, a cycle through sibling 1 itself.
 The remedy is a `UnitDelay` on the `Switch` output, fanned to every `v`. A
-block in standby then follows the selected command one tick old, and a block
+sibling in standby then follows the selected command one tick old, and a sibling
 engaged sees its own one-tick-old output as `v`, under a hold its reference
 while the code is nonzero and ignored while the code is zero.
 
 **The probe.** On 2026-10-14, before the brief, the wiring was built from
-shipped blocks against the tree at 53f35d0: two `DiscretePID`s with
+shipped components against the tree at 53f35d0: two `DiscretePID`s with
 `tracking = true`, a `Switch` on a root input `mode`, a `DiscreteIntegrator`
 plant, at `h = 1//100`. The standby law was emulated with `Ki = AsPort()`
 fed zero while not in command, since the shipped tracking variant has no
@@ -296,44 +296,44 @@ fed zero while not in command, since the shipped tracking variant has no
 
 Two lessons beyond the classifications. Tracking without the error gated
 off leaves `u_raw = v + Tt Ki e` in standby, which is most of the `1.92`.
-And a standby block chases a moving target with lag `Tt`, since its `v` and
-its own proportional term both move while the other block flies the plant,
+And a standby controller chases a moving target with lag `Tt`, since its `v` and
+its own proportional term both move while the other controller flies the plant,
 so the standby `Tt` should be short. On the discrete tier `Tt = 0` follows
 exactly, the FlightPhysics reset applied every tick, and `Tt = Inf` follows
 nothing, which is why a fixed infinite `Tt` is refused with `tracking = true`
 ([D-385][d-385]). The emulation's `Tt = 0` row is not reported: with the shipped
-variant the block in command tracked itself at `β = 1`, which the engaged
-block's fallback to its own `u` rules out.
+variant the sibling in command tracked itself at `β = 1`, which the engaged
+sibling's fallback to its own `u` rules out.
 
 ## 8. What stays in the design script
 
-The block takes designed gains, as `StateSpace` takes matrices. `trim!`
+The tracker takes designed gains, as `StateSpace` takes matrices. `trim!`
 finds the trim point and `linearize` returns the `Linearization`, whose
 `x₀`, `u₀` and `y₀` under their tap labels are `x_trim`, `u_trim` and
 `z_trim`, and whose `A`, `B`, `C` and `D` feed section 2's inverse and the
 Riccati solve, `lqr` in ControlSystemsBase. `K_fwd` needs the inverse alone,
-and it stays outside the block with the rest: a helper reading a
+and it stays outside the tracker with the rest: a helper reading a
 `Linearization` is a design-script convenience, not library material, and
 the Riccati solve brings a dependency the package does not want. The tap
 labels are the user's bookkeeping; the model packs `x` in the same order.
 
-The acceptance tests follow. The continuous block closing the loop on a
+The acceptance tests follow. The continuous tracker closing the loop on a
 `StateSpace` plant linearizes to `A - B K_fbk`. Without integral action and
 with section 2's feedforward, a step in `z_ref` settles with zero error on
 the linear plant. With `K_int` from section 3's augmented design, the closed
 loop agrees with the augmented one. These are numeric agreements with the
-textbook procedures, and the block's novelty is deliberately none.
+textbook procedures, and the tracker's novelty is deliberately none.
 
 ## 9. The decision
 
-[D-383][d-383] admits the two blocks under [D-313][d-313]'s guidelines and rules the four
+[D-383][d-383] admits the two trackers under [D-313][d-313]'s guidelines and rules the four
 points this companion argues: the gains come from outside, the saturation
 code is published on the discrete tier alone from stage 1 off the store, the
-standby reaches all four controller blocks, through the hold's `engaged`
+standby reaches all four controllers, through the hold's `engaged`
 input since [D-385][d-385], and the ports keep the FlightPhysics names. Against the guidelines, the tracker is
-domain-agnostic, it is the one block that shows the trim and linearize
-pipeline closing on itself, its matrices and its per-channel windup are
-easy to get wrong, and the C172 hand-writes it five times. It is not
+domain-agnostic, it is the one library component that shows the trim and
+linearize pipeline closing on itself, its matrices and its per-channel windup
+are easy to get wrong, and the C172 hand-writes it five times. It is not
 composable from the library: the integral path is an `n_z → n_u` matrix map,
 and the vector PID's `Ki` is componentwise.
 

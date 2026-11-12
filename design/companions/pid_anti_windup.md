@@ -1,19 +1,19 @@
-# The PID block: anti-windup, the two axes and the variants weighed
+# The PID component: anti-windup, the two axes and the variants weighed
 
 *A companion record, not normative text. The ground truth is `spec.md`
 [§13.7][s13-7] (the library), [§5.3][s5-3] and [§5.4][s5-4] (feedthrough and artificial loops), [§2.3][s2-3]
 and [§10.4][s10-4] (events and localization) and [§7.3][s7-3] (modes), with decisions [D-179][d-179],
 [D-231][d-231] and [D-313][d-313]. If this document and the spec ever disagree, the spec
 wins. It was written on 2026-10-07, when the PID was promoted from an
-example-first row of the inventory to a block of the library, to keep the
+example-first row of the inventory to a component of the library, to keep the
 reasoning that chose its anti-windup design and to record the variants it
 does not carry.*
 
 The inventory listed a PID with anti-windup as *example first*, because the
 design space, the controller's form, the anti-windup scheme and the
-derivative filter, is wide, and a block fixes a form. Working the example
-narrowed the space to two independent choices and one law, and the result
-satisfies the three admission guidelines of `library_inventory.md`,
+derivative filter, is wide, and a library component fixes a form. Working the
+example narrowed the space to two independent choices and one law, and the
+result satisfies the three admission guidelines of `library_inventory.md`,
 section 2, better than the didactic composition did: it is domain-agnostic
 and generally useful, its implementation has corners that are easy to get
 wrong, and building it met two framework mechanisms, stage-2 conservatism
@@ -23,11 +23,11 @@ them, section 4 the two axes and the law, section 5 a scenario per variant,
 section 6 the variants not carried, section 7 the decision with the measured
 numbers, and section 8 what the episode says about the framework. Section
 9, added the same day, carries the law to the discrete tier as
-`DiscretePID`. Section 10, added on 2026-10-08, widens both blocks over
+`DiscretePID`. Section 10, added on 2026-10-08, widens both PIDs over
 static vectors, makes any parameter a port and adds the setpoint weights.
 Section 11, added on 2026-10-14 with the LQR tracker, adds the hold's
 second input `engaged`, records the standby axis it replaced, and adds the
-discrete block's saturation output.
+discrete PID's saturation output.
 
 ## 1. Windup
 
@@ -72,7 +72,7 @@ is continuous and its kinks are second-order downstream, and one parameter
 with a rule, `Tt = √(Ti Td)` or `Tt = Ti`. Simulink writes the gain as `Kb`.
 
 **Tracking mode.** The same correction with an external value in place of
-the block's own clamp, `q̇ = Ki e + (v - u_raw) / Tt`, where `v` is what the
+the PID's own clamp, `q̇ = Ki e + (v - u_raw) / Tt`, where `v` is what the
 path actually delivered. Simulink's `TR` port with gain `Kt`. It is how a
 controller that is not in command, in manual mode or deselected in an
 override scheme, follows the actuator so that the hand-back is bumpless.
@@ -97,17 +97,17 @@ memoryless clamp of the leaf's own `u` and the build refuses an
 `AlgebraicCycle` classified artificial, with the dead hop naming `v` as the
 face `u` does not route. The remedy is [§5.4][s5-4]'s middle rung, taken: the clamp of
 a controller's own output is the controller's business, so the limits live
-inside the block and the correction reads the block's own fresh `u`, which a
+inside the PID and the correction reads the PID's own fresh `u`, which a
 derivative stage may do. The tracking input then serves what it is for: a
 value produced elsewhere, by a stateful actuator or an inner loop, whose
-publication from state breaks the cycle. An assembly of library blocks never
+publication from state breaks the cycle. An assembly of library components never
 meets the refusal, because its integrator is a component of its own by
 construction, which is [§5.4][s5-4]'s second remedy, the component split, for
 free.
 
 **A saturation code flips on a declared boundary.** Conditional integration
 is a mode made silently when its switch reads a continuous quantity. But
-when the saturating element is a moded block, its mode changes only when
+when the saturating element is a moded component, its mode changes only when
 its events fire, localized or at a step boundary. The code `LimitedIntegrator`
 publishes, `-1`, `0` or `+1` for the limit in force, is such a signal: a
 gate `saturation == sign(e) ? 0 : e` in front of the integrator switches on a
@@ -130,16 +130,16 @@ to be short.
 ## 4. The two axes and the law
 
 Two independent choices remain. The hold adds two input ports and the
-tracking reference one, each at the block's output shape, so a vector block
+tracking reference one, each at the PID's output shape, so a vector PID
 takes static vectors of its width.
 
-- **The hold**, `hold = true`: the loop tells the block its condition
+- **The hold**, `hold = true`: the loop tells the PID its condition
   through two independent inputs, `saturation::Int8`, the code of the path
-  downstream, and `engaged::Bool`, whether the block is in command. The code
+  downstream, and `engaged::Bool`, whether the PID is in command. The code
   gates the error by sign, `gate(e) = saturation == sign(e) ? 0 : e`; not
   engaged, the error is gated to zero whatever the code.
 - **The tracking reference**, `tracking = true`: the input `v`, the value
-  `u_raw` converges to while the block is not free, in place of the own
+  `u_raw` converges to while the PID is not free, in place of the own
   clamped output `u`.
 
 The derivative is one line, `q̇ = Ki · ε + (ref - u_raw) / Tt`, and the
@@ -155,7 +155,7 @@ variants are the table of its two slots over the channel's condition:
 Free is a zero code while engaged, limited a nonzero code while engaged, and
 not engaged takes precedence over the code. The three hold rows are one
 rule: `v` is a value to converge to while the path cannot follow or another
-block flies the plant, meaningless while the block is free, so the reference
+PID flies the plant, meaningless while the PID is free, so the reference
 falls back to `u` while the path is free. Without the hold there is no way
 to know, so that variant tracks always and carries section 3's coupling;
 with one, the coupling goes. The last row without `v` is the freeze: `q`
@@ -219,8 +219,8 @@ generated reference.
   only the internal term catches the comfort limit; only the hold catches
   the servo's.
 - **Tracking, no hold.** External back-calculation against a value whose
-  status the block cannot know: a servo whose position is measured but
-  which reports no limit. The block follows the servo always and pays
+  status the PID cannot know: a servo whose position is measured but
+  which reports no limit. The PID follows the servo always and pays
   section 3's coupling for it, which is why section 7's table ranks it
   below own limits wherever the limit is known.
 - **Not engaged, with tracking.** A controller not in command. An engine
@@ -241,7 +241,7 @@ generated reference.
   transients.
 
 In one sentence: own limits are for the limit the path cannot see, the
-hold for the limit the path reports and for the block's command status,
+hold for the limit the path reports and for the PID's command status,
 tracking for a value the integrator must follow rather than a limit it must
 respect, and the gate is what lets a tracking value be used without paying
 for it during free transients.
@@ -252,10 +252,10 @@ for it during free transients.
   of the command range so a failed sensor cannot drive it to full
   authority. The limiting scheme of section 2 in its proper role. It is
   the `LimitedIntegrator`'s four events applied to `q`, the one addition
-  that would give the block a mode.
+  that would give the PID a mode.
 - **Feedforward accounted in the saturation.** A feedforward command added
-  after the block is invisible to the own clamp; the hold variants see it
-  through the path. A `uff` input inside the block, so the clamp sees the
+  after the PID is invisible to the own clamp; the hold variants see it
+  through the path. A `uff` input inside the PID, so the clamp sees the
   total, is the alternative wiring.
 - **A general hold rule.** The `saturation` port is one hold rule with the sign
   built in. A `hold::Bool` port with the rule computed outside covers
@@ -265,14 +265,14 @@ for it during free transients.
   be a different controller there, with the output a limited integrator,
   a D term on the second difference and new meanings for both axes.
 - **Internal clamping**, Simulink's conditional integration against the
-  block's own limits. A third moded block with the limited integrator's
+  PID's own limits. A third moded PID with the limited integrator's
   events applied to `u_raw`, including the strict gate against the
   exact-zero corner `limited_integrator_variants.md` records. The `saturation` port
   gives the external form of the same thing on a declared boundary.
 
 ## 7. The decision, and the numbers
 
-The block is `PID{Hold, Track}` in `Redstone.Blocks`: two `Bool` type
+The PID is `PID{Hold, Track}` in `Redstone.Library`: two `Bool` type
 parameters, one per axis, since whether a port exists is a declaration;
 instance data `Kp`, `Ki`, `Kd`, `τd`, `Tt`, `u_min`, `u_max`, with `Ki = Kd
 = 0`, `τd = 0.1`, `Tt = Inf` and infinite limits as defaults, so the plain
@@ -280,9 +280,9 @@ spelling is a P controller and every mechanism is opted into; inputs `r` and
 `y`, plus `saturation` and `engaged` with the hold and `v` with tracking;
 outputs `u`, clamped,
 and `u_raw`; states `q` and `yf`; one `x_deriv` with two one-line helpers
-for the gate and the reference. A simplified assembly of library blocks,
+for the gate and the reference. A simplified assembly of library components,
 the first cell as a `Group`, stays in the tests as the inspector's example
-beside the block; it is not a library row.
+beside the PID; it is not a library row.
 
 The shape was probed at commit 99438ec, at `h = 1//100`, on a reference
 step to `5` at `t = 0.5`, with `Kp = 1, Ki = 0.5, Kd = 0.2, τd = 0.1` in
@@ -336,7 +336,7 @@ constraint, and that the integrator in it is precisely the component split
 
 The declared boundary is what makes an external saturation signal usable.
 A gate on a continuous quantity is the silent mode the junction's docstring
-warns against; a gate on a moded block's code switches where the framework
+warns against; a gate on a moded component's code switches where the framework
 already stopped. The signed `Int8` code was chosen for the mode store's
 isbits rule ([D-231][d-231]) so that a static vector of modes could exist; that it
 reads as arithmetic in a consumer, `saturation == sign(e)`, is what made the
@@ -344,7 +344,7 @@ hold variant a one-liner.
 
 ## 9. The discrete tier
 
-`DiscretePID{Hold, Track}` is the block of section 7 with `s = (q, yf)` in
+`DiscretePID{Hold, Track}` is the PID of section 7 with `s = (q, yf)` in
 place of `x`. Same seven fields, same ports, same two axes, same law. A
 user moves a controller onto the discrete tier by changing a name, and the
 anti-windup reasoning of sections 3 and 4 carries over unchanged. The
@@ -353,14 +353,14 @@ velocity form stays uncarried (section 6).
 **The stage split is the textbook's.** The discrete PID of the control
 texts computes the output from the integral term as it stands, then updates
 the integral with the current error and the back-calculation term. That is
-`y_direct` over `s` and `s_update` reading `y`, the block's own fresh `u`
+`y_direct` over `s` and `s_update` reading `y`, the PID's own fresh `u`
 and `u_raw` the update may read. Both outputs come from stage 2, so the
-block is feedthrough as the continuous one is, and [§5.4][s5-4]'s refusal of a
+PID is feedthrough as the continuous one is, and [§5.4][s5-4]'s refusal of a
 tracking input wired from a memoryless clamp of the own `u` holds for the
 same reason. The limits stay inside. One difference in the diagnostic: a
 discrete member traces structurally ([§13.8][s13-8]), its pinned declarations
 admitting no tracer scalar, so the cycle is classified `:real` with no dead
-hop, where the continuous block's is `:artificial` with the hop named. The
+hop, where the continuous PID's is `:artificial` with the hop named. The
 probe confirmed both.
 
 ```julia
@@ -382,15 +382,15 @@ default `τd = 0.1` a 5 Hz tick sits on the margin, and nothing complains,
 since the period is unknown at construction. Backward Euler on the filter
 alone is stable for every period and every `τd ≥ 0`, and admits `τd = 0`,
 where the D term is the plain backward difference `(y_k - y_{k-1})/Δt`,
-the discrete tier's native derivative, which the continuous block cannot
+the discrete tier's native derivative, which the continuous PID cannot
 express. The integral keeps forward Euler, since a pure accumulator has no
-stability question, and the default `τd` stays at `0.1` so the two blocks
+stability question, and the default `τd` stays at `0.1` so the two PIDs
 read alike.
 
 **The correction's step is exact.** The back-calculation term relaxes `q`
 at rate `1/Tt`, and its Euler step `Δt/Tt` is stable only for `Tt > Δt/2`
 and free of ringing only for `Tt ≥ Δt`, a constraint on a tuning constant
-against a period the block cannot see. The exact step of that relaxation
+against a period the PID cannot see. The exact step of that relaxation
 over one period with the inputs held is `β = 1 - e^{-Δt/Tt}`, spelled
 `-expm1(-Δt/Tt)` so that `Tt = Inf` gives exactly zero and small `Δt/Tt`
 reduces to the Euler step to rounding. Every `Tt` is then stable, and
@@ -402,11 +402,11 @@ fully exact step would also scale the integral's drive by `Tt β`, which is
 does not already give.
 
 **The law is shared, not the type.** The port sets, the gate and the
-reference rule are identical in both blocks, eleven methods: the four
+reference rule are identical in both PIDs, eleven methods: the four
 `signal_ports` arms, `u_types`, `y_types`, the two `gated_error` arms and
 the three `correction_reference` arms. With `parameters`, which fetches the
-nine parameters, they earn a supertype in the `LinearBlock` style,
-`PIDBlock{V, Hold, Track, Fixed}`, which carries them (section 10). The
+nine parameters, they earn a supertype in the `AbstractLinearSystem` style,
+`AbstractPID{V, Hold, Track, Fixed}`, which carries them (section 10). The
 stores and the stages sit on each concrete type, and the field `fixed`
 repeats in the discrete struct, since an abstract type carries none. The
 continuous `PID` reparents in one line.
@@ -415,7 +415,7 @@ continuous `PID` reparents in one line.
 `LimitedIntegrator`'s code read at the tick or a `DiscreteLimitedIntegrator`
 on the same tier, whose stage-1 `saturation` breaks the loop back into the
 PID's stage-2 `u`. And `s_init` is `(q = zero(V), yf = zero(V))` with no
-keywords, as the continuous block's `x_init` is; both share the start-up
+keywords, as the continuous PID's `x_init` is; both share the start-up
 kick from `yf` starting at zero rather than at the first measurement, a
 not-carried item common to the pair.
 
@@ -426,7 +426,7 @@ scalar sketch of sections 7 and 9. The spec names neither the PID's shape
 nor its parameters, so the design lives here and in the inventory
 ([§13.7][s13-7], [D-313][d-313]).
 
-**Widening, not forking.** The library's vector blocks are one struct each
+**Widening, not forking.** The library's vector components are one struct each
 over `V <: Union{Float64, SArray{<:Tuple, Float64}}`, with the law in
 broadcast form: `Integrator`, `FirstOrderLag`, `LimitedIntegrator`, `Relay`,
 `DiscreteLimitedIntegrator` and `RateLimiter`. Only two things fork on
@@ -440,8 +440,8 @@ per channel: a free channel at zero error never consults `sign` of a
 zero-valued `Dual`. Every product with a parameter and every division by one
 is dotted, since `SVector * SVector` is a shape error.
 
-**Every parameter a `V`.** The blocks are `PID{V, Hold, Track, Fixed}` and
-`DiscretePID{V, Hold, Track, Fixed}` over `PIDBlock{V, Hold, Track, Fixed}`,
+**Every parameter a `V`.** The components are `PID{V, Hold, Track, Fixed}` and
+`DiscretePID{V, Hold, Track, Fixed}` over `AbstractPID{V, Hold, Track, Fixed}`,
 `V` first as in `LimitedIntegrator{V, L}`. Each parameter of the roster
 `PID_PARAMETERS = (:Kp, :Ki, :Kd, :τd, :Tt, :u_min, :u_max, :b, :c)` is a
 `V`, and the stores start at `zero(V)`. The keywords given as values
@@ -459,10 +459,10 @@ keyword is scheduled `V` is `Float64`. The struct stores the fixed
 parameters alone, and one function fetches all nine:
 
 ```julia
-struct PID{V, Hold, Track, Fixed} <: PIDBlock{V, Hold, Track, Fixed}
+struct PID{V, Hold, Track, Fixed} <: AbstractPID{V, Hold, Track, Fixed}
     fixed::Fixed      # the parameters that are not ports, each a `V`, in roster order
 end
-parameters(c::PIDBlock, u) = NamedTuple{PID_PARAMETERS}(merge(c.fixed, u))
+parameters(c::AbstractPID, u) = NamedTuple{PID_PARAMETERS}(merge(c.fixed, u))
 ```
 
 `merge` resolves at compile time, and the selection lays the nine out in
@@ -482,7 +482,7 @@ their four arms read as section 4's table.
 
 **A scheduled port is an ordinary input.** `u` is a stage-2 output, so every
 input is a feedthrough edge (section 3, [§5.4][s5-4]). A schedule computed
-memorylessly from the block's own output closes an `AlgebraicCycle` as a
+memorylessly from the PID's own output closes an `AlgebraicCycle` as a
 clamped `v` does. It is classified real when the parameter enters the
 direct law, as every one but `Ki` and `Tt` does; a scheduled `Ki` or `Tt`
 closes an artificial cycle on the continuous tier, as `v` does, and a real
@@ -533,9 +533,9 @@ to follow the selected command while not, so that the switchover is
 bumpless. The hold's rule read `v` only while the code was nonzero, so a
 PID not in command but unsaturated ignored `v` and its integrator ran free
 on its error. The variant that follows `v` unconditionally is tracking
-without a hold, which cannot hold on the inner code. Nothing told the block
+without a hold, which cannot hold on the inner code. Nothing told the PID
 whether it was in command, so no combination of the two expressed it.
-FlightPhysics solved it by resetting the incoming block's integrator on
+FlightPhysics solved it by resetting the incoming PID's integrator on
 every mode change, by hand, inside the control law's sequencing.
 
 **Standby.** The missing piece is the textbook's manual mode with tracking,
@@ -543,15 +543,15 @@ every mode change, by hand, inside the control law's sequencing.
 tracking signal, and the reset was its one-shot approximation. The hold's
 second input `engaged::Bool` carries it, section 4's last row: not engaged,
 the error is gated to zero whatever the code, and the reference is `v`
-where the block tracks and the own `u` where it does not. With `v` the
+where the PID tracks and the own `u` where it does not. With `v` the
 integral term absorbs the proportional and derivative terms and `u_raw`
 converges to `v` at rate `1/Tt`, so at engagement the output equals the
 selected command and the transfer is bumpless. The error is gated off on
 purpose: with it left in, `u_raw` settles at `v + Tt Ki e`, a bias the
 switchover then pays. The probe in `lqr_tracker.md` section 7 measured
 both, a bump of `1.92` with the error left in against `0.002` with it gated
-off and `Tt = 0.1`. A standby block also chases a moving target with lag
-`Tt`, since `v` and its own proportional term both move while another block
+off and `Tt = 0.1`. A standby PID also chases a moving target with lag
+`Tt`, since `v` and its own proportional term both move while another PID
 flies the plant, so the standby `Tt` is short. On the discrete tier `Tt = 0`
 follows exactly, which is the FlightPhysics reset applied every tick.
 `Tt = Inf` follows nothing, which is why `tracking = true` with a fixed
@@ -565,20 +565,20 @@ duplicates, and the freeze, not engaged without a reference, had no
 spelling. [D-385][d-385] reads the space as two kinds of thing. The loop's
 conditions, limited and not engaged, arrive from independent sources, the
 actuator path and the mode logic, so the hold carries both inputs and the
-block owns the precedence between them. The reference is one port, since
+PID owns the precedence between them. The reference is one port, since
 tracking's `v` and standby's `v` are one mechanism under two conditions. A
 single per-channel status port merging the code and the flag was weighed
 and rejected: it would encode a directional value and a flag in one
 enumeration and push the precedence into a junction in every mode-switched
 model. The flag reads true in command, so a selector among parallel paths
-publishes one-hot flags that every block wires directly, and a block nobody
+publishes one-hot flags that every PID wires directly, and a PID nobody
 has selected sits in standby. It is at the output's shape like the code,
 one flag per channel, so a multi-output tracker can hand one channel to the
 pilot while the law keeps the others; a model whose mode is one flag
 broadcasts it.
 
 The fold changes the law only through the gate and the reference, so the
-blocks are `PID{V, Hold, Track, Fixed}` and its discrete twin, with
+components are `PID{V, Hold, Track, Fixed}` and its discrete twin, with
 `engaged` an ordinary input: a feedthrough edge like every other, since `u`
 is stage 2, and a `Bool` that a mode publishes flips on a boundary. The
 C172's outer PIDs are then `hold = true, tracking = true`, holding on the
@@ -594,12 +594,12 @@ name: `s_update` writes it from `u_raw` against `u_min` and `u_max` with
 `saturation_code`, and `y_state` publishes it at the next tick. The name is
 apart from the hold's input `saturation` because a root's input and output
 faces share one name space ([§8.6][s8-6], [D-210][d-210]), so one name on both would
-refuse the block alone as a root ([D-384][d-384]). Section 3's objection to a code
+refuse the PID alone as a root ([D-384][d-384]). Section 3's objection to a code
 from a clamp is that it flips inside a step. On the discrete tier the store
 flips only on a tick boundary, which the gate's doctrine asks for, and the
-stage-1 publication breaks the cascade cycle an outer block's hold would
+stage-1 publication breaks the cascade cycle an outer PID's hold would
 otherwise close. The code is one tick stale, so an outer integrator takes
-one extra step before the hold engages. The block never reads its own code;
+one extra step before the hold engages. The PID never reads its own code;
 own windup stays the correction's. `PID` publishes none, since a continuous
 code would need a mode and events for a consumer that does not exist;
 `lqr_tracker.md` section 6 gives the reasoning and the industrial and

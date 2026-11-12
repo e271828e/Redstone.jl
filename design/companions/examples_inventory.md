@@ -25,7 +25,7 @@ of it.
 
 Two placements were weighed before this one.
 
-- **A submodule `Redstone.Examples`, as the library is `Redstone.Blocks`.**
+- **A submodule `Redstone.Examples`, as the library is `Redstone.Library`.**
   It was the first choice, for three reasons, and the move out of the
   package answers each.
   - *An example in the package is tested.* So is one in its own package:
@@ -34,7 +34,7 @@ Two placements were weighed before this one.
   - *The precompile workload needs a model the package can see.* It does,
     and that model need not be an example. The workload's target is the
     generic machinery, which [§9.7][s9-7] prices at about 6 s whatever the model,
-    and a closed loop of library blocks alone exercises every generic path
+    and a closed loop of library components alone exercises every generic path
     without a new component type. `src/precompile.jl` is that loop.
   - *The example is the first consumer that uses only the public surface.*
     A separate package is the purer form of that consumer: it depends on
@@ -187,7 +187,7 @@ the tutorial for the rest.
 4. Linearize at the trim, print the eigenvalues, name the short period and
    the phugoid, design gains from the matrices. The tracker's "gains
    designed outside" workflow, demonstrated.
-5. Close the loop with library blocks in a group of groups: a rate limiter
+5. Close the loop with library components in a group of groups: a rate limiter
    and a first-order lag as each actuator, a discrete cascade at 50 Hz under
    a faster plant step, pitch rate inside, pitch attitude outside, altitude
    outermost, airspeed through throttle, white noise on the sensed altitude,
@@ -213,7 +213,7 @@ under either controller with no step and no noise. It holds a step in the
 altitude reference within a tolerance under either controller, and also
 when the switch hands command to the tracker in steady flight or mid-climb
 or hands it back to the cascade at 10 s, with the cascade's peak below a
-bound and the tracker's above one. During the climb each block not in
+bound and the tracker's above one. During the climb each controller not in
 command stays within a pinned gap of what it tracks. The elevator's
 frame-to-frame jump at the switch in steady flight stays below the jitter
 the sensor noise induces, and the jump mid-climb and the command's jump at

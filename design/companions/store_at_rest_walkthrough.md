@@ -118,7 +118,7 @@ The delay has lost a tick at the start. A counter copied this way reads one
 higher than the recording at every tick for the rest of the run. This was
 observed, not derived: [D-273][d-273]'s Rationale records that `init!` followed by a
 capture already returned `s(1)`, and increment 65's ruling notes record a
-noise block's counter reading `N + 1` after `N` ticks.
+noise component's counter reading `N + 1` after `N` ticks.
 
 ## 3. What goes wrong in practice, and whether to live with it
 

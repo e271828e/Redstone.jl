@@ -15,10 +15,11 @@ D-303 added the entry, and the `stop request` row on 2026-10-08, when D-316
 replaced `stop_on`'s. The `requester roster` row was counted on 2026-10-19,
 when chapter 13's rewrite added the entry. The twenty rows Appendix D's
 rewrite added were counted on 2026-10-21; no other row was recounted then.
-The `block` row was counted on 2026-10-27, when the entry was added. The
-`step point` row, added on 2026-11-11 by the review of increment 91, was
-removed the same day with its entry (D-449), and the `mandatory instant` row
-was counted then, when D-449 added the entry.
+The `block` row was counted on 2026-10-27, when the entry was added. It
+became the `library component` row on 2026-11-12 and was recounted then, when
+D-453 retired the term. The `step point` row, added on 2026-11-11 by the
+review of increment 91, was removed the same day with its entry (D-449), and
+the `mandatory instant` row was counted then, when D-449 added the entry.
 
 ## D.1 Component model and declaration layer
 
@@ -27,7 +28,6 @@ was counted then, when D-449 added the entry.
 | abstract entry | g-abstract-entry | 4 | A | an `u_types` entry admitting any concrete producer face |
 | assembly | g-assembly | 21 | B | a component that only composes children, with no dynamics |
 | auto-bubbling | g-auto-bubbling | 3 | A | promoting an unconnected input automatically to a root input |
-| block | g-block | 1 | A | a component the standard library ships, with no privilege of its own |
 | bound law / walk clause | g-bound-law | 4 | A | the two clauses that type-check a wire |
 | branch-shape rule | g-branch-shape-rule | 3 | A | a stage returns one `NamedTuple` shape on every branch |
 | class | g-class | 7 | A | a component's primitive-vs-assembly status, read off its declarations |
@@ -41,6 +41,7 @@ was counted then, when D-449 added the entry.
 | function family | g-function-family | 1 | A | which bundle fields a given function may legally receive |
 | generic holding | g-generic-holding | 2 | A | a parent holding a child through a non-concrete field type |
 | hybrid causal system | g-hybrid-causal-system | 1 | B | continuous flow, discrete dynamics, events and injected inputs |
+| library component | g-library-component | 3 | A | a component the standard library ships, with no privilege of its own |
 | local wire | g-local-wire | 6 | B | a `local_wires` entry, with both ends inside the assembly's boundary |
 | locality law / one-level rule | g-locality-law | 5 | A | each wire endpoint names an immediate child and its face |
 | the letters | g-the-letters | 0 | — | *(resists compression: the entry is a naming table)* |

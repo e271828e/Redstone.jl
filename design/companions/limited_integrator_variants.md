@@ -4,23 +4,23 @@
 [§2.3][s2-3] (events and edge semantics), [§10.4][s10-4] (detection policy, the gate form
 and localization), [§10.6][s10-6] (priors and quiescence) and [§13.7][s13-7] (the library),
 with decisions [D-179][d-179] and [D-313][d-313]. If this document and the spec ever
-disagree, the spec wins. It was written on 2026-10-07, when the block's
+disagree, the spec wins. It was written on 2026-10-07, when the integrator's
 second detection policy was briefed, to keep the reasoning that found a
 defect in the first shipped form, ruled out every continuous remedy, and
 settled on two policies.*
 
-The block is the inventory's demonstrator for modes and events
+The integrator is the inventory's demonstrator for modes and events
 (`library_inventory.md`, section 2): a limited integrator is not a clamp
 but a mode read by the derivative, with events that move the mode. Building
 it exposed a corner that the framework's edge semantics make unavoidable,
 and the search for a fix produced a comparison of implementation variants
-that is worth more than the fix. Sections 1 and 2 state the block and the
+that is worth more than the fix. Sections 1 and 2 state the integrator and the
 defect, section 3 proves that no continuous guard can repair it, section 4
 weighs the remedies, section 5 analyses the kinks that decide the cheap
 variant's accuracy, section 6 records the decision, and section 7 notes
 what the episode says about the framework.
 
-## 1. The block
+## 1. The integrator
 
 One continuous state `x`, one mode `saturation` in `:free`, `:upper` or
 `:lower`, and a derivative that reads the mode: `ẋ = in` while free and
@@ -40,19 +40,19 @@ leave_handler(c, _)         = (m = :free,)
 Section 8 adds the input to the hit guards. The hit guards are deliberately ungated. Gated on `:free`, a hit guard
 would read `-1` while saturated and `x - upper = 0` the instant a leave
 handler frees the mode. That is an edge, so it fires and saturates the
-block again, and the leave guard, which read `-1` while the mode was free,
+integrator again, and the leave guard, which read `-1` while the mode was free,
 now sees an edge of its own. Each handler hands the other guard a fresh
 edge, and the boundary chatters until [§10.6][s10-6]'s firing budget breaks the
 tie, under a `FiringBudget` warning. The event that fired first runs out
 first, so a release mid-run ends saturated and stuck, and a release at
-boundary zero ends free (probed 2026-10-20 on a gated copy of the block,
+boundary zero ends free (probed 2026-10-20 on a gated copy of the integrator,
 under both policies). The leave guards are gated by the mode in [§10.4][s10-4]'s
 gate form, `(gate) ? σ : -one(σ)`, which is sound because the mode is
 constant through a localization.
 
 ## 2. The defect
 
-Let the block be saturated at `upper` and let the input fall to exactly
+Let the integrator be saturated at `upper` and let the input fall to exactly
 `0.0`. The first leave guard computes `-u`, which is `-0.0`, and in IEEE
 arithmetic `-0.0 ≥ 0` is true because `-0.0 == 0.0`. The predicate holds,
 its prior was not-holding, and the leave event fires: the mode is `:free`
@@ -63,7 +63,7 @@ the hit fired. When a later input pushes outward, `x` rises, σ turns
 positive, and the predicate is still holding. There is no edge, the hit
 event never fires again, and `x` passes the limit with nothing to stop it.
 The reviewer's scenario stepped the input from `1` to `0` at `t = 1.05`
-and back to `1` at `t = 2.05` into a block limited at `0.5`; by `t = 3` the
+and back to `1` at `t = 2.05` into an integrator limited at `0.5`; by `t = 3` the
 state read `1.45`, mode `:free`. The mirror case at the lower limit reads
 `-1.45`. The corner also bites at boundary zero, which sets every prior to
 not-holding ([§10.6][s10-6]): an `x0` on the limit with a zero input frees there and
@@ -82,10 +82,10 @@ derivative, whatever continuous σ its guards compute.
   upper" must hold whenever `x > upper`, for every input. Approach the rest
   point `(x, in) = (upper, 0)` along `x ↓ upper` with `in = 0`: σ is
   positive all the way, so by continuity `σ(upper, 0) ≥ 0`, which holds.
-  Whenever the block is free at the rest point, the hit predicate is already
-  holding and can produce no edge. This is true of any continuous σ, in
+  Whenever the integrator is free at the rest point, the hit predicate is
+  already holding and can produce no edge. This is true of any continuous σ, in
   whatever mixture of `x` and `u`.
-- **So the block must never be free at the rest point**, which means
+- **So the integrator must never be free at the rest point**, which means
   "leave" must require `in < 0` strictly. No continuous σ satisfies
   `σ ≥ 0 ⟺ in < 0`: at `in = 0` it would have to be negative and the limit
   of positive values at once.
@@ -155,9 +155,9 @@ every upward one. A departure costs about 7 trial sweeps against the strict
 gate's 22, so this form wins only when departures outnumber all other zero
 crossings of the input three to one. The input of a limited integrator is
 typically a tracking error, which crosses zero at every overshoot and then
-continuously under any dither, while the latched block sits idle. Each
+continuously under any dither, while the latched integrator sits idle. Each
 spurious firing also ends the step at the crossing ([§10.4][s10-4]), fragmenting the
-grid with boundaries every component pays for. The block would also stop
+grid with boundaries every component pays for. The integrator would also stop
 being the modes-and-events demonstrator, and a saturation flag would become
 a `y_direct` output with feedthrough from `u`.
 
@@ -200,7 +200,7 @@ would make the departure a first-order kink too, but in this framework such
 an input carries its own event, `Step` localized or boundary-aligned, and a
 `Relay` likewise, so the boundary is already there.
 
-Take a step `[tₙ, tₙ + h]` with the block saturated at `upper` and the input
+Take a step `[tₙ, tₙ + h]` with the integrator saturated at `upper` and the input
 crossing zero at `tₙ + θh` with slope `-a`, so `in(t) = -a (t - t_c)`. The
 exact state at the end of the step is
 
@@ -230,7 +230,7 @@ tolerance, about 1e-8 in time.
 
 ## 6. The decision
 
-The block ships both detection policies for its departures, selected by a
+The integrator ships both detection policies for its departures, selected by a
 type parameter in `Step`'s shape, `LimitedIntegrator{V, L}` with the
 keyword `localized = true`. Arrivals are localized in both, since that kink
 is first-order and the exact clamp depends on it. The localized departure
@@ -253,7 +253,7 @@ The convention that a predicate holds at `σ ≥ 0`, with edges detected
 against a prior, is what makes non-localized and localized events share one
 declaration ([§2.3][s2-3]), and it is what made the rest point a trap: at
 `(upper, 0)` both "`x` has reached the limit" and "`u` has stopped pushing"
-hold, and neither can produce an edge from there. Any block that latches a
+hold, and neither can produce an edge from there. Any component that latches a
 mode on one continuous quantity reaching zero and releases it on another
 reaching zero meets the same corner, and the strict gate on the releasing
 quantity is the general remedy.
@@ -277,18 +277,18 @@ idiom beside the gate form, and [D-290][d-290] carries the annotation.
 
 ## 8. The return after a leave
 
-Section 2's defect leaves the block free at the rest point. On 2026-11-04 the
-review of `LimitedDoubleIntegrator` found a second way past the stop, which the
-single integrator shares. A leave frees the block with `x` on the limit, where
-`x - upper = 0` holds. If `x` dips and comes back inside one step, the predicate
-stops holding and holds again between two boundaries, so [§2.3][s2-3] sees no edge,
-and the block runs free past the limit until `x` falls back under it. Under the
-non-localized leave one reversal is enough: `u` is negative at the boundary and
-turns outward within the next step. On `u = (t - 0.45)(t - 0.52)` at `h = 0.5` with
-`upper = 0.02`, `x` stood 1.16 past the limit at `t = 2`. A localized leave observes
-the crossing only when `u` is negative where the step ends, which rules out the
-return, so it reaches the same state only when another event ends the step between
-the two.
+Section 2's defect leaves the integrator free at the rest point. On 2026-11-04
+the review of `LimitedDoubleIntegrator` found a second way past the stop, which
+the single integrator shares. A leave frees the integrator with `x` on the limit,
+where `x - upper = 0` holds. If `x` dips and comes back inside one step, the
+predicate stops holding and holds again between two boundaries, so [§2.3][s2-3] sees no
+edge, and the integrator runs free past the limit until `x` falls back under it.
+Under the non-localized leave one reversal is enough: `u` is negative at the
+boundary and turns outward within the next step. On `u = (t - 0.45)(t - 0.52)` at
+`h = 0.5` with `upper = 0.02`, `x` stood 1.16 past the limit at `t = 2`. A localized
+leave observes the crossing only when `u` is negative where the step ends, which
+rules out the return, so it reaches the same state only when another event ends
+the step between the two.
 
 The remedy is in the hit guard, which reads `u` on the limit:
 
@@ -296,14 +296,14 @@ The remedy is in the hit guard, which reads `u` on the limit:
 hit_upper_guard(c, (; x, u)) = first_nonzero(x - c.upper, u)
 ```
 
-A block freed on the limit has `u < 0`, so the predicate does not hold and the return
-presents a fresh edge. Section 3 still stands. At the rest point `u = 0` the guard
-holds, as safety demands, the strict gate stays necessary, and this σ is
-discontinuous at `x = upper` for `u < 0`, which is the discontinuity section 3 says
-some guard must carry. A hit at `x = upper` under `u = 0` while free cannot arise,
-since the leave is strict. The cost is nothing measurable: section 4's `cos(t)` input
-over 20 s makes 865 derivative calls localized and 835 non-localized under either
-guard, and reaches the same state.
+An integrator freed on the limit has `u < 0`, so the predicate does not hold and
+the return presents a fresh edge. Section 3 still stands. At the rest point `u =
+0` the guard holds, as safety demands, the strict gate stays necessary, and this
+σ is discontinuous at `x = upper` for `u < 0`, which is the discontinuity section 3
+says some guard must carry. A hit at `x = upper` under `u = 0` while free cannot
+arise, since the leave is strict. The cost is nothing measurable: section 4's
+`cos(t)` input over 20 s makes 865 derivative calls localized and 835
+non-localized under either guard, and reaches the same state.
 
 The guard reads the leading term of the motion against the limit, so the double
 integrator reads `q - limit`, then `v`, then `u`. It cannot skip `v`. Reading `u` at

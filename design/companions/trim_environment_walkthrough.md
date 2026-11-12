@@ -165,7 +165,7 @@ doctrine.
 
 (b) covers nothing (a) cannot. Wrap the constants in a component, wire it, and
 you have (a) back. The gain is purely one of ceremony, and its real niche is
-**component test rigs**: a strut, an airflow stage or an aero block tested on
+**component test rigs**: a strut, an airflow stage or an aero component tested on
 its own against a frozen environment. "Leave the face unconnected and write a
 handle literal into the root input" is the function-valued sibling of a constant
 source — the same answer dry-run finding #7 reaches for its `Constant{V}`
