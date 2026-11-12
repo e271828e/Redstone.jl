@@ -18865,14 +18865,14 @@ replay.
 
 **Status.** ratified
 
-**Position.** The stepper seam is a protocol of six calls, and the `Model`
+**Position.** The stepper seam is a protocol of seven calls, and the `Model`
 owns each step's length, its attempts, the commit, the clock and the
 discontinuity notice. The bundled rulings:
 
 - The backend answers `propose(stepper)`, `attempt!(stepper, model, h)`,
   `discontinuity!(stepper)`, `startpoint`, the generic `dense!` it may
-  override, and the checkpoint pair. A method that proposes nothing takes a
-  span in equal steps ([D-449][d-449]) and always accepts.
+  override, the checkpoint pair and `reset_stepper!(stepper)`. A method that
+  proposes nothing takes a span in equal steps ([D-449][d-449]) and always accepts.
 - `attempt!` returns whether the backend accepts, and nothing else. The
   `Model` reads `propose` before every step and after every rejection.
 - The remainder of a step after a `t*` is offered whole, with no proposal
@@ -18881,8 +18881,9 @@ discontinuity notice. The bundled rulings:
   state ([D-156][d-156]).
 - The `Model` refuses a shaped length that does not advance the clock, and a
   proposal that is not a number, as an internal invariant.
-- Neither `propose` nor the checkpoint pair has a default. A fixed-step
-  backend answers `nothing` to each.
+- None of `propose`, the checkpoint pair and `reset_stepper!` has a default.
+  A fixed-step backend answers `nothing` to the first two and does nothing
+  at a reset.
 - The `Model` clamps a proposal to `h_max` and to the span's end. A step that
   reaches the span's end takes the mandatory instant's clock, and one that
   stops short ends at the clock plus its length.
@@ -18906,8 +18907,8 @@ discontinuity notice. The bundled rulings:
   an advance for every frame after its first, and `frame!` never.
 - A `ModelState` holds the stepper's carried state, the value its checkpoint
   pair reads, `nothing` for a fixed-step method. A restore writes it back.
-- `init!` hands the backend the carried state it was bound with, before
-  boundary zero.
+- `init!` calls `reset_stepper!(stepper)` before boundary zero, and the
+  backend puts its carried state back as it was bound.
 
 **Spec.** [§10.2][s10-2], [§10.3][s10-3], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix D][sD]
 
@@ -18928,8 +18929,9 @@ admits pays none extra, since that loop copied `xₙ₊₁` out already.
 The carried state outlives a run, so `init!` must put it back. Left alone, a
 second `init!` under the same condition would continue the first run's
 proposal, and the run would no longer be a function of its condition
-([§2.4][s2-4]). The state as bound is a value every backend already takes
-through its own pair, so no backend states a reset.
+([§2.4][s2-4]). The backend states the reset itself, as it states its checkpoint
+pair. What a method carries, and what that is worth when a run opens, are the
+method's to know.
 
 A step that does not advance the clock would settle a second boundary at the
 clock of the first, which [D-450][d-450] forbids, and a span of such steps never ends.
@@ -18988,9 +18990,10 @@ method rejects a trial that blew up, so a rejected trial is never checked.
   would part from the original with no error.
 - *The carried state surviving `init!`:* a run would depend on what the
   model ran before it.
-- *A reset call every backend states:* a backend that forgot it would carry
-  one run's state into the next, and the checkpoint pair already takes the
-  state as bound.
+- *The `Model` keeping the carried state as bound and handing it back
+  through the checkpoint pair:* it adds no call, but it puts a field on the
+  `Model` for a value only the backend understands, and it resets through a
+  call made for restoring.
 - *Leaving a length that does not advance the clock to the floor of an
   adaptive method:* until one exists the frame hangs past an interrupt, and a
   floor below the clock's resolution would hang it still.

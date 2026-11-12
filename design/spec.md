@@ -5808,10 +5808,10 @@ The seam contract has four clauses.
   checkpoint pair. A [checkpoint](#g-checkpoint) is the `Model`'s state at a
   frame top ([§12.6][s12-6], [D-274][d-274]). **The pair carries an adaptive
   method's proposal and its controller's memory, and nothing for a
-  fixed-step method** ([D-452][d-452]). **`init!` hands the backend the
-  carried state it was bound with** ([D-452][d-452]). A run that `init!`
-  opens is then a function of its condition under any method, whatever the
-  model ran before ([§2.4][s2-4]).
+  fixed-step method** ([D-452][d-452]). **`init!` asks the backend to put
+  its carried state back as it was bound** ([D-452][d-452]). A run that
+  `init!` opens is then a function of its condition under any method,
+  whatever the model ran before ([§2.4][s2-4]).
 
 #### The step protocol
 
@@ -5828,6 +5828,7 @@ discontinuity!(stepper)             # the next step starts at a discontinuity
 startpoint(stepper)                 # (xₙ, ẋₙ), kept from the last attempt
 dense!(stepper, x̂, x₁, ẋ₁, θ, h′)    # the interpolant over the last accepted step
 checkpoint_stepper(stepper)         # the carried state; restore_stepper! puts it back
+reset_stepper!(stepper)             # the carried state as bound, at init!
 ```
 
 **The `Model` shapes every step's length, and the backend only proposes
@@ -5866,11 +5867,12 @@ loop keeps for its interpolant ([§10.4][s10-4]).
 count names the attempt in a cursor frame ([§13.4][s13-4]). The first-cut
 backends accept every attempt, so their steps take one each.
 
-**Neither `propose` nor the checkpoint pair has a default**
-([D-452][d-452]). A backend that forgot `propose` would change the stepping
-rule, and one that forgot the pair would lose its state at a restore, each
-without an error. So every backend states both, and a fixed-step one answers
-`nothing`.
+**None of `propose`, the checkpoint pair and `reset_stepper!` has a
+default** ([D-452][d-452]). A backend that forgot `propose` would change the
+stepping rule. One that forgot the pair would lose its state at a restore,
+and one that forgot the reset would carry a run's state into the next, each
+without an error. So every backend states all three. A fixed-step one
+answers `nothing` to the first two and does nothing at a reset.
 
 #### The discontinuity notice
 

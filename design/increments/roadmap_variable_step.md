@@ -105,8 +105,8 @@ needs it.
   alone, and the Model reads `propose` before each step and after each
   rejection. Neither `propose` nor the checkpoint pair has a default. The
   attempt writes the trial buffer `xnext`, and the Model commits it. Its
-  review added that `init!` hands the backend the carried state it was bound
-  with, so a run is a function of its condition.
+  review added `reset_stepper!`, a seventh call with no default, which
+  `init!` makes so that a run is a function of its condition.
 - **The discontinuity notice.** Raised at every boundary where a handler
   fired, a tick ran or the drain wrote a value, and at `init!` and
   `overlay!`. What the backend does with it is its own: a fixed-step
