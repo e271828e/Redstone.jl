@@ -122,9 +122,9 @@ strip_partials(course::Course) =
 # `cross`, `lap` and `leg`.
 function course_model(pass = nothing)
     build_course = Fn{Float64, Course{Float64}}(course_of)
-    children = pass === nothing ? (; m = build_course, g = Fields{Course{Float64}}()) :
-               (; m = build_course, p = pass, g = Fields{Course{Float64}}())
-    Group(children; input_wires = ("a" => "m/u",),
+    kids = pass === nothing ? (; m = build_course, g = Fields{Course{Float64}}()) :
+           (; m = build_course, p = pass, g = Fields{Course{Float64}}())
+    Group(kids; input_wires = ("a" => "m/u",),
           local_wires = pass === nothing ? ("m/y" => "g/u",) : ("m/y" => "p/u", "p/y" => "g/u"),
           output_wires = ("g/along" => "along", "g/cross" => "cross", "g/lap" => "lap", "g/leg" => "leg"))
 end

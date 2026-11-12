@@ -745,8 +745,10 @@ The standard component library, the submodule `Redstone.Library`:
   `LQR_PARAMETERS`, the helpers `parameter_types`, `tracker_sizes` and
   `check_shapes`, and `fixed_parameters`, `check_tracking` and
   `check_output_limits` shared with the PID (D-383, D-384, D-385).
-- `StateSpace` with the helper `static_system`, over scalar or `SVector` ports
-  by its matrix shapes, its feedthrough class the type parameter `FT`, and
+- `AbstractLinearSystem{FT}`, which carries the continuous linear systems'
+  stages over their `realization` (D-313, D-437), over `StateSpace` with the
+  helper `static_system`, over scalar or `SVector` ports by its matrix shapes,
+  its feedthrough class the type parameter `FT`, and
   `TransferFunction`, realized by `realize` into a held `StateSpace`
   (D-313). The helpers `coefficients_from_roots` and `transfer_coefficients`
   resolve the zero-pole spelling for the three transfer functions, the
