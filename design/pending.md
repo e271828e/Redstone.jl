@@ -25,7 +25,7 @@ item changes what the spec says, the spec edit is part of the item.
   state and never reseeds it. The plan, the settled rulings and the open
   decisions are `design/increments/roadmap_variable_step.md`: seven
   increments, the deployment surface first, then the three lattices, the
-  step bound, the seam protocol, exact periods with the step-length rule,
+  step bound, the seam protocol, exact time with the step-length rule,
   the first adaptive backend and the teaching, with every trajectory from
   before the update bit-identical through the seam protocol. The update
   changes the deployment keywords, so it precedes the exported-name audit
@@ -68,9 +68,12 @@ item changes what the spec says, the spec edit is part of the item.
     the floor and the attempt budget are owed. And a proposed step can end a
     sliver short of the span's end, leaving a last step of about an ulp,
     which equal division under a proposal removes, as ruled on 2026-11-12.
-  - **Next: exact periods and the step-length rule**, the roadmap's
-    increment 3b. The user ruled the roadmap's open decisions for
-    increment 4 on 2026-11-12 and cut it in two; the rulings are the
+  - **Next: exact time**, the roadmap's increment 3b: the periods and the
+    origin held exact, the clock the float nearest each exact instant, and
+    the float distance as the one step-length rule. The user ruled the
+    roadmap's open decisions for increment 4 on 2026-11-12 and cut it in
+    two, then reversed the step-length rule by piece and added the clock
+    and the origin on the first prototype's evidence; the rulings are the
     roadmap's section "Ruled on 2026-11-12".
   - **Then: the first adaptive backend**, the roadmap's increment 4, with
     `h_min` and the attempt budget on the `Deployment`.
@@ -93,7 +96,8 @@ item changes what the spec says, the spec edit is part of the item.
     - The steps per frame and the refusal of a lattice finer than the clock
       landed with the step bound (D-449, D-450).
     - Exact periods on the `Deployment` and one step-length rule wait for
-      the roadmap's increment 3b, ruled on 2026-11-12.
+      the roadmap's increment 3b, ruled on 2026-11-12, the rule as the
+      float distance everywhere.
 
     The two rejections these rulings owed the log landed with the step
     bound: the cap at the range's end in D-450's Rejected list, and an

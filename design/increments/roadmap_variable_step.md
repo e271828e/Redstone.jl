@@ -156,10 +156,11 @@ The user closed the decisions that named increment 4, before any prototype
 of it. Each lands in the spec and the log with the increment that builds
 it, 3b or 4 as marked.
 
-- **The cut.** Increment 4 splits in two. Exact periods and the step-length
-  rule need no backend and go first, as 3b. The step-length rule is where
-  the bit-identity invariant ends, since a model with localized events
-  moves by ulps. Alone in an increment, every moved pin has one cause.
+- **The cut.** Increment 4 splits in two. Exact time needs no backend and
+  goes first, as 3b: the periods, the origin, the clock and the step-length
+  rule. It is where the bit-identity invariant ends, since the float
+  distance moves a model without localized events and the nearest clock
+  moves every model, by ulps. The four move trajectories once, together.
   Increment 4 then moves no existing trajectory, and all its tests are new.
 - **Exact periods on the `Deployment`.** It stores `Δt_frame`, `Δt_base`
   and `h_max` as `Rational{Int}` and compares and hashes those, where it
@@ -168,12 +169,67 @@ it, 3b or 4 as marked.
   hashed equal and took 3 and 4 steps per frame, and `replay!` accepted
   one's recording into the other while the state drifted by 0.014 in five
   frames. Increment 3b.
-- **One step-length rule, by piece.** A step integrates by the exact length
-  between two instants the Model knows exactly, and by the float distance
-  from a `t*` or an adaptive step end. Before it, a model without localized
-  events integrated by the exact length of the piece and one with them by
-  the float distance to the step's end, so declaring a localized event that
-  never fires moved a trajectory by ulps. Increment 3b.
+- **One step-length rule: the float distance everywhere.** A step's length
+  and its two clocks agree. Where the end's clock is known beforehand, the
+  step integrates by the end's clock minus the start's. Where the length is
+  chosen first, as at an adaptive step end, the end's clock is the start
+  plus the length. Before it, a model without localized events integrated
+  by the exact length of the piece and one with them by the float distance
+  to the step's end, so declaring a localized event that never fires moved
+  a trajectory by ulps. The first ruling of the day was the rule by piece,
+  the exact length between two instants the Model knows exactly. The
+  prototype built it, and the user reversed it the same day on what the
+  prototype showed.
+  - *Why.* It is one sentence, and it is the general case, since an
+    adaptive step end has no other length. It removes two readings the
+    prototype had to take: the arrival sweep's clock an ulp off the step's
+    end, and the proposing step from a mandatory instant, which the rule by
+    piece left as a deviation.
+  - *What was weighed.* A state that should land on a typed threshold at a
+    designed instant does so by luck under either rule. A count in plain
+    float addition, for a timer of rate 1 set to zero mid-run: the exact
+    length misses 0% to 42% of the time across step sizes, the float
+    distance 32% to 48%. Only a state that copies the clock favours the
+    float distance. The rule by piece keeps the steps of a span equal bit
+    for bit, and for a model that does not read time it keeps the states
+    the same at a coarser frame and from another origin. Only a test can
+    tell those from round-off.
+  - *What it costs.* A model without localized events moves by ulps. D-449's
+    equal steps, and its bound that steps by `h_max` itself, hold to the
+    clock's round-off, and D-449 takes an annotation. Measured on the
+    prototype with the one line changed: 9 of 9841 assertions fail, seven
+    that pin D-449's wording in `test_lattices.jl` and two that revert the
+    prototype's own repin.
+
+  Increment 3b.
+- **The clock is the float nearest the exact instant.** A boundary's clock
+  was `t₀ + k·Float64(Δt_frame)`, which can sit an ulp from the float a user
+  types: at `Δt_frame = 3//10`, frame 3 reads `0.8999999999999999`. Probed
+  at 2804435, `Step(t_step = 0.9)` then fires at a `t*` 9.8 ps past that
+  boundary when localized, two snapshots for one event, and a frame late
+  when not. At a 0.1 s frame the clock differs from the nearest float at
+  352 of the first 1000 frame tops. With the periods exact, every instant
+  the Model knows exactly takes the float nearest it: a frame top, a due
+  instant and a step end inside a span. A typed time on a lattice then
+  equals its boundary's clock, snapshots carry the typed decimals, and
+  under the float distance a state that copies the clock lands on them.
+  Increment 3b.
+- **The origin is exact.** `t₀` is held exact, so the nearest clock holds
+  from any origin. `t0` takes the exact forms a period takes, and a float
+  at its exact value: an integer or a binary fraction is then what the user
+  meant, and `-0.3` or `time()` is its own value, with `-3//10` the
+  spelling of the decimal. Refusing a float, as the periods do, was
+  rejected, since a wall-clock origin is a float by nature. `init!` puts
+  the origin and the lattice's unit over one denominator, so a clock is one
+  integer multiply-add and one division, and an origin that does not fit is
+  refused at the door. The clock is exactly the nearest float while both
+  integers are below `2^53`, at millisecond periods past `10^12` s, and
+  within about an ulp beyond, which a float origin with a large binary
+  denominator reaches at once. No correctly rounded big division is built:
+  Julia 1.13's `Float64(::Rational)` divides the two converted integers,
+  and it differed from the nearest float in a third of random cases above
+  `2^53`. The checkpoint and the trace header hold and compare the origin
+  exact. Increment 3b.
 - **The bounds are the Model's and sit on the `Deployment`.** `h_min` is an
   optional keyword beside `h_max`, an exact time through the same door. A
   proposing method requires it, under the rule that a domain rate is not a
@@ -273,8 +329,8 @@ trajectory is bit-identical to today's, the old trajectories being the
 oracle for the rewritten loop. Increment 2b should move only trajectories
 that increment 91's own tests introduced, those with a bound finer than the
 frame and a due instant inside it. That is an argument, not yet a run.
-Increment 3b ends the invariant for a model with localized events, which
-moves by ulps, and increment 4 moves no existing trajectory.
+Increment 3b ends the invariant for every model, by ulps, and increment 4
+moves no existing trajectory.
 
 1. **The deployment surface.** `Deployment(build; Δt_frame, Δt_base,
    algorithm = RK4())`, the step inside the algorithm instance and
@@ -340,18 +396,22 @@ moves by ulps, and increment 4 moves no existing trajectory.
    attempt; a restore followed by a step bit-identical to the unrestored
    run.
 
-3b. **Exact periods and the step-length rule.** The `Deployment` stores
-    `Δt_frame`, `Δt_base` and `h_max` as `Rational{Int}`, with `==` and
-    `hash` over those, and the loop reads `Float64` values derived from
-    them. The localization loop's first segment integrates by the exact
-    length of its step, and a remainder from a `t*` by the float distance.
-    Spec: §9.2, §10.4, §10.5, §12.7. Log: an entry for each ruling. Tests:
-    `h_max = 1//3` and `h_max = Rational(1/3)` at a 1 s frame comparing
-    unequal, and `replay!` refusing one's recording in the other; a
-    localized event that never fires leaving a trajectory bit-identical to
-    the same model without it; every trajectory of a model without
-    localized events bit-identical; each pin that moves named with the ulps
-    it moves by.
+3b. **Exact time.** The `Deployment` stores `Δt_frame`, `Δt_base` and
+    `h_max` as `Rational{Int}`, with `==` and `hash` over those. The clock
+    holds the origin exact, `t0` takes exact forms and a float at its exact
+    value, and every instant the Model knows exactly takes the float
+    nearest it. Every step integrates by the float distance between its two
+    clocks. Spec: §2.1, §2.4, §9.2, §10.4, §10.5, §12.6, §12.7, §14.5,
+    Appendices B and C. Log: an entry for each ruling, D-449 and D-260
+    annotated. Tests: `h_max = 1//3` and `h_max = Rational(1/3)` at a 1 s
+    frame comparing unequal, and `replay!` refusing one's recording in the
+    other; a localized event that never fires leaving a trajectory
+    bit-identical to the same model without it; a step's length equal to
+    the difference of its two clocks; a typed time on the lattice equal to
+    its boundary's clock, from a zero origin and from an exact one;
+    `Step(t_step = 0.9)` at a 0.3 s frame firing at its boundary in one
+    snapshot; a bound finer than the frame bit-identical to the frame at
+    `h_max`; each pin that moves named with its cause.
 
 4. **The first adaptive backend.** Bogacki–Shampine with its parameters
    as recorded deployment data, proportional-integral control, `h_min` and
