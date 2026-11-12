@@ -9141,10 +9141,6 @@ use, which is the by-accident outcome the audit exists to prevent. Nobody is
 inconvenienced meanwhile: the package has no external user, and the
 developer's session pays one `-L` flag.
 
-Annotation (2026-11-12): the library is reached by import from
-`Redstone.Library` since [D-453][d-453]. The library's public standing and the rest
-stand.
-
 **Rejected.**
 - *Export the operator surface now:* decides the list by accident ahead of
   the audit `pending.md` records, and turns a later rename or submodule move into a
@@ -9167,6 +9163,10 @@ records it. `lifecycle(sim)` is public by standing under [Appendix B][sB]'s
 Running heading ([§12.6][s12-6]). `TerminationSource`, the parent of the four termination
 sources, and `LoopError`, the abnormal one of [§13.6][s13-6], are public by standing
 under that heading too.
+
+Annotation (2026-11-12): the library is reached by import from
+`Redstone.Library` since [D-453][d-453]. The library's public standing and the rest
+stand.
 
 ### D-227 — Select the stepper by type under the `algorithm` keyword
 

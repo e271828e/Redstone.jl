@@ -94,3 +94,7 @@ the battery and the examples' runner were green. Adjudicated:
   entry names `AbstractDiscreteLinearSystem` but not `AbstractLinearSystem`,
   and it says `src/Redstone.jl` includes the library last, while
   `precompile.jl` follows it.
+
+The reviewer's delta check confirmed every fix. It found one slip: D-226's
+new annotation stood before the Rejected list, ahead of the 2026-10-27
+annotation it corrects. It now ends the entry, in date order.
