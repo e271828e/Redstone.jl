@@ -31,6 +31,7 @@ bind_stepper(::Recorder, ::Type{T}, n_x::Int) where {T} =
 propose(::RecorderStepper) = nothing
 checkpoint_stepper(::RecorderStepper) = nothing
 restore_stepper!(::RecorderStepper, ::Nothing) = nothing
+reset_stepper!(::RecorderStepper) = nothing
 function attempt!(stepper::RecorderStepper, model::Model, h)
     push!(stepper.lengths, ForwardDiff.value(h)); push!(stepper.fresh, model.fresh)
     copyto!(stepper.x₀, model.exec.xbuf)

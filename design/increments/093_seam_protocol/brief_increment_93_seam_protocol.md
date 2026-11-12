@@ -426,3 +426,15 @@ measurements still 0 B. Nothing is pushed.
 retry carries the same cursor frame with the clock put back, and inference
 and the allocations are unchanged. It agreed that an infinite proposal
 stays legal.
+
+**The user's rulings on return**, on 2026-11-12, on the two rulings of the
+notes that add to the seam's contract. The refusal of a length that does not
+advance the clock stands. The reset at `init!` stands as a requirement and
+changes mechanism: the user chose an explicit call, `reset_stepper!(stepper)`,
+over the `Model` keeping the carried state as bound. It is the protocol's
+seventh call, with no default, and RK4 and Heun state it as a no-op.
+`stepper_bound` leaves the `Model`. D-452's bullet and its rejected
+alternative are swapped, docs commit first. The call dropped from `init!`:
+3 failures. The gate in the worktree, 9822 of 9822 in 9m43s, with the
+examples 77 of 77, the battery green and the 27 allocation measurements
+still 0 B. Nothing is pushed.

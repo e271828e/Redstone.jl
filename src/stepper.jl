@@ -1,7 +1,7 @@
 # The stepper seam (§10.2, D-452): loop ownership stops at one operation, *one
 # step of the continuous state from the clock*, delegated across this narrow
 # interface so the integration method can be replaced without the loop changing.
-# The backend's side is six calls, each answered by dispatch on the stepper:
+# The backend's side is seven calls, each answered by dispatch on the stepper:
 #
 #   - `propose(stepper)`, the length the backend asks for next, `nothing` for a
 #     method that proposes none, which takes each span in equal steps (D-449);
@@ -12,7 +12,9 @@
 #   - `startpoint(stepper)` and `dense!`, the dense output over the last
 #     accepted step, built lazily, because only event localization (§10.4) asks;
 #   - `checkpoint_stepper`/`restore_stepper!`, what the backend carries across a
-#     frame top, read into a model's state and written back from it.
+#     frame top, read into a model's state and written back from it;
+#   - `reset_stepper!(stepper)`, that carried state put back as bound, which
+#     `init!` asks for.
 #
 # The Model's side is model.jl's `integrate_step!`: it shapes the proposal into
 # a length, counts the attempts, discards a rejected one, checks and commits an
@@ -108,6 +110,17 @@ anything reads it, so both first-cut backends carry `nothing`.
 function checkpoint_stepper end
 function restore_stepper! end
 
+"""
+    reset_stepper!(stepper) -> Nothing
+
+Put the backend's carried state back as it was bound (§10.2, D-452). `init!`
+calls it before boundary zero, so a run it opens is a function of its condition
+and never of what the model ran before. Every backend states it; there is no
+default, since a forgotten one would carry one run's proposal into the next. A
+fixed-step method carries nothing and does nothing.
+"""
+function reset_stepper! end
+
 # Design: §10.2, D-442, D-452.
 # The classical fourth-order Runge–Kutta method, `RK4`'s stepper. It owns
 # exactly its own scratch, the state at the start of the step and the four
@@ -126,6 +139,7 @@ bind_stepper(::RK4, ::Type{T}, n_x::Int) where {T} =
 propose(::RK4Stepper) = nothing
 checkpoint_stepper(::RK4Stepper) = nothing
 restore_stepper!(::RK4Stepper, ::Nothing) = nothing
+reset_stepper!(::RK4Stepper) = nothing
 
 function attempt!(stepper::RK4Stepper, model::Model, h)
     exec = model.exec
@@ -165,6 +179,7 @@ bind_stepper(::Heun, ::Type{T}, n_x::Int) where {T} =
 propose(::HeunStepper) = nothing
 checkpoint_stepper(::HeunStepper) = nothing
 restore_stepper!(::HeunStepper, ::Nothing) = nothing
+reset_stepper!(::HeunStepper) = nothing
 
 function attempt!(stepper::HeunStepper, model::Model, h)
     exec = model.exec

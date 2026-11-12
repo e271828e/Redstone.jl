@@ -53,6 +53,8 @@ startpoint(stepper::ScheduledStepper) = (stepper.x₀, stepper.k₁)
 checkpoint_stepper(stepper::ScheduledStepper) = (stepper.proposal, stepper.attempts)
 restore_stepper!(stepper::ScheduledStepper, (proposal, attempts)::Tuple{Float64,Int}) =
     (stepper.proposal = proposal; stepper.attempts = attempts; nothing)
+reset_stepper!(stepper::ScheduledStepper) =
+    (stepper.proposal = stepper.algorithm.h; stepper.attempts = 0; nothing)
 function attempt!(stepper::ScheduledStepper, model::Model, h)
     exec, algorithm = model.exec, stepper.algorithm
     x, ẋ, (; x₀, k₁, k₂) = exec.xbuf, exec.ẋbuf, stepper
@@ -492,7 +494,7 @@ function test_seam_protocol()
         @test CursorFrame("r", :x_deriv, :integrate, 2, 1) != CursorFrame("r", :x_deriv, :integrate, 2, 2)
     end
 
-    @testset "init! hands the stepper its state as bound, so a run is a function of its condition (§2.4, §12.6, D-452)" begin
+    @testset "init! resets the stepper's carried state, so a run is a function of its condition (§2.4, §10.2, D-452)" begin
         algorithm = Scheduled(1/16; rejected = (5, 9), factor = 0.5)
         fresh, again = seam_sim(algorithm), seam_sim(algorithm)
         init!(fresh, set(u = (ref = 0.7,)))

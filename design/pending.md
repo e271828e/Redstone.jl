@@ -84,7 +84,8 @@ item changes what the spec says, the spec edit is part of the item.
     nonfinite value, and raises the discontinuity notice. `RK4()` and
     `Heun()` propose nothing and always accept, the cursor names the
     attempt, and a `ModelState` carries the stepper's state, which `init!`
-    puts back as bound. A frame-top hook returns whether it wrote a value,
+    resets through `reset_stepper!`. A frame-top hook returns whether it
+    wrote a value,
     and the caller of a frame says whether it continues the last one; D-447
     is superseded in part. The `Model` refuses a proposed length that does
     not advance the clock, as an internal invariant. Two things wait for the

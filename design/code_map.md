@@ -866,9 +866,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
   and compiles the check away on the loop's path (D-318).
 - The model's doors (D-317), each gated on the claim (D-318):
   - `init!`, whose condition method resolves and whose plan method refuses
-    an origin `_check_origin` rejects, does the writes, hands the stepper its
-    carried state as bound, the model's `stepper_bound` (D-452), runs boundary
-    zero under §13.4's catch and settles it through the hooks (§14.5, D-223);
+    an origin `_check_origin` rejects, does the writes, asks the stepper to
+    reset its carried state, `reset_stepper!` (D-452), runs boundary zero
+    under §13.4's catch and settles it through the hooks (§14.5, D-223);
   - `overlay!`, in the same two methods, whose condition method resolves with
     the stores as the merge bases, `_store_values`, and whose plan method
     raises the discontinuity notice and runs the continuing settling under
@@ -1184,8 +1184,9 @@ default, the retained `startpoint` and the generic `dense!`, and the steppers
 `RK4Stepper` and `HeunStepper`, each bound from its algorithm token by
 `bind_stepper` at `compile` (D-442), each proposing `nothing` and accepting
 every attempt, which writes the step's end into the executor's trial buffer
-`xnext`. `checkpoint_stepper` and `restore_stepper!` are the checkpoint pair.
-Neither it nor `propose` has a default, and both steppers carry `nothing`
+`xnext`. `checkpoint_stepper` and `restore_stepper!` are the checkpoint pair,
+and `reset_stepper!` puts the carried state back as bound, at `init!`. None
+of the three nor `propose` has a default, and both steppers carry `nothing`
 (D-274). The seam's framework
 side, `integrate_step!`, is model.jl's, and the tokens are deployment.jl's.
 

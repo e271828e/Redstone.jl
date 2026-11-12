@@ -136,3 +136,18 @@ third.
   its arrival raises a trigger the budget still admits, validated or not.
 - **D4.** A comment that overstated D-156, and an assertion moved to a
   testset whose name states it.
+
+## The user's rulings on return, on 2026-11-12
+
+- **Ruling 1, the mechanism, is reversed.** The user kept the requirement
+  and chose the explicit call: `reset_stepper!(stepper)`, a seventh call of
+  the protocol with no default, which `init!` makes before boundary zero.
+  `Model` loses `stepper_bound`. The coordinator had argued for the field
+  because no backend could then forget a reset. The user's ruling that the
+  protocol has no defaults already makes a forgotten call a `MethodError` at
+  the first `init!`, so that argument did not hold, and the notes above
+  overstate it. What remains is a field on the `Model` against a call in
+  the protocol, and the user prefers the call. D-452's bullet and the
+  rejected alternative are swapped.
+- **Ruling 9 stands.** The user agreed to the refusal of a length that does
+  not advance the clock.
