@@ -83,7 +83,9 @@ and the prototype's notes. Both worktrees can be removed after the push.
   confirmed by the reviewer's probe and stays outside the increment.
 - Later the same day: the delta check ran at a7df733, and the user ruled
   the `t*` clock. A loose commit fixes it: the localization loop decides the
-  degenerate case on the clock, at least `nextfloat(t_seg)`, and a clock
-  that reaches the step's end folds into that boundary (§10.4). The
+  degenerate case on the clock, at least `nextfloat(t_seg)`, and a root at
+  `θ★ = 1` or a clock that reaches the step's end folds into that boundary
+  (§10.4). The reviewer's check found the first form dropped the `θ★ = 1`
+  test; the coordinator restored it in a commit of its own. The
   other items under "Open, to carry forward" stand, except the `Δt_base`
   one, which D-454's Rationale now states.

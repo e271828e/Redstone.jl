@@ -278,9 +278,10 @@ function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHo
         # The clock strictly after the segment's start (§10.4): `t_seg + θ★·h′`
         # rounds onto `t_seg` once `θ★·h′` is below half its ulp.
         t★ = max(t_seg + θ★ * h′, nextfloat(t_seg))
-        if t★ ≥ t_to
-            # Degenerate: the crossing's clock is the step's end itself (§10.4,
-            # D-446), a root at θ★ = 1 or one that rounds onto it. The
+        if θ★ ≥ 1.0 || t★ ≥ t_to
+            # Degenerate: the crossing is the step's end itself (§10.4, D-446),
+            # a root at θ★ = 1, whose `t_seg + h′` can fall an ulp short of
+            # `t_to`, or one whose clock rounds onto the end. The
             # localization is discarded and the event fires inside that
             # boundary's ordinary iteration — one boundary, no zero-length
             # remainder.

@@ -108,6 +108,23 @@ function test_localization()
             times = [snapshot.t for snapshot in logged(sim)]
             @test allunique(times)
         end
+        # A root exactly at the step's end folds into its boundary even where
+        # `t_seg + h′` falls an ulp short of the end: here frame 3's top is
+        # `1e-5`, the step starting from `-0.09999`. The non-localized run's
+        # boundary count is the reference.
+        t0 = -3//10 + 1//100_000
+        base = Simulation(Group((; src = Sawtooth(1.0), s = Stamper(10.0));
+                                local_wires = ("src/q" => "s/sig",)); Δt_frame = 1//10)
+        init!(base; t0)
+        run!(base; t_end = Float64(t0) + 0.5)
+        top_3 = only(snapshot for snapshot in logged(base) if snapshot.frame == 3)
+        @test Float64(-1//10 + 1//100_000) + (top_3.t - Float64(-1//10 + 1//100_000)) < top_3.t
+        sim = Simulation(Group((; src = Sawtooth(1.0), s = Stamper(port(top_3, "src", :q)));
+                               local_wires = ("src/q" => "s/sig",)); Δt_frame = 1//10)
+        init!(sim; t0)
+        run!(sim; t_end = Float64(t0) + 0.5)
+        @test modes(sim, "s").t_fired == top_3.t
+        @test length(logged(sim)) == length(logged(base))
     end
 
     @testset "multiple crossings in one frame: earliest first, re-localized on the remainder" begin

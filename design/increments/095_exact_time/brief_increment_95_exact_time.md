@@ -812,8 +812,13 @@ an ulp of it. Two snapshots then share one clock: from `t0 = 2^20` at a 0.1
 s frame, crossings 1e-13 s and 1e-11 s past frame 3, and from `2^30` 1e-9
 s; from `t0 = 0` never. It predates the increment and stays outside it. The
 user ruled it after the delta check, and a loose commit decides the
-degenerate case on the clock: the clock is at least `nextfloat(t_seg)`, and
-one that reaches the step's end folds into that boundary.
+degenerate case on the clock as well as on `θ★`: the clock is at least
+`nextfloat(t_seg)`, and a root at `θ★ = 1` or a clock that reaches the
+step's end folds into that boundary. The reviewer's check of that commit
+found its first form tested the clock alone, so a root at the step's end
+whose `t_seg + h′` fell an ulp short published a `t*` boundary and a sliver
+remainder; the coordinator restored `θ★ ≥ 1.0` beside the clock's test, with
+a test from the reviewer's probe.
 
 **After the fixes.** The fixer ran the gate in the real tree, 9919 of 9919
 in 10m01.0s, 13:08 wall, part of it beside the mutant runs on a scratch
