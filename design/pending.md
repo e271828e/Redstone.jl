@@ -12,6 +12,30 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **The exact-arithmetic audit.** Increment 95 put the deployment's
+  periods, its bound and the run's origin on `Rational{Int}` (D-454,
+  D-457), and the fixes since have met overflow one site at a time: the
+  clock's integers, guarded at the origin's door; `bind_schedule`'s anchor
+  divisions, the loose fix `a7df733`; and now `_grid_report`'s
+  `reduce(gcd, …)` in `src/deployment.jl`. A rational `gcd` takes an `Int`
+  `lcm` of the denominators, so two anchored periods `1//(2^40+1)` and
+  `1//(2^40+3)` raise a raw `OverflowError` at `Deployment` construction;
+  the line predates increment 95, and its review found it. The user ruled
+  on 2026-11-13 that the switch to exact time stands, and that its fallout
+  is analyzed whole before the first adaptive backend, not met site by
+  site. The analysis is a dated report in `design/reports/` that covers:
+  - every exact-arithmetic site on the time surface, from a declared rate
+    through the schedule, the lattice, the clock, the checkpoint and the
+    trace header, with the inputs that overflow it and what it does then;
+  - one policy for them: a common integer width, or `Rational{Int}` kept
+    and a bound on denominators refused at the doors, with one refusal per
+    door and the errors that may still escape named;
+  - one rule for what the doors accept, since the period door and the
+    origin door differ today (`Float16`, `Rational{BigInt}`);
+  - the bounds the spec states, reconciled: D-450's `2^-52·(…)` in §10.5,
+    D-456's two ulps and the origin door's check at the run's two ends.
+
+  A ruling beside D-454 to D-457 follows the report, then the build.
 - **Variable-step integration.** The frame and the integration step become
   separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
   no required ratio on the `Deployment`, `N_base` retires, and the step is
@@ -96,7 +120,9 @@ item changes what the spec says, the spec edit is part of the item.
       `bind_schedule`'s `Δt_frame / h`, exact time the frame loop's exact
       piece length, and a loose fix on 2026-11-13 the last,
       `bind_schedule`'s `anchor.T / Δt_base`, now divided in `Int128` and
-      refused as `:anchor_period`, its offset's as `:anchor_offset`.
+      refused as `:anchor_period`, its offset's as `:anchor_offset`. The
+      count was one short: increment 95's review found a fourth,
+      `_grid_report`'s `gcd`, which waits on the exact-arithmetic audit.
     - The rename of D-448 does not sweep the log, and `rules/log_rules.md`
       rule 2 now says why. `:boundary` in the `Events` policies became
       `:non_localized`.
