@@ -32,17 +32,19 @@ item changes what the spec says, the spec edit is part of the item.
   report's policy A:
   - the overflow sites: checked arithmetic in the fold and the schedule's
     multiply-add, one catch per door refused under an existing reason, a
-    `Period` that is not finite refused, and `_prime_powers` bounded;
+    `Period` that is not finite refused, and `_prime_powers` bounded at
+    `2^20`; the structure step alone takes a new reason, `:range`;
   - the clock: the float nearest its instant at every magnitude, by a
     correctly rounded division past `2^53`, with boundary zero written by
     `_instant`, which adopts the alternative D-456 rejected;
-  - §10.5's bounds, corrected to that clock;
-  - the doors' loose ends: `Bool`, and a `Rational` of another integer
-    type at the `Deployment` keywords.
+  - §10.5's bounds, corrected to that clock, with D-450's `2^50·δ` kept;
+  - the doors' loose end: a `Rational` of another integer type at the
+    `Deployment` keywords. `Bool` stays accepted.
 
-  The rulings, their reasons and the points left to the readings round are
+  The rulings and their reasons are
   `design/increments/096_exact_arithmetic/notes_increment_96.md`. Stage
-  reached: the rulings; the prototype is next.
+  reached: the prototype, running in a scratch worktree with the four open
+  points ruled; its readings round is next.
 - **Variable-step integration.** The frame and the integration step become
   separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
   no required ratio on the `Deployment`, `N_base` retires, and the step is

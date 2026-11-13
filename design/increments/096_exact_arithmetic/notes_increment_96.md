@@ -78,15 +78,30 @@ them again inside it before a figure enters the brief.
 - A clock from a wall-clock origin costs 34 ns by the long division and
   1.2 ns by the plain one.
 
-## Open, for the readings round
+## Ruled on 2026-11-14, the four open points
 
-- **The structure step's reason.** No `RatesViolation` reason says that a
-  composed divisor or phase passes `Int`: `:multiplier` reads "K ≥ 1" and
-  `:phase` "0 ≤ φ < K". Ruling 3 asks for existing reasons, so the
-  prototype takes a reading here.
-- **`Bool`.** The user folded it in without saying which way. Refused at
-  every door, or kept.
-- **D-450's bound.** `2⁵⁰·δ` kept with its rationale restated, or relaxed
-  to the factor the new clock leaves.
-- **The cap on the trial division.** The report proposes `2^20`, with the
-  cofactor above it reported whole.
+The rulings above left four points open. The user ruled them the same day,
+while the prototype ran, and the prototyper received them in one message.
+
+7. **The structure step takes one new reason, `:range`.** A composed
+   divisor or phase past `Int` is a `RatesViolation` with reason `:range`,
+   on the diagnostic's existing `path`, `key` and `value`. It is the one
+   exception to ruling 3. No existing reason says it: `:multiplier` reads
+   "K ≥ 1" and `:phase` "0 ≤ φ < K", so reusing either would print a wrong
+   message for a valid `K`. `:range` is the reason every other time door
+   gives for a value its type cannot hold.
+8. **`Bool` stays accepted.** No door gains a method for it, which amends
+   ruling 6. `Δt_frame = true` deploys a 1 s frame, as Julia's `Bool` is an
+   integer, and nothing breaks. The user preferred no code for an input
+   nobody types. The coordinator had recommended a refusal, mildly.
+9. **D-450's bound stays `2⁵⁰·δ`, its rationale restated.** Under the new
+   clock two clocks keep their order while `|t₀| + 2ε < 2⁵²·δ`, so the
+   bound keeps a factor of 4. Relaxing it would move `_last_frame` for
+   every deployment and gain nothing a run reaches, and a proposing
+   backend's step end, the start's clock plus a length (D-455), may use
+   the margin at increment 4.
+10. **The trial division's cap is `2^20`.** A cofactor left below `2^40`
+    is prime, since a composite would have a factor below the cap, so
+    every denominator below `2^40` is factored whole. A cofactor at or
+    above `2^40` may be composite, and the grid report's message marks it
+    as unfactored. The worst case is about a million iterations.
