@@ -20,7 +20,11 @@ _exact(name::Symbol, value, diags::Vector{Diagnostic}) =
     (push!(diags, DeploymentInvalid(parameter = name, reason = :not_a_quantity,
                                     value = typeof(value))); nothing)
 
-_as_int(value::Rational) = denominator(value) == 1 ? Int(numerator(value)) : nothing
+# A whole quotient that fits `Int`, or `nothing`; a wide quotient past `Int` is
+# `nothing` too, so its refusal is the caller's, never an `InexactError`.
+_as_int(value::Rational) =
+    denominator(value) == 1 && typemin(Int) ≤ numerator(value) ≤ typemax(Int) ?
+    Int(numerator(value)) : nothing
 
 # --- the grid attribution (§9.2, D-187) -----------------------------------------
 
@@ -313,17 +317,19 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
     # Per anchor, one exact division pair; anchor 0 is the base grid itself. The
     # loop collects into the call's list (§13.1): every anchor the chosen base
     # grid cannot express is named, so the coarsest admissible value is chosen
-    # against the whole list. It reads `Δt_base` alone (D-229).
+    # against the whole list. It reads `Δt_base` alone (D-229). Each division
+    # runs in `Int128`, as `_lattice`'s do, so a count of base ticks past `Int`
+    # is refused as its anchor, never as a raw `OverflowError`.
     Δt_r === nothing && return nothing
     anchors_on_entry = length(diags)
     Dk, Φk = [1], [0]
     for anchor in anchors
-        D = _as_int(anchor.T / Δt_r)
+        D = _as_int(Rational{Int128}(anchor.T) / Δt_r)
         D === nothing &&
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period,
                                           value = anchor.T, related = Δt_r,
                                           scope = anchor.scope, key = anchor.key, grid = grid))
-        Φ = _as_int(anchor.τ / Δt_r)
+        Φ = _as_int(Rational{Int128}(anchor.τ) / Δt_r)
         Φ === nothing &&
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :anchor_offset,
                                           value = anchor.τ, related = Δt_r,

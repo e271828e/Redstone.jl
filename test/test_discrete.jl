@@ -463,6 +463,16 @@ function discrete_deployment()
               [(:period, 1), (:period, 10), (:offset, 3)]
         @test only(e.alternatives for e in d.grid.pool if e.kind === :offset) ==
               [3//500, 1//125]
+
+        # A period and an offset whose counts of base ticks leave `Int` are
+        # refused as their anchor, never as a raw overflow: about `2^63` seconds
+        # over a quarter-second base tick.
+        huge = Group((; a = TickCounter());
+                     sample_times = (; a = Absolute(Period(typemax(Int)), typemax(Int) - 1)))
+        err = failure(() -> Deployment(build(huge); Δt_frame = 1//4, Δt_base = 1//4))
+        @test Set((d.parameter, d.reason, d.value) for d in diagnostics(err)) ==
+              Set([(:Δt_base, :anchor_period, typemax(Int)//1),
+                   (:Δt_base, :anchor_offset, (typemax(Int) - 1)//1)])
     end
 
     @testset "Δt_base derivation demands an all-anchored model (§9.1)" begin
