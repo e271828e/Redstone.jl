@@ -303,7 +303,8 @@ status left `:built`.
 - `t0`: the start time, held exact: a `Rational{Int}`, an integer or a
   `Period`, or a float at its exact value, so `-3//10` is the decimal and
   `-0.3` the float nearest it. Refused as `ArgumentInvalid` if not finite, if
-  `Rational{Int}` cannot hold it, or if the run from it could take no frame.
+  `Rational{Int}` cannot hold it exactly, as for `1e-4`, or if the run from it
+  could take no frame.
 - `hooks`: the [`FrameHooks`](@ref) boundary zero settles through,
   [`NoHooks`](@ref) for a model stepped on its own.
 """
@@ -353,12 +354,18 @@ end
 
 # The origin a door takes, exact (D-457): an integer, a rational or a `Period`,
 # the forms a period takes, or a finite float at its exact value. Anything else,
-# an irrational among them, one that `Rational{Int}` cannot hold, and one whose
-# run the clock's integers cannot carry, is refused as `ArgumentInvalid`
-# `:range` on `t0`.
+# an irrational among them, one that `Rational{Int}` cannot hold exactly, and one
+# whose run the clock's integers cannot carry, is refused as `ArgumentInvalid`
+# `:range` on `t0`. `Rational{Int}` rationalizes a float whose exact value needs
+# a denominator past `Int`, such as `1e-4`, so the result is compared with the
+# float, exactly, and refused unless equal.
 _exact_origin(t0::Period) = t0.T
 _exact_origin(t0::Union{Integer,Rational{<:Integer}}) = Rational{Int}(t0)
-_exact_origin(t0::AbstractFloat) = isfinite(t0) ? Rational{Int}(t0) : nothing
+function _exact_origin(t0::AbstractFloat)
+    isfinite(t0) || return nothing
+    origin = Rational{Int}(t0)
+    origin == t0 ? origin : nothing
+end
 _exact_origin(t0) = nothing
 function _origin(call::Symbol, t0, deployment::Deployment)
     origin = try
@@ -574,11 +581,15 @@ _frame_at(t::Real, t₀::Real, Δt_frame::Float64) =
 # The last frame a run from the origin `t₀` may take (§10.5, D-445, D-450): the
 # lesser of the lattices' `max_frame` and the last frame whose clocks the origin
 # resolves. Every clock the loop writes in frame `k` lies within
-# `2^-52·(|t₀| + 2·(t - t₀))` of its instant, `t = t₀ + k·Δt_frame` the frame's
-# end, so two boundaries a gap `δ` apart take ordered clocks while
-# `|t₀| + 2·(t - t₀) < 2^50·δ`, half the first-order threshold. `reach` is
-# `2^50·δ`; the frame count it leaves is a few flops per call, so nothing is
-# stored where `t₀` is set.
+# `1.5·2^-52·(|t₀| + 2·(t - t₀))` of its instant, `t = t₀ + k·Δt_frame` the
+# frame's end: `_instant` rounds three times, the two conversions and the
+# division, each by at most `2^-53` relative, and `|t| ≤ |t₀| + 2·(t - t₀)`.
+# Measured past `2^53`, the error reached 1.34 times `2^-52·(|t₀| + 2·(t - t₀))`.
+# Two boundaries a gap `δ` apart take ordered clocks while their two errors stay
+# below `δ`. `reach` is `2^50·δ`, so while `|t₀| + 2·(t - t₀) < 2^50·δ` the two
+# errors close at most three quarters of the gap, the quarter left a margin for
+# the terms the estimate drops. The frame count it leaves is a few flops per
+# call, so nothing is stored where `t₀` is set.
 function _last_frame(deployment::Deployment, t₀::Float64)
     lattice = deployment.lattice
     room = (lattice.reach - abs(t₀)) / (2 * Float64(deployment.Δt_frame))   # k < room

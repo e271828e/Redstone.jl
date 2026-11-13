@@ -6607,7 +6607,7 @@ knows exactly takes the `Float64` nearest it as its clock**
 ([D-457][d-457]). The loop puts the origin and the lattices' unit over one
 denominator where the origin is set, so a clock is one integer
 multiply-add and one division. It is exactly the nearest float while both
-integers stay below `2⁵³`, and within about an ulp of it beyond. At
+integers stay below `2⁵³`, and within two ulps of it beyond. At
 `Δt_frame = 3//10`, frame 3 reads `0.9`, so `Step(t_step = 0.9)` fires at
 that boundary, in one snapshot.
 
@@ -9895,7 +9895,8 @@ ordinary [macro-sequence](#g-boundary-sequence) with an empty integrate ([§14.5
 with the clock ([§11.5][s11-5], [D-273][d-273]). **The origin is exact**
 ([D-457][d-457]). `t0` takes the exact forms a period takes, and a float at
 its exact value, so `-3//10` is the decimal and `-0.3` the float nearest it.
-An origin whose run the clock's integers cannot carry is refused at the door.
+A float whose exact value `Rational{Int}` cannot hold, such as `1e-4`, is
+refused, as is an origin whose run the clock's integers cannot carry.
 A checkpoint and a trace header hold and compare it exact.
 
 **A `Simulation` is constructed with a placeholder run** ([D-255][d-255]). The
@@ -13127,7 +13128,7 @@ and returns a report.
 #### The backend seam
 
 The signature is
-`trim!(model, problem; baseline, t0 = 0.0, backend = LevenbergMarquardt())`, where
+`trim!(model, problem; baseline, t0 = 0, backend = LevenbergMarquardt())`, where
 `model` is a [`Model`](#g-model) (a deployment materialized at one scalar type) at `Float64`
 ([D-319][d-319]). A `Model` at another scalar is refused as `ArgumentInvalid` with reason
 `:non_nominal` ([D-319][d-319]). A `Model` that a simulation has claimed is refused before
@@ -13700,7 +13701,9 @@ is about the trim point with nothing re-specified. **`about = <condition>`, with
 beside it, linearizes anywhere else without touching the sim**, the condition's
 coverage checked as [§14.6][s14-6] requires ([D-272][d-272]). `t0` is admitted only there, and a `t0`
 passed without `about` is an `ArgumentInvalid` ([D-420][d-420]). There it defaults to
-`0.0`, the init-service entry points' default ([§14.5][s14-5], [D-430][d-430]).
+`0`, the init-service entry points' default ([§14.5][s14-5], [D-430][d-430]).
+It takes the exact forms `init!`'s `t0` takes, and a `t0` of another form is
+refused as `ArgumentInvalid` ([D-457][d-457]).
 
 #### The seeded pass
 
@@ -14376,7 +14379,7 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   model a simulation has claimed, as `ArgumentInvalid` with reason
   `:claimed`.
 
-  - `init!(model, condition = set(); t0 = 0.0, hooks = NoHooks())` (`set`,
+  - `init!(model, condition = set(); t0 = 0, hooks = NoHooks())` (`set`,
     under Condition algebra). The
     model's entry point into `:consistent` ([D-317][d-317]). It runs
     [boundary zero](#g-boundary-zero) at `t0`, which settles through the hooks
@@ -14427,7 +14430,7 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   - `overlay!(model, condition = set(); hooks = NoHooks())`. Writes the
     condition onto the model at rest and settles the overlaid state with no
     discrete output stage and no update ([§12.6][s12-6]).
-  - `trim!(model, problem; baseline, t0 = 0.0, backend =
+  - `trim!(model, problem; baseline, t0 = 0, backend =
     LevenbergMarquardt()) → TrimReport`. The trim service on a
     `Model{Float64}`, committing through the model's `init!`
     ([§14.8][s14-8]).
@@ -14583,7 +14586,7 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   [D-429][d-429]).
 - `linearize(sim, taps; about = nothing, t0 = nothing, width = 8) →
   Linearization`. A pure query. The operating point defaults to the
-  checkpoint of the simulation, and `about` with `t0` (default `0.0` beside
+  checkpoint of the simulation, and `about` with `t0` (default `0` beside
   `about`) places
   it anywhere else ([§14.10][s14-10], [D-430][d-430]).
 - `get_state(path, leaf = "")`, `get_deriv(path, leaf = "")`, `get_output(path, leaf = "")`,

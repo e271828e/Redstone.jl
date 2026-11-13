@@ -190,7 +190,7 @@ end
 # (D-456), from the grid integers: `position` whole units from the origin, and
 # `i` of `steps` equal steps across a span of `units` past it. Both integers
 # convert exactly while they stay below `2^53`, and the one division then
-# rounds to nearest; past that the clock is within about an ulp of it. `count`
+# rounds to nearest; past that the clock is within two ulps of it. `count`
 # stays below `2^127`, so it never wraps. `mul` and `add` are the plain
 # operators in the loop, and the checked ones at the door, which refuses an
 # origin whose run the integers cannot carry (D-457, `_clock_integers`).

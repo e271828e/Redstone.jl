@@ -211,16 +211,16 @@ failures. The faults are a member in the wrong list, a discrete state in `x`, a
 tap that is not one scalar, a root input that cannot be seeded, and a second tap
 on one seeded site.
 
-A `t0` without `about`, a `width` below 1, a second argument that is not a tap
-set, and a model at a scalar type other than `Float64` are refused as
-`ArgumentInvalid`.
+A `t0` without `about`, a `t0` that is not an exact time as [`init!`](@ref)
+takes one, a `width` below 1, a second argument that is not a tap set, and a
+model at a scalar type other than `Float64` are refused as `ArgumentInvalid`.
 
 # Keywords
 
 - `about`: a condition placing the operating point, or `nothing` for
   `checkpoint(model)`.
-- `t0`: the time of the `about` operating point, `0.0` when `nothing`, allowed
-  only beside `about`.
+- `t0`: the time of the `about` operating point, held exact as `init!`'s, `0`
+  when `nothing`, allowed only beside `about`.
 - `width`: how many directions one evaluation seeds, at least 1, by default 8.
 """
 function linearize(model::Model{Float64}, tap_set::Taps; about = nothing,

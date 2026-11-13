@@ -19105,9 +19105,8 @@ resolved `h_max` as exact rationals, and `==`, `hash` and replay's check
 compare those values. The bundled rulings:
 
 - Two quantities that round to one `Float64` are two deployments.
-- The loop and every reader that needs a time in seconds read the `Float64`
-  nearest the exact value, the value the deployment stored before, so no
-  trajectory moves.
+- Every reader that needs a time in seconds converts the exact value at its
+  site.
 - `show(deployment)` and the `CheckpointMismatch` message print the exact
   values.
 - No recorded format changes. The descriptor carries no time quantity, and
@@ -19127,7 +19126,10 @@ clock is the float nearest an instant of the exact periods, so two spellings
 of a period that round to one `Float64` write different clocks on the
 lattice they set. They are two trajectories, and the exact comparison
 refuses them rightly. At a 0.1 s frame, `1//10` and `Rational(0.1)` part at
-352 of the first 1000 frame tops. The floats the loop reads are converted at the
+352 of the first 1000 frame tops. A `Δt_base` in a model with no discrete
+component sets no lattice, so its two spellings take one trajectory and still
+compare unequal, since the comparison reads the deployment's values and never
+the `Lattice` (rejected below). The floats the loop reads are converted at the
 site, by the conversion the binding applied before, so the stored value has
 one home. A printed deployment shows what it compares, so two deployments
 that compare unequal never print alike.
@@ -19208,7 +19210,7 @@ the span's exact start plus `i` times its exact step. The bundled rulings:
 - The clock is one integer multiply-add and one division over the origin
   and the lattices' unit put over one denominator, in `Int128`. It is
   exactly the nearest float while both integers stay below `2^53`, and
-  within about an ulp of it beyond. The loop's integer arithmetic is
+  within two ulps of it beyond. The loop's integer arithmetic is
   unchecked, since the door refuses an origin whose run the integers cannot
   carry ([D-457][d-457]).
 
@@ -19246,8 +19248,9 @@ holds from any origin. The bundled rulings:
   `about` form, accepts the exact forms a period takes, a `Rational`, an
   integer or a `Period`, and a float at its exact value. Any other value,
   an irrational among them, is refused.
-- An origin that is not finite, that `Rational{Int}` cannot hold, or whose
-  run the clock's integers cannot carry is refused at the door as
+- An origin that is not finite, that `Rational{Int}` cannot hold exactly,
+  such as the float `1e-4`, or whose run the clock's integers cannot carry
+  is refused at the door as
   `ArgumentInvalid` `:range` on `t0`, beside [D-450][d-450]'s refusal of an origin
   whose run could take no frame. The door evaluates the clock's formula with
   checked arithmetic at the run's two ends, the origin and one frame past

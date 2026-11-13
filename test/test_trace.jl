@@ -690,6 +690,19 @@ function trace_replay_loop()
         near_zero = replay_twin()
         replay!(near_zero, trace(shifted); to_time = 0.0)
         @test near_zero.run.frame == 3
+
+        # From the exact origin `3//10`, boundary zero's clock `0.3` lies an ulp's
+        # fraction below the origin and still names boundary zero (D-457).
+        exact = Simulation(replay_model(); Δt_frame = 1//10)
+        init!(exact, set(u = (ref = 1.0, rate = 0.0)); t0 = 3//10)
+        step!(exact; frames = 3)
+        @test first(logged(exact)).t === 0.3 < 3//10
+        at_origin = replay_twin()
+        replay!(at_origin, trace(exact); to_time = 0.3)
+        @test at_origin.run.frame == 0
+        at_two = replay_twin()
+        replay!(at_two, trace(exact); to_time = 0.5)
+        @test at_two.run.frame == 2
     end
 
     @testset "`to_time`'s refusals precede every write (§12.7, D-219)" begin
@@ -1729,6 +1742,15 @@ function trace_checkpoints()
         @test d.expected === 0//1 && d.found === Rational(0.05)   # exact (D-457)
         assert_unwritten(shifted, before)
         @test shifted.run === old_run
+        # Two origins that round to one float are two clocks: a recording from
+        # the float `0.3` refuses a simulation at `3//10`.
+        float_origin = replay_twin(; t0 = 0.3)
+        step!(float_origin; frames = 2)
+        exact_origin = replay_twin(; t0 = 3//10)
+        d = only(diagnostics(failure(() -> replay!(exact_origin, trace(float_origin);
+                                                   restore = false))))
+        @test d isa CheckpointMismatch && d.what === :clock && d.name === :t₀
+        @test d.expected === Rational(0.3) && d.found === 3//10
 
         # The simulation's frame runs from the header's to one short of the
         # recording's last: before the header the feed would run frames the

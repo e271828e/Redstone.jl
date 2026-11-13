@@ -819,7 +819,8 @@ it.
 - `t0`: the start time, held exact: a `Rational{Int}`, an integer or a
   `Period`, or a float at its exact value, so `-3//10` is the decimal and
   `-0.3` the float nearest it. Refused as `ArgumentInvalid` if not finite, if
-  `Rational{Int}` cannot hold it, or if the run from it could take no frame.
+  `Rational{Int}` cannot hold it exactly, as for `1e-4`, or if the run from it
+  could take no frame.
 - `trace`: record the input trace of this run.
 - `log`: keep the snapshot log of this run.
 - `log_every`: keep every `log_every`-th published [boundary](@ref g-boundary)
@@ -1370,7 +1371,7 @@ function replay!(sim::Simulation, trc::Trace; to_boundary = nothing,
         # slack: without it the plain floor would halt one boundary short of
         # the one named.
         t₀, recorded = trc.header.state.t₀, trc.header.state.deployment
-        to_time isa Real && isfinite(to_time) && to_time ≥ t₀ &&
+        to_time isa Real && isfinite(to_time) && to_time ≥ Float64(t₀) &&
             _frames_fit(recorded, to_time, t₀) ||
             throw(DiagnosticError(ArgumentInvalid(call = :replay!, reason = :range,
                                                   argument = :to_time, value = to_time)))

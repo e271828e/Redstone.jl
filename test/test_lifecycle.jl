@@ -43,9 +43,11 @@ resume_condition() = combine(at("ctl", set(s = (acc = 4.0,))),
                              set(u = (in = 0.5,)))
 
 function test_lifecycle()
-    @testset "an origin that is not finite or lies past the frame range is refused before any write (§10.5, §14.5, Appendix C, D-450)" begin
+    @testset "an origin that is not finite, not exact, or past the frame range is refused before any write (§10.5, §14.5, Appendix C, D-450, D-457)" begin
         point = set(u = (ref = 0.0,))
-        for bad in (NaN, Inf, -Inf, 1e15, 1e34, big"1e400", π)
+        # `1e-4` and `big"0.1"` are floats whose exact values `Rational{Int}`
+        # cannot hold, which it would rationalize.
+        for bad in (NaN, Inf, -Inf, 1e15, 1e34, big"1e400", π, 1e-4, big"0.1")
             model = Model(feedback_model(); Δt_frame = 1//10)
             d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, point; t0 = bad))
             @test d.call === :init! && d.reason === :range && d.argument === :t0 && d.value === bad
@@ -78,7 +80,7 @@ function test_lifecycle()
         @test checkpoint(sim).state.t₀ == 1e14
     end
 
-    @testset "an origin whose run the clock's integers cannot carry is refused at the door (§12.6, §14.5, D-457)" begin
+    @testset "an origin whose run the clock's integers cannot carry is refused at the door, and at a restore (§12.6, §14.5, D-457)" begin
         # A 10^5 s frame from an origin over the largest `Int` denominator: the
         # grid integers fit `Int128`, but the clock at the last frame the run may
         # take, about 5.6e14 frames on, would not, and the loop's arithmetic is
@@ -94,6 +96,19 @@ function test_lifecycle()
         short = Model(feedback_model(); Δt_frame = 1//10)
         init!(short, point; t0 = 1//typemax(Int))
         @test short.exec.clock.t₀ === 1//typemax(Int)
+        # A state built by hand carries the origin past `init!`'s door, and the
+        # restore refuses it the same way, the target left `built`.
+        wide = Model(feedback_model(); Δt_frame = 100_000)
+        init!(wide, point)
+        taken = checkpoint(wide)
+        forged = ModelState{Float64}(taken.x, taken.s, taken.m, taken.table, taken.prior,
+                                     taken.stepper, Float64(1//typemax(Int)), 1//typemax(Int),
+                                     taken.deployment, taken.layout)
+        target = Model(feedback_model(); Δt_frame = 100_000)
+        d = only(diagnostics(failure(() -> restore!(target, forged))))
+        @test d isa ArgumentInvalid && d.call === :restore! && d.reason === :range &&
+              d.argument === :t0 && d.value === 1//typemax(Int)
+        @test target.status === :built
     end
 
     @testset "a keyword past the frame range or past `Int` is refused as out of range before any write (§11.2, §12.6, §13.5)" begin
@@ -362,9 +377,10 @@ function test_lifecycle()
         frames!(dual_model, 3)
         @test dual_model.exec.clock.t isa D8
 
-        # Both helpers against the grid the loop writes, `t₀ + k * h`: every
-        # frame top resolves to its own frame, and every midpoint floors onto
-        # its frame and ceils onto the next. The origins take both signs, and
+        # Both helpers against the float grid `t₀ + k * h`, whose round-off
+        # their slack covers as it covers the loop's clocks': every frame top
+        # resolves to its own frame, and every midpoint floors onto its frame
+        # and ceils onto the next. The origins take both signs, and
         # `k` runs through zero's neighborhood where the origin is negative.
         grid = [(t₀, h, k) for h in (1e-3, 0.02, 0.1, 0.25, 1/3)
                 for t₀ in (-86400.0, -1000.0, -3.0, -1.3, -0.7, -0.3, 0.0, 0.3, 1.3, 86400.0)
@@ -900,7 +916,7 @@ function test_lifecycle()
         step!(sim; frames = 2)
         err = failure(() -> overlay!(sim, set(u = (in = true,))))
         @test err isa StepError{Detonated}
-        @test err.host === :overlay && err.boundary == 2 && err.t == 2 * 0.1
+        @test err.host === :overlay && err.boundary == 2 && err.t == 0.2
         @test err.cursor.path == "c" && err.cursor.phase === :round
         @test lifecycle(sim) === :built && termination(sim) === nothing
         d = carried(@test_throws DiagnosticError{MissingInit} trace(sim))

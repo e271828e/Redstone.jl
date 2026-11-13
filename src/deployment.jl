@@ -205,10 +205,15 @@ end
 # `Int` rationals, each period in units and each product of two `Int`s fit it,
 # and every factor is checked against `Int` before it multiplies. Returns
 # `:Δt_base` when the unit or one frame's positions leave `Int`, and `:h_max`
-# when a span's step count or its steps' exact length would, which
-# `bind_schedule` refuses (§9.2, D-229). A span of `units` takes
-# `cld(units·q, p)` steps of `(units·unit)/n`, `bound = p/q`, so the products
-# checked are the frame's `units·q` and the step's denominator.
+# when a frame's step count, or that count times the unit's denominator, would,
+# which `bind_schedule` refuses (§9.2, D-229). A span of `units` takes
+# `cld(units·q, p)` steps, `bound = p/q`, so the products checked are the
+# frame's `units·q` and its step count times the unit's denominator. The second
+# keeps the clock's products `scale·steps` and `origin·steps` below `2^126`
+# from any origin a `Rational{Int}` holds (store.jl's `_instant`). The origin's
+# door checks the clock's whole formula (model.jl's `_clock_integers`, D-457),
+# so this check refuses some bounds whose clocks `Int128` would carry from a
+# zero origin.
 function _lattice(Δt_frame::Rational{Int}, Δt_base::Rational{Int}, h_max::Rational{Int},
                   rows::Vector{ScheduleEntry})
     wide(value) = Rational{Int128}(value)

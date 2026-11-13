@@ -282,7 +282,7 @@ function test_trim()
         end
     end
 
-    @testset "the search runs with the clock at `t0`, as the commit does (§14.8)" begin
+    @testset "the search runs with the clock at `t0`, as the commit does, which keeps the origin exact (§14.8, D-457)" begin
         # `q̇ = -t·q² + u` at `q = 1` holds still at `u = t`, a point only the clock names.
         problem() = TrimProblem(guess = (u = 0.5,), lower = (u = -Inf,), upper = (u = Inf,),
                                 condition = d -> set(u = (in = d.u,)),
@@ -300,6 +300,13 @@ function test_trim()
         @test abs(report.committed_residuals.b) ≤ 1e-9
         # The default stays at 0, where `u = 0` holds.
         @test trim!(Model(fed(TimedDecay()); Δt_frame = 1//10), problem(); baseline = set()).solution.u ≈ 0.0 atol = 1e-9
+        # A decimal origin is committed as the rational given, in both forms.
+        model = Model(fed(TimedDecay()); Δt_frame = 1//10)
+        trim!(model, problem(); baseline = set(), t0 = 2//5)
+        @test model.exec.clock.t₀ === 2//5 && model.exec.clock.t === 0.4
+        sim = Simulation(fed(TimedDecay()); Δt_frame = 1//10)
+        trim!(sim, problem(); baseline = set(), t0 = 2//5)
+        @test sim.model.exec.clock.t₀ === 2//5 && sim.model.exec.clock.t === 0.4
 
         # The empty problem's one evaluation is the nominal half's.
         empty_problem = TrimProblem(guess = (;), lower = (;), upper = (;), condition = d -> set(),

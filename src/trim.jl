@@ -551,7 +551,8 @@ as `ArgumentInvalid`, before any check. So is a second argument that is not a
 - `t0`: the start time of the committing boundary zero, held exact: a
   `Rational{Int}`, an integer or a `Period`, or a float at its exact value.
   Refused as `ArgumentInvalid` before the search if not finite, if
-  `Rational{Int}` cannot hold it, or if the run from it could take no frame.
+  `Rational{Int}` cannot hold it exactly, as for `1e-4`, or if the run from it
+  could take no frame.
 - `backend`: the solver, any value with a [`solve`](@ref) method, by default
   [`LevenbergMarquardt`](@ref).
 """

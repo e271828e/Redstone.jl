@@ -495,7 +495,7 @@ function test_events()
         step!(sim; frames = 2)
         @test modes(sim, "c") === (state = :armed, count = 0)
         overlay!(sim, set(u = (in = 1.0,)))
-        @test port(sim, "", :in) == 1.0 && latest(sim).t == 2 * 0.1
+        @test port(sim, "", :in) == 1.0 && latest(sim).t == 0.2
         @test modes(sim, "c") === (state = :fired, count = 1) && port(sim, "c", :on) === true
         step!(sim)
         @test modes(sim, "c") === (state = :fired, count = 1)

@@ -668,7 +668,7 @@ function discrete_deployment()
         @test port(sim, "c", :n) == 10 && state(sim, "c").n == 11
         # `init!` from the same copy decodes it at boundary zero, one tick ahead
         fresh = Simulation(single(TickCounter()); Δt_frame = 1//10)
-        init!(fresh, at("c", set(s = (n = 10,))); t0 = 3 * 0.1)
+        init!(fresh, at("c", set(s = (n = 10,))); t0 = 3//10)
         @test port(fresh, "c", :n) == 10 && state(fresh, "c").n == 11
     end
 

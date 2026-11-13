@@ -67,3 +67,19 @@ throughout, on 2026-11-12 and 2026-11-13.
 The session's scratchpad holds the worktrees `wt_inc95`, the prototype's,
 and `wt_inc95_fd`, the coordinator's two measurements, with their gate logs
 and the prototype's notes. Both worktrees can be removed after the push.
+
+## 2026-11-13: the review and the fixer's commit
+
+- The cold review ran at 290801c: the gate 9870 of 9870, ten findings. The
+  coordinator adjudicated them, and a fixer landed the fixes as one commit,
+  "Fix increment 95's review findings", recorded in the brief's "The
+  review's record". F1's ruling stands as worded: a float origin is taken
+  at its exact value or refused, with no round-trip rule. F8's check stays
+  and its comment says what it guards.
+- The loose fix of ruling 4, `bind_schedule`'s division in `Int128`, lands
+  as its own commit after it.
+- Still open: the reviewer's delta check, the user's diff of the arc and
+  the push. The `t*` clock that rounds onto its segment's start is
+  confirmed by the reviewer's probe and stays outside the increment. The
+  other items under "Open, to carry forward" stand, except the `Δt_base`
+  one, which D-454's Rationale now states.

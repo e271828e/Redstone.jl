@@ -372,7 +372,8 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   one frame conservative: frame `max_frame + 1` would still fit. `_lattice`
   builds it in `Int128` and returns `:Δt_base` when the unit, a period in
   units or one frame's positions leave `Int`, or `max_frame < 1`, and
-  `:h_max` when a frame's step count or its steps' exact denominator would.
+  `:h_max` when a frame's step count, or that count times the unit's
+  denominator, would.
   The bound is not in the unit's gcd (D-449).
 - `bind_schedule` is strict under D-229: `Δt_frame`, `Δt_base` and `h_max`
   are each a premise of its own, positive and finite (`_positive_finite`),
@@ -1325,20 +1326,25 @@ framework name the tests call or extend is admitted. A second line,
 
 ### `test/test_lattices.jl`
 
-The frame on its lattices and the step bound (§2.1, §10.3–§10.5,
-D-444–D-447, D-449, D-450): the step counts against the exact periods, the
-split, equal steps under `h_max`, harmonic or not, subcycling, sub-step
-publication, freshness, localization across a frame's steps, a stop at a step
-end, the `Int` bound and the clock's resolution at every door. Its fixtures
-are its own:
+The frame on its lattices and the step bound (§2.1, §10.3–§10.5, §12.6,
+D-444–D-447, D-449, D-450, D-455–D-457): the step counts against the exact
+periods, the split, equal steps under `h_max`, harmonic or not, subcycling,
+sub-step publication, freshness, localization across a frame's steps, a stop
+at a step end, the `Int` bound and the clock's resolution at every door; a
+step's length as the difference of its two clocks, a remainder from a `t*`
+included, a typed time on a lattice as its boundary's clock from an exact
+origin, a bound finer than the frame on the clocks of a frame at that bound, a
+restored state on its own origin's clocks, and a step typed on the frame grid
+firing at its boundary. Its fixtures are its own:
 
 - `Recorder()`, an `AbstractAlgorithm` defined in the suite, and its
   `RecorderStepper`, forward Euler through the seam's protocol, proposing
   nothing and accepting every attempt, that keeps each step's length and the
   model's `fresh` flag (§10.2, D-452). No backend in `src/` records.
-- `LatticeHooks` and `FreshHooks`, hooks keeping each boundary's counters and
-  reporting nothing written at the top (D-317, D-447). The stop test reuses
-  `test_lifecycle.jl`'s `ramp_request`.
+- `LatticeHooks`, hooks keeping each boundary's counters and reporting
+  nothing written at the top (D-317, D-447). The stop test reuses
+  `test_lifecycle.jl`'s `ramp_request`, and the clock tests
+  `test_localization.jl`'s `RecordingHooks`.
 
 ### `test/test_stepper.jl`
 

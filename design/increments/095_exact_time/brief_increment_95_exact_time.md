@@ -713,4 +713,104 @@ twin's bound arm. Then, in this order:
 
 ## The review's record
 
-Filled after the review.
+The arc on top of 84379eb: 46b7674 (docs), b8dd909 (this brief and the
+patch), c58ce63 (code), 290801c (the coordinator's notes), then the
+review's fixes. Nothing is pushed.
+
+**The review**, at 290801c. An independent high-tier agent ran the gate,
+9870 of 9870 in 10m00.5s on Julia 1.13.3, with `Longitudinal` 77 of 77,
+the Documenter build clean and the battery green. Its own probes compared
+`_instant` with a correctly rounded `BigFloat` value: exactly nearest below
+`2^53`, and past it up to 2 ulps on origins with large odd denominators,
+1.34 times the bound in `_last_frame`'s comment at worst over 600,000
+adversarial cases, the boundaries still ordered. It checked 23,212 loop
+values against the door's two ends, none past them, and every door that
+sets the origin. `_instant` infers concretely at 0 B, and `frame!` allocates
+nothing past 1100 frames from `-0.3` at `Float64` and `LinearizeDual`.
+Against 84379eb, clocks moved at 59 to 70 of 200 frame tops and states by
+up to 8.4e-15, as D-456 and D-455 say. Its report lists ten findings.
+
+The coordinator adjudicated them, and a fixer landed the fixes as one
+commit:
+
+- **F1, a float origin was rationalized.** `Rational{Int}(x)` returns a
+  rational that rounds back to `x` when the exact value needs a denominator
+  past `Int`: `1e-4` became `855561659527253//8555616595272529590`, and
+  `big"0.1"` became `1//10`. The door now compares the result with the float
+  exactly and refuses it unless equal, so such a float is refused and the
+  message's exact forms apply. No round-trip rule. The origin door keeps
+  its types: the exact comparison refuses `big"0.1"` alone, and a
+  `Float16` or a `Rational{BigInt}` that fits is still taken at its exact
+  value. D-457, §12.6, the three `t0` docstrings and the code comment name
+  `1e-4`. Test: `1e-4` and `big"0.1"` join the refusal list. The comparison
+  dropped: 2 failures and 2 errors over `lifecycle` and `linearize`.
+- **F2, `replay!`'s `to_time` compared a float with the exact origin.**
+  From `t0 = 3//10`, `to_time = 0.3`, boundary zero's clock, was refused.
+  Now `to_time ≥ Float64(t₀)`. Test: from `3//10`, `to_time = 0.3` halts at
+  frame 0 and `0.5` at frame 2. The fix reverted: 1 error. The sweep found
+  no other comparison of a float with the exact origin: `_check_origin`,
+  `_last_frame`, the three frame helpers' deployment methods, `_nonfinite`,
+  `_assert_at_rest`, `_check_grid!` and `linearize`'s `about` form convert
+  at the site, and the trace header compares two rationals.
+- **F3, the shortened step lost its localized event.** At `every = 3` the
+  step holding the crossing at 0.315 was accepted whole. The stub is now
+  `Scheduled(1/40; rejected = (14,), factor = 0.8)`: attempt 14, offered 0.3
+  to 0.325, is rejected, and the retry from 0.3 ends at 0.32, past the
+  crossing. The test asserts the retry's start and `t_fired` inside it.
+- **F4, six survivors given tests**, each shown red on a scratch copy:
+  (a) a hand-built state at `t₀ = 1//typemax(Int)` on a 10^5 s frame is
+  refused at `restore!` as `ArgumentInvalid` `:t0`, the target left `built`
+  (G, 1 error); (b) `trim!` from `t0 = 2//5` commits `2//5` in both forms
+  (J, 2 failures); (c) a recording from the float `0.3` refuses a simulation
+  at `3//10` on `:t₀` (P, 1 error); (d) `linearize`'s `about` refuses `π`,
+  `1e-4`, `"0.3"` and `NaN` as `t0` (K, 1 failure and 1 error); (e) a state
+  restored into a fresh model steps on the taken model's clocks from `-0.3`,
+  `7//3` and `1e9 + 0.1` (H, 3 failures); (f) under a recording stub, the
+  remainder from each `t*` integrates by the distance to its step's end, and
+  the step it cut by its offer (B2, 1 failure).
+- **F5, stale `t0 = 0.0`.** The model's `init!` and `trim!` signatures in
+  §14.8 and Appendix B, and `linearize`'s default in §14.10 and Appendix B,
+  now read `0`. §14.10 gains a sentence on the exact forms and the refusal,
+  and `linearize`'s docstring says the same.
+- **F6, D-454's second bullet** said the loop read the float of the stored
+  value, so no trajectory moved. It now says every reader converts the exact
+  value at its site.
+- **F7, "within about an ulp".** D-456, §10.5 and `store.jl` say two ulps.
+  `_last_frame`'s comment bounds each clock by `1.5·2^-52·(|t₀| + 2·(t −
+  t₀))`, three roundings of `2^-53` each, so the reach leaves a quarter of
+  the gap as margin.
+- **F8, `_lattice`'s second `:h_max` check** guards no exact length now.
+  Ruled: the check and its test stay, and the comment says what it guards,
+  `_instant`'s `scale·steps` and `origin·steps` below `2^126`, which the
+  door also checks. The test's comment and the code map's entry follow.
+- **F9, stale text.** `test_readers.jl`'s testset on a `Float64` origin,
+  `test_lifecycle.jl`'s comment on the loop's grid, the old-form pins in
+  `test_failures.jl`, `test_events.jl`, `test_lifecycle.jl`,
+  `test_lattices.jl` and `test_discrete.jl`, written now as typed decimals
+  or as `Float64` of the exact product, `test_discrete.jl`'s origin `3 *
+  0.1` as `3//10`, the code map's `test_lattices.jl` entry with its
+  citations and properties, `FreshHooks` gone from it, and the two comment
+  blocks in `frame.jl`, wrapped.
+- **F10, a `Δt_base` in a model with no discrete component.** D-454's
+  Rationale gains the sentence: it sets no lattice, so its two spellings
+  take one trajectory and still compare unequal. The origin door's wider
+  types are settled under F1.
+
+**Survivors accepted**, the reviewer's: D2, the door's two ends at one step
+a span, near-equivalent, since the last frame's count barely moves with the
+step count and `_lattice` bounds `origin·steps` and `scale·steps`; L,
+`trim!`'s scratch clocks from the float origin, whose origin no scratch
+evaluation reads. B and T were discarded as equivalent. A, D1, E, F, Q, M1,
+M3 and N1 to N4 die, and X, the arrival clock written as `t_to`, kept every
+localized test green.
+
+**Report only: a `t*` clock can round onto its segment's start.** §10.4 says
+`t* = tₙ` cannot happen, at worst `nextfloat(tₙ)`. The bracket holds in θ,
+but the clock `t_seg + θ★·h′` rounds onto `t_seg` once `θ★·h′` is below half
+an ulp of it. Two snapshots then share one clock: from `t0 = 2^20` at a 0.1
+s frame, crossings 1e-13 s and 1e-11 s past frame 3, and from `2^30` 1e-9
+s; from `t0 = 0` never. It predates the increment and stays outside it.
+
+**After the fixes.** The fixer ran the gate in the real tree, 9919 of 9919 in 10m01.0s, 13:08 wall, part of it beside the
+mutant runs on a scratch copy, the 49 new assertions included,
+the battery green with `linkify.jl` a no-op, and `Longitudinal` 77 of 77.

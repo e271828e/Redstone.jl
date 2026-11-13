@@ -234,6 +234,18 @@ function test_linearize()
         @test linearize(tripped, taps(); about = set()) isa Linearization
     end
 
+    @testset "an `about` time that is not exact is refused before any evaluation, as `init!` refuses it (§14.10, D-457)" begin
+        # `1e-4` is a float whose exact value `Rational{Int}` cannot hold.
+        sim = Simulation(lin_pend(); Δt_frame = 1//10)
+        for bad in (π, 1e-4, "0.3", NaN)
+            d = carried(@test_throws DiagnosticError{ArgumentInvalid} linearize(
+                sim, lin_taps(); about = lin_point(), t0 = bad))
+            @test d.call === :linearize && d.reason === :range && d.argument === :t0 &&
+                  d.value === bad
+        end
+        @test lifecycle(sim) === :built
+    end
+
     @testset "the width groups the directions and never changes the answer (§14.10, D-272)" begin
         sim = Simulation(lin_pend(); Δt_frame = 1//10)
         init!(sim, lin_point())

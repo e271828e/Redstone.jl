@@ -405,7 +405,7 @@ function failures_runtime()
         @test err isa StepError{InterruptException}
         @test err.host === :loop && err.boundary == 0
         @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 4, 1)
-        @test staged.exec.clock.t == 1 * 0.1 && staged.status === :inconsistent
+        @test staged.exec.clock.t == 0.1 && staged.status === :inconsistent
         refused_then_restored(staged, before)
 
         # An event handler at the frame-top boundary.
@@ -417,7 +417,7 @@ function failures_runtime()
         @test err isa StepError{InterruptException}
         @test err.host === :loop && err.boundary == 1
         @test err.cursor == CursorFrame("c", :handler, :round, 1)
-        @test top.exec.clock.t == 2 * 0.1 && top.status === :inconsistent
+        @test top.exec.clock.t == 0.2 && top.status === :inconsistent
         refused_then_restored(top, before)
 
         # The `settled!` hook, after the frame top settled.
@@ -427,7 +427,7 @@ function failures_runtime()
         err = failure(() -> frame!(hooked, 1, InterruptingSettle()))
         @test err isa StepError{InterruptException}
         @test err.host === :loop && err.boundary == 0 && err.cursor.phase === :round
-        @test hooked.exec.clock.t == 1 * 0.1 && hooked.status === :inconsistent
+        @test hooked.exec.clock.t == 0.1 && hooked.status === :inconsistent
         refused_then_restored(hooked, before)
     end
 
@@ -438,13 +438,13 @@ function failures_runtime()
         before = checkpoint(model)
         err = failure(() -> restore!(model, before; hooks = InterruptingSettle()))
         @test err isa StepError{InterruptException}
-        @test err.host === :restore && err.boundary == 2 && err.t == 2 * 0.1
+        @test err.host === :restore && err.boundary == 2 && err.t == 0.2
         @test err.cursor.path === nothing && err.cursor.fn === :none   # a restore runs no component
         @test model.status === :built                   # a door's throw, as `init!`'s
         d = carried(@test_throws DiagnosticError{ServiceLifecycle} checkpoint(model))
         @test d.status === :built
         restore!(model, before)
-        @test model.status === :consistent && checkpoint(model).t == 2 * 0.1
+        @test model.status === :consistent && checkpoint(model).t == 0.2
     end
 
     @testset "a door's catch wraps an interrupt and returns the model to :built (§13.4, §12.6, D-441)" begin
@@ -490,7 +490,7 @@ function failures_runtime()
         source = termination(sim).source
         @test source isa LoopError && source.exception === err
         # The cut frame published nothing, so the last published boundary is final.
-        @test latest(sim).t == 2 * 0.1 && termination(sim).t == 2 * 0.1
+        @test latest(sim).t == 0.2 && termination(sim).t == 0.2
         d = carried(@test_throws DiagnosticError{ServiceLifecycle} checkpoint(sim))
         @test d.op === :checkpoint && d.status === :errored
 
@@ -523,7 +523,7 @@ function failures_runtime()
         @test err isa StepError{ErrorException} && err.host === :loop && err.boundary == 2
         @test err.cursor == CursorFrame(nothing, :none, :drain, 0)
         @test lifecycle(sim) === :errored
-        @test sim.model.exec.clock.t == 2 * 0.1 && sim.run.frame == 3
+        @test sim.model.exec.clock.t == 0.2 && sim.run.frame == 3
     end
 
     @testset "a deferred interrupt after another issuer keeps that issuer as the source (§12.1, §12.4, D-268)" begin

@@ -17,20 +17,20 @@
 # to `settled!` as the frame top's does (D-317).
 
 # Design: §10.3, §10.4, §10.5, §13.4, §13.5, D-261, D-268, D-317, D-444, D-445,
-# D-447, D-449, D-450, D-455, D-456. The cursor's `:drain` phase is written first. Mandatory
-# instants are whole units of the deployment's `Lattice`, so the next one and
-# every coincidence are integer comparisons, and each boundary's clock is
-# written once: a frame top `t₀ + k·Δt_frame`, a due instant from its base-tick
-# index, an interior step end from its span's start and its count in the span.
-# Every step integrates by the float distance between its two clocks, the bare
-# step and a localized one alike (D-455), and every clock the model knows
-# exactly is the float nearest its instant (D-456). A model with no localized
-# events, every non-nominal activation included since its events compiled out,
-# takes the bare step: no arrival machinery, no extra sweep. The whole frame is §13.4's one `try`, and the
-# `StepError` is the one constructor's. Its catch wraps every throw, an
-# interrupt included, since the status says whether the stores are a settled
-# boundary and the cause says what cut the frame. The index bound and the
-# claim's gate precede it.
+# D-447, D-449, D-450, D-455, D-456. The cursor's `:drain` phase is written
+# first. Mandatory instants are whole units of the deployment's `Lattice`, so
+# the next one and every coincidence are integer comparisons, and each
+# boundary's clock is written once: a frame top `t₀ + k·Δt_frame`, a due instant
+# from its base-tick index, an interior step end from its span's start and its
+# count in the span. Every step integrates by the float distance between its two
+# clocks, the bare step and a localized one alike (D-455), and every clock the
+# model knows exactly is the float nearest its instant (D-456). A model with no
+# localized events, every non-nominal activation included since its events
+# compiled out, takes the bare step: no arrival machinery, no extra sweep. The
+# whole frame is §13.4's one `try`, and the `StepError` is the one
+# constructor's. Its catch wraps every throw, an interrupt included, since the
+# status says whether the stores are a settled boundary and the cause says what
+# cut the frame. The index bound and the claim's gate precede it.
 """
     frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
 
@@ -169,16 +169,16 @@ end
 # `t_to`. Each turn integrates one segment — the whole step first, then
 # remainder steps from each `t*` — and either returns at the step's end or fires
 # one `t*` boundary and goes around. The whole step integrates by the length the
-# bare path takes, the distance between its clocks or a proposal's length, and
-# a remainder by the distance from its `t*` to `t_to` (D-455). A rejection may shorten the first
-# segment, no further than `t_limit`, the span's end, and the step then ends
-# where the accepted attempt did; a remainder targets the step's end and never a
-# later instant (D-452). The budget counts the frame's localizations, one per
-# `t*` boundary produced, across all its steps: per segment, root-finding runs
-# are already structurally bounded (at most one per declared event), while the
-# segment count is the quantity chattering inflates without bound. Returns
-# whether `settled!` abandoned the frame at a `t*` boundary, the frame's
-# localization count, and the step's end (D-261, D-317).
+# bare path takes, the distance between its clocks or a proposal's length, and a
+# remainder by the distance from its `t*` to `t_to` (D-455). A rejection may
+# shorten the first segment, no further than `t_limit`, the span's end, and the
+# step then ends where the accepted attempt did; a remainder targets the step's
+# end and never a later instant (D-452). The budget counts the frame's
+# localizations, one per `t*` boundary produced, across all its steps: per
+# segment, root-finding runs are already structurally bounded (at most one per
+# declared event), while the segment count is the quantity chattering inflates
+# without bound. Returns whether `settled!` abandoned the frame at a `t*`
+# boundary, the frame's localization count, and the step's end (D-261, D-317).
 function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHooks,
                           fresh::Bool, localizations::Int)
     exec = model.exec

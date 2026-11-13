@@ -330,12 +330,17 @@ function test_seam_protocol()
         @test stepper.starts[3] == stepper.starts[2]
         @test state(model, "a").n == 1 + 2         # the ticks at 3/32 and 3/16, at their instants
         # A localized event inside a step a rejection shortened still fires at
-        # its crossing.
-        sim = Simulation(stamped(); Δt_frame = 1//10, algorithm = Scheduled(1/40; every = 3, factor = 0.5))
+        # its crossing. Attempt 14 is offered 0.3 to 0.325 and rejected, and the
+        # retry from 0.3 ends at 0.32, past the crossing at 0.315.
+        sim = Simulation(stamped(); Δt_frame = 1//10,
+                         algorithm = Scheduled(1/40; rejected = (14,), factor = 0.8))
         init!(sim)
         run!(sim; t_end = 0.5)
+        stepper = sim.model.exec.stepper
+        @test first(stepper.starts[14]) === first(stepper.starts[15]) === 0.3
         @test modes(sim, "s").count == 1
         @test modes(sim, "s").t_fired ≈ 0.315 atol = 1e-6
+        @test 0.3 < modes(sim, "s").t_fired < 0.3 + 0.8 * 0.025
     end
 
     @testset "the notice reaches the backend where a handler fired, a tick ran, a drain wrote, and at init! and overlay!, never at a restore, and the same under one advance and many (§10.2, §12.6, D-452)" begin

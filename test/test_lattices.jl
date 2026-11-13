@@ -230,10 +230,10 @@ function test_lattices()
         for k in 1:2
             frame!(model, k, hooks)
         end
-        Δt_frame, Δt_base, h = Float64(model.deployment.Δt_frame), Float64(model.deployment.Δt_base), Float64(1//30)
-        @test clocks == [1 * Δt_base, 2 * Δt_base, 1 * Δt_frame,
-                         4 * Δt_base, 5 * Δt_base, 2 * Δt_frame]
-        @test clocks[5] !== 1 * Δt_frame + 2 * h        # the two formulas part by an ulp
+        Δt_frame, Δt_base = model.deployment.Δt_frame, model.deployment.Δt_base
+        @test clocks == Float64.([1 * Δt_base, 2 * Δt_base, 1 * Δt_frame,
+                                  4 * Δt_base, 5 * Δt_base, 2 * Δt_frame])
+        @test clocks[5] !== Float64(Δt_frame) + 2 * Float64(1//30)   # the two formulas part by an ulp
         @test state(model, "a").n == 1 + 6
     end
 
@@ -271,10 +271,11 @@ function test_lattices()
         step!(sim)
         stage!(sim, "in" => 3.0)                  # frame 2's drain
         step!(sim)
-        Δt_frame, Δt_base = Float64(sim.model.deployment.Δt_frame), Float64(sim.model.deployment.Δt_base)
+        Δt_frame, Δt_base = sim.model.deployment.Δt_frame, sim.model.deployment.Δt_base
         samples = [(s.t, port(s, "", :in), port(s, "z", :out)) for s in logged(sim)]
-        @test samples == [(0.0, 1.0, 1.0), (7 * Δt_base, 2.0, 2.0), (1 * Δt_frame, 2.0, 2.0),
-                          (14 * Δt_base, 3.0, 3.0), (2 * Δt_frame, 3.0, 3.0)]
+        @test samples == [(0.0, 1.0, 1.0), (Float64(7 * Δt_base), 2.0, 2.0),
+                          (Float64(1 * Δt_frame), 2.0, 2.0), (Float64(14 * Δt_base), 3.0, 3.0),
+                          (Float64(2 * Δt_frame), 3.0, 3.0)]
     end
 
     @testset "every step end publishes, under its frame's index and the next ordinal (§11.2, §12.3, D-445)" begin
@@ -527,8 +528,8 @@ function test_lattices()
         h_max = (3^25 ÷ 2)//3^25
         d = only(refused(unit_rig(), 1//1; Δt_frame = 2^30, h_max))
         @test d.parameter === :h_max && d.reason === :range && d.value == h_max
-        # A bound whose count `units·q` fits, but whose step's exact length over
-        # the unit's denominator would not: one frame of `1//(2^33 + 1)` taken in
+        # A bound whose count `units·q` fits, but whose step count times the
+        # unit's denominator would not: one frame of `1//(2^33 + 1)` taken in
         # about 2^30 steps.
         d = only(diagnostics(failure(() -> Deployment(build(feedback_model());
                                                       Δt_frame = 1//(2^33 + 1),
@@ -540,7 +541,7 @@ function test_lattices()
               Set([(:Δt_base, :range), (:firing_budget, :range)])
     end
 
-    @testset "a step's length is the difference of its two clocks, under a bound that divides nothing and a due instant that cuts a span (§10.5, D-455)" begin
+    @testset "a step's length is the difference of its two clocks, under a bound that divides nothing and a due instant that cuts a span, and a remainder from a `t*` the distance to its step's end (§10.4, §10.5, D-455)" begin
         # A 0.1 s frame beside a counter due every 0.07 s, the bound 3/100 s,
         # from the origin 1/7: spans cut at the due instants, each in equal
         # steps whose clocks no float sum reproduces.
@@ -556,6 +557,24 @@ function test_lattices()
         @test length(lengths) == length(clocks) - 1
         @test lengths == diff(clocks)
         @test any(!=(Float64(3//100)), lengths)   # the float distances are not one length
+
+        # Three crossings inside steps of 1/40: each step's first segment takes
+        # its offer, and the remainder from its `t*`, a clock on no lattice, the
+        # distance from that clock to the step's end.
+        model = Model(three_stampers(); Δt_frame = 1//10, h_max = 1//40, algorithm = Recorder())
+        init!(model)
+        clocks = Float64[model.exec.clock.t]
+        hooks = RecordingHooks(model, 0, clocks, false)
+        for frame in 1:5
+            frame!(model, frame, hooks)
+        end
+        lengths = model.exec.stepper.lengths
+        stars = findall(t -> t !== Float64(round(Int, 40t)//40), clocks)
+        @test length(stars) == 3 && length(lengths) == length(clocks) - 1
+        @test all(lengths[i] == clocks[i + 1] - clocks[i] for i in stars)
+        @test all(lengths[i - 1] == clocks[i + 1] - clocks[i - 1] for i in stars)
+        @test all(lengths[i] == clocks[i + 1] - clocks[i]
+                  for i in eachindex(lengths) if i ∉ stars && i + 1 ∉ stars)
     end
 
     @testset "a time typed on a lattice is its boundary's clock, from a zero origin and from an exact one (§2.1, §10.5, D-456, D-457)" begin
@@ -597,6 +616,19 @@ function test_lattices()
                      state(subcycled, "lag") === state(stepwise, "lag")
         end
         @test agree
+    end
+
+    @testset "a state restored into a fresh model steps on the clocks of the model it was taken from, from any origin (§12.6, D-456, D-457)" begin
+        for t0 in (-0.3, 7//3, 1e9 + 0.1)
+            taken = Model(feedback_model(); Δt_frame = 1//100, h_max = 1//300)
+            init!(taken, set(u = (ref = 0.7,)); t0)
+            frames!(taken, 7)
+            fresh = Model(feedback_model(); Δt_frame = 1//100, h_max = 1//300)
+            restore!(fresh, checkpoint(taken))
+            frames!(taken, 5)
+            frames!(fresh, 5)
+            @test fresh.exec.clock.t === taken.exec.clock.t && fresh.exec.xbuf == taken.exec.xbuf
+        end
     end
 
     @testset "a step typed on the frame grid fires at its boundary, in one snapshot, localized or not (§10.4, §10.5, D-456)" begin

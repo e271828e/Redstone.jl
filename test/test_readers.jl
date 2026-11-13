@@ -572,10 +572,9 @@ function test_readers()
         @test world(seeded) == before                # every refusal left the executor alone
     end
 
-    @testset "the origin is a `Float64`, so a seeded model takes `t0` (§12.6, D-260)" begin
-        # `t₀` is the grid's anchor and no design reader wants it perturbed, so
-        # it is a `Float64` on the clock while `t` stays in the model's
-        # scalar. A `T`-typed keyword refused `t0 = 0.25` here.
+    @testset "the origin is exact, so a seeded model takes `t0` (§12.6, D-260, D-457)" begin
+        # `t₀` is the grid's anchor, held exact on the clock while `t` stays in
+        # the model's scalar. A `T`-typed keyword refused `t0 = 0.25` here.
         seeded = Model(readable(), D8; Δt_frame = 1//10)
         init!(seeded, readable_condition(); t0 = 0.25)
         @test seeded.exec.clock.t₀ === 1//4
