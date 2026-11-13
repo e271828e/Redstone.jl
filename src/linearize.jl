@@ -270,8 +270,9 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
     if about === nothing
         _restore_state!(nominal_exec, operating_point)   # the held cells are the frozen tier's (D-274)
     else
-        t = Float64(something(t0, 0.0))
-        _set_clock!(nominal_exec, t, t)
+        origin = _origin(:linearize, something(t0, 0), model.deployment)
+        t = Float64(origin)
+        _set_clock!(nominal_exec, t, origin, model.deployment)
         plan = resolve_condition(about, build, Float64)
         assert_total(plan, build.structure, :linearize)   # (§14.6): before any evaluation
         apply!(nominal_exec, plan)
@@ -299,9 +300,9 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
             scatter_cell!(seeded_exec.store, addr, converted)
         end
         _report_violations(diags)
-        _set_clock!(seeded_exec, operating_point.t, operating_point.t₀)
+        _set_clock!(seeded_exec, operating_point.t, operating_point.t₀, model.deployment)
     else
-        _set_clock!(seeded_exec, t, t)
+        _set_clock!(seeded_exec, t, origin, model.deployment)
         apply!(seeded_exec, resolve_condition(about, build, T))
     end
     _establish_frozen!(seeded_exec, act, nominal_exec, build)
@@ -340,10 +341,11 @@ end
 # --- the pieces the service is built out of --------------------------------------
 
 # The scratch clock at the operating point: `t` in the executor's scalar, the
-# origin a `Float64` as everywhere (§12.6).
-function _set_clock!(exec::Executor{T}, t::Float64, t₀::Float64) where {T}
+# origin exact as everywhere, on the deployment's lattice (§12.6, D-457).
+function _set_clock!(exec::Executor{T}, t::Float64, t₀::Rational{Int},
+                     deployment::Deployment) where {T}
+    _set_origin!(exec.clock, t₀, deployment.lattice.unit)
     exec.clock.t = T(t)
-    exec.clock.t₀ = t₀
     nothing
 end
 

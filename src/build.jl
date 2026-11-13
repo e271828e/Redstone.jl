@@ -1456,7 +1456,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
     xbuf = zeros(T, n_x)
     establish_defaults!(xbuf, sstores, mstores, components, decls)
     ẋbuf = zeros(T, n_x)
-    clock = Clock{T}(0.0)
+    clock = Clock{T}()               # the origin is the model's to set (D-457)
     cursor = ExecutionCursor()     # closed over by every entry, exactly as `clock` is (§13.4)
 
     addr_group(path, names) =

@@ -487,7 +487,7 @@ end
 # problem is free (§14.8). The commit is the model's own `init!`, so the claim
 # is checked first (D-318, D-319).
 """
-    trim!(model::Model{Float64}, problem::TrimProblem; baseline, t0::Real = 0.0,
+    trim!(model::Model{Float64}, problem::TrimProblem; baseline, t0 = 0,
           backend = LevenbergMarquardt()) -> TrimReport
 
 Solve a trim problem on the model, and commit the solution through `init!`.
@@ -548,20 +548,20 @@ as `ArgumentInvalid`, before any check. So is a second argument that is not a
 
 - `baseline`: the required baseline the problem's condition is layered over, at
   setup and at the commit.
-- `t0`: the start time of the committing boundary zero, a finite real, held as a
-  `Float64` origin, and refused as `ArgumentInvalid` before the search if not
-  finite or so large that four rounding steps of it span more frames than an
-  `Int` counts.
+- `t0`: the start time of the committing boundary zero, held exact: a
+  `Rational{Int}`, an integer or a `Period`, or a float at its exact value.
+  Refused as `ArgumentInvalid` before the search if not finite, if
+  `Rational{Int}` cannot hold it, or if the run from it could take no frame.
 - `backend`: the solver, any value with a [`solve`](@ref) method, by default
   [`LevenbergMarquardt`](@ref).
 """
 function trim!(model::Model{Float64}, problem::TrimProblem; baseline,
-               t0::Real = 0.0, backend = LevenbergMarquardt())
+               t0 = 0, backend = LevenbergMarquardt())
     _claimed_gate(model, NoHooks(), :trim!)   # the claim is said first: the call commits (D-318)
-    _check_origin(model, :trim!, t0)
-    solved = _solve_problem(model, problem; baseline, t0 = Float64(t0), backend)
+    origin = _check_origin(model, :trim!, t0)
+    solved = _solve_problem(model, problem; baseline, t0 = origin, backend)
     _verdict!(model, problem, baseline, solved,
-              condition -> init!(model, condition; t0 = Float64(t0)))
+              condition -> init!(model, condition; t0 = origin))
 end
 
 trim!(::Model, other; kw...) = throw(DiagnosticError(
@@ -575,7 +575,7 @@ trim!(::Model{T}, ::TrimProblem; kw...) where {T} = throw(DiagnosticError(
 # The solve, from the setup checks through the verdict's evaluation, on scratch
 # models alone; the commit is the caller's (D-319). The bypassed zero-decision
 # problem and the solved one return the same packing, what `_verdict!` reads.
-function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t0::Float64,
+function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t0::Rational{Int},
                         backend)
     build = model.deployment.build
     diags = Diagnostic[]
@@ -592,7 +592,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
 
     # --- the nominal half (D-213) ------------------------------------------------
     nominal_exec = _scratch(model, Float64).exec
-    _set_clock!(nominal_exec, t0, t0)         # the search's time is the commit's (§14.8)
+    _set_clock!(nominal_exec, Float64(t0), t0, model.deployment)   # the search's time is the commit's (§14.8)
     plan = resolve_condition(override(baseline, problem.condition(guess)), build, Float64)
     assert_total(plan, build.structure, :trim!)    # (§14.6): pre-evaluation, all-or-nothing
     apply!(nominal_exec, plan)
@@ -618,7 +618,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
     T = ForwardDiff.Dual{TrimTag,Float64,N}
     act = activation(build, T)                # the cached activation (§9.4)
     seeded_exec = _scratch(model, T).exec
-    _set_clock!(seeded_exec, t0, t0)
+    _set_clock!(seeded_exec, Float64(t0), t0, model.deployment)
     _establish_frozen!(seeded_exec, act, nominal_exec, model.deployment.build)
     # The names enter the closure as types: captured as a `Tuple` of `Symbol`s,
     # they would leave every `NamedTuple` `eval!` builds to runtime dispatch.

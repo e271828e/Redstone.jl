@@ -252,9 +252,9 @@ derivation over the constraint pool, requested as `Δt_base = :derive` and
 permitted only with every discrete component anchored. `h_max` is resolved
 to the lesser of itself and `Δt_frame`, and to `Δt_frame` when absent, since
 a bound at the frame splits no span (D-449). Returns the bound grid:
-`Δt_frame`, `Δt_base`, the resolved `h_max`, the `Schedule` (§9.2's typed
-artifact), the `Lattice`, the grid attribution and whether the derivation
-path produced the value.
+`Δt_frame`, `Δt_base` and the resolved `h_max`, each exact (D-454), the
+`Schedule` (§9.2's typed artifact), the `Lattice`, the grid attribution and
+whether the derivation path produced the value.
 
 Every check whose premise holds runs, and the pass records into the call's list
 and returns `nothing` on any fault; the caller owns the one throw per
@@ -359,7 +359,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
                                        value = h_max_r, related = Δt_frame_r))
         return nothing
     end
-    (Δt_frame = Float64(Δt_frame_r), Δt_base = Δtb, h_max = Float64(h_max_r),
+    (Δt_frame = Δt_frame_r, Δt_base = Δt_r, h_max = h_max_r,
      schedule = Schedule(rows, scopes), lattice = lattice, grid = grid, derived = derived)
 end
 
@@ -406,7 +406,7 @@ Base.show(io::IO, algorithm::Union{RK4,Heun}) = print(io, nameof(typeof(algorith
 
 # --- the artifact (§9.1, §9.2, D-254) -------------------------------------------
 
-# Design: §9.1, §9.2, §10.2, §10.4, §10.6, §12.7, D-254, D-442, D-443, D-449.
+# Design: §9.1, §9.2, §10.2, §10.4, §10.6, §12.7, D-254, D-442, D-443, D-449, D-454.
 # `Δt_base` has exactly one of three cross-validated sources (§9.1): explicit,
 # `Δt_frame` by default, or GCD derivation over the anchors' constraint pool.
 # `Δt_frame` is required because a domain rate is not a framework default. The
@@ -439,9 +439,11 @@ models.
 
 Two deployments compare equal when their frame period, base tick, step bound,
 algorithm, event parameters and schedule agree, whatever their builds.
-[`replay!`](@ref) checks this before re-driving a recording. The bound is
-recorded as the lesser of `h_max` and `Δt_frame`, so a deployment with no
-`h_max` and one whose `h_max` is at or above the frame compare equal.
+[`replay!`](@ref) checks this before re-driving a recording. The three time
+quantities are held and compared exact, as `Rational{Int}`, so two that round
+to one `Float64` are different deployments. The bound is recorded as the lesser
+of `h_max` and `Δt_frame`, so a deployment with no `h_max` and one whose
+`h_max` is at or above the frame compare equal.
 
 `Δt_base = :derive` derives the base tick from the discrete
 [components](@ref g-component)' sample times. It is refused as
@@ -479,9 +481,9 @@ See also [`build`](@ref), [`Model`](@ref), [`Simulation`](@ref).
 """
 struct Deployment
     build::Build
-    Δt_frame::Float64             # the frame period (§9.2, D-443)
-    Δt_base::Float64
-    h_max::Float64                # the step bound, resolved against the frame (§10.5, D-449)
+    Δt_frame::Rational{Int}       # the frame period, exact (§9.2, D-443, D-454)
+    Δt_base::Rational{Int}
+    h_max::Rational{Int}          # the step bound, resolved against the frame (§10.5, D-449)
     algorithm::AbstractAlgorithm  # the method, bound at `Model` construction (D-442)
     firing_budget::Int            # per-event firings per boundary (§10.6)
     localization_tol::Float64     # relative bracket-width stop (§10.4)
@@ -547,9 +549,10 @@ end
 # recording against a *modified model of the same structure*, so **the build is
 # not compared**: comparing it would refuse what the spec admits. `grid`,
 # `lattice` and `warnings` are not compared either — all three are
-# functions of the rest. The algorithm compares as a value (D-442), and the
-# bound resolved, so no `h_max` and one at or above the frame deploy alike
-# (D-449).
+# functions of the rest. The three periods compare exact, so two that round
+# to one `Float64` are two deployments (D-454). The algorithm compares as a
+# value (D-442), and the bound resolved, so no `h_max` and one at or above the
+# frame deploy alike (D-449).
 Base.:(==)(a::Deployment, b::Deployment) =
     a.Δt_frame == b.Δt_frame && a.Δt_base == b.Δt_base && a.h_max == b.h_max &&
     a.algorithm == b.algorithm && a.firing_budget == b.firing_budget &&

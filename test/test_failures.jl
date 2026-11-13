@@ -778,7 +778,7 @@ function failures_runtime()
         # The clock at frame 4's first step end rounds to the top that ended
         # frame 3, and the payload still names frame 4, the frame from boundary
         # 3, as the carrier does.
-        Δt_frame, h = sim.model.deployment.Δt_frame, Float64(1//40)
+        Δt_frame, h = Float64(sim.model.deployment.Δt_frame), Float64(1//40)
         @test err.cause.boundary == 3 && err.boundary == 3
         @test err.cause.t ≈ 3 * Δt_frame + 1 * h
     end

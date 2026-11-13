@@ -193,8 +193,8 @@ D-438.
   buffer, the `s` and `m` stores, the signal table with every cell buffer
   copied, the guard priors, the stepper's carried state `stepper`, the
   value `checkpoint_stepper` reads, typed `Any` and `nothing` for a
-  fixed-step method (D-452), the clock's `t` and `t₀` (a `Float64` like
-  `Δt_frame`), and the fingerprint, the `Deployment` and the structural
+  fixed-step method (D-452), the clock's `t` and its exact `t₀` (D-457), and
+  the fingerprint, the `Deployment` and the structural
   layout `Fingerprint`.
 - `Checkpoint`, a `ModelState{Float64}` beside the run's frame index and
   boundary ordinal, with no scalar parameter (D-317, D-319).
@@ -357,7 +357,7 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   (§10.2, D-442, D-449). Their steppers are stepper.jl's.
 - The `Deployment` holds the build plus the grid parameters `Δt_frame` and
   `Δt_base`, the step bound `h_max` resolved to the lesser of itself and
-  `Δt_frame` (D-449), the algorithm token and the three event parameters
+  `Δt_frame` (D-449), the three each a `Rational{Int}` (D-454), the algorithm token and the three event parameters
   `firing_budget`, `localization_tol` and `localization_budget`.
   It is scalar-free. The `Deployment` constructor has one throw per call
   (§9.2, D-229). It also holds the `Lattice`, the frame loop's index-to-time
@@ -385,8 +385,8 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   event parameters' faults (§9.2, §10.5, D-445, D-449).
 - `==`/`hash` on a `Deployment` compare by value over everything but the
   build, the grid attribution, the `Lattice` and the warnings (§12.7), the
-  bound resolved. Two exact periods that round to one `Float64` therefore
-  compare equal, though their lattices differ.
+  bound resolved and the three time quantities exact, so two that round to
+  one `Float64` are two deployments (D-454).
 - `warnings(::Deployment)`.
 - The grid attribution `_grid_report` (D-187):
   - the constraint pool, with each entry's leave-one-out refinement factor;
@@ -401,7 +401,7 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   `GridUtilization` advisory at `min_i Dᵢ > 1`.
 
 Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
-D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450.
+D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454.
 
 ### `src/descriptor.jl`
 
@@ -618,14 +618,15 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
   written from its own index through model.jl's grid. The inner one asks
   `propose` before each step, and never of a model with no continuous state
   (D-156). Under `nothing` it takes a span's
-  `cld(units·q, p)` equal steps, `p/q` the bound in units, each of exact
-  length `(units·unit)/n`; an interior step end's clock is the span's start
-  clock plus `i` times that length, never accumulated. Under a proposal it
+  `cld(units·q, p)` equal steps, `p/q` the bound in units; an interior step
+  end's clock is the float nearest the span's exact start plus `i` exact
+  steps, store.jl's `_instant`, never accumulated (D-456). Under a proposal it
   clamps the length through model.jl's `_clamped`, and a step a rejection
   shortened ends where `_step_end` says, the clock plus its length (D-452).
   The span's last step runs `run_boundary!` with its tick index when due,
-  every other step end with the empty due set. A bare step integrates by its
-  exact length; a localized one by the float distance to its end (§10.5).
+  every other step end with the empty due set. Every step integrates by the
+  float distance between its two clocks, the bare path and the localized one
+  alike (§10.5, D-455).
 - The next due instant is recomputed after each due boundary, one `mod` per
   schedule row (`_next_due`, model.jl's). Nothing is cached, so nothing needs
   invalidating at a restore, an overlay or `init!`.
@@ -652,7 +653,8 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
   D-261, D-317).
 
 Spec: §10.2–§10.5, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-255,
-D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450, D-452.
+D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450, D-452,
+D-455.
 
 ### `src/leaves.jl`
 
@@ -850,7 +852,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
   first step the table (D-447, D-452).
 - The grid (§10.4, §10.5, D-445): `_grid_time`, frame top `k` from the index
   and `t₀`, and `_tick_time`, a due instant from its base-tick index; neither
-  accumulated. An interior step end is frame.jl's (D-449). `_next_due`, the
+  accumulated, each the float nearest its exact instant through store.jl's
+  `_instant` (D-456). An interior step end is frame.jl's (D-449). `_next_due`, the
   next due instant past a position, one `mod` per schedule row, recomputed
   per due boundary and never cached. The arithmetic over `t`, `t₀` and
   `Δt_frame`, `_frame_slack`, `_frames_to` and `_frame_at` (§12.4, §12.6,
@@ -868,7 +871,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
   and compiles the check away on the loop's path (D-318).
 - The model's doors (D-317), each gated on the claim (D-318):
   - `init!`, whose condition method resolves and whose plan method refuses
-    an origin `_check_origin` rejects, does the writes, asks the stepper to
+    an origin `_check_origin` rejects, the exact origin `_origin` reads off the
+    forms `_exact_origin` takes, refusing one whose run the clock's integers
+    cannot carry by `_clock_integers`, the checked clock formula at the run's
+    two ends (D-457), does the writes, asks the stepper to
     reset its carried state, `reset_stepper!` (D-452), runs boundary zero
     under §13.4's catch and settles it through the hooks (§14.5, D-223);
   - `overlay!`, in the same two methods, whose condition method resolves with
@@ -923,12 +929,13 @@ soon as nothing in it names a `Simulation` in a signature, and below
   D-429). `_check_checkpoint!`, the fingerprint check the restoring
   doors and replay's entry pass share, collecting `CheckpointMismatch`, and
   beside it `_check_grid!`, the grid check the three restore doors share,
-  collecting `CheckpointMidFrame` into the same list.
+  collecting `CheckpointMidFrame` into the same list, and an `ArgumentInvalid`
+  on `t0` where a state's origin fails `_clock_integers` (D-457).
 
 Spec: §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
 §13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
 D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447,
-D-449, D-450, D-452.
+D-449, D-450, D-452, D-454.
 
 ### `src/precompile.jl`
 
@@ -1048,7 +1055,8 @@ D-261.
 - The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
   binary guard at 100.
 - The `Deployment` sets `_grid_block`'s lines under `grid:`, and its
-  parameters line names `h_max` resolved. `_steps_line` states the steps of
+  parameters line names `h_max` resolved and prints the three time
+  quantities exact (D-454). `_steps_line` states the steps of
   a frame no due instant falls inside, one `cld` over the bound's ratio to
   the unit, and names each schedule row whose ticks are not all frame tops,
   one divisibility check per row, the count then labelled per unsplit frame
@@ -1058,7 +1066,7 @@ D-261.
   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and
   count-only past it.
 
-Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449.
+Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454.
 
 ### `src/sim.jl`
 
@@ -1212,10 +1220,17 @@ Spec: §10.2, §12.6, D-017, D-274, D-442, D-452.
 - The `Clock` of `t` and `t₀`, the frame and boundary counters being the
   run's (D-260, D-317):
   - its `t` is in the model's scalar;
-  - its origin `t₀` is a `Float64`;
-  - the constructor takes `t₀` and converts it into `t`.
+  - its origin `t₀` is a `Rational{Int}`, exact, beside `origin`, `unit` and
+    `scale`, the origin and the lattices' unit over one denominator in
+    `Int128`, which `_set_origin!` writes where the origin is set and
+    `_grid_integers` computes (D-457);
+  - `_instant`, the float nearest an exact instant from its position, one
+    integer multiply-add and one division over the three integers, its
+    multiply and add plain in the loop and checked at the door (D-456,
+    D-457); its `Clock` method forwards the clock's integers.
 
-Spec: §9.5, §9.7, §13.5, D-162, D-235, D-237, D-260, D-316, D-317, D-437.
+Spec: §9.5, §9.7, §10.5, §13.5, D-162, D-235, D-237, D-260, D-316, D-317, D-437,
+D-456, D-457.
 
 ### `src/trace.jl`
 

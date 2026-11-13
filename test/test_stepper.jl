@@ -126,11 +126,11 @@ function test_stepper()
                         Deployment(feedback_build; Δt_frame = 1//100, h_max = Period(1//50)),
                         Deployment(feedback_build; Δt_frame = 1//100, h_max = 7))
             @test spelled == unbounded && hash(spelled) == hash(unbounded)
-            @test spelled.h_max === unbounded.h_max === 0.01
+            @test spelled.h_max === unbounded.h_max === 1//100
         end
         # A bound below the frame is a different deployment, in every spelling.
         bounded = Deployment(feedback_build; Δt_frame = 1//100, h_max = Hz(400))
-        @test bounded.h_max === Float64(1//400) && bounded != unbounded &&
+        @test bounded.h_max === 1//400 && bounded != unbounded &&
               bounded == Deployment(feedback_build; Δt_frame = 1//100, h_max = 1//400)
         # A bound need divide nothing: with discrete work, `Δt_frame = 1//500`,
         # `Δt_base = 1//300` and `h_max = 3//2000` deploy, the bound a ratio of
@@ -221,7 +221,7 @@ function test_stepper()
         step!(fed_sim; t_plus = 0.3)
         stage!(fed_sim, "in" => 1.0)                   # frame 4's drain, at its frame top
         step!(fed_sim; t_plus = 0.3)
-        @test modes(fed_sim, "c").t_fired == 4 * fed_sim.model.deployment.Δt_frame
+        @test modes(fed_sim, "c").t_fired == Float64(4 * fed_sim.model.deployment.Δt_frame)
     end
 
     @testset "gate 4: the second backend holds the §9.8 invariant" begin
@@ -331,7 +331,7 @@ function test_seam_protocol()
         @test state(model, "a").n == 1 + 2         # the ticks at 3/32 and 3/16, at their instants
         # A localized event inside a step a rejection shortened still fires at
         # its crossing.
-        sim = Simulation(stamped(); Δt_frame = 1//10, algorithm = Scheduled(1/40; every = 2, factor = 0.5))
+        sim = Simulation(stamped(); Δt_frame = 1//10, algorithm = Scheduled(1/40; every = 3, factor = 0.5))
         init!(sim)
         run!(sim; t_end = 0.5)
         @test modes(sim, "s").count == 1
@@ -479,6 +479,31 @@ function test_seam_protocol()
         init!(bare)
         integrate!(bare, 1/16)
         @test bare.exec.stepper.lengths == [1/16] && bare.exec.clock.t === 1/16
+    end
+
+    @testset "a localized event that never fires leaves the trajectory bit-identical to the same model without it, under a bound and under a proposal (§10.4, §10.5, D-455)" begin
+        # A lag driven by a sine beside a comparator whose threshold it never
+        # reaches. The localized twin runs every step through the localization
+        # loop, the other the bare path. Under a bound of a third of a 0.1 s
+        # frame, and under a stub proposing 1/40, a step's float distance from
+        # clock to clock is not its length, so the loop must integrate by the
+        # length the bare path takes.
+        lagged(localized) = Group((; src = Source(t -> sin(3t)), lag = FirstOrderLag(τ = 0.3),
+                                    cmp = Comparator(; threshold = 10.0, localized));
+                                  local_wires = ("src/y" => "lag/u", "lag/y" => "cmp/u"))
+        for (kw, h) in (((; h_max = 1//30), Float64(1//30)), ((; algorithm = Scheduled(1/40)), 1/40))
+            (localized, bare) = map((true, false)) do policy
+                sim = Simulation(lagged(policy); Δt_frame = 1//10, kw...)
+                init!(sim)
+                run!(sim; t_end = 3.0)
+                sim
+            end
+            @test localized.model.exec.has_localized && !bare.model.exec.has_localized
+            ends = [snapshot.t for snapshot in logged(bare)]
+            @test any(!=(h), diff(ends))
+            @test same_snapshots(logged(localized), logged(bare))
+            @test state(localized, "lag") === state(bare, "lag")
+        end
     end
 
     @testset "an accepted trial is checked before it is committed, and the report reads the trial (§13.4, D-157, D-452)" begin

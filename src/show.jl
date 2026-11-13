@@ -254,8 +254,9 @@ end
 
 # --- Deployment -------------------------------------------------------------------
 
-# The algorithm prints by its token's `show` (D-442), after the bound resolved
-# (D-449).
+# The three time quantities print exact, as the deployment compares them
+# (D-454), the bound resolved (D-449), and the algorithm by its token's `show`
+# (D-442).
 _deployment_parameters(deployment::Deployment) =
     "Δt_frame = $(repr(deployment.Δt_frame)), Δt_base = $(repr(deployment.Δt_base)), " *
     "h_max = $(repr(deployment.h_max)), " * sprint(show, deployment.algorithm)

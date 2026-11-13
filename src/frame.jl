@@ -17,14 +17,16 @@
 # to `settled!` as the frame top's does (D-317).
 
 # Design: §10.3, §10.4, §10.5, §13.4, §13.5, D-261, D-268, D-317, D-444, D-445,
-# D-447, D-449, D-450. The cursor's `:drain` phase is written first. Mandatory
+# D-447, D-449, D-450, D-455, D-456. The cursor's `:drain` phase is written first. Mandatory
 # instants are whole units of the deployment's `Lattice`, so the next one and
 # every coincidence are integer comparisons, and each boundary's clock is
 # written once: a frame top `t₀ + k·Δt_frame`, a due instant from its base-tick
 # index, an interior step end from its span's start and its count in the span.
-# A model with no localized events, every non-nominal activation included since
-# its events compiled out, takes the bare step by its exact length: no arrival
-# machinery, no extra sweep. The whole frame is §13.4's one `try`, and the
+# Every step integrates by the float distance between its two clocks, the bare
+# step and a localized one alike (D-455), and every clock the model knows
+# exactly is the float nearest its instant (D-456). A model with no localized
+# events, every non-nominal activation included since its events compiled out,
+# takes the bare step: no arrival machinery, no extra sweep. The whole frame is §13.4's one `try`, and the
 # `StepError` is the one constructor's. Its catch wraps every throw, an
 # interrupt included, since the status says whether the stores are a settled
 # boundary and the cause says what cut the frame. The index bound and the
@@ -95,23 +97,23 @@ end
 # `position` the span's start as an offset from it, both in units, and the next
 # due instant is recomputed only after one is reached. The inner one takes the
 # span's steps. A backend that proposes nothing takes `n = ⌈g / h_max⌉` equal
-# steps, `n` one `cld` over the bound's exact ratio to the unit. A step's exact
-# length is `(units·unit)/n`, so a harmonic bound steps by `h_max` itself and a
-# span of one step by its own length. An interior step end has no position: its
-# clock is the span's start clock plus its count times that length, never
-# accumulated (D-449). A backend that proposes a length has it clamped to
+# steps, `n` one `cld` over the bound's exact ratio to the unit. An interior
+# step end has no position: its clock is the float nearest the span's exact
+# start plus `i·(units·unit)/n`, from its count `i`, never accumulated, and the
+# step integrates by the distance from its start's clock to its end's (D-449,
+# D-455, D-456). A backend that proposes a length has it clamped to
 # `h_max` and to the span's end, and an interior end it reaches is the clock
 # plus the accepted length; the span ends at the step that reaches its end
 # (D-452). Returns `settled!`'s answer at the frame top, and `true` where it
 # abandoned the frame at an earlier boundary.
-function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) where {T}
+function _frame_steps!(model::Model, k::Int, hooks::FrameHooks, fresh::Bool)
     exec, deployment = model.exec, model.deployment
     lattice, rows = deployment.lattice, deployment.schedule.rows
     origin = (k - 1) * lattice.frame
     (due, due_at) = _next_due(rows, lattice.base, origin)
     exec.has_localized && fill!(exec.events.loc_warned, false)   # one report per event per frame
     localizations = 0                                             # the frame's, across its steps (D-446)
-    position, t_from = 0, _grid_time(model, k - 1)
+    position = 0
     while true
         target = min(lattice.frame, due_at - origin)
         is_top = target == lattice.frame
@@ -119,7 +121,6 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) 
         t_to = is_top ? _grid_time(model, k) : _tick_time(model, due)
         units = target - position
         steps = cld(units * denominator(lattice.bound), numerator(lattice.bound))
-        h = Float64((units * lattice.unit) / steps)
         i = 0
         while true
             i += 1
@@ -128,8 +129,8 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) 
             proposal = isempty(exec.xbuf) ? nothing : propose(exec.stepper)
             if proposal === nothing
                 span_end = i == steps
-                t_next = span_end ? t_to : t_from + i * h
-                h_step = T(h)
+                t_next = span_end ? t_to : _instant(exec.clock, origin + position, i, units, steps)
+                h_step = oftype(t, t_next) - t
             else
                 h_step = _clamped(model, proposal, t, t_to)
                 span_end = h_step == t_to - t
@@ -137,7 +138,7 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) 
             end
             if exec.has_localized
                 (abandoned, localizations, t_end) =
-                    _localized_step!(model, t_next, t_to, k, hooks, fresh, localizations)
+                    _localized_step!(model, h_step, t_next, t_to, k, hooks, fresh, localizations)
                 abandoned && return true
             else
                 h_accepted = integrate_step!(model, h_step, t_to, k, fresh)
@@ -160,15 +161,16 @@ function _frame_steps!(model::Model{T}, k::Int, hooks::FrameHooks, fresh::Bool) 
             span_end && break
         end
         is_due && ((due, due_at) = _next_due(rows, lattice.base, origin + target))
-        position, t_from = target, t_to
+        position = target
     end
 end
 
-# The localization loop (§10.4, D-446), over one step ending at `t_to`. Each turn
-# integrates one segment — the whole step first, then remainder steps from each
-# `t*` — and either returns at the step's end or fires one `t*` boundary and goes
-# around. A segment integrates by the distance from the clock to `t_to`, since
-# its interpolant spans those two instants. A rejection may shorten the first
+# The localization loop (§10.4, D-446), over one step of length `h` ending at
+# `t_to`. Each turn integrates one segment — the whole step first, then
+# remainder steps from each `t*` — and either returns at the step's end or fires
+# one `t*` boundary and goes around. The whole step integrates by the length the
+# bare path takes, the distance between its clocks or a proposal's length, and
+# a remainder by the distance from its `t*` to `t_to` (D-455). A rejection may shorten the first
 # segment, no further than `t_limit`, the span's end, and the step then ends
 # where the accepted attempt did; a remainder targets the step's end and never a
 # later instant (D-452). The budget counts the frame's localizations, one per
@@ -177,15 +179,15 @@ end
 # segment count is the quantity chattering inflates without bound. Returns
 # whether `settled!` abandoned the frame at a `t*` boundary, the frame's
 # localization count, and the step's end (D-261, D-317).
-function _localized_step!(model::Model, t_to, t_limit, k::Int, hooks::FrameHooks,
+function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHooks,
                           fresh::Bool, localizations::Int)
     exec = model.exec
     events, cursor = exec.events, exec.cursor
     n_events = length(events.prior)
     (x₀, _) = startpoint(exec.stepper)         # the seam's retained pair (§10.2):
-    while true                                 # x₀ = x(t_seg) after each attempt
+    h′ = h                                     # x₀ = x(t_seg) after each attempt
+    while true
         t_seg = exec.clock.t
-        h′ = t_to - t_seg
         h_accepted = integrate_step!(model, h′, t_limit, k, fresh)
         if h_accepted != h′
             t_to = _step_end(t_seg, h′, h_accepted, t_to, t_limit)
@@ -302,6 +304,7 @@ function _localized_step!(model::Model, t_to, t_limit, k::Int, hooks::FrameHooks
         settled!(hooks) && return (true, localizations, t_to)
         localizations += 1
         fresh = true
+        h′ = t_to - exec.clock.t               # the remainder, from `t*` (D-455)
     end
 end
 
@@ -338,7 +341,7 @@ function _crossing(model::Model, i::Int, σ₀::Float64, σ₁::Float64, t_seg, 
     # In θ over a segment shorter than the frame it widens by Δt_frame/h′; past
     # 1 the segment is already within tolerance, no trial runs, and the
     # crossing folds into the segment's end.
-    tol = model.deployment.localization_tol * model.deployment.Δt_frame / _seconds(h′)
+    tol = model.deployment.localization_tol * Float64(model.deployment.Δt_frame) / _seconds(h′)
     lo, hi = 0.0, 1.0
     σlo, σhi = σ₀, σ₁
     # ITP constants over the unit bracket: κ₁ = 0.2, κ₂ = 2, n₀ = 1; ε is the

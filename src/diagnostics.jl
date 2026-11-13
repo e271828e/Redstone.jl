@@ -2395,8 +2395,10 @@ function message(d::ArgumentInvalid)
         return "`chunk_size` must be an integer ≥ 1 — the executor's unroll width, which " *
                "never moves the trajectory — got $(repr(d.value)) (§9.7)"
     d.argument === :t0 &&
-        return "`t0` must be a finite real from which a run may take at least its first " *
-               "frame — the grid's origin — got $(repr(d.value)) (§10.5, §14.5)"
+        return "`t0` must be an exact time — an integer, a rational, a `Period` or a finite " *
+               "float at its exact value — from which a run may take at least its first " *
+               "frame, on clock integers that carry the run — the grid's origin — got " *
+               "$(repr(d.value)) (§10.5, §14.5)"
     d.argument === :trace &&
         return "`trace` must be true or false — §11.5's trace kill switch, got $(repr(d.value))"
     d.argument === :log &&

@@ -1259,7 +1259,7 @@ function diagnostics_kind_set()
         @test occursin("got -1", rendered)
         rendered = message(ArgumentInvalid(call = :init!, reason = :range, argument = :t0,
                                            value = NaN))
-        @test startswith(rendered, "`t0` must be a finite real")
+        @test startswith(rendered, "`t0` must be an exact time")
         @test occursin("got NaN", rendered)
         rendered = message(ArgumentInvalid(call = :run!, reason = :range,
                                            argument = :ignore_stop_requests, value = "nope"))

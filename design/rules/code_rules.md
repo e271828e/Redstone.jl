@@ -184,11 +184,13 @@ Traps the code does not warn about, each hit more than once while building:
 - **`isempty` is no presence test for a store.** `isempty(nothing)` and
   `isempty(:idle)` throw, and an empty `SVector` is a declared store, so a
   store is present iff it is not `nothing` (§5.2);
-- **a test's clock value is an indexed instant**, bitwise, never a decimal
-  literal: a frame top `t₀ + k * Δt_frame`, a due instant off the tops
-  `t₀ + n * Δt_base`, a step end inside a span its start's clock plus
-  `i * h`, `h` the span's exact step as a `Float64` (D-445, D-449); a derived
-  index takes the helper its sibling door uses;
+- **a test's clock value is the float nearest its exact instant**, bitwise:
+  `Float64(t₀ + k * Δt_frame)` in exact arithmetic for a frame top, and
+  likewise a due instant and a step end inside a span, the span's exact
+  start plus `i` exact steps (D-445, D-449, D-456). From an exact origin a
+  typed decimal on the lattice is that float; `k * Float64(Δt_frame)` is
+  not, and can sit an ulp off. A step's length is the difference of its two
+  clocks (D-455); a derived index takes the helper its sibling door uses;
 - **a test that stages a root input reads it back with `get_input`** and
   pins the snapshot where it changes: `stage!` reports a misspelled face
   to the harness writer's diagnostic cell, never to the caller, and a

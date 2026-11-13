@@ -113,7 +113,7 @@ function test_show()
         activation(activated, D8)
         @test compact(activated) == "Build(4 components, activations: Float64, $(D8))"
         @test compact(deployed) ==
-              "Deployment(Δt_frame = 0.002, Δt_base = 0.002, h_max = 0.002, RK4())"
+              "Deployment(Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, RK4())"
         for x in (multirate.structure, multirate.outputs, multirate.events, deployed.schedule,
                   multirate, deployed)
             @test !occursin('\n', compact(x))
@@ -242,7 +242,7 @@ function test_show()
 
     @testset "Deployment: the parameters, the schedule, the grid and the warnings (§9.2, D-257)" begin
         text = plain(deployed)
-        @test startswith(text, "Deployment: Δt_frame = 0.002, Δt_base = 0.002, h_max = 0.002, " *
+        @test startswith(text, "Deployment: Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, " *
                                "RK4(); firing_budget = 4, localization_tol = 1.0e-6, " *
                                "localization_budget = 8\n" *
                                "  steps per frame: 1\n" *

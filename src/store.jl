@@ -151,21 +151,56 @@ capture_stores(bundle::StoreBundle) = StoreBundle(map(cs -> CellStore(copy(cs.bu
 """
 The clock, in its own mutable cell so the zero-arg phase bodies can close over
 it. `t` is a bundle field for every stage (§5.2's bundle law) and varies within
-a step — RK stages evaluate at internal times. `t₀` anchors the indexed grid:
-frame tops are `t₀ + k·Δt_frame`, computed from the index and never
-accumulated, so a remainder step's float arithmetic cannot drift the grid
-(§10.4). The frame index `k` and the boundary ordinal are not the clock's:
-they are the run's two counters (§12.6, D-317). `t₀` is a `Float64`, like `h` and `t_end`, while `t`
-stays in the model's scalar: the origin is the grid's anchor and no design
-reader wants it perturbed, and a `Float64` origin is what lets `init!` take
-`t0 = 0.25` on a `Dual` model (§12.6, D-260, D-317). The constructor below takes
-it and converts it into `t`.
+a step — RK stages evaluate at internal times. `t₀` anchors the indexed grid,
+held exact (D-457): every instant the model knows exactly is `t₀` plus a whole
+or fractional count of the lattice's unit, and its clock is the `Float64`
+nearest it, computed from its index and never accumulated (§10.4, D-456). The
+frame index `k` and the boundary ordinal are not the clock's: they are the
+run's two counters (§12.6, D-317). `t` stays in the model's scalar, so a
+`Dual` model takes `t0 = 0.25` alike (D-260). Where the origin is set,
+`_set_origin!` puts it and the unit over one denominator `scale`, so a clock
+is one integer multiply-add and one division: `origin = t₀·scale` and
+`unit = unit·scale`, in `Int128`.
 """
 mutable struct Clock{T}
     t::T
-    t₀::Float64
+    t₀::Rational{Int}   # the origin, exact (D-457)
+    origin::Int128      # `t₀` over the common denominator
+    unit::Int128        # the lattice's unit over it
+    scale::Int128       # the common denominator
 end
-Clock{T}(t₀::Float64) where {T} = Clock{T}(T(t₀), t₀)
+Clock{T}() where {T} = Clock{T}(zero(T), 0//1, Int128(0), Int128(0), Int128(1))
+
+# The origin and the unit over one denominator (D-457), computed where the
+# origin is set and never in the loop. A product past `Int128` throws
+# `OverflowError`, which the doors refuse before they write (`_clock_integers`).
+function _grid_integers(t₀::Rational{Int}, unit::Rational{Int})
+    scale = lcm(Int128(denominator(t₀)), Int128(denominator(unit)))
+    Base.Checked.checked_mul(Int128(numerator(t₀)), div(scale, denominator(t₀))),
+        Base.Checked.checked_mul(Int128(numerator(unit)), div(scale, denominator(unit))), scale
+end
+
+function _set_origin!(clock::Clock{T}, t₀::Rational{Int}, unit::Rational{Int}) where {T}
+    (clock.origin, clock.unit, clock.scale) = _grid_integers(t₀, unit)
+    clock.t₀ = t₀
+    clock.t = T(Float64(t₀))
+    nothing
+end
+# The float nearest the exact instant `t₀ + (position + i·units/steps)·unit`
+# (D-456), from the grid integers: `position` whole units from the origin, and
+# `i` of `steps` equal steps across a span of `units` past it. Both integers
+# convert exactly while they stay below `2^53`, and the one division then
+# rounds to nearest; past that the clock is within about an ulp of it. `count`
+# stays below `2^127`, so it never wraps. `mul` and `add` are the plain
+# operators in the loop, and the checked ones at the door, which refuses an
+# origin whose run the integers cannot carry (D-457, `_clock_integers`).
+@inline function _instant(origin::Int128, unit::Int128, scale::Int128, position::Int,
+                          i::Int = 0, units::Int = 0, steps::Int = 1, mul = *, add = +)
+    count = Int128(position) * steps + Int128(i) * units
+    Float64(add(mul(origin, steps), mul(unit, count))) / Float64(mul(scale, steps))
+end
+@inline _instant(clock::Clock, position::Int, i::Int = 0, units::Int = 0, steps::Int = 1) =
+    _instant(clock.origin, clock.unit, clock.scale, position, i, units, steps)
 
 "The activation scalar an executor runs at, read off its clock (§9.4)."
 activation_scalar(::Clock{T}) where {T} = T

@@ -711,7 +711,7 @@ end
 # against the build's root input faces (§14.6), then the writes; the services
 # path contains no call to `probe_value`. `t0` is a service argument, never a
 # condition entry, since time is not a store of any component (§14.5). It is
-# held as a `Float64` origin on the clock (D-260) while the clock's `t` stays in
+# held as an exact origin on the clock (D-457) while the clock's `t` stays in
 # the model's scalar, so a `Dual` model takes `t0 = 0.25` like any other.
 # Boundary zero is an ordinary boundary with an empty integrate (§10.5, §14.5),
 # run with the sweep's one amendment: every discrete output stage publishes, due
@@ -747,7 +747,7 @@ end
 # (§13.6): reproduction is trace replay, not resurrection. A throw inside
 # boundary zero leaves no checkpoint (§13.4, D-223, D-274).
 """
-    init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
+    init!(sim::Simulation, condition = set(); t0 = 0, trace = true,
           log = true, log_every = 1, log_max = 65536) -> Nothing
 
 Initialize the simulation from a [condition](@ref g-condition) on the declared
@@ -816,9 +816,10 @@ it.
 
 # Keywords
 
-- `t0`: the start time, a finite real, held as a `Float64` origin, and refused
-  as `ArgumentInvalid` if not finite or so large that four rounding steps of it
-  span more frames than an `Int` counts.
+- `t0`: the start time, held exact: a `Rational{Int}`, an integer or a
+  `Period`, or a float at its exact value, so `-3//10` is the decimal and
+  `-0.3` the float nearest it. Refused as `ArgumentInvalid` if not finite, if
+  `Rational{Int}` cannot hold it, or if the run from it could take no frame.
 - `trace`: record the input trace of this run.
 - `log`: keep the snapshot log of this run.
 - `log_every`: keep every `log_every`-th published [boundary](@ref g-boundary)
@@ -826,7 +827,7 @@ it.
 - `log_max`: the most snapshots the log keeps between its first and latest, an
   integer of at least 1, or `Inf` for no bound.
 """
-function init!(sim::Simulation, condition = set(); t0::Real = 0.0, trace = true,
+function init!(sim::Simulation, condition = set(); t0 = 0, trace = true,
                log = true, log_every = 1, log_max = 65536)
     lifecycle_state = lifecycle(sim)
     lifecycle_state === :running && throw(DiagnosticError(
@@ -1098,7 +1099,7 @@ restore!(::Simulation, ::ModelState{T}; kw...) where {T} =
 # The trim service on a simulation, a stopped-sim service legal in `built`,
 # `initialized` and `stopped`. It runs the model's solve.
 """
-    trim!(sim::Simulation, problem::TrimProblem; baseline, t0::Real = 0.0,
+    trim!(sim::Simulation, problem::TrimProblem; baseline, t0 = 0,
           backend = LevenbergMarquardt()) -> TrimReport
 
 Solve a trim problem on the simulation's model, and commit the solution through
@@ -1116,16 +1117,16 @@ happened. The keywords mean what they mean on the model's method.
 refused as `ArgumentInvalid`.
 """
 function trim!(sim::Simulation, problem::TrimProblem; baseline,
-               t0::Real = 0.0, backend = LevenbergMarquardt())
+               t0 = 0, backend = LevenbergMarquardt())
     lifecycle_state = lifecycle(sim)
     lifecycle_state === :running && throw(DiagnosticError(ServiceLifecycle(
         op = :trim!, status = :running, legal = collect(STOPPED_SIM_LEGAL))))
     lifecycle_state === :errored && throw(DiagnosticError(ServiceLifecycle(
         op = :trim!, status = :errored, legal = collect(STOPPED_SIM_LEGAL))))
-    _check_origin(sim.model, :trim!, t0)
-    solved = _solve_problem(sim.model, problem; baseline, t0 = Float64(t0), backend)
+    origin = _check_origin(sim.model, :trim!, t0)
+    solved = _solve_problem(sim.model, problem; baseline, t0 = origin, backend)
     _verdict!(sim.model, problem, baseline, solved,
-              condition -> init!(sim, condition; t0 = Float64(t0)))
+              condition -> init!(sim, condition; t0 = origin))
 end
 
 trim!(sim::Simulation, other; kw...) = trim!(sim.model, other; kw...)
@@ -2082,7 +2083,7 @@ settled!(hooks::LoopHooks) =
 function _advance!(sim::Simulation, ignore_mask::Vector{Bool}, upto::Int,
                    t_end_frame::Int, roster::Vector{RosterEntry}, pacer::Union{Nothing,Pacer})
     plane, control, clock, run = sim.plane, sim.control, sim.model.exec.clock, sim.run
-    Δt_frame = sim.model.deployment.Δt_frame
+    Δt_frame = Float64(sim.model.deployment.Δt_frame)
     hooks = LoopHooks(sim, roster, pacer, ignore_mask)   # one per advance (D-317)
     advanced = 0
     requester = _stop_hit(sim, ignore_mask)

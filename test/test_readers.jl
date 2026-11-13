@@ -578,7 +578,7 @@ function test_readers()
         # scalar. A `T`-typed keyword refused `t0 = 0.25` here.
         seeded = Model(readable(), D8; Δt_frame = 1//10)
         init!(seeded, readable_condition(); t0 = 0.25)
-        @test seeded.exec.clock.t₀ === 0.25
+        @test seeded.exec.clock.t₀ === 1//4
         @test seeded.exec.clock.t isa D8 && ForwardDiff.value(seeded.exec.clock.t) === 0.25
     end
 

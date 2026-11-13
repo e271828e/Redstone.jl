@@ -95,7 +95,7 @@ function trace_recording()
                   for (x, y) in zip(values(header.state.table.stores), values(latest(sim).store.stores)))
         @test header.state.prior == [true]
         # the clock in full: frame 0, one publication behind it
-        @test header.state.t === 0.0 && header.state.t₀ === 0.0
+        @test header.state.t === 0.0 && header.state.t₀ === 0//1
         @test header.frame == 0 && header.boundary == 1 == sim.run.boundary
 
         # The root inputs ride in the table as resolved values (§11.5): neither
@@ -261,17 +261,17 @@ function trace_entry_pass()
         # compared resolved (D-449).
         err = failure(() -> _compile_feed(Simulation(three_root_inputs(); Δt_frame = 1//20), trc))
         d = only(x for x in diagnostics(err) if x.name === :Δt_frame)
-        @test d.what === :deployment && d.expected === 0.1 && d.found === 0.05
+        @test d.what === :deployment && d.expected === 1//10 && d.found === 1//20
         @test any(x -> x.what === :deployment && x.name === :Δt_base, diagnostics(err))
         d = only(x for x in diagnostics(err) if x.name === :h_max)
-        @test d.what === :deployment && d.expected === 0.1 && d.found === 0.05
+        @test d.what === :deployment && d.expected === 1//10 && d.found === 1//20
         # The bound alone: the same frame in two steps, and a bound above the
         # frame, which is the recording's own trajectory and passes.
         err = failure(() -> _compile_feed(
             Simulation(three_root_inputs(); Δt_frame = 1//10, h_max = 1//20), trc))
         d = only(diagnostics(err))
-        @test d.what === :deployment && d.name === :h_max && d.expected === 0.1 &&
-              d.found === 0.05
+        @test d.what === :deployment && d.name === :h_max && d.expected === 1//10 &&
+              d.found === 1//20
         @test _compile_feed(Simulation(three_root_inputs(); Δt_frame = 1//10, h_max = 1), trc) !==
               nothing
         # The algorithm alone: the same frame under another method, compared as
@@ -296,6 +296,38 @@ function trace_entry_pass()
 
         # The clock is restored rather than compared (§12.7).
         @test _compile_feed(Simulation(three_root_inputs(); Δt_frame = 1//10), trc) isa ReplayFeed
+    end
+
+    @testset "a time quantity compares by its exact value: two that round to one Float64 are two deployments, and replay! refuses one's recording in the other (§9.2, §12.7, D-454)" begin
+        # Each quantity beside a spelling of its own nearest `Float64`: the two
+        # convert to one float, and they compare and hash apart.
+        feedback_build = build(feedback_model())
+        for (name, exact) in ((:Δt_frame, 1//10), (:Δt_base, 1//10), (:h_max, 1//30))
+            spelled = Rational(Float64(exact))
+            deployed(value) = Deployment(feedback_build;
+                                         merge((; Δt_frame = 1//10), NamedTuple{(name,)}((value,)))...)
+            (a, b) = (deployed(exact), deployed(spelled))
+            @test getfield(a, name) === exact && getfield(b, name) === spelled &&
+                  Float64(getfield(a, name)) === Float64(getfield(b, name))
+            @test a != b && hash(a) != hash(b)
+        end
+        # At a 1 s frame, a third takes three steps a frame and its binary
+        # fraction, just below a third, takes four: two trajectories.
+        runs = map((1//3, Rational(1/3))) do h_max
+            sim = Simulation(feedback_model(); Δt_frame = 1, h_max)
+            init!(sim, set(u = (ref = 0.7,)))
+            run!(sim; t_end = 5.0)
+            sim
+        end
+        @test (runs[1].run.frame, runs[2].run.frame) == (5, 5)
+        @test runs[2].run.boundary - runs[1].run.boundary == 5   # one more step a frame
+        @test maximum(abs.(state(runs[1], "plant").q .- state(runs[2], "plant").q)) > 0.01
+        # The recording of one is refused in the other, by the bound's exact values.
+        twin = Simulation(feedback_model(); Δt_frame = 1, h_max = Rational(1/3))
+        d = only(diagnostics(failure(() -> replay!(twin, trace(runs[1])))))
+        @test d isa CheckpointMismatch && d.what === :deployment && d.name === :h_max &&
+              d.expected === 1//3 && d.found === Rational(1/3)
+        @test lifecycle(twin) === :built
     end
 
     @testset "a schedule row whose column differs is refused by path and column (§12.7)" begin
@@ -1369,7 +1401,7 @@ function trace_checkpoints()
             @test lifecycle(abandoned) === :errored
             @test termination(abandoned).source isa LoopError
             @test abandoned.run.frame == 3 && latest(abandoned).frame == 2
-            @test (abandoned.model.exec.clock.t == 3 * 0.1) == at_frame_top    # frame 3's top
+            @test (abandoned.model.exec.clock.t == 0.3) == at_frame_top    # frame 3's top
             d = carried(@test_throws DiagnosticError{ServiceLifecycle} checkpoint(abandoned))
             @test d.op === :checkpoint && d.status === :errored
             d = carried(@test_throws DiagnosticError{ServiceLifecycle} linearize(abandoned, taps()))
@@ -1396,7 +1428,7 @@ function trace_checkpoints()
         err = failure(() -> restore!(fine, cp))
         @test err isa DiagnosticError && all(d isa CheckpointMismatch for d in diagnostics(err))
         d = only(x for x in diagnostics(err) if x.name === :Δt_frame)
-        @test d.what === :deployment && d.expected === 0.1 && d.found === 0.05
+        @test d.what === :deployment && d.expected === 1//10 && d.found === 1//20
         @test lifecycle(fine) === :built
 
         # A state taken on a model at another scalar is refused by dispatch, with
@@ -1606,7 +1638,7 @@ function trace_checkpoints()
         frames!(model, 3)
         model_state = checkpoint(model)
         @test model_state isa ModelState{Float64}
-        @test model_state.t === 0.0 + 3 * 0.1 && model_state.t₀ === 0.0   # the indexed top
+        @test model_state.t === 0.3 && model_state.t₀ === 0//1   # the top nearest 3//10 (D-456)
 
         # The state opens a fresh trajectory at its own frame: the restored
         # boundary under boundary zero's ordinal, the run's counter one past it.
@@ -1653,17 +1685,17 @@ function trace_checkpoints()
                                   model_state.t₀, model_state.deployment, model_state.layout)
             d = only(diagnostics(failure(() -> restore!(sim, off_grid))))
             @test d isa CheckpointMidFrame && d.frame == k && d.t === t &&
-                  d.t_frame === 0.0 + k * 0.1
+                  d.t_frame === Float64(k // 10)
             @test lifecycle(sim) === :stopped
             assert_unwritten(sim, before)
             twin = Model(replay_model(); Δt_frame = 1//10)
             d = only(diagnostics(failure(() -> restore!(twin, off_grid))))
             @test d isa CheckpointMidFrame && d.frame == k && d.t === t &&
-                  d.t_frame === 0.0 + k * 0.1
+                  d.t_frame === Float64(k // 10)
             @test twin.status === :built
             d = only(diagnostics(failure(() -> restore!(sim, Checkpoint(off_grid, k, 1)))))
             @test d isa CheckpointMidFrame && d.frame == k && d.t === t &&
-                  d.t_frame === 0.0 + k * 0.1
+                  d.t_frame === Float64(k // 10)
             @test lifecycle(sim) === :stopped
             assert_unwritten(sim, before)
         end
@@ -1694,7 +1726,7 @@ function trace_checkpoints()
         before, old_run = checkpoint(shifted), shifted.run
         d = only(diagnostics(failure(() -> replay!(shifted, trc; restore = false))))
         @test d isa CheckpointMismatch && d.what === :clock && d.name === :t₀
-        @test d.expected === 0.0 && d.found === 0.05
+        @test d.expected === 0//1 && d.found === Rational(0.05)   # exact (D-457)
         assert_unwritten(shifted, before)
         @test shifted.run === old_run
 
@@ -1772,7 +1804,7 @@ function trace_overlay()
         # One snapshot at the stopped run's `t`, under its last ordinal as
         # `restore!` re-publishes: the discrete cell held, the continuous refreshed.
         @test length(logged(sim)) == 1
-        @test latest(sim).t == 3 * 0.1 && latest(sim).frame == 3
+        @test latest(sim).t === 0.3 && latest(sim).frame == 3
         @test latest(sim).boundary == last_ordinal && sim.run.boundary == last_ordinal + 1
         @test port(sim, "ctl", :u) ≈ 4.15 && state(sim, "ctl").acc == 9.0
         @test state(sim, "c").θ == 0.0 && port(sim, "c", :θ) == 0.0

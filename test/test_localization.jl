@@ -71,7 +71,7 @@ function test_localization()
         stage!(sim, "in" => 1.0)                     # staged, drained at the next frame top (§11.4)
         step!(sim; t_plus = 0.3)
         @test modes(sim, "c").count == 1
-        @test modes(sim, "c").t_fired == 4 * sim.model.deployment.Δt_frame     # the grid point itself
+        @test modes(sim, "c").t_fired == Float64(4 * sim.model.deployment.Δt_frame)     # the grid point itself
     end
 
     @testset "t* = tₙ₊₁ exactly degenerates to the grid boundary (§10.4)" begin
@@ -84,7 +84,7 @@ function test_localization()
         init!(sim)
         run!(sim; t_end = 0.6)
         @test modes(sim, "s").count == 1
-        @test modes(sim, "s").t_fired == 4 * sim.model.deployment.Δt_frame
+        @test modes(sim, "s").t_fired == Float64(4 * sim.model.deployment.Δt_frame)
     end
 
     @testset "multiple crossings in one frame: earliest first, re-localized on the remainder" begin
@@ -120,7 +120,7 @@ function test_localization()
         init!(distinct_sim)
         run!(distinct_sim; t_end = 0.5)             # the degradation reports on the loop's cell (§11.8)
         @test modes(distinct_sim, "s1").t_fired ≈ 0.31 atol = 1e-6
-        @test modes(distinct_sim, "s2").t_fired == 4 * distinct_sim.model.deployment.Δt_frame
+        @test modes(distinct_sim, "s2").t_fired == Float64(4 * distinct_sim.model.deployment.Δt_frame)
         loop_status = writer_status(latest(distinct_sim), "loop")
         # frame 4's report, folded at frame 5's top
         d = only(loop_status.recent)
@@ -144,8 +144,8 @@ function test_localization()
         init!(sim)
         @test_logs run!(sim; t_end = 0.5)
         @test modes(sim, "s1").t_fired ≈ 0.399 atol = 1e-4
-        @test modes(sim, "s1").t_fired < 4 * sim.model.deployment.Δt_frame
-        @test modes(sim, "s2").t_fired == 4 * sim.model.deployment.Δt_frame
+        @test modes(sim, "s1").t_fired < Float64(4 * sim.model.deployment.Δt_frame)
+        @test modes(sim, "s2").t_fired == Float64(4 * sim.model.deployment.Δt_frame)
         @test modes(sim, "s1").count == 1 && modes(sim, "s2").count == 1
     end
 
@@ -209,7 +209,7 @@ function test_localization()
         stage!(sim2, "gate" => true)                            # the u seam, through the drain (§11.4)
         step!(sim2; t_plus = 0.3)
         @test modes(sim2, "s").count == 1
-        @test modes(sim2, "s").t_fired == 6 * sim2.model.deployment.Δt_frame
+        @test modes(sim2, "s").t_fired == Float64(6 * sim2.model.deployment.Δt_frame)
     end
 
     @testset "ticks are never due at t*: the discrete tier holds through it (§10.4)" begin
@@ -316,7 +316,7 @@ function test_localization()
         @test length(hooks.boundaries) == 11
         t_star = modes(model, "s").t_fired
         @test t_star ≈ 0.315 atol = 1e-6
-        @test hooks.boundaries[4:5] == [t_star, 4 * deployment.Δt_frame]
+        @test hooks.boundaries[4:5] == [t_star, Float64(4 * deployment.Δt_frame)]
 
         # A `true` at the first t* abandons the frame there: the clock stays at
         # t*, the frame top is never reached, and the remainder never runs.
@@ -331,14 +331,14 @@ function test_localization()
         @test modes(model, "s").count == 1
         # The clock inside the frame is no state to take (§12.6, D-319).
         d = carried(@test_throws DiagnosticError{CheckpointMidFrame} checkpoint(model))
-        @test d.frame == 4 && d.t_frame == 4 * deployment.Δt_frame && d.t == model.exec.clock.t
+        @test d.frame == 4 && d.t_frame == Float64(4 * deployment.Δt_frame) && d.t == model.exec.clock.t
 
         # A `true` at the frame top is `frame!`'s return too, in a frame with no t*.
         model = Model(deployment)
         init!(model)
         hooks = RecordingHooks(model, 0, Float64[], true)
         @test frame!(model, 1, hooks) === true
-        @test hooks.boundaries == [deployment.Δt_frame]
+        @test hooks.boundaries == [Float64(deployment.Δt_frame)]
 
         # A `D8` model steps its frame too, its events compiled out (§9.4).
         dual_model = Model(deployment, D8)

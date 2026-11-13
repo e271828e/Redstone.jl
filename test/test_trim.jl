@@ -136,7 +136,7 @@ function test_trim()
         # The commit is an `init!` in every respect: the lifecycle, the anchor, the
         # authored state and the root input the solver decided.
         @test lifecycle(sim) === :initialized
-        @test sim.model.exec.clock.t === 0.25 && sim.model.exec.clock.t₀ === 0.25
+        @test sim.model.exec.clock.t === 0.25 && sim.model.exec.clock.t₀ === 1//4
         @test state(sim, "c") === (θ = 0.5, ω = 0.0)
         @test port(sim, "", :in) === report.solution.u
 
@@ -777,7 +777,7 @@ function test_trim()
         report = trim!(sim, u_problem(); baseline = pend_base(), t0 = 0.4)
         @test report.converged && report.committed_residuals !== nothing
         @test lifecycle(sim) === :initialized
-        @test sim.model.exec.clock.t === 0.4 && sim.model.exec.clock.t₀ === 0.4 && sim.run.frame == 0
+        @test sim.model.exec.clock.t === 0.4 && sim.model.exec.clock.t₀ === Rational(0.4) && sim.run.frame == 0
         @test state(sim, "c") === (θ = 0.5, ω = 0.0)      # the problem's condition won
         @test port(sim, "", :in) === report.solution.u
     end

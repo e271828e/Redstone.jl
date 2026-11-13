@@ -68,14 +68,20 @@ item changes what the spec says, the spec edit is part of the item.
     the floor and the attempt budget are owed. And a proposed step can end a
     sliver short of the span's end, leaving a last step of about an ulp,
     which equal division under a proposal removes, as ruled on 2026-11-12.
-  - **Next: exact time**, the roadmap's increment 3b: the periods and the
-    origin held exact, the clock the float nearest each exact instant, and
-    the float distance as the one step-length rule. The user ruled the
-    roadmap's open decisions for increment 4 on 2026-11-12 and cut it in
-    two, then reversed the step-length rule by piece and added the clock
-    and the origin on the first prototype's evidence; the rulings are the
+  - **Landed: exact time**, increment 95 (D-454, D-455, D-456, D-457,
+    `design/increments/095_exact_time/`). The `Deployment` holds
+    `Δt_frame`, `Δt_base` and `h_max` as `Rational{Int}` and compares and
+    hashes those. The origin is exact, and `t0` takes the exact forms a
+    period takes and a float at its exact value. Every instant the `Model`
+    knows exactly takes the float nearest it as its clock. A step
+    integrates by the float distance between its two clocks, or by its
+    length where the length is chosen first, so a localized event that
+    finds no crossing moves no trajectory. The user ruled the roadmap's
+    open decisions for increment 4 on 2026-11-12 and cut it in two, then
+    reversed the step-length rule by piece and added the clock and the
+    origin on the first prototype's evidence; the rulings are the
     roadmap's section "Ruled on 2026-11-12".
-  - **Then: the first adaptive backend**, the roadmap's increment 4, with
+  - **Next: the first adaptive backend**, the roadmap's increment 4, with
     `h_min` and the attempt budget on the `Deployment`.
   - **Ruled from the three lattices** by the user on 2026-11-11, on the open
     points of `design/increments/091_three_lattices/notes_increment_91.md`:
@@ -87,7 +93,9 @@ item changes what the spec says, the spec edit is part of the item.
       a hand-written hooks type on an unclaimed model can break it.
     - The sites that raise a raw `OverflowError` on periods of extreme
       magnitude are left. They were three. The step bound removed
-      `bind_schedule`'s `Δt_frame / h`, so two remain.
+      `bind_schedule`'s `Δt_frame / h`, and exact time the frame loop's
+      exact piece length, so one remains, `bind_schedule`'s
+      `anchor.T / Δt_base`.
     - The rename of D-448 does not sweep the log, and `rules/log_rules.md`
       rule 2 now says why. `:boundary` in the `Events` policies became
       `:non_localized`.
@@ -95,9 +103,9 @@ item changes what the spec says, the spec edit is part of the item.
       message and §13.4 now say so.
     - The steps per frame and the refusal of a lattice finer than the clock
       landed with the step bound (D-449, D-450).
-    - Exact periods on the `Deployment` and one step-length rule wait for
-      the roadmap's increment 3b, ruled on 2026-11-12, the rule as the
-      float distance everywhere.
+    - Exact periods on the `Deployment` and one step-length rule landed
+      with increment 95 (D-454, D-455), ruled on 2026-11-12, the rule as
+      the float distance everywhere.
 
     The two rejections these rulings owed the log landed with the step
     bound: the cap at the range's end in D-450's Rejected list, and an

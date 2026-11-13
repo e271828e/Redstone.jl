@@ -120,6 +120,7 @@ function Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) whe
     act = activation(deployment.build, T)
     exec = compile(deployment.build, act, deployment.schedule; chunk_size = Int(chunk_size),
                    algorithm = deployment.algorithm)
+    _set_origin!(exec.clock, 0//1, deployment.lattice.unit)   # a zero origin until `init!` (D-457)
     Model{T,typeof(exec)}(deployment, exec, :built, false, DiagCell(EMPTY_DIAG), false)
 end
 
@@ -266,7 +267,7 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
 # here. An interrupt has no stop path in a service, so the catch wraps it like
 # any throw (D-441).
 """
-    init!(model::Model, condition = set(); t0::Real = 0.0,
+    init!(model::Model, condition = set(); t0 = 0,
           hooks::FrameHooks = NoHooks()) -> Nothing
 
 Initialize the model from a [condition](@ref g-condition) on the declared
@@ -299,9 +300,10 @@ status left `:built`.
 
 # Keywords
 
-- `t0`: the start time, a finite real, held as a `Float64` origin, and refused
-  as `ArgumentInvalid` if not finite or so large that four rounding steps of it
-  span more frames than an `Int` counts.
+- `t0`: the start time, held exact: a `Rational{Int}`, an integer or a
+  `Period`, or a float at its exact value, so `-3//10` is the decimal and
+  `-0.3` the float nearest it. Refused as `ArgumentInvalid` if not finite, if
+  `Rational{Int}` cannot hold it, or if the run from it could take no frame.
 - `hooks`: the [`FrameHooks`](@ref) boundary zero settles through,
   [`NoHooks`](@ref) for a model stepped on its own.
 """
@@ -312,18 +314,18 @@ function init!(model::Model{T}, condition = set(); kw...) where {T}
     init!(model, plan; kw...)
 end
 
-function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
+function init!(model::Model{T}, plan::ConditionPlan; t0 = 0,
                hooks::FrameHooks = NoHooks()) where {T}
     _claimed_gate(model, hooks, :init!)
-    _check_origin(model, :init!, t0)
+    origin = _check_origin(model, :init!, t0)
     exec = model.exec
     @atomic :release model.status = :built   # the door's first write (D-441)
     establish_defaults!(exec.xbuf, exec.sstores, exec.mstores,
                         model.deployment.build.structure.components,
                         activation(model.deployment.build, T).decls)   # D-063's reset
     _apply_plan!(model, plan)
-    exec.clock.t = Float64(t0)        # the origin at the door, into the deployment's scalar (D-260)
-    exec.clock.t₀ = Float64(t0)       # exact: the clock's origin is a `Float64` too
+    # the origin exact, and the clock the float nearest it in the model's scalar (D-260, D-457)
+    _set_origin!(exec.clock, origin, model.deployment.lattice.unit)
     fill!(exec.events.prior, false)   # every prior not-holding (§10.6)
     # the stepper's carried state as bound, so the run is a function of the condition (D-452)
     reset_stepper!(exec.stepper)
@@ -338,15 +340,59 @@ function init!(model::Model{T}, plan::ConditionPlan; t0::Real = 0.0,
     nothing
 end
 
-# The origin `init!` and `trim!` take, before any write or search: finite, and
-# with a first frame the run may take, inside the lattices' `Int` range and
-# resolved by the origin's clocks (D-450).
-function _check_origin(model::Model, call::Symbol, t0::Real)
-    origin = Float64(t0)
-    isfinite(origin) && _last_frame(model.deployment, origin) ≥ 1 ||
+# The origin `init!` and `trim!` take, before any write or search: held exact
+# (D-457), and with a first frame the run may take, inside the lattices' `Int`
+# range and resolved by the origin's clocks (D-450). Returns the exact origin.
+function _check_origin(model::Model, call::Symbol, t0)
+    origin = _origin(call, t0, model.deployment)
+    _last_frame(model.deployment, Float64(origin)) ≥ 1 ||
         throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, argument = :t0,
                                               value = t0)))
-    nothing
+    origin
+end
+
+# The origin a door takes, exact (D-457): an integer, a rational or a `Period`,
+# the forms a period takes, or a finite float at its exact value. Anything else,
+# an irrational among them, one that `Rational{Int}` cannot hold, and one whose
+# run the clock's integers cannot carry, is refused as `ArgumentInvalid`
+# `:range` on `t0`.
+_exact_origin(t0::Period) = t0.T
+_exact_origin(t0::Union{Integer,Rational{<:Integer}}) = Rational{Int}(t0)
+_exact_origin(t0::AbstractFloat) = isfinite(t0) ? Rational{Int}(t0) : nothing
+_exact_origin(t0) = nothing
+function _origin(call::Symbol, t0, deployment::Deployment)
+    origin = try
+        exact = _exact_origin(t0)
+        exact === nothing || _clock_integers(exact, deployment)
+        exact
+    catch err
+        err isa Union{InexactError,OverflowError,DivideError} || rethrow()
+        nothing
+    end
+    origin === nothing && throw(DiagnosticError(ArgumentInvalid(
+        call = call, reason = :range, argument = :t0, value = t0)))
+    origin
+end
+
+# The grid integers of an origin on a deployment's lattice, checked against the
+# run the origin may take (D-457). The loop's clock arithmetic is unchecked, so
+# the checked formula runs here at the run's two ends: the origin, and one frame
+# past the last frame `_last_frame` allows, each at the lattice's largest step
+# count per span, a span of the whole frame. Every count the loop forms lies
+# between the two ends' counts and every step count at most theirs, so each
+# product's magnitude stays within the ends'. The sum lies between the origin's
+# product and the far end's sum, or the far end's product for a negative
+# origin, each checked here. Throws `OverflowError` where the integers cannot
+# carry the run.
+function _clock_integers(t₀::Rational{Int}, deployment::Deployment)
+    lattice = deployment.lattice
+    integers = _grid_integers(t₀, lattice.unit)
+    steps = cld(lattice.frame * denominator(lattice.bound), numerator(lattice.bound))
+    last = _last_frame(deployment, Float64(t₀))
+    mul, add = Base.Checked.checked_mul, Base.Checked.checked_add
+    _instant(integers..., 0, 0, lattice.frame, steps, mul, add)
+    _instant(integers..., last * lattice.frame, steps, lattice.frame, steps, mul, add)
+    integers
 end
 
 # Design: §12.6, §14.1, §14.3, D-429.
@@ -475,15 +521,15 @@ phase_bodies(model::Model) = model.exec.bodies
 # them from here. Positions are compared as whole units of the deployment's
 # `Lattice`, so a coincidence is an integer equality and never a float one.
 
-"""Frame top `k`, computed from the index and `t₀` — never accumulated (§10.4).
-The origin and the stride are both `Float64`, so the top is one too, and the
-clock write below converts it into the deployment's scalar (D-260)."""
-_grid_time(model::Model, k::Int) = model.exec.clock.t₀ + k * model.deployment.Δt_frame
+"""Frame top `k`, the `Float64` nearest `t₀ + k·Δt_frame`, computed from the
+index and never accumulated (§10.4, D-456). The clock write below converts it
+into the deployment's scalar (D-260)."""
+_grid_time(model::Model, k::Int) = _instant(model.exec.clock, k * model.deployment.lattice.frame)
 
-# A due instant off the frame tops, from its base-tick index (§10.4, D-445). An
-# interior step end has no index of its own: frame.jl writes it from its span's
-# start and its count in the span (D-449).
-_tick_time(model::Model, n::Int) = model.exec.clock.t₀ + n * model.deployment.Δt_base
+# A due instant off the frame tops, the float nearest `t₀ + n·Δt_base`, from its
+# base-tick index (§10.4, D-445, D-456). An interior step end is frame.jl's,
+# from its span's start and its count in the span (D-449).
+_tick_time(model::Model, n::Int) = _instant(model.exec.clock, n * model.deployment.lattice.base)
 
 # The next due instant strictly past `position` (in units from `t₀`): the first
 # base-tick index there that some row's gate admits, one modular computation
@@ -504,9 +550,11 @@ end
 # reaches the bound `t` (§12.4, §12.6), and its floor sibling, the last frame
 # top at or before `t`. Both carry a slack of a few ulps in frame units, at the
 # larger of `|t|` and `|t₀|`, since `t₀ + k·Δt_frame` and `t - t₀` both round
-# at that magnitude. `0.3/0.1` is `2.9999999999999996`, and at `t₀ = -0.3` the
-# loop writes frame 3's time as `5.6e-17`, whose own ulps absorb none of that.
-# `t` and `t₀` are any reals; the stride is `Float64` (D-260). A bound at or
+# at that magnitude. `0.3/0.1` is `2.9999999999999996`. A clock is the float
+# nearest its instant (D-456), so from the exact origin `-3//10` frame 3 reads
+# `0.0`, while from the float `-0.3` it reads about `1.1e-17`, whose own ulps
+# absorb none of that. `t` and `t₀` are any reals, an exact origin converted
+# at the site, and the stride is `Float64` (D-260, D-457). A bound at or
 # before the origin is frame 0, whatever its distance, so `_frames_to` never
 # rounds a count `Int` cannot hold on that side. `_frames_fit` is the doors'
 # check for the other side, `_frames_to`'s mirror before its conversion: the
@@ -533,17 +581,20 @@ _frame_at(t::Real, t₀::Real, Δt_frame::Float64) =
 # stored where `t₀` is set.
 function _last_frame(deployment::Deployment, t₀::Float64)
     lattice = deployment.lattice
-    room = (lattice.reach - abs(t₀)) / (2 * deployment.Δt_frame)   # k < room
+    room = (lattice.reach - abs(t₀)) / (2 * Float64(deployment.Δt_frame))   # k < room
     min(lattice.max_frame, room ≤ 1 ? 0 : ceil(Int, room) - 1)
 end
-_last_frame(model::Model) = _last_frame(model.deployment, model.exec.clock.t₀)
+_last_frame(model::Model) = _last_frame(model.deployment, Float64(model.exec.clock.t₀))
 
 # The same three over a deployment's lattices from an origin, and over a model's
 # own clock, so no caller rebuilds the triple (§12.6, D-445).
 _frames_fit(deployment::Deployment, t::Real, t₀::Real) =
-    _frames_fit(t, t₀, deployment.Δt_frame, _last_frame(deployment, Float64(t₀)))
-_frames_to(deployment::Deployment, t::Real, t₀::Real) = _frames_to(t, t₀, deployment.Δt_frame)
-_frame_at(deployment::Deployment, t::Real, t₀::Real) = _frame_at(t, t₀, deployment.Δt_frame)
+    _frames_fit(t, Float64(t₀), Float64(deployment.Δt_frame),
+                _last_frame(deployment, Float64(t₀)))
+_frames_to(deployment::Deployment, t::Real, t₀::Real) =
+    _frames_to(t, Float64(t₀), Float64(deployment.Δt_frame))
+_frame_at(deployment::Deployment, t::Real, t₀::Real) =
+    _frame_at(t, Float64(t₀), Float64(deployment.Δt_frame))
 _frames_fit(model::Model, t::Real) = _frames_fit(model.deployment, t, model.exec.clock.t₀)
 _frames_to(model::Model, t::Real) = _frames_to(model.deployment, t, model.exec.clock.t₀)
 
@@ -788,7 +839,7 @@ end
 # which the clamp would otherwise read as the whole remainder.
 @inline function _clamped(model::Model, proposal::Float64, t, t_limit)
     remaining = t_limit - t
-    cap = min(proposal, model.deployment.h_max)
+    cap = min(proposal, Float64(model.deployment.h_max))
     h = cap < _seconds(remaining) ? oftype(remaining, cap) : remaining
     (!isnan(proposal) && t + h > t) || _stalled(model, proposal, t)   # the throw is the cold path
     h
@@ -847,8 +898,8 @@ end
         # end inside it (D-445); a bare `integrate!` rounds the clock onto the
         # frame top it ends at. The counters are the run's, which the model never
         # sees (D-317)
-        boundary = (k === nothing ? round(Int, (_seconds(exec.clock.t) - exec.clock.t₀) /
-                                           model.deployment.Δt_frame) : k) - 1)))
+        boundary = (k === nothing ? round(Int, (_seconds(exec.clock.t) - Float64(exec.clock.t₀)) /
+                                           Float64(model.deployment.Δt_frame)) : k) - 1)))
 end
 
 # Design: §9.2, §11.8, D-250.
@@ -1091,7 +1142,7 @@ function _assert_at_rest(model::Model, op::Symbol)
     model_status === :consistent || throw(DiagnosticError(ServiceLifecycle(
         op = op, status = model_status, legal = [:consistent])))
     clock = model.exec.clock
-    k = _frames_to(clock.t, clock.t₀, model.deployment.Δt_frame)
+    k = _frames_to(model.deployment, clock.t, clock.t₀)
     t_frame = _grid_time(model, k)
     clock.t == oftype(clock.t, t_frame) ||
         throw(DiagnosticError(CheckpointMidFrame(t = _seconds(clock.t), t_frame = t_frame,
@@ -1150,9 +1201,20 @@ end
 # `checkpoint(model)` uses, a clock before `t₀` sitting in frame 0, and the
 # clock exactly that frame's top in the state's scalar. Returns the frame.
 function _check_grid!(diags::Vector{Diagnostic}, model_state::ModelState)
-    t, t₀, Δt_frame = model_state.t, model_state.t₀, model_state.deployment.Δt_frame
-    k = _frames_to(t, t₀, Δt_frame)
-    t_frame = t₀ + k * Δt_frame
+    t, t₀, deployment = model_state.t, model_state.t₀, model_state.deployment
+    # A hand-built state may carry an origin no door accepted, so it is checked
+    # as `init!` checks one (D-457).
+    integers = try
+        _clock_integers(t₀, deployment)
+    catch err
+        err isa OverflowError || rethrow()
+        push!(diags, ArgumentInvalid(call = :restore!, reason = :range, argument = :t0,
+                                     value = t₀))
+        return 0
+    end
+    k = _frames_to(deployment, t, t₀)
+    # the state's own origin on its lattice, as its clock wrote it (D-456)
+    t_frame = _instant(integers..., k * deployment.lattice.frame)
     t == oftype(t, t_frame) ||
         push!(diags, CheckpointMidFrame(t = _seconds(t), t_frame = t_frame, frame = k))
     k
@@ -1213,7 +1275,7 @@ restore!(::Model{T}, ::ModelState{S}; kw...) where {T,S} =
 # `:built` as a throw inside `init!`'s or `overlay!`'s settling does. The pointer
 # is the frame the state stands at, on the grid the door has checked.
 function _restore_state!(model::Model, model_state::ModelState; hooks::FrameHooks = NoHooks())
-    k = _frames_to(model_state.t, model_state.t₀, model_state.deployment.Δt_frame)
+    k = _frames_to(model_state.deployment, model_state.t, model_state.t₀)
     cursor = model.exec.cursor
     cursor.comp = 0; cursor.fn = :none   # no stale frame: a restore runs no component
     @atomic :release model.status = :built   # the door's first write (D-441)

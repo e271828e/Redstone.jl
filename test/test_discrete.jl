@@ -177,7 +177,7 @@ function discrete_rate_fold()
         # inner (1, 0), outer (5, 2), gnss (10, 0) — §9.2's table, exactly.
         sim = Simulation(MultiRate(); Δt_frame = 1//500)
         deployment = sim.model.deployment
-        @test deployment.Δt_frame == 0.002 && deployment.Δt_base == 0.002
+        @test deployment.Δt_frame === deployment.Δt_base === 1//500   # exact (D-454)
         @test [(e.path, e.D, e.Φ) for e in deployment.schedule.rows] ==
               [("fcs/inner", 1, 0), ("fcs/outer", 5, 2), ("gnss", 10, 0)]
         @test [e.Δt for e in deployment.schedule.rows] ≈ [0.002, 0.01, 0.02]
@@ -246,10 +246,10 @@ function discrete_deployment()
         multirate_build = build(MultiRate())
         deployment = Deployment(multirate_build; Δt_frame = 1//500)
         @test deployment isa Deployment
-        @test deployment.Δt_frame == 0.002 && deployment.Δt_base == 0.002
+        @test deployment.Δt_frame === deployment.Δt_base === 1//500   # exact (D-454)
         # the default algorithm, and no bound below the frame, the bound resolved
         # to the frame period (D-442, D-449)
-        @test deployment.algorithm == RK4() && deployment.h_max == 0.002 &&
+        @test deployment.algorithm == RK4() && deployment.h_max === 1//500 &&
               deployment.firing_budget == 4 &&
               deployment.localization_budget == 8 && deployment.localization_tol == 1e-6
         # the very build, never a reconstruction
@@ -402,7 +402,7 @@ function discrete_deployment()
         # required ratio, and the bound is the frame under the default (D-445,
         # D-449).
         off_frame = Deployment(multirate_build; Δt_frame = 1//300, Δt_base = 1//500)
-        @test off_frame.h_max == Float64(1//300) &&
+        @test off_frame.h_max === 1//300 &&
               [e.D for e in off_frame.schedule.rows] == [1, 5, 10]
 
         # The call is the barrier (§9.1, D-229): `Δt_frame` and the event
@@ -479,7 +479,7 @@ function discrete_deployment()
                          sample_times = (; c = Absolute(Hz(50), 1//100)))
         sim = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Simulation(
             anchored; Δt_frame = 1//500, Δt_base = :derive)
-        @test sim.model.deployment.Δt_base == 0.01
+        @test sim.model.deployment.Δt_base === 1//100
         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(2, 1)]
 
         # The offset alone refines, so the grid is twice the fastest declared work
@@ -503,7 +503,7 @@ function discrete_deployment()
         deployment = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
             build(comp); Δt_frame = 1//1500, Δt_base = :derive)
         grid = deployment.grid
-        @test deployment.Δt_base == Float64(1//1500)
+        @test deployment.Δt_base === 1//1500
         @test grid.admissible == 1//1500 &&
               [row.D for row in deployment.schedule.rows] == [3, 150]
 
@@ -661,7 +661,7 @@ function discrete_deployment()
         step!(sim; frames = 3)
         @test port(sim, "c", :n) == 3 && state(sim, "c").n == 4     # the rest reading
         overlay!(sim, at("c", set(s = (n = 10,))))
-        @test latest(sim).t == 3 * 0.1 && latest(sim).frame == 3
+        @test latest(sim).t === 0.3 && latest(sim).frame == 3
         @test port(sim, "c", :n) == 3                        # the held cell stays
         @test state(sim, "c").n == 10                        # the store is the next tick's state
         step!(sim)

@@ -50,7 +50,7 @@ fields hold the state.
 - `stepper`: what the integration method carries from one step to the next,
   such as its next step's length, and `nothing` for a method that carries
   nothing, `RK4()` and `Heun()` among them.
-- `t` and `t₀`: the clock's time and origin.
+- `t` and `t₀`: the clock's time and origin, the origin exact.
 - `deployment`: the [`Deployment`](@ref), compared as a value on restore.
 - `layout`: the [fingerprint](@ref g-fingerprint), compared against the target's
   on restore.
@@ -58,8 +58,8 @@ fields hold the state.
 The frame index and the [boundary](@ref g-boundary) ordinal belong to a run, so
 a [`Checkpoint`](@ref) carries them beside the state.
 
-`t` equals `t₀ + k·Δt_frame` as the clock writes it. A hand-typed decimal can
-miss the grid by an ulp and be refused as `CheckpointMidFrame`.
+`t` is the float nearest `t₀ + k·Δt_frame`, as the clock writes it, so a
+typed decimal on the frame grid matches it from an exact origin.
 
 A model's state is not a [condition](@ref g-condition). It holds the
 [root inputs](@ref g-root-input) as values, never as the condition that set
@@ -78,7 +78,7 @@ struct ModelState{T}
     prior::Vector{Bool}              # the guard priors
     stepper::Any                     # the stepper's carried state (§10.2), immutable
     t::T                             # the clock's time
-    t₀::Float64                      # the clock's origin
+    t₀::Rational{Int}                # the clock's origin, exact (D-457)
     deployment::Deployment           # compared as a value at restore (§12.7)
     layout::Fingerprint              # compared against the `Build`
 end
@@ -122,7 +122,9 @@ function _restore_state!(exec::Executor{T}, model_state::ModelState{T}) where {T
     copyto!(exec.events.prior, model_state.prior)
     copyto!(exec.events.last, model_state.prior)
     clock = exec.clock
-    clock.t, clock.t₀ = model_state.t, model_state.t₀
+    # the state's origin on its own lattice, which its door checked (D-457)
+    _set_origin!(clock, model_state.t₀, model_state.deployment.lattice.unit)
+    clock.t = model_state.t
     restore_stepper!(exec.stepper, model_state.stepper)
     nothing
 end

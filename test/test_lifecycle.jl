@@ -45,7 +45,7 @@ resume_condition() = combine(at("ctl", set(s = (acc = 4.0,))),
 function test_lifecycle()
     @testset "an origin that is not finite or lies past the frame range is refused before any write (§10.5, §14.5, Appendix C, D-450)" begin
         point = set(u = (ref = 0.0,))
-        for bad in (NaN, Inf, -Inf, 1e15, 1e34, big"1e400")
+        for bad in (NaN, Inf, -Inf, 1e15, 1e34, big"1e400", π)
             model = Model(feedback_model(); Δt_frame = 1//10)
             d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, point; t0 = bad))
             @test d.call === :init! && d.reason === :range && d.argument === :t0 && d.value === bad
@@ -76,6 +76,24 @@ function test_lifecycle()
         sim = Simulation(feedback_model(); Δt_frame = 1//10)
         init!(sim, point; t0 = 1e14)
         @test checkpoint(sim).state.t₀ == 1e14
+    end
+
+    @testset "an origin whose run the clock's integers cannot carry is refused at the door (§12.6, §14.5, D-457)" begin
+        # A 10^5 s frame from an origin over the largest `Int` denominator: the
+        # grid integers fit `Int128`, but the clock at the last frame the run may
+        # take, about 5.6e14 frames on, would not, and the loop's arithmetic is
+        # unchecked.
+        point = set(u = (ref = 0.0,))
+        model = Model(feedback_model(); Δt_frame = 100_000)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, point;
+                                                                          t0 = 1//typemax(Int)))
+        @test d.call === :init! && d.reason === :range && d.argument === :t0 &&
+              d.value === 1//typemax(Int)
+        @test model.status === :built
+        # A short frame takes the same origin, its run far shorter.
+        short = Model(feedback_model(); Δt_frame = 1//10)
+        init!(short, point; t0 = 1//typemax(Int))
+        @test short.exec.clock.t₀ === 1//typemax(Int)
     end
 
     @testset "a keyword past the frame range or past `Int` is refused as out of range before any write (§11.2, §12.6, §13.5)" begin
@@ -322,8 +340,9 @@ function test_lifecycle()
         run!(late; t_end = 86402.0)
         @test termination(late).t == 86402.0 && late.run.frame == 100
 
-        # An origin far from zero and a bound near it: at `t0 = -0.3` the loop
-        # writes frame 3's time as `-0.3 + 3 * 0.1`, about `5.6e-17`. That time
+        # An origin far from zero and a bound near it: from the float `t0 = -0.3`
+        # frame 3's time is the float nearest `-0.3 + 3//10`, about `1.1e-17`
+        # (D-456, D-457), where `-3//10` would give `0.0`. That time
         # as the bound ends at frame 3, not 4; so does a `t_plus` of three steps,
         # and the next `t_plus` counts from that frame top.
         shifted = Simulation(feedback_model(); Δt_frame = 1//10)
@@ -334,7 +353,7 @@ function test_lifecycle()
         run!(shifted; t_end = t_three)
         @test termination(shifted).t == t_three && shifted.run.frame == 3
         init!(shifted, set(u = (ref = 0.0,)); t0 = -0.3)
-        @test step!(shifted; t_plus = 3 * shifted.model.deployment.Δt_frame) == 3
+        @test step!(shifted; t_plus = Float64(3 * shifted.model.deployment.Δt_frame)) == 3
         @test shifted.model.exec.clock.t == t_three
         @test step!(shifted; t_plus = 0.3) == 3
         # A `Dual` model's clock is a `Dual`, from the same origin (D-260, D-317).
@@ -374,7 +393,7 @@ function test_lifecycle()
         @test termination(lifted).source === EndTimeReached() && termination(lifted).t == 0.2
         init!(lifted)
         run!(lifted; t_end = Inf)
-        @test termination(lifted).t == 4 * lifted.model.deployment.Δt_frame
+        @test termination(lifted).t == Float64(4 * lifted.model.deployment.Δt_frame)
         unbound = Simulation(feedback_model(); Δt_frame = 1//50)
         init!(unbound, set(u = (ref = 0.0,)))
         # The bound is validated identically at the three binding sites: the same
@@ -431,7 +450,7 @@ function test_lifecycle()
         record = termination(sim)
         # kind + payload, one typed value (D-203)
         @test record.source === ModelRequestedStop("stop", :y, "ramp at level")
-        @test record.t == 4 * sim.model.deployment.Δt_frame                # the sweep at boundary 4 saw 0.4 ≥ 0.35
+        @test record.t == Float64(4 * sim.model.deployment.Δt_frame)                # the sweep at boundary 4 saw 0.4 ≥ 0.35
         @test sim.run.frame == 4                       # the run ended there, not at t_end
         # that snapshot is the final one
         @test latest(sim).t === record.t
