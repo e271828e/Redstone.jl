@@ -23,19 +23,26 @@ item changes what the spec says, the spec edit is part of the item.
   the line predates increment 95, and its review found it. The user ruled
   on 2026-11-13 that the switch to exact time stands, and that its fallout
   is analyzed whole before the first adaptive backend, not met site by
-  site. The analysis is a dated report in `design/reports/` that covers:
-  - every exact-arithmetic site on the time surface, from a declared rate
-    through the schedule, the lattice, the clock, the checkpoint and the
-    trace header, with the inputs that overflow it and what it does then;
-  - one policy for them: a common integer width, or `Rational{Int}` kept
-    and a bound on denominators refused at the doors, with one refusal per
-    door and the errors that may still escape named;
-  - one rule for what the doors accept, since the period door and the
-    origin door differ today (`Float16`, `Rational{BigInt}`);
-  - the bounds the spec states, reconciled: D-450's `2^-52·(…)` in §10.5,
-    D-456's two ulps and the origin door's check at the run's two ends.
+  site. The analysis is
+  `design/reports/20261113_exact_arithmetic/report.md`: the 23
+  exact-arithmetic sites of the time surface, a policy for them, a rule
+  for the doors and the spec's clock bounds reconciled. The user ruled on
+  2026-11-14 that exact time stands against floats everywhere, and that
+  the fallout lands as increment 96, single-stage and smaller than the
+  report's policy A:
+  - the overflow sites: checked arithmetic in the fold and the schedule's
+    multiply-add, one catch per door refused under an existing reason, a
+    `Period` that is not finite refused, and `_prime_powers` bounded;
+  - the clock: the float nearest its instant at every magnitude, by a
+    correctly rounded division past `2^53`, with boundary zero written by
+    `_instant`, which adopts the alternative D-456 rejected;
+  - §10.5's bounds, corrected to that clock;
+  - the doors' loose ends: `Bool`, and a `Rational` of another integer
+    type at the `Deployment` keywords.
 
-  A ruling beside D-454 to D-457 follows the report, then the build.
+  The rulings, their reasons and the points left to the readings round are
+  `design/increments/096_exact_arithmetic/notes_increment_96.md`. Stage
+  reached: the rulings; the prototype is next.
 - **Variable-step integration.** The frame and the integration step become
   separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
   no required ratio on the `Deployment`, `N_base` retires, and the step is
