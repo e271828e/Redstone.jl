@@ -6305,18 +6305,19 @@ machinery.
 
 **The root-finder returns the holding endpoint of its final bracket**
 ([D-082][d-082], [D-290][d-290]). That is the smallest trial point where the predicate holds.
-It follows that `t* = tₙ` is structurally impossible. It never needs clamping
-away.
+It follows that `t* = tₙ` is structurally impossible.
 
 The argument rests on what was measured, not on what the prior reports.
 Root-finding starts only after the θ = 0 validation has measured σ₀ not-holding
 under the frame's own `u`. The bracket's left end is therefore not-holding by
 the same kind of evidence as its right end. The returned point is thus
-strictly later than the published, immutable tₙ. In the worst rounding case it
-is `nextfloat(tₙ)`. This holds unconditionally, with no appeal to the prior.
+strictly later than the published, immutable tₙ. This holds
+unconditionally, with no appeal to the prior.
 It also leaves no residual epoch hole, because the case where the prior and
 the frame's `u` disagree is exactly the epoch-caused edge, and that case
-never reaches the root-finder ([D-182][d-182], [D-290][d-290]).
+never reaches the root-finder ([D-182][d-182], [D-290][d-290]). The clock
+`tₙ + θ★·h` can still round onto tₙ late in a long run, once `θ★·h` is below
+half an ulp of tₙ, so the clock is at least `nextfloat(tₙ)`.
 
 The guard also observably holds at `t*` ([D-082][d-082], [D-290][d-290]). Handlers therefore
 fire in states where their own predicate holds, and the post-fire prior
@@ -6324,7 +6325,8 @@ records an actual observation rather than an assumption.
 
 `t* = tₙ₊₁` exactly is legitimate ([D-082][d-082], [D-290][d-290]). It is a crossing at
 the step's end, where σ(tₙ₊₁) = 0 both triggers detection and is the root. It
-degenerates to the boundary at that end ([D-446][d-446]). The localization result is discarded and
+degenerates to the boundary at that end ([D-446][d-446]). So does a crossing whose
+clock rounds onto tₙ₊₁. The localization result is discarded and
 the event fires inside tₙ₊₁'s ordinary iteration. That outcome is bitwise
 identical to the non-localized one, with one boundary, one
 [snapshot](#g-snapshot) (the immutable per-boundary publication) and no

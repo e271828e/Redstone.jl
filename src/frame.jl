@@ -275,9 +275,13 @@ function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHo
             events.triggered[i] || continue
             θ★ = min(θ★, _crossing(model, i, events.σ0[i], events.σ1[i], t_seg, h′))
         end
-        if θ★ ≥ 1.0
-            # Degenerate: the crossing is the step's end itself (§10.4, D-446).
-            # The localization is discarded and the event fires inside that
+        # The clock strictly after the segment's start (§10.4): `t_seg + θ★·h′`
+        # rounds onto `t_seg` once `θ★·h′` is below half its ulp.
+        t★ = max(t_seg + θ★ * h′, nextfloat(t_seg))
+        if t★ ≥ t_to
+            # Degenerate: the crossing's clock is the step's end itself (§10.4,
+            # D-446), a root at θ★ = 1 or one that rounds onto it. The
+            # localization is discarded and the event fires inside that
             # boundary's ordinary iteration — one boundary, no zero-length
             # remainder.
             copyto!(exec.xbuf, exec.xnext)
@@ -294,7 +298,7 @@ function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHo
         # published consistency point. The interpolant is invalidated by falling
         # out of scope — the handlers made it a lie for t > t*.
         dense!(exec.stepper, exec.xbuf, exec.xnext, exec.ẋnext, θ★, h′)
-        exec.clock.t = t_seg + θ★ * h′
+        exec.clock.t = t★
         run_boundary!(model, nothing)
 
         # Every settled boundary may end the frame (§13.5): a `true` makes this
@@ -332,8 +336,8 @@ convergence certificate. Stops once the bracket is narrower than
 segment stops sooner (§10.4, D-446) — and returns the **holding endpoint of the
 final bracket** — every `hi` is an actual observation, so the returned
 point is strictly later than the segment start and the guard observably holds
-there. A return of exactly 1.0 is the degenerate crossing at the step's end,
-discarded by the caller.
+there. A return of exactly 1.0, or one whose clock rounds onto the step's end,
+is the degenerate crossing there, discarded by the caller.
 """
 function _crossing(model::Model, i::Int, σ₀::Float64, σ₁::Float64, t_seg, h′)
     events = model.exec.events

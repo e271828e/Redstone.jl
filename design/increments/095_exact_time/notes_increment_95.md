@@ -80,6 +80,10 @@ and the prototype's notes. Both worktrees can be removed after the push.
   as its own commit after it.
 - Still open: the reviewer's delta check, the user's diff of the arc and
   the push. The `t*` clock that rounds onto its segment's start is
-  confirmed by the reviewer's probe and stays outside the increment. The
+  confirmed by the reviewer's probe and stays outside the increment.
+- Later the same day: the delta check ran at a7df733, and the user ruled
+  the `t*` clock. A loose commit fixes it: the localization loop decides the
+  degenerate case on the clock, at least `nextfloat(t_seg)`, and a clock
+  that reaches the step's end folds into that boundary (§10.4). The
   other items under "Open, to carry forward" stand, except the `Δt_base`
   one, which D-454's Rationale now states.

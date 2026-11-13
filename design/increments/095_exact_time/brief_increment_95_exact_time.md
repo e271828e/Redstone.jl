@@ -728,7 +728,8 @@ values against the door's two ends, none past them, and every door that
 sets the origin. `_instant` infers concretely at 0 B, and `frame!` allocates
 nothing past 1100 frames from `-0.3` at `Float64` and `LinearizeDual`.
 Against 84379eb, clocks moved at 59 to 70 of 200 frame tops and states by
-up to 8.4e-15, as D-456 and D-455 say. Its report lists ten findings.
+up to 8.4e-15, as D-456 and D-455 say, except where a state copies the clock
+onto a threshold: stamped's wrap moves a frame. Its report lists ten findings.
 
 The coordinator adjudicated them, and a fixer landed the fixes as one
 commit:
@@ -809,8 +810,18 @@ localized test green.
 but the clock `t_seg + θ★·h′` rounds onto `t_seg` once `θ★·h′` is below half
 an ulp of it. Two snapshots then share one clock: from `t0 = 2^20` at a 0.1
 s frame, crossings 1e-13 s and 1e-11 s past frame 3, and from `2^30` 1e-9
-s; from `t0 = 0` never. It predates the increment and stays outside it.
+s; from `t0 = 0` never. It predates the increment and stays outside it. The
+user ruled it after the delta check, and a loose commit decides the
+degenerate case on the clock: the clock is at least `nextfloat(t_seg)`, and
+one that reaches the step's end folds into that boundary.
 
-**After the fixes.** The fixer ran the gate in the real tree, 9919 of 9919 in 10m01.0s, 13:08 wall, part of it beside the
-mutant runs on a scratch copy, the 49 new assertions included,
-the battery green with `linkify.jl` a no-op, and `Longitudinal` 77 of 77.
+**After the fixes.** The fixer ran the gate in the real tree, 9919 of 9919
+in 10m01.0s, 13:08 wall, part of it beside the mutant runs on a scratch
+copy, the 49 new assertions included, the battery green with `linkify.jl` a
+no-op, and `Longitudinal` 77 of 77.
+
+**The delta check**, at a7df733, after the loose fix to `bind_schedule`. The
+reviewer ran the gate, 9920 of 9920, killed all ten mutants, and saw the
+anchor fix's test red under both old forms. It found one more site, the
+`gcd` in `_grid_report`, which the user put in `pending.md`'s first bullet,
+the exact-arithmetic audit, at 70804c9.

@@ -87,6 +87,29 @@ function test_localization()
         @test modes(sim, "s").t_fired == Float64(4 * sim.model.deployment.Δt_frame)
     end
 
+    @testset "a t* clock lies strictly after its step's start, or is its end's boundary, late in a long run (§10.4)" begin
+        # From `2^30` an ulp of the clock is about 2.4e-7 s, so a crossing a hair
+        # after frame 3's top, or a hair before frame 4's, has a `t_seg + θ★·h`
+        # that rounds onto that top. The sawtooth's ramp is read once, to place
+        # each crossing.
+        t0 = 2^30
+        ramp = Simulation(Group((; src = Sawtooth(1.0))); Δt_frame = 1//10)
+        init!(ramp; t0)
+        step!(ramp; frames = 4)
+        q = [port(snapshot, "src", :q) for snapshot in logged(ramp)]
+        top_3, top_4 = Float64(t0 + 3//10), Float64(t0 + 4//10)
+        for level in (q[4] + 1e-11, q[5] - 1e-7)
+            sim = Simulation(Group((; src = Sawtooth(1.0), s = Stamper(level));
+                                   local_wires = ("src/q" => "s/sig",)); Δt_frame = 1//10)
+            init!(sim; t0)
+            run!(sim; t_end = Float64(t0) + 0.5)
+            @test modes(sim, "s").count == 1
+            @test top_3 < modes(sim, "s").t_fired ≤ top_4
+            times = [snapshot.t for snapshot in logged(sim)]
+            @test allunique(times)
+        end
+    end
+
     @testset "multiple crossings in one frame: earliest first, re-localized on the remainder" begin
         two_stamper_model() = Group(
                      (; src = Sawtooth(1.0), s1 = Stamper(0.31), s2 = Stamper(0.34));
