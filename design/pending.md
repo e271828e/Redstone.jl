@@ -12,153 +12,65 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The exact-arithmetic audit.** Increment 95 put the deployment's
-  periods, its bound and the run's origin on `Rational{Int}` (D-454,
-  D-457), and the fixes since have met overflow one site at a time: the
-  clock's integers, guarded at the origin's door; `bind_schedule`'s anchor
-  divisions, the loose fix `a7df733`; and now `_grid_report`'s
-  `reduce(gcd, …)` in `src/deployment.jl`. A rational `gcd` takes an `Int`
-  `lcm` of the denominators, so two anchored periods `1//(2^40+1)` and
-  `1//(2^40+3)` raise a raw `OverflowError` at `Deployment` construction;
-  the line predates increment 95, and its review found it. The user ruled
-  on 2026-11-13 that the switch to exact time stands, and that its fallout
-  is analyzed whole before the first adaptive backend, not met site by
-  site. The analysis is
-  `design/reports/20261113_exact_arithmetic/report.md`: the 23
-  exact-arithmetic sites of the time surface, a policy for them, a rule
-  for the doors and the spec's clock bounds reconciled. The user ruled on
-  2026-11-14 that exact time stands against floats everywhere, and that
-  the fallout lands as increment 96, single-stage and smaller than the
-  report's policy A:
-  - the overflow sites: checked arithmetic in the fold and the schedule's
-    multiply-add, one catch per door refused under an existing reason, a
-    `Period` that is not finite refused, and `_prime_powers` bounded at
-    `2^20`; the structure step alone takes a new reason, `:range`;
-  - the clock: the float nearest its instant at every magnitude, by a
-    correctly rounded division past `2^53`, with boundary zero written by
-    `_instant`, which adopts the alternative D-456 rejected;
+- **The exact-arithmetic audit, increment 96.** Increment 95 put the
+  deployment's periods, its bound and the run's origin on `Rational{Int}`
+  (D-454, D-457), and the fixes since met overflow one site at a time. The
+  audit of the whole time surface is
+  `design/reports/20261113_exact_arithmetic/report.md`. The user ruled on
+  2026-11-14 that exact time stands against floats everywhere, and that the
+  fallout lands as one single-stage increment before the first adaptive
+  backend, smaller than the report's policy A:
+  - the overflow sites, refused at their doors by checked arithmetic and
+    one catch per door;
+  - the clock, the float nearest its instant at every magnitude, which
+    adopts the alternative D-456 rejected;
   - §10.5's bounds, corrected to that clock, with D-450's `2^50·δ` kept;
-  - the doors' loose end: a `Rational` of another integer type at the
-    `Deployment` keywords. `Bool` stays accepted.
+  - a `Rational` of any integer type at the `Deployment` keywords.
 
   The rulings and their reasons are
   `design/increments/096_exact_arithmetic/notes_increment_96.md`. Stage
   reached: the prototype, running in a scratch worktree with the four open
   points ruled; its readings round is next.
 - **Variable-step integration.** The frame and the integration step become
-  separate quantities: `Δt_frame`, the frame period, and `Δt_base` stand in
-  no required ratio on the `Deployment`, `N_base` retires, and the step is
-  the `Model`'s to decide. It never crosses a frame top or a due instant and
-  is never longer than the deployment's optional `h_max`. A fixed-step
-  method takes the span between two such instants in equal steps, and an
-  adaptive one under its error controller's proposal (§2.1, §2.2, §10.2,
-  §10.4, §10.5). Every accepted sub-step
-  ends in a boundary; the drain, the control read, the pacer's deadline and
-  the trace's ordinal stay at frame tops; `restore!` restores the stepper's
-  state and never reseeds it. The plan, the settled rulings and the open
-  decisions are `design/increments/roadmap_variable_step.md`: seven
-  increments, the deployment surface first, then the three lattices, the
-  step bound, the seam protocol, exact time with the step-length rule,
-  the first adaptive backend and the teaching, with every trajectory from
-  before the update bit-identical through the seam protocol. The update
-  changes the deployment keywords, so it precedes the exported-name audit
-  and delays the release.
-  - **Landed: the deployment surface**, increment 90 (D-442, D-443,
-    `design/increments/090_deployment_surface/`). `Δt_frame` and `Δt_base`
-    sit on the `Deployment`, the step rides `algorithm = RK4(h)` and is
-    `Δt_frame` when the instance names none, and `N_base` is gone.
-  - **Landed: the three lattices**, increment 91 (D-444, D-445, D-446,
-    D-447, `design/increments/091_three_lattices/`). The frame advances
-    through boundaries on the frame tops, the due instants and the step
-    points, a due instant inside a fixed step splits it, `frames_per_tick`
-    and the two transitional refusals are gone, and `bind_schedule` is
-    strict under D-229.
-  - **Landed: the step bound**, increment 92 (D-449, D-450,
-    `design/increments/092_step_bound/`). `h_max` is an optional bound on the
-    `Deployment`, recorded as the lesser of itself and `Δt_frame`, a
-    fixed-step method takes each span between two mandatory instants in
-    equal steps, and `RK4()` and `Heun()` carry no step. A run the clock
-    cannot resolve is refused at every door, and `show(deployment)` states
-    the steps per frame. D-442, D-443, D-444 and D-445 are superseded in
-    part.
-  - **Landed: the seam protocol**, increment 93 (D-452,
-    `design/increments/093_seam_protocol/`). The backend proposes a length
-    or nothing and accepts or rejects each attempt, which writes a trial
-    buffer the `Model` commits; the `Model` clamps a proposal to `h_max` and
-    to the span's end, counts the attempts, checks an accepted trial for a
-    nonfinite value, and raises the discontinuity notice. `RK4()` and
-    `Heun()` propose nothing and always accept, the cursor names the
-    attempt, and a `ModelState` carries the stepper's state, which `init!`
-    resets through `reset_stepper!`. A frame-top hook returns whether it
-    wrote a value,
-    and the caller of a frame says whether it continues the last one; D-447
-    is superseded in part. The `Model` refuses a proposed length that does
-    not advance the clock, as an internal invariant. Two things wait for the
-    roadmap's increment 4, and no backend in `src/` reaches either. Nothing
-    bounds a step's attempts or the count of steps in a span, so a backend
-    that keeps rejecting, or proposes steps that advance by almost nothing,
-    holds its frame past an interrupt, since the frame runs masked (§12.4);
-    the floor and the attempt budget are owed. And a proposed step can end a
-    sliver short of the span's end, leaving a last step of about an ulp,
-    which equal division under a proposal removes, as ruled on 2026-11-12.
-  - **Landed: exact time**, increment 95 (D-454, D-455, D-456, D-457,
-    `design/increments/095_exact_time/`). The `Deployment` holds
-    `Δt_frame`, `Δt_base` and `h_max` as `Rational{Int}` and compares and
-    hashes those. The origin is exact, and `t0` takes the exact forms a
-    period takes and a float at its exact value. Every instant the `Model`
-    knows exactly takes the float nearest it as its clock. A step
-    integrates by the float distance between its two clocks, or by its
-    length where the length is chosen first, so a localized event that
-    finds no crossing moves no trajectory. The user ruled the roadmap's
-    open decisions for increment 4 on 2026-11-12 and cut it in two, then
-    reversed the step-length rule by piece and added the clock and the
-    origin on the first prototype's evidence; the rulings are the
-    roadmap's section "Ruled on 2026-11-12".
+  separate quantities. The step is the `Model`'s to decide: it never
+  crosses a frame top or a due instant and is never longer than the
+  deployment's optional `h_max`. A fixed-step method takes the span between
+  two such instants in equal steps, and an adaptive one under its error
+  controller's proposal (§2.1, §2.2, §10.2, §10.4, §10.5). The plan, the
+  settled rulings and the open decisions are
+  `design/increments/roadmap_variable_step.md`, in seven increments. The
+  update changes the deployment keywords, so it precedes the exported-name
+  audit and delays the release.
+  - **Landed:** the deployment surface, increment 90 (D-442, D-443); the
+    three lattices, 91 (D-444 to D-447); the step bound, 92 (D-449,
+    D-450); the seam protocol, 93 (D-452); and exact time, 95 (D-454 to
+    D-457). Each one's record is its folder under `design/increments/`.
   - **Next: the first adaptive backend**, the roadmap's increment 4, with
-    `h_min` and the attempt budget on the `Deployment`.
-  - **Ruled from the three lattices** by the user on 2026-11-11, on the open
-    points of `design/increments/091_three_lattices/notes_increment_91.md`:
-    - The reconstructed Rejected lists of D-445 to D-447 stand as written.
-    - An unbounded run keeps ending on `frame!`'s refusal at the end of the
-      lattices' range (§10.5). It is not capped as if a `t_end` were
-      reached, since a cap would end the run without saying why.
-    - A `settled!` hook's contract stays stated and unenforced (D-447). Only
-      a hand-written hooks type on an unclaimed model can break it.
-    - The sites that raised a raw `OverflowError` on periods of extreme
-      magnitude were left. They were three. The step bound removed
-      `bind_schedule`'s `Δt_frame / h`, exact time the frame loop's exact
-      piece length, and a loose fix on 2026-11-13 the last,
-      `bind_schedule`'s `anchor.T / Δt_base`, now divided in `Int128` and
-      refused as `:anchor_period`, its offset's as `:anchor_offset`. The
-      count was one short: increment 95's review found a fourth,
-      `_grid_report`'s `gcd`, which waits on the exact-arithmetic audit.
-    - The rename of D-448 does not sweep the log, and `rules/log_rules.md`
-      rule 2 now says why. `:boundary` in the `Events` policies became
-      `:non_localized`.
-    - A loop error outside the frame reads `stopped` (§13.5). The log
-      message and §13.4 now say so.
-    - The steps per frame and the refusal of a lattice finer than the clock
-      landed with the step bound (D-449, D-450).
-    - Exact periods on the `Deployment` and one step-length rule landed
-      with increment 95 (D-454, D-455), ruled on 2026-11-12, the rule as
-      the float distance everywhere.
-
-    The two rejections these rulings owed the log landed with the step
-    bound: the cap at the range's end in D-450's Rejected list, and an
-    enforced hook contract in an annotation of D-447.
+    `h_min` and the attempt budget on the `Deployment`. Its rulings are the
+    roadmap's section "Ruled on 2026-11-12". They cover the two things the
+    seam protocol left open, which this increment builds: nothing bounds a
+    step's attempts or the steps of a span, and a proposed step can end a
+    sliver short of the span's end.
+  - **Ruled from the three lattices** by the user on 2026-11-11, on the
+    open points of
+    `design/increments/091_three_lattices/notes_increment_91.md`. Every
+    ruling has landed: the unbounded run that ends on `frame!`'s refusal,
+    in D-450 and its Rejected list; the `settled!` hook's unenforced
+    contract, in an annotation of D-447; D-448's rename, in
+    `rules/log_rules.md` rule 2; a loop error outside the frame, in §13.4
+    and §13.5; and the rest with increments 92, 95 and 96. One ruling has
+    no other record: the reconstructed Rejected lists of D-445 to D-447
+    stand as written.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
-  is the later stages after the release. The descriptor's class value `"leaf"` became
-  `"primitive"` on 2026-11-05, with the schema's `PrimitiveNode` and
-  `PrimitiveFace` and no format bump; the inspector's half, the
-  regenerated types and the renames through the frontend and the records,
-  lands with its next pin on the core. The same pin moves its six
-  construction sites from `h =` to `Δt_frame =` (D-443), and takes the
-  library's rename to `Redstone.Library` (D-453): a node's `type` carries
-  the module's name, so the fixtures regenerate and the icon table's keys
-  change.
+  is the later stages after the release. Its next pin on the core takes
+  three changes made here, detailed on its bullet "The class value and the
+  module's name at the next pin": the descriptor's class value `"leaf"`
+  became `"primitive"` with no format bump, its six construction sites
+  move from `h =` to `Δt_frame =` (D-443), and the library is
+  `Redstone.Library` (D-453), so the fixtures regenerate.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
