@@ -285,7 +285,10 @@ frame period. The start of a frame is its frame top.
   schedule falls ([§10.5][s10-5]).
 
 Each instant is computed from its own index on its own lattice, never
-accumulated ([§10.4][s10-4], [D-445][d-445]). Whether two instants coincide is
+accumulated ([§10.4][s10-4], [D-445][d-445]). The origin `t₀` is an exact
+time, and the clock at each instant is the floating-point number nearest it
+([D-456][d-456], [D-457][d-457]). A time typed on a lattice therefore reads
+as its boundary's clock. Whether two instants coincide is
 decided on the deployment's exact periods, never by comparing computed
 times. The lattices are fixed for the whole run, and an event located inside
 a step never moves a later instant ([D-290][d-290]).
@@ -371,7 +374,11 @@ instants at which some discrete component is scheduled to run. A span of
 length `g` thus takes `n = ⌈g / h_max⌉` steps of `g / n`, and one step when
 the deployment sets no bound. The bound need divide neither period. The steps
 of a span are therefore equal unless a localized event splits one, and no
-step is longer than `h_max`. Each step starts from the state the previous
+step is longer than `h_max`, each to the clock's round-off. A step
+integrates by the distance between its two clocks, or by its length where
+the length is chosen first, so a localized event that finds no crossing in a
+step leaves that step as it would be without the event ([D-455][d-455]).
+Each step starts from the state the previous
 [boundary](#g-boundary) (a published consistency point) left. By then that
 state has passed through any event handler's reset and through
 [projection](#g-projection) (the per-component hook that returns state to its
@@ -613,7 +620,9 @@ at each frame top, and the deployment parameters ([§11.5][s11-5],
 share), the step bound `h_max`, the integration method, the localization
 tolerance and budget, and the firing budget ([§9.2][s9-2], [D-133][d-133],
 [D-181][d-181], [D-254][d-254], [D-442][d-442], [D-443][d-443],
-[D-449][d-449]).
+[D-449][d-449]). The three time quantities count by their exact values, so
+two that round to the same floating-point number are different parameters
+([D-454][d-454]).
 
 Nothing else changes a trajectory under that code. Each of the following
 leaves it bit-identical ([§10.7][s10-7], [§11.2][s11-2], [§12.6][s12-6],
@@ -4625,6 +4634,15 @@ bound resolved, the lesser of `h_max` and `Δt_frame`** ([D-449][d-449]). A
 bound at or above the frame splits no span, so an absent bound, a bound at
 the frame and one above it are one trajectory and compare as one value.
 
+**A `Deployment` holds its three time quantities exact and compares them
+exact** ([D-454][d-454]). The lattices, the step counts and every coincidence
+are decided on the exact values ([§10.5][s10-5]), so the exact value is the
+one that fixes the trajectory. Two values that round to one `Float64` are
+therefore two deployments. At a 1 s frame, `h_max = 1//3` takes three steps
+a frame. `h_max = Rational(1/3)`, a binary fraction just below a third, takes
+four. Where the loop needs a time in seconds, it reads the `Float64` nearest
+the exact value.
+
 **If any unanchored component exists, deployment must declare `Δt_base`**
 ([D-283][d-283]). The refusal is constructive, carrying the suggestion message
 of the grid diagnostics below. Under the anchored-only restriction, `Δt_base`
@@ -4731,6 +4749,9 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
   It costs one check per component, since a component's ticks all
   fall on frame tops exactly when the frame divides its period and its
   offset.
+- **`show(::Deployment)` prints the three time quantities exact**, as the
+  deployment holds and compares them ([D-454][d-454]). Two deployments that
+  compare unequal never print alike.
 
 A REPL user gets each table by evaluating the value. A client outside the
 process gets the same facts as data: `descriptor` renders a `Build` or a
@@ -6228,7 +6249,10 @@ the drain causes (above; [D-179][d-179], [D-365][d-365]). Boundary firing is the
 correct semantics, not a degradation. This is the left-end mirror of the
 `t* = tₙ₊₁` degeneracy below.
 
-The interpolant is the seam's dense output ([§10.2][s10-2]). It is built lazily
+The interpolant is the seam's dense output ([§10.2][s10-2]). It spans the
+segment's length. A step's first segment takes the step's own length, and a
+remainder from a `t*` the distance from the clock to the step's end
+([§10.5][s10-5], [D-455][d-455]). It is built lazily
 ([D-018][d-018]). It is the cubic Hermite continuous extension
 $\hat{x}(\theta)$, $\theta = (t - t_n)/(t_{n+1} - t_n) \in [0, 1]$, built from
 $(x_n, \dot{x}_n, x_{n+1}, \dot{x}_{n+1})$. $\dot{x}_n$ is the step's first
@@ -6310,9 +6334,10 @@ zero-length remainder.
 accumulated** ([D-082][d-082], [D-445][d-445]). A frame top is
 `tₖ = t₀ + k·Δt_frame`, from the frame index. A due instant off the frame tops
 is `t₀ + n·Δt_base`, from its base-tick index `n`. A step end inside a span
-lies on no lattice. It is the span's start clock plus `i` times the span's
+lies on no lattice. It is the span's exact start plus `i` times the span's
 exact step, from its count `i` in the span, never the sum of the steps before
-it ([§10.5][s10-5], [D-449][d-449]). Tick gating is counter-modulo in the same
+it ([§10.5][s10-5], [D-449][d-449]). Each instant is exact, and its clock is
+the `Float64` nearest it ([D-456][d-456]). Tick gating is counter-modulo in the same
 spirit ([§10.5][s10-5]). The clock is written once per boundary. An instant
 on both lattices takes the first formula above that applies to it, so a
 frame top is always `t₀ + k·Δt_frame`. The remainder step targets the
@@ -6561,17 +6586,30 @@ on the unit and needs none, since no mandatory instant lies inside a span.
 Two due instants a unit apart make a span one unit long, a step of its own
 that is never merged into a neighbour.
 
-A step's length depends on whether the model has localized events. A step
-in a model without them integrates by its exact length `g / n`, so a bound
-that divides the span steps by `h_max` itself. In a model with localized
-events, a step integrates by the distance from the clock to the step's end,
-since the step's interpolant spans those two instants ([§10.4][s10-4]).
+**A step integrates by the float distance between its two clocks**
+([D-455][d-455]). Where the end's clock is known beforehand, as at a
+mandatory instant and at a step end inside a span, the step's length is the
+end's clock minus the start's. Where the length is chosen first, as under a
+proposing backend, the step integrates by that length, and the end's clock is
+the start's plus it ([§10.2][s10-2], [D-452][d-452]). A model with localized
+events and one without integrate a step by one length, so a localized event
+that finds no crossing moves no trajectory. The steps of a span are equal,
+and a bound that divides the span steps by `h_max`, to the clock's
+round-off. A step can exceed `h_max` by an ulp of the clock.
 
 The clock at a step's end is written once, from an index
-([D-445][d-445]). A frame top is `t₀ + k·Δt_frame`, and a due instant off the
-frame tops is `t₀ + n·Δt_base`. **A step end inside a span is the span's
-start clock plus `i·(g / n)`**, from its count `i` in the span, never
-accumulated ([§10.4][s10-4], [D-449][d-449]).
+([D-445][d-445]). A frame top is `t₀ + k·Δt_frame`, a due instant off the
+frame tops is `t₀ + n·Δt_base`, and a step end inside a span is the span's
+exact start plus `i·(g / n)`, from its count `i` in the span, never
+accumulated ([§10.4][s10-4], [D-449][d-449]). **Every instant the `Model`
+knows exactly takes the `Float64` nearest it as its clock**
+([D-456][d-456]). The origin is exact, so the rule holds from any origin
+([D-457][d-457]). The loop puts the origin and the lattices' unit over one
+denominator where the origin is set, so a clock is one integer
+multiply-add and one division. It is exactly the nearest float while both
+integers stay below `2⁵³`, and within about an ulp of it beyond. At
+`Δt_frame = 3//10`, frame 3 reads `0.9`, so `Step(t_step = 0.9)` fires at
+that boundary, in one snapshot.
 
 The split follows the schedule, not the state. A `Model` at a `Dual` takes
 the steps the `Float64` model takes, though its discrete tier is frozen
@@ -9854,8 +9892,11 @@ The origin `t₀` is not a run field ([D-260][d-260]). The clock of the [executo
 compiled form of the stage execution order) holds it beside `t`. `init!` sets it
 on the clock before [boundary zero](#g-boundary-zero), the initialization boundary run as the
 ordinary [macro-sequence](#g-boundary-sequence) with an empty integrate ([§14.5][s14-5]). A checkpoint carries it
-with the clock ([§11.5][s11-5], [D-273][d-273]). It is a `Float64`, as `Δt_frame` and `t_end` are
-([D-260][d-260]).
+with the clock ([§11.5][s11-5], [D-273][d-273]). **The origin is exact**
+([D-457][d-457]). `t0` takes the exact forms a period takes, and a float at
+its exact value, so `-3//10` is the decimal and `-0.3` the float nearest it.
+An origin whose run the clock's integers cannot carry is refused at the door.
+A checkpoint and a trace header hold and compare it exact.
 
 **A `Simulation` is constructed with a placeholder run** ([D-255][d-255]). The
 placeholder is an empty log, no trace, no feed and no termination, and
@@ -10387,8 +10428,9 @@ no face name is resolved per frame under replay either.
 The checkpoint carries the recorded run's `Deployment`, the target
 simulation's `Model` carries its own, and the check is their comparison, on
 the *structural* side of that line. The value covers the
-trajectory-determining parameters, `Δt_frame`, `Δt_base`, the algorithm with
-its step, `localization_tol`, `localization_budget` ([§10.4][s10-4]) and
+trajectory-determining parameters, `Δt_frame`, `Δt_base` and the step bound
+`h_max`, each compared exact ([§9.2][s9-2], [D-454][d-454]), the algorithm,
+`localization_tol`, `localization_budget` ([§10.4][s10-4]) and
 `firing_budget` ([§10.6][s10-6], [D-133][d-133]). It also covers the
 [schedule](#g-schedule) (the typed per-component `(D, Φ, Δt)` tick table) with
 every column, the anchor and rate-chain columns included. A rate re-declared
@@ -12774,7 +12816,9 @@ boundary, the ordinary macro-sequence with an empty integrate) means for trim.
   opening the run before the model's method writes. Each form of `trim!`
   commits through the matching `init!`, the model's or the simulation's
   ([§14.8][s14-8]). Conditions are time-free. Nothing after boundary zero
-  sets the origin. A `t0` that is not finite, or so large that its rounding slack
+  sets the origin. A `t0` that is not finite, that no exact `Rational{Int}`
+  holds, whose run the clock's integers cannot carry, or so large that its
+  rounding slack
   in frames passes the last frame a run from it may take, the clock's
   resolution included ([§10.5][s10-5], [D-450][d-450]), is refused as
   `ArgumentInvalid` before any write, and
@@ -14489,11 +14533,11 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 
 #### Stopped-sim services
 
-- `init!(sim, condition = set(); t0::Real = 0.0, trace = true, log = true,
+- `init!(sim, condition = set(); t0 = 0, trace = true, log = true,
   log_every = 1, log_max = 65536)`.
   [Root-input totality](#g-root-input-totality) is checked pre-write
-  ([§14.6][s14-6]). Then boundary zero runs at `t0`, held as a `Float64`
-  origin, and the [checkpoint](#g-checkpoint) that is the run's
+  ([§14.6][s14-6]). Then boundary zero runs at `t0`, held as an exact
+  origin ([D-457][d-457]), and the [checkpoint](#g-checkpoint) that is the run's
   [trace header](#g-trace-header) follows ([§11.5][s11-5], [§14.5][s14-5],
   [D-260][d-260]).
 
@@ -14507,7 +14551,7 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   Recording. The four keywords configure the run this call builds, with its
   log and trace ([§12.6][s12-6], [D-261][d-261]). `overlay!`, `restore!` and
   `replay!` take the same four.
-- `trim!(sim, problem; baseline, t0::Real = 0.0,
+- `trim!(sim, problem; baseline, t0 = 0,
   backend = LevenbergMarquardt()) → TrimReport`. It solves against the
   problem's own `tolerances`, by default as nonlinear least squares on the
   packed residuals with exact Dual Jacobians ([§14.7][s14-7]).
@@ -15109,8 +15153,8 @@ activation):
   root-input value that does not convert to its declared type, the scalar
   type (the
   recorded one vs. the target model's), a deployment parameter
-  (`Δt_frame`/`Δt_base`/algorithm/`localization_tol`/`localization_budget`/`firing_budget`,
-  recorded vs. bound value), a [schedule](#g-schedule) row whose column
+  (`Δt_frame`/`Δt_base`/`h_max`/algorithm/`localization_tol`/`localization_budget`/`firing_budget`,
+  recorded vs. bound value, a time quantity exact), a [schedule](#g-schedule) row whose column
   differs (the component path, the column, recorded vs. bound value), a rate
   scope whose column differs (its path, the column, recorded vs. bound
   value), a schedule whose row list or scope list differs (the name, the two
@@ -16907,6 +16951,10 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-451]: log.md#d-451--discard-a-replaying-advances-late-staging-at-its-halt
 [d-452]: log.md#d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
 [d-453]: log.md#d-453--retire-the-term-block-for-the-librarys-components
+[d-454]: log.md#d-454--hold-the-deployments-time-quantities-exact-and-compare-them-so
+[d-455]: log.md#d-455--integrate-every-step-by-the-float-distance-between-its-two-clocks
+[d-456]: log.md#d-456--write-each-clock-the-model-knows-exactly-as-the-float-nearest-its-instant
+[d-457]: log.md#d-457--hold-the-origin-exact
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

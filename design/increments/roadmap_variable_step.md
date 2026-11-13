@@ -181,10 +181,10 @@ it, 3b or 4 as marked.
   prototype built it, and the user reversed it the same day on what the
   prototype showed.
   - *Why.* It is one sentence, and it is the general case, since an
-    adaptive step end has no other length. It removes two readings the
-    prototype had to take: the arrival sweep's clock an ulp off the step's
-    end, and the proposing step from a mandatory instant, which the rule by
-    piece left as a deviation.
+    adaptive step end has no other length. It makes the arrival sweep's
+    clock the step end's, but for a rare rounding case, and it makes the
+    proposing step from a mandatory instant the rule, where the rule by
+    piece left it as a deviation.
   - *What was weighed.* A state that should land on a typed threshold at a
     designed instant does so by luck under either rule. A count in plain
     float addition, for a timer of rate 1 set to zero mid-run: the exact

@@ -452,6 +452,10 @@ were derived.
 | [D-451][d-451] | Discard a replaying advance's late staging at its halt | ratified |
 | [D-452][d-452] | Split each step between a proposing backend and a shaping Model | ratified |
 | [D-453][d-453] | Retire the term block for the library's components | ratified |
+| [D-454][d-454] | Hold the deployment's time quantities exact and compare them so | ratified |
+| [D-455][d-455] | Integrate every step by the float distance between its two clocks | ratified |
+| [D-456][d-456] | Write each clock the model knows exactly as the float nearest its instant | ratified |
+| [D-457][d-457] | Hold the origin exact | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -10891,6 +10895,10 @@ simulation, which a `T`-typed keyword refused.
 Annotation (2026-10-15): [D-317][d-317] supersedes the first bullet's four-field
 `Run`. The frame index and the boundary ordinal are the run's counters.
 
+Annotation (2026-11-12): amended by [D-457][d-457]. The origin is held exact, a
+`Rational{Int}`, and `t0` takes the exact forms a period takes and a float at
+its exact value. The rest stands.
+
 **Rejected.**
 - *A run per advance, owning its policy:* the log and the trace span
   advances, so consecutive runs would share them and own neither; and an
@@ -18578,6 +18586,10 @@ its count times the span's exact step ([D-449][d-449]). Two boundaries closer th
 clock resolves no longer take clocks equal or out of order, since such a run
 is refused ([D-450][d-450]). The other bullets stand.
 
+Annotation (2026-11-12): amended by [D-456][d-456]. Each instant is still computed from
+its own index, never accumulated, and its clock is the `Float64` nearest the
+exact instant rather than `t₀ + k·Δt_frame` in floats.
+
 **Rejected.**
 - *Every base tick a boundary:* a finer base grid, the price [§10.5][s10-5] names for
   an offset, would add boundaries and snapshots where nothing runs, and the
@@ -18754,6 +18766,14 @@ step points to the bit, so increment 91's subcycled runs keep their clocks.
 Deployments from before the update map to `Δt_frame = h`,
 `Δt_base = N_base·h` and no `h_max`, and every trajectory that takes one step
 per frame, split only at due instants, is bit-identical to increment 91's.
+
+Annotation (2026-11-12): refined by [D-454][d-454], [D-455][d-455] and [D-456][d-456]. The deployment
+holds the three time quantities exact, and `==`, `hash` and replay's check
+compare the exact values. A step end inside a span is the float nearest the
+span's exact start plus `i` exact steps, and every step integrates by the
+distance between its clocks, so the equal steps, and a bound that steps by
+`h_max` itself, hold to the clock's round-off, and a step can exceed `h_max`
+by an ulp of the clock.
 
 **Rejected.**
 - *Superseded position — the step inside the algorithm instance, `RK4(h)`,
@@ -19075,6 +19095,192 @@ it carries.
 - *`AbstractController` for the controllers' parent:* it names every
   controller, while the type holds only those with the two anti-windup
   axes, and a user's controller without them could not subtype it.
+
+### D-454 — Hold the deployment's time quantities exact and compare them so
+
+**Status.** ratified
+
+**Position.** The `Deployment` stores `Δt_frame`, `Δt_base` and the
+resolved `h_max` as exact rationals, and `==`, `hash` and replay's check
+compare those values. The bundled rulings:
+
+- Two quantities that round to one `Float64` are two deployments.
+- The loop and every reader that needs a time in seconds read the `Float64`
+  nearest the exact value, the value the deployment stored before, so no
+  trajectory moves.
+- `show(deployment)` and the `CheckpointMismatch` message print the exact
+  values.
+- No recorded format changes. The descriptor carries no time quantity, and
+  the checkpoint and the trace header hold the `Deployment` as a value in
+  memory.
+
+**Spec.** [§2.4][s2-4], [§9.2][s9-2], [§12.7][s12-7], [Appendix C][sC]
+
+**Rationale.** The lattices, the step counts and every coincidence are
+decided on the exact values ([D-445][d-445], [D-449][d-449]), so the exact value is the one
+that fixes the trajectory, and the comparison reads what decides. Comparing
+the floats left a hole the step bound made easy to reach. At a 1 s frame,
+`h_max = 1//3` and `h_max = Rational(1/3)` compared and hashed equal and
+took 3 and 4 steps a frame, and `replay!` accepted one's recording into the
+other while the state drifted by 0.014 in five frames. Under [D-456][d-456] each
+clock is the float nearest an instant of the exact periods, so two spellings
+of a period that round to one `Float64` write different clocks on the
+lattice they set. They are two trajectories, and the exact comparison
+refuses them rightly. At a 0.1 s frame, `1//10` and `Rational(0.1)` part at
+352 of the first 1000 frame tops. The floats the loop reads are converted at the
+site, by the conversion the binding applied before, so the stored value has
+one home. A printed deployment shows what it compares, so two deployments
+that compare unequal never print alike.
+
+**Rejected.**
+- *The `Float64` values compared, as before:* the hole above, a replay
+  accepted across two trajectories.
+- *The exact values stored beside the floats:* a derived form beside its
+  source, a second home that only the constructor keeps in step.
+- *The comparison read off the `Lattice`:* the lattice holds `Δt_base` only
+  when a discrete component exists, so two base ticks would compare equal
+  in a model without one, and the lattice is a function of the rest by
+  design, never part of the value.
+- *Equality within an ulp, or on the trajectory the values produce:* a
+  tolerance some pair defeats, or a comparison that runs the model.
+
+### D-455 — Integrate every step by the float distance between its two clocks
+
+**Status.** ratified
+
+**Position.** A step's length and its two clocks agree. The bundled rulings:
+
+- Where the end's clock is known beforehand, at a mandatory instant and at
+  a step end inside a span under a fixed-step method, the step integrates
+  by the end's clock minus the start's.
+- Where the length is chosen first, as under a proposing backend, the
+  step integrates by that length, and the end's clock is the start's plus
+  it.
+- The localization loop's first segment takes the step's offered length,
+  as the bare path does, and a remainder from a `t*` integrates by the
+  distance from the clock to the step's end.
+- `integrate!(model, h)` integrates by the `h` its caller gives.
+
+**Spec.** [§2.2][s2-2], [§10.4][s10-4], [§10.5][s10-5]
+
+**Rationale.** Before this entry a model without localized events
+integrated by the exact length of its piece and a model with them by the
+float distance to the step's end, so declaring a localized event that never
+fires moved a trajectory by ulps. One rule removes that, and the float
+distance is the general case: an adaptive step end has no other length. It
+also removes the deviation the rule by piece left, a proposing step from a
+mandatory instant to the next. The arrival sweep reads the step end's clock,
+except in the rare rounding case where a step starts below half its end's
+time and the start plus the float distance lands an ulp off the end. The
+boundary's clock is written from its instant, so nothing published depends
+on it. A state that should land on a
+typed threshold at a designed instant does so by luck under either rule.
+For a timer of rate 1 reset mid-run, counted in plain float addition, the
+exact length missed 0% to 42% of the time across step sizes and the float
+distance 32% to 48%, so the measure favours neither, and only a state that
+copies the clock favours the float distance. Under it, [D-449][d-449]'s equal steps,
+and its bound that steps by `h_max` itself, hold to the clock's round-off,
+and a step can exceed `h_max` by an ulp of the clock.
+
+**Rejected.**
+- *The float distance inside the localization loop and the exact length
+  elsewhere, as before:* a localized event that never fires moves the
+  trajectory.
+- *The rule by piece, the exact length between two instants the `Model`
+  knows exactly and the float distance from a `t*` or an adaptive step
+  end:* ruled first and reversed the same day on the prototype's evidence.
+  It keeps the steps of a span equal bit for bit, and for a model that does
+  not read time it keeps the states the same at a coarser frame and from
+  another origin. Only a test can tell those from round-off. It costs two
+  sentences where one does, and a deviation under a proposal.
+
+### D-456 — Write each clock the model knows exactly as the float nearest its instant
+
+**Status.** ratified
+
+**Position.** Every instant the `Model` knows exactly takes the `Float64`
+nearest it as its clock: a frame top `t₀ + k·Δt_frame`, a due instant
+`t₀ + n·Δt_base`, and a step end inside a span under a fixed-step method,
+the span's exact start plus `i` times its exact step. The bundled rulings:
+
+- A proposing backend's step end inside a span is the start's clock plus
+  the length ([D-455][d-455]), and a `t*` is what the root-finder returns.
+- The clock is one integer multiply-add and one division over the origin
+  and the lattices' unit put over one denominator, in `Int128`. It is
+  exactly the nearest float while both integers stay below `2^53`, and
+  within about an ulp of it beyond. The loop's integer arithmetic is
+  unchecked, since the door refuses an origin whose run the integers cannot
+  carry ([D-457][d-457]).
+
+**Spec.** [§2.1][s2-1], [§10.4][s10-4], [§10.5][s10-5]
+
+**Rationale.** A clock written as `t₀ + k·Float64(Δt_frame)` can sit an ulp
+from the float a user types: at `Δt_frame = 3//10`, frame 3 read
+`0.8999999999999999`, and `Step(t_step = 0.9)` fired at a `t*` 9.8 ps past
+that boundary when localized, two snapshots for one event, and a frame late
+when not. At a 0.1 s frame the old clock differed from the nearest float at
+352 of the first 1000 frame tops. The nearest float makes a typed time on a
+lattice equal to its boundary's clock, and snapshots carry the typed
+decimals. Under the float distance a state that copies the clock lands on
+them, and a bound finer than the frame steps through the same clocks as a
+frame at that bound. No correctly rounded big division is built: Julia
+1.13's `Float64(::Rational)` divides the two converted integers, and it
+differed from the nearest float in a third of random cases above `2^53`.
+
+**Rejected.**
+- *`t₀ + k·Float64(Δt_frame)`, as before:* an ulp off a typed time, so an
+  event typed on the lattice fires off its boundary.
+- *A correctly rounded division for every magnitude:* a big division per
+  boundary for integers no practical origin reaches.
+- *Rational arithmetic per boundary:* it overflows `Int` or allocates in
+  the loop; the denominator is put in common once, where the origin is set.
+
+### D-457 — Hold the origin exact
+
+**Status.** ratified
+
+**Position.** The origin `t₀` is held exact as a `Rational{Int}`, so [D-456][d-456]
+holds from any origin. The bundled rulings:
+
+- `t0` at every door that takes one, `init!`, `trim!` and `linearize`'s
+  `about` form, accepts the exact forms a period takes, a `Rational`, an
+  integer or a `Period`, and a float at its exact value. Any other value,
+  an irrational among them, is refused.
+- An origin that is not finite, that `Rational{Int}` cannot hold, or whose
+  run the clock's integers cannot carry is refused at the door as
+  `ArgumentInvalid` `:range` on `t0`, beside [D-450][d-450]'s refusal of an origin
+  whose run could take no frame. The door evaluates the clock's formula with
+  checked arithmetic at the run's two ends, the origin and one frame past
+  the last frame the run may take, at the lattice's largest step count per
+  span. Every value the loop forms lies between the two ends', so the loop's
+  arithmetic runs unchecked. A restore checks a state's origin the same way,
+  since a state built by hand carries an origin no door accepted.
+- The checkpoint's `ModelState` and the trace header hold the origin exact
+  and compare it so. Every reader of the origin as a float converts at its
+  site.
+
+**Spec.** [§2.1][s2-1], [§10.5][s10-5], [§12.6][s12-6], [§14.5][s14-5], [Appendix B][sB]
+
+**Rationale.** An integer or a binary fraction is then what the user meant,
+and `-0.3` or `time()` is its own value, with `-3//10` the spelling of the
+decimal. From `t0 = -3//10` at a 0.1 s frame, frame 3 reads `0.0`; from the
+float `-0.3` it read `5.6e-17` before this entry and reads `1.1e-17` after
+it, the float nearest the float origin's instant.
+
+**Rejected.**
+- *A float origin, as before ([D-260][d-260]):* the clock cannot be the float nearest
+  an instant whose origin is already rounded.
+- *Refusing a float `t0`, as the periods do:* a wall-clock origin is a float
+  by nature.
+- *Taking any real through `Rational{Int}`:* it takes `π` as a rational
+  approximation, which is no exact time.
+- *Checked arithmetic in the loop:* 27 ns a clock against 1.7 ns unchecked,
+  measured standalone, paid at every boundary for a fault the door can
+  refuse once.
+- *A cached limit folded into `_last_frame`:* it would change [D-450][d-450]'s
+  bound, which the door's check leaves alone.
+- *No check at all:* unchecked `Int128` arithmetic wraps in silence, so a
+  run would carry wrong clocks with no error.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -19504,6 +19710,10 @@ it carries.
 [d-451]: #d-451--discard-a-replaying-advances-late-staging-at-its-halt
 [d-452]: #d-452--split-each-step-between-a-proposing-backend-and-a-shaping-model
 [d-453]: #d-453--retire-the-term-block-for-the-librarys-components
+[d-454]: #d-454--hold-the-deployments-time-quantities-exact-and-compare-them-so
+[d-455]: #d-455--integrate-every-step-by-the-float-distance-between-its-two-clocks
+[d-456]: #d-456--write-each-clock-the-model-knows-exactly-as-the-float-nearest-its-instant
+[d-457]: #d-457--hold-the-origin-exact
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
