@@ -14,7 +14,7 @@ spec change obliges the code to conform. Nothing deviates silently.
 |---|---|
 | the normative design | `design/spec.md`, read by section through its heading outline, never whole |
 | settled decisions and the alternatives they rejected | `design/log.md`; the log lags the spec, the spec wins, and the latest entry outranks an older one |
-| what the code owes the spec, the work order, open questions, deviations | `design/pending.md`, first bullet next; the state of an open task lives on its bullet, nowhere else |
+| what the code owes the spec, the work order, open questions, deviations | `design/pending.md`, first bullet next; the state of an open task lives on its bullet, an increment's detail in its notes file |
 | the map of `src/` and `test/` | `design/code_map.md`, read whole before building: about 27k tokens, and a fix often reaches files a topic search would miss |
 | the rules each kind of file is written to | `design/rules/`: `spec_rules.md`, `log_rules.md`, `code_rules.md`, `docstring_rules.md`, `increment_rules.md`, `brief_rules.md` |
 | explanations, walkthroughs, the library inventory | `design/companions/`; the spec wins over them |
@@ -44,8 +44,10 @@ never a restatement.
 - A trap, a naming rule, how the suite runs: `design/rules/code_rules.md`.
 - A lesson on writing briefs or running the pipeline:
   `design/rules/brief_rules.md` or `design/rules/increment_rules.md`.
-- The state of work in progress: its `pending.md` bullet. A ruling made
-  while the user is away: a notes file in the increment's folder.
+- The state of work in progress: its `pending.md` bullet. For an
+  increment in flight the bullet names the stage reached and the notes
+  file, which holds the detail. A ruling the spec, the log and the brief
+  do not carry: that notes file.
 - What an investigation found: a dated report.
 - Anything about the user's machine or tools: the user's own
   instructions, never this repo.
