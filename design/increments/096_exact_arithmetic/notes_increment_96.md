@@ -53,6 +53,16 @@ everywhere as an alternative, and ruled after the session's analysis.
    are an unordered item in `RedstoneInspector.jl/design/pending.md`, its
    commit `b90f95e`.
 
+## Delegated overnight on 2026-11-14
+
+The user delegated the rest of the increment overnight, with the prototype
+on its gate run: the readings round, the docs commit, the brief, the build,
+the cold review, the fixes and the delta check. Every ruling the
+coordinator makes from here is recorded under "The coordinator's rulings"
+below, with its reason, and nothing is pushed
+(`rules/increment_rules.md`). The user's diff of the arc and the push
+remain.
+
 ## Weighed and not taken
 
 - **A float origin kept as a float base**, the clock `t0` plus the float
