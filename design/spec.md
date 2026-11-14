@@ -4800,7 +4800,11 @@ per-entry attribution. Attribution has two forms:
   an edit changed. **The trial division stops at the divisor `2^20`, and a
   cofactor left at or above `2^40` prints as unfactored** ([D-459][d-459]). A cofactor
   below `2^40` is prime, since a composite would have a factor below the
-  cap, so every denominator below `2^40` is factored whole.
+  cap, so every denominator below `2^40` is factored whole. An unfactored
+  cofactor may be composite, and two entries may then supply one of its
+  primes each. **It is traced to every entry whose denominator shares a
+  factor with it** ([D-459][d-459]). Some entry always does, since the cofactor
+  divides the least common multiple of the pool's denominators.
 
 When an offset is a driver, the message adds the nearest non-refining
 alternatives, the admissible offsets on the grid the rest of the pool
