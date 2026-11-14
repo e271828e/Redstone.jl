@@ -29,14 +29,10 @@ item changes what the spec says, the spec edit is part of the item.
     the fallout of the audit
     `design/reports/20261113_exact_arithmetic/report.md`. Each one's
     record is its folder under `design/increments/`.
-  - **Waiting for the user from increment 96.** The user delegated its
-    review overnight on 2026-11-14, and nothing is pushed. The rulings R1
-    to R20 of
-    `design/increments/096_exact_arithmetic/notes_increment_96.md` are the
-    coordinators' and none is ratified. R10 comes first: the review found
-    a pool that deploys and got no grid report, so an offset's neighbour
-    whose arithmetic leaves `Int` is no longer offered. Then the diff of
-    the arc from `daaeccf` and the push.
+  - **Waiting for the user from increment 96:** the diff of the arc from
+    `daaeccf` and the push. The user ratified the overnight rulings R1 to
+    R20 of `design/increments/096_exact_arithmetic/notes_increment_96.md`
+    on 2026-11-14.
   - **Next: the first adaptive backend**, the roadmap's increment 4, with
     `h_min` and the attempt budget on the `Deployment`. Its rulings are the
     roadmap's section "Ruled on 2026-11-12". They cover the two things the

@@ -347,3 +347,21 @@ The reviewer's delta files sit beside its first ones: `mutate_delta.py`,
 `mutants_delta.log`, `mutants_delta/`, `probes/r4_fix_probe.jl` and
 `probes/item3_case.jl`. Its worktree `wt_review` and the prototype's
 `wt_inc96` can go after the push.
+
+## Ratified on 2026-11-14
+
+The user ratified R1 to R20 after the session explained R10 against R4 and
+ruling 3.
+
+The explanation corrected one bullet above. "Ruling 3 stands, and the run
+did not stop" puts the overreach in R4 alone, but it began earlier. The
+audit's table lists the neighbours as site 9, "not probed". Its section
+2.3 argues only the gcd and the factor, under a heading that says every
+overflow. Ruling 3's recorded reason repeated the heading, and R4 built it
+into one catch around the whole report. The counterexample made that
+reason false at site 9 and left ruling 3's mechanism intact. R10 makes the
+reason true again, since after it only the gcd and a factor empty the
+report. The user ratified R10 on that account.
+
+R10's three rejected alternatives join D-459's Rejected list. What remains
+is the user's diff of the arc and the push.
