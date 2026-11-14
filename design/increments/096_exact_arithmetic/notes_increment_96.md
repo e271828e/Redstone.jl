@@ -156,9 +156,11 @@ ruled each. All nine stand as the prototype built them.
   rule ruling 3 gives `Period`.
 - **R8. The slow path is a chunked long division**, 11 ns a clock against
   34 ns for the session's bit-by-bit loop. A frame of the measured model
-  takes 0.21 µs and writes four or five clocks, so the difference is a
-  tenth of a frame on a wall-clock run. Both forms matched the reference
-  on 4.6 million quotients.
+  takes 0.21 µs and writes four or five clocks. Against the fast path's
+  2.6 ns, the chunked form adds about a fifth to that frame on a
+  wall-clock run, and the loop would add more than half. Both forms
+  matched the reference on 4.6 million quotients. The docs agent caught
+  the coordinator's first figure here, "a tenth of a frame", as wrong.
 - **R9. The scratch clocks of `trim!` and `linearize` go through
   `_set_origin!`**, which leaves `_set_clock!` to the checkpoint form.
 

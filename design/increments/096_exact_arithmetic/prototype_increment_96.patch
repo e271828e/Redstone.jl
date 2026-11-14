@@ -1,0 +1,875 @@
+diff --git a/src/assembly.jl b/src/assembly.jl
+index b7af7fb..40d3c8d 100644
+--- a/src/assembly.jl
++++ b/src/assembly.jl
+@@ -1187,10 +1187,12 @@ The child's scope timing, and the link an explicit key declared — the declarin
+ assembly's path, the key as `_rate_entry` returned it, and the wrapper value —
+ or `nothing` for an unlisted child. The unlisted child continues at the
+ enclosing timing: the `Relative(1)` default is the affine law at
+-`(K, φ) = (1, 0)`, implemented by nothing.
++`(K, φ) = (1, 0)`, implemented by nothing. The law runs in checked `Int`
++arithmetic, and a composed divisor or phase past `Int` is recorded as `:range`
++on the entry; the child then continues at the enclosing timing too.
+ """
+ function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::String,
+-                      field::Symbol, scope::Timing)
++                      field::Symbol, scope::Timing, diags::Vector{Diagnostic})
+     hit = _rate_entry(rate_decl, segment, field)
+     hit === nothing && return scope, nothing
+     (key, rate) = hit
+@@ -1201,7 +1203,16 @@ function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::S
+     (rate isa Relative || rate isa Absolute) || return scope, nothing
+     link = RateLink((scope = path, key = key, entry = rate))
+     if rate isa Relative
+-        Timing((scope.anchor, rate.K * scope.m, scope.c + rate.φ * scope.m)), link
++        # A rate its own check refused composes nothing. A sound one keeps
++        # `c < m`, so a phase past `Int` needs a multiplier past it first.
++        1 ≤ rate.K && 0 ≤ rate.φ < rate.K || return scope, link
++        timing = _exact_or_nothing(
++            () -> Timing((scope.anchor, Base.Checked.checked_mul(rate.K, scope.m),
++                          Base.Checked.checked_add(scope.c,
++                                                   Base.Checked.checked_mul(rate.φ, scope.m)))))
++        timing === nothing || return timing, link
++        push!(diags, RatesViolation(path = path, reason = :range, key = key, value = rate))
++        scope, link
+     else
+         # One anchor per `Absolute` entry (§9.1): a bare container key applies one
+         # declaration to every element (§8.7), so the elements share the anchor
+@@ -1381,7 +1392,8 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
+         _check_sample_times(path, rate_decl, kids, fields, diags)
+         for ((segment, kid), field) in zip(kids, fields)
+             child_path = _join(path, segment)
+-            kid_scope, kid_link = _child_scope(draft, path, rate_decl, segment, field, scope)
++            kid_scope, kid_link = _child_scope(draft, path, rate_decl, segment, field, scope,
++                                               diags)
+             # a primitive's tier, `nothing` for an assembly
+             tier = _walk!(draft, child_path, kid, kid_scope, below, kid_link, diags)
+             # A key on a continuous child is the Δt-on-continuous error at
+diff --git a/src/declare.jl b/src/declare.jl
+index 435e39f..784545c 100644
+--- a/src/declare.jl
++++ b/src/declare.jl
+@@ -370,7 +370,28 @@ stop_reason(::Any) = ""  # COV_EXCL_LINE
+ # constructor-side refusal is floats, because it is a normalization failure
+ # rather than a range check: grid derivation is GCD arithmetic, ill-defined over
+ # floats, so every period and offset is an exact `Rational{Int}` and a float
+-# argument throws the teaching error naming the exact spelling.
++# argument throws the teaching error naming the exact spelling. A value that
++# `Rational{Int}` cannot hold finitely fails the same normalization, and is
++# refused as `:range`: an integer or a part past `Int`, or `Hz(0)`'s period.
++
++# `f()`, or `nothing` where its exact arithmetic leaves `Int`: the one catch the
++# time surface's doors share, each refusing the `nothing` under its own reason.
++function _exact_or_nothing(f)
++    try
++        f()
++    catch err
++        err isa Union{InexactError,OverflowError,DivideError} || rethrow()
++        nothing
++    end
++end
++
++# A declaration door's exact value, `to_exact(value)` held finitely, or the
++# door's refusal.
++function _declared_quantity(to_exact, call::Symbol, value)
++    quantity = _exact_or_nothing(() -> to_exact(value))
++    quantity !== nothing && isfinite(quantity) && return quantity
++    throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, value = value)))
++end
+ 
+ # Design: §10.5.
+ # GCD arithmetic derives the base grid, and it is ill-defined over floats.
+@@ -385,11 +406,12 @@ value, so the spelling is a choice. Each normalizes to the exact rational period
+ at construction. See [`Hz`](@ref) for the frequency spelling.
+ 
+ A float is refused as `ArgumentInvalid`, because the grid arithmetic is exact.
+-Write `Period(1//50)`, not `Period(0.02)`.
++Write `Period(1//50)`, not `Period(0.02)`. So is a value that `Rational{Int}`
++cannot hold, or that is not finite.
+ """
+ struct Period
+     T::Rational{Int}
+-    Period(T::Union{Integer,Rational{<:Integer}}) = new(Rational{Int}(T))
++    Period(T::Union{Integer,Rational{<:Integer}}) = new(_declared_quantity(Rational{Int}, :Period, T))
+     Period(T::AbstractFloat) =
+         throw(DiagnosticError(ArgumentInvalid(call = :Period, reason = :inexact, value = T)))
+ end
+@@ -405,9 +427,11 @@ Return the [`Period`](@ref) of a frequency, `1 // frequency` seconds.
+ [`Deployment`](@ref).
+ 
+ A float is refused as `ArgumentInvalid`, because the grid arithmetic is exact.
+-Write `Hz(1//2)` for 0.5 Hz, not `Hz(0.5)`.
++Write `Hz(1//2)` for 0.5 Hz, not `Hz(0.5)`. So is a frequency whose period
++`Rational{Int}` cannot hold, or that is not finite, as `Hz(0)`'s.
+ """
+-Hz(frequency::Union{Integer,Rational{<:Integer}}) = Period(1 // frequency)
++Hz(frequency::Union{Integer,Rational{<:Integer}}) =
++    Period(_declared_quantity(f -> Rational{Int}(1 // f), :Hz, frequency))
+ Hz(frequency::AbstractFloat) =
+     throw(DiagnosticError(ArgumentInvalid(call = :Hz, reason = :inexact, value = frequency)))
+ 
+@@ -458,14 +482,16 @@ only once a [`Deployment`](@ref) fixes `Δt_base`. Anchor periods and nonzero
+ offsets constrain the base grid together. An offset of `T/1000` can cost a grid
+ 1000 times finer.
+ 
+-A float offset is refused as `ArgumentInvalid`, and so is a bare number in place
++A float offset is refused as `ArgumentInvalid`, and so is an offset that
++`Rational{Int}` cannot hold or that is not finite, and a bare number in place
+ of a `Period`. Write `Absolute(Hz(50), 1//500)`. The build refuses a period that
+ is not positive, or an offset outside `0 ≤ τ < T`, as `RatesViolation`.
+ """
+ struct Absolute
+     T::Rational{Int}
+     τ::Rational{Int}
+-    Absolute(q::Period, τ::Union{Integer,Rational{<:Integer}} = 0) = new(q.T, Rational{Int}(τ))
++    Absolute(q::Period, τ::Union{Integer,Rational{<:Integer}} = 0) =
++        new(q.T, _declared_quantity(Rational{Int}, :Absolute, τ))
+     Absolute(::Period, τ::AbstractFloat) =
+         throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :inexact, value = τ)))
+     Absolute(q::Real, τ...) =
+diff --git a/src/deployment.jl b/src/deployment.jl
+index f41e5f5..f0548b3 100644
+--- a/src/deployment.jl
++++ b/src/deployment.jl
+@@ -9,9 +9,16 @@
+ # The algorithm tokens live here, since the `Deployment` holds one in a typed
+ # field; the steppers they bind to, and `bind_stepper`, are `stepper.jl`'s.
+ 
+-# Records and returns `nothing` on its two refusing arms; the call's list carries it.
+-_exact(name::Symbol, value::Rational{Int}, diags::Vector{Diagnostic}) = value
+-_exact(name::Symbol, value::Integer, diags::Vector{Diagnostic}) = Rational{Int}(value)
++# Records and returns `nothing` on its three refusing arms; the call's list
++# carries it. An integer or a `Rational` of any integer type is taken at its
++# value, refused as `:range` where `Rational{Int}` cannot hold it.
++function _exact(name::Symbol, value::Union{Integer,Rational{<:Integer}},
++                diags::Vector{Diagnostic})
++    exact = _exact_or_nothing(() -> Rational{Int}(value))
++    exact === nothing &&
++        push!(diags, DeploymentInvalid(parameter = name, reason = :range, value = value))
++    exact
++end
+ _exact(name::Symbol, value::Period, diags::Vector{Diagnostic}) = value.T
+ _exact(name::Symbol, value::AbstractFloat, diags::Vector{Diagnostic}) =
+     (push!(diags, DeploymentInvalid(parameter = name, reason = :inexact, value = value));
+@@ -29,11 +36,16 @@ _as_int(value::Rational) =
+ # --- the grid attribution (§9.2, D-187) -----------------------------------------
+ 
+ # Trial division: the integers factored here are grid denominators, lcms of a
+-# handful of declared ones, so no prime table is worth a dependency.
++# handful of declared ones, so no prime table is worth a dependency. It stops at
++# `PRIME_DIVISOR_CAP`, and the cofactor left is reported whole: below the cap's
++# square it is prime, since a composite would have a factor below the cap, and
++# at or above it the grid block prints it as unfactored. The condition is the
++# square's, written so it cannot wrap.
++const PRIME_DIVISOR_CAP = 2^20
+ function _prime_powers(integer::Int)
+     powers = Tuple{Int,Int}[]
+     cofactor, divisor = integer, 2
+-    while divisor * divisor ≤ cofactor
++    while divisor ≤ PRIME_DIVISOR_CAP && divisor ≤ cofactor ÷ divisor
+         if cofactor % divisor == 0
+             power = 0
+             while cofactor % divisor == 0; cofactor ÷= divisor; power += 1 end
+@@ -291,7 +303,13 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
+     # The attribution over the constraint pool — every anchor's period and every
+     # nonzero offset (§9.1) — computed once, ahead of the branch, and handed to
+     # every refusal that names the grid as well as to the artifact (§9.2, D-187).
+-    grid = _grid_report(anchors)
++    # A report whose arithmetic leaves `Int` is `nothing`, and marks a pool no
++    # deployment holds: a base tick divides the pool's gcd, so its denominator
++    # is at least the gcd's, and a leave-one-out factor, or an offset's
++    # neighbour, past `Int` puts some anchor's count of base ticks past it at
++    # every base tick that divides the pool. `:derive` refuses it below, and
++    # any other `Δt_base` meets the anchor loop's refusal.
++    grid = _exact_or_nothing(() -> _grid_report(anchors))
+ 
+     # The Δt_base branch is its own premise: derivation reads the tiers and the
+     # anchors, the explicit keyword reads only itself, and only the default path
+@@ -303,6 +321,9 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
+         if !isempty(unanchored)
+             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :unanchored,
+                                            paths = unanchored, grid = grid))
++        elseif grid === nothing
++            push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :range,
++                                           value = :derive))
+         elseif grid.admissible === nothing
+             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint))
+         else
+@@ -341,26 +362,33 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
+     # Per component, one multiply-add; the canonical residue 0 ≤ Φ < D survives
+     # composition (§10.5), which is what the gate's truncated rem relies on. The
+     # rate scopes resolve by the same law, off the timing the fold left them.
++    # The law runs in checked `Int`, and a schedule it cannot hold is `nothing`:
++    # `Φ < D`, so a divisor past `Int` counts a period in base ticks, and so in
++    # units, past it, the lattices' refusal below.
+     Δtb = Float64(Δt_r)
+-    timing_gates(timing::Timing) = (timing.m * Dk[timing.anchor + 1],
+-                                    Φk[timing.anchor + 1] +
+-                                    timing.c * Dk[timing.anchor + 1])
+-    rows = ScheduleEntry[]
+-    for entry in structure.components
+-        entry.tier === DISCRETE || continue
+-        D, Φ = timing_gates(entry.timing)
+-        # the rates vector itself: the structure is immutable, so no copy
+-        push!(rows, ScheduleEntry(entry.path, entry.timing.anchor, D, Φ, D * Δtb, entry.rates))
++    timing_gates(timing::Timing) =
++        (Base.Checked.checked_mul(timing.m, Dk[timing.anchor + 1]),
++         Base.Checked.checked_add(Φk[timing.anchor + 1],
++                                  Base.Checked.checked_mul(timing.c, Dk[timing.anchor + 1])))
++    schedule = _exact_or_nothing() do
++        rows = ScheduleEntry[]
++        for entry in structure.components
++            entry.tier === DISCRETE || continue
++            D, Φ = timing_gates(entry.timing)
++            # the rates vector itself: the structure is immutable, so no copy
++            push!(rows, ScheduleEntry(entry.path, entry.timing.anchor, D, Φ, D * Δtb, entry.rates))
++        end
++        scopes = [ScopeEntry(scope.path, scope.key, scope.timing.anchor,
++                             timing_gates(scope.timing)...)
++                  for scope in structure.scopes]
++        Schedule(rows, scopes)
+     end
+-    scopes = [ScopeEntry(scope.path, scope.key, scope.timing.anchor,
+-                         timing_gates(scope.timing)...)
+-              for scope in structure.scopes]
+     # Every other premise's fault is on the list by now.
+     length(diags) == count_on_entry || return nothing
+     # The lattices' premise is all of the above. A unit too fine to index one
+-    # frame in an `Int`, or a bound too fine to count a frame's steps in one,
+-    # joins the event parameters' faults in the one throw.
+-    lattice = _lattice(Δt_frame_r, Δt_r, h_max_r, rows)
++    # frame in an `Int`, a period in units past it, or a bound too fine to count
++    # a frame's steps in one, joins the event parameters' faults in the one throw.
++    lattice = schedule === nothing ? :Δt_base : _lattice(Δt_frame_r, Δt_r, h_max_r, schedule.rows)
+     if lattice === :Δt_base
+         push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :range,
+                                        value = Δt_r, related = Δt_frame_r))
+@@ -371,7 +399,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
+         return nothing
+     end
+     (Δt_frame = Δt_frame_r, Δt_base = Δt_r, h_max = h_max_r,
+-     schedule = Schedule(rows, scopes), lattice = lattice, grid = grid, derived = derived)
++     schedule = schedule, lattice = lattice, grid = grid, derived = derived)
+ end
+ 
+ # --- the integration algorithm (§10.2, D-442, D-449) ---------------------------
+@@ -472,10 +500,10 @@ Exhausting `firing_budget` warns `FiringBudget`.
+ 
+ # Keywords
+ 
+-- `Δt_frame`: the frame period in seconds, a `Rational{Int}`, an integer, a
++- `Δt_frame`: the frame period in seconds, a `Rational`, an integer, a
+   `Period` or an `Hz` value, required and refused as `DeploymentInvalid` when
+-  absent or given as a float.
+-- `Δt_base`: the base tick period as a `Rational{Int}`, an integer, a `Period`
++  absent, given as a float, or past what `Rational{Int}` holds.
++- `Δt_base`: the base tick period as a `Rational`, an integer, a `Period`
+   or an `Hz` value, `Δt_frame` by default, or `:derive`.
+ - `h_max`: the longest step in seconds, taking the values `Δt_frame` takes and
+   refused alike, or `nothing` for no bound below the frame.
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index fe21e72..e77558a 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -748,7 +748,7 @@ end
+ "§8.7, §10.5: a `sample_times` declaration outside the value vocabulary, the residue bounds or the key rule."
+ Base.@kwdef struct RatesViolation <: Diagnostic
+     path::String
+-    reason::Symbol   # :declaration_shape|:value_vocabulary|:multiplier|:phase|:period|:offset|:unknown_child|:continuous_child
++    reason::Symbol   # :declaration_shape|:value_vocabulary|:multiplier|:phase|:range|:period|:offset|:unknown_child|:continuous_child
+     key::Union{Nothing,Symbol} = nothing     # the offending key
+     value::Any = nothing                     # the offending value
+     candidates::Vector{String} = String[]    # the immediate child names
+@@ -762,6 +762,7 @@ function message(d::RatesViolation)
+     d.reason === :value_vocabulary &&
+         return "$(_rates_entry(d)): $(repr(d.value)) — the wrappers are the whole value " *
+                "vocabulary; a bare integer or bare quantity is a declaration error (§8.7)"
++    d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.K), $(d.value.φ)) composes a divisor past `Int` (§10.5)"
+     d.reason === :multiplier && return "$(_rates_entry(d)): K = $(d.value), and K ≥ 1 (§10.5)"
+     d.reason === :phase && return "$(_rates_entry(d)): φ = $(d.value), and 0 ≤ φ < K (§10.5)"
+     d.reason === :period && return "$(_rates_entry(d)): period $(d.value), and T > 0 (§10.5)"
+@@ -1354,7 +1355,7 @@ _deployment_constraint(parameter::Symbol) =
+     parameter === :localization_tol    ? "must be a positive real" :
+     parameter === :localization_budget ? "must be an integer ≥ 1" :
+     (parameter === :h_max || parameter === :Δt_frame || parameter === :Δt_base) ?
+-                                   "must be positive and finite" :
++                                   "must be positive and finite in `Rational{Int}`" :
+                                    "is outside its constraint"
+ _deployment_section(parameter::Symbol) =
+     parameter === :algorithm           ? " (§10.2)" :
+@@ -1394,7 +1395,10 @@ function _grid_block(grid::Union{Nothing,GridReport})
+         push!(rows, rstrip(row))
+     end
+     # A whole-second grid has no prime to attribute, so the section is absent.
+-    prime_powers = ["$(p.prime)$(_superscript(p.power))" for p in grid.primes]
++    # A cofactor the trial division left at or above its cap's square may be
++    # composite, so it prints as unfactored, never as a prime.
++    prime_powers = [p.prime ≥ PRIME_DIVISOR_CAP^2 ? "$(p.prime) unfactored" :
++                    "$(p.prime)$(_superscript(p.power))" for p in grid.primes]
+     isempty(prime_powers) ||
+         push!(rows, "  primes: $(denominator(grid.admissible)) = " *
+                     join(prime_powers, "·"))
+@@ -1435,6 +1439,11 @@ function message(d::DeploymentInvalid)
+     d.reason === :no_constraint &&
+         return "Δt_base cannot be derived: no anchor declares a constraint to derive it " *
+                "from (§9.1)"
++    # A pool whose grid report leaves `Int`: no base tick serves every anchor.
++    d.reason === :range && d.value === :derive &&
++        return "Δt_base cannot be derived: the gcd of the anchors' periods and offsets " *
++               "has a denominator past `Int`, or an anchor counts more of its ticks than " *
++               "`Int` holds, so no `Rational{Int}` base tick serves them all (§9.1, §9.2)"
+     d.reason === :anchor_period &&
+         return "$(_anchor_label(d.scope, d.key)): period $(d.value) is not an integer " *
+                "multiple of Δt_base = $(d.related) (§9.1)" * _grid_block(d.grid)
+@@ -2301,6 +2310,11 @@ function message(d::ArgumentInvalid)
+     d.reason === :not_a_quantity &&
+         return "`Absolute` takes a quantity value: `Period(1//50)` or `Hz(50)` — got " *
+                "$(repr(d.value)) (§10.5)"
++    # A declaration door's value that `Rational{Int}` cannot hold finitely.
++    d.reason === :range && d.call in (:Period, :Hz, :Absolute) &&
++        return "`$(d.call)` holds an exact `Rational{Int}`, and $(repr(d.value)) " *
++               (d.call === :Hz ? "gives a period" : "is") *
++               " past `Int` or not finite (§10.5)"
+     d.reason === :both_given &&
+         return d.call === :replay! ?
+                "replay! takes `to_boundary` or `to_time`, not both — the boundary index and " *
+diff --git a/src/linearize.jl b/src/linearize.jl
+index 785da1e..561245a 100644
+--- a/src/linearize.jl
++++ b/src/linearize.jl
+@@ -271,8 +271,7 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
+         _restore_state!(nominal_exec, operating_point)   # the held cells are the frozen tier's (D-274)
+     else
+         origin = _origin(:linearize, something(t0, 0), model.deployment)
+-        t = Float64(origin)
+-        _set_clock!(nominal_exec, t, origin, model.deployment)
++        _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
+         plan = resolve_condition(about, build, Float64)
+         assert_total(plan, build.structure, :linearize)   # (§14.6): before any evaluation
+         apply!(nominal_exec, plan)
+@@ -302,7 +301,7 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
+         _report_violations(diags)
+         _set_clock!(seeded_exec, operating_point.t, operating_point.t₀, model.deployment)
+     else
+-        _set_clock!(seeded_exec, t, origin, model.deployment)
++        _set_origin!(seeded_exec.clock, origin, model.deployment.lattice.unit)
+         apply!(seeded_exec, resolve_condition(about, build, T))
+     end
+     _establish_frozen!(seeded_exec, act, nominal_exec, build)
+diff --git a/src/model.jl b/src/model.jl
+index bec339b..e0dd8d1 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -580,15 +580,13 @@ _frame_at(t::Real, t₀::Real, Δt_frame::Float64) =
+ 
+ # The last frame a run from the origin `t₀` may take (§10.5, D-445, D-450): the
+ # lesser of the lattices' `max_frame` and the last frame whose clocks the origin
+-# resolves. Every clock the loop writes in frame `k` lies within
+-# `1.5·2^-52·(|t₀| + 2·(t - t₀))` of its instant, `t = t₀ + k·Δt_frame` the
+-# frame's end: `_instant` rounds three times, the two conversions and the
+-# division, each by at most `2^-53` relative, and `|t| ≤ |t₀| + 2·(t - t₀)`.
+-# Measured past `2^53`, the error reached 1.34 times `2^-52·(|t₀| + 2·(t - t₀))`.
+-# Two boundaries a gap `δ` apart take ordered clocks while their two errors stay
+-# below `δ`. `reach` is `2^50·δ`, so while `|t₀| + 2·(t - t₀) < 2^50·δ` the two
+-# errors close at most three quarters of the gap, the quarter left a margin for
+-# the terms the estimate drops. The frame count it leaves is a few flops per
++# resolves. Every clock the loop writes in frame `k` is the float nearest its
++# instant (`_instant`), and rounding to nearest keeps order, so two boundaries
++# never swap. Two a gap `δ` apart take distinct clocks while an ulp of their
++# instant `t` stays below `δ`, which holds while `|t| < 2^52·δ`, and
++# `|t| ≤ |t₀| + 2·(t - t₀)`, `t = t₀ + k·Δt_frame` the frame's end. `reach` is
++# `2^50·δ`, a factor 4 inside that, left as the margin for the float arithmetic
++# that computes the last frame. The frame count it leaves is a few flops per
+ # call, so nothing is stored where `t₀` is set.
+ function _last_frame(deployment::Deployment, t₀::Float64)
+     lattice = deployment.lattice
+diff --git a/src/store.jl b/src/store.jl
+index d0b153d..4bd0dce 100644
+--- a/src/store.jl
++++ b/src/store.jl
+@@ -180,24 +180,49 @@ function _grid_integers(t₀::Rational{Int}, unit::Rational{Int})
+         Base.Checked.checked_mul(Int128(numerator(unit)), div(scale, denominator(unit))), scale
+ end
+ 
++# Boundary zero's clock is `_instant`'s at position 0, as every later one is.
+ function _set_origin!(clock::Clock{T}, t₀::Rational{Int}, unit::Rational{Int}) where {T}
+     (clock.origin, clock.unit, clock.scale) = _grid_integers(t₀, unit)
+     clock.t₀ = t₀
+-    clock.t = T(Float64(t₀))
++    clock.t = T(_instant(clock, 0))
+     nothing
+ end
+ # The float nearest the exact instant `t₀ + (position + i·units/steps)·unit`
+ # (D-456), from the grid integers: `position` whole units from the origin, and
+-# `i` of `steps` equal steps across a span of `units` past it. Both integers
+-# convert exactly while they stay below `2^53`, and the one division then
+-# rounds to nearest; past that the clock is within two ulps of it. `count`
+-# stays below `2^127`, so it never wraps. `mul` and `add` are the plain
+-# operators in the loop, and the checked ones at the door, which refuses an
+-# origin whose run the integers cannot carry (D-457, `_clock_integers`).
++# `i` of `steps` equal steps across a span of `units` past it. `count` stays
++# below `2^127`, so it never wraps. `mul` and `add` are the plain operators in
++# the loop, and the checked ones at the door, which refuses an origin whose run
++# the integers cannot carry (D-457, `_clock_integers`).
+ @inline function _instant(origin::Int128, unit::Int128, scale::Int128, position::Int,
+                           i::Int = 0, units::Int = 0, steps::Int = 1, mul = *, add = +)
+     count = Int128(position) * steps + Int128(i) * units
+-    Float64(add(mul(origin, steps), mul(unit, count))) / Float64(mul(scale, steps))
++    _nearest(add(mul(origin, steps), mul(unit, count)), mul(scale, steps))
++end
++
++# The float nearest `dividend / divisor`, `divisor > 0`. While both stay within
++# `2^53` they convert exactly and one division rounds to nearest; past it the
++# division is `_rounded_quotient`'s.
++const MAX_EXACT_INTEGER = Int128(2)^53
++@inline _nearest(dividend::Int128, divisor::Int128) =
++    -MAX_EXACT_INTEGER ≤ dividend ≤ MAX_EXACT_INTEGER && divisor ≤ MAX_EXACT_INTEGER ?
++    Float64(dividend) / Float64(divisor) : _rounded_quotient(dividend, divisor)
++
++# The long division past `2^53`, in `UInt128` so nothing allocates: the integer
++# quotient, extended a chunk at a time until it holds 55 bits, each chunk as
++# wide as the remainder can shift without leaving `UInt128`. The remainder
++# then folds into the quotient's last bit, below the rounding bit, and the
++# one conversion rounds to nearest. An exact quotient stops early.
++@noinline function _rounded_quotient(dividend::Int128, divisor::Int128)
++    quotient, remainder = divrem(unsigned(abs(dividend)), unsigned(divisor))
++    exponent = 0
++    while quotient < UInt128(1) << 54 && remainder != 0
++        shift = min(leading_zeros(remainder), leading_zeros(quotient) - 73)
++        next_bits, remainder = divrem(remainder << shift, unsigned(divisor))
++        quotient = quotient << shift | next_bits
++        exponent -= shift
++    end
++    magnitude = ldexp(Float64(quotient | (remainder != 0)), exponent)
++    dividend < 0 ? -magnitude : magnitude
+ end
+ @inline _instant(clock::Clock, position::Int, i::Int = 0, units::Int = 0, steps::Int = 1) =
+     _instant(clock.origin, clock.unit, clock.scale, position, i, units, steps)
+diff --git a/src/trim.jl b/src/trim.jl
+index 91f77f1..0897b62 100644
+--- a/src/trim.jl
++++ b/src/trim.jl
+@@ -593,7 +593,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
+ 
+     # --- the nominal half (D-213) ------------------------------------------------
+     nominal_exec = _scratch(model, Float64).exec
+-    _set_clock!(nominal_exec, Float64(t0), t0, model.deployment)   # the search's time is the commit's (§14.8)
++    _set_origin!(nominal_exec.clock, t0, model.deployment.lattice.unit)   # the search's time is the commit's (§14.8)
+     plan = resolve_condition(override(baseline, problem.condition(guess)), build, Float64)
+     assert_total(plan, build.structure, :trim!)    # (§14.6): pre-evaluation, all-or-nothing
+     apply!(nominal_exec, plan)
+@@ -619,7 +619,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
+     T = ForwardDiff.Dual{TrimTag,Float64,N}
+     act = activation(build, T)                # the cached activation (§9.4)
+     seeded_exec = _scratch(model, T).exec
+-    _set_clock!(seeded_exec, Float64(t0), t0, model.deployment)
++    _set_origin!(seeded_exec.clock, t0, model.deployment.lattice.unit)
+     _establish_frozen!(seeded_exec, act, nominal_exec, model.deployment.build)
+     # The names enter the closure as types: captured as a `Tuple` of `Symbol`s,
+     # they would leave every `NamedTuple` `eval!` builds to runtime dispatch.
+diff --git a/test/imports.jl b/test/imports.jl
+index c74bcc4..1d5b4fb 100644
+--- a/test/imports.jl
++++ b/test/imports.jl
+@@ -48,7 +48,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
+     _accepts, _accepts_wire, _bump, _check_handler, _check_root_faces, _check_transparent,
+     _children, _container_fields, _contract, _element_keys, _elements, _is_container,
+     _declares, _declares_workspace, _holds_marker, _kind, _leaf_values, _cell_key, _compile_feed, _compile_reads, _gates, _heartbeat,
+-    _fire!, _frame_at, _frames_fit, _frames_to, _last_frame, _guards!, _mflatten_expr, _mreconstruct_expr, _ports, _projects!,
++    _fire!, _frame_at, _frames_fit, _frames_to, _last_frame, _nearest, _prime_powers, _rounded_quotient, _guards!, _mflatten_expr, _mreconstruct_expr, _ports, _projects!,
+     report_cell!, report_thread_budget!, _restore_state!, _saturated, _take!,
+     _total, _typename, _walk!, _walk_at,
+     _walked_children, _warn!, _workspace, activation, anchor!, apply!, at, at_component, attach!,
+diff --git a/test/test_declare.jl b/test/test_declare.jl
+index 33e31fd..73f16a5 100644
+--- a/test/test_declare.jl
++++ b/test/test_declare.jl
+@@ -32,6 +32,32 @@ function test_declare()
+         @test Absolute(Period(0)).T == 0
+     end
+ 
++    @testset "a value `Rational{Int}` cannot hold finitely is refused at its declaration door, any other integer type taken at its value (§10.5, D-185)" begin
++        # Past `Int`, in a numerator, a denominator or an offset, and a period
++        # that is not finite, `Hz(0)`'s among them: the normalization fails, as
++        # a float's does, and the door names itself and the value.
++        for (f, call, value) in ((() -> Period(big(2)^70), :Period, big(2)^70),
++                                 (() -> Period(big(1)//big(2)^70), :Period, big(1)//big(2)^70),
++                                 (() -> Period(1//0), :Period, 1//0),
++                                 (() -> Period(-1//0), :Period, -1//0),
++                                 (() -> Hz(0), :Hz, 0),
++                                 (() -> Hz(Int32(0)), :Hz, Int32(0)),
++                                 (() -> Hz(typemin(Int)), :Hz, typemin(Int)),
++                                 (() -> Hz(big(1)//big(2)^70), :Hz, big(1)//big(2)^70),
++                                 (() -> Absolute(Period(1), big(1)//big(2)^70), :Absolute,
++                                  big(1)//big(2)^70),
++                                 (() -> Absolute(Period(1), 1//0), :Absolute, 1//0))
++            d = carried(@test_throws DiagnosticError{ArgumentInvalid} f())
++            @test d.call === call && d.reason === :range && d.value == value
++        end
++        # Another integer type whose value fits is that value, and so is `Bool`,
++        # an integer to Julia.
++        @test period(Period(Int32(1)//Int32(50))) === period(Period(big(1)//50)) === 1//50
++        @test period(Hz(Int32(50))) === 1//50
++        @test Absolute(Period(1), big(1)//3).τ === 1//3
++        @test period(Period(true)) === 1//1 && Absolute(Period(2), true).τ === 1//1
++    end
++
+     @testset "the bundle law (§5.2)" begin
+         # A name appears iff the store or fact exists: the stateless gain sees no
+         # `x`, the no-feedthrough stage sees no `u`, `t` is always there.
+diff --git a/test/test_diagnostics.jl b/test/test_diagnostics.jl
+index cf20040..d4f73dd 100644
+--- a/test/test_diagnostics.jl
++++ b/test/test_diagnostics.jl
+@@ -326,6 +326,7 @@ function diagnostics_kind_set()
+             RatesViolation(path = "a", reason = :value_vocabulary, key = :b, value = 3),
+             RatesViolation(path = "a", reason = :multiplier, key = :b, value = 0),
+             RatesViolation(path = "a", reason = :phase, key = :b, value = 5),
++            RatesViolation(path = "a", reason = :range, key = :b, value = Relative(2^32 + 1)),
+             RatesViolation(path = "a", reason = :period, key = :b, value = 0//1),
+             RatesViolation(path = "a", reason = :offset, key = :b, value = 3//1),
+             RatesViolation(path = "a", reason = :unknown_child, key = :z, candidates = ["b"]),
+@@ -434,6 +435,7 @@ function diagnostics_kind_set()
+             DeploymentInvalid(parameter = :Δt_base, reason = :unanchored, paths = ["a/b"],
+                               grid = grid),
+             DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint),
++            DeploymentInvalid(parameter = :Δt_base, reason = :range, value = :derive),
+             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1),
+             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 1//(10^10 + 1),
+                               related = 1//10^10),
+@@ -619,6 +621,9 @@ function diagnostics_kind_set()
+             ArgumentInvalid(call = :Hz, reason = :inexact, value = 0.5),
+             ArgumentInvalid(call = :Absolute, reason = :inexact, value = 0.5),
+             ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = 1),
++            ArgumentInvalid(call = :Period, reason = :range, value = 1//0),
++            ArgumentInvalid(call = :Hz, reason = :range, value = 0),
++            ArgumentInvalid(call = :Absolute, reason = :range, value = big(1)//big(2)^70),
+             ArgumentInvalid(call = :step!, reason = :both_given),
+             ArgumentInvalid(call = :step!, reason = :range, argument = :frames, value = 0),
+             ArgumentInvalid(call = :step!, reason = :range, argument = :t_plus, value = -1.0),
+@@ -784,9 +789,9 @@ function diagnostics_kind_set()
+         # `Δt_base` and the bound each have a range of their own, and the bound's
+         # exactness is its step count's (§9.2, §10.5, D-445, D-449).
+         @test message(DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1)) ==
+-              "`Δt_base` must be positive and finite, got 0//1 (§9.2)"
++              "`Δt_base` must be positive and finite in `Rational{Int}`, got 0//1 (§9.2)"
+         @test message(DeploymentInvalid(parameter = :h_max, reason = :range, value = 0//1)) ==
+-              "`h_max` must be positive and finite, got 0//1 (§10.5)"
++              "`h_max` must be positive and finite in `Rational{Int}`, got 0//1 (§10.5)"
+         @test message(DeploymentInvalid(parameter = :h_max, reason = :inexact, value = 0.001)) ==
+               "`h_max` must be exact — a Rational (`h_max = 1//100`) or a `Period`/`Hz` " *
+               "value: a span's step count is exact arithmetic, ill-defined over floats " *
+@@ -808,6 +813,38 @@ function diagnostics_kind_set()
+                                                  value = 922, related = 921)),
+                          "frame 922 is past frame 921, the last a run of this deployment " *
+                          "from this origin may take")
++        # A value a time door cannot hold names the door and the value (§10.5).
++        @test message(ArgumentInvalid(call = :Hz, reason = :range, value = 0)) ==
++              "`Hz` holds an exact `Rational{Int}`, and 0 gives a period past `Int` or not " *
++              "finite (§10.5)"
++        @test message(ArgumentInvalid(call = :Period, reason = :range, value = 1//0)) ==
++              "`Period` holds an exact `Rational{Int}`, and 1//0 is past `Int` or not finite (§10.5)"
++        @test message(DeploymentInvalid(parameter = :Δt_frame, reason = :range,
++                                        value = big(2)^70)) ==
++              "`Δt_frame` must be positive and finite in `Rational{Int}`, got " *
++              "1180591620717411303424 (§9.2)"
++        # A composed divisor past `Int` names the entry that composed it (§10.5).
++        @test message(RatesViolation(path = "g", reason = :range, key = :a,
++                                     value = Relative(2^32 + 1))) ==
++              "`sample_times` at `g`, key `a`: Relative(4294967297, 0) composes a divisor " *
++              "past `Int` (§10.5)"
++        # A pool past `Int` has no derivable base tick, for either cause (§9.2).
++        @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
++                                                   value = :derive)),
++                         "Δt_base cannot be derived: the gcd of the anchors' periods and " *
++                         "offsets has a denominator past `Int`, or an anchor counts more of " *
++                         "its ticks than `Int` holds")
++        # A cofactor the trial division left at or above its cap's square may be
++        # composite, and prints as unfactored, never as a prime (§9.2, D-187).
++        unfactored = GridReport([GridEntry(:period, 1//(3 * (2^61 - 1)), "", :a, 1, Rational{Int}[])],
++                                1//(3 * (2^61 - 1)),
++                                [(prime = 3, power = 1, suppliers = [1]),
++                                 (prime = 2^61 - 1, power = 1, suppliers = [1])])
++        rendered = message(DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period,
++                                             value = 1//(3 * (2^61 - 1)), related = 1//1,
++                                             scope = "", key = :a, grid = unfactored))
++        @test occursin("\n  primes: 6917529027641081853 = 3·2305843009213693951 unfactored\n", rendered)
++        @test occursin("\n    2305843009213693951 unfactored  a period", rendered)
+         # A header mismatch counts the parameters the walk names (§12.7).
+         @test occursin("the seven trajectory-determining deployment parameters",
+                        message(CheckpointMismatch(what = :deployment, name = :algorithm,
+diff --git a/test/test_discrete.jl b/test/test_discrete.jl
+index 1c29997..2a657a8 100644
+--- a/test/test_discrete.jl
++++ b/test/test_discrete.jl
+@@ -156,6 +156,33 @@ function discrete_rate_fold()
+         @test all(e.D == 2 && e.Φ == 1 for e in rows)
+     end
+ 
++    @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, §10.5)" begin
++        # `Relative(K₂)` inside `Relative(K₁)` composes the multiplier `K₂·K₁`.
++        # Past `Int` it wrapped to a wrong divisor, to 0 or below; now the inner
++        # key is refused as `:range`, alone.
++        nested(K1, K2) = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(K2))));
++                               sample_times = (; g = Relative(K1)))
++        for (K1, K2) in ((2^32 + 1, 2^32 + 1), (2^32, 2^32), (2^62, 3))
++            d = only(diagnostics(failure(() -> build(nested(K1, K2)))))
++            @test d isa RatesViolation && d.reason === :range && d.path == "g" &&
++                  d.key === :a && d.value === Relative(K2)
++        end
++        # Just inside `Int` the multiplier composes exactly, its phase with it.
++        @test Tuple(only(build(nested(2^31, 2^31)).structure.components).timing) == (0, 2^62, 0)
++        phased = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2^31, 2^31 - 1))));
++                       sample_times = (; g = Relative(2^31, 2^31 - 1)))
++        @test Tuple(only(build(phased).structure.components).timing) ==
++              (0, 2^62, (2^31 - 1) + (2^31 - 1) * 2^31)
++        # A rate its own check refuses composes nothing, so a multiplier or a
++        # phase that would also overflow is refused once, by its own reason.
++        for (K2, φ2, reason) in ((-2^62, 0, :multiplier), (2, 2^62, :phase))
++            bad = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(K2, φ2))));
++                        sample_times = (; g = Relative(4)))
++            d = only(diagnostics(failure(() -> build(bad))))
++            @test d isa RatesViolation && d.reason === reason && d.value == (reason === :phase ? φ2 : K2)
++        end
++    end
++
+     @testset "bare rate keys drive the grid the composite ones did (§8.7, D-211)" begin
+         bare = Simulation(Group((; a = TickCounter(), b = TickCounter());
+                                 sample_times = (; a = Relative(2), b = Relative(3, 1))); Δt_frame = 1//10)
+@@ -475,6 +502,46 @@ function discrete_deployment()
+                    (:Δt_base, :anchor_offset, (typemax(Int) - 1)//1)])
+     end
+ 
++    @testset "a time quantity of any integer type is taken at its value, and one `Rational{Int}` cannot hold is refused as its parameter's range (§9.2, D-229, D-454)" begin
++        multirate_build = build(MultiRate())
++        reference = Deployment(multirate_build; Δt_frame = 1//500, Δt_base = 1//250, h_max = 1//1000)
++        @test Deployment(multirate_build; Δt_frame = big(1)//500, Δt_base = Int32(1)//Int32(250),
++                         h_max = Int16(1)//Int16(1000)) == reference
++        feedback_build = build(feedback_model())
++        @test Deployment(feedback_build; Δt_frame = Int8(1), Δt_base = big(1)).Δt_frame === 1//1
++        # `Bool` is an integer to Julia, so `true` is one second.
++        @test Deployment(feedback_build; Δt_frame = true).Δt_frame === 1//1
++        # Past `Int`, each keyword is refused on its own premise, every one in
++        # the one throw (D-229).
++        err = failure(() -> Deployment(multirate_build; Δt_frame = big(2)^70,
++                                       Δt_base = big(1)//big(2)^70, h_max = Int128(2)^64 // 3))
++        @test Set((d.parameter, d.reason, d.value) for d in diagnostics(err)) ==
++              Set([(:Δt_frame, :range, big(2)^70), (:Δt_base, :range, big(1)//big(2)^70),
++                   (:h_max, :range, Int128(2)^64 // 3)])
++    end
++
++    @testset "a divisor composed with its anchor past `Int` is the lattices' refusal, never wrapped (§9.2, §10.5, D-445)" begin
++        # `Relative(2^30)` under a `2^40` s anchor over a `2^-20` s base tick:
++        # the anchor counts `2^60` base ticks, its member `2^90`, a period in
++        # units past `Int`.
++        rig = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2^30))));
++                    sample_times = (; g = Absolute(Period(2^40))))
++        d = only(diagnostics(failure(() -> Deployment(build(rig); Δt_frame = 1//2^20,
++                                                      Δt_base = 1//2^20))))
++        @test d isa DeploymentInvalid && d.parameter === :Δt_base && d.reason === :range &&
++              d.value == 1//2^20 && d.related == 1//2^20
++        # A coarser grid holds it, and the divisor composes exactly.
++        deployment = Deployment(build(rig); Δt_frame = 2^10, Δt_base = 2^10)
++        @test [(row.D, row.Φ) for row in deployment.schedule.rows] == [(2^60, 0)]
++        @test [(scope.D, scope.Φ) for scope in deployment.schedule.scopes] == [(2^30, 0)]
++        # Collected with the event parameters' faults in the one throw, as every
++        # lattice refusal is (D-229).
++        err = failure(() -> Deployment(build(rig); Δt_frame = 1//2^20, Δt_base = 1//2^20,
++                                       firing_budget = 0))
++        @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
++              Set([(:Δt_base, :range), (:firing_budget, :range)])
++    end
++
+     @testset "Δt_base derivation demands an all-anchored model (§9.1)" begin
+         # Derivation with an unanchored component present is action at a distance:
+         # refused constructively, naming the components whose periods would rescale.
+@@ -573,6 +640,47 @@ function discrete_deployment()
+               warnings(deployment3) == Diagnostic[]
+     end
+ 
++    @testset "a pool whose attribution leaves `Int` admits no deployment, and is refused as one, never raised (§9.1, §9.2, D-187, D-229)" begin
++        anchored(rates) = build(Group(NamedTuple{keys(rates)}(Tuple(TickCounter() for _ in rates));
++                                      sample_times = rates))
++        # Two coprime denominators past `2^31`: the pool's gcd has no
++        # `Rational{Int}` denominator, so no base tick divides both periods.
++        coprime = anchored((; a = Absolute(Period(1//(2^40 + 1))), b = Absolute(Period(1//(2^40 + 3)))))
++        err = failure(() -> Deployment(coprime; Δt_frame = 1))
++        @test [(d.reason, d.key, d.grid) for d in diagnostics(err)] ==
++              [(:anchor_period, :a, nothing), (:anchor_period, :b, nothing)]
++        d = only(diagnostics(failure(() -> Deployment(coprime; Δt_frame = 1, Δt_base = :derive))))
++        @test d isa DeploymentInvalid && d.parameter === :Δt_base && d.reason === :range &&
++              d.value === :derive
++        # An offset's leave-one-out factor past `Int`, `2^40·(2^23 + 1)`: the
++        # gcd fits, but no base tick counts the period in an `Int`.
++        refined = anchored((; a = Absolute(Period(2^40), 1//(2^23 + 1))))
++        d = only(diagnostics(failure(() -> Deployment(refined; Δt_frame = 1))))
++        @test d.reason === :anchor_offset && d.grid === nothing
++        d = only(diagnostics(failure(() -> Deployment(refined; Δt_frame = 1, Δt_base = :derive))))
++        @test d.reason === :range && d.value === :derive
++        # The derivation's other premises run beside it (D-229).
++        err = failure(() -> Deployment(coprime; Δt_frame = 1, Δt_base = :derive, h_max = 0))
++        @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
++              Set([(:h_max, :range), (:Δt_base, :range)])
++
++        # The trial division stops at its cap, the cofactor above it whole, and
++        # never wraps: a prime denominator near `2^61` derives at once, one
++        # near `2^63` is refused rather than hung.
++        prime = 2^61 - 1
++        deployment = @test_logs (:info, r"derived") Deployment(
++            anchored((; a = Absolute(Period(1//prime)))); Δt_frame = 1, Δt_base = :derive)
++        @test deployment.grid.primes == [(prime = prime, power = 1, suppliers = [1])]
++        d = only(diagnostics(failure(() -> Deployment(
++            anchored((; a = Absolute(Period(1//(typemax(Int) - 24))))); Δt_frame = 1))))
++        @test d.reason === :anchor_period
++        # Two primes past the cap stay one cofactor; the primes below it split.
++        (p, q) = (1_048_583, 1_048_589)
++        @test _prime_powers(p * q) == [(p * q, 1)]
++        @test _prime_powers(2^2 * 3 * p) == [(2, 2), (3, 1), (p, 1)]
++        @test _prime_powers(typemax(Int) - 24) == [(typemax(Int) - 24, 1)]
++    end
++
+     # --- multi-rate: the gate at run time (§10.5) -----------------------------------
+ 
+     @testset "boundary zero admits Φ = 0 for updates, and publishes every output stage" begin
+diff --git a/test/test_lattices.jl b/test/test_lattices.jl
+index de90722..91e2c96 100644
+--- a/test/test_lattices.jl
++++ b/test/test_lattices.jl
+@@ -631,6 +631,66 @@ function test_lattices()
+         end
+     end
+ 
++    @testset "the clock's division rounds once at every magnitude, the plain one below `2^53` (§10.5, D-456)" begin
++        # Against the exact quotient, over the shapes the plain division
++        # missed: a quotient just below 2, where an ulp is smallest against
++        # it, one past 55 bits, a tiny one and near ties, each signed.
++        nearest(dividend, divisor) = Float64(big(dividend) // big(divisor))
++        spread(i, range) = first(range) + Int128(hash(i) % length(range))
++        shapes = Tuple{Int128,Int128}[]
++        for i in 1:4000
++            divisor = spread(i, 2^60:2^62) * spread(-i, 2^20:2^40)
++            push!(shapes, (2divisor - spread(2i, 1:2^50), divisor))
++            push!(shapes, (spread(i, 2^55:2^62) * spread(-i, 1:2^60), spread(2i, 1:2^20)))
++            push!(shapes, (spread(i, 1:2^20), spread(-i, 2^60:2^62) * spread(2i, 2^40:2^62)))
++            half = spread(2i, 1:2^30)
++            push!(shapes, (spread(i, 2^53:2^54 - 1) * half + i % 5 - 2, 2half))
++        end
++        @test all(_nearest(dividend, divisor) === nearest(dividend, divisor) &&
++                  _nearest(-dividend, divisor) === -nearest(dividend, divisor)
++                  for (dividend, divisor) in shapes)
++        @test _rounded_quotient(Int128(0), Int128(3)) === _nearest(Int128(0), Int128(2)^100) === 0.0
++        @test _nearest(typemax(Int128), Int128(1)) === nearest(typemax(Int128), 1)
++        # Below `2^53` both integers convert exactly and the one division is
++        # today's, so no trajectory there moves.
++        small = [(spread(i, -2^53:2^53), spread(-i, 1:2^53)) for i in 1:4000]
++        @test all(_nearest(dividend, divisor) === Float64(dividend) / Float64(divisor)
++                  for (dividend, divisor) in small)
++    end
++
++    @testset "from a wall-clock origin every frame top is the float nearest its instant, boundary zero's the origin itself (§10.5, §12.6, D-456, D-457)" begin
++        # A float near today's `time()` has an ulp of `2^-22`, so over a 0.1 s
++        # frame its integers pass `2^53` at frame 0.
++        t0 = 1.7631e9 + 0.123456
++        exact(k) = Float64(big(numerator(Rational{Int}(t0))) // big(denominator(Rational{Int}(t0))) +
++                           big(k) // 10)
++        model = Model(feedback_model(); Δt_frame = 1//10)
++        init!(model, set(u = (ref = 0.0,)); t0)
++        clocks = Float64[model.exec.clock.t]
++        hooks = RecordingHooks(model, 0, clocks, false)
++        for frame in 1:200
++            frame!(model, frame, hooks)
++        end
++        @test clocks == [exact(k) for k in 0:200]
++        # A time typed as `t0 + s`, one rounding, is its frame top's clock.
++        @test clocks[11:10:end] == [t0 + s for s in 1:20]
++        # Boundary zero takes its clock from the same formula, so the model is
++        # at a frame top there, from any wall-clock origin.
++        for i in 1:40
++            t0 = 1.7e9 + i * 2.5e6 + i / 7
++            init!(model, set(u = (ref = 0.0,)); t0)
++            @test model.exec.clock.t === t0
++            @test checkpoint(model).t === t0
++        end
++        # A rational origin whose own parts pass `2^53`: `Float64(t₀)` divides
++        # the two converted parts and lands an ulp off, the clock does not.
++        t₀ = 684943219091290305//514823562239077262
++        init!(model, set(u = (ref = 0.0,)); t0 = t₀)
++        @test model.exec.clock.t === Float64(big(numerator(t₀)) // big(denominator(t₀))) ===
++              1.330442639634298
++        @test checkpoint(model).t₀ === t₀
++    end
++
+     @testset "a step typed on the frame grid fires at its boundary, in one snapshot, localized or not (§10.4, §10.5, D-456)" begin
+         # At a 0.3 s frame, frame 3 is 0.9 itself, where the step is due.
+         for localized in (true, false)
+diff --git a/test/test_lifecycle.jl b/test/test_lifecycle.jl
+index 4ccf3a2..3d6fc00 100644
+--- a/test/test_lifecycle.jl
++++ b/test/test_lifecycle.jl
+@@ -78,6 +78,17 @@ function test_lifecycle()
+         sim = Simulation(feedback_model(); Δt_frame = 1//10)
+         init!(sim, point; t0 = 1e14)
+         @test checkpoint(sim).state.t₀ == 1e14
++        # The exact forms a period takes, of any integer type, `Bool` among
++        # them, and a float at its exact value; an integer past `Int` is refused.
++        for (t0, origin) in ((Float16(0.1), 819//8192), (big(1)//3, 1//3),
++                             (Int32(1)//Int32(3), 1//3), (true, 1//1), (Period(1//4), 1//4))
++            model = Model(feedback_model(); Δt_frame = 1//10)
++            init!(model, point; t0)
++            @test model.exec.clock.t₀ === origin && model.exec.clock.t === Float64(origin)
++        end
++        model = Model(feedback_model(); Δt_frame = 1//10)
++        d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, point; t0 = big(2)^70))
++        @test d.argument === :t0 && d.reason === :range
+     end
+ 
+     @testset "an origin whose run the clock's integers cannot carry is refused at the door, and at a restore (§12.6, §14.5, D-457)" begin
+diff --git a/test/test_linearize.jl b/test/test_linearize.jl
+index 9a75f83..f5162cc 100644
+--- a/test/test_linearize.jl
++++ b/test/test_linearize.jl
+@@ -484,4 +484,16 @@ function test_linearize()
+         @test d isa TapResolution && d.reason === :unseedable && d.field === :u
+         @test d.pinning == [("del", :discrete, Float64)]
+     end
++
++    @testset "the `about` form's clock is boundary zero's at `t0`, the float nearest it from any origin (§14.10, D-456, D-457)" begin
++        # `q̇ = -t·q² + u` at `q = 1` and `u = 0` reads `-t`. The origin's parts
++        # pass `2^53`, where `Float64(t₀)` lands an ulp off the nearest float.
++        t₀ = 684943219091290305//514823562239077262
++        model = Model(fed(TimedDecay()); Δt_frame = 1//10)
++        linearization = linearize(model, taps(x = (q = get_state("c", :q),));
++                                  about = set(u = (in = 0.0,)), t0 = t₀)
++        init!(model, set(u = (in = 0.0,)); t0 = t₀)
++        @test linearization.ẋ₀.q === -model.exec.clock.t === -1.330442639634298
++        @test Float64(t₀) != 1.330442639634298
++    end
+ end
+diff --git a/test/test_trim.jl b/test/test_trim.jl
+index b5fc937..0df09e7 100644
+--- a/test/test_trim.jl
++++ b/test/test_trim.jl
+@@ -307,6 +307,23 @@ function test_trim()
+         sim = Simulation(fed(TimedDecay()); Δt_frame = 1//10)
+         trim!(sim, problem(); baseline = set(), t0 = 2//5)
+         @test sim.model.exec.clock.t₀ === 2//5 && sim.model.exec.clock.t === 0.4
++        # From an origin whose parts pass `2^53`, both halves search at the
++        # commit's clock, the float nearest the origin, never `Float64(t₀)`
++        # an ulp off it: at the guess `u = 0`, `q̇ = -t` exactly.
++        t₀ = 684943219091290305//514823562239077262
++        seen = Tuple{Bool,Float64}[]
++        clocked = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
++                              condition = d -> set(u = (in = d.u,)),
++                              reads = reads(q̇ = get_deriv("c", :q)),
++                              residuals = (r, d) -> (push!(seen, (r.q̇ isa Float64,
++                                                                  ForwardDiff.value(r.q̇)));
++                                                     (b = r.q̇,)),
++                              tolerances = (b = 1e-9,))
++        model = Model(fed(TimedDecay()); Δt_frame = 1//10)
++        trim!(model, clocked; baseline = set(), t0 = t₀)
++        @test model.exec.clock.t === 1.330442639634298 != Float64(t₀)
++        @test first(seen) == (true, -1.330442639634298)
++        @test first(value for (nominal, value) in seen if !nominal) == -1.330442639634298
+ 
+         # The empty problem's one evaluation is the nominal half's.
+         empty_problem = TrimProblem(guess = (;), lower = (;), upper = (;), condition = d -> set(),
