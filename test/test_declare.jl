@@ -32,6 +32,32 @@ function test_declare()
         @test Absolute(Period(0)).T == 0
     end
 
+    @testset "a value `Rational{Int}` cannot hold finitely is refused at its declaration door, any other integer type taken at its value (§10.5, D-185)" begin
+        # Past `Int`, in a numerator, a denominator or an offset, and a period
+        # that is not finite, `Hz(0)`'s among them: the normalization fails, as
+        # a float's does, and the door names itself and the value.
+        for (f, call, value) in ((() -> Period(big(2)^70), :Period, big(2)^70),
+                                 (() -> Period(big(1)//big(2)^70), :Period, big(1)//big(2)^70),
+                                 (() -> Period(1//0), :Period, 1//0),
+                                 (() -> Period(-1//0), :Period, -1//0),
+                                 (() -> Hz(0), :Hz, 0),
+                                 (() -> Hz(Int32(0)), :Hz, Int32(0)),
+                                 (() -> Hz(typemin(Int)), :Hz, typemin(Int)),
+                                 (() -> Hz(big(1)//big(2)^70), :Hz, big(1)//big(2)^70),
+                                 (() -> Absolute(Period(1), big(1)//big(2)^70), :Absolute,
+                                  big(1)//big(2)^70),
+                                 (() -> Absolute(Period(1), 1//0), :Absolute, 1//0))
+            d = carried(@test_throws DiagnosticError{ArgumentInvalid} f())
+            @test d.call === call && d.reason === :range && d.value == value
+        end
+        # Another integer type whose value fits is that value, and so is `Bool`,
+        # an integer to Julia.
+        @test period(Period(Int32(1)//Int32(50))) === period(Period(big(1)//50)) === 1//50
+        @test period(Hz(Int32(50))) === 1//50
+        @test Absolute(Period(1), big(1)//3).τ === 1//3
+        @test period(Period(true)) === 1//1 && Absolute(Period(2), true).τ === 1//1
+    end
+
     @testset "the bundle law (§5.2)" begin
         # A name appears iff the store or fact exists: the stateless gain sees no
         # `x`, the no-feedthrough stage sees no `u`, `t` is always there.

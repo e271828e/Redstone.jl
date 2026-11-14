@@ -9,9 +9,16 @@
 # The algorithm tokens live here, since the `Deployment` holds one in a typed
 # field; the steppers they bind to, and `bind_stepper`, are `stepper.jl`'s.
 
-# Records and returns `nothing` on its two refusing arms; the call's list carries it.
-_exact(name::Symbol, value::Rational{Int}, diags::Vector{Diagnostic}) = value
-_exact(name::Symbol, value::Integer, diags::Vector{Diagnostic}) = Rational{Int}(value)
+# Records and returns `nothing` on its three refusing arms; the call's list
+# carries it. An integer or a `Rational` of any integer type is taken at its
+# value, refused as `:range` where `Rational{Int}` cannot hold it.
+function _exact(name::Symbol, value::Union{Integer,Rational{<:Integer}},
+                diags::Vector{Diagnostic})
+    exact = _exact_or_nothing(() -> Rational{Int}(value))
+    exact === nothing &&
+        push!(diags, DeploymentInvalid(parameter = name, reason = :range, value = value))
+    exact
+end
 _exact(name::Symbol, value::Period, diags::Vector{Diagnostic}) = value.T
 _exact(name::Symbol, value::AbstractFloat, diags::Vector{Diagnostic}) =
     (push!(diags, DeploymentInvalid(parameter = name, reason = :inexact, value = value));
@@ -29,11 +36,16 @@ _as_int(value::Rational) =
 # --- the grid attribution (§9.2, D-187) -----------------------------------------
 
 # Trial division: the integers factored here are grid denominators, lcms of a
-# handful of declared ones, so no prime table is worth a dependency.
+# handful of declared ones, so no prime table is worth a dependency. It stops at
+# `PRIME_DIVISOR_CAP`, and the cofactor left is reported whole: below the cap's
+# square it is prime, since a composite would have a factor below the cap, and
+# at or above it the grid block prints it as unfactored. The condition is the
+# square's, written so it cannot wrap.
+const PRIME_DIVISOR_CAP = 2^20
 function _prime_powers(integer::Int)
     powers = Tuple{Int,Int}[]
     cofactor, divisor = integer, 2
-    while divisor * divisor ≤ cofactor
+    while divisor ≤ PRIME_DIVISOR_CAP && divisor ≤ cofactor ÷ divisor
         if cofactor % divisor == 0
             power = 0
             while cofactor % divisor == 0; cofactor ÷= divisor; power += 1 end
@@ -291,7 +303,13 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
     # The attribution over the constraint pool — every anchor's period and every
     # nonzero offset (§9.1) — computed once, ahead of the branch, and handed to
     # every refusal that names the grid as well as to the artifact (§9.2, D-187).
-    grid = _grid_report(anchors)
+    # A report whose arithmetic leaves `Int` is `nothing`, and marks a pool no
+    # deployment holds: a base tick divides the pool's gcd, so its denominator
+    # is at least the gcd's, and a leave-one-out factor, or an offset's
+    # neighbour, past `Int` puts some anchor's count of base ticks past it at
+    # every base tick that divides the pool. `:derive` refuses it below, and
+    # any other `Δt_base` meets the anchor loop's refusal.
+    grid = _exact_or_nothing(() -> _grid_report(anchors))
 
     # The Δt_base branch is its own premise: derivation reads the tiers and the
     # anchors, the explicit keyword reads only itself, and only the default path
@@ -303,6 +321,9 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
         if !isempty(unanchored)
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :unanchored,
                                            paths = unanchored, grid = grid))
+        elseif grid === nothing
+            push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :range,
+                                           value = :derive))
         elseif grid.admissible === nothing
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint))
         else
@@ -341,26 +362,33 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
     # Per component, one multiply-add; the canonical residue 0 ≤ Φ < D survives
     # composition (§10.5), which is what the gate's truncated rem relies on. The
     # rate scopes resolve by the same law, off the timing the fold left them.
+    # The law runs in checked `Int`, and a schedule it cannot hold is `nothing`:
+    # `Φ < D`, so a divisor past `Int` counts a period in base ticks, and so in
+    # units, past it, the lattices' refusal below.
     Δtb = Float64(Δt_r)
-    timing_gates(timing::Timing) = (timing.m * Dk[timing.anchor + 1],
-                                    Φk[timing.anchor + 1] +
-                                    timing.c * Dk[timing.anchor + 1])
-    rows = ScheduleEntry[]
-    for entry in structure.components
-        entry.tier === DISCRETE || continue
-        D, Φ = timing_gates(entry.timing)
-        # the rates vector itself: the structure is immutable, so no copy
-        push!(rows, ScheduleEntry(entry.path, entry.timing.anchor, D, Φ, D * Δtb, entry.rates))
+    timing_gates(timing::Timing) =
+        (Base.Checked.checked_mul(timing.m, Dk[timing.anchor + 1]),
+         Base.Checked.checked_add(Φk[timing.anchor + 1],
+                                  Base.Checked.checked_mul(timing.c, Dk[timing.anchor + 1])))
+    schedule = _exact_or_nothing() do
+        rows = ScheduleEntry[]
+        for entry in structure.components
+            entry.tier === DISCRETE || continue
+            D, Φ = timing_gates(entry.timing)
+            # the rates vector itself: the structure is immutable, so no copy
+            push!(rows, ScheduleEntry(entry.path, entry.timing.anchor, D, Φ, D * Δtb, entry.rates))
+        end
+        scopes = [ScopeEntry(scope.path, scope.key, scope.timing.anchor,
+                             timing_gates(scope.timing)...)
+                  for scope in structure.scopes]
+        Schedule(rows, scopes)
     end
-    scopes = [ScopeEntry(scope.path, scope.key, scope.timing.anchor,
-                         timing_gates(scope.timing)...)
-              for scope in structure.scopes]
     # Every other premise's fault is on the list by now.
     length(diags) == count_on_entry || return nothing
     # The lattices' premise is all of the above. A unit too fine to index one
-    # frame in an `Int`, or a bound too fine to count a frame's steps in one,
-    # joins the event parameters' faults in the one throw.
-    lattice = _lattice(Δt_frame_r, Δt_r, h_max_r, rows)
+    # frame in an `Int`, a period in units past it, or a bound too fine to count
+    # a frame's steps in one, joins the event parameters' faults in the one throw.
+    lattice = schedule === nothing ? :Δt_base : _lattice(Δt_frame_r, Δt_r, h_max_r, schedule.rows)
     if lattice === :Δt_base
         push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :range,
                                        value = Δt_r, related = Δt_frame_r))
@@ -371,7 +399,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
         return nothing
     end
     (Δt_frame = Δt_frame_r, Δt_base = Δt_r, h_max = h_max_r,
-     schedule = Schedule(rows, scopes), lattice = lattice, grid = grid, derived = derived)
+     schedule = schedule, lattice = lattice, grid = grid, derived = derived)
 end
 
 # --- the integration algorithm (§10.2, D-442, D-449) ---------------------------
@@ -472,10 +500,10 @@ Exhausting `firing_budget` warns `FiringBudget`.
 
 # Keywords
 
-- `Δt_frame`: the frame period in seconds, a `Rational{Int}`, an integer, a
+- `Δt_frame`: the frame period in seconds, a `Rational`, an integer, a
   `Period` or an `Hz` value, required and refused as `DeploymentInvalid` when
-  absent or given as a float.
-- `Δt_base`: the base tick period as a `Rational{Int}`, an integer, a `Period`
+  absent, given as a float, or past what `Rational{Int}` holds.
+- `Δt_base`: the base tick period as a `Rational`, an integer, a `Period`
   or an `Hz` value, `Δt_frame` by default, or `:derive`.
 - `h_max`: the longest step in seconds, taking the values `Δt_frame` takes and
   refused alike, or `nothing` for no bound below the frame.

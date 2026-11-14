@@ -271,8 +271,7 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
         _restore_state!(nominal_exec, operating_point)   # the held cells are the frozen tier's (D-274)
     else
         origin = _origin(:linearize, something(t0, 0), model.deployment)
-        t = Float64(origin)
-        _set_clock!(nominal_exec, t, origin, model.deployment)
+        _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
         plan = resolve_condition(about, build, Float64)
         assert_total(plan, build.structure, :linearize)   # (§14.6): before any evaluation
         apply!(nominal_exec, plan)
@@ -302,7 +301,7 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
         _report_violations(diags)
         _set_clock!(seeded_exec, operating_point.t, operating_point.t₀, model.deployment)
     else
-        _set_clock!(seeded_exec, t, origin, model.deployment)
+        _set_origin!(seeded_exec.clock, origin, model.deployment.lattice.unit)
         apply!(seeded_exec, resolve_condition(about, build, T))
     end
     _establish_frozen!(seeded_exec, act, nominal_exec, build)

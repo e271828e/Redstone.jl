@@ -307,6 +307,23 @@ function test_trim()
         sim = Simulation(fed(TimedDecay()); Δt_frame = 1//10)
         trim!(sim, problem(); baseline = set(), t0 = 2//5)
         @test sim.model.exec.clock.t₀ === 2//5 && sim.model.exec.clock.t === 0.4
+        # From an origin whose parts pass `2^53`, both halves search at the
+        # commit's clock, the float nearest the origin, never `Float64(t₀)`
+        # an ulp off it: at the guess `u = 0`, `q̇ = -t` exactly.
+        t₀ = 684943219091290305//514823562239077262
+        seen = Tuple{Bool,Float64}[]
+        clocked = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper = (u = Inf,),
+                              condition = d -> set(u = (in = d.u,)),
+                              reads = reads(q̇ = get_deriv("c", :q)),
+                              residuals = (r, d) -> (push!(seen, (r.q̇ isa Float64,
+                                                                  ForwardDiff.value(r.q̇)));
+                                                     (b = r.q̇,)),
+                              tolerances = (b = 1e-9,))
+        model = Model(fed(TimedDecay()); Δt_frame = 1//10)
+        trim!(model, clocked; baseline = set(), t0 = t₀)
+        @test model.exec.clock.t === 1.330442639634298 != Float64(t₀)
+        @test first(seen) == (true, -1.330442639634298)
+        @test first(value for (nominal, value) in seen if !nominal) == -1.330442639634298
 
         # The empty problem's one evaluation is the nominal half's.
         empty_problem = TrimProblem(guess = (;), lower = (;), upper = (;), condition = d -> set(),

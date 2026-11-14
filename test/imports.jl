@@ -48,7 +48,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
     _accepts, _accepts_wire, _bump, _check_handler, _check_root_faces, _check_transparent,
     _children, _container_fields, _contract, _element_keys, _elements, _is_container,
     _declares, _declares_workspace, _holds_marker, _kind, _leaf_values, _cell_key, _compile_feed, _compile_reads, _gates, _heartbeat,
-    _fire!, _frame_at, _frames_fit, _frames_to, _last_frame, _guards!, _mflatten_expr, _mreconstruct_expr, _ports, _projects!,
+    _fire!, _frame_at, _frames_fit, _frames_to, _last_frame, _nearest, _prime_powers, _rounded_quotient, _guards!, _mflatten_expr, _mreconstruct_expr, _ports, _projects!,
     report_cell!, report_thread_budget!, _restore_state!, _saturated, _take!,
     _total, _typename, _walk!, _walk_at,
     _walked_children, _warn!, _workspace, activation, anchor!, apply!, at, at_component, attach!,

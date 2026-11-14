@@ -580,15 +580,13 @@ _frame_at(t::Real, t₀::Real, Δt_frame::Float64) =
 
 # The last frame a run from the origin `t₀` may take (§10.5, D-445, D-450): the
 # lesser of the lattices' `max_frame` and the last frame whose clocks the origin
-# resolves. Every clock the loop writes in frame `k` lies within
-# `1.5·2^-52·(|t₀| + 2·(t - t₀))` of its instant, `t = t₀ + k·Δt_frame` the
-# frame's end: `_instant` rounds three times, the two conversions and the
-# division, each by at most `2^-53` relative, and `|t| ≤ |t₀| + 2·(t - t₀)`.
-# Measured past `2^53`, the error reached 1.34 times `2^-52·(|t₀| + 2·(t - t₀))`.
-# Two boundaries a gap `δ` apart take ordered clocks while their two errors stay
-# below `δ`. `reach` is `2^50·δ`, so while `|t₀| + 2·(t - t₀) < 2^50·δ` the two
-# errors close at most three quarters of the gap, the quarter left a margin for
-# the terms the estimate drops. The frame count it leaves is a few flops per
+# resolves. Every clock the loop writes in frame `k` is the float nearest its
+# instant (`_instant`), and rounding to nearest keeps order, so two boundaries
+# never swap. Two a gap `δ` apart take distinct clocks while an ulp of their
+# instant `t` stays below `δ`, which holds while `|t| < 2^52·δ`, and
+# `|t| ≤ |t₀| + 2·(t - t₀)`, `t = t₀ + k·Δt_frame` the frame's end. `reach` is
+# `2^50·δ`, a factor 4 inside that, left as the margin for the float arithmetic
+# that computes the last frame. The frame count it leaves is a few flops per
 # call, so nothing is stored where `t₀` is set.
 function _last_frame(deployment::Deployment, t₀::Float64)
     lattice = deployment.lattice

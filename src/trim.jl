@@ -593,7 +593,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
 
     # --- the nominal half (D-213) ------------------------------------------------
     nominal_exec = _scratch(model, Float64).exec
-    _set_clock!(nominal_exec, Float64(t0), t0, model.deployment)   # the search's time is the commit's (§14.8)
+    _set_origin!(nominal_exec.clock, t0, model.deployment.lattice.unit)   # the search's time is the commit's (§14.8)
     plan = resolve_condition(override(baseline, problem.condition(guess)), build, Float64)
     assert_total(plan, build.structure, :trim!)    # (§14.6): pre-evaluation, all-or-nothing
     apply!(nominal_exec, plan)
@@ -619,7 +619,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
     T = ForwardDiff.Dual{TrimTag,Float64,N}
     act = activation(build, T)                # the cached activation (§9.4)
     seeded_exec = _scratch(model, T).exec
-    _set_clock!(seeded_exec, Float64(t0), t0, model.deployment)
+    _set_origin!(seeded_exec.clock, t0, model.deployment.lattice.unit)
     _establish_frozen!(seeded_exec, act, nominal_exec, model.deployment.build)
     # The names enter the closure as types: captured as a `Tuple` of `Symbol`s,
     # they would leave every `NamedTuple` `eval!` builds to runtime dispatch.

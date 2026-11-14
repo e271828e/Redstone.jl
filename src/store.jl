@@ -180,24 +180,49 @@ function _grid_integers(t₀::Rational{Int}, unit::Rational{Int})
         Base.Checked.checked_mul(Int128(numerator(unit)), div(scale, denominator(unit))), scale
 end
 
+# Boundary zero's clock is `_instant`'s at position 0, as every later one is.
 function _set_origin!(clock::Clock{T}, t₀::Rational{Int}, unit::Rational{Int}) where {T}
     (clock.origin, clock.unit, clock.scale) = _grid_integers(t₀, unit)
     clock.t₀ = t₀
-    clock.t = T(Float64(t₀))
+    clock.t = T(_instant(clock, 0))
     nothing
 end
 # The float nearest the exact instant `t₀ + (position + i·units/steps)·unit`
 # (D-456), from the grid integers: `position` whole units from the origin, and
-# `i` of `steps` equal steps across a span of `units` past it. Both integers
-# convert exactly while they stay below `2^53`, and the one division then
-# rounds to nearest; past that the clock is within two ulps of it. `count`
-# stays below `2^127`, so it never wraps. `mul` and `add` are the plain
-# operators in the loop, and the checked ones at the door, which refuses an
-# origin whose run the integers cannot carry (D-457, `_clock_integers`).
+# `i` of `steps` equal steps across a span of `units` past it. `count` stays
+# below `2^127`, so it never wraps. `mul` and `add` are the plain operators in
+# the loop, and the checked ones at the door, which refuses an origin whose run
+# the integers cannot carry (D-457, `_clock_integers`).
 @inline function _instant(origin::Int128, unit::Int128, scale::Int128, position::Int,
                           i::Int = 0, units::Int = 0, steps::Int = 1, mul = *, add = +)
     count = Int128(position) * steps + Int128(i) * units
-    Float64(add(mul(origin, steps), mul(unit, count))) / Float64(mul(scale, steps))
+    _nearest(add(mul(origin, steps), mul(unit, count)), mul(scale, steps))
+end
+
+# The float nearest `dividend / divisor`, `divisor > 0`. While both stay within
+# `2^53` they convert exactly and one division rounds to nearest; past it the
+# division is `_rounded_quotient`'s.
+const MAX_EXACT_INTEGER = Int128(2)^53
+@inline _nearest(dividend::Int128, divisor::Int128) =
+    -MAX_EXACT_INTEGER ≤ dividend ≤ MAX_EXACT_INTEGER && divisor ≤ MAX_EXACT_INTEGER ?
+    Float64(dividend) / Float64(divisor) : _rounded_quotient(dividend, divisor)
+
+# The long division past `2^53`, in `UInt128` so nothing allocates: the integer
+# quotient, extended a chunk at a time until it holds 55 bits, each chunk as
+# wide as the remainder can shift without leaving `UInt128`. The remainder
+# then folds into the quotient's last bit, below the rounding bit, and the
+# one conversion rounds to nearest. An exact quotient stops early.
+@noinline function _rounded_quotient(dividend::Int128, divisor::Int128)
+    quotient, remainder = divrem(unsigned(abs(dividend)), unsigned(divisor))
+    exponent = 0
+    while quotient < UInt128(1) << 54 && remainder != 0
+        shift = min(leading_zeros(remainder), leading_zeros(quotient) - 73)
+        next_bits, remainder = divrem(remainder << shift, unsigned(divisor))
+        quotient = quotient << shift | next_bits
+        exponent -= shift
+    end
+    magnitude = ldexp(Float64(quotient | (remainder != 0)), exponent)
+    dividend < 0 ? -magnitude : magnitude
 end
 @inline _instant(clock::Clock, position::Int, i::Int = 0, units::Int = 0, steps::Int = 1) =
     _instant(clock.origin, clock.unit, clock.scale, position, i, units, steps)

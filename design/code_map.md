@@ -44,7 +44,9 @@ in the `src/model.jl` entry.
 - `LevelEntry` and `Child`, one row per assembly in walk order with its
   children and its declared wires, the accessor `membership` on a `Child`, and
   `terminal_producer`/`face_routes` over them (D-315).
-- The sample-time fold.
+- The sample-time fold, `_child_scope`, in checked `Int`: a composed divisor
+  or phase past `Int` is recorded as `RatesViolation` `:range`, and a rate
+  its own check refused composes nothing (§10.5, D-459).
 - The shadowing check ahead of `classify` in the walk (D-246).
 - The store-shape read ahead of the classifier in the walk, `check_store_form`,
   which refuses `(;)` as `EmptyStore` and reads that primitive no further
@@ -99,7 +101,7 @@ in the `src/model.jl` entry.
 Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
 §13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
 D-231, D-236, D-246, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
-D-315, D-437, D-438.
+D-315, D-437, D-438, D-459.
 
 ### `src/bindings.jl`
 
@@ -332,6 +334,10 @@ The declaration layer:
   `output_wires`, beside `transparent_container`.
 - The optional declaration `stop_reason` (D-316).
 - The rate forms `Period`, `Relative` and `Absolute`, with `sample_times`.
+  `_exact_or_nothing`, the one catch of `OverflowError`, `InexactError` and
+  `DivideError` the time surface's doors share, each refusing its `nothing`
+  under its own reason, and `_declared_quantity`, the constructors' exact
+  value or their `ArgumentInvalid` `:range` (§10.5, D-459).
 - The event surface `StateEvent`, `state_events` and `x_projection`.
 - The declaration family `DECLARATION_FAMILY` and `foreign_declarations`.
 - The user-code frame `invoke_declaration`, `invoke_probed` and
@@ -341,12 +347,16 @@ The declaration layer:
   new component type compiles none of them again (§9.7, D-289).
 
 Spec: §2.3, §5.2, §8.1, §8.2, §8.5–§8.7, §9.3, §9.7, §13.5, Appendix B, D-051,
-D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
+D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438,
+D-459.
 
 ### `src/deployment.jl`
 
 - Deployment binding and its two artifacts (D-254), the `Schedule` and the
   `Deployment`. The binding is `bind_schedule`, with `_exact`/`_as_int`.
+  `_exact` takes an integer or a `Rational` of any integer type through
+  declare.jl's `_exact_or_nothing`, refusing what `Rational{Int}` cannot
+  hold as `:range` (§9.2, D-459).
 - The typed `Schedule`, over `ScheduleEntry` and `ScopeEntry` (D-261):
   - the anchor and rates columns beside `(D, Φ, Δt)`, in `ScheduleEntry`;
   - the rate-scope rows, in `ScopeEntry`;
@@ -383,7 +393,9 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   `_lattice`'s `:Δt_base` is `DeploymentInvalid` on `Δt_base` with reason
   `:range` and `Δt_frame` as `related`, and its `:h_max` the same on
   `h_max`, the two `:range`s that carry a related value, collected with the
-  event parameters' faults (§9.2, §10.5, D-445, D-449).
+  event parameters' faults (§9.2, §10.5, D-445, D-449). The schedule's
+  multiply-add runs in checked `Int` under one catch, and a schedule it
+  cannot hold is the lattices' `:Δt_base` refusal (D-459).
 - `==`/`hash` on a `Deployment` compare by value over everything but the
   build, the grid attribution, the `Lattice` and the warnings (§12.7), the
   bound resolved and the three time quantities exact, so two that round to
@@ -391,9 +403,12 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
 - `warnings(::Deployment)`.
 - The grid attribution `_grid_report` (D-187):
   - the constraint pool, with each entry's leave-one-out refinement factor;
-  - the prime attribution of `gcd(pool)`'s denominator;
+  - the prime attribution of `gcd(pool)`'s denominator, by `_prime_powers`,
+    a trial division stopping at `PRIME_DIVISOR_CAP` (D-459);
   - a driving offset's nearest non-refining neighbours.
-- `_grid_report` runs once per call, ahead of the `Δt_base` branch. The
+- `_grid_report` runs once per call, ahead of the `Δt_base` branch, under
+  the shared catch: a report whose arithmetic leaves `Int` is `nothing`, and
+  `:derive` is then refused as `:range` (D-459). The
   `Deployment` carries its result. The call also hands that result to the
   three refusals whose remedy is a `Δt_base` the pool admits, and to the
   derivation path's info line.
@@ -402,7 +417,8 @@ D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438.
   `GridUtilization` advisory at `min_i Dᵢ > 1`.
 
 Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
-D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454.
+D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454,
+D-459.
 
 ### `src/descriptor.jl`
 
@@ -508,7 +524,11 @@ D-256, D-261, D-268, D-270, D-315.
 - The build's warning channel `BUILD_WARNINGS` and `_warn!` (D-250).
 - The grid records `GridEntry` and `GridReport`, and `_anchor_label`.
 - `DeploymentInvalid`'s and `GridUtilization`'s `grid` payloads, rendered by
-  `_grid_block` (D-187).
+  `_grid_block`, which prints a cofactor at or above `PRIME_DIVISOR_CAP`'s
+  square as unfactored (D-187, D-459).
+- The time doors' `:range` arms: `RatesViolation`'s composed divisor,
+  `DeploymentInvalid`'s `:derive` over a pool past `Int`, and
+  `ArgumentInvalid`'s on `Period`, `Hz` and `Absolute` (§9.2, §10.5, D-459).
 - `ArgumentInvalid`'s arms off the deployment surface (D-256, D-261).
 - The `Trim*` kinds `TrimProblemInvalid`, `TrimCommitEvents`,
   `TrimCommitResiduals` and `TrimCommitChecks` (D-262).
@@ -560,7 +580,7 @@ Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
-D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452.
+D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452, D-459.
 
 ### `src/executor.jl`
 
@@ -796,7 +816,8 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D
   through the simulation's method (D-319), restored into the
   nominal half with no resolve, no `apply!` and no establishment round, so
   the frozen cells are the checkpoint's held cells. The `about` form keeps
-  the resolve, the `apply!` and D-213's round (D-274).
+  the resolve, the `apply!` and D-213's round (D-274), and sets both halves'
+  clocks at `t0` through store.jl's `_set_origin!` (D-458).
 - At the default point each root input's checkpoint value enters the seeded
   half through conditions.jl's `_convert`, and a type that does not convert
   is `ConditionResolution` `:unconvertible` with the checkpoint as its
@@ -823,7 +844,7 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D
   face `u` (D-437).
 
 Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,
-D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438.
+D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438, D-458.
 
 ### `src/model.jl`
 
@@ -1228,10 +1249,15 @@ Spec: §10.2, §12.6, D-017, D-274, D-442, D-452.
   - `_instant`, the float nearest an exact instant from its position, one
     integer multiply-add and one division over the three integers, its
     multiply and add plain in the loop and checked at the door (D-456,
-    D-457); its `Clock` method forwards the clock's integers.
+    D-457); its `Clock` method forwards the clock's integers;
+  - the division `_nearest`, one float division while both integers stay
+    within `MAX_EXACT_INTEGER`, `2^53`, and past it `_rounded_quotient`, a
+    long division in `UInt128` that rounds once (D-458);
+  - `_set_origin!` writes boundary zero's clock through `_instant` at
+    position 0, as every later clock is written (D-458).
 
 Spec: §9.5, §9.7, §10.5, §13.5, D-162, D-235, D-237, D-260, D-316, D-317, D-437,
-D-456, D-457.
+D-456, D-457, D-458.
 
 ### `src/trace.jl`
 
@@ -1283,14 +1309,15 @@ Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245, D-437.
   two-half scratch world. Each half is a scratch `Model`, built by model.jl's
   `_scratch` (D-317, D-319).
 - `_solve_problem`, the solve through the verdict's evaluation, with both
-  halves' clocks at `t0` (§14.8), and `_verdict!`, which takes the caller's
+  halves' clocks set at `t0` through store.jl's `_set_origin!` (§14.8,
+  D-458), and `_verdict!`, which takes the caller's
   commit, both shared with the simulation's method in sim.jl (D-319).
 - The misuse fallback on a `Model`, and `ArgumentInvalid`'s `:non_nominal` on
   a `Model` at another scalar (D-319).
 - `TrimReport`, with its `committed_checks` (D-262).
 
 Spec: §9.6, §13.1, §14.5–§14.9, D-070, D-158, D-213, D-224, D-253, D-262,
-D-277, D-317, D-318, D-319.
+D-277, D-317, D-318, D-319, D-458.
 
 ### `test/fixtures.jl`
 
@@ -1327,15 +1354,17 @@ framework name the tests call or extend is admitted. A second line,
 ### `test/test_lattices.jl`
 
 The frame on its lattices and the step bound (§2.1, §10.3–§10.5, §12.6,
-D-444–D-447, D-449, D-450, D-455–D-457): the step counts against the exact
+D-444–D-447, D-449, D-450, D-455–D-458): the step counts against the exact
 periods, the split, equal steps under `h_max`, harmonic or not, subcycling,
 sub-step publication, freshness, localization across a frame's steps, a stop
 at a step end, the `Int` bound and the clock's resolution at every door; a
 step's length as the difference of its two clocks, a remainder from a `t*`
 included, a typed time on a lattice as its boundary's clock from an exact
 origin, a bound finer than the frame on the clocks of a frame at that bound, a
-restored state on its own origin's clocks, and a step typed on the frame grid
-firing at its boundary. Its fixtures are its own:
+restored state on its own origin's clocks, a step typed on the frame grid
+firing at its boundary, the clock's division against the exact quotient at
+every magnitude, and a wall-clock origin's clocks, boundary zero's included.
+Its fixtures are its own:
 
 - `Recorder()`, an `AbstractAlgorithm` defined in the suite, and its
   `RecorderStepper`, forward Euler through the seam's protocol, proposing

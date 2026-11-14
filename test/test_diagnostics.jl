@@ -326,6 +326,7 @@ function diagnostics_kind_set()
             RatesViolation(path = "a", reason = :value_vocabulary, key = :b, value = 3),
             RatesViolation(path = "a", reason = :multiplier, key = :b, value = 0),
             RatesViolation(path = "a", reason = :phase, key = :b, value = 5),
+            RatesViolation(path = "a", reason = :range, key = :b, value = Relative(2^32 + 1)),
             RatesViolation(path = "a", reason = :period, key = :b, value = 0//1),
             RatesViolation(path = "a", reason = :offset, key = :b, value = 3//1),
             RatesViolation(path = "a", reason = :unknown_child, key = :z, candidates = ["b"]),
@@ -434,6 +435,7 @@ function diagnostics_kind_set()
             DeploymentInvalid(parameter = :Δt_base, reason = :unanchored, paths = ["a/b"],
                               grid = grid),
             DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint),
+            DeploymentInvalid(parameter = :Δt_base, reason = :range, value = :derive),
             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1),
             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 1//(10^10 + 1),
                               related = 1//10^10),
@@ -619,6 +621,9 @@ function diagnostics_kind_set()
             ArgumentInvalid(call = :Hz, reason = :inexact, value = 0.5),
             ArgumentInvalid(call = :Absolute, reason = :inexact, value = 0.5),
             ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = 1),
+            ArgumentInvalid(call = :Period, reason = :range, value = 1//0),
+            ArgumentInvalid(call = :Hz, reason = :range, value = 0),
+            ArgumentInvalid(call = :Absolute, reason = :range, value = big(1)//big(2)^70),
             ArgumentInvalid(call = :step!, reason = :both_given),
             ArgumentInvalid(call = :step!, reason = :range, argument = :frames, value = 0),
             ArgumentInvalid(call = :step!, reason = :range, argument = :t_plus, value = -1.0),
@@ -784,9 +789,9 @@ function diagnostics_kind_set()
         # `Δt_base` and the bound each have a range of their own, and the bound's
         # exactness is its step count's (§9.2, §10.5, D-445, D-449).
         @test message(DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1)) ==
-              "`Δt_base` must be positive and finite, got 0//1 (§9.2)"
+              "`Δt_base` must be positive and finite in `Rational{Int}`, got 0//1 (§9.2)"
         @test message(DeploymentInvalid(parameter = :h_max, reason = :range, value = 0//1)) ==
-              "`h_max` must be positive and finite, got 0//1 (§10.5)"
+              "`h_max` must be positive and finite in `Rational{Int}`, got 0//1 (§10.5)"
         @test message(DeploymentInvalid(parameter = :h_max, reason = :inexact, value = 0.001)) ==
               "`h_max` must be exact — a Rational (`h_max = 1//100`) or a `Period`/`Hz` " *
               "value: a span's step count is exact arithmetic, ill-defined over floats " *
@@ -808,6 +813,38 @@ function diagnostics_kind_set()
                                                  value = 922, related = 921)),
                          "frame 922 is past frame 921, the last a run of this deployment " *
                          "from this origin may take")
+        # A value a time door cannot hold names the door and the value (§10.5).
+        @test message(ArgumentInvalid(call = :Hz, reason = :range, value = 0)) ==
+              "`Hz` holds an exact `Rational{Int}`, and 0 gives a period past `Int` or not " *
+              "finite (§10.5)"
+        @test message(ArgumentInvalid(call = :Period, reason = :range, value = 1//0)) ==
+              "`Period` holds an exact `Rational{Int}`, and 1//0 is past `Int` or not finite (§10.5)"
+        @test message(DeploymentInvalid(parameter = :Δt_frame, reason = :range,
+                                        value = big(2)^70)) ==
+              "`Δt_frame` must be positive and finite in `Rational{Int}`, got " *
+              "1180591620717411303424 (§9.2)"
+        # A composed divisor past `Int` names the entry that composed it (§10.5).
+        @test message(RatesViolation(path = "g", reason = :range, key = :a,
+                                     value = Relative(2^32 + 1))) ==
+              "`sample_times` at `g`, key `a`: Relative(4294967297, 0) composes a divisor " *
+              "past `Int` (§10.5)"
+        # A pool past `Int` has no derivable base tick, for either cause (§9.2).
+        @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
+                                                   value = :derive)),
+                         "Δt_base cannot be derived: the gcd of the anchors' periods and " *
+                         "offsets has a denominator past `Int`, or an anchor counts more of " *
+                         "its ticks than `Int` holds")
+        # A cofactor the trial division left at or above its cap's square may be
+        # composite, and prints as unfactored, never as a prime (§9.2, D-187).
+        unfactored = GridReport([GridEntry(:period, 1//(3 * (2^61 - 1)), "", :a, 1, Rational{Int}[])],
+                                1//(3 * (2^61 - 1)),
+                                [(prime = 3, power = 1, suppliers = [1]),
+                                 (prime = 2^61 - 1, power = 1, suppliers = [1])])
+        rendered = message(DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period,
+                                             value = 1//(3 * (2^61 - 1)), related = 1//1,
+                                             scope = "", key = :a, grid = unfactored))
+        @test occursin("\n  primes: 6917529027641081853 = 3·2305843009213693951 unfactored\n", rendered)
+        @test occursin("\n    2305843009213693951 unfactored  a period", rendered)
         # A header mismatch counts the parameters the walk names (§12.7).
         @test occursin("the seven trajectory-determining deployment parameters",
                        message(CheckpointMismatch(what = :deployment, name = :algorithm,

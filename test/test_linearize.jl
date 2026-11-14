@@ -484,4 +484,16 @@ function test_linearize()
         @test d isa TapResolution && d.reason === :unseedable && d.field === :u
         @test d.pinning == [("del", :discrete, Float64)]
     end
+
+    @testset "the `about` form's clock is boundary zero's at `t0`, the float nearest it from any origin (§14.10, D-456, D-457)" begin
+        # `q̇ = -t·q² + u` at `q = 1` and `u = 0` reads `-t`. The origin's parts
+        # pass `2^53`, where `Float64(t₀)` lands an ulp off the nearest float.
+        t₀ = 684943219091290305//514823562239077262
+        model = Model(fed(TimedDecay()); Δt_frame = 1//10)
+        linearization = linearize(model, taps(x = (q = get_state("c", :q),));
+                                  about = set(u = (in = 0.0,)), t0 = t₀)
+        init!(model, set(u = (in = 0.0,)); t0 = t₀)
+        @test linearization.ẋ₀.q === -model.exec.clock.t === -1.330442639634298
+        @test Float64(t₀) != 1.330442639634298
+    end
 end

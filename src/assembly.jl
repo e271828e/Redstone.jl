@@ -1187,10 +1187,12 @@ The child's scope timing, and the link an explicit key declared — the declarin
 assembly's path, the key as `_rate_entry` returned it, and the wrapper value —
 or `nothing` for an unlisted child. The unlisted child continues at the
 enclosing timing: the `Relative(1)` default is the affine law at
-`(K, φ) = (1, 0)`, implemented by nothing.
+`(K, φ) = (1, 0)`, implemented by nothing. The law runs in checked `Int`
+arithmetic, and a composed divisor or phase past `Int` is recorded as `:range`
+on the entry; the child then continues at the enclosing timing too.
 """
 function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::String,
-                      field::Symbol, scope::Timing)
+                      field::Symbol, scope::Timing, diags::Vector{Diagnostic})
     hit = _rate_entry(rate_decl, segment, field)
     hit === nothing && return scope, nothing
     (key, rate) = hit
@@ -1201,7 +1203,16 @@ function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::S
     (rate isa Relative || rate isa Absolute) || return scope, nothing
     link = RateLink((scope = path, key = key, entry = rate))
     if rate isa Relative
-        Timing((scope.anchor, rate.K * scope.m, scope.c + rate.φ * scope.m)), link
+        # A rate its own check refused composes nothing. A sound one keeps
+        # `c < m`, so a phase past `Int` needs a multiplier past it first.
+        1 ≤ rate.K && 0 ≤ rate.φ < rate.K || return scope, link
+        timing = _exact_or_nothing(
+            () -> Timing((scope.anchor, Base.Checked.checked_mul(rate.K, scope.m),
+                          Base.Checked.checked_add(scope.c,
+                                                   Base.Checked.checked_mul(rate.φ, scope.m)))))
+        timing === nothing || return timing, link
+        push!(diags, RatesViolation(path = path, reason = :range, key = key, value = rate))
+        scope, link
     else
         # One anchor per `Absolute` entry (§9.1): a bare container key applies one
         # declaration to every element (§8.7), so the elements share the anchor
@@ -1381,7 +1392,8 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
         _check_sample_times(path, rate_decl, kids, fields, diags)
         for ((segment, kid), field) in zip(kids, fields)
             child_path = _join(path, segment)
-            kid_scope, kid_link = _child_scope(draft, path, rate_decl, segment, field, scope)
+            kid_scope, kid_link = _child_scope(draft, path, rate_decl, segment, field, scope,
+                                               diags)
             # a primitive's tier, `nothing` for an assembly
             tier = _walk!(draft, child_path, kid, kid_scope, below, kid_link, diags)
             # A key on a continuous child is the Δt-on-continuous error at

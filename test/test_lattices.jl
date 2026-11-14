@@ -631,6 +631,66 @@ function test_lattices()
         end
     end
 
+    @testset "the clock's division rounds once at every magnitude, the plain one below `2^53` (§10.5, D-456)" begin
+        # Against the exact quotient, over the shapes the plain division
+        # missed: a quotient just below 2, where an ulp is smallest against
+        # it, one past 55 bits, a tiny one and near ties, each signed.
+        nearest(dividend, divisor) = Float64(big(dividend) // big(divisor))
+        spread(i, range) = first(range) + Int128(hash(i) % length(range))
+        shapes = Tuple{Int128,Int128}[]
+        for i in 1:4000
+            divisor = spread(i, 2^60:2^62) * spread(-i, 2^20:2^40)
+            push!(shapes, (2divisor - spread(2i, 1:2^50), divisor))
+            push!(shapes, (spread(i, 2^55:2^62) * spread(-i, 1:2^60), spread(2i, 1:2^20)))
+            push!(shapes, (spread(i, 1:2^20), spread(-i, 2^60:2^62) * spread(2i, 2^40:2^62)))
+            half = spread(2i, 1:2^30)
+            push!(shapes, (spread(i, 2^53:2^54 - 1) * half + i % 5 - 2, 2half))
+        end
+        @test all(_nearest(dividend, divisor) === nearest(dividend, divisor) &&
+                  _nearest(-dividend, divisor) === -nearest(dividend, divisor)
+                  for (dividend, divisor) in shapes)
+        @test _rounded_quotient(Int128(0), Int128(3)) === _nearest(Int128(0), Int128(2)^100) === 0.0
+        @test _nearest(typemax(Int128), Int128(1)) === nearest(typemax(Int128), 1)
+        # Below `2^53` both integers convert exactly and the one division is
+        # today's, so no trajectory there moves.
+        small = [(spread(i, -2^53:2^53), spread(-i, 1:2^53)) for i in 1:4000]
+        @test all(_nearest(dividend, divisor) === Float64(dividend) / Float64(divisor)
+                  for (dividend, divisor) in small)
+    end
+
+    @testset "from a wall-clock origin every frame top is the float nearest its instant, boundary zero's the origin itself (§10.5, §12.6, D-456, D-457)" begin
+        # A float near today's `time()` has an ulp of `2^-22`, so over a 0.1 s
+        # frame its integers pass `2^53` at frame 0.
+        t0 = 1.7631e9 + 0.123456
+        exact(k) = Float64(big(numerator(Rational{Int}(t0))) // big(denominator(Rational{Int}(t0))) +
+                           big(k) // 10)
+        model = Model(feedback_model(); Δt_frame = 1//10)
+        init!(model, set(u = (ref = 0.0,)); t0)
+        clocks = Float64[model.exec.clock.t]
+        hooks = RecordingHooks(model, 0, clocks, false)
+        for frame in 1:200
+            frame!(model, frame, hooks)
+        end
+        @test clocks == [exact(k) for k in 0:200]
+        # A time typed as `t0 + s`, one rounding, is its frame top's clock.
+        @test clocks[11:10:end] == [t0 + s for s in 1:20]
+        # Boundary zero takes its clock from the same formula, so the model is
+        # at a frame top there, from any wall-clock origin.
+        for i in 1:40
+            t0 = 1.7e9 + i * 2.5e6 + i / 7
+            init!(model, set(u = (ref = 0.0,)); t0)
+            @test model.exec.clock.t === t0
+            @test checkpoint(model).t === t0
+        end
+        # A rational origin whose own parts pass `2^53`: `Float64(t₀)` divides
+        # the two converted parts and lands an ulp off, the clock does not.
+        t₀ = 684943219091290305//514823562239077262
+        init!(model, set(u = (ref = 0.0,)); t0 = t₀)
+        @test model.exec.clock.t === Float64(big(numerator(t₀)) // big(denominator(t₀))) ===
+              1.330442639634298
+        @test checkpoint(model).t₀ === t₀
+    end
+
     @testset "a step typed on the frame grid fires at its boundary, in one snapshot, localized or not (§10.4, §10.5, D-456)" begin
         # At a 0.3 s frame, frame 3 is 0.9 itself, where the step is due.
         for localized in (true, false)

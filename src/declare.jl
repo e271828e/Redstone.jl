@@ -370,7 +370,28 @@ stop_reason(::Any) = ""  # COV_EXCL_LINE
 # constructor-side refusal is floats, because it is a normalization failure
 # rather than a range check: grid derivation is GCD arithmetic, ill-defined over
 # floats, so every period and offset is an exact `Rational{Int}` and a float
-# argument throws the teaching error naming the exact spelling.
+# argument throws the teaching error naming the exact spelling. A value that
+# `Rational{Int}` cannot hold finitely fails the same normalization, and is
+# refused as `:range`: an integer or a part past `Int`, or `Hz(0)`'s period.
+
+# `f()`, or `nothing` where its exact arithmetic leaves `Int`: the one catch the
+# time surface's doors share, each refusing the `nothing` under its own reason.
+function _exact_or_nothing(f)
+    try
+        f()
+    catch err
+        err isa Union{InexactError,OverflowError,DivideError} || rethrow()
+        nothing
+    end
+end
+
+# A declaration door's exact value, `to_exact(value)` held finitely, or the
+# door's refusal.
+function _declared_quantity(to_exact, call::Symbol, value)
+    quantity = _exact_or_nothing(() -> to_exact(value))
+    quantity !== nothing && isfinite(quantity) && return quantity
+    throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, value = value)))
+end
 
 # Design: §10.5.
 # GCD arithmetic derives the base grid, and it is ill-defined over floats.
@@ -385,11 +406,12 @@ value, so the spelling is a choice. Each normalizes to the exact rational period
 at construction. See [`Hz`](@ref) for the frequency spelling.
 
 A float is refused as `ArgumentInvalid`, because the grid arithmetic is exact.
-Write `Period(1//50)`, not `Period(0.02)`.
+Write `Period(1//50)`, not `Period(0.02)`. So is a value that `Rational{Int}`
+cannot hold, or that is not finite.
 """
 struct Period
     T::Rational{Int}
-    Period(T::Union{Integer,Rational{<:Integer}}) = new(Rational{Int}(T))
+    Period(T::Union{Integer,Rational{<:Integer}}) = new(_declared_quantity(Rational{Int}, :Period, T))
     Period(T::AbstractFloat) =
         throw(DiagnosticError(ArgumentInvalid(call = :Period, reason = :inexact, value = T)))
 end
@@ -405,9 +427,11 @@ Return the [`Period`](@ref) of a frequency, `1 // frequency` seconds.
 [`Deployment`](@ref).
 
 A float is refused as `ArgumentInvalid`, because the grid arithmetic is exact.
-Write `Hz(1//2)` for 0.5 Hz, not `Hz(0.5)`.
+Write `Hz(1//2)` for 0.5 Hz, not `Hz(0.5)`. So is a frequency whose period
+`Rational{Int}` cannot hold, or that is not finite, as `Hz(0)`'s.
 """
-Hz(frequency::Union{Integer,Rational{<:Integer}}) = Period(1 // frequency)
+Hz(frequency::Union{Integer,Rational{<:Integer}}) =
+    Period(_declared_quantity(f -> Rational{Int}(1 // f), :Hz, frequency))
 Hz(frequency::AbstractFloat) =
     throw(DiagnosticError(ArgumentInvalid(call = :Hz, reason = :inexact, value = frequency)))
 
@@ -458,14 +482,16 @@ only once a [`Deployment`](@ref) fixes `Δt_base`. Anchor periods and nonzero
 offsets constrain the base grid together. An offset of `T/1000` can cost a grid
 1000 times finer.
 
-A float offset is refused as `ArgumentInvalid`, and so is a bare number in place
+A float offset is refused as `ArgumentInvalid`, and so is an offset that
+`Rational{Int}` cannot hold or that is not finite, and a bare number in place
 of a `Period`. Write `Absolute(Hz(50), 1//500)`. The build refuses a period that
 is not positive, or an offset outside `0 ≤ τ < T`, as `RatesViolation`.
 """
 struct Absolute
     T::Rational{Int}
     τ::Rational{Int}
-    Absolute(q::Period, τ::Union{Integer,Rational{<:Integer}} = 0) = new(q.T, Rational{Int}(τ))
+    Absolute(q::Period, τ::Union{Integer,Rational{<:Integer}} = 0) =
+        new(q.T, _declared_quantity(Rational{Int}, :Absolute, τ))
     Absolute(::Period, τ::AbstractFloat) =
         throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :inexact, value = τ)))
     Absolute(q::Real, τ...) =

@@ -748,7 +748,7 @@ end
 "§8.7, §10.5: a `sample_times` declaration outside the value vocabulary, the residue bounds or the key rule."
 Base.@kwdef struct RatesViolation <: Diagnostic
     path::String
-    reason::Symbol   # :declaration_shape|:value_vocabulary|:multiplier|:phase|:period|:offset|:unknown_child|:continuous_child
+    reason::Symbol   # :declaration_shape|:value_vocabulary|:multiplier|:phase|:range|:period|:offset|:unknown_child|:continuous_child
     key::Union{Nothing,Symbol} = nothing     # the offending key
     value::Any = nothing                     # the offending value
     candidates::Vector{String} = String[]    # the immediate child names
@@ -762,6 +762,7 @@ function message(d::RatesViolation)
     d.reason === :value_vocabulary &&
         return "$(_rates_entry(d)): $(repr(d.value)) — the wrappers are the whole value " *
                "vocabulary; a bare integer or bare quantity is a declaration error (§8.7)"
+    d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.K), $(d.value.φ)) composes a divisor past `Int` (§10.5)"
     d.reason === :multiplier && return "$(_rates_entry(d)): K = $(d.value), and K ≥ 1 (§10.5)"
     d.reason === :phase && return "$(_rates_entry(d)): φ = $(d.value), and 0 ≤ φ < K (§10.5)"
     d.reason === :period && return "$(_rates_entry(d)): period $(d.value), and T > 0 (§10.5)"
@@ -1354,7 +1355,7 @@ _deployment_constraint(parameter::Symbol) =
     parameter === :localization_tol    ? "must be a positive real" :
     parameter === :localization_budget ? "must be an integer ≥ 1" :
     (parameter === :h_max || parameter === :Δt_frame || parameter === :Δt_base) ?
-                                   "must be positive and finite" :
+                                   "must be positive and finite in `Rational{Int}`" :
                                    "is outside its constraint"
 _deployment_section(parameter::Symbol) =
     parameter === :algorithm           ? " (§10.2)" :
@@ -1394,7 +1395,10 @@ function _grid_block(grid::Union{Nothing,GridReport})
         push!(rows, rstrip(row))
     end
     # A whole-second grid has no prime to attribute, so the section is absent.
-    prime_powers = ["$(p.prime)$(_superscript(p.power))" for p in grid.primes]
+    # A cofactor the trial division left at or above its cap's square may be
+    # composite, so it prints as unfactored, never as a prime.
+    prime_powers = [p.prime ≥ PRIME_DIVISOR_CAP^2 ? "$(p.prime) unfactored" :
+                    "$(p.prime)$(_superscript(p.power))" for p in grid.primes]
     isempty(prime_powers) ||
         push!(rows, "  primes: $(denominator(grid.admissible)) = " *
                     join(prime_powers, "·"))
@@ -1435,6 +1439,11 @@ function message(d::DeploymentInvalid)
     d.reason === :no_constraint &&
         return "Δt_base cannot be derived: no anchor declares a constraint to derive it " *
                "from (§9.1)"
+    # A pool whose grid report leaves `Int`: no base tick serves every anchor.
+    d.reason === :range && d.value === :derive &&
+        return "Δt_base cannot be derived: the gcd of the anchors' periods and offsets " *
+               "has a denominator past `Int`, or an anchor counts more of its ticks than " *
+               "`Int` holds, so no `Rational{Int}` base tick serves them all (§9.1, §9.2)"
     d.reason === :anchor_period &&
         return "$(_anchor_label(d.scope, d.key)): period $(d.value) is not an integer " *
                "multiple of Δt_base = $(d.related) (§9.1)" * _grid_block(d.grid)
@@ -2301,6 +2310,11 @@ function message(d::ArgumentInvalid)
     d.reason === :not_a_quantity &&
         return "`Absolute` takes a quantity value: `Period(1//50)` or `Hz(50)` — got " *
                "$(repr(d.value)) (§10.5)"
+    # A declaration door's value that `Rational{Int}` cannot hold finitely.
+    d.reason === :range && d.call in (:Period, :Hz, :Absolute) &&
+        return "`$(d.call)` holds an exact `Rational{Int}`, and $(repr(d.value)) " *
+               (d.call === :Hz ? "gives a period" : "is") *
+               " past `Int` or not finite (§10.5)"
     d.reason === :both_given &&
         return d.call === :replay! ?
                "replay! takes `to_boundary` or `to_time`, not both — the boundary index and " *

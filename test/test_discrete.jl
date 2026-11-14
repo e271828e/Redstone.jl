@@ -156,6 +156,33 @@ function discrete_rate_fold()
         @test all(e.D == 2 && e.Φ == 1 for e in rows)
     end
 
+    @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, §10.5)" begin
+        # `Relative(K₂)` inside `Relative(K₁)` composes the multiplier `K₂·K₁`.
+        # Past `Int` it wrapped to a wrong divisor, to 0 or below; now the inner
+        # key is refused as `:range`, alone.
+        nested(K1, K2) = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(K2))));
+                               sample_times = (; g = Relative(K1)))
+        for (K1, K2) in ((2^32 + 1, 2^32 + 1), (2^32, 2^32), (2^62, 3))
+            d = only(diagnostics(failure(() -> build(nested(K1, K2)))))
+            @test d isa RatesViolation && d.reason === :range && d.path == "g" &&
+                  d.key === :a && d.value === Relative(K2)
+        end
+        # Just inside `Int` the multiplier composes exactly, its phase with it.
+        @test Tuple(only(build(nested(2^31, 2^31)).structure.components).timing) == (0, 2^62, 0)
+        phased = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2^31, 2^31 - 1))));
+                       sample_times = (; g = Relative(2^31, 2^31 - 1)))
+        @test Tuple(only(build(phased).structure.components).timing) ==
+              (0, 2^62, (2^31 - 1) + (2^31 - 1) * 2^31)
+        # A rate its own check refuses composes nothing, so a multiplier or a
+        # phase that would also overflow is refused once, by its own reason.
+        for (K2, φ2, reason) in ((-2^62, 0, :multiplier), (2, 2^62, :phase))
+            bad = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(K2, φ2))));
+                        sample_times = (; g = Relative(4)))
+            d = only(diagnostics(failure(() -> build(bad))))
+            @test d isa RatesViolation && d.reason === reason && d.value == (reason === :phase ? φ2 : K2)
+        end
+    end
+
     @testset "bare rate keys drive the grid the composite ones did (§8.7, D-211)" begin
         bare = Simulation(Group((; a = TickCounter(), b = TickCounter());
                                 sample_times = (; a = Relative(2), b = Relative(3, 1))); Δt_frame = 1//10)
@@ -475,6 +502,46 @@ function discrete_deployment()
                    (:Δt_base, :anchor_offset, (typemax(Int) - 1)//1)])
     end
 
+    @testset "a time quantity of any integer type is taken at its value, and one `Rational{Int}` cannot hold is refused as its parameter's range (§9.2, D-229, D-454)" begin
+        multirate_build = build(MultiRate())
+        reference = Deployment(multirate_build; Δt_frame = 1//500, Δt_base = 1//250, h_max = 1//1000)
+        @test Deployment(multirate_build; Δt_frame = big(1)//500, Δt_base = Int32(1)//Int32(250),
+                         h_max = Int16(1)//Int16(1000)) == reference
+        feedback_build = build(feedback_model())
+        @test Deployment(feedback_build; Δt_frame = Int8(1), Δt_base = big(1)).Δt_frame === 1//1
+        # `Bool` is an integer to Julia, so `true` is one second.
+        @test Deployment(feedback_build; Δt_frame = true).Δt_frame === 1//1
+        # Past `Int`, each keyword is refused on its own premise, every one in
+        # the one throw (D-229).
+        err = failure(() -> Deployment(multirate_build; Δt_frame = big(2)^70,
+                                       Δt_base = big(1)//big(2)^70, h_max = Int128(2)^64 // 3))
+        @test Set((d.parameter, d.reason, d.value) for d in diagnostics(err)) ==
+              Set([(:Δt_frame, :range, big(2)^70), (:Δt_base, :range, big(1)//big(2)^70),
+                   (:h_max, :range, Int128(2)^64 // 3)])
+    end
+
+    @testset "a divisor composed with its anchor past `Int` is the lattices' refusal, never wrapped (§9.2, §10.5, D-445)" begin
+        # `Relative(2^30)` under a `2^40` s anchor over a `2^-20` s base tick:
+        # the anchor counts `2^60` base ticks, its member `2^90`, a period in
+        # units past `Int`.
+        rig = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2^30))));
+                    sample_times = (; g = Absolute(Period(2^40))))
+        d = only(diagnostics(failure(() -> Deployment(build(rig); Δt_frame = 1//2^20,
+                                                      Δt_base = 1//2^20))))
+        @test d isa DeploymentInvalid && d.parameter === :Δt_base && d.reason === :range &&
+              d.value == 1//2^20 && d.related == 1//2^20
+        # A coarser grid holds it, and the divisor composes exactly.
+        deployment = Deployment(build(rig); Δt_frame = 2^10, Δt_base = 2^10)
+        @test [(row.D, row.Φ) for row in deployment.schedule.rows] == [(2^60, 0)]
+        @test [(scope.D, scope.Φ) for scope in deployment.schedule.scopes] == [(2^30, 0)]
+        # Collected with the event parameters' faults in the one throw, as every
+        # lattice refusal is (D-229).
+        err = failure(() -> Deployment(build(rig); Δt_frame = 1//2^20, Δt_base = 1//2^20,
+                                       firing_budget = 0))
+        @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
+              Set([(:Δt_base, :range), (:firing_budget, :range)])
+    end
+
     @testset "Δt_base derivation demands an all-anchored model (§9.1)" begin
         # Derivation with an unanchored component present is action at a distance:
         # refused constructively, naming the components whose periods would rescale.
@@ -571,6 +638,47 @@ function discrete_deployment()
               [e.factor for e in deployment3.grid.pool] == [1, 1, 1]
         @test [row.D for row in deployment3.schedule.rows] == [3, 2, 1] &&
               warnings(deployment3) == Diagnostic[]
+    end
+
+    @testset "a pool whose attribution leaves `Int` admits no deployment, and is refused as one, never raised (§9.1, §9.2, D-187, D-229)" begin
+        anchored(rates) = build(Group(NamedTuple{keys(rates)}(Tuple(TickCounter() for _ in rates));
+                                      sample_times = rates))
+        # Two coprime denominators past `2^31`: the pool's gcd has no
+        # `Rational{Int}` denominator, so no base tick divides both periods.
+        coprime = anchored((; a = Absolute(Period(1//(2^40 + 1))), b = Absolute(Period(1//(2^40 + 3)))))
+        err = failure(() -> Deployment(coprime; Δt_frame = 1))
+        @test [(d.reason, d.key, d.grid) for d in diagnostics(err)] ==
+              [(:anchor_period, :a, nothing), (:anchor_period, :b, nothing)]
+        d = only(diagnostics(failure(() -> Deployment(coprime; Δt_frame = 1, Δt_base = :derive))))
+        @test d isa DeploymentInvalid && d.parameter === :Δt_base && d.reason === :range &&
+              d.value === :derive
+        # An offset's leave-one-out factor past `Int`, `2^40·(2^23 + 1)`: the
+        # gcd fits, but no base tick counts the period in an `Int`.
+        refined = anchored((; a = Absolute(Period(2^40), 1//(2^23 + 1))))
+        d = only(diagnostics(failure(() -> Deployment(refined; Δt_frame = 1))))
+        @test d.reason === :anchor_offset && d.grid === nothing
+        d = only(diagnostics(failure(() -> Deployment(refined; Δt_frame = 1, Δt_base = :derive))))
+        @test d.reason === :range && d.value === :derive
+        # The derivation's other premises run beside it (D-229).
+        err = failure(() -> Deployment(coprime; Δt_frame = 1, Δt_base = :derive, h_max = 0))
+        @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
+              Set([(:h_max, :range), (:Δt_base, :range)])
+
+        # The trial division stops at its cap, the cofactor above it whole, and
+        # never wraps: a prime denominator near `2^61` derives at once, one
+        # near `2^63` is refused rather than hung.
+        prime = 2^61 - 1
+        deployment = @test_logs (:info, r"derived") Deployment(
+            anchored((; a = Absolute(Period(1//prime)))); Δt_frame = 1, Δt_base = :derive)
+        @test deployment.grid.primes == [(prime = prime, power = 1, suppliers = [1])]
+        d = only(diagnostics(failure(() -> Deployment(
+            anchored((; a = Absolute(Period(1//(typemax(Int) - 24))))); Δt_frame = 1))))
+        @test d.reason === :anchor_period
+        # Two primes past the cap stay one cofactor; the primes below it split.
+        (p, q) = (1_048_583, 1_048_589)
+        @test _prime_powers(p * q) == [(p * q, 1)]
+        @test _prime_powers(2^2 * 3 * p) == [(2, 2), (3, 1), (p, 1)]
+        @test _prime_powers(typemax(Int) - 24) == [(typemax(Int) - 24, 1)]
     end
 
     # --- multi-rate: the gate at run time (§10.5) -----------------------------------
