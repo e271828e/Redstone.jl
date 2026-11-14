@@ -368,13 +368,10 @@ function _exact_origin(t0::AbstractFloat)
 end
 _exact_origin(t0) = nothing
 function _origin(call::Symbol, t0, deployment::Deployment)
-    origin = try
+    origin = _exact_or_nothing() do
         exact = _exact_origin(t0)
         exact === nothing || _clock_integers(exact, deployment)
         exact
-    catch err
-        err isa Union{InexactError,OverflowError,DivideError} || rethrow()
-        nothing
     end
     origin === nothing && throw(DiagnosticError(ArgumentInvalid(
         call = call, reason = :range, argument = :t0, value = t0)))
@@ -1213,10 +1210,8 @@ function _check_grid!(diags::Vector{Diagnostic}, model_state::ModelState)
     t, t₀, deployment = model_state.t, model_state.t₀, model_state.deployment
     # A hand-built state may carry an origin no door accepted, so it is checked
     # as `init!` checks one (D-457).
-    integers = try
-        _clock_integers(t₀, deployment)
-    catch err
-        err isa OverflowError || rethrow()
+    integers = _exact_or_nothing(() -> _clock_integers(t₀, deployment))
+    if integers === nothing
         push!(diags, ArgumentInvalid(call = :restore!, reason = :range, argument = :t0,
                                      value = t₀))
         return 0
