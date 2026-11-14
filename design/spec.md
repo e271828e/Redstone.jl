@@ -6749,6 +6749,12 @@ a `Rational` of any integer type is taken at its value. **A value that
 `ArgumentInvalid` `:range`**, `Hz(0)` and an infinite offset included
 ([D-459][d-459]). Like a float, it fails the normalization to an exact period.
 
+`K` and `φ` count scope ticks, and each is an integer of any type. **`Relative`
+refuses a count that `Int` cannot hold as `ArgumentInvalid` `:range`, and a
+float or a rational as `:not_a_count`** ([D-459][d-459]). A fraction there usually
+asks for a child that ticks faster than its scope, or for a period in
+seconds. The message names `Absolute` for both.
+
 The wrappers are the whole vocabulary ([D-185][d-185]). A bare integer or bare
 quantity is a declaration error. An unlisted discrete child defaults to
 `Relative(1)`. The common case therefore costs nothing, and a multiplied or
@@ -15250,11 +15256,13 @@ activation):
   `overlay!`, `restore!` and `replay!` ([D-261][d-261]). The call
   (`Model`, `Simulation`, `init!`, `overlay!`, `frame!`, `apply!`, `restore!`, `run!`,
   `step!`, `replay!`, `live!`, `pace!`, `margin!`, `trim!`, `linearize`,
-  `trace`, `TableBinding`, a period constructor), the argument, the value in
-  hand, and a `reason` naming the violated constraint. A period constructor,
-  `Period`, `Hz` or `Absolute`, refuses a float as `:inexact` and a value
-  that `Rational{Int}` cannot hold finitely as `:range`, `Hz(0)` included
-  ([§10.5][s10-5], [D-459][d-459]). A `:range` refusal of
+  `trace`, `TableBinding`, a period constructor, `Relative`), the argument, the
+  value in hand, and a `reason` naming the violated constraint. A period
+  constructor, `Period`, `Hz` or `Absolute`, refuses a float as `:inexact` and
+  a value that `Rational{Int}` cannot hold finitely as `:range`, `Hz(0)`
+  included ([§10.5][s10-5], [D-459][d-459]). `Relative` refuses a count that `Int` cannot
+  hold as `:range`, and a float or a rational as `:not_a_count`. A `:range`
+  refusal of
   `frame!`'s `k` also carries the last frame the run may take, the lesser of
   the last the lattices index in an `Int` and the last the origin's clock
   resolves ([§10.5][s10-5], [D-445][d-445], [D-450][d-450]). A `TableBinding`
