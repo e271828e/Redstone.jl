@@ -346,7 +346,7 @@ end
 # range and resolved by the origin's clocks (D-450). Returns the exact origin.
 function _check_origin(model::Model, call::Symbol, t0)
     origin = _origin(call, t0, model.deployment)
-    _last_frame(model.deployment, Float64(origin)) ≥ 1 ||
+    _last_frame(model.deployment, _origin_clock(origin)) ≥ 1 ||
         throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, argument = :t0,
                                               value = t0)))
     origin
@@ -392,7 +392,7 @@ function _clock_integers(t₀::Rational{Int}, deployment::Deployment)
     lattice = deployment.lattice
     integers = _grid_integers(t₀, lattice.unit)
     steps = cld(lattice.frame * denominator(lattice.bound), numerator(lattice.bound))
-    last = _last_frame(deployment, Float64(t₀))
+    last = _last_frame(deployment, _origin_clock(t₀))
     mul, add = Base.Checked.checked_mul, Base.Checked.checked_add
     _instant(integers..., 0, 0, lattice.frame, steps, mul, add)
     _instant(integers..., last * lattice.frame, steps, lattice.frame, steps, mul, add)
@@ -557,8 +557,9 @@ end
 # at that magnitude. `0.3/0.1` is `2.9999999999999996`. A clock is the float
 # nearest its instant (D-456), so from the exact origin `-3//10` frame 3 reads
 # `0.0`, while from the float `-0.3` it reads about `1.1e-17`, whose own ulps
-# absorb none of that. `t` and `t₀` are any reals, an exact origin converted
-# at the site, and the stride is `Float64` (D-260, D-457). A bound at or
+# absorb none of that. `t` and `t₀` are any reals, an exact origin read at the
+# site as boundary zero's clock (store.jl's `_origin_clock`, D-458), and the
+# stride is `Float64` (D-260, D-457). A bound at or
 # before the origin is frame 0, whatever its distance, so `_frames_to` never
 # rounds a count `Int` cannot hold on that side. `_frames_fit` is the doors'
 # check for the other side, `_frames_to`'s mirror before its conversion: the
@@ -590,17 +591,17 @@ function _last_frame(deployment::Deployment, t₀::Float64)
     room = (lattice.reach - abs(t₀)) / (2 * Float64(deployment.Δt_frame))   # k < room
     min(lattice.max_frame, room ≤ 1 ? 0 : ceil(Int, room) - 1)
 end
-_last_frame(model::Model) = _last_frame(model.deployment, Float64(model.exec.clock.t₀))
+_last_frame(model::Model) = _last_frame(model.deployment, _origin_clock(model.exec.clock.t₀))
 
 # The same three over a deployment's lattices from an origin, and over a model's
 # own clock, so no caller rebuilds the triple (§12.6, D-445).
 _frames_fit(deployment::Deployment, t::Real, t₀::Real) =
-    _frames_fit(t, Float64(t₀), Float64(deployment.Δt_frame),
-                _last_frame(deployment, Float64(t₀)))
+    _frames_fit(t, _origin_clock(t₀), Float64(deployment.Δt_frame),
+                _last_frame(deployment, _origin_clock(t₀)))
 _frames_to(deployment::Deployment, t::Real, t₀::Real) =
-    _frames_to(t, Float64(t₀), Float64(deployment.Δt_frame))
+    _frames_to(t, _origin_clock(t₀), Float64(deployment.Δt_frame))
 _frame_at(deployment::Deployment, t::Real, t₀::Real) =
-    _frame_at(t, Float64(t₀), Float64(deployment.Δt_frame))
+    _frame_at(t, _origin_clock(t₀), Float64(deployment.Δt_frame))
 _frames_fit(model::Model, t::Real) = _frames_fit(model.deployment, t, model.exec.clock.t₀)
 _frames_to(model::Model, t::Real) = _frames_to(model.deployment, t, model.exec.clock.t₀)
 
@@ -904,8 +905,9 @@ end
         # end inside it (D-445); a bare `integrate!` rounds the clock onto the
         # frame top it ends at. The counters are the run's, which the model never
         # sees (D-317)
-        boundary = (k === nothing ? round(Int, (_seconds(exec.clock.t) - Float64(exec.clock.t₀)) /
-                                           Float64(model.deployment.Δt_frame)) : k) - 1)))
+        boundary = (k === nothing ?
+                    round(Int, (_seconds(exec.clock.t) - _origin_clock(exec.clock.t₀)) /
+                               Float64(model.deployment.Δt_frame)) : k) - 1)))
 end
 
 # Design: §9.2, §11.8, D-250.

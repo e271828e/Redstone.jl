@@ -187,6 +187,12 @@ function _set_origin!(clock::Clock{T}, t₀::Rational{Int}, unit::Rational{Int})
     clock.t = T(_instant(clock, 0))
     nothing
 end
+# The float a reader of an origin takes: boundary zero's clock (D-458), the
+# float nearest the exact origin. `Float64(t₀)` divides the two rounded parts,
+# and sits an ulp off it for some origins whose parts pass `2^53`. A frame
+# count taken from a clock reads the clock as it stands.
+_origin_clock(t₀::Rational{Int}) = _nearest(Int128(numerator(t₀)), Int128(denominator(t₀)))
+_origin_clock(t::Float64) = t
 # The float nearest the exact instant `t₀ + (position + i·units/steps)·unit`
 # (D-456, D-458), from the grid integers: `position` whole units from the origin, and
 # `i` of `steps` equal steps across a span of `units` past it. `count` stays

@@ -1371,7 +1371,7 @@ function replay!(sim::Simulation, trc::Trace; to_boundary = nothing,
         # slack: without it the plain floor would halt one boundary short of
         # the one named.
         t₀, recorded = trc.header.state.t₀, trc.header.state.deployment
-        to_time isa Real && isfinite(to_time) && to_time ≥ Float64(t₀) &&
+        to_time isa Real && isfinite(to_time) && to_time ≥ _origin_clock(t₀) &&
             _frames_fit(recorded, to_time, t₀) ||
             throw(DiagnosticError(ArgumentInvalid(call = :replay!, reason = :range,
                                                   argument = :to_time, value = to_time)))

@@ -889,7 +889,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
   stays within `_last_frame` before either rounds it, `_check_origin`'s
   included. Their
   deployment and model methods are what sim.jl's sites call, so no caller
-  rebuilds the `(t, t₀, Δt_frame)` triple.
+  rebuilds the `(t, t₀, Δt_frame)` triple. They read an exact origin through
+  store.jl's `_origin_clock` (D-458).
 - The claim's gate `_claimed_gate`, which refuses a claimed model's direct
   call as `ArgumentInvalid` `:claimed`. Its `LoopHooks` method is sim.jl's
   and compiles the check away on the loop's path (D-318).
@@ -1256,7 +1257,11 @@ Spec: §10.2, §12.6, D-017, D-274, D-442, D-452.
     within `MAX_EXACT_INTEGER`, `2^53`, and past it `_rounded_quotient`, a
     long division in `UInt128` that rounds once (D-458);
   - `_set_origin!` writes boundary zero's clock through `_instant` at
-    position 0, as every later clock is written (D-458).
+    position 0, as every later clock is written (D-458);
+  - `_origin_clock`, the float a reader of the origin takes: boundary zero's
+    clock, from the exact origin by `_nearest`, never `Float64(t₀)`, which
+    can sit an ulp off it past `2^53`. Its `Float64` method reads a clock as
+    it stands (D-458).
 
 Spec: §9.5, §9.7, §10.5, §13.5, D-162, D-235, D-237, D-260, D-316, D-317, D-437,
 D-456, D-457, D-458.

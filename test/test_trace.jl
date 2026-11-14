@@ -703,6 +703,21 @@ function trace_replay_loop()
         at_two = replay_twin()
         replay!(at_two, trace(exact); to_time = 0.5)
         @test at_two.run.frame == 2
+
+        # A rational origin whose parts pass `2^53`: `Float64` of it divides the
+        # two rounded parts and sits an ulp above boundary zero's clock, which
+        # still names boundary zero (D-458).
+        wide_origin = 1059182088945177950//2973339279761842937
+        wide = Simulation(replay_model(); Δt_frame = 1//10)
+        init!(wide, set(u = (ref = 1.0, rate = 0.0)); t0 = wide_origin)
+        step!(wide; frames = 3)
+        @test first(logged(wide)).t === prevfloat(Float64(wide_origin))
+        at_wide_origin = replay_twin()
+        replay!(at_wide_origin, trace(wide); to_time = first(logged(wide)).t)
+        @test at_wide_origin.run.frame == 0
+        at_wide_three = replay_twin()
+        replay!(at_wide_three, trace(wide); to_time = last(logged(wide)).t)
+        @test at_wide_three.run.frame == 3
     end
 
     @testset "`to_time`'s refusals precede every write (§12.7, D-219)" begin
