@@ -301,3 +301,49 @@ The reviewer's files are under
 `review_notes_96.md`, `gate.log`, `mutate_review.py`, `mutants_review.log`,
 the `mutants/` logs, the `probes/` scripts with their logs, and the
 worktree `wt_review`.
+
+## After the fixes and the delta check
+
+The fixer landed R10 to R16 as `3052530`, with the gate at 10 114 of
+10 114 on the real tree. The same reviewer checked the delta with its
+context intact and read all seven findings as fixed. The successor ruled
+three more points, none ratified by the user:
+
+- **R18. The neighbour's rule reads "whose arithmetic leaves `Int`"**, the
+  fixer's wording, which amends R10's "that `Rational{Int}` cannot hold".
+  The reviewer built the case that separates them. In a pool that cannot
+  deploy, the quotient `τ/partial` can overflow while both neighbours fit,
+  and the report then offers neither. The code before the increment gave
+  such a pool no report at all, and recovering the neighbours would take
+  wider arithmetic, which ruling 3 does not take. In a pool that deploys
+  the two wordings agree, and the reviewer proved it.
+- **R19. The delta check's two leftovers land as a second small commit**,
+  `39572a9`: a test for the key of the fold's de-duplication, which a
+  mutant showed untested, and one clause in `bind_schedule`'s docstring.
+  The fixer ran the routed subset `discrete diagnostics`, 1279 of 1279,
+  and no gate, since the commit adds one test and rewords one internal
+  docstring.
+- **R20. One more survivor is accepted.** The quotient left outside the
+  catch changes only a pool that cannot deploy: its refusal loses the grid
+  block.
+
+Two things the fixer saw are left as they are. The message's remedy
+"coarsen `Δt_base` or `Δt_frame`" names `Δt_frame`, which does not help
+the period's case. R10's three rejected alternatives are here and not in
+D-459's Rejected list, since R10 is not ratified.
+
+**State at the closing commit.** The arc is `daaeccf`, `12b5bc4`,
+`0c64874`, `fed5ba3`, `1602946`, `3052530`, `39572a9` and the commit that
+carries this section. The brief holds the review's record, and the first
+`pending.md` bullet is retired. What waits for the user is on the
+variable-step bullet of `pending.md`: the rulings R1 to R20, R10 first,
+then the diff of the arc and the push.
+
+The fixer's files are under
+`/private/tmp/claude-501/-Users-miguel--julia-dev-Redstone-jl/37100ed5-3f61-4bd7-986b-4005fa955c19/scratchpad/fix_96/`:
+`fix_notes_96.md`, `gate.log`, `routed.log`, `routed_delta.log`,
+`mutate_fix.py`, `mutants_fix.log`, the `mutants/` logs and its probes.
+The reviewer's delta files sit beside its first ones: `mutate_delta.py`,
+`mutants_delta.log`, `mutants_delta/`, `probes/r4_fix_probe.jl` and
+`probes/item3_case.jl`. Its worktree `wt_review` and the prototype's
+`wt_inc96` can go after the push.

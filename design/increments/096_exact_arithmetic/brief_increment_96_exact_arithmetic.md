@@ -223,3 +223,106 @@ the gate on the Julia floor and the mutation check of each fix:
 Acceptable survivor: the wrapping condition under the cap, above.
 
 ## The review's record
+
+The arc on top of `6cfcce8`: `daaeccf` (docs), `12b5bc4` (this brief and
+the patch), `0c64874` (code), `fed5ba3` (the handover), `1602946` (the
+successor's rulings), `3052530` (the review's fixes) and `39572a9` (the
+delta check's two). The session `inc-96-handoff` ran the review from the
+handover on. Nothing is pushed.
+
+**The review**, at `fed5ba3`. An independent high-tier agent ran the gate
+on the real tree, 10 101 of 10 101 in 10m04 on Julia 1.13.3. The
+Documenter build was clean and `docstring_roster.jl` empty. Its probes:
+
+- **The division.** A copy of `_nearest` and `_rounded_quotient` against
+  an exact `BigInt` reference: 3 100 027 quotients, none off. The shapes
+  were divisors near `2^126`, quotients of 53 to 56 bits, exact ties and
+  their neighbours, and the fast path at its bounds. The same probe failed
+  235 265 quotients with the sticky bit dropped.
+- **Bit-identity below `2^53`.** Boundary zero moved at 0 of 80 632
+  origins with integers within `2^53` and at 0 of 319 368 with only the
+  origin's parts within it. Clocks moved at 0 of 91 555.
+- **The doors.** 39 inputs at 10 doors, every row of the report's section 4
+  among them. No numeric input raised a raw error.
+- **R4's argument.** A counterexample, F1 below. The reviewer proved the
+  argument for the gcd and for a leave-one-out factor.
+
+It ran 34 mutants of its own, 28 red, and listed seven findings.
+
+The successor adjudicated them as R10 to R17 of the notes, and a fixer
+landed the fixes as one commit:
+
+- **F1, a pool that deploys got no report.** With `E = 2^45 + 3`, the
+  anchors `Absolute(Period(2^20), 2^21//3)` and
+  `Absolute(Period(2^20//E))` deploy at their gcd `2^20//(3E)`. The
+  offset's neighbours have numerators past `2^64`, so `_grid_report` raised
+  and the report was `nothing`. An explicit or default `Δt_base` then
+  raised a raw `MethodError` at the `Deployment`'s `grid` field, and
+  `:derive` refused the pool. Now each neighbour is a product under its own
+  catch, and one whose arithmetic leaves `Int` is not offered (R10). The
+  upper neighbour is `(n + 1)·partial`, not a sum, since Julia reduces a
+  product before it multiplies and a sum can overflow in an intermediate
+  term. Tests: that pool on the three paths, two pools where one neighbour
+  fits, one where both do, and the grid block's row without its
+  "declaring" clause. The bare neighbours, the sum and one shared catch
+  each go red.
+- **F2, the docs stated R4's argument for the neighbour too.** D-459's
+  Position and Rationale, D-187's annotation, §9.2 and `bind_schedule`'s
+  comment now state it for the gcd and the factor. D-459 and §9.2 gain the
+  neighbour's rule.
+- **F3, `linearize`'s nominal clock had no test.** The revert of
+  `linearize.jl`'s first `_set_origin!` stayed green, and the builder's
+  list had no mutant for it. The `about` testset now wires `ClockStamp`
+  beside `TimedDecay` and pins `y₀.stamp` at `1.330442639634298`. The
+  revert reads `1.3304426396342983`, so it goes red.
+- **F4, a bare container key gave one `:range` refusal per element.** The
+  fold now pushes one per path and key. Test: a three-element `Group`
+  under a bare `children` key. The de-duplication dropped: red.
+- **F5, R3's refusal printed a message false for its case.** The lattices'
+  `Δt_base` `:range` arm now names both conditions, the unit too fine to
+  index one frame and a component's period past `Int`. The pin moved.
+- **F6, citations.** The test names and comments on the division, boundary
+  zero's clock and the scratch clocks cite D-458, and those on the doors,
+  the fold and the schedule cite D-459. A citation still right stayed
+  beside the new one.
+- **F7, four nits.** A comment's `2^31` for values near `2^40`; the
+  accepted origin forms in a testset of their own; `_exact_or_nothing`'s
+  argument as `fn`; and `Hz`'s docstring, where "not finite" now reads as
+  the period's.
+
+**Survivors accepted**, the reviewer's: the catch's `DivideError` arm,
+which ruling 3 names and no door input reached in twelve candidates; the
+fold's and the multiply-add's phase checks alone, equivalent since a sound
+composition keeps `c < m` and `Φ < D`; the fast path's bound made strict,
+equivalent at `2^53`; and the wrapping condition under the cap, as above.
+
+**After the fixes.** The fixer ran the gate on the real tree, 10 114 of
+10 114 in 9m43.2s on Julia 1.13.3, the 13 new assertions included. The
+battery was green with `linkify.jl` a no-op, `audit_fragments.jl` lost
+nothing, and the Documenter build was clean.
+
+**The delta check**, at `3052530`, by the same reviewer with its context
+intact. It read the fixer's gate log and did not run the gate again. All
+seven findings read as fixed, and `store.jl` moved in comments only.
+
+- It fuzzed 6 000 pools against the new code. 2 819 reports were
+  `nothing`, and none of those pools deploys. 1 203 neighbours were
+  offered, and `Absolute` takes every one. No path raised a raw error.
+- It confirmed the fixer's six reverts red and added three. Two survived.
+  The quotient left outside the catch changes only a pool that cannot
+  deploy, and is accepted. The de-duplication without its key was a
+  missing test.
+- It confirmed the wording "whose arithmetic leaves `Int`", which the
+  fixer chose over R10's "that `Rational{Int}` cannot hold". In a pool
+  that cannot deploy, the quotient can fail while both neighbours fit.
+
+`39572a9` lands that test, two keys in one scope that both overflow, and
+one clause in `bind_schedule`'s docstring, which named only the unit for
+`Δt_base`'s `:range`. The routed subset `discrete diagnostics` read
+1279 of 1279. The gate did not run again after it.
+
+**Left for the user.** The rulings R1 to R20 of the notes were made
+overnight and none is ratified. R10 comes first, with the successor's
+reading that F1 breaks R4 and leaves ruling 3 standing. R10's three
+rejected alternatives are in the notes and not in D-459's Rejected list.
+Then the diff of the arc and the push.

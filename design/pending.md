@@ -12,28 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The exact-arithmetic audit, increment 96.** Increment 95 put the
-  deployment's periods, its bound and the run's origin on `Rational{Int}`
-  (D-454, D-457), and the fixes since met overflow one site at a time. The
-  audit of the whole time surface is
-  `design/reports/20261113_exact_arithmetic/report.md`. The user ruled on
-  2026-11-14 that exact time stands against floats everywhere, and that the
-  fallout lands as one single-stage increment before the first adaptive
-  backend, smaller than the report's policy A:
-  - the overflow sites, refused at their doors by checked arithmetic and
-    one catch per door;
-  - the clock, the float nearest its instant at every magnitude, which
-    adopts the alternative D-456 rejected;
-  - §10.5's bounds, corrected to that clock, with D-450's `2^50·δ` kept;
-  - a `Rational` of any integer type at the `Deployment` keywords.
-
-  The rulings and their reasons are
-  `design/increments/096_exact_arithmetic/notes_increment_96.md`. Stage
-  reached: the code commit `0c64874`, after the docs commit `daaeccf`
-  (D-458, D-459) and the brief. The cold review is next, run by the
-  successor session from the brief and the notes. The user delegated the
-  rest overnight on 2026-11-14, so the prototype's nine readings are the
-  coordinator's rulings, in the notes, and nothing is pushed.
 - **Variable-step integration.** The frame and the integration step become
   separate quantities. The step is the `Model`'s to decide: it never
   crosses a frame top or a due instant and is never longer than the
@@ -46,8 +24,19 @@ item changes what the spec says, the spec edit is part of the item.
   audit and delays the release.
   - **Landed:** the deployment surface, increment 90 (D-442, D-443); the
     three lattices, 91 (D-444 to D-447); the step bound, 92 (D-449,
-    D-450); the seam protocol, 93 (D-452); and exact time, 95 (D-454 to
-    D-457). Each one's record is its folder under `design/increments/`.
+    D-450); the seam protocol, 93 (D-452); exact time, 95 (D-454 to
+    D-457); and exact arithmetic on the time surface, 96 (D-458, D-459),
+    the fallout of the audit
+    `design/reports/20261113_exact_arithmetic/report.md`. Each one's
+    record is its folder under `design/increments/`.
+  - **Waiting for the user from increment 96.** The user delegated its
+    review overnight on 2026-11-14, and nothing is pushed. The rulings R1
+    to R20 of
+    `design/increments/096_exact_arithmetic/notes_increment_96.md` are the
+    coordinators' and none is ratified. R10 comes first: the review found
+    a pool that deploys and got no grid report, so an offset's neighbour
+    whose arithmetic leaves `Int` is no longer offered. Then the diff of
+    the arc from `daaeccf` and the push.
   - **Next: the first adaptive backend**, the roadmap's increment 4, with
     `h_min` and the attempt budget on the `Deployment`. Its rulings are the
     roadmap's section "Ruled on 2026-11-12". They cover the two things the
