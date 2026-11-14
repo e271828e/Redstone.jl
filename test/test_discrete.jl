@@ -175,6 +175,12 @@ function discrete_rate_fold()
         d = only(diagnostics(failure(() -> build(bank))))
         @test d isa RatesViolation && d.reason === :range && d.path == "g" &&
               d.key === :children && d.value === Relative(2^32 + 1)
+        # Two keys of one scope are two entries, each refused once.
+        pair = Group((; g = Group((; a = TickCounter(), b = TickCounter());
+                                  sample_times = (; a = Relative(2^32 + 1), b = Relative(2^32 + 1))));
+                     sample_times = (; g = Relative(2^32 + 1)))
+        @test sort([(d.path, d.reason, d.key) for d in diagnostics(failure(() -> build(pair)))]) ==
+              [("g", :range, :a), ("g", :range, :b)]
         # Just inside `Int` the multiplier composes exactly, its phase with it.
         @test Tuple(only(build(nested(2^31, 2^31)).structure.components).timing) == (0, 2^62, 0)
         phased = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2^31, 2^31 - 1))));

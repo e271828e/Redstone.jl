@@ -291,7 +291,8 @@ and returns `nothing` on any fault; the caller owns the one throw per
 `Deployment` call (§9.1, D-229). Nothing relates the three quantities, and the
 anchor loop reads `Δt_base` alone (D-445, D-449). The lattices come last,
 every check above their premise: a unit too fine to index one frame in an
-`Int` is `Δt_base`'s `:range`, `Δt_frame` its related value, and a bound
+`Int`, or under which a component's period in units leaves `Int`, is
+`Δt_base`'s `:range`, `Δt_frame` its related value, and a bound
 whose step counts or exact steps leave `Int` is `h_max`'s (§10.5, D-445).
 """
 function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{Diagnostic})
