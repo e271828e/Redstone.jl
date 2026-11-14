@@ -456,6 +456,8 @@ were derived.
 | [D-455][d-455] | Integrate every step by the float distance between its two clocks | ratified |
 | [D-456][d-456] | Write each clock the model knows exactly as the float nearest its instant | ratified |
 | [D-457][d-457] | Hold the origin exact | ratified |
+| [D-458][d-458] | Write each clock as the nearest float at every magnitude, boundary zero's included | ratified |
+| [D-459][d-459] | Keep time exact and refuse at its doors a value `Rational{Int}` cannot hold | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -7354,6 +7356,14 @@ Annotation (2026-10-02): amended by [D-205][d-205]. Every discrete output stage
 publishes at boundary zero, so no offset component holds probe-populated
 cells. The gate composition and the residue invariant stand.
 
+Annotation (2026-11-14): amended by [D-459][d-459]. A value that `Rational{Int}`
+cannot hold finitely, `Hz(0)`'s period among them, fails the constructor's
+normalization as a float does, and is refused there as `ArgumentInvalid`
+`:range`. The range checks stay the structure step's, so the rejection of
+constructor-side range validation below stands. The composition runs in
+checked `Int`, and a composed divisor or phase past `Int` is a
+`RatesViolation` `:range`.
+
 **Rejected.**
 - *Bare-value sugar behind a normalization function (`ratespec`: bare `Int` ⇒
   `Relative`, bare quantity ⇒ `Absolute`):* implicit form inference; the
@@ -7461,6 +7471,12 @@ stagger room legitimately inflating the metric; no new error kinds,
 
 Annotation (2026-10-02): amended by [D-254][d-254]. The bound schedule is the
 `Schedule`, and it lives on the `Deployment`, not on the `Simulation`.
+
+Annotation (2026-11-14): amended by [D-459][d-459]. The prime attribution's trial
+division stops at the divisor `2^20`, and a cofactor left at or above
+`2^40` prints as unfactored. A pool whose attribution leaves `Int` admits no
+deployment and gets no report: `:derive` is refused as `:range`, and the
+anchor refusals carry no grid block.
 
 **Rejected.**
 - *The simple-fraction-of-its-period offset test as the engine's warning:*
@@ -18849,6 +18865,11 @@ frame top that showed the fault in increment 91 is refused at `init!`. A pure
 function of the deployment and `t₀` needs no reset at `init!`, `restore!` or
 `overlay!`, and costs a few float operations per frame.
 
+Annotation (2026-11-14): the derivation above is replaced by [D-458][d-458]'s, and the
+bound stands. Each clock is the float nearest its instant, and rounding to
+nearest keeps order, so two clocks `δ` apart stay distinct while
+`|t₀| + 2ε < 2^52·δ`. The bound of `2^50·δ` keeps a factor of 4 inside that.
+
 **Rejected.**
 - *Clamping each clock to the larger of its own value and the last one:*
   two boundaries could still share one clock, so the localized path could
@@ -19229,6 +19250,12 @@ frame at that bound. No correctly rounded big division is built: Julia
 1.13's `Float64(::Rational)` divides the two converted integers, and it
 differed from the nearest float in a third of random cases above `2^53`.
 
+Annotation (2026-11-14): superseded in part by [D-458][d-458]. The clock is the
+nearest float at every magnitude, its division exact past `2^53`, and
+boundary zero takes its clock from the same formula. The second bullet's
+two-ulp clause and the rejection of a correctly rounded division below fall,
+since a wall-clock float origin reaches those integers at frame 0.
+
 **Rejected.**
 - *`t₀ + k·Float64(Δt_frame)`, as before:* an ulp off a typed time, so an
   event typed on the lattice fires off its boundary.
@@ -19270,6 +19297,11 @@ decimal. From `t0 = -3//10` at a 0.1 s frame, frame 3 reads `0.0`; from the
 float `-0.3` it read `5.6e-17` before this entry and reads `1.1e-17` after
 it, the float nearest the float origin's instant.
 
+Annotation (2026-11-14): amended by [D-458][d-458] and [D-459][d-459]. [D-456][d-456] holds from any
+origin at every magnitude, boundary zero's clock included. The period
+constructors and the `Deployment` keywords refuse what `Rational{Int}`
+cannot hold, as this entry's door does, each under its own diagnostic.
+
 **Rejected.**
 - *A float origin, as before ([D-260][d-260]):* the clock cannot be the float nearest
   an instant whose origin is already rounded.
@@ -19284,6 +19316,169 @@ it, the float nearest the float origin's instant.
   bound, which the door's check leaves alone.
 - *No check at all:* unchecked `Int128` arithmetic wraps in silence, so a
   run would carry wrong clocks with no error.
+
+### D-458 — Write each clock as the nearest float at every magnitude, boundary zero's included
+
+**Status.** ratified
+
+**Position.** Every clock the `Model` writes from an exact instant is the
+`Float64` nearest that instant, however large the clock's integers grow
+([D-456][d-456]). The bundled rulings:
+
+- Past `2⁵³` the clock's division is exact and rounds once. A branch on the
+  integers' magnitude keeps the one float division below `2⁵³`, so no clock
+  there moves.
+- Boundary zero takes its clock from the same formula at position 0, never
+  from `Float64(t₀)`.
+- Each clock lies within half an ulp of its instant, and [D-450][d-450]'s bound of
+  `2⁵⁰·δ` stands on that error.
+
+**Spec.** [§2.1][s2-1], [§10.5][s10-5]
+
+**Rationale.** [D-456][d-456] built no correctly rounded division past `2⁵³`, on the
+premise that no practical origin reaches those integers. A wall-clock float
+origin, the case [D-457][d-457] holds exact, reaches them at frame 0. Over 200
+wall-clock origins and frames 0 to 999, the plain division left the nearest
+float at 67 600 of 200 000 clocks at a frame of `1//10`, 63 160 at `1//100`
+and 48 648 at `1//1000`. The exact division leaves it at none. An event typed
+at `t₀ + s` could then fire off its boundary, [D-456][d-456]'s own fault again, and
+the two-ulp bound [D-456][d-456] stated did not hold past `2⁵³`.
+
+The slow path is a long division, extended a chunk at a time until the
+quotient holds 55 bits, with the remainder folded into a sticky bit before
+the one rounding. It allocates nothing. It matched a `BigFloat` reference on
+4.6 million quotients. A clock on it costs about 11 ns against 2.6 ns for
+the plain division, and only a run whose integers pass `2⁵³` pays it.
+
+Boundary zero wrote `Float64(t₀)`, which Julia computes by dividing the two
+converted integers ([D-456][d-456]). Every later clock, and the frame-top test of
+`checkpoint`, `overlay!` and `restore!`, computes the instant by the clock's
+formula. Past `2⁵³` the two could part by an ulp, and `checkpoint` refused a
+model at its own boundary zero as `CheckpointMidFrame`. One formula for every
+clock removes the second. `trim!` and `linearize` set their scratch clocks by
+it too, so a search runs at the time its commit's boundary zero starts from.
+
+Under the nearest float each clock lies within half an ulp of its instant
+`t`, and rounding to nearest never reverses two instants, so two boundaries
+never take clocks out of order. Two boundaries `δ` apart take distinct
+clocks while an ulp of `t` stays below `δ`, which holds while
+`|t| < 2⁵²·δ`. With `ε = t − t₀`, `|t| ≤ |t₀| + 2ε`, so [D-450][d-450]'s condition
+`|t₀| + 2ε < 2⁵⁰·δ` keeps a factor of 4 inside that threshold. The factor is
+the margin for the float arithmetic that computes the last frame.
+
+**Rejected.**
+- *Within two ulps of the nearest float past `2⁵³`, as before ([D-456][d-456]):* a
+  wall-clock origin's clocks miss the nearest float, as above.
+- *A float origin kept as a float base, the clock `t₀` plus the float
+  nearest the elapsed time:* it is the nearest float at wall-clock magnitude
+  and regresses small float origins. From `t₀ = 0.25` at a 1 ms frame, 162
+  of 1000 frame tops leave the nearest float, where the exact formula leaves
+  none. From `-0.3` at a 0.1 s frame, 290 do.
+- *Refusing an origin whose clock integers pass `2⁵³`:* the least code, but
+  it refuses `time()` and the float `-0.3` on a decimal grid, which [D-457][d-457]
+  takes.
+- *Relaxing [D-450][d-450]'s bound to the new threshold:* it would move the last
+  frame of every deployment and gain nothing a run reaches. A proposing
+  backend's step end, the start's clock plus a length ([D-455][d-455]), may need the
+  margin.
+
+### D-459 — Keep time exact and refuse at its doors a value `Rational{Int}` cannot hold
+
+**Status.** ratified
+
+**Position.** Time stays exact, and each door refuses a value its stored
+type cannot hold under a diagnostic it already raises, with one new reason
+at the structure step ([D-185][d-185], [D-454][d-454], [D-457][d-457]). The bundled rulings:
+
+- `Period`, `Hz`, `Absolute`'s offset and the `Deployment` keywords
+  `Δt_frame`, `Δt_base` and `h_max` take an integer or a `Rational` of any
+  integer type at its value. A value that `Rational{Int}` cannot hold
+  finitely is refused, as `ArgumentInvalid` `:range` at the three
+  constructors, `Hz(0)` and an infinite offset included, and as
+  `DeploymentInvalid` `:range` at the keywords. `Bool` is an integer and
+  stays accepted.
+- The structure step composes rates in checked `Int`. A composed divisor or
+  phase past `Int` is a `RatesViolation` with the new reason `:range`, on
+  the entry that composed it. A rate its own check refused composes nothing.
+- The schedule's multiply-add runs in checked `Int`. A divisor past `Int`
+  after composition with its anchor is the lattices' refusal,
+  `DeploymentInvalid` `:range` on `Δt_base`.
+- A grid report whose arithmetic leaves `Int` is no report. `:derive` is
+  then refused as `DeploymentInvalid` `:range` on `Δt_base`, and the anchor
+  refusals of any other `Δt_base` carry no grid block.
+- The `Deployment` catches `OverflowError`, `InexactError` and
+  `DivideError` at each premise, so the call still collects every fault
+  ([D-229][d-229]).
+- The prime attribution's trial division stops at the divisor `2^20`. A
+  cofactor left at or above `2^40` prints as unfactored.
+
+**Spec.** [§9.2][s9-2], [§10.5][s10-5], [Appendix B][sB], [Appendix C][sC]
+
+**Rationale.** Exact time was weighed against floats everywhere and kept.
+The overflow sites predate [D-454][d-454] and [D-457][d-457]. `Period` has held a
+`Rational{Int}` since [D-185][d-185], and the fold composed in `Int` before either. A
+float period would keep the integer schedule and add a tolerance at the
+doors. From origin 0, `k·Float64(Δt)` misses the float a user types at 3595
+of 10 000 frame tops for `1//10`, 1327 for `1//100` and 866 for `1//60`.
+Every overflow found needs nested multipliers near `2^32` or coprime
+denominators near `2^40`. A pool of nine realistic periods and offsets has
+a gcd of `1//882000`, 20 bits of 63. `Hz(0)` and the wall-clock float origin
+([D-458][d-458]) were the two findings on plausible input.
+
+Every overflow in the grid report marks a pool no deployment can hold. A
+base tick divides the pool's gcd, so its denominator is at least the gcd's.
+A leave-one-out factor, or an offset's neighbour, past `Int` gives some
+anchor a count of base ticks past `Int` at every base tick that divides the
+pool, which the anchor loop refuses. A catch therefore refuses nothing
+deployable, and wider arithmetic would only defer the refusal. The schedule's
+overflow is the lattices' for the same reason: a sound composition keeps
+`Φ < D`, so a divisor past `Int` counts a period in base ticks, and so in
+the lattices' unit, past `Int`.
+
+A value that `Rational{Int}` cannot hold fails the constructor's
+normalization to an exact period, as a float does, so the constructor
+refuses it rather than raise a raw `InexactError`. The range checks stay the
+structure step's ([D-185][d-185]). `Hz(0)` built an infinite period that passed
+`T > 0` and `0 ≤ τ < T` and failed at the `Deployment` with a raw
+`DivideError`. `:range` is the reason every other time door gives for a
+value its type cannot hold, and it is the structure step's one new reason.
+
+A cofactor the trial division leaves below `2^40` is prime, since a
+composite would have a factor below the cap, so every denominator below
+`2^40` is factored whole. A cofactor at or above `2^40` may be composite.
+The cap bounds the worst case at about a million iterations. Uncapped, the
+division ran to the square root of a prime denominator, and its condition
+wrapped near `2^63`. `Bool` stays because Julia's `Bool` is an integer:
+`Δt_frame = true` deploys a 1 s frame, and nothing breaks.
+
+**Rejected.**
+- *Floats everywhere:* a float period keeps the integer schedule and adds a
+  tolerance at the doors, and a float clock misses the typed float, as
+  above.
+- *Every site widened to `Int128` under a bound proof, with a reason per
+  path:* a catch refuses nothing deployable, so the proofs and the reasons
+  buy nothing a deployment holds.
+- *A bound on numerators and denominators at the declaration doors, every
+  part below `2^31` say:* a bound on each value does not bound the
+  composites. The pool's `lcm` grows with the number of anchors and the
+  fold's divisor with the tree's depth, so the pool and the fold still need
+  their checks. A user meets the ceiling as a rule with no reason in the
+  model: `1//10^10`, a 0.1 ns grid, would be refused.
+- *`Rational{Int128}` at rest:* the thresholds move, but the pool and the
+  fold still grow without bound, and the clock's integers would need
+  `Int256`, which Julia lacks. It changes [D-454][d-454]'s stored and printed type,
+  and every `Period`'s, for inputs no practical model reaches.
+- *`:multiplier` or `:phase` for a composed divisor past `Int`:* their
+  messages read `K ≥ 1` and `0 ≤ φ < K`, false of a valid `K`.
+- *`:anchor_period` for a divisor past `Int` after composition:* it says
+  "not an integer multiple", which is false of an overflow.
+- *One catch around the whole binding:* it would drop the faults [D-229][d-229] has
+  the call collect.
+- *Refusing `Bool` at every door:* code for an input nobody types, where
+  nothing breaks.
+- *A marker for an unfactored cofactor in the report's data:* it would touch
+  the factoring, the supplier test and the record's shape for a label one
+  renderer prints, and the renderer reads the cofactor's magnitude.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -19717,6 +19912,8 @@ it, the float nearest the float origin's instant.
 [d-455]: #d-455--integrate-every-step-by-the-float-distance-between-its-two-clocks
 [d-456]: #d-456--write-each-clock-the-model-knows-exactly-as-the-float-nearest-its-instant
 [d-457]: #d-457--hold-the-origin-exact
+[d-458]: #d-458--write-each-clock-as-the-nearest-float-at-every-magnitude-boundary-zeros-included
+[d-459]: #d-459--keep-time-exact-and-refuse-at-its-doors-a-value-rationalint-cannot-hold
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

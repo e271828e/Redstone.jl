@@ -287,7 +287,7 @@ frame period. The start of a frame is its frame top.
 Each instant is computed from its own index on its own lattice, never
 accumulated ([§10.4][s10-4], [D-445][d-445]). The origin `t₀` is an exact
 time, and the clock at each instant is the floating-point number nearest it
-([D-456][d-456], [D-457][d-457]). A time typed on a lattice therefore reads
+([D-456][d-456], [D-457][d-457], [D-458][d-458]). A time typed on a lattice therefore reads
 as its boundary's clock. Whether two instants coincide is
 decided on the deployment's exact periods, never by comparing computed
 times. The lattices are fixed for the whole run, and an event located inside
@@ -4612,7 +4612,8 @@ caller, since a domain rate is not a framework default.
 **`Δt_base` has exactly one of three sources**, cross-validated
 ([D-283][d-283], [D-443][d-443]):
 
-- the explicit keyword, a `Rational`, `Period` or `Hz` value;
+- the explicit keyword, an integer or a `Rational`, a `Period` or an `Hz`
+  value;
 - `Δt_frame`, when the keyword is absent;
 - derivation, permitted only when every discrete component is anchored, that
   is, with anchor 0 unpopulated.
@@ -4643,6 +4644,13 @@ a frame. `h_max = Rational(1/3)`, a binary fraction just below a third, takes
 four. Where the loop needs a time in seconds, it reads the `Float64` nearest
 the exact value.
 
+**Each time quantity takes an integer or a `Rational` of any integer type at
+its value, and refuses one that `Rational{Int}` cannot hold finitely**
+([D-459][d-459]). A `Period` or an `Hz` value is taken at its period. A float is
+refused as `:inexact`, since a step count and a coincidence are exact
+arithmetic. A `Rational{Int32}` and a `BigInt` that fits are the values they
+spell, and `big(2)^70` or `1//0` is refused as `:range`.
+
 **If any unanchored component exists, deployment must declare `Δt_base`**
 ([D-283][d-283]). The refusal is constructive, carrying the suggestion message
 of the grid diagnostics below. Under the anchored-only restriction, `Δt_base`
@@ -4665,9 +4673,12 @@ Admissibility is exact GCD arithmetic over the constraint pool:
 Resolution is therefore one division pair per anchor and one multiply-add per
 component. `Dₖ` and `Φₖ` must both come out exact integers. Otherwise the
 result is a `DeploymentInvalid`, naming the anchor with its declaring scope
-and key from the rate-chain column. The per-component triples are the
-content of the `Schedule`, which the constructor builds and the `Deployment`
-carries.
+and key from the rate-chain column. **The multiply-add runs in checked
+`Int`, and a divisor past `Int` is the lattices' refusal on `Δt_base`**
+([D-459][d-459]). Since `Φ < D`, such a divisor counts a period past `Int` in base
+ticks, and so in the lattices' unit ([§10.5][s10-5]). The per-component
+triples are the content of the `Schedule`, which the constructor builds and
+the `Deployment` carries.
 
 **Deployment validation is collected like its declarative siblings**
 ([§13.1][s13-1], [D-229][d-229]). Violations are collected and reported as
@@ -4675,17 +4686,23 @@ carries.
 violated constraint:
 
 - a `Δt_frame`, a `Δt_base` or an `h_max` that is not positive and finite,
-  each checked on its own ([D-445][d-445], [D-449][d-449]);
+  or that `Rational{Int}` cannot hold, each checked on its own
+  ([D-445][d-445], [D-449][d-449], [D-459][d-459]);
 - a non-dividing anchor period or offset;
+- a derivation over a pool whose grid attribution leaves `Int` ([D-459][d-459]);
 - a `Δt_base` whose exact unit with `Δt_frame` is too fine to index one frame
-  in an `Int` ([§10.5][s10-5], [D-445][d-445]);
+  in an `Int`, or under which a component's divisor leaves `Int`
+  ([§10.5][s10-5], [D-445][d-445], [D-459][d-459]);
 - an `h_max` too fine to count the steps of one frame in an `Int`
   ([§10.5][s10-5], [D-449][d-449]);
 - an algorithm the [stepper seam](#g-seam) does not know;
 - a nonpositive `localization_tol`;
 - a `localization_budget` or a `firing_budget` that is not an integer ≥ 1.
 
-Every check whose premise holds runs, and the constructor throws once.
+Every check whose premise holds runs, and the constructor throws once. An
+overflow, an inexact conversion or a division by zero in a premise's own
+arithmetic is that premise's refusal, so it never escapes raw and never
+drops another premise's fault ([D-459][d-459]).
 
 The event parameters validate on their own terms only. They are
 grid-independent, so they take no part in the harmonic-grid check
@@ -4780,7 +4797,10 @@ per-entry attribution. Attribution has two forms:
   responsibility is the honest answer.
 - Prime attribution is the second form. Each prime power of `1/Δt_base` is
   traced to the pool entries whose denominators supply it. That pinpoints what
-  an edit changed.
+  an edit changed. **The trial division stops at the divisor `2^20`, and a
+  cofactor left at or above `2^40` prints as unfactored** ([D-459][d-459]). A cofactor
+  below `2^40` is prime, since a composite would have a factor below the
+  cap, so every denominator below `2^40` is factored whole.
 
 When an offset is a driver, the message adds the nearest non-refining
 alternatives, the admissible offsets on the grid the rest of the pool
@@ -4789,6 +4809,14 @@ supports. That turns the diagnostic into a repair.
 **Blame is computed against the actual pool** ([D-284][d-284]). A
 simple-fraction-of-its-period test stays authoring guidance and never becomes
 the engine's.
+
+**A pool whose attribution leaves `Int` gets no grid report** ([D-459][d-459]). Such a
+pool admits no deployment. A base tick divides `gcd(pool)`, so its
+denominator is at least the gcd's, and no `Rational{Int}` base tick exists
+when the gcd's leaves `Int`. A refinement factor past `Int` gives some
+anchor a count of base ticks past `Int` at every admissible `Δt_base`.
+`Δt_base = :derive` is then refused as `DeploymentInvalid` `:range`, and any
+other `Δt_base` meets the anchor refusals, which carry no grid block.
 
 The derivation path is the one place refinement happens silently. It always
 prints the derived value with its drivers, and it carries the one advisory,
@@ -6608,8 +6636,11 @@ knows exactly takes the `Float64` nearest it as its clock**
 ([D-456][d-456]). The origin is exact, so the rule holds from any origin
 ([D-457][d-457]). The loop puts the origin and the lattices' unit over one
 denominator where the origin is set, so a clock is one integer
-multiply-add and one division. It is exactly the nearest float while both
-integers stay below `2⁵³`, and within two ulps of it beyond. At
+multiply-add and one division. **The division rounds once to nearest at
+every magnitude, and boundary zero's clock is the same formula's at
+position 0** ([D-458][d-458]). While both integers stay below `2⁵³`, one float
+division does it. Beyond, an exact long division does, which a wall-clock
+float origin such as `time()` needs from frame 0. At
 `Δt_frame = 3//10`, frame 3 reads `0.9`, so `Step(t_step = 0.9)` fires at
 that boundary, in one snapshot.
 
@@ -6623,10 +6654,12 @@ run more tightly. The positions are exact and ordered, but the clock has the
 resolution of a `Float64`, and each boundary's clock is rounded from its own
 formula. **A run is refused where two distinct boundaries could take clocks
 that are equal or out of order** ([D-450][d-450]). Every clock the loop
-writes lies within about `2⁻⁵²·(|t₀| + 2·(t − t₀))` of its instant `t`. Two
-consecutive boundaries lie at least a gap `δ` apart. The gap is the unit
-between two mandatory instants, and more than `h_max / 2` between two equal
-steps, since a span of length `g > h_max` takes
+writes from an index is the float nearest its instant `t`, within half an
+ulp of it. Rounding to nearest keeps order, so two such clocks are never out
+of order, and two stay distinct while an ulp of `t` is below the gap between
+them. Two consecutive boundaries lie at least a gap `δ` apart. The gap is
+the unit between two mandatory instants, and more than `h_max / 2` between
+two equal steps, since a span of length `g > h_max` takes
 `n = ⌈g / h_max⌉ < g / h_max + 1` of them. So a run
 from `t₀` may reach an instant `t` only while
 
@@ -6634,8 +6667,9 @@ from `t₀` may reach an instant `t` only while
 |t₀| + 2·(t − t₀) < 2⁵⁰·δ
 ```
 
-That is half the bound at which the two errors could close the gap, which
-leaves room for the terms the estimate drops. With a unit of 1 µs and no
+The left side bounds `|t|`, and the clocks stay distinct while it is below
+`2⁵²·δ`. The bound keeps a factor of 4 inside that, as margin for the float
+arithmetic that computes the last frame ([D-458][d-458]). With a unit of 1 µs and no
 finer bound, a run from `t₀ = 0` resolves about 17 years. A base tick of
 `1e-17` seconds leaves no 10 ms frame resolved at all. The refusal does not
 cover a `t*` boundary, which lies on no lattice and is located only to
@@ -6702,7 +6736,11 @@ then give them `Relative(2, 0)` and `Relative(2, 1)`.
 choice, normalized to the rational period at construction. Every period and
 offset is an exact `Rational{Int}`, because grid derivation is GCD arithmetic
 and ill-defined over floats. A float argument throws the teaching error naming
-the exact spelling (`Period(1//50)`, or `Hz(1//2)` for 0.5 Hz).
+the exact spelling (`Period(1//50)`, or `Hz(1//2)` for 0.5 Hz). An integer or
+a `Rational` of any integer type is taken at its value. **A value that
+`Rational{Int}` cannot hold finitely is refused at the constructor as
+`ArgumentInvalid` `:range`**, `Hz(0)` and an infinite offset included
+([D-459][d-459]). Like a float, it fails the normalization to an exact period.
 
 The wrappers are the whole vocabulary ([D-185][d-185]). A bare integer or bare
 quantity is a declaration error. An unlisted discrete child defaults to
@@ -6711,9 +6749,10 @@ anchored child (one declared `Absolute`, below) always appears explicitly.
 
 Validation belongs to the structure step (the build's declaration-reading
 step), which collects it with path attribution ([§9.1][s9-1], [§13.1][s13-1],
-[D-185][d-185]). It covers `K ≥ 1`, `0 ≤ φ < K`, `T > 0`, `0 ≤ τ < T`, and
-keys naming discrete or scope children. The constructors themselves are plain
-data carriers, with no checks of their own.
+[D-185][d-185]). It covers `K ≥ 1`, `0 ≤ φ < K`, `T > 0`, `0 ≤ τ < T`,
+keys naming discrete or scope children, and a composition past `Int`
+(below). Apart from the normalization above, the constructors are plain data
+carriers, with no checks of their own.
 
 #### Relative composition
 
@@ -6721,6 +6760,13 @@ Multipliers compose multiplicatively and phases affinely down the tree
 ([D-019][d-019], [D-185][d-185], [D-291][d-291]). Under a scope compiled to divisor and phase
 `(D_s, Φ_s)` in base ticks, a child declared `Relative(K, φ)` compiles to
 `D = K·D_s` and `Φ = Φ_s + φ·D_s`.
+
+**The structure step composes in checked `Int`, and refuses a composed
+divisor or phase past `Int` as `RatesViolation` `:range`** on the entry that
+composed it ([D-459][d-459]). A rate its own check refuses composes nothing, so one
+fault is one refusal. The anchor's divisor joins the product only at
+deployment, where the same check refuses an overflow on `Δt_base`
+([§9.2][s9-2]).
 
 Composition preserves the canonical residue `0 ≤ Φ < D`.
 `companions/sample_time_proposal.md` (the declaration design's worked companion)
@@ -14354,9 +14400,9 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   | keyword | default | meaning | owning section |
   |---|---|---|---|
   | `algorithm` | `RK4()` | the integration method, `RK4()` or `Heun()`, bound against the state buffer at [`Model`](#g-model) construction ([D-442][d-442]) | [§10.2][s10-2] |
-  | [`Δt_frame`](#g-dt_frame) | — | the frame period (`Rational`, `Period` or `Hz`), required, refused as `DeploymentInvalid` when absent ([D-443][d-443]) | [§9.2][s9-2] |
-  | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (`Rational`, `Period` or `Hz`), positive and finite, in no required ratio to `Δt_frame` or `h_max` ([D-445][d-445]), `Δt_frame` when absent, or `:derive` | [§9.2][s9-2] |
-  | `h_max` | `nothing` | the step bound (`Rational`, `Period` or `Hz`), positive and finite, in no required ratio to either period, recorded as the lesser of itself and `Δt_frame`, which it is when absent ([D-449][d-449]) | [§9.2][s9-2], [§10.5][s10-5] |
+  | [`Δt_frame`](#g-dt_frame) | — | the frame period (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), required, refused as `DeploymentInvalid` when absent ([D-443][d-443]) | [§9.2][s9-2] |
+  | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to `Δt_frame` or `h_max` ([D-445][d-445]), `Δt_frame` when absent, or `:derive` | [§9.2][s9-2] |
+  | `h_max` | `nothing` | the step bound (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to either period, recorded as the lesser of itself and `Δt_frame`, which it is when absent ([D-449][d-449]) | [§9.2][s9-2], [§10.5][s10-5] |
   | `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · Δt_frame`, [D-446][d-446]) | [§10.4][s10-4] |
   | `localization_budget` | `8` | the per-frame localization allowance | [§10.4][s10-4] |
   | [`firing_budget`](#g-firing-budget) | `4` | the per-event, per-boundary firing allowance, an integer ≥ 1; exhaustion warns `FiringBudget` | [§10.6][s10-6] |
@@ -14880,9 +14926,10 @@ collection ([§9.2][s9-2], [D-250][d-250]).
 - **`RatesViolation`** ([§10.5][s10-5], [§8.7][s8-7]). Error · build ·
   collected. Assembly path, offending key and value, the immediate child
   names in hand, and a `reason`. The reasons are `:declaration_shape`,
-  `:value_vocabulary`, `:multiplier` (`K` below 1), `:phase`, `:period`,
-  `:offset`, `:unknown_child` (a deep key included) and `:continuous_child`
-  (`K` on a continuous child).
+  `:value_vocabulary`, `:multiplier` (`K` below 1), `:phase`, `:range` (a
+  composed divisor or phase past `Int`, the entry that composed it in hand,
+  [D-459][d-459]), `:period`, `:offset`, `:unknown_child` (a deep key included) and
+  `:continuous_child` (`K` on a continuous child).
 - **`MissingProbeValue`** ([§9.3][s9-3]). Error · build · collected. Face
   name, type.
 - **`ChildNameCollision`** ([§8.5][s8-5]). Error · build · collected as
@@ -15002,17 +15049,21 @@ activation):
   `localization_tol`, `localization_budget` or `firing_budget`. The reasons
   are `:range`, `:inexact`, `:not_a_quantity` and `:missing` (no
   `Δt_frame`). `:range` covers a `Δt_frame`, a `Δt_base` or an `h_max` that
-  is not positive and finite. It also covers a `Δt_base` whose exact unit
-  with `Δt_frame` is too fine to index one frame in an `Int`, and an `h_max`
-  too fine to count the steps of one frame in an `Int`, each with
-  `Δt_frame` in hand ([§10.5][s10-5], [D-445][d-445], [D-449][d-449]). Two
-  more are on `Δt_base`'s grid,
+  is not positive and finite, or that `Rational{Int}` cannot hold. It also
+  covers a `Δt_base` whose exact unit with `Δt_frame` is too fine to index
+  one frame in an `Int`, or under which a component's divisor leaves `Int`
+  after composition with its anchor, and an `h_max` too fine to count the
+  steps of one frame in an `Int`, each with `Δt_frame` in hand
+  ([§10.5][s10-5], [D-445][d-445], [D-449][d-449], [D-459][d-459]). A `:range` with
+  the value `:derive` refuses a derivation over a pool whose grid
+  attribution leaves `Int` ([D-459][d-459]). Two more are on `Δt_base`'s grid,
   `:unanchored` (derivation with unanchored discrete components, their paths
   in hand) and `:no_constraint` (derivation with no anchored work). A
   non-dividing anchor period or offset is `:anchor_period` or
   `:anchor_offset`, the anchor named with its declaring scope and key. The
   anchor and `:unanchored` refusals carry the grid attribution
-  `GridUtilization` names. Arguments that are not deployment parameters
+  `GridUtilization` names, unless the pool's attribution leaves `Int`.
+  Arguments that are not deployment parameters
   validate under `ArgumentInvalid`.
 - **`AttachUnknownFace`** ([§11.3][s11-3]). Error · service · fail-fast. The
   device (by type, since its roster id is assigned only at admission),
@@ -15142,7 +15193,8 @@ activation):
   the `Deployment` constructor (derivation path only) · logged, on the
   deployment's warnings ([D-254][d-254]). The derived `Δt_base`, the grid
   attribution (the pool with each entry's anchor and refinement factor,
-  the coarsest admissible `Δt_base`, the prime attribution) and `min_i Dᵢ`,
+  the coarsest admissible `Δt_base`, the prime attribution, with a cofactor
+  at or above `2^40` printed as unfactored, [D-459][d-459]) and `min_i Dᵢ`,
   the grid rendered as "N× finer than the fastest declared work", with that
   work's path.
 - **`CheckpointMismatch`** ([§12.6][s12-6], [§12.7][s12-7]).
@@ -15192,7 +15244,10 @@ activation):
   (`Model`, `Simulation`, `init!`, `overlay!`, `frame!`, `apply!`, `restore!`, `run!`,
   `step!`, `replay!`, `live!`, `pace!`, `margin!`, `trim!`, `linearize`,
   `trace`, `TableBinding`, a period constructor), the argument, the value in
-  hand, and a `reason` naming the violated constraint. A `:range` refusal of
+  hand, and a `reason` naming the violated constraint. A period constructor,
+  `Period`, `Hz` or `Absolute`, refuses a float as `:inexact` and a value
+  that `Rational{Int}` cannot hold finitely as `:range`, `Hz(0)` included
+  ([§10.5][s10-5], [D-459][d-459]). A `:range` refusal of
   `frame!`'s `k` also carries the last frame the run may take, the lesser of
   the last the lattices index in an `Int` and the last the origin's clock
   resolves ([§10.5][s10-5], [D-445][d-445], [D-450][d-450]). A `TableBinding`
@@ -16960,6 +17015,8 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-455]: log.md#d-455--integrate-every-step-by-the-float-distance-between-its-two-clocks
 [d-456]: log.md#d-456--write-each-clock-the-model-knows-exactly-as-the-float-nearest-its-instant
 [d-457]: log.md#d-457--hold-the-origin-exact
+[d-458]: log.md#d-458--write-each-clock-as-the-nearest-float-at-every-magnitude-boundary-zeros-included
+[d-459]: log.md#d-459--keep-time-exact-and-refuse-at-its-doors-a-value-rationalint-cannot-hold
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
