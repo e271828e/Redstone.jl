@@ -57,6 +57,15 @@ function _prime_powers(integer::Int)
     powers
 end
 
+# Whether a pool entry's denominator supplies a factor of the grid's (§9.2,
+# D-459). A prime power is supplied where it divides the denominator. An
+# unfactored cofactor may be composite, with its primes in different entries,
+# so it is supplied wherever the denominator shares a factor with it. It
+# divides the lcm of the pool's denominators, so some entry always does.
+_supplies(pool_denominator::Int, prime::Int, power::Int) =
+    prime ≥ PRIME_DIVISOR_CAP^2 ? gcd(pool_denominator, prime) > 1 :
+                                  pool_denominator % prime^power == 0
+
 """
 The grid attribution D-187 asks for (§9.2), a pure function of the structure's
 anchors: the constraint pool — every anchor's period and every nonzero offset,
@@ -115,7 +124,7 @@ function _grid_report(anchors::Vector{Anchor})
     end
     primes = [(prime = prime, power = power,
                suppliers = [i for i in eachindex(entry_values)
-                            if denominator(entry_values[i]) % prime^power == 0])
+                            if _supplies(denominator(entry_values[i]), prime, power)])
               for (prime, power) in _prime_powers(denominator(admissible))]
     GridReport(pool, admissible, primes)
 end

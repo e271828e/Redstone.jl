@@ -693,6 +693,22 @@ function discrete_deployment()
         @test _prime_powers(p * q) == [(p * q, 1)]
         @test _prime_powers(2^2 * 3 * p) == [(2, 2), (3, 1), (p, 1)]
         @test _prime_powers(typemax(Int) - 24) == [(typemax(Int) - 24, 1)]
+        # Two anchors that supply one prime of that cofactor each: it divides
+        # neither denominator, and both are its suppliers. So is an entry that
+        # supplies one prime beside an entry that supplies the whole cofactor.
+        one_each = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
+            anchored((; a = Absolute(Period(1//p)), b = Absolute(Period(1//q))));
+            Δt_frame = 1, Δt_base = :derive)
+        @test one_each.grid.primes == [(prime = p * q, power = 1, suppliers = [1, 2])]
+        part_and_whole = @test_logs (:info, r"derived") Deployment(
+            anchored((; a = Absolute(Period(1//p)), b = Absolute(Period(1//(p * q)))));
+            Δt_frame = 1, Δt_base = :derive)
+        @test part_and_whole.grid.primes == [(prime = p * q, power = 1, suppliers = [1, 2])]
+        # A prime power keeps the divisibility rule: `2^2` is the first entry's alone.
+        powers = @test_logs (:info, r"derived") Deployment(
+            anchored((; a = Absolute(Period(1//4)), b = Absolute(Period(1//2))));
+            Δt_frame = 1, Δt_base = :derive)
+        @test powers.grid.primes == [(prime = 2, power = 2, suppliers = [1])]
     end
 
     @testset "an offset's neighbour `Rational{Int}` cannot hold is not offered, and its pool deploys (§9.2, D-187, D-459)" begin

@@ -405,7 +405,9 @@ D-459.
 - The grid attribution `_grid_report` (D-187):
   - the constraint pool, with each entry's leave-one-out refinement factor;
   - the prime attribution of `gcd(pool)`'s denominator, by `_prime_powers`,
-    a trial division stopping at `PRIME_DIVISOR_CAP` (D-459);
+    a trial division stopping at `PRIME_DIVISOR_CAP`, and `_supplies`, the
+    supplier test: a prime power divides the entry's denominator, and an
+    unfactored cofactor shares a factor with it (D-459);
   - a driving offset's nearest non-refining neighbours, each a product under
     the shared catch, one whose arithmetic leaves `Int` not offered (D-459).
 - `_grid_report` runs once per call, ahead of the `Δt_base` branch, under
