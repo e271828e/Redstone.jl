@@ -215,3 +215,89 @@ Where the session's files are, under
 
 The prototyper and the docs agent answered `inc-96` alone, so a successor
 resumes neither.
+
+## The successor's rulings on the cold review, overnight
+
+The session `inc-96-handoff` took over at `fed5ba3` and launched one cold
+reviewer. Its gate read 10 101 of 10 101 on Julia 1.13.3, on the real tree.
+It ran 34 mutants of its own: 28 went red and six survived. The review's
+findings and their fixes are the brief's record. The user was away, so the
+successor ruled each finding. None is ratified by the user yet.
+
+- **R10. An offset's neighbour that `Rational{Int}` cannot hold is not
+  offered**, which amends R4. The reviewer built a counterexample to R4's
+  argument. With `E = 2^45 + 3`, the anchors
+  `Absolute(Period(2^20), 2^21//3)` and `Absolute(Period(2^20//E))` have
+  the gcd `g = 2^20//(3E)`. Every count at `Δt_base = g` fits `Int`, so the
+  anchor loop, the schedule and the lattices pass. The offset's lower
+  neighbour has a numerator past `Int`, so the report was `nothing`. An
+  explicit or default `Δt_base` then raised a raw `MethodError` at the
+  `Deployment`'s `grid` field, and `:derive` refused a pool that deploys.
+  The fix computes each neighbour under the shared catch and drops one that
+  fails. A neighbour is an offset to declare, and `Absolute` refuses a value
+  `Rational{Int}` cannot hold, so the dropped one was no repair. The report
+  then fails only at the gcd and at a factor. There the reviewer proved
+  R4's argument, as the audit's section 2.3 states it. Three alternatives
+  were not taken:
+  - neighbours in `Int128`, since ruling 3 takes no wider arithmetic and
+    the value could not be declared anyway;
+  - a `Deployment` that holds no report, which changes a field's type and
+    still has `:derive` refuse a pool that deploys;
+  - a guard for a missing report at the constructor, since the proof covers
+    the two sites left.
+- **Ruling 3 stands, and the run did not stop.** The handover's limit stops
+  the run on a finding that contradicts a user ruling. The successor read
+  F1 as no such finding. Ruling 3's mechanism is unchanged: checked
+  arithmetic and one catch per door. Its reason cites the audit's section
+  2.3, which argues the gcd and the factor only, and both arguments hold.
+  The extension to an offset's neighbour was R4's. The user may read it
+  otherwise, so this is the first thing put to them.
+- **R11. The docs commit's sentences on that argument are corrected in
+  place, in the fix commit.** D-459's Position gains the neighbour's rule.
+  Its Rationale, D-187's annotation, §9.2 and the comment in
+  `bind_schedule` state the argument for the gcd and the factor only.
+  D-459 is this arc's own entry and is not pushed, and the fix commits of
+  increments 91 to 95 corrected their arcs' entries the same way.
+- **R12. The nominal half's clock in `linearize` takes a test.** The
+  reviewer's mutant reverted `linearize.jl`'s first `_set_origin!` and
+  nothing went red. The builder's list had no mutant for that site. The
+  test must go red under the revert. If no observable shows the clock, the
+  fixer stops and reports.
+- **R13. One `:range` refusal per entry in the fold.** A bare container key
+  whose composition leaves `Int` gave one identical refusal per element.
+  D-459 puts the refusal "on the entry that composed it", and R6 has one
+  fault give one refusal.
+- **R14. The lattices' `Δt_base` `:range` message names both of its
+  conditions**: a unit too fine to index one frame, and a period past `Int`
+  in units. R3's reason stays. The old text was false for the case R3
+  routes there, where one frame is one unit. `_lattice` already returned
+  this refusal for a period past `Int` before the increment, so the text
+  was already too narrow.
+- **R15. Comments and test names cite the entry that rules.** D-458 for the
+  division, boundary zero's clock and the scratch clocks, and D-459 for
+  the doors, the fold and the schedule. `model.jl`'s comment at the
+  `_set_origin!` call is included, though the patch left it alone, since
+  the docs commit made its citation stale.
+- **R16. Four nits are fixed.** A comment in `test_discrete.jl` that says
+  `2^31` where the values are near `2^40`. The accepted origin forms in
+  `test_lifecycle.jl`, which sat in a testset named for refusals and get
+  their own. `_exact_or_nothing`'s argument, renamed `fn` by the roster of
+  `code_rules.md`. `Hz`'s docstring, where "that is not finite" could read
+  as the frequency: `Hz(1//0)` builds a zero period that the structure
+  step refuses.
+- **R17. Five survivors are accepted beside the brief's one.** The catch's
+  `DivideError` arm stays, since ruling 3 names the three errors, and the
+  reviewer found no door input that raises it in twelve candidates. The
+  two phase checks alone are equivalent mutants, since a sound composition
+  keeps `c < m` and `Φ < D`. The fast path's bound made strict is
+  equivalent, since both paths round correctly at `2^53`.
+
+Two things the review left open stay open. It did not prove `DivideError`
+unreachable under the shared catch, and it did not measure the clock's
+costs again.
+
+The reviewer's files are under
+`/private/tmp/claude-501/-Users-miguel--julia-dev-Redstone-jl/37100ed5-3f61-4bd7-986b-4005fa955c19/scratchpad/review_96/`:
+`review_notes_96.md`, `gate.log`, `mutate_review.py`, `mutants_review.log`,
+the `mutants/` logs, the `probes/` scripts with their logs, and the
+worktree `wt_review`.
