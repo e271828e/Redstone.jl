@@ -374,11 +374,11 @@ stop_reason(::Any) = ""  # COV_EXCL_LINE
 # `Rational{Int}` cannot hold finitely fails the same normalization, and is
 # refused as `:range`: an integer or a part past `Int`, or `Hz(0)`'s period.
 
-# `f()`, or `nothing` where its exact arithmetic leaves `Int`: the one catch the
+# `fn()`, or `nothing` where its exact arithmetic leaves `Int`: the one catch the
 # time surface's doors share, each refusing the `nothing` under its own reason.
-function _exact_or_nothing(f)
+function _exact_or_nothing(fn)
     try
-        f()
+        fn()
     catch err
         err isa Union{InexactError,OverflowError,DivideError} || rethrow()
         nothing
@@ -428,7 +428,9 @@ Return the [`Period`](@ref) of a frequency, `1 // frequency` seconds.
 
 A float is refused as `ArgumentInvalid`, because the grid arithmetic is exact.
 Write `Hz(1//2)` for 0.5 Hz, not `Hz(0.5)`. So is a frequency whose period
-`Rational{Int}` cannot hold, or that is not finite, as `Hz(0)`'s.
+`Rational{Int}` cannot hold, or whose period is not finite, as `Hz(0)`'s is. An
+infinite frequency, `Hz(1//0)`, gives a zero period, which the build and
+[`Deployment`](@ref) refuse.
 """
 Hz(frequency::Union{Integer,Rational{<:Integer}}) =
     Period(_declared_quantity(f -> Rational{Int}(1 // f), :Hz, frequency))

@@ -156,7 +156,7 @@ function discrete_rate_fold()
         @test all(e.D == 2 && e.Φ == 1 for e in rows)
     end
 
-    @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, §10.5)" begin
+    @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, §10.5, D-459)" begin
         # `Relative(K₂)` inside `Relative(K₁)` composes the multiplier `K₂·K₁`.
         # Past `Int` it wrapped to a wrong divisor, to 0 or below; now the inner
         # key is refused as `:range`, alone.
@@ -167,6 +167,14 @@ function discrete_rate_fold()
             @test d isa RatesViolation && d.reason === :range && d.path == "g" &&
                   d.key === :a && d.value === Relative(K2)
         end
+        # A bare container key composes once per element, and its one entry is
+        # refused once.
+        bank = Group((; g = Group((; c1 = TickCounter(), c2 = TickCounter(), c3 = TickCounter());
+                                  sample_times = (; children = Relative(2^32 + 1))));
+                     sample_times = (; g = Relative(2^32 + 1)))
+        d = only(diagnostics(failure(() -> build(bank))))
+        @test d isa RatesViolation && d.reason === :range && d.path == "g" &&
+              d.key === :children && d.value === Relative(2^32 + 1)
         # Just inside `Int` the multiplier composes exactly, its phase with it.
         @test Tuple(only(build(nested(2^31, 2^31)).structure.components).timing) == (0, 2^62, 0)
         phased = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2^31, 2^31 - 1))));
@@ -502,7 +510,7 @@ function discrete_deployment()
                    (:Δt_base, :anchor_offset, (typemax(Int) - 1)//1)])
     end
 
-    @testset "a time quantity of any integer type is taken at its value, and one `Rational{Int}` cannot hold is refused as its parameter's range (§9.2, D-229, D-454)" begin
+    @testset "a time quantity of any integer type is taken at its value, and one `Rational{Int}` cannot hold is refused as its parameter's range (§9.2, D-229, D-454, D-459)" begin
         multirate_build = build(MultiRate())
         reference = Deployment(multirate_build; Δt_frame = 1//500, Δt_base = 1//250, h_max = 1//1000)
         @test Deployment(multirate_build; Δt_frame = big(1)//500, Δt_base = Int32(1)//Int32(250),
@@ -520,7 +528,7 @@ function discrete_deployment()
                    (:h_max, :range, Int128(2)^64 // 3)])
     end
 
-    @testset "a divisor composed with its anchor past `Int` is the lattices' refusal, never wrapped (§9.2, §10.5, D-445)" begin
+    @testset "a divisor composed with its anchor past `Int` is the lattices' refusal, never wrapped (§9.2, §10.5, D-445, D-459)" begin
         # `Relative(2^30)` under a `2^40` s anchor over a `2^-20` s base tick:
         # the anchor counts `2^60` base ticks, its member `2^90`, a period in
         # units past `Int`.
@@ -640,10 +648,10 @@ function discrete_deployment()
               warnings(deployment3) == Diagnostic[]
     end
 
-    @testset "a pool whose attribution leaves `Int` admits no deployment, and is refused as one, never raised (§9.1, §9.2, D-187, D-229)" begin
+    @testset "a pool whose attribution leaves `Int` admits no deployment, and is refused as one, never raised (§9.1, §9.2, D-187, D-229, D-459)" begin
         anchored(rates) = build(Group(NamedTuple{keys(rates)}(Tuple(TickCounter() for _ in rates));
                                       sample_times = rates))
-        # Two coprime denominators past `2^31`: the pool's gcd has no
+        # Two coprime denominators near `2^40`: the pool's gcd has no
         # `Rational{Int}` denominator, so no base tick divides both periods.
         coprime = anchored((; a = Absolute(Period(1//(2^40 + 1))), b = Absolute(Period(1//(2^40 + 3)))))
         err = failure(() -> Deployment(coprime; Δt_frame = 1))
@@ -679,6 +687,44 @@ function discrete_deployment()
         @test _prime_powers(p * q) == [(p * q, 1)]
         @test _prime_powers(2^2 * 3 * p) == [(2, 2), (3, 1), (p, 1)]
         @test _prime_powers(typemax(Int) - 24) == [(typemax(Int) - 24, 1)]
+    end
+
+    @testset "an offset's neighbour `Rational{Int}` cannot hold is not offered, and its pool deploys (§9.2, D-187, D-459)" begin
+        anchored(rates) = build(Group(NamedTuple{keys(rates)}(Tuple(TickCounter() for _ in rates));
+                                      sample_times = rates))
+        pool(τ, E) = anchored((; a = Absolute(Period(2^20), τ), c = Absolute(Period(2^20 // E))))
+        # The rest of the pool supports the grid `2^20//E`. With `E = 2^45 + 3` the
+        # offset `2^21//3` sits between steps near `2^44`, so both neighbours have
+        # a numerator past `Int`, while every anchor counts its base ticks in one at
+        # the gcd `g`. The pool deploys on every path, and its offset still drives.
+        E = 2^45 + 3
+        g = 2^20 // (3E)
+        reviewed = pool(2^21 // 3, E)
+        deployments = (Deployment(reviewed; Δt_frame = g, Δt_base = g),
+                       Deployment(reviewed; Δt_frame = g),
+                       @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
+                           reviewed; Δt_frame = g, Δt_base = :derive))
+        for deployment in deployments
+            @test deployment.Δt_base === g && deployment.grid.admissible == g
+            @test [(e.kind, e.value, e.factor, e.alternatives) for e in deployment.grid.pool] ==
+                  [(:period, 2^20 // 1, 1, Rational{Int}[]), (:period, 2^20 // E, E, Rational{Int}[]),
+                   (:offset, 2^21 // 3, 3, Rational{Int}[])]
+        end
+        # Each neighbour is dropped alone. At `E = 2^47 + 57` the lower neighbour
+        # shares the factor 5 with `E` and fits, the upper does not; at
+        # `E = 2^47 + 47` the converse, and a sum `lower + partial` would leave
+        # `Int` on the way to the upper one.
+        for (E, side, neighbour) in ((2^47 + 57, <, 4216398645420883968 // 28147497671077),
+                                     (2^47 + 47, >, 4216398645420883968 // 28147497671075))
+            deployment = Deployment(pool(2^20 // 7, E); Δt_frame = 2^20 // (7E))
+            offset = only(e for e in deployment.grid.pool if e.kind === :offset)
+            @test offset.factor == 7 && offset.alternatives == [neighbour] &&
+                  side(neighbour, 2^20 // 7)
+        end
+        # Where both neighbours fit, both are offered.
+        deployment = Deployment(pool(2^21 // 3, 2^33 + 5); Δt_frame = 2^20 // (3 * (2^33 + 5)))
+        @test only(e.alternatives for e in deployment.grid.pool if e.kind === :offset) ==
+              [6004799505956864 // 8589934597, 6004799507005440 // 8589934597]
     end
 
     # --- multi-rate: the gate at run time (§10.5) -----------------------------------

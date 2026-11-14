@@ -1314,7 +1314,7 @@ struct GridEntry
     scope::String                         # the anchor's declaring scope path
     key::Symbol                           # the anchor's declaring key
     factor::Int                           # r_p ≥ 1
-    alternatives::Vector{Rational{Int}}   # a driving offset's nearest non-refining neighbours; else empty
+    alternatives::Vector{Rational{Int}}   # a driving offset's nearest non-refining neighbours that fit `Int`; else empty
 end
 
 # The anchor's declaring entry, as every grid consumer names it.
@@ -1418,7 +1418,8 @@ function message(d::DeploymentInvalid)
                "frame of Δt_frame = $(d.related) in an `Int` — coarsen `h_max` (§9.2, §10.5)"
     d.reason === :range && d.related !== nothing &&
         return "the lattices' exact unit, gcd(Δt_frame, Δt_base) for Δt_base = $(d.value) " *
-               "and Δt_frame = $(d.related), is too fine to index one frame in an `Int` — " *
+               "and Δt_frame = $(d.related), is too fine to index one frame, or to count " *
+               "a component's period, in an `Int` — " *
                "coarsen `Δt_base` or `Δt_frame` (§9.2, §10.5)"
     d.reason === :inexact &&
         return "`$(d.parameter)` must be exact — a Rational (`$(d.parameter) = 1//100`) or " *

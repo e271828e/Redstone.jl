@@ -7474,9 +7474,10 @@ Annotation (2026-10-02): amended by [D-254][d-254]. The bound schedule is the
 
 Annotation (2026-11-14): amended by [D-459][d-459]. The prime attribution's trial
 division stops at the divisor `2^20`, and a cofactor left at or above
-`2^40` prints as unfactored. A pool whose attribution leaves `Int` admits no
-deployment and gets no report: `:derive` is refused as `:range`, and the
-anchor refusals carry no grid block.
+`2^40` prints as unfactored. A pool whose gcd or leave-one-out factor
+leaves `Int` admits no deployment and gets no report: `:derive` is refused
+as `:range`, and the anchor refusals carry no grid block. An offset's
+neighbour whose arithmetic leaves `Int` is not offered.
 
 **Rejected.**
 - *The simple-fraction-of-its-period offset test as the engine's warning:*
@@ -19403,9 +19404,12 @@ at the structure step ([D-185][d-185], [D-454][d-454], [D-457][d-457]). The bund
 - The schedule's multiply-add runs in checked `Int`. A divisor past `Int`
   after composition with its anchor is the lattices' refusal,
   `DeploymentInvalid` `:range` on `Δt_base`.
-- A grid report whose arithmetic leaves `Int` is no report. `:derive` is
-  then refused as `DeploymentInvalid` `:range` on `Δt_base`, and the anchor
-  refusals of any other `Δt_base` carry no grid block.
+- A grid report whose arithmetic leaves `Int` at the pool's gcd or at a
+  leave-one-out factor is no report. `:derive` is then refused as
+  `DeploymentInvalid` `:range` on `Δt_base`, and the anchor refusals of any
+  other `Δt_base` carry no grid block.
+- An offset's neighbour whose arithmetic leaves `Int` is not offered, and
+  the report stands without it.
 - The `Deployment` catches `OverflowError`, `InexactError` and
   `DivideError` at each premise, so the call still collects every fault
   ([D-229][d-229]).
@@ -19425,15 +19429,27 @@ denominators near `2^40`. A pool of nine realistic periods and offsets has
 a gcd of `1//882000`, 20 bits of 63. `Hz(0)` and the wall-clock float origin
 ([D-458][d-458]) were the two findings on plausible input.
 
-Every overflow in the grid report marks a pool no deployment can hold. A
-base tick divides the pool's gcd, so its denominator is at least the gcd's.
-A leave-one-out factor, or an offset's neighbour, past `Int` gives some
-anchor a count of base ticks past `Int` at every base tick that divides the
-pool, which the anchor loop refuses. A catch therefore refuses nothing
-deployable, and wider arithmetic would only defer the refusal. The schedule's
-overflow is the lattices' for the same reason: a sound composition keeps
-`Φ < D`, so a divisor past `Int` counts a period in base ticks, and so in
-the lattices' unit, past `Int`.
+An overflow at the grid report's gcd or at a leave-one-out factor marks a
+pool no deployment can hold. A base tick divides the pool's gcd, so its
+denominator is at least the gcd's. A leave-one-out factor past `Int` gives
+some anchor a count of base ticks past `Int` at every base tick that divides
+the pool, which the anchor loop refuses. A catch there therefore refuses
+nothing deployable, and wider arithmetic would only defer the refusal.
+
+An offset's neighbour differs, since a pool can deploy while a neighbour's
+numerator leaves `Int`. The anchors `Absolute(Period(2^20), 2^21//3)` and
+`Absolute(Period(2^20//E))`, with `E = 2^45 + 3`, deploy at their gcd
+`2^20//(3E)`, and both neighbours of the offset have a numerator past
+`2^64`. A neighbour is an offset to declare, and `Absolute` refuses a value
+`Rational{Int}` cannot hold, so that value is no repair and the report drops
+it. In a pool that deploys, a neighbour's quotient is the offset's count of
+the gcd over its factor, which fits. Julia reduces a product before it
+multiplies, so the neighbour, formed as a product, fails only where
+`Rational{Int}` cannot hold it.
+
+The schedule's overflow is the lattices' for the reason the factor's is: a
+sound composition keeps `Φ < D`, so a divisor past `Int` counts a period in
+base ticks, and so in the lattices' unit, past `Int`.
 
 A value that `Rational{Int}` cannot hold fails the constructor's
 normalization to an exact period, as a float does, so the constructor

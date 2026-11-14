@@ -1211,7 +1211,11 @@ function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::S
                           Base.Checked.checked_add(scope.c,
                                                    Base.Checked.checked_mul(rate.φ, scope.m)))))
         timing === nothing || return timing, link
-        push!(diags, RatesViolation(path = path, reason = :range, key = key, value = rate))
+        # A bare container key composes once per element, all alike, so the
+        # elements share one refusal, as they share one anchor below (D-459).
+        any(d -> d isa RatesViolation && d.path == path && d.key === key && d.reason === :range,
+            diags) ||
+            push!(diags, RatesViolation(path = path, reason = :range, key = key, value = rate))
         scope, link
     else
         # One anchor per `Absolute` entry (§9.1): a bare container key applies one

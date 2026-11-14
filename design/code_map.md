@@ -45,7 +45,8 @@ in the `src/model.jl` entry.
   children and its declared wires, the accessor `membership` on a `Child`, and
   `terminal_producer`/`face_routes` over them (D-315).
 - The sample-time fold, `_child_scope`, in checked `Int`: a composed divisor
-  or phase past `Int` is recorded as `RatesViolation` `:range`, and a rate
+  or phase past `Int` is recorded as `RatesViolation` `:range`, once per
+  entry, so a bare container key's elements share one refusal, and a rate
   its own check refused composes nothing (§10.5, D-459).
 - The shadowing check ahead of `classify` in the walk (D-246).
 - The store-shape read ahead of the classifier in the walk, `check_store_form`,
@@ -405,10 +406,11 @@ D-459.
   - the constraint pool, with each entry's leave-one-out refinement factor;
   - the prime attribution of `gcd(pool)`'s denominator, by `_prime_powers`,
     a trial division stopping at `PRIME_DIVISOR_CAP` (D-459);
-  - a driving offset's nearest non-refining neighbours.
+  - a driving offset's nearest non-refining neighbours, each a product under
+    the shared catch, one whose arithmetic leaves `Int` not offered (D-459).
 - `_grid_report` runs once per call, ahead of the `Δt_base` branch, under
-  the shared catch: a report whose arithmetic leaves `Int` is `nothing`, and
-  `:derive` is then refused as `:range` (D-459). The
+  the shared catch: a report whose gcd or leave-one-out factor leaves `Int`
+  is `nothing`, and `:derive` is then refused as `:range` (D-459). The
   `Deployment` carries its result. The call also hands that result to the
   three refusals whose remedy is a `Δt_base` the pool admits, and to the
   derivation path's info line.

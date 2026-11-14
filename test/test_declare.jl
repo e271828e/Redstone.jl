@@ -32,7 +32,7 @@ function test_declare()
         @test Absolute(Period(0)).T == 0
     end
 
-    @testset "a value `Rational{Int}` cannot hold finitely is refused at its declaration door, any other integer type taken at its value (§10.5, D-185)" begin
+    @testset "a value `Rational{Int}` cannot hold finitely is refused at its declaration door, any other integer type taken at its value (§10.5, D-185, D-459)" begin
         # Past `Int`, in a numerator, a denominator or an offset, and a period
         # that is not finite, `Hz(0)`'s among them: the normalization fails, as
         # a float's does, and the door names itself and the value.

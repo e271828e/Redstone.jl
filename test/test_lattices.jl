@@ -631,7 +631,7 @@ function test_lattices()
         end
     end
 
-    @testset "the clock's division rounds once at every magnitude, the plain one below `2^53` (§10.5, D-456)" begin
+    @testset "the clock's division rounds once at every magnitude, the plain one below `2^53` (§10.5, D-456, D-458)" begin
         # Against the exact quotient, over the shapes the plain division
         # missed: a quotient just below 2, where an ulp is smallest against
         # it, one past 55 bits, a tiny one and near ties, each signed.
@@ -658,7 +658,7 @@ function test_lattices()
                   for (dividend, divisor) in small)
     end
 
-    @testset "from a wall-clock origin every frame top is the float nearest its instant, boundary zero's the origin itself (§10.5, §12.6, D-456, D-457)" begin
+    @testset "from a wall-clock origin every frame top is the float nearest its instant, boundary zero's the origin itself (§10.5, §12.6, D-456, D-457, D-458)" begin
         # A float near today's `time()` has an ulp of `2^-22`, so over a 0.1 s
         # frame its integers pass `2^53` at frame 0.
         t0 = 1.7631e9 + 0.123456

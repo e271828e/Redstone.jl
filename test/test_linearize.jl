@@ -4,7 +4,7 @@
 # returned value checked against the closed forms. The fixtures live at top
 # level for `code_rules.md`'s local-scope reason; `PEND_G_L` and `PEND_C` are
 # test_trim.jl's, `resume_condition` test_lifecycle.jl's, `LeafPose`
-# test_readers.jl's.
+# test_readers.jl's, `ClockStamp` test_build.jl's.
 
 # The walkthrough's model: a sum of two root inputs drives the pendulum's
 # torque, and two faces leave the root, one of them the sum's feedthrough.
@@ -485,7 +485,7 @@ function test_linearize()
         @test d.pinning == [("del", :discrete, Float64)]
     end
 
-    @testset "the `about` form's clock is boundary zero's at `t0`, the float nearest it from any origin (§14.10, D-456, D-457)" begin
+    @testset "the `about` form's clock is boundary zero's at `t0`, the float nearest it from any origin (§14.10, D-456, D-457, D-458)" begin
         # `q̇ = -t·q² + u` at `q = 1` and `u = 0` reads `-t`. The origin's parts
         # pass `2^53`, where `Float64(t₀)` lands an ulp off the nearest float.
         t₀ = 684943219091290305//514823562239077262
@@ -495,5 +495,14 @@ function test_linearize()
         init!(model, set(u = (in = 0.0,)); t0 = t₀)
         @test linearization.ẋ₀.q === -model.exec.clock.t === -1.330442639634298
         @test Float64(t₀) != 1.330442639634298
+        # The nominal half runs every discrete output stage, and the seeded half
+        # takes its frozen cells from there (D-213): a stamp of the clock reads
+        # the nominal half's clock, the same float.
+        stamped = Model(Group((; c = TimedDecay(), s = ClockStamp()); input_wires = ("in" => "c/u",),
+                              output_wires = ("s/stamp" => "stamp",)); Δt_frame = 1//10)
+        linearization = linearize(stamped, taps(x = (q = get_state("c", :q),),
+                                                y = (stamp = get_face(:stamp),));
+                                  about = set(u = (in = 0.0,)), t0 = t₀)
+        @test linearization.y₀.stamp === -linearization.ẋ₀.q === 1.330442639634298
     end
 end

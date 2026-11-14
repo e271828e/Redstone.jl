@@ -78,17 +78,21 @@ function test_lifecycle()
         sim = Simulation(feedback_model(); Δt_frame = 1//10)
         init!(sim, point; t0 = 1e14)
         @test checkpoint(sim).state.t₀ == 1e14
-        # The exact forms a period takes, of any integer type, `Bool` among
-        # them, and a float at its exact value; an integer past `Int` is refused.
+        # An integer past `Int` is refused.
+        model = Model(feedback_model(); Δt_frame = 1//10)
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, point; t0 = big(2)^70))
+        @test d.argument === :t0 && d.reason === :range
+    end
+
+    @testset "an origin in an exact form a period takes, of any integer type, or a float is held at its exact value (§14.5, D-457, D-459)" begin
+        # `Bool` is an integer to Julia, so `true` is one second.
+        point = set(u = (ref = 0.0,))
         for (t0, origin) in ((Float16(0.1), 819//8192), (big(1)//3, 1//3),
                              (Int32(1)//Int32(3), 1//3), (true, 1//1), (Period(1//4), 1//4))
             model = Model(feedback_model(); Δt_frame = 1//10)
             init!(model, point; t0)
             @test model.exec.clock.t₀ === origin && model.exec.clock.t === Float64(origin)
         end
-        model = Model(feedback_model(); Δt_frame = 1//10)
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} init!(model, point; t0 = big(2)^70))
-        @test d.argument === :t0 && d.reason === :range
     end
 
     @testset "an origin whose run the clock's integers cannot carry is refused at the door, and at a restore (§12.6, §14.5, D-457)" begin

@@ -180,7 +180,7 @@ function _grid_integers(t₀::Rational{Int}, unit::Rational{Int})
         Base.Checked.checked_mul(Int128(numerator(unit)), div(scale, denominator(unit))), scale
 end
 
-# Boundary zero's clock is `_instant`'s at position 0, as every later one is.
+# Boundary zero's clock is `_instant`'s at position 0, as every later one is (D-458).
 function _set_origin!(clock::Clock{T}, t₀::Rational{Int}, unit::Rational{Int}) where {T}
     (clock.origin, clock.unit, clock.scale) = _grid_integers(t₀, unit)
     clock.t₀ = t₀
@@ -188,7 +188,7 @@ function _set_origin!(clock::Clock{T}, t₀::Rational{Int}, unit::Rational{Int})
     nothing
 end
 # The float nearest the exact instant `t₀ + (position + i·units/steps)·unit`
-# (D-456), from the grid integers: `position` whole units from the origin, and
+# (D-456, D-458), from the grid integers: `position` whole units from the origin, and
 # `i` of `steps` equal steps across a span of `units` past it. `count` stays
 # below `2^127`, so it never wraps. `mul` and `add` are the plain operators in
 # the loop, and the checked ones at the door, which refuses an origin whose run
@@ -201,15 +201,15 @@ end
 
 # The float nearest `dividend / divisor`, `divisor > 0`. While both stay within
 # `2^53` they convert exactly and one division rounds to nearest; past it the
-# division is `_rounded_quotient`'s.
+# division is `_rounded_quotient`'s (D-458).
 const MAX_EXACT_INTEGER = Int128(2)^53
 @inline _nearest(dividend::Int128, divisor::Int128) =
     -MAX_EXACT_INTEGER ≤ dividend ≤ MAX_EXACT_INTEGER && divisor ≤ MAX_EXACT_INTEGER ?
     Float64(dividend) / Float64(divisor) : _rounded_quotient(dividend, divisor)
 
-# The long division past `2^53`, in `UInt128` so nothing allocates: the integer
-# quotient, extended a chunk at a time until it holds 55 bits, each chunk as
-# wide as the remainder can shift without leaving `UInt128`. The remainder
+# The long division past `2^53` (D-458), in `UInt128` so nothing allocates:
+# the integer quotient, extended a chunk at a time until it holds 55 bits, each
+# chunk as wide as the remainder can shift without leaving `UInt128`. The remainder
 # then folds into the quotient's last bit, below the rounding bit, and the
 # one conversion rounds to nearest. An exact quotient stops early.
 @noinline function _rounded_quotient(dividend::Int128, divisor::Int128)

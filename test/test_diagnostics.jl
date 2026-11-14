@@ -796,12 +796,13 @@ function diagnostics_kind_set()
               "`h_max` must be exact — a Rational (`h_max = 1//100`) or a `Period`/`Hz` " *
               "value: a span's step count is exact arithmetic, ill-defined over floats " *
               "(§9.1, §10.5)"
-        # A unit too fine to index one frame names `Δt_base` and the frame (§10.5, D-445).
+        # A unit too fine to index one frame, or to count a period, names `Δt_base`
+        # and the frame (§10.5, D-445, D-459).
         @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
                                                    value = 1//(10^10 + 1), related = 1//10^10)),
                          "the lattices' exact unit, gcd(Δt_frame, Δt_base) for Δt_base = " *
                          "1//10000000001 and Δt_frame = 1//10000000000, is too fine to index " *
-                         "one frame in an `Int`")
+                         "one frame, or to count a component's period, in an `Int`")
         # A bound too fine to count one frame's steps names itself and the frame (D-449).
         @test startswith(message(DeploymentInvalid(parameter = :h_max, reason = :range,
                                                    value = 1//2^60, related = 1//1)),
@@ -845,6 +846,16 @@ function diagnostics_kind_set()
                                              scope = "", key = :a, grid = unfactored))
         @test occursin("\n  primes: 6917529027641081853 = 3·2305843009213693951 unfactored\n", rendered)
         @test occursin("\n    2305843009213693951 unfactored  a period", rendered)
+        # A driving offset whose neighbours `Rational{Int}` cannot hold keeps its
+        # row and its factor, with no repair to declare (§9.2, D-459).
+        neighbourless = build(Group((; a = TickCounter(), c = TickCounter());
+                                    sample_times = (; a = Absolute(Period(2^20), 2^21 // 3),
+                                                    c = Absolute(Period(2^20 // (2^45 + 3))))))
+        rendered = message(DeploymentInvalid(
+            parameter = :Δt_base, reason = :anchor_offset, value = 2^21 // 3, related = 1//1,
+            scope = "", key = :a,
+            grid = Deployment(neighbourless; Δt_frame = 2^20 // (3 * (2^45 + 3))).grid))
+        @test occursin(r"offset 2097152//3 +×3\n", rendered) && !occursin("declaring", rendered)
         # A header mismatch counts the parameters the walk names (§12.7).
         @test occursin("the seven trajectory-determining deployment parameters",
                        message(CheckpointMismatch(what = :deployment, name = :algorithm,

@@ -63,9 +63,9 @@ anchors: the constraint pool — every anchor's period and every nonzero offset,
 in anchor order, periods first — with each entry's leave-one-out refinement
 factor `r_p = gcd(pool ∖ p)/gcd(pool)`, the prime attribution of `gcd(pool)`'s
 denominator, and, for a driving offset, the nearest offsets the rest of the pool
-already supports. One report per constructor call, computed ahead of the
-`Δt_base` branch: the refusal path's suggestion, the derivation path's line and
-the `Deployment` itself read the same substrate.
+already supports, those whose arithmetic fits `Int`. One report per constructor
+call, computed ahead of the `Δt_base` branch: the refusal path's suggestion, the
+derivation path's line and the `Deployment` itself read the same substrate.
 """
 function _grid_report(anchors::Vector{Anchor})
     entry_kinds, entry_values, anchor_indices = Symbol[], Rational{Int}[], Int[]
@@ -95,10 +95,19 @@ function _grid_report(anchors::Vector{Anchor})
             # The grid the rest of the pool supports, and τ's neighbours on it. The
             # fold requires 0 ≤ τ < T (`assembly.jl`), so an upper neighbour reaching
             # the anchor's period is no offset; 0 stays, declaring none being a repair.
+            # A neighbour whose arithmetic leaves `Int` is not offered, since
+            # `Absolute` refuses what `Rational{Int}` cannot hold (D-459). Each is a
+            # product, which Julia reduces before it multiplies, so it fails only
+            # for a value past `Int`; a sum could fail in an intermediate product.
             τ, T = entry_values[i], anchors[anchor_indices[i]].T
-            lower = floor(Int, τ / partial) * partial
-            push!(alternatives, lower)
-            lower + partial < T && push!(alternatives, lower + partial)
+            lower_index = _exact_or_nothing(() -> floor(Int, τ / partial))
+            if lower_index !== nothing
+                lower = _exact_or_nothing(() -> lower_index * partial)
+                upper = _exact_or_nothing(
+                    () -> Base.Checked.checked_add(lower_index, 1) * partial)
+                lower === nothing || push!(alternatives, lower)
+                upper !== nothing && upper < T && push!(alternatives, upper)
+            end
         end
         anchor = anchors[anchor_indices[i]]
         push!(pool, GridEntry(entry_kinds[i], entry_values[i], anchor.scope, anchor.key,
@@ -305,10 +314,10 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
     # every refusal that names the grid as well as to the artifact (§9.2, D-187).
     # A report whose arithmetic leaves `Int` is `nothing`, and marks a pool no
     # deployment holds: a base tick divides the pool's gcd, so its denominator
-    # is at least the gcd's, and a leave-one-out factor, or an offset's
-    # neighbour, past `Int` puts some anchor's count of base ticks past it at
-    # every base tick that divides the pool. `:derive` refuses it below, and
-    # any other `Δt_base` meets the anchor loop's refusal.
+    # is at least the gcd's, and a leave-one-out factor past `Int` puts some
+    # anchor's count of base ticks past it at every base tick that divides the
+    # pool (D-459). `:derive` refuses it below, and any other `Δt_base` meets
+    # the anchor loop's refusal.
     grid = _exact_or_nothing(() -> _grid_report(anchors))
 
     # The Δt_base branch is its own premise: derivation reads the tiers and the

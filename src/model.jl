@@ -325,7 +325,7 @@ function init!(model::Model{T}, plan::ConditionPlan; t0 = 0,
                         model.deployment.build.structure.components,
                         activation(model.deployment.build, T).decls)   # D-063's reset
     _apply_plan!(model, plan)
-    # the origin exact, and the clock the float nearest it in the model's scalar (D-260, D-457)
+    # the origin exact, and the clock the float nearest it in the model's scalar (D-260, D-457, D-458)
     _set_origin!(exec.clock, origin, model.deployment.lattice.unit)
     fill!(exec.events.prior, false)   # every prior not-holding (§10.6)
     # the stepper's carried state as bound, so the run is a function of the condition (D-452)
@@ -581,7 +581,7 @@ _frame_at(t::Real, t₀::Real, Δt_frame::Float64) =
 # The last frame a run from the origin `t₀` may take (§10.5, D-445, D-450): the
 # lesser of the lattices' `max_frame` and the last frame whose clocks the origin
 # resolves. Every clock the loop writes in frame `k` is the float nearest its
-# instant (`_instant`), and rounding to nearest keeps order, so two boundaries
+# instant (`_instant`, D-458), and rounding to nearest keeps order, so two boundaries
 # never swap. Two a gap `δ` apart take distinct clocks while an ulp of their
 # instant `t` stays below `δ`, which holds while `|t| < 2^52·δ`, and
 # `|t| ≤ |t₀| + 2·(t - t₀)`, `t = t₀ + k·Δt_frame` the frame's end. `reach` is

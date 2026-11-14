@@ -4804,14 +4804,17 @@ per-entry attribution. Attribution has two forms:
 
 When an offset is a driver, the message adds the nearest non-refining
 alternatives, the admissible offsets on the grid the rest of the pool
-supports. That turns the diagnostic into a repair.
+supports. That turns the diagnostic into a repair. **An alternative whose
+arithmetic leaves `Int` is not offered** ([D-459][d-459]). An alternative is an offset
+to declare, and `Absolute` refuses a value `Rational{Int}` cannot hold. In a
+pool that deploys, the arithmetic leaves `Int` only for such a value.
 
 **Blame is computed against the actual pool** ([D-284][d-284]). A
 simple-fraction-of-its-period test stays authoring guidance and never becomes
 the engine's.
 
-**A pool whose attribution leaves `Int` gets no grid report** ([D-459][d-459]). Such a
-pool admits no deployment. A base tick divides `gcd(pool)`, so its
+**A pool whose gcd or refinement factor leaves `Int` gets no grid report**
+([D-459][d-459]). Such a pool admits no deployment. A base tick divides `gcd(pool)`, so its
 denominator is at least the gcd's, and no `Rational{Int}` base tick exists
 when the gcd's leaves `Int`. A refinement factor past `Int` gives some
 anchor a count of base ticks past `Int` at every admissible `Δt_base`.
