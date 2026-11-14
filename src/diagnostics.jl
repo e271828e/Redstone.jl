@@ -2289,7 +2289,7 @@ message(d::ConditionShapeDrift) =
 
 "§10.5, §11.6, §12.4, §12.6, §14.7, D-215: an argument outside its constraint — `DeploymentInvalid`'s twin off the deployment surface."
 Base.@kwdef struct ArgumentInvalid <: Diagnostic
-    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Period|:Hz|:Absolute|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
+    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Period|:Hz|:Absolute|:Relative|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
     reason::Symbol
     argument::Union{Nothing,Symbol} = nothing
     value::Any = nothing
@@ -2311,6 +2311,14 @@ function message(d::ArgumentInvalid)
     d.reason === :not_a_quantity &&
         return "`Absolute` takes a quantity value: `Period(1//50)` or `Hz(50)` — got " *
                "$(repr(d.value)) (§10.5)"
+    # `Relative`'s two refusals: a fraction, which teaches `Absolute`, and a
+    # count past `Int` (D-459).
+    d.reason === :not_a_count &&
+        return "`Relative` counts ticks of the enclosing scope, so `K` and `φ` are integers — " *
+               "got $(repr(d.value)). A child that ticks faster than its scope, or at a " *
+               "period in seconds, takes `Absolute`, as in `Absolute(Hz(100))` (§10.5)"
+    d.reason === :range && d.call === :Relative &&
+        return "`Relative` holds its counts in `Int`, and $(repr(d.value)) is past it (§10.5)"
     # A declaration door's value that `Rational{Int}` cannot hold finitely.
     d.reason === :range && d.call in (:Period, :Hz, :Absolute) &&
         return "`$(d.call)` holds an exact `Rational{Int}`, and $(repr(d.value)) " *

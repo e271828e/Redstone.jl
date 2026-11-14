@@ -624,6 +624,8 @@ function diagnostics_kind_set()
             ArgumentInvalid(call = :Period, reason = :range, value = 1//0),
             ArgumentInvalid(call = :Hz, reason = :range, value = 0),
             ArgumentInvalid(call = :Absolute, reason = :range, value = big(1)//big(2)^70),
+            ArgumentInvalid(call = :Relative, reason = :range, value = big(2)^70),
+            ArgumentInvalid(call = :Relative, reason = :not_a_count, value = 0.5),
             ArgumentInvalid(call = :step!, reason = :both_given),
             ArgumentInvalid(call = :step!, reason = :range, argument = :frames, value = 0),
             ArgumentInvalid(call = :step!, reason = :range, argument = :t_plus, value = -1.0),
@@ -820,6 +822,12 @@ function diagnostics_kind_set()
               "finite (§10.5)"
         @test message(ArgumentInvalid(call = :Period, reason = :range, value = 1//0)) ==
               "`Period` holds an exact `Rational{Int}`, and 1//0 is past `Int` or not finite (§10.5)"
+        @test message(ArgumentInvalid(call = :Relative, reason = :range, value = big(2)^70)) ==
+              "`Relative` holds its counts in `Int`, and 1180591620717411303424 is past it (§10.5)"
+        @test message(ArgumentInvalid(call = :Relative, reason = :not_a_count, value = 1//2)) ==
+              "`Relative` counts ticks of the enclosing scope, so `K` and `φ` are integers — " *
+              "got 1//2. A child that ticks faster than its scope, or at a period in seconds, " *
+              "takes `Absolute`, as in `Absolute(Hz(100))` (§10.5)"
         @test message(DeploymentInvalid(parameter = :Δt_frame, reason = :range,
                                         value = big(2)^70)) ==
               "`Δt_frame` must be positive and finite in `Rational{Int}`, got " *

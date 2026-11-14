@@ -58,6 +58,25 @@ function test_declare()
         @test period(Period(true)) === 1//1 && Absolute(Period(2), true).τ === 1//1
     end
 
+    @testset "`Relative` takes an integer count of any type, and refuses a count past `Int` and a fraction (§10.5, D-459)" begin
+        @test Relative(Int8(5), 0x02) === Relative(5, 2) && Relative(big(5)) === Relative(5, 0)
+        @test Relative(true) === Relative(1, 0)
+        for (f, value) in ((() -> Relative(big(2)^70), big(2)^70),
+                           (() -> Relative(2, big(2)^70), big(2)^70),
+                           (() -> Relative(-big(2)^70, 1), -big(2)^70))
+            d = carried(@test_throws DiagnosticError{ArgumentInvalid} f())
+            @test d.call === :Relative && d.reason === :range && d.value == value
+        end
+        # A float or a rational is no count, a whole one included, and the
+        # refusal carries the first argument at fault.
+        for (f, value) in ((() -> Relative(0.5), 0.5), (() -> Relative(1//2), 1//2),
+                           (() -> Relative(2.0, 0), 2.0), (() -> Relative(5//1, 0), 5//1),
+                           (() -> Relative(2, 0.5), 0.5), (() -> Relative(2.5, 0.5), 2.5))
+            d = carried(@test_throws DiagnosticError{ArgumentInvalid} f())
+            @test d.call === :Relative && d.reason === :not_a_count && d.value === value
+        end
+    end
+
     @testset "the bundle law (§5.2)" begin
         # A name appears iff the store or fact exists: the stateless gain sees no
         # `x`, the no-feedthrough stage sees no `u`, `t` is always there.

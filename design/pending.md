@@ -225,11 +225,6 @@ breaking user code, and each may benefit from user feedback first.
   components' sweep and `x_deriv` bodies and says nothing about the discrete
   ones. The standing rule for new library components is
   `rules/brief_rules.md`'s, under its section on library components.
-- **The time surface's leftovers** (increment 96, outside its scope). One
-  thing its prototype found and did not fix:
-  - `Relative`'s constructor converts its arguments, so
-    `Relative(big(2)^70)` raises a raw `InexactError` and
-    `Relative(2.0, 0)` is taken as `K = 2`. `Relative` is not a time door.
 
 ## Deviations
 

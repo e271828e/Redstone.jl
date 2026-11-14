@@ -338,7 +338,9 @@ The declaration layer:
   `_exact_or_nothing`, the one catch of `OverflowError`, `InexactError` and
   `DivideError` the time surface's doors share, each refusing its `nothing`
   under its own reason, and `_declared_quantity`, the constructors' exact
-  value or their `ArgumentInvalid` `:range` (§10.5, D-459).
+  value or their `ArgumentInvalid` `:range`, `Relative`'s two counts
+  included. `Relative`'s second method refuses a float or a rational as
+  `:not_a_count` (§10.5, D-459).
 - The event surface `StateEvent`, `state_events` and `x_projection`.
 - The declaration family `DECLARATION_FAMILY` and `foreign_declarations`.
 - The user-code frame `invoke_declaration`, `invoke_probed` and

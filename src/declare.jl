@@ -373,6 +373,8 @@ stop_reason(::Any) = ""  # COV_EXCL_LINE
 # argument throws the teaching error naming the exact spelling. A value that
 # `Rational{Int}` cannot hold finitely fails the same normalization, and is
 # refused as `:range`: an integer or a part past `Int`, or `Hz(0)`'s period.
+# `Relative`'s counts normalize to `Int` alike: a count past it is `:range`, and
+# a float or a rational is `:not_a_count`, the whole ones included (D-459).
 
 # `fn()`, or `nothing` where its exact arithmetic leaves `Int`: the one catch the
 # time surface's doors share, each refusing the `nothing` under its own reason.
@@ -439,10 +441,9 @@ Hz(frequency::AbstractFloat) =
 
 period(q::Period) = q.T
 
-# Design: §10.5.
+# Design: §10.5, D-459.
 """
-    Relative(K, φ) -> Relative
-    Relative(K::Integer) -> Relative
+    Relative(K::Integer, φ::Integer = 0) -> Relative
 
 A sample time in [ticks](@ref g-tick) of the enclosing
 [scope](@ref g-rate-scope), every `K`-th tick starting from the `φ`-th.
@@ -458,14 +459,21 @@ phase `Φ_s + φ·D_s`.
 instead. Declare their scope at twice their rate, and give them `Relative(2, 0)`
 and `Relative(2, 1)`.
 
-The constructor checks nothing. The build refuses `K < 1`, or a `φ` outside
+`K` and `φ` are integers of any type. A count that `Int` cannot hold is refused
+as `ArgumentInvalid`, and so is a float or a rational. A child that ticks faster
+than its scope, or at a period in seconds, takes [`Absolute`](@ref). The
+constructor checks no range. The build refuses `K < 1`, or a `φ` outside
 `0 ≤ φ < K`, as `RatesViolation`.
 """
 struct Relative
     K::Int
     φ::Int
+    Relative(K::Integer, φ::Integer = 0) =
+        new(_declared_quantity(Int, :Relative, K), _declared_quantity(Int, :Relative, φ))
+    Relative(K::Real, φ::Real = 0) =
+        throw(DiagnosticError(ArgumentInvalid(call = :Relative, reason = :not_a_count,
+                                              value = K isa Integer ? φ : K)))
 end
-Relative(K::Integer) = Relative(K, 0)
 
 # Design: §9.1, §10.5, D-186.
 """
