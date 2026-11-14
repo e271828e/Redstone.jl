@@ -29,8 +29,11 @@ item changes what the spec says, the spec edit is part of the item.
 
   The rulings and their reasons are
   `design/increments/096_exact_arithmetic/notes_increment_96.md`. Stage
-  reached: the prototype, running in a scratch worktree with the four open
-  points ruled; its readings round is next.
+  reached: the code commit `0c64874`, after the docs commit `daaeccf`
+  (D-458, D-459) and the brief. The cold review is next, run by the
+  successor session from the brief and the notes. The user delegated the
+  rest overnight on 2026-11-14, so the prototype's nine readings are the
+  coordinator's rulings, in the notes, and nothing is pushed.
 - **Variable-step integration.** The frame and the integration step become
   separate quantities. The step is the `Model`'s to decide: it never
   crosses a frame top or a due instant and is never longer than the
@@ -237,6 +240,18 @@ breaking user code, and each may benefit from user feedback first.
   components' sweep and `x_deriv` bodies and says nothing about the discrete
   ones. The standing rule for new library components is
   `rules/brief_rules.md`'s, under its section on library components.
+- **The time surface's leftovers** (increment 96, outside its scope). Four
+  things its prototype found and did not fix:
+  - `Relative`'s constructor converts its arguments, so
+    `Relative(big(2)^70)` raises a raw `InexactError` and
+    `Relative(2.0, 0)` is taken as `K = 2`. `Relative` is not a time door.
+  - Replay's `to_time` check and `_frames_fit`, `_frames_to` and
+    `_frame_at` convert the origin by `Float64(t₀)`. For a rational origin
+    whose own parts pass `2^53`, that float can sit an ulp off boundary
+    zero's clock (D-458).
+  - A composite cofactor in the grid's prime attribution can list no
+    supplier, since an entry may supply only one of its primes.
+  - `_origin` keeps its own `try` where `_exact_or_nothing` would serve.
 
 ## Deviations
 

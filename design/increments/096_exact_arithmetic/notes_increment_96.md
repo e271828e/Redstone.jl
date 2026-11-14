@@ -168,3 +168,50 @@ Four things the prototype found outside the scope are left for the user,
 on a `pending.md` bullet: `Relative`'s constructor, the readers that
 convert the origin by `Float64(t₀)`, a composite cofactor's suppliers, and
 `_origin`'s own `try`.
+
+## State at 0c64874, the handover
+
+The coordinating session `inc-96` handed over here, at the code commit, to
+the standby session `inc-96-handoff`. Its context read 350k at the brief's
+commit. The review, its fixes and the delta check need one session, since
+a reviewer answers only the session that launched it.
+
+- **Commits, none pushed.** The rulings `6cfcce8` and `b743551`, the
+  audit report `52cb5eb`, the overnight rulings `9d1263e`, the docs commit
+  `daaeccf` (D-458, D-459), the brief with the patch `12b5bc4`, and the
+  code commit `0c64874`.
+- **Tests.** The gate read 10 101 of 10 101 in the prototype's worktree.
+  The routed subset read 2403 of 2403 on the real tree before the code
+  commit: `declare discrete lattices lifecycle trim linearize diagnostics`.
+  `docstring_roster.jl` came back clean. The Documenter build has not run.
+- **Next.** The cold review by the brief's last section, the adjudication,
+  the fixer's one commit, the same reviewer's delta check, the review's
+  record in the brief, and the first `pending.md` bullet retired. Then the
+  user's diff of the arc and the push.
+- **For the reviewer, beyond the brief.** The patch's comments and test
+  names cite D-456 and D-457, never D-458 or D-459, which did not exist
+  when it was written. The Documenter build is owed, since four exported
+  docstrings changed. D-459's Rationale and §9.2 state R4's argument for
+  an offset's neighbour as settled, and the brief asks the reviewer to
+  test it.
+- **The limit on overnight rulings.** A successor rules what the review
+  raises and records it here. It does not reverse the user's rulings 1 to
+  10. A finding that contradicts one stops the run at that stage.
+
+Where the session's files are, under
+`/private/tmp/claude-501/-Users-miguel--julia-dev-Redstone-jl/8985b7f9-b4fe-42e5-99c1-7fdf38c4a14f/scratchpad/`:
+
+- `wt_inc96`, the prototype's worktree, detached at `6cfcce8` with its
+  patch uncommitted. It can go after the push.
+- `prototype_notes_96.md`, the prototyper's notes.
+- `mutate.py` and `mutants.log`, the 19 mutants and their results.
+- `gate.log`, the prototype's gate, and `routed_real_tree.log`, the
+  routed subset on the real tree.
+- `report_probes.jl`, `measure_clock.jl`, `quotient_probe.jl` and
+  `quotient_cost.jl`, the prototyper's probes.
+- `clock_probe.jl` and `worked.jl`, the coordinator's standalone probes
+  behind rulings 1 and 4.
+- `context_watch.py`, the context watch over an agent's transcript.
+
+The prototyper and the docs agent answered `inc-96` alone, so a successor
+resumes neither.
