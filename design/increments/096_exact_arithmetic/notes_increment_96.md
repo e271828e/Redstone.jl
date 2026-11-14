@@ -63,6 +63,11 @@ below, with its reason, and nothing is pushed
 (`rules/increment_rules.md`). The user's diff of the arc and the push
 remain.
 
+The user left a fresh session in standby, named `inc-96-handoff`. If the
+coordinator reaches its stopping point, it brings these notes and the
+`pending.md` bullet up to date, commits them, and messages that session
+with the successor's first prompt, to finish the increment.
+
 ## Weighed and not taken
 
 - **A float origin kept as a float base**, the clock `t0` plus the float
@@ -115,3 +120,49 @@ while the prototype ran, and the prototyper received them in one message.
     every denominator below `2^40` is factored whole. A cofactor at or
     above `2^40` may be composite, and the grid report's message marks it
     as unfactored. The worst case is about a million iterations.
+
+## The coordinator's rulings, overnight
+
+The prototype reported on 2026-11-14 with the gate at 10 101 of 10 101 in
+its worktree and nine readings. The user was away, so the coordinator
+ruled each. All nine stand as the prototype built them.
+
+- **R1. The unfactored cofactor is marked where the grid block is
+  rendered**, by its magnitude, at or above the cap's square. The data
+  keeps its shape. A marker in the data would touch `_prime_powers`, the
+  supplier test and the named tuple for a label one function prints. A
+  prime between `2^40` and the square of the first prime past the cap
+  prints as unfactored, which is true of it: nothing factored it.
+- **R2. The `Deployment` door catches at each premise**, through one
+  shared function: each keyword, the grid report and the multiply-add. A
+  single catch around `bind_schedule` would drop the faults D-229 has the
+  call collect. This is ruling 3's "one catch per door" read against
+  D-229, which the user's ruling did not suspend.
+- **R3. A divisor past `Int` after composition with its anchor is the
+  lattices' existing refusal**, `Δt_base` `:range`. `:anchor_period` says
+  "not an integer multiple", which is false of an overflow, and ruling 3
+  asks for an existing reason.
+- **R4. A grid report whose arithmetic leaves `Int` is no report.**
+  `:derive` is then refused as `:range`, under a message arm of its own.
+  An explicit or default `Δt_base` meets the anchor loop's refusal, by the
+  report's section 2.3. The cold review probes that argument, since a
+  deployment built with no report would be a defect.
+- **R5. The time keywords' constraint reads "must be positive and finite
+  in `Rational{Int}`".** The old text would tell a user that `2^70` is not
+  positive and finite. Two message pins move.
+- **R6. A rate its own check refused composes nothing in the fold**, so
+  one fault is one refusal.
+- **R7. An offset that is not finite is refused at `Absolute`**, by the
+  rule ruling 3 gives `Period`.
+- **R8. The slow path is a chunked long division**, 11 ns a clock against
+  34 ns for the session's bit-by-bit loop. A frame of the measured model
+  takes 0.21 µs and writes four or five clocks, so the difference is a
+  tenth of a frame on a wall-clock run. Both forms matched the reference
+  on 4.6 million quotients.
+- **R9. The scratch clocks of `trim!` and `linearize` go through
+  `_set_origin!`**, which leaves `_set_clock!` to the checkpoint form.
+
+Four things the prototype found outside the scope are left for the user,
+on a `pending.md` bullet: `Relative`'s constructor, the readers that
+convert the origin by `Float64(t₀)`, a composite cofactor's suppliers, and
+`_origin`'s own `try`.
