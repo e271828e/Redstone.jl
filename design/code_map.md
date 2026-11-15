@@ -404,8 +404,9 @@ D-459.
   every check whose premise holds runs, and nothing relates them (D-445,
   D-449). `h_max` resolves against `Δt_frame`, absent meaning `Δt_frame`.
   `h_min` takes the same door, is required where the token's trait says the
-  method proposes, and is refused above the resolved `h_max` as `:range`
-  with `h_max` related (D-460).
+  method proposes, and is refused above half the resolved `h_max` as
+  `:range` with `h_max` related, the half taken in `Int128` so no
+  `Rational{Int}` overflows (D-460, D-463).
   The lattices come last, with every other check as their premise:
   `_lattice`'s `:Δt_base` is `DeploymentInvalid` on `Δt_base` with reason
   `:range` and `Δt_frame` as `related`, and its `:h_max` the same on
@@ -439,7 +440,7 @@ D-459.
 
 Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
 D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454,
-D-459, D-460, D-461.
+D-459, D-460, D-461, D-463.
 
 ### `src/descriptor.jl`
 
@@ -597,15 +598,17 @@ D-256, D-261, D-268, D-270, D-315.
   `:subcycling`, `:not_frame_multiple` and `:not_harmonic`, the parameter
   `:h` and the tokens' `:inexact` are gone (§9.2, §10.5, D-445, D-449,
   D-450). `DeploymentInvalid`'s `h_min` arms, `:missing` under a proposing
-  method and `:range` with `h_max` related, and `attempt_budget`'s `:range`;
-  `CheckpointMismatch`'s message counts nine parameters (D-460, D-462).
+  method and `:range` with `h_max` related, a floor above half the bound,
+  and `attempt_budget`'s `:range`; `CheckpointMismatch`'s message counts
+  nine parameters (D-460, D-462, D-463).
 
 Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
 §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
-D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452, D-459, D-460, D-462.
+D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452, D-459, D-460, D-462,
+D-463.
 
 ### `src/executor.jl`
 
@@ -1399,15 +1402,18 @@ framework name the tests call or extend is admitted. A second line,
 
 ### `test/test_adaptive.jl`
 
-The first adaptive backend (§10.2, §10.4, §10.5, §12.6, §12.7, §14.10,
-D-460–D-462): a recording replayed from a mid-run checkpoint bit for bit,
+The first adaptive backend (§9.2, §10.2, §10.4, §10.5, §12.6, §12.7, §14.10,
+D-460–D-463): a recording replayed from a mid-run checkpoint bit for bit,
 the method's order and the tolerance's proportionality under the integral
-gain alone, allocation, the controller's two branches, a `t*` ending a step,
-the floor and the budget with their warning, a nonfinite estimate, the
-starting bound and its absence under a vanishing derivative, a `Dual`
-run's steps, projection's silence, the checkpoint pair and the reset, the shaping rule, the deployment's keywords and their
-mismatch names, the clock's resolution of the floor, and `show`. Its
-fixtures are its own:
+gain alone, allocation, the controller's two branches, the error estimate,
+its scale and the rejection's shrink in literals, a `t*` ending a step,
+the floor and the budget with their warning, a nonfinite estimate or trial,
+the starting bound and its absence under a derivative that vanishes or is
+not a number, a `Dual` run's steps, projection's silence, the checkpoint
+pair and the reset, the shaping rule, every step within `h_max` under a
+floor at half the bound, at the floor's count, at the bound's and after a
+`t*`, the deployment's keywords and their mismatch names, the clock's
+resolution of the floor, and `show`. Its fixtures are its own:
 
 - `Watched(inner)`, an `AbstractAlgorithm` defined in the suite, and its
   `WatchedStepper`, which forwards every call to a `BS3Stepper`, keeps per
@@ -1416,11 +1422,13 @@ fixtures are its own:
   fails its test.
 - `ClockHooks`, the settled clocks as values at any scalar; `Cliff()`, a state
   whose derivative is not a number past zero, `Recharger()`, a nonlinear
-  relaxation reset by a localized event, and `Kepler()`, an orbit of
-  eccentricity 0.8 from pericentre, all three zero-argument and so in
-  `test_build.jl`'s `Dual` sweep; `adaptive_sim()`, the seam rig under
-  `BS3`; and the controller's two formulas in literals, `elementary` and
-  `proportional_integral`.
+  relaxation reset by a localized event, `Kepler()`, an orbit of
+  eccentricity 0.8 from pericentre, and `Overflowing()`, a state whose trial
+  overflows to `Inf` under a finite estimate, all four zero-argument and so
+  in `test_build.jl`'s `Dual` sweep; `Expo(λ)`, the flow `ẋ = λx` from 1,
+  argument-taking and so among the sweep's skipped; `adaptive_sim()`, the
+  seam rig under `BS3`; and the controller's two formulas in literals,
+  `elementary` and `proportional_integral`.
 
 ### `test/test_lattices.jl`
 

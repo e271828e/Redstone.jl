@@ -1414,10 +1414,11 @@ function _grid_block(grid::Union{Nothing,GridReport})
 end
 
 function message(d::DeploymentInvalid)
-    # A floor above the bound: `h_max` resolved in hand (D-460).
+    # A floor above half the bound: `h_max` resolved in hand (D-460, D-463).
     d.reason === :range && d.related !== nothing && d.parameter === :h_min &&
-        return "the step floor h_min = $(d.value) is above the step bound h_max = " *
-               "$(d.related), resolved against the frame — no step could take both (§10.2)"
+        return "the step floor h_min = $(d.value) is above half the step bound h_max = " *
+               "$(d.related), resolved against the frame — a step at the floor can be " *
+               "up to just under 2·h_min long, past the bound (§9.2, §10.2)"
     # A `:range` with a related value is the lattices' refusal, `Δt_frame` in hand:
     # the unit's, on `Δt_base`, or the bound's, on `h_max`.
     d.reason === :range && d.related !== nothing && d.parameter === :h_max &&

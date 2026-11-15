@@ -73,6 +73,26 @@ y_types(::Kepler) = (rx = Float64,)
 y_state(::Kepler, (; x)) = (rx = x.r[1],)
 x_deriv(::Kepler, (; x)) = (r = x.v, v = -x.r / sqrt(x.r[1]^2 + x.r[2]^2)^3)
 
+# A state growing or decaying at the rate `λ` from 1, whose stages are
+# hand-computable from the tableau; at `λ = NaN` its derivative at the start
+# is not a number.
+struct Expo <: AbstractComponent
+    λ::Float64
+end
+x_init(::Expo) = 1.0
+y_types(::Expo) = Float64
+y_state(::Expo, (; x)) = x
+x_deriv(c::Expo, (; x)) = c.λ * x
+
+# A state driven from 0 at 1e308 per second while it is finite and below
+# 1e300: over a 10 s step the trial overflows to `Inf` while the error
+# estimate stays finite.
+struct Overflowing <: AbstractComponent end
+x_init(::Overflowing) = 0.0
+y_types(::Overflowing) = Float64
+y_state(::Overflowing, (; x)) = x
+x_deriv(::Overflowing, (; x)) = (isfinite(x) && x < 1e300) ? 1e308 : 0.0
+
 # The seam rig under BS3 at a tolerance that subcycles every frame.
 adaptive_sim(algorithm = Watched(BS3(reltol = 1e-6, abstol = 1e-9))) =
     Simulation(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, h_min = 1//2^20, algorithm)
@@ -214,6 +234,29 @@ function test_adaptive()
         @test exact.exec.stepper.proposal == 10 * 0.01 && exact.exec.stepper.memory == 1e-4
     end
 
+    @testset "an attempt's error estimate, its scale max(|xₙ|, |xₙ₊₁|) and its rejection's shrink are the tableau's, in literals (§10.2, D-461)" begin
+        # One attempt from x = 1 at h = 1/2 on ẋ = λx, past the starting state,
+        # its stages and estimate written from the tableau's literals, the
+        # tolerance set so the scaled error is 3/2. Growth puts the larger state
+        # at the step's end and decay at its start.
+        for λ in (1.0, -1.0)
+            h = 0.5
+            k1 = λ; k2 = λ * (1 + h / 2 * k1); k3 = λ * (1 + 3h / 4 * k2)
+            x1 = 1 + h * (2 / 9 * k1 + 1 / 3 * k2 + 4 / 9 * k3); k4 = λ * x1
+            estimate = h * (-5 / 72 * k1 + 1 / 12 * k2 + 1 / 9 * k3 - 1 / 8 * k4)
+            reltol = abs(estimate) / (1.5 * max(1.0, abs(x1)))
+            model = Model(Group((; e = Expo(λ))); Δt_frame = 1, h_min = 1//2^20,
+                          algorithm = BS3(reltol = reltol, abstol = 1e-300))
+            init!(model)
+            stepper = model.exec.stepper
+            restore_stepper!(stepper, (h, 0.0))
+            @test !attempt!(stepper, model, h)
+            @test model.exec.xnext[1] ≈ x1 rtol = 1e-14
+            # The rejection shrinks by the integral gain alone, 0.9 · (3/2)^(-1/3).
+            @test stepper.proposal ≈ h * 0.9 * 1.5^(-1/3) rtol = 1e-9
+        end
+    end
+
     @testset "a localized event inside a sub-step fires at its crossing, and its t* ends the step under a proposal (§10.4, D-460)" begin
         # Four steps a frame under `h_max = 1//40`; the stamper crosses at 0.315,
         # inside frame 4's first step, on a linear trajectory the method
@@ -274,9 +317,18 @@ function test_adaptive()
         @test count(a -> a[3], attempts) ≥ 5
         @test !attempts[end][3] && attempts[end][2] < 2 * 0.001
         @test all(a -> !isnan(a[6]), attempts)
+        # A trial that overflows to `Inf` under a finite estimate is a rejection
+        # too: its scale max(|xₙ|, |xₙ₊₁|) is infinite, so the norm alone would
+        # pass it. The attempt runs past the starting state.
+        model = Model(single(Overflowing()); Δt_frame = 10, h_min = 1//1000, algorithm = BS3())
+        init!(model)
+        stepper = model.exec.stepper
+        restore_stepper!(stepper, (10.0, 0.0))
+        @test !attempt!(stepper, model, 10.0)
+        @test model.exec.xnext[1] == Inf && stepper.proposal == 0.2 * 10.0
     end
 
-    @testset "a rejected first attempt proposes at most the starting bound, from its first stage, and a vanishing derivative gives none (§10.2, D-461)" begin
+    @testset "a rejected first attempt proposes at most the starting bound, from its first stage, and a vanishing derivative or one that is not a number gives none (§10.2, D-461)" begin
         # Kepler at a 2 s frame. The scale is `max(|xᵢ|, abstol/reltol)`, here
         # 1e-3 for the acceleration's component, so the rate is 25 / 1e-3, and
         # the bound 1 / (25e3 / (0.8 · 1e-6^(1/3))) = 3.2e-7 s.
@@ -298,6 +350,15 @@ function test_adaptive()
         step!(sim)
         attempts = sim.model.exec.stepper.attempts
         @test attempts[1][2:3] == (2.0, false) && attempts[1][6] ≥ 0.2 * 2.0
+        # A derivative that is not a number at the start gives none either: the
+        # retries shrink to the floor, whose acceptance throws NonfiniteState,
+        # and no proposal is `NaN`.
+        model = Model(Group((; e = Expo(NaN))); Δt_frame = 1, h_min = 1//1000,
+                      algorithm = Watched())
+        init!(model)
+        err = failure(() -> frame!(model, 1))
+        @test err isa StepError{NonfiniteState} && err.cause.path == "e"
+        @test all(a -> !isnan(a[6]), model.exec.stepper.attempts)
     end
 
     @testset "a Dual run takes the steps the Float64 run takes, the error over the values alone (§9.4, §14.10, D-461)" begin
@@ -365,7 +426,39 @@ function test_adaptive()
         @test err isa InternalInvariant
     end
 
-    @testset "h_min and attempt_budget are deployment parameters: h_min required by a proposing method and refused above h_max, both compared, hashed and named (§9.2, §12.7, Appendix C, D-460, D-462)" begin
+    @testset "a floor at half the bound keeps every step within h_max: a tolerance no step meets takes the floor's count, one every step meets the bound's, and a t* leaves one step longer than the floor (§9.2, §10.2, D-463)" begin
+        # Frames of 3 ms under a bound of 2 ms and a floor of 1 ms, over a reset
+        # at ln 2.5 s, inside frame 306. A floor at the bound, which the door
+        # refuses, took one step of 3 ms a frame.
+        h_max, h_min = 1//500, 1//1000
+        function steps_by_frame(algorithm)
+            model = Model(single(Recharger()); Δt_frame = 3//1000, h_max, h_min, algorithm)
+            init!(model)
+            hooks = ClockHooks(model, Float64[])
+            steps = map(1:310) do k
+                n = length(hooks.clocks)
+                frame!(model, k, hooks)
+                diff([n == 0 ? 0.0 : hooks.clocks[n]; hooks.clocks[(n + 1):end]])
+            end
+            @test modes(model, "c").count == 1
+            steps
+        end
+        quiet(steps) = steps[setdiff(1:310, 306)]
+        # A tolerance no step meets lifts every proposal to the floor: a quiet
+        # frame takes the floor's count, ⌊3/1⌋ = 3 steps of 1 ms. The reset
+        # leaves 1.71 ms to its frame's end, one step longer than the floor.
+        tight = steps_by_frame(BS3(reltol = 1e-15, abstol = 1e-15))
+        @test all(f -> length(f) == 3 && all(h -> isapprox(h, 1e-3; atol = 1e-15), f), quiet(tight))
+        @test maximum(reduce(vcat, tight)) ≤ Float64(h_max)
+        @test any(h -> 1.5 * Float64(h_min) < h ≤ Float64(h_max), tight[306])
+        # Under the default tolerance a quiet frame's proposal passes the bound,
+        # whose count ⌈3/2⌉ = 2 is below the floor's: two steps of 1.5 ms.
+        loose = steps_by_frame(BS3())
+        @test all(f -> length(f) == 2 && all(h -> isapprox(h, 1.5e-3; atol = 1e-15), f), quiet(loose))
+        @test maximum(reduce(vcat, loose)) ≤ Float64(h_max)
+    end
+
+    @testset "h_min and attempt_budget are deployment parameters: h_min required by a proposing method and refused above half h_max, both compared, hashed and named (§9.2, §12.7, Appendix C, D-460, D-462, D-463)" begin
         feedback_build = build(feedback_model())
         refused(; kw...) = diagnostics(failure(() -> Deployment(feedback_build; Δt_frame = 1//100, kw...)))
         d = only(refused(algorithm = BS3()))
@@ -379,6 +472,20 @@ function test_adaptive()
         d = only(refused(algorithm = BS3(), h_max = 1//400, h_min = 1//200))
         @test d.parameter === :h_min && d.reason === :range && d.value === 1//200 &&
               d.related === 1//400
+        # A floor above half the bound is refused, the bound itself included,
+        # and one at half the bound is admitted.
+        d = only(refused(algorithm = BS3(), h_max = 1//400, h_min = 1//400))
+        @test d.parameter === :h_min && d.reason === :range && d.value === 1//400 &&
+              d.related === 1//400
+        @test Deployment(feedback_build; Δt_frame = 1//100, h_max = 1//400, h_min = 1//800,
+                         algorithm = BS3()).h_min === 1//800
+        # The half is exact where `Rational{Int}` cannot hold it, an odd
+        # numerator over a denominator past 2^62.
+        odd_bound = 3 // (2^62 + 1)
+        @test Deployment(feedback_build; Δt_frame = 1//100, h_max = odd_bound,
+                         h_min = 1 // (2^62 + 1), algorithm = BS3()).h_min === 1 // (2^62 + 1)
+        d = only(refused(algorithm = BS3(), h_max = odd_bound, h_min = 2 // (2^62 + 1)))
+        @test d.parameter === :h_min && d.reason === :range && d.related === odd_bound
         for bad in (0, 1.5, "2")
             d = only(refused(algorithm = BS3(), h_min = 1//10^6, attempt_budget = bad))
             @test d.parameter === :attempt_budget && d.reason === :range
@@ -438,6 +545,10 @@ function test_adaptive()
         init!(fixed, set(u = (ref = 0.7,)))
         @test fixed.deployment.lattice.reach > adaptive.deployment.lattice.reach ==
               exp2(50) * 1e-17
+        # A unit finer than the floor is the least gap: frames of 1/8 s and a
+        # base tick of 3/320 s meet on 1/320 s, below the floor of 1/200 s.
+        @test Deployment(build(seam_rig()); Δt_frame = 1//8, Δt_base = 3//320, h_min = 1//200,
+                         algorithm = BS3()).lattice.reach == exp2(50) * Float64(1//320)
     end
 
     @testset "show(deployment) prints the floor, the budget and the proposed range of steps per frame (§9.2, D-460)" begin

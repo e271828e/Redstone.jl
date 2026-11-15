@@ -865,7 +865,7 @@ end
     remaining = t_limit - t
     steps = _shaped_steps(model, proposal, t, t_limit)
     h = steps == 1 ? remaining : remaining / steps
-    isnan(proposal) && _stalled(model, proposal, t)   # the throw is the cold path
+    isnan(proposal) && _refuse_nan_proposal(model, proposal, t)   # the throw is the cold path
     h
 end
 
@@ -901,7 +901,7 @@ end
 
 # The refusal is the framework's own act at the start of an attempt, with no
 # stage run, so the cursor names integration and no component (§13.4).
-@noinline function _stalled(model::Model, proposal, t)
+@noinline function _refuse_nan_proposal(model::Model, proposal, t)
     cursor = model.exec.cursor
     cursor.comp = 0; cursor.fn = :none
     _phase!(cursor, :integrate)

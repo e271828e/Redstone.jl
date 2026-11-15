@@ -308,10 +308,11 @@ every check above their premise: a unit too fine to index one frame in an
 whose step counts or exact steps leave `Int` is `h_max`'s (§10.5, D-445).
 
 The floor `h_min` takes the door `h_max` takes, and is required where the
-method proposes, `proposing` the token's trait. One above the resolved `h_max`
-is `:range` with `h_max` as its related value. Under a proposing method it
-enters the lattices' least gap, so the doors refuse a run whose clock cannot
-resolve it (D-450, D-460). A fixed-step method leaves it unused.
+method proposes, `proposing` the token's trait. One above half the resolved
+`h_max` is `:range` with `h_max` as its related value, since a step at the
+floor can be up to just under `2·h_min` long (D-463). Under a proposing
+method it enters the lattices' least gap, so the doors refuse a run whose
+clock cannot resolve it (D-450, D-460). A fixed-step method leaves it unused.
 """
 function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposing::Bool,
                        diags::Vector{Diagnostic})
@@ -327,12 +328,15 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
     h_max === nothing && (h_max_r = Δt_frame_r)
     Δt_frame_r === nothing || h_max_r === nothing || (h_max_r = min(h_max_r, Δt_frame_r))
     # The floor, through the same door, required by a proposing method and
-    # refused above the resolved bound (D-460).
+    # refused above half the resolved bound (D-460, D-463). The half is taken
+    # in `Int128`, since halving a `Rational{Int}` with an odd numerator
+    # doubles its denominator, which can leave `Int`.
     proposing && h_min === nothing &&
         push!(diags, DeploymentInvalid(parameter = :h_min, reason = :missing))
     h_min_r = _positive_finite(:h_min,
         h_min === nothing ? nothing : _exact(:h_min, h_min, diags), diags)
-    h_min_r === nothing || h_max_r === nothing || h_min_r ≤ h_max_r ||
+    h_min_r === nothing || h_max_r === nothing ||
+        Rational{Int128}(h_min_r) ≤ Rational{Int128}(h_max_r) / 2 ||
         push!(diags, DeploymentInvalid(parameter = :h_min, reason = :range, value = h_min_r,
                                        related = h_max_r))
 
@@ -495,8 +499,9 @@ proposed by an error controller and shaped by the deployment's bounds
 is at most `abstol + reltol·max(|xₙ|, |xₙ₊₁|)`, over the values alone.
 
 The first attempt after `init!` has no error to propose from, so it takes
-all that `h_max` and the span allow. If the error test rejects it, the retry
-is at most the step over which the initial derivative changes the state by
+all that `h_max` and the span allow. If the error test rejects it, the
+backend's proposal for the retry is at most the step over which the initial
+derivative changes the state by
 `0.8·reltol^(1/3)` of its scale, `max(|xᵢ|, abstol/reltol)`. A zero
 derivative sets no such limit. The first attempt still runs whole, so under
 a coarse frame, set `h_max`. Without it that attempt's stages reach up to a
@@ -554,7 +559,7 @@ Base.show(io::IO, algorithm::BS3) =
 # --- the artifact (§9.1, §9.2, D-254) -------------------------------------------
 
 # Design: §9.1, §9.2, §10.2, §10.4, §10.6, §12.7, D-254, D-442, D-443, D-449, D-454,
-# D-460.
+# D-460, D-463.
 # `Δt_base` has exactly one of three cross-validated sources (§9.1): explicit,
 # `Δt_frame` by default, or GCD derivation over the anchors' constraint pool.
 # `Δt_frame` is required because a domain rate is not a framework default. The
@@ -582,7 +587,7 @@ with no scalar type.
 
 The time quantities are a [frame](@ref g-frame) period, a
 [base tick](@ref g-tick), a step bound and, for an adaptive method, a step
-floor.
+[floor](@ref g-floor).
 
 A deployment carries the build, the grid it settled, the [`Schedule`](@ref) and
 the warnings its construction raised, read with [`warnings`](@ref).
@@ -610,9 +615,11 @@ A keyword outside its range is refused as `DeploymentInvalid`, and so is a
 ratio. A `Δt_base` whose exact common unit with `Δt_frame` is too fine to count
 one frame in an `Int` is refused as well, and so is an `h_max` too fine to
 count one frame's steps in one. An adaptive method, such as [`BS3`](@ref),
-needs `h_min`, refused as `DeploymentInvalid` when absent or above `h_max`.
+needs `h_min`, refused as `DeploymentInvalid` when absent or above half of
+`h_max`, since a step at the floor can be up to just under twice `h_min`
+long.
 One throw reports the faults found together. Exhausting `firing_budget` warns
-`FiringBudget`, and a step taken at `h_min` against its error test, or after
+`FiringBudget`, and a step taken at the floor against its error test, or after
 `attempt_budget` rejected attempts, warns `StepFloor`.
 
 # Keywords
@@ -624,8 +631,10 @@ One throw reports the faults found together. Exhausting `firing_budget` warns
   or an `Hz` value, `Δt_frame` by default, or `:derive`.
 - `h_max`: the longest step in seconds, taking the values `Δt_frame` takes and
   refused alike, or `nothing` for no bound below the frame.
-- `h_min`: the shortest step an adaptive method may take, in seconds, taking
-  the values `h_max` takes. A fixed-step method leaves it unused.
+- `h_min`: the floor of an adaptive method's steps in seconds, taking the
+  values `h_max` takes. A distance to a
+  [mandatory instant](@ref g-mandatory-instant) shorter than it is one step.
+  A fixed-step method leaves it unused.
 - `algorithm`: the integration method, [`RK4`](@ref), [`Heun`](@ref) or
   [`BS3`](@ref), bound to the state [buffer](@ref g-buffer) when the `Model`
   is built.
@@ -636,7 +645,7 @@ One throw reports the faults found together. Exhausting `firing_budget` warns
 - `localization_budget`: how many event localizations one frame admits, an
   integer of at least 1.
 - `attempt_budget`: how many attempts an adaptive method's step may make
-  before its next attempt is at `h_min`, an integer of at least 1.
+  before its next attempt is at the floor, an integer of at least 1.
 
 See also [`build`](@ref), [`Model`](@ref), [`Simulation`](@ref).
 """

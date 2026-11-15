@@ -881,12 +881,14 @@ function diagnostics_kind_set()
         @test startswith(message(StepFloor(0.1, 0.01, 0.01, 1, :rejected)),
                          "the step from t = 0.1 was accepted at the floor, 0.01 s against " *
                          "h_min = 0.01 s, though its error test failed in attempt 1")
-        # The floor's two refusals at the deployment (D-460).
+        # The floor's two refusals at the deployment (D-460, D-463).
         @test startswith(message(DeploymentInvalid(parameter = :h_min, reason = :missing)),
                          "an adaptive algorithm needs the step floor")
         @test startswith(message(DeploymentInvalid(parameter = :h_min, reason = :range,
                                                    value = 1//200, related = 1//400)),
-                         "the step floor h_min = 1//200 is above the step bound h_max = 1//400")
+                         "the step floor h_min = 1//200 is above half the step bound " *
+                         "h_max = 1//400, resolved against the frame — a step at the floor " *
+                         "can be up to just under 2·h_min long")
 
         # The obligation chain renders innermost first, the last face being the one
         # nobody wired.
