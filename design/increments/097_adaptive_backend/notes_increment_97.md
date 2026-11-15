@@ -229,6 +229,61 @@ the scratch folder named below, under `probes_coord/`.
   full evaluation, and with a fresh first stage a step's interior sweeps
   are its stages minus one. BS3 costs what RK4 costs, at one order less.
 
+## The coordinator's rulings, under the user's delegation
+
+On 2026-11-15 the user stepped away and delegated: "Unless something major
+comes up, proceed with the landing and the cold review." These are the
+coordinator's own, for the user to ratify.
+
+- **The reviser's three changes of a test's setup are sound.** The brief
+  names them under "Readings the prototype took".
+- **D-461 says strict reuse "would save one more" `x_deriv` block**, where
+  the reviser wrote "would add". Corrected on the real tree in the docs
+  commit, so the patch beside the brief differs from the log by that word.
+- **`_stalled` keeps its name for now.** It refuses only a proposal that is
+  not a number since ruling 10. The rename goes to the review's fix commit.
+- **The starting bound's source.** The reviser verified the rule against a
+  copy of MathWorks' `ode23.m` on a public GitHub mirror, and left a copy
+  in scratch at `proto_97/ode23_copy.m`. Nothing of it entered the tree
+  but the formula, in the reviser's own words, and D-461 attributes the
+  rule to `ode23`. The user may want the scratch copy deleted.
+- **The handover is taken before the cold review.** The coordinator read
+  365k tokens at the code commit, under the 400k of that planned check.
+  The review, its fixes and the delta check would cross 450k in one
+  session, and a handover between the review and the delta check costs a
+  fresh reviewer.
+
+## The state at the code commit, and the handover
+
+At `4367fa5` on 2026-11-15, nothing pushed, six commits ahead of
+`origin/master`:
+
+- `117ceda`, `f2bd140`, `438a528`: these notes, as the rulings were made.
+- `106cb8a`: the docs commit, D-460 to D-462, five annotations, the
+  roadmap and the coinage row. The battery passed.
+- `a5cc557`: the brief and the prototype's patch.
+- `4367fa5`: the code commit, the patch applied whole. The gate read
+  10 267 of 10 267 on the real tree, Julia 1.13.3.
+
+Where each ruling lives: rulings 1 to 10 above, with the spec and the log
+carrying what D-460 to D-462 state. Nothing is ruled only in a transcript.
+
+What is open, for the successor session `inc-97-handoff`:
+
+1. The cold review, by an independent high-tier agent in a worktree of its
+   own, from the brief's section "The cold review". It runs the gate.
+2. The adjudication, one "Fix increment 97's review findings" commit by a
+   fixer, and the reviewer's check of the delta. The fix commit also
+   renames `_stalled`.
+3. The brief's "The review's record", and `pending.md`: the variable-step
+   item's "Landed" gains increment 97 and "Next" becomes the roadmap's
+   increment 5, the teaching.
+4. No push. The user diff-verifies the arc.
+
+For the user at the end: the coordinator's rulings above, the glossary
+entry for "floor" taken on a reading of "go with your recommendations",
+and whether to report `Alshina3`'s estimate upstream.
+
 ## Scratch
 
 `/private/tmp/claude-501/-Users-miguel--julia-dev-Redstone-jl/e10a5fc9-27fb-4587-bd0d-070e826ab3bb/scratchpad/`:
@@ -237,5 +292,10 @@ the scratch folder named below, under `probes_coord/`.
   `test/test_adaptive.jl` untracked.
 - `proto_97/`, the prototyper's `report.md`, `notes.txt`, `probes/`,
   `mutants/` and `gate_final.log`.
+- `proto_97/report_successor.md` and `report_successor2.md`, the reviser's
+  two reports, with `gate_successor2.log`, `mutants_s/` and `precompile/`.
+- `pair_97/`, the probe of the three-stage pair: `report.md`, `notes.txt`,
+  `probes/` and the outputs. `wt_pair` is the frozen copy it ran on.
+- `land/`, the patches as applied and `gate_real.log`, the real tree's gate.
 - `probes_coord/`, the coordinator's probes.
 - `wt_probe`, a copy of the worktree the prototyper made, which can go.

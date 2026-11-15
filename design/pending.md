@@ -34,13 +34,13 @@ item changes what the spec says, the spec edit is part of the item.
     roadmap's section "Ruled on 2026-11-12". They cover the two things the
     seam protocol left open, which this increment builds: nothing bounds a
     step's attempts or the steps of a span, and a proposed step can end a
-    sliver short of the span's end. It is increment 97. Stage reached: the
-    prototype has reported and the user ruled on its readings on
-    2026-11-15, in
-    `design/increments/097_adaptive_backend/notes_increment_97.md`. A
-    successor agent revises the prototype to the rulings and probes BS3
-    against a three-stage pair, on whose figures the user chooses the
-    method. The brief follows.
+    sliver short of the span's end. It is increment 97. Stage
+    reached: the code commit `4367fa5`, after the docs commit `106cb8a`
+    (D-460 to D-462) and the brief. The cold review is next, run by a
+    successor session from the brief and
+    `design/increments/097_adaptive_backend/notes_increment_97.md`. The
+    user delegated the landing and the review on 2026-11-15, and nothing
+    is pushed.
   - **Ruled from the three lattices** by the user on 2026-11-11, on the
     open points of
     `design/increments/091_three_lattices/notes_increment_91.md`. Every
