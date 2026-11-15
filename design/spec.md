@@ -4641,7 +4641,9 @@ the frame and one above it are one trajectory and compare as one value.
 
 **`h_min` is an optional exact time, the floor of a proposing method's step,
 which that method requires** ([§10.2][s10-2], [D-460][d-460]). It takes the
-values `h_max` takes, and it is refused above the resolved `h_max`. The
+values `h_max` takes. **A floor above half the resolved `h_max` is
+refused** ([D-463][d-463]). A step at the floor can be up to just under `2·h_min`
+long ([§10.2][s10-2]), and the refusal keeps that step within the bound. The
 algorithm's token states whether its method proposes. A fixed-step method
 leaves the floor unused, as a model with no localized event leaves
 `localization_budget`, and the deployment still records and compares it.
@@ -4709,7 +4711,8 @@ violated constraint:
 - an `h_max` too fine to count the steps of one frame in an `Int`
   ([§10.5][s10-5], [D-449][d-449]);
 - an `h_min` taken as `h_max` is and refused alike, one absent under a
-  proposing method, or one above the resolved `h_max` ([D-460][d-460]);
+  proposing method, or one above half the resolved `h_max` ([D-460][d-460],
+  [D-463][d-463]);
 - an algorithm the [stepper seam](#g-seam) does not know;
 - a nonpositive `localization_tol`;
 - a `localization_budget`, a `firing_budget` or an `attempt_budget` that is
@@ -5952,7 +5955,9 @@ the distance, the `Model` commits it and files `StepFloor`**
 ([D-460][d-460]). That step is the floor's, and no shorter one is allowed.
 The floor is read by the step count, never by length. Over a distance `r`
 the floor's step is `r / ⌊r / h_min⌋`, or `r` itself when `r` is shorter
-than `h_min`, so it can be up to just under `2·h_min` long. **A step
+than `h_min`, so it can be up to just under `2·h_min` long. The deployment
+refuses a floor above half the bound, so that step stays within `h_max`
+([§9.2][s9-2]). **A step
 that has spent its attempt budget takes its next attempt at the floor**
 ([D-460][d-460]). The budget is the deployment's `attempt_budget`, 7 by
 default. A step therefore makes at most its budget of attempts and one more,
@@ -14531,7 +14536,7 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   | [`Δt_frame`](#g-dt_frame) | — | the frame period (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), required, refused as `DeploymentInvalid` when absent ([D-443][d-443]) | [§9.2][s9-2] |
   | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to `Δt_frame` or `h_max` ([D-445][d-445]), `Δt_frame` when absent, or `:derive` | [§9.2][s9-2] |
   | `h_max` | `nothing` | the step bound (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to either period, recorded as the lesser of itself and `Δt_frame`, which it is when absent ([D-449][d-449]) | [§9.2][s9-2], [§10.5][s10-5] |
-  | `h_min` | `nothing` | the step [floor](#g-floor), taking the values `h_max` takes, required by a proposing method and unused by a fixed-step one, refused above the resolved `h_max` ([D-460][d-460]) | [§10.2][s10-2], [§10.5][s10-5] |
+  | `h_min` | `nothing` | the step [floor](#g-floor), taking the values `h_max` takes, required by a proposing method and unused by a fixed-step one, refused above half the resolved `h_max` ([D-460][d-460], [D-463][d-463]) | [§10.2][s10-2], [§10.5][s10-5] |
   | `attempt_budget` | `7` | the attempts a proposing method's step makes before its next is at the floor, an integer ≥ 1; the floor warns `StepFloor` | [§10.2][s10-2] |
   | `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · Δt_frame`, [D-446][d-446]) | [§10.4][s10-4] |
   | `localization_budget` | `8` | the per-frame localization allowance | [§10.4][s10-4] |
@@ -15183,7 +15188,7 @@ activation):
   `firing_budget` or `attempt_budget`. The reasons
   are `:range`, `:inexact`, `:not_a_quantity` and `:missing` (no
   `Δt_frame`, or no `h_min` under a proposing method, [D-460][d-460]). A
-  `:range` on `h_min` with `h_max` in hand refuses a floor above the
+  `:range` on `h_min` with `h_max` in hand refuses a floor above half the
   resolved bound. `:range` covers a `Δt_frame`, a `Δt_base` or an `h_max` that
   is not positive and finite, or that `Rational{Int}` cannot hold. It also
   covers a `Δt_base` whose exact unit with `Δt_frame` is too fine to index
@@ -17178,6 +17183,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-460]: log.md#d-460--shape-a-proposed-step-between-the-floor-and-the-bound-and-accept-at-the-floor
 [d-461]: log.md#d-461--ship-bogackishampine-32-under-proportional-integral-control-as-the-first-adaptive-backend
 [d-462]: log.md#d-462--compare-the-algorithm-as-one-value-and-name-its-differing-fields
+[d-463]: log.md#d-463--refuse-a-floor-above-half-the-step-bound
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
