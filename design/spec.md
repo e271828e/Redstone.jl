@@ -617,10 +617,11 @@ at each frame top, and the deployment parameters ([§11.5][s11-5],
 [D-273][d-273]). The deployment parameters are the
 [frame period](#g-dt_frame) (the spacing of the loop's frame tops), the
 [base tick period](#g-dt_base) (the step of the lattice all discrete rates
-share), the step bound `h_max`, the integration method, the localization
-tolerance and budget, and the firing budget ([§9.2][s9-2], [D-133][d-133],
+share), the step bound `h_max`, the step [floor](#g-floor) `h_min`, the integration
+method with its tolerances, the attempt budget, the localization tolerance
+and budget, and the firing budget ([§9.2][s9-2], [D-133][d-133],
 [D-181][d-181], [D-254][d-254], [D-442][d-442], [D-443][d-443],
-[D-449][d-449]). The three time quantities count by their exact values, so
+[D-449][d-449], [D-460][d-460], [D-461][d-461]). The time quantities count by their exact values, so
 two that round to the same floating-point number are different parameters
 ([D-454][d-454]).
 
@@ -4585,10 +4586,12 @@ with different grid parameters.
 **A `Deployment` is scalar-free** ([D-254][d-254]). It carries everything the
 grid parameters fix. Its constructor sits after the build's three steps,
 and nothing in them depends on it. The constructor consumes the `Build` and
-the grid parameters. It binds the grid parameters, the step bound, the
-algorithm and the three event parameters, runs harmonic-grid validation, and
-builds the `Schedule`. The `Deployment` it returns holds the build, the grid
-parameters, the step bound, the algorithm, the three event parameters, the
+the grid parameters. It binds the grid parameters, the step bound and
+[floor](#g-floor) (the shortest step a proposing method takes),
+the algorithm, the attempt budget and the three event parameters, runs
+harmonic-grid validation, and builds the `Schedule`. The `Deployment` it
+returns holds the build, the grid parameters, the step bound and floor, the
+algorithm, the attempt budget, the three event parameters, the
 `Schedule`, the grid
 diagnostics below and its own `warnings`. `Model` materializes it at a scalar type `T` that is
 `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not, and
@@ -4607,7 +4610,8 @@ may take, under every method ([§10.5][s10-5]). The three stand in no required
 ratio ([D-445][d-445], [D-449][d-449]). `Δt_frame` belongs to the `Deployment`
 because it moves the trajectory. The simulation owns the activities keyed to
 the frame, never the frame. `Δt_frame` has no default and is required of the
-caller, since a domain rate is not a framework default.
+caller, since a domain rate is not a framework default. An adaptive method
+adds a fourth, the floor `h_min`, below.
 
 **`Δt_base` has exactly one of three sources**, cross-validated
 ([D-283][d-283], [D-443][d-443]):
@@ -4635,7 +4639,16 @@ bound resolved, the lesser of `h_max` and `Δt_frame`** ([D-449][d-449]). A
 bound at or above the frame splits no span, so an absent bound, a bound at
 the frame and one above it are one trajectory and compare as one value.
 
-**A `Deployment` holds its three time quantities exact and compares them
+**`h_min` is an optional exact time, the floor of a proposing method's step,
+which that method requires** ([§10.2][s10-2], [D-460][d-460]). It takes the
+values `h_max` takes, and it is refused above the resolved `h_max`. The
+algorithm's token states whether its method proposes. A fixed-step method
+leaves the floor unused, as a model with no localized event leaves
+`localization_budget`, and the deployment still records and compares it.
+`attempt_budget`, 7 by default, bounds the attempts of one step before its
+next attempt is at the floor.
+
+**A `Deployment` holds its time quantities exact and compares them
 exact** ([D-454][d-454]). The lattices, the step counts and every coincidence
 are decided on the exact values ([§10.5][s10-5]), so the exact value is the
 one that fixes the trajectory. Two values that round to one `Float64` are
@@ -4695,9 +4708,12 @@ violated constraint:
   ([§10.5][s10-5], [D-445][d-445], [D-459][d-459]);
 - an `h_max` too fine to count the steps of one frame in an `Int`
   ([§10.5][s10-5], [D-449][d-449]);
+- an `h_min` taken as `h_max` is and refused alike, one absent under a
+  proposing method, or one above the resolved `h_max` ([D-460][d-460]);
 - an algorithm the [stepper seam](#g-seam) does not know;
 - a nonpositive `localization_tol`;
-- a `localization_budget` or a `firing_budget` that is not an integer ≥ 1.
+- a `localization_budget`, a `firing_budget` or an `attempt_budget` that is
+  not an integer ≥ 1.
 
 Every check whose premise holds runs, and the constructor throws once. An
 overflow, an inexact conversion or a division by zero in a premise's own
@@ -5889,20 +5905,28 @@ reset_stepper!(stepper)             # the carried state as bound, at init!
 
 **The `Model` shapes every step's length, and the backend only proposes
 one** ([D-452][d-452]). Before each step, and after each rejected attempt,
-the `Model` asks `propose` for a proposal. **The remainder of a step after
-a [`t*`](#g-t) boundary is offered whole, up to the step's end, with no
-proposal asked** ([§10.4][s10-4], [D-452][d-452]). A
+the `Model` asks `propose` for a proposal. A
 fixed-step method proposes nothing, and the `Model` takes the span in equal
 steps no longer than `h_max` ([§10.5][s10-5], [D-449][d-449]). **A proposal
-is clamped to `h_max` and to the span's end** ([D-452][d-452]). A step that
+is clamped into `[h_min, h_max]`, and the distance to the next mandatory
+instant is taken in equal steps no longer than it** ([§10.5][s10-5],
+[D-460][d-460]). The `Model` owns both bounds, so a backend never reads
+`h_min`. A step that
 reaches the span's end ends on that [mandatory instant](#g-mandatory-instant)
 (a frame top or a due instant) and takes its clock. A proposed step that
 stops short ends at its start's clock plus its length, an instant on no
-lattice. **The `Model` refuses a length that does not advance the clock**
-([D-452][d-452]). A proposal that is zero, negative or below the clock's
-resolution is a backend's bug, and a span of such steps would never end. A
-proposal that is not a number is refused with them. The refusal is an
-internal invariant, since no user can fix it.
+lattice. **Under a proposing method a [`t*`](#g-t) boundary ends its step,
+and the next step is shaped from it** ([§10.4][s10-4], [D-460][d-460]). The
+`Model` asks `propose` there as before any step, after the handler's notice.
+**The remainder of a step after a `t*` boundary is offered whole, up to the
+step's end, with no proposal asked** ([§10.4][s10-4], [D-452][d-452]). That
+remainder is a fixed-step method's, so its trajectories keep their steps.
+**The `Model` refuses a proposal that is not a number** ([D-460][d-460]).
+Only a backend's bug produces one, so the refusal is an internal invariant,
+since no user can fix it. A proposal below `h_min`, zero and negative ones
+among them, is clamped up to the [floor](#g-floor) (the shortest step the shaping rule allows),
+and the doors refuse a run whose clock cannot resolve the floor
+([§10.5][s10-5]). So no shaped length fails to advance the clock.
 
 The backend takes each step in [attempts](#g-attempt) (tries at the step, each
 of which it accepts or rejects). **An attempt writes the step's end into a trial
@@ -5913,15 +5937,31 @@ as scratch. On acceptance the `Model` writes the clock at the step's end,
 checks the trial for a nonfinite value ([§13.4][s13-4]) and copies it into
 the state buffer. On rejection the `Model` puts back the step's start, the
 state `startpoint` kept and the clock as it stood. It then asks for a new
-proposal and offers it, under the same clamp, as the next attempt. The
+proposal and offers it, shaped as the first was, as the next attempt. The
 rejected stages left their values in the signal table, so the next attempt's
 first evaluation runs the sweep ([§10.3][s10-3]). A method that proposes
 nothing always accepts. The trial buffer is also the `xₙ₊₁` the localization
 loop keeps for its interpolant ([§10.4][s10-4]).
 
 **The `Model` counts the attempts of each step** ([D-452][d-452]). The
-count names the attempt in a cursor frame ([§13.4][s13-4]). The first-cut
+count names the attempt in a cursor frame ([§13.4][s13-4]). The fixed-step
 backends accept every attempt, so their steps take one each.
+
+**When the backend rejects the shortest step the shaping rule allows over
+the distance, the `Model` commits it and files `StepFloor`**
+([D-460][d-460]). That step is the floor's, and no shorter one is allowed.
+The floor is read by the step count, never by length. Over a distance `r`
+the floor's step is `r / ⌊r / h_min⌋`, or `r` itself when `r` is shorter
+than `h_min`, so it can be up to just under `2·h_min` long. **A step
+that has spent its attempt budget takes its next attempt at the floor**
+([D-460][d-460]). The budget is the deployment's `attempt_budget`, 7 by
+default. A step therefore makes at most its budget of attempts and one more,
+and a span of length `g` takes at most `g / h_min` steps and one more. Either
+case files one `StepFloor` warning, at most one report per frame, into the
+model's own [diagnostic cell](#g-diagnostic-cell) (the per-writer cell for
+runtime diagnostics) ([§11.8][s11-8], [Appendix C][sC]). The `Model` checks
+accepted trials only, so a nonfinite trial accepted at the floor throws
+`NonfiniteState` ([§13.4][s13-4]).
 
 **None of `propose`, the checkpoint pair and `reset_stepper!` has a
 default** ([D-452][d-452]). A backend that forgot `propose` would change the
@@ -5944,6 +5984,11 @@ the backend did with it. Two notices before a step mean one.
 **What the backend does with the notice is its own** ([D-452][d-452]). A
 fixed-step method ignores it. An integral controller may keep its proposal,
 and a proportional-integral controller may clear its history.
+
+**Projection raises no notice** ([D-460][d-460]). `x_projection` writes the
+state at every boundary, so its notice would precede every step and always
+clear a controller's history. Its correction is of the order of the step's
+error.
 
 **The notice depends on the trajectory alone** ([D-452][d-452]). At a frame
 top only a value the hook wrote raises it, which the hook returns as a `Bool`
@@ -5977,7 +6022,7 @@ the step over it disappear. Everything else about such a model is ordinary.
 The boundary machinery of [sweeps](#g-sweep), events and ticks runs
 unchanged.
 
-#### The first-cut backends
+#### The in-house backends
 
 **The first cut ships in-house fixed-step RK4 and Heun** over the flat state
 buffer ([D-017][d-017]). Together they are about a hundred lines. They are
@@ -5988,14 +6033,42 @@ required of the stepper, because linearization and the
 rejected cycle as real or artificial, [§13.8][s13-8]) drive the *sweep*, never the
 integrator.
 
-**The `algorithm` keyword selects the backend by an instance**, `RK4()` or
-`Heun()`, on the [`Deployment`](#g-deployment) (the scalar-free artifact the
-grid parameters fix) ([D-442][d-442]). **`RK4()` is the default** of the two
+**The first adaptive backend is Bogacki–Shampine 3(2) under
+proportional-integral control**, `BS3(; reltol = 1e-3, abstol = 1e-6)`
+([D-461][d-461]). Three stages reach the third-order solution, and a fourth,
+the derivative at the step's end, completes the embedded second-order error
+estimate. **The step passes when every state component's estimate is at most
+`abstol + reltol·max(|xₙ|, |xₙ₊₁|)`, the maximum over the state**
+([D-461][d-461]). A quiet component then never loosens the tolerance of the
+rest. The estimate reads the values alone ([§14.10][s14-10]). The controller's constants are
+fixed, part of the method's identity and never keywords. An accepted step
+proposes from its error and the last accepted step's. A step with no
+history, after `reset_stepper!` or a notice, proposes from its own error
+alone, the integral gain. A rejected step proposes a shorter one. **A
+nonfinite error estimate is a rejection at the strongest shrink**
+([D-461][d-461]), so the proposal never becomes `NaN` and an overshoot into a
+singular region recovers. The first proposal after `reset_stepper!` is
+unbounded, so the first attempt takes what `h_max` and the span allow.
+**A rejection of that first attempt proposes at most the starting bound**
+([D-461][d-461]), the step over which the first stage changes the state by
+`0.8·reltol^(1/3)` of its scale `max(|xᵢ|, abstol/reltol)`. A vanishing
+derivative gives no bound, so the rule needs no default rate. The first
+attempt still runs whole, and its stages reach as far as its length. Every
+attempt pays all four stages, and the next step evaluates its first stage
+again. `abstol` is in the state's units and has no universal
+value, so a state whose meaningful scale is far below `1e-6` integrates with
+no error control under the default.
+
+**The `algorithm` keyword selects the backend by an instance**, `RK4()`,
+`Heun()` or `BS3(…)`, on the [`Deployment`](#g-deployment) (the scalar-free artifact the
+grid parameters fix) ([D-442][d-442]). **`RK4()` is the default**
 ([D-442][d-442]). **A fixed-step instance carries no step** ([D-449][d-449]).
 The longest step is the deployment's `h_max`, which bounds every method, and
 a fixed-step method takes each span in the fewest equal steps it allows
 ([§9.2][s9-2], [§10.5][s10-5]). An instance carries what the deployment fixes
-for its method alone, such as an adaptive method's tolerances. The instance
+for its method alone, such as an adaptive method's tolerances. **The token
+states whether its method proposes** ([D-460][d-460]), and a proposing method
+requires the floor `h_min` ([§9.2][s9-2]). The instance
 is a token. The stepper is
 a separate runtime object, since it owns scratch sized by the state and typed
 by the scalar, and only materialization knows both. Materialization at `Model`
@@ -6003,22 +6076,26 @@ construction binds the token to its stepper against the state buffer, on the
 executor ([Appendix B][sB], [§9.2][s9-2], [D-442][d-442]).
 
 An `OrdinaryDiffEq`-backed stepper can exist later as a package extension, if
-an offline study genuinely demands adaptive or stiff methods
+an offline study genuinely demands stiff or high-order methods
 ([D-017][d-017]). It is a [guarded addition](#g-guarded-addition) (a
 capability the design admits but does not build), so it is not built until
 then.
 
-#### The case for fixed-step low order
+#### The case for low order
 
 The domain argument is recorded here because it is decisive for the choice
-of integration method. It makes three claims.
+of integration method. It makes three claims, and they favour a low order
+under any step control.
 
 1. Closed-loop ticks cap the step. Every application beyond bare propagation
    runs periodic avionics (onboard flight systems), whose commands are
    zero-order-held signals. Integrating past a tick with stale commands is
    wrong, so the integrator must land on every tick boundary regardless of
-   method. Adaptive and high-order methods pay off exactly when steps can
-   stretch, and the execution model forbids the stretch by construction.
+   method. High-order methods pay off exactly when steps can stretch, and
+   the execution model caps the stretch at the next mandatory instant by
+   construction. An adaptive method still chooses the step between two such
+   instants, where error control replaces a guessed `h_max`, so the first
+   adaptive backend is of order 3 ([D-461][d-461]).
 2. A piecewise-smooth [RHS](#g-flow) (the continuous derivative function)
    starves high order. Linearly interpolated lookup tables (C¹-kinked at
    every knot), clamps, friction blends and mode branches deny high-order
@@ -6293,8 +6370,8 @@ $\hat{x}(\theta)$, $\theta = (t - t_n)/(t_{n+1} - t_n) \in [0, 1]$, built from
 $(x_n, \dot{x}_n, x_{n+1}, \dot{x}_{n+1})$. $\dot{x}_n$ is the step's first
 stage. $\dot{x}_{n+1}$ costs one sweep, paid only on a validated trigger
 ([D-182][d-182], [D-290][d-290]). The θ = 0 trial evaluation comes first, so an epoch-caused
-edge never pays for it. Uniform accuracy is $O(h^4)$, one order below the
-discrete solution, which is the standard pairing. The event time can never be
+edge never pays for it. Uniform accuracy is $O(h^4)$ over the step, the
+standard pairing for a one-step method of order 4 or less. The event time can never be
 more accurate than the interpolant, so nothing more expensive is worth running
 trials against.
 
@@ -6319,10 +6396,12 @@ of trial evaluations, and around 20 in bisection's worst case.
 
 After the event, the boundary sequence runs at `t*` (below). The interpolant is
 then invalidated, because the handlers have made it wrong for `t > t*`
-([D-018][d-018]). Integration resumes from `t*` with the
-[remainder step](#g-remainder-step) (the integration from `t*` to the end of
+([D-018][d-018]). Under a fixed-step method integration resumes from `t*`
+with the [remainder step](#g-remainder-step) (the integration from `t*` to the end of
 the step it interrupted). It targets tₙ₊₁, the end of the step the crossing
-was found in, and never a later instant ([D-446][d-446]). The guards are
+was found in, and never a later instant ([D-446][d-446]). Under a proposing
+method the `t*` ends the step, and the next one is shaped from it to the
+span's end ([§10.2][s10-2], [D-460][d-460]). The guards are
 re-checked on the remainder. The re-check runs under the per-frame
 [localization budget](#g-chattering) (below), with a chattering diagnostic.
 
@@ -6610,6 +6689,19 @@ The seam integrates by whatever length a step has, as it does for a remainder
 step after `t*` ([§10.2][s10-2], [§10.4][s10-4]). Since the steps of a span
 are equal, the method never makes a short step of its own.
 
+A proposing backend's step is shaped by the same rule over the distance to
+the next mandatory instant ([§10.2][s10-2], [D-460][d-460]). With `r` that distance and `p`
+the proposal, the `Model` takes `r / n`, where `n = ⌈r / min(p, h_max)⌉`
+is capped at `⌊r / h_min⌋` and is at least 1. A fixed-step method is the same
+rule under an infinite proposal. Division never cuts a step below the
+[floor](#g-floor) `h_min`,
+and a distance shorter than the floor is one step. It leaves no sliver before
+a mandatory instant, and it never cuts a proposal to less than half, so the
+controller recovers in one step. The cap can lengthen a step past its
+proposal near the floor, and such an attempt is the floor's ([§10.2][s10-2]).
+The rule is recomputed at every step, from the clock, so a proposal that grows
+inside a span can cost one step.
+
 The loop compares mandatory instants as whole multiples of one exact unit.
 That unit is the greatest common divisor of `Δt_frame` and `Δt_base`, or
 `Δt_frame` when no discrete component exists. Finding the next mandatory
@@ -6667,7 +6759,9 @@ of order, and two stay distinct while an ulp of `t` is below the gap between
 them. Two consecutive boundaries lie at least a gap `δ` apart. The gap is
 the unit between two mandatory instants, and more than `h_max / 2` between
 two equal steps, since a span of length `g > h_max` takes
-`n = ⌈g / h_max⌉ < g / h_max + 1` of them. So a run
+`n = ⌈g / h_max⌉ < g / h_max + 1` of them. Under a proposing method it is the
+lesser of the unit and `h_min`, since no shaped step is shorter than the
+floor ([D-460][d-460]). So a run
 from `t₀` may reach an instant `t` only while
 
 ```
@@ -7278,6 +7372,16 @@ when its loop starts, so the first frame runs at once ([D-269][d-269]).
 wall budget `Δt_frame/p` leaves debt. Subsequent frames repay it by running short or
 without waiting. The long-run rate is therefore exact, and ms-scale hiccups
 from GC or the scheduler are invisible.
+
+Under an adaptive method a frame's cost is bounded by `Δt_frame/h_min`
+([§10.2][s10-2], [D-460][d-460]). Its steps follow the state, so a frame
+costs what its error control demands, but no shaped step is shorter than the
+[floor](#g-floor) `h_min` and no step makes more than its attempt budget and one more attempts.
+A frame no due instant or `t*` splits takes at most `⌊Δt_frame / h_min⌋`
+steps. A proposing method therefore does not suit a paced run, whose work
+per frame it bounds only by `Δt_frame / h_min`. Nothing refuses or warns, so
+a paced deployment that takes one sizes `h_min` against the frame budget,
+and a frame past it is debt like any other.
 
 **Debt beyond a threshold of five frames' worth of budget, `5·Δt_frame/p`, is
 forgiven** by re-anchor plus a warning ([D-133][d-133]). As a result, long
@@ -8349,7 +8453,8 @@ the values they wrote. The fingerprint and the deployment are the parts of the
 header replay compares rather than restores ([§12.7][s12-7]).
 
 The deployment comes from [§9.2][s9-2]. It carries `Δt_frame`, `Δt_base`, the
-step bound `h_max`, the algorithm, `localization_tol`, `localization_budget` ([§10.4][s10-4]) and
+step bound `h_max`, the step [floor](#g-floor) `h_min`, the algorithm with its tolerances,
+the attempt budget ([§10.2][s10-2], [D-460][d-460]), `localization_tol`, `localization_budget` ([§10.4][s10-4]) and
 `firing_budget` ([§10.6][s10-6], [D-254][d-254]). The fingerprint is the store layout and the
 root-input faces the [`Build`](#g-build) (the artifact `build(world)` produces) fixes. It
 also holds what a copy by position relies on, namely each component's `x` type,
@@ -10136,7 +10241,9 @@ nothing advances until `init!`, `restore!` or `replay!` opens a new run, and
 signal table, the guard priors, the stepper's carried state, `t`, `t₀`, the
 [fingerprint](#g-fingerprint) (the structural layout) and the deployment.
 The stepper's carried state is what the backend's checkpoint pair reads,
-`nothing` for a fixed-step method ([§10.2][s10-2], [D-452][d-452]). The
+`nothing` for a fixed-step method ([§10.2][s10-2], [D-452][d-452]). Under
+`BS3` it is the proposal and the controller's memory, two `Float64`s
+([D-461][d-461]). The
 derivative buffer stays out, as every step rewrites it before reading it. It
 is legal at `:consistent` with the clock on a
 grid top. A frame cut by a throw, an interrupt included, leaves the status
@@ -10491,7 +10598,8 @@ The checkpoint carries the recorded run's `Deployment`, the target
 simulation's `Model` carries its own, and the check is their comparison, on
 the *structural* side of that line. The value covers the
 trajectory-determining parameters, `Δt_frame`, `Δt_base` and the step bound
-`h_max`, each compared exact ([§9.2][s9-2], [D-454][d-454]), the algorithm,
+`h_max`, each compared exact ([§9.2][s9-2], [D-454][d-454]), the [floor](#g-floor) `h_min`, the
+algorithm, the attempt budget ([D-460][d-460]),
 `localization_tol`, `localization_budget` ([§10.4][s10-4]) and
 `firing_budget` ([§10.6][s10-6], [D-133][d-133]). It also covers the
 [schedule](#g-schedule) (the typed per-component `(D, Φ, Δt)` tick table) with
@@ -10500,7 +10608,10 @@ through a different anchor at the same tick table is therefore a different
 deployment, and the replay is refused. The refusal costs one re-recording in
 a rare case, and it keeps the equality a plain value equality rather than one
 that ignores two of a row's columns. Mismatch is `CheckpointMismatch` with a
-deployment-parameter discriminator, never a what-if ([D-127][d-127]). A
+deployment-parameter discriminator, never a what-if ([D-127][d-127]). **The
+algorithm is compared as one value and named field by field** ([D-462][d-462]).
+Two tokens of one type that differ name each differing field, as
+`algorithm.reltol`, and tokens of two types name the whole value. A
 deployment change moves the times at which the frame-ordinal batches apply.
 That is different inputs, not a modified model. The event trio (the
 localization pair and `firing_budget`) is compared for exactly the same reason
@@ -10520,7 +10631,7 @@ The dispositions, by trace content:
 | trace content | disposition |
 |---|---|
 | the checkpoint's fingerprint: store layout, root-input faces, and what a copy by position relies on | compared against the `Build` |
-| the recorded `Deployment`, carrying `Δt_frame`, `Δt_base`, `h_max`, the algorithm, `localization_tol`, `localization_budget`, `firing_budget` | compared as a value against the deployment the target simulation's `Model` carries |
+| the recorded `Deployment`, carrying `Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm, `attempt_budget`, `localization_tol`, `localization_budget`, `firing_budget` | compared as a value against the deployment the target simulation's `Model` carries |
 | each writer's face-name → position schema (on the trace's `schemas` list) | validated against the target model's root-input faces: disagreement is a replay error |
 | the checkpoint's state | restored under the default form; no boundary zero |
 | the clock | restored under the default form, `replay!` takes no `t0`; under `restore = false` the simulation's own clock runs, its origin equal to the recording's |
@@ -13886,7 +13997,10 @@ extension is additive along existing [seams](#g-seam).
 - One new activation, "continuous chain + `x_deriv` + the discrete tier's
   output stages + `s_update`" ([§9.4][s9-4]).
 - Forward sensitivities through the in-house RK steppers, for free. That is a
-  payoff of owning the loop ([§10.1][s10-1]).
+  payoff of owning the loop ([§10.1][s10-1]). **An adaptive method's error
+  norm reads the values alone** ([§10.2][s10-2], [D-461][d-461]), so a `Dual`
+  model takes the steps its `Float64` twin takes, and the partials ride a
+  fixed step sequence.
 - **A distinct `s`-tap list sits beside the `x` list**, labeling the step
   map's state blocks $\partial(x^+, s^+)/\partial(x, s)$ ([D-197][d-197]). The
   `x` list keeps its continuous meaning unchanged.
@@ -14404,18 +14518,21 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 #### Deployment and the model
 
 - `Deployment(build; Δt_frame, Δt_base = nothing, h_max = nothing,
-  algorithm = RK4(), firing_budget = 4, localization_tol = 1e-6,
-  localization_budget = 8) → Deployment`. The [deployment](#g-deployment) (the scalar-free artifact the
+  h_min = nothing, algorithm = RK4(), firing_budget = 4,
+  localization_tol = 1e-6, localization_budget = 8, attempt_budget = 7)
+  → Deployment`. The [deployment](#g-deployment) (the scalar-free artifact the
   grid parameters fix), carrying the [`Schedule`](#g-schedule) (the typed
   per-component `(D, Φ, Δt)` tick table), the grid diagnostics and its
   `warnings` ([§9.2][s9-2]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
-  | `algorithm` | `RK4()` | the integration method, `RK4()` or `Heun()`, bound against the state buffer at [`Model`](#g-model) construction ([D-442][d-442]) | [§10.2][s10-2] |
+  | `algorithm` | `RK4()` | the integration method, `RK4()`, `Heun()` or `BS3(…)`, bound against the state buffer at [`Model`](#g-model) construction ([D-442][d-442], [D-461][d-461]) | [§10.2][s10-2] |
   | [`Δt_frame`](#g-dt_frame) | — | the frame period (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), required, refused as `DeploymentInvalid` when absent ([D-443][d-443]) | [§9.2][s9-2] |
   | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to `Δt_frame` or `h_max` ([D-445][d-445]), `Δt_frame` when absent, or `:derive` | [§9.2][s9-2] |
   | `h_max` | `nothing` | the step bound (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to either period, recorded as the lesser of itself and `Δt_frame`, which it is when absent ([D-449][d-449]) | [§9.2][s9-2], [§10.5][s10-5] |
+  | `h_min` | `nothing` | the step [floor](#g-floor), taking the values `h_max` takes, required by a proposing method and unused by a fixed-step one, refused above the resolved `h_max` ([D-460][d-460]) | [§10.2][s10-2], [§10.5][s10-5] |
+  | `attempt_budget` | `7` | the attempts a proposing method's step makes before its next is at the floor, an integer ≥ 1; the floor warns `StepFloor` | [§10.2][s10-2] |
   | `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · Δt_frame`, [D-446][d-446]) | [§10.4][s10-4] |
   | `localization_budget` | `8` | the per-frame localization allowance | [§10.4][s10-4] |
   | [`firing_budget`](#g-firing-budget) | `4` | the per-event, per-boundary firing allowance, an integer ≥ 1; exhaustion warns `FiringBudget` | [§10.6][s10-6] |
@@ -14423,6 +14540,9 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
 - `RK4()` and `Heun()`. The algorithm instances the `algorithm` keyword
   takes, each a token that carries no step ([§10.2][s10-2], [D-442][d-442],
   [D-449][d-449]).
+- `BS3(; reltol = 1e-3, abstol = 1e-6) → BS3`. The adaptive instance, a token
+  carrying its two tolerances, each refused as `ArgumentInvalid` unless
+  positive and finite ([§10.2][s10-2], [D-461][d-461]).
 - `Model(deployment, T = Float64; chunk_size = 16) → Model{T}`. Materializes a
   deployment at a scalar type, allocating the buffers ([§9.2][s9-2], [D-317][d-317]).
 
@@ -15058,10 +15178,13 @@ activation):
 - **`DeploymentInvalid`** ([§9.2][s9-2]). Error · service · collected. The
   deployment parameter, the value in hand and the value it is measured
   against, and a `reason` naming the violated constraint. The parameter is
-  one of `Δt_frame`, `Δt_base`, `h_max` (the step bound), algorithm,
-  `localization_tol`, `localization_budget` or `firing_budget`. The reasons
+  one of `Δt_frame`, `Δt_base`, `h_max` (the step bound), `h_min` (the step
+  [floor](#g-floor)), algorithm, `localization_tol`, `localization_budget`,
+  `firing_budget` or `attempt_budget`. The reasons
   are `:range`, `:inexact`, `:not_a_quantity` and `:missing` (no
-  `Δt_frame`). `:range` covers a `Δt_frame`, a `Δt_base` or an `h_max` that
+  `Δt_frame`, or no `h_min` under a proposing method, [D-460][d-460]). A
+  `:range` on `h_min` with `h_max` in hand refuses a floor above the
+  resolved bound. `:range` covers a `Δt_frame`, a `Δt_base` or an `h_max` that
   is not positive and finite, or that `Rational{Int}` cannot hold. It also
   covers a `Δt_base` whose exact unit with `Δt_frame` is too fine to index
   one frame in an `Int`, or under which a component's divisor leaves `Int`
@@ -15223,8 +15346,9 @@ activation):
   root-input value that does not convert to its declared type, the scalar
   type (the
   recorded one vs. the target model's), a deployment parameter
-  (`Δt_frame`/`Δt_base`/`h_max`/algorithm/`localization_tol`/`localization_budget`/`firing_budget`,
-  recorded vs. bound value, a time quantity exact), a [schedule](#g-schedule) row whose column
+  (`Δt_frame`/`Δt_base`/`h_max`/`h_min`/algorithm/`localization_tol`/`localization_budget`/`firing_budget`/`attempt_budget`,
+  recorded vs. bound value, a time quantity exact, an algorithm field by its
+  dotted name such as `algorithm.reltol`, [D-462][d-462]), a [schedule](#g-schedule) row whose column
   differs (the component path, the column, recorded vs. bound value), a rate
   scope whose column differs (its path, the column, recorded vs. bound
   value), a schedule whose row list or scope list differs (the name, the two
@@ -15256,12 +15380,14 @@ activation):
   `overlay!`, `restore!` and `replay!` ([D-261][d-261]). The call
   (`Model`, `Simulation`, `init!`, `overlay!`, `frame!`, `apply!`, `restore!`, `run!`,
   `step!`, `replay!`, `live!`, `pace!`, `margin!`, `trim!`, `linearize`,
-  `trace`, `TableBinding`, a period constructor, `Relative`), the argument, the
+  `trace`, `TableBinding`, a period constructor, `Relative`, `BS3`), the argument, the
   value in hand, and a `reason` naming the violated constraint. A period
   constructor, `Period`, `Hz` or `Absolute`, refuses a float as `:inexact` and
   a value that `Rational{Int}` cannot hold finitely as `:range`, `Hz(0)`
   included ([§10.5][s10-5], [D-459][d-459]). `Relative` refuses a count that `Int` cannot
-  hold as `:range`, and a float or a rational as `:not_a_count`. A `:range`
+  hold as `:range`, and a float or a rational as `:not_a_count`. `BS3`
+  refuses a tolerance that is not positive and finite as `:range`
+  ([D-461][d-461]). A `:range`
   refusal of
   `frame!`'s `k` also carries the last frame the run may take, the lesser of
   the last the lattices index in an `Int` and the last the origin's clock
@@ -15307,6 +15433,12 @@ activation):
 - **`FiringBudget`** ([§10.6][s10-6]). Warning · runtime · rate-limited.
   Component path, event name, boundary time, the exhausted `firing_budget`
   and the boundary's firing count.
+- **`StepFloor`** ([§10.2][s10-2]). Warning · runtime · rate-limited, at most
+  one report per frame. The start of a step taken at the floor, the floor
+  attempt's length, `h_min`, the step's attempts so far, and the reason,
+  `:rejected` for an attempt accepted at the floor against the backend's
+  verdict or `:budget` for a step whose attempt budget sent it there
+  ([D-460][d-460]).
 - **`DebtReanchor`** ([§10.7][s10-7]). Warning · runtime · rate-limited.
   Forgiven debt in seconds, and the new anchor's `t` (the boundary time)
   and `τ`.
@@ -15738,8 +15870,10 @@ exactly as against the root grid ([§10.5][s10-5], [§9.2][s9-2]).
 length, which the backend accepts or rejects. The backend writes the step's
 end into a trial buffer, and the `Model` commits it only on acceptance. After
 a rejection the `Model` puts the step's start back and offers the backend's
-**proposal**, the length it asks for next, clamped to `h_max` and to the
-[span](#g-mandatory-instant)'s end. A cursor frame names the attempt by its
+**proposal**, the length it asks for next, clamped into `[h_min, h_max]` and
+shaped by equal division over the distance to the
+[span](#g-mandatory-instant)'s end. When the backend rejects the shortest
+step the shaping rule allows, the `Model` commits it. A cursor frame names the attempt by its
 ordinal in the step ([§10.2][s10-2], [§13.4][s13-4]).
 
 <a id="g-boundary"></a>**boundary** — a published consistency point, where the
@@ -15805,6 +15939,14 @@ boundary. That is a [deployment](#g-deployment) keyword, an integer ≥ 1 that d
 budget lets a re-enabled event fire at its true boundary, against a fresh [sweep](#g-sweep).
 Exhaustion drops the event's further edges there under a `FiringBudget` warning
 ([§10.6][s10-6]).
+
+<a id="g-floor"></a>**floor** — the shortest step the shaping rule allows a
+proposing method, set by the [deployment](#g-deployment)'s `h_min`. It is read by count. Over a
+distance `r` to the [span](#g-mandatory-instant)'s end, the floor's step is `r / ⌊r / h_min⌋`, or `r`
+itself when `r` is shorter than `h_min`. When the backend rejects that
+[attempt](#g-attempt), the `Model` commits it and files a `StepFloor` warning, and a step
+that has spent its attempt budget takes its next attempt there
+([§10.2][s10-2], [§10.5][s10-5]).
 
 <a id="g-guard"></a>**guard** — the declared function that defines an event's
 [predicate](#g-predicate). It pairs with a handler in the ordered, named `state_events`
@@ -15885,7 +16027,8 @@ iterate until a round fires nothing. After that the [priors](#g-prior) are updat
 
 <a id="g-remainder-step"></a>**remainder step** — the integration from `t*` to the end of the step it
 interrupted, after a [localized](#g-localized) event, with `h′` derived at use. [Guards](#g-guard) are re-checked on
-it under the [localization budget](#g-chattering) ([§10.4][s10-4]).
+it under the [localization budget](#g-chattering) ([§10.4][s10-4]). Only a fixed-step method runs one.
+Under a proposing method a `t*` ends its step ([§10.2][s10-2]).
 
 <a id="g-schedule"></a>**schedule / `Schedule`** — the typed [tick](#g-tick) timing the
 `Deployment` carries. The `Deployment` constructor builds it, one row per
@@ -17032,6 +17175,9 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-457]: log.md#d-457--hold-the-origin-exact
 [d-458]: log.md#d-458--write-each-clock-as-the-nearest-float-at-every-magnitude-boundary-zeros-included
 [d-459]: log.md#d-459--keep-time-exact-and-refuse-at-its-doors-a-value-rationalint-cannot-hold
+[d-460]: log.md#d-460--shape-a-proposed-step-between-the-floor-and-the-bound-and-accept-at-the-floor
+[d-461]: log.md#d-461--ship-bogackishampine-32-under-proportional-integral-control-as-the-first-adaptive-backend
+[d-462]: log.md#d-462--compare-the-algorithm-as-one-value-and-name-its-differing-fields
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

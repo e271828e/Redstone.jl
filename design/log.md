@@ -458,6 +458,9 @@ were derived.
 | [D-457][d-457] | Hold the origin exact | ratified |
 | [D-458][d-458] | Write each clock as the nearest float at every magnitude, boundary zero's included | ratified |
 | [D-459][d-459] | Keep time exact and refuse at its doors a value `Rational{Int}` cannot hold | ratified |
+| [D-460][d-460] | Shape a proposed step between the floor and the bound, and accept at the floor | ratified |
+| [D-461][d-461] | Ship Bogacki–Shampine 3(2) under proportional-integral control as the first adaptive backend | ratified |
+| [D-462][d-462] | Compare the algorithm as one value and name its differing fields | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -789,6 +792,10 @@ Annotation (2026-11-11): the seam's clauses are now a protocol between the
 backend accepts or rejects, the dense output is over the last accepted step,
 and the checkpoint hook is a pair that carries an adaptive method's proposal
 and memory. The one-step restriction stands.
+
+Annotation (2026-11-15): an in-house adaptive backend joins the two
+fixed-step ones, `BS3`, Bogacki–Shampine 3(2) under proportional-integral
+control ([D-461][d-461]). The `OrdinaryDiffEq` adapter stays a possible extension.
 
 **Rejected.**
 - *`OrdinaryDiffEq` as substrate with `CallbackSet` choreography:* semantics by
@@ -4694,6 +4701,11 @@ beside `Δt_frame`, `Δt_base` and the algorithm, whose instance carries `h`.
 Annotation (2026-11-11): superseded in part by [D-446][d-446]. The bracket width is
 measured against `Δt_frame`, and the budget counts the frame's localizations
 across all its steps.
+
+Annotation (2026-11-15): a third semantic constant joins the two, the
+attempt budget, `attempt_budget` on the `Deployment`, default 7, the attempts
+a step of an adaptive method makes before its next is at the floor `h_min`.
+It is validated, recorded and compared with its siblings ([D-460][d-460]).
 
 **Rejected.**
 - *An absolute-in-`t` localization tolerance:* breaks scale-freedom across `h`
@@ -18428,6 +18440,11 @@ refusal at the token and the parameter `h` of `DeploymentInvalid` are gone.
 The token and the stepper as two types, `RK4()` as the default and the
 instance compared and printed as a value stand.
 
+Annotation (2026-11-15): the Rationale's adaptive backend brings its
+tolerances on the instance, `BS3(; reltol, abstol)`, and not its bounds. The
+floor `h_min` sits on the `Deployment` beside `h_max`, since the `Model`
+enforces both ([D-460][d-460], [D-461][d-461]).
+
 **Rejected.**
 - *One parametrized type for the token and the stepper:* the token would
   carry empty scratch fields or a `Nothing` parameter, and every comparison
@@ -18871,6 +18888,10 @@ bound stands. Each clock is the float nearest its instant, and rounding to
 nearest keeps order, so two clocks `δ` apart stay distinct while
 `|t₀| + 2ε < 2^52·δ`. The bound of `2^50·δ` keeps a factor of 4 inside that.
 
+Annotation (2026-11-15): under a proposing method `δ` is the lesser of
+the lattices' unit and the floor `h_min`, since the shaping rule cuts no step
+below the floor ([D-460][d-460]).
+
 **Rejected.**
 - *Clamping each clock to the larger of its own value and the last one:*
   two boundaries could still share one clock, so the localized path could
@@ -19034,6 +19055,18 @@ the next step and a checkpoint taken at the boundary already holds what the
 backend did with it. A fixed-step method has no floor below its own step, so
 a nonfinite accepted trial throws `NonfiniteState` as before. An adaptive
 method rejects a trial that blew up, so a rejected trial is never checked.
+
+Annotation (2026-11-15): refined by [D-460][d-460] and [D-461][d-461]. A proposal is
+clamped into `[h_min, h_max]` and the distance to the span's end divided into
+equal steps, which replaces the clamp to `h_max` and to the span's end. Under
+a proposing method a `t*` ends its step, and the remainder offered whole is
+the fixed-step methods'. When the backend rejects the shortest step the
+shaping rule allows, the `Model` commits it. The refusal of a shaped length
+that does not advance the clock is withdrawn by [D-460][d-460]. The clamp lifts every
+proposal to the floor, and the doors refuse a run whose clock cannot resolve
+it, which answers both objections of the alternative rejected below. The
+refusal of a proposal that is not a number stands. Projection raises no
+notice. The seam keeps its seven calls.
 
 **Rejected.**
 - *The attempt writing the state buffer, the `Model` putting the start back
@@ -19534,6 +19567,280 @@ exact, and `:range` is false of `0.5`, which lies inside `Int`'s range.
 - *A whole float taken at its value, `Relative(2.0, 0)`:* one rule, integers
   only, as `Period(1.0)` is refused.
 
+### D-460 — Shape a proposed step between the floor and the bound, and accept at the floor
+
+**Status.** ratified
+
+**Position.** The `Model` owns both bounds of a proposed step, shapes it by
+one rule, and degrades at the floor rather than refuse. The bundled rulings:
+
+- `h_min` is an optional keyword of the `Deployment`, an exact time through
+  the door `h_max` takes. A proposing method requires it, and a fixed-step
+  method leaves it unused. A floor above the resolved `h_max` is refused as
+  `DeploymentInvalid` `:range`, with `h_max` as its related value.
+- The token states whether its method proposes, `proposes(algorithm)`, and
+  the constructor reads it. The trait has no default.
+- Under a proposing method the least gap between two boundaries is the
+  lesser of the lattices' unit and `h_min`, and [D-450][d-450]'s bound holds with it.
+- The `Model` clamps every proposal `p` into `[h_min, h_max]`, so a backend
+  never reads `h_min`. Over the distance `r` to the next mandatory instant
+  it takes `r / n`, with `n = ⌈r / min(p, h_max)⌉` capped at `⌊r / h_min⌋`
+  and at least 1. A fixed-step method is the same rule under an infinite
+  proposal ([D-449][d-449]).
+- Under a proposing method a `t*` ends its step. The handler's notice is
+  raised, the `Model` asks `propose`, and the next step is shaped over the
+  distance to the span's end. A fixed-step method keeps its remainder,
+  offered whole ([D-452][d-452]).
+- When the backend rejects the shortest step the shaping rule allows over
+  the distance, the `Model` commits it and files `StepFloor`. The floor is
+  read by the count `⌊r / h_min⌋`, never by length.
+- A step that has spent its attempt budget takes its next attempt at the
+  floor. The budget is the `Deployment`'s `attempt_budget`, counted per
+  step, an integer of at least 1, 7 by default.
+- Either case files one `StepFloor` warning, at most one report per frame.
+- Projection raises no discontinuity notice.
+- The `Model` refuses a proposal that is not a number, as an internal
+  invariant. No shaped length fails to advance the clock, since the clamp
+  lifts every proposal to `h_min` and the doors refuse a run whose clock
+  cannot resolve it.
+
+**Spec.** [§2.4][s2-4], [§9.2][s9-2], [§10.2][s10-2], [§10.5][s10-5], [§10.7][s10-7], [§11.5][s11-5], [§12.7][s12-7], [Appendix B][sB],
+[Appendix C][sC]
+
+**Rationale.** The floor is the `Model`'s because the `Model` must enforce
+it. A backend whose error test fails at the floor would ask for a shorter
+step, and none is allowed, so the `Model` accepts the attempt. `attempt!`
+returns a `Bool` alone ([D-452][d-452]), so a backend that forced its own acceptance
+could not say so, and the `Model` files the warning. The two bounds together
+bound what the seam protocol left open. A span of length `g` takes at most
+`g / h_min` steps and one more, and a step at most its budget of attempts
+and one more. A run can proceed past the floor with its error uncontrolled
+for a few steps, so it degrades under a warning, as the firing and
+localization budgets do. The budget's default is the limit of error-test
+failures per step that SUNDIALS' CVODE and ARKODE keep.
+
+Equal division takes the steps a clamp takes under a constant proposal and
+leaves no sliver before a scheduled instant. It never cuts a proposal to
+less than half, so the controller recovers in one step, where a sliver would
+hold its proposal down for several. It can cost one step when the proposal
+grows inside a span. The cap at `⌊r / h_min⌋` keeps every step at the floor
+or above, and a distance shorter than the floor is one step. The cap can
+lengthen a step past its proposal, by less than a factor of two, and only
+where the proposal is within a factor of two of the floor. Such an attempt is
+the floor's, so a rejection of it is accepted at once, never retried at the
+same length up to the budget. A forced step can therefore be up to just
+under `2·h_min` long. On two runs at tolerances of `1e-9` and `1e-11` the cap
+lengthened a step by at most 3.6%, and the backend rejected none of those
+steps. The comparisons of the rule carry a slack of a
+few ulps of the clock, so a constant proposal that divides the distance from
+an interior clock takes its count and no step more.
+
+A `t*` that ends the step lets the controller act on the handler's notice.
+The remainder offered whole would run a step whose length the reset made
+stale. A fixed-step method keeps its remainder, so its trajectories do not
+move. The floor enters the clock's least gap because the shaping rule cuts
+no step below it, and a span shorter than it is at least a unit long, so a
+door refuses a run whose clock cannot resolve the floor as it refuses one
+whose lattices it cannot. Projection writes the state at every boundary, so
+its notice would precede every step and always clear a controller's memory.
+Its correction is of the order of the step's error.
+
+**Rejected.**
+- *`h_min` on the algorithm instance, as the controller's floor:* the
+  `Model` must enforce the floor, so the instance would be a place the
+  `Model` reaches into for a bound it owns. It was the recommendation until
+  the floor became the `Model`'s.
+- *A `StepError` at the floor:* it ends a run that can proceed, where the
+  two existing budgets degrade under a warning.
+- *Superseded position — the floor read by length, an attempt no longer
+  than `h_min`, as ruled on 2026-11-12:* over a distance of 0.25 with
+  `h_min = 0.1` the cap gives two steps of 0.125. A rejected 0.125 would be
+  retried at the same length until the budget ran out, then a literal 0.1
+  would leave 0.15, and the pattern would repeat.
+- *Superseded position — a proposal clamped to `h_max` and to the span's
+  end, [D-452][d-452]'s bullet:* it leaves a sliver before a scheduled instant, about
+  an ulp long, and the sliver holds the controller's proposal down.
+- *The remainder after a `t*` offered whole under a proposing method:* it
+  takes a step the controller never proposed, from a state the handler
+  reset.
+- *A default for the trait:* a proposing method that forgot it would deploy
+  with no floor, and the `Model` would clamp its proposals against a bound
+  that does not exist.
+- *Projection raising the notice:* it would clear a proportional-integral
+  controller's memory before every step, for a correction of the order of
+  the step's error.
+- *Superseded position — [D-452][d-452]'s refusal of a shaped length that does not
+  advance the clock:* the floor and the clock's resolution of it leave no
+  such length, and a mutant that dropped the check passed every test that
+  steps a model.
+
+### D-461 — Ship Bogacki–Shampine 3(2) under proportional-integral control as the first adaptive backend
+
+**Status.** ratified
+
+**Position.** The first adaptive backend is `BS3(; reltol = 1e-3,
+abstol = 1e-6)`, the Bogacki–Shampine 3(2) pair under proportional-integral
+step control. The bundled rulings:
+
+- The token carries the two tolerances, compared as part of the algorithm's
+  value. A tolerance that is not a positive finite real is refused at the
+  token as `ArgumentInvalid`. The token and the stepper stay two types.
+- The controller's constants are fixed, part of the method's identity and
+  never keywords. They are OrdinaryDiffEqCore's defaults at the order
+  `k = 3`: the gains `7/(10k)` and `2/(5k)`, the safety factor 0.9, each
+  factor inside `[0.2, 10]`, and a memory floor of `1e-4`. The strongest
+  shrink is 0.2.
+- A step with no history, after `reset_stepper!` or a notice, proposes by
+  the integral gain alone, the elementary controller. The notice clears the
+  history and keeps the proposal. A rejection proposes by the integral gain
+  alone and keeps the history.
+- The error test is `|err| ≤ abstol + reltol·max(|xₙ|, |xₙ₊₁|)`, and the
+  norm is the maximum over the state.
+- The error reads the values alone, never a `Dual`'s partials.
+- A nonfinite estimate or trial is a rejection at the strongest shrink, so
+  the proposal never becomes `NaN`.
+- The checkpoint pair carries the proposal and the controller's memory, two
+  `Float64`s. `reset_stepper!` puts back an infinite proposal and no memory,
+  so the first attempt takes what `h_max` and the span allow.
+- A rejection of that first attempt proposes at most the starting bound, the
+  step over which the first stage changes the state by `0.8·reltol^(1/3)` of
+  its scale `max(|xᵢ|, abstol/reltol)`, the rule of MATLAB's `ode23`. A
+  vanishing derivative gives no bound. The infinite proposal is the starting
+  state, so the checkpoint pair carries it.
+- Every attempt pays all four stages. The fourth, the derivative at the
+  step's end, serves the error estimate alone, and the next step's first
+  stage is evaluated again. The generic cubic Hermite serves as its dense
+  output.
+
+**Spec.** [§10.2][s10-2], [§12.6][s12-6], [§14.10][s14-10], [Appendix B][sB]
+
+**Rationale.** The backend brings error control at a low order. It needs no
+interpolant of its own, since the generic cubic Hermite serves any one-step
+method up to order 4 ([D-018][d-018]). It has two uses. A model whose ticks cap its
+steps has a piecewise-smooth right-hand side, which rewards a low order. A
+model of continuous components alone, at a coarse frame, takes the steps its
+tolerance needs between frame tops. The backend runs under
+proportional-integral control from the start, so the stepper's checkpoint
+field takes its final shape once. The default tolerances are the ones
+MATLAB, SciPy and OrdinaryDiffEq share. `reltol` is dimensionless, so the
+rule on domain quantities does not touch it. `abstol` is in the state's
+units and has no universal value. A state whose meaningful scale is far
+below `1e-6` integrates with no control under the default, which the
+docstring says. A scale declared with the state is the later cure.
+
+The maximum norm keeps a quiet component from loosening the tolerance of
+the rest. The values alone make a `Dual` model take the steps its `Float64`
+twin takes, so the partials ride a fixed step sequence. A step with no
+history has no proportional term to compute, and the elementary controller
+is the setting the convergence test runs at. An infinite first proposal is
+no rate at all, so the first step costs the rejections the bound and the
+tolerance demand, measured at none to four on a damped oscillator from a
+frame of 1/100 s to 1 s. Unbounded, the rejections can spend the budget at
+a modest frame.
+On a Kepler orbit of eccentricity 0.8 at a 2 s frame and a tolerance of
+`1e-6`, the first step spent its seven attempts shrinking from 2 s to about
+`1e-4` s, then took a step at `h_min` under a `StepFloor` warning and grew
+back by ten times per step. The starting bound reads the derivative the
+first attempt already computed, so it needs no evaluation of its own. It
+needs no default rate either, since a vanishing derivative leaves the step
+to the error test. One attempt per run is wasted at most, the first, whose
+stages still reach as far as its length, which is why the docstring advises
+`h_max` under a coarse frame.
+
+The first stage of the next step is not the last stage of this one. A
+boundary may move the state or the table, by projection, a handler, a tick
+or a drain. Freshness already reduces that stage to the `x_deriv` block over the
+boundary's table ([D-447][d-447]), so an accepted step whose first stage is fresh costs
+three sweeps and four derivative blocks. The fourth stage is paid in full,
+so BS3 costs what RK4 costs per attempt, at one order less.
+
+**Rejected.**
+- *Dormand–Prince 5(4) first:* its order is what a piecewise-smooth
+  right-hand side starves, and its interpolant reopens [D-018][d-018]. It waits for
+  the offline study that wants it.
+- *The controller's constants as keywords:* they are the method's identity,
+  and a keyword per constant is a surface no user has asked to tune.
+- *A root-mean-square norm:* a quiet component loosens the tolerance of the
+  rest.
+- *A norm over a `Dual`'s partials:* the `Dual` model would take steps of its
+  own, and a sensitivity would differentiate the step sequence.
+- *A starting history of `1e-4`, as Hairer's codes and OrdinaryDiffEq
+  begin:* it biases the first steps toward growth, where no history means no
+  proportional term.
+- *A starting step estimated from the state, as Hairer's algorithm does:* it
+  needs evaluations `propose` cannot make, and its fallback for a vanishing
+  derivative is a rate the framework would have to default. The starting
+  bound needs neither.
+- *Superseded position — the first proposal infinite and nothing bounding
+  the first rejection:* on the Kepler orbit above it spent the first step's
+  attempt budget and filed a `StepFloor` at the start of a smooth run.
+- *The early rejection, the first attempt returning `false` after its first
+  stage when its length exceeds the bound:* it would keep the far stages
+  from running, but the `Model` commits the trial of a rejected attempt at
+  the floor, which an early return has not written, and a backend never
+  reads `h_min`. Bounding the first rejection costs one wasted attempt per
+  run at most, which is not worth that hazard or any change to the seam.
+- *A three-stage 3(2) pair on BS3's first three stages:* for a three-stage
+  third-order tableau the embedded second-order estimate is unique up to a
+  scale, `s·h·(k₁ − 3k₂ + 2k₃)`, so the choice of weights only changes what
+  a tolerance means. The pair spends fewer evaluations than BS3 for the
+  same achieved error on every model probed: 0.77 to 0.84 of BS3's on a
+  Kepler orbit of eccentricity 0.8 and 0.9, 0.65 to 0.82 on van der Pol,
+  0.72 to 0.76 of the `rhs` blocks on the example closed loop once steps go
+  below the frame, and exactly 0.75 where the frame caps the step. Its
+  estimate never fell below the true local error at a sampled step, but its
+  spread is about twice BS3's, and on Kepler it needs 3% to 13% more steps
+  for the same error. BS3 is kept for its standard tableau over an
+  uncharted one. The pair remains a later option, a second token and
+  stepper behind the same seam.
+- *Strict first-same-as-last reuse of the last stage as the next step's
+  first:* the sweep exists so that expensive intermediate computations are
+  not repeated, and the fresh first stage ([D-447][d-447]) already takes that saving.
+  Strict reuse would save one more `x_deriv` block per quiet step, at the
+  cost of a silent failure mode. It needs a report that projection wrote nothing,
+  an invalidation at a `t*`, at a restore and at a write outside the frame
+  loop, and care with the freshness flag, and a stale first stage gives a
+  slightly wrong step that no test catches unless pinned bit for bit. Type
+  stability and zero allocation matter more than savings of that size.
+  Under tick-capped steps it would seldom apply, since a tick runs at every
+  due instant and raises the notice.
+- *The fourth stage handed to the localization loop as its arrival
+  derivative, through an optional eighth call of the seam:* it saved 6
+  sweeps of 667 in a 3 s run with events, a saving of the kind strict
+  reuse is refused for, and the seam stays at [D-452][d-452]'s seven calls.
+
+**Divergence.** After a rejection OrdinaryDiffEq shrinks the step by its
+first gain, `0.9·err^(-0.7/3)`. This backend shrinks it by the elementary
+exponent, `0.9·err^(-1/3)`, so at a scaled error of 8 the factor is 0.45
+against 0.55. A rejected step's own error is the direct measure, so the
+elementary shrink is the right size, and a weaker one risks a second
+rejection.
+
+### D-462 — Compare the algorithm as one value and name its differing fields
+
+**Status.** ratified
+
+**Position.** The recorded deployment compares the algorithm as one value,
+and the `CheckpointMismatch` walk names each differing field of two tokens
+of one type, `algorithm.reltol` for a tolerance, and the whole value for
+tokens of two types. The walk names `h_min` and `attempt_budget` with the
+other parameters.
+
+**Spec.** [§12.7][s12-7], [Appendix C][sC]
+
+**Rationale.** One comparison decides, as [D-254][d-254] has it, so the check stays
+one expression. The walk explains what it refused. A token with fields
+printed whole makes the reader diff two long values by eye, where the field
+says which tolerance differs. A token whose fields all compare equal but
+whose value does not is named whole, so a refusal is never silent.
+
+**Rejected.**
+- *The whole value alone in the message:* two `BS3` tokens print in full,
+  and the reader finds the field by eye.
+- *The tolerances as deployment keywords beside the algorithm:* the
+  tolerances are the method's, and [D-442][d-442]'s objection to a step beside the
+  algorithm holds for them.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -19968,6 +20275,9 @@ exact, and `:range` is false of `0.5`, which lies inside `Int`'s range.
 [d-457]: #d-457--hold-the-origin-exact
 [d-458]: #d-458--write-each-clock-as-the-nearest-float-at-every-magnitude-boundary-zeros-included
 [d-459]: #d-459--keep-time-exact-and-refuse-at-its-doors-a-value-rationalint-cannot-hold
+[d-460]: #d-460--shape-a-proposed-step-between-the-floor-and-the-bound-and-accept-at-the-floor
+[d-461]: #d-461--ship-bogackishampine-32-under-proportional-integral-control-as-the-first-adaptive-backend
+[d-462]: #d-462--compare-the-algorithm-as-one-value-and-name-its-differing-fields
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

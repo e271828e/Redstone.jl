@@ -1,7 +1,8 @@
 # Roadmap: variable-step integration
 
 The live roadmap for the integration-step update, settled in discussion on
-2026-11-05 and 2026-11-06 and amended on 2026-11-11 and 2026-11-12. It
+2026-11-05 and 2026-11-06 and amended on 2026-11-11, 2026-11-12 and
+2026-11-15. It
 stages the work in seven increments, names the rulings the discussion
 settled, and lists the decisions each increment still needs. Its `pending.md` bullet carries the
 state of the work; this file carries the plan. Every number here is a
@@ -9,7 +10,9 @@ reading of the tree at the time of writing, and each brief re-counts what it
 pins. The step bound entered on 2026-11-11 between the second increment and
 the third. It is numbered 2b, so the numbers the records cite still hold.
 Exact periods and the step-length rule entered on 2026-11-12 between the
-third increment and the fourth, numbered 3b for the same reason.
+third increment and the fourth, numbered 3b for the same reason. The
+user's rulings of 2026-11-15 on increment 4's prototype amend the plan
+below in place.
 
 ## What the update is
 
@@ -126,7 +129,9 @@ needs it.
   whether it continues the last one.
 - **Strict first-same-as-last reuse is not built.** The arrival derivative
   of a FSAL backend serves the interpolant, so the lazy sweep for `ẋₙ₊₁`
-  disappears for that backend.
+  disappears for that backend. Since 2026-11-15 neither is built: strict
+  reuse is refused with a reason, and the arrival hand-over was dropped;
+  see the rulings of that day below.
 - **Interpolants.** The cubic Hermite stays the generic `dense!`, above
   the first backend's order, so D-018 stands untouched until a backend of
   order 4 or more arrives; that backend overrides `dense!` with its own
@@ -162,6 +167,8 @@ it, 3b or 4 as marked.
   distance moves a model without localized events and the nearest clock
   moves every model, by ulps. The four move trajectories once, together.
   Increment 4 then moves no existing trajectory, and all its tests are new.
+  Since 2026-11-15 that holds for RK4 and Heun only; see the rulings of
+  that day below.
 - **Exact periods on the `Deployment`.** It stores `Δt_frame`, `Δt_base`
   and `h_max` as `Rational{Int}` and compares and hashes those, where it
   compared their `Float64` values. The bound made the hole easy to reach: at
@@ -245,7 +252,8 @@ it, 3b or 4 as marked.
   be a place the Model reaches into for a bound it owns. Increment 4.
 - **The floor degrades, and the Model enforces it.** The Model accepts an
   attempt at or below `h_min` whatever the backend's verdict, since no
-  shorter step is allowed. A step that has spent its attempt budget takes
+  shorter step is allowed. Since 2026-11-15 the floor is read by count, not
+  by length; see the rulings of that day below. A step that has spent its attempt budget takes
   its next attempt at `h_min`. Either files one new warning kind, at most
   one report per frame, by the doctrine of the two existing budgets.
   `attempt!` returns a `Bool` alone (D-452), so a backend that forced its
@@ -290,7 +298,9 @@ it, 3b or 4 as marked.
   `CheckpointMismatch` message. Increment 4.
 - **The first adaptive backend.** Bogacki–Shampine 3(2), three evaluations
   per accepted step under first-same-as-last, its low order what a
-  piecewise-smooth right-hand side under a tick-capped step rewards. It
+  piecewise-smooth right-hand side under a tick-capped step rewards. Since
+  2026-11-15 it pays four evaluations per attempt, and its case rests on
+  error control at low order; see the rulings of that day below. It
   runs under proportional-integral step control from the start, so the
   stepper's checkpoint field takes its final shape once. The controller's
   constants are fixed per backend at the standard values, part of the
@@ -308,6 +318,75 @@ it, 3b or 4 as marked.
   stepper stay two types, and the new log entry annotates D-442's
   rationale, which puts an adaptive backend's bounds on the instance.
   Increment 4.
+
+## Ruled on 2026-11-15
+
+The user ruled on increment 4's prototype. Each ruling below amends the
+plan above where it is cited, and the increment's notes file carries the
+detail.
+
+- **The descriptor's format bump and the inspector's pin are void.** The
+  descriptor's deployment body is the build's alone, and a diagnostic's
+  `kind` is a free string, so `BS3`, `h_min`, `attempt_budget` and
+  `StepFloor` change nothing it carries. §13.9 is untouched.
+- **Increment 4 moves no RK4 or Heun trajectory, and three rulings move the
+  proposing stub's pins.** "Moves no existing trajectory" missed
+  `Scheduled`, the stub of `test_stepper.jl`, which proposes. Equal division
+  moves its boundaries, a `t*` that ends the step changes one attempt count,
+  and the clamp into `[h_min, h_max]` lifts proposals of `0.0`, `-0.1` and
+  `1e-20` to the floor where D-452 refused them. The refusal existed because
+  nothing else ended the span, and the floor now does. A negative proposal
+  takes the literal clamp, and `NaN` stays refused. Each pin is repinned
+  with its cause named.
+- **The floor is read by count, not by length.** An attempt is the floor's
+  when no proposal could shape a shorter one, that is, when its count is
+  `⌊r / h_min⌋`. Over a distance of 0.25 with `h_min = 0.1` the cap gives
+  two steps of 0.125. Read by length, a rejected 0.125 would be retried at
+  the same length until the budget ran out, then a literal 0.1 would leave
+  0.15, and the pattern would repeat. A forced step can be up to just under
+  `2·h_min`. The spec states the rule by the remedy: when the backend
+  rejects the shortest step the shaping rule allows over the distance, the
+  Model commits it and files `StepFloor`.
+- **Strict first-same-as-last reuse is refused, and BS3 pays four
+  evaluations per attempt.** The sweep exists so that expensive
+  intermediate computations are not repeated, and the fresh first stage
+  (D-447) already takes that saving. What strict reuse adds is one `x_deriv`
+  block per quiet step, at the cost of a silent failure mode. Type stability
+  and zero allocation matter more than savings of that size. The
+  prototype's optional eighth seam call, which handed the fourth stage to
+  the localization loop, is dropped for the same reason: it saved 6 sweeps
+  of 667 in a 3 s run with events. The seam stays at D-452's seven calls,
+  and BS3 costs what RK4 costs per attempt, at one order less.
+- **The increment's spec and log lists, as they turned out.** Spec: §2.4,
+  §9.2, §10.2, §10.4, §10.5, §10.7, §11.5, §12.6, §12.7, §14.10, Appendices
+  B, C and D, and not §13.9. Log: new entries D-460 for the floor and the
+  shaping rule, D-461 for the backend and D-462 for the recorded set, and
+  D-017, D-133, D-442, D-450 and D-452 annotated.
+
+After the probe of a three-stage pair and the revision, the user ruled on
+the same day:
+
+- **BS3 stays.** The three-stage 3(2) pair on BS3's first three stages
+  spent fewer evaluations for the same achieved error on every model
+  probed: 0.77 to 0.84 of BS3's on a Kepler orbit of eccentricity 0.8 and
+  0.9, 0.65 to 0.82 on van der Pol, 0.72 to 0.76 of the `rhs` blocks on the
+  example closed loop once steps go below the frame, and 0.75 where the
+  frame caps the step. The user kept BS3, preferring the standard tableau
+  to uncharted territory for now. The pair joins the later list below.
+- **The first rejection is bounded from the first stage's derivative.**
+  This amends the infinite first proposal. On Kepler at a 2 s frame and a
+  tolerance of `1e-6` the first step spent its seven attempts and dropped to
+  `h_min` under a `StepFloor`. A rejection of the first attempt now proposes
+  at most the step over which the first stage changes the state by
+  `0.8·reltol^(1/3)` of its scale, the rule of MATLAB's `ode23`. A vanishing
+  derivative gives no bound. The first attempt still runs whole, one wasted
+  attempt per run at most, and the early rejection that would skip its far
+  stages is refused for its hazard at the floor.
+- **Three small corrections.** §10.4's "one order below the discrete
+  solution" is corrected, the half of `_shaped`'s refusal that checks a step
+  advances the clock is removed, a mutant having confirmed it dead, and
+  D-461 gains the reason for its departure from OrdinaryDiffEq after a
+  rejection.
 
 ## Open decisions
 
@@ -330,7 +409,7 @@ oracle for the rewritten loop. Increment 2b should move only trajectories
 that increment 91's own tests introduced, those with a bound finer than the
 frame and a due instant inside it. That is an argument, not yet a run.
 Increment 3b ends the invariant for every model, by ulps, and increment 4
-moves no existing trajectory.
+moves no RK4 or Heun trajectory (amended 2026-11-15).
 
 1. **The deployment surface.** `Deployment(build; Δt_frame, Δt_base,
    algorithm = RK4())`, the step inside the algorithm instance and
@@ -420,7 +499,9 @@ moves no existing trajectory.
    descriptor format bump and the inspector's pin. Spec: §2.4's trajectory-fixing list, §10.2's domain
    argument reframed, §10.7's cost bound `Δt_frame/h_min`, §11.5, §12.7,
    §13.9, §14.10's value-norm rule, Appendix C. Log: D-133, D-442 and D-452
-   annotated, new entries for the floor and the recorded set. Tests, the
+   annotated, new entries for the floor and the recorded set. Since
+   2026-11-15 the bump and the pin are void, and the lists are the ones the
+   rulings of that day give. Tests, the
    first one first: a recording replayed from a checkpoint taken mid-run,
    through frames with rejected attempts and sub-step boundaries,
    bit-identical to the original's snapshots; order of convergence on a
@@ -438,7 +519,9 @@ moves no existing trajectory.
 Later, when wanted: Dormand–Prince 5(4) for the tight-tolerance offline
 study, carrying the `dense!` override with its fourth-order extension, the
 D-018 annotation and the matched-interpolant question; the checkpoint rest
-relaxation; the controller's constants as keywords; the adapter.
+relaxation; the controller's constants as keywords; the adapter; the
+three-stage 3(2) pair on BS3's first three stages, as a second token and
+stepper behind the same seam (added 2026-11-15).
 
 ## Risks
 
