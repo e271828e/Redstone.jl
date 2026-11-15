@@ -254,19 +254,25 @@ end
 
 # --- Deployment -------------------------------------------------------------------
 
-# The three time quantities print exact, as the deployment compares them
-# (D-454), the bound resolved (D-449), and the algorithm by its token's `show`
-# (D-442).
+# The time quantities print exact, as the deployment compares them (D-454),
+# the bound resolved (D-449), the floor where one is set (D-460), and the
+# algorithm by its token's `show` (D-442).
 _deployment_parameters(deployment::Deployment) =
     "Δt_frame = $(repr(deployment.Δt_frame)), Δt_base = $(repr(deployment.Δt_base)), " *
-    "h_max = $(repr(deployment.h_max)), " * sprint(show, deployment.algorithm)
+    "h_max = $(repr(deployment.h_max)), " *
+    (deployment.h_min === nothing ? "" : "h_min = $(repr(deployment.h_min)), ") *
+    sprint(show, deployment.algorithm)
 
 Base.show(io::IO, deployment::Deployment) =
     print(io, "Deployment(", _deployment_parameters(deployment), ")")
 
 # The steps of a fixed-step method per frame (§9.2, §10.5, D-449). A frame no
 # due instant falls inside is one span, taken in `⌈Δt_frame / h_max⌉` steps, one
-# `cld` over the bound's ratio to the unit. A row's ticks lie at
+# `cld` over the bound's ratio to the unit. Under a proposing method the count
+# is the controller's, and the line states its range instead: at least the
+# fixed count, which a proposal at or above the bound takes, and at most
+# `⌊Δt_frame / h_min⌋`, since no step of an unsplit frame is shorter than the
+# floor; a localized event's `t*` adds a step beyond it (D-460). A row's ticks lie at
 # `(Φ + j·D)·base` units, all of them frame tops exactly when the frame divides
 # both `Φ·base` and `D·base`; every other row splits frames, and the line names
 # it, the count then labelled as the unsplit frame's. No frame is walked, so
@@ -275,13 +281,17 @@ Base.show(io::IO, deployment::Deployment) =
 function _steps_line(deployment::Deployment)
     lattice = deployment.lattice
     steps = cld(lattice.frame * denominator(lattice.bound), numerator(lattice.bound))
+    ratio = proposes(deployment.algorithm) ?
+            Rational{Int128}(deployment.Δt_frame) / deployment.h_min : nothing
+    steps_text = ratio === nothing ? string(steps) :
+                 "$steps to $(max(steps, fld(numerator(ratio), denominator(ratio)))), as proposed"
     splitting = [_path_label(row.path) for row in deployment.schedule.rows
                  if (row.Φ * lattice.base) % lattice.frame != 0 ||
                     (row.D * lattice.base) % lattice.frame != 0]
     # Where a row splits frames, the count is labelled as the unsplit frame's,
     # which holds even when every frame is split.
-    isempty(splitting) ? "steps per frame: $steps" :
-        "steps per unsplit frame: $steps; due instants of " * join(splitting, ", ") *
+    isempty(splitting) ? "steps per frame: $steps_text" :
+        "steps per unsplit frame: $steps_text; due instants of " * join(splitting, ", ") *
         " split frames"
 end
 
@@ -296,7 +306,8 @@ function _lines(deployment::Deployment)
     vcat(["Deployment: " * _deployment_parameters(deployment) *
           "; firing_budget = $(deployment.firing_budget), " *
           "localization_tol = $(repr(deployment.localization_tol)), " *
-          "localization_budget = $(deployment.localization_budget)",
+          "localization_budget = $(deployment.localization_budget), " *
+          "attempt_budget = $(deployment.attempt_budget)",
           "  " * _steps_line(deployment),
           "  build: " * sprint(show, deployment.build)],
          _indented(_lines(deployment.schedule)),

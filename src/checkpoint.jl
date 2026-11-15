@@ -49,7 +49,8 @@ fields hold the state.
 - `prior`: the event [priors](@ref g-prior).
 - `stepper`: what the integration method carries from one step to the next,
   such as its next step's length, and `nothing` for a method that carries
-  nothing, `RK4()` and `Heun()` among them.
+  nothing, `RK4()` and `Heun()` among them. Under [`BS3`](@ref) it is the
+  proposal and the controller's memory, two `Float64`s.
 - `t` and `t₀`: the clock's time and origin, the origin exact.
 - `deployment`: the [`Deployment`](@ref), compared as a value on restore.
 - `layout`: the [fingerprint](@ref g-fingerprint), compared against the target's
@@ -182,18 +183,29 @@ _deployment_diff!(diags::Vector{Diagnostic}, path::String, name::Symbol, expecte
     push!(diags, CheckpointMismatch(what = :deployment, path = path, name = name,
                                     expected = expected, found = found))
 
-# What the `==` above refused, named (§12.7, Appendix C): the seven
-# trajectory-determining parameters by name, the algorithm as one value
-# (D-442) and the bound resolved (D-449), then the schedule, which the value
+# What the `==` above refused, named (§12.7, Appendix C): the nine
+# trajectory-determining parameters by name, the bound resolved (D-449), the
+# algorithm compared as one value and named field by field where both tokens
+# are of one type, `algorithm.reltol` for a tolerance, and whole otherwise
+# (D-442, D-462), then the schedule, which the value
 # covers with every column — the anchor and the rates included, so a rate
 # re-declared through a different anchor at the same tick table is a different
 # deployment. The walk covers exactly what `Deployment`'s and `Schedule`'s `==`
 # compare, so a refusal is never silent.
 function _walk_deployment!(diags::Vector{Diagnostic}, recorded::Deployment,
                            target::Deployment)
-    for name in (:Δt_base, :Δt_frame, :h_max, :algorithm, :localization_tol,
-                 :localization_budget, :firing_budget)
-        _deployment_diff!(diags, "", name, getfield(recorded, name), getfield(target, name))
+    for name in (:Δt_base, :Δt_frame, :h_max, :h_min, :algorithm, :localization_tol,
+                 :localization_budget, :firing_budget, :attempt_budget)
+        recorded_value, target_value = getfield(recorded, name), getfield(target, name)
+        reported = length(diags)
+        if name === :algorithm && typeof(recorded_value) === typeof(target_value)
+            for field in fieldnames(typeof(recorded_value))
+                _deployment_diff!(diags, "", Symbol("algorithm.", field),
+                                  getfield(recorded_value, field), getfield(target_value, field))
+            end
+        end
+        # a token of another type, or one whose fields all compare equal
+        length(diags) == reported && _deployment_diff!(diags, "", name, recorded_value, target_value)
     end
     recorded_schedule, target_schedule = recorded.schedule, target.schedule
     # the rows, identified by path: a differing row count or path list is the

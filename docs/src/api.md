@@ -60,6 +60,7 @@ Deployment
 Schedule
 RK4
 Heun
+BS3
 Model
 FrameHooks
 NoHooks

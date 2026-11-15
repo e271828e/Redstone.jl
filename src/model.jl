@@ -28,13 +28,13 @@
 """
     Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) -> Model{T}
     Model(build::Build, ::Type{T} = Float64; Δt_frame, Δt_base = nothing,
-          h_max = nothing, algorithm = RK4(), firing_budget = 4,
-          localization_tol = 1e-6, localization_budget = 8,
+          h_max = nothing, h_min = nothing, algorithm = RK4(), firing_budget = 4,
+          localization_tol = 1e-6, localization_budget = 8, attempt_budget = 7,
           chunk_size = 16) -> Model{T}
     Model(root::AbstractComponent, ::Type{T} = Float64; Δt_frame,
-          Δt_base = nothing, h_max = nothing, algorithm = RK4(),
+          Δt_base = nothing, h_max = nothing, h_min = nothing, algorithm = RK4(),
           firing_budget = 4, localization_tol = 1e-6, localization_budget = 8,
-          chunk_size = 16) -> Model{T}
+          attempt_budget = 7, chunk_size = 16) -> Model{T}
 
 A deployment materialized at one scalar type, ready to be written, evaluated and
 stepped.
@@ -99,6 +99,7 @@ mutable struct Model{T,E}
     @atomic claimed::Bool
     const frame_diag::DiagCell
     fresh::Bool   # the next stage's table is the last boundary's (§10.3, D-447)
+    floor_reported::Bool   # the frame's `StepFloor` report is filed (§10.2, D-460)
 end
 
 # The scalars `Float64` embeds exactly into (D-320): itself, and a concrete `Dual`
@@ -121,7 +122,7 @@ function Model(deployment::Deployment, ::Type{T} = Float64; chunk_size = 16) whe
     exec = compile(deployment.build, act, deployment.schedule; chunk_size = Int(chunk_size),
                    algorithm = deployment.algorithm)
     _set_origin!(exec.clock, 0//1, deployment.lattice.unit)   # a zero origin until `init!` (D-457)
-    Model{T,typeof(exec)}(deployment, exec, :built, false, DiagCell(EMPTY_DIAG), false)
+    Model{T,typeof(exec)}(deployment, exec, :built, false, DiagCell(EMPTY_DIAG), false, false)
 end
 
 # The two sugar forms, each *defined as* the composition (§9.2, D-254). The
@@ -794,19 +795,22 @@ to say what it would do at N = 0.
 @inline integrate!(model::Model, h) =
     (integrate_step!(model, h, model.exec.clock.t + h, nothing, false); nothing)
 
-# Design: §10.2, §10.3, §13.4, D-157, D-447, D-452.
+# Design: §10.2, §10.3, §13.4, D-157, D-447, D-452, D-460.
 # The Model's step over the seam: attempts from the clock until the backend
 # accepts one, and the accepted length returned. `h` is the first attempt's
-# length; after a rejection the backend's proposal, clamped to `h_max` and to
-# `t_limit`, the instant no attempt may pass, is the next one's. `k` is the frame the step lies
+# length; after a rejection the backend's proposal, shaped toward `t_limit`, the
+# instant no attempt may pass, is the next one's. `k` is the frame the step lies
 # in, which a nonfinite state's report names, and `fresh` says the table is the
 # last boundary's, which the first attempt's first `evaluate!` reads without a
 # sweep. A rejected attempt leaves its stages in the table, so the next one
 # sweeps. An accepted trial is checked before the commit (D-157), and a rejected
 # one is discarded unread: the state buffer takes the step's start back from
 # `startpoint`, the clock its value. The flag is disarmed after each attempt, so
-# it never outlives the step. Nothing bounds the attempts here: the backends in
-# `src/` always accept.
+# it never outlives the step. The floor bounds the attempts (D-460): an attempt
+# the shaping rule can shorten no further is accepted whatever the backend's
+# verdict, and the attempt after the budget's last is the floor's, so a step
+# makes at most `attempt_budget + 1` attempts. A fixed-step backend always
+# accepts and never reaches either.
 @inline function integrate_step!(model::Model, h, t_limit, k::Union{Nothing,Int}, fresh::Bool)
     exec = model.exec
     cursor, clock = exec.cursor, exec.clock
@@ -824,6 +828,9 @@ to say what it would do at N = 0.
         model.fresh = fresh
         accepted = attempt!(exec.stepper, model, h)
         model.fresh = false
+        # no shorter step is allowed, so the floor's attempt is taken (D-460)
+        accepted || (_at_floor(model, h, t, t_limit) &&
+                     (accepted = _report_floor!(model, t, h, attempt, :rejected)))
         if accepted
             clock.t = t + h
             _check_finite!(model, exec.xnext, k)
@@ -833,23 +840,63 @@ to say what it would do at N = 0.
         copyto!(exec.xbuf, first(startpoint(exec.stepper)))
         clock.t = t
         fresh = false
-        h = _clamped(model, propose(exec.stepper), t, t_limit)
+        if attempt == model.deployment.attempt_budget
+            h = _shaped(model, Float64(model.deployment.h_min), t, t_limit)
+            _report_floor!(model, t, h, attempt, :budget)
+        else
+            h = _shaped(model, propose(exec.stepper), t, t_limit)
+        end
     end
 end
 
-# A proposal shaped into the length of a step from `t` (§10.2, D-452): clamped
-# to the bound and to what remains before `t_limit`, the instant no step may
-# pass, and that remainder itself when the clamp reaches it, so the step ends on
-# the instant. A length that does not advance the clock is the backend's bug and
-# is refused here, since a span of such steps never ends and the frame runs
-# masked against an interrupt (§12.4). So is a proposal that is not a number,
-# which the clamp would otherwise read as the whole remainder.
-@inline function _clamped(model::Model, proposal::Float64, t, t_limit)
+# A proposal shaped into the length of a step from `t` (§10.2, §10.5, D-460):
+# clamped into `[h_min, h_max]`, then the distance `r` to `t_limit`, the instant
+# no step may pass, taken in `n = ⌈r / cap⌉` equal steps, `n` capped at
+# `⌊r / h_min⌋` and at least 1. Division never cuts a step below the floor, and
+# a distance shorter than the floor is one step. A single step is the remainder
+# itself, so it ends on the instant. Both roundings carry a slack of a few ulps
+# of the clock, as `_frame_slack` does, so a constant proposal that divides the
+# distance takes its count and no step more; the counts stay floats, so no
+# distance overflows them. A proposal that is not a number is the backend's
+# bug and is refused here, since the clamp would otherwise read it as the whole
+# remainder. No shaped length fails to advance the clock: the clamp lifts every
+# proposal to `h_min`, and the doors refuse a run whose clock cannot resolve it.
+@inline function _shaped(model::Model, proposal::Float64, t, t_limit)
     remaining = t_limit - t
-    cap = min(proposal, Float64(model.deployment.h_max))
-    h = cap < _seconds(remaining) ? oftype(remaining, cap) : remaining
-    (!isnan(proposal) && t + h > t) || _stalled(model, proposal, t)   # the throw is the cold path
+    steps = _shaped_steps(model, proposal, t, t_limit)
+    h = steps == 1 ? remaining : remaining / steps
+    isnan(proposal) && _stalled(model, proposal, t)   # the throw is the cold path
     h
+end
+
+# The step count `_shaped` divides by, and the floor's, the largest count the
+# cap allows: the shortest step the rule can give from `t`. `NaN` passes
+# through, for `_shaped`'s refusal.
+@inline function _shaped_steps(model::Model, proposal::Float64, t, t_limit)
+    deployment = model.deployment
+    r = _seconds(t_limit - t)
+    h_min = Float64(deployment.h_min)
+    cap = max(min(proposal, Float64(deployment.h_max)), h_min)
+    slack = 4 * eps(max(abs(_seconds(t)), abs(_seconds(t_limit))))
+    floor_steps = max(1.0, floor((r + slack) / h_min))
+    cap ≥ r ? 1.0 : max(1.0, min(ceil((r - slack) / cap), floor_steps))
+end
+_floor_steps(model::Model, t, t_limit) =
+    _shaped_steps(model, Float64(model.deployment.h_min), t, t_limit)
+
+# Whether an attempt of length `h` toward `t_limit` is the floor's: no proposal
+# shapes a shorter one from `t` (D-460).
+@inline _at_floor(model::Model, h, t, t_limit) =
+    _seconds(h) ≤ _seconds((t_limit - t) / _floor_steps(model, t, t_limit))
+
+# The floor's warning, at most one report a frame, into the model's own cell
+# (§11.8, D-460). Returns `true`, the acceptance it reports.
+@noinline function _report_floor!(model::Model, t, h, attempts::Int, reason::Symbol)
+    model.floor_reported && return true
+    model.floor_reported = true
+    report_cell!(model.frame_diag, StepFloor(_seconds(t), _seconds(h),
+                                             Float64(model.deployment.h_min), attempts, reason))
+    true
 end
 
 # The refusal is the framework's own act at the start of an attempt, with no
@@ -859,8 +906,8 @@ end
     cursor.comp = 0; cursor.fn = :none
     _phase!(cursor, :integrate)
     throw(InternalInvariant(
-        "the backend proposed a step of $proposal s at t = $(_seconds(t)) s, which does not " *
-        "advance the clock (§10.2)"))
+        "the backend proposed a step of $proposal s at t = $(_seconds(t)) s, which is not " *
+        "a number (§10.2)"))
 end
 
 # The clock at the end of a step offered `h` toward `t_next`, of which the

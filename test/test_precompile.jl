@@ -13,7 +13,7 @@ const CHILD_SCRIPT = """
 Base.cumulative_compile_timing(true)
 using Redstone
 import Redstone: build, Simulation, init!, step!, run!, set, port, state, series, reads, get_output,
-    checkpoint, restore!, trim!, TrimProblem, get_deriv, linearize, taps, get_state, get_input
+    checkpoint, restore!, trim!, TrimProblem, get_deriv, linearize, taps, get_state, get_input, BS3
 compile_ns = Base.cumulative_compile_time_ns()[1]
 loop_build = build(Redstone.workload_loop())
 sprint(show, MIME"text/plain"(), loop_build)
@@ -25,6 +25,9 @@ port(sim, "plant")
 state(sim, "plant")
 series(sim, reads(y = get_output("plant")))
 restore!(sim, checkpoint(sim))
+adaptive = Simulation(loop_build; Δt_frame = 1//1000, h_min = 1//10^6, algorithm = BS3())
+init!(adaptive, set(u = (disturbance = 0.0,)))
+run!(adaptive; t_end = 0.1)
 trim_sim = Simulation(loop_build; Δt_frame = 1//1000)
 trim!(trim_sim, TrimProblem(
     guess = (d = 0.3,), lower = (d = -1.0,), upper = (d = 1.0,),

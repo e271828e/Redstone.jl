@@ -34,8 +34,9 @@ workload_loop() = Library.Group((
 
 The workload's body: `workload_loop` through `build`, the build's `show`,
 `Simulation`, `init!`, `step!`, `run!`, `port`, `state`, `series` and a
-`checkpoint` restored, then `trim!` and `linearize` on a second simulation of
-the same build. `@compile_workload` runs it once while the package precompiles.
+`checkpoint` restored, a run under `BS3`, then `trim!` and `linearize` on a
+further simulation of the same build. `@compile_workload` runs it once while
+the package precompiles.
 """
 function workload()
     loop_build = build(workload_loop())
@@ -48,6 +49,9 @@ function workload()
     state(sim, "plant")
     series(sim, reads(y = get_output("plant")))
     restore!(sim, checkpoint(sim))
+    adaptive = Simulation(loop_build; Δt_frame = 1//1000, h_min = 1//10^6, algorithm = BS3())
+    init!(adaptive, set(u = (disturbance = 0.0,)))
+    run!(adaptive; t_end = 0.1)
     trim_sim = Simulation(loop_build; Δt_frame = 1//1000)
     trim!(trim_sim, TrimProblem(
         guess = (d = 0.3,), lower = (d = -1.0,), upper = (d = 1.0,),

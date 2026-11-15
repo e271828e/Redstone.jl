@@ -1350,15 +1350,18 @@ end
 # `ArgumentInvalid` (D-256, D-261), and their constraint text and section moved
 # with them.
 _deployment_constraint(parameter::Symbol) =
-    parameter === :algorithm           ? "must be an algorithm — `RK4()` or `Heun()`" :
+    parameter === :algorithm           ? "must be an algorithm — `RK4()`, `Heun()` or `BS3()`" :
     parameter === :firing_budget       ? "must be an integer ≥ 1" :
+    parameter === :attempt_budget      ? "must be an integer ≥ 1" :
     parameter === :localization_tol    ? "must be a positive real" :
     parameter === :localization_budget ? "must be an integer ≥ 1" :
-    (parameter === :h_max || parameter === :Δt_frame || parameter === :Δt_base) ?
+    (parameter === :h_max || parameter === :h_min || parameter === :Δt_frame ||
+     parameter === :Δt_base) ?
                                    "must be positive and finite in `Rational{Int}`" :
                                    "is outside its constraint"
 _deployment_section(parameter::Symbol) =
     parameter === :algorithm           ? " (§10.2)" :
+    (parameter === :h_min || parameter === :attempt_budget) ? " (§10.2)" :
     parameter === :h_max               ? " (§10.5)" :
     parameter === :firing_budget       ? " (§10.6)" :
     (parameter === :localization_tol || parameter === :localization_budget) ? " (§10.4)" :
@@ -1411,6 +1414,10 @@ function _grid_block(grid::Union{Nothing,GridReport})
 end
 
 function message(d::DeploymentInvalid)
+    # A floor above the bound: `h_max` resolved in hand (D-460).
+    d.reason === :range && d.related !== nothing && d.parameter === :h_min &&
+        return "the step floor h_min = $(d.value) is above the step bound h_max = " *
+               "$(d.related), resolved against the frame — no step could take both (§10.2)"
     # A `:range` with a related value is the lattices' refusal, `Δt_frame` in hand:
     # the unit's, on `Δt_base`, or the bound's, on `h_max`.
     d.reason === :range && d.related !== nothing && d.parameter === :h_max &&
@@ -1424,11 +1431,14 @@ function message(d::DeploymentInvalid)
     d.reason === :inexact &&
         return "`$(d.parameter)` must be exact — a Rational (`$(d.parameter) = 1//100`) or " *
                "a `Period`/`Hz` value: " *
-               (d.parameter === :h_max ? "a span's step count is exact arithmetic" :
+               (d.parameter in (:h_max, :h_min) ? "a span's step count is exact arithmetic" :
                                          "grid derivation is GCD arithmetic") *
                ", ill-defined over floats (§9.1, §10.5)"
     d.reason === :not_a_quantity &&
         return "`$(d.parameter)` must be a Rational or a `Period`/`Hz` value, got $(d.value)"
+    d.reason === :missing && d.parameter === :h_min &&
+        return "an adaptive algorithm needs the step floor: `Simulation(…; h_min = 1//10^6)` " *
+               "— a domain rate is not a framework default (§9.2, §10.2)"
     d.reason === :missing &&
         return "deployment needs the frame period: `Simulation(…; Δt_frame = 1//100)` — a " *
                "domain rate is not a framework default (§9.2)"
@@ -1599,6 +1609,21 @@ struct FiringBudget <: Diagnostic
     count::Int
 end
 
+"""
+§10.2's floor (D-460): a step an adaptive method took at the floor `h_min`,
+accepted although its error test failed (`reason` `:rejected`), or reached once
+the step spent its attempt budget (`:budget`). `t` is the step's start, `h` the
+floor attempt's length, and `attempts` the attempts the step had made.
+Reported into the model's own cell, at most once per frame.
+"""
+struct StepFloor <: Diagnostic
+    t::Float64
+    h::Float64
+    h_min::Float64
+    attempts::Int
+    reason::Symbol      # :rejected | :budget
+end
+
 "§10.7's forgiveness: debt past `5·h/p` cleared by a re-anchor, on the loop's own cell."
 struct DebtReanchor <: Diagnostic
     forgiven::Float64   # seconds of debt cleared
@@ -1674,6 +1699,7 @@ severity(::ClaimedFaceEntry) = :warning  # COV_EXCL_LINE
 severity(::EntryTypeMismatch) = :warning  # COV_EXCL_LINE
 severity(::ChatteringBudget) = :warning  # COV_EXCL_LINE
 severity(::FiringBudget) = :warning  # COV_EXCL_LINE
+severity(::StepFloor) = :warning  # COV_EXCL_LINE
 severity(::DebtReanchor) = :warning  # COV_EXCL_LINE
 severity(::UnboundedRun) = :warning  # COV_EXCL_LINE
 severity(::ThreadBudget) = :warning  # COV_EXCL_LINE
@@ -1703,6 +1729,14 @@ message(d::ChatteringBudget) =
 message(d::FiringBudget) =
     "`$(d.path)`.$(d.event) exhausted its firing budget $(d.budget) at t = $(d.t) after " *
     "$(d.count) firings — its further edges at this boundary are lost (§10.6)"
+message(d::StepFloor) =
+    d.reason === :rejected ?
+    "the step from t = $(d.t) was accepted at the floor, $(d.h) s against h_min = " *
+    "$(d.h_min) s, though its error test failed in attempt $(d.attempts) — its error is " *
+    "not controlled, and the frame's further floor steps are not reported (§10.2)" :
+    "the step from t = $(d.t) spent its attempt budget of $(d.attempts), and its next " *
+    "attempt is at the floor, $(d.h) s against h_min = $(d.h_min) s — the frame's further " *
+    "floor steps are not reported (§10.2)"
 message(d::DebtReanchor) =
     "the pacer forgave $(d.forgiven) s of debt past five frames' budget and re-anchored at " *
     "t = $(d.t) (τ = $(d.τ)) rather than catch up in a burst (§10.7)"
@@ -2533,7 +2567,7 @@ _checkpoint_value(d::CheckpointMismatch, value) =
 
 _checkpoint_paths(paths) = isempty(paths) ? "none" : join((_at_path(p) for p in paths), ", ")
 
-# The `:deployment` arms, one per case the walk in `trace.jl` emits: the seven
+# The `:deployment` arms, one per case the walk in `trace.jl` emits: the nine
 # parameters and the two lists carry no path, a schedule row and a rate scope
 # carry theirs, and a scope column rides in `name` behind its prefix.
 _checkpoint_deployment(d::CheckpointMismatch) =
@@ -2549,7 +2583,7 @@ _checkpoint_deployment(d::CheckpointMismatch) =
      "path and its key, so a differing scope list is reported whole rather than column by " *
      "column (§12.7)" :
      "the checkpoint was taken at `$(d.name)` = $(d.expected) and this " *
-     "simulation is bound at $(d.found) — the seven trajectory-determining " *
+     "simulation is bound at $(d.found) — the nine trajectory-determining " *
      "deployment parameters are compared, the schedule with them, never taken as a " *
      "what-if: a deployment change moves the lattice the state continues on and the times " *
      "a trace's batches apply at, which is different inputs rather than a modified model " *

@@ -39,12 +39,16 @@ settle every [boundary](@ref g-boundary) in it.
 
 `k` must be the frame after the clock's, which `frame!` does not check. A frame
 starts with `frame_top!(hooks)`, before the model touches any state. It then
-integrates from each [mandatory instant](@ref g-mandatory-instant) to the next
-in the fewest equal steps the deployment's `h_max` allows. At a
+integrates from each [mandatory instant](@ref g-mandatory-instant) to the next.
+A fixed-step method takes the fewest equal steps the deployment's `h_max`
+allows. An adaptive method, such as [`BS3`](@ref), takes the steps its error
+controller proposes, between the deployment's `h_min` and `h_max`, each the
+distance to the next mandatory instant divided equally. At a
 [due](@ref g-due) instant the discrete [components](@ref g-component) due there
 run their stages and updates. A [localized](@ref g-localized) event adds a
-boundary at its time [`t*`](@ref g-t). Every step end is a boundary, and the
-last is the frame top `tₖ`. `settled!(hooks)` follows every boundary.
+boundary at its time [`t*`](@ref g-t), which under an adaptive method ends
+its step. Every step end is a boundary, and the last is the frame top `tₖ`.
+`settled!(hooks)` follows every boundary.
 
 A `Model` at a `Dual` has no events and freezes its discrete components, and it
 takes the same steps as at `Float64`.
@@ -101,10 +105,12 @@ end
 # step end has no position: its clock is the float nearest the span's exact
 # start plus `i·(units·unit)/n`, from its count `i`, never accumulated, and the
 # step integrates by the distance from its start's clock to its end's (D-449,
-# D-455, D-456). A backend that proposes a length has it clamped to
-# `h_max` and to the span's end, and an interior end it reaches is the clock
-# plus the accepted length; the span ends at the step that reaches its end
-# (D-452). Returns `settled!`'s answer at the frame top, and `true` where it
+# D-455, D-456). A backend that proposes a length has it shaped by model.jl's
+# `_shaped`, clamped into `[h_min, h_max]` and the distance to the span's end
+# divided equally, and an interior end it reaches is the clock plus the
+# accepted length; the span ends at the step that reaches its end (D-452,
+# D-460). Under a proposal a `t*` ends its step, and the next step is shaped
+# from it. Returns `settled!`'s answer at the frame top, and `true` where it
 # abandoned the frame at an earlier boundary.
 function _frame_steps!(model::Model, k::Int, hooks::FrameHooks, fresh::Bool)
     exec, deployment = model.exec, model.deployment
@@ -112,6 +118,7 @@ function _frame_steps!(model::Model, k::Int, hooks::FrameHooks, fresh::Bool)
     origin = (k - 1) * lattice.frame
     (due, due_at) = _next_due(rows, lattice.base, origin)
     exec.has_localized && fill!(exec.events.loc_warned, false)   # one report per event per frame
+    model.floor_reported = false                                  # one floor report per frame (D-460)
     localizations = 0                                             # the frame's, across its steps (D-446)
     position = 0
     while true
@@ -132,14 +139,17 @@ function _frame_steps!(model::Model, k::Int, hooks::FrameHooks, fresh::Bool)
                 t_next = span_end ? t_to : _instant(exec.clock, origin + position, i, units, steps)
                 h_step = oftype(t, t_next) - t
             else
-                h_step = _clamped(model, proposal, t, t_to)
+                h_step = _shaped(model, proposal, t, t_to)
                 span_end = h_step == t_to - t
                 t_next = span_end ? oftype(t, t_to) : t + h_step
             end
             if exec.has_localized
-                (abandoned, localizations, t_end) =
-                    _localized_step!(model, h_step, t_next, t_to, k, hooks, fresh, localizations)
+                (abandoned, localizations, t_end, settled_end) =
+                    _localized_step!(model, h_step, t_next, t_to, k, hooks, fresh, localizations,
+                                     proposal !== nothing)
                 abandoned && return true
+                # a `t*` ended the step under a proposal, its boundary settled (D-460)
+                settled_end && (fresh = true; continue)
             else
                 h_accepted = integrate_step!(model, h_step, t_to, k, fresh)
                 t_end = _step_end(t, h_step, h_accepted, t_next, t_to)
@@ -177,10 +187,13 @@ end
 # localizations, one per `t*` boundary produced, across all its steps: per
 # segment, root-finding runs are already structurally bounded (at most one per
 # declared event), while the segment count is the quantity chattering inflates
-# without bound. Returns whether `settled!` abandoned the frame at a `t*`
-# boundary, the frame's localization count, and the step's end (D-261, D-317).
+# without bound. Under a proposing backend a `t*` ends the step instead: no
+# remainder runs, and the frame loop shapes the next step from `t*` (D-460).
+# Returns whether `settled!` abandoned the frame at a `t*` boundary, the frame's
+# localization count, the step's end, and whether that end is a `t*` boundary
+# already settled (D-261, D-317).
 function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHooks,
-                          fresh::Bool, localizations::Int)
+                          fresh::Bool, localizations::Int, proposing::Bool)
     exec = model.exec
     events, cursor = exec.events, exec.cursor
     n_events = length(events.prior)
@@ -210,7 +223,7 @@ function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHo
                                   events.σ1[i] ≥ 0
             any_triggered |= events.triggered[i]
         end
-        any_triggered || return (false, localizations, t_to)
+        any_triggered || return (false, localizations, t_to, false)
 
         # Budget exhaustion degrades; it does not throw (§10.4): the remainder
         # step has already completed, and this crossing fires in the coming
@@ -227,7 +240,7 @@ function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHo
                                               model.deployment.localization_budget,
                                               localizations))
             end
-            return (false, localizations, t_to)
+            return (false, localizations, t_to, false)
         end
 
         # xₙ₊₁ stays in the trial buffer the step was committed from (D-452),
@@ -255,7 +268,7 @@ function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHo
         if !remaining
             # epoch-caused only: fall through to the step's end
             copyto!(exec.xbuf, exec.xnext)
-            return (false, localizations, t_to)
+            return (false, localizations, t_to, false)
         end
 
         # ẋₙ₊₁, paid only past a validated trigger (§10.4): one sweep and the
@@ -286,7 +299,7 @@ function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHo
             # boundary's ordinary iteration — one boundary, no zero-length
             # remainder.
             copyto!(exec.xbuf, exec.xnext)
-            return (false, localizations, t_to)
+            return (false, localizations, t_to, false)
         end
 
         # The t* boundary (§10.4): interpolated state in, then the §10.6
@@ -306,8 +319,11 @@ function _localized_step!(model::Model, h, t_to, t_limit, k::Int, hooks::FrameHo
         # boundary the frame's last, its remainder abandoned, and reaches the
         # loop as `frame!`'s return (D-261, D-317). The remainder's first stage
         # reads the table this boundary left (D-447).
-        settled!(hooks) && return (true, localizations, t_to)
+        settled!(hooks) && return (true, localizations, t_to, false)
         localizations += 1
+        # Under a proposal the `t*` is the step's end, and the next step is
+        # shaped from it, the notice raised if a handler fired (D-460).
+        proposing && return (false, localizations, t★, true)
         fresh = true
         h′ = t_to - exec.clock.t               # the remainder, from `t*` (D-455)
     end

@@ -698,6 +698,8 @@ function diagnostics_kind_set()
             EntryTypeMismatch(:a, "x", Float64),
             ChatteringBudget("a/b", :snap, 1.0, 8, 9),
             FiringBudget("a/b", :snap, 1.0, 4, 5),
+            StepFloor(0.0, 0.01, 0.01, 2, :budget),
+            StepFloor(0.1, 0.01, 0.01, 1, :rejected),
             DebtReanchor(0.05, 1.0, 12345.0),
             UnboundedRun(Inf, String[]),
             UnboundedRun(Inf, ["a/stop", "b"]),
@@ -712,7 +714,7 @@ function diagnostics_kind_set()
         warning_kinds = Set{DataType}([EmptyFaceSelection, EmptyGreedyClaim,
                                       TrimCommitEvents, TrimCommitResiduals, TrimCommitChecks,
                                       MalformedDatum, OutOfClaimEntry, ClaimedFaceEntry,
-                                      EntryTypeMismatch, ChatteringBudget, FiringBudget,
+                                      EntryTypeMismatch, ChatteringBudget, FiringBudget, StepFloor,
                                       DebtReanchor, UnboundedRun, ThreadBudget, DeviceCrash,
                                       DeviceJoinTimeout, GridUtilization, ReplayDiscardedStaging])
         for d in occurrences
@@ -865,9 +867,26 @@ function diagnostics_kind_set()
             grid = Deployment(neighbourless; Δt_frame = 2^20 // (3 * (2^45 + 3))).grid))
         @test occursin(r"offset 2097152//3 +×3\n", rendered) && !occursin("declaring", rendered)
         # A header mismatch counts the parameters the walk names (§12.7).
-        @test occursin("the seven trajectory-determining deployment parameters",
+        @test occursin("the nine trajectory-determining deployment parameters",
                        message(CheckpointMismatch(what = :deployment, name = :algorithm,
                                                   expected = RK4(), found = Heun())))
+        # A token's field is named by its dotted path (D-462).
+        @test occursin("taken at `algorithm.reltol` = 1.0e-6 and this simulation is bound at 1.0e-5",
+                       message(CheckpointMismatch(what = :deployment, name = Symbol("algorithm.reltol"),
+                                                  expected = 1e-6, found = 1e-5)))
+        # The floor's two reasons (§10.2, D-460).
+        @test startswith(message(StepFloor(0.0, 0.01, 0.01, 2, :budget)),
+                         "the step from t = 0.0 spent its attempt budget of 2, and its next attempt " *
+                         "is at the floor, 0.01 s against h_min = 0.01 s")
+        @test startswith(message(StepFloor(0.1, 0.01, 0.01, 1, :rejected)),
+                         "the step from t = 0.1 was accepted at the floor, 0.01 s against " *
+                         "h_min = 0.01 s, though its error test failed in attempt 1")
+        # The floor's two refusals at the deployment (D-460).
+        @test startswith(message(DeploymentInvalid(parameter = :h_min, reason = :missing)),
+                         "an adaptive algorithm needs the step floor")
+        @test startswith(message(DeploymentInvalid(parameter = :h_min, reason = :range,
+                                                   value = 1//200, related = 1//400)),
+                         "the step floor h_min = 1//200 is above the step bound h_max = 1//400")
 
         # The obligation chain renders innermost first, the last face being the one
         # nobody wired.

@@ -4,7 +4,8 @@
 # imports into `RedstoneTests` and into `Main`.
 import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, AbstractComponent,
     AbstractStepper, attempt!, bind_stepper, checkpoint_stepper, discontinuity!, propose,
-    reset_stepper!, restore_stepper!, startpoint,
+    reset_stepper!, restore_stepper!, startpoint, proposes, BS3, BS3Stepper,
+    StepFloor, _at_floor, _shaped,
     AbstractDevice, AlgebraicCycle, AlreadyAttached, Anchor, ArgumentInvalid,
     AbstractAtRoot, AttachUnknownFace, Authored, BUILD_WARNINGS, BindingContractMismatch,
     Build, BundleFieldError,

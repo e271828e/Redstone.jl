@@ -34,7 +34,7 @@ it, `KindCounts` keeps one field per member in its order, and a renderer walks
 it to name a kind no retained value carries.
 """
 const KINDS = (MalformedDatum, OutOfClaimEntry, ClaimedFaceEntry, EntryTypeMismatch,
-               ChatteringBudget, FiringBudget, DebtReanchor, UnboundedRun, ThreadBudget,
+               ChatteringBudget, FiringBudget, StepFloor, DebtReanchor, UnboundedRun, ThreadBudget,
                DeviceCrash, DeviceJoinTimeout, ReplayDiscardedStaging, EmptyGreedyClaim)
 
 "The closed set as a union: what a ring holds, and what `report_cell!` admits."
@@ -54,6 +54,7 @@ struct KindCounts
     type_mismatch::Int
     chattering::Int
     firing::Int
+    step_floor::Int
     reanchor::Int
     unbounded::Int
     thread_budget::Int
@@ -62,7 +63,7 @@ struct KindCounts
     replay_discarded::Int
     empty_greedy::Int
 end
-KindCounts() = KindCounts(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+KindCounts() = KindCounts(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 # A kind's `KindCounts` field, defined on the type so a renderer names a kind
 # no retained value carries; an occurrence forwards to its type.
@@ -72,6 +73,7 @@ _kind(::Type{ClaimedFaceEntry}) = :claimed_face  # COV_EXCL_LINE
 _kind(::Type{EntryTypeMismatch}) = :type_mismatch  # COV_EXCL_LINE
 _kind(::Type{ChatteringBudget}) = :chattering  # COV_EXCL_LINE
 _kind(::Type{FiringBudget})     = :firing  # COV_EXCL_LINE
+_kind(::Type{StepFloor})        = :step_floor  # COV_EXCL_LINE
 _kind(::Type{DebtReanchor})     = :reanchor  # COV_EXCL_LINE
 _kind(::Type{UnboundedRun})     = :unbounded  # COV_EXCL_LINE
 _kind(::Type{ThreadBudget})     = :thread_budget  # COV_EXCL_LINE

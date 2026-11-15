@@ -50,6 +50,7 @@ propose(stepper::ScheduledStepper) = stepper.proposal
 discontinuity!(stepper::ScheduledStepper) =
     (stepper.algorithm.record && push!(stepper.notices, stepper.attempts); nothing)
 startpoint(stepper::ScheduledStepper) = (stepper.x₀, stepper.k₁)
+proposes(::Scheduled) = true
 checkpoint_stepper(stepper::ScheduledStepper) = (stepper.proposal, stepper.attempts)
 restore_stepper!(stepper::ScheduledStepper, (proposal, attempts)::Tuple{Float64,Int}) =
     (stepper.proposal = proposal; stepper.attempts = attempts; nothing)
@@ -86,7 +87,7 @@ seam_rig() = Group((plant = Plant(), ctl = Gain(4.0), sum = Sum(), a = TickCount
                                   "plant/y" => "sum/b"),
                    input_wires = "ref" => "sum/a",
                    sample_times = (; a = Absolute(Period(3//32))))
-seam_sim(algorithm) = Simulation(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
+seam_sim(algorithm) = Simulation(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, h_min = 1//2^20, algorithm)
 
 # A sawtooth whose stamper crosses inside a step, and whose own wrap does too: a
 # model with localized events.
@@ -288,8 +289,8 @@ function test_seam_protocol()
         @test same_snapshots(logged(rejecting), logged(plain))
         @test state(rejecting, "plant").q === state(plain, "plant").q
         # A model with localized events: the rejections land in whole steps and
-        # in remainders after `t*` alike.
-        localized = [Simulation(stamped(); Δt_frame = 1//10, algorithm) for algorithm in
+        # in the steps shaped from `t*` alike.
+        localized = [Simulation(stamped(); Δt_frame = 1//10, h_min = 1//2^20, algorithm) for algorithm in
                      (Scheduled(1/40), Scheduled(1/40; every = 3))]
         for sim in localized
             init!(sim)
@@ -297,47 +298,51 @@ function test_seam_protocol()
         end
         @test modes(localized[1], "s").t_fired ≈ 0.315 atol = 1e-6
         @test same_snapshots(logged(localized[2]), logged(localized[1]))
-        # A remainder's retry never passes the end of its step (D-446). Over
-        # dyadic periods, attempt 12 is the remainder from the stamper's `t*`
-        # to 11/32, rejected for four times its length, and the retry is
-        # clamped back to it.
-        straight, grown = [Simulation(stamped(); Δt_frame = 1//8, algorithm) for algorithm in
+        # A retry from `t*` never passes the end of its span (D-446, D-460).
+        # Over dyadic periods the stamper's `t*` ends step 11, and the span's
+        # rest to 3/8 takes two equal steps. Attempt 12, the first of them, is
+        # rejected for four times its length, and the retry is shaped back to
+        # the span's end, one step where the straight run takes two.
+        straight, grown = [Simulation(stamped(); Δt_frame = 1//8, h_min = 1//2^20, algorithm) for algorithm in
                            (Scheduled(1/32), Scheduled(1/32; rejected = (12,), factor = 4.0))]
         for sim in (straight, grown)
             init!(sim)
             run!(sim; t_end = 0.5)
         end
-        @test grown.model.exec.stepper.attempts == straight.model.exec.stepper.attempts + 1 == 18
-        @test same_snapshots(logged(grown), logged(straight))
+        @test grown.model.exec.stepper.attempts == straight.model.exec.stepper.attempts == 17
+        @test [s.t for s in logged(grown)] == [s.t for s in logged(straight)][[1:12; 14:end]]
+        @test logged(grown)[13].t == 3/8
     end
 
-    @testset "a proposal is clamped to h_max and to the span's end, a rejection's proposal is the retry's, and a shortened step ends at the clock plus its length (§10.2, §10.5, D-452)" begin
+    @testset "a proposal is clamped to h_max and the span divided equally, a rejection's proposal is the retry's, and a shortened step ends at the clock plus its length (§10.2, §10.5, D-452, D-460)" begin
         # Every period is dyadic, so each clock below is exact. The proposal of
-        # 0.1 is clamped to `h_max = 1/16`. Attempt 2, offered the span's last
-        # 1/32, is rejected for a quarter of it, so the step ends at
-        # 1/16 + 1/128, a boundary on no lattice, and the next step takes the
-        # span's rest to the due instant at 3/32.
+        # 0.1 is clamped to `h_max = 1/16`, so the span to the due instant at
+        # 3/32 takes two steps of 3/64. Attempt 2, offered the second, is
+        # rejected for a quarter of it, so the retry divides the rest into four
+        # and the step ends at 15/256, a boundary on no lattice, and the next
+        # step takes the span's rest to 3/32.
         model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, h_max = 1//16,
-                      algorithm = Scheduled(0.1; rejected = (2,), factor = 0.25))
+                      h_min = 1//2^20, algorithm = Scheduled(0.1; rejected = (2,), factor = 0.25))
         init!(model, set(u = (ref = 0.7,)))
         hooks = RecordingHooks(model, 0, Float64[], false)
         frame!(model, 1, hooks)
         frame!(model, 2, hooks)
         stepper = model.exec.stepper
-        @test hooks.boundaries == [1/16, 1/16 + 1/128, 3/32, 1/8, 3/16, 1/4]
-        @test stepper.lengths == [1/16, 1/128, 3/128, 1/32, 1/16, 1/16]
+        @test hooks.boundaries == [3/64, 15/256, 3/32, 1/8, 3/16, 1/4]
+        @test stepper.lengths == [3/64, 3/256, 9/256, 1/32, 1/16, 1/16]
         @test stepper.attempts == 7
         @test stepper.starts[3] == stepper.starts[2]
         @test state(model, "a").n == 1 + 2         # the ticks at 3/32 and 3/16, at their instants
         # A localized event inside a step a rejection shortened still fires at
-        # its crossing. Attempt 14 is offered 0.3 to 0.325 and rejected, and the
-        # retry from 0.3 ends at 0.32, past the crossing at 0.315.
+        # its crossing. Attempt 13 is offered 0.3 to 0.325 and rejected, and the
+        # retry from 0.3 divides the span into five, so it ends at 0.32, past
+        # the crossing at 0.315.
         sim = Simulation(stamped(); Δt_frame = 1//10,
-                         algorithm = Scheduled(1/40; rejected = (14,), factor = 0.8))
+                         h_min = 1//2^20, algorithm = Scheduled(1/40; rejected = (13,), factor = 0.8))
         init!(sim)
         run!(sim; t_end = 0.5)
         stepper = sim.model.exec.stepper
-        @test first(stepper.starts[14]) === first(stepper.starts[15]) === 0.3
+        @test first(stepper.starts[13]) === first(stepper.starts[14]) === 0.3
         @test modes(sim, "s").count == 1
         @test modes(sim, "s").t_fired ≈ 0.315 atol = 1e-6
         @test 0.3 < modes(sim, "s").t_fired < 0.3 + 0.8 * 0.025
@@ -369,7 +374,7 @@ function test_seam_protocol()
         @test once.model.exec.stepper.notices == [notices; 12]
         # A handler that fires notifies at its boundary: the stamper's `t*`, in
         # frame 4's one step.
-        sim = Simulation(stamped(); Δt_frame = 1//10, algorithm = Scheduled(0.2))
+        sim = Simulation(stamped(); Δt_frame = 1//10, h_min = 1//2^20, algorithm = Scheduled(0.2))
         init!(sim)
         run!(sim; t_end = 0.5)
         @test sim.model.exec.stepper.notices == [0, 4]
@@ -398,12 +403,12 @@ function test_seam_protocol()
         @test same_snapshots(logged(resumed), after)
         # The model's own pair: a state taken from a standalone model and
         # restored into a fresh one.
-        model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
+        model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, h_min = 1//2^20, algorithm)
         init!(model, set(u = (ref = 0.7,)))
         frames!(model, 3)
         model_state = checkpoint(model)
         @test model_state.stepper == (model.exec.stepper.proposal, model.exec.stepper.attempts)
-        twin = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, algorithm)
+        twin = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, h_min = 1//2^20, algorithm)
         restore!(twin, model_state)
         frames!(model, 4)
         frames!(twin, 4)
@@ -419,15 +424,15 @@ function test_seam_protocol()
 
     @testset "a cursor frame names the attempt, rendered past the first (§13.4, D-452)" begin
         # Attempt 1 offers 0.02, whose second stage at 0.02 is short of the
-        # trip; it is rejected for four times its length, and attempt 2's second
-        # stage, at 0.08, trips.
+        # trip; it is rejected for four times its length, which divides the
+        # frame into two, and attempt 2's second stage, at 0.05, trips.
         model = Model(fed(Tripwire(0.05), "arm"); Δt_frame = 1//10,
-                      algorithm = Scheduled(0.02; rejected = (1,), factor = 4.0))
+                      h_min = 1//2^20, algorithm = Scheduled(0.02; rejected = (1,), factor = 4.0))
         init!(model, set(u = (in = true,)))
         err = failure(() -> frame!(model, 1))
         @test err isa StepError{Tripped}
         @test err.cursor == CursorFrame("c", :x_deriv, :integrate, 2, 2)
-        @test err.t == 0.08 && err.boundary == 0
+        @test err.t == 0.05 && err.boundary == 0
         @test occursin("integration stage 2 in attempt 2 of the frame from boundary 0",
                        sprint(showerror, err))
     end
@@ -450,7 +455,7 @@ function test_seam_protocol()
         short = 0.1 * Δt
         @test short + (Δt - short) != Δt
         ramp() = Model(Group((; r = BareRamp())); Δt_frame = 3//10,
-                       algorithm = Scheduled(1.0; rejected = (1,), factor = 0.1))
+                       h_min = 1//2^20, algorithm = Scheduled(1.0; rejected = (1,), factor = 0.1))
         # A first offer: attempt 1 is rejected for a tenth of the frame, and the
         # next step is offered the rest of the span.
         model = ramp()
@@ -463,7 +468,7 @@ function test_seam_protocol()
         # model with localized events, whose loop moves the step's end.
         for root in (Group((; r = BareRamp())), stamped())
             model = Model(root; Δt_frame = 3//10,
-                          algorithm = Scheduled(short; rejected = (2,), factor = 100.0))
+                          h_min = 1//2^20, algorithm = Scheduled(short; rejected = (2,), factor = 100.0))
             init!(model)
             hooks = RecordingHooks(model, 0, Float64[], false)
             frame!(model, 1, hooks)
@@ -474,13 +479,13 @@ function test_seam_protocol()
         # end it was first offered: rejected at 1/32 for four times that, it takes
         # the whole frame.
         localized = Model(stamped(); Δt_frame = 1//8,
-                          algorithm = Scheduled(1/32; rejected = (1,), factor = 4.0))
+                          h_min = 1//2^20, algorithm = Scheduled(1/32; rejected = (1,), factor = 4.0))
         init!(localized)
         frame!(localized, 1)
         @test localized.exec.stepper.lengths == [1/8]
         # The bare primitive's retry never passes the length it was given.
         bare = Model(Group((; r = BareRamp())); Δt_frame = 1//8,
-                     algorithm = Scheduled(1/16; rejected = (1,), factor = 4.0))
+                     h_min = 1//2^20, algorithm = Scheduled(1/16; rejected = (1,), factor = 4.0))
         init!(bare)
         integrate!(bare, 1/16)
         @test bare.exec.stepper.lengths == [1/16] && bare.exec.clock.t === 1/16
@@ -496,7 +501,7 @@ function test_seam_protocol()
         lagged(localized) = Group((; src = Source(t -> sin(3t)), lag = FirstOrderLag(τ = 0.3),
                                     cmp = Comparator(; threshold = 10.0, localized));
                                   local_wires = ("src/y" => "lag/u", "lag/y" => "cmp/u"))
-        for (kw, h) in (((; h_max = 1//30), Float64(1//30)), ((; algorithm = Scheduled(1/40)), 1/40))
+        for (kw, h) in (((; h_max = 1//30), Float64(1//30)), ((; algorithm = Scheduled(1/40), h_min = 1//2^20), 1/40))
             (localized, bare) = map((true, false)) do policy
                 sim = Simulation(lagged(policy); Δt_frame = 1//10, kw...)
                 init!(sim)
@@ -513,7 +518,7 @@ function test_seam_protocol()
 
     @testset "an accepted trial is checked before it is committed, and the report reads the trial (§13.4, D-157, D-452)" begin
         # Attempt 3, the first of frame 2, is accepted with an infinite trial.
-        model = Model(Group((; r = BareRamp())); Δt_frame = 1//4, algorithm = Scheduled(1/8; spoil = 3))
+        model = Model(Group((; r = BareRamp())); Δt_frame = 1//4, h_min = 1//2^20, algorithm = Scheduled(1/8; spoil = 3))
         init!(model)
         frame!(model, 1)
         err = failure(() -> frame!(model, 2))
@@ -540,35 +545,40 @@ function test_seam_protocol()
 
     @testset "a model with no continuous state never asks its stepper for a proposal (§10.2, D-156, D-452)" begin
         # One step a frame, though the backend's standing proposal is 0.03.
-        model = Model(Group((; a = TickCounter())); Δt_frame = 1//10, algorithm = Scheduled(0.03))
+        model = Model(Group((; a = TickCounter())); Δt_frame = 1//10, h_min = 1//2^20, algorithm = Scheduled(0.03))
         init!(model)
         hooks = RecordingHooks(model, 0, Float64[], false)
         frame!(model, 1, hooks)
         @test hooks.boundaries == [Float64(1//10)] && model.exec.stepper.attempts == 0
     end
 
-    @testset "a proposal that does not advance the clock is refused as the backend's bug (§10.2, D-452)" begin
-        # At t₀ = 1 a length of 1e-20 is below the clock's resolution. Each of
-        # the first three would otherwise take steps without end, and the clamp
-        # would read the fourth as the whole span. The frame names integration
-        # and no component, since no stage ran.
-        for proposal in (0.0, -0.1, 1e-20, NaN)
-            model = Model(Group((; r = BareRamp())); Δt_frame = 1//8, algorithm = Scheduled(proposal))
+    @testset "a proposal that would not advance the clock is lifted to the floor, and one that is not a number is refused as the backend's bug (§10.2, D-452, D-460)" begin
+        # At t₀ = 1 a length of 1e-20 is below the clock's resolution. The clamp
+        # into `[h_min, h_max]` lifts it, `0.0` and `-0.1` to the floor, so the
+        # frame takes four steps of 1/32, and it would read `NaN` as the whole
+        # span. The frame names integration and no component, since no stage ran.
+        for proposal in (0.0, -0.1, 1e-20)
+            model = Model(Group((; r = BareRamp())); Δt_frame = 1//8, h_min = 1//32, algorithm = Scheduled(proposal))
             init!(model; t0 = 1.0)
-            err = failure(() -> frame!(model, 1))
-            @test err isa StepError && err.cause isa InternalInvariant
-            @test err.t == 1.0 && model.exec.stepper.attempts == 0
-            @test err.cursor == CursorFrame(nothing, :none, :integrate, 0, 0)
+            frame!(model, 1)
+            @test model.exec.stepper.lengths == fill(1/32, 4) && model.exec.clock.t == 1.125
         end
-        # A retry is shaped the same way: rejected for none of its length.
-        model = Model(Group((; r = BareRamp())); Δt_frame = 1//8,
-                      algorithm = Scheduled(1/16; rejected = (1,), factor = 0.0))
-        init!(model)
+        model = Model(Group((; r = BareRamp())); Δt_frame = 1//8, h_min = 1//32, algorithm = Scheduled(NaN))
+        init!(model; t0 = 1.0)
         err = failure(() -> frame!(model, 1))
-        @test err.cause isa InternalInvariant && model.exec.stepper.attempts == 1
+        @test err isa StepError && err.cause isa InternalInvariant
+        @test err.t == 1.0 && model.exec.stepper.attempts == 0
         @test err.cursor == CursorFrame(nothing, :none, :integrate, 0, 0)
+        # A retry is shaped the same way: rejected for none of its length, it
+        # takes the floor, and the next step the span's rest in two.
+        model = Model(Group((; r = BareRamp())); Δt_frame = 1//8,
+                      h_min = 1//2^20, algorithm = Scheduled(1/16; rejected = (1,), factor = 0.0))
+        init!(model)
+        frame!(model, 1)
+        @test model.exec.stepper.attempts == 4 && model.exec.stepper.lengths[1] == 1/2^20
+        @test model.exec.clock.t == 1/8
         # An infinite proposal asks for all it may have, and takes the span.
-        model = Model(Group((; r = BareRamp())); Δt_frame = 1//8, algorithm = Scheduled(Inf))
+        model = Model(Group((; r = BareRamp())); Δt_frame = 1//8, h_min = 1//2^20, algorithm = Scheduled(Inf))
         init!(model)
         frame!(model, 1)
         @test model.exec.stepper.lengths == [1/8]
@@ -576,7 +586,7 @@ function test_seam_protocol()
 
     @testset "the attempt loop allocates nothing, rejections included (§9.8, D-452)" begin
         model = Model(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32,
-                      algorithm = Scheduled(1/16; every = 2, factor = 0.5, record = false))
+                      h_min = 1//2^20, algorithm = Scheduled(1/16; every = 2, factor = 0.5, record = false))
         init!(model, set(u = (ref = 0.7,)))
         frames!(model, 2)
         k = Ref(3)

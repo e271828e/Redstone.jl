@@ -308,13 +308,14 @@ end
     Simulation(deployment::Deployment; join_timeout = 5.0,
                chunk_size = 16) -> Simulation
     Simulation(build::Build; Δt_frame, Δt_base = nothing, h_max = nothing,
-               algorithm = RK4(), firing_budget = 4, localization_tol = 1e-6,
-               localization_budget = 8, join_timeout = 5.0,
+               h_min = nothing, algorithm = RK4(), firing_budget = 4,
+               localization_tol = 1e-6, localization_budget = 8,
+               attempt_budget = 7, join_timeout = 5.0,
                chunk_size = 16) -> Simulation
     Simulation(root::AbstractComponent; Δt_frame, Δt_base = nothing,
-               h_max = nothing, algorithm = RK4(), firing_budget = 4,
-               localization_tol = 1e-6, localization_budget = 8,
-               join_timeout = 5.0, chunk_size = 16) -> Simulation
+               h_max = nothing, h_min = nothing, algorithm = RK4(),
+               firing_budget = 4, localization_tol = 1e-6, localization_budget = 8,
+               attempt_budget = 7, join_timeout = 5.0, chunk_size = 16) -> Simulation
 
 Construct a simulation around a `Model{Float64}`, with no
 [device](@ref g-device) attached and an empty run.

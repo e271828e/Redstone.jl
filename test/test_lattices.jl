@@ -40,6 +40,7 @@ function attempt!(stepper::RecorderStepper, model::Model, h)
     true
 end
 startpoint(stepper::RecorderStepper) = (stepper.x₀, stepper.k₁)
+proposes(::Recorder) = false
 
 # The R2 rig: a continuous plant beside two counters at 0.1 s and 0.1001 s.
 lattice_rig() = Group((; c = Plant(), a = TickCounter(), b = TickCounter());

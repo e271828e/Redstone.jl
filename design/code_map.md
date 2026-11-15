@@ -195,8 +195,9 @@ D-438.
 - `ModelState{T}`, a model's state as one value (D-274, D-319): the flat
   buffer, the `s` and `m` stores, the signal table with every cell buffer
   copied, the guard priors, the stepper's carried state `stepper`, the
-  value `checkpoint_stepper` reads, typed `Any` and `nothing` for a
-  fixed-step method (D-452), the clock's `t` and its exact `t₀` (D-457), and
+  value `checkpoint_stepper` reads, typed `Any`, `nothing` for a
+  fixed-step method and `BS3`'s proposal and memory for it (D-452, D-461),
+  the clock's `t` and its exact `t₀` (D-457), and
   the fingerprint, the `Deployment` and the structural
   layout `Fingerprint`.
 - `Checkpoint`, a `ModelState{Float64}` beside the run's frame index and
@@ -216,14 +217,15 @@ D-438.
 - `_detach`'s two methods, the state's and the checkpoint's over it.
 - The mismatch namers behind `_check_checkpoint!` (§12.7): `_check_addresses!`
   over the table's addresses, and `_walk_deployment!`, which names what a
-  deployment `==` refused, the seven parameters and the schedule's rows and
-  scopes by path and column.
+  deployment `==` refused, the nine parameters, the algorithm by its dotted
+  field where two tokens of one type differ (D-462), and the schedule's rows
+  and scopes by path and column.
 - The model-level functions, `_fingerprint`, `checkpoint(model)`, the
   fingerprint check `_check_checkpoint!` and the model's restore doors, are
   model.jl's (D-317, D-319).
 
 Spec: §10.2, §11.5, §12.6, §12.7, §14.10, D-038, D-254, D-273, D-274, D-317, D-319,
-D-452.
+D-452, D-461, D-462.
 
 ### `src/conditions.jl`
 
@@ -298,7 +300,8 @@ D-256, D-268, D-269, D-317.
 - The diagnostic cells, one per writer and one on each model for its frame
   (D-317). The channel's kinds are diagnostics.jl's.
 - `KINDS`, the closed set's one home. The union `DiagValue` and `KindCounts`'
-  field order are built from it.
+  field order are built from it, `StepFloor`'s field `step_floor` after
+  `firing` (D-460).
 - Snapshots, and the log with re-decimation. The log stores the box
   publication made, which `log!` takes `@nospecialize`d beside its concrete
   type, so the two `boundary` reads stay static (§9.8).
@@ -366,12 +369,18 @@ D-459.
   - `_gates`, which derives the per-component triple the executor compiles
     over from the rows at `compile`.
 - The algorithm tokens `RK4()` and `Heun()` under `AbstractAlgorithm`,
-  singletons that carry no step, and the `show` that prints them as spelled
-  (§10.2, D-442, D-449). Their steppers are stepper.jl's.
+  singletons that carry no step, and `BS3(; reltol, abstol)`, the adaptive
+  token holding its two tolerances, which its constructor refuses as
+  `ArgumentInvalid` unless positive and finite, with the `show` that prints
+  each as spelled (§10.2, D-442, D-449, D-461). The trait `proposes`, with no
+  default, says whether a token's method proposes (D-460). Their steppers are
+  stepper.jl's.
 - The `Deployment` holds the build plus the grid parameters `Δt_frame` and
   `Δt_base`, the step bound `h_max` resolved to the lesser of itself and
-  `Δt_frame` (D-449), the three each a `Rational{Int}` (D-454), the algorithm token and the three event parameters
-  `firing_budget`, `localization_tol` and `localization_budget`.
+  `Δt_frame` (D-449), the three each a `Rational{Int}` (D-454), the floor
+  `h_min`, a `Rational{Int}` or `nothing` (D-460), the algorithm token, the
+  three event parameters `firing_budget`, `localization_tol` and
+  `localization_budget`, and `attempt_budget` (D-460).
   It is scalar-free. The `Deployment` constructor has one throw per call
   (§9.2, D-229). It also holds the `Lattice`, the frame loop's index-to-time
   map, derived from the exact periods once (§10.5, D-445).
@@ -380,7 +389,9 @@ D-459.
   units, the bound `h_max` as an exact ratio to the unit, `max_frame`, the
   last frame index whose positions fit `Int`, and `reach`, the clock bound's
   `2^50·δ` in seconds, `δ` the least gap between two boundaries: the unit,
-  or the lesser of it and `h_max / 2` when the bound splits a frame (D-450).
+  or the lesser of it and `h_max / 2` when the bound splits a frame (D-450),
+  and under a proposing method, whose `h_min` `_lattice` takes, the lesser of
+  the unit and `h_min` (D-460).
   `max_frame` bounds `k·frame` plus the largest period in units, so it is
   one frame conservative: frame `max_frame + 1` would still fit. `_lattice`
   builds it in `Int128` and returns `:Δt_base` when the unit, a period in
@@ -392,6 +403,9 @@ D-459.
   are each a premise of its own, positive and finite (`_positive_finite`),
   every check whose premise holds runs, and nothing relates them (D-445,
   D-449). `h_max` resolves against `Δt_frame`, absent meaning `Δt_frame`.
+  `h_min` takes the same door, is required where the token's trait says the
+  method proposes, and is refused above the resolved `h_max` as `:range`
+  with `h_max` related (D-460).
   The lattices come last, with every other check as their premise:
   `_lattice`'s `:Δt_base` is `DeploymentInvalid` on `Δt_base` with reason
   `:range` and `Δt_frame` as `related`, and its `:h_max` the same on
@@ -401,8 +415,9 @@ D-459.
   cannot hold is the lattices' `:Δt_base` refusal (D-459).
 - `==`/`hash` on a `Deployment` compare by value over everything but the
   build, the grid attribution, the `Lattice` and the warnings (§12.7), the
-  bound resolved and the three time quantities exact, so two that round to
-  one `Float64` are two deployments (D-454).
+  bound resolved and the time quantities exact, so two that round to
+  one `Float64` are two deployments (D-454), `h_min` and `attempt_budget`
+  among them (D-460).
 - `warnings(::Deployment)`.
 - The grid attribution `_grid_report` (D-187):
   - the constraint pool, with each entry's leave-one-out refinement factor;
@@ -424,7 +439,7 @@ D-459.
 
 Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
 D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454,
-D-459.
+D-459, D-460, D-461.
 
 ### `src/descriptor.jl`
 
@@ -511,7 +526,9 @@ D-256, D-261, D-268, D-270, D-315.
   `UnboundedRun`, the loop's own advisory (§13.5, D-255, D-316),
   `ThreadBudget`, the run-top tightness warning on the loop's own cell
   (§12.2, D-027), `DeviceCrash`, `DeviceJoinTimeout` (§12.4, D-203) and
-  `ReplayDiscardedStaging` (§12.7). `EmptyGreedyClaim` is reported by
+  `ReplayDiscardedStaging` (§12.7), and `StepFloor`, the floor's
+  degradation on the model's own cell, with its two reasons `:rejected` and
+  `:budget` (§10.2, D-460). `EmptyGreedyClaim` is reported by
   `attach!` into the roster entry's own cell (§11.6, D-250).
 - `_typename`.
 - `_named`, the one renderer of a `(path, name)` pair; `_at_port`, a port in a
@@ -579,14 +596,16 @@ D-256, D-261, D-268, D-270, D-315.
   `related`, and `:inexact`'s wording for `h_max`. The reasons
   `:subcycling`, `:not_frame_multiple` and `:not_harmonic`, the parameter
   `:h` and the tokens' `:inexact` are gone (§9.2, §10.5, D-445, D-449,
-  D-450).
+  D-450). `DeploymentInvalid`'s `h_min` arms, `:missing` under a proposing
+  method and `:range` with `h_max` related, and `attempt_budget`'s `:range`;
+  `CheckpointMismatch`'s message counts nine parameters (D-460, D-462).
 
 Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
 §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
-D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452, D-459.
+D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452, D-459, D-460, D-462.
 
 ### `src/executor.jl`
 
@@ -648,8 +667,9 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
   `cld(units·q, p)` equal steps, `p/q` the bound in units; an interior step
   end's clock is the float nearest the span's exact start plus `i` exact
   steps, store.jl's `_instant`, never accumulated (D-456). Under a proposal it
-  clamps the length through model.jl's `_clamped`, and a step a rejection
-  shortened ends where `_step_end` says, the clock plus its length (D-452).
+  shapes the length through model.jl's `_shaped`, and a step a rejection
+  shortened ends where `_step_end` says, the clock plus its length (D-452,
+  D-460). It resets the frame's floor latch, `floor_reported`, at its top.
   The span's last step runs `run_boundary!` with its tick index when due,
   every other step end with the empty due set. Every step integrates by the
   float distance between its two clocks, the bare path and the localized one
@@ -662,7 +682,9 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
   the span's end, a remainder never past the step's (D-452). It keeps
   `xₙ₊₁` in the trial buffer `xnext` the step was committed from, with the arrival
   sweep, the θ = 0 validation, ITP bracketing `_crossing`, `t*` boundaries,
-  the remainder step to the step's end, the localization budget counted
+  the remainder step to the step's end under a fixed-step method, a `t*` that
+  ends the step under a proposing one, returned as a settled end the frame
+  loop shapes the next step from (D-460), the localization budget counted
   across the frame's steps, and the `ChatteringBudget` degradation, reported
   into the model's diagnostic cell (D-446). The report folds at the next
   frame top and its delta rides the first publication after the fold, which
@@ -681,7 +703,7 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
 
 Spec: §10.2–§10.5, §11.8, §12.4, §13.4, §13.5, D-018, D-059, D-255,
 D-260, D-261, D-317, D-318, D-444, D-445, D-446, D-447, D-449, D-450, D-452,
-D-455.
+D-455, D-460, D-461.
 
 ### `src/leaves.jl`
 
@@ -860,8 +882,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
 `model.jl` as soon as something in it names a `Model`.
 
 - `Model{T,E}`, the deployment and its executor at one scalar, its status,
-  its claim flag, its frame's diagnostic cell and the freshness flag `fresh`
-  (§10.3, D-447), with the materialization
+  its claim flag, its frame's diagnostic cell, the freshness flag `fresh`
+  (§10.3, D-447) and the frame's floor latch `floor_reported` (D-460), with
+  the materialization
   `Model(deployment, T)` and `Model(::Build)` and `Model(::AbstractComponent)`
   over it (§9.2, §11.8, §12.6, D-254, D-317). `Simulation(model)` sets the
   claim flag once and nothing clears it (D-318).
@@ -938,10 +961,14 @@ soon as nothing in it names a `Simulation` in a signature, and below
   which returns the accepted length. It counts the attempts into the cursor,
   commits an accepted trial from `xnext` after the `isfinite` sweep
   `_check_finite!`, and puts a rejected attempt's start back from
-  `startpoint`. `_clamped` shapes a proposal into a length, and refuses one
-  that does not advance the clock, or is not a number, as an
-  `InternalInvariant` under a cursor that names integration, and `_step_end`
-  writes where a step ended. The bare primitive `integrate!(model, h)` is
+  `startpoint`. `_shaped` shapes a proposal into a length by equal division
+  over `_shaped_steps`' count, clamped into `[h_min, h_max]` and capped at
+  the floor, and refuses one that is not a number as an `InternalInvariant`
+  under a cursor that names integration.
+  `_at_floor` tests an attempt against `_floor_steps`, the floor's count, and
+  the loop accepts a rejected attempt there and takes the floor's attempt
+  past `attempt_budget`, each reported once a frame by `_report_floor!` as
+  `StepFloor` (D-460). `_step_end` writes where a step ended. The bare primitive `integrate!(model, h)` is
   one step toward `t + h`. `_check_finite!`'s `NonfiniteState` names the
   loop's frame or, off the loop, the frame top the clock rounds to (D-157,
   D-445).
@@ -964,13 +991,13 @@ soon as nothing in it names a `Simulation` in a signature, and below
 Spec: §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
 §13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
 D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447,
-D-449, D-450, D-452, D-454.
+D-449, D-450, D-452, D-454, D-460.
 
 ### `src/precompile.jl`
 
 The precompile workload (§9.7, D-289): `workload_loop`, a closed loop of
-library components, and `workload`, its run through the loop's path, `trim!` and
-`linearize`. The `@compile_workload` call inside `@setup_workload` runs
+library components, and `workload`, its run through the loop's path, a run
+under `BS3`, `trim!` and `linearize`. The `@compile_workload` call inside `@setup_workload` runs
 `workload` while the package precompiles, and `test_precompile.jl`'s child
 runs it in a fresh process. Nothing in the package depends on it, so
 `src/Redstone.jl` includes it last, after the library it uses.
@@ -1085,17 +1112,19 @@ D-261.
   binary guard at 100.
 - The `Deployment` sets `_grid_block`'s lines under `grid:`, and its
   parameters line names `h_max` resolved and prints the three time
-  quantities exact (D-454). `_steps_line` states the steps of
+  quantities exact (D-454), `h_min` where one is set, and the long form
+  adds `attempt_budget` (D-460). `_steps_line` states the steps of
   a frame no due instant falls inside, one `cld` over the bound's ratio to
-  the unit, and names each schedule row whose ticks are not all frame tops,
-  one divisibility check per row, the count then labelled per unsplit frame
-  (D-449).
+  the unit, under a proposing method the range from it to
+  `⌊Δt_frame / h_min⌋` (D-460), and names each schedule row whose ticks are
+  not all frame tops, one divisibility check per row, the count then
+  labelled per unsplit frame (D-449).
 - The published `FrameworkStatus`'s two forms. The `MIME"text/plain"` form
   prints one block per writer and the pacer's line last. It prints each
   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and
   count-only past it.
 
-Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454.
+Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460.
 
 ### `src/sim.jl`
 
@@ -1226,10 +1255,16 @@ every attempt, which writes the step's end into the executor's trial buffer
 `xnext`. `checkpoint_stepper` and `restore_stepper!` are the checkpoint pair,
 and `reset_stepper!` puts the carried state back as bound, at `init!`. None
 of the three nor `propose` has a default, and both steppers carry `nothing`
-(D-274). The seam's framework
-side, `integrate_step!`, is model.jl's, and the tokens are deployment.jl's.
+(D-274). `BS3Stepper`, the Bogacki–Shampine 3(2) pair under
+proportional-integral control, its constants `BS3_*` and its tableau beside
+it, carries its proposal and its controller's memory, clears the memory at a
+notice, pays all four stages at every attempt, and bounds the proposal
+after a rejected first attempt by `_starting_bound`, from that attempt's
+first stage, the infinite proposal being its starting state (D-461). The
+seam's framework side, `integrate_step!`, is model.jl's, and the tokens are
+deployment.jl's.
 
-Spec: §10.2, §12.6, D-017, D-274, D-442, D-452.
+Spec: §10.2, §10.4, §12.6, §14.10, D-017, D-274, D-442, D-452, D-461.
 
 ### `src/store.jl`
 
@@ -1362,6 +1397,31 @@ The suite's `import Redstone:` list, shared with `repl.jl` — the one place a
 framework name the tests call or extend is admitted. A second line,
 `import Redstone.Library:`, admits the library's components.
 
+### `test/test_adaptive.jl`
+
+The first adaptive backend (§10.2, §10.4, §10.5, §12.6, §12.7, §14.10,
+D-460–D-462): a recording replayed from a mid-run checkpoint bit for bit,
+the method's order and the tolerance's proportionality under the integral
+gain alone, allocation, the controller's two branches, a `t*` ending a step,
+the floor and the budget with their warning, a nonfinite estimate, the
+starting bound and its absence under a vanishing derivative, a `Dual`
+run's steps, projection's silence, the checkpoint pair and the reset, the shaping rule, the deployment's keywords and their
+mismatch names, the clock's resolution of the floor, and `show`. Its
+fixtures are its own:
+
+- `Watched(inner)`, an `AbstractAlgorithm` defined in the suite, and its
+  `WatchedStepper`, which forwards every call to a `BS3Stepper`, keeps per
+  attempt its start, length, verdict, memory before and after, and proposal
+  after, and throws past 10 000 attempts, so a step loop that never ends
+  fails its test.
+- `ClockHooks`, the settled clocks as values at any scalar; `Cliff()`, a state
+  whose derivative is not a number past zero, `Recharger()`, a nonlinear
+  relaxation reset by a localized event, and `Kepler()`, an orbit of
+  eccentricity 0.8 from pericentre, all three zero-argument and so in
+  `test_build.jl`'s `Dual` sweep; `adaptive_sim()`, the seam rig under
+  `BS3`; and the controller's two formulas in literals, `elementary` and
+  `proportional_integral`.
+
 ### `test/test_lattices.jl`
 
 The frame on its lattices and the step bound (§2.1, §10.3–§10.5, §12.6,
@@ -1380,7 +1440,8 @@ Its fixtures are its own:
 - `Recorder()`, an `AbstractAlgorithm` defined in the suite, and its
   `RecorderStepper`, forward Euler through the seam's protocol, proposing
   nothing and accepting every attempt, that keeps each step's length and the
-  model's `fresh` flag (§10.2, D-452). No backend in `src/` records.
+  model's `fresh` flag (§10.2, D-452), and declares through `proposes` that
+  it proposes nothing (D-460). No backend in `src/` records.
 - `LatticeHooks`, hooks keeping each boundary's counters and reporting
   nothing written at the top (D-317, D-447). The stop test reuses
   `test_lifecycle.jl`'s `ramp_request`, and the clock tests
@@ -1397,8 +1458,9 @@ either backend, allocation, and the seam's protocol. Its fixtures are its own:
   Heun's method through the protocol that proposes `h`, rejects attempts on
   a schedule, proposes `factor` times a rejected length, carries its proposal
   and its attempt count through the checkpoint pair, and keeps each
-  attempt's start, each accepted length and each notice. No backend in
-  `src/` rejects.
+  attempt's start, each accepted length and each notice. It declares through
+  `proposes` that it proposes, so each of its deployments sets `h_min`
+  (D-460). Of the backends in `src/` only `BS3` rejects.
 - `seam_rig()`, a closed loop beside a counter due off the frame tops, every
   period dyadic, `stamped()`, a model with localized events, and
   `same_snapshots`, two logs compared bitwise.

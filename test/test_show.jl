@@ -244,7 +244,7 @@ function test_show()
         text = plain(deployed)
         @test startswith(text, "Deployment: Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, " *
                                "RK4(); firing_budget = 4, localization_tol = 1.0e-6, " *
-                               "localization_budget = 8\n" *
+                               "localization_budget = 8, attempt_budget = 7\n" *
                                "  steps per frame: 1\n" *
                                "  build: Build(4 components, activations: Float64)\n")
         @test occursin("\n" * join("  " .* split(MULTIRATE_SCHEDULE, '\n'), "\n") * "\n  grid:\n", text)

@@ -249,7 +249,7 @@ end
 # so this check refuses some bounds whose clocks `Int128` would carry from a
 # zero origin.
 function _lattice(Δt_frame::Rational{Int}, Δt_base::Rational{Int}, h_max::Rational{Int},
-                  rows::Vector{ScheduleEntry})
+                  h_min::Union{Nothing,Rational{Int}}, rows::Vector{ScheduleEntry})
     wide(value) = Rational{Int128}(value)
     fits(value) = value ≤ typemax(Int)
     unit = isempty(rows) ? wide(Δt_frame) : gcd(wide(Δt_frame), wide(Δt_base))
@@ -267,8 +267,11 @@ function _lattice(Δt_frame::Rational{Int}, Δt_base::Rational{Int}, h_max::Rati
     # The least gap between two boundaries (D-450): a unit between two mandatory
     # instants, and more than half the bound between two equal steps, since
     # `n = ⌈g / h_max⌉ ≥ 2` steps of a span `g` are each longer than `h_max / 2`.
-    # A bound at the frame splits no span.
-    gap = frame_steps == 1 ? unit : min(unit, wide(h_max) / 2)
+    # A bound at the frame splits no span. Under a proposing method, `h_min`
+    # passed in, the shaping rule cuts no step below the floor, and a span
+    # shorter than it is one step at least a unit long (D-460).
+    gap = h_min !== nothing ? min(unit, wide(h_min)) :
+          frame_steps == 1 ? unit : min(unit, wide(h_max) / 2)
     Lattice(Rational{Int}(unit), Int(frame), Int(base), Rational{Int}(bound), Int(max_frame),
             exp2(50) * Float64(gap))
 end
@@ -303,8 +306,15 @@ every check above their premise: a unit too fine to index one frame in an
 `Int`, or under which a component's period in units leaves `Int`, is
 `Δt_base`'s `:range`, `Δt_frame` its related value, and a bound
 whose step counts or exact steps leave `Int` is `h_max`'s (§10.5, D-445).
+
+The floor `h_min` takes the door `h_max` takes, and is required where the
+method proposes, `proposing` the token's trait. One above the resolved `h_max`
+is `:range` with `h_max` as its related value. Under a proposing method it
+enters the lattices' least gap, so the doors refuse a run whose clock cannot
+resolve it (D-450, D-460). A fixed-step method leaves it unused.
 """
-function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{Diagnostic})
+function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposing::Bool,
+                       diags::Vector{Diagnostic})
     count_on_entry = length(diags)
     Δt_frame === nothing &&
         push!(diags, DeploymentInvalid(parameter = :Δt_frame, reason = :missing))
@@ -316,6 +326,15 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
         h_max === nothing ? nothing : _exact(:h_max, h_max, diags), diags)
     h_max === nothing && (h_max_r = Δt_frame_r)
     Δt_frame_r === nothing || h_max_r === nothing || (h_max_r = min(h_max_r, Δt_frame_r))
+    # The floor, through the same door, required by a proposing method and
+    # refused above the resolved bound (D-460).
+    proposing && h_min === nothing &&
+        push!(diags, DeploymentInvalid(parameter = :h_min, reason = :missing))
+    h_min_r = _positive_finite(:h_min,
+        h_min === nothing ? nothing : _exact(:h_min, h_min, diags), diags)
+    h_min_r === nothing || h_max_r === nothing || h_min_r ≤ h_max_r ||
+        push!(diags, DeploymentInvalid(parameter = :h_min, reason = :range, value = h_min_r,
+                                       related = h_max_r))
 
     structure = build.structure
     anchors = structure.anchors
@@ -407,7 +426,8 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
     # The lattices' premise is all of the above. A unit too fine to index one
     # frame in an `Int`, a period in units past it, or a bound too fine to count
     # a frame's steps in one, joins the event parameters' faults in the one throw.
-    lattice = schedule === nothing ? :Δt_base : _lattice(Δt_frame_r, Δt_r, h_max_r, schedule.rows)
+    lattice = schedule === nothing ? :Δt_base :
+              _lattice(Δt_frame_r, Δt_r, h_max_r, proposing ? h_min_r : nothing, schedule.rows)
     if lattice === :Δt_base
         push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :range,
                                        value = Δt_r, related = Δt_frame_r))
@@ -417,7 +437,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, diags::Vector{D
                                        value = h_max_r, related = Δt_frame_r))
         return nothing
     end
-    (Δt_frame = Δt_frame_r, Δt_base = Δt_r, h_max = h_max_r,
+    (Δt_frame = Δt_frame_r, Δt_base = Δt_r, h_max = h_max_r, h_min = h_min_r,
      schedule = schedule, lattice = lattice, grid = grid, derived = derived)
 end
 
@@ -457,14 +477,84 @@ Pass it as the `algorithm` keyword of [`Deployment`](@ref). It steps as
 """
 struct Heun <: AbstractAlgorithm end
 
+# Design: §10.2, §10.7, D-442, D-460, D-461. The tolerances are the identity of the choice, so
+# the token holds them and the deployment compares them as part of the value.
+# The controller's constants are the backend's, fixed in stepper.jl and never
+# keywords. Each tolerance is refused at the token, as `Period` refuses a
+# nonpositive period, so no deployment holds a token that cannot run.
+"""
+    BS3(; reltol = 1e-3, abstol = 1e-6) -> BS3
+
+The Bogacki–Shampine method of order 3 with an embedded order-2 error
+estimate, an adaptive method.
+
+Pass it as the `algorithm` keyword of [`Deployment`](@ref), which then needs
+`h_min`, the [floor](@ref g-floor) of its steps. Each step's length is
+proposed by an error controller and shaped by the deployment's bounds
+`h_min` and `h_max`. A step passes when every state component's error estimate
+is at most `abstol + reltol·max(|xₙ|, |xₙ₊₁|)`, over the values alone.
+
+The first attempt after `init!` has no error to propose from, so it takes
+all that `h_max` and the span allow. If the error test rejects it, the retry
+is at most the step over which the initial derivative changes the state by
+`0.8·reltol^(1/3)` of its scale, `max(|xᵢ|, abstol/reltol)`. A zero
+derivative sets no such limit. The first attempt still runs whole, so under
+a coarse frame, set `h_max`. Without it that attempt's stages reach up to a
+frame ahead, where the model's own code may throw.
+
+The method does not suit a [paced](@ref g-pacing) run, whose work per frame
+it bounds only by `Δt_frame / h_min` steps.
+
+`abstol` is in the units of the state and has no universal value. A state
+whose meaningful scale is far below `1e-6` integrates with no error control
+under the default, so such a model sets its own `abstol`.
+
+A tolerance that is not a positive finite real is refused as
+`ArgumentInvalid`.
+
+# Keywords
+
+- `reltol`: the relative tolerance, dimensionless.
+- `abstol`: the absolute tolerance, in the state's units.
+
+See also [`RK4`](@ref), [`Heun`](@ref).
+"""
+struct BS3 <: AbstractAlgorithm
+    reltol::Float64
+    abstol::Float64
+    function BS3(reltol::Real, abstol::Real)
+        diags = Diagnostic[]
+        for (argument, value) in ((:reltol, reltol), (:abstol, abstol))
+            value > 0 && isfinite(value) ||
+                push!(diags, ArgumentInvalid(call = :BS3, reason = :range, argument = argument,
+                                             value = value))
+        end
+        isempty(diags) || throw(DiagnosticError(diags))
+        new(Float64(reltol), Float64(abstol))
+    end
+end
+BS3(; reltol::Real = 1e-3, abstol::Real = 1e-6) = BS3(reltol, abstol)
+
+# Design: §10.2, D-460.
+# Whether a method proposes its steps' lengths, read by the `Deployment`
+# constructor, which then requires `h_min`. No default: a proposing method that
+# forgot it would deploy with no floor, and a fixed-step one would be refused
+# for a floor it never reads.
+proposes(::RK4) = false
+proposes(::Heun) = false
+proposes(::BS3) = true
+
 # The token prints as it is spelled, by its bare name, so a trace header or a
 # mismatch message reads the same from any module. `==` and `hash` are the
 # fallbacks': a token is an immutable value, compared field by field.
 Base.show(io::IO, algorithm::Union{RK4,Heun}) = print(io, nameof(typeof(algorithm)), "()")
+Base.show(io::IO, algorithm::BS3) =
+    print(io, "BS3(reltol = ", repr(algorithm.reltol), ", abstol = ", repr(algorithm.abstol), ")")
 
 # --- the artifact (§9.1, §9.2, D-254) -------------------------------------------
 
-# Design: §9.1, §9.2, §10.2, §10.4, §10.6, §12.7, D-254, D-442, D-443, D-449, D-454.
+# Design: §9.1, §9.2, §10.2, §10.4, §10.6, §12.7, D-254, D-442, D-443, D-449, D-454,
+# D-460.
 # `Δt_base` has exactly one of three cross-validated sources (§9.1): explicit,
 # `Δt_frame` by default, or GCD derivation over the anchors' constraint pool.
 # `Δt_frame` is required because a domain rate is not a framework default. The
@@ -477,18 +567,22 @@ Base.show(io::IO, algorithm::Union{RK4,Heun}) = print(io, nameof(typeof(algorith
 # separates them; the event time is only as accurate as the O(h⁴) interpolant,
 # so a tolerance tighter than 1e-6 buys nothing while each trial evaluation
 # costs a full sweep; a multi-event frame needs three or four localizations and
-# chattering needs tens, so 8. The `Lattice` is the loop's index-to-time map,
-# derived here from the exact periods once (§10.5, D-445).
+# chattering needs tens, so 8; a step's error test fails at most seven times
+# before the floor, the limit of error-test failures per step SUNDIALS' CVODE
+# and ARKODE keep, so 7. The `Lattice` is the loop's index-to-time map, derived
+# here from the exact periods once (§10.5, D-445).
 """
     Deployment(build::Build; Δt_frame, Δt_base = nothing, h_max = nothing,
-               algorithm = RK4(), firing_budget = 4, localization_tol = 1e-6,
-               localization_budget = 8) -> Deployment
+               h_min = nothing, algorithm = RK4(), firing_budget = 4,
+               localization_tol = 1e-6, localization_budget = 8,
+               attempt_budget = 7) -> Deployment
 
 The build fixed to its time quantities, an algorithm and event parameters,
 with no scalar type.
 
 The time quantities are a [frame](@ref g-frame) period, a
-[base tick](@ref g-tick) and a step bound.
+[base tick](@ref g-tick), a step bound and, for an adaptive method, a step
+floor.
 
 A deployment carries the build, the grid it settled, the [`Schedule`](@ref) and
 the warnings its construction raised, read with [`warnings`](@ref).
@@ -496,8 +590,9 @@ the warnings its construction raised, read with [`warnings`](@ref).
 models.
 
 Two deployments compare equal when their frame period, base tick, step bound,
-algorithm, event parameters and schedule agree, whatever their builds.
-[`replay!`](@ref) checks this before re-driving a recording. The three time
+step floor, algorithm, event parameters, attempt budget and schedule agree,
+whatever their builds.
+[`replay!`](@ref) checks this before re-driving a recording. The time
 quantities are held and compared exact, as `Rational{Int}`, so two that round
 to one `Float64` are different deployments. The bound is recorded as the lesser
 of `h_max` and `Δt_frame`, so a deployment with no `h_max` and one whose
@@ -514,8 +609,11 @@ A keyword outside its range is refused as `DeploymentInvalid`, and so is a
 [`Δt_frame`](@ref g-dt_frame), `Δt_base` and `h_max` stand in no required
 ratio. A `Δt_base` whose exact common unit with `Δt_frame` is too fine to count
 one frame in an `Int` is refused as well, and so is an `h_max` too fine to
-count one frame's steps in one. One throw reports the faults found together.
-Exhausting `firing_budget` warns `FiringBudget`.
+count one frame's steps in one. An adaptive method, such as [`BS3`](@ref),
+needs `h_min`, refused as `DeploymentInvalid` when absent or above `h_max`.
+One throw reports the faults found together. Exhausting `firing_budget` warns
+`FiringBudget`, and a step taken at `h_min` against its error test, or after
+`attempt_budget` rejected attempts, warns `StepFloor`.
 
 # Keywords
 
@@ -526,14 +624,19 @@ Exhausting `firing_budget` warns `FiringBudget`.
   or an `Hz` value, `Δt_frame` by default, or `:derive`.
 - `h_max`: the longest step in seconds, taking the values `Δt_frame` takes and
   refused alike, or `nothing` for no bound below the frame.
-- `algorithm`: the integration method, [`RK4`](@ref) or [`Heun`](@ref), bound
-  to the state [buffer](@ref g-buffer) when the `Model` is built.
+- `h_min`: the shortest step an adaptive method may take, in seconds, taking
+  the values `h_max` takes. A fixed-step method leaves it unused.
+- `algorithm`: the integration method, [`RK4`](@ref), [`Heun`](@ref) or
+  [`BS3`](@ref), bound to the state [buffer](@ref g-buffer) when the `Model`
+  is built.
 - `firing_budget`: how many times one event may fire at one
   [boundary](@ref g-boundary), an integer of at least 1.
 - `localization_tol`: the positive relative bracket width, as a fraction of
   `Δt_frame`, at which event localization stops.
 - `localization_budget`: how many event localizations one frame admits, an
   integer of at least 1.
+- `attempt_budget`: how many attempts an adaptive method's step may make
+  before its next attempt is at `h_min`, an integer of at least 1.
 
 See also [`build`](@ref), [`Model`](@ref), [`Simulation`](@ref).
 """
@@ -542,10 +645,12 @@ struct Deployment
     Δt_frame::Rational{Int}       # the frame period, exact (§9.2, D-443, D-454)
     Δt_base::Rational{Int}
     h_max::Rational{Int}          # the step bound, resolved against the frame (§10.5, D-449)
+    h_min::Union{Nothing,Rational{Int}}   # the step floor, a proposing method's (§10.2, D-460)
     algorithm::AbstractAlgorithm  # the method, bound at `Model` construction (D-442)
     firing_budget::Int            # per-event firings per boundary (§10.6)
     localization_tol::Float64     # relative bracket-width stop (§10.4)
     localization_budget::Int      # t* boundaries permitted per frame (§10.4)
+    attempt_budget::Int           # attempts per step before the floor (§10.2, D-460)
     schedule::Schedule            # the bound per-component tick table (§9.2)
     grid::GridReport              # the attribution over the constraint pool (§9.2, D-187)
     lattice::Lattice              # the loop's index-to-time map (§10.5, D-445)
@@ -553,8 +658,8 @@ struct Deployment
 end
 
 function Deployment(build::Build; Δt_frame = nothing, Δt_base = nothing, h_max = nothing,
-                    algorithm = RK4(), firing_budget = 4, localization_tol = 1e-6,
-                    localization_budget = 8)
+                    h_min = nothing, algorithm = RK4(), firing_budget = 4,
+                    localization_tol = 1e-6, localization_budget = 8, attempt_budget = 7)
     # The event parameters and the algorithm validate on their own terms, ahead
     # of the grid; all of it lands in one list and one throw (§9.1, D-229).
     diags, raised = Diagnostic[], Diagnostic[]
@@ -566,7 +671,11 @@ function Deployment(build::Build; Δt_frame = nothing, Δt_base = nothing, h_max
         push!(diags, DeploymentInvalid(parameter = :localization_tol, reason = :range, value = localization_tol))
     localization_budget isa Integer && localization_budget ≥ 1 ||
         push!(diags, DeploymentInvalid(parameter = :localization_budget, reason = :range, value = localization_budget))
-    bound = bind_schedule(build, Δt_frame, Δt_base, h_max, diags)
+    attempt_budget isa Integer && attempt_budget ≥ 1 ||
+        push!(diags, DeploymentInvalid(parameter = :attempt_budget, reason = :range, value = attempt_budget))
+    # The token's trait says whether the method needs a floor (D-460).
+    proposing = algorithm isa AbstractAlgorithm && proposes(algorithm)
+    bound = bind_schedule(build, Δt_frame, Δt_base, h_max, h_min, proposing, diags)
     # One throw per call (§9.1, D-229), carrying the warnings raised so far: the
     # artifact that would have held them never returns (D-250).
     isempty(diags) || throw(DiagnosticError(diags, raised))
@@ -591,10 +700,10 @@ function Deployment(build::Build; Δt_frame = nothing, Δt_base = nothing, h_max
                                 rows[findfirst(row -> row.D == utilization, rows)].path,
                             grid = grid))
     end
-    deployment = Deployment(build, bound.Δt_frame, bound.Δt_base, bound.h_max, algorithm,
-                            Int(firing_budget), Float64(localization_tol),
-                            Int(localization_budget), bound.schedule, bound.grid,
-                            bound.lattice, raised)
+    deployment = Deployment(build, bound.Δt_frame, bound.Δt_base, bound.h_max, bound.h_min,
+                            algorithm, Int(firing_budget), Float64(localization_tol),
+                            Int(localization_budget), Int(attempt_budget), bound.schedule,
+                            bound.grid, bound.lattice, raised)
     # The completed constructor carries the record, and logs each warning once at
     # return through the standard backend (Appendix C's `logged`), as `build` does.
     for warning in raised
@@ -610,17 +719,20 @@ end
 # functions of the rest. The three periods compare exact, so two that round
 # to one `Float64` are two deployments (D-454). The algorithm compares as a
 # value (D-442), and the bound resolved, so no `h_max` and one at or above the
-# frame deploy alike (D-449).
+# frame deploy alike (D-449). The floor and the attempt budget compare whatever
+# the method, as `localization_budget` does in a model with no localized event.
 Base.:(==)(a::Deployment, b::Deployment) =
     a.Δt_frame == b.Δt_frame && a.Δt_base == b.Δt_base && a.h_max == b.h_max &&
-    a.algorithm == b.algorithm && a.firing_budget == b.firing_budget &&
+    a.h_min == b.h_min && a.algorithm == b.algorithm && a.firing_budget == b.firing_budget &&
     a.localization_tol == b.localization_tol &&
-    a.localization_budget == b.localization_budget && a.schedule == b.schedule
+    a.localization_budget == b.localization_budget &&
+    a.attempt_budget == b.attempt_budget && a.schedule == b.schedule
 Base.hash(deployment::Deployment, seed::UInt) =
-    hash(deployment.schedule, hash(deployment.localization_budget,
-        hash(deployment.localization_tol, hash(deployment.firing_budget,
-            hash(deployment.algorithm, hash(deployment.h_max, hash(deployment.Δt_base,
-                hash(deployment.Δt_frame, seed))))))))
+    hash(deployment.schedule, hash(deployment.attempt_budget,
+        hash(deployment.localization_budget, hash(deployment.localization_tol,
+            hash(deployment.firing_budget, hash(deployment.algorithm,
+                hash(deployment.h_min, hash(deployment.h_max, hash(deployment.Δt_base,
+                    hash(deployment.Δt_frame, seed))))))))))
 
 # Design: §9.2, D-250. The constructor produces an artifact, so its warnings
 # live on it; the log line each one got at return is presentation, never the
