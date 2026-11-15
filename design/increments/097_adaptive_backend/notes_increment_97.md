@@ -167,8 +167,17 @@ probe of ruling 3 in a frozen copy of the prototype. The user then ruled:
    the step whose first-order change of the state is `0.8·reltol^(1/3)`
    of its scale. It needs no default rate, since a vanishing derivative
    leaves the step unbounded. The Model fixes an attempt's length before
-   the backend sees the derivative, so how the bound enters the seam is a
-   reading the reviser takes and reports.
+   the backend sees the derivative, so the bound can only act through a
+   rejection. The user ruled the shape: the first attempt runs whole, and
+   if the error test rejects it, the backend proposes the lesser of its
+   usual shrink and the bound. Rejected: an early rejection after the
+   first stage, before the other stages run. It saves three evaluations
+   once per run and keeps the far stages from being evaluated, but the
+   Model commits a rejected attempt at the floor, and an early return has
+   written no trial. Closing that needs the backend to read `h_min` or a
+   third verdict on the seam. The docstring keeps its advice to set
+   `h_max` under a coarse frame, since the first attempt's stages still
+   reach a frame ahead.
 10. **The reviser's four flags, adjudicated as the coordinator proposed.**
     - Two repins change a test's setup as well as its value, and the brief
       names them: a scheduled rejection moved from attempt 14 to 13, and
