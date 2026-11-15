@@ -130,6 +130,57 @@ numbers are the coordinator's items as put to the user.
   suit a paced run, whose work per frame is bounded only by
   `Δt_frame / h_min`. Nothing refuses or warns in code.
 
+## Ruled on 2026-11-15, after the probe and the revision
+
+A successor agent revised the worktree to the rulings above and reported
+the gate at 10 259 of 10 259 and the battery green. A second agent ran the
+probe of ruling 3 in a frozen copy of the prototype. The user then ruled:
+
+8. **BS3 stays.** The probe found that the three-stage pair spends fewer
+   evaluations than BS3 for the same achieved error on every model: 0.77
+   to 0.84 of BS3's on a Kepler orbit of eccentricity 0.8 and 0.9, 0.65 to
+   0.82 on van der Pol, 0.72 to 0.76 of the `rhs` blocks on the example
+   closed loop once steps go below the frame, and exactly 0.75 where the
+   frame caps the step. The user kept BS3 all the same, preferring the
+   standard tableau to uncharted territory for now. What the probe
+   established besides:
+   - For a three-stage third-order tableau the embedded second-order
+     estimate is unique up to a scale: `s·h·(k₁ − 3k₂ + 2k₃)` on BS3's
+     first three stages. The choice of weights only changes what a
+     tolerance means.
+   - The estimate never fell below the true local error at a sampled
+     step. Its spread is about twice BS3's, and on Kepler it needs 3% to
+     13% more steps for the same error.
+   - OrdinaryDiffEq's `Alshina3`, which the coordinator had offered as an
+     independent candidate, has the same tableau with the estimate
+     `h·(4/9)·k₂`, which is first order. It is not a candidate.
+
+   The three-stage pair remains a later option, as a second token and
+   stepper behind the same seam.
+9. **The first step is bounded from the first stage's derivative.** This
+   amends ruling 4. The probe hit the infinite proposal's weakness at a
+   modest frame: on Kepler at a 2 s frame and a tolerance of `1e-6`, the
+   first step spent its seven attempts shrinking from 2 s to about
+   `1e-4` s, then dropped to `h_min` with a `StepFloor` warning and
+   climbed back by 10 times per step. The bound is the rule of MATLAB's
+   `ode23` as the coordinator recalled it, to be checked against a source:
+   the step whose first-order change of the state is `0.8·reltol^(1/3)`
+   of its scale. It needs no default rate, since a vanishing derivative
+   leaves the step unbounded. The Model fixes an attempt's length before
+   the backend sees the derivative, so how the bound enters the seam is a
+   reading the reviser takes and reports.
+10. **The reviser's four flags, adjudicated as the coordinator proposed.**
+    - Two repins change a test's setup as well as its value, and the brief
+      names them: a scheduled rejection moved from attempt 14 to 13, and
+      `h_min = 1//32` in the loop of lifted proposals.
+    - §10.4's "one order below the discrete solution" is corrected. It is
+      false for BS3 and was already false for Heun.
+    - The half of `_shaped`'s refusal that checks the step advances the
+      clock is confirmed dead by a mutant, then removed.
+    - D-461 gains the reason for its departure from OrdinaryDiffEq: a
+      rejected step's own error is the direct measure, so the elementary
+      shrink is the right size, and a weaker one risks a second rejection.
+
 ## What the discussion settled besides
 
 - **Increment 97 stays in the work order.** The coordinator suggested
