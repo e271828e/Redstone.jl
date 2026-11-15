@@ -253,6 +253,10 @@ coordinator's own, for the user to ratify.
   session, and a handover between the review and the delta check costs a
   fresh reviewer.
 
+**Ratified by the user** on 2026-11-15, after the review: the four rulings
+above and the glossary entry for "floor". The scratch copy of `ode23.m` is
+deleted.
+
 ## The state at the code commit, and the handover
 
 At `4367fa5` on 2026-11-15, nothing pushed, six commits ahead of
