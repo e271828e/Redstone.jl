@@ -263,4 +263,68 @@ boundary zero, which is equivalent (ruling 6).
 
 ## The review's record
 
-To be filled after the review.
+The arc on top of `6d2ec22`: `117ceda`, `f2bd140` and `438a528` (the
+notes), `106cb8a` (docs), `a5cc557` (this brief and the patch), `4367fa5`
+(code), `5ebfe20` (the handover), `bc82476` (D-463) and `16c67dc` (the
+review's fixes). The session `inc-97-handoff` ran the review from the
+handover on, under the user's delegation and with the user's rulings on
+the findings. Nothing is pushed.
+
+**The review**, at `5ebfe20`, by an independent high-tier agent in a
+worktree of its own. The gate read 10 267 of 10 267 in 10m20 on Julia
+1.13.3, and the battery was green. Its probes found sound: replay from
+boundary zero, from a frame whose first step was bounded, after a first
+attempt rejected seven times and from a frame that filed `StepFloor`; the
+forced acceptance with a `t*` inside it and with a nonfinite trial; zero
+allocation in frames that file `StepFloor` and in frames a `t*` ends; the
+latch under the bare `integrate!`; the principle sweeps; the controller's
+literals and the starting bound against their sources; the checkpoint
+walk, `==` and `hash`; D-460 to D-462 against the rules. It ran 13 mutants
+of its own and listed eight findings.
+
+The user ruled on F1 and took the coordinator's recommendations on the
+rest. A fixer landed them as one commit, and the delta check's point was
+folded into it:
+
+- **F1, a step longer than `h_max`.** The floor's count
+  `min(⌈r / cap⌉, ⌊r / h_min⌋)` gave one step of `r` wherever
+  `h_max < r < 2·h_min`. With `h_min = h_max = 2 ms` a frame of 3 ms took one
+  step of 3 ms, and `show` printed two. D-463 refuses a floor above half the
+  resolved `h_max`, under every method, so a floor step stays under
+  `2·h_min ≤ h_max`. Rejected there: the bound's count winning over the
+  floor's. The door compares in `Int128`, since halving a `Rational{Int}`
+  overflows at `3//(2^62+1)`. Tests: `h_min = h_max` refused,
+  `h_min = h_max/2` admitted, the odd bound near `Int`'s limit both ways,
+  the message, and a testset of every step within `h_max` at the floor's
+  count, at the bound's and after a `t*`. The old door, the half in
+  `Rational{Int}`, a strict door and a cap that ignores `h_max` each go red.
+- **F2, BS3's error norm and rejection shrink were unpinned.** One attempt
+  on `ẋ = ±x` against the tableau's literals. OrdinaryDiffEq's rejection
+  exponent and a scale from either state alone go red. The fixture `Expo`
+  joins the `Dual` sweep, skipped since it takes an argument.
+- **F3, the least gap's `unit` arm.** One assertion of the reach with a
+  unit finer than `h_min`. `h_min` alone goes red.
+- **F4, a derivative that is not a number at the start.** It gives no
+  starting bound and ends in `NonfiniteState`. A bound of `NaN` goes red.
+- **F5, an infinite trial with a finite estimate.** Rejected, through the
+  fixture `Overflowing`. Removing the trial's check goes red.
+- **F6, three docstring wordings** in `deployment.jl`: the backend's
+  proposal for the retry is what the bound limits, `h_min` is the floor and
+  not the shortest step, and "at the floor" for "at `h_min`".
+- **F7, `_stalled` renamed `_refuse_nan_proposal`.**
+- **F8, no change.** The 4-ulp slack lets a step exceed `h_max` by a few
+  clock ulps over the count, within Part I's "to the clock's round-off".
+
+**Survivors accepted.** J, `fresh = false` after a settled `t*`, costs one
+sweep per `t*` with identical values (D-447). P, the accepted factor
+without its lower clamp, is equivalent, since on acceptance the factor is at
+least 0.264. Ruling 6's survivor was not rerun.
+
+**The delta check**, the reviewer resumed at the first fix commit. Every
+finding fixed, and the reviewer's mutants and three of the door all red.
+It found the regression testset's bound assertion unable to fail at a
+tolerance no step meets. A second run at the default tolerance, where the
+bound's count sets two steps of 1.5 ms a frame, gave it one. The fixer ran
+the gate after each round, 10 285 and then 10 289 of 10 289, with the
+battery, both docstring tools and the Documenter build clean. No test's
+setup changed and no trajectory of RK4 or Heun moved.

@@ -25,22 +25,17 @@ item changes what the spec says, the spec edit is part of the item.
   - **Landed:** the deployment surface, increment 90 (D-442, D-443); the
     three lattices, 91 (D-444 to D-447); the step bound, 92 (D-449,
     D-450); the seam protocol, 93 (D-452); exact time, 95 (D-454 to
-    D-457); and exact arithmetic on the time surface, 96 (D-458, D-459),
+    D-457); exact arithmetic on the time surface, 96 (D-458, D-459),
     the fallout of the audit
-    `design/reports/20261113_exact_arithmetic/report.md`. Each one's
-    record is its folder under `design/increments/`.
-  - **Next: the first adaptive backend**, the roadmap's increment 4, with
-    `h_min` and the attempt budget on the `Deployment`. Its rulings are the
-    roadmap's section "Ruled on 2026-11-12". They cover the two things the
-    seam protocol left open, which this increment builds: nothing bounds a
-    step's attempts or the steps of a span, and a proposed step can end a
-    sliver short of the span's end. It is increment 97. Stage
-    reached: the code commit `4367fa5`, after the docs commit `106cb8a`
-    (D-460 to D-462) and the brief. The cold review is next, run by a
-    successor session from the brief and
-    `design/increments/097_adaptive_backend/notes_increment_97.md`. The
-    user delegated the landing and the review on 2026-11-15, and nothing
-    is pushed.
+    `design/reports/20261113_exact_arithmetic/report.md`; and the first
+    adaptive backend, 97 (D-460 to D-463). Each one's record is its folder
+    under `design/increments/`. Increment 97 awaits the user's diff check
+    of its arc and its push.
+  - **Next: the teaching**, the roadmap's increment 5. A companion
+    walkthrough of one frame under adaptive stepping, the tutorial's
+    deployment chapter, the docstrings of the new types, and the
+    inventory's note that the OrdinaryDiffEq adapter stays a guarded
+    addition shaped by the seam. No code.
   - **Ruled from the three lattices** by the user on 2026-11-11, on the
     open points of
     `design/increments/091_three_lattices/notes_increment_91.md`. Every
