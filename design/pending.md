@@ -29,8 +29,7 @@ item changes what the spec says, the spec edit is part of the item.
     the fallout of the audit
     `design/reports/20261113_exact_arithmetic/report.md`; and the first
     adaptive backend, 97 (D-460 to D-463). Each one's record is its folder
-    under `design/increments/`. Increment 97 awaits the user's diff check
-    of its arc and its push.
+    under `design/increments/`.
   - **Next: the teaching**, the roadmap's increment 5. A companion
     walkthrough of one frame under adaptive stepping, the tutorial's
     deployment chapter, the docstrings of the new types, and the
