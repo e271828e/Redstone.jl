@@ -17,12 +17,6 @@ item changes what the spec says, the spec edit is part of the item.
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
   is the later stages after the release.
-- **The API docstrings' two later passes.** The sweep to the manual's
-  conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
-  convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
-  after the tutorial, and a signature-and-link pass after the audit's
-  renames, since a rename costs a signature line and the Documenter build
-  catches a stale link. Unexported names keep their docstrings as they are.
 - **The tutorial and the README.** The tutorial takes a newcomer from a
   component to a run and a plot, one chapter per layer of the example
   model. The README keeps its quick start, shows three of the layers
@@ -87,6 +81,12 @@ item changes what the spec says, the spec edit is part of the item.
       with a public Base name when the spec's verb is that word, reached by
       qualified name or explicit import; `peek` (§11.7, D-270) is the first
       instance, the panel kit's verb beside `Base.peek`.
+- **The API docstrings' two later passes.** The sweep to the manual's
+  conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
+  convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
+  after the tutorial, and a signature-and-link pass after the audit's
+  renames, since a rename costs a signature line and the Documenter build
+  catches a stale link. Unexported names keep their docstrings as they are.
 - **The first release.** Registration in General, the tag, and the
   announcement, in that order. Registration is quiet and the announcement
   is the public moment, so the announcement waits for everything above.
