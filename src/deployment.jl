@@ -485,7 +485,11 @@ struct Heun <: AbstractAlgorithm end
 # the token holds them and the deployment compares them as part of the value.
 # The controller's constants are the backend's, fixed in stepper.jl and never
 # keywords. Each tolerance is refused at the token, as `Period` refuses a
-# nonpositive period, so no deployment holds a token that cannot run.
+# nonpositive period, so no deployment holds a token that cannot run. If the
+# error test rejects the first attempt, the backend's proposal for the retry is
+# at most the step over which the initial derivative changes the state by
+# `0.8·reltol^(1/3)` of its scale, `max(|xᵢ|, abstol/reltol)`. A zero derivative
+# sets no such limit.
 """
     BS3(; reltol = 1e-3, abstol = 1e-6) -> BS3
 
@@ -500,13 +504,9 @@ is at most `abstol + reltol·max(|xₙ|, |xₙ₊₁|)`, over the values alone.
 
 The first [attempt](@ref g-attempt) after `init!` has no error to propose
 from, so it takes all that `h_max` and the
-[span](@ref g-mandatory-instant) allow. If the error test rejects it, the
-backend's proposal for the retry is at most the step over which the initial
-derivative changes the state by
-`0.8·reltol^(1/3)` of its scale, `max(|xᵢ|, abstol/reltol)`. A zero
-derivative sets no such limit. The first attempt still runs whole, so under
-a coarse [frame](@ref g-frame), set `h_max`. Without it that attempt's stages reach up to a
-frame ahead, where the model's own code may throw.
+[span](@ref g-mandatory-instant) allow. That attempt runs whole, so under a
+coarse [frame](@ref g-frame), set `h_max`. Without it that attempt's stages
+reach up to a frame ahead, where the model's own code may throw.
 
 The method does not suit a [paced](@ref g-pacing) run, whose work per frame
 it bounds only by `Δt_frame / h_min` steps.
