@@ -1,0 +1,65 @@
+# pair_97 probe notes (three-stage 3(2) pair vs BS3)
+Run: cd wt_pair; WT=$PWD JULIA_LOAD_PATH="@:@stdlib" julia -t 1 --startup-file=no --project=test ../pair_97/probes/<script>
+
+## Milestone 1 (k1_smoke.jl, Kepler e=0.8, frame 2, t_end 20, tol 1e-4)
+- A (wrapped package BS3) and A' (my reimplementation, kind :bs3) give identical runs:
+  acc 586, rej 28, stage sweeps 1871, rhs 2456, err_end 2.62e-3, err_max 1.12e-2. Controller copy verified.
+- Component counters: total sweeps 2457 = stage sweeps 1871 + accepted 586 (one boundary sweep per accepted step). Verified.
+- B_mid at 1e-4: acc 957, rej 27, rhs 2952, err_end 7.7e-4, err_max 3.2e-3.
+- C (Alshina3 as OrdinaryDiffEq ships it): acc 3,140,680 at 1e-4, err 5e-12. Its estimate h*(4/9)*k2 is O(h), not O(h^3).
+- Source: ~/.julia/packages/OrdinaryDiffEqLowOrderRK/Q09W3/src/low_order_rk_tableaus.jl:1861-1889 (tableau),
+  low_order_rk_perform_step.jl:2021-2048 and 2066-2093 (utilde = dt*(b2tilde*k2)), v2.2.4.
+  Alshina3's tableau = Ralston 3 = BS3's first three stages (c=(0,1/2,3/4), a21=1/2, a32=3/4, b=(2/9,1/3,4/9)).
+- Analysis: for a 3-stage order-3 tableau, the embedded order-2 estimate e=b-b̂ must satisfy sum e=0, sum e c=0,
+  a 1-D space: e ∝ (1,-3,2) here. Every B member is e = s*(1,-3,2): b̂=(0,1,0) is s=2/9; b̂=(1/3,0,2/3) s=-1/9;
+  b̂=(1/9,2/3,2/9) s=1/9; b̂=(-2/9,5/3,-4/9) s=4/9. The norm is absolute, so B(s) at tol equals B(2/9) at tol*(2/9)/|s|
+  (with abstol/reltol fixed). The family is one work-precision curve.
+
+## Milestone 2: orders (k2_order.jl) and M1 work-precision (k3_wp.jl, output k3_wp.out)
+- Fixed steps h=1/16..1/256 (frame = h, reltol 1e6 so all accept), Kepler t=4: A, B_mid, C bitwise identical
+  errors 3.95e-1 5.34e-2 6.54e-3 8.10e-4 1.01e-4, ratios 7.39 8.17 8.07 8.03 -> order 3 (same third-order solution).
+- One step from pericenter: true local error slopes 4.04 3.68 3.92 3.98 (order 4); estimate slopes:
+  A 3.08 2.62 2.91 2.98; B_mid 1.78 2.72 2.93 2.98; C 0.69 0.91 0.98 0.99 (C's estimate is first order).
+- M1 table in k3_wp.out. B family members trace one curve (ratios to A agree within ~1%).
+  Work ratio to A at equal achieved error (rhs; sweeps same to 3 digits):
+  err_end 1e-1/1e-3/1e-5: B_mid 0.820/0.827/0.811, B_1/9 0.825/0.819/0.810, B_4/9 -/0.828/0.809
+  err_max 1e-1/1e-3/1e-5: B_mid 0.826/0.807/0.805, B_1/9 0.836/0.802/0.805, B_4/9 0.827/0.802/0.804
+  Accepted steps at equal error: B needs 7-13% more than A (so 0.75 per-step saving becomes ~0.81).
+- C: 1e-2 -> 31,576 steps, 94,749 rhs, err 3.5e-8; 1e-3 -> 314,344 steps; 1e-4 -> 3.14M steps (k1_smoke). Not usable.
+- StepFloor (k4_floor.jl): one per run at tol <= 1e-6 for every candidate, at t=0, reason :budget, 7 attempts:
+  first proposal Inf -> h_max = 2 s, each rejection shrinks by <=0.2 (2 -> 1.28e-4 after 6), budget runs out,
+  the 8th attempt is h_min = 2^-40. Prototype behaviour, same for all candidates.
+
+## Milestone 3: estimate tracking on M1 (k5_track.jl, output k5_track.out)
+- Every accepted step with h >= 1e-6; true local error from RK4 with 2000 substeps (SVector), checked against 4000.
+  Ratio = scaled estimate norm / scaled true local-error norm (same weights as the controller).
+- A' 1e-4: med 29, q05 8.8, q95 102, min 4.9, never under; q95/q05 11.5. peri med 20, apo med 22.
+- B_mid 1e-4: med 201, q05 78, q95 2075, min 65; q95/q05 26.7. peri med 168, apo med 369.
+- A' 1e-6: med 142, q05 41, q95 1348; spread 33. peri 95, apo 89.
+- B_mid 1e-6: med 878, q05 347, q95 18212; spread 52. peri 890, apo 1608.
+- C 1e-2: ratios 1e7..1e13 (O(h) estimate). Reference check unreliable for C (local errors below ref precision).
+- Reading: neither underestimates at any sampled step. B's scale is arbitrary (s); its spread is 2x A's, and it
+  overestimates ~2x more at apocentre than at pericentre, where A is balanced -> B misplaces steps -> +8-13% steps.
+- M2 first try failed: snapshots are per boundary and log_max 65536 truncates; now records state per frame via step!.
+
+## Milestone 4: M2 (m2_closed_loop.jl -> m2.out) and M3 (m3_descent.jl -> m3.out), --project=examples/test
+- M2 reference RK4 h_max = frame/32, vs /16: 5.9e-13. Error = max over (V,γ,θ,q,h) |Δ|/max(1,|ref|), per frame top.
+  A' = A bitwise on M2. tol 1e-2: all 24000 steps frame-capped, A and B identical errors, B 25% fewer rhs, 20% fewer sweeps.
+  Interp (probes/interp.py m2.out err_max ...): rhs ratio B_mid 0.847/0.733/0.737, B_1/9 0.754/0.764/0.718 at 1e-6/1e-7/1e-8;
+  total sweeps 0.880/0.759/0.748 and 0.803/0.787/0.730; accepted steps ratio ~1.0 (0.96-1.13). err_end non-monotone, not used.
+  sweeps_tot for M2 = stage sweeps + accepted (inferred, rule verified on M1 by counter).
+- M3 reference RK4 frame/32, touchdown 17.670844829 (vs /16 differs 9e-9 s... see m3.out), frame-top err 5e-12.
+  Frame-capped (1768 steps) for A up to tol 1e-5, B_1/9 up to 1e-5, B_mid up to 1e-4: identical errors, rhs 0.750, sweeps 0.800
+  (counter: A 8849 = 5305 stage + 1768 boundary + 1768 arrival + 8; B 7082 = 3537 + 3536 + 9).
+  Interp err_max 9e-9/7e-9/5.5e-9: rhs B_mid 0.750/0.755/0.759, B_1/9 0.746/0.732/0.663; sweeps 0.800/0.805/0.810, 0.797/0.781/0.707.
+- No StepFloor on M2 or M3 (frame 5 ms / 10 ms, first proposal h_max = frame accepted or few rejections).
+- Correction: M3 touchdown time of the reference moves 9e-9 s between RK4 frame/16 and frame/32, larger than the
+  candidates' td_err (2e-9..4e-9): td_err is unresolved (localization, not integration). Use err_max for M3.
+
+## Milestone 5: M1 variants
+- Kepler e=0.9 (ECC=0.9 SKIPC=1 k3_wp.jl -> k3_wp_e0.9.out): rhs ratio at err_max 1e-1/1e-3/1e-5: B 0.82-0.83/0.777/0.774;
+  at err_end 0.83-0.87/0.79/0.78. Steps ratio 1.03-1.15.
+- Kepler e=0.5 (-> k3_wp_e0.5.out): erratic curves (A's err_max drops 36x from tol 1e-3 to 1e-4); ratios at err_max
+  1e-1/1e-3/1e-5: B_1/9 0.906/1.091/0.627; at err_end 0.905/0.956/0.404. Scatter, not a trend.
+- van der Pol mu=5 (k6_vdp.jl -> k6_vdp.out), frame 2, t_end 24, ref RK4 2^-13 (vs 2^-12: 2.3e-12), error at frame tops:
+  rhs ratio at err_max 1e-2/1e-4/1e-6: B_mid 0.821/0.720/0.654, B_1/9 0.844/0.735/0.650; steps ratio 1.08-1.11/0.96-0.98/0.87.

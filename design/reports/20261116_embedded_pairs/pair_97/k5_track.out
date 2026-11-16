@@ -1,0 +1,10 @@
+A'     tol 1e-04: n=586  ratio est/true: min 4.88  q05 8.82  q25 19.93  med 29.22  q75 47.72  q95 101.54  max 924.9  under(<1) 0.0%  q95/q05 11.5
+        pericentre r<0.5: n=206 med 19.99 [q05 6.04, q95 183.33]; apocentre r>1.5: n=87 med 22.32 [q05 13.08, q95 172.41]; ref check 1.0e-07
+B_mid  tol 1e-04: n=957  ratio est/true: min 65.32  q05 77.72  q25 136.18  med 201.30  q75 329.17  q95 2075.38  max 27872.8  under(<1) 0.0%  q95/q05 26.7
+        pericentre r<0.5: n=356 med 167.97 [q05 67.94, q95 2202.95]; apocentre r>1.5: n=167 med 368.96 [q05 134.79, q95 8141.87]; ref check 2.1e-06
+A'     tol 1e-06: n=2628  ratio est/true: min 18.59  q05 40.62  q25 88.36  med 141.64  q75 221.11  q95 1347.73  max 2617505.9  under(<1) 0.0%  q95/q05 33.2
+        pericentre r<0.5: n=988 med 95.32 [q05 24.43, q95 3542.48]; apocentre r>1.5: n=357 med 88.52 [q05 47.78, q95 2055.62]; ref check 2.7e-04
+B_mid  tol 1e-06: n=4327  ratio est/true: min 298.53  q05 346.92  q25 583.30  med 877.80  q75 1646.33  q95 18211.81  max 3579587.5  under(<1) 0.0%  q95/q05 52.5
+        pericentre r<0.5: n=1689 med 890.40 [q05 305.44, q95 29223.34]; apocentre r>1.5: n=702 med 1607.90 [q05 548.60, q95 77185.66]; ref check 1.1e-03
+C      tol 1e-02: n=30506  ratio est/true: min 28065509.00  q05 114384169.70  q25 6041706715.96  med 629726516203.55  q75 3146906744651.76  q95 11424538567464.80  max Inf  under(<1) 0.0%  q95/q05 99878.7
+        pericentre r<0.5: n=14578 med 986413599405.41 [q05 170522018.96, q95 10781106344604.72]; apocentre r>1.5: n=4917 med 1061834448256.30 [q05 130324614.85, q95 15397124393026.22]; ref check 5.1e+02

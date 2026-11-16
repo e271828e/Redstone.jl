@@ -193,6 +193,22 @@ breaking user code, and each may benefit from user feedback first.
   components' sweep and `x_deriv` bodies and says nothing about the discrete
   ones. The standing rule for new library components is
   `rules/brief_rules.md`'s, under its section on library components.
+- **A retry's first stage** (§10.2, D-447, D-461). After a rejection,
+  `integrate_step!` puts back the step's start and the clock, and the next
+  `attempt!` evaluates its first stage again with a full sweep. The state,
+  the clock and the inputs are the rejected attempt's, so `BS3Stepper`
+  recomputes the `k₁` it still holds. Keeping it would save one sweep and
+  one `x_deriv` block per rejected attempt. The saving is small where
+  rejections are rare: the probe of the three-stage pair counted 7 to 28 a
+  run, against 158 to 12821 accepted steps. To check before a ruling: the
+  seam does not tell a backend that an attempt is a retry (D-452); the
+  cursor's stage ordinal counts evaluations (§13.4), so a retry that skips
+  one numbers its stages differently; and D-461 refused strict reuse of the
+  last stage for its silent failure mode. This case is narrower, since
+  nothing writes the state or the table between a rejection and its retry.
+  Found beside `design/reports/20261116_embedded_pairs/report.md`, which
+  compares embedded pairs with `BS3` on paper and qualifies the roadmap's
+  later options.
 
 ## Deviations
 
