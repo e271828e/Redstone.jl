@@ -14,8 +14,9 @@ This document follows a single frame through the frame loop and names, at
 each step, the function that performs it. It exists because the spec states
 the loop's rules across four sections, and the implementation spreads their
 mechanics across five files. `sim.jl` owns the advance loop, the drain and
-publication. `frame.jl` owns the frame and its localization, `model.jl` the
-boundary entries and the event phase, `stepper.jl` the integration seam, and
+publication. `frame.jl` owns the frame and its localization. `model.jl` owns
+the boundary routine, the event phase and the seam's framework side, the
+attempt loop and the shaping rule. `stepper.jl` owns the backends, and
 `executor.jl` the compiled sweeps and the event registers. A reader with the
 code open beside this document can follow one frame and know which rule each
 line serves.
@@ -34,9 +35,10 @@ under the adaptive `BS3`, on an example of its own.
 
 **The frame top.** One iteration of `_advance!`, the frame loop in `sim.jl`,
 is one frame. `run!` and `step!` both enter that loop. It checks the stop word and the frame
-bounds, advances the run's frame index, and hands the frame to the model's
-`frame!` in `frame.jl`. The model drains, integrates, runs the boundary and
-publishes through two hooks:
+bounds and hands frame `run.frame + 1` to the model's `run_frame!` in
+`frame.jl`, the frame behind the public `frame!`. `run_frame!` drains and
+hands the rest to `_frame_steps!`, which integrates, runs the boundary and
+publishes. The model reaches the simulation through two hooks:
 
 ```julia
 # sim.jl, _advance!
@@ -62,8 +64,8 @@ abandon = settled!(hooks)             # publish!, then _stop_hit
 carries `ignore_mask`, the advance's stop policy compiled into a mask of
 ignored requesters ([§13.5][s13-5]). It also carries `pacer`, the run's pacer
 ([§10.7][s10-7]), which `step!` leaves `nothing`. The model reaches the simulation
-only through the two hooks. `frame_top!` runs `drain!`, and `settled!` runs
-`publish!` and then `_stop_hit`.
+only through the two hooks. `frame_top!` advances the run's frame index and
+runs `drain!`, and `settled!` runs `publish!` and then `_stop_hit`.
 
 Three things happen in order, all inside the frame's one `try` ([§13.4][s13-4]). The
 top hook applies the device writes. The integration carries the continuous
@@ -76,11 +78,12 @@ This selection is the whole of the frame/tick discrimination [§10.5][s10-5]
 describes: the gate reads a tick index, and a boundary with nothing due has
 none.
 
-**The drain.** `frame!` sets the cursor's phase to `:drain` and then calls the
-top hook. `drain!` in `sim.jl` counts the frame in the trace ([§11.5][s11-5]). It
-swaps each roster entry's staged batch into the root-input cells through the
-entry's compiled drain thunk. The loop has already advanced the run's frame
-index to `k`, so the trace files this frame's batches under `k`. The harness
+**The drain.** `run_frame!` sets the cursor's phase to `:drain` and then calls the
+top hook. The hook advances the run's frame index to `k`, inside the frame's
+`try`, and calls `drain!` in `sim.jl`, which counts the frame in the trace
+([§11.5][s11-5]). It swaps each roster entry's staged batch into the root-input cells
+through the entry's compiled drain thunk. The index already reads `k`, so
+the trace files this frame's batches under `k`. The harness
 cell drains last, and the diagnostic cells fold into the per-writer accounts
 at the same point ([§11.8][s11-8]). The model's own cell, `frame_diag`, folds into the
 loop's account there too. In `:replay`, `_replay_drain!` reads the recording
@@ -92,7 +95,7 @@ ignores and section 5's method reads.
 
 ## Section 2 — Integration and localization
 
-**`frame!`** computes the span's end from its index, never by accumulation,
+**`_frame_steps!`** computes the span's end from its index, never by accumulation,
 asks the backend for a proposal, takes the span's equal steps when there is
 none, and picks the path for each:
 
@@ -140,7 +143,7 @@ and returns `true`, an acceptance:
 ```julia
 copyto!(x₀, x)
 evaluate!(model); copyto!(k₁, ẋ)
-_stage_point!(x, x₀, k₁, h / 2); model.exec.clock.t = t + h / 2
+_stage_point!(x, x₀, k₁, h / 2); exec.clock.t = t + h / 2
 evaluate!(model); copyto!(k₂, ẋ)
 ...
 xtrial[i] = x₀[i] + (h / 6) * (k₁[i] + 2k₂[i] + 2k₃[i] + k₄[i])
@@ -284,14 +287,14 @@ raises the discontinuity notice as it settles.
 appends it to the log, and bumps the wait counter ([§12.3][s12-3], [D-230][d-230]). The `t*`
 snapshot is a published consistency point like any other, and `_stop_hit`
 scans the stop requests on it ([§13.5][s13-5]). If one holds, `settled!` returns `true`.
-`frame!` then returns at once, the remainder unrun and the clock at `t*`. If
+`_frame_steps!` then returns at once, the remainder unrun and the clock at `t*`. If
 none holds, the localization count increments and the loop turns again.
 
 **The remainder.** The next turn reads `t_seg = t*` off the clock and sets
 `h′ = t₈ − t*`, and `integrate_step!(model, h′, t_limit, k, fresh)` runs a full RK4 step from the
 post-handler state. A one-step method restarts from a new state at no cost,
 which is why the seam admits nothing else ([D-017][d-017]). The arrival sweep at `t₈`
-finds no new edge, `_localized_step!` returns `false`, and `frame!` stamps
+finds no new edge, `_localized_step!` returns `false`, and `_frame_steps!` stamps
 the clock at `t₈`. Had the remainder triggered again, the loop would localize
 once more, up to `localization_budget` per frame, counted across its steps.
 Past that budget, further crossings are left to the step's end boundary under a `ChatteringBudget`
@@ -304,6 +307,7 @@ step instead, and section 5 shapes the next step from it.
 **The tick boundary, `run_boundary!(model, 2)`** in `model.jl`:
 
 ```julia
+_phase!(model.exec.cursor, :project)
 _projects!(model.exec.events, model.exec.xbuf)
 fired = event_phase!(model, due)
 run_ticks!(model, due)       # bodies.ticks(tick) at an `Int`, nothing at `nothing`
@@ -343,11 +347,11 @@ full, the sweeps are the zero-argument ones, and no `ticks` body runs at all.
 The controller's cells still hold the values it published at `t = 0.04`, and
 its `s` is untouched until `t = 0.08`.
 
-**Publication.** `frame!` ends with `settled!(hooks)`. `publish!` builds the
+**Publication.** `_frame_steps!` ends with `settled!(hooks)`. `publish!` builds the
 snapshot from the clock, the run's frame index, the boundary ordinal and a
 capture of the store. It then releases the snapshot, logs it and wakes device
 waiters ([§11.2][s11-2]). `_stop_hit` scans the stop requests on that snapshot. If an
-honoured one holds, `frame!` returns `true`. The loop reads the requester
+honoured one holds, `run_frame!` returns `true`. The loop reads the requester
 again off the same snapshot and returns `ModelRequestedStop(requester)`
 ([§13.5][s13-5]). Otherwise the loop proceeds to the next frame top, and the cursor's
 trail restarts: `:drain`, `:integrate`, `:arrival`, `:validation`, `:trial`,
@@ -378,10 +382,11 @@ boundary zero has no integrate and no drain.
 ## Section 5 — The frame under an adaptive method
 
 An adaptive method chooses each step's length under error control
-([§10.2][s10-2]). Of sections 1 to 3, only two places change: the frame loop's
-inner loop, which shapes a proposal into a step, and the attempt loop, which
-now meets rejections. The drain, the localization machinery, the boundaries
-and publication are as above. This section follows one frame of a run and
+([§10.2][s10-2]). Of sections 1 to 3, three places change. The frame loop's
+inner loop shapes a proposal into a step. The attempt loop now meets
+rejections. The localization loop ends a step at its `t*` instead of
+running a remainder. The drain, validation and root-finding, the
+boundaries and publication are as above. This section follows one frame of a run and
 quotes the step lengths it took.
 
 **The example.** A first-order lag with `τ = 0.05 s` prefilters the root
@@ -425,7 +430,7 @@ t_next = span_end ? oftype(t, t_to) : t + h_step
 
 `_shaped` in `model.jl` clamps the proposal into `[h_min, h_max]` and
 divides the distance `r` to the span's end into equal steps no longer than
-it ([D-460][d-460]):
+it ([D-460][d-460]). It counts the steps in `_shaped_steps`:
 
 ```julia
 cap = max(min(proposal, Float64(deployment.h_max)), h_min)
@@ -439,7 +444,8 @@ From `0.6` the distance to the due instant is `0.05`, so `n = ⌈0.05 /
 equal division leaves no sliver. The rule runs again at every step's start,
 from the clock, so the division is never a plan carried across steps. An
 interior step's end is the clock plus the accepted length, on no lattice.
-`slack` is four ulps of the clock, so a proposal that divides the distance
+`slack` is four ulps of the larger of the clock and the span's end, so a
+proposal that divides the distance
 exactly takes its count and no step more.
 
 **A rejected attempt.** `attempt!(::BS3Stepper, model, h)` evaluates four
@@ -493,7 +499,7 @@ stepper.memory = max(scaled_error, BS3_MEMORY_FLOOR)
 The second step, from `0.608333`, scores 0.53 and proposes `0.00829`. From
 `0.616667` the distance `0.033333` fits four steps of `0.008333`, but the
 proposal is shorter, so `n = 5` and the step is `0.006667`. The step never
-exceeds the proposal, except by the slack. Each accepted step ends at a
+exceeds the proposal, except by the slack or at the floor. Each accepted step ends at a
 boundary, and each boundary publishes, at `0.608333`, `0.616667`,
 `0.623333` and `0.63`.
 
