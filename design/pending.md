@@ -49,12 +49,7 @@ item changes what the spec says, the spec edit is part of the item.
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
-  is the later stages after the release. Its next pin on the core takes
-  three changes made here, detailed on its bullet "The class value and the
-  module's name at the next pin": the descriptor's class value `"leaf"`
-  became `"primitive"` with no format bump, its six construction sites
-  move from `h =` to `Δt_frame =` (D-443), and the library is
-  `Redstone.Library` (D-453), so the fixtures regenerate.
+  is the later stages after the release.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
