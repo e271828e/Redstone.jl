@@ -1233,7 +1233,7 @@ function diagnostics_kind_set()
                                                    "ctl/out" => "plant/u"]))
         @test occursin("plant/power → sum/b, sum/e → ctl/e, ctl/out → plant/u", rendered)
         @test occursin("break it with a state", rendered) && occursin("UnitDelay", rendered) &&
-              occursin("discrete tier", rendered)
+              occursin("makes the signal discrete", rendered)
         # Artificial: the hop, then §5.4's two exits, each dead member named once.
         rendered = message(AlgebraicCycle(members = ["d", "g"],
                                           wires = ["d/y" => "g/e", "g/out" => "d/b"],
@@ -1256,7 +1256,7 @@ function diagnostics_kind_set()
                                           classification = :real,
                                           traced = ["p" => :structural,
                                                     "q" => :structural]))
-        @test occursin("structurally", rendered)
+        @test occursin("`p`, `q` assumed from their declarations", rendered)
         # The sampled fallback rides in both forms: as the mode phrase under a
         # real verdict, and as the caveat on a hop it found under an artificial
         # one, an untaken branch being its only miss (§13.8, D-012).
@@ -1265,7 +1265,8 @@ function diagnostics_kind_set()
                                           classification = :real, dead = [("m", :g, :F)],
                                           traced = ["m" => :sampled, "g1" => :global,
                                                     "g2" => :global]))
-        @test occursin("`m` at sampled states, the rest globally", rendered)
+        @test occursin("`m` checked at sampled states, the rest checked exactly from their code",
+                       rendered)
         rendered = message(AlgebraicCycle(members = ["m", "g2"],
                                           wires = ["m/F" => "g2/e", "g2/out" => "m/g"],
                                           classification = :artificial,

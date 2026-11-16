@@ -80,14 +80,14 @@ struct PI <: AbstractComponent
 end
 
 s_init(::PI) = 0.0                                   # one state `s`, declared bare
-u_types(::PI) = (ref = Float64, y = Float64)
+u_types(::PI) = (ref = Float64, meas = Float64)
 y_types(::PI) = Float64                              # one output `y`, declared bare
 
-y_direct(c::PI, (; s, u)) = c.k_p * (u.ref - u.y) + s
-s_update(c::PI, (; s, u, Δt)) = s + c.k_i * Δt * (u.ref - u.y)
+y_direct(c::PI, (; s, u)) = c.k_p * (u.ref - u.meas) + s
+s_update(c::PI, (; s, u, Δt)) = s + c.k_i * Δt * (u.ref - u.meas)
 
 loop(feedback) = Group((plant = Plant(2.0, 0.3), ctl = PI(3.0, 2.0));
-    local_wires = ("ctl/y" => "plant/u", "plant/$feedback" => "ctl/y"),
+    local_wires = ("ctl/y" => "plant/u", "plant/$feedback" => "ctl/meas"),
     input_wires = "ref" => "ctl/ref",
     output_wires = "plant/y" => "y",
     sample_times = (ctl = Absolute(Hz(50)),))
@@ -113,7 +113,7 @@ closes an algebraic loop, and the build refuses the tree:
 ```
 julia> build(loop("power"))
 ERROR: DiagnosticError: 1 diagnostics
-  AlgebraicCycle: algebraic loop among `plant`, `ctl`: plant/power → ctl/y, ctl/y → plant/u — real: a loop survives the trace (`ctl` structurally, the rest globally); break it with a state, a stage-1 (`y_state`) port, or a `UnitDelay`, which moves the signal onto the discrete tier and inserts a Δt_base-scale zero-order hold (§5.5)
+  AlgebraicCycle: algebraic loop among `plant`, `ctl`: plant/power → ctl/meas, ctl/y → plant/u — real: direct dependencies run all the way around it (`ctl` assumed from its declarations, the rest checked exactly from their code); break it with a state, a `y_state` port, or a `UnitDelay`, which makes the signal discrete, sampled every base tick and held in between (§5.5)
 ```
 
 ## Documentation

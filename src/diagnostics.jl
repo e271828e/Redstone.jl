@@ -982,11 +982,16 @@ _wirelist(wires) = join(("$p → $c" for (p, c) in wires), ", ")
 _hop((member, face, output_port)) = "`$member`'s `$output_port` does not route `$face`"
 
 function _modes(traced)
-    rest = ["`$member` " * (tracing === :sampled ? "at sampled states" : "structurally")
-            for (member, tracing) in traced if tracing !== :global]
-    isempty(rest) && return "traced globally"
-    join(rest, ", ") *
-        (any(tracing === :global for (_, tracing) in traced) ? ", the rest globally" : "")
+    members_in(mode) = ["`$member`" for (member, tracing) in traced if tracing === mode]
+    structural, sampled = members_in(:structural), members_in(:sampled)
+    phrases = String[]
+    isempty(structural) ||
+        push!(phrases, join(structural, ", ") * " assumed from " *
+                       (length(structural) == 1 ? "its" : "their") * " declarations")
+    isempty(sampled) || push!(phrases, join(sampled, ", ") * " checked at sampled states")
+    any(tracing === :global for (_, tracing) in traced) &&
+        push!(phrases, (isempty(phrases) ? "all" : "the rest") * " checked exactly from their code")
+    join(phrases, ", ")
 end
 
 # The ladder's two exits (§13.8, D-140), each dead member named once.
@@ -1000,15 +1005,14 @@ _cycle_hint(dead) =
               " consumed only in a fallback branch"
           end for member in unique(first.(dead))), "; ") * " (§5.4)"
 
-const _BREAK_CYCLE = "break it with a state, a stage-1 (`y_state`) port, or a `UnitDelay`, " *
-    "which moves the signal onto the discrete tier and inserts a Δt_base-scale " *
-    "zero-order hold (§5.5)"
+const _BREAK_CYCLE = "break it with a state, a `y_state` port, or a `UnitDelay`, " *
+    "which makes the signal discrete, sampled every base tick and held in between (§5.5)"
 
 function message(d::AlgebraicCycle)
     head = "algebraic loop among $(_namelist(d.members)): $(_wirelist(d.wires))"
     d.classification === nothing && return "$head — $_BREAK_CYCLE"
     if d.classification === :real
-        sentence = "$head — real: a loop survives the trace ($(_modes(d.traced)))"
+        sentence = "$head — real: direct dependencies run all the way around it ($(_modes(d.traced)))"
         for hop in d.dead
             sentence *= "; $(_hop(hop)), a wire the loop does not need"
         end

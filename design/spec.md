@@ -12000,7 +12000,7 @@ dependency graph) ([§5.5][s5-5], [D-005][d-005]), and tracing is diagnostic onl
 for correctness ([D-012][d-012]). Tracing improves error messages and verification. When
 the build finds a cycle, it triggers the [feedthrough tracer](#g-feedthrough-tracer) (the set-propagation
 instrument that tracks which inputs a value depends on) to classify that cycle.
-A genuine cycle gets "break it with a state, a stage-1 (`y_state`) port, or a
+A genuine cycle gets "break it with a state, a `y_state` port, or a
 `UnitDelay`", and an artificial one gets the remedy ladder ([§5.4][s5-4], [D-140][d-140]). Where
 the diagnostic recommends a unit delay, it states the delay's [tier](#g-tier) caveat rather
 than offering it as a free remedy ([§5.5][s5-5], [§13.7][s13-7], [D-348][d-348]). A tier is the continuous
