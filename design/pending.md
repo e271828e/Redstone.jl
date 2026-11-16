@@ -87,6 +87,12 @@ item changes what the spec says, the spec edit is part of the item.
   after the tutorial, and a signature-and-link pass after the audit's
   renames, since a rename costs a signature line and the Documenter build
   catches a stale link. Unexported names keep their docstrings as they are.
+- **The `§` references in diagnostic messages.** Every message ends by
+  citing a spec section, which a user without the spec cannot follow. The
+  pass drops each reference or replaces it with a pointer into the
+  documentation, kind by kind. Messages are presentation (D-058), and only
+  `test_diagnostics.jl`'s rendering testset pins their text. It follows the
+  audit, whose renames reach the messages too.
 - **The first release.** Registration in General, the tag, and the
   announcement, in that order. Registration is quiet and the announcement
   is the public moment, so the announcement waits for everything above.
