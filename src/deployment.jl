@@ -498,13 +498,14 @@ proposed by an error controller and shaped by the deployment's bounds
 `h_min` and `h_max`. A step passes when every state component's error estimate
 is at most `abstol + reltol·max(|xₙ|, |xₙ₊₁|)`, over the values alone.
 
-The first attempt after `init!` has no error to propose from, so it takes
-all that `h_max` and the span allow. If the error test rejects it, the
+The first [attempt](@ref g-attempt) after `init!` has no error to propose
+from, so it takes all that `h_max` and the
+[span](@ref g-mandatory-instant) allow. If the error test rejects it, the
 backend's proposal for the retry is at most the step over which the initial
 derivative changes the state by
 `0.8·reltol^(1/3)` of its scale, `max(|xᵢ|, abstol/reltol)`. A zero
 derivative sets no such limit. The first attempt still runs whole, so under
-a coarse frame, set `h_max`. Without it that attempt's stages reach up to a
+a coarse [frame](@ref g-frame), set `h_max`. Without it that attempt's stages reach up to a
 frame ahead, where the model's own code may throw.
 
 The method does not suit a [paced](@ref g-pacing) run, whose work per frame
@@ -595,7 +596,8 @@ the warnings its construction raised, read with [`warnings`](@ref).
 models.
 
 Two deployments compare equal when their frame period, base tick, step bound,
-step floor, algorithm, event parameters, attempt budget and schedule agree,
+step floor, algorithm, event parameters, [attempt](@ref g-attempt) budget
+and schedule agree,
 whatever their builds.
 [`replay!`](@ref) checks this before re-driving a recording. The time
 quantities are held and compared exact, as `Rational{Int}`, so two that round
