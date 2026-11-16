@@ -12,8 +12,8 @@ and control, but the formalism is domain-neutral.
 
 ## Features
 
-- Continuous dynamics on a fixed step, with events located by root-finding or
-  checked at step boundaries.
+- Continuous dynamics on fixed or adaptive steps, with events located by
+  root-finding or checked at step boundaries.
 - Multi-rate periodic discrete dynamics, held zero-order between ticks.
 - An execution order derived from declared feedthrough. Algebraic loops are
   build errors that name the cycle.
@@ -23,6 +23,8 @@ and control, but the formalism is domain-neutral.
 - Bit-identical replay from a recorded input trace.
 - Initialization, trim and linearization, with exact
   automatic-differentiation Jacobians.
+- Checkpoint and restore of a stopped simulation, checked against its
+  deployment.
 - Real-time pacing against the wall clock, with pause and resume.
 - A standard component library: integrators and limited integrators, lags,
   linear systems in `s` and `z`, relays, delays, noise, and PID and LQR tracking
@@ -30,7 +32,9 @@ and control, but the formalism is domain-neutral.
 - Structured diagnostics from a closed set of kinds, reported where the
   mistake was made.
 
-The browser inspector and cockpit are designed but not yet built.
+The browser inspector is in progress in a separate package,
+[RedstoneInspector.jl](https://github.com/e271828e/RedstoneInspector.jl).
+The live inspector and the cockpit come after the first release.
 
 ## Status
 
@@ -52,8 +56,8 @@ A continuous plant under a discrete PI controller running at 50 Hz:
 ```julia
 using Redstone
 import Redstone: AbstractComponent, x_init, s_init, u_types, y_types,
-    y_state, y_direct, x_deriv, s_update,
-    Absolute, Hz, Simulation, init!, run!, set, port, state, build
+    y_state, y_direct, x_deriv, s_update            # extended by components
+import Redstone: Absolute, Hz, Simulation, init!, run!, set, port, state, build
 import Redstone.Library: Group
 
 struct Plant <: AbstractComponent
@@ -88,7 +92,7 @@ loop(feedback) = Group((plant = Plant(2.0, 0.3), ctl = PI(3.0, 2.0));
     output_wires = "plant/y" => "y",
     sample_times = (ctl = Absolute(Hz(50)),))
 
-sim = Simulation(loop("y"); Δt_frame = 1//1000)
+sim = Simulation(loop("y"); Δt_frame = 1//1000)   # frames of 1 ms
 init!(sim, set(u = (ref = 1.0,)))
 run!(sim; t_end = 10.0)
 
@@ -96,9 +100,10 @@ port(sim, "plant", :y)    # 0.9654…
 state(sim, "plant")       # (q = 0.9654…, v = 0.0120…)
 ```
 
-The `import` list is part of authoring. A component extends the framework's
-functions rather than calling them, and Julia allows that only for names
-imported explicitly.
+A component adds methods to the framework's functions. Julia accepts a new
+method only for a name that is imported explicitly or written qualified, as
+in `Redstone.x_init`. The other names are imported only because the module
+exports nothing yet.
 
 Each component has two output stages. `y_state` sees only the state, and
 `y_direct` also sees the inputs. The build derives the execution order
@@ -113,12 +118,21 @@ ERROR: DiagnosticError: 1 diagnostics
 
 ## Documentation
 
-Redstone has no user manual yet. Its design is written down in full:
+Redstone has no user manual yet. The
+[documentation](https://e271828e.github.io/Redstone.jl/dev/) holds the API
+reference and a glossary. The design is written down in full:
 
-- `design/spec.md` is the normative specification.
-- `design/log.md` records every design decision and the
-  alternatives it rejected.
-- `design/companions/` holds worked explainers, among them
-  `library_inventory.md`, the standard library and its admission rule.
-- `design/pending.md` is the work order toward the first release.
+- [`design/spec.md`](https://github.com/e271828e/Redstone.jl/blob/master/design/spec.md)
+  is the normative specification.
+- [`design/log.md`](https://github.com/e271828e/Redstone.jl/blob/master/design/log.md)
+  records every design decision and the alternatives it rejected.
+- [`design/companions/`](https://github.com/e271828e/Redstone.jl/tree/master/design/companions)
+  holds worked explainers, among them `library_inventory.md`, the standard
+  library and its admission rule.
+- [`design/pending.md`](https://github.com/e271828e/Redstone.jl/blob/master/design/pending.md)
+  is the work order toward the first release.
+
+[`examples/`](https://github.com/e271828e/Redstone.jl/tree/master/examples)
+is a separate package with a larger worked model, a longitudinal aircraft
+under LQR and PID control.
 
