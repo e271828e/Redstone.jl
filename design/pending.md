@@ -12,38 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **Variable-step integration.** The frame and the integration step become
-  separate quantities. The step is the `Model`'s to decide: it never
-  crosses a frame top or a due instant and is never longer than the
-  deployment's optional `h_max`. A fixed-step method takes the span between
-  two such instants in equal steps, and an adaptive one under its error
-  controller's proposal (§2.1, §2.2, §10.2, §10.4, §10.5). The plan, the
-  settled rulings and the open decisions are
-  `design/increments/roadmap_variable_step.md`, in seven increments. The
-  update changes the deployment keywords, so it precedes the exported-name
-  audit and delays the release.
-  - **Landed:** the deployment surface, increment 90 (D-442, D-443); the
-    three lattices, 91 (D-444 to D-447); the step bound, 92 (D-449,
-    D-450); the seam protocol, 93 (D-452); exact time, 95 (D-454 to
-    D-457); exact arithmetic on the time surface, 96 (D-458, D-459),
-    the fallout of the audit
-    `design/reports/20261113_exact_arithmetic/report.md`; and the first
-    adaptive backend, 97 (D-460 to D-463). Each one's record is its folder
-    under `design/increments/`.
-  - **Next: the teaching**, the roadmap's increment 5. A companion
-    walkthrough of one frame under adaptive stepping, the docstrings of
-    the new types, and the inventory's note that the OrdinaryDiffEq
-    adapter stays a guarded addition shaped by the seam. No code.
-  - **Ruled from the three lattices** by the user on 2026-11-11, on the
-    open points of
-    `design/increments/091_three_lattices/notes_increment_91.md`. Every
-    ruling has landed: the unbounded run that ends on `frame!`'s refusal,
-    in D-450 and its Rejected list; the `settled!` hook's unenforced
-    contract, in an annotation of D-447; D-448's rename, in
-    `rules/log_rules.md` rule 2; a loop error outside the frame, in §13.4
-    and §13.5; and the rest with increments 92, 95 and 96. One ruling has
-    no other record: the reconstructed Rejected lists of D-445 to D-447
-    stand as written.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

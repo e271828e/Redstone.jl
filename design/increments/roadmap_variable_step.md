@@ -1,8 +1,8 @@
 # Roadmap: variable-step integration
 
 The live roadmap for the integration-step update, settled in discussion on
-2026-11-05 and 2026-11-06 and amended on 2026-11-11, 2026-11-12 and
-2026-11-15. It
+2026-11-05 and 2026-11-06, amended on 2026-11-11, 2026-11-12 and
+2026-11-15, and closed on 2026-11-16. It
 stages the work in seven increments, names the rulings the discussion
 settled, and lists the decisions each increment still needs. Its `pending.md` bullet carries the
 state of the work; this file carries the plan. Every number here is a
@@ -154,6 +154,9 @@ needs it.
   plane and the pacer are built upon. §2.1, §2.2, §10.2 and §10.4 are
   rewritten as sections; a log position that changes is superseded, not
   annotated.
+- **The reconstructed Rejected lists.** On 2026-11-11, ruling on increment
+  91's open points, the user left the reconstructed Rejected lists of D-445
+  to D-447 as written.
 
 ## Ruled on 2026-11-12
 
@@ -511,12 +514,14 @@ moves no RK4 or Heun trajectory (amended 2026-11-15).
    sequence matches the `Float64` run's; the one step after a discontinuity
    taken under integral control alone.
 
-5. **The teaching.** A companion walkthrough of one frame under adaptive
-   stepping, the docstrings of the new types, and the inventory's note that
-   the OrdinaryDiffEq adapter stays a guarded addition shaped by the seam.
-   No code. The tutorial's teaching of the deployment moved to the
-   tutorial's own item in `pending.md` on 2026-11-16, since no tutorial
-   exists to hold a chapter.
+5. **The teaching.** Landed on 2026-11-16, with no code. Section 5 of
+   `companions/frame_walkthrough.md` follows one frame under `BS3`, and
+   sections 1 to 4 were refreshed to the tree. The docstrings of the new
+   types landed with increment 4 and took four glossary links. The note on
+   the OrdinaryDiffEq adapter was dropped: §10.2 and D-017's annotation of
+   2026-11-15 already say it, and no inventory lists integration methods.
+   The tutorial's teaching of the deployment moved to the tutorial's item in
+   `pending.md`, since no tutorial exists to hold a chapter.
 
 Later, when wanted: Dormand–Prince 5(4) for the tight-tolerance offline
 study, carrying the `dense!` override with its fourth-order extension, the
