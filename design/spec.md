@@ -165,8 +165,9 @@ in plain Julia. The build checks the tree. A simulation runs a
 [`Model`](#g-model) (the tree compiled at one scalar type, ready to step)
 ([§9][s9]). The framework provides these capabilities.
 
-- Continuous dynamics with algebraic outputs, integrated on a fixed step, with
-  events either located by root-finding or checked at step boundaries
+- Continuous dynamics with algebraic outputs, integrated by a fixed-step or an
+  adaptive method, with events either located by root-finding or checked at
+  step boundaries
   ([§2][s2], [§10][s10]).
 - Multi-rate periodic discrete dynamics at declared sample times, held
   zero-order between ticks ([§3.2][s3-2], [§10.5][s10-5]).
@@ -322,9 +323,11 @@ Every frame top is a boundary, but not every boundary is a frame top. A step
 end inside a frame and a localized event time are boundaries inside a frame,
 never frame tops.
 
-A step end before the next mandatory instant lies on neither lattice. Its
-time is the mandatory instant before it plus its count times the step, never
-a sum of steps ([D-449][d-449]).
+A step end before the next mandatory instant lies on neither lattice. Under a
+fixed-step method its time is the mandatory instant before it plus its count
+times the step, never a sum of steps ([D-449][d-449]). Under an adaptive
+method it is the step's start plus the step's length ([D-455][d-455],
+[D-460][d-460]).
 
 ```
  frame 1       frame 2
@@ -364,9 +367,9 @@ Between boundaries the continuous state integrates, against values that come
 partly from outside the model. This section fixes how a step integrates, then
 when outside values enter and what else may influence a run.
 
-A fixed-step one-step method advances the continuous state across each step.
-The method is chosen at deployment ([§10.2][s10-2], [D-017][d-017],
-[D-442][d-442]). **A fixed-step method takes the span between two
+A one-step method advances the continuous state across each step. The method
+is chosen at deployment, either a fixed-step method or an adaptive one
+([§10.2][s10-2], [D-017][d-017], [D-442][d-442], [D-461][d-461]). **A fixed-step method takes the span between two
 consecutive [mandatory instants](#g-mandatory-instant) in the fewest equal
 steps no longer than the deployment's step bound `h_max`** ([D-449][d-449]).
 The mandatory instants are the frame tops and the [due](#g-due) instants, the
@@ -374,16 +377,28 @@ instants at which some discrete component is scheduled to run. A span of
 length `g` thus takes `n = ⌈g / h_max⌉` steps of `g / n`, and one step when
 the deployment sets no bound. The bound need divide neither period. The steps
 of a span are therefore equal unless a localized event splits one, and no
-step is longer than `h_max`, each to the clock's round-off. A step
-integrates by the distance between its two clocks, or by its length where
-the length is chosen first, so a localized event that finds no crossing in a
-step leaves that step as it would be without the event ([D-455][d-455]).
-Each step starts from the state the previous
+step is longer than `h_max`, each to the clock's round-off.
+
+An adaptive method asks for each step's length from its own error estimate
+([D-461][d-461]). The run takes the distance to the next mandatory instant in
+the fewest equal steps no longer than that length and `h_max`. The
+[floor](#g-floor) `h_min` wins over the length asked for. No step is shorter
+than the floor unless less than the floor remains to that instant
+([D-460][d-460]). A step the method rejects is tried again shorter, and a
+step at the floor is taken even when the method rejects it ([D-460][d-460]).
+
+A step integrates by the distance between its two clocks, or by its length
+where the length is chosen first, so a localized event that finds no
+crossing in a step leaves that step as it would be without the event
+([D-455][d-455]). Each step starts from the state the previous
 [boundary](#g-boundary) (a published consistency point) left. By then that
 state has passed through any event handler's reset and through
 [projection](#g-projection) (the per-component hook that returns state to its
-manifold). A one-step method carries no history from earlier steps, so a
-reset needs no special treatment ([D-017][d-017]). Inside a step, discrete
+manifold). A one-step method carries no solution history from earlier steps,
+so a reset needs no special treatment ([D-017][d-017]). An adaptive method's
+step control does keep a memory of past steps. The run tells it of every
+jump, whether a handler's reset, a tick or a drain's write, and the method
+decides what to keep ([§10.2][s10-2], [D-452][d-452]). Inside a step, discrete
 outputs hold the values of their last [tick](#g-tick) (an instant at which a
 discrete component runs, [§5.3][s5-3], [D-147][d-147]). Before its first
 tick, a discrete component's outputs hold the values computed at
@@ -512,13 +527,14 @@ with a fresh [firing budget](#g-firing-budget) (the per-boundary cap on how ofte
 each event fires). No discrete component ticks there, and no
 [root input](#g-root-input) (a source cell written from outside the model)
 changes ([§10.4][s10-4], [D-081][d-081], [D-147][d-147], [D-181][d-181],
-[D-290][d-290]). Integration then resumes from the settled state at `t*` and
-finishes the step to the same end. That integration is the
+[D-290][d-290]). Integration then resumes from the settled state at `t*`. A
+fixed-step method finishes the step to the same end. That integration is the
 [remainder step](#g-remainder-step) (the integration from `t*` to the end of
-the step it interrupted, [D-446][d-446]). When several localized events
-trigger in one step, the
-earliest crossing becomes the boundary, and the later crossings are located
-again on the remainder ([D-018][d-018]).
+the step it interrupted, [D-446][d-446]). An adaptive method ends the step at
+`t*` and chooses the next one from there ([D-460][d-460]). When several
+localized events trigger in one step, the earliest crossing becomes the
+boundary, and the later crossings are located again on the integration that
+follows it ([D-018][d-018]).
 
 A [frame](#g-frame) (one fixed period of the run, the unit of scheduling)
 allows a bounded number of localizations, counted across all its steps. That
@@ -591,9 +607,9 @@ the last ([§10.3][s10-3], [D-293][d-293]).
 A run that does not fail ends at a completed boundary, in one of three ways.
 A failure ends it otherwise ([§13.6][s13-6]).
 
-- An end time stops the run at the first grid boundary at or after it. The
-  last step is never shortened, so the final time can pass the end time by up
-  to one step ([§12.4][s12-4], [D-133][d-133]).
+- An end time stops the run at the first frame top at or after it. The last
+  frame is never shortened, so the final time can pass the end time by up to
+  one frame period ([§12.4][s12-4], [D-133][d-133]).
 - A [stop request](#g-stop-request) is an output port of a framework type
   whose value can request a stop ([§4.3][s4-3], [§13.5][s13-5]). It ends the
   run when its value requests a stop, unless the call advancing the run chose
@@ -1507,8 +1523,8 @@ Honoring the reset only in `s_update` is legal, and it means something else
 ([D-089][d-089], [D-342][d-342]). The state still lands correctly at the next tick. But the
 *output at the engagement tick* was already published from the stale state
 during the sweep. Under zero-order hold, which keeps a discrete component's
-outputs constant between its ticks ([§10.5][s10-5]), the plant integrates a full step
-under that stale command. That one-tick-late command is exactly the bump that
+outputs constant between its ticks ([§10.5][s10-5]), the plant integrates a full tick
+period under that stale command. That one-tick-late command is exactly the bump that
 bumpless transfer exists to remove. No diagnostic can catch the bump, because
 both spellings are meaningful designs. The update stage cannot rescue its own
 boundary, because republishing from `s⁺` is rejected ([D-067][d-067], [D-342][d-342]). The output
@@ -1590,7 +1606,7 @@ already standard practice in the domain.
 ([D-348][d-348]). The library's `UnitDelay` ([§13.7][s13-7]) changes the model's
 [tier](#g-tier) structure (its split into continuous and discrete sides). The broken signal
 becomes discrete, sampled on a period on the scale of [`Δt_base`](#g-dt_base) (the base tick
-period, an integer multiple of the continuous step). Implicit delays and per-step
+period, the step of the lattice all discrete rates share). Implicit delays and per-step
 numerical loop solving are both closed ([D-005][d-005], [D-343][d-343]).
 
 **Implicit *algebraic balances* inside a [component](#g-component) remain the
@@ -6176,7 +6192,9 @@ boundary, a frame top, a [due](#g-due) instant or a step end inside a span
 (the stretch between two such instants, [D-449][d-449]). A due instant is one
 at which a discrete component is scheduled to run ([§10.5][s10-5]). A step in
 which one event localizes runs through these steps. Its boundaries are tₙ,
-`t*` and tₙ₊₁.
+`t*` and tₙ₊₁ under a fixed-step method. Under a proposing method `t*` ends
+the step, so the chain below stops there, and the next step is shaped from
+`t*` ([§10.2][s10-2], [D-460][d-460]).
 
 > tₙ → integrate → arrival sweep at tₙ₊₁ → trigger → θ = 0 [trial evaluation](#g-trial-evaluation)
 > → bracket → root-find → t\* → remainder step → tₙ₊₁
@@ -6454,11 +6472,13 @@ zero-length remainder.
 **Every scheduled instant is computed from its index on its own lattice, never
 accumulated** ([D-082][d-082], [D-445][d-445]). A frame top is
 `tₖ = t₀ + k·Δt_frame`, from the frame index. A due instant off the frame tops
-is `t₀ + n·Δt_base`, from its base-tick index `n`. A step end inside a span
-lies on no lattice. It is the span's exact start plus `i` times the span's
-exact step, from its count `i` in the span, never the sum of the steps before
-it ([§10.5][s10-5], [D-449][d-449]). Each instant is exact, and its clock is
-the `Float64` nearest it ([D-456][d-456]). Tick gating is counter-modulo in the same
+is `t₀ + n·Δt_base`, from its base-tick index `n`. A fixed-step method's step
+end inside a span lies on no lattice. It is the span's exact start plus `i`
+times the span's exact step, from its count `i` in the span, never the sum of
+the steps before it ([§10.5][s10-5], [D-449][d-449]). Each instant is exact,
+and its clock is the `Float64` nearest it ([D-456][d-456]). A proposing
+method's step end is no such instant. Its clock is its start's clock plus the
+step's length ([§10.5][s10-5], [D-455][d-455]). Tick gating is counter-modulo in the same
 spirit ([§10.5][s10-5]). The clock is written once per boundary. An instant
 on both lattices takes the first formula above that applies to it, so a
 frame top is always `t₀ + k·Δt_frame`. The remainder step targets the
@@ -6473,7 +6493,7 @@ and this rule removes it.
 **At `t*` the full [§10.6][s10-6] event phase runs** ([D-081][d-081], [D-290][d-290]). The
 sweep → guards → handlers cycle iterates to quiescence. Firing-budget
 accounting is scoped to this boundary ([D-181][d-181]). The budget is fresh
-again at tₙ₊₁, and again at a second `t*` on the remainder.
+again at every later boundary, a second `t*` included.
 
 The settled state is then published. That means a snapshot, the
 boundary-counter increment of [§12.3][s12-3] and the
@@ -6530,9 +6550,9 @@ Chattering needs tens. A budget of 8 therefore bounds the pathology without
 ever binding on a healthy model.
 
 **Budget exhaustion degrades; it does not throw** ([D-018][d-018]). When a
-frame spends its budget, localization stops for the rest of that frame. The
-remainder step completes, and any further crossings fire in the next
-boundary's ordinary iteration, at boundary granularity for that frame. A
+frame spends its budget, localization stops for the rest of that frame. Any
+further crossing fires in the ordinary iteration of the boundary that ends
+the step it crosses in, at boundary granularity for that frame. A
 `ChatteringBudget` warning ([Appendix C][sC]) names the chattering event and
 the localization count.
 
@@ -6727,14 +6747,14 @@ end's clock minus the start's. Where the length is chosen first, as under a
 proposing backend, the step integrates by that length, and the end's clock is
 the start's plus it ([§10.2][s10-2], [D-452][d-452]). A model with localized
 events and one without integrate a step by one length, so a localized event
-that finds no crossing moves no trajectory. The steps of a span are equal,
-and a bound that divides the span steps by `h_max`, to the clock's
+that finds no crossing moves no trajectory. Under a fixed-step method the
+steps of a span are equal, and a bound that divides the span steps by `h_max`, to the clock's
 round-off. A step can exceed `h_max` by an ulp of the clock.
 
-The clock at a step's end is written once, from an index
-([D-445][d-445]). A frame top is `t₀ + k·Δt_frame`, a due instant off the
-frame tops is `t₀ + n·Δt_base`, and a step end inside a span is the span's
-exact start plus `i·(g / n)`, from its count `i` in the span, never
+The clock at a step's end is written once, from an index wherever the
+`Model` knows the instant exactly ([D-445][d-445]). A frame top is
+`t₀ + k·Δt_frame`, a due instant off the frame tops is `t₀ + n·Δt_base`, and
+a fixed-step method's step end inside a span is the span's exact start plus `i·(g / n)`, from its count `i` in the span, never
 accumulated ([§10.4][s10-4], [D-449][d-449]). **Every instant the `Model`
 knows exactly takes the `Float64` nearest it as its clock**
 ([D-456][d-456]). The origin is exact, so the rule holds from any origin
@@ -7705,8 +7725,8 @@ The derived/primary split ([D-038][d-038]) decides why decimation is admissible 
 not there. The log is recomputable from the trace by replay, so a thinned log
 costs resolution in a *view*, never in a record. Thinning the trace would
 destroy the only primary account of a session ([D-029][d-029]). Decimation is a retention
-policy only. Every boundary still runs, is still published to live readers, and
-still enters the trace ([D-038][d-038]).
+policy only. Every boundary still runs and is still published to live readers,
+and the trace still records every frame's inputs ([D-038][d-038]).
 
 Decimation slows the log's growth. It does not stop it. The default
 configuration is `log = true, log_every = 1` alongside `t_end = Inf`, `init!`'s
@@ -7734,8 +7754,11 @@ snapshot.
 
 **The default is finite unconditionally** ([D-137][d-137], [D-368][d-368]). It is not a modal rule
 keyed on `t_end`. A finite run shorter than the bound never notices the bound,
-and one number is easier to hold than two regimes. At 50 Hz and full density,
-2¹⁶ boundaries is about 22 minutes before anything is dropped at all.
+and one number is easier to hold than two regimes. At 50 Hz, one boundary per
+frame and full density, 2¹⁶ boundaries is about 22 minutes before anything is
+dropped at all. A frame that `h_max` or an adaptive method divides into
+several steps publishes a boundary at each step end, and fills the log that
+many times faster.
 
 **When the log fills, the retention stride doubles**, so coverage stays global
 ([D-137][d-137], [D-368][d-368]). A rolling window, with the recent past at full density and the
@@ -10251,7 +10274,7 @@ The stepper's carried state is what the backend's checkpoint pair reads,
 ([D-461][d-461]). The
 derivative buffer stays out, as every step rewrites it before reading it. It
 is legal at `:consistent` with the clock on a
-grid top. A frame cut by a throw, an interrupt included, leaves the status
+frame top. A frame cut by a throw, an interrupt included, leaves the status
 `:inconsistent`, so no state is read off it ([§13.4][s13-4], [D-441][d-441]).
 `checkpoint(sim)` wraps that state with the run's frame index and
 boundary ordinal ([D-319][d-319]). It is a stopped-sim service, legal in
@@ -10466,7 +10489,7 @@ It computes `k = ⌊(to_time − t₀)/Δt_frame⌋` against the header's `t₀`
 form. A time falling between two frame tops floors onto the earlier one.
 
 The rounding is the deliberate opposite of `t_end`'s, which ends a run at the
-first grid boundary reaching or exceeding it ([§12.4][s12-4]). `t_end` bounds
+first frame top reaching or exceeding it ([§12.4][s12-4]). `t_end` bounds
 a run, and `to_time` positions an inspection. The point of halting is to
 stand *before* the anomaly, so a halt that stepped past it would defeat the
 call ([D-219][d-219]).
@@ -14161,7 +14184,7 @@ For component authors:
   input. For same-tick output semantics the *output stage* consumes that
   input, overriding the state-derived path, and `s_update` stores the
   matching `s⁺`. A reset honored only in `s_update` reaches the outputs one
-  tick late, and the plant integrates a full step under the stale command.
+  tick late, and the plant integrates a full tick period under the stale command.
   Both spellings are legal, and they mean different things. The continuous
   tier has no such choice (the next item).
 - **Continuous-tier resets** ([§3.1][s3-1], [§10.6][s10-6], [§5.3][s5-3];
@@ -16446,8 +16469,8 @@ not a [condition](#g-condition) and has no algebra ([§11.5][s11-5], [§12.6][s1
 
 <a id="g-decimation"></a>**decimation** — the [log's](#g-log) keep-every-kth retention
 policy, `log_every`. It is admissible on the log alone because the log is
-derived data. Every [boundary](#g-boundary) still runs, publishes to live readers and enters
-the [trace](#g-trace). When the log fills its `log_max` bound, the stride doubles. That
+derived data. Every [boundary](#g-boundary) still runs and publishes to live readers, and
+the [trace](#g-trace) still records every frame's inputs. When the log fills its `log_max` bound, the stride doubles. That
 *progressive re-decimation* keeps coverage global. Decimation is a view policy,
 never trajectory-determining ([§11.2][s11-2]).
 

@@ -145,12 +145,12 @@ first release, but each is low priority, additive, and lands without
 breaking user code, and each may benefit from user feedback first.
 
 - **Publication's garbage** (§9.8, §10.7, §11.2, D-269). A new snapshot and
-  table copy per frame are by design: §11.2 leaves published snapshots to
+  table copy per boundary are by design: §11.2 leaves published snapshots to
   the GC, so a run never avoids it. The requirement that sets the target is
   a hardware-in-the-loop run: a paced run in which no collection pause may
   break a frame deadline, at the expense of logging. Publication cannot be
   switched off for it, since a device reads the model through the snapshot.
-  On a small model `publish!` allocates about 784 B per frame, plus 8 B per
+  On a small model `publish!` allocates about 784 B per boundary, plus 8 B per
   `Float64` cell and about 272 B per rostered device, and the status vector
   is two thirds of it (`design/reports/20261002_tuple_walks/report.md`,
   section 7). A proper analysis on a model of real size comes first, with
