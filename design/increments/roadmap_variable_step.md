@@ -512,9 +512,11 @@ moves no RK4 or Heun trajectory (amended 2026-11-15).
    taken under integral control alone.
 
 5. **The teaching.** A companion walkthrough of one frame under adaptive
-   stepping, the tutorial's deployment chapter, the docstrings of the new
-   types, and the inventory's note that the OrdinaryDiffEq adapter stays a
-   guarded addition shaped by the seam. No code.
+   stepping, the docstrings of the new types, and the inventory's note that
+   the OrdinaryDiffEq adapter stays a guarded addition shaped by the seam.
+   No code. The tutorial's teaching of the deployment moved to the
+   tutorial's own item in `pending.md` on 2026-11-16, since no tutorial
+   exists to hold a chapter.
 
 Later, when wanted: Dormand–Prince 5(4) for the tight-tolerance offline
 study, carrying the `dense!` override with its fourth-order extension, the

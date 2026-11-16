@@ -31,10 +31,9 @@ item changes what the spec says, the spec edit is part of the item.
     adaptive backend, 97 (D-460 to D-463). Each one's record is its folder
     under `design/increments/`.
   - **Next: the teaching**, the roadmap's increment 5. A companion
-    walkthrough of one frame under adaptive stepping, the tutorial's
-    deployment chapter, the docstrings of the new types, and the
-    inventory's note that the OrdinaryDiffEq adapter stays a guarded
-    addition shaped by the seam. No code.
+    walkthrough of one frame under adaptive stepping, the docstrings of
+    the new types, and the inventory's note that the OrdinaryDiffEq
+    adapter stays a guarded addition shaped by the seam. No code.
   - **Ruled from the three lattices** by the user on 2026-11-11, on the
     open points of
     `design/increments/091_three_lattices/notes_increment_91.md`. Every
@@ -62,7 +61,11 @@ item changes what the spec says, the spec edit is part of the item.
   condensed with the plot and the diagram, and links to the tutorial; the
   interactive part is the binding's few lines until the live inspector
   gives a recording. The closed loop's references are root inputs, so the
-  tutorial can also linearize from `h_ref` to the altitude. Writing the
+  tutorial can also linearize from `h_ref` to the altitude. The tutorial
+  also teaches the deployment: the frame, the base tick, `h_max`, and the
+  choice between a fixed-step and an adaptive algorithm. Whether that is a
+  chapter of its own or spread across the layers is the tutorial's to
+  decide. Writing the
   tutorial is what finds the API's friction, which is why it precedes the
   audit.
 - **The exported-name audit.** The export list is to be decided deliberately
