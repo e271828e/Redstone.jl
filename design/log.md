@@ -19760,6 +19760,20 @@ boundary's table ([D-447][d-447]), so an accepted step whose first stage is fres
 three sweeps and four derivative blocks. The fourth stage is paid in full,
 so BS3 costs what RK4 costs per attempt, at one order less.
 
+Annotation (2026-11-16): keeping the first stage across a retry was weighed
+and rejected. After a rejection the next attempt starts from the same state,
+clock and inputs, so it evaluates again the first stage the stepper still
+holds, at one sweep and one `x_deriv` block per rejected attempt. The probe
+of the three-stage pair counted 7 to 28 rejections a run, between 0.01% and
+1.8% of the run's sweeps (`design/reports/20261116_embedded_pairs/pair_97/`),
+a saving of the kind strict reuse is refused for. The backend cannot tell a
+retry by itself. The `Model` commits an attempt rejected at the floor
+([D-460][d-460]), so a flag the stepper set at that rejection would still stand at the
+next step, which would take a stale first stage without an error. Telling
+the backend needs an eighth call of the seam ([D-452][d-452]), or a comparison of the
+state and the clock at every attempt, and the cursor would number a retry's
+stages differently ([§13.4][s13-4]).
+
 **Rejected.**
 - *Dormand–Prince 5(4) first:* its order is what a piecewise-smooth
   right-hand side starves, and its interpolant reopens [D-018][d-018]. It waits for
