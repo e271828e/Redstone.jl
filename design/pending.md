@@ -25,14 +25,16 @@ item changes what the spec says, the spec edit is part of the item.
   concepts through whole code beside real output and leaves the syntax to
   the reference. The deployment is taught where each quantity first
   matters: the frame in chapter 1, the algorithm and `h_max` in chapter 3,
-  the base tick in chapter 4. The example changes once to fit the arc. The
-  README keeps its quick start, shows three of the chapters condensed with
-  the plot and the diagram, and links to the tutorial; the interactive part
-  is the binding's few lines until the live inspector gives a recording.
-  Writing the tutorial is what finds the API's friction, which is why it
-  precedes the audit. Stage reached: the arc is settled and the prototype
-  is next. The rulings, the probes and what is open are
-  `design/increments/20261117_tutorial/notes_tutorial.md`.
+  the base tick in chapter 4. The README keeps its quick start, shows three
+  of the chapters condensed with the plot and the diagram, and links to the
+  tutorial; the interactive part is the binding's few lines until the live
+  inspector gives a recording. Writing the tutorial is what finds the API's
+  friction, which is why it precedes the audit. The work is an arc of five
+  increments: the example's main path, the docs scaffold with chapters 1 to
+  3, chapters 4 to 8, the tracker, and the closing with the README. Stage
+  reached: the arc is settled and staged, and no increment has started. The
+  plan, the rulings and the open decisions are
+  `design/increments/roadmap_tutorial.md`.
 - **The exported-name audit.** The export list is to be decided deliberately
   rather than by accident, and until the audit runs the module exports
   nothing (D-226). The audit is a full-surface sweep under the four-class
