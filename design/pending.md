@@ -17,19 +17,22 @@ item changes what the spec says, the spec edit is part of the item.
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
   is the later stages after the release.
-- **The tutorial and the README.** The tutorial takes a newcomer from a
-  component to a run and a plot, one chapter per layer of the example
-  model. The README keeps its quick start, shows three of the layers
-  condensed with the plot and the diagram, and links to the tutorial; the
-  interactive part is the binding's few lines until the live inspector
-  gives a recording. The closed loop's references are root inputs, so the
-  tutorial can also linearize from `h_ref` to the altitude. The tutorial
-  also teaches the deployment: the frame, the base tick, `h_max`, and the
-  choice between a fixed-step and an adaptive algorithm. Whether that is a
-  chapter of its own or spread across the layers is the tutorial's to
-  decide. Writing the
-  tutorial is what finds the API's friction, which is why it precedes the
-  audit.
+- **The tutorial and the README.** The tutorial builds the longitudinal
+  aircraft from scratch in nine chapters, each ending at a named function
+  of the examples package: the plant, trim, linearization, a first loop,
+  the autopilot, the engage switch, replay and checkpoint, the approach and
+  touchdown, and the LQR tracker as an optional last chapter. It teaches
+  concepts through whole code beside real output and leaves the syntax to
+  the reference. The deployment is taught where each quantity first
+  matters: the frame in chapter 1, the algorithm and `h_max` in chapter 3,
+  the base tick in chapter 4. The example changes once to fit the arc. The
+  README keeps its quick start, shows three of the chapters condensed with
+  the plot and the diagram, and links to the tutorial; the interactive part
+  is the binding's few lines until the live inspector gives a recording.
+  Writing the tutorial is what finds the API's friction, which is why it
+  precedes the audit. Stage reached: the arc is settled and the prototype
+  is next. The rulings, the probes and what is open are
+  `design/increments/20261117_tutorial/notes_tutorial.md`.
 - **The exported-name audit.** The export list is to be decided deliberately
   rather than by accident, and until the audit runs the module exports
   nothing (D-226). The audit is a full-surface sweep under the four-class
