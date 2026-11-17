@@ -92,7 +92,10 @@ item changes what the spec says, the spec edit is part of the item.
   pass drops each reference or replaces it with a pointer into the
   documentation, kind by kind. Messages are presentation (D-058), and only
   `test_diagnostics.jl`'s rendering testset pins their text. It follows the
-  audit, whose renames reach the messages too.
+  audit, whose renames reach the messages too. The pass also rewords
+  `AlgebraicCycle`'s verdict: a real verdict that rests on a member traced
+  structurally reads "presumed real", since the tracer assumes every hop
+  through such a member (§13.8). The classification stays `:real`.
 - **The first release.** Registration in General, the tag, and the
   announcement, in that order. Registration is quiet and the announcement
   is the public moment, so the announcement waits for everything above.
