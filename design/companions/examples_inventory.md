@@ -104,9 +104,8 @@ package built on the framework.
   package stays flat until a second domain arrives.
 - **A plant that reads in one screen.** The example teaches the framework,
   not the domain. The example's file is longer than its plant, since it
-  also carries the trim problem, the tap set, the closed loop and the
-  descent the tutorial's layers walk through, each a plain function beside
-  the plant. The measurement model the compile-cost and garbage reports
+  also carries the trim problem, the tap set and the loops the tutorial's
+  chapters walk through, each a plain function beside the plant. The measurement model the compile-cost and garbage reports
   want may grow from an example by subsystems a newcomer should not have to
   read, and then it is a second file, not the tutorial's.
 
@@ -155,60 +154,87 @@ one line and the linearization is a double integrator, where the aircraft
 gives a real trim problem ([§14.7][s14-7]), modes a reader knows by name, and the
 home domain.
 
-**The file's surface.** Beside the plant, one more component and the plain
-functions the tutorial's layers call, each the subject of one chapter:
+**The file's surface.** Beside the plant, two more components and the plain
+functions the tutorial's chapters call:
 
 - `GroundContact(; h_ground = 0.0)`, the leaf whose localized guard fires
   at touchdown and whose `Bool` output feeds a `StopRequest`;
+- `Altimeter()`, the stateless discrete leaf that adds the sensor's noise
+  to the altitude and holds the sum at its rate;
 - `aircraft()`, the plant alone under the root inputs `δe` and `δt`;
 - `level_flight(; V, h)`, the trim problem of level flight, and
   `longitudinal_taps()`, the tap set of the five states, the two inputs
   and the outputs `h` and `V`;
+- `pitch_hold(; discrete)`, one PID on the pitch angle, on either tier,
+  under the root inputs `θ_ref` and `δt`;
+- the groups `sensing(; noise_psd)`, `cascade(; standby)`,
+  `actuators(solution)` and `selection(solution)`, and `feedback_wires()`,
+  the root wires the next three models share;
+- `autopilot(solution; noise_psd)`, the cascade with its actuators and its
+  sensing under the root inputs `h_ref` and `V_ref`, and
+  `cruise(solution)`, its initial condition, which holds the trim
+  references and seeds the three integrators whose trim value is not zero
+  through `set(s = …)` beside the plant's state;
+- `piloted(solution; noise_psd)`, the same loop with the engage switch and
+  the root inputs `δe_pilot`, `δt_pilot` and `engage`, and
+  `hand_flown(solution)`, its initial condition;
+- `approach(solution; noise_psd)`, `piloted` as the child `vehicle` with
+  the gear and the stop request;
 - `lqr_gains(linearization; qx, qξ, r)`, the tracker's three gains from a
   linearization, by `lqr_tracker.md`'s sections 2 and 3;
-- `closed_loop(solution, gains; noise_σ)`, layer 5's model, a `Group` of
-  five groups beside the plant under the root inputs `h_ref`, `V_ref` and
-  `mode`, and `trimmed(solution)`, its initial condition, which holds the
-  trim references with the cascade in command and seeds the three
-  integrators whose trim value is not zero through `set(s = …)` beside the
-  plant's state;
-- `descent()`, the aircraft with the gear and the stop request.
+- `closed_loop(solution, gains; noise_σ)`, the older model with two
+  controllers, a `Group` of five groups beside the plant under the root
+  inputs `h_ref`, `V_ref` and `mode`, and `trimmed(solution)`, its initial
+  condition, with the cascade in command.
 
-**The layers.** The tutorial peels the one model in order, each chapter
-adding a layer. The README shows layers 2, 4 and 5 condensed, with the
-plot and the diagram, after the quick start it already has, and links to
-the tutorial for the rest.
+**The chapters.** The tutorial builds the one model in order, and each
+chapter ends at a function of this file. The arc, with what each chapter
+teaches and shows, is `increments/roadmap_tutorial.md`.
 
-1. Author the plant: the declarations and the stages, nothing else.
-2. Build and run open loop from an off-trim state, log, plot the phugoid.
-   The README's first picture.
-3. Trim at level flight at a given airspeed: pitch angle, elevator
-   and throttle solved together.
-4. Linearize at the trim, print the eigenvalues, name the short period and
-   the phugoid, design gains from the matrices. The tracker's "gains
-   designed outside" workflow, demonstrated.
-5. Close the loop with library components in a group of groups: a rate limiter
-   and a first-order lag as each actuator, a discrete cascade at 50 Hz under
-   a faster plant step, pitch rate inside, pitch attitude outside, altitude
-   outermost, airspeed through throttle, white noise on the sensed altitude,
-   and a switch between the PID cascade and the LQR tracker for a bumpless
-   engage, with the references and the mode as root inputs the run stages.
-   The static inspector's diagram, one level at a time, and the README's
-   second picture.
-6. Fly a descent to touchdown: a localized gear-contact guard and a stop
-   request ([§13.5][s13-5]), the termination record and its reason.
-7. Replay from the recorded trace, bit-identical.
-8. Bind a device to the open-loop aircraft's elevator and run paced.
-   Tutorial only, and shown in the README as the binding's few lines until
-   the live inspector gives a recording.
+| Chapter | Ends at |
+|---|---|
+| 1. The aircraft | `aircraft()` |
+| 2. Trim | `level_flight()` |
+| 3. Linearize | `longitudinal_taps()` |
+| 4. A first loop | `pitch_hold()` |
+| 5. The autopilot | `autopilot(solution)` |
+| 6. Hands on and off | `piloted(solution)` |
+| 7. Approach and touchdown | `approach(solution)` |
+| 8. The flight, again | no new function: the trace and a checkpoint of chapter 7's flight |
+| 9. A second controller, optional | `lqr_gains` and `closed_loop`, until the roadmap's increment 4 rebuilds that model on the groups above |
 
-**The testset's pins.** The aircraft, the closed loop and the descent build
+The README shows three of the chapters condensed, with the plot and the
+diagram, after the quick start it already has, and links to the tutorial
+for the rest. Binding a device and running paced are left to the user
+guide.
+
+**The testset's pins.** Every model builds
 under the nominal and the linearization activations. The trim converges to
 the pitch angle, elevator and throttle `longitudinal_aircraft.md` gives,
 at a tolerance. The linearization's eigenvalues give the short-period and
 the phugoid pair at the pinned frequencies and dampings, and one eigenvalue
 at zero. The open-loop run from an off-trim airspeed crosses the trim
-airspeed at half the phugoid's period. The closed loop rests at the trim
+airspeed at half the phugoid's period.
+
+The pitch hold's closed loop has the pinned eigenvalues and a unit DC
+gain, the discrete one refuses the linearization, and the two tiers stay
+within a pinned gap through a step. The autopilot rests at the trim with
+no step and no noise, ticks its outer loops at 10 Hz and its pitch loops
+at 50 Hz, and holds a step in the altitude reference within a tolerance,
+with its peak below a bound. The altimeter's output changes only at its
+ticks, and its noise has the declared density, to 10%. The piloted loop
+without its delays is refused with one real cycle per switch. Its staged
+commands land on pinned snapshots, the standby cascade stays within pinned
+gaps of the pilot's commands, the latched engage acts at the pinned tick
+with the commands' jumps below pinned bounds, and the autopilot recaptures
+the reference. The approach repeats that flight to the bit, then descends
+to a stop with the touchdown's reason at the pinned time, with the
+altitude at zero to within the localization tolerance. The whole flight
+replays to the bit. A checkpoint at the top of the descent flies a second
+approach to its own pinned touchdown, and the first again to the bit. The
+approach's phase bodies allocate nothing.
+
+The two-controller loop keeps its pins. It rests at the trim
 under either controller with no step and no noise. It holds a step in the
 altitude reference within a tolerance under either controller, and also
 when the switch hands command to the tracker in steady flight or mid-climb
@@ -218,14 +244,11 @@ command stays within a pinned gap of what it tracks. The elevator's
 frame-to-frame jump at the switch in steady flight stays below the jitter
 the sensor noise induces, and the jump mid-climb and the command's jump at
 the hand-back stay below pinned bounds. The sensed altitude's noise has the
-declared standard deviation, to 10%. The descent ends with the touchdown's
-stop reason at the pinned time, with the altitude at zero to within the
-localization tolerance. The closed loop's phase bodies allocate nothing.
+declared standard deviation, to 10%. Its phase bodies allocate nothing.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-226]: ../log.md#d-226--reach-the-public-surface-by-qualified-name-until-the-export-audit
 [d-313]: ../log.md#d-313--admit-a-library-block-by-judgement-against-three-guidelines
-[s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s14-7]: ../spec.md#147-the-trim-problem-namedtuple-decisions-declared-reads-named-residuals
 [s8-1]: ../spec.md#81-position-a-declarative-trait-layer-in-plain-julia-no-macros

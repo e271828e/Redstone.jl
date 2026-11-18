@@ -209,13 +209,11 @@ only if a second tutorial is written.
 
 ## Open decisions
 
-Each names the increment that needs it ruled.
+Each names the increment that needs it ruled. Increment 1's three are
+ruled in its notes, `20261118_tutorial_example/notes_tutorial_example.md`:
+the names of the chapter-end functions as L1, the approach's reference,
+staged by the run, as L2, and `approach` in place of `descent()` as L3.
 
-- **The names of the chapter-end functions.** Increment 1.
-- **How the approach's reference descends**, staged between steps or
-  produced inside the model. Increment 1.
-- **Whether the approach replaces `descent()`** or sits beside it, which
-  follows R7's fallback. Increment 1.
 - **The plotting package.** Increment 2.
 - **Where the pages sit under `docs/src/`**, and the docs build's time
   budget in CI. Increment 2.

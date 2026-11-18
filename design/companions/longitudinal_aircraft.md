@@ -3,12 +3,13 @@
 *A companion record, not normative text. It gives the background of the
 first example, `Longitudinal` in `examples/`, whose place and guidelines are
 `examples_inventory.md`: the model and its parameters, the trim problem, the
-linearization and its modes, the closed loop the tutorial builds and the
-descent it flies. The framework mechanisms it leans on are `spec.md` [§14.7][s14-7]
+linearization and its modes, the loops the tutorial builds and the
+approach it flies. The framework mechanisms it leans on are `spec.md` [§14.7][s14-7]
 and [§14.8][s14-8] (trim), [§14.10][s14-10] (linearization), [§13.5][s13-5] (termination) and [§13.7][s13-7]
 (the library), and the controllers' design is `pid_anti_windup.md` and
 `lqr_tracker.md`. Written on 2026-10-18 from the prototype that fixed the
-example's numbers, which the testset pins.*
+example's numbers, which the testset pins. Sections 4 and 5 were revised on
+2026-11-18 for the loops of the tutorial's chapters 4 to 8.*
 
 ## 1. The model
 
@@ -112,10 +113,10 @@ The problem runs on `aircraft()`, the plant as the one child `plant` of a
 `Group` whose `input_wires` hand it the root inputs. A leaf may be the root
 on its own ([D-208][d-208]), with its `u_types` as the root inputs and the empty
 path as its address. The wrapper is there only for the path: in the closed
-loop and the descent the plant must sit under a group, at `"plant"`, and
+loops the plant must sit under a group, at `"plant"`, and
 with the open loop placing it there too, the trim condition, the taps and
 every reader in the tutorial and the testset keep one spelling across the
-layers.
+chapters. `approach` alone moves the plant, to `"vehicle/plant"`.
 
 ## 3. Linearization and the modes
 
@@ -160,35 +161,83 @@ rides 46 m above and back.
 
 ## 4. The closed loop
 
-The tutorial's fifth layer closes the loop with library components alone
-([§13.7][s13-7]), in a `Group` of five groups beside the plant, `sensing`,
-`pid_controller`, `lqr_controller`, `selection` and `actuators`, under the
-root inputs `h_ref`, `V_ref` and `mode`. Each group exports the signals
+The tutorial closes the loop in three steps, each a function of the
+example's file. `pitch_hold` is one PID on the pitch angle. `autopilot` is
+the cascade with its actuators and its sensing. `piloted` puts an engage
+switch between the cascade and the actuators. All three are built from
+library components ([§13.7][s13-7]) and one leaf of the example's own,
+`Altimeter`. From `autopilot` on the model is a `Group` of groups beside
+the plant. Each group exports the signals
 that cross its boundary as faces and keeps the rest inside, so the root level
 reads as the loop's block diagram and each group as one of its boxes.
-Everything discrete runs at 50 Hz under a plant step of 5 ms, each group
-declaring its own rates.
+The plant steps at 5 ms. The pitch loops and the actuators' limiters run
+at 50 Hz, and the altitude loop, the airspeed loop and the altimeter at
+10 Hz ([§10.5][s10-5]), each group declaring its own rates. The last part of this
+section is `closed_loop`, the older model with two controllers, which the
+tutorial's optional last chapter flies.
+
+**The pitch hold**, `pitch_hold`. One PID reads the pitch angle `θ` and
+commands the elevator, with `Kp = −2.0` and `Ki = −1.0`, under the root
+inputs `θ_ref` and `δt`. The gains are negative because a positive
+elevator pitches the nose down. The controller is the continuous `PID`, or
+with `discrete = true` the `DiscretePID` at 50 Hz, the same law on the
+discrete tier. At trim the error is zero, so the integral term alone
+carries the elevator and starts at the trim value `δe`. It is the state
+`x.q` of the `PID` and the store `s.q` of the `DiscretePID`.
+
+The continuous loop linearizes from `θ_ref` at the trim ([§14.10][s14-10]).
+The taps are the plant's `V`, `γ`, `θ` and `q` and the integral term. The
+altitude is left out, since its pure integrator would make `A` singular.
+The eigenvalues are
+
+    −2.047 ± 8.064i     −1.392     −0.642     −0.052
+
+and the DC gain from `θ_ref` to `θ` is 1. The fast pair is the short
+period, moved from `ωn = 5.43 rad/s` and `ζ = 0.566` to `ωn = 8.32 rad/s`
+and `ζ = 0.246`. The discrete loop refuses the same call. The discrete
+tier holds the integral term and the reference the controller reads, so
+each of the two taps comes back as a `TapResolution`. The loop is
+therefore designed in continuous time and deployed in discrete time.
+
+From the trim with the reference 0.05 rad above it, at 0.0699 rad, the
+pitch angle peaks at 0.0799 rad under the continuous controller and at
+0.0820 rad under the discrete one. The two responses stay within
+0.0021 rad of each other.
 
 **The actuators**, `actuators`. Each control passes through a discrete
 `RateLimiter` and a continuous `FirstOrderLag`: the elevator at 1 rad/s and
 50 ms, the throttle at 0.5 /s and 0.5 s. Their initial values are the trim's.
 The group takes `δe_cmd` and `δt_cmd` and publishes `δe` and `δt`.
 
-**The sensing**, `sensing`. The altitude both controllers read is the
-plant's plus Gaussian white noise of 0.3 m standard deviation per sample from a
-`GaussianWhiteNoise` at the controllers' rate, summed by the `altimeter`
-junction and published as `h_meas`, so the plots show a measurement rather
-than a state.
+**The sensing**, `sensing`. The altitude loop reads a measurement, the
+plant's altitude plus Gaussian white noise, so the plots show a sensor and
+not a state. The sensor is configured to the rate of the loop it feeds.
+`Altimeter`, a stateless discrete leaf at 10 Hz ([§3.2][s3-2]), adds the noise to
+the altitude and holds the sum between its ticks, and the group publishes
+it as `h_meas`. The `GaussianWhiteNoise` ticks at 10 Hz too and takes its
+strength as a two-sided density, `noise_psd = 1.8e-3 m² s`. That is
+0.134 m per sample at 10 Hz and the same density as 0.3 m per sample at
+50 Hz, so the sensor's band ends at the loop's Nyquist frequency. A 50 Hz
+sensor read by the 10 Hz loop is decimated with no anti-aliasing. The loop
+then holds one 0.3 m sample for five of the sensor's periods, and the late
+altitude error more than doubles. On the 50 m step described below, with
+the late errors read once the transient is over:
 
-**The PID cascade**, `pid_controller`. Four `DiscretePID`s, each with
-the hold and the tracking axis (`pid_anti_windup.md`, section 4):
+| Sensor and rates | Late altitude error (m) | Late airspeed error (m/s) | Peak (m) |
+|---|---|---|---|
+| 50 Hz sensor, loops at two rates | 0.1646 | 0.0392 | 1050.126 |
+| 50 Hz sensor, every loop at 50 Hz | 0.0640 | 0.0150 | 1050.064 |
+| 10 Hz altimeter, loops at two rates | 0.0775 | 0.0187 | 1050.061 |
 
-| Loop | Reads | Commands | `Kp`, `Ki` | Limits |
-|---|---|---|---|---|
-| pitch rate | `q` | elevator | −0.2, −0.4 | ±0.5 rad |
-| pitch attitude | `θ` | pitch rate | 2.0, 0.5 | ±0.5 rad/s |
-| altitude | `h` with sensor noise | pitch attitude | 0.01, 0.001 | ±0.26 rad |
-| airspeed | `V` | throttle | 0.2, 0.05 | 0 to 1 |
+**The cascade**, `cascade`. Four `DiscretePID`s, each with the hold
+axis (`pid_anti_windup.md`, section 4):
+
+| Loop | Rate | Reads | Commands | `Kp`, `Ki` | Limits |
+|---|---|---|---|---|---|
+| pitch rate | 50 Hz | `q` | elevator | −0.2, −0.4 | ±0.5 rad |
+| pitch attitude | 50 Hz | `θ` | pitch rate | 2.0, 0.5 | ±0.5 rad/s |
+| altitude | 10 Hz | `h` with sensor noise | pitch attitude | 0.01, 0.001 | ±0.26 rad |
+| airspeed | 10 Hz | `V` | throttle | 0.2, 0.05 | 0 to 1 |
 
 The signs follow `Cmδe < 0`: a positive elevator pitches down, so the
 innermost gains are negative. The inner loop's crossover sits near the
@@ -204,13 +253,26 @@ attitude loop's, so an outer integrator stops winding when the inner
 command is on its limit. The two innermost PIDs read a constant zero code
 and back-calculate against their own limits. The chain stays inside the
 group: what crosses its boundary is the references, the measurements, the
-mode, the delayed commands it tracks, and the two commands it publishes as
-`δe` and `δt`.
+flag `engaged`, and the two commands it publishes as `δe` and `δt`.
 
-**The initial condition.** `trimmed(solution)` writes the plant's trim
-pitch angle beside its level state, the root inputs at the trim references
-with the cascade in command, and seeds the stores of three of the four
-PIDs through `at` and `set(s = …)`. A `DiscretePID`'s store
+The chain works across the two rates. On the 50 m step the attitude loop
+never reaches its limits. With those limits cut to ±0.05 rad/s it stays
+limited for 1.14 s, against 0.38 s with every loop at 50 Hz and 2.54 s
+with no hold, and nothing winds or stalls.
+
+`cascade(standby = true)` adds the tracking axis, with the tracking
+reference of `pid_anti_windup.md` section 11, so that a cascade not in
+command follows the command in force. The two innermost controllers track
+the inputs `δe_track` and `δt_track`, which the group then also takes.
+Each outer controller tracks the measured variable of the loop inside it,
+pitch attitude for the altitude loop and pitch rate for the attitude loop.
+Every `Tt` is 0.02 s. `autopilot` builds the cascade without its standby
+and holds `engaged` true through a `Constant`.
+
+**The initial conditions.** `cruise(solution)` is `autopilot`'s. It writes
+the plant's trim pitch angle beside its level state and the root inputs at
+the trim references, 1000 m and 50 m/s, and seeds the stores of three of
+the four PIDs through `at` and `set(s = …)`. A `DiscretePID`'s store
 is `(q, yf, saturated)`, the integral term, the derivative filter's state
 and the clamp code, all zero by default. At trim every loop's error is
 zero: `h_ref = h`, the attitude reference is the altitude loop's output,
@@ -220,8 +282,7 @@ equals `q = 0`, and `V_ref = V`. With `b = 1` and `Kd = 0` the law
 if its integral term already holds the trim value of what it commands. The
 altitude loop's is seeded at `θ`, the pitch-rate loop's at `δe` and the
 airspeed loop's at `δt`; the attitude loop commands a pitch rate, zero at
-trim, and keeps its default. The tracker carries `x_trim`, `u_trim` and
-`z_trim` as parameters, so its integral state is zero at trim. Without the
+trim, and keeps its default. Without the
 seeds the rate loop would command zero elevator, the actuator would slew
 away from the trim and the integrators would wind until they found it
 again, a transient of many seconds. `yf` is set to its fixed point, the
@@ -229,8 +290,80 @@ measurement each PID reads, 1000 for the altitude loop, 0 for the rate
 loop and 50 for the airspeed loop; with `Kd = 0` it never reaches the
 output, and the seed only spares the filter the start-up jump that
 `pid_anti_windup.md` section 9 lists. A store overlay merges onto `s_init`
-([§14.3][s14-3]), so naming `q` alone would do; the example writes the full stores.
-The closed loop then starts at rest at the trim.
+([§14.3][s14-3]), so `cruise` names `q` and `yf` and leaves `saturated` at
+its default. The loop then starts at rest at the trim: with the noise off
+the altitude drifts by less than 3e-10 m over 60 s. `hand_flown(solution)`
+is `piloted`'s, `cruise`'s with the pilot's commands at the trim and
+`engage` false.
+
+**The engage switch**, `selection`. A `Switch` per control selects the
+cascade's command while the autopilot is engaged and the pilot's
+otherwise. The pilot's commands `δe_pilot` and `δt_pilot` and the flag
+`engage` are root inputs of `piloted`. The selected commands leave the
+group twice, as they are for the actuators and one tick old through a
+`UnitDelay` at 50 Hz as `δe_prev` and `δt_prev`, which the cascade's
+`δe_track` and `δt_track` read. The cascade runs all the time. While the
+pilot flies it tracks the pilot's commands, so at the engage every
+integrator holds nearly the value that reproduces the current command.
+Without the delays the tracking wires close an algebraic loop through each
+switch, and the build refuses the model with two `AlgebraicCycle`
+diagnostics, both real ([§13.8][s13-8]): the pitch-rate loop with the elevator's
+switch, and the airspeed loop with the throttle's.
+
+The flag is latched. One staged `engage` would otherwise reach the
+continuous switches at the next frame, the pitch loops at their next
+50 Hz tick and the outer loops at their next 10 Hz tick. Staged at 30 s,
+those are 30.005, 30.02 and 30.1 s. So `selection` holds `engage` in a
+`UnitDelay` at 10 Hz, the cascade's slowest rate. The switches read the
+latch, and it leaves the group as the face `engaged` for the cascade, so
+the switches and all four controllers act at the same tick. The cost is a
+delay of up to two ticks of the slowest rate: an `engage` staged at 30 s
+acts at 30.2 s.
+
+**What the loops do.** The references, the pilot's commands and the flag
+are root inputs, so the scenario belongs to the run, not to the model. The
+testset stages each write while the simulation is stopped at the write's
+nominal time. A staged batch applies at the top of the next frame, and a
+discrete component reads it at its next tick.
+
+Under `autopilot`, a 50 m step in the altitude reference, written in the
+initial condition, is within 1 m by 24.4 s and peaks at 1050.06 m. The
+airspeed strays from 50 m/s by up to 3.90 m/s, at 3.73 s. After 75 s the
+altitude stays within 0.078 m of the reference and the airspeed within
+0.019 m/s.
+
+Under `piloted` the pilot holds the trim, pulls the elevator 0.02 rad
+over `[5, 7)` s and engages the autopilot at 30 s. By hand the altitude
+runs between 988.0 and 1016.7 m. Meanwhile the standby cascade stays
+within 0.0043 rad of the pilot's elevator over `[8, 30)` s, and within
+0.0156 of the throttle over `[5, 30)` s, whose loop ticks at 10 Hz. At
+30.2 s, when the latch engages the cascade, the selected elevator command
+jumps by 0.0011 rad and the throttle command by 0.0086, under the 0.01
+its rate limiter passes per tick. Behind its actuator the elevator jumps
+by 1.0e-4 rad. For scale, the elevator command's largest frame-to-frame
+change in steady engaged flight is 0.0017 rad. The autopilot then
+recaptures 1000 m and holds it within 0.057 m over `[80, 90)` s.
+
+The testset pins the eigenvalues, the DC gain, the refusal and the step of
+the pitch hold. Under `autopilot` it pins the rest at the trim, the two
+rates, the hold after 75 s, the peak and the sensor's noise. Under
+`piloted` it pins the refused loop, the staged writes, the standby gaps,
+the latched engage, the jumps and the recapture.
+
+**The two-controller loop**, `closed_loop`. The tutorial's optional last
+chapter flies the cascade beside an LQR tracker, with a switch between the
+two. This model predates the functions above and wires its own groups,
+`sensing`, `pid_controller`, `lqr_controller`, `selection` and `actuators`
+beside the plant, under the root inputs `h_ref`, `V_ref` and `mode`.
+Everything discrete in it runs at 50 Hz. Its `pid_controller` is the
+cascade above with its standby, and what crosses that group's boundary is
+the references, the measurements, the mode, the delayed commands it
+tracks, and its two commands. Its `sensing` is a 50 Hz sensor, noise of
+0.3 m per sample summed by the `altimeter` junction. `trimmed(solution)`
+is its initial condition: `cruise`'s seeds with the full stores written,
+and the cascade in command. The tracker carries `x_trim`, `u_trim` and
+`z_trim` as parameters, so its integral state is zero at trim. The rest of
+this section is about this model.
 
 Every tracking time constant `Tt` is one period, 0.02 s, the tracker's
 included. A controller not in command follows the selected command with a lag
@@ -264,7 +397,7 @@ needs `A⁻¹`, which the zero altitude eigenvalue denies. The trim triple is
 the linearization's operating point. The tracker's own limits are the
 actuators' ranges, and its hold input reads a zero code.
 
-**The selection and the bumpless engage**, `selection`. A `Switch` per
+**Its selection and the bumpless switch.** A `Switch` per
 control selects the cascade's command while the root input `mode` holds, and
 the tracker's otherwise. Both controllers run all the time, and the one not
 in command tracks the one that is (`pid_anti_windup.md`, section 11): `mode`
@@ -295,7 +428,7 @@ standby having sat 0.15 rad behind a command slewing at up to about
 4 rad/s, and the actuator's rate limit would take about a tenth of a
 second to catch up.
 
-**What the loop does.** The references and the mode are root inputs, so the
+**What this loop does.** The references and the mode are root inputs, so the
 scenario belongs to the run, not to the model: the testset's helper steps the
 simulation to one frame before 5 s, stages `h_ref` at 1050 m, steps on to one
 frame before the switch time if there is one, stages `mode`, and runs to
@@ -311,14 +444,22 @@ about 1 m/s under the tracker, and after `t = 80 s` it stays within
 equilibrium at trim, the standby's tracking during the climb, the jumps at
 the two switches and at the hand-back, and the sensor noise.
 
-## 5. The descent and the touchdown
+## 5. The approach and the touchdown
 
-The sixth layer flies the open-loop aircraft from 30 m at the trim
-elevator and a reduced throttle, `δt = 0.25`. The thrust deficit of about
-300 N settles into a shallow glide, `sin γ ≈ −ΔT / (m g) ≈ −0.03`, and the
-aircraft reaches the ground after 17.7 s.
+`approach` nests `piloted` whole as the child `vehicle` and adds the
+ground and a stop request, under the same five root inputs. Its flight
+begins as section 4's, by hand and then engaged, and is the same to the
+bit over the first 60 s. From there the run lowers the altitude reference
+by 0.15 m every 0.1 s, one write per tick of the altitude loop. That is a
+sink rate of 1.5 m/s at 50 m/s, a glide angle of
+`sin γ = −1.5 / 50 = −0.03`. The reference is a root input, so the run
+stages the descent and the model carries no ramp. The cascade follows the
+descending reference within 0.25 m from 160 s to the last second. No loop
+saturates, and the airspeed stays between 49.978 and 50.022 m/s. There is
+no flare: the aircraft meets the ground at `γ = −0.0303`, after 726.6 s.
 
-The ground is a `GroundContact` leaf wired from the plant's altitude. Its
+The ground is a `GroundContact` leaf wired from the vehicle's altitude,
+which `piloted` exports as the face `h`. Its
 one event is a localized state event ([§2.3][s2-3], [§10.4][s10-4]): the guard returns the
 sign-form value `h_ground − h`, which the framework root-finds, so the step
 in which the crossing falls ends at the crossing itself, and the handler
@@ -330,13 +471,27 @@ within the localization tolerance rather than one step below it, which is
 the difference between this and a `Junction` computing `h ≤ 0`, whose
 request would be sampled at the next frame top.
 
+The same flight is the subject of the replay and of the checkpoint.
+Replayed from its trace on a fresh simulation ([§12.7][s12-7]), the whole flight
+comes back to the bit and stops at the same instant. A checkpoint taken at
+60 s, the top of the descent, restores into a fresh simulation ([§12.6][s12-6]).
+Flown from there at 2 m/s it touches down at 560.0 s, and flown at 1.5 m/s
+again it gives the first touchdown to the bit. A checkpoint is checked
+against its deployment, so one taken on `piloted` alone is refused here as
+`CheckpointMismatch`. That is why the checkpoint is taken on this model.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-208]: ../log.md#d-208--root-inputs-are-the-root-components-input-faces-whatever-its-class
 [s10-4]: ../spec.md#104-localization-mechanics
+[s10-5]: ../spec.md#105-multi-rate-tick-scheduling
+[s12-6]: ../spec.md#126-run-lifecycle-and-partial-advance
+[s12-7]: ../spec.md#127-replay-the-trace-re-drives-the-ordinary-loop
 [s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
+[s13-8]: ../spec.md#138-cycle-diagnosis-feedthrough-tracing
 [s14-10]: ../spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
 [s14-3]: ../spec.md#143-resolution-flatten-validate-compile-once
 [s14-7]: ../spec.md#147-the-trim-problem-namedtuple-decisions-declared-reads-named-residuals
 [s14-8]: ../spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s2-3]: ../spec.md#23-events-two-detection-policies
+[s3-2]: ../spec.md#32-periodic-discrete-component
