@@ -32,8 +32,8 @@ item changes what the spec says, the spec edit is part of the item.
   friction, which is why it precedes the API audit. The work is an arc of five
   increments: the example's main path, the docs scaffold with chapters 1 to
   3, chapters 4 to 8, the tracker, and the closing with the README. Stage
-  reached: increment 1's brief and docs commit have landed, and the
-  prototype's patch is next, then the cold review; its state, rulings, pins
+  reached: increment 1's brief, docs commit and code have landed, and the
+  cold review is next, then its fix; its state, rulings, pins
   and friction list are
   `design/increments/20261118_tutorial_example/notes_tutorial_example.md`,
   with the brief and the prototype's patch beside it. The plan, the arc's

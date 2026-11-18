@@ -1,7 +1,7 @@
 # The longitudinal aircraft: a three-degree-of-freedom point mass with pitch,
-# its trim problem, its tap set, its gain design, the closed loop and the
-# descent the tutorial's layers walk through. The physics and the control design
-# are `design/companions/longitudinal_aircraft.md`.
+# its trim problem, its tap set, the loops of the tutorial's chapters 4 to 7,
+# and the gain design and the closed loop of its optional last chapter. The
+# physics and the control design are `design/companions/longitudinal_aircraft.md`.
 
 """The gravitational acceleration, in m/s², constant over a flat earth."""
 const g = 9.81
@@ -101,9 +101,9 @@ state_events(::GroundContact) = (touchdown = StateEvent(contact_guard, contact_h
 
 The plant alone, `Longitudinal()` as the child `plant`, under the root inputs
 `δe` and `δt`. A leaf may be the root on its own (D-208); the `Group` is there
-only to give the plant the path `"plant"` it has in `closed_loop` and
-`descent`, so the trim problem, the taps and every reader address it the same
-way in every layer.
+only to give the plant the path `"plant"` it has in `pitch_hold`, `autopilot`,
+`piloted` and `closed_loop`, so the trim problem, the taps and every reader
+address it the same way in each.
 """
 aircraft() = Group((; plant = Longitudinal()); input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
 
@@ -139,6 +139,237 @@ longitudinal_taps() = taps(
          q = get_state("plant", :q), h = get_state("plant", :h)),
     u = (δe = get_input(:δe), δt = get_input(:δt)),
     y = (h = get_output("plant", :h), V = get_output("plant", :V)))
+
+"""
+    pitch_hold(; discrete = false)
+
+Chapter 4's loop: the aircraft with one PID on its pitch angle commanding the
+elevator, under the root inputs `θ_ref` and `δt`. The controller `θ_ctl` reads
+`θ_ref` as its reference and the plant's `θ` as its measurement, with
+`Kp = -2.0` and `Ki = -1.0`, negative since a positive elevator pitches down.
+It is the continuous `PID`, or with `discrete = true` the `DiscretePID` at
+50 Hz, the same law on the discrete tier. The integral term carries the
+elevator, so at trim it holds the trim elevator: the state `x.q` of the `PID`,
+the store `s.q` of the `DiscretePID`. `longitudinal_aircraft.md`, section 4.
+"""
+function pitch_hold(; discrete = false)
+    gains = (Kp = -2.0, Ki = -1.0)
+    Group((; plant = Longitudinal(), θ_ctl = discrete ? DiscretePID(; gains...) : PID(; gains...));
+          input_wires = ("θ_ref" => "θ_ctl/r", "δt" => "plant/δt"),
+          local_wires = ("plant/θ" => "θ_ctl/y", "θ_ctl/u" => "plant/δe"),
+          sample_times = discrete ? (θ_ctl = Absolute(Hz(50)),) : (;))
+end
+
+"""
+    Altimeter()
+
+The altimeter's measurement: the altitude `h` plus the sensor's error `noise`,
+published as the bare output `y`. A stateless discrete leaf, so it computes its
+output only at its ticks and holds it in between (§3.2): placed at the loop's
+rate, the whole measurement is sampled and held there, as a sensor configured
+to the loop's rate delivers it.
+"""
+struct Altimeter <: AbstractComponent end
+
+s_init(::Altimeter) = nothing
+u_types(::Altimeter) = (h = Float64, noise = Float64)
+y_types(::Altimeter) = Float64
+y_direct(::Altimeter, (; u)) = u.h + u.noise
+
+"""
+    sensing(; noise_psd = 1.8e-3)
+
+The altimeter at 10 Hz, the altitude loop's rate: the altitude `h` plus
+Gaussian white noise of two-sided density `noise_psd`, in m² s, seeded at 7,
+published as `h_meas`. The default is 0.134 m per sample at 10 Hz, the same
+density as 0.3 m per sample at 50 Hz, so the sensor's band ends at the loop's
+Nyquist frequency and the loop reads no aliased noise.
+"""
+sensing(; noise_psd = 1.8e-3) =
+    Group((; noise = GaussianWhiteNoise(seed = 7, psd = noise_psd), altimeter = Altimeter());
+          input_wires = ("h" => "altimeter/h",),
+          local_wires = ("noise/y" => "altimeter/noise",),
+          output_wires = ("altimeter/y" => "h_meas",),
+          sample_times = (noise = Absolute(Hz(10)), altimeter = Absolute(Hz(10))))
+
+"""
+    cascade(; standby = false)
+
+The autopilot: four `DiscretePID` controllers that fly pitch rate through the
+elevator, pitch attitude through pitch rate, altitude through pitch attitude
+and airspeed through the throttle, the pitch loops at 50 Hz and the altitude
+and airspeed loops at 10 Hz. It takes the references `h_ref` and `V_ref`, the
+measurements `h_meas`, `θ`, `q` and `V` and the flag `engaged`, and publishes
+`δe` and `δt`.
+
+Each controller holds on the `saturated` code of the controller inside it, and
+the two innermost read a constant zero code. While `engaged` holds and its
+path is free, a controller back-calculates against its own limits.
+
+`standby = true` adds the tracking reference of `pid_anti_windup.md` section
+11, so that the cascade not in command follows the command in force: each
+outer controller tracks the measured variable of the loop inside it, and the
+two innermost track the inputs `δe_track` and `δt_track`, which the cascade
+then also takes. Every `Tt` is 0.02 s. The gains and the limits are
+`longitudinal_aircraft.md` section 4.
+"""
+function cascade(; standby = false)
+    fast, slow = Absolute(Hz(50)), Absolute(Hz(10))
+    pid(; gains...) = DiscretePID(; gains..., Tt = 0.02, hold = true, tracking = standby)
+    # with standby, the outer controllers also read the inner measurements, and two faces join
+    θ_readers, q_readers = standby ? (("θ_ctl/y", "h_ctl/v"), ("q_ctl/y", "θ_ctl/v")) : ("θ_ctl/y", "q_ctl/y")
+    tracking_wires = standby ? ("δe_track" => "q_ctl/v", "δt_track" => "V_ctl/v") : ()
+    Group((; h_ctl = pid(Kp = 0.01, Ki = 0.001, u_min = -0.26, u_max = 0.26),
+             θ_ctl = pid(Kp = 2.0, Ki = 0.5, u_min = -0.5, u_max = 0.5),
+             q_ctl = pid(Kp = -0.2, Ki = -0.4, u_min = -0.5, u_max = 0.5),
+             V_ctl = pid(Kp = 0.2, Ki = 0.05, u_min = 0.0, u_max = 1.0),
+             free = Constant(Int8(0)));
+          # outermost first, each controller's hold on the one inside it
+          input_wires = ("h_ref" => "h_ctl/r", "h_meas" => "h_ctl/y", "θ" => θ_readers, "q" => q_readers,
+                         "V_ref" => "V_ctl/r", "V" => "V_ctl/y",
+                         "engaged" => ("h_ctl/engaged", "θ_ctl/engaged", "q_ctl/engaged", "V_ctl/engaged"),
+                         tracking_wires...),
+          local_wires = ("h_ctl/u" => "θ_ctl/r", "θ_ctl/u" => "q_ctl/r",
+                         "θ_ctl/saturated" => "h_ctl/saturation", "q_ctl/saturated" => "θ_ctl/saturation",
+                         "free/y" => "q_ctl/saturation", "free/y" => "V_ctl/saturation"),
+          output_wires = ("q_ctl/u" => "δe", "V_ctl/u" => "δt"),
+          sample_times = (h_ctl = slow, θ_ctl = fast, q_ctl = fast, V_ctl = slow))
+end
+
+"""
+    actuators(solution)
+
+The elevator and throttle actuators, each a `RateLimiter` at 50 Hz then a
+`FirstOrderLag`: the elevator at 1 rad/s and 50 ms, the throttle at 0.5 /s
+and 0.5 s, both starting at the trim triple `solution`. It takes `δe_cmd` and
+`δt_cmd` and publishes `δe` and `δt`.
+"""
+actuators(solution) =
+    Group((; δe_limiter = RateLimiter(rising = 1.0, s0 = solution.δe), δe_lag = FirstOrderLag(τ = 0.05, x0 = solution.δe),
+             δt_limiter = RateLimiter(rising = 0.5, s0 = solution.δt), δt_lag = FirstOrderLag(τ = 0.5, x0 = solution.δt));
+          input_wires = ("δe_cmd" => "δe_limiter/u", "δt_cmd" => "δt_limiter/u"),
+          local_wires = ("δe_limiter/y" => "δe_lag/u", "δt_limiter/y" => "δt_lag/u"),
+          output_wires = ("δe_lag/y" => "δe", "δt_lag/y" => "δt"),
+          sample_times = (δe_limiter = Absolute(Hz(50)), δt_limiter = Absolute(Hz(50))))
+
+"""
+    feedback_wires()
+
+The wires every loop of chapters 5 to 7 shares at its root: the plant's
+altitude through the sensing, its pitch angle, pitch rate and airspeed to the
+cascade, and the actuators to the plant.
+"""
+feedback_wires() = ("plant/h" => "sensing/h", "sensing/h_meas" => "cascade/h_meas",
+                    "plant/θ" => "cascade/θ", "plant/q" => "cascade/q", "plant/V" => "cascade/V",
+                    "actuators/δe" => "plant/δe", "actuators/δt" => "plant/δt")
+
+"""
+    autopilot(solution; noise_psd = 1.8e-3)
+
+Chapter 5's loop: the aircraft under the cascade, with the actuators and the
+sensing, a `Group` of groups (§13.7) under the root inputs `h_ref` and
+`V_ref`. `solution` is the trim triple `(θ, δe, δt)` of `level_flight()`. The
+cascade is always engaged here, through a `Constant`, and has no standby.
+`cruise(solution)` is its initial condition.
+"""
+autopilot(solution; noise_psd = 1.8e-3) =
+    Group((; plant = Longitudinal(), sensing = sensing(; noise_psd), cascade = cascade(),
+             actuators = actuators(solution), engaged = Constant(true));
+          input_wires = ("h_ref" => "cascade/h_ref", "V_ref" => "cascade/V_ref"),
+          local_wires = (feedback_wires()..., "engaged/y" => "cascade/engaged",
+                         "cascade/δe" => "actuators/δe_cmd", "cascade/δt" => "actuators/δt_cmd"))
+
+"""
+    cruise(solution)
+
+The initial condition of `autopilot` at the trim triple `solution`: the
+references at 1000 m and 50 m/s, the plant's trim pitch angle beside its
+default level state, and the integral terms of the three controllers that
+command a nonzero trim value, the altitude loop's pitch angle, the pitch-rate
+loop's elevator and the airspeed loop's throttle. `yf` sits at its fixed point,
+the measurement. `longitudinal_aircraft.md`, section 4.
+"""
+cruise(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0)),
+                           at("plant", condition(Longitudinal(); θ = solution.θ)),
+                           at("cascade/h_ctl", set(s = (q = solution.θ, yf = 1000.0))),
+                           at("cascade/q_ctl", set(s = (q = solution.δe, yf = 0.0))),
+                           at("cascade/V_ctl", set(s = (q = solution.δt, yf = 50.0))))
+
+"""
+    selection(solution)
+
+The engage switch: a `Switch` per control, which selects the cascade's command
+`δe_auto` or `δt_auto` while the latched `engage` holds and the pilot's
+`δe_pilot` or `δt_pilot` otherwise, and a `UnitDelay` at 50 Hz per control
+that holds the selected command one tick old, starting at the trim triple
+`solution`. The `UnitDelay` `latch` holds `engage` at 10 Hz, the cascade's
+slowest rate, so that one staged `engage` reaches the switches and every
+controller at the same tick, one tick of the latch after it is read. It
+publishes the selected commands as `δe` and `δt`, the delayed ones as
+`δe_prev` and `δt_prev`, and the latched flag as `engaged`.
+"""
+selection(solution) =
+    Group((; latch = UnitDelay(false), select_δe = Switch{Float64}(), select_δt = Switch{Float64}(),
+             command_δe = UnitDelay(solution.δe), command_δt = UnitDelay(solution.δt));
+          input_wires = ("δe_auto" => "select_δe/in1", "δe_pilot" => "select_δe/in2",
+                         "δt_auto" => "select_δt/in1", "δt_pilot" => "select_δt/in2", "engage" => "latch/u"),
+          local_wires = ("latch/y" => "select_δe/select", "latch/y" => "select_δt/select",
+                         "select_δe/y" => "command_δe/u", "select_δt/y" => "command_δt/u"),
+          output_wires = ("select_δe/y" => "δe", "select_δt/y" => "δt",
+                          "command_δe/y" => "δe_prev", "command_δt/y" => "δt_prev", "latch/y" => "engaged"),
+          sample_times = (latch = Absolute(Hz(10)), command_δe = Absolute(Hz(50)), command_δt = Absolute(Hz(50))))
+
+"""
+    piloted(solution; noise_psd = 1.8e-3)
+
+Chapter 6's loop: `autopilot`'s with the engage switch between the cascade and
+the actuators, under the root inputs `h_ref`, `V_ref`, `δe_pilot`, `δt_pilot`
+and `engage`. `selection` latches `engage` and drives its switches and the
+cascade's `engaged` input from the latch. The cascade has its standby, and its tracking inputs read the selected
+commands one tick old, so the cascade not in command follows the pilot and its
+engagement is bumpless (`pid_anti_windup.md`, section 11). Without the delays
+the tracking wires close an algebraic loop through the switches.
+`hand_flown(solution)` is its initial condition.
+"""
+piloted(solution; noise_psd = 1.8e-3) =
+    Group((; plant = Longitudinal(), sensing = sensing(; noise_psd), cascade = cascade(standby = true),
+             selection = selection(solution), actuators = actuators(solution));
+          input_wires = ("h_ref" => "cascade/h_ref", "V_ref" => "cascade/V_ref",
+                         "δe_pilot" => "selection/δe_pilot", "δt_pilot" => "selection/δt_pilot",
+                         "engage" => "selection/engage"),
+          local_wires = (feedback_wires()...,
+                         "cascade/δe" => "selection/δe_auto", "cascade/δt" => "selection/δt_auto",
+                         "selection/δe" => "actuators/δe_cmd", "selection/δt" => "actuators/δt_cmd",
+                         "selection/δe_prev" => "cascade/δe_track", "selection/δt_prev" => "cascade/δt_track",
+                         "selection/engaged" => "cascade/engaged"),
+          output_wires = ("plant/h" => "h",))
+
+"""
+    hand_flown(solution)
+
+The initial condition of `piloted` at the trim triple `solution`: `cruise`'s,
+with the pilot's commands at the trim and the autopilot disengaged.
+"""
+hand_flown(solution) = combine(cruise(solution),
+                               set(u = (δe_pilot = solution.δe, δt_pilot = solution.δt, engage = false)))
+
+"""
+    approach(solution; noise_psd = 1.8e-3)
+
+Chapter 7's model: `piloted`'s as the child `vehicle`, with the ground and a
+stop request, under the same five root inputs. A `GroundContact` reads the
+vehicle's altitude, and a `StopRequest(reason = "touchdown")` reads its
+`contact`, so the run ends at the touchdown's boundary with that reason in the
+termination record (§13.5). The run flies the approach by staging a descending
+`h_ref`, about 1.5 m/s at 50 m/s, the glide angle of
+`longitudinal_aircraft.md` section 5, and there is no flare.
+`at("vehicle", hand_flown(solution))` is its initial condition.
+"""
+approach(solution; noise_psd = 1.8e-3) =
+    Group((; vehicle = piloted(solution; noise_psd), gear = GroundContact(), stop = StopRequest(reason = "touchdown"));
+          input_wires = ("h_ref" => "vehicle/h_ref", "V_ref" => "vehicle/V_ref", "δe_pilot" => "vehicle/δe_pilot",
+                         "δt_pilot" => "vehicle/δt_pilot", "engage" => "vehicle/engage"),
+          local_wires = ("vehicle/h" => "gear/h", "gear/contact" => "stop/u"))
 
 """
     lqr_gains(linearization; qx = 1 ./ [5.0, 0.05, 0.05, 0.2, 20.0] .^ 2,
@@ -315,15 +546,3 @@ trimmed(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0, mode = true))
                             at("pid_controller/h_ctl", set(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
                             at("pid_controller/q_ctl", set(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
                             at("pid_controller/V_ctl", set(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
-
-"""
-    descent()
-
-The aircraft with the ground and a stop request, under the root inputs `δe`
-and `δt`: a `GroundContact` reads the plant's altitude, and a
-`StopRequest(reason = "touchdown")` reads its `contact`, so the run ends at the
-touchdown's boundary with that reason in the termination record (§13.5).
-"""
-descent() = Group((; plant = Longitudinal(), gear = GroundContact(), stop = StopRequest(reason = "touchdown"));
-                  input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"),
-                  local_wires = ("plant/h" => "gear/h", "gear/contact" => "stop/u"))

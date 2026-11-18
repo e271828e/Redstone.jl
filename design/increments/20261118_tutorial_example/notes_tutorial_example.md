@@ -10,7 +10,9 @@ rulings that reach the whole arc are the roadmap's R18 to R20.
 
 - The prototype is settled after three rounds of rulings, and the brief is
   `brief_tutorial_example.md` beside this file, drafted at `dec5ee4`.
-  Nothing of the prototype is in the real tree yet.
+  The brief is `f71ac93` and the docs commit `a4c72ed`. The code commit
+  after them is the patch applied with `git apply`, unchanged, and the
+  examples' runner read 146 of 146 on the real tree before it.
 - The patch is `prototype_tutorial_example.patch` beside this file, the
   worktree's `git diff` against `0d43dfc`. It touches four files under
   `examples/`, +490 −34, and `git apply --check`
@@ -265,18 +267,14 @@ Two fixes were sketched in discussion and left for the friction review:
 
 ## 6. Open
 
-- **The pipeline's later stages**, in the brief's order: the docs commit,
-  the patch applied to the real tree with the examples' runner, one cold
-  review, its fix. The prototype is the implementation.
-- **The docs commit.** `longitudinal_aircraft.md` sections 4 and 5 take
-  the figures above, with a new part on the pitch hold.
-  `examples_inventory.md` section 3 takes the file's new surface, its
-  layers restated as the chapters. The roadmap's three open decisions for
-  increment 1 retire to L1 to L3. The brief's "What is settled" has the
-  detail.
-- **The inspector.** Its `scripts/fixtures.jl` imports `descent`, which
-  becomes `approach(solution)` at the next bump of its pin. L21 puts a
-  line in its `design/pending.md` with the code commit.
+- **The pipeline's later stages.** The docs and the code have landed. One
+  cold review is next, then its fix as one commit, the reviewer's check of
+  the delta, and the user's diff of the arc before any push.
+- **The inspector.** Its `scripts/fixtures.jl` imports `descent` and
+  writes the fixture `descent.json`, which 20 of its frontend test files
+  read. L21 puts a bullet in its `design/pending.md` with the code commit.
+  The next bump of its pin decides between building that small model in
+  the script and moving the tests to `approach(solution)`.
 - **For increment 3's pages.** Chapter 6 explains the latch. Chapters 4
   and 5 put their step in the initial condition, so `stage!` first appears
   in chapter 6.

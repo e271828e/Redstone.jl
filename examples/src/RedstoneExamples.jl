@@ -10,11 +10,11 @@ qualified name or by per-name `import`.
 module RedstoneExamples
 
 using Redstone
-import Redstone: AbstractComponent, StateEvent, x_init, m_init, u_types, y_types, y_state, x_deriv,
+import Redstone: AbstractComponent, StateEvent, x_init, m_init, s_init, u_types, y_types, y_state, y_direct, x_deriv,
     state_events, condition, set, at, combine, TrimProblem, reads, get_state, get_deriv,
     get_input, get_output, taps, Absolute, Hz
 import Redstone.Library: Group, Constant, Source, Step, StopRequest, GaussianWhiteNoise, SumJunction,
-    Junction, Pack, Unpack, Switch, UnitDelay, RateLimiter, FirstOrderLag, DiscretePID, DiscreteLQRTracker
+    Junction, Pack, Unpack, Switch, UnitDelay, RateLimiter, FirstOrderLag, PID, DiscretePID, DiscreteLQRTracker
 using StaticArrays: SMatrix, SVector
 using LinearAlgebra: Diagonal
 using ControlSystemsBase: lqr, Continuous
