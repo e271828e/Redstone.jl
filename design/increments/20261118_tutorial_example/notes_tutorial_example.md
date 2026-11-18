@@ -265,8 +265,8 @@ the brief, at 360k tokens of its context.
   fix.
 - **Every ruling is on file.** The arc's are the roadmap's R1 to R20, and
   the increment's are section 3. None lives only in the old transcript.
-  L12 to L14 are the coordinator's, as marked, and so are rules 2 and 11
-  of the roadmap's rules for the pages.
+  L12 to L14 are the coordinator's, as marked, and so is rule 2 of the
+  roadmap's rules for the pages.
 - **What the coordinator did not verify.** The gate and every figure are
   the prototyper's. The coordinator checked only that the patch equals the
   worktree's diff and that it applies to the real tree.

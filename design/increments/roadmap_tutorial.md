@@ -287,9 +287,8 @@ order or side by side.
 
 A draft, written before any page. It is revised once chapters 1 to 3
 exist, and an agent that writes or reviews a page reads it first. R2
-governs the physics and is not repeated here. Rules 2 and 11, the voice
-and the length, are the coordinator's guesses, which the user has not yet
-confirmed.
+governs the physics and is not repeated here. Rule 2, the voice, is the
+coordinator's guess, which the user has not yet confirmed.
 
 ### The reader and the voice
 
@@ -319,8 +318,10 @@ confirmed.
    end state from `RedstoneExamples`.
 10. **A mistake is shown where the arc names one**, with the message the
     build really prints, whole.
-11. **A page reads in about ten minutes.** That is some 1500 words of
-    prose beside the code.
+11. **A page is as long as its row of the arc needs, and no longer.** Its
+    length follows from rules 7 and 8. No word count is a target, and a
+    page is never padded or cut to reach one. Once chapters 1 to 3 exist,
+    they are the reference for the pace.
 
 ### The code
 
