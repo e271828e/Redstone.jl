@@ -73,14 +73,18 @@ function fly_by_hand!(sim, solution; until = 60.0)
 end
 
 # The approach's reference, staged by the run from 1000 m down at `sink_rate`, one write per tick of
-# the altitude loop, until the stop request ends the run.
+# the altitude loop, until the stop request ends the run or 10 000 writes pass, so that a write that
+# never lands fails the testset instead of hanging it. Returns the count of writes.
 function descend!(sim; sink_rate = 1.5)
     h_ref = 1000.0
-    while lifecycle(sim) !== :stopped
+    n_writes = 0
+    while lifecycle(sim) !== :stopped && n_writes < 10_000
         h_ref -= sink_rate / 10
         stage!(sim, "h_ref" => h_ref)
         step!(sim; t_plus = 1//10)
+        n_writes += 1
     end
+    n_writes
 end
 
 # The plant's four logged outputs a replay or a restore is compared on.
@@ -286,12 +290,14 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
     end
 
     @testset "chapter 5: the autopilot holds the altitude step (§13.7)" begin
-        # The probe's figures after 75 s: 0.0775 m and 0.0187 m/s; its peak 1050.061.
+        # The probe's figures after 75 s: 0.0775 m and 0.0187 m/s; its peak 1050.061; its largest
+        # airspeed excursion over the climb 3.9015 m/s.
         @test termination(climb).source isa EndTimeReached
         late = logged_times(climb) .>= 75
         @test all(h -> abs(h - 1050) <= 0.12, logged_port(climb, "plant", :h)[late])
         @test all(V -> abs(V - 50) <= 0.03, logged_port(climb, "plant", :V)[late])
         @test maximum(logged_port(climb, "plant", :h)) < 1050.2
+        @test maximum(abs, logged_port(climb, "plant", :V) .- 50) ≈ 3.9015 atol = 0.02
     end
 
     @testset "chapter 5: the altimeter samples and holds at 10 Hz, its noise of the declared density (§3.2, §7.3)" begin
@@ -351,8 +357,20 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         δe_selected, δt_selected = logged_face(hand, "selection", :δe), logged_face(hand, "selection", :δt)
         @test largest_gap(logged_face(hand, "cascade", :δe), δe_selected, hand, 8, 30) <= 0.008
         @test largest_gap(logged_face(hand, "cascade", :δt), δt_selected, hand, 5, 30) <= 0.02
+        # The standby outer loops track the measurements of the loops inside them. The probe's gaps
+        # over [8, 30): 0.0086 between the altitude loop's command and θ and 0.0201 between the
+        # attitude loop's and q, at most 0.0088 and 0.0202 over 20 alignments of each write 5 ms
+        # apart.
+        @test largest_gap(logged_port(hand, "cascade/h_ctl", :u), logged_port(hand, "plant", :θ), hand, 8, 30) <= 0.015
+        @test largest_gap(logged_port(hand, "cascade/θ_ctl", :u), logged_port(hand, "plant", :q), hand, 8, 30) <= 0.03
         switch = findfirst(identity, logged_face(hand, "selection", :engaged))
         @test logged_times(hand)[switch] == 30.2
+        # The switches act at the same tick, where the selected elevator command first leaves the
+        # pilot's.
+        times = logged_times(hand)
+        δe_pilot = series(hand, reads(δe = get_input("δe_pilot"))).columns.δe
+        handover = findfirst(k -> times[k] > 29.9 && δe_selected[k] != δe_pilot[k], eachindex(times))
+        @test times[handover] == 30.2
         @test abs(δe_selected[switch] - δe_selected[switch - 1]) <= 0.005
         @test abs(δt_selected[switch] - δt_selected[switch - 1]) <= 0.01
     end
@@ -367,22 +385,25 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
     fly_by_hand!(flight, solution)
     by_hand_outputs = plant_outputs(flight, "vehicle/plant")
     descent_top = checkpoint(flight)
-    descend!(flight)
+    n_writes = descend!(flight)
 
     @testset "chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§2.3, §13.5, D-316)" begin
         @test by_hand_outputs == map(column -> column[1:length(by_hand_outputs.h)], plant_outputs(hand, "plant"))
         record = termination(flight)
         # The probe's touchdown: 726.644 s, 6667 writes of the reference after the cruise.
-        @test record.t ≈ 726.6442291951134 atol = 1e-2
+        @test record.t ≈ 726.6442291951134 atol = 1e-3
+        @test n_writes == 6667
         @test record.source isa ModelRequestedStop
         @test record.source.path == "stop"
         @test record.source.port === :y
         @test record.source.reason == "touchdown"
         @test abs(state(flight, "vehicle/plant").h) <= 1e-6
         @test modes(flight, "gear").contact === true
+        h_refs = series(flight, reads(h_ref = get_input("h_ref"))).columns.h_ref
+        # The last staged reference, read back: the probe's -0.04999999989 m, 1000 m less 6667 writes.
+        @test h_refs[end] ≈ -0.05 atol = 1e-6
         # The probe's largest tracking error over [160 s, the last second): 0.247 m.
         descending = window(flight, 160, record.t - 1)
-        h_refs = series(flight, reads(h_ref = get_input("h_ref"))).columns.h_ref
         @test maximum(abs, (logged_port(flight, "vehicle/plant", :h) .- h_refs)[descending]) <= 0.35
     end
 
@@ -402,7 +423,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         descend!(second; sink_rate = 2.0)
         record = termination(second)
         # The probe's second touchdown, at 2 m/s: 559.969 s.
-        @test record.t ≈ 559.9685756981099 atol = 1e-2
+        @test record.t ≈ 559.9685756981099 atol = 1e-3
         @test record.source.reason == "touchdown"
         @test abs(state(second, "vehicle/plant").h) <= 1e-6
         # Restored and flown at 1.5 m/s again, the first approach's touchdown, to the bit.

@@ -333,3 +333,76 @@ Survivors the reviewer may accept, each with its reason restated:
   output.
 - The rate of `command_δe` or `command_δt` dropped, if the delays' rate is
   inferred as the legacy review found.
+
+## The review's record
+
+The arc on top of `dec5ee4`: `f71ac93` (this brief), `a4c72ed` (docs),
+`e70da63` (code) and the fix commit that adds this record. In
+`RedstoneInspector.jl`, `cba1680` carries L21's bullet. Nothing is
+pushed.
+
+**The review**, at `e70da63`, by an independent high-tier agent in the
+worktree `../Redstone.jl-worktrees/tutorial_1_review`, its probes and
+notes beside it. The examples' runner read 146 of 146 on Julia 1.13.3,
+and the battery was green. It ran 57 mutants. Of the brief's 28, 26 went
+red, one survived and one hung the testset. Its probes found sound: the
+wiring flattened leaf to leaf against the legacy cascade path, every pin
+of chapters 4 to 8, the six statements the coordinator flagged, every
+pin of chapter 6 at 20 alignments of the pull, the release and the
+engage, the latch's single instant, and 0 B in the phase bodies of every
+new model. It listed eight findings. The user took the coordinator's
+recommendations on all of them, and L23 to L25 in the notes record the
+rulings they asked for.
+
+A fresh high-tier fixer made the fixes in the worktree
+`../Redstone.jl-worktrees/tutorial_1_fix` and showed each test fix red by
+its mutant. The coordinator applied its diff to the real tree and added
+the two pins paragraphs and one table figure:
+
+- **F1, a staged write that never lands hung the testset.** `descend!`
+  now stops at 10 000 writes and returns the count. Chapter 7 pins 6667
+  writes and the last staged `h_ref`, −0.05 to 1e-6. The engage or the
+  reference misspelled now fail in 31 s.
+- **F2, the standby's outer loops were unpinned.** Two gaps over
+  [8, 30) s: the altitude loop's command against θ, 0.0086, bound 0.015,
+  and the attitude loop's against q, 0.0201, bound 0.03. Their worst over
+  20 alignments of each write is 0.0088 and 0.0202. The outer `v` on the
+  wrong measurement, at 0.104 and 0.107, goes red.
+- **F3, the switches reading `engage` around the latch survived.** The
+  instant the selected elevator command first leaves the pilot's is
+  pinned at 30.2 s. The unlatched switches, at 30.005 s, go red.
+- **F4, the hold chain's figures came from an older model.** The
+  companion now gives 1.84 s limited at two rates, 2.02 s at one and
+  2.68 s with no hold. L4 carries the correction, and its ruling stands.
+- **F5, the approach's tracking read low on the thinned log.** "Within
+  0.26 m", against 0.254 m at full resolution, and the airspeed band tied
+  to the same span. L5 carries the correction.
+- **F6, the sensor table's first peak was a staged step's.** 1050.152.
+  Row 2's late altitude error became 0.0641 on the same ground.
+- **F7, eight gain and actuator mutants passed every pin.** Chapter 5
+  pins the climb's airspeed excursion, 3.9015 m/s to 0.02, and all eight
+  go red. The touchdowns tighten from 1e-2 to 1e-3 by L23, which alone
+  catches two of them.
+- **F8, the 0.0017 rad of jitter** now names its window, [80, 90) s.
+- **L22.** `piloted`'s docstring paragraph rewrapped, no word changed.
+
+The fixer moved chapter 7's `h_refs` read above the line that reads
+`record.t`, so that a descent which never stops fails the new pins
+instead of throwing first. The examples' runner read 152 of 152 in the
+fixer's worktree, and 152 of 152 on the real tree before the commit,
+with the battery green.
+
+**Survivors accepted.** A hold wire of the cascade changed to the zero
+code, since no scenario publishes a nonzero `saturated` code. A `yf` seed
+dropped, since with `Kd = 0` it never reaches an output. A delay's rate
+dropped, since its 50 Hz rate is inferred. `Tt` doubled, whose figures
+stay inside the spread the alignments give. The elevator delay starting
+at 0, identical to six digits. Each reads identical to six digits or
+within the alignment spread on the reviewer's probes.
+
+**Reported and left.** A staged `engage = false` jumps the elevator
+command by 6.6e-4 rad, unpinned by L24. `longitudinal_taps()` carries a
+forward reference for chapter 9, handed to increment 4 by L25. The brief's
+"65 537 snapshots spaced 0.02 s" reads 65 538, spaced in a mix of 0.01 and
+0.02 s. Not checked by either agent: whether the run is identical on the
+examples' Linux CI.

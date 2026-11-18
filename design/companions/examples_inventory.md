@@ -221,14 +221,17 @@ gain, the discrete one refuses the linearization, and the two tiers stay
 within a pinned gap through a step. The autopilot rests at the trim with
 no step and no noise, ticks its outer loops at 10 Hz and its pitch loops
 at 50 Hz, and holds a step in the altitude reference within a tolerance,
-with its peak below a bound. The altimeter's output changes only at its
+with its peak below a bound and its airspeed excursion at a pinned value.
+The altimeter's output changes only at its
 ticks, and its noise has the declared density, to 10%. The piloted loop
 without its delays is refused with one real cycle per switch. Its staged
-commands land on pinned snapshots, the standby cascade stays within pinned
-gaps of the pilot's commands, the latched engage acts at the pinned tick
-with the commands' jumps below pinned bounds, and the autopilot recaptures
-the reference. The approach repeats that flight to the bit, then descends
-to a stop with the touchdown's reason at the pinned time, with the
+commands land on pinned snapshots. The standby cascade stays within pinned
+gaps of the pilot's commands, and its outer loops within pinned gaps of
+the measurements they track. The latched engage moves the switches and
+the controllers at the pinned tick, with the commands' jumps below pinned
+bounds, and the autopilot recaptures the reference. The approach repeats
+that flight to the bit, then descends with a pinned count of staged
+writes to a stop with the touchdown's reason at the pinned time, with the
 altitude at zero to within the localization tolerance. The whole flight
 replays to the bit. A checkpoint at the top of the descent flies a second
 approach to its own pinned touchdown, and the first again to the bit. The

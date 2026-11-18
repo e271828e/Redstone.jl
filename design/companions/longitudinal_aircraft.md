@@ -225,8 +225,8 @@ the late errors read once the transient is over:
 
 | Sensor and rates | Late altitude error (m) | Late airspeed error (m/s) | Peak (m) |
 |---|---|---|---|
-| 50 Hz sensor, loops at two rates | 0.1646 | 0.0392 | 1050.126 |
-| 50 Hz sensor, every loop at 50 Hz | 0.0640 | 0.0150 | 1050.064 |
+| 50 Hz sensor, loops at two rates | 0.1646 | 0.0392 | 1050.152 |
+| 50 Hz sensor, every loop at 50 Hz | 0.0641 | 0.0150 | 1050.064 |
 | 10 Hz altimeter, loops at two rates | 0.0775 | 0.0187 | 1050.061 |
 
 **The cascade**, `cascade`. Four `DiscretePID`s, each with the hold
@@ -257,8 +257,8 @@ flag `engaged`, and the two commands it publishes as `δe` and `δt`.
 
 The chain works across the two rates. On the 50 m step the attitude loop
 never reaches its limits. With those limits cut to ±0.05 rad/s it stays
-limited for 1.14 s, against 0.38 s with every loop at 50 Hz and 2.54 s
-with no hold, and nothing winds or stalls.
+limited for 1.84 s at the two rates and 2.02 s with every loop at 50 Hz,
+and nothing winds or stalls. With no hold it stays limited for 2.68 s.
 
 `cascade(standby = true)` adds the tracking axis, with the tracking
 reference of `pid_anti_windup.md` section 11, so that a cascade not in
@@ -341,14 +341,15 @@ within 0.0043 rad of the pilot's elevator over `[8, 30)` s, and within
 jumps by 0.0011 rad and the throttle command by 0.0086, under the 0.01
 its rate limiter passes per tick. Behind its actuator the elevator jumps
 by 1.0e-4 rad. For scale, the elevator command's largest frame-to-frame
-change in steady engaged flight is 0.0017 rad. The autopilot then
+change over `[80, 90)` s is 0.0017 rad. The autopilot then
 recaptures 1000 m and holds it within 0.057 m over `[80, 90)` s.
 
 The testset pins the eigenvalues, the DC gain, the refusal and the step of
 the pitch hold. Under `autopilot` it pins the rest at the trim, the two
-rates, the hold after 75 s, the peak and the sensor's noise. Under
-`piloted` it pins the refused loop, the staged writes, the standby gaps,
-the latched engage, the jumps and the recapture.
+rates, the hold after 75 s, the peak, the airspeed excursion and the
+sensor's noise. Under `piloted` it pins the refused loop, the staged
+writes, the standby gaps of the innermost and the outer loops, the instant
+the latch moves the switches, the jumps and the recapture.
 
 **The two-controller loop**, `closed_loop`. The tutorial's optional last
 chapter flies the cascade beside an LQR tracker, with a switch between the
@@ -454,9 +455,10 @@ by 0.15 m every 0.1 s, one write per tick of the altitude loop. That is a
 sink rate of 1.5 m/s at 50 m/s, a glide angle of
 `sin γ = −1.5 / 50 = −0.03`. The reference is a root input, so the run
 stages the descent and the model carries no ramp. The cascade follows the
-descending reference within 0.25 m from 160 s to the last second. No loop
-saturates, and the airspeed stays between 49.978 and 50.022 m/s. There is
-no flare: the aircraft meets the ground at `γ = −0.0303`, after 726.6 s.
+descending reference within 0.26 m from 160 s to the last second, and the
+airspeed stays between 49.978 and 50.022 m/s over the same span. No loop
+saturates. There is no flare: the aircraft meets the ground at
+`γ = −0.0303`, after 726.6 s.
 
 The ground is a `GroundContact` leaf wired from the vehicle's altitude,
 which `piloted` exports as the face `h`. Its

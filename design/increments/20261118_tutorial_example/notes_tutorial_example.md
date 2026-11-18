@@ -76,11 +76,18 @@ carried.
 **L4. Two rates are kept, untuned.** The hold chain and the standby
 tracking behave across 10 Hz and 50 Hz. With the hold, a pitch loop cut to
 ±0.05 rad/s stays saturated 1.14 s at two rates against 0.38 s at one, and
-nothing winds or stalls.
+nothing winds or stalls. The cold review found those two figures taken on
+an older model, with tracking on in the attitude loop, the 50 Hz sensor
+and the step staged at 5 s. On the shipped `autopilot` the loop stays
+limited 1.84 s at two rates, 2.02 s at one and 2.68 s with no hold. The
+ruling stands, since the hold still shortens the limited time at both
+rates and nothing winds, but two rates no longer cost more than one.
 
 **L5. The approach flies under the autopilot.** No loop saturates, the
 airspeed stays within 0.05 m/s of 50, and 726 s of flight take about
-0.25 s of wall time.
+0.25 s of wall time. The cold review found the airspeed within that band
+from 100 s on. Over [60, 100) s, the recapture after the engage, it
+reaches 50.57 m/s.
 
 **L6. The cascade's keyword**, the first instance of the roadmap's R19.
 `cascade(; standby = false)` adds the tracking inputs and the `δe_track`
@@ -176,6 +183,25 @@ repo with the code commit here.
 **L22. The review's fix commit rewraps `piloted`'s overlong docstring
 line.** The patch stays the worktree's diff.
 
+L23 to L25 were made on the cold review's findings. The user took the
+coordinator's recommendations on 2026-11-18.
+
+**L23. The touchdown's tolerance is 1e-3**, for both approaches. The
+reviewer proposed 1e-4, since the run is deterministic to the bit on one
+machine. Rejected: nobody has checked the run is identical on the
+examples' CI, which runs on Linux, and the trim's linear solves depend on
+the platform. The pin on the climb's airspeed excursion already catches
+every gain and actuator mutant that the looser touchdown lets through.
+
+**L24. A staged `engage = false` is not pinned.** The hand-back jumps the
+elevator command by 6.6e-4 rad, and no docstring or page claims anything
+about it.
+
+**L25. `longitudinal_taps()` carries a forward reference outside this
+arc.** Its outputs `h` and `V` are read only by chapter 9's `lqr_gains`,
+an instance of R19 in chapter 3's function. Increment 4 settles it with
+the tracker.
+
 ## 4. The pins
 
 Frame period 1/200 s, altimeter seed 7, `noise_psd = 1.8e-3`.
@@ -216,6 +242,11 @@ The sensor's effect on the 50 m step, the evidence chapter 5 can show:
 | 50 Hz sensor, two rates | 0.1646 | 0.0392 | 1050.126 |
 | 50 Hz sensor, one rate | 0.0640 | 0.0150 | 1050.064 |
 | 10 Hz altimeter, two rates | 0.0775 | 0.0187 | 1050.061 |
+
+The cold review found the first row's peak taken with the step staged at
+5 s. With the step in the initial condition, as the other rows and the
+companion have it, the peak is 1050.152. The tracking figure of chapter 7
+above reads the thinned log, and at full resolution it is 0.254 m.
 
 Further figures for `longitudinal_aircraft.md`: the airspeed excursion in
 the step is 3.90 m/s at 3.73 s, and the altitude is within 1 m by 24.4 s.
@@ -267,9 +298,10 @@ Two fixes were sketched in discussion and left for the friction review:
 
 ## 6. Open
 
-- **The pipeline's later stages.** The docs and the code have landed. One
-  cold review is next, then its fix as one commit, the reviewer's check of
-  the delta, and the user's diff of the arc before any push.
+- **The pipeline's later stages.** The docs, the code and the cold
+  review's fixes have landed, the review's record in the brief. The
+  reviewer's check of the fix is next, then the user's diff of the arc
+  before any push.
 - **The inspector.** Its `scripts/fixtures.jl` imports `descent` and
   writes the fixture `descent.json`, which 20 of its frontend test files
   read. L21 puts a bullet in its `design/pending.md` with the code commit.

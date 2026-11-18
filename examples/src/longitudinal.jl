@@ -325,11 +325,11 @@ selection(solution) =
 Chapter 6's loop: `autopilot`'s with the engage switch between the cascade and
 the actuators, under the root inputs `h_ref`, `V_ref`, `δe_pilot`, `δt_pilot`
 and `engage`. `selection` latches `engage` and drives its switches and the
-cascade's `engaged` input from the latch. The cascade has its standby, and its tracking inputs read the selected
-commands one tick old, so the cascade not in command follows the pilot and its
-engagement is bumpless (`pid_anti_windup.md`, section 11). Without the delays
-the tracking wires close an algebraic loop through the switches.
-`hand_flown(solution)` is its initial condition.
+cascade's `engaged` input from the latch. The cascade has its standby, and its
+tracking inputs read the selected commands one tick old, so the cascade not in
+command follows the pilot and its engagement is bumpless (`pid_anti_windup.md`,
+section 11). Without the delays the tracking wires close an algebraic loop
+through the switches. `hand_flown(solution)` is its initial condition.
 """
 piloted(solution; noise_psd = 1.8e-3) =
     Group((; plant = Longitudinal(), sensing = sensing(; noise_psd), cascade = cascade(standby = true),
