@@ -116,15 +116,18 @@ keeps its 50 Hz sensor. No hold joins the library:
 `sample_times` do it.
 
 **L12. The noise keyword is `noise_psd`**, mirroring the library's `psd`.
-A per-sample `σ` depends on the sensor's rate.
+A per-sample `σ` depends on the sensor's rate. Accepted on the coordinator's
+recommendation, with no objection from the user.
 
 **L13. The engage bump is pinned as the jump itself.** With the quieter
 sensor the steady elevator jitter fell to 0.0017 rad, so "the bump is
 below the jitter" no longer holds. A retune of the standby `Tt` was not
-probed.
+probed. Accepted on the coordinator's
+recommendation, with no objection from the user.
 
 **L14. The second approach sinks at 2 m/s**, plainly different from the
-first.
+first. Accepted on the coordinator's
+recommendation, with no objection from the user.
 
 **L15. The mode is latched.** One staged `engage` reached the continuous
 `Switch`, the 50 Hz loop and the 10 Hz loops at three instants, 30.005,
@@ -242,7 +245,33 @@ Two fixes were sketched in discussion and left for the friction review:
   in chapter 6.
 - **For increment 4.** `selection` is taken, so chapter 9's rebuilt group
   needs another name or a method.
-- **The audit's bullet.** The coordinator proposed widening the
-  exported-name audit in `pending.md` into an API audit of two ordered
-  parts, a friction review and then the name sweep. The user has not
-  ruled, and the bullet is unchanged.
+- **The friction review.** Section 5's list feeds the friction review of
+  the API audit, the bullet of `pending.md` that the user's ruling of
+  2026-11-18 widened from the exported-name audit.
+
+## 7. The handover
+
+Written on 2026-11-18, when the coordinating session handed over before
+the brief, at 360k tokens of its context.
+
+- **Read, in this order.** `AGENTS.md`; `design/rules/increment_rules.md`
+  and `design/rules/brief_rules.md`, whole; `../roadmap_tutorial.md`,
+  whole; this file; the patch beside it; and `design/rules/code_rules.md`,
+  whole, before anything under `examples/` is touched.
+- **What comes next.** The brief, the pipeline's third stage: drafted from
+  the settled prototype, shown to the user before anything lands, and
+  committed to this folder. Then the docs commit of section 6, the patch
+  applied with `git apply`, the examples' gate, one cold review and its
+  fix.
+- **Every ruling is on file.** The arc's are the roadmap's R1 to R20, and
+  the increment's are section 3. None lives only in the old transcript.
+  L12 to L14 are the coordinator's, as marked, and so are rules 2 and 11
+  of the roadmap's rules for the pages.
+- **What the coordinator did not verify.** The gate and every figure are
+  the prototyper's. The coordinator checked only that the patch equals the
+  worktree's diff and that it applies to the real tree.
+- **Agents.** None is running. The prototyper cannot be resumed from
+  another session, so a change to the prototype goes to a fresh agent
+  that continues from the worktree and `tutorial_1_notes.md`.
+- **The coordinator pushed nothing.** `git log origin/master..HEAD` lists
+  what is not on the remote.

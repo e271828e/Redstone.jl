@@ -29,7 +29,7 @@ item changes what the spec says, the spec edit is part of the item.
   of the chapters condensed with the plot and the diagram, and links to the
   tutorial; the interactive part is the binding's few lines until the live
   inspector gives a recording. Writing the tutorial is what finds the API's
-  friction, which is why it precedes the audit. The work is an arc of five
+  friction, which is why it precedes the API audit. The work is an arc of five
   increments: the example's main path, the docs scaffold with chapters 1 to
   3, chapters 4 to 8, the tracker, and the closing with the README. Stage
   reached: increment 1's prototype is settled after three rounds of
@@ -39,69 +39,80 @@ item changes what the spec says, the spec edit is part of the item.
   with the prototype's patch beside it. The plan, the arc's rulings, the
   open decisions and the draft rules for the pages are
   `design/increments/roadmap_tutorial.md`.
-- **The exported-name audit.** The export list is to be decided deliberately
-  rather than by accident, and until the audit runs the module exports
-  nothing (D-226). The audit is a full-surface sweep under the four-class
-  naming convention (§8.1, D-144): every API name is exported, renamed or
-  left unexported. It also settles which fields are public, since `Model`'s
-  docstring lists every field, `exec` and `frame_diag` included, while
-  `Deployment` and `Schedule` list none and tests read `deployment.h`. It
-  comes after the tutorial, which surfaces the names a
-  user types, and after the library has added its names; the examples are
-  a package of their own and add none.
-  - **The extension-only surface**, where *unexported* is preferred. It has
-    three parts: the declaration and stage family of the import list (§8.1),
-    the larger half, settled on every component file's first line; the
-    binding interface `claims`/`reads` (§11.6) with the side traits
-    `is_input`/`is_output`/`is_greedy`, `map_input`/`map_output` sitting
-    outside the question as loop-idiom conventions the framework never
-    calls; and the device contract `init!`/`loop`/`shutdown!`/`unblock!`,
-    extended by `import` or qualified name, `Base.show`-style.
-  - **The operator side.** `condition`, `set`, `at` and `combine`
-    (§14.2) are generic names that share a namespace with user domain code,
-    and whether the condition algebra ships behind a submodule is the
-    packaging question.
-  - **What Appendix B's rewrite left for the audit.** B lists the names
-    the examples import, and some names no spec sentence spells:
-    `logged(sim)`, `termination(sim)`, `port(snapshot, path, name)`, the
-    `Simulation` forms of `port`, `state` and `modes`, and `Model(build)`
-    and `Model(root)`. `reads` is both the binding trait `reads(b)` and the
-    read-set constructor `reads(; selectors...)`, one name in two senses.
-    And D-226 makes a name public by standing on B, so a diagnostic kind is
-    public only where B names it; whether Appendix C's kind set is public
-    as a whole is the audit's to settle.
-  - **Five boundary cases** the convention does not settle are flagged for
-    the sweep, none a defect of its list:
-    - `input_faces`/`output_faces` (§13.3), build primitives named by nouns
-      where class (4) asks for plain verbs, mitigated by being
-      framework-facing; the pun on the `_types` declarations that D-144
-      flagged went with their rename to `u_types`/`y_types` (D-267);
-    - `loop` (§11.6), a mutating task body spelled as a bare noun among its
-      verb-`!` siblings `init!`/`shutdown!`/`unblock!`; with `run!` taken
-      and the "loop body" prose entrenched, it needs the whole-surface view;
-    - the bare-noun accessors `trace(sim)`, `latest(sim)`,
-      `binding(handle)`, `phase_bodies(sim)`, value selectors outside class
-      (2)'s `get_` rule; `trace` is the sharpest, its kill-switch
-      `trace = false` and post-run accessor `trace(sim)` being one name in
-      two senses, the overload pattern D-122 and D-144 retire;
-    - whether class (1) needs an explicit exemption for predicate traits
-      (`is_input`, `is_greedy`).
-    - whether an unexported name on the extension-only surface may coincide
-      with a public Base name when the spec's verb is that word, reached by
-      qualified name or explicit import; `peek` (§11.7, D-270) is the first
-      instance, the panel kit's verb beside `Base.peek`.
+- **The API audit.** The API is reviewed as a whole before the release, in
+  two parts, in this order. It comes after the tutorial, which surfaces the
+  names a user types and the friction a user meets.
+  - **The friction review.** Every item the tutorial arc records is ruled:
+    fixed, documented, or declined with its reason. The items sit in each
+    increment's notes, by R17 of `design/increments/roadmap_tutorial.md`,
+    and the arc's closing increment collates them. The first nineteen are
+    section 5 of
+    `design/increments/20261118_tutorial_example/notes_tutorial_example.md`.
+    A fix lands as a loose commit or as an increment of its own, and before
+    the exported-name audit, since it can add or rename a name.
+  - **The exported-name audit.** The export list is to be decided deliberately
+    rather than by accident, and until the audit runs the module exports
+    nothing (D-226). The audit is a full-surface sweep under the four-class
+    naming convention (§8.1, D-144): every API name is exported, renamed or
+    left unexported. It also settles which fields are public, since `Model`'s
+    docstring lists every field, `exec` and `frame_diag` included, while
+    `Deployment` and `Schedule` list none and tests read `deployment.h`. It
+    comes after the tutorial, which surfaces the names a
+    user types, and after the library has added its names; the examples are
+    a package of their own and add none.
+    - **The extension-only surface**, where *unexported* is preferred. It has
+      three parts: the declaration and stage family of the import list (§8.1),
+      the larger half, settled on every component file's first line; the
+      binding interface `claims`/`reads` (§11.6) with the side traits
+      `is_input`/`is_output`/`is_greedy`, `map_input`/`map_output` sitting
+      outside the question as loop-idiom conventions the framework never
+      calls; and the device contract `init!`/`loop`/`shutdown!`/`unblock!`,
+      extended by `import` or qualified name, `Base.show`-style.
+    - **The operator side.** `condition`, `set`, `at` and `combine`
+      (§14.2) are generic names that share a namespace with user domain code,
+      and whether the condition algebra ships behind a submodule is the
+      packaging question.
+    - **What Appendix B's rewrite left for the audit.** B lists the names
+      the examples import, and some names no spec sentence spells:
+      `logged(sim)`, `termination(sim)`, `port(snapshot, path, name)`, the
+      `Simulation` forms of `port`, `state` and `modes`, and `Model(build)`
+      and `Model(root)`. `reads` is both the binding trait `reads(b)` and the
+      read-set constructor `reads(; selectors...)`, one name in two senses.
+      And D-226 makes a name public by standing on B, so a diagnostic kind is
+      public only where B names it; whether Appendix C's kind set is public
+      as a whole is the audit's to settle.
+    - **Five boundary cases** the convention does not settle are flagged for
+      the sweep, none a defect of its list:
+      - `input_faces`/`output_faces` (§13.3), build primitives named by nouns
+        where class (4) asks for plain verbs, mitigated by being
+        framework-facing; the pun on the `_types` declarations that D-144
+        flagged went with their rename to `u_types`/`y_types` (D-267);
+      - `loop` (§11.6), a mutating task body spelled as a bare noun among its
+        verb-`!` siblings `init!`/`shutdown!`/`unblock!`; with `run!` taken
+        and the "loop body" prose entrenched, it needs the whole-surface view;
+      - the bare-noun accessors `trace(sim)`, `latest(sim)`,
+        `binding(handle)`, `phase_bodies(sim)`, value selectors outside class
+        (2)'s `get_` rule; `trace` is the sharpest, its kill-switch
+        `trace = false` and post-run accessor `trace(sim)` being one name in
+        two senses, the overload pattern D-122 and D-144 retire;
+      - whether class (1) needs an explicit exemption for predicate traits
+        (`is_input`, `is_greedy`).
+      - whether an unexported name on the extension-only surface may coincide
+        with a public Base name when the spec's verb is that word, reached by
+        qualified name or explicit import; `peek` (§11.7, D-270) is the first
+        instance, the panel kit's verb beside `Base.peek`.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
-  after the tutorial, and a signature-and-link pass after the audit's
-  renames, since a rename costs a signature line and the Documenter build
+  after the tutorial, and a signature-and-link pass after the
+  exported-name audit's renames, since a rename costs a signature line and the Documenter build
   catches a stale link. Unexported names keep their docstrings as they are.
 - **The `§` references in diagnostic messages.** Every message ends by
   citing a spec section, which a user without the spec cannot follow. The
   pass drops each reference or replaces it with a pointer into the
   documentation, kind by kind. Messages are presentation (D-058), and only
   `test_diagnostics.jl`'s rendering testset pins their text. It follows the
-  audit, whose renames reach the messages too. The pass also rewords
+  exported-name audit, whose renames reach the messages too. The pass also rewords
   `AlgebraicCycle`'s verdict: a real verdict that rests on a member traced
   structurally reads "presumed real", since the tracer assumes every hop
   through such a member (§13.8). The classification stays `:real`.

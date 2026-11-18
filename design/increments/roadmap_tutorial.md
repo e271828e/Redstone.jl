@@ -25,7 +25,7 @@ to one increment goes to that increment's notes.
 - Every code block is complete and runnable, imports included, because a
   user's agent imitates worked examples.
 - Writing the code is what finds the API's friction, whatever the prose
-  does, so the tutorial still precedes the audit.
+  does, so the tutorial still precedes the API audit.
 
 ## The arc
 
@@ -156,8 +156,8 @@ plotting package.
 
 **R13. Two success criteria.**
 - A fresh agent given only the public surface and the tutorial builds a
-  model from another domain. Where it stumbles is friction for the audit
-  or a gap in the docs.
+  model from another domain. Where it stumbles is friction for the API
+  audit or a gap in the docs.
 - A reader can predict that a wire closes an algebraic loop, and say why.
 
 **R14. Four features stay out and go to the user guide**: real-time
@@ -176,8 +176,8 @@ below.
 
 **R17. A rule for friction.** Each increment's notes record what the
 writing found in the API. A small fix lands as its own commit, and
-anything larger goes to the audit's bullet in `pending.md`. The arc does
-not stall on API changes.
+anything larger goes to the friction review of the API audit in
+`pending.md`. The arc does not stall on API changes.
 
 ## Ruled on 2026-11-18
 
@@ -266,7 +266,7 @@ order or side by side.
 
 5. **The closing.** The README's condensed chapters, the cold-agent test
    of R13, and the friction list collated from the increments' notes for
-   the audit. Needs 3.
+   the API audit's friction review. Needs 3.
 
 ## Risks
 
@@ -287,7 +287,9 @@ order or side by side.
 
 A draft, written before any page. It is revised once chapters 1 to 3
 exist, and an agent that writes or reviews a page reads it first. R2
-governs the physics and is not repeated here.
+governs the physics and is not repeated here. Rules 2 and 11, the voice
+and the length, are the coordinator's guesses, which the user has not yet
+confirmed.
 
 ### The reader and the voice
 
