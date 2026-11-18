@@ -69,9 +69,7 @@ M_12 = -A⁻¹ B M_22    Δx* = M_12 Δz*
 
 These are the `Nu` and `Nx` of Franklin, Powell and Emami-Naeini's reference
 input with full state feedback, section 7.4 of *Feedback Control of Dynamic
-Systems*. The sign of `M_12` follows from `0 = A Δx* + B Δu*`; the
-FlightPhysics notes drop it, and their design script is unaffected because
-it inverts the whole matrix numerically.
+Systems*. The sign of `M_12` follows from `0 = A Δx* + B Δu*`.
 
 The quantities to regulate are the errors to that equilibrium,
 
