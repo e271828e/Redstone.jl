@@ -62,7 +62,10 @@ the pipeline stops only for a design decision. The brief's rules are
 
 ## The prototype and its probes
 
-- The worktree is a scratch `git worktree` with the root `Manifest.toml`
+- The worktree is a scratch `git worktree` under `../Redstone.jl-worktrees/`,
+  beside the repository, with its probes and the prototyper's notes beside
+  it there, never in a session's scratch directory, which the user cannot
+  track and a reboot clears. The root `Manifest.toml` is
   copied in: a worktree lacks that untracked file, and the `examples/test`
   environment needs one `Pkg.instantiate()`. The gate runs there
   unchanged, the worktree's `git diff` is the brief's patch, applied with

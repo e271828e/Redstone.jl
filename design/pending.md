@@ -20,8 +20,8 @@ item changes what the spec says, the spec edit is part of the item.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, each ending at a named function
   of the examples package: the plant, trim, linearization, a first loop,
-  the autopilot, the engage switch, replay and checkpoint, the approach and
-  touchdown, and the LQR tracker as an optional last chapter. It teaches
+  the autopilot, the engage switch, the approach and touchdown, replay and
+  checkpoint, and the LQR tracker as an optional last chapter. It teaches
   concepts through whole code beside real output and leaves the syntax to
   the reference. The deployment is taught where each quantity first
   matters: the frame in chapter 1, the algorithm and `h_max` in chapter 3,
@@ -32,8 +32,10 @@ item changes what the spec says, the spec edit is part of the item.
   friction, which is why it precedes the audit. The work is an arc of five
   increments: the example's main path, the docs scaffold with chapters 1 to
   3, chapters 4 to 8, the tracker, and the closing with the README. Stage
-  reached: the arc is settled and staged, and no increment has started. The
-  plan, the rulings and the open decisions are
+  reached: increment 1's prototype is built and its readings are being
+  ruled, with no brief yet; the worktree, its probes and the prototyper's
+  notes are in `../Redstone.jl-worktrees/`. The plan, the rulings, the open
+  decisions and the draft rules for the pages are
   `design/increments/roadmap_tutorial.md`.
 - **The exported-name audit.** The export list is to be decided deliberately
   rather than by accident, and until the audit runs the module exports
