@@ -1,0 +1,620 @@
+diff --git a/examples/src/RedstoneExamples.jl b/examples/src/RedstoneExamples.jl
+index 623007c..c69adb6 100644
+--- a/examples/src/RedstoneExamples.jl
++++ b/examples/src/RedstoneExamples.jl
+@@ -10,11 +10,11 @@ qualified name or by per-name `import`.
+ module RedstoneExamples
+ 
+ using Redstone
+-import Redstone: AbstractComponent, StateEvent, x_init, m_init, u_types, y_types, y_state, x_deriv,
++import Redstone: AbstractComponent, StateEvent, x_init, m_init, s_init, u_types, y_types, y_state, y_direct, x_deriv,
+     state_events, condition, set, at, combine, TrimProblem, reads, get_state, get_deriv,
+     get_input, get_output, taps, Absolute, Hz
+ import Redstone.Library: Group, Constant, Source, Step, StopRequest, GaussianWhiteNoise, SumJunction,
+-    Junction, Pack, Unpack, Switch, UnitDelay, RateLimiter, FirstOrderLag, DiscretePID, DiscreteLQRTracker
++    Junction, Pack, Unpack, Switch, UnitDelay, RateLimiter, FirstOrderLag, PID, DiscretePID, DiscreteLQRTracker
+ using StaticArrays: SMatrix, SVector
+ using LinearAlgebra: Diagonal
+ using ControlSystemsBase: lqr, Continuous
+diff --git a/examples/src/longitudinal.jl b/examples/src/longitudinal.jl
+index c2b6daa..4e67976 100644
+--- a/examples/src/longitudinal.jl
++++ b/examples/src/longitudinal.jl
+@@ -1,7 +1,7 @@
+ # The longitudinal aircraft: a three-degree-of-freedom point mass with pitch,
+-# its trim problem, its tap set, its gain design, the closed loop and the
+-# descent the tutorial's layers walk through. The physics and the control design
+-# are `design/companions/longitudinal_aircraft.md`.
++# its trim problem, its tap set, the loops of the tutorial's chapters 4 to 7,
++# and the gain design and the closed loop of its optional last chapter. The
++# physics and the control design are `design/companions/longitudinal_aircraft.md`.
+ 
+ """The gravitational acceleration, in m/s², constant over a flat earth."""
+ const g = 9.81
+@@ -101,9 +101,9 @@ state_events(::GroundContact) = (touchdown = StateEvent(contact_guard, contact_h
+ 
+ The plant alone, `Longitudinal()` as the child `plant`, under the root inputs
+ `δe` and `δt`. A leaf may be the root on its own (D-208); the `Group` is there
+-only to give the plant the path `"plant"` it has in `closed_loop` and
+-`descent`, so the trim problem, the taps and every reader address it the same
+-way in every layer.
++only to give the plant the path `"plant"` it has in `pitch_hold`, `autopilot`,
++`piloted` and `closed_loop`, so the trim problem, the taps and every reader
++address it the same way in each.
+ """
+ aircraft() = Group((; plant = Longitudinal()); input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
+ 
+@@ -140,6 +140,237 @@ longitudinal_taps() = taps(
+     u = (δe = get_input(:δe), δt = get_input(:δt)),
+     y = (h = get_output("plant", :h), V = get_output("plant", :V)))
+ 
++"""
++    pitch_hold(; discrete = false)
++
++Chapter 4's loop: the aircraft with one PID on its pitch angle commanding the
++elevator, under the root inputs `θ_ref` and `δt`. The controller `θ_ctl` reads
++`θ_ref` as its reference and the plant's `θ` as its measurement, with
++`Kp = -2.0` and `Ki = -1.0`, negative since a positive elevator pitches down.
++It is the continuous `PID`, or with `discrete = true` the `DiscretePID` at
++50 Hz, the same law on the discrete tier. The integral term carries the
++elevator, so at trim it holds the trim elevator: the state `x.q` of the `PID`,
++the store `s.q` of the `DiscretePID`. `longitudinal_aircraft.md`, section 4.
++"""
++function pitch_hold(; discrete = false)
++    gains = (Kp = -2.0, Ki = -1.0)
++    Group((; plant = Longitudinal(), θ_ctl = discrete ? DiscretePID(; gains...) : PID(; gains...));
++          input_wires = ("θ_ref" => "θ_ctl/r", "δt" => "plant/δt"),
++          local_wires = ("plant/θ" => "θ_ctl/y", "θ_ctl/u" => "plant/δe"),
++          sample_times = discrete ? (θ_ctl = Absolute(Hz(50)),) : (;))
++end
++
++"""
++    Altimeter()
++
++The altimeter's measurement: the altitude `h` plus the sensor's error `noise`,
++published as the bare output `y`. A stateless discrete leaf, so it computes its
++output only at its ticks and holds it in between (§3.2): placed at the loop's
++rate, the whole measurement is sampled and held there, as a sensor configured
++to the loop's rate delivers it.
++"""
++struct Altimeter <: AbstractComponent end
++
++s_init(::Altimeter) = nothing
++u_types(::Altimeter) = (h = Float64, noise = Float64)
++y_types(::Altimeter) = Float64
++y_direct(::Altimeter, (; u)) = u.h + u.noise
++
++"""
++    sensing(; noise_psd = 1.8e-3)
++
++The altimeter at 10 Hz, the altitude loop's rate: the altitude `h` plus
++Gaussian white noise of two-sided density `noise_psd`, in m² s, seeded at 7,
++published as `h_meas`. The default is 0.134 m per sample at 10 Hz, the same
++density as 0.3 m per sample at 50 Hz, so the sensor's band ends at the loop's
++Nyquist frequency and the loop reads no aliased noise.
++"""
++sensing(; noise_psd = 1.8e-3) =
++    Group((; noise = GaussianWhiteNoise(seed = 7, psd = noise_psd), altimeter = Altimeter());
++          input_wires = ("h" => "altimeter/h",),
++          local_wires = ("noise/y" => "altimeter/noise",),
++          output_wires = ("altimeter/y" => "h_meas",),
++          sample_times = (noise = Absolute(Hz(10)), altimeter = Absolute(Hz(10))))
++
++"""
++    cascade(; standby = false)
++
++The autopilot: four `DiscretePID` controllers that fly pitch rate through the
++elevator, pitch attitude through pitch rate, altitude through pitch attitude
++and airspeed through the throttle, the pitch loops at 50 Hz and the altitude
++and airspeed loops at 10 Hz. It takes the references `h_ref` and `V_ref`, the
++measurements `h_meas`, `θ`, `q` and `V` and the flag `engaged`, and publishes
++`δe` and `δt`.
++
++Each controller holds on the `saturated` code of the controller inside it, and
++the two innermost read a constant zero code. While `engaged` holds and its
++path is free, a controller back-calculates against its own limits.
++
++`standby = true` adds the tracking reference of `pid_anti_windup.md` section
++11, so that the cascade not in command follows the command in force: each
++outer controller tracks the measured variable of the loop inside it, and the
++two innermost track the inputs `δe_track` and `δt_track`, which the cascade
++then also takes. Every `Tt` is 0.02 s. The gains and the limits are
++`longitudinal_aircraft.md` section 4.
++"""
++function cascade(; standby = false)
++    fast, slow = Absolute(Hz(50)), Absolute(Hz(10))
++    pid(; gains...) = DiscretePID(; gains..., Tt = 0.02, hold = true, tracking = standby)
++    # with standby, the outer controllers also read the inner measurements, and two faces join
++    θ_readers, q_readers = standby ? (("θ_ctl/y", "h_ctl/v"), ("q_ctl/y", "θ_ctl/v")) : ("θ_ctl/y", "q_ctl/y")
++    tracking_wires = standby ? ("δe_track" => "q_ctl/v", "δt_track" => "V_ctl/v") : ()
++    Group((; h_ctl = pid(Kp = 0.01, Ki = 0.001, u_min = -0.26, u_max = 0.26),
++             θ_ctl = pid(Kp = 2.0, Ki = 0.5, u_min = -0.5, u_max = 0.5),
++             q_ctl = pid(Kp = -0.2, Ki = -0.4, u_min = -0.5, u_max = 0.5),
++             V_ctl = pid(Kp = 0.2, Ki = 0.05, u_min = 0.0, u_max = 1.0),
++             free = Constant(Int8(0)));
++          # outermost first, each controller's hold on the one inside it
++          input_wires = ("h_ref" => "h_ctl/r", "h_meas" => "h_ctl/y", "θ" => θ_readers, "q" => q_readers,
++                         "V_ref" => "V_ctl/r", "V" => "V_ctl/y",
++                         "engaged" => ("h_ctl/engaged", "θ_ctl/engaged", "q_ctl/engaged", "V_ctl/engaged"),
++                         tracking_wires...),
++          local_wires = ("h_ctl/u" => "θ_ctl/r", "θ_ctl/u" => "q_ctl/r",
++                         "θ_ctl/saturated" => "h_ctl/saturation", "q_ctl/saturated" => "θ_ctl/saturation",
++                         "free/y" => "q_ctl/saturation", "free/y" => "V_ctl/saturation"),
++          output_wires = ("q_ctl/u" => "δe", "V_ctl/u" => "δt"),
++          sample_times = (h_ctl = slow, θ_ctl = fast, q_ctl = fast, V_ctl = slow))
++end
++
++"""
++    actuators(solution)
++
++The elevator and throttle actuators, each a `RateLimiter` at 50 Hz then a
++`FirstOrderLag`: the elevator at 1 rad/s and 50 ms, the throttle at 0.5 /s
++and 0.5 s, both starting at the trim triple `solution`. It takes `δe_cmd` and
++`δt_cmd` and publishes `δe` and `δt`.
++"""
++actuators(solution) =
++    Group((; δe_limiter = RateLimiter(rising = 1.0, s0 = solution.δe), δe_lag = FirstOrderLag(τ = 0.05, x0 = solution.δe),
++             δt_limiter = RateLimiter(rising = 0.5, s0 = solution.δt), δt_lag = FirstOrderLag(τ = 0.5, x0 = solution.δt));
++          input_wires = ("δe_cmd" => "δe_limiter/u", "δt_cmd" => "δt_limiter/u"),
++          local_wires = ("δe_limiter/y" => "δe_lag/u", "δt_limiter/y" => "δt_lag/u"),
++          output_wires = ("δe_lag/y" => "δe", "δt_lag/y" => "δt"),
++          sample_times = (δe_limiter = Absolute(Hz(50)), δt_limiter = Absolute(Hz(50))))
++
++"""
++    feedback_wires()
++
++The wires every loop of chapters 5 to 7 shares at its root: the plant's
++altitude through the sensing, its pitch angle, pitch rate and airspeed to the
++cascade, and the actuators to the plant.
++"""
++feedback_wires() = ("plant/h" => "sensing/h", "sensing/h_meas" => "cascade/h_meas",
++                    "plant/θ" => "cascade/θ", "plant/q" => "cascade/q", "plant/V" => "cascade/V",
++                    "actuators/δe" => "plant/δe", "actuators/δt" => "plant/δt")
++
++"""
++    autopilot(solution; noise_psd = 1.8e-3)
++
++Chapter 5's loop: the aircraft under the cascade, with the actuators and the
++sensing, a `Group` of groups (§13.7) under the root inputs `h_ref` and
++`V_ref`. `solution` is the trim triple `(θ, δe, δt)` of `level_flight()`. The
++cascade is always engaged here, through a `Constant`, and has no standby.
++`cruise(solution)` is its initial condition.
++"""
++autopilot(solution; noise_psd = 1.8e-3) =
++    Group((; plant = Longitudinal(), sensing = sensing(; noise_psd), cascade = cascade(),
++             actuators = actuators(solution), engaged = Constant(true));
++          input_wires = ("h_ref" => "cascade/h_ref", "V_ref" => "cascade/V_ref"),
++          local_wires = (feedback_wires()..., "engaged/y" => "cascade/engaged",
++                         "cascade/δe" => "actuators/δe_cmd", "cascade/δt" => "actuators/δt_cmd"))
++
++"""
++    cruise(solution)
++
++The initial condition of `autopilot` at the trim triple `solution`: the
++references at 1000 m and 50 m/s, the plant's trim pitch angle beside its
++default level state, and the integral terms of the three controllers that
++command a nonzero trim value, the altitude loop's pitch angle, the pitch-rate
++loop's elevator and the airspeed loop's throttle. `yf` sits at its fixed point,
++the measurement. `longitudinal_aircraft.md`, section 4.
++"""
++cruise(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0)),
++                           at("plant", condition(Longitudinal(); θ = solution.θ)),
++                           at("cascade/h_ctl", set(s = (q = solution.θ, yf = 1000.0))),
++                           at("cascade/q_ctl", set(s = (q = solution.δe, yf = 0.0))),
++                           at("cascade/V_ctl", set(s = (q = solution.δt, yf = 50.0))))
++
++"""
++    selection(solution)
++
++The engage switch: a `Switch` per control, which selects the cascade's command
++`δe_auto` or `δt_auto` while the latched `engage` holds and the pilot's
++`δe_pilot` or `δt_pilot` otherwise, and a `UnitDelay` at 50 Hz per control
++that holds the selected command one tick old, starting at the trim triple
++`solution`. The `UnitDelay` `latch` holds `engage` at 10 Hz, the cascade's
++slowest rate, so that one staged `engage` reaches the switches and every
++controller at the same tick, one tick of the latch after it is read. It
++publishes the selected commands as `δe` and `δt`, the delayed ones as
++`δe_prev` and `δt_prev`, and the latched flag as `engaged`.
++"""
++selection(solution) =
++    Group((; latch = UnitDelay(false), select_δe = Switch{Float64}(), select_δt = Switch{Float64}(),
++             command_δe = UnitDelay(solution.δe), command_δt = UnitDelay(solution.δt));
++          input_wires = ("δe_auto" => "select_δe/in1", "δe_pilot" => "select_δe/in2",
++                         "δt_auto" => "select_δt/in1", "δt_pilot" => "select_δt/in2", "engage" => "latch/u"),
++          local_wires = ("latch/y" => "select_δe/select", "latch/y" => "select_δt/select",
++                         "select_δe/y" => "command_δe/u", "select_δt/y" => "command_δt/u"),
++          output_wires = ("select_δe/y" => "δe", "select_δt/y" => "δt",
++                          "command_δe/y" => "δe_prev", "command_δt/y" => "δt_prev", "latch/y" => "engaged"),
++          sample_times = (latch = Absolute(Hz(10)), command_δe = Absolute(Hz(50)), command_δt = Absolute(Hz(50))))
++
++"""
++    piloted(solution; noise_psd = 1.8e-3)
++
++Chapter 6's loop: `autopilot`'s with the engage switch between the cascade and
++the actuators, under the root inputs `h_ref`, `V_ref`, `δe_pilot`, `δt_pilot`
++and `engage`. `selection` latches `engage` and drives its switches and the
++cascade's `engaged` input from the latch. The cascade has its standby, and its tracking inputs read the selected
++commands one tick old, so the cascade not in command follows the pilot and its
++engagement is bumpless (`pid_anti_windup.md`, section 11). Without the delays
++the tracking wires close an algebraic loop through the switches.
++`hand_flown(solution)` is its initial condition.
++"""
++piloted(solution; noise_psd = 1.8e-3) =
++    Group((; plant = Longitudinal(), sensing = sensing(; noise_psd), cascade = cascade(standby = true),
++             selection = selection(solution), actuators = actuators(solution));
++          input_wires = ("h_ref" => "cascade/h_ref", "V_ref" => "cascade/V_ref",
++                         "δe_pilot" => "selection/δe_pilot", "δt_pilot" => "selection/δt_pilot",
++                         "engage" => "selection/engage"),
++          local_wires = (feedback_wires()...,
++                         "cascade/δe" => "selection/δe_auto", "cascade/δt" => "selection/δt_auto",
++                         "selection/δe" => "actuators/δe_cmd", "selection/δt" => "actuators/δt_cmd",
++                         "selection/δe_prev" => "cascade/δe_track", "selection/δt_prev" => "cascade/δt_track",
++                         "selection/engaged" => "cascade/engaged"),
++          output_wires = ("plant/h" => "h",))
++
++"""
++    hand_flown(solution)
++
++The initial condition of `piloted` at the trim triple `solution`: `cruise`'s,
++with the pilot's commands at the trim and the autopilot disengaged.
++"""
++hand_flown(solution) = combine(cruise(solution),
++                               set(u = (δe_pilot = solution.δe, δt_pilot = solution.δt, engage = false)))
++
++"""
++    approach(solution; noise_psd = 1.8e-3)
++
++Chapter 7's model: `piloted`'s as the child `vehicle`, with the ground and a
++stop request, under the same five root inputs. A `GroundContact` reads the
++vehicle's altitude, and a `StopRequest(reason = "touchdown")` reads its
++`contact`, so the run ends at the touchdown's boundary with that reason in the
++termination record (§13.5). The run flies the approach by staging a descending
++`h_ref`, about 1.5 m/s at 50 m/s, the glide angle of
++`longitudinal_aircraft.md` section 5, and there is no flare.
++`at("vehicle", hand_flown(solution))` is its initial condition.
++"""
++approach(solution; noise_psd = 1.8e-3) =
++    Group((; vehicle = piloted(solution; noise_psd), gear = GroundContact(), stop = StopRequest(reason = "touchdown"));
++          input_wires = ("h_ref" => "vehicle/h_ref", "V_ref" => "vehicle/V_ref", "δe_pilot" => "vehicle/δe_pilot",
++                         "δt_pilot" => "vehicle/δt_pilot", "engage" => "vehicle/engage"),
++          local_wires = ("vehicle/h" => "gear/h", "gear/contact" => "stop/u"))
++
+ """
+     lqr_gains(linearization; qx = 1 ./ [5.0, 0.05, 0.05, 0.2, 20.0] .^ 2,
+               qξ = 1 ./ [100.0, 25.0] .^ 2, r = 1 ./ [0.2, 0.3] .^ 2)
+@@ -315,15 +546,3 @@ trimmed(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0, mode = true))
+                             at("pid_controller/h_ctl", set(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
+                             at("pid_controller/q_ctl", set(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
+                             at("pid_controller/V_ctl", set(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
+-
+-"""
+-    descent()
+-
+-The aircraft with the ground and a stop request, under the root inputs `δe`
+-and `δt`: a `GroundContact` reads the plant's altitude, and a
+-`StopRequest(reason = "touchdown")` reads its `contact`, so the run ends at the
+-touchdown's boundary with that reason in the termination record (§13.5).
+-"""
+-descent() = Group((; plant = Longitudinal(), gear = GroundContact(), stop = StopRequest(reason = "touchdown"));
+-                  input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"),
+-                  local_wires = ("plant/h" => "gear/h", "gear/contact" => "stop/u"))
+diff --git a/examples/test/runtests.jl b/examples/test/runtests.jl
+index 24a589c..dcebe9a 100644
+--- a/examples/test/runtests.jl
++++ b/examples/test/runtests.jl
+@@ -7,8 +7,10 @@ using Test, LinearAlgebra, BenchmarkTools
+ using Statistics: std
+ using Redstone, RedstoneExamples
+ import Redstone: Build, ProbeDual, Simulation, build, init!, run!, step!, stage!, trim!, linearize, state, modes,
+-    series, reads, get_output, get_face, get_input, termination, phase_bodies, set, at, combine, override, condition, EndTimeReached,
+-    ModelRequestedStop
++    series, reads, get_output, get_face, get_input, get_state, taps, termination, lifecycle, phase_bodies, set, at, combine,
++    override, condition, checkpoint, restore!, replay!, trace, local_wires, input_wires, output_wires, diagnostics,
++    DiagnosticError, TapResolution, AlgebraicCycle, EndTimeReached, ModelRequestedStop
++import Redstone.Library: Group
+ 
+ include("utils.jl")
+ 
+diff --git a/examples/test/test_longitudinal.jl b/examples/test/test_longitudinal.jl
+index bee1ab3..1b74eb3 100644
+--- a/examples/test/test_longitudinal.jl
++++ b/examples/test/test_longitudinal.jl
+@@ -2,7 +2,7 @@
+ # pins are probed values.
+ 
+ import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps, lqr_gains, closed_loop,
+-    trimmed, descent
++    trimmed, pitch_hold, autopilot, cruise, piloted, hand_flown, approach
+ 
+ 
+ # The aircraft trimmed at level flight, the simulation left at the commit.
+@@ -12,9 +12,8 @@ function trimmed_aircraft()
+     (sim, report)
+ end
+ 
+-# The aircraft's state from `plant_state` at the trim controls, or at the throttle `δt`.
+-at_trim(solution, plant_state; δt = solution.δt) =
+-    combine(at("plant", plant_state), set(u = (δe = solution.δe, δt = δt)))
++# The aircraft's state from `plant_state` at the trim controls.
++at_trim(solution, plant_state) = combine(at("plant", plant_state), set(u = (δe = solution.δe, δt = solution.δt)))
+ 
+ # The closed loop flown from the trim, the cascade or the tracker in command, the altitude
+ # reference stepped at 5 s and command handed to the other controller at `switch_at`. A staged
+@@ -36,14 +35,73 @@ function fly_closed_loop(solution, gains; cascade = true, switch_at = nothing, h
+     sim
+ end
+ 
++# The frame index of time `t` under the loops' frame of 5 ms.
++frame_index(t) = round(Int, t * 200)
++
++# Chapter 4's loop at the trim, on either tier, its integral term holding the trim elevator: the
++# continuous PID's state or the discrete one's store. The reference starts `θ_step` above the trim.
++function pitch_hold_at_trim(solution; discrete = false, θ_step = 0.0)
++    sim = Simulation(pitch_hold(; discrete); Δt_frame = 1//200)
++    integral = discrete ? set(s = (q = solution.δe,)) : set(x = (q = solution.δe,))
++    init!(sim, combine(set(u = (θ_ref = solution.θ + θ_step, δt = solution.δt)),
++                       at("plant", condition(Longitudinal(); θ = solution.θ)), at("θ_ctl", integral)))
++    sim
++end
++
++# Chapter 5's loop flown from the trim, the altitude reference `h_step` above it from the start.
++function fly_autopilot(solution; h_step = 50.0, noise_psd = 1.8e-3, t_end = 120.0)
++    sim = Simulation(autopilot(solution; noise_psd); Δt_frame = 1//200)
++    init!(sim, override(cruise(solution), set(u = (h_ref = 1000.0 + h_step,))))
++    run!(sim; t_end)
++    sim
++end
++
++# The scenarios below stage each write while stopped at its nominal time. It applies at the top of
++# the next frame, and a discrete component reads it at its next tick.
++
++# Chapter 6's flight, on `piloted` or nested in `approach`: the pilot holds the trim, pulls the
++# elevator 0.02 rad over [5, 7) s and engages the autopilot at 30 s, and the simulation stops at
++# `until`.
++function fly_by_hand!(sim, solution; until = 60.0)
++    step!(sim; frames = frame_index(5.0))
++    stage!(sim, "δe_pilot" => solution.δe - 0.02)
++    step!(sim; frames = frame_index(7.0) - frame_index(5.0))
++    stage!(sim, "δe_pilot" => solution.δe)
++    step!(sim; frames = frame_index(30.0) - frame_index(7.0))
++    stage!(sim, "engage" => true)
++    step!(sim; frames = frame_index(until) - frame_index(30.0))
++end
++
++# The approach's reference, staged by the run from 1000 m down at `sink_rate`, one write per tick of
++# the altitude loop, until the stop request ends the run.
++function descend!(sim; sink_rate = 1.5)
++    h_ref = 1000.0
++    while lifecycle(sim) !== :stopped
++        h_ref -= sink_rate / 10
++        stage!(sim, "h_ref" => h_ref)
++        step!(sim; t_plus = 1//10)
++    end
++end
++
++# The plant's four logged outputs a replay or a restore is compared on.
++plant_outputs(sim, path) = series(sim, reads(h = get_output(path, :h), θ = get_output(path, :θ),
++                                             V = get_output(path, :V), q = get_output(path, :q))).columns
++
++# The instants at which a logged signal changes value.
++change_times(sim, signal) = logged_times(sim)[2:end][diff(signal) .!= 0]
++
++# Whether `t` sits on the 10 Hz grid.
++on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
++
+ @testset "Longitudinal" begin
+     sim, report = trimmed_aircraft()
+     solution = report.solution
+     linearization = linearize(sim, longitudinal_taps())
+     gains = lqr_gains(linearization)
+ 
+-    @testset "the aircraft, the closed loop and the descent build under both activations (§9.4)" begin
+-        for model in (aircraft(), closed_loop(solution, gains), descent())
++    @testset "the aircraft, the chapters' loops and the closed loop build under both activations (§9.4)" begin
++        for model in (aircraft(), pitch_hold(), pitch_hold(discrete = true), autopilot(solution), piloted(solution),
++                      approach(solution), closed_loop(solution, gains))
+             @test build(model; activations = (Float64, ProbeDual)) isa Build
+         end
+     end
+@@ -172,18 +230,195 @@ end
+         @test isapprox(std(noise), 0.3; rtol = 0.1)
+     end
+ 
+-    @testset "the descent ends at touchdown with the gear's stop reason (§2.3, §13.5, D-316)" begin
+-        flight = Simulation(descent(); Δt_frame = 1//100)
+-        init!(flight, at_trim(solution, condition(Longitudinal(); θ = solution.θ, h = 30.0); δt = 0.25))
+-        run!(flight; t_end = 200.0)
++    @testset "chapter 4: the continuous pitch hold linearizes with unit DC gain, the discrete one refuses (§14.10, D-272)" begin
++        loop_taps = taps(x = (V = get_state("plant", :V), γ = get_state("plant", :γ), θ = get_state("plant", :θ),
++                              q = get_state("plant", :q), ξ = get_state("θ_ctl", :q)),
++                         u = (θ_ref = get_input(:θ_ref),), y = (θ = get_output("plant", :θ),))
++        closed = linearize(pitch_hold_at_trim(solution), loop_taps)
++        # The probe's eigenvalues: -2.047 ± 8.064im, -1.392, -0.642 and -0.052.
++        λs = eigvals(closed.A)
++        @test all(λ -> real(λ) < 0, λs)
++        @test maximum(imag, λs) ≈ 8.063682350858338 atol = 1e-6
++        @test maximum(real, λs) ≈ -0.051555431912159534 atol = 1e-6
++        @test (closed.D - closed.C * (closed.A \ closed.B))[1] ≈ 1 atol = 1e-9
++        refusal = try
++            linearize(pitch_hold_at_trim(solution; discrete = true), loop_taps)
++            nothing
++        catch err
++            err
++        end
++        # The discrete tier holds the controller's store and the reference it reads: one refusal for
++        # each tap.
++        @test refusal isa DiagnosticError
++        @test all(d -> d isa TapResolution, diagnostics(refusal))
++        @test Set((d.reason, d.tap) for d in diagnostics(refusal)) == Set([(:discrete_state, :x), (:unseedable, :u)])
++    end
++
++    @testset "chapter 4: the discrete pitch hold at 50 Hz follows the continuous one through a step (§10.5)" begin
++        θs = map((false, true)) do discrete
++            sim = pitch_hold_at_trim(solution; discrete, θ_step = 0.05)
++            run!(sim; t_end = 9.0)
++            logged_port(sim, "plant", :θ)
++        end
++        # The probe's peaks: 0.07991 continuous and 0.08200 discrete; the largest gap 0.00211.
++        @test maximum(θs[1]) ≈ 0.0799086028202168 atol = 1e-4
++        @test maximum(θs[2]) ≈ 0.08199667463210653 atol = 1e-4
++        @test maximum(abs, θs[1] .- θs[2]) <= 0.003
++    end
++
++    @testset "chapter 5: the autopilot rests at the trim (§14.5)" begin
++        resting = fly_autopilot(solution; h_step = 0.0, noise_psd = 0.0, t_end = 60.0)
++        # The probe's largest drift: 2.3e-10 m, 3.9e-11 m/s and 3.7e-12 rad.
++        @test all(h -> abs(h - 1000) <= 1e-6, logged_port(resting, "plant", :h))
++        @test all(V -> abs(V - 50) <= 1e-6, logged_port(resting, "plant", :V))
++        @test all(θ -> abs(θ - solution.θ) <= 1e-6, logged_port(resting, "plant", :θ))
++    end
++
++    climb = fly_autopilot(solution)
++
++    @testset "chapter 5: the altitude and airspeed loops tick at 10 Hz and the pitch loops at 50 Hz (§10.5)" begin
++        for (loop, ten_hz) in (("h_ctl", true), ("V_ctl", true), ("θ_ctl", false), ("q_ctl", false))
++            changes = change_times(climb, logged_port(climb, "cascade/$loop", :u))
++            @test !isempty(changes)
++            @test all(t -> isapprox(50t, round(50t); atol = 1e-6), changes)
++            @test all(on_10_hz, changes) == ten_hz
++        end
++    end
++
++    @testset "chapter 5: the autopilot holds the altitude step (§13.7)" begin
++        # The probe's figures after 75 s: 0.0775 m and 0.0187 m/s; its peak 1050.061.
++        @test termination(climb).source isa EndTimeReached
++        late = logged_times(climb) .>= 75
++        @test all(h -> abs(h - 1050) <= 0.12, logged_port(climb, "plant", :h)[late])
++        @test all(V -> abs(V - 50) <= 0.03, logged_port(climb, "plant", :V)[late])
++        @test maximum(logged_port(climb, "plant", :h)) < 1050.2
++    end
++
++    @testset "chapter 5: the altimeter samples and holds at 10 Hz, its noise of the declared density (§3.2, §7.3)" begin
++        h_meas = logged_face(climb, "sensing", :h_meas)
++        @test all(on_10_hz, change_times(climb, h_meas))
++        noise = (h_meas .- logged_port(climb, "plant", :h))[on_10_hz.(logged_times(climb))]
++        # The probe's deviation per sample: 0.1322, against sqrt(1.8e-3 / 0.1) = 0.134.
++        @test isapprox(std(noise), sqrt(1.8e-3 / 0.1); rtol = 0.1)
++    end
++
++    @testset "chapter 6: the tracking wires without the delays close an algebraic loop per switch (§5.4, §13.8)" begin
++        model = piloted(solution)
++        undelayed = map(local_wires(model)) do wire
++            wire.first == "selection/δe_prev" ? ("selection/δe" => wire.second) :
++            wire.first == "selection/δt_prev" ? ("selection/δt" => wire.second) : wire
++        end
++        bypassed = Group(model.children; local_wires = undelayed, input_wires = input_wires(model),
++                         output_wires = output_wires(model))
++        refusal = try
++            build(bypassed)
++            nothing
++        catch err
++            err
++        end
++        @test refusal isa DiagnosticError
++        cycles = diagnostics(refusal)
++        @test length(cycles) == 2
++        @test all(d -> d isa AlgebraicCycle && d.classification === :real, cycles)
++        @test Set(Set(d.members) for d in cycles) ==
++              Set([Set(["cascade/q_ctl", "selection/select_δe"]), Set(["cascade/V_ctl", "selection/select_δt"])])
++    end
++
++    hand = Simulation(piloted(solution); Δt_frame = 1//200)
++    init!(hand, hand_flown(solution))
++    fly_by_hand!(hand, solution)
++    run!(hand; t_end = 90.0)
++
++    @testset "chapter 6: the pilot's staged commands and the engage land on their ticks (§11.3)" begin
++        # Snapshot k + 1 is the frame top t = k h, and a write staged at t applies from the frame
++        # after it, so the pull shows at snapshot 1002, its release at 1402 and the engage at 6002.
++        staged = series(hand, reads(δe = get_input("δe_pilot"), engage = get_input("engage"))).columns
++        @test findfirst(!=(solution.δe), staged.δe) == 1002
++        @test findfirst(==(solution.δe), staged.δe[1002:end]) + 1001 == 1402
++        @test findfirst(identity, staged.engage) == 6002
++        by_hand = window(hand, 0, 30)
++        @test logged_face(hand, "selection", :δe)[by_hand] == staged.δe[by_hand]
++        # The probe's altitudes by hand: up to 1016.7 m, down to 988.0 m.
++        @test maximum(logged_port(hand, "plant", :h)[by_hand]) > 1015
++    end
++
++    @testset "chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)" begin
++        # The probe's standby gaps over [8, 30): 0.0043 on the elevator, and over [5, 30) 0.0156 on
++        # the throttle, whose loop ticks at 10 Hz. The latch publishes the engage staged at 30 s at
++        # its 30.2 s tick, where the switches and every controller read it, and the selected
++        # commands jump there by the standby's gap: 0.0011 on the elevator and 0.0086 on the
++        # throttle, under the 0.01 its rate limiter passes per tick.
++        δe_selected, δt_selected = logged_face(hand, "selection", :δe), logged_face(hand, "selection", :δt)
++        @test largest_gap(logged_face(hand, "cascade", :δe), δe_selected, hand, 8, 30) <= 0.008
++        @test largest_gap(logged_face(hand, "cascade", :δt), δt_selected, hand, 5, 30) <= 0.02
++        switch = findfirst(identity, logged_face(hand, "selection", :engaged))
++        @test logged_times(hand)[switch] == 30.2
++        @test abs(δe_selected[switch] - δe_selected[switch - 1]) <= 0.005
++        @test abs(δt_selected[switch] - δt_selected[switch - 1]) <= 0.01
++    end
++
++    @testset "chapter 6: once engaged the autopilot recaptures the reference altitude (§13.7)" begin
++        # The probe's largest error over [80, 90): 0.057 m.
++        @test all(h -> abs(h - 1000) <= 0.12, logged_port(hand, "plant", :h)[window(hand, 80, 90)])
++    end
++
++    flight = Simulation(approach(solution); Δt_frame = 1//200)
++    init!(flight, at("vehicle", hand_flown(solution)))
++    fly_by_hand!(flight, solution)
++    by_hand_outputs = plant_outputs(flight, "vehicle/plant")
++    descent_top = checkpoint(flight)
++    descend!(flight)
++
++    @testset "chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§2.3, §13.5, D-316)" begin
++        @test by_hand_outputs == map(column -> column[1:length(by_hand_outputs.h)], plant_outputs(hand, "plant"))
+         record = termination(flight)
+-        @test record.t ≈ 17.670844829159307 atol = 1e-3
++        # The probe's touchdown: 726.644 s, 6667 writes of the reference after the cruise.
++        @test record.t ≈ 726.6442291951134 atol = 1e-2
+         @test record.source isa ModelRequestedStop
+         @test record.source.path == "stop"
+         @test record.source.port === :y
+         @test record.source.reason == "touchdown"
+-        @test abs(state(flight, "plant").h) <= 1e-6
++        @test abs(state(flight, "vehicle/plant").h) <= 1e-6
+         @test modes(flight, "gear").contact === true
++        # The probe's largest tracking error over [160 s, the last second): 0.247 m.
++        descending = window(flight, 160, record.t - 1)
++        h_refs = series(flight, reads(h_ref = get_input("h_ref"))).columns.h_ref
++        @test maximum(abs, (logged_port(flight, "vehicle/plant", :h) .- h_refs)[descending]) <= 0.35
++    end
++
++    @testset "chapter 8: the whole flight replays bit-identically from its trace, touchdown included (§12.7)" begin
++        replayed = Simulation(approach(solution); Δt_frame = 1//200)
++        replay!(replayed, trace(flight))
++        @test termination(replayed).t == termination(flight).t
++        @test termination(replayed).source.reason == "touchdown"
++        @test logged_times(replayed) == logged_times(flight)
++        @test plant_outputs(replayed, "vehicle/plant") == plant_outputs(flight, "vehicle/plant")
++        @test logged_face(replayed, "vehicle/selection", :δe) == logged_face(flight, "vehicle/selection", :δe)
++    end
++
++    @testset "chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)" begin
++        second = Simulation(approach(solution); Δt_frame = 1//200)
++        restore!(second, descent_top)
++        descend!(second; sink_rate = 2.0)
++        record = termination(second)
++        # The probe's second touchdown, at 2 m/s: 559.969 s.
++        @test record.t ≈ 559.9685756981099 atol = 1e-2
++        @test record.source.reason == "touchdown"
++        @test abs(state(second, "vehicle/plant").h) <= 1e-6
++        # Restored and flown at 1.5 m/s again, the first approach's touchdown, to the bit.
++        restore!(second, descent_top)
++        descend!(second)
++        @test termination(second).t == termination(flight).t
++    end
++
++    @testset "the approach's phase bodies allocate nothing (§9.8)" begin
++        bodies = phase_bodies(Simulation(approach(solution); Δt_frame = 1//200))
++        for name in (:sweep_1, :sweep_2, :rhs, :ticks)
++            body = bodies[name]
++            body(); body(0)
++            @test @ballocated($body()) == 0
++            @test @ballocated($body(1)) == 0
++        end
+     end
+ 
+     @testset "the closed loop's phase bodies allocate nothing (§9.8)" begin
