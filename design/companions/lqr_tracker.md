@@ -73,33 +73,107 @@ Systems*. The sign of `M_12` follows from `0 = A Δx* + B Δu*`; the
 FlightPhysics notes drop it, and their design script is unaffected because
 it inverts the whole matrix numerically.
 
-Regulating about the equilibrium, `Δu - Δu* = -K (Δx - Δx*)`, and
-substituting the two blocks gives the law
+The quantities to regulate are the errors to that equilibrium,
+
+```
+Δx̃ = Δx - Δx*      Δũ = Δu - Δu*      Δz̃ = Δz - Δz*
+```
+
+Subtracting the equilibrium equations from the linear model gives the
+errors' own dynamics. For a constant reference `Δx*` is constant, so
+`d/dt Δx̃ = Δẋ` and
+
+```
+d/dt Δx̃ = A Δx̃ + B Δũ
+Δz̃      = C Δx̃ + D Δũ
+```
+
+The errors obey the linear model's own matrices, with the origin at the
+target. Driving `z` to `z_ref` is then regulating `Δx̃` to zero, and the
+LQR designed for `(A, B)` applies as it stands,
+
+```
+Δũ = -K Δx̃        d/dt Δx̃ = (A - B K) Δx̃
+```
+
+The closed loop is asymptotically stable, so `Δx̃` goes to zero, `Δũ`
+goes with it, and `Δz̃ = C Δx̃ + D Δũ` follows. In the steady state
+`Δx = Δx*`, `Δu = Δu*` and `Δz = Δz*`. Undoing the definitions gives the
+law in the measured quantities,
+
+```
+Δu = Δu* + Δũ
+   = Δu* - K (Δx - Δx*)
+   = M_22 Δz* - K Δx + K M_12 Δz*
+   = (M_22 + K M_12) Δz* - K Δx
+```
+
+that is,
 
 ```
 Δu = K_fwd Δz* - K_fbk Δx        K_fwd = M_22 + K M_12,   K_fbk = K
 u  = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim)
 ```
 
-Because the closed loop is stable, `Δx` converges to `Δx*`, and at that
-point `Δz = Δz*` on the linear model. On the plant the model error leaves a
-steady offset, which is what section 3 removes.
+The result holds for a constant reference on the linear model. A moving
+reference adds `-M_12 ż_ref` to the error dynamics, a disturbance the
+regulator only attenuates, which is the case of an inner tracker under an
+outer loop (section 6). On the plant the model error leaves a steady
+offset, which is what section 3 removes.
 
 ## 3. Integral action
 
 For the subset `z_i` of the commands that must settle with zero error, the
-state is augmented with the integral of their error, `ξ̇ = z_i - z_i*`, and
-the LQR is designed for the augmented plant
+state is augmented with the integral of their error,
 
 ```
-A_aug = [ A    0 ]      B_aug = [ B   ]      K_aug = [ K_x  K_ξ ]
+ξ̇ = Δz̃_i = C_i Δx̃ + D_i Δũ
+```
+
+where `C_i` and `D_i` are the rows of `C` and `D` for `z_i`, and
+`Δz̃_i = z_i - z_i*` because the trim values cancel. In the error
+coordinates the augmented plant is homogeneous,
+
+```
+d/dt [ Δx̃ ] = A_aug [ Δx̃ ] + B_aug Δũ
+     [ ξ  ]         [ ξ  ]
+
+A_aug = [ A    0 ]      B_aug = [ B   ]
         [ C_i  0 ]              [ D_i ]
 ```
 
-MATLAB's `lqi` is this design, one integrator per tracked output. The law
-becomes `u = u_trim + K_fwd Δz* - K_x Δx - K_ξ ξ` with
-`K_fwd = M_22 + K_x M_12`, and a disturbance that shifts the equilibrium is
-absorbed by `ξ`, since the stable closed loop still forces `ξ̇ = 0`.
+In `Δx` and `Δu` the integrator row would carry `-Δz_i*` as a forcing
+term, which is why the design is stated on the errors. The LQR for
+`(A_aug, B_aug)` is
+
+```
+Δũ = -K_x Δx̃ - K_ξ ξ        K_aug = [ K_x  K_ξ ]
+```
+
+Its closed loop is asymptotically stable, so in the steady state `ξ̇ = 0`,
+which reads `z_i = z_i*`. A constant disturbance `w` does not change that.
+It enters the first row as `G w`,
+
+```
+d/dt [ Δx̃ ] = (A_aug - B_aug K_aug) [ Δx̃ ] + [ G w ]
+     [ ξ  ]                         [ ξ  ]   [ 0   ]
+```
+
+and leaves the closed-loop matrix alone, so the state still settles and
+the second row still gives `ξ̇ = 0`. What moves is the point it settles
+at. `Δx̃` and `ξ` are no longer zero, and `ξ` holds the value that
+balances `w`. Model error acts the same way, which removes section 2's
+offset. Undoing the definitions,
+
+```
+Δu = Δu* + Δũ
+   = Δu* - K_x (Δx - Δx*) - K_ξ ξ
+   = (M_22 + K_x M_12) Δz* - K_x Δx - K_ξ ξ
+
+u  = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) - K_ξ ξ
+```
+
+with `K_fwd = M_22 + K_x M_12` and `K_fbk = K_x`.
 
 The tracker does not integrate `ξ`. It moves `K_ξ` inside the integral,
 
