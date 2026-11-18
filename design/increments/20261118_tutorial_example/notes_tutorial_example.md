@@ -8,15 +8,17 @@ rulings that reach the whole arc are the roadmap's R18 to R20.
 
 ## 1. The state on 2026-11-18
 
-- The prototype is settled after three rounds of rulings. No brief exists
-  yet, and nothing of the prototype is in the real tree.
+- The prototype is settled after three rounds of rulings, and the brief is
+  `brief_tutorial_example.md` beside this file, drafted at `dec5ee4`.
+  Nothing of the prototype is in the real tree yet.
 - The patch is `prototype_tutorial_example.patch` beside this file, the
   worktree's `git diff` against `0d43dfc`. It touches four files under
   `examples/`, +490 −34, and `git apply --check`
-  passes on the real tree at `fb85189`.
+  passes on the real tree at `dec5ee4`.
 - The prototyper's gate, run in the worktree as
   `julia --startup-file=no --project=examples -e 'using Pkg; Pkg.test()'`:
-  146 of 146, against 77 of 77 before. The coordinator has not rerun it.
+  146 of 146, against 77 of 77 before. The second coordinator reran it
+  there at the brief, on Julia 1.13.3: 146 of 146.
 - The worktree is `/Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1`,
   detached at `0d43dfc`. Its probes are `tutorial_1_probes/` beside it and
   the prototyper's own notes `tutorial_1_notes.md` beside it. Every figure
@@ -142,6 +144,36 @@ second hand-written hold.
 `stage!` is chapter 6's feature, and staging had doubled chapter 4's gap
 between the tiers with a delay that is not discretization.
 
+L17 to L22 were raised by the second coordinator while drafting the brief.
+The user ruled on each as recommended, on 2026-11-18.
+
+**L17. `piloted`'s `h` export is a named exception to R19.** `approach`
+alone reads it, so chapter 6's model carries a wire that only chapter 7
+uses. L8 chose the nesting knowing this cost. Rejected: the flat root
+rebuilt from `piloted`'s children, as in L8. Chapter 6's page says what
+the export is for.
+
+**L18. The legacy `closed_loop` keeps its locals `sensing`, `selection`
+and `actuators`**, which now share a name with a module function against
+the naming rules. It is harmless at run time, and increment 4 replaces
+the function. Rejected: renaming them now, a change to code the arc is
+about to delete.
+
+**L19. The arc's gate is the examples' runner on Julia 1.13**, for the
+reviewer and the fixer. Nothing under `src/` or `test/` changes, and
+`code_rules.md` routes a change under `examples/` to that runner alone.
+
+**L20. The cold review runs the brief's mutants first, then its own.**
+The prototyper ran none, so the brief's are expectations from reading the
+patch.
+
+**L21. The inspector's `design/pending.md` takes one line** on its
+`scripts/fixtures.jl`, which imports `descent`. It is committed in that
+repo with the code commit here.
+
+**L22. The review's fix commit rewraps `piloted`'s overlong docstring
+line.** The patch stays the worktree's diff.
+
 ## 4. The pins
 
 Frame period 1/200 s, altimeter seed 7, `noise_psd = 1.8e-3`.
@@ -233,13 +265,18 @@ Two fixes were sketched in discussion and left for the friction review:
 
 ## 6. Open
 
-- **The brief**, then the pipeline's later stages. The prototype is the
-  implementation, so the build is the patch applied to the real tree.
+- **The pipeline's later stages**, in the brief's order: the docs commit,
+  the patch applied to the real tree with the examples' runner, one cold
+  review, its fix. The prototype is the implementation.
 - **The docs commit.** `longitudinal_aircraft.md` sections 4 and 5 take
-  the figures above, with a new part on the pitch hold, and
-  `examples_inventory.md` section 3 takes the file's new surface.
+  the figures above, with a new part on the pitch hold.
+  `examples_inventory.md` section 3 takes the file's new surface, its
+  layers restated as the chapters. The roadmap's three open decisions for
+  increment 1 retire to L1 to L3. The brief's "What is settled" has the
+  detail.
 - **The inspector.** Its `scripts/fixtures.jl` imports `descent`, which
-  becomes `approach(solution)` at the next bump of its pin.
+  becomes `approach(solution)` at the next bump of its pin. L21 puts a
+  line in its `design/pending.md` with the code commit.
 - **For increment 3's pages.** Chapter 6 explains the latch. Chapters 4
   and 5 put their step in the initial condition, so `stage!` first appears
   in chapter 6.
