@@ -12,11 +12,43 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **The core work ahead of the inspector's increment 10**, settled in the
+  design session of the deployment overlay on 2026-11-19, in four parts
+  in this order. The session's record will be
+  `RedstoneInspector.jl/design/deployment_overlay.md`.
+  - **The notation.** An anchor's period reads `Δtₖ` where the spec and
+    `show(::Structure)` say `T`. An anchor then has `(Δtₖ, τₖ)` as a
+    component has `(Δt, τ)`, and anchor 0 is `Δt₀ = Δt_base`. `Absolute`'s
+    first argument is named `Δt` where it was `q`. The fields `Anchor.T`
+    and `Absolute.T` become `Δt`. `Period.T` keeps its name until the
+    friction review rules on retiring `Period` and `Hz`.
+  - **The grid report, derived from the structure.** The report is a pure
+    function of the anchors. `show(::Structure)` derives it and prints it
+    under the anchor table, and `Deployment` drops its `grid` field (§9.2,
+    amending D-254 under D-261's rule). The refusal's message, the
+    derivation line and `GridUtilization` stay the deployment's and keep
+    the report in their payloads. A pool that admits no deployment prints
+    one line saying so. Whether the build should refuse it is open.
+  - **The descriptor.** The format stays at 1.0 and changes freely until
+    the first release (§13.9). It carries every fact `show` prints of a
+    `Build` or a `Deployment`, or the facts from which a client derives it
+    exactly, and no internals, where it carried what a client needs to
+    draw the component tree. That adds the schedule's rows for anchors,
+    discrete primitives and rate scopes, `dt_frame` and `dt_base`, the
+    deployment's warnings and parameters, the events, and the grid report
+    in `structure`. The anchor's key `T` becomes `dt`. The writer's
+    qualified `@ref` links and the schema's record path land with it. The
+    shapes still open are the session's.
+  - **`show(::Deployment)` in the notation**, after the three parts above
+    and not owed to the inspector. Its tables show each anchor's `Dₖ` and
+    `Φₖ` and each component's `m`, `c`, `D`, `Φ`, `Δt` and `τ` in one row,
+    and its chart marks the frame tops, one column per lattice unit
+    (§9.2, amending D-257's chart).
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
-  is the later stages after the release.
+  before the release is the bullet above, and after it the later stages.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, each ending at a named function
   of the examples package: the plant, trim, linearization, a first loop,
