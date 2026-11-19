@@ -94,8 +94,8 @@ package built on the framework.
   shared between examples. Two examples that want the same helper copy
   it.
 - **No dependency in `Redstone`.** Anything an example needs joins the
-  examples environment, never `Redstone`'s. The gain design and the
-  tutorial's plotting live there.
+  examples environment, never `Redstone`'s. The gain design lives there,
+  and the tutorial's plotting in the docs environment.
 - **Walked through and pinned.** Every example is the subject of a
   tutorial chapter and of a testset. One without a tutorial is a fixture,
   and belongs in `test/`.

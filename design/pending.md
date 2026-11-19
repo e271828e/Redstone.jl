@@ -67,11 +67,15 @@ item changes what the spec says, the spec edit is part of the item.
   reached: increment 1 is pushed; its state, rulings, pins and friction
   list are
   `design/increments/20261118_tutorial_example/notes_tutorial_example.md`,
-  with the brief and the prototype's patch beside it. Increment 2's
-  prototype is running in the scratch worktree
-  `../Redstone.jl-worktrees/tutorial_2`, and its readings round is next.
-  The plan, the arc's
-  rulings, the open decisions and the draft rules for the pages are
+  with the brief and the prototype's patch beside it. Increment 2 is
+  landing, the docs commit first, then the pages, then its cold review;
+  its record is
+  `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`,
+  with the patch beside it and no brief. Before increment 3 a loose
+  change is proposed apart, by L12 and L23 of that record: a compact
+  `show` for `Simulation`, `Series` and `TrimReport`, and a `Series` that
+  forwards its columns as properties, with its spec edit. The plan, the
+  arc's rulings, the open decisions and the rules for the pages are
   `design/increments/roadmap_tutorial.md`.
 - **The API audit.** The API is reviewed as a whole before the release, in
   two parts, in this order. It comes after the tutorial, which surfaces the
@@ -81,7 +85,9 @@ item changes what the spec says, the spec edit is part of the item.
     increment's notes, by R17 of `design/increments/roadmap_tutorial.md`,
     and the arc's closing increment collates them. The first nineteen are
     section 5 of
-    `design/increments/20261118_tutorial_example/notes_tutorial_example.md`.
+    `design/increments/20261118_tutorial_example/notes_tutorial_example.md`,
+    and eleven more are section 6 of
+    `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`.
     One item comes from outside the arc, from the design session of the
     inspector's deployment overlay on 2026-11-19: whether `Period` and `Hz`
     retire (§10.5, D-185). `Absolute` would then take its period as an

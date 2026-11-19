@@ -134,8 +134,9 @@ altitude, so `h` is a pure integrator and one eigenvalue is exactly zero.
 The other four form two complex pairs.
 
 **The short period.** On the time scale of a second the airspeed has no
-time to change. Freezing `V` and writing the `γ` and `q` rows in `α = θ − γ`
-gives the two-state system
+time to change. The `γ` and `q` rows read the angles through `α = θ − γ`
+alone, so their `γ` and `θ` entries are equal and opposite. Freezing `V`
+and writing `α̇ = θ̇ − γ̇ = q − γ̇` gives the two-state system
 
     α̇ = q − 2.469 α
     q̇ = −20.42 α − 3.675 q
@@ -147,14 +148,30 @@ the pitch damping `−Mq` and the `2.469` the lift slope's `−Zα / V`, so the
 short period is a mass on a spring whose stiffness is the static margin and
 whose damping is `Cmq` plus the lift curve.
 
-**The phugoid.** On the time scale of half a minute the angle of attack
-stays at its trim value and the aircraft exchanges kinetic and potential
-energy. Lanchester's estimate gives `ωn = √2 g / V = 0.277 rad/s` and
+**The phugoid.** On the time scale of half a minute the aircraft exchanges
+kinetic and potential energy. Lanchester's estimate holds the angle of
+attack at its trim value and gives `ωn = √2 g / V = 0.277 rad/s` and
 `ζ = 1 / (√2 L/D) = 0.067` with `L/D = CL / CD = 10.5`. The full matrix's
-slow pair is at `ωn = 0.231 rad/s`, a period of 27.3 s, and `ζ = 0.067`:
-the damping estimate is exact and the frequency estimate is 20% high,
-because it drops the speed dependence of thrust and drag that the first row
-of `A` carries. The tutorial's open-loop run shows this mode directly: from
+slow pair is at `ωn = 0.231 rad/s`, a period of 27.3 s, and `ζ = 0.067`.
+
+The frequency estimate is 20% high because the angle of attack does not
+hold. On this time scale the pitching moment stays balanced,
+`Mα Δα + Mq q = 0`, and the aircraft pitches with its flight path,
+`q = γ̇`. So the angle of attack gives way against the path's curvature,
+`Δα = −(Mq / Mα) γ̇ = −0.180 γ̇`, and the lift it takes away slows the
+path by the factor `1 + 2.469 × 0.180 = 1.444`. That is the short period's
+stiffness over its static part, `29.5 / 20.42`. The frequency falls by its
+square root, to `0.277 / 1.202 = 0.231 rad/s`. With `Cmq = 0` the factor is
+one and the model's slow pair sits at `0.277 rad/s`, Lanchester's value.
+
+The speed dependence of drag in the first row of `A` gives the mode its
+damping and leaves its frequency alone, and the thrust of this model does
+not vary with speed. The damping estimate agrees to three figures at these
+parameters and not in general: with `Cmq = 0` the model's `ζ` is 0.050.
+The figures of these two paragraphs come from
+`increments/20261119_tutorial_pages/probe_phugoid.jl`.
+
+The tutorial's open-loop run shows this mode directly: from
 `55 m/s` at the trim controls the airspeed swings between 46 and 55 m/s and
 crosses the trim airspeed every 13.6 s, half the period, while the altitude
 rides 46 m above and back.

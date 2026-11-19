@@ -1,0 +1,909 @@
+diff --git a/docs/Project.toml b/docs/Project.toml
+index 725c9c5..02d294a 100644
+--- a/docs/Project.toml
++++ b/docs/Project.toml
+@@ -1,7 +1,10 @@
+ [deps]
++CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+ Redstone = "653472ee-a41b-4fb0-9ffa-a5db0d34d125"
++RedstoneExamples = "28cf5f55-110a-4578-bc3c-cf560fa74dd0"
+ 
+ [compat]
++CairoMakie = "0.15"
+ Documenter = "1"
+ julia = "1.13"
+diff --git a/docs/make.jl b/docs/make.jl
+index 89fcb55..7aa4d05 100644
+--- a/docs/make.jl
++++ b/docs/make.jl
+@@ -15,6 +15,13 @@ write_glossary(joinpath(@__DIR__, "..", "design", "spec.md"),
+ 
+ DocMeta.setdocmeta!(Redstone, :DocTestSetup, :(using Redstone); recursive = true)
+ 
++# The tutorial's plot theme, the one setup its pages do not show. A figure renders as a PNG
++# at twice its size in pixels, so its weight does not grow with the length of the log.
++using CairoMakie
++CairoMakie.enable_only_mime!("png")
++set_theme!(size = (720, 420), fontsize = 13, linewidth = 1.5,
++           Axis = (xgridcolor = (:black, 0.08), ygridcolor = (:black, 0.08)))
++
+ makedocs(;
+     sitename = "Redstone.jl",
+     authors = "Miguel Alonso <miguel883@gmail.com>",
+@@ -24,11 +31,19 @@ makedocs(;
+     pagesonly = true,
+     pages = [
+         "Home" => "index.md",
++        "Tutorial" => [
++            "tutorial/index.md",
++            "1\\. The aircraft" => "tutorial/aircraft.md",
++            "2\\. Trim" => "tutorial/trim.md",
++            "3\\. Linearize" => "tutorial/linearize.md",
++        ],
+         "API" => "api.md",
+         "Glossary" => "glossary.md",
+     ],
+     format = Documenter.HTML(;
+         prettyurls = get(ENV, "CI", nothing) == "true",
++        # the Tutorial group stays collapsed unless one of its pages is open
++        collapselevel = 1,
+         # one page for the whole surface, and one for the whole glossary
+         size_threshold_ignore = ["api.md", "glossary.md"],
+     ),
+diff --git a/docs/src/tutorial/aircraft.md b/docs/src/tutorial/aircraft.md
+new file mode 100644
+index 0000000..ca71cc4
+--- /dev/null
++++ b/docs/src/tutorial/aircraft.md
+@@ -0,0 +1,220 @@
++# The aircraft
++
++```@meta
++CurrentModule = Redstone
++```
++
++In this chapter you write the aircraft the tutorial flies. It is a rigid
++airplane moving in its plane of symmetry, with five states and two
++controls. You write it as a [component](@ref g-component), run it for two
++minutes from an airspeed above trim, and watch its slow mode, the phugoid,
++trade speed for height every 27 seconds.
++
++## The equations
++
++The aircraft has three degrees of freedom. It moves along two axes and
++rotates in pitch. The earth is flat, the air still and its density
++constant. The states are the airspeed ``V``, the flight path angle
++``\gamma``, the pitch angle ``\theta``, the pitch rate ``q`` and the
++altitude ``h``. The aerodynamics read the angle of attack
++``\alpha = \theta - \gamma``. The controls are the elevator ``\delta_e``, in
++radians and positive trailing edge down, and the throttle ``\delta_t``,
++from 0 to 1.
++
++Lift and drag follow a linear lift curve and a parabolic polar. The pitching
++moment has a static term, a damping term and an elevator term. The thrust
++is a fraction of a fixed maximum, along the body axis. With the dynamic
++pressure ``\bar q = \tfrac12 \rho V^2``, the forces and the moment are
++
++```math
++\begin{aligned}
++L &= \bar q S (C_{L0} + C_{L\alpha}\alpha) &
++D &= \bar q S (C_{D0} + k C_L^2) \\
++M &= \bar q S \bar c \left(C_{m0} + C_{m\alpha}\alpha + C_{mq}\frac{q \bar c}{2V} + C_{m\delta_e}\delta_e\right) &
++T &= \delta_t T_{max}
++\end{aligned}
++```
++
++and the equations of motion are
++
++```math
++\begin{aligned}
++\dot V &= (T\cos\alpha - D)/m - g\sin\gamma \\
++\dot\gamma &= (L + T\sin\alpha)/(m V) - g\cos\gamma / V \\
++\dot\theta &= q \\
++\dot q &= M / I_{yy} \\
++\dot h &= V \sin\gamma
++\end{aligned}
++```
++
++The parameters are those of a light single-engine aircraft. Their values
++and the derivation of these equations are in the
++[aircraft's companion](https://github.com/e271828e/Redstone.jl/blob/master/design/companions/longitudinal_aircraft.md#1-the-model).
++
++## The component
++
++A component is a Julia type, a subtype of
++[`AbstractComponent`](@ref), that adds methods to the framework's
++functions. Each method declares one thing. [`x_init`](@ref) names the
++continuous state and its default values. [`u_types`](@ref) and
++[`y_types`](@ref) name the input and output [ports](@ref g-port) and their
++types. [`y_state`](@ref) computes the outputs from the state, and
++[`x_deriv`](@ref) the state's derivative from the state and the inputs.
++A component with a continuous state and no children is a continuous
++[primitive](@ref g-primitive). Every output here depends on the state
++alone, so the aircraft needs no other output function.
++
++```@example aircraft
++using Redstone
++import Redstone: AbstractComponent, x_init, u_types, y_types, y_state, x_deriv
++
++const g = 9.81
++
++@kwdef struct Longitudinal <: AbstractComponent
++    m::Float64 = 1000.0
++    S::Float64 = 16.0
++    c̄::Float64 = 1.5
++    Iyy::Float64 = 1800.0
++    T_max::Float64 = 2500.0
++    ρ::Float64 = 1.225
++    CL0::Float64 = 0.3
++    CLα::Float64 = 5.0
++    CD0::Float64 = 0.03
++    k::Float64 = 0.05
++    Cm0::Float64 = 0.05
++    Cmα::Float64 = -1.0
++    Cmq::Float64 = -12.0
++    Cmδe::Float64 = -1.2
++end
++
++x_init(::Longitudinal) = (V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0)
++u_types(::Longitudinal) = (δe = Float64, δt = Float64)
++y_types(::Longitudinal) = (V = Float64, γ = Float64, θ = Float64, q = Float64, h = Float64, α = Float64)
++y_state(::Longitudinal, (; x)) = (V = x.V, γ = x.γ, θ = x.θ, q = x.q, h = x.h, α = x.θ - x.γ)
++function x_deriv(plant::Longitudinal, (; x, u))
++    (; V, γ, θ, q) = x
++    α = θ - γ
++    q̄ = 0.5 * plant.ρ * V^2
++    CL = plant.CL0 + plant.CLα * α
++    Cm = plant.Cm0 + plant.Cmα * α + plant.Cmq * q * plant.c̄ / (2V) + plant.Cmδe * u.δe
++    lift = q̄ * plant.S * CL
++    drag = q̄ * plant.S * (plant.CD0 + plant.k * CL^2)
++    moment = q̄ * plant.S * plant.c̄ * Cm
++    thrust = u.δt * plant.T_max
++    (V = (thrust * cos(α) - drag) / plant.m - g * sin(γ),
++     γ = (lift + thrust * sin(α)) / (plant.m * V) - g * cos(γ) / V,
++     θ = q,
++     q = moment / plant.Iyy,
++     h = V * sin(γ))
++end
++```
++
++Each line of the returned value is one equation of motion.
++
++## The model
++
++A model is a tree of components with one root. The aircraft sits under a
++[`Group`](@ref Redstone.Library.Group), an [assembly](@ref g-assembly) that
++names its children and wires them. Here the group has one child, `plant`,
++and hands it the group's own inputs `δe` and `δt`, the model's
++[root inputs](@ref g-root-input). Every later reader addresses the aircraft
++by the path `"plant"`.
++
++```@example aircraft
++import Redstone.Library: Group
++
++aircraft() = Group((; plant = Longitudinal());
++                   input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
++```
++
++## The run
++
++A [`Simulation`](@ref) runs the model in [frames](@ref g-frame). At each
++frame top it publishes a [snapshot](@ref g-snapshot) of every port, and the
++[log](@ref g-log) keeps them. The frame period
++[`Δt_frame`](@ref g-dt_frame) is the one quantity the run cannot do
++without. By default the integrator takes one step per frame. The period is
++exact, a `Rational` such as `1//100`, and a float is refused with the
++reason:
++
++```@repl aircraft
++import Redstone: Simulation
++Simulation(aircraft(); Δt_frame = 0.01)
++```
++
++The run starts from a [condition](@ref g-condition), the values to set
++before the first frame. [`set`](@ref) writes values, [`at`](@ref) places
++them under a path, and [`combine`](@ref) joins conditions. A condition
++may write part of a state. The states it does not name keep the values
++`x_init` declares, here level flight at 50 m/s and 1000 m. The root inputs
++have no default, so the condition must give both.
++
++Level flight at 50 m/s needs a pitch angle of 0.019930 rad, an elevator of
++0.025058 rad and a throttle of 0.37234. [Chapter 2](trim.md) computes these numbers.
++Here the aircraft starts at those controls and that pitch, but 5 m/s too
++fast. [`init!`](@ref) sets the condition and [`run!`](@ref) runs to
++`t_end`.
++
++```@example aircraft
++import Redstone: set, at, combine, init!, run!
++
++off_trim = combine(at("plant", set(x = (V = 55.0, θ = 0.019930))),
++                   set(u = (δe = 0.025058, δt = 0.37234)))
++sim = Simulation(aircraft(); Δt_frame = 1//100)
++init!(sim, off_trim)
++run!(sim; t_end = 120.0)
++```
++
++## The phugoid
++
++[`series`](@ref) gathers the log into columns, one per entry of a
++[read set](@ref g-read-set). Each entry is a [selector](@ref g-selector),
++here [`get_output`](@ref) of a port by path and name. The log holds one
++snapshot per frame.
++
++```@example aircraft
++import Redstone: series, reads, get_output
++using CairoMakie
++
++flight = series(sim, reads(V = get_output("plant", :V), h = get_output("plant", :h)))
++
++fig = Figure()
++lines(fig[1, 1], flight.t, flight.columns.V; color = :royalblue, axis = (; ylabel = "V (m/s)"))
++lines(fig[2, 1], flight.t, flight.columns.h; color = :darkorange, axis = (; xlabel = "t (s)", ylabel = "h (m)"))
++fig
++```
++
++The aircraft climbs as it slows and dives as it speeds up. The period is
++the time between two upward crossings of the trim airspeed.
++
++```@example aircraft
++V = flight.columns.V
++upward = [flight.t[i] for i in 2:length(V) if V[i - 1] < 50.0 ≤ V[i]]
++(snapshots = length(V), V = extrema(V), h = extrema(flight.columns.h), periods = diff(upward))
++```
++
++The log holds 12 001 snapshots over the two minutes. The airspeed swings
++between 46 and 55 m/s, the altitude rises 46 m above the start, and the
++period is 27.3 s. [Chapter 3](linearize.md) finds the period again from the
++linearized model.
++
++## The package's aircraft
++
++The examples package, `RedstoneExamples`, ships this chapter's model. Its
++`aircraft()` flown from the same condition gives the same flight, to the
++bit.
++
++```@example aircraft
++import RedstoneExamples
++
++package_sim = Simulation(RedstoneExamples.aircraft(); Δt_frame = 1//100)
++init!(package_sim, off_trim)
++run!(package_sim; t_end = 120.0)
++series(package_sim, reads(V = get_output("plant", :V), h = get_output("plant", :h))).columns == flight.columns
++```
++
++To start from this chapter's end, import the aircraft and its model:
++
++```julia
++import RedstoneExamples: Longitudinal, aircraft
++```
+diff --git a/docs/src/tutorial/index.md b/docs/src/tutorial/index.md
+new file mode 100644
+index 0000000..8559694
+--- /dev/null
++++ b/docs/src/tutorial/index.md
+@@ -0,0 +1,26 @@
++# Introduction
++
++The tutorial builds one model from scratch, a light aircraft in its plane of
++symmetry, and grows it chapter by chapter. Each page shows its code whole,
++beside the output the build of this site produced. The physics is stated,
++not derived, and each result is checked against a hand calculation.
++
++Every chapter ends at a function of the examples package,
++`RedstoneExamples`, so you can start any chapter from the one before
++without writing it. The package lives in the `examples` folder of the
++repository. Add it beside Redstone:
++
++```julia
++using Pkg
++Pkg.add(url = "https://github.com/e271828e/Redstone.jl")
++Pkg.add(url = "https://github.com/e271828e/Redstone.jl", subdir = "examples")
++Pkg.add("CairoMakie")
++```
++
++In a clone of the repository you need none of this. Start Julia there with
++`julia --project=docs`, the environment that holds Redstone, the examples
++and CairoMakie, and run `using Pkg; Pkg.instantiate()` once.
++
++1. [The aircraft](@ref): the aircraft as a component, run off trim.
++2. [Trim](@ref): the controls that hold level flight.
++3. [Linearize](@ref): the aircraft's modes and the integration step.
+diff --git a/docs/src/tutorial/linearize.md b/docs/src/tutorial/linearize.md
+new file mode 100644
+index 0000000..ce7bd7c
+--- /dev/null
++++ b/docs/src/tutorial/linearize.md
+@@ -0,0 +1,208 @@
++# Linearize
++
++```@meta
++CurrentModule = Redstone
++```
++
++In this chapter you linearize the trimmed aircraft and read its two modes
++from the eigenvalues. The short period is a pitch oscillation of about a
++second, and the phugoid's period matches the run of
++[chapter 1](aircraft.md). The
++two time scales then decide how the run integrates. The step must follow
++the fast mode, even when only the slow one shows.
++
++The chapter starts from the trimmed aircraft of [chapter 2](trim.md).
++
++```@example linearize
++using Redstone
++import Redstone: Simulation, trim!, set
++import RedstoneExamples: Longitudinal, aircraft, level_flight
++
++sim = Simulation(aircraft(); Δt_frame = 1//100)
++solution = trim!(sim, level_flight(); baseline = set()).solution
++```
++
++## The tap set
++
++A linearization perturbs some quantities and watches others. The
++[taps](@ref g-taps) name them, each with a [selector](@ref g-selector).
++The states to perturb go under `x`, selected with [`get_state`](@ref), the
++root inputs under `u`, selected with [`get_input`](@ref), and the outputs
++to watch under `y`. Each list's labels become the axes of the matrices.
++[`linearize`](@ref) works at the simulation's current state, here the
++committed trim, and returns ``\dot x = A x + B u`` in deviations from it.
++This chapter needs the states and the controls only, so the tap set has no
++outputs.
++
++```@example linearize
++import Redstone: taps, get_state, get_input, linearize
++
++aircraft_taps = taps(
++    x = (V = get_state("plant", :V), γ = get_state("plant", :γ), θ = get_state("plant", :θ),
++         q = get_state("plant", :q), h = get_state("plant", :h)),
++    u = (δe = get_input(:δe), δt = get_input(:δt)))
++linearization = linearize(sim, aircraft_taps)
++round.(linearization.A; digits = 4)
++```
++
++```@example linearize
++round.(linearization.B; digits = 4)
++```
++
++## Exact Jacobians
++
++`linearize` differentiates the model's own code by automatic
++differentiation. It needs no perturbation size, and each entry is exact up
++to the rounding of the arithmetic. Two entries can be checked by eye. The
++altitude's rate ``V \sin\gamma`` changes with ``\gamma`` at ``V \cos\gamma
++= 50``, and the pitch angle's rate is ``q`` itself. Nothing depends on the
++altitude, since the density is constant, so the last column is zero. The
++indices follow the tap set's order of the states.
++
++```@example linearize
++V, γ, θ, q, h = 1:5   # the rows and columns of A, in the tap set's order
++
++(linearization.A[h, γ], linearization.A[θ, q], linearization.A[:, h])
++```
++
++`x_deriv` is an ordinary function, so you can call it yourself. The block
++below differentiates the `x_deriv` of [chapter 1](aircraft.md) by plain
++central differences at the trim, and compares the result with the
++framework's derivative through the built model.
++
++```@example linearize
++import Redstone: x_deriv
++using LinearAlgebra: I
++
++x₀, u₀ = linearization.x₀, linearization.u₀
++f(v) = collect(x_deriv(Longitudinal(), (x = NamedTuple{keys(x₀)}(Tuple(v)), u = u₀)))
++v₀, ε = collect(x₀), 1e-6
++A_fd = reduce(hcat, [(f(v₀ + ε * e) - f(v₀ - ε * e)) / 2ε for e in eachcol(I(5))])
++maximum(abs, A_fd - linearization.A)
++```
++
++The largest gap is about 1.5e-10, the error of the differences
++themselves, which depends on the choice of ε. The framework's derivative
++needs no ε.
++
++## The modes
++
++Each complex pair of eigenvalues of ``A`` is an oscillating mode. Its
++natural frequency ``\omega_n = |\lambda|``, the magnitude of the
++eigenvalue, is the frequency the mode would have with no damping. Its
++damping ratio is ``\zeta = -\mathrm{Re}\,\lambda / |\lambda|``. The
++oscillation you see has the damped frequency, the imaginary part
++``\mathrm{Im}\,\lambda``, and its period is ``2\pi / \mathrm{Im}\,\lambda``.
++The zero eigenvalue is the altitude, which integrates the climb rate and
++feeds nothing back.
++
++```@example linearize
++using LinearAlgebra: eigvals
++
++λs = eigvals(linearization.A)
++```
++
++```@example linearize
++mode(λ) = (ωn = abs(λ), ζ = -real(λ) / abs(λ), period = 2π / imag(λ))
++
++phugoid, short_period = mode.(sort(filter(λ -> imag(λ) > 0, λs); by = abs))
++```
++
++The short period is fast and well damped. The phugoid is slow and lightly
++damped, which is why [chapter 1](aircraft.md)'s run still swings after two
++minutes. Its period from the eigenvalue is 27.3 s, the period measured on
++the run.
++
++```@example linearize
++phugoid.period
++```
++
++## The step
++
++The run integrates each frame in steps. The default method,
++[`RK4`](@ref), takes each frame in equal steps no longer than `h_max`, and
++in one step when `h_max` is not set. `h_max`, the method and the frame are
++keywords of the [`Deployment`](@ref), which `Simulation` passes on. An
++explicit method like `RK4` stays stable only while the step is short
++against the fastest mode. The short period's ``|\lambda|`` of 5.43 rad/s puts that
++limit well under a second, though a two-minute run shows only the phugoid.
++
++The function below flies [chapter 1](aircraft.md)'s flight, 5 m/s above
++trim, under the deployment keywords it is given. It compares the airspeed
++at each whole second with the run at [chapter 1](aircraft.md)'s frame of
++1/100 s. Each step ends at a
++snapshot, so the log's length counts the steps.
++
++```@example linearize
++import Redstone: at, combine, init!, run!, series, reads, get_output
++
++off_trim = combine(at("plant", set(x = (V = 55.0, θ = solution.θ))),
++                   set(u = (δe = solution.δe, δt = solution.δt)))
++
++function fly(; deployment...)
++    flight_sim = Simulation(aircraft(); deployment...)
++    init!(flight_sim, off_trim)
++    run!(flight_sim; t_end = 120.0)
++    series(flight_sim, reads(V = get_output("plant", :V)))
++end
++
++reference = fly(Δt_frame = 1//100)
++V_at(flight, t) = flight.columns.V[findfirst(==(t), flight.t)]
++compare(flight) = (steps = length(flight.t) - 1,
++                   error = maximum(t -> abs(V_at(flight, t) - V_at(reference, t)), 0.0:1.0:120.0))
++```
++
++A frame of one second with one step per frame is past the limit. The
++short period grows instead of decaying, and the run stops on the first
++state that is no longer finite.
++
++```@repl linearize
++fly(Δt_frame = 1)
++```
++
++The frame need not be the step. `h_max` bounds the step inside each frame,
++and a tenth of a second follows the short period closely.
++
++```@example linearize
++compare(fly(Δt_frame = 1, h_max = 1//10))
++```
++
++An adaptive method chooses each step from an error estimate.
++[`BS3`](@ref) needs a floor for its steps, `h_min`, and refuses to run
++without one.
++
++```@repl linearize
++import Redstone: BS3
++fly(Δt_frame = 1, algorithm = BS3())
++```
++
++With a floor of a millisecond it takes about a third as many steps as the
++fixed method, at its default tolerances. Its steps still follow the short
++period, not the phugoid.
++
++```@example linearize
++compare(fly(Δt_frame = 1, algorithm = BS3(), h_min = 1//1000))
++```
++
++A fixed step is the one you choose from the eigenvalues, and it costs the
++same on every run. The adaptive step finds its own length, and its error
++follows the tolerances rather than the step.
++
++## The package's tap set
++
++The examples package ships a tap set as `longitudinal_taps()`. Its states
++and controls are this chapter's, so its ``A`` and ``B`` are the same.
++
++```@example linearize
++import RedstoneExamples
++
++package_linearization = linearize(sim, RedstoneExamples.longitudinal_taps())
++(package_linearization.A == linearization.A, package_linearization.B == linearization.B)
++```
++
++To start from this chapter's end, import the tap set with the problem and
++the aircraft:
++
++```julia
++import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps
++```
+diff --git a/docs/src/tutorial/trim.md b/docs/src/tutorial/trim.md
+new file mode 100644
+index 0000000..39c49ba
+--- /dev/null
++++ b/docs/src/tutorial/trim.md
+@@ -0,0 +1,149 @@
++# Trim
++
++```@meta
++CurrentModule = Redstone
++```
++
++In this chapter you find the pitch angle, the elevator and the throttle
++that hold the aircraft in level flight at 50 m/s. You state the question as
++a [`TrimProblem`](@ref), solve it with [`trim!`](@ref), and read the
++report. The solver's answer lands within 1% of an estimate by hand.
++
++The chapter starts from the aircraft of [chapter 1](aircraft.md).
++
++```@example trim
++using Redstone
++import RedstoneExamples: Longitudinal, aircraft
++```
++
++## Level flight
++
++Level flight at a given airspeed and altitude fixes four of the five
++states. The flight path angle ``\gamma`` and the pitch rate ``q`` are zero,
++and ``V`` and ``h`` take the values asked for. Three rates must then
++vanish, ``\dot V = \dot\gamma = \dot q = 0``. The other two follow, since
++``\dot\theta = q`` and ``\dot h = V \sin\gamma``. Three equations need three
++unknowns. They are the pitch angle ``\theta``, which equals the angle of
++attack when ``\gamma = 0``, the elevator ``\delta_e`` and the throttle
++``\delta_t``.
++
++## The problem
++
++A trim problem names its unknowns, the decisions, with a guess and bounds.
++Its `condition` is a function that turns the decisions into a
++[condition](@ref g-condition), the values the model starts from. Here it
++writes the pitch angle into the plant's state beside the held airspeed,
++altitude and zero rates, and the two controls into the root inputs.
++`reads` names what the solver looks at after each evaluation, a
++[read set](@ref g-read-set) built by [`reads`](@ref), here of three derivatives read with
++[`get_deriv`](@ref). `residuals` turns the reads into
++the equations to zero, and `tolerances` says how close to zero is enough.
++
++```@example trim
++import Redstone: TrimProblem, set, at, combine, reads, get_deriv
++
++level_flight(; V = 50.0, h = 1000.0) = TrimProblem(
++    guess = (θ = 0.0, δe = 0.0, δt = 0.5),
++    lower = (θ = -0.3, δe = -0.5, δt = 0.0),
++    upper = (θ = 0.3, δe = 0.5, δt = 1.0),
++    condition = d -> combine(
++        at("plant", set(x = (V = V, γ = 0.0, θ = d.θ, q = 0.0, h = h))),
++        set(u = (δe = d.δe, δt = d.δt))),
++    reads = reads(V̇ = get_deriv("plant", :V), γ̇ = get_deriv("plant", :γ), q̇ = get_deriv("plant", :q)),
++    residuals = (derivatives, d) -> (V̇ = derivatives.V̇, γ̇ = derivatives.γ̇, q̇ = derivatives.q̇),
++    tolerances = (V̇ = 1e-9, γ̇ = 1e-9, q̇ = 1e-9))
++```
++
++## The solution
++
++`trim!` solves the problem on a simulation's model. A solve that converges
++commits its answer through [`init!`](@ref), so the simulation is ready to
++run from the trim. The commit lays the problem's condition over a
++[baseline](@ref g-baseline), a condition for whatever the problem leaves
++out. This problem writes the plant's whole state and both root inputs, so
++the baseline is empty.
++
++```@example trim
++import Redstone: Simulation, trim!
++
++sim = Simulation(aircraft(); Δt_frame = 1//100)
++report = trim!(sim, level_flight(); baseline = set())
++(status = report.status, iterations = report.n_iterations, solution = report.solution)
++```
++
++The solver converges in four iterations. The report also carries the
++residuals at the answer, each well inside its tolerance.
++
++```@example trim
++report.residuals
++```
++
++[`state`](@ref) reads the plant's committed state.
++
++```@example trim
++import Redstone: state
++
++state(sim, "plant")
++```
++
++## A trim that fails
++
++At 20 m/s the aircraft needs more angle of attack than the problem's upper
++bound on ``\theta`` allows. The solver stops against the bound and says so.
++It commits nothing, so the simulation stays as it was.
++
++```@example trim
++import Redstone: lifecycle
++
++slow_sim = Simulation(aircraft(); Δt_frame = 1//100)
++slow = trim!(slow_sim, level_flight(V = 20.0); baseline = set())
++(status = slow.status, saturated = slow.saturated, residuals = slow.residuals, lifecycle = lifecycle(slow_sim))
++```
++
++## The check
++
++The estimate by hand ignores the small tilt of the thrust. Lift balances
++weight, which gives the lift coefficient and so the angle of attack. The
++moment vanishes, which gives the elevator. Thrust balances drag, which
++gives the throttle. The
++[companion](https://github.com/e271828e/Redstone.jl/blob/master/design/companions/longitudinal_aircraft.md#2-trim)
++sets out the three steps.
++
++```@example trim
++const g = 9.81
++
++plant = Longitudinal()
++q̄ = 0.5 * plant.ρ * 50.0^2
++CL = plant.m * g / (q̄ * plant.S)
++α = (CL - plant.CL0) / plant.CLα
++estimate = (θ = α,
++            δe = (plant.Cm0 + plant.Cmα * α) / -plant.Cmδe,
++            δt = q̄ * plant.S * (plant.CD0 + plant.k * CL^2) / plant.T_max)
++```
++
++The solution differs from the estimate by these percentages:
++
++```@example trim
++map((solved, estimated) -> 100 * (solved / estimated - 1), report.solution, estimate)
++```
++
++All three are within 1%. The largest gap is in the pitch angle, where the
++thrust's tilt adds a little lift.
++
++## The package's problem
++
++The examples package ships this problem as `level_flight()`. Solved on a
++fresh simulation, it gives the same answer.
++
++```@example trim
++import RedstoneExamples
++
++package_report = trim!(Simulation(aircraft(); Δt_frame = 1//100), RedstoneExamples.level_flight(); baseline = set())
++package_report.solution == report.solution
++```
++
++To start from this chapter's end, import the problem with the aircraft:
++
++```julia
++import RedstoneExamples: Longitudinal, aircraft, level_flight
++```
+diff --git a/examples/src/RedstoneExamples.jl b/examples/src/RedstoneExamples.jl
+index c69adb6..12ca646 100644
+--- a/examples/src/RedstoneExamples.jl
++++ b/examples/src/RedstoneExamples.jl
+@@ -11,7 +11,7 @@ module RedstoneExamples
+ 
+ using Redstone
+ import Redstone: AbstractComponent, StateEvent, x_init, m_init, s_init, u_types, y_types, y_state, y_direct, x_deriv,
+-    state_events, condition, set, at, combine, TrimProblem, reads, get_state, get_deriv,
++    state_events, set, at, combine, TrimProblem, reads, get_state, get_deriv,
+     get_input, get_output, taps, Absolute, Hz
+ import Redstone.Library: Group, Constant, Source, Step, StopRequest, GaussianWhiteNoise, SumJunction,
+     Junction, Pack, Unpack, Switch, UnitDelay, RateLimiter, FirstOrderLag, PID, DiscretePID, DiscreteLQRTracker
+diff --git a/examples/src/longitudinal.jl b/examples/src/longitudinal.jl
+index fdbb16b..c59e563 100644
+--- a/examples/src/longitudinal.jl
++++ b/examples/src/longitudinal.jl
+@@ -31,15 +31,22 @@ the modes are `longitudinal_aircraft.md`, sections 1 to 3.
+ 
+ The example is didactic, and it may change in a minor version.
+ """
+-struct Longitudinal <: AbstractComponent
+-    m::Float64; S::Float64; c̄::Float64; Iyy::Float64; T_max::Float64; ρ::Float64
+-    CL0::Float64; CLα::Float64; CD0::Float64; k::Float64
+-    Cm0::Float64; Cmα::Float64; Cmq::Float64; Cmδe::Float64
++@kwdef struct Longitudinal <: AbstractComponent
++    m::Float64 = 1000.0
++    S::Float64 = 16.0
++    c̄::Float64 = 1.5
++    Iyy::Float64 = 1800.0
++    T_max::Float64 = 2500.0
++    ρ::Float64 = 1.225
++    CL0::Float64 = 0.3
++    CLα::Float64 = 5.0
++    CD0::Float64 = 0.03
++    k::Float64 = 0.05
++    Cm0::Float64 = 0.05
++    Cmα::Float64 = -1.0
++    Cmq::Float64 = -12.0
++    Cmδe::Float64 = -1.2
+ end
+-Longitudinal(; m = 1000.0, S = 16.0, c̄ = 1.5, Iyy = 1800.0, T_max = 2500.0, ρ = 1.225,
+-             CL0 = 0.3, CLα = 5.0, CD0 = 0.03, k = 0.05,
+-             Cm0 = 0.05, Cmα = -1.0, Cmq = -12.0, Cmδe = -1.2) =
+-    Longitudinal(m, S, c̄, Iyy, T_max, ρ, CL0, CLα, CD0, k, Cm0, Cmα, Cmq, Cmδe)
+ 
+ x_init(::Longitudinal) = (V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0)
+ u_types(::Longitudinal) = (δe = Float64, δt = Float64)
+@@ -62,15 +69,6 @@ function x_deriv(plant::Longitudinal, (; x, u))
+      h = V * sin(γ))
+ end
+ 
+-"""
+-    condition(::Longitudinal; V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0)
+-
+-The aircraft's own vocabulary (§14.2): the fragment writing its five states,
+-level at 50 m/s and 1000 m by default.
+-"""
+-condition(::Longitudinal; V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0) =
+-    set(x = (V = V, γ = γ, θ = θ, q = q, h = h))
+-
+ """
+     GroundContact(; h_ground = 0.0)
+ 
+@@ -105,7 +103,8 @@ only to give the plant the path `"plant"` it has in `pitch_hold`, `autopilot`,
+ `piloted` and `closed_loop`, so the trim problem, the taps and every reader
+ address it the same way in each.
+ """
+-aircraft() = Group((; plant = Longitudinal()); input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
++aircraft() = Group((; plant = Longitudinal());
++                   input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
+ 
+ """
+     level_flight(; V = 50.0, h = 1000.0)
+@@ -121,7 +120,7 @@ level_flight(; V = 50.0, h = 1000.0) = TrimProblem(
+     guess = (θ = 0.0, δe = 0.0, δt = 0.5),
+     lower = (θ = -0.3, δe = -0.5, δt = 0.0),
+     upper = (θ = 0.3, δe = 0.5, δt = 1.0),
+-    condition = d -> combine(at("plant", condition(Longitudinal(); V = V, θ = d.θ, h = h)),
++    condition = d -> combine(at("plant", set(x = (V = V, γ = 0.0, θ = d.θ, q = 0.0, h = h))),
+                              set(u = (δe = d.δe, δt = d.δt))),
+     reads = reads(V̇ = get_deriv("plant", :V), γ̇ = get_deriv("plant", :γ), q̇ = get_deriv("plant", :q)),
+     residuals = (derivatives, d) -> (V̇ = derivatives.V̇, γ̇ = derivatives.γ̇, q̇ = derivatives.q̇),
+@@ -290,7 +289,7 @@ loop's elevator and the airspeed loop's throttle. `yf` sits at its fixed point,
+ the measurement. `longitudinal_aircraft.md`, section 4.
+ """
+ cruise(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0)),
+-                           at("plant", condition(Longitudinal(); θ = solution.θ)),
++                           at("plant", set(x = (θ = solution.θ,))),
+                            at("cascade/h_ctl", set(s = (q = solution.θ, yf = 1000.0))),
+                            at("cascade/q_ctl", set(s = (q = solution.δe, yf = 0.0))),
+                            at("cascade/V_ctl", set(s = (q = solution.δt, yf = 50.0))))
+@@ -542,7 +541,7 @@ do; the full stores are written for clarity. `longitudinal_aircraft.md`,
+ section 4.
+ """
+ trimmed(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0, mode = true)),
+-                            at("plant", condition(Longitudinal(); θ = solution.θ)),
++                            at("plant", set(x = (θ = solution.θ,))),
+                             at("pid_controller/h_ctl", set(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
+                             at("pid_controller/q_ctl", set(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
+                             at("pid_controller/V_ctl", set(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
+diff --git a/examples/test/runtests.jl b/examples/test/runtests.jl
+index dcebe9a..9addd38 100644
+--- a/examples/test/runtests.jl
++++ b/examples/test/runtests.jl
+@@ -8,7 +8,7 @@ using Statistics: std
+ using Redstone, RedstoneExamples
+ import Redstone: Build, ProbeDual, Simulation, build, init!, run!, step!, stage!, trim!, linearize, state, modes,
+     series, reads, get_output, get_face, get_input, get_state, taps, termination, lifecycle, phase_bodies, set, at, combine,
+-    override, condition, checkpoint, restore!, replay!, trace, local_wires, input_wires, output_wires, diagnostics,
++    override, checkpoint, restore!, replay!, trace, local_wires, input_wires, output_wires, diagnostics,
+     DiagnosticError, TapResolution, AlgebraicCycle, EndTimeReached, ModelRequestedStop
+ import Redstone.Library: Group
+ 
+diff --git a/examples/test/test_longitudinal.jl b/examples/test/test_longitudinal.jl
+index ec86e43..f6a0ea0 100644
+--- a/examples/test/test_longitudinal.jl
++++ b/examples/test/test_longitudinal.jl
+@@ -35,6 +35,20 @@ function fly_closed_loop(solution, gains; cascade = true, switch_at = nothing, h
+     sim
+ end
+ 
++# Chapter 3's flight: chapter 1's open loop from 55 m/s at the trim controls under the deployment
++# keywords given, its airspeed logged.
++function fly_open_loop(solution; deployment...)
++    sim = Simulation(aircraft(); deployment...)
++    init!(sim, at_trim(solution, set(x = (V = 55.0, θ = solution.θ))))
++    run!(sim; t_end = 120.0)
++    series(sim, reads(V = get_output("plant", :V)))
++end
++
++# The largest airspeed gap between two flights at the whole seconds of chapter 3's comparison.
++airspeed_gap(flight, reference) =
++    maximum(t -> abs(flight.columns.V[findfirst(==(t), flight.t)] - reference.columns.V[findfirst(==(t), reference.t)]),
++            0.0:1.0:120.0)
++
+ # The frame index of time `t` under the loops' frame of 5 ms.
+ frame_index(t) = round(Int, t * 200)
+ 
+@@ -44,7 +58,7 @@ function pitch_hold_at_trim(solution; discrete = false, θ_step = 0.0)
+     sim = Simulation(pitch_hold(; discrete); Δt_frame = 1//200)
+     integral = discrete ? set(s = (q = solution.δe,)) : set(x = (q = solution.δe,))
+     init!(sim, combine(set(u = (θ_ref = solution.θ + θ_step, δt = solution.δt)),
+-                       at("plant", condition(Longitudinal(); θ = solution.θ)), at("θ_ctl", integral)))
++                       at("plant", set(x = (θ = solution.θ,))), at("θ_ctl", integral)))
+     sim
+ end
+ 
+@@ -142,7 +156,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
+ 
+     @testset "the open loop from 55 m/s crosses the trim airspeed every half phugoid period (§10.2)" begin
+         open_loop = Simulation(aircraft(); Δt_frame = 1//100)
+-        init!(open_loop, at_trim(solution, condition(Longitudinal(); V = 55.0, θ = solution.θ)))
++        init!(open_loop, at_trim(solution, set(x = (V = 55.0, θ = solution.θ))))
+         run!(open_loop; t_end = 120.0)
+         times = logged_times(open_loop)
+         Vs = logged_port(open_loop, "plant", :V)
+@@ -153,6 +167,71 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
+         @test isapprox((first_six[6] - first_six[1]) / 5, π / 0.23005; rtol = 0.01)
+     end
+ 
++    @testset "chapter 1: from the companion's rounded trim the open loop swings between 46 and 55 m/s, 46 m up, at a 27.3 s period (§10.2)" begin
++        page = Simulation(aircraft(); Δt_frame = 1//100)
++        init!(page, combine(at("plant", set(x = (V = 55.0, θ = 0.019930))),
++                            set(u = (δe = 0.025058, δt = 0.37234))))
++        run!(page; t_end = 120.0)
++        times = logged_times(page)
++        Vs = logged_port(page, "plant", :V)
++        @test length(times) == 12001
++        @test minimum(Vs) ≈ 45.872 atol = 1e-3
++        @test maximum(Vs) == 55.0
++        @test maximum(logged_port(page, "plant", :h)) ≈ 1046.016 atol = 1e-3
++        # The probe's upward crossings: 20.12, 47.45, 74.78, 102.11.
++        upward = [times[i] for i in 2:length(Vs) if Vs[i - 1] < 50.0 ≤ Vs[i]]
++        @test length(upward) == 4
++        @test all(period -> isapprox(period, 27.33; atol = 0.01), diff(upward))
++    end
++
++    @testset "chapter 2: an empty baseline trims to the same point, and at 20 m/s the trim stalls on the pitch bound and commits nothing (§14.8)" begin
++        unbased = trim!(Simulation(aircraft(); Δt_frame = 1//100), level_flight(); baseline = set())
++        @test unbased.n_iterations == 4
++        @test all(name -> isapprox(unbased.solution[name], solution[name]; atol = 1e-12), keys(solution))
++        slow_sim = Simulation(aircraft(); Δt_frame = 1//100)
++        slow = trim!(slow_sim, level_flight(V = 20.0); baseline = set())
++        @test slow.status == :stalled
++        @test slow.saturated == [(:θ, :upper)]
++        @test lifecycle(slow_sim) == :built
++    end
++
++    @testset "chapter 3: the Jacobian's entries are exact and match central differences, and the short period bounds the step (§14.10, §10.2)" begin
++        A = linearization.A
++        @test A[5, 2] == 50.0
++        @test A[3, 4] == 1.0
++        @test all(iszero, A[:, 5])
++        # Central differences of the plant's `x_deriv` at the trim, as the page computes them; the
++        # probe's largest gap is 1.53e-10.
++        x₀, u₀ = linearization.x₀, linearization.u₀
++        f(v) = collect(Redstone.x_deriv(Longitudinal(), (x = NamedTuple{keys(x₀)}(Tuple(v)), u = u₀)))
++        v₀, ε = collect(x₀), 1e-6
++        A_fd = reduce(hcat, [(f(v₀ + ε * e) - f(v₀ - ε * e)) / 2ε for e in eachcol(I(5))])
++        @test maximum(abs, A_fd - A) < 1e-8
++        diverged = try
++            fly_open_loop(solution; Δt_frame = 1)
++            nothing
++        catch err
++            err
++        end
++        @test diverged isa Redstone.StepError{Redstone.NonfiniteState}
++        reference = fly_open_loop(solution; Δt_frame = 1//100)
++        bounded = fly_open_loop(solution; Δt_frame = 1, h_max = 1//10)
++        @test length(bounded.t) - 1 == 1200
++        @test airspeed_gap(bounded, reference) < 1e-5
++        refusal = try
++            fly_open_loop(solution; Δt_frame = 1, algorithm = Redstone.BS3())
++            nothing
++        catch err
++            err
++        end
++        @test refusal isa DiagnosticError
++        @test only(diagnostics(refusal)) isa Redstone.DeploymentInvalid
++        # The probe's adaptive run: 418 steps, a largest gap of 4.29e-4 m/s.
++        adaptive = fly_open_loop(solution; Δt_frame = 1, algorithm = Redstone.BS3(), h_min = 1//1000)
++        @test 380 <= length(adaptive.t) - 1 <= 460
++        @test airspeed_gap(adaptive, reference) < 1e-3
++    end
++
+     @testset "the closed loop rests at the trim under either controller (§14.5)" begin
+         for cascade in (true, false)
+             resting = fly_closed_loop(solution, gains; cascade, h_step = 0.0, noise_σ = 0.0, t_end = 60.0)

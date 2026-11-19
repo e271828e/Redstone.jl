@@ -1,12 +1,15 @@
 # Roadmap: the tutorial
 
 The live roadmap for the tutorial, settled in discussion on 2026-11-17 and
-amended on 2026-11-18. It
+amended on 2026-11-18 and 2026-11-19. It
 states the tutorial's aim and arc, names the rulings the discussion
 settled, stages the work in five increments, lists the decisions each
 increment still needs, and holds the draft rules the pages are written to.
 The rulings of 2026-11-18 on increment 1's prototype amend the arc and R5,
-R6 and R10 below in place. Its `pending.md` bullet carries the state of the
+R6 and R10 below in place, and those of 2026-11-19 on increment 2's
+prototype amend rows 1 and 3 of the arc, R2, R12 and the rules for the
+pages. Its
+`pending.md` bullet carries the state of the
 work; this file carries the plan. The probes behind the rulings are
 `20261117_tutorial/notes_tutorial.md`, with their scripts beside it. A
 ruling made later on the whole arc is appended here, dated; a ruling local
@@ -35,9 +38,9 @@ a chapter imports its end state.
 
 | # | Chapter | The reader builds | Domain idea | Framework features | Evidence shown |
 |---|---|---|---|---|---|
-| 1 | The aircraft | `Longitudinal`, run off trim | five ODEs | continuous leaf, declarations, the frame, `run!`, `series` | the phugoid plot |
+| 1 | The aircraft | `Longitudinal`, run off trim | five ODEs | continuous primitive, declarations, a condition, the group that names the plant, the frame, `run!`, `series` | the phugoid plot |
 | 2 | Trim | the level-flight problem | equilibrium, three unknowns | conditions, `TrimProblem`, the report | the solver within 1% of the hand estimate |
-| 3 | Linearize | the tap set | modes as eigenvalues | taps, exact Jacobians, `h_max`, fixed against adaptive steps | the eigenvalues against chapter 1's period |
+| 3 | Linearize | the tap set | modes as eigenvalues | taps, exact Jacobians, `h_max`, fixed against adaptive steps | the Jacobian against finite differences, the eigenvalues against chapter 1's period |
 | 4 | A first loop | pitch hold, continuous then discrete | one PID on pitch attitude | `Group`, wires, root inputs, sample time, the base tick | margins from `A` and `B`, the gap between the tiers |
 | 5 | The autopilot | the cascade, actuators, sensing | cascade, actuator, sensor noise | hierarchy, faces, the library, two rates, the inspector's diagram | the altitude step |
 | 6 | Hands on and off | the engage switch, the tracking wires | bumpless engage | `stage!`, the loop error, `UnitDelay` | a bumpless engage |
@@ -61,7 +64,8 @@ chapter N needs chapters 1 to N-1.
 - One domain idea per chapter, the one the framework feature needs.
 - Rigor through checks against hand results, shown as output. The
   companions already hold them: the hand trim estimate, the reduced short
-  period, Lanchester's phugoid.
+  period, Lanchester's phugoid. R24 narrows which of them a page
+  shows.
 - Design numbers are given with one sentence and a link, never a tuning
   argument.
 
@@ -151,8 +155,8 @@ regenerate only at a deliberate bump. The cost falls at that bump, when
 
 **R12. The pages are executable.** Documenter `@example` blocks generate
 the outputs and the plots at build time, so the tutorial cannot rot and
-the evidence is real. The docs environment gains `RedstoneExamples` and a
-plotting package.
+the evidence is real. The docs environment gains `RedstoneExamples` and
+CairoMakie, by R21.
 
 **R13. Two success criteria.**
 - A fresh agent given only the public surface and the tutorial builds a
@@ -207,16 +211,62 @@ stays in chapter 5, because the hold chain brings it.
 section below. They move to a file of their own under `design/rules/`
 only if a second tutorial is written.
 
+## Ruled on 2026-11-19
+
+The user's rulings on the readings of increment 2's prototype that reach
+the whole arc. The readings local to the increment go to its notes,
+`20261119_tutorial_pages/notes_tutorial_pages.md`, with the probes'
+figures.
+
+**R21. The figures are CairoMakie's.** Inside an `@example` block Plots
+with GR emits SVG, which grows with the log: 434 KB for chapter 1's
+phugoid, and about 1.2 MB per line for chapter 7's whole log. A PNG there
+needs a save line in view, against rule 12 of the pages. CairoMakie emits
+a PNG of fixed weight, 88 KB for the same figure. The cost is build time:
+on the prototyper's machine the docs environment's cold precompile goes
+from 28 s to 145 s and a warm build from 7.5 s to about 31 s. The workflow
+does not change. Rejected: Plots with GR, the lighter package with the
+shorter call. It also has ControlSystemsBase's recipes, where that
+package's Makie module is marked experimental and draws a coarse margin
+plot, so a frequency response, if chapter 4 shows one, is drawn with plain
+`lines`.
+
+**R22. The pages sit under `docs/src/tutorial/` and are live from the
+pilot on.** A page's file is named by its subject with no number, as
+`aircraft.md`, so its address survives a reordering. `index.md`, titled
+"Introduction", holds the install lines and lists the chapters that exist.
+The sidebar holds them as the group "Tutorial" with numbered labels, and
+`collapselevel = 1` folds the group unless one of its pages is open. The
+pages are public with three chapters of nine because a page in `pages`
+runs on every build, the index promises nothing, and the site is not yet
+announced. Rejected: numbered file names; and keeping the pilot out of
+`pages` until increment 3, where `pagesonly` would leave it unbuilt.
+
+**R23. The rules for the pages are revised on the pilot.** Rules 6, 12,
+17, 18, 19, 20 and 22 below changed in place, each on a point where the
+three pages pinched. Row 1 of the arc gained the condition and the group,
+which the first run cannot be written without.
+
+**R24. A check must hold.** R2 asks for checks against hand results, and
+the user's reading of the pilot narrowed it. A hand estimate that misses
+checks nothing and leaves a gap to explain: Lanchester's frequency is 20%
+high on this aircraft, for a reason that needs the short period, so it
+left chapters 1 and 3. Where the framework computes what a few lines of
+plain code can compute another way, that comparison is the check: chapter
+3 sets `linearize`'s `A` against central differences of the reader's own
+`x_deriv`. Rejected: keeping the reduced short period and Lanchester's
+damping beside it, the first unclear without its derivation and the second
+an agreement the parameters happen to give.
+
 ## Open decisions
 
 Each names the increment that needs it ruled. Increment 1's three are
 ruled in its notes, `20261118_tutorial_example/notes_tutorial_example.md`:
 the names of the chapter-end functions as L1, the approach's reference,
 staged by the run, as L2, and `approach` in place of `descent()` as L3.
+Increment 2's two are ruled above: the plotting package and the build's
+time budget as R21, and where the pages sit as R22.
 
-- **The plotting package.** Increment 2.
-- **Where the pages sit under `docs/src/`**, and the docs build's time
-  budget in CI. Increment 2.
 - **How chapter 5 shows the inspector's diagram.** Increment 3.
 - **What chapter 4 shows of the margins from `A` and `B`**, and which of
   it the testset pins. Increment 1 pins the pitch loop's eigenvalues and
@@ -274,7 +324,8 @@ order or side by side.
 - The standby tracking and the bumpless figures were measured with every
   discrete component at 50 Hz. Across two rates they may degrade, which
   is increment 4's to find.
-- A plotting package adds load and build time to the docs workflow.
+- CairoMakie adds load and build time to the docs workflow. R21's figures
+  are one machine's, and the CI's are estimates until the first push.
 - Chapter 5's diagram depends on the inspector's stage 1 and on a bump of
   its pin to a revision that has increment 1's model.
 - Between increments 1 and 4 the package holds today's `closed_loop`
@@ -283,10 +334,10 @@ order or side by side.
 
 ## The rules for the pages
 
-A draft, written before any page. It is revised once chapters 1 to 3
-exist, and an agent that writes or reviews a page reads it first. R2
-governs the physics and is not repeated here. Rule 2, the voice, is the
-coordinator's guess, which the user has not yet confirmed.
+Drafted before any page and revised on 2026-11-19 against chapters 1 to
+3, by R23. An agent that writes or reviews a page reads it first. R2
+governs the physics and is not repeated here. Rule 2, the voice, began as
+the coordinator's guess, and the user confirmed it on the pilot.
 
 ### The reader and the voice
 
@@ -306,8 +357,9 @@ coordinator's guess, which the user has not yet confirmed.
 
 6. **A page has one shape.** It opens with what the chapter builds and the
    result it ends at. Then come the steps, each a need, the code that
-   meets it and its output. Then a check against a hand result. It closes
-   by naming the chapter-end function and how to import it.
+   meets it and its output. A check against a hand result follows the
+   step it checks. The page closes by naming the chapter-end function and
+   how to import it.
 7. **The arc's table fixes the content.** A page carries its row's domain
    idea and framework features and no others.
 8. **A concept gets one paragraph before the code that uses it.** The
@@ -318,13 +370,18 @@ coordinator's guess, which the user has not yet confirmed.
     build really prints, whole.
 11. **A page is as long as its row of the arc needs, and no longer.** Its
     length follows from rules 7 and 8. No word count is a target, and a
-    page is never padded or cut to reach one. Once chapters 1 to 3 exist,
-    they are the reference for the pace.
+    page is never padded or cut to reach one. Chapters 1 to 3 are the
+    reference for the pace.
 
 ### The code
 
 12. **Every block is whole and runs in page order.** No hidden setup,
-    except a plot theme. Every name is imported in view.
+    except a plot theme. Every name is imported in view. A page's blocks
+    share one named module, and a refusal runs in an `@repl` block of the
+    same name. A block ends on a value worth showing, since Documenter
+    does not honor a trailing `;`. An `@meta` block is not code. The
+    closing import is displayed and not run, since it would collide with
+    the page's own definitions.
 13. **The names are the package's.** Components, paths, faces and
     functions are spelled as `examples/src/longitudinal.jl` spells them.
 14. **The page builds by hand what the package ships.** Where it is cheap,
@@ -335,24 +392,50 @@ coordinator's guess, which the user has not yet confirmed.
 
 16. **Output is real.** It comes from the build and is never typed or
     trimmed by hand. Code that would print too much prints less.
-17. **A number in the prose is one the page's output shows**, rounded, and
-    the examples' testset pins it.
+17. **A number in the prose is one the page's output shows**, rounded. The
+    examples' testset pins each number a model produces. A hand result the
+    page computes from the parameters is not pinned. A number typed into a
+    page's code is the companion's, and the testset pins the page's run
+    with it.
 18. **One claim per figure.** Axes carry the quantity and its unit, time
-    is in seconds, and a signal keeps its color across chapters.
+    is in seconds, and a signal keeps its color across chapters. A figure
+    is the last value of its block, which the build writes as a PNG. The
+    theme is set in `docs/make.jl`. Each signal has its own axis, stacked
+    over a shared time axis, and each call names its color:
+
+    | Signal | Color |
+    |---|---|
+    | `V` | `:royalblue` |
+    | `h` | `:darkorange` |
+    | `θ` | `:seagreen` |
+    | `γ` | `:mediumpurple` |
+    | `q` | `:teal` |
+    | `α` | `:goldenrod` |
+    | `δe` | `:crimson` |
+    | `δt` | `:slategray` |
+
+    A reference takes its signal's color, dashed. A comparison run of the
+    same signal is black, dashed.
 
 ### Terms and links
 
 19. **The glossary's words only.** The first mention of a glossary term
     links to the glossary page, and an API name links to its reference
     entry, as `docstring_rules.md` rules 25 and 27 do. A component is a
-    component, never a block.
-20. **No `§` and no `D-nnn`.** A derivation is linked to its companion and
+    component, never a block. A name of the examples package takes no
+    link while that package has no reference page. Every reference to
+    another chapter links to its page.
+20. **No `§` and no `D-nnn` in the prose.** A message printed whole by
+    rule 10 or rule 16 keeps what it cites. A derivation is linked to its
+    companion by its GitHub address on master, as the README links it, and
     never restated.
 
 ### What a page never does
 
 21. It promises no future feature.
-22. It explains no Julia.
+22. It explains no Julia, except in one sentence where a Julia rule is a
+    trap of the framework, such as importing a function before extending
+    it.
 23. It hides no failure: a refusal that the reader will meet is shown.
 
 ### For the agent
