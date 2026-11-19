@@ -72,8 +72,10 @@ item changes what the spec says, the spec edit is part of the item.
   `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`,
   with the patch beside it and no brief. Before increment 3 a loose
   change is proposed apart, by L12 and L23 of that record: a compact
-  `show` for `Simulation`, `Series` and `TrimReport`, and a `Series` that
-  forwards its columns as properties, with its spec edit. The plan, the
+  `show` for `Simulation`, `Series` and `TrimReport`; a `Series` that
+  forwards its columns as properties; and labelled access to a
+  `Linearization`'s matrices, friction item 10 of that record, which
+  chapters 4 and 9 read. The last two take a spec edit each. The plan, the
   arc's rulings, the open decisions and the rules for the pages are
   `design/increments/roadmap_tutorial.md`.
 - **The API audit.** The API is reviewed as a whole before the release, in
