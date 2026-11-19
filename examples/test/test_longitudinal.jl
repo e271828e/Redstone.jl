@@ -188,6 +188,9 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         unbased = trim!(Simulation(aircraft(); Δt_frame = 1//100), level_flight(); baseline = set())
         @test unbased.n_iterations == 4
         @test all(name -> isapprox(unbased.solution[name], solution[name]; atol = 1e-12), keys(solution))
+        high_sim = Simulation(aircraft(); Δt_frame = 1//100)
+        trim!(high_sim, level_flight(h = 2000.0); baseline = set())
+        @test state(high_sim, "plant").h == 2000.0
         slow_sim = Simulation(aircraft(); Δt_frame = 1//100)
         slow = trim!(slow_sim, level_flight(V = 20.0); baseline = set())
         @test slow.status == :stalled

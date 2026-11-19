@@ -11,8 +11,12 @@ roadmap's R21 to R23.
 ## 1. The state on 2026-11-19
 
 - The prototype is settled after two rounds of rulings, the second the
-  user's reading of the built pages, and three revisions. Nothing of it
-  has landed.
+  user's reading of the built pages, and three revisions. It landed as
+  three commits: the docs as `2227860`, the rules as `249b466` and the
+  pages as `df4a2b6`, the patch applied unchanged. On the real tree
+  before the pages' commit the docs build was green and the examples'
+  runner read 178 of 178. The cold review ran at `df4a2b6`, and its
+  record is section 8.
 - The patch is `prototype_tutorial_pages.patch` beside this file, the
   worktree's `git diff` against `1aace3c`. It touches ten files, +724 −25,
   and `git apply --check` passes on the real tree at `cf3c782`.
@@ -50,8 +54,8 @@ roadmap's R21 to R23.
 | `examples/test/runtests.jl` | 1 changed | the same import dropped |
 | `examples/test/test_longitudinal.jl` | +83 | two helpers, `fly_open_loop` and `airspeed_gap`, three testsets, and L15's uses rewritten |
 
-- **Chapter 1** defines `Longitudinal`, its `condition` method and
-  `aircraft()` in the page, flies 120 s from 55 m/s at the trim controls
+- **Chapter 1** defines `Longitudinal` and `aircraft()` in the page,
+  flies 120 s from 55 m/s at the trim controls
   of 50 m/s, and shows the phugoid in one figure. It measures the period
   on the run and checks its own flight against the package's, to the bit.
 - **Chapter 2** builds the level-flight problem, solves it in four
@@ -368,7 +372,7 @@ mind, its probes outside the tree. An empty review is acceptable.
   against `companions/longitudinal_aircraft.md` sections 1 to 3. Each
   name, path and function against `examples/src/longitudinal.jl`, by
   rule 13.
-- **The mutants.** The three of section 4 first, then its own, each
+- **The mutants.** The four of section 4 first, then its own, each
   reverted alone on a scratch copy. A survivor is a missing test or is
   named with its reason.
 - **The links.** The companions' GitHub anchors against the headings they
@@ -380,7 +384,53 @@ mind, its probes outside the tree. An empty review is acceptable.
 
 ### The review's record
 
-To be filled after the review.
+One high-tier reviewer at `df4a2b6`, in the worktree
+`../Redstone.jl-worktrees/tutorial_2_review`, its probes and logs in
+`tutorial_2_review_probes/` beside it and its notes
+`tutorial_2_review_notes.md`. It found no blocking defect. Both gates
+matched this record, every number in the prose matched the built output
+and its pin, and the companion's corrected passage held figure by figure
+but for F7. The package before and after L13 and L15 agreed to the bit on
+every trim, initial state and run it compared.
+
+The findings and the coordinator's adjudication. The fixes are one commit,
+"Fix increment 2's review findings".
+
+| # | Finding | Adjudication |
+|---|---|---|
+| F1 | The Introduction says each result is checked against a hand calculation, which R24 ended | fixed: a hand estimate or a second computation |
+| F2 | `trim.md` calls γ = 0 a zero rate | fixed |
+| F3 | `linearize.md` gives the short period "about a second" where the output shows 1.40 s | fixed: about 1.4 s |
+| F4 | Six first mentions without their link, by rule 19 | fixed |
+| F5 | `examples_inventory.md` section 1 lists other routes than the Introduction's and says the examples are no workspace member, false since `87f72d7` | fixed in the companion |
+| F6 | Two stale lines of this record | fixed |
+| F7 | The companion's new text says the damping estimate agrees to three figures, 0.0672 against 0.0670 | fixed: two figures |
+| F8 | `level_flight`'s `h` keyword is pinned nowhere, and a mutant survives | fixed: one assertion in the chapter 2 testset |
+| F9 | Four blocks end on a definition and print the REPL's line for it | declined: the user read the pages so, and rule 12 now allows a block to end on a definition |
+| F10 | In `trim.md` the hand check stands after the failing trim, against rule 6 | fixed: the two sections swapped |
+| F11 | `aircraft.md` says the companion derives the equations, which it states | fixed |
+| F12 | `linearize.md` claims the adaptive steps follow the short period, with no output behind it | fixed: the sentence dropped |
+| F13 | "Each list's labels become the axes" invites `A[:h, :γ]` | fixed: the order fixes the rows and columns |
+| F14 | "Every later reader" reads as the human reader | fixed |
+| F15 | The companion says the altitude "rides 46 m above and back", and it settles near 1027.5 m | fixed, a sentence older than the increment |
+| F16 | A page's own check that printed `false` would leave the build green | declined: it comes with R12's executable pages, and the testset pins the package's side |
+
+The mutants: seventeen, each run alone. The four of section 4 went red,
+and each new testset and each rewritten `set` call went red at least
+once. Five survived. One is F8's. The other four are accepted with the
+reviewer's reasons:
+
+- dropping γ and q from `level_flight`'s `set`, equivalent under `init!`
+  since `x_init` declares both zero;
+- the start speed of the older open-loop testset, which pins the period
+  and a bound alone, while chapter 1's testset pins the amplitude;
+- the start speed inside `fly_open_loop`, since chapter 3 compares two
+  flights from that one helper;
+- `h_min` raised to 1/10 s, a floor that does not bind at a mean step of
+  0.29 s.
+
+Not reached: the install from GitHub, since nothing is pushed, with both
+routes run from a local address; and the build on headless Linux.
 
 ## 9. Open
 

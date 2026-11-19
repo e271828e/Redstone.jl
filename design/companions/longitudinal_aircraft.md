@@ -166,7 +166,7 @@ one and the model's slow pair sits at `0.277 rad/s`, Lanchester's value.
 
 The speed dependence of drag in the first row of `A` gives the mode its
 damping and leaves its frequency alone, and the thrust of this model does
-not vary with speed. The damping estimate agrees to three figures at these
+not vary with speed. The damping estimate agrees to two figures at these
 parameters and not in general: with `Cmq = 0` the model's `ζ` is 0.050.
 The figures of these two paragraphs come from
 `increments/20261119_tutorial_pages/probe_phugoid.jl`.
@@ -174,7 +174,7 @@ The figures of these two paragraphs come from
 The tutorial's open-loop run shows this mode directly: from
 `55 m/s` at the trim controls the airspeed swings between 46 and 55 m/s and
 crosses the trim airspeed every 13.6 s, half the period, while the altitude
-rides 46 m above and back.
+rises 46 m above the start.
 
 ## 4. The closed loop
 

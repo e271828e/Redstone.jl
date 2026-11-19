@@ -3,7 +3,8 @@
 The tutorial builds one model from scratch, a light aircraft in its plane of
 symmetry, and grows it chapter by chapter. Each page shows its code whole,
 beside the output the build of this site produced. The physics is stated,
-not derived, and each result is checked against a hand calculation.
+not derived. Each result is checked against a hand estimate or a second
+computation of it.
 
 Every chapter ends at a function of the examples package,
 `RedstoneExamples`, so you can start any chapter from the one before

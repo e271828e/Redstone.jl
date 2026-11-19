@@ -17,11 +17,11 @@ The examples are the package `RedstoneExamples`, in the repository's
 `examples/` directory, one file per example. Its `Project.toml` is a
 workspace root of its own, with `examples/test` as its member, so
 `Pkg.test` works from `--project=examples` as it does from the repository
-root. It reaches `Redstone` through a `[sources]` entry with `path = ".."`,
-never through membership in the root workspace, and keeps its own manifest.
-`Redstone`'s manifest therefore never lists what only an example needs, and
-the gate (`rules/code_rules.md`, "Running the suite") installs and loads none
-of it.
+root. It reaches `Redstone` through a `[sources]` entry with `path = ".."`.
+It is also a member of the root workspace, so in a clone the root's one
+manifest, never committed, resolves it beside `Redstone`, its tests and the
+docs. `Redstone`'s `Project.toml` never lists what only an example needs, and
+the gate (`rules/code_rules.md`, "Running the suite") loads none of it.
 
 Two placements were weighed before this one.
 
@@ -59,7 +59,7 @@ change in a minor version.
 
 **Getting the examples.** The installed `Redstone` carries `examples/`
 inside its package directory, whether it came from a URL or from the
-registry, so a reader has two routes.
+registry, so a reader has two routes to the examples alone.
 
     # From a clone, the examples and, later, the tutorial scripts beside them.
     git clone https://github.com/e271828e/Redstone.jl
@@ -81,6 +81,25 @@ dependency of the environment for `using Redstone` to resolve in `Main`;
 developing the examples alone loads them, through the `[sources]` path,
 but leaves `Redstone` unreachable. Both routes were run end to end on
 2026-10-18.
+
+The tutorial's Introduction, `docs/src/tutorial/index.md`, teaches two other
+routes, which also bring CairoMakie for its plots. Neither environment above
+holds CairoMakie. The docs environment, `docs/Project.toml`, holds
+`Redstone`, the examples and CairoMakie.
+
+    # Into the reader's own environment, by URL.
+    julia> using Pkg
+    julia> Pkg.add(url = "https://github.com/e271828e/Redstone.jl")
+    julia> Pkg.add(url = "https://github.com/e271828e/Redstone.jl", subdir = "examples")
+    julia> Pkg.add("CairoMakie")
+
+    # From a clone, in the docs environment.
+    julia --project=Redstone.jl/docs -e 'using Pkg; Pkg.instantiate()'
+    julia --project=Redstone.jl/docs
+    julia> using Redstone, RedstoneExamples, CairoMakie
+
+Both were run on 2026-11-19 with a local clone as the address, since nothing
+had been pushed.
 
 ## 2. The admission guidelines
 

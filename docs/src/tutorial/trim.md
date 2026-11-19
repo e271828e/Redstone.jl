@@ -32,8 +32,9 @@ attack when ``\gamma = 0``, the elevator ``\delta_e`` and the throttle
 A trim problem names its unknowns, the decisions, with a guess and bounds.
 Its `condition` is a function that turns the decisions into a
 [condition](@ref g-condition), the values the model starts from. Here it
-writes the pitch angle into the plant's state beside the held airspeed,
-altitude and zero rates, and the two controls into the root inputs.
+writes the pitch angle into the plant's state, beside the held airspeed and
+altitude, a level flight path and no pitch rate. It writes the two controls
+into the [root inputs](@ref g-root-input).
 `reads` names what the solver looks at after each evaluation, a
 [read set](@ref g-read-set) built by [`reads`](@ref), here of three derivatives read with
 [`get_deriv`](@ref). `residuals` turns the reads into
@@ -86,20 +87,6 @@ import Redstone: state
 state(sim, "plant")
 ```
 
-## A trim that fails
-
-At 20 m/s the aircraft needs more angle of attack than the problem's upper
-bound on ``\theta`` allows. The solver stops against the bound and says so.
-It commits nothing, so the simulation stays as it was.
-
-```@example trim
-import Redstone: lifecycle
-
-slow_sim = Simulation(aircraft(); Δt_frame = 1//100)
-slow = trim!(slow_sim, level_flight(V = 20.0); baseline = set())
-(status = slow.status, saturated = slow.saturated, residuals = slow.residuals, lifecycle = lifecycle(slow_sim))
-```
-
 ## The check
 
 The estimate by hand ignores the small tilt of the thrust. Lift balances
@@ -130,10 +117,24 @@ map((solved, estimated) -> 100 * (solved / estimated - 1), report.solution, esti
 All three are within 1%. The largest gap is in the pitch angle, where the
 thrust's tilt adds a little lift.
 
+## A trim that fails
+
+At 20 m/s the aircraft needs more angle of attack than the problem's upper
+bound on ``\theta`` allows. The solver stops against the bound and says so.
+It commits nothing, so the simulation stays as it was.
+
+```@example trim
+import Redstone: lifecycle
+
+slow_sim = Simulation(aircraft(); Δt_frame = 1//100)
+slow = trim!(slow_sim, level_flight(V = 20.0); baseline = set())
+(status = slow.status, saturated = slow.saturated, residuals = slow.residuals, lifecycle = lifecycle(slow_sim))
+```
+
 ## The package's problem
 
-The examples package ships this problem as `level_flight()`. Solved on a
-fresh simulation, it gives the same answer.
+The examples package ships this chapter's problem as `level_flight()`.
+Solved on a fresh simulation, it gives the same answer as yours at 50 m/s.
 
 ```@example trim
 import RedstoneExamples

@@ -48,7 +48,7 @@ and the equations of motion are
 ```
 
 The parameters are those of a light single-engine aircraft. Their values
-and the derivation of these equations are in the
+and the assumptions behind these equations are in the
 [aircraft's companion](https://github.com/e271828e/Redstone.jl/blob/master/design/companions/longitudinal_aircraft.md#1-the-model).
 
 ## The component
@@ -117,7 +117,7 @@ A model is a tree of components with one root. The aircraft sits under a
 [`Group`](@ref Redstone.Library.Group), an [assembly](@ref g-assembly) that
 names its children and wires them. Here the group has one child, `plant`,
 and hands it the group's own inputs `δe` and `δt`, the model's
-[root inputs](@ref g-root-input). Every later reader addresses the aircraft
+[root inputs](@ref g-root-input). Every later read addresses the aircraft
 by the path `"plant"`.
 
 ```@example aircraft

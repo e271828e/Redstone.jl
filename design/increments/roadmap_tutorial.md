@@ -378,8 +378,8 @@ the coordinator's guess, and the user confirmed it on the pilot.
 12. **Every block is whole and runs in page order.** No hidden setup,
     except a plot theme. Every name is imported in view. A page's blocks
     share one named module, and a refusal runs in an `@repl` block of the
-    same name. A block ends on a value worth showing, since Documenter
-    does not honor a trailing `;`. An `@meta` block is not code. The
+    same name. A block ends on a value worth showing or on a definition,
+    since Documenter does not honor a trailing `;`. An `@meta` block is not code. The
     closing import is displayed and not run, since it would collide with
     the page's own definitions.
 13. **The names are the package's.** Components, paths, faces and

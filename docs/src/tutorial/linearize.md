@@ -5,8 +5,8 @@ CurrentModule = Redstone
 ```
 
 In this chapter you linearize the trimmed aircraft and read its two modes
-from the eigenvalues. The short period is a pitch oscillation of about a
-second, and the phugoid's period matches the run of
+from the eigenvalues. The short period is a pitch oscillation of about 1.4 s,
+and the phugoid's period matches the run of
 [chapter 1](aircraft.md). The
 two time scales then decide how the run integrates. The step must follow
 the fast mode, even when only the slow one shows.
@@ -27,8 +27,9 @@ solution = trim!(sim, level_flight(); baseline = set()).solution
 A linearization perturbs some quantities and watches others. The
 [taps](@ref g-taps) name them, each with a [selector](@ref g-selector).
 The states to perturb go under `x`, selected with [`get_state`](@ref), the
-root inputs under `u`, selected with [`get_input`](@ref), and the outputs
-to watch under `y`. Each list's labels become the axes of the matrices.
+[root inputs](@ref g-root-input) under `u`, selected with
+[`get_input`](@ref), and the outputs to watch under `y`. Each list's order
+fixes the rows and columns of the matrices.
 [`linearize`](@ref) works at the simulation's current state, here the
 committed trim, and returns ``\dot x = A x + B u`` in deviations from it.
 This chapter needs the states and the controls only, so the tap set has no
@@ -65,7 +66,7 @@ V, γ, θ, q, h = 1:5   # the rows and columns of A, in the tap set's order
 (linearization.A[h, γ], linearization.A[θ, q], linearization.A[:, h])
 ```
 
-`x_deriv` is an ordinary function, so you can call it yourself. The block
+[`x_deriv`](@ref) is an ordinary function, so you can call it yourself. The block
 below differentiates the `x_deriv` of [chapter 1](aircraft.md) by plain
 central differences at the trim, and compares the result with the
 framework's derivative through the built model.
@@ -119,10 +120,10 @@ phugoid.period
 
 ## The step
 
-The run integrates each frame in steps. The default method,
+The run integrates each [frame](@ref g-frame) in steps. The default method,
 [`RK4`](@ref), takes each frame in equal steps no longer than `h_max`, and
 in one step when `h_max` is not set. `h_max`, the method and the frame are
-keywords of the [`Deployment`](@ref), which `Simulation` passes on. An
+keywords of the [`Deployment`](@ref), which [`Simulation`](@ref) passes on. An
 explicit method like `RK4` stays stable only while the step is short
 against the fastest mode. The short period's ``|\lambda|`` of 5.43 rad/s puts that
 limit well under a second, though a two-minute run shows only the phugoid.
@@ -131,7 +132,8 @@ The function below flies [chapter 1](aircraft.md)'s flight, 5 m/s above
 trim, under the deployment keywords it is given. It compares the airspeed
 at each whole second with the run at [chapter 1](aircraft.md)'s frame of
 1/100 s. Each step ends at a
-snapshot, so the log's length counts the steps.
+[snapshot](@ref g-snapshot), so the [log](@ref g-log)'s length counts the
+steps.
 
 ```@example linearize
 import Redstone: at, combine, init!, run!, series, reads, get_output
@@ -177,8 +179,7 @@ fly(Δt_frame = 1, algorithm = BS3())
 ```
 
 With a floor of a millisecond it takes about a third as many steps as the
-fixed method, at its default tolerances. Its steps still follow the short
-period, not the phugoid.
+fixed method, at its default tolerances.
 
 ```@example linearize
 compare(fly(Δt_frame = 1, algorithm = BS3(), h_min = 1//1000))
