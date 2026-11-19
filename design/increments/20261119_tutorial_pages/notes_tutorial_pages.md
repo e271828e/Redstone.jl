@@ -232,6 +232,7 @@ rule 17 of the pages.
 | 2 | four iterations | `iterations = 4` | existing, and new for the empty baseline |
 | 2 | within 1% of the hand estimate | −0.75, +0.51, −0.06 % | the solution's existing pin; the estimate is hand arithmetic |
 | 2 | the stall at 20 m/s | status, saturated, lifecycle | new, exact |
+| 2 | none: `level_flight`'s `h` keyword | not shown | new with F8: a trim at 2000 m commits `h = 2000`, exact |
 | 3 | 5.43 rad/s and 27.3 s | the modes | the existing eigenvalue pins, to 1e-3 |
 | 3 | `A[h, γ]` is 50, `A[θ, q]` is 1, the column of `h` is zero | the entries | new, exact |
 | 3 | `A` within about 1.5e-10 of central differences | `1.526e-10` | new: below 1e-8, computed as the page does |
@@ -401,7 +402,7 @@ The findings and the coordinator's adjudication. The fixes are one commit,
 | F1 | The Introduction says each result is checked against a hand calculation, which R24 ended | fixed: a hand estimate or a second computation |
 | F2 | `trim.md` calls γ = 0 a zero rate | fixed |
 | F3 | `linearize.md` gives the short period "about a second" where the output shows 1.40 s | fixed: about 1.4 s |
-| F4 | Six first mentions without their link, by rule 19 | fixed |
+| F4 | Seven first mentions without their link, by rule 19 | fixed |
 | F5 | `examples_inventory.md` section 1 lists other routes than the Introduction's and says the examples are no workspace member, false since `87f72d7` | fixed in the companion |
 | F6 | Two stale lines of this record | fixed |
 | F7 | The companion's new text says the damping estimate agrees to three figures, 0.0672 against 0.0670 | fixed: two figures |
@@ -432,10 +433,23 @@ reviewer's reasons:
 Not reached: the install from GitHub, since nothing is pushed, with both
 routes run from a local address; and the build on headless Linux.
 
+The fixes are `47d3b05`. At it the docs build is green, the examples'
+runner reads 179 of 179 with F8's assertion, and the battery is OK. The
+reviewer verified the delta: every fix answers its finding, F8's mutant
+now goes red, and no new error entered the pages. Its two corrections to
+this record and the fixer's three leftovers landed after it: the count in
+F4's row, the pin of F8 in section 4, the chapter 2 testset's name, a
+stale comment in `companions/examples_inventory.md`, and
+`rules/code_rules.md`, which said the gate never installs the examples'
+dependencies.
+
 ## 9. Open
 
 - **Not verified.** The docs build on headless Linux and its timings
-  there, which the first push shows. The GitHub install lines, tested
+  there, which the first push shows. The same push shows what CairoMakie
+  costs the other workflows: the workspace has one manifest, so each
+  job's `Pkg.instantiate()` may now download the docs environment's 308
+  dependencies. The GitHub install lines, tested
   with the local worktree as the address. The `BS3` step count on Linux.
 - **For increment 3.** Chapter 4 is the place to bring `condition` back,
   by L15. The core work now first in `pending.md` renames `Absolute`'s

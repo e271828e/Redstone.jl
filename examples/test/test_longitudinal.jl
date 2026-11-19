@@ -184,7 +184,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         @test all(period -> isapprox(period, 27.33; atol = 0.01), diff(upward))
     end
 
-    @testset "chapter 2: an empty baseline trims to the same point, and at 20 m/s the trim stalls on the pitch bound and commits nothing (§14.8)" begin
+    @testset "chapter 2: an empty baseline trims to the same point, a trim at 2000 m commits that altitude, and at 20 m/s the trim stalls on the pitch bound and commits nothing (§14.8)" begin
         unbased = trim!(Simulation(aircraft(); Δt_frame = 1//100), level_flight(); baseline = set())
         @test unbased.n_iterations == 4
         @test all(name -> isapprox(unbased.solution[name], solution[name]; atol = 1e-12), keys(solution))

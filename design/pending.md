@@ -68,8 +68,8 @@ item changes what the spec says, the spec edit is part of the item.
   list are
   `design/increments/20261118_tutorial_example/notes_tutorial_example.md`,
   with the brief and the prototype's patch beside it. Increment 2 has
-  landed with its cold review's fixes, and the delta check is next, then
-  the user's diff of the arc and the push; its record is
+  landed with its cold review's fixes and the delta check's, and the
+  user's diff of the arc is next, then the push; its record is
   `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`,
   with the patch beside it and no brief. Before increment 3 a loose
   change is proposed apart, by L12 and L23 of that record: a compact

@@ -61,7 +61,7 @@ change in a minor version.
 inside its package directory, whether it came from a URL or from the
 registry, so a reader has two routes to the examples alone.
 
-    # From a clone, the examples and, later, the tutorial scripts beside them.
+    # From a clone, the examples.
     git clone https://github.com/e271828e/Redstone.jl
     julia --project=Redstone.jl/examples -e 'using Pkg; Pkg.instantiate()'
     julia --project=Redstone.jl/examples

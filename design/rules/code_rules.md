@@ -363,8 +363,8 @@ that stops running shows nothing. A line takes a marker only once the gate is
 shown to run it, by a test that calls it directly or a recording override. A
 line the gate does not run takes a test.
 
-The examples are a second package, `examples/`, in an environment of its
-own that reaches `Redstone` by a `[sources]` path
+The examples are a second package, `examples/`, a member of the root
+workspace that reaches `Redstone` by a `[sources]` path
 (`companions/examples_inventory.md`, which is also their register). Their
 tests run from the repository root with
 
@@ -374,8 +374,8 @@ or, for one example's file, `julia --project=examples/test
 examples/test/runtests.jl longitudinal`: the tests are one `test_<example>.jl`
 per example over the helpers of `examples/test/utils.jl`, and `runtests.jl`
 is the driver. CI runs them as a third workflow (`.github/workflows/Examples.yml`), on
-Linux, on the same triggers. The gate never installs or loads the examples'
-dependencies, which is why the environment is separate. A change under
+Linux, on the same triggers. The gate never loads the examples'
+dependencies, which is why the package is separate. A change under
 `examples/` runs that runner; so does a commit in the table's last row, and
 any change to a name the examples import.
 
