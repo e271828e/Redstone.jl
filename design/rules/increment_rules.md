@@ -22,18 +22,23 @@ the pipeline stops only for a design decision. The brief's rules are
    the worktree and runs the gate again. The coordinator checks nothing
    itself beyond a grep and never edits the prototype. Each ruling enters
    the increment's notes file as it is made, with its reason.
-3. **The brief, once.** The coordinator drafts the brief from the settled
-   prototype, shows it to the user before anything lands, and commits it
-   to the increment's folder under `design/increments/` with the
-   prototype's patch and the notes.
+3. **The record, once.** When the prototype is the implementation, the
+   notes file is the increment's record and no brief is written. Beside
+   its rulings it takes the shape built, the measurements, what the tests
+   pin with the mutant that turns each pin red, the bookkeeping, what is
+   out of scope, and the cold review's charter. A multi-stage increment
+   takes a brief as well, drafted from the settled prototype, since its
+   builders start from it. The coordinator shows the record to the user
+   before anything lands, and commits it to the increment's folder under
+   `design/increments/` with the prototype's patch.
 4. **Who builds depends on size.** When the prototype is the
    implementation, the coordinator applies its patch to the real tree, runs
-   the routed runners and commits, whatever its size; the brief keeps its
-   record half only. A multi-stage increment takes one fresh high-tier
-   agent per stage, each prompt carrying the brief's path, the
-   predecessors' handoff notes and the tip hash; one commit per stage,
-   suite green. An agent that stopped on a design conflict having edited
-   nothing is resumed with the ruling, its context intact, never replaced.
+   the routed runners and commits, whatever its size. A multi-stage
+   increment takes one fresh high-tier agent per stage, each prompt
+   carrying the brief's path, the predecessors' handoff notes and the tip
+   hash; one commit per stage, suite green. An agent that stopped on a
+   design conflict having edited nothing is resumed with the ruling, its
+   context intact, never replaced.
 5. **One cold review** by an independent high-tier agent over the whole
    increment, whoever built it: an open-mind stance, probe scripts outside
    the tree, and "empty is acceptable". It runs the gate on the Julia floor
@@ -68,9 +73,9 @@ the pipeline stops only for a design decision. The brief's rules are
   track and a reboot clears. The root `Manifest.toml` is
   copied in: a worktree lacks that untracked file, and the `examples/test`
   environment needs one `Pkg.instantiate()`. The gate runs there
-  unchanged, the worktree's `git diff` is the brief's patch, applied with
-  `git apply` once the docs commit lands, and every pin and figure in the
-  brief comes from the prototype. The worktree carries the previous
+  unchanged, the worktree's `git diff` is the increment's patch, applied
+  with `git apply` once the docs commit lands, and every pin and figure in
+  the record comes from the prototype. The worktree carries the previous
   increment's patch when the next prototype needs it, and the brief's
   reference file names which hunks are its own.
 - Probe read-only against the real tree only while no agent runs on it, in
@@ -79,7 +84,7 @@ the pipeline stops only for a design decision. The brief's rules are
   ends before the device's task is scheduled, and bounds every wait. `@allocated`
   can read 0 on a dynamic call whose result goes unused, so use the result.
 - Measure allocations through `phase_bodies`, and build under `(Float64,
-  LinearizeDual)`, before a number enters a brief. Measure compile latency
+  LinearizeDual)`, before a number enters the record. Measure compile latency
   through the real entry point in a fresh process with `--startup-file=no`:
   a startup file that loads Revise, or a probe that calls a resolver's
   per-item helper, hides the per-call-shape recompile the real path pays.
@@ -125,7 +130,7 @@ the pipeline stops only for a design decision. The brief's rules are
 - The ceiling is 500k tokens and the stopping point 450k, for the
   coordinator as for a long agent. The coordinator reads its own context
   at every agent report, every round of rulings and every commit.
-- The brief's commit is a planned check, and on a multi-stage increment
+- The record's commit is a planned check, and on a multi-stage increment
   the last stage's commit is another: no agent is resumed across either.
   Past 400k there, a fresh session lands the increment.
 - Elsewhere the coordinator hands over at 450k, once every running agent
@@ -136,6 +141,6 @@ the pipeline stops only for a design decision. The brief's rules are
   tip, where each ruling lives, the rulings recorded nowhere else, what
   is open, and the worktrees, logs and agents' notes by absolute path.
   The coordinator commits it, puts the stage reached on the `pending.md`
-  bullet, and gives the user the successor's first prompt: the brief, the
-  notes, the bullet and the tip hash.
+  bullet, and gives the user the successor's first prompt: the notes, the
+  brief where there is one, the bullet and the tip hash.
 - The successor reads those and the rules, never the old transcript.

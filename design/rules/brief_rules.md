@@ -6,6 +6,11 @@ reviewer get beyond the repo's standing rules, so it routes, pins and
 counts, and restates nothing a rules file says. The pipeline it feeds is
 `increment_rules.md`; the template is the last section.
 
+A brief is written where agents build from it: a multi-stage increment, a
+sweep or an audit. An increment whose prototype is the implementation
+takes none. Its notes file carries the record sections of the template
+below, written to these rules.
+
 ## Routing
 
 - Route the reading: `code_map.md` entries for the files touched, the
