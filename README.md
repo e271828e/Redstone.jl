@@ -119,8 +119,8 @@ ERROR: DiagnosticError: 1 diagnostics
 ## Documentation
 
 Redstone has no user manual yet. The
-[documentation](https://e271828e.github.io/Redstone.jl/dev/) holds the API
-reference and a glossary. The design is written down in full:
+[documentation](https://e271828e.github.io/Redstone.jl/dev/) holds the
+first chapters of a tutorial, the API reference and a glossary. The design is written down in full:
 
 - [`design/spec.md`](https://github.com/e271828e/Redstone.jl/blob/master/design/spec.md)
   is the normative specification.

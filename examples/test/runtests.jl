@@ -8,7 +8,7 @@ using Statistics: std
 using Redstone, RedstoneExamples
 import Redstone: Build, ProbeDual, Simulation, build, init!, run!, step!, stage!, trim!, linearize, state, modes,
     series, reads, get_output, get_face, get_input, get_state, taps, termination, lifecycle, phase_bodies, set, at, combine,
-    override, condition, checkpoint, restore!, replay!, trace, local_wires, input_wires, output_wires, diagnostics,
+    override, checkpoint, restore!, replay!, trace, local_wires, input_wires, output_wires, diagnostics,
     DiagnosticError, TapResolution, AlgebraicCycle, EndTimeReached, ModelRequestedStop
 import Redstone.Library: Group
 

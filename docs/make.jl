@@ -15,6 +15,13 @@ write_glossary(joinpath(@__DIR__, "..", "design", "spec.md"),
 
 DocMeta.setdocmeta!(Redstone, :DocTestSetup, :(using Redstone); recursive = true)
 
+# The tutorial's plot theme, the one setup its pages do not show. A figure renders as a PNG
+# at twice its size in pixels, so its weight does not grow with the length of the log.
+using CairoMakie
+CairoMakie.enable_only_mime!("png")
+set_theme!(size = (720, 420), fontsize = 13, linewidth = 1.5,
+           Axis = (xgridcolor = (:black, 0.08), ygridcolor = (:black, 0.08)))
+
 makedocs(;
     sitename = "Redstone.jl",
     authors = "Miguel Alonso <miguel883@gmail.com>",
@@ -24,11 +31,19 @@ makedocs(;
     pagesonly = true,
     pages = [
         "Home" => "index.md",
+        "Tutorial" => [
+            "tutorial/index.md",
+            "1\\. The aircraft" => "tutorial/aircraft.md",
+            "2\\. Trim" => "tutorial/trim.md",
+            "3\\. Linearize" => "tutorial/linearize.md",
+        ],
         "API" => "api.md",
         "Glossary" => "glossary.md",
     ],
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", nothing) == "true",
+        # the Tutorial group stays collapsed unless one of its pages is open
+        collapselevel = 1,
         # one page for the whole surface, and one for the whole glossary
         size_threshold_ignore = ["api.md", "glossary.md"],
     ),

@@ -1,7 +1,10 @@
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Redstone = "653472ee-a41b-4fb0-9ffa-a5db0d34d125"
+RedstoneExamples = "28cf5f55-110a-4578-bc3c-cf560fa74dd0"
 
 [compat]
+CairoMakie = "0.15"
 Documenter = "1"
 julia = "1.13"

@@ -35,6 +35,20 @@ function fly_closed_loop(solution, gains; cascade = true, switch_at = nothing, h
     sim
 end
 
+# Chapter 3's flight: chapter 1's open loop from 55 m/s at the trim controls under the deployment
+# keywords given, its airspeed logged.
+function fly_open_loop(solution; deployment...)
+    sim = Simulation(aircraft(); deployment...)
+    init!(sim, at_trim(solution, set(x = (V = 55.0, θ = solution.θ))))
+    run!(sim; t_end = 120.0)
+    series(sim, reads(V = get_output("plant", :V)))
+end
+
+# The largest airspeed gap between two flights at the whole seconds of chapter 3's comparison.
+airspeed_gap(flight, reference) =
+    maximum(t -> abs(flight.columns.V[findfirst(==(t), flight.t)] - reference.columns.V[findfirst(==(t), reference.t)]),
+            0.0:1.0:120.0)
+
 # The frame index of time `t` under the loops' frame of 5 ms.
 frame_index(t) = round(Int, t * 200)
 
@@ -44,7 +58,7 @@ function pitch_hold_at_trim(solution; discrete = false, θ_step = 0.0)
     sim = Simulation(pitch_hold(; discrete); Δt_frame = 1//200)
     integral = discrete ? set(s = (q = solution.δe,)) : set(x = (q = solution.δe,))
     init!(sim, combine(set(u = (θ_ref = solution.θ + θ_step, δt = solution.δt)),
-                       at("plant", condition(Longitudinal(); θ = solution.θ)), at("θ_ctl", integral)))
+                       at("plant", set(x = (θ = solution.θ,))), at("θ_ctl", integral)))
     sim
 end
 
@@ -142,7 +156,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
 
     @testset "the open loop from 55 m/s crosses the trim airspeed every half phugoid period (§10.2)" begin
         open_loop = Simulation(aircraft(); Δt_frame = 1//100)
-        init!(open_loop, at_trim(solution, condition(Longitudinal(); V = 55.0, θ = solution.θ)))
+        init!(open_loop, at_trim(solution, set(x = (V = 55.0, θ = solution.θ))))
         run!(open_loop; t_end = 120.0)
         times = logged_times(open_loop)
         Vs = logged_port(open_loop, "plant", :V)
@@ -151,6 +165,71 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         # The probe's crossings: 6.62, 20.12, 33.9, 47.45, 61.19, 74.78.
         first_six = crossings(times, Vs, 50.0)[1:6]
         @test isapprox((first_six[6] - first_six[1]) / 5, π / 0.23005; rtol = 0.01)
+    end
+
+    @testset "chapter 1: from the companion's rounded trim the open loop swings between 46 and 55 m/s, 46 m up, at a 27.3 s period (§10.2)" begin
+        page = Simulation(aircraft(); Δt_frame = 1//100)
+        init!(page, combine(at("plant", set(x = (V = 55.0, θ = 0.019930))),
+                            set(u = (δe = 0.025058, δt = 0.37234))))
+        run!(page; t_end = 120.0)
+        times = logged_times(page)
+        Vs = logged_port(page, "plant", :V)
+        @test length(times) == 12001
+        @test minimum(Vs) ≈ 45.872 atol = 1e-3
+        @test maximum(Vs) == 55.0
+        @test maximum(logged_port(page, "plant", :h)) ≈ 1046.016 atol = 1e-3
+        # The probe's upward crossings: 20.12, 47.45, 74.78, 102.11.
+        upward = [times[i] for i in 2:length(Vs) if Vs[i - 1] < 50.0 ≤ Vs[i]]
+        @test length(upward) == 4
+        @test all(period -> isapprox(period, 27.33; atol = 0.01), diff(upward))
+    end
+
+    @testset "chapter 2: an empty baseline trims to the same point, and at 20 m/s the trim stalls on the pitch bound and commits nothing (§14.8)" begin
+        unbased = trim!(Simulation(aircraft(); Δt_frame = 1//100), level_flight(); baseline = set())
+        @test unbased.n_iterations == 4
+        @test all(name -> isapprox(unbased.solution[name], solution[name]; atol = 1e-12), keys(solution))
+        slow_sim = Simulation(aircraft(); Δt_frame = 1//100)
+        slow = trim!(slow_sim, level_flight(V = 20.0); baseline = set())
+        @test slow.status == :stalled
+        @test slow.saturated == [(:θ, :upper)]
+        @test lifecycle(slow_sim) == :built
+    end
+
+    @testset "chapter 3: the Jacobian's entries are exact and match central differences, and the short period bounds the step (§14.10, §10.2)" begin
+        A = linearization.A
+        @test A[5, 2] == 50.0
+        @test A[3, 4] == 1.0
+        @test all(iszero, A[:, 5])
+        # Central differences of the plant's `x_deriv` at the trim, as the page computes them; the
+        # probe's largest gap is 1.53e-10.
+        x₀, u₀ = linearization.x₀, linearization.u₀
+        f(v) = collect(Redstone.x_deriv(Longitudinal(), (x = NamedTuple{keys(x₀)}(Tuple(v)), u = u₀)))
+        v₀, ε = collect(x₀), 1e-6
+        A_fd = reduce(hcat, [(f(v₀ + ε * e) - f(v₀ - ε * e)) / 2ε for e in eachcol(I(5))])
+        @test maximum(abs, A_fd - A) < 1e-8
+        diverged = try
+            fly_open_loop(solution; Δt_frame = 1)
+            nothing
+        catch err
+            err
+        end
+        @test diverged isa Redstone.StepError{Redstone.NonfiniteState}
+        reference = fly_open_loop(solution; Δt_frame = 1//100)
+        bounded = fly_open_loop(solution; Δt_frame = 1, h_max = 1//10)
+        @test length(bounded.t) - 1 == 1200
+        @test airspeed_gap(bounded, reference) < 1e-5
+        refusal = try
+            fly_open_loop(solution; Δt_frame = 1, algorithm = Redstone.BS3())
+            nothing
+        catch err
+            err
+        end
+        @test refusal isa DiagnosticError
+        @test only(diagnostics(refusal)) isa Redstone.DeploymentInvalid
+        # The probe's adaptive run: 418 steps, a largest gap of 4.29e-4 m/s.
+        adaptive = fly_open_loop(solution; Δt_frame = 1, algorithm = Redstone.BS3(), h_min = 1//1000)
+        @test 380 <= length(adaptive.t) - 1 <= 460
+        @test airspeed_gap(adaptive, reference) < 1e-3
     end
 
     @testset "the closed loop rests at the trim under either controller (§14.5)" begin

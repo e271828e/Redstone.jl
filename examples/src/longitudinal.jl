@@ -31,15 +31,22 @@ the modes are `longitudinal_aircraft.md`, sections 1 to 3.
 
 The example is didactic, and it may change in a minor version.
 """
-struct Longitudinal <: AbstractComponent
-    m::Float64; S::Float64; c̄::Float64; Iyy::Float64; T_max::Float64; ρ::Float64
-    CL0::Float64; CLα::Float64; CD0::Float64; k::Float64
-    Cm0::Float64; Cmα::Float64; Cmq::Float64; Cmδe::Float64
+@kwdef struct Longitudinal <: AbstractComponent
+    m::Float64 = 1000.0
+    S::Float64 = 16.0
+    c̄::Float64 = 1.5
+    Iyy::Float64 = 1800.0
+    T_max::Float64 = 2500.0
+    ρ::Float64 = 1.225
+    CL0::Float64 = 0.3
+    CLα::Float64 = 5.0
+    CD0::Float64 = 0.03
+    k::Float64 = 0.05
+    Cm0::Float64 = 0.05
+    Cmα::Float64 = -1.0
+    Cmq::Float64 = -12.0
+    Cmδe::Float64 = -1.2
 end
-Longitudinal(; m = 1000.0, S = 16.0, c̄ = 1.5, Iyy = 1800.0, T_max = 2500.0, ρ = 1.225,
-             CL0 = 0.3, CLα = 5.0, CD0 = 0.03, k = 0.05,
-             Cm0 = 0.05, Cmα = -1.0, Cmq = -12.0, Cmδe = -1.2) =
-    Longitudinal(m, S, c̄, Iyy, T_max, ρ, CL0, CLα, CD0, k, Cm0, Cmα, Cmq, Cmδe)
 
 x_init(::Longitudinal) = (V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0)
 u_types(::Longitudinal) = (δe = Float64, δt = Float64)
@@ -61,15 +68,6 @@ function x_deriv(plant::Longitudinal, (; x, u))
      q = moment / plant.Iyy,
      h = V * sin(γ))
 end
-
-"""
-    condition(::Longitudinal; V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0)
-
-The aircraft's own vocabulary (§14.2): the fragment writing its five states,
-level at 50 m/s and 1000 m by default.
-"""
-condition(::Longitudinal; V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0) =
-    set(x = (V = V, γ = γ, θ = θ, q = q, h = h))
 
 """
     GroundContact(; h_ground = 0.0)
@@ -105,7 +103,8 @@ only to give the plant the path `"plant"` it has in `pitch_hold`, `autopilot`,
 `piloted` and `closed_loop`, so the trim problem, the taps and every reader
 address it the same way in each.
 """
-aircraft() = Group((; plant = Longitudinal()); input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
+aircraft() = Group((; plant = Longitudinal());
+                   input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
 
 """
     level_flight(; V = 50.0, h = 1000.0)
@@ -121,7 +120,7 @@ level_flight(; V = 50.0, h = 1000.0) = TrimProblem(
     guess = (θ = 0.0, δe = 0.0, δt = 0.5),
     lower = (θ = -0.3, δe = -0.5, δt = 0.0),
     upper = (θ = 0.3, δe = 0.5, δt = 1.0),
-    condition = d -> combine(at("plant", condition(Longitudinal(); V = V, θ = d.θ, h = h)),
+    condition = d -> combine(at("plant", set(x = (V = V, γ = 0.0, θ = d.θ, q = 0.0, h = h))),
                              set(u = (δe = d.δe, δt = d.δt))),
     reads = reads(V̇ = get_deriv("plant", :V), γ̇ = get_deriv("plant", :γ), q̇ = get_deriv("plant", :q)),
     residuals = (derivatives, d) -> (V̇ = derivatives.V̇, γ̇ = derivatives.γ̇, q̇ = derivatives.q̇),
@@ -290,7 +289,7 @@ loop's elevator and the airspeed loop's throttle. `yf` sits at its fixed point,
 the measurement. `longitudinal_aircraft.md`, section 4.
 """
 cruise(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0)),
-                           at("plant", condition(Longitudinal(); θ = solution.θ)),
+                           at("plant", set(x = (θ = solution.θ,))),
                            at("cascade/h_ctl", set(s = (q = solution.θ, yf = 1000.0))),
                            at("cascade/q_ctl", set(s = (q = solution.δe, yf = 0.0))),
                            at("cascade/V_ctl", set(s = (q = solution.δt, yf = 50.0))))
@@ -542,7 +541,7 @@ do; the full stores are written for clarity. `longitudinal_aircraft.md`,
 section 4.
 """
 trimmed(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0, mode = true)),
-                            at("plant", condition(Longitudinal(); θ = solution.θ)),
+                            at("plant", set(x = (θ = solution.θ,))),
                             at("pid_controller/h_ctl", set(s = (q = solution.θ, yf = 1000.0, saturated = Int8(0)))),
                             at("pid_controller/q_ctl", set(s = (q = solution.δe, yf = 0.0, saturated = Int8(0)))),
                             at("pid_controller/V_ctl", set(s = (q = solution.δt, yf = 50.0, saturated = Int8(0)))))
