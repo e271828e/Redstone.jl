@@ -64,12 +64,11 @@ item changes what the spec says, the spec edit is part of the item.
   friction, which is why it precedes the API audit. The work is an arc of five
   increments: the example's main path, the docs scaffold with chapters 1 to
   3, chapters 4 to 8, the tracker, and the closing with the README. Stage
-  reached: increment 1 is pushed; its state, rulings, pins and friction
-  list are
+  reached: increments 1 and 2 are pushed. Increment 1's state, rulings,
+  pins and friction list are
   `design/increments/20261118_tutorial_example/notes_tutorial_example.md`,
-  with the brief and the prototype's patch beside it. Increment 2 has
-  landed with its cold review's fixes and the delta check's, and the
-  user's diff of the arc is next, then the push; its record is
+  with the brief and the prototype's patch beside it. Increment 2's
+  record is
   `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`,
   with the patch beside it and no brief. Before increment 3 a loose
   change is proposed apart, by L12 and L23 of that record: a compact
