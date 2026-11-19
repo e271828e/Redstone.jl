@@ -240,7 +240,7 @@ The sensor's effect on the 50 m step, the evidence chapter 5 can show:
 | Sensor and rates | Late altitude error (m) | Late airspeed error (m/s) | Peak (m) |
 |---|---|---|---|
 | 50 Hz sensor, two rates | 0.1646 | 0.0392 | 1050.126 |
-| 50 Hz sensor, one rate | 0.0640 | 0.0150 | 1050.064 |
+| 50 Hz sensor, one rate | 0.0641 | 0.0150 | 1050.064 |
 | 10 Hz altimeter, two rates | 0.0775 | 0.0187 | 1050.061 |
 
 The cold review found the first row's peak taken with the step staged at
@@ -298,10 +298,9 @@ Two fixes were sketched in discussion and left for the friction review:
 
 ## 6. Open
 
-- **The pipeline's later stages.** The docs, the code and the cold
-  review's fixes have landed, the review's record in the brief. The
-  reviewer's check of the fix is next, then the user's diff of the arc
-  before any push.
+- **The pipeline's later stages.** The docs, the code, the cold review's
+  fixes and the delta check's have landed, the review's record in the
+  brief. The user's diff of the arc is next, then the push.
 - **The inspector.** Its `scripts/fixtures.jl` imports `descent` and
   writes the fixture `descent.json`, which 20 of its frontend test files
   read. L21 puts a bullet in its `design/pending.md` with the code commit.

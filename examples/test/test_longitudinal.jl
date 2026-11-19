@@ -60,15 +60,15 @@ end
 # the next frame, and a discrete component reads it at its next tick.
 
 # Chapter 6's flight, on `piloted` or nested in `approach`: the pilot holds the trim, pulls the
-# elevator 0.02 rad over [5, 7) s and engages the autopilot at 30 s, and the simulation stops at
-# `until`.
-function fly_by_hand!(sim, solution; until = 60.0)
+# elevator 0.02 rad over [5, 7) s and, unless `engage` is false, engages the autopilot at 30 s, and
+# the simulation stops at `until`.
+function fly_by_hand!(sim, solution; until = 60.0, engage = true)
     step!(sim; frames = frame_index(5.0))
     stage!(sim, "δe_pilot" => solution.δe - 0.02)
     step!(sim; frames = frame_index(7.0) - frame_index(5.0))
     stage!(sim, "δe_pilot" => solution.δe)
     step!(sim; frames = frame_index(30.0) - frame_index(7.0))
-    stage!(sim, "engage" => true)
+    engage && stage!(sim, "engage" => true)
     step!(sim; frames = frame_index(until) - frame_index(30.0))
 end
 
@@ -371,6 +371,19 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         δe_pilot = series(hand, reads(δe = get_input("δe_pilot"))).columns.δe
         handover = findfirst(k -> times[k] > 29.9 && δe_selected[k] != δe_pilot[k], eachindex(times))
         @test times[handover] == 30.2
+        # Until the latch publishes, each controller computes exactly what it computes in the same
+        # flight with no engage, the same model under the same seed. A `DiscretePID` publishes `u`
+        # from its state before the tick's update, so a controller first shows the engage at its tick
+        # after 30.2 s: 30.22 s at 50 Hz, 30.3 s at 10 Hz. The window holds the 30.2 s snapshot and
+        # ends before the 50 Hz loops' next tick, its edge mid-gap between the snapshots at 30.205 s
+        # and 30.21 s.
+        unengaged = Simulation(piloted(solution); Δt_frame = 1//200)
+        init!(unengaged, hand_flown(solution))
+        fly_by_hand!(unengaged, solution; until = 30.4, engage = false)
+        for loop in ("h_ctl", "θ_ctl", "q_ctl", "V_ctl")
+            @test logged_port(hand, "cascade/$loop", :u)[window(hand, 0, 30.2075)] ==
+                  logged_port(unengaged, "cascade/$loop", :u)[window(unengaged, 0, 30.2075)]
+        end
         @test abs(δe_selected[switch] - δe_selected[switch - 1]) <= 0.005
         @test abs(δt_selected[switch] - δt_selected[switch - 1]) <= 0.01
     end

@@ -344,8 +344,9 @@ pushed.
 **The review**, at `e70da63`, by an independent high-tier agent in the
 worktree `../Redstone.jl-worktrees/tutorial_1_review`, its probes and
 notes beside it. The examples' runner read 146 of 146 on Julia 1.13.3,
-and the battery was green. It ran 57 mutants. Of the brief's 28, 26 went
-red, one survived and one hung the testset. Its probes found sound: the
+and the battery was green. It ran 57 mutants. Of the 32 runs for the
+brief's 28 items, 30 went red, one survived and one hung the testset.
+Its probes found sound: the
 wiring flattened leaf to leaf against the legacy cascade path, every pin
 of chapters 4 to 8, the six statements the coordinator flagged, every
 pin of chapter 6 at 20 alignments of the pull, the release and the
@@ -386,9 +387,10 @@ the two pins paragraphs and one table figure:
 - **F8, the 0.0017 rad of jitter** now names its window, [80, 90) s.
 - **L22.** `piloted`'s docstring paragraph rewrapped, no word changed.
 
-The fixer moved chapter 7's `h_refs` read above the line that reads
-`record.t`, so that a descent which never stops fails the new pins
-instead of throwing first. The examples' runner read 152 of 152 in the
+The fixer moved chapter 7's `h_refs` read above the line
+`descending = window(flight, 160, record.t - 1)`, so that a descent which
+never stops fails the new pins before that line throws. On such a run
+`termination` returns `nothing`. The examples' runner read 152 of 152 in the
 fixer's worktree, and 152 of 152 on the real tree before the commit,
 with the battery green.
 
@@ -406,3 +408,25 @@ forward reference for chapter 9, handed to increment 4 by L25. The brief's
 "65 537 snapshots spaced 0.02 s" reads 65 538, spaced in a mix of 0.01 and
 0.02 s. Not checked by either agent: whether the run is identical on the
 examples' Linux CI.
+
+**The delta check**, the reviewer resumed at `75b560b`. It found F1 to F8
+fixed and their figures right, and showed each new pin is what turns its
+mutant red: with the pin removed, the mutant survives. It listed one new
+finding and three wording errors in this record and the notes, corrected
+in the commit that adds this paragraph.
+
+- **F9, the controllers' engage tick was unpinned.** Fed the unlatched
+  `engage` while the switches stayed on the latch, the four controllers
+  acted at 30.02 and 30.1 s and every pin passed. The elevator's jump at
+  30.2 s rose from 0.0011 to 0.0037, under its bound of 0.005. The
+  reviewer proposed a bound of 0.002. The user ruled it brittle and asked
+  for the claim itself. The bound stays, and chapter 6 now pins each
+  controller's output equal, to the bit, to the same flight with no
+  engage, through the 30.2 s snapshot and before the 50 Hz loops' next
+  tick. A `DiscretePID` publishes `u` from its state before the tick's
+  update, so the engage first shows at 30.22 s at 50 Hz and 30.3 s at
+  10 Hz. The fixer showed the reviewer's mutant red, and the 10 Hz and
+  50 Hz loops unlatched alone red, and the reviewer's mutant surviving
+  without the new pins. The examples' runner read 156 of 156.
+
+The fix of F9 was not sent back to the reviewer.
