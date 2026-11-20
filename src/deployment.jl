@@ -526,8 +526,8 @@ One throw reports the faults found together. Exhausting `firing_budget` warns
   is built.
 - `firing_budget`: how many times one event may fire at one
   [boundary](@ref g-boundary), an integer of at least 1.
-- `localization_tol`: the positive relative bracket width, as a fraction of
-  `Δt_frame`, at which event localization stops.
+- `localization_tol`: the positive finite relative bracket width, as a
+  fraction of `Δt_frame`, at which event localization stops.
 - `localization_budget`: how many event localizations one frame admits, an
   integer of at least 1.
 - `attempt_budget`: how many attempts an adaptive method's step may make
@@ -561,7 +561,7 @@ function Deployment(build::Build; Δt_frame = nothing, Δt_base = nothing, h_max
         push!(diags, DeploymentInvalid(parameter = :algorithm, reason = :range, value = algorithm))
     firing_budget isa Integer && firing_budget ≥ 1 ||
         push!(diags, DeploymentInvalid(parameter = :firing_budget, reason = :range, value = firing_budget))
-    localization_tol isa Real && localization_tol > 0 ||
+    localization_tol isa Real && localization_tol > 0 && isfinite(localization_tol) ||
         push!(diags, DeploymentInvalid(parameter = :localization_tol, reason = :range, value = localization_tol))
     localization_budget isa Integer && localization_budget ≥ 1 ||
         push!(diags, DeploymentInvalid(parameter = :localization_budget, reason = :range, value = localization_budget))

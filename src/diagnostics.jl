@@ -1364,7 +1364,7 @@ _deployment_constraint(parameter::Symbol) =
     parameter === :algorithm           ? "must be an algorithm — `RK4()`, `Heun()` or `BS3()`" :
     parameter === :firing_budget       ? "must be an integer ≥ 1" :
     parameter === :attempt_budget      ? "must be an integer ≥ 1" :
-    parameter === :localization_tol    ? "must be a positive real" :
+    parameter === :localization_tol    ? "must be a positive and finite real" :
     parameter === :localization_budget ? "must be an integer ≥ 1" :
     (parameter === :h_max || parameter === :h_min || parameter === :Δt_frame ||
      parameter === :Δt_base) ?

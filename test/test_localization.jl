@@ -272,6 +272,8 @@ function test_localization()
         @test d isa DeploymentInvalid && d.parameter === :localization_tol
         d = only(diagnostics(failure(() -> Simulation(model; Δt_frame = 1//10, localization_tol = -1e-3))))
         @test d isa DeploymentInvalid && d.parameter === :localization_tol
+        d = only(diagnostics(failure(() -> Simulation(model; Δt_frame = 1//10, localization_tol = Inf))))
+        @test d isa DeploymentInvalid && d.parameter === :localization_tol && d.reason === :range && d.value === Inf
         d = only(diagnostics(failure(() -> Simulation(model; Δt_frame = 1//10, localization_budget = 0))))
         @test d isa DeploymentInvalid && d.parameter === :localization_budget
     end
