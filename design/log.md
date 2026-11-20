@@ -20244,8 +20244,9 @@ no internals. The bundled rulings:
 - An anchor's period stands under the key `dt`.
 - The writer adds a target to each bare `@ref` link of a docstring whose
   name resolves, from the type's module, to a binding its owner exports. It
-  keeps the text. The target is the owner and the name, with an operator's
-  name quoted in parentheses, and the module itself where the name resolves
+  keeps the text. The name is an identifier or a dotted path of identifiers,
+  and a link that names a macro or an operator stays as written. The target
+  is the owner and the name, and the module itself where the name resolves
   to a module.
 
 Supersedes the headline of [D-432][d-432]'s third bullet, that version one carries
@@ -20323,12 +20324,13 @@ exports nothing until the export audit ([D-226][d-226]), so the pass rewrites no
 the package's 124 bare links until then. The docs build's check also lists
 the module `Redstone` alone, which leaves `Redstone.Library` outside it. All
 124 targets stand on the API page, which is kept by hand.) After the
-writer's pass a bare link is one that did not resolve. (Amended 2026-11-20,
-at the cold review: a macro and an operator are bindings an owner exports,
-so the pass targets them as it targets a type. Julia reads `Owner.⊕` as the
-broadcast of `⊕`, so an operator's target is quoted, and `Owner.:(⊕)` is the
-one quoted form that parses for every operator. A module holds a binding to
-itself and counts as exporting it, so the owner and the name gave
+writer's pass a bare link is one that did not resolve. (Amended 2026-11-21,
+at the cold review: the pass reads a name that is an identifier or a dotted
+path of identifiers. Every bare link in the package's component docstrings
+is such a name, and the inspector's page links a target under `Redstone.`
+alone (`RedstoneInspector.jl/design/deployment_overlay.md`, answer 15), so a
+target for a user's macro or operator has no reader. A module holds a
+binding to itself and counts as exporting it, so the owner and the name gave
 `MyPkg.MyPkg` for a link to a package's own module.) The session that
 settled the content is recorded in
 `RedstoneInspector.jl/design/deployment_overlay.md`, answers 1, 2, 4 to 7
@@ -20380,8 +20382,13 @@ and the flag.
 - *An operator's target as Julia prints it, `Owner.:⊕` beside
   `Owner.:(==)`:* two forms for a client to recognize, and the printer
   chooses between them by no rule the format can state.
-- *An operator's link left bare:* a link that resolved, and that a client
-  cannot place.
+- *Superseded position — a target for an exported macro or operator, the
+  operator's name quoted in parentheses as `Owner.:(⊕)`:* Julia reads
+  `Owner.⊕` as the broadcast of `⊕`, so an operator needs a quoted target,
+  and no one quoted form parses for every operator, the adjoint's
+  `Base.:(')` among the failures. An operator whose name holds a dot, as
+  `..`, needs a reading of its own beside the dotted path. Each form is a
+  rule in the format for a link no page follows.
 - *The owner and the name for a module's own binding, `MyPkg.MyPkg`:* Julia
   evaluates it to the module, and a client that matches the target as text
   finds no anchor under the doubled name.

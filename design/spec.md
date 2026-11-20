@@ -12410,9 +12410,9 @@ records no location for a `struct` itself. **The writer adds a target to each ba
 whose name resolves, from the type's module, to a binding its owner exports**
 ([D-467][d-467]). It writes the owner as the target and keeps the text, so
 `` [`Pinned`](@ref) `` in a `Redstone.Library` docstring becomes
-`` [`Pinned`](@ref Redstone.Pinned) ``. The name may be a macro's or an
-operator's. An operator's name is quoted in parentheses, as `Owner.:(⊕)`,
-since Julia reads `Owner.⊕` as the broadcast of `⊕` and not as a name. A
+`` [`Pinned`](@ref Redstone.Pinned) ``. The name is an identifier or a dotted
+path of identifiers. A link that names a macro or an operator stays as
+written. A
 name that resolves to a module takes the module as its target, so a link to
 a package's own module `MyPkg` targets `MyPkg` and not `MyPkg.MyPkg`. Every
 other link stays as written, so
