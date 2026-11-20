@@ -78,8 +78,9 @@ Each is stated in the spec or the log except where noted.
     from `flatten_tree!` to `_check_root_faces`;
   - `build.jl`'s header says the flattened tree holds "one resolved
     producer per input", which predates D-315;
-  - `code_map.md`'s Spec lines for `assembly.jl` and `structure.jl` omit
-    D-414 and §10.5, which their bullets cite.
+  - `code_map.md`'s Spec line for `structure.jl` omits D-414 and §10.5,
+    which its bullets cite. The gap was the old `assembly.jl` entry's, and
+    it went to `structure.jl` with the two bullets.
 - **The inspector's repo names `assembly.jl` for what moved**, at
   `RedstoneInspector.jl/design/failure_descriptor.md` lines 70 and 84 and
   in the foundation increment's brief at lines 98 and 393. Nothing there
@@ -151,7 +152,8 @@ commit after the trial's.
   `flatten_tree!`, so the fold's banner covers the fold alone.
   `build.jl`'s header names the `Structure` and D-315's resolution.
   `code_map.md`'s Spec line for `structure.jl` gains §10.5 and D-414. The
-  line for `assembly.jl` had no gap: none of its bullets cites either.
+  line for `assembly.jl` needed nothing, since none of its bullets cites
+  either.
 - **The inspector's repo.** `failure_descriptor.md` names `structure.jl`
   at its two present-tense mentions, in a commit of that repo. The
   foundation increment's brief keeps `src/assembly.jl:1565` to `1596`:
