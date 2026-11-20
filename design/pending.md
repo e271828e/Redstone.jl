@@ -18,14 +18,35 @@ item changes what the spec says, the spec edit is part of the item.
   `RedstoneInspector.jl/design/deployment_overlay.md`, and its answer 17
   lists the five log entries the parts owe. Each part lands as a spec and
   log commit followed by its code. Part one, the notation, has landed
-  (D-464), and parts two to four follow.
+  (D-464), and parts two to four follow. The session left open whether the
+  build refuses a pool that admits no deployment. That was ruled on
+  2026-11-20, and its work runs ahead of part two, as the first sub-bullet
+  below, with a log entry of its own.
+  - **The build refuses a structure that no deployment binds.** A
+    structure admits a deployment exactly when it binds at
+    `Δt_frame = Δt_base = gcd(pool)`, or at any base tick where the pool is
+    empty. Every count the binding forms is least at that point: a base
+    tick is `gcd(pool)/k` and scales each count by `k`, and the frame
+    loop's margin is least when the frame is the base tick. The structure
+    step runs that one trial after the fold, through the deployment's own
+    anchor division, multiply-add and frame margin. A failure is
+    `RatesViolation` `:range`, on the entry whose count leaves `Int`, or on
+    every anchor's entry when the gcd has no `Rational{Int}` value (§9.1,
+    §9.2, amending D-459). A built structure then always has a grid
+    report, `bind_schedule` loses its arm for a missing one, and
+    `:derive`'s `:range` refusal goes. The report's own overflow is not the
+    test: the anchors `Absolute(Period(2^40))`, `Absolute(Period(1), 1//4099)`
+    and `Absolute(Period(1), 1//4111)` get a whole report, and the first
+    counts about `1.85e19` base ticks at its coarsest value. Stage reached:
+    ruled, nothing written.
   - **The grid report, derived from the structure.** The report is a pure
     function of the anchors. `show(::Structure)` derives it and prints it
-    under the anchor table, and `Deployment` drops its `grid` field (§9.2,
+    under the anchor table, as `_grid_block`'s lines under `grid:`, and
+    prints no block for a structure with no anchors. `Deployment` drops its
+    `grid` field, and `show(::Deployment)` its `grid:` block (§9.2,
     amending D-254 under D-261's rule). The refusal's message, the
     derivation line and `GridUtilization` stay the deployment's and keep
-    the report in their payloads. A pool that admits no deployment prints
-    one line saying so. Whether the build should refuse it is open.
+    the report in their payloads.
   - **The descriptor.** The format stays at 1.0 and changes freely until
     the first release (§13.9). It carries every fact `show` prints of a
     `Build` or a `Deployment`, or the facts from which a client derives it
