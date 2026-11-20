@@ -4777,7 +4777,7 @@ violated constraint:
   proposing method, or one above half the resolved `h_max` ([D-460][d-460],
   [D-463][d-463]);
 - an algorithm the [stepper seam](#g-seam) does not know;
-- a nonpositive `localization_tol`;
+- **a `localization_tol` that is not positive and finite** ([D-470][d-470]);
 - a `localization_budget`, a `firing_budget` or an `attempt_budget` that is
   not an integer ≥ 1.
 
@@ -17384,6 +17384,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-467]: log.md#d-467--the-descriptor-carries-what-show-prints-at-version-10-until-the-first-release
 [d-468]: log.md#d-468--show-and-carry-a-root-inputs-pin-with-the-consumers-that-cause-it
 [d-469]: log.md#d-469--retire-period-and-hz-and-give-absolute-its-period-as-a-bare-exact-number
+[d-470]: log.md#d-470--refuse-a-non-finite-localization_tol-at-the-deployment
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
