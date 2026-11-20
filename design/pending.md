@@ -31,9 +31,10 @@ item changes what the spec says, the spec edit is part of the item.
     under the anchor table, as `_grid_block`'s lines under `grid:`, and
     prints no block for a structure with no anchors. `Deployment` drops its
     `grid` field, and `show(::Deployment)` its `grid:` block (§9.2,
-    amending D-254 under D-261's rule). The refusal's message, the
+    D-466, amending D-254 under D-261's rule). The refusal's message, the
     derivation line and `GridUtilization` stay the deployment's and keep
-    the report in their payloads. Stage reached: not started. The handover,
+    the report in their payloads. Stage reached: the spec and the log have
+    landed, and the code is next. The handover,
     with the spec, code and test sites, is section 8 of
     `design/increments/20261120_structure_trial/notes_structure_trial.md`.
   - **The descriptor.** The format stays at 1.0 and changes freely until

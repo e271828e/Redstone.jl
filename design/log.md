@@ -464,6 +464,7 @@ were derived.
 | [D-463][d-463] | Refuse a floor above half the step bound | ratified |
 | [D-464][d-464] | Write a discrete component's timing in four frames, and an anchor's period as `Δtₖ` | ratified |
 | [D-465][d-465] | Refuse at the build a structure that no deployment binds | ratified |
+| [D-466][d-466] | Derive the grid report from the structure's anchors, and print it with the structure | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -7510,6 +7511,10 @@ that binds at no base tick, so every built structure has a report, `:derive`
 has no `:range` refusal, and the anchor refusals always carry the grid
 block.
 
+Annotation (2026-11-20): amended by [D-466][d-466]. The grid report reads the
+structure's anchors and is derived where it is used. Of the grid
+diagnostics, `GridUtilization` alone reads the `Schedule`'s rows.
+
 **Rejected.**
 - *The simple-fraction-of-its-period offset test as the engine's warning:*
   authoring guidance only — demand is relational: `τ = T/10` can cost nothing
@@ -10565,6 +10570,11 @@ Annotation (2026-11-10): amended by [D-442][d-442] and [D-443][d-443]. The `Depl
 carries `Δt_frame`, `Δt_base` and the algorithm instance with its step;
 `h` and `N_base` are no longer its fields.
 
+Annotation (2026-11-20): amended by [D-466][d-466]. The `Deployment` carries no grid
+report. The report is a function of the structure's anchors, derived where
+it is used, and `show(::Structure)` prints it. The refusal's message, the
+derivation line and `GridUtilization` stay the deployment's.
+
 **Rejected.**
 - *Binding inside the `Simulation` constructor, as today:* the products
   have no type, cannot be compared or printed on their own, and the
@@ -10787,6 +10797,10 @@ Annotation (2026-10-26): the rejection of accessors does not reach
 `descriptor`, the rendering to data ([D-432][d-432]). An accessor returns the
 artifact's internals, where the descriptor returns a projection under a
 versioned format of its own.
+
+Annotation (2026-11-20): `show(::Structure)` also prints the grid report
+after the anchor table, and no block for a structure with no anchors.
+`show(::Deployment)` prints no grid block ([D-466][d-466]).
 
 ### D-258 — "Schedule" is the tick timing and "execution order" the stage sequence
 
@@ -11097,6 +11111,10 @@ Both its methods take the four recording keywords, with `init!`'s defaults
 
 Annotation (2026-11-20): an `Anchor` row's pair is written `(Δtₖ, τₖ)`, and
 its field `T` is `Δt` ([D-464][d-464]).
+
+Annotation (2026-11-20): [D-466][d-466] supersedes the clause keeping
+`Deployment.grid`, under this entry's artifact rule. The grid report is
+derived from the structure's anchors where it is used.
 
 **Rejected.**
 - *The recording flags as a sixth `Simulation` field:* a parameter nothing
@@ -20065,6 +20083,76 @@ questions), and the session on the grid report's part ruled it on
   and a new payload. `:range` already says that a composed count leaves
   `Int`, and the entry that composed it is in hand.
 
+### D-466 — Derive the grid report from the structure's anchors, and print it with the structure
+
+**Status.** ratified
+
+**Position.** The grid report is a function of the structure's anchors,
+derived where it is used. No artifact holds it.
+
+- `show(::Structure)` derives the report and prints it after the anchor
+  table, as the grid block's lines under `grid:`. A structure with no anchors
+  prints no block.
+- `Deployment` has no `grid` field, and `show(::Deployment)` prints no grid
+  block.
+- The refusal's message, the derivation line and `GridUtilization` stay the
+  `Deployment` constructor's. The refusal and the advisory keep the report in
+  their payloads, and the derivation line prints it.
+- Of the grid diagnostics, `GridUtilization` alone reads the `Schedule`'s
+  rows. The report reads the anchors.
+
+Supersedes [D-254][d-254]'s clause that the `Deployment` carries the grid diagnostics
+of [D-187][d-187], the report's part of [D-254][d-254]'s third bullet, and [D-261][d-261]'s clause
+keeping `Deployment.grid`. [D-254][d-254]'s third bullet stands for the derivation
+line and `GridUtilization`.
+
+**Spec.** [§9.2][s9-2], [Appendix B][sB], [Appendix D][sD]
+
+**Rationale.** The report is the pool with each entry's leave-one-out
+factor, the coarsest admissible `Δt_base` and the prime attribution. Each
+follows from the anchors' `(Δtₖ, τₖ)` pairs, and none reads a grid
+parameter. [D-261][d-261] rules that an artifact holds declared facts and that what
+follows from them is derived where it is used, as the feedthrough line is
+where `show(::Build)` prints it. A report stored on the `Deployment` was the
+anchors' facts a second time, on an artifact downstream of them.
+
+The report answers which base ticks a component tree admits. A user wants
+that before choosing one, and so before a `Deployment` exists. On the
+structure, `show(::Build)` prints it with no deployment in hand.
+
+[D-254][d-254] landed the grid diagnostics on the deployment in one bundle. Three of
+them do depend on the deployment. The refusal answers a `Δt_base` the caller
+chose or asked to derive, the derivation line prints when the constructor
+derives, and `GridUtilization` reads `min_i Dᵢ` off the bound schedule. They
+stay the constructor's. The report was the fourth, and it depends on none of
+that. The data survey behind [D-261][d-261] found the field read by no source file
+and kept it for its renderer, `show(::Deployment)`, then unwritten
+(`design/reports/20260921_data_survey/merge.md`, B5). The renderer is now
+the structure's, and it derives.
+
+[D-187][d-187] and [§9.2][s9-2] called the `Schedule` the substrate of the grid diagnostics.
+The report never read it, and the advisory does.
+
+[D-465][d-465] makes the report total over built structures, so `show(::Structure)`
+has two cases only, a pool with a report and no anchors. The line once
+planned for a pool that admits no deployment has no case left.
+`show(::Deployment)` drops its block because the block states nothing the
+deployment fixes. Whether it prints its `Δt_base` against the coarsest
+admissible one is left to its rewrite in the notation (`pending.md`). The
+inspector's design session of 2026-11-19 and 2026-11-20 settled the
+placement (`RedstoneInspector.jl/design/deployment_overlay.md`, answer 6),
+and the session on the grid report's part ruled the printed form on
+2026-11-20.
+
+**Rejected.**
+- *The report kept on the `Deployment` ([D-254][d-254]'s third bullet, [D-261][d-261]'s last):*
+  [D-254][d-254] bundled it there with the three things that do depend on the
+  deployment. It is a derived value held away from the facts it follows
+  from, and unreadable until a base tick is chosen, which is the choice it
+  informs.
+- *The field moved to the `Build`:* nearer its facts and still a second home
+  for them, with no enforcer but the constructor that filled both ([D-261][d-261]).
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -20505,6 +20593,7 @@ questions), and the session on the grid report's part ruled it on
 [d-463]: #d-463--refuse-a-floor-above-half-the-step-bound
 [d-464]: #d-464--write-a-discrete-components-timing-in-four-frames-and-an-anchors-period-as-δtₖ
 [d-465]: #d-465--refuse-at-the-build-a-structure-that-no-deployment-binds
+[d-466]: #d-466--derive-the-grid-report-from-the-structures-anchors-and-print-it-with-the-structure
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

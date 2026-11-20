@@ -4509,7 +4509,7 @@ typed per-component `(D, Φ, Δt)` tick table). A [`Model`](#g-model) (the
 deployment and its executor at one scalar) then materializes a `Deployment` at
 a scalar type, and a `Simulation` runs a `Model{Float64}`. This section states
 what each artifact holds, how a `Deployment` binds, how each artifact prints,
-how a `Deployment` explains its grid, and where the warnings raised on the way
+what the grid diagnostics report, and where the warnings raised on the way
 live.
 
 #### The `Build`
@@ -4620,9 +4620,8 @@ the grid parameters. It binds the grid parameters, the step bound and
 the algorithm, the attempt budget and the three event parameters, runs
 harmonic-grid validation, and builds the `Schedule`. The `Deployment` it
 returns holds the build, the grid parameters, the step bound and floor, the
-algorithm, the attempt budget, the three event parameters, the
-`Schedule`, the grid
-diagnostics below and its own `warnings`. `Model` materializes it at a scalar type `T` that is
+algorithm, the attempt budget, the three event parameters, the `Schedule`
+and its own `warnings`. `Model` materializes it at a scalar type `T` that is
 `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not, and
 `Simulation` runs a `Model{Float64}`.
 **`Model` refuses any other scalar** as `ArgumentInvalid`, before it derives
@@ -4800,8 +4799,9 @@ and rate-chain columns. It also has the rate-scope rows, each with its own
 `(Dₛ, Φₛ)`. The per-component `(D, Φ, Δt)` the executor compiles over are
 derived from the rows at `compile`, never stored beside them
 ([D-261][d-261]). The `Schedule` is the single source of truth for `Δt`
-([§10.5][s10-5]). It is also the substrate of the grid diagnostics below, and
-the table that answers "when does what run, and what coincides with what".
+([§10.5][s10-5]). It is also what the `GridUtilization` advisory reads
+(below), and the table that answers "when does what run, and what coincides
+with what".
 
 The example worked in [§10.5][s10-5] has three discrete components under two
 scopes, and that section's code block gives their `sample_times`. The root holds
@@ -4829,9 +4829,13 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
 
 - `show(::Structure)` prints the anchor table with the `A₀` row and the
   component table with the [rate-scope](#g-rate-scope) rows (an assembly's
-  `sample_times` declaration against the enclosing scope). `show(::Structure)`
-  derives each root face's routing chain from the declared wires and prints
-  the root's routes, one line per chain ([§13.7][s13-7]).
+  `sample_times` declaration against the enclosing scope).
+  **`show(::Structure)` prints the grid report under the anchor table**
+  ([D-466][d-466]). It derives the report from the anchors and sets the grid
+  block's lines under `grid:` (below). A structure with no anchors prints no
+  block. `show(::Structure)` derives each root face's routing chain from the
+  declared wires and prints the root's routes, one line per chain
+  ([§13.7][s13-7]).
 - `show(::Outputs)` prints the execution order with each port's class.
 - `show(::Events)` prints each component's event names with their policies.
 - `show(::Schedule)` prints the rows and the hyperperiod chart.
@@ -4869,11 +4873,16 @@ hyperperiod is the complete truth, not a sample. The chart guard is binary.
 
 #### Grid diagnostics
 
-**The grid diagnostics live on the `Deployment`** and print from the pool,
-exactly ([D-187][d-187], [D-254][d-254]). The refusal path's suggestion message and the
-derivation path's info line share one substrate. That substrate is the
-coarsest admissible `Δt_base` with the admissible set `gcd(pool)/k`, and
-per-entry attribution. Attribution has two forms:
+**The grid report is a function of the structure's anchors, derived where it
+is used** ([D-466][d-466]). It prints from the pool, exactly ([D-187][d-187]). The
+report is the coarsest admissible `Δt_base` with the admissible set
+`gcd(pool)/k`, and per-entry attribution. No artifact holds it, as none holds
+the feedthrough graph ([§9.1][s9-1], [D-261][d-261]). `show(::Structure)` prints it, so
+a user reads which base ticks a component tree admits before choosing one.
+The `Deployment` constructor's grid diagnostics carry it. They are the
+refusal path's suggestion message, the derivation path's info line and the
+`GridUtilization` advisory. The `Deployment` holds no report, and
+`show(::Deployment)` prints none. Attribution has two forms:
 
 - Leave-one-out refinement factors are the first form.
   `r_p = gcd(pool ∖ p)/gcd(pool)` is an integer ≥ 1 read as "how much coarser
@@ -14602,8 +14611,7 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   localization_tol = 1e-6, localization_budget = 8, attempt_budget = 7)
   → Deployment`. The [deployment](#g-deployment) (the scalar-free artifact the
   grid parameters fix), carrying the [`Schedule`](#g-schedule) (the typed
-  per-component `(D, Φ, Δt)` tick table), the grid diagnostics and its
-  `warnings` ([§9.2][s9-2]).
+  per-component `(D, Φ, Δt)` tick table) and its `warnings` ([§9.2][s9-2]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
@@ -16115,8 +16123,8 @@ Under a proposing method a `t*` ends its step ([§10.2][s10-2]).
 <a id="g-schedule"></a>**schedule / `Schedule`** — the typed [tick](#g-tick) timing the
 `Deployment` carries. The `Deployment` constructor builds it, one row per
 discrete [component](#g-component) carrying `(D, Φ, Δt)`, plus the rate-scope rows. It is the
-single source of truth for `Δt`, and the substrate of the grid diagnostics and
-the hyperperiod chart ([§9.2][s9-2], [§10.5][s10-5], [D-258][d-258],
+single source of truth for `Δt`, and the substrate of the `GridUtilization`
+advisory and the hyperperiod chart ([§9.2][s9-2], [§10.5][s10-5], [D-258][d-258],
 [D-261][d-261]).
 
 <a id="g-state-event"></a>**state event** — an event whose instant is unknown in advance and must be
@@ -16191,7 +16199,7 @@ from superlinear in body size to linear in entry count ([§9.7][s9-7]).
 
 <a id="g-deployment"></a>**`Deployment`** — the artifact the grid parameters fix: the [build](#g-build) plus
 `Δt_frame`, `Δt_base`, the step bound `h_max`, the algorithm and the three event parameters, carrying
-the `Schedule`, the grid diagnostics and its own `warnings`. It is
+the `Schedule` and its own `warnings`. It is
 scalar-free, it compares as a value, and a `Model` materializes it at a
 scalar type ([§9.2][s9-2], [D-254][d-254], [D-317][d-317]).
 
@@ -16286,8 +16294,9 @@ the foreign names and the missing import ([§8.1][s8-1], [§9.1][s9-1]).
 everything the instance alone fixes. It holds the [components](#g-component) and [tiers](#g-tier), one row
 per [assembly](#g-assembly) with its children and wires, the [root inputs](#g-root-input), the rate chains and
 the scope triples. The [face](#g-face) table and each face's routing chain are functions
-over its wires. Nothing in it depends on a scalar type ([§9.1][s9-1],
-[D-253][d-253], [D-315][d-315]).
+over its wires, and the grid report is a function over its [anchors](#g-anchor).
+Nothing in it depends on a scalar type ([§9.1][s9-1], [§9.2][s9-2],
+[D-253][d-253], [D-315][d-315], [D-466][d-466]).
 
 <a id="g-walked"></a>**walked / pinned / exempt** — the eltype-genericity
 classes. Walked payload/value types follow the [activation](#g-activation) scalar, a pinned
@@ -17263,6 +17272,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-463]: log.md#d-463--refuse-a-floor-above-half-the-step-bound
 [d-464]: log.md#d-464--write-a-discrete-components-timing-in-four-frames-and-an-anchors-period-as-δtₖ
 [d-465]: log.md#d-465--refuse-at-the-build-a-structure-that-no-deployment-binds
+[d-466]: log.md#d-466--derive-the-grid-report-from-the-structures-anchors-and-print-it-with-the-structure
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
