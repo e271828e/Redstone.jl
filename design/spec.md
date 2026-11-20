@@ -12410,7 +12410,12 @@ records no location for a `struct` itself. **The writer adds a target to each ba
 whose name resolves, from the type's module, to a binding its owner exports**
 ([D-467][d-467]). It writes the owner as the target and keeps the text, so
 `` [`Pinned`](@ref) `` in a `Redstone.Library` docstring becomes
-`` [`Pinned`](@ref Redstone.Pinned) ``. Every other link stays as written, so
+`` [`Pinned`](@ref Redstone.Pinned) ``. The name may be a macro's or an
+operator's. An operator's name is quoted in parentheses, as `Owner.:(⊕)`,
+since Julia reads `Owner.⊕` as the broadcast of `⊕` and not as a name. A
+name that resolves to a module takes the module as its target, so a link to
+a package's own module `MyPkg` targets `MyPkg` and not `MyPkg.MyPkg`. Every
+other link stays as written, so
 after the pass a bare link is one that did not resolve. The package exports
 nothing until the export audit ([D-226][d-226]), so until then the pass
 rewrites no link of the package's own. The node's summary lists each inert field as `repr` text under

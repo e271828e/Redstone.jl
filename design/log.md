@@ -20244,7 +20244,9 @@ no internals. The bundled rulings:
 - An anchor's period stands under the key `dt`.
 - The writer adds a target to each bare `@ref` link of a docstring whose
   name resolves, from the type's module, to a binding its owner exports. It
-  keeps the text.
+  keeps the text. The target is the owner and the name, with an operator's
+  name quoted in parentheses, and the module itself where the name resolves
+  to a module.
 
 Supersedes the headline of [D-432][d-432]'s third bullet, that version one carries
 what a client draws and explains. The bullet's list of what `structure` and
@@ -20321,7 +20323,13 @@ exports nothing until the export audit ([D-226][d-226]), so the pass rewrites no
 the package's 124 bare links until then. The docs build's check also lists
 the module `Redstone` alone, which leaves `Redstone.Library` outside it. All
 124 targets stand on the API page, which is kept by hand.) After the
-writer's pass a bare link is one that did not resolve. The session that
+writer's pass a bare link is one that did not resolve. (Amended 2026-11-20,
+at the cold review: a macro and an operator are bindings an owner exports,
+so the pass targets them as it targets a type. Julia reads `Owner.⊕` as the
+broadcast of `⊕`, so an operator's target is quoted, and `Owner.:(⊕)` is the
+one quoted form that parses for every operator. A module holds a binding to
+itself and counts as exporting it, so the owner and the name gave
+`MyPkg.MyPkg` for a link to a package's own module.) The session that
 settled the content is recorded in
 `RedstoneInspector.jl/design/deployment_overlay.md`, answers 1, 2, 4 to 7
 and 15, and the session of 2026-11-20 on this part ruled the positions' base
@@ -20369,6 +20377,14 @@ and the flag.
 - *A target for any binding with a docstring in its owner:* links before the
   export audit, resting on a page kept by hand, and an internal helper with
   a docstring would qualify.
+- *An operator's target as Julia prints it, `Owner.:⊕` beside
+  `Owner.:(==)`:* two forms for a client to recognize, and the printer
+  chooses between them by no rule the format can state.
+- *An operator's link left bare:* a link that resolved, and that a client
+  cannot place.
+- *The owner and the name for a module's own binding, `MyPkg.MyPkg`:* Julia
+  evaluates it to the module, and a client that matches the target as text
+  finds no anchor under the doubled name.
 
 ### D-468 — Show and carry a root input's pin with the consumers that cause it
 
