@@ -3977,7 +3977,7 @@ The declaration maps each child name to a `Relative` or `Absolute` entry, as
 in this one.
 
 ```julia
-sample_times(::A) = (nav = Relative(5), gnss = Absolute(Hz(10)))
+sample_times(::A) = (nav = Relative(5), gnss = Absolute(1//10))
 ```
 
 These are the two forms that [§10.5][s10-5] defines ([D-185][d-185]). Relative entries compose
@@ -4644,8 +4644,7 @@ adds a fourth, the floor `h_min`, below.
 **`Δt_base` has exactly one of three sources**, cross-validated
 ([D-283][d-283], [D-443][d-443]):
 
-- the explicit keyword, an integer or a `Rational`, a `Period` or an `Hz`
-  value;
+- the explicit keyword, an integer or a `Rational`;
 - `Δt_frame`, when the keyword is absent;
 - derivation, permitted only when every discrete component is anchored, that
   is, with anchor 0 unpopulated.
@@ -4689,10 +4688,9 @@ the exact value.
 
 **Each time quantity takes an integer or a `Rational` of any integer type at
 its value, and refuses one that `Rational{Int}` cannot hold finitely**
-([D-459][d-459]). A `Period` or an `Hz` value is taken at its period. A float is
-refused as `:inexact`, since a step count and a coincidence are exact
-arithmetic. A `Rational{Int32}` and a `BigInt` that fits are the values they
-spell, and `big(2)^70` or `1//0` is refused as `:range`.
+([D-459][d-459]). A float is refused as `:inexact`, since a step count and a
+coincidence are exact arithmetic. A `Rational{Int32}` and a `BigInt` that fits
+are the values they spell, and `big(2)^70` or `1//0` is refused as `:range`.
 
 **If any unanchored component exists, deployment must declare `Δt_base`**
 ([D-283][d-283]). The refusal is constructive, carrying the suggestion message
@@ -4806,14 +4804,14 @@ with what".
 The example worked in [§10.5][s10-5] has three discrete components under two
 scopes, and that section's code block gives their `sample_times`. The root holds
 a flight-control scope `fcs` and a discrete GNSS component `gnss`, declared as
-`fcs = Relative(1)` and `gnss = Absolute(Hz(50))`. Deploy
+`fcs = Relative(1)` and `gnss = Absolute(1//50)`. Deploy
 it at `Δt_base = 2 ms`. The `Absolute` entry seeds the anchor
 `A₁ = (1//50, 0)`, and the rest of the tree stays on anchor 0. So the three
 components carry these values through binding:
 
 | | `inner` | `outer` | `gnss` |
 |---|---|---|---|
-| declaration | `Relative(1)` under `fcs` | `Relative(5, 2)` under `fcs` | `Absolute(Hz(50))` at the root |
+| declaration | `Relative(1)` under `fcs` | `Relative(5, 2)` under `fcs` | `Absolute(1//50)` at the root |
 | anchor | `A₀` | `A₀` | `A₁` |
 | triple `(m, c)` | `(1, 0)` | `(5, 2)` | `(1, 0)` |
 | bound `(D, Φ)` | `(1, 0)` | `(5, 2)` | `(10, 0)` |
@@ -6915,15 +6913,18 @@ time, in different units.
 are staggered one level down instead. Declare the scope at twice their rate,
 then give them `Relative(2, 0)` and `Relative(2, 1)`.
 
-`Δt` is a quantity value, `Period(1//50)` or `Hz(50)`. The two are a spelling
-choice, normalized to the rational period at construction. Every period and
-offset is an exact `Rational{Int}`, because grid derivation is GCD arithmetic
-and ill-defined over floats. A float argument throws the teaching error naming
-the exact spelling (`Period(1//50)`, or `Hz(1//2)` for 0.5 Hz). An integer or
-a `Rational` of any integer type is taken at its value. **A value that
+**`Absolute` takes its period and its offset as exact numbers of seconds, each
+an integer or a `Rational`** ([D-469][d-469]). A 50 Hz loop is `Absolute(1//50)`, and
+`Absolute(50)` is a period of 50 s. `Absolute` names the unit, so the numbers
+stand bare, as they do in the deployment's time keywords ([§9.2][s9-2]). Every period
+and offset is an exact `Rational{Int}`, because grid derivation is GCD
+arithmetic and ill-defined over floats. A float argument throws the teaching
+error naming the exact spelling, `Absolute(1//50)` for 50 Hz. So does any
+other real that is neither an integer nor a `Rational`. An integer or a
+`Rational` of any integer type is taken at its value. **A value that
 `Rational{Int}` cannot hold finitely is refused at the constructor as
-`ArgumentInvalid` `:range`**, `Hz(0)` and an infinite offset included
-([D-459][d-459]). Like a float, it fails the normalization to an exact period.
+`ArgumentInvalid` `:range`**, an infinite period or offset included
+([D-459][d-459]). Like a float, it fails the normalization to an exact value.
 
 `K` and `φ` count scope ticks, and each is an integer of any type. **`Relative`
 refuses a count that `Int` cannot hold as `ArgumentInvalid` `:range`, and a
@@ -6931,8 +6932,8 @@ float or a rational as `:not_a_count`** ([D-459][d-459]). A fraction there usual
 asks for a child that ticks faster than its scope, or for a period in
 seconds. The message names `Absolute` for both.
 
-The wrappers are the whole vocabulary ([D-185][d-185]). A bare integer or bare
-quantity is a declaration error. An unlisted discrete child defaults to
+The wrappers are the whole vocabulary ([D-185][d-185]). A bare integer or a bare
+rational is a declaration error. An unlisted discrete child defaults to
 `Relative(1)`. The common case therefore costs nothing, and a multiplied or
 anchored child (one declared `Absolute`, below) always appears explicitly.
 
@@ -7052,7 +7053,7 @@ The root scope holds `fcs`, an FCS scope, and `gnss`, a satellite-navigation
 ```julia
 # Root scope: (D_s, Φ_s) = (1, 0).
 sample_times(::Vehicle) = (fcs  = Relative(1),        # → (D, Φ) = (1, 0)
-                           gnss = Absolute(Hz(50)))   # → (10, 0), anchored at Δt = 20 ms
+                           gnss = Absolute(1//50))    # → (10, 0), anchored at Δt = 20 ms
 
 # fcs is the enclosing scope of its own children, at (D_s, Φ_s) = (1, 0).
 sample_times(::FCS) = (inner = Relative(1),           # → (1, 0)
@@ -14629,8 +14630,8 @@ What a [component](#g-component) or [assembly](#g-assembly) defines ([§8.2][s8-
   `input_wires`, `output_wires` and `sample_times`, and the optional
   `transparent_container` (default `nothing`).
 - Sample-time entries. `Relative(K, φ = 0)` in scope ticks and
-  `Absolute(Δt, τ = 0)` in exact rational seconds, with `Δt` a quantity value,
-  `Period(T)` or `Hz(frequency)` ([§10.5][s10-5], [D-185][d-185]). The `φ = 0` is shorthand for
+  `Absolute(Δt, τ = 0)` in exact rational seconds, each an integer or a
+  `Rational` ([§10.5][s10-5], [D-185][d-185], [D-469][d-469]). The `φ = 0` is shorthand for
   `Relative(K)`, a method of its own.
 - Any component. `stop_reason` (optional, default `""`), the reason its
   [stop requests](#g-stop-request) report ([§8.2][s8-2], [D-316][d-316]).
@@ -14710,9 +14711,9 @@ on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
   | keyword | default | meaning | owning section |
   |---|---|---|---|
   | `algorithm` | `RK4()` | the integration method, `RK4()`, `Heun()` or `BS3(…)`, bound against the state buffer at [`Model`](#g-model) construction ([D-442][d-442], [D-461][d-461]) | [§10.2][s10-2] |
-  | [`Δt_frame`](#g-dt_frame) | — | the frame period (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), required, refused as `DeploymentInvalid` when absent ([D-443][d-443]) | [§9.2][s9-2] |
-  | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to `Δt_frame` or `h_max` ([D-445][d-445]), `Δt_frame` when absent, or `:derive` | [§9.2][s9-2] |
-  | `h_max` | `nothing` | the step bound (an integer or a `Rational` of any integer type, `Period` or `Hz`, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to either period, recorded as the lesser of itself and `Δt_frame`, which it is when absent ([D-449][d-449]) | [§9.2][s9-2], [§10.5][s10-5] |
+  | [`Δt_frame`](#g-dt_frame) | — | the frame period (an integer or a `Rational` of any integer type, held as a `Rational{Int}`, [D-459][d-459]), required, refused as `DeploymentInvalid` when absent ([D-443][d-443]) | [§9.2][s9-2] |
+  | [`Δt_base`](#g-dt_base) | `nothing` | the base tick period (an integer or a `Rational` of any integer type, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to `Δt_frame` or `h_max` ([D-445][d-445]), `Δt_frame` when absent, or `:derive` | [§9.2][s9-2] |
+  | `h_max` | `nothing` | the step bound (an integer or a `Rational` of any integer type, held as a `Rational{Int}`, [D-459][d-459]), positive and finite, in no required ratio to either period, recorded as the lesser of itself and `Δt_frame`, which it is when absent ([D-449][d-449]) | [§9.2][s9-2], [§10.5][s10-5] |
   | `h_min` | `nothing` | the step [floor](#g-floor), taking the values `h_max` takes, required by a proposing method and unused by a fixed-step one, refused above half the resolved `h_max` ([D-460][d-460], [D-463][d-463]) | [§10.2][s10-2], [§10.5][s10-5] |
   | `attempt_budget` | `7` | the attempts a proposing method's step makes before its next is at the floor, an integer ≥ 1; the floor warns `StepFloor` | [§10.2][s10-2] |
   | `localization_tol` | `1e-6` | the root-finder's relative bracket-width convergence test (`localization_tol · Δt_frame`, [D-446][d-446]) | [§10.4][s10-4] |
@@ -15562,11 +15563,11 @@ activation):
   `overlay!`, `restore!` and `replay!` ([D-261][d-261]). The call
   (`Model`, `Simulation`, `init!`, `overlay!`, `frame!`, `apply!`, `restore!`, `run!`,
   `step!`, `replay!`, `live!`, `pace!`, `margin!`, `trim!`, `linearize`,
-  `trace`, `TableBinding`, a period constructor, `Relative`, `BS3`), the argument, the
-  value in hand, and a `reason` naming the violated constraint. A period
-  constructor, `Period`, `Hz` or `Absolute`, refuses a float as `:inexact` and
-  a value that `Rational{Int}` cannot hold finitely as `:range`, `Hz(0)`
-  included ([§10.5][s10-5], [D-459][d-459]). `Relative` refuses a count that `Int` cannot
+  `trace`, `TableBinding`, `Absolute`, `Relative`, `BS3`), the argument, the
+  value in hand, and a `reason` naming the violated constraint. `Absolute`
+  refuses a period or an offset that is not exact as `:inexact`, with the
+  argument named, and one that `Rational{Int}` cannot hold finitely as
+  `:range` ([§10.5][s10-5], [D-459][d-459], [D-469][d-469]). `Relative` refuses a count that `Int` cannot
   hold as `:range`, and a float or a rational as `:not_a_count`. `BS3`
   refuses a tolerance that is not positive and finite as `:range`
   ([D-461][d-461]). A `:range`
@@ -17382,6 +17383,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-466]: log.md#d-466--derive-the-grid-report-from-the-structures-anchors-and-print-it-with-the-structure
 [d-467]: log.md#d-467--the-descriptor-carries-what-show-prints-at-version-10-until-the-first-release
 [d-468]: log.md#d-468--show-and-carry-a-root-inputs-pin-with-the-consumers-that-cause-it
+[d-469]: log.md#d-469--retire-period-and-hz-and-give-absolute-its-period-as-a-bare-exact-number
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

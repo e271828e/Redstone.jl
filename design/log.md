@@ -467,6 +467,7 @@ were derived.
 | [D-466][d-466] | Derive the grid report from the structure's anchors, and print it with the structure | ratified |
 | [D-467][d-467] | The descriptor carries what `show` prints, at version 1.0 until the first release | ratified |
 | [D-468][d-468] | Show and carry a root input's pin with the consumers that cause it | ratified |
+| [D-469][d-469] | Retire `Period` and `Hz` and give `Absolute` its period as a bare exact number | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -7391,6 +7392,10 @@ Annotation (2026-11-20): [D-464][d-464] names `Absolute`'s first argument `Δt` 
 writes its constraints `Δt > 0`, `0 ≤ τ < Δt`. The scope phase is written
 `φ`, and `Φ` is the phase in base ticks.
 
+Annotation (2026-11-20): amended by [D-469][d-469]. `Period` and `Hz` retire, and
+`Absolute` takes its period as an integer or a `Rational` in seconds, as it
+takes its offset. The two forms, the composition and the gate stand.
+
 **Rejected.**
 - *Bare-value sugar behind a normalization function (`ratespec`: bare `Int` ⇒
   `Relative`, bare quantity ⇒ `Absolute`):* implicit form inference; the
@@ -7455,6 +7460,9 @@ key when non-dividing) plus one multiply-add per component, the residue
 invariant surviving into the bound `(D, Φ, Δt)`.
 
 Annotation (2026-11-20): an anchor's pair is written `(Δtₖ, τₖ)` ([D-464][d-464]).
+
+Annotation (2026-11-20): amended by [D-469][d-469]. The explicit `Δt_base` keyword is
+an integer or a `Rational`, and `Period` and `Hz` retire.
 
 **Rejected.**
 - *Root-only absolute declaration (the superseded [§10.5][s10-5] clause):* right about
@@ -12862,6 +12870,9 @@ Annotation (2026-11-10): amended by [D-443][d-443]. The second source is
 
 Annotation (2026-11-20): the per-anchor division reads `Dₖ = Δtₖ/Δt_base`,
 and a component's phase in seconds is `τ = Φ·Δt_base` ([D-464][d-464]).
+
+Annotation (2026-11-20): amended by [D-469][d-469]. The explicit keyword is an integer
+or a `Rational`, and `Period` and `Hz` retire.
 
 **Rejected.**
 - *Silent `Δt_base` derivation with unanchored components present:* the
@@ -18509,6 +18520,9 @@ tolerances on the instance, `BS3(; reltol, abstol)`, and not its bounds. The
 floor `h_min` sits on the `Deployment` beside `h_max`, since the `Model`
 enforces both ([D-460][d-460], [D-461][d-461]).
 
+Annotation (2026-11-20): amended by [D-469][d-469]. `Period` and `Hz` retire, so no
+time quantity is spelled through either.
+
 **Rejected.**
 - *One parametrized type for the token and the stepper:* the token would
   carry empty scratch fields or a `Nothing` parameter, and every comparison
@@ -19400,6 +19414,9 @@ origin at every magnitude, boundary zero's clock included. The period
 constructors and the `Deployment` keywords refuse what `Rational{Int}`
 cannot hold, as this entry's door does, each under its own diagnostic.
 
+Annotation (2026-11-20): amended by [D-469][d-469]. `Period` retires, so `t0` takes a
+`Rational`, an integer, or a float at its exact value.
+
 **Rejected.**
 - *A float origin, as before ([D-260][d-260]):* the clock cannot be the float nearest
   an instant whose origin is already rounded.
@@ -19591,6 +19608,10 @@ The Rationale's claim that the report's overflow marks a pool no deployment
 holds is true in that direction alone, and [D-465][d-465] gives a pool that no
 deployment holds and that gets a whole report. The third bullet stands for a
 base tick the caller chose finer than the coarsest one.
+
+Annotation (2026-11-20): amended by [D-469][d-469]. `Period` and `Hz` retire. The first
+bullet's constructors are `Absolute` and `Relative`, and `Absolute`'s period
+is refused as its offset is.
 
 **Rejected.**
 - *Floats everywhere:* a float period keeps the integer schedule and adds a
@@ -20004,6 +20025,8 @@ are corrected with this entry. `Period.T` waits for the ruling on whether
 `Period` and `Hz` retire. The session that settled the notation is recorded
 in `RedstoneInspector.jl/design/deployment_overlay.md`, answer 3.
 
+Annotation (2026-11-20): [D-469][d-469] retires `Period`, and its field `T` with it.
+
 **Rejected.**
 - *The inspector's page renaming alone:* the page and the REPL would name
   one quantity by two letters.
@@ -20404,6 +20427,76 @@ in `RedstoneInspector.jl/design/deployment_overlay.md`, answer 14.
   user wrote.
 - *Superseded position — a root input's `pinned` false in version one
   ([D-433][d-433]):* a field that could never be true.
+
+### D-469 — Retire `Period` and `Hz` and give `Absolute` its period as a bare exact number
+
+**Status.** ratified
+
+**Position.** `Period` and `Hz` retire, and `Absolute(Δt, τ = 0)` takes its
+period as it takes its offset, an exact number of seconds. The bundled
+rulings:
+
+- `Δt` and `τ` are each an integer or a `Rational` of any integer type, taken
+  at its value and held as a `Rational{Int}`. `Absolute(1//50)` is a 50 Hz
+  entry, and `Absolute(50)` is a period of 50 s.
+- A period or an offset that is a real of any other kind, a float or an
+  irrational, is refused at the constructor as `ArgumentInvalid` `:inexact`,
+  with the argument named. The reason `:not_a_quantity` leaves
+  `ArgumentInvalid`.
+- The `Deployment` keywords `Δt_frame`, `Δt_base`, `h_max` and `h_min` take an
+  integer or a `Rational`, and `t0` takes those and a float at its exact
+  value. None takes a `Period`.
+
+Supersedes [D-185][d-185]'s ruling that `Absolute`'s first argument is a
+`Period`/`Hz` quantity, and the acceptance of a `Period` or an `Hz` value by
+the deployment's keywords ([D-283][d-283], [D-459][d-459]) and by `t0` ([D-457][d-457]).
+
+**Spec.** [§8.7][s8-7], [§9.2][s9-2], [§10.5][s10-5], [Appendix B][sB], [Appendix C][sC]
+
+**Rationale.** `Absolute` is the wrapper that names the unit system ([D-185][d-185]),
+so a `Period` inside it named seconds a second time. The period was also the
+one wrapped time quantity. `Absolute`'s own offset is a bare rational, and
+since [D-459][d-459] so are the deployment's keywords. The tree spelled those keywords
+bare in over a thousand places and through a `Period` or an `Hz` in four,
+each a test of that acceptance.
+
+Three smaller facts point the same way. `show(::Structure)` prints an entry
+as `Absolute(1//50, 0//1)`, which the constructor refused, and the printed
+entry is now valid input. `Period` is a name `Dates` exports, so the
+exported-name audit ([D-226][d-226]) would have had to rename it or leave it
+unexported. And `t0 = Period(1//4)` gave an origin the type of a period.
+
+The cost is a guard. `Absolute(50)` was refused as `:not_a_quantity` with a
+message that taught the spelling, and it is now a period of 50 s that the
+build and the grid accept. A rate typed in hertz is almost always an
+integer, so the float refusal does not catch it. `Δt_frame = 50` has carried
+the same hazard since [D-459][d-459]. What remains against it is the declaration's
+name, `sample_times`, the period `show` prints for each component, and the
+float refusal's message, which spells a 50 Hz entry.
+
+The examples wrote every `Absolute` entry through `Hz` and none through
+`Period`, so the reading at the entry costs one inversion. In exchange the
+entry `Absolute(1//50)` and the deployment's `Δt_frame = 1//50` show the same
+number. The question was raised in the design session of the inspector's
+deployment overlay, recorded in
+`RedstoneInspector.jl/design/deployment_overlay.md`.
+
+**Rejected.**
+- *Both names kept:* two spellings of one value and a wrapper type for one
+  argument, with the `Dates` clash left to the exported-name audit.
+- *`Period` retired and `Hz` kept as a plain function returning the rational
+  period, `Hz(50) === 1//50`:* it keeps the rate spelling and loses the guard
+  all the same. It leaves two spellings of one value and a name the framework
+  never needs, which a user who wants it writes in one line.
+- *A constructor check on a suspect period, such as an integer above one:* it
+  refuses a legitimate whole-second period, such as a 1 s logger's, and the
+  constructors check no range ([D-185][d-185]).
+- *`:not_a_quantity` kept for a real that is neither exact nor a float:* an
+  irrational fails the normalization a float fails, so it takes the float's
+  reason.
+- *Superseded position — `Absolute`'s period a `Period`/`Hz` quantity,
+  normalized to its rational period at construction ([D-185][d-185]):* the wrapper
+  named the unit that `Absolute` names.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -20848,6 +20941,7 @@ in `RedstoneInspector.jl/design/deployment_overlay.md`, answer 14.
 [d-466]: #d-466--derive-the-grid-report-from-the-structures-anchors-and-print-it-with-the-structure
 [d-467]: #d-467--the-descriptor-carries-what-show-prints-at-version-10-until-the-first-release
 [d-468]: #d-468--show-and-carry-a-root-inputs-pin-with-the-consumers-that-cause-it
+[d-469]: #d-469--retire-period-and-hz-and-give-absolute-its-period-as-a-bare-exact-number
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
