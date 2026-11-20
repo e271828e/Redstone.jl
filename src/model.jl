@@ -301,11 +301,10 @@ status left `:built`.
 
 # Keywords
 
-- `t0`: the start time, held exact: a `Rational{Int}`, an integer or a
-  `Period`, or a float at its exact value, so `-3//10` is the decimal and
-  `-0.3` the float nearest it. Refused as `ArgumentInvalid` if not finite, if
-  `Rational{Int}` cannot hold it exactly, as for `1e-4`, or if the run from it
-  could take no frame.
+- `t0`: the start time, held exact: a `Rational{Int}` or an integer, or a float
+  at its exact value, so `-3//10` is the decimal and `-0.3` the float nearest
+  it. Refused as `ArgumentInvalid` if not finite, if `Rational{Int}` cannot hold
+  it exactly, as for `1e-4`, or if the run from it could take no frame.
 - `hooks`: the [`FrameHooks`](@ref) boundary zero settles through,
   [`NoHooks`](@ref) for a model stepped on its own.
 """
@@ -353,14 +352,13 @@ function _check_origin(model::Model, call::Symbol, t0)
     origin
 end
 
-# The origin a door takes, exact (D-457): an integer, a rational or a `Period`,
-# the forms a period takes, or a finite float at its exact value. Anything else,
-# an irrational among them, one that `Rational{Int}` cannot hold exactly, and one
-# whose run the clock's integers cannot carry, is refused as `ArgumentInvalid`
-# `:range` on `t0`. `Rational{Int}` rationalizes a float whose exact value needs
-# a denominator past `Int`, such as `1e-4`, so the result is compared with the
-# float, exactly, and refused unless equal.
-_exact_origin(t0::Period) = t0.T
+# The origin a door takes, exact (D-457): an integer, a rational or a finite
+# float at its exact value. Anything else, an irrational among them, one that
+# `Rational{Int}` cannot hold exactly, and one whose run the clock's integers
+# cannot carry, is refused as `ArgumentInvalid` `:range` on `t0`. `Rational{Int}`
+# rationalizes a float whose exact value needs a denominator past `Int`, such as
+# `1e-4`, so the result is compared with the float, exactly, and refused unless
+# equal.
 _exact_origin(t0::Union{Integer,Rational{<:Integer}}) = Rational{Int}(t0)
 function _exact_origin(t0::AbstractFloat)
     isfinite(t0) || return nothing

@@ -2,7 +2,7 @@
 # Each build-side and deployment artifact prints itself: the compact form on
 # `show(io, x)` and the tables on `MIME"text/plain"`. The exact blocks below are
 # `MultiRate`'s at `h = 1//500`, whose rows and hyperperiod §9.2's worked example
-# fixes; the anchored `Hz(500)`/`Hz(10), 1//150` group is the guard's long case.
+# fixes; the anchored `1//500`/`1//10, 1//150` group is the guard's long case.
 
 # The REPL form.
 plain(x) = sprint(show, MIME("text/plain"), x)
@@ -14,7 +14,7 @@ compact(x) = sprint(show, x)
 # `h = 1//1500`: `lcm(Dᵢ) = 150`, past the chart guard.
 function anchored_group()
     comp = Group((; a = TickCounter(), b = TickCounter());
-                 sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
+                 sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150)))
     @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
         build(comp); Δt_frame = 1//1500, Δt_base = :derive)
 end
@@ -308,7 +308,7 @@ function test_show()
         # A counter at 0.07 s in 0.1 s frames under a 25 ms bound: an unsplit
         # frame takes 4 steps, and the counter's ticks fall inside frames.
         rig = build(Group((; c = Plant(), a = TickCounter()); input_wires = ("in" => "c/u",),
-                          sample_times = (; a = Absolute(Period(7//100)))))
+                          sample_times = (; a = Absolute(7//100))))
         @test steps_line(Deployment(rig; Δt_frame = 1//10, Δt_base = 1//100, h_max = 1//40)) ==
               "  steps per unsplit frame: 4; due instants of a split frames"
         # No bound: one step per unsplit frame.
@@ -324,20 +324,20 @@ function test_show()
         # Two components at the frame period, one offset by half a frame: only
         # the offset one splits, by its phase alone.
         offset = build(Group((; a = TickCounter(), b = TickCounter());
-                             sample_times = (; a = Absolute(Period(1//10), 1//20),
-                                               b = Absolute(Period(1//10)))))
+                             sample_times = (; a = Absolute(1//10, 1//20),
+                                               b = Absolute(1//10))))
         @test steps_line(Deployment(offset; Δt_frame = 1//10, Δt_base = 1//20)) ==
               "  steps per unsplit frame: 1; due instants of a split frames"
         # Periods of 0.1 s and 0.10001 s in 20 ms frames: only the second splits,
         # by its period alone. With both offset, both are named in row order.
         long = build(Group((; a = TickCounter(), b = TickCounter());
-                           sample_times = (; a = Absolute(Period(1//10)),
-                                             b = Absolute(Period(10001//100000)))))
+                           sample_times = (; a = Absolute(1//10),
+                                             b = Absolute(10001//100000))))
         @test steps_line(Deployment(long; Δt_frame = 1//50, Δt_base = 1//100000)) ==
               "  steps per unsplit frame: 1; due instants of b split frames"
         both = build(Group((; a = TickCounter(), b = TickCounter());
-                           sample_times = (; a = Absolute(Period(1//10), 1//100),
-                                             b = Absolute(Period(1//10), 1//100))))
+                           sample_times = (; a = Absolute(1//10, 1//100),
+                                             b = Absolute(1//10, 1//100))))
         @test steps_line(Deployment(both; Δt_frame = 1//50, Δt_base = 1//100)) ==
               "  steps per unsplit frame: 1; due instants of a, b split frames"
     end

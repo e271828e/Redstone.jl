@@ -19,7 +19,6 @@ function _exact(name::Symbol, value::Union{Integer,Rational{<:Integer}},
         push!(diags, DeploymentInvalid(parameter = name, reason = :range, value = value))
     exact
 end
-_exact(name::Symbol, value::Period, diags::Vector{Diagnostic}) = value.T
 _exact(name::Symbol, value::AbstractFloat, diags::Vector{Diagnostic}) =
     (push!(diags, DeploymentInvalid(parameter = name, reason = :inexact, value = value));
      nothing)
@@ -370,12 +369,11 @@ struct Heun <: AbstractAlgorithm end
 # Design: §10.2, §10.7, D-442, D-460, D-461. The tolerances are the identity of the choice, so
 # the token holds them and the deployment compares them as part of the value.
 # The controller's constants are the backend's, fixed in stepper.jl and never
-# keywords. Each tolerance is refused at the token, as `Period` refuses a
-# nonpositive period, so no deployment holds a token that cannot run. If the
-# error test rejects the first attempt, the backend's proposal for the retry is
-# at most the step over which the initial derivative changes the state by
-# `0.8·reltol^(1/3)` of its scale, `max(|xᵢ|, abstol/reltol)`. A zero derivative
-# sets no such limit.
+# keywords. Each tolerance is refused at the token, so no deployment holds a
+# token that cannot run. If the error test rejects the first attempt, the
+# backend's proposal for the retry is at most the step over which the initial
+# derivative changes the state by `0.8·reltol^(1/3)` of its scale,
+# `max(|xᵢ|, abstol/reltol)`. A zero derivative sets no such limit.
 """
     BS3(; reltol = 1e-3, abstol = 1e-6) -> BS3
 
@@ -512,11 +510,11 @@ One throw reports the faults found together. Exhausting `firing_budget` warns
 
 # Keywords
 
-- `Δt_frame`: the frame period in seconds, a `Rational`, an integer, a
-  `Period` or an `Hz` value, required and refused as `DeploymentInvalid` when
-  absent, given as a float, or past what `Rational{Int}` holds.
-- `Δt_base`: the base tick period as a `Rational`, an integer, a `Period`
-  or an `Hz` value, `Δt_frame` by default, or `:derive`.
+- `Δt_frame`: the frame period in seconds, a `Rational` or an integer,
+  required and refused as `DeploymentInvalid` when absent, given as a float, or
+  past what `Rational{Int}` holds.
+- `Δt_base`: the base tick period as a `Rational` or an integer, `Δt_frame` by
+  default, or `:derive`.
 - `h_max`: the longest step in seconds, taking the values `Δt_frame` takes and
   refused alike, or `nothing` for no bound below the frame.
 - `h_min`: the floor of an adaptive method's steps in seconds, taking the

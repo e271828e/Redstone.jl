@@ -12,7 +12,7 @@ module RedstoneExamples
 using Redstone
 import Redstone: AbstractComponent, StateEvent, x_init, m_init, s_init, u_types, y_types, y_state, y_direct, x_deriv,
     state_events, set, at, combine, TrimProblem, reads, get_state, get_deriv,
-    get_input, get_output, taps, Absolute, Hz
+    get_input, get_output, taps, Absolute
 import Redstone.Library: Group, Constant, Source, Step, StopRequest, GaussianWhiteNoise, SumJunction,
     Junction, Pack, Unpack, Switch, UnitDelay, RateLimiter, FirstOrderLag, PID, DiscretePID, DiscreteLQRTracker
 using StaticArrays: SMatrix, SVector

@@ -86,7 +86,7 @@ seam_rig() = Group((plant = Plant(), ctl = Gain(4.0), sum = Sum(), a = TickCount
                    local_wires = ("ctl/out" => "plant/u", "sum/e" => "ctl/e",
                                   "plant/y" => "sum/b"),
                    input_wires = "ref" => "sum/a",
-                   sample_times = (; a = Absolute(Period(3//32))))
+                   sample_times = (; a = Absolute(3//32)))
 seam_sim(algorithm) = Simulation(seam_rig(); Δt_frame = 1//8, Δt_base = 1//32, h_min = 1//2^20, algorithm)
 
 # A sawtooth whose stamper crosses inside a step, and whose own wrap does too: a
@@ -123,16 +123,15 @@ function test_stepper()
         # No bound, a bound at the frame and one above it are one trajectory, so
         # they deploy as one value, the bound resolved to the frame.
         unbounded = Deployment(feedback_build; Δt_frame = 1//100)
-        for spelled in (Deployment(feedback_build; Δt_frame = Hz(100), h_max = 1//100),
-                        Deployment(feedback_build; Δt_frame = 1//100, h_max = Period(1//50)),
+        for spelled in (Deployment(feedback_build; Δt_frame = 1//100, h_max = 1//100),
+                        Deployment(feedback_build; Δt_frame = 1//100, h_max = 1//50),
                         Deployment(feedback_build; Δt_frame = 1//100, h_max = 7))
             @test spelled == unbounded && hash(spelled) == hash(unbounded)
             @test spelled.h_max === unbounded.h_max === 1//100
         end
-        # A bound below the frame is a different deployment, in every spelling.
-        bounded = Deployment(feedback_build; Δt_frame = 1//100, h_max = Hz(400))
-        @test bounded.h_max === 1//400 && bounded != unbounded &&
-              bounded == Deployment(feedback_build; Δt_frame = 1//100, h_max = 1//400)
+        # A bound below the frame is a different deployment.
+        bounded = Deployment(feedback_build; Δt_frame = 1//100, h_max = 1//400)
+        @test bounded.h_max === 1//400 && bounded != unbounded
         # A bound need divide nothing: with discrete work, `Δt_frame = 1//500`,
         # `Δt_base = 1//300` and `h_max = 3//2000` deploy, the bound a ratio of
         # the unit `gcd(1//500, 1//300) = 1//1500`.

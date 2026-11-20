@@ -313,7 +313,7 @@ The declaration layer:
 - The connection declarations `local_wires`, `input_wires` and
   `output_wires`, beside `transparent_container`.
 - The optional declaration `stop_reason` (D-316).
-- The rate forms `Period`, `Relative` and `Absolute`, with `sample_times`.
+- The rate forms `Relative` and `Absolute`, with `sample_times`.
   `_exact_or_nothing`, the one catch of `OverflowError`, `InexactError` and
   `DivideError` the time surface's doors share, each refusing its `nothing`
   under its own reason, and `_declared_quantity`, the constructors' exact
@@ -532,7 +532,7 @@ D-256, D-261, D-268, D-270, D-315.
   square as unfactored (D-187, D-459).
 - The time doors' `:range` arms: `RatesViolation`'s on a `Relative`, a
   composed divisor, and on an `Absolute`, an anchor no base tick counts in an
-  `Int`, and `ArgumentInvalid`'s on `Period`, `Hz` and `Absolute` (§9.2,
+  `Int`, and `ArgumentInvalid`'s on `Absolute` (§9.2,
   §10.5, D-459, D-465). `DeploymentInvalid` has no `:derive` `:range`.
 - `ArgumentInvalid`'s arms off the deployment surface (D-256, D-261).
 - The `Trim*` kinds `TrimProblemInvalid`, `TrimCommitEvents`,

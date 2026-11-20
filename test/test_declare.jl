@@ -10,52 +10,45 @@
 # left to the files that own it (`test_multirate.jl`).
 
 function test_declare()
-    @testset "the wrappers are plain data over exact rationals (D-185)" begin
-        # `Period` and `Hz` are one quantity, two spellings, normalized at
-        # construction; floats are refused with the exact spelling named.
-        @test period(Hz(50)) === 1//50
-        @test period(Period(1//50)) === 1//50
-        @test period(Hz(1//2)) === 2//1
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} Period(0.02))
-        @test d.call === :Period && d.reason === :inexact
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} Hz(0.5))
-        @test d.call === :Hz && d.reason === :inexact
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} Absolute(Hz(50), 0.001))
-        @test d.call === :Absolute && d.reason === :inexact
-        d = carried(@test_throws DiagnosticError{ArgumentInvalid} Absolute(1//50))
-        @test d.call === :Absolute && d.reason === :not_a_quantity
+    @testset "the wrappers are plain data over exact rationals (D-185, D-469)" begin
+        # `Absolute` takes its period and its offset as an integer or a
+        # `Rational`, in seconds, normalized at construction; floats are refused
+        # with the exact spelling named.
+        @test Absolute(1//50).Δt === 1//50
+        @test Absolute(50).Δt === 50//1
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} Absolute(0.02))
+        @test d.call === :Absolute && d.reason === :inexact && d.argument === :Δt
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} Absolute(1//50, 0.001))
+        @test d.call === :Absolute && d.reason === :inexact && d.argument === :τ
+        d = carried(@test_throws DiagnosticError{ArgumentInvalid} Absolute(π))
+        @test d.call === :Absolute && d.reason === :inexact && d.argument === :Δt
 
         # Plain data carriers: no range checks of their own — those are the structure step's,
         # with path attribution, at the fold.
         @test Relative(5) === Relative(5, 0)
         @test Relative(0).K == 0
-        @test Absolute(Period(0)).Δt == 0
+        @test Absolute(0).Δt == 0
     end
 
     @testset "a value `Rational{Int}` cannot hold finitely is refused at its declaration door, any other integer type taken at its value (§10.5, D-185, D-459)" begin
         # Past `Int`, in a numerator, a denominator or an offset, and a period
-        # that is not finite, `Hz(0)`'s among them: the normalization fails, as
-        # a float's does, and the door names itself and the value.
-        for (f, call, value) in ((() -> Period(big(2)^70), :Period, big(2)^70),
-                                 (() -> Period(big(1)//big(2)^70), :Period, big(1)//big(2)^70),
-                                 (() -> Period(1//0), :Period, 1//0),
-                                 (() -> Period(-1//0), :Period, -1//0),
-                                 (() -> Hz(0), :Hz, 0),
-                                 (() -> Hz(Int32(0)), :Hz, Int32(0)),
-                                 (() -> Hz(typemin(Int)), :Hz, typemin(Int)),
-                                 (() -> Hz(big(1)//big(2)^70), :Hz, big(1)//big(2)^70),
-                                 (() -> Absolute(Period(1), big(1)//big(2)^70), :Absolute,
+        # that is not finite: the normalization fails, as a float's does, and
+        # the door names itself and the value.
+        for (f, call, value) in ((() -> Absolute(big(2)^70), :Absolute, big(2)^70),
+                                 (() -> Absolute(big(1)//big(2)^70), :Absolute, big(1)//big(2)^70),
+                                 (() -> Absolute(1//0), :Absolute, 1//0),
+                                 (() -> Absolute(-1//0), :Absolute, -1//0),
+                                 (() -> Absolute(1, big(1)//big(2)^70), :Absolute,
                                   big(1)//big(2)^70),
-                                 (() -> Absolute(Period(1), 1//0), :Absolute, 1//0))
+                                 (() -> Absolute(1, 1//0), :Absolute, 1//0))
             d = carried(@test_throws DiagnosticError{ArgumentInvalid} f())
             @test d.call === call && d.reason === :range && d.value == value
         end
         # Another integer type whose value fits is that value, and so is `Bool`,
         # an integer to Julia.
-        @test period(Period(Int32(1)//Int32(50))) === period(Period(big(1)//50)) === 1//50
-        @test period(Hz(Int32(50))) === 1//50
-        @test Absolute(Period(1), big(1)//3).τ === 1//3
-        @test period(Period(true)) === 1//1 && Absolute(Period(2), true).τ === 1//1
+        @test Absolute(Int32(1)//Int32(50)).Δt === Absolute(big(1)//50).Δt === 1//50
+        @test Absolute(1, big(1)//3).τ === 1//3
+        @test Absolute(true).Δt === 1//1 && Absolute(2, true).τ === 1//1
     end
 
     @testset "`Relative` takes an integer count of any type, and refuses a count past `Int` and a fraction (§10.5, D-459)" begin

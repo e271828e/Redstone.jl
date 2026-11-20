@@ -761,7 +761,7 @@ function message(d::RatesViolation)
                "name => `Relative`/`Absolute` entries (§8.7)"
     d.reason === :value_vocabulary &&
         return "$(_rates_entry(d)): $(repr(d.value)) — the wrappers are the whole value " *
-               "vocabulary; a bare integer or bare quantity is a declaration error (§8.7)"
+               "vocabulary; a bare integer or a bare rational is a declaration error (§8.7)"
     d.reason === :range && d.value isa Absolute &&
         return "$(_rates_entry(d)): no base tick the model's anchors admit counts " *
                "Absolute($(d.value.Δt), $(d.value.τ)) in an `Int` (§9.2)"
@@ -1442,13 +1442,13 @@ function message(d::DeploymentInvalid)
                "a component's period, in an `Int` — " *
                "coarsen `Δt_base` or `Δt_frame` (§9.2, §10.5)"
     d.reason === :inexact &&
-        return "`$(d.parameter)` must be exact — a Rational (`$(d.parameter) = 1//100`) or " *
-               "a `Period`/`Hz` value: " *
+        return "`$(d.parameter)` must be exact — an integer or a Rational " *
+               "(`$(d.parameter) = 1//100`): " *
                (d.parameter in (:h_max, :h_min) ? "a span's step count is exact arithmetic" :
                                          "grid derivation is GCD arithmetic") *
                ", ill-defined over floats (§9.1, §10.5)"
     d.reason === :not_a_quantity &&
-        return "`$(d.parameter)` must be a Rational or a `Period`/`Hz` value, got $(d.value)"
+        return "`$(d.parameter)` must be an integer or a Rational, got $(d.value)"
     d.reason === :missing && d.parameter === :h_min &&
         return "an adaptive algorithm needs the step floor: `Simulation(…; h_min = 1//10^6)` " *
                "— a domain rate is not a framework default (§9.2, §10.2)"
@@ -2331,7 +2331,7 @@ message(d::ConditionShapeDrift) =
 
 "§10.5, §11.6, §12.4, §12.6, §14.7, D-215: an argument outside its constraint — `DeploymentInvalid`'s twin off the deployment surface."
 Base.@kwdef struct ArgumentInvalid <: Diagnostic
-    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Period|:Hz|:Absolute|:Relative|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
+    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Absolute|:Relative|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
     reason::Symbol
     argument::Union{Nothing,Symbol} = nothing
     value::Any = nothing
@@ -2342,30 +2342,23 @@ end
 
 function message(d::ArgumentInvalid)
     d.reason === :inexact &&
-        return d.call === :Period ?
-               "a period is an exact Rational — write `Period(1//50)`, not $(repr(d.value)): " *
-               "grid derivation is GCD arithmetic (§10.5)" :
-               d.call === :Hz ?
-               "a frequency is an exact Rational — write `Hz(1//2)` for 0.5 Hz, not " *
-               "$(repr(d.value)): grid derivation is GCD arithmetic (§10.5)" :
-               "an offset is an exact Rational — write `Absolute(Hz(50), 1//500)`, not " *
-               "$(repr(d.value)): grid derivation is GCD arithmetic (§10.5)"
-    d.reason === :not_a_quantity &&
-        return "`Absolute` takes a quantity value: `Period(1//50)` or `Hz(50)` — got " *
-               "$(repr(d.value)) (§10.5)"
+        return d.argument === :Δt ?
+               "a period is an exact Rational in seconds — write `Absolute(1//50)` for 50 Hz, " *
+               "not $(repr(d.value)): grid derivation is GCD arithmetic (§10.5)" :
+               "an offset is an exact Rational in seconds — write `Absolute(1//50, 1//500)`, " *
+               "not $(repr(d.value)): grid derivation is GCD arithmetic (§10.5)"
     # `Relative`'s two refusals: a fraction, which teaches `Absolute`, and a
     # count past `Int` (D-459).
     d.reason === :not_a_count &&
         return "`Relative` counts ticks of the enclosing scope, so `K` and `φ` are integers — " *
                "got $(repr(d.value)). A child that ticks faster than its scope, or at a " *
-               "period in seconds, takes `Absolute`, as in `Absolute(Hz(100))` (§10.5)"
+               "period in seconds, takes `Absolute`, as in `Absolute(1//100)` (§10.5)"
     d.reason === :range && d.call === :Relative &&
         return "`Relative` holds its counts in `Int`, and $(repr(d.value)) is past it (§10.5)"
     # A declaration door's value that `Rational{Int}` cannot hold finitely.
-    d.reason === :range && d.call in (:Period, :Hz, :Absolute) &&
-        return "`$(d.call)` holds an exact `Rational{Int}`, and $(repr(d.value)) " *
-               (d.call === :Hz ? "gives a period" : "is") *
-               " past `Int` or not finite (§10.5)"
+    d.reason === :range && d.call === :Absolute &&
+        return "`Absolute` holds an exact `Rational{Int}`, and $(repr(d.value)) " *
+               "is past `Int` or not finite (§10.5)"
     d.reason === :both_given &&
         return d.call === :replay! ?
                "replay! takes `to_boundary` or `to_time`, not both — the boundary index and " *
@@ -2460,7 +2453,7 @@ function message(d::ArgumentInvalid)
         return "`chunk_size` must be an integer ≥ 1 — the executor's unroll width, which " *
                "never moves the trajectory — got $(repr(d.value)) (§9.7)"
     d.argument === :t0 &&
-        return "`t0` must be an exact time — an integer, a rational, a `Period` or a finite " *
+        return "`t0` must be an exact time — an integer, a rational or a finite " *
                "float at its exact value — from which a run may take at least its first " *
                "frame, on clock integers that carry the run — the grid's origin — got " *
                "$(repr(d.value)) (§10.5, §14.5)"

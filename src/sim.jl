@@ -817,11 +817,10 @@ it.
 
 # Keywords
 
-- `t0`: the start time, held exact: a `Rational{Int}`, an integer or a
-  `Period`, or a float at its exact value, so `-3//10` is the decimal and
-  `-0.3` the float nearest it. Refused as `ArgumentInvalid` if not finite, if
-  `Rational{Int}` cannot hold it exactly, as for `1e-4`, or if the run from it
-  could take no frame.
+- `t0`: the start time, held exact: a `Rational{Int}` or an integer, or a float
+  at its exact value, so `-3//10` is the decimal and `-0.3` the float nearest
+  it. Refused as `ArgumentInvalid` if not finite, if `Rational{Int}` cannot hold
+  it exactly, as for `1e-4`, or if the run from it could take no frame.
 - `trace`: record the input trace of this run.
 - `log`: keep the snapshot log of this run.
 - `log_every`: keep every `log_every`-th published [boundary](@ref g-boundary)

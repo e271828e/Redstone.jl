@@ -84,11 +84,11 @@ function test_lifecycle()
         @test d.argument === :t0 && d.reason === :range
     end
 
-    @testset "an origin in an exact form a period takes, of any integer type, or a float is held at its exact value (§14.5, D-457, D-459)" begin
+    @testset "an origin that is an integer or a rational of any integer type, or a float, is held at its exact value (§14.5, D-457, D-459)" begin
         # `Bool` is an integer to Julia, so `true` is one second.
         point = set(u = (ref = 0.0,))
         for (t0, origin) in ((Float16(0.1), 819//8192), (big(1)//3, 1//3),
-                             (Int32(1)//Int32(3), 1//3), (true, 1//1), (Period(1//4), 1//4))
+                             (Int32(1)//Int32(3), 1//3), (true, 1//1))
             model = Model(feedback_model(); Δt_frame = 1//10)
             init!(model, point; t0)
             @test model.exec.clock.t₀ === origin && model.exec.clock.t === Float64(origin)

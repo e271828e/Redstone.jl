@@ -57,7 +57,7 @@ A continuous plant under a discrete PI controller running at 50 Hz:
 using Redstone
 import Redstone: AbstractComponent, x_init, s_init, u_types, y_types,
     y_state, y_direct, x_deriv, s_update            # extended by components
-import Redstone: Absolute, Hz, Simulation, init!, run!, set, port, state, build
+import Redstone: Absolute, Simulation, init!, run!, set, port, state, build
 import Redstone.Library: Group
 
 struct Plant <: AbstractComponent
@@ -90,7 +90,7 @@ loop(feedback) = Group((plant = Plant(2.0, 0.3), ctl = PI(3.0, 2.0));
     local_wires = ("ctl/y" => "plant/u", "plant/$feedback" => "ctl/meas"),
     input_wires = "ref" => "ctl/ref",
     output_wires = "plant/y" => "y",
-    sample_times = (ctl = Absolute(Hz(50)),))
+    sample_times = (ctl = Absolute(1//50),))
 
 sim = Simulation(loop("y"); Δt_frame = 1//1000)   # frames of 1 ms
 init!(sim, set(u = (ref = 1.0,)))

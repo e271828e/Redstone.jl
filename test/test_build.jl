@@ -2405,7 +2405,7 @@ local_wires(::EmptySelectionRated) = ("src/out" => "g/e",)
 input_wires(a::EmptySelectionRated) = (input_passthrough(a, "g"; except = ("e",))...,
                                          "in" => "src/e")
 output_wires(::EmptySelectionRated) = ("g/out" => "out",)
-sample_times(::EmptySelectionRated) = (; c = Absolute(Hz(50), 1//100))
+sample_times(::EmptySelectionRated) = (; c = Absolute(1//50, 1//100))
 
 # One passthrough level above it, which asks the child for its face lists: the
 # walk's memo keeps the warning's count at one (§13.3, Appendix C).

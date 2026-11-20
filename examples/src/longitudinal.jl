@@ -156,7 +156,7 @@ function pitch_hold(; discrete = false)
     Group((; plant = Longitudinal(), θ_ctl = discrete ? DiscretePID(; gains...) : PID(; gains...));
           input_wires = ("θ_ref" => "θ_ctl/r", "δt" => "plant/δt"),
           local_wires = ("plant/θ" => "θ_ctl/y", "θ_ctl/u" => "plant/δe"),
-          sample_times = discrete ? (θ_ctl = Absolute(Hz(50)),) : (;))
+          sample_times = discrete ? (θ_ctl = Absolute(1//50),) : (;))
 end
 
 """
@@ -189,7 +189,7 @@ sensing(; noise_psd = 1.8e-3) =
           input_wires = ("h" => "altimeter/h",),
           local_wires = ("noise/y" => "altimeter/noise",),
           output_wires = ("altimeter/y" => "h_meas",),
-          sample_times = (noise = Absolute(Hz(10)), altimeter = Absolute(Hz(10))))
+          sample_times = (noise = Absolute(1//10), altimeter = Absolute(1//10)))
 
 """
     cascade(; standby = false)
@@ -213,7 +213,7 @@ then also takes. Every `Tt` is 0.02 s. The gains and the limits are
 `longitudinal_aircraft.md` section 4.
 """
 function cascade(; standby = false)
-    fast, slow = Absolute(Hz(50)), Absolute(Hz(10))
+    fast, slow = Absolute(1//50), Absolute(1//10)
     pid(; gains...) = DiscretePID(; gains..., Tt = 0.02, hold = true, tracking = standby)
     # with standby, the outer controllers also read the inner measurements, and two faces join
     θ_readers, q_readers = standby ? (("θ_ctl/y", "h_ctl/v"), ("q_ctl/y", "θ_ctl/v")) : ("θ_ctl/y", "q_ctl/y")
@@ -249,7 +249,7 @@ actuators(solution) =
           input_wires = ("δe_cmd" => "δe_limiter/u", "δt_cmd" => "δt_limiter/u"),
           local_wires = ("δe_limiter/y" => "δe_lag/u", "δt_limiter/y" => "δt_lag/u"),
           output_wires = ("δe_lag/y" => "δe", "δt_lag/y" => "δt"),
-          sample_times = (δe_limiter = Absolute(Hz(50)), δt_limiter = Absolute(Hz(50))))
+          sample_times = (δe_limiter = Absolute(1//50), δt_limiter = Absolute(1//50)))
 
 """
     feedback_wires()
@@ -316,7 +316,7 @@ selection(solution) =
                          "select_δe/y" => "command_δe/u", "select_δt/y" => "command_δt/u"),
           output_wires = ("select_δe/y" => "δe", "select_δt/y" => "δt",
                           "command_δe/y" => "δe_prev", "command_δt/y" => "δt_prev", "latch/y" => "engaged"),
-          sample_times = (latch = Absolute(Hz(10)), command_δe = Absolute(Hz(50)), command_δt = Absolute(Hz(50))))
+          sample_times = (latch = Absolute(1//10), command_δe = Absolute(1//50), command_δt = Absolute(1//50)))
 
 """
     piloted(solution; noise_psd = 1.8e-3)
@@ -446,7 +446,7 @@ wiring are `longitudinal_aircraft.md` section 4.
 """
 function closed_loop(solution, gains; noise_σ = 0.3)
     (; θ, δe, δt) = solution
-    rate = Absolute(Hz(50))
+    rate = Absolute(1//50)
     pid(; kwargs...) = DiscretePID(; kwargs..., Tt = 0.02, hold = true, tracking = true)
     sensing = Group((; noise = GaussianWhiteNoise(seed = 7, σ = noise_σ), altimeter = SumJunction{Float64, 2}());
                     input_wires = ("h" => "altimeter/in1",),

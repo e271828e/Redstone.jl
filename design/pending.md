@@ -89,18 +89,6 @@ item changes what the spec says, the spec edit is part of the item.
     `design/increments/20261118_tutorial_example/notes_tutorial_example.md`,
     and eleven more are section 6 of
     `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`.
-    One item comes from outside the arc, from the design session of the
-    inspector's deployment overlay on 2026-11-19: whether `Period` and `Hz`
-    retire (§10.5, D-185). `Absolute` would then take its period as an
-    exact integer or `Rational` in seconds, as it takes its offset and as
-    the deployment's time keywords already allow. The user leans to
-    retiring both. `sample_times` names the dimension, a frequency is one
-    inversion away, and writing `Absolute` or `Relative` at every entry
-    removes most of the remaining danger. The refusal of `Absolute(50)` as
-    `:not_a_quantity` would go with them, the one guard against a rate
-    typed in hertz. The float refusals would stay. `Hz` and `Period` are
-    called about 130 times across `src/`, `test/`, the examples and the
-    spec.
     A fix lands as a loose commit or as an increment of its own, and before
     the exported-name audit, since it can add or rename a name.
   - **The exported-name audit.** The export list is to be decided deliberately

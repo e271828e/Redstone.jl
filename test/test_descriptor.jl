@@ -102,7 +102,7 @@ end
 # One period whose denominator is 3 times the Mersenne prime 2^61 − 1: the trial
 # division stops below it, so the cofactor is left whole and flagged (D-459).
 unfactored_model() =
-    Group((; c = TickCounter()); sample_times = (; c = Absolute(Period(1//(3 * (2^61 - 1))))))
+    Group((; c = TickCounter()); sample_times = (; c = Absolute(1//(3 * (2^61 - 1)))))
 
 # A keyed scope over a container's bare field key and an explicit `Relative(1)`:
 # chains the timings alone do not determine (§9.2, §13.9).
@@ -692,7 +692,7 @@ function test_descriptor()
         # Two anchors, the second with an offset that drives: its pool entry names
         # the second anchor, and its repair rides it. `primes` names pool positions.
         anchored = Group((; a = TickCounter(), b = TickCounter());
-                         sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
+                         sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150)))
         value = descriptor(build(anchored))
         round_trip(value)
         @test value.build.structure.grid ==
@@ -759,7 +759,7 @@ function test_descriptor()
         # and the deployment's own warnings.
         derived = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
             build(Group((; a = TickCounter(), b = TickCounter());
-                        sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150))));
+                        sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150))));
             Δt_frame = 1//1500, Δt_base = :derive)
         value = descriptor(derived)
         round_trip(value)
@@ -773,7 +773,7 @@ function test_descriptor()
         # client could not solve them back (D-467).
         held = Deployment(build(Group((; s = Group((; g = Gain(1.0)); input_wires = ("in" => "g/e",)));
                                       input_wires = ("in" => "s/in",),
-                                      sample_times = (; s = Absolute(Period(1//10), 1//20))));
+                                      sample_times = (; s = Absolute(1//10, 1//20))));
                           Δt_frame = 1//100)
         value = descriptor(held)
         round_trip(value)
@@ -816,7 +816,7 @@ function test_descriptor()
     @testset "the file carries what `show` prints: a client's derivation matches the printed lines (§9.2, §13.9, D-467)" begin
         multirate = build(MultiRate())
         anchored = Group((; a = TickCounter(), b = TickCounter());
-                         sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
+                         sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150)))
         for built in (multirate, build(pinned_fanout()), build(abstract_entries()), build(chained_model()),
                       build(unfactored_model()), build(anchored), build(routed_pair()), build(FannedLoops(2)),
                       build(Motor(1.0)), build(bare_ports_world()))

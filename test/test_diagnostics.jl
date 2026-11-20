@@ -327,7 +327,7 @@ function diagnostics_kind_set()
             RatesViolation(path = "a", reason = :multiplier, key = :b, value = 0),
             RatesViolation(path = "a", reason = :phase, key = :b, value = 5),
             RatesViolation(path = "a", reason = :range, key = :b, value = Relative(2^32 + 1)),
-            RatesViolation(path = "a", reason = :range, key = :b, value = Absolute(Period(2^40))),
+            RatesViolation(path = "a", reason = :range, key = :b, value = Absolute(2^40)),
             RatesViolation(path = "a", reason = :period, key = :b, value = 0//1),
             RatesViolation(path = "a", reason = :offset, key = :b, value = 3//1),
             RatesViolation(path = "a", reason = :unknown_child, key = :z, candidates = ["b"]),
@@ -617,12 +617,8 @@ function diagnostics_kind_set()
             ArgumentInvalid(call = :run!, reason = :range, argument = :t_end, value = -1.0),
             ArgumentInvalid(call = :run!, reason = :range, argument = :ignore_stop_requests,
                             value = :foo),
-            ArgumentInvalid(call = :Period, reason = :inexact, value = 0.02),
-            ArgumentInvalid(call = :Hz, reason = :inexact, value = 0.5),
-            ArgumentInvalid(call = :Absolute, reason = :inexact, value = 0.5),
-            ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = 1),
-            ArgumentInvalid(call = :Period, reason = :range, value = 1//0),
-            ArgumentInvalid(call = :Hz, reason = :range, value = 0),
+            ArgumentInvalid(call = :Absolute, reason = :inexact, argument = :Δt, value = 0.02),
+            ArgumentInvalid(call = :Absolute, reason = :inexact, argument = :τ, value = 0.5),
             ArgumentInvalid(call = :Absolute, reason = :range, value = big(1)//big(2)^70),
             ArgumentInvalid(call = :Relative, reason = :range, value = big(2)^70),
             ArgumentInvalid(call = :Relative, reason = :not_a_count, value = 0.5),
@@ -797,8 +793,8 @@ function diagnostics_kind_set()
         @test message(DeploymentInvalid(parameter = :h_max, reason = :range, value = 0//1)) ==
               "`h_max` must be positive and finite in `Rational{Int}`, got 0//1 (§10.5)"
         @test message(DeploymentInvalid(parameter = :h_max, reason = :inexact, value = 0.001)) ==
-              "`h_max` must be exact — a Rational (`h_max = 1//100`) or a `Period`/`Hz` " *
-              "value: a span's step count is exact arithmetic, ill-defined over floats " *
+              "`h_max` must be exact — an integer or a Rational (`h_max = 1//100`): " *
+              "a span's step count is exact arithmetic, ill-defined over floats " *
               "(§9.1, §10.5)"
         # A unit too fine to index one frame, or to count a period, names `Δt_base`
         # and the frame (§10.5, D-445, D-459).
@@ -819,17 +815,22 @@ function diagnostics_kind_set()
                          "frame 922 is past frame 921, the last a run of this deployment " *
                          "from this origin may take")
         # A value a time door cannot hold names the door and the value (§10.5).
-        @test message(ArgumentInvalid(call = :Hz, reason = :range, value = 0)) ==
-              "`Hz` holds an exact `Rational{Int}`, and 0 gives a period past `Int` or not " *
-              "finite (§10.5)"
-        @test message(ArgumentInvalid(call = :Period, reason = :range, value = 1//0)) ==
-              "`Period` holds an exact `Rational{Int}`, and 1//0 is past `Int` or not finite (§10.5)"
+        @test message(ArgumentInvalid(call = :Absolute, reason = :inexact, argument = :Δt,
+                                      value = 50.0)) ==
+              "a period is an exact Rational in seconds — write `Absolute(1//50)` for 50 Hz, " *
+              "not 50.0: grid derivation is GCD arithmetic (§10.5)"
+        @test message(ArgumentInvalid(call = :Absolute, reason = :inexact, argument = :τ,
+                                      value = 0.001)) ==
+              "an offset is an exact Rational in seconds — write `Absolute(1//50, 1//500)`, " *
+              "not 0.001: grid derivation is GCD arithmetic (§10.5)"
+        @test message(ArgumentInvalid(call = :Absolute, reason = :range, value = 1//0)) ==
+              "`Absolute` holds an exact `Rational{Int}`, and 1//0 is past `Int` or not finite (§10.5)"
         @test message(ArgumentInvalid(call = :Relative, reason = :range, value = big(2)^70)) ==
               "`Relative` holds its counts in `Int`, and 1180591620717411303424 is past it (§10.5)"
         @test message(ArgumentInvalid(call = :Relative, reason = :not_a_count, value = 1//2)) ==
               "`Relative` counts ticks of the enclosing scope, so `K` and `φ` are integers — " *
               "got 1//2. A child that ticks faster than its scope, or at a period in seconds, " *
-              "takes `Absolute`, as in `Absolute(Hz(100))` (§10.5)"
+              "takes `Absolute`, as in `Absolute(1//100)` (§10.5)"
         @test message(DeploymentInvalid(parameter = :Δt_frame, reason = :range,
                                         value = big(2)^70)) ==
               "`Δt_frame` must be positive and finite in `Rational{Int}`, got " *
@@ -847,7 +848,7 @@ function diagnostics_kind_set()
         # An anchor no base tick counts in an `Int` names its entry by its fields
         # (§9.2, D-465).
         @test message(RatesViolation(path = "g", reason = :range, key = :a,
-                                     value = Absolute(Period(2^40), 1//(2^23 + 1)))) ==
+                                     value = Absolute(2^40, 1//(2^23 + 1)))) ==
               "`sample_times` at `g`, key `a`: no base tick the model's anchors admit counts " *
               "Absolute(1099511627776//1, 1//8388609) in an `Int` (§9.2)"
         # A cofactor the trial division left at or above its cap's square may be
@@ -864,8 +865,8 @@ function diagnostics_kind_set()
         # A driving offset whose neighbours `Rational{Int}` cannot hold keeps its
         # row and its factor, with no repair to declare (§9.2, D-459).
         neighbourless = build(Group((; a = TickCounter(), c = TickCounter());
-                                    sample_times = (; a = Absolute(Period(2^20), 2^21 // 3),
-                                                    c = Absolute(Period(2^20 // (2^45 + 3))))))
+                                    sample_times = (; a = Absolute(2^20, 2^21 // 3),
+                                                    c = Absolute(2^20 // (2^45 + 3)))))
         rendered = message(DeploymentInvalid(
             parameter = :Δt_base, reason = :anchor_offset, value = 2^21 // 3, related = 1//1,
             scope = "", key = :a,

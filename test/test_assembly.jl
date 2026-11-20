@@ -735,7 +735,7 @@ function assembly_rate_chains()
         # An anchor severs and re-seeds, and its one link is the anchor's own; the
         # anchor's row carries its `(Δtₖ, τₖ)` with the declaring scope and key.
         @test timing("gnss") == (1, 1, 0)
-        @test entry("gnss").rates == [(scope = "", key = :gnss, entry = Absolute(Hz(50)))]
+        @test entry("gnss").rates == [(scope = "", key = :gnss, entry = Absolute(1//50))]
         @test structure.anchors == [Anchor(1//50, 0, "", :gnss)]
 
         # An unlisted child continues at the enclosing scope and records nothing.

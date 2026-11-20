@@ -1377,7 +1377,7 @@ sample_times(::FCS) = (inner = Relative(1), outer = Relative(5, 2))
     MultiRate()
 
 The §9.2 worked example: three discrete components under two scopes, `fcs` on
-the root grid and `gnss` anchored at `Hz(50)`. Deployed at `Δt_base = 2 ms` the
+the root grid and `gnss` anchored at `1//50`. Deployed at `Δt_base = 2 ms` the
 compiled pairs are inner `(1, 0)`, outer `(5, 2)`, gnss `(10, 0)`, and one
 hyperperiod is `lcm(Dᵢ) = 10` base ticks. The ramp source makes every sample
 carry its own acquisition time, so the chart's dots — and the stagger's aging —
@@ -1395,7 +1395,7 @@ local_wires(::MultiRate) =
     ("src/out" => "fcs/in", "src/out" => "gnss/in", "gnss/out" => "fcs/g")
 output_wires(::MultiRate) =
     ("fcs/y_inner" => "inner", "fcs/y_outer" => "outer", "gnss/out" => "gnss")
-sample_times(::MultiRate) = (fcs = Relative(1), gnss = Absolute(Hz(50)))
+sample_times(::MultiRate) = (fcs = Relative(1), gnss = Absolute(1//50))
 
 # --- the field-handle coverage set (§4.4, D-237) --------------------------------
 # The handle pattern: an immutable struct combining isbits parameters with a

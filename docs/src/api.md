@@ -30,8 +30,6 @@ sample_times
 transparent_container
 Relative
 Absolute
-Period
-Hz
 stop_reason
 Pinned
 ```

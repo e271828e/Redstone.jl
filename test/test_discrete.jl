@@ -108,7 +108,7 @@ struct AnchoredBank <: AbstractComponent
     clock::TickCounter
 end
 local_wires(::AnchoredBank) = ()
-sample_times(::AnchoredBank) = (units = Absolute(Hz(10), 1//150), clock = Absolute(Hz(500)))
+sample_times(::AnchoredBank) = (units = Absolute(1//10, 1//150), clock = Absolute(1//500))
 
 function discrete_rate_fold()
     @testset "the fold validates with path attribution (§8.7, §9.1)" begin
@@ -122,8 +122,8 @@ function discrete_rate_fold()
 
         for (rates, reason) in (((; c = Relative(0)),               :multiplier),
                                 ((; c = Relative(2, 2)),            :phase),
-                                ((; c = Absolute(Period(0))),       :period),
-                                ((; c = Absolute(Hz(50), 1//40)),   :offset))
+                                ((; c = Absolute(0)),               :period),
+                                ((; c = Absolute(1//50, 1//40)),    :offset))
             err = failure(() -> build(rated(rates)))
             @test err isa DiagnosticError
             d = only(diagnostics(err))
@@ -272,7 +272,7 @@ function discrete_rate_fold()
         gps = Group((; rx = TickCounter());
                     sample_times = (; rx = Relative(3)))
         sim = Simulation(Group((; gps = gps);
-                               sample_times = (; gps = Absolute(Hz(50)))); Δt_frame = 1//500)
+                               sample_times = (; gps = Absolute(1//50))); Δt_frame = 1//500)
         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(30, 0)]
     end
 end
@@ -299,7 +299,7 @@ function discrete_deployment()
         # The typed schedule: the §9.2 worked example's rows, each with the anchor
         # it resolved against (0 is the base grid) and the `sample_times` links met
         # on the way down. `MultiRate` declares `fcs = Relative(1)` and
-        # `gnss = Absolute(Hz(50))`, and `FCS` declares `inner = Relative(1)` and
+        # `gnss = Absolute(1//50)`, and `FCS` declares `inner = Relative(1)` and
         # `outer = Relative(5, 2)`.
         rows = deployment.schedule.rows
         @test [(row.path, row.D, row.Φ) for row in rows] ==
@@ -406,21 +406,16 @@ function discrete_deployment()
     @testset "one Build backs many Simulations; Δt_base has three sources (§9.1)" begin
         multirate_build = build(MultiRate())
 
-        # `Δt_frame` (the default path) and the explicit keyword (Rational or
-        # quantity): the anchored divisor is deployment's, not the build's — the
+        # `Δt_frame` (the default path) and the explicit keyword (an integer or a
+        # `Rational`): the anchored divisor is deployment's, not the build's — the
         # same Build lands gnss at D = 10 or D = 5.
         default_sim = Simulation(multirate_build; Δt_frame = 1//500)
         Δt_base_sim = Simulation(multirate_build; Δt_frame = 1//500, Δt_base = 1//250)
-        period_sim = Simulation(multirate_build; Δt_frame = 1//500, Δt_base = Period(1//250))
         @test [e.D for e in default_sim.model.deployment.schedule.rows] == [1, 5, 10]
         @test [e.D for e in Δt_base_sim.model.deployment.schedule.rows] == [1, 5, 5]
         # Silence means `Δt_frame`: the default deploys equal to the spelled value.
         @test default_sim.model.deployment ==
               Deployment(multirate_build; Δt_frame = 1//500, Δt_base = 1//500)
-        # The deployment is a value (§12.7, D-254): two spellings of one base tick
-        # period, over one build, deploy equal — and hash equal with it.
-        @test Δt_base_sim.model.deployment == period_sim.model.deployment
-        @test hash(Δt_base_sim.model.deployment) == hash(period_sim.model.deployment)
 
         # Nothing writable is shared: each `Model` materializes its own buffers.
         init!(default_sim); run!(default_sim; t_end = 0.02)
@@ -484,7 +479,7 @@ function discrete_deployment()
         # A driving offset's refusal carries the repair: the nearest offsets on the
         # grid the rest of the pool already supports (§9.2, D-187).
         offset = Group((; a = TickCounter(), b = TickCounter());
-                       sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
+                       sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150)))
         d = only(diagnostics(failure(() -> Simulation(offset; Δt_frame = 1//500))))
         @test d isa DeploymentInvalid && d.reason === :anchor_offset
         @test d.grid.admissible == 1//1500
@@ -510,7 +505,7 @@ function discrete_deployment()
         # overflow: `2^62` seconds over a quarter-second base tick, which the build
         # admits at its gcd of 1 s (D-465).
         huge = Group((; a = TickCounter());
-                     sample_times = (; a = Absolute(Period(2^62), 2^62 - 1)))
+                     sample_times = (; a = Absolute(2^62, 2^62 - 1)))
         err = failure(() -> Deployment(build(huge); Δt_frame = 1//4, Δt_base = 1//4))
         @test Set((d.parameter, d.reason, d.value) for d in diagnostics(err)) ==
               Set([(:Δt_base, :anchor_period, (2^62)//1),
@@ -540,7 +535,7 @@ function discrete_deployment()
         # the anchor counts `2^60` base ticks, its member `2^90`, a period in
         # units past `Int`.
         rig = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2^30))));
-                    sample_times = (; g = Absolute(Period(2^40))))
+                    sample_times = (; g = Absolute(2^40)))
         d = only(diagnostics(failure(() -> Deployment(build(rig); Δt_frame = 1//2^20,
                                                       Δt_base = 1//2^20))))
         @test d isa DeploymentInvalid && d.parameter === :Δt_base && d.reason === :range &&
@@ -568,7 +563,7 @@ function discrete_deployment()
         # All anchored: the pool is every period and every nonzero offset, and the
         # derived value is its GCD — the offset drives the grid 2× finer here.
         anchored = Group((; c = TickCounter());
-                         sample_times = (; c = Absolute(Hz(50), 1//100)))
+                         sample_times = (; c = Absolute(1//50, 1//100)))
         sim = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Simulation(
             anchored; Δt_frame = 1//500, Δt_base = :derive)
         @test sim.model.deployment.Δt_base === 1//100
@@ -591,7 +586,7 @@ function discrete_deployment()
         # 1//150 s. The offset's denominator brings the prime 3 the rest of the pool
         # has not, so the derived grid is three times finer than the 500 Hz period.
         comp = Group((; a = TickCounter(), b = TickCounter());
-                     sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
+                     sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150)))
         deployment = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
             build(comp); Δt_frame = 1//1500, Δt_base = :derive)
         # No artifact holds the report: it is derived from the structure's
@@ -636,7 +631,7 @@ function discrete_deployment()
         # period itself, the fastest work fills every base tick, and `u == 1` is no
         # information — the line prints, nothing warns.
         plain = Group((; a = TickCounter(), b = TickCounter());
-                      sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10))))
+                      sample_times = (; a = Absolute(1//500), b = Absolute(1//10)))
         deployment2 = @test_logs (:info, r"derived") Deployment(build(plain); Δt_frame = 1//500,
                                                                 Δt_base = :derive)
         grid2 = _grid_report(deployment2.build.structure.anchors)
@@ -647,8 +642,8 @@ function discrete_deployment()
         # Where every entry divides what the others already give, no entry refines
         # another and the line says exactly that.
         harmonic = Group((; a = TickCounter(), b = TickCounter(), c = TickCounter());
-                         sample_times = (; a = Absolute(Hz(4)), b = Absolute(Hz(6)),
-                                    c = Absolute(Hz(12))))
+                         sample_times = (; a = Absolute(1//4), b = Absolute(1//6),
+                                    c = Absolute(1//12)))
         deployment3 = @test_logs (:info, r"no entry refines another") Deployment(
             build(harmonic); Δt_frame = 1//12, Δt_base = :derive)
         grid3 = _grid_report(deployment3.build.structure.anchors)
@@ -666,10 +661,10 @@ function discrete_deployment()
         # near `2^63` is refused rather than hung.
         prime = 2^61 - 1
         deployment = @test_logs (:info, r"derived") Deployment(
-            anchored((; a = Absolute(Period(1//prime)))); Δt_frame = 1, Δt_base = :derive)
+            anchored((; a = Absolute(1//prime))); Δt_frame = 1, Δt_base = :derive)
         @test primes_of(deployment) == [(prime = prime, power = 1, suppliers = [1])]
         d = only(diagnostics(failure(() -> Deployment(
-            anchored((; a = Absolute(Period(1//(typemax(Int) - 24))))); Δt_frame = 1))))
+            anchored((; a = Absolute(1//(typemax(Int) - 24)))); Δt_frame = 1))))
         @test d.reason === :anchor_period
         # Two primes past the cap stay one cofactor; the primes below it split.
         (p, q) = (1_048_583, 1_048_589)
@@ -680,16 +675,16 @@ function discrete_deployment()
         # neither denominator, and both are its suppliers. So is an entry that
         # supplies one prime beside an entry that supplies the whole cofactor.
         one_each = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
-            anchored((; a = Absolute(Period(1//p)), b = Absolute(Period(1//q))));
+            anchored((; a = Absolute(1//p), b = Absolute(1//q)));
             Δt_frame = 1, Δt_base = :derive)
         @test primes_of(one_each) == [(prime = p * q, power = 1, suppliers = [1, 2])]
         part_and_whole = @test_logs (:info, r"derived") Deployment(
-            anchored((; a = Absolute(Period(1//p)), b = Absolute(Period(1//(p * q)))));
+            anchored((; a = Absolute(1//p), b = Absolute(1//(p * q))));
             Δt_frame = 1, Δt_base = :derive)
         @test primes_of(part_and_whole) == [(prime = p * q, power = 1, suppliers = [1, 2])]
         # A prime power keeps the divisibility rule: `2^2` is the first entry's alone.
         powers = @test_logs (:info, r"derived") Deployment(
-            anchored((; a = Absolute(Period(1//4)), b = Absolute(Period(1//2))));
+            anchored((; a = Absolute(1//4), b = Absolute(1//2)));
             Δt_frame = 1, Δt_base = :derive)
         @test primes_of(powers) == [(prime = 2, power = 2, suppliers = [1])]
     end
@@ -709,32 +704,32 @@ function discrete_deployment()
         deploys(root, g) = Deployment(build(root); Δt_frame = g, Δt_base = g) isa Deployment
         # Two coprime denominators near `2^40`: no `Rational{Int}` holds the gcd,
         # so the refusal lands on every anchor's entry. Near `2^31` the gcd fits.
-        far = (; a = Absolute(Period(1//(2^40 + 1))), b = Absolute(Period(1//(2^40 + 3))))
+        far = (; a = Absolute(1//(2^40 + 1)), b = Absolute(1//(2^40 + 3)))
         @test refusals(anchored(far)) == [(true, "", :a, far.a), (true, "", :b, far.b)]
-        @test deploys(anchored((; a = Absolute(Period(1//(2^31 + 1))),
-                                  b = Absolute(Period(1//(2^31 + 3))))),
+        @test deploys(anchored((; a = Absolute(1//(2^31 + 1)),
+                                  b = Absolute(1//(2^31 + 3)))),
                       1//((2^31 + 1) * (2^31 + 3)))
         # An offset that refines a `2^40` s period past `Int` base ticks: the gcd
         # fits, the anchor's count at it does not. Below the frontier,
         # `2^40·(2^23 - 1)` fits. The two components under it share one refusal.
         refined(d) = Group((; s = Group((; x = TickCounter(), y = TickCounter())));
-                           sample_times = (; s = Absolute(Period(2^40), 1//d)))
+                           sample_times = (; s = Absolute(2^40, 1//d)))
         @test refusals(refined(2^23 + 1)) ==
-              [(true, "", :s, Absolute(Period(2^40), 1//(2^23 + 1)))]
+              [(true, "", :s, Absolute(2^40, 1//(2^23 + 1)))]
         @test deploys(refined(2^23 - 1), 1//(2^23 - 1))
         # Three anchors with a whole grid report, no single entry refining much:
         # the two offsets together push the first anchor's count to `2^40·16850989`,
         # about `1.85e19`. The report's overflow is no test, so the build's is the
         # trial's. At `2^38` s the count fits.
-        three(Δt) = anchored((; a = Absolute(Period(Δt)), b = Absolute(Period(1), 1//4099),
-                               c = Absolute(Period(1), 1//4111)))
+        three(Δt) = anchored((; a = Absolute(Δt), b = Absolute(1, 1//4099),
+                               c = Absolute(1, 1//4111)))
         root = three(2^40)
         draft = StructureDraft(root)
         flatten_tree!(draft, root, Diagnostic[])
         report = _grid_report(draft.anchors)
         @test report.admissible == 1//16850989 &&
               [e.factor for e in report.pool] == [1, 1, 1, 4099, 4111]
-        @test refusals(three(2^40)) == [(true, "", :a, Absolute(Period(2^40)))]
+        @test refusals(three(2^40)) == [(true, "", :a, Absolute(2^40))]
         @test deploys(three(2^38), 1//16850989)
     end
 
@@ -752,7 +747,7 @@ function discrete_deployment()
         # product. The inner entry is the one the running count passes.
         @test only(build(nest(TickCounter(), Relative(2^30), Relative(2^30))).structure.components).timing ==
               (anchor = 0, m = 2^60, c = 0)
-        anchor = Absolute(Period(1), 1//1000)
+        anchor = Absolute(1, 1//1000)
         @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(2^30))) ==
               [(true, "n/n", :n, Relative(2^30))]
         # The frontier itself: `K·1000·2^30` at the last `K` that fits, and one past.
@@ -763,7 +758,7 @@ function discrete_deployment()
                            1//1000).schedule.rows).D == K * 1000 * 2^30
         # A count that reaches `typemax(Int)` exactly still fits: the entry refused
         # is the next one, which passes it.
-        @test refusals(nest(TickCounter(), Absolute(Period(1), 1//7), Relative(typemax(Int) ÷ 7),
+        @test refusals(nest(TickCounter(), Absolute(1, 1//7), Relative(typemax(Int) ÷ 7),
                             Relative(2))) ==
               [(true, "n/n", :n, Relative(2))]
         # The first entry passed is refused, not the last link, and the scope and
@@ -796,9 +791,9 @@ function discrete_deployment()
         @test Deployment(build(nest(TickCounter(), Relative(typemax(Int) - 1)));
                          Δt_frame = 1, Δt_base = 1).lattice.max_frame == 1
         # An anchor's own count at the largest divisor: its entry is refused.
-        @test refusals(nest(TickCounter(), Absolute(Period(typemax(Int)), 1))) ==
-              [(true, "", :n, Absolute(Period(typemax(Int)), 1))]
-        @test Deployment(build(nest(TickCounter(), Absolute(Period(typemax(Int) - 1), 1)));
+        @test refusals(nest(TickCounter(), Absolute(typemax(Int), 1))) ==
+              [(true, "", :n, Absolute(typemax(Int), 1))]
+        @test Deployment(build(nest(TickCounter(), Absolute(typemax(Int) - 1, 1)));
                          Δt_frame = 1, Δt_base = 1).lattice.max_frame == 1
         # Only the components at the largest divisor are refused.
         pair = Group((; a = TickCounter(), b = TickCounter());
@@ -812,13 +807,13 @@ function discrete_deployment()
     @testset "the trial's premise is a fold that recorded no violation, and its refusals join the walk's in one throw (§9.1, §13.1, D-229, D-465)" begin
         # An unbindable pool beside a fold violation reports the fold's alone.
         mixed = Group((; a = TickCounter(), b = TickCounter(), c = TickCounter());
-                      sample_times = (; a = Absolute(Period(1//(2^40 + 1))),
-                                      b = Absolute(Period(1//(2^40 + 3))), c = Relative(0)))
+                      sample_times = (; a = Absolute(1//(2^40 + 1)),
+                                      b = Absolute(1//(2^40 + 3)), c = Relative(0)))
         @test [(typeof(d), d.reason, d.key) for d in diagnostics(failure(() -> build(mixed)))] ==
               [(RatesViolation, :multiplier, :c)]
         # A refused `Absolute` still pushes its anchor; the premise keeps its zero
         # period out of the gcd.
-        zero_period = Group((; a = TickCounter()); sample_times = (; a = Absolute(Period(0))))
+        zero_period = Group((; a = TickCounter()); sample_times = (; a = Absolute(0)))
         @test [(typeof(d), d.reason) for d in diagnostics(failure(() -> build(zero_period)))] ==
               [(RatesViolation, :period)]
         # The trial runs ahead of the walk's barrier, so an unfed input and an
@@ -833,7 +828,7 @@ function discrete_deployment()
     @testset "an offset's neighbour `Rational{Int}` cannot hold is not offered, and its pool deploys (§9.2, D-187, D-459)" begin
         anchored(rates) = build(Group(NamedTuple{keys(rates)}(Tuple(TickCounter() for _ in rates));
                                       sample_times = rates))
-        pool(τ, E) = anchored((; a = Absolute(Period(2^20), τ), c = Absolute(Period(2^20 // E))))
+        pool(τ, E) = anchored((; a = Absolute(2^20, τ), c = Absolute(2^20 // E)))
         # The rest of the pool supports the grid `2^20//E`. With `E = 2^45 + 3` the
         # offset `2^21//3` sits between steps near `2^44`, so both neighbours have
         # a numerator past `Int`, while every anchor counts its base ticks in one at

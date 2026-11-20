@@ -27,7 +27,7 @@ workload_loop() = Library.Group((
                    "force/y" => "plant/u", "plant/y" => "integral/u"),
     input_wires = ("disturbance" => "force/in2",),
     output_wires = ("plant/y" => "y",),
-    sample_times = (controller = Absolute(Hz(50)),))
+    sample_times = (controller = Absolute(1//50),))
 
 """
     workload()

@@ -363,16 +363,16 @@ reason on its [`ModelRequestedStop`](@ref) source.
 stop_reason(::Any) = ""  # COV_EXCL_LINE
 
 # --- rate scopes (§8.7, §10.5) --------------------------------------------------
-# The two forms of the sample-time declaration, and the wrappers are the
-# whole value vocabulary — a bare integer or bare quantity in a `sample_times`
-# entry is a declaration error. They are plain data carriers (D-185): range
-# validation is the structure step's, with path attribution, in the fold. The one
-# constructor-side refusal is floats, because it is a normalization failure
-# rather than a range check: grid derivation is GCD arithmetic, ill-defined over
-# floats, so every period and offset is an exact `Rational{Int}` and a float
-# argument throws the teaching error naming the exact spelling. A value that
-# `Rational{Int}` cannot hold finitely fails the same normalization, and is
-# refused as `:range`: an integer or a part past `Int`, or `Hz(0)`'s period.
+# The two forms of the sample-time declaration are the whole value vocabulary,
+# and a bare number in a `sample_times` entry is a declaration error. They are
+# plain data carriers (D-185): range validation is the structure step's, with
+# path attribution, in the fold. The one constructor-side refusal is floats,
+# because it is a normalization failure rather than a range check: grid
+# derivation is GCD arithmetic, ill-defined over floats, so every period and
+# offset is an exact `Rational{Int}` and a float argument throws the teaching
+# error naming the exact spelling. A value that `Rational{Int}` cannot hold
+# finitely fails the same normalization, and is refused as `:range`: an integer
+# or a part past `Int`.
 # `Relative`'s counts normalize to `Int` alike: a count past it is `:range`, and
 # a float or a rational is `:not_a_count`, the whole ones included (D-459).
 
@@ -394,52 +394,6 @@ function _declared_quantity(to_exact, call::Symbol, value)
     quantity !== nothing && isfinite(quantity) && return quantity
     throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, value = value)))
 end
-
-# Design: §10.5.
-# GCD arithmetic derives the base grid, and it is ill-defined over floats.
-"""
-    Period(T::Union{Integer,Rational{<:Integer}}) -> Period
-
-A time period `T`, in exact rational seconds.
-
-A `Period` is what [`Absolute`](@ref) and the [`Δt_base`](@ref g-dt_base)
-keyword of [`Deployment`](@ref) take. `Period(1//50)` and `Hz(50)` are the same
-value, so the spelling is a choice. Each normalizes to the exact rational period
-at construction. See [`Hz`](@ref) for the frequency spelling.
-
-A float is refused as `ArgumentInvalid`, because the grid arithmetic is exact.
-Write `Period(1//50)`, not `Period(0.02)`. So is a value that `Rational{Int}`
-cannot hold, or that is not finite.
-"""
-struct Period
-    T::Rational{Int}
-    Period(T::Union{Integer,Rational{<:Integer}}) = new(_declared_quantity(Rational{Int}, :Period, T))
-    Period(T::AbstractFloat) =
-        throw(DiagnosticError(ArgumentInvalid(call = :Period, reason = :inexact, value = T)))
-end
-
-# Design: §10.5, D-185.
-"""
-    Hz(frequency::Union{Integer,Rational{<:Integer}}) -> Period
-
-Return the [`Period`](@ref) of a frequency, `1 // frequency` seconds.
-
-`Hz(50)` and `Period(1//50)` are the same value, and either may be given to
-[`Absolute`](@ref) or as the [`Δt_base`](@ref g-dt_base) keyword of
-[`Deployment`](@ref).
-
-A float is refused as `ArgumentInvalid`, because the grid arithmetic is exact.
-Write `Hz(1//2)` for 0.5 Hz, not `Hz(0.5)`. So is a frequency whose period
-`Rational{Int}` cannot hold, or whose period is not finite, as `Hz(0)`'s is. An
-infinite frequency, `Hz(1//0)`, gives a zero period, which the build and
-[`Deployment`](@ref) refuse.
-"""
-Hz(frequency::Union{Integer,Rational{<:Integer}}) =
-    Period(_declared_quantity(f -> Rational{Int}(1 // f), :Hz, frequency))
-Hz(frequency::AbstractFloat) =
-    throw(DiagnosticError(ArgumentInvalid(call = :Hz, reason = :inexact, value = frequency)))
-
-period(q::Period) = q.T
 
 # Design: §10.5, D-459.
 """
@@ -480,15 +434,17 @@ struct Relative
                                               value = K isa Integer ? φ : K)))
 end
 
-# Design: §9.1, §9.2, §10.5, D-186, D-464.
+# Design: §9.1, §9.2, §10.5, D-186, D-464, D-469.
 """
-    Absolute(Δt::Period, τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
+    Absolute(Δt::Union{Integer,Rational{<:Integer}},
+             τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
 
 A sample time in exact rational seconds, with [ticks](@ref g-tick) at
 `t = t₀ + τ + k·Δt`.
 
-`Δt` is the period, built with [`Period`](@ref) or [`Hz`](@ref), and `τ` is
-the offset in seconds.
+`Δt` is the period and `τ` the offset, each in seconds. Each is an integer or a
+`Rational` of any integer type. `Absolute(1//50)` is a 50 Hz entry, and
+`Absolute(50)` a period of 50 s.
 
 The [entry](@ref g-entry) is an [anchor](@ref g-anchor). It detaches its child
 from the enclosing [scope](@ref g-rate-scope)'s grid, so the child may tick
@@ -497,10 +453,10 @@ only once a [`Deployment`](@ref) fixes `Δt_base`. Anchor periods and nonzero
 offsets constrain the base grid together. An offset of `Δt/1000` can cost a grid
 1000 times finer.
 
-A float offset is refused as `ArgumentInvalid`, and so is an offset that
-`Rational{Int}` cannot hold or that is not finite, and a bare number in place
-of a `Period`. Write `Absolute(Hz(50), 1//500)`. The build refuses a period that
-is not positive, or an offset outside `0 ≤ τ < Δt`, as `RatesViolation`.
+A float or any other inexact real, in either argument, is refused as
+`ArgumentInvalid`, and so is a value that `Rational{Int}` cannot hold or that is
+not finite. Write `Absolute(1//50, 1//500)`. The build refuses a period that is
+not positive, or an offset outside `0 ≤ τ < Δt`, as `RatesViolation`.
 
 The build also refuses the entry as `RatesViolation` when it leaves the tree no
 `Δt_base` to deploy at. No common divisor of the anchors' periods and offsets
@@ -509,12 +465,16 @@ then counts its period in an `Int` with room for one [frame](@ref g-frame).
 struct Absolute
     Δt::Rational{Int}
     τ::Rational{Int}
-    Absolute(Δt::Period, τ::Union{Integer,Rational{<:Integer}} = 0) =
-        new(Δt.T, _declared_quantity(Rational{Int}, :Absolute, τ))
-    Absolute(::Period, τ::AbstractFloat) =
-        throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :inexact, value = τ)))
-    Absolute(Δt::Real, τ...) =
-        throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = Δt)))
+    Absolute(Δt::Union{Integer,Rational{<:Integer}},
+             τ::Union{Integer,Rational{<:Integer}} = 0) =
+        new(_declared_quantity(Rational{Int}, :Absolute, Δt),
+            _declared_quantity(Rational{Int}, :Absolute, τ))
+    function Absolute(Δt::Real, τ::Real = 0)
+        exact = Δt isa Union{Integer,Rational{<:Integer}}
+        throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :inexact,
+                                              argument = exact ? :τ : :Δt,
+                                              value = exact ? τ : Δt)))
+    end
 end
 
 # Design: §8.7, §10.5.
@@ -526,7 +486,7 @@ immediate child name => [`Relative`](@ref) or [`Absolute`](@ref).
 
 A [rate scope](@ref g-rate-scope) schedules the assembly's discrete children and
 sub-assemblies, as in
-`sample_times(::A) = (nav = Relative(5), gnss = Absolute(Hz(10)))`. The
+`sample_times(::A) = (nav = Relative(5), gnss = Absolute(1//10))`. The
 declaration is optional, and so is every key. An unlisted discrete child
 defaults to `Relative(1)`, so only multiplied, [phased](@ref g-phase) or
 [anchored](@ref g-anchor) children appear. A

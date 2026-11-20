@@ -45,19 +45,19 @@ proposes(::Recorder) = false
 # The R2 rig: a continuous plant beside two counters at 0.1 s and 0.1001 s.
 lattice_rig() = Group((; c = Plant(), a = TickCounter(), b = TickCounter());
                       input_wires = ("in" => "c/u",),
-                      sample_times = (; a = Absolute(Period(1//10)),
-                                        b = Absolute(Period(1001//10000))))
+                      sample_times = (; a = Absolute(1//10),
+                                        b = Absolute(1001//10000)))
 
 # One counter at 0.07 s beside the plant, the split rig, and beside a sawtooth,
 # whose sign-form guard makes the model's events localized.
 split_rig() = Group((; c = Plant(), a = TickCounter()); input_wires = ("in" => "c/u",),
-                    sample_times = (; a = Absolute(Period(7//100))))
+                    sample_times = (; a = Absolute(7//100)))
 localized_split_rig() = Group((; c = Sawtooth(1.0), a = TickCounter());
-                              sample_times = (; a = Absolute(Period(7//100))))
+                              sample_times = (; a = Absolute(7//100)))
 
 # A root input sampled by a ZOH due at 0.07 s, off the frame tops.
 sampled_rig() = Group((; z = ZOH()); input_wires = ("in" => "z/in",),
-                      sample_times = (; z = Absolute(Period(7//100))))
+                      sample_times = (; z = Absolute(7//100)))
 
 # Three stampers on one sawtooth, crossing in the first, second and third steps
 # of frame 4 under `h_max = 1//40`.

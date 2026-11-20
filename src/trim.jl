@@ -549,7 +549,7 @@ as `ArgumentInvalid`, before any check. So is a second argument that is not a
 - `baseline`: the required baseline the problem's condition is layered over, at
   setup and at the commit.
 - `t0`: the start time of the committing boundary zero, held exact: a
-  `Rational{Int}`, an integer or a `Period`, or a float at its exact value.
+  `Rational{Int}` or an integer, or a float at its exact value.
   Refused as `ArgumentInvalid` before the search if not finite, if
   `Rational{Int}` cannot hold it exactly, as for `1e-4`, or if the run from it
   could take no frame.
