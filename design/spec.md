@@ -4386,7 +4386,8 @@ The step also checks the declaration-completeness rules ([§8.2][s8-2]):
 - a stateless primitive with no output contract.
 
 **`sample_times` validation is the structure step's too** ([D-185][d-185]). It
-has two parts. The first is per-entry validity against the constraints of
+has three parts, the third a trial binding stated after the fold. The first
+is per-entry validity against the constraints of
 [§10.5][s10-5]. They require wrapper-typed values, `K ≥ 1`, `0 ≤ φ < K`,
 `Δt > 0`, `0 ≤ τ < Δt`, and keys naming discrete or scope children. Those
 violations are collected with path attribution. The second is compilation into
@@ -4410,6 +4411,18 @@ within each anchor's subtree by the same induction.
 Everything except binding `Δt_base`, which is deployment's, happens in the
 structure step. [§9.2][s9-2] states why final divisors wait for that
 binding.
+
+**The structure step refuses a structure that no deployment binds** ([D-465][d-465]).
+After the fold it binds the triples once, at the coarsest base tick the
+anchors admit and with the frame period equal to it. It runs the arithmetic
+the `Deployment` constructor runs ([§9.2][s9-2]). No other base tick and frame
+period form a smaller count, so this one trial decides for all of them. A
+count that leaves `Int` there is a `RatesViolation` `:range` on the entry
+that composed it. That entry is the `Absolute` entry of an anchor whose own
+count leaves `Int`, or the `Relative` entry beneath an anchor at which a
+divisor first does. Where no `Rational{Int}` divides every anchor's period
+and offset, the refusal lands on every anchor's entry. The trial's premise
+is a fold that recorded no violation.
 
 **The structure step returns `Structure`** (the artifact holding everything the
 instance alone fixes), and that is its whole product ([D-253][d-253]).
@@ -4731,6 +4744,24 @@ in base ticks. The same law holds in seconds, `Δt = m·Δtₖ` and
 seconds pair. Under anchor 0 it is a multiple of `Δt_base` until the
 deployment binds.
 
+**A structure admits a deployment exactly when it binds at
+`Δt_frame = Δt_base = gcd(pool)`** ([D-465][d-465]). Where the pool is empty, any
+base tick serves. Every count the binding forms is least at that point:
+
+| the caller's choice | what it scales | least at |
+|---|---|---|
+| `Δt_base = gcd(pool)/k` | every `Dₖ`, `Φₖ`, `D` and `Φ`, by `k` | `k = 1` |
+| `Δt_frame` | the frame and the base tick in the lattices' unit, each at least one unit ([§10.5][s10-5]) | `Δt_frame = Δt_base`, one unit each |
+| `h_max` | the steps of one frame | absent, one step |
+
+The frame loop indexes one frame past the largest divisor, so that divisor
+must leave room for one frame in an `Int`. If any choice binds, this one
+does, since each of its counts is no larger. If this one fails, every other
+fails on the same count. The structure step runs it as one trial and refuses
+a failure at the build ([§9.1][s9-1]). A built structure therefore has a deployment,
+and every `DeploymentInvalid` names a keyword the caller can change to
+repair it.
+
 **Deployment validation is collected like its declarative siblings**
 ([§13.1][s13-1], [D-229][d-229]). Violations are collected and reported as
 `DeploymentInvalid` ([Appendix C][sC]), carrying parameter, value and the
@@ -4740,7 +4771,6 @@ violated constraint:
   or that `Rational{Int}` cannot hold, each checked on its own
   ([D-445][d-445], [D-449][d-449], [D-459][d-459]);
 - a non-dividing anchor period or offset;
-- a derivation over a pool whose grid attribution leaves `Int` ([D-459][d-459]);
 - a `Δt_base` whose exact unit with `Δt_frame` is too fine to index one frame
   in an `Int`, or under which a component's divisor leaves `Int`
   ([§10.5][s10-5], [D-445][d-445], [D-459][d-459]);
@@ -4872,13 +4902,10 @@ pool that deploys, the arithmetic leaves `Int` only for such a value.
 simple-fraction-of-its-period test stays authoring guidance and never becomes
 the engine's.
 
-**A pool whose gcd or refinement factor leaves `Int` gets no grid report**
-([D-459][d-459]). Such a pool admits no deployment. A base tick divides `gcd(pool)`, so its
-denominator is at least the gcd's, and no `Rational{Int}` base tick exists
-when the gcd's leaves `Int`. A refinement factor past `Int` gives some
-anchor a count of base ticks past `Int` at every admissible `Δt_base`.
-`Δt_base = :derive` is then refused as `DeploymentInvalid` `:range`, and any
-other `Δt_base` meets the anchor refusals, which carry no grid block.
+A built structure always has a grid report. The build's trial holds
+`gcd(pool)` in a `Rational{Int}` and fits every anchor's count at it in an
+`Int` ([§9.1][s9-1], [D-465][d-465]). Each refinement factor is at most one of those counts,
+since the gcd of the rest of the pool divides some other entry.
 
 The derivation path is the one place refinement happens silently. It always
 prints the derived value with its drivers, and it carries the one advisory,
@@ -6916,9 +6943,11 @@ Multipliers compose multiplicatively and phases affinely down the tree
 **The structure step composes in checked `Int`, and refuses a composed
 divisor or phase past `Int` as `RatesViolation` `:range`** on the entry that
 composed it ([D-459][d-459]). A rate its own check refuses composes nothing, so one
-fault is one refusal. The anchor's divisor joins the product only at
-deployment, where the same check refuses an overflow on `Δt_base`
-([§9.2][s9-2]).
+fault is one refusal. The anchor's divisor joins the product only when a
+base tick binds. The build's trial composes it once, at the coarsest base
+tick the anchors admit, and refuses a count that leaves `Int` there under
+the same reason ([§9.1][s9-1], [D-465][d-465]). At a finer base tick the caller chose, the
+deployment's check refuses the overflow on `Δt_base` ([§9.2][s9-2]).
 
 Composition preserves the canonical residue `0 ≤ Φ < D`. The proof is an
 induction down the tree, and the root scope starts it at `(1, 0)`. If a scope
@@ -15111,8 +15140,9 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   collected. Assembly path, offending key and value, the immediate child
   names in hand, and a `reason`. The reasons are `:declaration_shape`,
   `:value_vocabulary`, `:multiplier` (`K` below 1), `:phase`, `:range` (a
-  composed divisor or phase past `Int`, the entry that composed it in hand,
-  [D-459][d-459]), `:period`, `:offset`, `:unknown_child` (a deep key included) and
+  composed divisor or phase past `Int`, or a count that leaves `Int` at the
+  coarsest base tick the anchors admit, the entry that composed it in hand,
+  [D-459][d-459], [D-465][d-465], [§9.1][s9-1]), `:period`, `:offset`, `:unknown_child` (a deep key included) and
   `:continuous_child` (`K` on a continuous child).
 - **`MissingProbeValue`** ([§9.3][s9-3]). Error · build · collected. Face
   name, type.
@@ -15241,15 +15271,14 @@ activation):
   one frame in an `Int`, or under which a component's divisor leaves `Int`
   after composition with its anchor, and an `h_max` too fine to count the
   steps of one frame in an `Int`, each with `Δt_frame` in hand
-  ([§10.5][s10-5], [D-445][d-445], [D-449][d-449], [D-459][d-459]). A `:range` with
-  the value `:derive` refuses a derivation over a pool whose grid
-  attribution leaves `Int` ([D-459][d-459]). Two more are on `Δt_base`'s grid,
+  ([§10.5][s10-5], [D-445][d-445], [D-449][d-449], [D-459][d-459]). Two more
+  are on `Δt_base`'s grid,
   `:unanchored` (derivation with unanchored discrete components, their paths
   in hand) and `:no_constraint` (derivation with no anchored work). A
   non-dividing anchor period or offset is `:anchor_period` or
   `:anchor_offset`, the anchor named with its declaring scope and key. The
   anchor and `:unanchored` refusals carry the grid attribution
-  `GridUtilization` names, unless the pool's attribution leaves `Int`.
+  `GridUtilization` names, which every built structure has ([D-465][d-465]).
   Arguments that are not deployment parameters
   validate under `ArgumentInvalid`.
 - **`AttachUnknownFace`** ([§11.3][s11-3]). Error · service · fail-fast. The
@@ -17233,6 +17262,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-462]: log.md#d-462--compare-the-algorithm-as-one-value-and-name-its-differing-fields
 [d-463]: log.md#d-463--refuse-a-floor-above-half-the-step-bound
 [d-464]: log.md#d-464--write-a-discrete-components-timing-in-four-frames-and-an-anchors-period-as-δtₖ
+[d-465]: log.md#d-465--refuse-at-the-build-a-structure-that-no-deployment-binds
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

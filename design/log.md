@@ -463,6 +463,7 @@ were derived.
 | [D-462][d-462] | Compare the algorithm as one value and name its differing fields | ratified |
 | [D-463][d-463] | Refuse a floor above half the step bound | ratified |
 | [D-464][d-464] | Write a discrete component's timing in four frames, and an anchor's period as `Δtₖ` | ratified |
+| [D-465][d-465] | Refuse at the build a structure that no deployment binds | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -7503,6 +7504,11 @@ division stops at the divisor `2^20`, and a cofactor left at or above
 leaves `Int` admits no deployment and gets no report: `:derive` is refused
 as `:range`, and the anchor refusals carry no grid block. An offset's
 neighbour whose arithmetic leaves `Int` is not offered.
+
+Annotation (2026-11-20): amended by [D-465][d-465]. The build refuses a structure
+that binds at no base tick, so every built structure has a report, `:derive`
+has no `:range` refusal, and the anchor refusals always carry the grid
+block.
 
 **Rejected.**
 - *The simple-fraction-of-its-period offset test as the engine's warning:*
@@ -19539,6 +19545,14 @@ raised a raw `InexactError`, and `Relative(2.0, 0)` was taken as `K = 2`. No
 existing reason fits a fraction: `:inexact` is false of `1//2`, which is
 exact, and `:range` is false of `0.5`, which lies inside `Int`'s range.
 
+Annotation (2026-11-20): amended by [D-465][d-465], which supersedes the fourth
+bullet. The build refuses a structure that binds at no base tick, so a built
+structure always has a grid report and `:derive` has no `:range` refusal.
+The Rationale's claim that the report's overflow marks a pool no deployment
+holds is true in that direction alone, and [D-465][d-465] gives a pool that no
+deployment holds and that gets a whole report. The third bullet stands for a
+base tick the caller chose finer than the coarsest one.
+
 **Rejected.**
 - *Floats everywhere:* a float period keeps the integer schedule and adds a
   tolerance at the doors, and a float clock misses the typed float, as
@@ -19954,6 +19968,102 @@ in `RedstoneInspector.jl/design/deployment_overlay.md`, answer 3.
 **Rejected.**
 - *The inspector's page renaming alone:* the page and the REPL would name
   one quantity by two letters.
+
+### D-465 — Refuse at the build a structure that no deployment binds
+
+**Status.** ratified
+
+**Position.** The structure step refuses a structure that admits no
+deployment, by one trial binding.
+
+- A structure admits a deployment exactly when it binds at
+  `Δt_frame = Δt_base = gcd(pool)`, or at any base tick where the pool is
+  empty.
+- The structure step runs that trial after the fold, by the `Deployment`
+  constructor's own anchor division, multiply-add and frame margin. Its
+  premise is a fold that recorded no violation.
+- A failure is a `RatesViolation` `:range` on the entry that composed the
+  count. That entry is the `Absolute` entry of an anchor whose own count
+  leaves `Int`, or the `Relative` entry beneath an anchor at which a divisor
+  first does. Where the pool's gcd has no `Rational{Int}` value, the refusal
+  lands on every anchor's entry.
+- A built structure always has a grid report. `Δt_base = :derive` has no
+  `:range` refusal, and the anchor refusals always carry the grid block.
+
+Supersedes [D-459][d-459]'s fourth bullet. [D-459][d-459]'s third bullet stands for a base
+tick the caller chose finer than the coarsest one.
+
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§10.5][s10-5], [Appendix C][sC]
+
+**Rationale.** Three checks of the `Deployment` constructor read the
+structure, and each is least demanding at one point of the caller's choices.
+A base tick divides every pool entry, so it is `gcd(pool)/k`, and every
+`Dₖ`, `Φₖ`, `D` and `Φ` at it is `k` times its value at the gcd. The frame
+loop counts in the unit `gcd(Δt_frame, Δt_base)`. The frame and the base
+tick are each at least one unit, and the loop needs
+`frame + max D · base` units in an `Int`, which is least when the frame is
+the base tick. A step bound adds step counts to fit, and an absent one adds
+none. So `Δt_frame = Δt_base = gcd(pool)` dominates: each of its counts is
+no larger than the same count under any other choice. If any choice binds,
+the gcd has a `Rational{Int}` value, since its denominator divides that base
+tick's and its numerator is at most any entry's, and the dominant choice
+binds too. If the dominant choice fails, every other fails on the same
+count. One trial therefore decides, and it is exact.
+
+[D-459][d-459] placed these refusals at the deployment and let the grid report's
+overflow mark a pool no deployment holds. That mark is true one way only.
+The anchors `Absolute(Period(2^40))`, `Absolute(Period(1), 1//4099)` and
+`Absolute(Period(1), 1//4111)` have the gcd `1//16850989` and the
+leave-one-out factors `[1, 1, 1, 4099, 4111]`, a whole report. The first
+anchor then counts `2^40 · 16850989`, about `1.85e19`, base ticks at the
+coarsest value the report names, and more at every finer one. No single
+entry's removal coarsens that grid much, and the two offsets together push
+the anchor out. A third cause lies outside the pool. An anchor
+`Absolute(Period(1), 1//1000)` counts 1000 base ticks at its gcd, and two
+`Relative(2^30)` entries beneath it compose `m = 2^60`, which the fold
+accepts and no base tick counts.
+
+The fault depends on the structure alone, so the structure step is its
+door, as it is for a composed divisor past `Int` ([D-459][d-459]). `build` is the
+entry point CI and the acceptance tests target ([§9.2][s9-2]), and a tree no
+deployment runs passed it. With the refusal at the build, every
+`DeploymentInvalid` names a keyword the caller can change to repair it. The
+grid report is total over built structures: the trial fits every anchor's
+count at the gcd, and each leave-one-out factor is at most one of those
+counts, since the gcd of the rest of the pool divides some other entry. The
+descriptor's `grid` section and `show` then need no third state beside a
+pool with a report and an empty pool.
+
+The trial costs one gcd over the pool, one division pair per anchor and one
+multiply-add per discrete component and rate scope. It needs neither the
+leave-one-out factors nor the prime attribution. It calls the binding the
+constructor runs, so the two cannot drift apart. The inputs stay contrived,
+as [D-459][d-459]'s survey found. The entry closes the frontier, and serves no
+common case. The inspector's design session of 2026-11-19 and 2026-11-20
+left the question open
+(`RedstoneInspector.jl/design/deployment_overlay.md`, under its pending
+questions), and the session on the grid report's part ruled it on
+2026-11-20.
+
+**Rejected.**
+- *The refusal left at the deployment ([D-459][d-459]'s fourth bullet):* a tree no
+  deployment runs passes `build`, and `show`, the descriptor and
+  `bind_schedule` each carry a state for a structure with no report.
+- *The grid report's overflow as the build's test:* it misses the pool of
+  three anchors above, and the pool-external cause.
+- *The pool alone tested at the build:* a divisor `m·Dₖ` past `Int` at the
+  gcd also rules out every deployment, and it would stay the lattices'
+  refusal. The frontier would be partial.
+- *A bound on each declared numerator and denominator:* [D-459][d-459] rejected it,
+  and its reason carries over. A bound on each value does not bound the
+  pool's `lcm` or the fold's divisor, and it refuses honest input.
+- *A conservative bound on the composite, the longest period counted in
+  `1/lcm(denominators)`:* it costs the same fold over the pool and the same
+  product per row as the exact trial, and it refuses pools that deploy,
+  under a rule with no reason in the model.
+- *One diagnostic at the root that lists the pool:* it needs a new reason
+  and a new payload. `:range` already says that a composed count leaves
+  `Int`, and the entry that composed it is in hand.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -20394,6 +20504,7 @@ in `RedstoneInspector.jl/design/deployment_overlay.md`, answer 3.
 [d-462]: #d-462--compare-the-algorithm-as-one-value-and-name-its-differing-fields
 [d-463]: #d-463--refuse-a-floor-above-half-the-step-bound
 [d-464]: #d-464--write-a-discrete-components-timing-in-four-frames-and-an-anchors-period-as-δtₖ
+[d-465]: #d-465--refuse-at-the-build-a-structure-that-no-deployment-binds
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

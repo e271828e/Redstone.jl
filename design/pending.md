@@ -32,13 +32,13 @@ item changes what the spec says, the spec edit is part of the item.
     anchor division, multiply-add and frame margin. A failure is
     `RatesViolation` `:range`, on the entry whose count leaves `Int`, or on
     every anchor's entry when the gcd has no `Rational{Int}` value (§9.1,
-    §9.2, amending D-459). A built structure then always has a grid
+    §9.2, D-465, amending D-459). A built structure then always has a grid
     report, `bind_schedule` loses its arm for a missing one, and
     `:derive`'s `:range` refusal goes. The report's own overflow is not the
     test: the anchors `Absolute(Period(2^40))`, `Absolute(Period(1), 1//4099)`
     and `Absolute(Period(1), 1//4111)` get a whole report, and the first
     counts about `1.85e19` base ticks at its coarsest value. Stage reached:
-    ruled, nothing written.
+    the spec and the log carry it, and the code is next.
   - **The grid report, derived from the structure.** The report is a pure
     function of the anchors. `show(::Structure)` derives it and prints it
     under the anchor table, as `_grid_block`'s lines under `grid:`, and
