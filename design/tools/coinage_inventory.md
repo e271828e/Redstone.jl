@@ -109,4 +109,4 @@ framing, service walk, guarded sequence, pre-sweep doctrine, probe-value
 barrier, committed-state residuals, shim, port view, unmask point, state
 what-if, tail residue, run's-end sweep, sticky stopped status and the
 re-anchor; and the remedy ladder and the granularity guideline, at three uses
-each.
+each. D-471 added the joint period, local to §9.2's chart paragraph.

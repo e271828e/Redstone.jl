@@ -469,6 +469,7 @@ were derived.
 | [D-468][d-468] | Show and carry a root input's pin with the consumers that cause it | ratified |
 | [D-469][d-469] | Retire `Period` and `Hz` and give `Absolute` its period as a bare exact number | ratified |
 | [D-470][d-470] | Refuse a non-finite `localization_tol` at the `Deployment` | ratified |
+| [D-471][d-471] | Print a deployment's schedule under the four frames' symbols, and chart it against the frame tops | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -10820,6 +10821,12 @@ Annotation (2026-11-20): `show(::Structure)` marks each input route that
 ends at a pinning consumer, as pinned by tier or pinned by declaration
 ([D-468][d-468]).
 
+Annotation (2026-11-21): `show(::Deployment)` no longer nests the
+`Schedule`'s lines. It prints the schedule in a block of its own, under
+[D-464][d-464]'s symbols, and its chart has one column per exact unit over the joint
+period, with a row of frame tops and the guard at 100 columns ([D-471][d-471]).
+`show(::Schedule)` and its chart are unchanged.
+
 ### D-258 — "Schedule" is the tick timing and "execution order" the stage sequence
 
 **Status.** ratified
@@ -20552,6 +20559,101 @@ refused already, since it fails the comparison with zero.
 - *The constructor unchanged, with the `descriptor` docstring naming the
   values an encoder refuses:* the run still fails at its first crossing.
 
+### D-471 — Print a deployment's schedule under the four frames' symbols, and chart it against the frame tops
+
+**Status.** ratified
+
+**Position.** `show(::Deployment)` prints the schedule in a block of its own
+under `schedule:`, under [D-464][d-464]'s symbols, and charts it against the frame
+tops.
+
+- The anchor table gives each anchor's `Δtₖ`, `τₖ`, `Dₖ` and `Φₖ`. Its `A₀`
+  row prints `Δt_base` by its value.
+- The component table has one row per discrete component, with its anchor,
+  `m`, `c`, `D`, `Φ`, `Δt` and `τ`. The rate-scope table has the same
+  columns. Neither prints a rate chain.
+- `Δt` and `τ` print exact, as `D·Δt_base` and `Φ·Δt_base`.
+- The chart has one column per exact unit, `gcd(Δt_frame, Δt_base)`. It
+  spans the joint period, the least common multiple of the hyperperiod and
+  `Δt_frame` taken in time.
+- The chart's first row marks the frame tops, in every deployment. A
+  component's row marks each base tick as due or not due, and leaves blank a
+  column that is no base tick.
+- The guard stays binary, at 100 columns of the joint period.
+- `show(::Schedule)` is unchanged. It prints its rows with the float `Δt`
+  and the rate chains, and the tick chart over one hyperperiod.
+
+Amends [D-257][d-257]'s chart for the `Deployment`. [D-257][d-257]'s guard at 100 base ticks
+stands for `show(::Schedule)`.
+
+**Spec.** [§9.2][s9-2]
+
+**Rationale.** [D-464][d-464] gave a discrete component's timing its four frames, and
+`show(::Structure)` took the symbols. `show(::Deployment)` still nested the
+`Schedule`'s lines, which give `D`, `Φ`, a float `Δt` and the rate chain.
+Binding is the step from `(m, c)` to `(D, Φ)`, and the printed deployment
+showed its result alone. With `m`, `c`, `D` and `Φ` on one row, and each
+anchor's `Dₖ` and `Φₖ` in the table above, a reader checks `D = m·Dₖ` and
+`Φ = Φₖ + c·Dₖ` by eye, and `Δt = D·Δt_base` beside them.
+
+The `Schedule` cannot print these. It holds no anchor, no `(m, c)`, no
+`Δt_base` and no `Δt_frame`, and storing them there would give each a second
+home ([D-261][d-261]). The `Deployment` holds the build and the three time
+quantities, so its `show` reads `m` and `c` from the structure and derives
+each anchor's counts by the division the constructor binds with. The block
+is the deployment's own for that reason, headed in lower case as the
+build's `feedthrough:` line is.
+
+The deployment prints its time quantities exact ([D-454][d-454]), and a component's
+period is one of them. The float on a schedule row is the base tick's float
+times `D`, which is not always the float nearest the period. Three base
+ticks of `1//10` read `0.30000000000000004` (`pending.md`). The rate chain
+is a fact of the build. It stands on the structure's table and on the
+schedule's, and it is the widest column of either.
+
+[D-445][d-445] put the frame tops and the base ticks on two lattices in no required
+ratio. The steps line names the components whose due instants split frames,
+and it cannot say where a frame is cut or into how many spans. A row of
+frame tops over the tick rows shows both. A frame top can fall between two
+base ticks, so a column per base tick has no place for it. The exact unit is
+the coarsest column on which every frame top and every base tick has one,
+and it is the unit the loop already counts in ([§10.5][s10-5]). The frame tops and
+the ticks repeat together at the joint period and over no shorter span.
+[D-257][d-257] argued that one period is the complete truth and a prefix is a sample,
+and the same argument sets the span here. The guard counts columns because
+a screen holds columns. At `Δt_frame = Δt_base` the joint period is the
+hyperperiod and a column is a base tick, so the chart is [D-257][d-257]'s with one
+more row.
+
+Every fact the block prints follows from what the descriptor carries
+([D-467][d-467]): the anchors' counts, each node's `(m, c)`, `Δt_base` and
+`Δt_frame`. The format is unchanged. The inspector's design session of
+2026-11-19 and 2026-11-20 settled the content
+(`RedstoneInspector.jl/design/deployment_overlay.md`, answers 11 and 17),
+and the user ruled the printed form on 2026-11-21.
+
+**Rejected.**
+- *The columns added to `show(::Schedule)`:* the `Schedule` holds none of
+  the facts they need, and holding them is the second home [D-261][d-261] rules out.
+- *The `Schedule`'s lines kept, with a table of `(m, c)` beside them:* `D`
+  and `Φ` printed twice, and the law split across two tables.
+- *The rate chain kept on the component table:* a build fact printed a third
+  time, on the table that just gained four columns.
+- *The schedule row's float `Δt`:* the one time quantity of the deployment
+  that would not print exact, and not always the float nearest its period.
+- *The chart over one hyperperiod, with the frame tops marked:* where the
+  frame does not divide the hyperperiod the frame pattern does not close, so
+  the chart would be a sample.
+- *One column per base tick:* a frame top between two base ticks has no
+  column.
+- *The guard kept at 100 base ticks:* it would bound neither the chart's
+  width nor its span.
+- *The frame tops' row omitted where every column is a frame top:* the
+  session's first reading, which the user overruled. The chart keeps one
+  shape with no special case, and a full row states that every column is a
+  frame top. The inspector's page omits its lines there (answer 11), since
+  lines over every tick hide the marks, which a row of its own does not.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -20997,6 +21099,7 @@ refused already, since it fails the comparison with zero.
 [d-468]: #d-468--show-and-carry-a-root-inputs-pin-with-the-consumers-that-cause-it
 [d-469]: #d-469--retire-period-and-hz-and-give-absolute-its-period-as-a-bare-exact-number
 [d-470]: #d-470--refuse-a-non-finite-localization_tol-at-the-deployment
+[d-471]: #d-471--print-a-deployments-schedule-under-the-four-frames-symbols-and-chart-it-against-the-frame-tops
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

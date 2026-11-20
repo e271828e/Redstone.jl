@@ -4857,6 +4857,19 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
 - **`show(::Deployment)` prints the three time quantities exact**, as the
   deployment holds and compares them ([D-454][d-454]). Two deployments that
   compare unequal never print alike.
+- **`show(::Deployment)` prints the schedule under the four frames'
+  symbols**, in a block of its own under `schedule:` ([D-471][d-471]). The anchor
+  table gives each anchor's `Δtₖ`, `τₖ`, `Dₖ` and `Φₖ`, and its `A₀` row
+  prints `Δt_base` by its value. The component table has one row per
+  discrete component, with its anchor, `m`, `c`, `D`, `Φ`, `Δt` and `τ`. The
+  rate-scope table has the same columns. A reader checks the composition
+  law on one row, against the anchor's row above. `show` reads `m` and `c`
+  from the structure and derives each anchor's counts, since the `Schedule`
+  holds neither ([D-261][d-261]). The rate chains stay on the structure's
+  table and on `show(::Schedule)`'s.
+- **`show(::Deployment)` prints each `Δt` and `τ` exact**, as `D·Δt_base`
+  and `Φ·Δt_base` ([D-471][d-471]). `show(::Schedule)` prints the float its row
+  holds.
 
 A REPL user gets each table by evaluating the value. A client outside the
 process gets the same facts as data: `descriptor` renders a `Build` or a
@@ -4869,6 +4882,20 @@ hyperperiod is the complete truth, not a sample. The chart guard is binary.
 `lcm(Dᵢ)` is at most 100 base ticks**
 ([D-257][d-257]). Otherwise `show` prints the hyperperiod's length and
 "chart omitted".
+
+**`show(::Deployment)` draws its chart against the frame tops, one column
+per exact unit** ([D-471][d-471]). The unit is the greatest common divisor of
+`Δt_frame` and `Δt_base`, the one the loop counts in ([§10.5][s10-5]). A frame top
+can fall between two base ticks, so a column per base tick has no place for
+it. The chart spans the joint period, the least common multiple of the
+hyperperiod and `Δt_frame` taken in time. The frame tops and the ticks
+repeat together there, and over no shorter span. The first row marks the
+frame tops, in every deployment. A component's row marks each base tick as
+due or not due, and leaves blank a column that is no base tick. **The
+guard stays binary, at 100 columns of the joint period** ([D-471][d-471]). Past it
+`show` prints the span's length and "chart omitted". `show(::Schedule)`
+keeps the tick chart over one hyperperiod, since a `Schedule` holds neither
+`Δt_frame` nor `Δt_base`.
 
 #### Grid diagnostics
 
@@ -17390,6 +17417,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-468]: log.md#d-468--show-and-carry-a-root-inputs-pin-with-the-consumers-that-cause-it
 [d-469]: log.md#d-469--retire-period-and-hz-and-give-absolute-its-period-as-a-bare-exact-number
 [d-470]: log.md#d-470--refuse-a-non-finite-localization_tol-at-the-deployment
+[d-471]: log.md#d-471--print-a-deployments-schedule-under-the-four-frames-symbols-and-chart-it-against-the-frame-tops
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
