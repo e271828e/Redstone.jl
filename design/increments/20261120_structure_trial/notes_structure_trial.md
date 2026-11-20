@@ -137,3 +137,118 @@ Each is stated in the spec or the log except where noted.
 - The record `RedstoneInspector.jl/design/deployment_overlay.md` expected
   the grid report's placement to take the log number after D-464. D-465
   took it, and the placement entry will be D-466.
+
+## 7. The follow-up, on the user's word the same day
+
+The user asked for three of section 6's items to be fixed, in one loose
+commit after the trial's.
+
+- **The docstrings.** `Relative` and `Absolute` each gain a paragraph on
+  the build's refusal of an entry that leaves the tree no `Δt_base` to
+  deploy at, and `sample_times` points at the two for an entry's own
+  refusals.
+- **The stale texts.** `structure.jl` gains the banner "the walk" ahead of
+  `flatten_tree!`, so the fold's banner covers the fold alone.
+  `build.jl`'s header names the `Structure` and D-315's resolution.
+  `code_map.md`'s Spec line for `structure.jl` gains §10.5 and D-414. The
+  line for `assembly.jl` had no gap: none of its bullets cites either.
+- **The inspector's repo.** `failure_descriptor.md` names `structure.jl`
+  at its two present-tense mentions, in a commit of that repo. The
+  foundation increment's brief keeps `src/assembly.jl:1565` to `1596`:
+  the brief is pinned to the core at `9c2ba28`, where that path and those
+  lines are right, and `structure.jl` does not exist at that tip.
+
+## 8. Handover: the grid report's part
+
+The next work is the sub-bullet "The grid report, derived from the
+structure" of `pending.md`'s first bullet. It was not started. The
+session that wrote this file stopped at about 360k tokens of context, and
+a fresh session takes the part. Its sources are that bullet,
+`RedstoneInspector.jl/design/deployment_overlay.md` answers 6 and 17, and
+this section. It lands as a spec and log commit, then its code.
+
+**What is ruled.** The report is a function of the structure's anchors,
+derived where it is used, and `Deployment` drops its `grid` field (the
+record's answer 6). The user's three rulings of 2026-11-20 are on the
+bullet: `show(::Structure)` prints `_grid_block`'s lines under `grid:`
+after the anchor table and before the routes; a structure with no anchors
+prints no block; `show(::Deployment)` drops its `grid:` block. The line
+once planned for a pool that admits no deployment is gone, since D-465
+leaves no such structure. Whether `show(::Deployment)` prints its
+`Δt_base` against the coarsest admissible one was raised and left to
+part four.
+
+**The log entry, D-466.** It states the placement and annotates D-254,
+whose third bullet lands the grid diagnostics on the deployment, and the
+last bullet of D-261, which keeps `Deployment.grid`. The refusal's
+message, the derivation line and `GridUtilization` stay the deployment's
+and keep the report in their payloads. Its rejected alternatives are the
+report kept on the deployment, where D-254 bundled it with the three
+things that do depend on the deployment, and the field moved to the
+`Build`. D-261's rule on derived values is the reason.
+
+**The spec sites**, all found by reading, none edited:
+
+- §9.2's opening paragraph, "how a `Deployment` explains its grid";
+- §9.2's `Deployment` paragraph, which lists "the grid diagnostics below"
+  among what the artifact holds;
+- §9.2's rendering list, the `show(::Structure)` bullet, which gains the
+  report, and the sentence under "The `Schedule` lives on the
+  `Deployment`" that calls the schedule the diagnostics' substrate;
+- the lead ruling of "Grid diagnostics", "The grid diagnostics live on the
+  `Deployment`", bold under D-187 and D-254, which the new entry replaces.
+  The paragraph "A built structure always has a grid report" is D-465's
+  and stays;
+- Appendix B's `Deployment` line, "carrying the `Schedule`, the grid
+  diagnostics and its `warnings`";
+- Appendix D's `Deployment` entry, the same phrase, and its `Structure`
+  entry, which can say the report is a function over the anchors;
+- Appendix C's `GridUtilization` row cites D-254 for the warning's home,
+  which stands.
+- Appendix D's `Schedule` entry calls the schedule the substrate of the
+  grid diagnostics, as §9.2 does. Both are to be read against the new
+  placement, since the report reads the anchors and only the advisory
+  reads the rows.
+
+**The code sites.**
+
+- `src/deployment.jl`: the field, the constructor's argument, the
+  `bound.grid` hand-off, the comment on `==` and the docstring of
+  `bind_schedule`, which lists the grid attribution among what it returns.
+  The constructor still needs the report for the derivation line and the
+  advisory.
+- `src/show.jl`: the block in `_lines(::Structure)`, `_lines(::Deployment)`
+  without its `grid` lines, and the header comment's two sentences on the
+  block.
+- `src/diagnostics.jl`: the comment above `GridEntry` still says the
+  `Deployment` carries a report.
+- `src/structure.jl`: `_grid_report`'s docstring names its callers.
+- `src/descriptor.json` mentions the grid report at its deployment body.
+  That is part three's.
+
+**The test sites.**
+
+- `test/test_discrete.jl` reads `deployment.grid` at about fifteen places,
+  which become `_grid_report(deployment.build.structure.anchors)` or a
+  local helper. `_grid_report` is already on `test/imports.jl`'s list. One
+  identity check, `warning.grid === grid`, compares the warning's payload
+  with the field. `GridReport` has no `==`, so it becomes a read of the
+  warning's own payload.
+- `test/test_show.jl`: `MULTIRATE_STRUCTURE` has one anchor, `1//50`, so it
+  gains a block, by hand `admissible: gcd(pool)/k, coarsest 1//50`, one
+  pool row and `primes: 50 = 2·5²` with two rows. That text was not run.
+  The `Deployment` testset loses its three `grid:` assertions, and the
+  anchored group's block moves to a structure assertion.
+- `test/test_diagnostics.jl` reads `.grid` off a deployment once, near its
+  unfactored-cofactor case.
+
+**The run.** `deployment.jl` is in the routing table's last row, so the
+commit runs the gate, about ten minutes, and the examples' runner. The
+suite read 10312 of 10312 at `05089f1`.
+
+**The first prompt for the successor.** "Continue the first bullet of
+`design/pending.md` at its sub-bullet 'The grid report, derived from the
+structure'. Read `AGENTS.md`, that bullet, and
+`design/increments/20261120_structure_trial/notes_structure_trial.md`,
+whose section 8 is the handover. The spec and log commit, D-466, comes
+first, then the code."

@@ -33,7 +33,9 @@ item changes what the spec says, the spec edit is part of the item.
     `grid` field, and `show(::Deployment)` its `grid:` block (§9.2,
     amending D-254 under D-261's rule). The refusal's message, the
     derivation line and `GridUtilization` stay the deployment's and keep
-    the report in their payloads.
+    the report in their payloads. Stage reached: not started. The handover,
+    with the spec, code and test sites, is section 8 of
+    `design/increments/20261120_structure_trial/notes_structure_trial.md`.
   - **The descriptor.** The format stays at 1.0 and changes freely until
     the first release (§13.9). It carries every fact `show` prints of a
     `Build` or a `Deployment`, or the facts from which a client derives it
