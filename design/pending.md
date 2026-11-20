@@ -189,6 +189,18 @@ breaking user code, and each may benefit from user feedback first.
   every discrete bundle receives. The exact value is `D·Δt_base` as a
   rational. Found by the descriptor increment's parity check, whose client
   copies the float product.
+- **A framework throw inside a step is framed as a component's** (§13.4).
+  A `StepError`'s message names the cursor as the catch found it, so a
+  throw from the framework's own step code reads as the last stage entered.
+  Seen once, by the descriptor increment's fixer, with D-470's refusal
+  removed: a bouncer deployed at `localization_tol = Inf` threw an
+  `InexactError` in `_crossing` (`src/frame.jl`), and the message read "in
+  `c` x_deriv, arrival sweep of the frame from boundary 3". The `cause` and
+  its stack trace were right. D-470 closes that path, so no input reaches
+  the framing today, and any later throw in the framework's step code
+  would. Whether the message tells a throw inside a stage body from one
+  outside it is open. Evidence:
+  `design/increments/20261120_descriptor_content/probe_localization_inf.jl`.
 - **Publication's garbage** (§9.8, §10.7, §11.2, D-269). A new snapshot and
   table copy per boundary are by design: §11.2 leaves published snapshots to
   the GC, so a run never avoids it. The requirement that sets the target is
