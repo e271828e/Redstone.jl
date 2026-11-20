@@ -4387,21 +4387,21 @@ The step also checks the declaration-completeness rules ([§8.2][s8-2]):
 
 **`sample_times` validation is the structure step's too** ([D-185][d-185]). It
 has two parts. The first is per-entry validity against the constraints of
-[§10.5][s10-5]. They require wrapper-typed values, `K ≥ 1`, `0 ≤ Φ < K`,
-`T > 0`, `0 ≤ τ < T`, and keys naming discrete or scope children. Those
+[§10.5][s10-5]. They require wrapper-typed values, `K ≥ 1`, `0 ≤ φ < K`,
+`Δt > 0`, `0 ≤ τ < Δt`, and keys naming discrete or scope children. Those
 violations are collected with path attribution. The second is compilation into
 `(anchor, m, c)` triples. A triple carries a discrete component's divisor and
 [phase](#g-phase) in the [tick](#g-tick) units of its [anchor](#g-anchor), the
-exact `(T, τ)` pair an `Absolute` entry establishes.
+exact `(Δtₖ, τₖ)` pair an `Absolute` entry establishes.
 
 The compilation is a fold down the tree, one rule per case
 ([D-186][d-186], [D-283][d-283]):
 
 | the fold meets | the triple it produces |
 |---|---|
-| the root scope | `(A₀, 1, 0)`, anchor 0 being the base grid itself: `(T, τ) = (Δt_base, 0)` |
+| the root scope | `(A₀, 1, 0)`, anchor 0 being the base grid itself: `(Δt₀, τ₀) = (Δt_base, 0)` |
 | `Relative(K, φ)` under a scope at `(a, mₛ, cₛ)` | `(a, K·mₛ, cₛ + φ·mₛ)` |
-| `Absolute(q, τ)` under any scope | severs and re-seeds: a fresh anchor `Aₖ = (period(q), τ)`, its subtree continuing at `(Aₖ, 1, 0)` |
+| `Absolute(Δt, τ)` under any scope | severs and re-seeds: a fresh anchor `Aₖ` with `(Δtₖ, τₖ) = (Δt, τ)`, its subtree continuing at `(Aₖ, 1, 0)` |
 
 Anchor 0 is symbolic until deployment. The `Relative` case is the affine law
 ([§10.5][s10-5]) in anchor-tick units. The canonical residue (`c < m`) holds
@@ -4584,13 +4584,13 @@ and so does mounting ([§14.9][s14-9]).
 them ([D-283][d-283]). From the structure step the artifact gains two
 printable tables:
 
-- The [anchor](#g-anchor) table holds each anchor's exact `(T, τ)` rationals
+- The [anchor](#g-anchor) table holds each anchor's exact `(Δtₖ, τₖ)` rationals
   with the declaring scope's path and key.
 - The [component](#g-component) table holds the `(anchor, m, c)` triples with
   their rate chain, the `Relative`/`Absolute` chain down the tree.
 
 The base grid `A₀` takes an anchor-table row of its own, with a dash in the
-scope and key columns, because no scope declares it. Its `(T, τ)` stays
+scope and key columns, because no scope declares it. Its period `Δt₀` stays
 symbolic there until `Δt_base` binds. For a fully relative model the only
 anchor is `A₀`, and the triples *are* the final base-[tick](#g-tick) `(D, Φ)`
 pairs. When anchors exist, final divisors cannot live here. They do not exist
@@ -4694,12 +4694,12 @@ Admissibility is exact GCD arithmetic over the constraint pool:
 
 | quantity | value |
 |---|---|
-| the constraint pool | every anchor's period and every nonzero anchor offset `τ` |
+| the constraint pool | every anchor's period `Δtₖ` and every nonzero anchor offset `τₖ` |
 | an admissible `Δt_base` | one dividing every pool entry, equivalently one dividing `gcd(pool)` |
 | the admissible set | `gcd(pool)/k`, for integer `k ≥ 1` |
 | the derived `Δt_base` | `gcd(pool)` itself, the coarsest admissible value |
-| per anchor `k` | `Dₖ = Tₖ/Δt_base`, `Φₖ = τₖ/Δt_base` |
-| per component | `D = m·Dₖ`, `Φ = Φₖ + c·Dₖ`, `Δt = D·Δt_base` |
+| per anchor `k` | `Dₖ = Δtₖ/Δt_base`, `Φₖ = τₖ/Δt_base` |
+| per component | `D = m·Dₖ`, `Φ = Φₖ + c·Dₖ`, `Δt = D·Δt_base`, `τ = Φ·Δt_base` |
 
 Resolution is therefore one division pair per anchor and one multiply-add per
 component. `Dₖ` and `Φₖ` must both come out exact integers. Otherwise the
@@ -4710,6 +4710,26 @@ and key from the rate-chain column. **The multiply-add runs in checked
 ticks, and so in the lattices' unit ([§10.5][s10-5]). The per-component
 triples are the content of the `Schedule`, which the constructor builds and
 the `Deployment` carries.
+
+**A discrete component's timing is one period and one phase, written in four
+frames** ([D-464][d-464]). Each frame has its unit and its pair of symbols, and the
+framework prints a quantity under its symbol.
+
+| frame | pair | unit |
+|---|---|---|
+| the enclosing rate scope | `(K, φ)` | scope ticks, as declared |
+| the anchor | `(m, c)` | ticks of anchor `k` |
+| the base grid | `(D, Φ)` | base ticks |
+| seconds | `(Δt, τ)` | seconds |
+
+An anchor has the last two pairs, `(Dₖ, Φₖ)` and `(Δtₖ, τₖ)`. Anchor 0 is the
+base grid, so `Δt₀ = Δt_base`, `τ₀ = 0`, `D₀ = 1` and `Φ₀ = 0`. The
+admissibility table's last row composes a component's pair from its anchor's
+in base ticks. The same law holds in seconds, `Δt = m·Δtₖ` and
+`τ = τₖ + c·Δtₖ`. A component's `τ` is its phase in seconds, the time from
+`t₀` to its first tick. Under an anchor `k ≥ 1` the build already knows the
+seconds pair. Under anchor 0 it is a multiple of `Δt_base` until the
+deployment binds.
 
 **Deployment validation is collected like its declarative siblings**
 ([§13.1][s13-1], [D-229][d-229]). Violations are collected and reported as
@@ -6852,13 +6872,13 @@ time, in different units.
 | entry | unit system | tick instants | constraints |
 |---|---|---|---|
 | `Relative(K, φ = 0)` | scope ticks | every `K`-th tick of the enclosing scope, starting from its `φ`-th | `K ≥ 1`, `0 ≤ φ < K` |
-| `Absolute(q, τ = 0)` | seconds | `t = t₀ + τ + k·T`, with `T = period(q)` and `t₀` the clock's origin | `T > 0`, `0 ≤ τ < T` |
+| `Absolute(Δt, τ = 0)` | seconds | `t = t₀ + τ + k·Δt`, with `t₀` the clock's origin | `Δt > 0`, `0 ≤ τ < Δt` |
 
 `K = 1` therefore admits no stagger ([D-185][d-185], [D-291][d-291]). Two same-rate siblings
 are staggered one level down instead. Declare the scope at twice their rate,
 then give them `Relative(2, 0)` and `Relative(2, 1)`.
 
-`q` is a quantity value, `Period(1//50)` or `Hz(50)`. The two are a spelling
+`Δt` is a quantity value, `Period(1//50)` or `Hz(50)`. The two are a spelling
 choice, normalized to the rational period at construction. Every period and
 offset is an exact `Rational{Int}`, because grid derivation is GCD arithmetic
 and ill-defined over floats. A float argument throws the teaching error naming
@@ -6881,7 +6901,7 @@ anchored child (one declared `Absolute`, below) always appears explicitly.
 
 Validation belongs to the structure step (the build's declaration-reading
 step), which collects it with path attribution ([§9.1][s9-1], [§13.1][s13-1],
-[D-185][d-185]). It covers `K ≥ 1`, `0 ≤ φ < K`, `T > 0`, `0 ≤ τ < T`,
+[D-185][d-185]). It covers `K ≥ 1`, `0 ≤ φ < K`, `Δt > 0`, `0 ≤ τ < Δt`,
 keys naming discrete or scope children, and a composition past `Int`
 (below). Apart from the normalization above, the constructors are plain data
 carriers, with no checks of their own.
@@ -6925,7 +6945,7 @@ fastest member so that unused slots exist.
 #### Anchors
 
 **An `Absolute` entry may appear in any scope's `sample_times`, not only the
-root's** ([D-186][d-186]). The `(T, τ)` pair it establishes is an
+root's** ([D-186][d-186]). The `(Δtₖ, τₖ)` pair it establishes is an
 [anchor](#g-anchor), and the child hangs from that anchor. The child is
 severed from the enclosing scope's grid, and no relation to the scope's ticks
 remains.
@@ -6948,7 +6968,7 @@ as against the root grid ([D-186][d-186], [D-283][d-283]). A nested anchor simpl
 **Absolute periods and nonzero offsets jointly constrain the base grid**
 ([D-186][d-186], [D-283][d-283]). They join the deployment-time constraint pool
 ([§9.2][s9-2]). This is the subtle part, and it has a real cost. An offset of
-`T/2` can cost a 2× finer grid, and `T/1000` a 1000× one. The cost is
+`Δt/2` can cost a 2× finer grid, and `Δt/1000` a 1000× one. The cost is
 relational, incurred against everything else declared. That is why
 attribution is the engine's job ([§9.2][s9-2]).
 
@@ -6993,7 +7013,7 @@ The root scope holds `fcs`, an FCS scope, and `gnss`, a satellite-navigation
 ```julia
 # Root scope: (D_s, Φ_s) = (1, 0).
 sample_times(::Vehicle) = (fcs  = Relative(1),        # → (D, Φ) = (1, 0)
-                           gnss = Absolute(Hz(50)))   # → (10, 0), anchored at T = 20 ms
+                           gnss = Absolute(Hz(50)))   # → (10, 0), anchored at Δt = 20 ms
 
 # fcs is the enclosing scope of its own children, at (D_s, Φ_s) = (1, 0).
 sample_times(::FCS) = (inner = Relative(1),           # → (1, 0)
@@ -14477,7 +14497,7 @@ What a [component](#g-component) or [assembly](#g-assembly) defines ([§8.2][s8-
   `input_wires`, `output_wires` and `sample_times`, and the optional
   `transparent_container` (default `nothing`).
 - Sample-time entries. `Relative(K, φ = 0)` in scope ticks and
-  `Absolute(q, τ = 0)` in exact rational seconds, with `q` a quantity value,
+  `Absolute(Δt, τ = 0)` in exact rational seconds, with `Δt` a quantity value,
   `Period(T)` or `Hz(frequency)` ([§10.5][s10-5], [D-185][d-185]). The `φ = 0` is shorthand for
   `Relative(K)`, a method of its own.
 - Any component. `stop_reason` (optional, default `""`), the reason its
@@ -15891,9 +15911,9 @@ boundary sweep refreshes any discrete [cell](#g-cell) ([§10.4][s10-4]).
 
 ### D.4 Time and events
 
-<a id="g-anchor"></a>**anchor** — the exact `(T, τ)` pair an `Absolute` entry establishes: period
+<a id="g-anchor"></a>**anchor** — the exact `(Δtₖ, τₖ)` pair an `Absolute` entry establishes: period
 and offset in rational seconds. It severs its subtree from the enclosing
-scope's grid. Anchor 0 is the base grid itself. Anchors join the [deployment](#g-deployment)
+scope's grid. Anchor 0 is the base grid itself, `Δt₀ = Δt_base`. Anchors join the [deployment](#g-deployment)
 constraint pool, and relative declarations below one compose against it
 exactly as against the root grid ([§10.5][s10-5], [§9.2][s9-2]).
 
@@ -16031,11 +16051,13 @@ and never alters the [boundary sequence](#g-boundary-sequence). A frame exceedin
 leaves **debt** that later frames repay. Excess debt is forgiven by
 re-anchor plus warning ([§10.7][s10-7]).
 
-<a id="g-phase"></a>**phase (`Φ`)** — a [schedule's](#g-schedule) offset against its grid, in scope ticks for
-`Relative(K, Φ)` and in rational seconds for `Absolute(q, τ)`. It is
-compiled to base ticks with `0 ≤ Φ < D` by construction. The [boundary](#g-boundary) gate
-is `(tick − Φ) % D == 0`, and a phase shifts firing instants, never the
-period ([§10.5][s10-5]).
+<a id="g-phase"></a>**phase (`Φ`)** — a [schedule's](#g-schedule) offset against its grid. It is one
+quantity in four units. It reads `φ` in [ticks](#g-tick) of the enclosing scope, as
+`Relative(K, φ)` declares it, `c` in ticks of the [anchor](#g-anchor), `Φ` in base ticks
+and `τ` in seconds ([§9.2][s9-2]). An `Absolute(Δt, τ)` entry declares its
+anchor's offset, which is its child's `τ`. `0 ≤ Φ < D` holds by
+construction. The [boundary](#g-boundary) gate is `(tick − Φ) % D == 0`, and a phase
+shifts firing instants, never the period ([§10.5][s10-5]).
 
 <a id="g-predicate"></a>**predicate** — what a [guard](#g-guard) defines: a `Bool`-valued
 form, or the sign of a continuous function, which holds when the function's
@@ -17210,6 +17232,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-461]: log.md#d-461--ship-bogackishampine-32-under-proportional-integral-control-as-the-first-adaptive-backend
 [d-462]: log.md#d-462--compare-the-algorithm-as-one-value-and-name-its-differing-fields
 [d-463]: log.md#d-463--refuse-a-floor-above-half-the-step-bound
+[d-464]: log.md#d-464--write-a-discrete-components-timing-in-four-frames-and-an-anchors-period-as-δtₖ
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

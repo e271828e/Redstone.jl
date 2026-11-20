@@ -462,6 +462,7 @@ were derived.
 | [D-461][d-461] | Ship Bogacki–Shampine 3(2) under proportional-integral control as the first adaptive backend | ratified |
 | [D-462][d-462] | Compare the algorithm as one value and name its differing fields | ratified |
 | [D-463][d-463] | Refuse a floor above half the step bound | ratified |
+| [D-464][d-464] | Write a discrete component's timing in four frames, and an anchor's period as `Δtₖ` | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -7382,6 +7383,10 @@ Annotation (2026-11-20): the proposal is no longer a companion. It moved to
 not swept at later renames. [§10.5][s10-5] states the residue induction itself and
 cites the report for its worked examples.
 
+Annotation (2026-11-20): [D-464][d-464] names `Absolute`'s first argument `Δt` and
+writes its constraints `Δt > 0`, `0 ≤ τ < Δt`. The scope phase is written
+`φ`, and `Φ` is the phase in base ticks.
+
 **Rejected.**
 - *Bare-value sugar behind a normalization function (`ratespec`: bare `Int` ⇒
   `Relative`, bare quantity ⇒ `Absolute`):* implicit form inference; the
@@ -7444,6 +7449,8 @@ product, or derivation at the pool GCD — and resolution is one exact division
 pair per anchor (`DeploymentInvalid` naming the anchor's declaring scope and
 key when non-dividing) plus one multiply-add per component, the residue
 invariant surviving into the bound `(D, Φ, Δt)`.
+
+Annotation (2026-11-20): an anchor's pair is written `(Δtₖ, τₖ)` ([D-464][d-464]).
 
 **Rejected.**
 - *Root-only absolute declaration (the superseded [§10.5][s10-5] clause):* right about
@@ -11082,6 +11089,9 @@ Annotation (2026-10-15): `restore!` is a door that builds a run too ([D-274][d-2
 Both its methods take the four recording keywords, with `init!`'s defaults
 ([§12.6][s12-6]).
 
+Annotation (2026-11-20): an `Anchor` row's pair is written `(Δtₖ, τₖ)`, and
+its field `T` is `Δt` ([D-464][d-464]).
+
 **Rejected.**
 - *The recording flags as a sixth `Simulation` field:* a parameter nothing
   on the simulation reads, on the struct whose five fields are the five
@@ -12819,6 +12829,9 @@ The explicit request has no prior entry. [§9.2][s9-2] and [Appendix B][sB] stat
 Annotation (2026-11-10): amended by [D-443][d-443]. The second source is
 `Δt_frame`, the default when the keyword is absent, in place of the
 `N_base·h` product, and the explicit keyword derives no count.
+
+Annotation (2026-11-20): the per-anchor division reads `Dₖ = Δtₖ/Δt_base`,
+and a component's phase in seconds is `τ = Φ·Δt_base` ([D-464][d-464]).
 
 **Rejected.**
 - *Silent `Δt_base` derivation with unanchored components present:* the
@@ -19898,6 +19911,50 @@ under every method, as [D-460][d-460]'s door did.
   `h_max`:* it admits a floor between half the bound and the bound, under
   which a step at the floor is longer than `h_max`.
 
+### D-464 — Write a discrete component's timing in four frames, and an anchor's period as `Δtₖ`
+
+**Status.** ratified
+
+**Position.** A discrete component's timing is one period and one phase,
+written in four frames. The symbol is the quantity's name wherever the
+framework prints it.
+
+- The frames are `(K, φ)` in ticks of the enclosing rate scope, `(m, c)` in
+  ticks of anchor `k`, `(D, Φ)` in base ticks and `(Δt, τ)` in seconds.
+- An anchor has the last two pairs, `(Dₖ, Φₖ)` and `(Δtₖ, τₖ)`. Anchor 0 is
+  `Δt₀ = Δt_base`, `τ₀ = 0`, `D₀ = 1`, `Φ₀ = 0`.
+- One law composes a component's pair from its anchor's in each unit:
+  `Δt = m·Δtₖ` and `τ = τₖ + c·Δtₖ` in seconds, `D = m·Dₖ` and
+  `Φ = Φₖ + c·Dₖ` in base ticks. `Δtₖ = Dₖ·Δt_base` and `τₖ = Φₖ·Δt_base`
+  link the two.
+- A component's phase in seconds is `τ = Φ·Δt_base`, the time from `t₀` to
+  its first tick.
+- `Absolute`'s first argument is named `Δt`. The fields `Anchor.T` and
+  `Absolute.T` become `Δt`. `show(::Structure)` heads the anchor table's
+  columns `Δtₖ` and `τₖ`. `Period.T` keeps its name.
+
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§10.5][s10-5], [Appendix B][sB], [Appendix D][sD]
+
+**Rationale.** The spec wrote an anchor's period `T` and a component's `Δt`,
+two letters for one kind of quantity, and had no letter for a component's
+phase in seconds. With `Δtₖ` the laws hold for every `k` with no special
+case, and `T` stops doubling as the scalar type's letter. An `Absolute`
+entry puts its child at `(Aₖ, 1, 0)`, so `Absolute(Δt, τ)` declares exactly
+the `Δt` and `τ` its child has. The inspector's page had printed `c` as
+"phase" in one place and as "offset" in another, while the spec gives
+"phase" to `Φ` and calls `τₖ` the anchor's offset. One set of symbols in the
+spec, in `show` and on the page ends that. A parameter named `τ`, as
+`FirstOrderLag`'s, now shows beside a timing `τ`, and `c`, `m`, `K` and `D`
+meet the same clash. The section a letter stands in tells them apart. The
+scope phase was already `φ` in [§10.5][s10-5], and two sites that still wrote it `Φ`
+are corrected with this entry. `Period.T` waits for the ruling on whether
+`Period` and `Hz` retire. The session that settled the notation is recorded
+in `RedstoneInspector.jl/design/deployment_overlay.md`, answer 3.
+
+**Rejected.**
+- *The inspector's page renaming alone:* the page and the REPL would name
+  one quantity by two letters.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -20336,6 +20393,7 @@ under every method, as [D-460][d-460]'s door did.
 [d-461]: #d-461--ship-bogackishampine-32-under-proportional-integral-control-as-the-first-adaptive-backend
 [d-462]: #d-462--compare-the-algorithm-as-one-value-and-name-its-differing-fields
 [d-463]: #d-463--refuse-a-floor-above-half-the-step-bound
+[d-464]: #d-464--write-a-discrete-components-timing-in-four-frames-and-an-anchors-period-as-δtₖ
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
