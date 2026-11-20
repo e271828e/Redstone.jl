@@ -241,8 +241,9 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
     anchors = structure.anchors
     # The attribution over the constraint pool — every anchor's period and every
     # nonzero offset (§9.1) — computed once, ahead of the branch, and handed to
-    # every refusal that names the grid as well as to the artifact (§9.2, D-187).
-    # The build's trial binding fits its arithmetic in `Int` (D-465).
+    # every refusal that names the grid, and to the caller for the derivation
+    # path (§9.2, D-187, D-466). The build's trial binding fits its arithmetic
+    # in `Int` (D-465).
     grid = _grid_report(anchors)
 
     # The Δt_base branch is its own premise: derivation reads the tiers and the
@@ -548,7 +549,6 @@ struct Deployment
     localization_budget::Int      # t* boundaries permitted per frame (§10.4)
     attempt_budget::Int           # attempts per step before the floor (§10.2, D-460)
     schedule::Schedule            # the bound per-component tick table (§9.2)
-    grid::GridReport              # the attribution over the constraint pool (§9.2, D-187)
     lattice::Lattice              # the loop's index-to-time map (§10.5, D-445)
     warnings::Vector{Diagnostic}  # the warnings the constructor raised (§9.1, D-250)
 end
@@ -599,7 +599,7 @@ function Deployment(build::Build; Δt_frame = nothing, Δt_base = nothing, h_max
     deployment = Deployment(build, bound.Δt_frame, bound.Δt_base, bound.h_max, bound.h_min,
                             algorithm, Int(firing_budget), Float64(localization_tol),
                             Int(localization_budget), Int(attempt_budget), bound.schedule,
-                            bound.grid, bound.lattice, raised)
+                            bound.lattice, raised)
     # The completed constructor carries the record, and logs each warning once at
     # return through the standard backend (Appendix C's `logged`), as `build` does.
     for warning in raised
@@ -610,9 +610,9 @@ end
 
 # §12.7's header check is the consumer, and a what-if replay re-drives a
 # recording against a *modified model of the same structure*, so **the build is
-# not compared**: comparing it would refuse what the spec admits. `grid`,
-# `lattice` and `warnings` are not compared either — all three are
-# functions of the rest. The three periods compare exact, so two that round
+# not compared**: comparing it would refuse what the spec admits. `lattice`
+# and `warnings` are not compared either — both are functions of the
+# rest. The three periods compare exact, so two that round
 # to one `Float64` are two deployments (D-454). The algorithm compares as a
 # value (D-442), and the bound resolved, so no `h_max` and one at or above the
 # frame deploy alike (D-449). The floor and the attempt budget compare whatever

@@ -7,7 +7,7 @@
 # over `textwidth` and two spaces between columns, as `_grid_block` does, each
 # block indented two spaces under its heading, and a nested artifact's lines two
 # spaces further in. The grid block itself stays in `diagnostics.jl`, since the
-# messages use it; the `Deployment` sets its lines under `grid:` here. The
+# messages use it; the `Structure` sets its lines under `grid:` here. The
 # published `FrameworkStatus` renders here too, under the same conventions, with
 # §11.8's `maxlog` cap its presentation policy.
 
@@ -79,8 +79,10 @@ end
 # The component table with its timing against the anchors, the rate-scope rows
 # when any keyed scope exists, the anchor table with the `A₀` row always
 # present: `Δt_base` symbolic in its `T` column and dashes where no scope
-# declares it (§9.2), and the root faces' routes, derived through `face_routes`.
-# The level rows and their wires are fields, printed by no method here.
+# declares it (§9.2), the grid report derived from the anchors, its block's
+# lines under `grid:` and no block where no anchor exists (D-466), and the root
+# faces' routes, derived through `face_routes`. The level rows and their wires
+# are fields, printed by no method here.
 function _lines(structure::Structure)
     lines = ["Structure: " * _structure_counts(structure) * "; root inputs: " *
              (isempty(structure.root_inputs) ? "none" : join(structure.root_inputs, ", ")),
@@ -104,6 +106,8 @@ function _lines(structure::Structure)
                                [[_anchor_name(k), string(anchor.Δt), string(anchor.τ),
                                  _path_label(anchor.scope), string(anchor.key)]
                                 for (k, anchor) in enumerate(structure.anchors)])))
+    block = _grid_block(_grid_report(structure.anchors))
+    isempty(block) || append!(lines, ["  grid:"; _indented(split(block, '\n')[2:end])])
     root_level = first(structure.levels)
     append!(lines, _route_lines("input routes:", structure, _boundary_inputs(root_level)))
     append!(lines, _route_lines("output routes:", structure, _boundary_outputs(root_level)))
@@ -296,13 +300,9 @@ function _steps_line(deployment::Deployment)
 end
 
 # The parameters, the steps per frame, the build in its compact form (a reader
-# wanting it evaluates `deployment.build`), the schedule, the grid block's lines
-# under `grid:` — `no constraint` where no anchor declares one — and the
-# warnings. The block's lines carry their own indent under the line they are
-# appended to.
+# wanting it evaluates `deployment.build`), the schedule and the warnings. The
+# grid report is the structure's to print (D-466).
 function _lines(deployment::Deployment)
-    block = _grid_block(deployment.grid)
-    grid = isempty(block) ? ["grid: no constraint"] : vcat(["grid:"], split(block, '\n')[2:end])
     vcat(["Deployment: " * _deployment_parameters(deployment) *
           "; firing_budget = $(deployment.firing_budget), " *
           "localization_tol = $(repr(deployment.localization_tol)), " *
@@ -311,7 +311,6 @@ function _lines(deployment::Deployment)
           "  " * _steps_line(deployment),
           "  build: " * sprint(show, deployment.build)],
          _indented(_lines(deployment.schedule)),
-         _indented(grid),
          _indented(_warning_lines(deployment.warnings)))
 end
 

@@ -594,7 +594,9 @@ function discrete_deployment()
                      sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10), 1//150)))
         deployment = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
             build(comp); Δt_frame = 1//1500, Δt_base = :derive)
-        grid = deployment.grid
+        # No artifact holds the report: it is derived from the structure's
+        # anchors where it is read (D-466).
+        grid = _grid_report(deployment.build.structure.anchors)
         @test deployment.Δt_base === 1//1500
         @test grid.admissible == 1//1500 &&
               [row.D for row in deployment.schedule.rows] == [3, 150]
@@ -627,7 +629,7 @@ function discrete_deployment()
         warning = only(warnings(deployment))
         @test warning isa GridUtilization && warning.Δt_base == 1//1500 &&
               warning.utilization == 3
-        @test warning.fastest == "a" && warning.grid === grid
+        @test warning.fastest == "a"
         @test [e.value for e in warning.grid.pool if e.factor > 1] == [1//500, 1//150]
 
         # Drop the offset and the prime 3 goes with it: the grid is the 500 Hz
@@ -637,8 +639,8 @@ function discrete_deployment()
                       sample_times = (; a = Absolute(Hz(500)), b = Absolute(Hz(10))))
         deployment2 = @test_logs (:info, r"derived") Deployment(build(plain); Δt_frame = 1//500,
                                                                 Δt_base = :derive)
-        @test deployment2.grid.admissible == 1//500 &&
-              [e.factor for e in deployment2.grid.pool] == [50, 1]
+        grid2 = _grid_report(deployment2.build.structure.anchors)
+        @test grid2.admissible == 1//500 && [e.factor for e in grid2.pool] == [50, 1]
         @test [row.D for row in deployment2.schedule.rows] == [1, 50] &&
               warnings(deployment2) == Diagnostic[]
 
@@ -649,8 +651,8 @@ function discrete_deployment()
                                     c = Absolute(Hz(12))))
         deployment3 = @test_logs (:info, r"no entry refines another") Deployment(
             build(harmonic); Δt_frame = 1//12, Δt_base = :derive)
-        @test deployment3.grid.admissible == 1//12 &&
-              [e.factor for e in deployment3.grid.pool] == [1, 1, 1]
+        grid3 = _grid_report(deployment3.build.structure.anchors)
+        @test grid3.admissible == 1//12 && [e.factor for e in grid3.pool] == [1, 1, 1]
         @test [row.D for row in deployment3.schedule.rows] == [3, 2, 1] &&
               warnings(deployment3) == Diagnostic[]
     end
@@ -658,13 +660,14 @@ function discrete_deployment()
     @testset "the prime attribution's trial division stops at its cap and never wraps (§9.2, D-187, D-459)" begin
         anchored(rates) = build(Group(NamedTuple{keys(rates)}(Tuple(TickCounter() for _ in rates));
                                       sample_times = rates))
+        primes_of(deployment) = _grid_report(deployment.build.structure.anchors).primes
         # The trial division stops at its cap, the cofactor above it whole, and
         # never wraps: a prime denominator near `2^61` derives at once, one
         # near `2^63` is refused rather than hung.
         prime = 2^61 - 1
         deployment = @test_logs (:info, r"derived") Deployment(
             anchored((; a = Absolute(Period(1//prime)))); Δt_frame = 1, Δt_base = :derive)
-        @test deployment.grid.primes == [(prime = prime, power = 1, suppliers = [1])]
+        @test primes_of(deployment) == [(prime = prime, power = 1, suppliers = [1])]
         d = only(diagnostics(failure(() -> Deployment(
             anchored((; a = Absolute(Period(1//(typemax(Int) - 24))))); Δt_frame = 1))))
         @test d.reason === :anchor_period
@@ -679,16 +682,16 @@ function discrete_deployment()
         one_each = @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
             anchored((; a = Absolute(Period(1//p)), b = Absolute(Period(1//q))));
             Δt_frame = 1, Δt_base = :derive)
-        @test one_each.grid.primes == [(prime = p * q, power = 1, suppliers = [1, 2])]
+        @test primes_of(one_each) == [(prime = p * q, power = 1, suppliers = [1, 2])]
         part_and_whole = @test_logs (:info, r"derived") Deployment(
             anchored((; a = Absolute(Period(1//p)), b = Absolute(Period(1//(p * q)))));
             Δt_frame = 1, Δt_base = :derive)
-        @test part_and_whole.grid.primes == [(prime = p * q, power = 1, suppliers = [1, 2])]
+        @test primes_of(part_and_whole) == [(prime = p * q, power = 1, suppliers = [1, 2])]
         # A prime power keeps the divisibility rule: `2^2` is the first entry's alone.
         powers = @test_logs (:info, r"derived") Deployment(
             anchored((; a = Absolute(Period(1//4)), b = Absolute(Period(1//2))));
             Δt_frame = 1, Δt_base = :derive)
-        @test powers.grid.primes == [(prime = 2, power = 2, suppliers = [1])]
+        @test primes_of(powers) == [(prime = 2, power = 2, suppliers = [1])]
     end
 
     # --- the build's trial binding (§9.1, §9.2, D-465) -----------------------------
@@ -843,11 +846,13 @@ function discrete_deployment()
                        @test_logs (:info, r"derived") (:warn, r"^GridUtilization") Deployment(
                            reviewed; Δt_frame = g, Δt_base = :derive))
         for deployment in deployments
-            @test deployment.Δt_base === g && deployment.grid.admissible == g
-            @test [(e.kind, e.value, e.factor, e.alternatives) for e in deployment.grid.pool] ==
-                  [(:period, 2^20 // 1, 1, Rational{Int}[]), (:period, 2^20 // E, E, Rational{Int}[]),
-                   (:offset, 2^21 // 3, 3, Rational{Int}[])]
+            @test deployment.Δt_base === g
         end
+        grid = _grid_report(reviewed.structure.anchors)
+        @test grid.admissible == g
+        @test [(e.kind, e.value, e.factor, e.alternatives) for e in grid.pool] ==
+              [(:period, 2^20 // 1, 1, Rational{Int}[]), (:period, 2^20 // E, E, Rational{Int}[]),
+               (:offset, 2^21 // 3, 3, Rational{Int}[])]
         # Each neighbour is dropped alone. At `E = 2^47 + 57` the lower neighbour
         # shares the factor 5 with `E` and fits, the upper does not; at
         # `E = 2^47 + 47` the converse, and a sum `lower + partial` would leave
@@ -855,13 +860,15 @@ function discrete_deployment()
         for (E, side, neighbour) in ((2^47 + 57, <, 4216398645420883968 // 28147497671077),
                                      (2^47 + 47, >, 4216398645420883968 // 28147497671075))
             deployment = Deployment(pool(2^20 // 7, E); Δt_frame = 2^20 // (7E))
-            offset = only(e for e in deployment.grid.pool if e.kind === :offset)
+            offset = only(e for e in _grid_report(deployment.build.structure.anchors).pool
+                          if e.kind === :offset)
             @test offset.factor == 7 && offset.alternatives == [neighbour] &&
                   side(neighbour, 2^20 // 7)
         end
         # Where both neighbours fit, both are offered.
         deployment = Deployment(pool(2^21 // 3, 2^33 + 5); Δt_frame = 2^20 // (3 * (2^33 + 5)))
-        @test only(e.alternatives for e in deployment.grid.pool if e.kind === :offset) ==
+        @test only(e.alternatives for e in _grid_report(deployment.build.structure.anchors).pool
+                   if e.kind === :offset) ==
               [6004799505956864 // 8589934597, 6004799507005440 // 8589934597]
     end
 

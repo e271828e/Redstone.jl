@@ -63,6 +63,13 @@ Structure: 4 components, 1 anchor, 1 rate scope; root inputs: none
     anchor  Δtₖ      τₖ    scope  key
     A₀      Δt_base  0//1  —      —
     A₁      1//50    0//1  root   gnss
+  grid:
+    admissible: gcd(pool)/k, coarsest 1//50
+    pool:
+      `sample_times` at the root component, key `gnss`  period 1//50  ×1
+    primes: 50 = 2·5²
+      2   gnss period
+      5²  gnss period
   output routes:
     inner → fcs/y_inner → fcs/inner/out
     outer → fcs/y_outer → fcs/outer/out
@@ -138,6 +145,25 @@ function test_show()
         @test !occursin("rate scopes:", text)
         @test occursin("\n  anchors:\n    anchor  Δtₖ      τₖ    scope  key\n    A₀      Δt_base  0//1  —      —", text)
         @test count('\n', text) == 6
+    end
+
+    @testset "Structure: the grid report under the anchor table, and no block with no anchors (§9.2, D-466)" begin
+        # Derived from the anchors, the grid block's lines re-indented under
+        # `grid:`, between the anchor table and the routes.
+        @test occursin("    A₁      1//50    0//1  root   gnss\n  grid:\n" *
+                       "    admissible: gcd(pool)/k, coarsest 1//50\n", plain(multirate.structure))
+        @test occursin("      5²  gnss period\n  output routes:\n", plain(multirate.structure))
+        # A driving offset's repair rides its pool row, as in the refusals.
+        text = plain(group.build.structure)
+        @test occursin("\n  grid:\n    admissible: gcd(pool)/k, coarsest 1//1500\n    pool:\n" *
+                       "      `sample_times` at the root component, key `a`  period 1//500  ×10\n" *
+                       "      `sample_times` at the root component, key `b`  period 1//10   ×1\n" *
+                       "      `sample_times` at the root component, key `b`  offset 1//150  ×3   " *
+                       "declaring 3//500 or 1//125 keeps 1//500\n" *
+                       "    primes: 1500 = 2²·3·5³\n", text)
+        # No anchor, no block.
+        @test !occursin("grid", plain(pendulum.structure))
+        @test !occursin("grid", plain(build(routed_pair()).structure))
     end
 
     @testset "Structure: the root faces' routes, one line per route (§9.2, §13.7, D-257)" begin
@@ -240,24 +266,25 @@ function test_show()
         @test endswith(text, "\n  warnings:\n    " * logline(only(warnings(warned))))
     end
 
-    @testset "Deployment: the parameters, the schedule, the grid and the warnings (§9.2, D-257)" begin
+    @testset "Deployment: the parameters, the schedule and the warnings, with no grid block (§9.2, D-257, D-466)" begin
         text = plain(deployed)
         @test startswith(text, "Deployment: Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, " *
                                "RK4(); firing_budget = 4, localization_tol = 1.0e-6, " *
                                "localization_budget = 8, attempt_budget = 7\n" *
                                "  steps per frame: 1\n" *
                                "  build: Build(4 components, activations: Float64)\n")
-        @test occursin("\n" * join("  " .* split(MULTIRATE_SCHEDULE, '\n'), "\n") * "\n  grid:\n", text)
-        @test endswith(text, "\n  warnings: none")
-        # The grid block's lines re-indented under `grid:`, for an anchored model.
+        # The warnings follow the schedule directly: the grid report is the
+        # structure's to print, with or without an anchor.
+        @test endswith(text, "\n" * join("  " .* split(MULTIRATE_SCHEDULE, '\n'), "\n") *
+                             "\n  warnings: none")
+        @test !occursin("grid:", text)
+        # An advisory still carries the block, as its own message's lines.
         text = plain(group)
-        @test occursin("\n  grid:\n    admissible: gcd(pool)/k, coarsest 1//1500\n    pool:\n" *
-                       "      `sample_times` at the root component, key `a`  period 1//500  ×10\n", text)
-        @test occursin("\n  warnings:\n    GridUtilization: Δt_base derived as 1//1500 s: the grid is 3× finer", text)
-        # No anchor declares a constraint: the grid line says so.
+        @test occursin("chart omitted\n  warnings:\n    GridUtilization: Δt_base derived as 1//1500 s: the grid is 3× finer", text)
+        @test !occursin("\n  grid:", text)
         text = plain(pendulum_deployed)
-        @test occursin("\n  build: Build(1 component, activations: Float64)\n  Schedule: no rows\n" *
-                       "  grid: no constraint\n  warnings: none", text)
+        @test endswith(text, "\n  build: Build(1 component, activations: Float64)\n  Schedule: no rows\n" *
+                             "  warnings: none")
     end
 
     @testset "Deployment: the steps of an unsplit frame, and the components that split frames (§9.2, §10.5, D-449)" begin

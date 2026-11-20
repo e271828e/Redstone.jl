@@ -17,26 +17,16 @@ item changes what the spec says, the spec edit is part of the item.
   in four parts in this order. The session's record is
   `RedstoneInspector.jl/design/deployment_overlay.md`, and its answer 17
   lists the five log entries the parts owe. Each part lands as a spec and
-  log commit followed by its code. Part one, the notation, has landed
-  (D-464), and parts two to four follow. The session left open whether the
+  log commit followed by its code. Parts one and two, the notation and
+  the grid report's placement, have landed (D-464, D-466), and parts three
+  and four follow. The session left open whether the
   build refuses a pool that admits no deployment. That was ruled on
   2026-11-20 and has landed ahead of part two: the build refuses a
   structure that no deployment binds, by one trial binding (§9.1, §9.2,
   D-465). `src/assembly.jl` was split for it, and the grid arithmetic now
-  lives in `src/structure.jl`. The record, with its findings and the items
-  it leaves open for the user, is
+  lives in `src/structure.jl`. The record, with its findings, the items
+  it leaves open for the user and the grid report's part, is
   `design/increments/20261120_structure_trial/notes_structure_trial.md`.
-  - **The grid report, derived from the structure.** The report is a pure
-    function of the anchors. `show(::Structure)` derives it and prints it
-    under the anchor table, as `_grid_block`'s lines under `grid:`, and
-    prints no block for a structure with no anchors. `Deployment` drops its
-    `grid` field, and `show(::Deployment)` its `grid:` block (§9.2,
-    D-466, amending D-254 under D-261's rule). The refusal's message, the
-    derivation line and `GridUtilization` stay the deployment's and keep
-    the report in their payloads. Stage reached: the spec and the log have
-    landed, and the code is next. The handover,
-    with the spec, code and test sites, is section 8 of
-    `design/increments/20261120_structure_trial/notes_structure_trial.md`.
   - **The descriptor.** The format stays at 1.0 and changes freely until
     the first release (§13.9). It carries every fact `show` prints of a
     `Build` or a `Deployment`, or the facts from which a client derives it

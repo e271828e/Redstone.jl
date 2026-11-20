@@ -254,3 +254,49 @@ structure'. Read `AGENTS.md`, that bullet, and
 `design/increments/20261120_structure_trial/notes_structure_trial.md`,
 whose section 8 is the handover. The spec and log commit, D-466, comes
 first, then the code."
+
+## 9. The grid report's part, landed
+
+A fresh session took section 8's handover the same day and landed the part
+as two commits, on the user's word at each.
+
+- `41ff09c`: the spec, D-466 and the stage on the `pending.md` bullet.
+- The commit that adds this section: the code, its tests, `code_map.md` and
+  the retired bullet.
+
+**Beyond the handover, confirmed by the user.**
+
+- D-187 and D-257 are annotated beside D-254 and D-261. D-187 calls the
+  schedule the substrate of every grid diagnostic, and D-257 lists what
+  `show(::Structure)` prints.
+- D-466's Rationale gives `show(::Deployment)`'s lost block a reason in the
+  session's words, that the block states nothing the deployment fixes. The
+  handover held the ruling and no reason.
+- The Rationale cites the data survey's finding B5 for why D-261 kept the
+  field.
+
+**The shape built.** `bind_schedule` still computes the report once per
+`Deployment` call and returns it, for the refusals, the derivation line and
+the advisory. Only the hand-off to the struct went. `show(::Structure)`
+derives its own.
+
+**What changed shape in the tests.**
+
+- `test_discrete.jl`'s identity check `warning.grid === grid` is gone. The
+  line after it pins the payload's drivers.
+- The neighbour testset asserted the report on each of three deployments of
+  one build. It now asserts it once on the build, and the loop keeps
+  `Δt_base`.
+- `test_show.jl` gains a structure testset for the block and its absence,
+  and the `Deployment` testset asserts no `grid:` line.
+
+**The run.** The gate read 10316 of 10316, against 10312 at `05089f1`.
+
+**Left as found.**
+
+- `src/descriptor.json` says the grid report waits for a minor bump. That is
+  the descriptor's part.
+- The glossary's `Structure` entry omits the anchor table from what the
+  artifact holds.
+- "Grid report" has no glossary entry. With the descriptor's part it reaches
+  §13.9, a third place, where the coinage rule gives it one.

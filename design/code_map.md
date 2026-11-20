@@ -389,23 +389,23 @@ D-459, D-464.
   multiply-add runs in checked `Int` under one catch, and a schedule it
   cannot hold is the lattices' `:Δt_base` refusal (D-459).
 - `==`/`hash` on a `Deployment` compare by value over everything but the
-  build, the grid attribution, the `Lattice` and the warnings (§12.7), the
+  build, the `Lattice` and the warnings (§12.7), the
   bound resolved and the time quantities exact, so two that round to
   one `Float64` are two deployments (D-454), `h_min` and `attempt_budget`
   among them (D-460).
 - `warnings(::Deployment)`.
 - structure.jl's `_grid_report` runs once per call, ahead of the `Δt_base`
   branch, with no catch: a built structure always has a report (D-465). The
-  `Deployment` carries its result. The call also hands that result to the
-  three refusals whose remedy is a `Δt_base` the pool admits, and to the
-  derivation path's info line. `:derive` has no `:range` refusal.
+  call hands its result to the three refusals whose remedy is a `Δt_base`
+  the pool admits, and to the derivation path's info line and advisory. The
+  `Deployment` holds none (D-466). `:derive` has no `:range` refusal.
 - The derivation path's info line shows the derived value over the same block,
   with both attribution forms. The derivation path also raises the
   `GridUtilization` advisory at `min_i Dᵢ > 1`.
 
 Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
 D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454,
-D-459, D-460, D-461, D-463, D-465.
+D-459, D-460, D-461, D-463, D-465, D-466.
 
 ### `src/descriptor.jl`
 
@@ -1074,13 +1074,16 @@ D-261.
     and the producers' stage-2 names;
   - every `(path, name)` pair, a feedthrough end or a route's hop, renders
     through `_named` in slash form, a bare port by its face `u` or `y` (D-437).
+- The `Structure`'s grid report after the anchor table: structure.jl's
+  `_grid_report` over the anchors, with `_grid_block`'s lines set under
+  `grid:`, and no block for a structure with no anchors (D-466).
 - The `Structure`'s `input routes:` and `output routes:` blocks after the
-  anchors, one line per route of a root face, its hops joined with ` → `
+  grid block, one line per route of a root face, its hops joined with ` → `
   (§13.7), derived through `face_routes` over the root's level row (D-315).
   A side with no root face prints no block.
 - The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
   binary guard at 100.
-- The `Deployment` sets `_grid_block`'s lines under `grid:`, and its
+- The `Deployment` prints no grid block (D-466). Its
   parameters line names `h_max` resolved and prints the three time
   quantities exact (D-454), `h_min` where one is set, and the long form
   adds `attempt_budget` (D-460). `_steps_line` states the steps of
@@ -1095,7 +1098,7 @@ D-261.
   count-only past it.
 
 Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460,
-D-464.
+D-464, D-466.
 
 ### `src/sim.jl`
 
@@ -1303,7 +1306,9 @@ D-456, D-457, D-458.
   and `_lattice` share (§9.2, D-465): `_as_int`; `_anchor_counts`, one
   anchor's division pair at a base tick in `Int128`; `_timing_counts`, one
   timing's multiply-add in checked `Int`; `_max_frame`, the frame loop's
-  margin. Beside them the grid attribution `_grid_report` (D-187):
+  margin. Beside them the grid attribution `_grid_report` (D-187), which no
+  artifact holds and `bind_schedule` and show.jl's `Structure` each derive
+  (D-466):
   - the constraint pool, with each entry's leave-one-out refinement factor;
   - the prime attribution of `gcd(pool)`'s denominator, by `_prime_powers`,
     a trial division stopping at `PRIME_DIVISOR_CAP`, and `_supplies`, the
@@ -1339,7 +1344,8 @@ D-456, D-457, D-458.
 
 Spec: §6.1, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §10.5, §13.1, §13.3,
 §13.7, Appendix C, D-130, D-187, D-208, D-210, D-211, D-229, D-236, D-246,
-D-248, D-253, D-261, D-289, D-315, D-414, D-437, D-445, D-459, D-464, D-465.
+D-248, D-253, D-261, D-289, D-315, D-414, D-437, D-445, D-459, D-464, D-465,
+D-466.
 
 ### `src/trace.jl`
 

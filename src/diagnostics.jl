@@ -1305,9 +1305,9 @@ message(d::StopRequestInvalid) =
 
 # --- the grid attribution (§9.2, D-187) -----------------------------------------
 # Structure substrate rather than diagnostics: the report is a function of the
-# structure's anchors, filled by `structure.jl`'s `_grid_report`, and the
-# `Deployment` carries one. They are defined here because the two payloads below
-# name them and this file is included first.
+# structure's anchors, filled by `structure.jl`'s `_grid_report` and derived
+# where it is used, held by no artifact (D-466). They are defined here because
+# the two payloads below name them and this file is included first.
 
 """
 One constraint-pool entry (§9.1, §9.2): an anchor's period or its nonzero offset,
@@ -1332,8 +1332,8 @@ _anchor_label(scope::String, key::Symbol) =
 """
 The grid attribution (§9.2, D-187): the pool, the coarsest admissible `Δt_base`
 and each prime power of its denominator traced to the entries supplying it. A
-pure function of the structure's anchors, printed by the refusal path's
-suggestion and the derivation path's line alike.
+pure function of the structure's anchors, printed by `show(::Structure)`, the
+refusal path's suggestion and the derivation path's line alike.
 """
 struct GridReport
     pool::Vector{GridEntry}
@@ -1377,7 +1377,8 @@ _deployment_section(parameter::Symbol) =
 
 # The grid block (§9.2, D-187), appended to the first line of every consumer that
 # names the grid: the three grid refusals, the derivation path's info line and
-# the `GridUtilization` advisory. Its rows are the admissible set with the
+# the `GridUtilization` advisory. `show(::Structure)` sets its lines under
+# `grid:` (D-466). Its rows are the admissible set with the
 # coarsest value; the pool table, every entry and not only the drivers, since a
 # ×1 beside a ×10 tells the reader which entry is innocent, with a driving
 # offset's repair on its row's tail; and the prime attribution, one prime power

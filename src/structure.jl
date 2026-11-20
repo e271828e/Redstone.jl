@@ -795,10 +795,11 @@ anchors: the constraint pool — every anchor's period and every nonzero offset,
 in anchor order, periods first — with each entry's leave-one-out refinement
 factor `r_p = gcd(pool ∖ p)/gcd(pool)`, the prime attribution of `gcd(pool)`'s
 denominator, and, for a driving offset, the nearest offsets the rest of the pool
-already supports, those whose arithmetic fits `Int`. One report per `Deployment`
-call, computed by `bind_schedule` ahead of the `Δt_base` branch: the refusal
-path's suggestion, the derivation path's line and the `Deployment` itself read
-the same substrate. A built structure always has one: the trial binding fits the
+already supports, those whose arithmetic fits `Int`. No artifact holds it
+(D-466). `bind_schedule` computes one per `Deployment` call, ahead of the
+`Δt_base` branch, for the refusal path's suggestion, the derivation path's line
+and the advisory, and `show(::Structure)` derives its own where it prints.
+A built structure always has one: the trial binding fits the
 gcd and every anchor's count at it, and each factor is at most one of those
 counts (D-465).
 """

@@ -869,7 +869,7 @@ function diagnostics_kind_set()
         rendered = message(DeploymentInvalid(
             parameter = :Δt_base, reason = :anchor_offset, value = 2^21 // 3, related = 1//1,
             scope = "", key = :a,
-            grid = Deployment(neighbourless; Δt_frame = 2^20 // (3 * (2^45 + 3))).grid))
+            grid = _grid_report(neighbourless.structure.anchors)))
         @test occursin(r"offset 2097152//3 +×3\n", rendered) && !occursin("declaring", rendered)
         # A header mismatch counts the parameters the walk names (§12.7).
         @test occursin("the nine trajectory-determining deployment parameters",
