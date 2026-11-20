@@ -474,25 +474,24 @@ end
 
 # The `u` list: the root input's cell follows the seeded scalar only when every
 # consumer tolerates it, D-168's meet. A consumer whose entry refuses the walked
-# type is a pinning consumer, named with its tier and its declared entry: a
-# continuous one pins by declaration (D-167), a discrete one by tier (§8.2). The
-# face is the root input the mount step landed on, so the meet is right at a
-# mount (D-277).
+# type is a pinning consumer, build.jl's `pinning_consumers` at this
+# activation's scalar, named with its tier and its declared entry: a continuous
+# one pins by declaration (D-167), a discrete one by tier (§8.2). The face is the
+# root input the mount step landed on, so the meet is right at a mount (D-277).
 function _seeded_tap(::Val{:u}, entry::CellRead{A,C}, ::GetInput, read::MountedRead,
                      build::Build, act::Activation{T}, diags::Vector{Diagnostic}) where {A,C,T}
     structure = build.structure
     face = read.head
     P = _port_type(entry.addr)
     _check_seedable(read, P, C, _resolved_type(P, C), diags) || return nothing
-    root_type = structure.root_types[findfirst(==(face), structure.root_inputs)]
+    k = findfirst(==(face), structure.root_inputs)
+    root_type = structure.root_types[k]
     walked_type = retype(T, root_type)
     pinning = Tuple{String,Symbol,Any}[
         (consumer.path, Symbol(tier_word(consumer.tier)),
-         _keyed(invoke_declaration(u_types, consumer.instance), default_name(u_types))[consumer_face])
-        for (ci, consumer) in enumerate(structure.components)
-        for consumer_face in keys(keyed_ins(act.decls[ci]))
-        if terminal_producer(structure, (consumer.path, consumer_face)) == ("", face) &&
-           !_accepts_wire(keyed_ins(act.decls[ci])[consumer_face], walked_type, T)]
+         _keyed(invoke_declaration(u_types, structure.components[index_of(structure, consumer.path)].instance),
+                default_name(u_types))[consumer.port])
+        for consumer in pinning_consumers(structure, T)[k]]
     addr = act.layout.addr[("", face)]
     # The seeded cell's type is the meet's own witness.
     isempty(pinning) == (_port_type(addr) === walked_type) || throw(InternalInvariant(

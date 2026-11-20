@@ -190,6 +190,22 @@ function test_show()
         @test !occursin("routes:", plain(pendulum.structure))
     end
 
+    @testset "Structure: an input route ending at a pinning consumer is marked with its cause (§9.2, §13.7, D-468)" begin
+        # One root input fanned out to a tolerant gain, a discrete consumer and a
+        # `Pinned` entry, a second read by the tolerant gain alone: each mark
+        # names its consumer's cause, in one column after the widest route, and
+        # an unpinned route carries none.
+        text = plain(build(pinned_fanout()).structure)
+        @test endswith(text, "\n  input routes:\n" *
+                             "    in → g/e\n" *
+                             "    in → acc/e  pinned by tier\n" *
+                             "    in → p/e    pinned by declaration\n" *
+                             "    free → h/e")
+        # A primitive root prints no routes, so its pin shows in no mark.
+        @test !occursin("pinned", plain(build(PinnedGain()).structure))
+        @test !occursin("pinned", plain(build(routed_pair()).structure))
+    end
+
     @testset "Outputs: the execution order with each stage's ports (§9.2, D-257, D-261)" begin
         @test plain(multirate.outputs) == MULTIRATE_OUTPUTS
         # Inside the `Build` the same table, indented, and under it the one
@@ -402,7 +418,7 @@ function test_show()
         text = plain(build(bare_ports_world()))
         @test occursin("\n  feedthrough: plant/loop/scale/y → plant/loop/echo/u\n", text)
         @test occursin("    plant/loop/flow   y        —\n", text)
-        @test occursin("      u → plant/u → plant/summer/u\n", text)
+        @test occursin("      u → plant/u → plant/summer/u  pinned by tier\n", text)
         @test occursin("      total → plant/total → plant/summer/y\n", text)
         @test occursin("      ramp → ramp/y\n", text)
         @test !occursin(r"[a-z]/(\s|$)", text) && !occursin(r"[a-z]\.(\s|$)", text)

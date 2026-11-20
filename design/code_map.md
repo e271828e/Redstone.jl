@@ -125,6 +125,11 @@ Spec: §11.2, §11.4, §11.6, §14.4.
   - `_ports`, which concatenates a row into the products' order.
 - At a stall, the SCC decomposition into one `AlgebraicCycle` per cluster
   (§13.8, D-012).
+- `pinning_consumers`, each root input's consumers whose entry refuses its
+  type walked to a scalar, `ProbeDual` by default, read off the `Structure`
+  alone; show.jl's input-route marks, descriptor.jl's root inputs and
+  linearize.jl's unseedable refusal, at its activation's scalar, share it
+  (§8.2, §13.7, §13.9, D-168, D-468).
 - The layout, with the root-input meet (D-168, D-236), `IllegalPortType`'s
   three layout arms (D-237) and its two stop-request arms (D-316), and the flat
   `x` ranges every offset is read from (D-261). `Requester` is one entry of the
@@ -159,7 +164,7 @@ Spec: §11.2, §11.4, §11.6, §14.4.
 Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
 §13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
 D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316, D-437,
-D-438, D-465.
+D-438, D-465, D-468.
 
 ### `src/checkpoint.jl`
 
@@ -412,9 +417,11 @@ D-459, D-460, D-461, D-463, D-465, D-466.
 - `descriptor` on a `Build`, on a `Deployment` and on a `DiagnosticError`,
   the artifact or the carrier rendered to data under the format
   `src/descriptor.json` fixes (§13.9, D-432, D-434): the envelope
-  `_envelope` with `DESCRIPTOR_FORMAT`, the build body's two sections
-  `_structure_section` and `_outputs_section` with its `warnings`, the
-  deployment body embedding the build's, and the failure body
+  `_envelope` with `DESCRIPTOR_FORMAT`, the build body's three sections
+  `_structure_section`, `_outputs_section` and `_events_section` with its
+  `warnings`, the deployment body `_deployment_body`, flat after the build's,
+  with `_schedule_section` and the anchors' counts through structure.jl's
+  `_anchor_counts` (D-467), and the failure body
   `_failure_body` with `policy` off the type parameter and `structure` when
   the carrier holds one.
 - A diagnostic as data `_diagnostic`: kind, severity, path and the rendered
@@ -426,6 +433,11 @@ D-459, D-460, D-461, D-463, D-465, D-466.
 - The node walk `_nodes`, a pre-order over the level rows' children with the
   primitives read off `components`, and the node's `field` and `key` from
   `membership` on the `Child`.
+- The structure section's derived rows: `_root_inputs`, each `pinned` and
+  `pinned_by` off build.jl's `pinning_consumers` (D-468), and `_grid_section`,
+  structure.jl's `_grid_report` as data, each pool entry's anchor found by
+  its scope and key, positions from 1 (D-466, D-467). A primitive node's
+  `rates`, its chain by `_rate_link`.
 - The primitive faces `_primitive_faces`, read off the declarations as written with a
   `Pinned` entry unwrapped and flagged, a bare contract's face `u` or `y`, and the kind marker `_kind_marker`,
   §13.9's table in test order, its `struct` row the leaf walk's isbits cut
@@ -435,13 +447,13 @@ D-459, D-460, D-461, D-463, D-465, D-466.
   summary `_parameters` over `_summarize!`, each inert field cut at 80
   characters and a `NamedTuple` field opened into dotted entries (D-439),
   the `types` rows `_type_rows`
-  with `_docstring` off the docsystem's meta and `_locations` over
-  `LOCATED_DECLARATIONS`.
+  with `_docstring` off the docsystem's meta, each bare `@ref` link targeted
+  by `_targeted_link` (D-467), and `_locations` over `LOCATED_DECLARATIONS`.
 - Nothing here encodes text. `test_descriptor.jl` holds the round trip, with
   JSON and JSONSchema as the suite's dependencies alone.
 
 Spec: §8.5, §9.1, §9.2, §13.2, §13.8, §13.9, D-211, D-237, D-418, D-432, D-433,
-D-434, D-437.
+D-434, D-437, D-466, D-467, D-468.
 
 ### `src/devices.jl`
 
@@ -512,7 +524,9 @@ D-256, D-261, D-268, D-270, D-315.
 - `logline`.
 - The build's warning channel `BUILD_WARNINGS` and `_warn!` (D-250).
 - The grid records `GridEntry` and `GridReport`, which structure.jl's
-  `_grid_report` fills, and `_anchor_label`.
+  `_grid_report` fills, `_unfactored`, the one test of a cofactor left
+  whole, which `_supplies`, `_grid_block` and descriptor.jl's grid section
+  call (D-459), and `_anchor_label`.
 - `DeploymentInvalid`'s and `GridUtilization`'s `grid` payloads, rendered by
   `_grid_block`, which prints a cofactor at or above `PRIME_DIVISOR_CAP`'s
   square as unfactored (D-187, D-459).
@@ -823,7 +837,8 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D
 - The collecting tap resolution, with the discrete store, the vector leaf,
   the member in the wrong list, the unseedable root input and a second seed
   at one site refused. The unseedable root input names its pinning consumers
-  with their tiers, the duplicate the earlier label.
+  with their tiers, build.jl's `pinning_consumers` at the activation's scalar
+  (D-468), the duplicate the earlier label.
 - `_tap_violation`, the tap-set builder: each of the five refusals is a
   `TapResolution`, its tap set read off the selector's kind by `_tap`. A
   read's own refusal stays the `ReadResolution` readers.jl raised (D-406).
@@ -842,7 +857,7 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D
   face `u` (D-437).
 
 Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,
-D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438, D-458.
+D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438, D-458, D-468.
 
 ### `src/model.jl`
 
@@ -1080,7 +1095,9 @@ D-261.
 - The `Structure`'s `input routes:` and `output routes:` blocks after the
   grid block, one line per route of a root face, its hops joined with ` → `
   (§13.7), derived through `face_routes` over the root's level row (D-315).
-  A side with no root face prints no block.
+  A side with no root face prints no block. `_pin_marks` marks an input route
+  ending at a pinning consumer, `pinned by tier` or `pinned by declaration`, in
+  one column after the block's widest route (D-468).
 - The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
   binary guard at 100.
 - The `Deployment` prints no grid block (D-466). Its
@@ -1098,7 +1115,7 @@ D-261.
   count-only past it.
 
 Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460,
-D-464, D-466.
+D-464, D-466, D-468.
 
 ### `src/sim.jl`
 
@@ -1422,6 +1439,8 @@ The suite's fixtures:
 - The bare-contract fixtures `BareScale`, `BareFlow`, `BareSpin`, `BareSummer`
   and `BareRamp`, with the assemblies `bare_loop()` and `bare_ports_world()`,
   bare ports two levels down, wired by their faces `u` and `y` (D-437).
+- `pinned_fanout()`, a root input pinned by tier and by declaration beside a
+  tolerant consumer, and one pinned by nothing (D-468).
 - `tick_alarmed`, the tick-detected stop request over `TickAlarm` (§10.5,
   §13.5, D-316).
 - The `ForgottenImport` module and the forgotten-import fixtures `Inventory`,

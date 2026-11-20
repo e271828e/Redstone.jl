@@ -1224,6 +1224,17 @@ routed_pair() =
           input_wires = "u" => "pair/u", output_wires = "pair/y" => "y")
 
 """
+    pinned_fanout()
+
+A root input's pin and its causes (§8.2, §13.7, D-168, D-468): `in` fans out to a
+tolerant gain, a discrete consumer, which pins it by tier, and a `Pinned`
+entry, which pins it by declaration; `free` feeds a tolerant gain alone.
+"""
+pinned_fanout() =
+    Group((; g = Gain(2.0), acc = DiscreteAccumulator(1.0), p = PinnedGain(), h = Gain(3.0));
+          input_wires = ("in" => ("g/e", "acc/e", "p/e"), "free" => "h/e"))
+
+"""
     FannedLoops(n)
 
 `n` sampled loops in one container field, under one `"ref"` face fanned out to

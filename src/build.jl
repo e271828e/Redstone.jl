@@ -530,6 +530,29 @@ function _root_input_cell(structure::Structure, decls::Vector{Decls}, root_index
     all(input_type -> _accepts_wire(input_type, walked_type, T), consumer_types) ? walked_type : P_F
 end
 
+# Design: §8.2, §13.7, §13.9, §14.10, D-168, D-468.
+# Each root input's pinning consumers, in the order of `structure.root_inputs`:
+# the consumer faces the root input feeds whose entry refuses its type walked to
+# `T`, D-168's meet, in walk order and declaration order. A discrete consumer
+# pins by tier, its entry read as written, and a continuous one by declaration,
+# a `Pinned` entry or an abstract one that admits no `T`. It reads the
+# `Structure` alone, so `show`, the descriptor and a failure past the structure
+# step share it. `ProbeDual` stands for "a `Dual`"; `linearize` passes its own
+# scalar, the one its activation's cells follow.
+function pinning_consumers(structure::Structure, ::Type{T} = ProbeDual) where {T}
+    pinning = [@NamedTuple{path::String, port::Symbol, tier::Tier}[] for _ in structure.root_inputs]
+    for entry in structure.components
+        for (face, input_type) in pairs(declared_at(u_types, entry.instance, entry.tier, T))
+            producer_path, root_face = terminal_producer(structure, (entry.path, face))
+            isempty(producer_path) || continue
+            k = findfirst(==(root_face), structure.root_inputs)
+            _accepts_wire(input_type, retype(T, structure.root_types[k]), T) ||
+                push!(pinning[k], (path = entry.path, port = face, tier = entry.tier))
+        end
+    end
+    pinning
+end
+
 # --- 5. the Build artifact and its activations (§9.2, §9.4) ---------------------
 
 """

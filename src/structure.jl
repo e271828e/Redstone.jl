@@ -786,7 +786,7 @@ end
 # so it is supplied wherever the denominator shares a factor with it. It
 # divides the lcm of the pool's denominators, so some entry always does.
 _supplies(pool_denominator::Int, prime::Int, power::Int) =
-    prime ≥ PRIME_DIVISOR_CAP^2 ? gcd(pool_denominator, prime) > 1 :
+    _unfactored(prime) ? gcd(pool_denominator, prime) > 1 :
                                   pool_denominator % prime^power == 0
 
 """

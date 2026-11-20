@@ -1,4 +1,4 @@
-# --- the descriptor (§13.9, D-432, D-434) ---------------------------------------
+# --- the descriptor (§13.9, D-432, D-434, D-467) --------------------------------
 # `descriptor` renders a `Build`, a `Deployment` or a carrier exception to
 # data, beside `show`'s rendering to text: a tree of `NamedTuple`s, vectors, strings, numbers and
 # Booleans whose shape `src/descriptor.json` fixes. A field that does not
@@ -11,10 +11,10 @@ const DESCRIPTOR_FORMAT = (major = 1, minor = 0)
 
 # The declarations whose method locations a type's row carries, in this order.
 const LOCATED_DECLARATIONS = (u_types, y_types, x_init, s_init, m_init, sample_times,
-                              local_wires, input_wires, output_wires, stop_reason,
-                              transparent_container)
+                              state_events, local_wires, input_wires, output_wires,
+                              stop_reason, transparent_container)
 
-# Design: §13.9, D-432, D-434.
+# Design: §13.9, D-432, D-434, D-467, D-468.
 """
     descriptor(build::Build) -> NamedTuple
     descriptor(deployment::Deployment) -> NamedTuple
@@ -25,7 +25,8 @@ rendering to data.
 
 The descriptor holds the fields `format_version`, `redstone_version` and `kind`,
 and the body under the key the kind names, `build`, `deployment` or `failure`. A
-deployment's body embeds the build's whole.
+deployment's body embeds the build's whole, beside the deployment's parameters
+and its [`Schedule`](@ref).
 
 A failure's body holds the diagnostics and warnings of the
 [carrier exception](@ref g-carrier-exception), `DiagnosticError`, each as its
@@ -41,8 +42,7 @@ is the caller's job.
 See also [`Build`](@ref), [`Deployment`](@ref).
 """
 descriptor(build::Build) = _envelope("build", _build_body(build))
-descriptor(deployment::Deployment) =
-    _envelope("deployment", (build = _build_body(deployment.build),))
+descriptor(deployment::Deployment) = _envelope("deployment", _deployment_body(deployment))
 descriptor(err::DiagnosticError) = _envelope("failure", _failure_body(err))
 
 _envelope(kind::String, body) =
@@ -53,7 +53,41 @@ _envelope(kind::String, body) =
 
 _build_body(build::Build) =
     (structure = _structure_section(build.structure), outputs = _outputs_section(build.outputs),
-     warnings = [_diagnostic(d) for d in build.warnings])
+     events = _events_section(build.events), warnings = [_diagnostic(d) for d in build.warnings])
+
+# --- the deployment body (D-467) ------------------------------------------------
+
+# Flat, in the order of the `Deployment`'s fields: the build, the three time
+# quantities exact, the floor where one is set, the algorithm as its token's
+# `show` prints it with whether it proposes, the four budgets, the schedule and
+# the deployment's own warnings.
+function _deployment_body(deployment::Deployment)
+    body = (build = _build_body(deployment.build), dt_frame = _rational(deployment.Δt_frame),
+            dt_base = _rational(deployment.Δt_base), h_max = _rational(deployment.h_max))
+    deployment.h_min === nothing || (body = merge(body, (h_min = _rational(deployment.h_min),)))
+    merge(body,
+          (algorithm = (text = sprint(show, deployment.algorithm),
+                        proposes = proposes(deployment.algorithm)::Bool),
+           firing_budget = deployment.firing_budget,
+           localization_tol = deployment.localization_tol,
+           localization_budget = deployment.localization_budget,
+           attempt_budget = deployment.attempt_budget,
+           schedule = _schedule_section(deployment),
+           warnings = [_diagnostic(d) for d in deployment.warnings]))
+end
+
+# The `Schedule`'s rows and scopes, beside each anchor's `(Dₖ, Φₖ)` in the order
+# of the structure's anchors, which the writer computes as `bind_schedule` does,
+# the `Schedule` holding none (D-261). A bound schedule fits every count.
+function _schedule_section(deployment::Deployment)
+    schedule = deployment.schedule
+    anchor_counts = [_anchor_counts(anchor, deployment.Δt_base)
+                     for anchor in deployment.build.structure.anchors]
+    (anchors = [(D = something(D), phi = something(Φ)) for (D, Φ) in anchor_counts],
+     rows = [(path = row.path, D = row.D, phi = row.Φ) for row in schedule.rows],
+     scopes = [(path = scope.path, key = String(scope.key), D = scope.D, phi = scope.Φ)
+               for scope in schedule.scopes])
+end
 
 # --- the failure body (D-434) ---------------------------------------------------
 
@@ -125,16 +159,53 @@ end
 function _structure_section(structure::Structure)
     nodes, node_instances = _nodes(structure)
     (nodes = nodes,
-     root_inputs = [_primitive_face(face, T) for (face, T) in zip(structure.root_inputs, structure.root_types)],
-     anchors = [(T = _rational(anchor.Δt), tau = _rational(anchor.τ),
+     root_inputs = _root_inputs(structure),
+     anchors = [(dt = _rational(anchor.Δt), tau = _rational(anchor.τ),
                  scope = anchor.scope, key = String(anchor.key))
                 for anchor in structure.anchors],
      scopes = [(path = scope.path, key = String(scope.key), timing = scope.timing)
                for scope in structure.scopes],
+     grid = _grid_section(structure.anchors),
      types = _type_rows(node_instances))
 end
 
 _rational(x::Rational{Int}) = (num = numerator(x), den = denominator(x))
+
+# The root inputs as primitive faces, typed by the wire pass, each `pinned` by
+# D-168's meet and `pinned_by` its pinning consumers as endpoints (D-468). The
+# fixed type carries no marker, so the face's own flag would read false.
+_root_inputs(structure::Structure) =
+    [merge(_primitive_face(face, root_type),
+           (pinned = !isempty(consumers),
+            pinned_by = [_endpoint((consumer.path, consumer.port)) for consumer in consumers]))
+     for (face, root_type, consumers) in
+         zip(structure.root_inputs, structure.root_types, pinning_consumers(structure))]
+
+# The grid report as data (D-466, D-467): the coarsest admissible base tick, the
+# pool in the report's order with each entry's anchor by position from 1, and
+# the prime attribution, each supplier a position in the pool from 1. A cofactor
+# the trial division left at or above its cap's square is flagged unfactored, as
+# the grid block prints it. No anchors, no `admissible`.
+function _grid_section(anchors::Vector{Anchor})
+    report = _grid_report(anchors)
+    pool = NamedTuple[]
+    for entry in report.pool
+        anchor = findfirst(a -> a.scope == entry.scope && a.key === entry.key, anchors)
+        row = (anchor = anchor, kind = String(entry.kind), factor = entry.factor)
+        isempty(entry.alternatives) ||
+            (row = merge(row, (alternatives = _rational.(entry.alternatives),)))
+        push!(pool, row)
+    end
+    primes = NamedTuple[]
+    for attribution in report.primes
+        row = (prime = attribution.prime, power = attribution.power,
+               suppliers = attribution.suppliers)
+        _unfactored(attribution.prime) && (row = merge(row, (unfactored = true,)))
+        push!(primes, row)
+    end
+    grid = report.admissible === nothing ? (;) : (admissible = _rational(report.admissible),)
+    merge(grid, (pool = pool, primes = primes))
+end
 
 # The nodes in walk order, assemblies included: a pre-order walk from the root's
 # level row through each assembly's children, as the structure step walked them.
@@ -177,11 +248,22 @@ end
 function _primitive_node(identity::NamedTuple, entry::ComponentEntry)
     instance = entry.instance
     merge(identity,
-          (class = "primitive", tier = tier_word(entry.tier), timing = entry.timing),
+          (class = "primitive", tier = tier_word(entry.tier), timing = entry.timing,
+           rates = [_rate_link(link) for link in entry.rates]),
           _type_identity(typeof(instance)),
           (inputs = _primitive_faces(u_types, instance), outputs = _primitive_faces(y_types, instance),
            parameters = _parameters(instance)))
 end
+
+# One `sample_times` link of a primitive's chain, as the component row holds it:
+# the declaring scope's path, the key as written, and the entry's own values. The
+# timing does not determine the chain, which an explicit `Relative(1)` or a
+# container's bare field key leaves unchanged.
+_rate_link(link::RateLink) =
+    link.entry isa Relative ?
+        (scope = link.scope, key = String(link.key), K = link.entry.K, phi = link.entry.φ) :
+        (scope = link.scope, key = String(link.key), dt = _rational(link.entry.Δt),
+         tau = _rational(link.entry.τ))
 
 function _assembly_node(identity::NamedTuple, level::LevelEntry)
     instance = level.instance
@@ -348,15 +430,40 @@ function _type_rows(node_instances::Vector{Any})
     rows
 end
 
-# The type's docstring as its Markdown source, `nothing` when it has none.
+# The type's docstring as its Markdown source, `nothing` when it has none, each
+# bare `@ref` link that resolves to an exported binding given its target.
 function _docstring(@nospecialize(component_type::Type))
-    doc_binding = Base.Docs.Binding(parentmodule(component_type), nameof(component_type))
-    meta = Base.Docs.meta(parentmodule(component_type); autoinit = false)
+    mod = parentmodule(component_type)
+    doc_binding = Base.Docs.Binding(mod, nameof(component_type))
+    meta = Base.Docs.meta(mod; autoinit = false)
     meta === nothing && return nothing
     haskey(meta, doc_binding) || return nothing
     multidoc = meta[doc_binding]
     signature = haskey(multidoc.docs, Union{}) ? Union{} : first(multidoc.order)
-    join(multidoc.docs[signature].text)    # an interpolated docstring holds the values among its parts
+    text = join(multidoc.docs[signature].text)    # an interpolated docstring holds the values among its parts
+    replace(text, r"\[`([^`]+)`\]\(@ref\)" => link -> _targeted_link(link, mod))
+end
+
+# A bare `@ref` link, `` [`name`](@ref) ``, with the target its name resolves to
+# from `mod` when the binding's owner exports it: the owner's qualified name, the
+# text kept (D-467). A dotted name resolves segment by segment. Any other link,
+# one naming no identifier or a binding its owner does not export, stays as written.
+function _targeted_link(link::AbstractString, mod::Module)
+    name = match(r"^\[`([^`]+)`\]", link).captures[1]
+    segments = split(name, '.')
+    all(Base.isidentifier, segments) || return link
+    scope = mod
+    for segment in segments[1:end-1]
+        symbol = Symbol(segment)
+        isdefined(scope, symbol) || return link
+        scope = getfield(scope, symbol)
+        scope isa Module || return link
+    end
+    symbol = Symbol(last(segments))
+    isdefined(scope, symbol) || return link
+    owner = which(scope, symbol)
+    Base.isexported(owner, symbol) || return link
+    "[`$name`](@ref $owner.$symbol)"
 end
 
 # The declaration methods the type defines, by the fixed order of
@@ -377,3 +484,17 @@ _outputs_section(outputs::Outputs) =
     (order = [outputs.components[ci].path for ci in outputs.order],
      components = [(path = row.path, stage1 = String.(row.stage1), stage2 = String.(row.stage2))
                    for row in outputs.components])
+
+# --- the events section (D-467) -------------------------------------------------
+
+# The `Events` as the artifact holds them, one row per primitive in walk order,
+# so a position addresses a row here and in `outputs` alike: the events in
+# declaration order with their policies, and the bundle's field names. The
+# vectors are typed, since an empty comprehension over an empty `NamedTuple`'s
+# pairs is a `Vector{Union{}}`, which JSON encodes as `{}`.
+_events_section(events::Events) =
+    (components = [(path = row.path,
+                    events = NamedTuple[(name = String(name), policy = String(policy))
+                                        for (name, policy) in pairs(row.policies)],
+                    bundle = String[String(field) for field in row.bundle])
+                   for row in events.components],)

@@ -17,9 +17,12 @@ item changes what the spec says, the spec edit is part of the item.
   in four parts in this order. The session's record is
   `RedstoneInspector.jl/design/deployment_overlay.md`, and its answer 17
   lists the five log entries the parts owe. Each part lands as a spec and
-  log commit followed by its code. Parts one and two, the notation and
-  the grid report's placement, have landed (D-464, D-466), and parts three
-  and four follow. The session left open whether the
+  log commit followed by its code. Parts one to three, the notation, the
+  grid report's placement and the descriptor, have landed (D-464, D-466,
+  D-467, D-468), and part four follows. Part three's cold review is next,
+  and its record is
+  `design/increments/20261120_descriptor_content/notes_descriptor_content.md`,
+  whose section 11 is the handover. The session left open whether the
   build refuses a pool that admits no deployment. That was ruled on
   2026-11-20 and has landed ahead of part two: the build refuses a
   structure that no deployment binds, by one trial binding (§9.1, §9.2,
@@ -27,26 +30,6 @@ item changes what the spec says, the spec edit is part of the item.
   lives in `src/structure.jl`. The record, with its findings, the items
   it leaves open for the user and the grid report's part, is
   `design/increments/20261120_structure_trial/notes_structure_trial.md`.
-  - **The descriptor.** The format stays at 1.0 and changes freely until
-    the first release (§13.9). It carries every fact `show` prints of a
-    `Build` or a `Deployment`, or the facts from which a client derives it
-    exactly, and no internals, where it carried what a client needs to
-    draw the component tree. That adds the schedule's rows for anchors,
-    discrete primitives and rate scopes, `dt_frame` and `dt_base`, the
-    deployment's warnings and parameters, the events, one row per
-    primitive as the artifact holds them, and the grid report in
-    `structure`. The anchor's key `T` becomes `dt`. A root input's
-    `pinned` becomes the meet's (§8.2, D-168), with `pinned_by` naming the
-    consumers that pin, and `show(::Structure)` marks each input route
-    that ends at one, by tier or by declaration. The writer adds a target
-    to each bare `@ref` link whose name resolves to an exported binding.
-    The schema's record path lands with it. The shapes are the record's
-    answers 4 to 7, 14 and 15. Stage reached: the spec and the log have
-    landed (D-467, D-468), the prototype is whole and its readings are
-    ratified, and the record and the patch are committed. The code commit
-    and the cold review are next. The notes are
-    `design/increments/20261120_descriptor_content/notes_descriptor_content.md`,
-    whose section 11 is the handover.
   - **`show(::Deployment)` in the notation**, after parts one to three
     and not owed to the inspector. Its tables show each anchor's `Dₖ` and
     `Φₖ` and each component's `m`, `c`, `D`, `Φ`, `Δt` and `τ` in one row,

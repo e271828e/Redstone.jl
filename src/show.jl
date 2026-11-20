@@ -69,20 +69,35 @@ _route_label(face::Symbol, route::Vector{Tuple{String,Symbol}}) =
     join([String(face); [_named(path, name, "/") for (path, name) in route]], " → ")
 
 # One side's block: one line per route of each root face in `faces`, derived from
-# the wires (D-315), or no block when the side has no root face.
-function _route_lines(heading::String, structure::Structure, faces::Vector{Symbol})
-    lines = ["    " * _route_label(face, route)
-             for face in faces for route in face_routes(structure, ("", face))]
-    isempty(lines) ? String[] : vcat(["  " * heading], lines)
+# the wires (D-315), or no block when the side has no root face. A route whose
+# terminal `marks` holds takes that mark in one column after the widest route.
+function _route_lines(heading::String, structure::Structure, faces::Vector{Symbol},
+                      marks::Dict{Tuple{String,Symbol},String} = Dict{Tuple{String,Symbol},String}())
+    routes = [(face, route) for face in faces for route in face_routes(structure, ("", face))]
+    isempty(routes) && return String[]
+    labels = [_route_label(face, route) for (face, route) in routes]
+    width = maximum(textwidth, labels)
+    vcat(["  " * heading],
+         [rstrip("    " * rpad(label, width) * "  " * get(marks, last(route), ""))
+          for (label, (_, route)) in zip(labels, routes)])
 end
+
+# The input routes' marks (§13.7, D-468): each pinning consumer's terminal, by
+# its tier, where the route that ends there is printed.
+_pin_marks(structure::Structure) =
+    Dict{Tuple{String,Symbol},String}(
+        (consumer.path, consumer.port) =>
+            (consumer.tier === DISCRETE ? "pinned by tier" : "pinned by declaration")
+        for consumers in pinning_consumers(structure) for consumer in consumers)
 
 # The component table with its timing against the anchors, the rate-scope rows
 # when any keyed scope exists, the anchor table with the `A₀` row always
 # present: `Δt_base` symbolic in its `T` column and dashes where no scope
 # declares it (§9.2), the grid report derived from the anchors, its block's
 # lines under `grid:` and no block where no anchor exists (D-466), and the root
-# faces' routes, derived through `face_routes`. The level rows and their wires
-# are fields, printed by no method here.
+# faces' routes, derived through `face_routes`, an input route marked where its
+# consumer pins the root input (D-468). The level rows and their wires are
+# fields, printed by no method here.
 function _lines(structure::Structure)
     lines = ["Structure: " * _structure_counts(structure) * "; root inputs: " *
              (isempty(structure.root_inputs) ? "none" : join(structure.root_inputs, ", ")),
@@ -109,7 +124,8 @@ function _lines(structure::Structure)
     block = _grid_block(_grid_report(structure.anchors))
     isempty(block) || append!(lines, ["  grid:"; _indented(split(block, '\n')[2:end])])
     root_level = first(structure.levels)
-    append!(lines, _route_lines("input routes:", structure, _boundary_inputs(root_level)))
+    append!(lines, _route_lines("input routes:", structure, _boundary_inputs(root_level),
+                                _pin_marks(structure)))
     append!(lines, _route_lines("output routes:", structure, _boundary_outputs(root_level)))
     lines
 end

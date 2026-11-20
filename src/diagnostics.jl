@@ -1325,6 +1325,9 @@ struct GridEntry
     alternatives::Vector{Rational{Int}}   # a driving offset's nearest non-refining neighbours that fit `Int`; else empty
 end
 
+# A cofactor the trial division left whole, which may be composite (§9.2, D-459).
+_unfactored(prime::Int) = prime ≥ PRIME_DIVISOR_CAP^2
+
 # The anchor's declaring entry, as every grid consumer names it.
 _anchor_label(scope::String, key::Symbol) =
     "`sample_times` at $(_at_path(scope)), key `$key`"
@@ -1409,7 +1412,7 @@ function _grid_block(grid::Union{Nothing,GridReport})
     # A whole-second grid has no prime to attribute, so the section is absent.
     # A cofactor the trial division left at or above its cap's square may be
     # composite, so it prints as unfactored, never as a prime.
-    prime_powers = [p.prime ≥ PRIME_DIVISOR_CAP^2 ? "$(p.prime) unfactored" :
+    prime_powers = [_unfactored(p.prime) ? "$(p.prime) unfactored" :
                     "$(p.prime)$(_superscript(p.power))" for p in grid.primes]
     isempty(prime_powers) ||
         push!(rows, "  primes: $(denominator(grid.admissible)) = " *
