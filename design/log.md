@@ -466,6 +466,7 @@ were derived.
 | [D-465][d-465] | Refuse at the build a structure that no deployment binds | ratified |
 | [D-466][d-466] | Derive the grid report from the structure's anchors, and print it with the structure | ratified |
 | [D-467][d-467] | The descriptor carries what `show` prints, at version 1.0 until the first release | ratified |
+| [D-468][d-468] | Show and carry a root input's pin with the consumers that cause it | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -10803,6 +10804,10 @@ Annotation (2026-11-20): `show(::Structure)` also prints the grid report
 after the anchor table, and no block for a structure with no anchors.
 `show(::Deployment)` prints no grid block ([D-466][d-466]).
 
+Annotation (2026-11-20): `show(::Structure)` marks each input route that
+ends at a pinning consumer, as pinned by tier or pinned by declaration
+([D-468][d-468]).
+
 ### D-258 — "Schedule" is the tick timing and "execution order" the stage sequence
 
 **Status.** ratified
@@ -17702,6 +17707,10 @@ and kind are closed, the client resolving (its answer 4).
 Annotation (2026-11-12): the library is `Redstone.Library` since [D-453][d-453], so
 the example base name reads `Redstone.Library.PID`. The reading stands.
 
+Annotation (2026-11-20): [D-468][d-468] supersedes the bullet on a root input's
+`pinned`. The flag is [D-168][d-168]'s meet, computed by the writer, and `pinned_by`
+lists the consumers that pin. The root input keeps a primitive face's shape.
+
 Annotation (2026-11-20): [D-467][d-467] has the writer add a target to each bare
 `@ref` link of the docstring it carries. Which docstring it carries stands.
 [D-467][d-467] also states as a rule what the annotation of 2026-10-27 allowed once,
@@ -20315,6 +20324,68 @@ and the flag.
 - *The client testing `prime ≥ 2^40` for itself:* a field named `prime`
   holding an unmarked composite, and the cap copied into every client.
 
+### D-468 — Show and carry a root input's pin with the consumers that cause it
+
+**Status.** ratified
+
+**Position.** A root input's pin is shown by `show(::Structure)` and carried
+by the descriptor, each with the consumers that cause it.
+
+- A pinning consumer of a root input is a consumer whose input entry refuses
+  the root input's type walked to a `Dual`: a discrete one by tier, and a
+  continuous one by its `Pinned` marker or by an abstract entry that admits
+  no `Dual`. A root input with a pinning consumer is pinned, [D-168][d-168]'s meet.
+- `show(::Structure)` marks each input route that ends at a pinning
+  consumer, as pinned by tier or pinned by declaration.
+- In the descriptor a root input's `pinned` is the meet's, and `pinned_by`
+  lists the pinning consumers, each an endpoint, an empty array when none.
+  The cause has no key.
+- The meet is computed from the `Structure` alone, so a failure descriptor
+  past the structure step carries it.
+
+Supersedes [D-433][d-433]'s bullet that a root input's `pinned` is false in version
+one.
+
+**Spec.** [§9.2][s9-2], [§13.7][s13-7], [§13.9][s13-9], [§14.10][s14-10]
+
+**Rationale.** The field was `false` in every file. The writer read the type
+the wire pass had stripped of its marker ([D-236][d-236]), so the ruling corrects a
+field. [§8.2][s8-2] gives the word: the root input pins at every activation if any
+consumer's entry pins. The meet needs no `Dual` activation, since a
+consumer's entry at a scalar is a function of its declaration, its tier and
+the scalar.
+
+The input routes list each terminal consumer of each root input, which is
+the set the meet runs over. A mark there names the consumer and the cause
+where the user already reads. The cause decides the remedy ([§14.10][s14-10]): a
+declared pin can be promoted, and a pin by tier cannot. Until now a user
+learned of a pinned root input when `linearize` refused a tap, from the list
+that refusal builds. With the mark in `show`, [D-467][d-467]'s parity rule brings the
+consumers into the format, and a client's marks are exact.
+
+The cause needs no key because the consumer's node carries its tier. The
+build refuses a marker below the top of an entry ([D-265][d-265]), so a primitive
+face's own `pinned` flag covers every declared pin. The one pin a client
+could not see for itself is the abstract entry's, which subtyping decides,
+and the writer's list covers it. The session that settled this is recorded
+in `RedstoneInspector.jl/design/deployment_overlay.md`, answer 14.
+
+**Rejected.**
+- *The pin left unshown, the user learning at `linearize`'s refusal:* the
+  fact follows from the structure and is known at the build.
+- *The client deriving the pin from the consumers' flags and tiers:* a
+  second implementation of the meet, which misses the abstract entry.
+- *A `seedable` verdict in the format:* it would be per tap, a vector input
+  having one per component.
+- *`show` unchanged, a client alone carrying the fact:* the REPL user reads
+  less than the page, against [D-467][d-467].
+- *The word "pinned" beside the name on `show`'s heading:* it says the input
+  is frozen and not by whom or why.
+- *A root-inputs table in `show` with the types:* the types are what the
+  user wrote.
+- *Superseded position — a root input's `pinned` false in version one
+  ([D-433][d-433]):* a field that could never be true.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -20757,6 +20828,7 @@ and the flag.
 [d-465]: #d-465--refuse-at-the-build-a-structure-that-no-deployment-binds
 [d-466]: #d-466--derive-the-grid-report-from-the-structures-anchors-and-print-it-with-the-structure
 [d-467]: #d-467--the-descriptor-carries-what-show-prints-at-version-10-until-the-first-release
+[d-468]: #d-468--show-and-carry-a-root-inputs-pin-with-the-consumers-that-cause-it
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

@@ -4834,8 +4834,8 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
   ([D-466][d-466]). It derives the report from the anchors and sets the grid
   block's lines under `grid:` (below). A structure with no anchors prints no
   block. `show(::Structure)` derives each root face's routing chain from the
-  declared wires and prints the root's routes, one line per chain
-  ([§13.7][s13-7]).
+  declared wires and prints the root's routes, one line per chain, an input
+  route marked where its consumer pins the root input ([§13.7][s13-7]).
 - `show(::Outputs)` prints the execution order with each port's class.
 - `show(::Events)` prints each component's event names with their policies.
 - `show(::Schedule)` prints the rows and the hyperperiod chart.
@@ -11795,6 +11795,18 @@ routing chain from the declared wires and prints the root's routes ([D-257][d-25
 face that fans out prints one line per consumer. The wiring diagnostics name
 endpoints in the same slash form.
 
+**`show(::Structure)` marks each input route that ends at a pinning
+consumer** ([D-468][d-468]). A pinning consumer is one whose input entry refuses
+the root input's type walked to a `Dual`, and a root input with one is pinned
+at every activation, by the fan-out meet ([§8.2][s8-2], [D-168][d-168]). The mark
+reads `pinned by tier` on a discrete consumer and `pinned by declaration` on
+a continuous one, whose entry is `Pinned` or an abstract type that admits no
+`Dual`. The routes already list every terminal consumer of a root input,
+the set the meet runs over. The mark therefore names who froze the input
+and why, where the user reads its consumers. The cause decides the remedy:
+a declared pin can be promoted, and a pin by tier cannot
+([§14.10][s14-10]).
+
 #### The standard component library
 
 A standard component library makes good on the junction promise
@@ -12264,9 +12276,15 @@ body has three sections, each the projection of one [artifact](#g-artifact)
   a [root input](#g-root-input) (one of the root component's own input
   faces). `root_inputs`, `anchors` and `scopes` project the remaining rows,
   an anchor's period under the key `dt` ([D-464][d-464], [D-467][d-467]), `grid`
-  is the grid report (below), and a `types` table describes each type once. A root input is a primitive face
-  whose `pinned` is false in version one, the wire pass having stripped the
-  marker when it fixed the type ([D-236][d-236], [D-433][d-433]).
+  is the grid report (below), and a `types` table describes each type once. A root input has a primitive
+  face's shape. **A root input's `pinned` is the fan-out meet's**
+  ([§8.2][s8-2], [D-168][d-168], [D-468][d-468]). It is true when some consumer's
+  entry refuses the root input's type walked to a `Dual`. The row also holds
+  `pinned_by`, those consumers, each an endpoint of a path and a port, an
+  empty array when none. The cause has no key, since a consumer on the
+  discrete tier pins by tier and one on the continuous tier by declaration.
+  The writer computes the meet from the `Structure` alone, so a failure past
+  the structure step carries it too.
 - `outputs` projects [`Outputs`](#g-outputs) (the execution order and each
   port's stage): the order as paths, and per primitive its stage-1 and stage-2
   port names, `y` for a bare port ([D-437][d-437]).
@@ -14076,7 +14094,9 @@ root input. A discrete consumer pins its input entry by tier, not by declaration
 ([§8.2][s8-2]), so a root input it reads is unseedable at every activation with nothing
 to promote. The rejection then names the tier, and the next move is to tap the
 continuous cell that consumer drives, or the recorded step map
-below ([D-272][d-272], [D-419][d-419]).
+below ([D-272][d-272], [D-419][d-419]). `show(::Structure)` marks the same consumers on
+the root's input routes and the descriptor lists them, so a user can read
+them before a tap is refused ([§13.7][s13-7], [§13.9][s13-9], [D-468][d-468]).
 
 The table sets seeded and frozen leaves side by side.
 
@@ -17335,6 +17355,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-465]: log.md#d-465--refuse-at-the-build-a-structure-that-no-deployment-binds
 [d-466]: log.md#d-466--derive-the-grid-report-from-the-structures-anchors-and-print-it-with-the-structure
 [d-467]: log.md#d-467--the-descriptor-carries-what-show-prints-at-version-10-until-the-first-release
+[d-468]: log.md#d-468--show-and-carry-a-root-inputs-pin-with-the-consumers-that-cause-it
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
