@@ -465,6 +465,7 @@ were derived.
 | [D-464][d-464] | Write a discrete component's timing in four frames, and an anchor's period as `Δtₖ` | ratified |
 | [D-465][d-465] | Refuse at the build a structure that no deployment binds | ratified |
 | [D-466][d-466] | Derive the grid report from the structure's anchors, and print it with the structure | ratified |
+| [D-467][d-467] | The descriptor carries what `show` prints, at version 1.0 until the first release | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -17589,6 +17590,12 @@ Annotation (2026-10-28): the carrier field landed with [D-434][d-434], which
 widens its trigger to any throw leaving the door past the structure step, a
 requested activation's included, and types it `Any` for the include order.
 
+Annotation (2026-11-20): amended by [D-467][d-467]. The content rule is parity with
+`show`, in place of the third bullet's "what a client draws and explains",
+and the body gains the events, the deployment's parameters, the schedule
+and the grid report. The format stays at version 1.0 and changes freely
+until the first release, and the second bullet's bump rules bind from then.
+
 **Rejected.**
 - *Reading the descriptor as [D-257][d-257]'s rejected accessor:* an accessor binds
   the artifact's fields; the descriptor binds a format.
@@ -17694,6 +17701,11 @@ and kind are closed, the client resolving (its answer 4).
 
 Annotation (2026-11-12): the library is `Redstone.Library` since [D-453][d-453], so
 the example base name reads `Redstone.Library.PID`. The reading stands.
+
+Annotation (2026-11-20): [D-467][d-467] has the writer add a target to each bare
+`@ref` link of the docstring it carries. Which docstring it carries stands.
+[D-467][d-467] also states as a rule what the annotation of 2026-10-27 allowed once,
+additions to version one before the release.
 
 **Rejected.**
 - *The table read literally, a closure and an `Array` as `struct`:* captures
@@ -20153,6 +20165,156 @@ and the session on the grid report's part ruled the printed form on
 - *The field moved to the `Build`:* nearer its facts and still a second home
   for them, with no enforcer but the constructor that filled both ([D-261][d-261]).
 
+### D-467 — The descriptor carries what `show` prints, at version 1.0 until the first release
+
+**Status.** ratified
+
+**Position.** The descriptor carries every fact `show` prints of a `Build`
+or a `Deployment`, or the facts from which a client derives it exactly, and
+no internals. The bundled rulings:
+
+- The build's activation list stays out, as the state of a cache. A client
+  derives the routes, the feedthrough edges, a component's rate chain, the
+  hyperperiod and the steps per frame.
+- The format stays at version 1.0 and changes freely until the first
+  release. Version 1.0 is the format as of that release, and [D-432][d-432]'s bump
+  rules bind from then. The schema requires each section the format gains.
+- The deployment body is flat, in the order of the `Deployment`'s fields:
+  `build`, `dt_frame`, `dt_base`, `h_max` resolved, `h_min` when set,
+  `algorithm` as the text its `show` prints with the flag `proposes`,
+  `firing_budget`, `localization_tol`, `localization_budget`,
+  `attempt_budget`, `schedule` and the deployment's `warnings`.
+- `schedule` holds `anchors`, each anchor's `(Dₖ, Φₖ)` as the writer
+  computes them, `rows`, each discrete primitive's path, `D` and `phi`, and
+  `scopes`, each rate scope's path, key, `D` and `phi`. A row carries no
+  anchor, no rate chain and no `Δt`.
+- `structure` carries the grid report as data under `grid`: `admissible`,
+  `pool` with each entry's anchor, kind, factor and alternatives, and
+  `primes` with each row's prime, power and suppliers. A cofactor the trial
+  division left unfactored carries `unfactored`.
+- A stored position counts from 1: an anchor in `anchors`, with 0 the base
+  grid, and a supplier in `pool`.
+- The build body gains `events`, one row per primitive in walk order as the
+  `Events` artifact holds them: the path, the events in declaration order
+  with name and policy, and the bundle's field names. `state_events` joins
+  the declarations a `types` row locates.
+- An anchor's period stands under the key `dt`.
+- The writer adds a target to each bare `@ref` link of a docstring whose
+  name resolves, from the type's module, to a binding its owner exports. It
+  keeps the text.
+
+Supersedes the headline of [D-432][d-432]'s third bullet, that version one carries
+what a client draws and explains. The bullet's list of what `structure` and
+`outputs` hold stands, and this entry adds to it.
+
+**Spec.** [§13.9][s13-9]
+
+**Rationale.** [D-432][d-432] staged the content by what the first client drew. The
+events and the deployment's parameters were left out by that staging and
+never by principle: the inspector's design already titled the content "the
+artifacts' facts plus instance context" and had the page turn what `show`
+prints into something to navigate. Parity states that as a rule with a
+boundary. Initial states, cell layouts and compiled forms stay out as
+before. The core's suite can check the rule, and a user who has read
+`show(deployment)` finds the same facts on the page under the same names.
+
+[D-433][d-433]'s annotation of 2026-10-27, [D-434][d-434] and [D-437][d-437] each added to version one
+unbumped, the package being unreleased and the format having no reader to
+protect. A rule replaces the repeated exception. A minor bump only adds
+fields, so a 1.1 schema would have had to leave every new section optional,
+and a reader would have kept a path for a file without them.
+
+The two periods are the `Deployment`'s fields, where the `Schedule` holds
+neither. The frame places the frame tops against the schedule. The
+algorithm, the step bounds and the budgets decide how the model behaves, so
+the rule brings them in. A tolerance inside the algorithm's text never
+changes the format when a new method arrives, and `proposes` is the one fact
+a client needs from the token, to state the steps per frame as a count or as
+a range.
+
+Each section projects one artifact, and [§9.2][s9-2] calls the `Schedule` the single
+source of truth for `Δt`. Binding is exact rational division, and a
+JavaScript number is exact only below `2^53`, so the rows are carried and
+not left to the client. They are also the oracle a client's own checks need.
+The anchors' counts link `(m, c)` to `(D, Φ)`, and a client cannot solve
+them back from a component row for an anchor with no discrete primitive
+beneath it. The writer computes them where the file is written, since [D-261][d-261]
+keeps a derived value off the `Schedule`.
+
+The grid report goes in `structure` because it is a function of the anchors
+([D-466][d-466]), so a build's file and a failure's past the structure step both
+carry it. With the anchor's position a client sets each factor beside the
+value it belongs to. [D-465][d-465] leaves two cases only, a pool with a report and
+an empty pool.
+
+A `primes` row for an unfactored cofactor holds a number that may be
+composite, and its suppliers are the entries that share a factor with it,
+where a prime power's are the entries it divides ([D-459][d-459]). `show` adds the
+word by comparing the number with the trial division's cap. The flag states
+it in the data, where a reader of the file sees it, and a change of the cap
+then touches no client.
+
+A position stored in the file has no base of its own. The format already
+counted from 1 in its two places, an anchor's number and a tuple's field
+names ([D-433][d-433]), and the report's suppliers count from 1 in the artifact. One
+rule for the file serves every reader, and the first client's language is
+no criterion. The inspector's record wrote the suppliers of its example from
+0, and this entry does not follow it.
+
+The events' rows are the artifact's rows, as in every other section, so a
+missing row is an error a reader can detect, and one position addresses a
+primitive's events and its outputs. The section is no field on the node
+because a policy comes from the nominal probe, which a failure descriptor
+never has, [D-432][d-432]'s reason for the output stages. One change to the format
+serves what the rule treats as one gap, ahead of the client's drawing of
+the events.
+
+A client that joins a bare `@ref` name to the type's module makes dead links
+out of every link from `Redstone.Library` into `Redstone`. The docs build
+checks that every exported name with a docstring stands on the API page, so
+a link to an exported name has its anchor by construction. After the
+writer's pass a bare link is one that did not resolve. The session that
+settled the content is recorded in
+`RedstoneInspector.jl/design/deployment_overlay.md`, answers 1, 2, 4 to 7
+and 15, and the session of 2026-11-20 on this part ruled the positions' base
+and the flag.
+
+**Rejected.**
+- *"The `Model` as a whole" as the content rule:* it has no boundary, a
+  `Model` adding a scalar type, buffers and state.
+- *A `schedule` section and nothing else:* the scope the inspector's roadmap
+  first named, written before the frame period existed ([D-443][d-443]).
+- *A bump to 1.1:* every new section optional in the schema, for a format
+  with no released reader.
+- *The schedule and the base tick alone in the deployment body:* the frame,
+  the method and the budgets are facts `show` prints.
+- *The deployment's parameters grouped under two keys:* the artifact is flat
+  and `show` prints one line.
+- *The base tick alone, the client binding the schedule:* a second
+  implementation of binding, in a language whose numbers are exact only
+  below `2^53`.
+- *The anchors' `Dₖ` and `Φₖ` stored on the `Schedule`:* a derived value on
+  an artifact, against [D-261][d-261].
+- *The grid block as the text `show` prints:* it could only sit in a block
+  of its own, with no factor beside its anchor.
+- *The events in a later change to the format:* twice the pin moves and
+  fixture rounds for one gap.
+- *One event row per declaring component, as `show` prints:* the one section
+  whose rows would follow `show`'s selection and not the artifact's.
+- *The `Events` type retired for a bare vector:* the type gives
+  `build.events` its table and its documented name.
+- *`which(mod, name)` alone for a link's target:* it also qualifies an
+  internal name, which has no anchor.
+- *The link's text qualified with its target:* it changes what the author
+  wrote.
+- *Suppliers counted from 0, as a JavaScript array index:* the one
+  zero-based number in the file, beside anchors counted from 1 in the same
+  object.
+- *A supplier as the pair of its anchor and kind:* a longer row for no new
+  fact, where an anchor is already named by position.
+- *The client testing `prime ≥ 2^40` for itself:* a field named `prime`
+  holding an unmarked composite, and the cap copied into every client.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -20594,6 +20756,7 @@ and the session on the grid report's part ruled the printed form on
 [d-464]: #d-464--write-a-discrete-components-timing-in-four-frames-and-an-anchors-period-as-δtₖ
 [d-465]: #d-465--refuse-at-the-build-a-structure-that-no-deployment-binds
 [d-466]: #d-466--derive-the-grid-report-from-the-structures-anchors-and-print-it-with-the-structure
+[d-467]: #d-467--the-descriptor-carries-what-show-prints-at-version-10-until-the-first-release
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

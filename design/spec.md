@@ -12228,12 +12228,20 @@ embeds the build body whole under `build`, so one definition of the build
 body serves both places and a file always opens on its own. **A minor bump
 only adds fields, and a major bump may break readers** ([D-432][d-432]). A reader
 ignores fields it does not know and refuses a major version it does not
-know.
+know. **The format stays at version 1.0 and changes freely until the first
+release** ([D-467][d-467]). Version 1.0 is the format as of that release, and
+the two bump rules bind from then. Until then the schema requires each
+section the format gains, and a reader keeps no path for an older file.
 
-**Version one carries what a client needs to draw and explain the component
-tree, and no internals** ([D-432][d-432]). The build body has two sections, each the
-projection of one [artifact](#g-artifact) (an immutable pure function of its
-inputs), and the build's warnings:
+**The descriptor carries every fact `show` prints of a `Build` or a
+`Deployment`, or the facts from which a client derives it exactly, and no
+internals** ([D-467][d-467]). The second clause covers what a client computes
+from the file: the routes, the feedthrough edges, a component's rate chain,
+the hyperperiod and the steps per frame. One printed thing stays out, the
+build's list of [activations](#g-activation) (the build's typed products at
+a given scalar type), which is the state of a cache ([§9.4][s9-4]). The build
+body has three sections, each the projection of one [artifact](#g-artifact)
+(an immutable pure function of its inputs), and the build's warnings:
 
 - `structure` projects the [`Structure`](#g-structure) (the structure step's
   declared facts). `nodes` lists every [component](#g-component) (a primitive or
@@ -12255,12 +12263,20 @@ inputs), and the build's warnings:
   full path and a port, the level's own path on a boundary face and `""` for
   a [root input](#g-root-input) (one of the root component's own input
   faces). `root_inputs`, `anchors` and `scopes` project the remaining rows,
-  and a `types` table describes each type once. A root input is a primitive face
+  an anchor's period under the key `dt` ([D-464][d-464], [D-467][d-467]), `grid`
+  is the grid report (below), and a `types` table describes each type once. A root input is a primitive face
   whose `pinned` is false in version one, the wire pass having stripped the
   marker when it fixed the type ([D-236][d-236], [D-433][d-433]).
 - `outputs` projects [`Outputs`](#g-outputs) (the execution order and each
   port's stage): the order as paths, and per primitive its stage-1 and stage-2
   port names, `y` for a bare port ([D-437][d-437]).
+- `events` projects [`Events`](#g-events) (each component's event names and
+  detection policies) as the artifact holds it, one row per primitive in walk
+  order, so one position addresses a row here and in `outputs` alike
+  ([D-467][d-467]). A row holds the primitive's path, its events in
+  declaration order, each a `name` and a `policy`, `localized` or
+  `non_localized`, and the event bundle's field names. A primitive that
+  declares no event has both lists empty.
 - `warnings` lists the warnings the build kept ([§9.2][s9-2]), each encoded
   as the failure descriptor encodes a diagnostic, an empty array when there
   are none ([D-434][d-434]).
@@ -12273,6 +12289,46 @@ implementation change is never a format change. Faces come from the
 declaration reader at `Float64`, which takes an instance and its tier, both
 in the `Structure`, so a failure after the structure step can still carry
 them. Port classes come from probing and live in `outputs` for that reason.
+
+**`structure` carries the grid report as data, under `grid`**
+([D-467][d-467]). The writer derives it from the
+[anchors](#g-anchor) (the exact `(Δtₖ, τₖ)` pairs the `Absolute` entries
+establish), as `show(::Structure)` does ([§9.2][s9-2], [D-466][d-466]).
+`admissible` is the coarsest admissible `Δt_base`. `pool` lists the entries
+in the report's order, each with its `anchor`, its `kind`, `period` or
+`offset`, its refinement `factor`, and `alternatives` where it has some. An
+entry's value, scope and key are its anchor's row. `primes` lists each prime
+power of the grid's denominator as its `prime`, its `power` and its
+`suppliers`, the pool entries that supply it. **A cofactor the trial division
+left unfactored carries `unfactored`**, and its suppliers are the entries
+that share a factor with it ([§9.2][s9-2], [D-459][d-459], [D-467][d-467]). A
+structure with no anchors has an empty `pool`, an empty `primes` and no
+`admissible`.
+
+**A stored position counts from 1** ([D-467][d-467]). An `anchor` is a position
+in `anchors`, with 0 for the base grid, which has no row. A supplier is a
+position in `pool`. The format names no client's language, and a reader
+subtracts where its own arrays count from 0.
+
+**The deployment body is flat, in the order of the `Deployment`'s fields**
+([D-467][d-467]). After `build` it holds `dt_frame`, `dt_base` and `h_max`,
+each exact as a numerator and a denominator, and `h_min` when one is set.
+`h_max` is the resolved bound ([§9.2][s9-2]). `algorithm` holds the text the
+token's `show` prints and `proposes`, whether the method proposes its steps,
+which decides whether a client states the steps per frame as a count or as a
+range. Then come `firing_budget`, `localization_tol`, `localization_budget`
+and `attempt_budget`, the `schedule` section, and `warnings`, the
+deployment's own, encoded as the build's are.
+
+`schedule` projects the [`Schedule`](#g-schedule) (the typed per-component
+tick table), with the anchors' counts beside its rows. `anchors` holds each
+anchor's `(Dₖ, Φₖ)` in the order of `structure`'s `anchors`. The writer
+computes them as `Δtₖ/Δt_base` and `τₖ/Δt_base`, since a client cannot solve
+them back for an anchor with no discrete primitive beneath it. `rows` holds
+each discrete primitive's path with its `D` and `phi`, and `scopes` each rate
+scope's path and key with its `D` and `phi`. A row carries no anchor, which
+its node's `timing` holds, no rate chain, and no `Δt`, which a client
+computes exact as `D` times `dt_base`.
 
 **Each primitive face carries a kind marker computed in the core** ([D-432][d-432]). The
 [kind marker](#g-kind-marker) (a small object telling a client with no Julia
@@ -12317,10 +12373,15 @@ them, and the base name is the identity ([D-433][d-433]). The docstring is the o
 written on the type itself, or, when the type has none, the first its binding
 holds ([D-433][d-433]). The `types` row holds the docstring as Markdown source and the
 source locations of the declaration methods the type defines, `u_types`,
-`y_types`, `x_init`, `s_init`, `m_init`, `sample_times`, the three wire
-declarations, `stop_reason` and `transparent_container`, each as the file
-and line Julia reports, since Julia records no location for a `struct`
-itself. The node's summary lists each inert field as `repr` text under
+`y_types`, `x_init`, `s_init`, `m_init`, `sample_times`, `state_events`
+([D-467][d-467]), the three wire declarations, `stop_reason` and
+`transparent_container`, each as the file and line Julia reports, since Julia
+records no location for a `struct` itself. **The writer adds a target to each bare `@ref` link of a docstring
+whose name resolves, from the type's module, to a binding its owner exports**
+([D-467][d-467]). It writes the owner as the target and keeps the text, so
+`` [`Pinned`](@ref) `` in a `Redstone.Library` docstring becomes
+`` [`Pinned`](@ref Redstone.Pinned) ``. Every other link stays as written, so
+after the pass a bare link is one that did not resolve. The node's summary lists each inert field as `repr` text under
 `:compact` and `:limit`, cut at 80 characters, so a `Constant` holding a
 lookup table never swells the file. An inert field holding a `NamedTuple`
 with fields lists one entry per field instead, named by the dotted path,
@@ -17273,6 +17334,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-464]: log.md#d-464--write-a-discrete-components-timing-in-four-frames-and-an-anchors-period-as-δtₖ
 [d-465]: log.md#d-465--refuse-at-the-build-a-structure-that-no-deployment-binds
 [d-466]: log.md#d-466--derive-the-grid-report-from-the-structures-anchors-and-print-it-with-the-structure
+[d-467]: log.md#d-467--the-descriptor-carries-what-show-prints-at-version-10-until-the-first-release
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
