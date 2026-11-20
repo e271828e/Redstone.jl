@@ -60,12 +60,62 @@ Each comes back as a reading in the rules' form.
 6. **A parity check in the suite.** D-467's Rationale says the core's suite
    can check the rule. Whether a test does, and how, is open.
 
+## 3a. The readings round, ratified by the user on 2026-11-20
+
+The prototype was whole at the round: the gate at 10676 of 10676 against
+10316 at the base, the examples at 179 of 179, thirteen mutants red and one
+accepted survivor. The user accepted every recommendation below.
+
+1. **The meet's scalar is `ProbeDual`**, an argument of
+   `pinning_consumers(structure, T = ProbeDual)` in `build.jl`. `linearize`
+   passes its own scalar, so its refusal is unchanged. `Marker` was
+   rejected on a probe: an entry `Union{Float64, ForwardDiff.Dual}` admits a
+   `Dual` and refuses `Marker`, which would print a false mark. The
+   surviving mutant has `linearize` call at `ProbeDual`. The two scalars
+   differ only for an entry that tells two `Dual` tags or widths apart,
+   which no fixture has.
+2. **The mark sits in an aligned column**, two spaces after the widest
+   route of the block, with no parentheses.
+3. **The rate chain is not derivable, and the node carries it as `rates`.**
+   A client derivation from the timings and the scope rows reproduced 12 of
+   18 printed chains. §13.9 and D-467 are amended. The rejected alternatives
+   are in D-467.
+4. **`state_events` stands after `sample_times`.**
+5. **The `@ref` rule stays as ruled and is inert until the export audit.**
+   The package exports nothing (D-226), so none of the 124 bare links gains
+   a target. D-467's rationale claimed the docs build guarantees an anchor,
+   which was false and is corrected. The user chose to wait for the audit
+   over targeting any documented binding. The inspector's record counts 121
+   links in 42 docstrings, and the run found 124 in 45.
+6. **A parity test joins the suite**: a client in Julia over the parsed
+   JSON rebuilds `show`'s tables, on ten builds and four deployments.
+7. **A pool entry finds its anchor by scope and key**, with no new field on
+   `GridEntry`, an Appendix C payload.
+8. **The events section is `{"components": [...]}`**, now named in §13.9.
+9. **One helper holds `prime ≥ PRIME_DIVISOR_CAP^2`** for its three sites.
+   The prototyper adds it after the round. `_root_input_cell` stays.
+
+Rulings on the smaller findings:
+
+- A schedule row's float `Δt` is derivable exactly from `D` and `dt_base`,
+  so the format needs nothing. That the float is not the nearest to the
+  exact period predates the increment and has its own `pending.md` item.
+- A primitive root prints no routes, so its pin has no mark in `show`.
+  §13.7 says so.
+- The `Vector{Union{}}` trap is in `code_rules.md`.
+- A discrete consumer with an abstract `Real` entry refuses nothing and is
+  no pinning consumer. D-468 defines the consumer by the refusal, so the
+  spec stands. Read, not probed.
+
 ## 4. The record's checks, for the prototype to run
 
 - That an `AbstractFloat` entry pins. Read off `_accepts_wire`, not run.
+  Result: it pins, verified by running.
 - That the bare `@ref` links of the component docstrings, 121 at the
-  record's count, all name exported bindings.
-- That the docs build's `checkdocs` covers `Redstone.Library`.
+  record's count, all name exported bindings. Result: none does, since
+  nothing is exported. All 124 resolve, and all stand on the API page.
+- That the docs build's `checkdocs` covers `Redstone.Library`. Result: it
+  does not, `docs/make.jl` listing `modules = [Redstone]`.
 
 ## 5. Bookkeeping the code commit owes
 

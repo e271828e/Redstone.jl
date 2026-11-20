@@ -63,6 +63,9 @@ Traps the code does not warn about, each hit more than once while building:
   called from that same world age — reach it through `Base.invokelatest`, or
   build it at top level. `test_leaves.jl` compiles the mixed-cell expression
   builders that way;
+- **an empty comprehension can be a `Vector{Union{}}`**, as over the `pairs`
+  of an empty `NamedTuple`, and JSON.jl encodes one as `{}`, not `[]`. A
+  vector the descriptor writes is typed where it can be empty (§13.9);
 - `===` has no curried form (`all(===(x), v)` fails — use a lambda); a
   `where`-clause method's `.sig` is a `UnionAll` (`Base.unwrap_unionall`
   before `.parameters`);

@@ -20183,8 +20183,8 @@ or a `Deployment`, or the facts from which a client derives it exactly, and
 no internals. The bundled rulings:
 
 - The build's activation list stays out, as the state of a cache. A client
-  derives the routes, the feedthrough edges, a component's rate chain, the
-  hyperperiod and the steps per frame.
+  derives the routes, the feedthrough edges, the hyperperiod and the steps
+  per frame.
 - The format stays at version 1.0 and changes freely until the first
   release. Version 1.0 is the format as of that release, and [D-432][d-432]'s bump
   rules bind from then. The schema requires each section the format gains.
@@ -20197,16 +20197,23 @@ no internals. The bundled rulings:
   computes them, `rows`, each discrete primitive's path, `D` and `phi`, and
   `scopes`, each rate scope's path, key, `D` and `phi`. A row carries no
   anchor, no rate chain and no `Δt`.
+- A primitive node carries its rate chain as `rates`, the links as the
+  `Structure` holds them. (Amended 2026-11-20, at the prototype's readings:
+  this entry first listed the chain among what a client derives. A
+  derivation from the timings and the scope rows reproduced 12 of 18
+  printed chains over the suite's fixtures. An explicit `Relative(1)`
+  changes no timing, and a primitive's own key stands nowhere else in the
+  file.)
 - `structure` carries the grid report as data under `grid`: `admissible`,
   `pool` with each entry's anchor, kind, factor and alternatives, and
   `primes` with each row's prime, power and suppliers. A cofactor the trial
   division left unfactored carries `unfactored`.
 - A stored position counts from 1: an anchor in `anchors`, with 0 the base
   grid, and a supplier in `pool`.
-- The build body gains `events`, one row per primitive in walk order as the
-  `Events` artifact holds them: the path, the events in declaration order
-  with name and policy, and the bundle's field names. `state_events` joins
-  the declarations a `types` row locates.
+- The build body gains `events`, with one row per primitive in walk order
+  under `components`, as the `Events` artifact holds them: the path, the
+  events in declaration order with name and policy, and the bundle's field
+  names. `state_events` joins the declarations a `types` row locates.
 - An anchor's period stands under the key `dt`.
 - The writer adds a target to each bare `@ref` link of a docstring whose
   name resolves, from the type's module, to a binding its owner exports. It
@@ -20279,9 +20286,14 @@ serves what the rule treats as one gap, ahead of the client's drawing of
 the events.
 
 A client that joins a bare `@ref` name to the type's module makes dead links
-out of every link from `Redstone.Library` into `Redstone`. The docs build
-checks that every exported name with a docstring stands on the API page, so
-a link to an exported name has its anchor by construction. After the
+out of every link from `Redstone.Library` into `Redstone`. The target is an
+exported binding because an exported name is one the docs build can be held
+to give an anchor. (Amended 2026-11-20, at the prototype's readings: this
+entry first said the docs build already guarantees that anchor. The package
+exports nothing until the export audit ([D-226][d-226]), so the pass rewrites none of
+the package's 124 bare links until then. The docs build's check also lists
+the module `Redstone` alone, which leaves `Redstone.Library` outside it. All
+124 targets stand on the API page, which is kept by hand.) After the
 writer's pass a bare link is one that did not resolve. The session that
 settled the content is recorded in
 `RedstoneInspector.jl/design/deployment_overlay.md`, answers 1, 2, 4 to 7
@@ -20323,6 +20335,13 @@ and the flag.
   fact, where an anchor is already named by position.
 - *The client testing `prime ≥ 2^40` for itself:* a field named `prime`
   holding an unmarked composite, and the cap copied into every client.
+- *The rate chain derived by the client from the timings and the scope
+  rows:* it reproduces 12 of 18 printed chains.
+- *A node field holding the primitive's own link alone:* less to carry, and
+  the client rebuilds the rest of the chain, a second reading of the fold.
+- *A target for any binding with a docstring in its owner:* links before the
+  export audit, resting on a page kept by hand, and an internal helper with
+  a docstring would qualify.
 
 ### D-468 — Show and carry a root input's pin with the consumers that cause it
 

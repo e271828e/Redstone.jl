@@ -126,7 +126,11 @@ item changes what the spec says, the spec edit is part of the item.
     `Deployment` and `Schedule` list none and tests read `deployment.h`. It
     comes after the tutorial, which surfaces the names a
     user types, and after the library has added its names; the examples are
-    a package of their own and add none.
+    a package of their own and add none. Two things wait on it. The
+    descriptor writer's `@ref` pass targets exported bindings alone, so it
+    rewrites no link until the audit exports some (§13.9, D-467). And
+    `docs/make.jl` lists `modules = [Redstone]`, so `checkdocs = :exports`
+    checks nothing in `Redstone.Library` even then, until the list names it.
     - **The extension-only surface**, where *unexported* is preferred. It has
       three parts: the declaration and stage family of the import list (§8.1),
       the larger half, settled on every component file's first line; the
@@ -205,6 +209,12 @@ Items with no order among them. Nothing prevents any of them before the
 first release, but each is low priority, additive, and lands without
 breaking user code, and each may benefit from user feedback first.
 
+- **A schedule row's `Δt` is not the float nearest its exact period**
+  (§9.2, §10.5). `bind_schedule` writes `D * Float64(Δt_base)`, so three
+  base ticks of `1//10` read `0.30000000000000004`, which `show` prints and
+  every discrete bundle receives. The exact value is `D·Δt_base` as a
+  rational. Found by the descriptor increment's parity check, whose client
+  copies the float product.
 - **Publication's garbage** (§9.8, §10.7, §11.2, D-269). A new snapshot and
   table copy per boundary are by design: §11.2 leaves published snapshots to
   the GC, so a run never avoids it. The requirement that sets the target is

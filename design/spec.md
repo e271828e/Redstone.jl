@@ -11806,7 +11806,8 @@ a continuous one, whose entry is `Pinned` or an abstract type that admits no
 the set the meet runs over. The mark therefore names who froze the input
 and why, where the user reads its consumers. The cause decides the remedy:
 a declared pin can be promoted, and a pin by tier cannot
-([§14.10][s14-10]).
+([§14.10][s14-10]). A primitive root prints no routes, so its pin has no mark
+in `show`, and the descriptor carries it ([§13.9][s13-9]).
 
 #### The standard component library
 
@@ -12249,8 +12250,8 @@ section the format gains, and a reader keeps no path for an older file.
 **The descriptor carries every fact `show` prints of a `Build` or a
 `Deployment`, or the facts from which a client derives it exactly, and no
 internals** ([D-467][d-467]). The second clause covers what a client computes
-from the file: the routes, the feedthrough edges, a component's rate chain,
-the hyperperiod and the steps per frame. One printed thing stays out, the
+from the file: the routes, the feedthrough edges, the hyperperiod and the
+steps per frame. One printed thing stays out, the
 build's list of [activations](#g-activation) (the build's typed products at
 a given scalar type), which is the state of a cache ([§9.4][s9-4]). The build
 body has three sections, each the projection of one [artifact](#g-artifact)
@@ -12261,8 +12262,8 @@ body has three sections, each the projection of one [artifact](#g-artifact)
   an assembly of components) in walk order, assemblies included, each keyed
   by its path with its [class](#g-class) (assembly or primitive), the field that
   contributed it and, for a container element, its key, its
-  [tier](#g-tier) (continuous or discrete) and timing when a primitive, its type's
-  qualified base name with the full printed type beside it, its alias when a
+  [tier](#g-tier) (continuous or discrete), timing and rate chain when a
+  primitive, its type's qualified base name with the full printed type beside it, its alias when a
   `const` of its own module binds a parameterization of its type, and its
   faces. A primitive's [face](#g-face) (the name a port wears on its component's boundary)
   carries its printed type, its kind marker and whether it is pinned; an
@@ -12291,8 +12292,9 @@ body has three sections, each the projection of one [artifact](#g-artifact)
   port's stage): the order as paths, and per primitive its stage-1 and stage-2
   port names, `y` for a bare port ([D-437][d-437]).
 - `events` projects [`Events`](#g-events) (each component's event names and
-  detection policies) as the artifact holds it, one row per primitive in walk
-  order, so one position addresses a row here and in `outputs` alike
+  detection policies) as the artifact holds it, under `components`, one row
+  per primitive in walk order, so one position addresses a row here and in
+  `outputs` alike
   ([D-467][d-467]). A row holds the primitive's path, its events in
   declaration order, each a `name` and a `policy`, `localized` or
   `non_localized`, and the event bundle's field names. A primitive that
@@ -12325,6 +12327,13 @@ that share a factor with it ([§9.2][s9-2], [D-459][d-459], [D-467][d-467]). A
 structure with no anchors has an empty `pool`, an empty `primes` and no
 `admissible`.
 
+**A primitive node carries its rate chain as `rates`** ([D-467][d-467]). It
+is the chain of `sample_times` links the `Structure` holds for the component,
+from the root down. Each link holds the declaring `scope` and its `key`, with
+`K` and `phi` for a `Relative` entry or `dt` and `tau` for an `Absolute` one.
+A client cannot derive the chain from the timings. An explicit `Relative(1)`
+changes no timing, and a primitive's own key stands nowhere else in the file.
+
 **A stored position counts from 1** ([D-467][d-467]). An `anchor` is a position
 in `anchors`, with 0 for the base grid, which has no row. A supplier is a
 position in `pool`. The format names no client's language, and a reader
@@ -12346,9 +12355,9 @@ anchor's `(Dₖ, Φₖ)` in the order of `structure`'s `anchors`. The writer
 computes them as `Δtₖ/Δt_base` and `τₖ/Δt_base`, since a client cannot solve
 them back for an anchor with no discrete primitive beneath it. `rows` holds
 each discrete primitive's path with its `D` and `phi`, and `scopes` each rate
-scope's path and key with its `D` and `phi`. A row carries no anchor, which
-its node's `timing` holds, no rate chain, and no `Δt`, which a client
-computes exact as `D` times `dt_base`.
+scope's path and key with its `D` and `phi`. A row carries no anchor and no
+rate chain, which its node holds, and no `Δt`, which a client computes exact
+as `D` times `dt_base`.
 
 **Each primitive face carries a kind marker computed in the core** ([D-432][d-432]). The
 [kind marker](#g-kind-marker) (a small object telling a client with no Julia
@@ -12401,7 +12410,9 @@ whose name resolves, from the type's module, to a binding its owner exports**
 ([D-467][d-467]). It writes the owner as the target and keeps the text, so
 `` [`Pinned`](@ref) `` in a `Redstone.Library` docstring becomes
 `` [`Pinned`](@ref Redstone.Pinned) ``. Every other link stays as written, so
-after the pass a bare link is one that did not resolve. The node's summary lists each inert field as `repr` text under
+after the pass a bare link is one that did not resolve. The package exports
+nothing until the export audit ([D-226][d-226]), so until then the pass
+rewrites no link of the package's own. The node's summary lists each inert field as `repr` text under
 `:compact` and `:limit`, cut at 80 characters, so a `Constant` holding a
 lookup table never swells the file. An inert field holding a `NamedTuple`
 with fields lists one entry per field instead, named by the dotted path,
