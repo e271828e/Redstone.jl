@@ -327,6 +327,7 @@ function diagnostics_kind_set()
             RatesViolation(path = "a", reason = :multiplier, key = :b, value = 0),
             RatesViolation(path = "a", reason = :phase, key = :b, value = 5),
             RatesViolation(path = "a", reason = :range, key = :b, value = Relative(2^32 + 1)),
+            RatesViolation(path = "a", reason = :range, key = :b, value = Absolute(Period(2^40))),
             RatesViolation(path = "a", reason = :period, key = :b, value = 0//1),
             RatesViolation(path = "a", reason = :offset, key = :b, value = 3//1),
             RatesViolation(path = "a", reason = :unknown_child, key = :z, candidates = ["b"]),
@@ -435,7 +436,6 @@ function diagnostics_kind_set()
             DeploymentInvalid(parameter = :Δt_base, reason = :unanchored, paths = ["a/b"],
                               grid = grid),
             DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint),
-            DeploymentInvalid(parameter = :Δt_base, reason = :range, value = :derive),
             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 0//1),
             DeploymentInvalid(parameter = :Δt_base, reason = :range, value = 1//(10^10 + 1),
                               related = 1//10^10),
@@ -844,12 +844,12 @@ function diagnostics_kind_set()
               "`sample_times` at `g`, key `a`: period 0//1, and Δt > 0 (§10.5)"
         @test message(RatesViolation(path = "g", reason = :offset, key = :a, value = 3//1)) ==
               "`sample_times` at `g`, key `a`: offset 3//1, and 0 ≤ τ < Δt (§10.5)"
-        # A pool past `Int` has no derivable base tick, for either cause (§9.2).
-        @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
-                                                   value = :derive)),
-                         "Δt_base cannot be derived: the gcd of the anchors' periods and " *
-                         "offsets has a denominator past `Int`, or an anchor counts more of " *
-                         "its ticks than `Int` holds")
+        # An anchor no base tick counts in an `Int` names its entry by its fields
+        # (§9.2, D-465).
+        @test message(RatesViolation(path = "g", reason = :range, key = :a,
+                                     value = Absolute(Period(2^40), 1//(2^23 + 1)))) ==
+              "`sample_times` at `g`, key `a`: no base tick the model's anchors admit counts " *
+              "Absolute(1099511627776//1, 1//8388609) in an `Int` (§9.2)"
         # A cofactor the trial division left at or above its cap's square may be
         # composite, and prints as unfactored, never as a prime (§9.2, D-187).
         unfactored = GridReport([GridEntry(:period, 1//(3 * (2^61 - 1)), "", :a, 1, Rational{Int}[])],

@@ -1,8 +1,9 @@
 # The structure step (§9.1, D-261): the walk that turns the component tree into
 # a `Structure`, and the reads over one. Endpoint resolution over the draft, the
 # row types, `Structure` and `StructureDraft`, the flatten pass with its
-# sample-time fold, the wiring's resolution over the level rows (D-315) and the
-# service walk (D-414). The declarations it reads are `assembly.jl`'s.
+# sample-time fold, the grid arithmetic with the trial binding (D-465), the
+# wiring's resolution over the level rows (D-315) and the service walk (D-414).
+# The declarations it reads are `assembly.jl`'s.
 
 # --- endpoint resolution (§8.6) -----------------------------------------------
 # Faces are kind-blind (D-172): an endpoint's final segment resolves to a
@@ -265,6 +266,7 @@ struct StructureDraft
     timings::Vector{Timing}              # per primitive: the fold's value
     anchors::Vector{Anchor}
     scopes::Vector{RateScope}
+    scope_rates::Vector{Vector{RateLink}}   # per rate scope, beside `scopes`: the links met on the way down, its own last
     root_inputs::Vector{Symbol}
     out_faces::Vector{Pair{Tuple{String,Symbol},Vector{Tuple{String,Symbol}}}}   # (path, face) => route
     feeds::Dict{Tuple{String,Symbol},Tuple{String,Symbol}}
@@ -279,7 +281,7 @@ StructureDraft(@nospecialize(root::AbstractComponent)) =
     StructureDraft(root, String[], AbstractComponent[],
                    Union{Nothing,Tier}[],
                    Vector{RateLink}[], Timing[],
-                   Anchor[], RateScope[],
+                   Anchor[], RateScope[], Vector{RateLink}[],
                    Symbol[],
                    Pair{Tuple{String,Symbol},Vector{Tuple{String,Symbol}}}[],
                    Dict{Tuple{String,Symbol},Tuple{String,Symbol}}(),
@@ -569,10 +571,13 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
     end
     at_component(path) do
         # One row per assembly an explicit key names, in walk order: the scope a
-        # `sample_times` key opened, with the timing everything under it folds from.
-        link === nothing ||
-            push!(draft.scopes, RateScope((path = path, key = link.key, timing = scope)))
+        # `sample_times` key opened, with the timing everything under it folds from,
+        # and its chain beside it for the trial binding.
         below = _extend(chain, link)
+        if link !== nothing
+            push!(draft.scopes, RateScope((path = path, key = link.key, timing = scope)))
+            push!(draft.scope_rates, below)
+        end
         rate_decl = invoke_declaration(sample_times, comp)
         kids, fields = draft.child_lists[path] = _children(path, comp)
         # The one place a level is entered, ahead of its children: pre-order.
@@ -735,6 +740,227 @@ function _check_root_faces(@nospecialize(comp), diags::Vector{Diagnostic})
     duplicates = [String(n) for n in keys(_contract(u_types, comp)) if n in output_names]
     isempty(duplicates) ||
         push!(diags, FaceNameCollision(path = "", faces = duplicates, site = :root))
+    nothing
+end
+
+# --- the grid arithmetic (§9.2, D-465) ------------------------------------------
+# The exact arithmetic the structure step's trial binding shares with the
+# `Deployment` constructor (deployment.jl's `bind_schedule` and `_lattice`), so
+# the two cannot drift apart: one anchor's counts at a base tick, one timing's
+# multiply-add, the frame loop's margin, and the grid attribution over the
+# anchors.
+
+# A whole quotient that fits `Int`, or `nothing`; a wide quotient past `Int` is
+# `nothing` too, so its refusal is the caller's, never an `InexactError`.
+_as_int(value::Rational) =
+    denominator(value) == 1 && typemin(Int) ≤ numerator(value) ≤ typemax(Int) ?
+    Int(numerator(value)) : nothing
+
+# Trial division: the integers factored here are grid denominators, lcms of a
+# handful of declared ones, so no prime table is worth a dependency. It stops at
+# `PRIME_DIVISOR_CAP`, and the cofactor left is reported whole: below the cap's
+# square it is prime, since a composite would have a factor below the cap, and
+# at or above it the grid block prints it as unfactored. The condition is the
+# square's, written so it cannot wrap.
+const PRIME_DIVISOR_CAP = 2^20
+function _prime_powers(integer::Int)
+    powers = Tuple{Int,Int}[]
+    cofactor, divisor = integer, 2
+    while divisor ≤ PRIME_DIVISOR_CAP && divisor ≤ cofactor ÷ divisor
+        if cofactor % divisor == 0
+            power = 0
+            while cofactor % divisor == 0; cofactor ÷= divisor; power += 1 end
+            push!(powers, (divisor, power))
+        end
+        divisor += 1
+    end
+    cofactor > 1 && push!(powers, (cofactor, 1))
+    powers
+end
+
+# Whether a pool entry's denominator supplies a factor of the grid's (§9.2,
+# D-459). A prime power is supplied where it divides the denominator. An
+# unfactored cofactor may be composite, with its primes in different entries,
+# so it is supplied wherever the denominator shares a factor with it. It
+# divides the lcm of the pool's denominators, so some entry always does.
+_supplies(pool_denominator::Int, prime::Int, power::Int) =
+    prime ≥ PRIME_DIVISOR_CAP^2 ? gcd(pool_denominator, prime) > 1 :
+                                  pool_denominator % prime^power == 0
+
+"""
+The grid attribution D-187 asks for (§9.2), a pure function of the structure's
+anchors: the constraint pool — every anchor's period and every nonzero offset,
+in anchor order, periods first — with each entry's leave-one-out refinement
+factor `r_p = gcd(pool ∖ p)/gcd(pool)`, the prime attribution of `gcd(pool)`'s
+denominator, and, for a driving offset, the nearest offsets the rest of the pool
+already supports, those whose arithmetic fits `Int`. One report per `Deployment`
+call, computed by `bind_schedule` ahead of the `Δt_base` branch: the refusal
+path's suggestion, the derivation path's line and the `Deployment` itself read
+the same substrate. A built structure always has one: the trial binding fits the
+gcd and every anchor's count at it, and each factor is at most one of those
+counts (D-465).
+"""
+function _grid_report(anchors::Vector{Anchor})
+    entry_kinds, entry_values, anchor_indices = Symbol[], Rational{Int}[], Int[]
+    for (k, anchor) in enumerate(anchors)
+        push!(entry_kinds, :period); push!(entry_values, anchor.Δt); push!(anchor_indices, k)
+    end
+    for (k, anchor) in enumerate(anchors)
+        anchor.τ == 0 && continue
+        push!(entry_kinds, :offset); push!(entry_values, anchor.τ); push!(anchor_indices, k)
+    end
+    isempty(entry_values) &&
+        return GridReport(GridEntry[], nothing,
+                          Vector{@NamedTuple{prime::Int, power::Int, suppliers::Vector{Int}}}())
+    admissible = reduce(gcd, entry_values)
+    pool = GridEntry[]
+    for i in eachindex(entry_values)
+        # The empty reduction has no value, so a singleton pool gives factor 1 by
+        # convention: with nothing else declared, nothing is refined.
+        partial = length(entry_values) == 1 ? admissible :
+            reduce(gcd, (entry_values[j] for j in eachindex(entry_values) if j != i))
+        factor = _as_int(partial / admissible)
+        factor === nothing && throw(InternalInvariant(
+            "leave-one-out factor $(partial / admissible) is not an integer: " *
+            "gcd(pool) divides every partial gcd"))
+        alternatives = Rational{Int}[]
+        if entry_kinds[i] === :offset && factor > 1
+            # The grid the rest of the pool supports, and τ's neighbours on it. The
+            # fold requires 0 ≤ τ < Δt (`_check_sample_times`), so an upper neighbour
+            # reaching the anchor's period is no offset; 0 stays, declaring none being
+            # a repair.
+            # A neighbour whose arithmetic leaves `Int` is not offered, since
+            # `Absolute` refuses what `Rational{Int}` cannot hold (D-459). Each is a
+            # product, which Julia reduces before it multiplies, so it fails only
+            # for a value past `Int`; a sum could fail in an intermediate product.
+            τ, Δt_k = entry_values[i], anchors[anchor_indices[i]].Δt
+            lower_index = _exact_or_nothing(() -> floor(Int, τ / partial))
+            if lower_index !== nothing
+                lower = _exact_or_nothing(() -> lower_index * partial)
+                upper = _exact_or_nothing(
+                    () -> Base.Checked.checked_add(lower_index, 1) * partial)
+                lower === nothing || push!(alternatives, lower)
+                upper !== nothing && upper < Δt_k && push!(alternatives, upper)
+            end
+        end
+        anchor = anchors[anchor_indices[i]]
+        push!(pool, GridEntry(entry_kinds[i], entry_values[i], anchor.scope, anchor.key,
+                              factor, alternatives))
+    end
+    primes = [(prime = prime, power = power,
+               suppliers = [i for i in eachindex(entry_values)
+                            if _supplies(denominator(entry_values[i]), prime, power)])
+              for (prime, power) in _prime_powers(denominator(admissible))]
+    GridReport(pool, admissible, primes)
+end
+
+# One anchor's counts at a base tick, `(Dₖ, Φₖ)` (§9.2): one exact division
+# pair, each `nothing` where its quotient is not a whole `Int`. Each division
+# runs in `Int128`, as `_lattice`'s do, so a count past `Int` is `nothing`,
+# never a raw `OverflowError`.
+_anchor_counts(anchor::Anchor, Δt_base::Rational{Int}) =
+    (_as_int(Rational{Int128}(anchor.Δt) / Δt_base),
+     _as_int(Rational{Int128}(anchor.τ) / Δt_base))
+
+# One timing's `(D, Φ)` in base ticks (§9.2): `D = m·Dₖ` and `Φ = Φₖ + c·Dₖ`,
+# against the anchors' counts, whose first entry is anchor 0's `(1, 0)`. The law
+# runs in checked `Int`, so a count past it throws, and the caller catches.
+function _timing_counts(timing::Timing, Dk::Vector{Int}, Φk::Vector{Int})
+    D_anchor, Φ_anchor = Dk[timing.anchor + 1], Φk[timing.anchor + 1]
+    (Base.Checked.checked_mul(timing.m, D_anchor),
+     Base.Checked.checked_add(Φ_anchor, Base.Checked.checked_mul(timing.c, D_anchor)))
+end
+
+# The last frame index whose positions fit an `Int` (§10.5, D-445), from the
+# frame and the base tick in the lattices' unit and the components' divisors.
+# Inside frame `k` the largest position the loop forms is a due index's, at most
+# the largest divisor's period past the frame top, so `k·frame` plus that margin
+# must fit. In `Int128`; below 1, no frame fits.
+_max_frame(frame::Int128, base::Int128, tick_divisors) =
+    fld(Int128(typemax(Int)) - maximum(Int128, tick_divisors; init = Int128(0)) * base, frame)
+
+# The link of `chain` that composed a count past `limit` (§9.2, D-465): the
+# anchor's own `Absolute` entry, the chain's last, where the anchor's count
+# `D_anchor` already passes it, else the first `Relative` link below the anchor
+# at which the running count does. The count runs in `Int128`, each factor at
+# most `typemax(Int)`.
+function _composing_link(chain::Vector{RateLink}, D_anchor::Int, limit::Int)
+    anchor_index = something(findlast(link -> link.entry isa Absolute, chain), 0)
+    running = Int128(D_anchor)
+    anchor_index > 0 && running > limit && return chain[anchor_index]
+    for link in chain[anchor_index+1:end]
+        running *= link.entry.K
+        running > limit && return link
+    end
+    throw(InternalInvariant("no link of the chain composes a count past $limit"))
+end
+
+"""
+The structure step's trial binding (§9.1, §9.2, D-465): the deployment's anchor
+division, multiply-add and frame margin, run once at
+`Δt_frame = Δt_base = gcd(pool)`, or at any base tick where the pool is empty.
+Every count the binding forms is least there, so a structure this refuses binds
+at no choice of the caller's, and one it passes binds at this one.
+
+A count that leaves `Int` is a `RatesViolation` `:range` on the entry that
+composed it, once per entry: an anchor's `Absolute` entry, or the first
+`Relative` link below the anchor at which the running count passes. A gcd no
+`Rational{Int}` holds refuses every anchor's entry. A frame margin that fits no
+frame refuses, for each component at the largest divisor, the entry at which its
+count passes that divisor less one. The premise is a fold that recorded no
+violation: a faulty `Absolute` still pushes an anchor, a zero period among them.
+"""
+function _check_trial_binding(draft::StructureDraft, diags::Vector{Diagnostic})
+    any(d -> d isa RatesViolation, diags) && return nothing
+    # One refusal per entry, as the fold refuses its own `:range` (D-459).
+    refuse(link::RateLink) =
+        any(d -> d isa RatesViolation && d.path == link.scope && d.key === link.key &&
+                 d.reason === :range, diags) ||
+        push!(diags, RatesViolation(path = link.scope, reason = :range, key = link.key,
+                                    value = link.entry))
+    # An anchor's entry is a link on the chain of everything below it.
+    chains = [draft.rates; draft.scope_rates]
+    anchor_link(anchor::Anchor) =
+        first(link for chain in chains for link in chain
+              if link.scope == anchor.scope && link.key === anchor.key)
+
+    pool = [[anchor.Δt for anchor in draft.anchors];
+            [anchor.τ for anchor in draft.anchors if anchor.τ != 0]]
+    Δt_base = isempty(pool) ? 1//1 : _exact_or_nothing(() -> reduce(gcd, pool))
+    if Δt_base === nothing
+        foreach(anchor -> refuse(anchor_link(anchor)), draft.anchors)
+        return nothing
+    end
+    # Anchor 0 is the base grid itself.
+    Dk, Φk, counted = [1], [0], [true]
+    for anchor in draft.anchors
+        D, Φ = _anchor_counts(anchor, Δt_base)
+        formed = D !== nothing && Φ !== nothing
+        formed || refuse(anchor_link(anchor))
+        push!(Dk, something(D, 1)); push!(Φk, something(Φ, 0)); push!(counted, formed)
+    end
+    # A row's divisor, or `nothing` where it leaves `Int` or its anchor did. The
+    # count of a sound composition keeps `Φ < D`, so only a divisor overflows.
+    function tick_divisor(timing::Timing, chain::Vector{RateLink})
+        counted[timing.anchor + 1] || return nothing
+        counts = _exact_or_nothing(() -> _timing_counts(timing, Dk, Φk))
+        counts === nothing && refuse(_composing_link(chain, Dk[timing.anchor + 1], typemax(Int)))
+        counts === nothing ? nothing : first(counts)
+    end
+    discrete = [ci for ci in eachindex(draft.paths) if draft.tiers[ci] === DISCRETE]
+    tick_divisors = [tick_divisor(draft.timings[ci], draft.rates[ci]) for ci in discrete]
+    scope_divisors = [tick_divisor(scope.timing, chain)
+                      for (scope, chain) in zip(draft.scopes, draft.scope_rates)]
+    all(counted) && !any(isnothing, tick_divisors) && !any(isnothing, scope_divisors) ||
+        return nothing
+    # The frame margin at one unit each, over the components' divisors alone, as
+    # `_lattice` reads it.
+    _max_frame(Int128(1), Int128(1), tick_divisors) ≥ 1 && return nothing
+    largest = maximum(tick_divisors)
+    for (ci, D) in zip(discrete, tick_divisors)
+        D == largest || continue
+        refuse(_composing_link(draft.rates[ci], Dk[draft.timings[ci].anchor + 1], largest - 1))
+    end
     nothing
 end
 

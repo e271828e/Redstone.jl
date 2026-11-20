@@ -27,108 +27,6 @@ _exact(name::Symbol, value, diags::Vector{Diagnostic}) =
     (push!(diags, DeploymentInvalid(parameter = name, reason = :not_a_quantity,
                                     value = typeof(value))); nothing)
 
-# A whole quotient that fits `Int`, or `nothing`; a wide quotient past `Int` is
-# `nothing` too, so its refusal is the caller's, never an `InexactError`.
-_as_int(value::Rational) =
-    denominator(value) == 1 && typemin(Int) ≤ numerator(value) ≤ typemax(Int) ?
-    Int(numerator(value)) : nothing
-
-# --- the grid attribution (§9.2, D-187) -----------------------------------------
-
-# Trial division: the integers factored here are grid denominators, lcms of a
-# handful of declared ones, so no prime table is worth a dependency. It stops at
-# `PRIME_DIVISOR_CAP`, and the cofactor left is reported whole: below the cap's
-# square it is prime, since a composite would have a factor below the cap, and
-# at or above it the grid block prints it as unfactored. The condition is the
-# square's, written so it cannot wrap.
-const PRIME_DIVISOR_CAP = 2^20
-function _prime_powers(integer::Int)
-    powers = Tuple{Int,Int}[]
-    cofactor, divisor = integer, 2
-    while divisor ≤ PRIME_DIVISOR_CAP && divisor ≤ cofactor ÷ divisor
-        if cofactor % divisor == 0
-            power = 0
-            while cofactor % divisor == 0; cofactor ÷= divisor; power += 1 end
-            push!(powers, (divisor, power))
-        end
-        divisor += 1
-    end
-    cofactor > 1 && push!(powers, (cofactor, 1))
-    powers
-end
-
-# Whether a pool entry's denominator supplies a factor of the grid's (§9.2,
-# D-459). A prime power is supplied where it divides the denominator. An
-# unfactored cofactor may be composite, with its primes in different entries,
-# so it is supplied wherever the denominator shares a factor with it. It
-# divides the lcm of the pool's denominators, so some entry always does.
-_supplies(pool_denominator::Int, prime::Int, power::Int) =
-    prime ≥ PRIME_DIVISOR_CAP^2 ? gcd(pool_denominator, prime) > 1 :
-                                  pool_denominator % prime^power == 0
-
-"""
-The grid attribution D-187 asks for (§9.2), a pure function of the structure's
-anchors: the constraint pool — every anchor's period and every nonzero offset,
-in anchor order, periods first — with each entry's leave-one-out refinement
-factor `r_p = gcd(pool ∖ p)/gcd(pool)`, the prime attribution of `gcd(pool)`'s
-denominator, and, for a driving offset, the nearest offsets the rest of the pool
-already supports, those whose arithmetic fits `Int`. One report per constructor
-call, computed ahead of the `Δt_base` branch: the refusal path's suggestion, the
-derivation path's line and the `Deployment` itself read the same substrate.
-"""
-function _grid_report(anchors::Vector{Anchor})
-    entry_kinds, entry_values, anchor_indices = Symbol[], Rational{Int}[], Int[]
-    for (k, anchor) in enumerate(anchors)
-        push!(entry_kinds, :period); push!(entry_values, anchor.Δt); push!(anchor_indices, k)
-    end
-    for (k, anchor) in enumerate(anchors)
-        anchor.τ == 0 && continue
-        push!(entry_kinds, :offset); push!(entry_values, anchor.τ); push!(anchor_indices, k)
-    end
-    isempty(entry_values) &&
-        return GridReport(GridEntry[], nothing,
-                          Vector{@NamedTuple{prime::Int, power::Int, suppliers::Vector{Int}}}())
-    admissible = reduce(gcd, entry_values)
-    pool = GridEntry[]
-    for i in eachindex(entry_values)
-        # The empty reduction has no value, so a singleton pool gives factor 1 by
-        # convention: with nothing else declared, nothing is refined.
-        partial = length(entry_values) == 1 ? admissible :
-            reduce(gcd, (entry_values[j] for j in eachindex(entry_values) if j != i))
-        factor = _as_int(partial / admissible)
-        factor === nothing && throw(InternalInvariant(
-            "leave-one-out factor $(partial / admissible) is not an integer: " *
-            "gcd(pool) divides every partial gcd"))
-        alternatives = Rational{Int}[]
-        if entry_kinds[i] === :offset && factor > 1
-            # The grid the rest of the pool supports, and τ's neighbours on it. The
-            # fold requires 0 ≤ τ < Δt (`structure.jl`), so an upper neighbour reaching
-            # the anchor's period is no offset; 0 stays, declaring none being a repair.
-            # A neighbour whose arithmetic leaves `Int` is not offered, since
-            # `Absolute` refuses what `Rational{Int}` cannot hold (D-459). Each is a
-            # product, which Julia reduces before it multiplies, so it fails only
-            # for a value past `Int`; a sum could fail in an intermediate product.
-            τ, Δt_k = entry_values[i], anchors[anchor_indices[i]].Δt
-            lower_index = _exact_or_nothing(() -> floor(Int, τ / partial))
-            if lower_index !== nothing
-                lower = _exact_or_nothing(() -> lower_index * partial)
-                upper = _exact_or_nothing(
-                    () -> Base.Checked.checked_add(lower_index, 1) * partial)
-                lower === nothing || push!(alternatives, lower)
-                upper !== nothing && upper < Δt_k && push!(alternatives, upper)
-            end
-        end
-        anchor = anchors[anchor_indices[i]]
-        push!(pool, GridEntry(entry_kinds[i], entry_values[i], anchor.scope, anchor.key,
-                              factor, alternatives))
-    end
-    primes = [(prime = prime, power = power,
-               suppliers = [i for i in eachindex(entry_values)
-                            if _supplies(denominator(entry_values[i]), prime, power)])
-              for (prime, power) in _prime_powers(denominator(admissible))]
-    GridReport(pool, admissible, primes)
-end
-
 # --- the typed schedule (§9.2, §10.5, D-254) ------------------------------------
 
 """
@@ -256,8 +154,7 @@ function _lattice(Δt_frame::Rational{Int}, Δt_base::Rational{Int}, h_max::Rati
     frame = numerator(wide(Δt_frame) / unit)
     base = isempty(rows) ? Int128(0) : numerator(wide(Δt_base) / unit)
     (fits(denominator(unit)) && fits(frame) && fits(base)) || return :Δt_base
-    margin = isempty(rows) ? Int128(0) : maximum(Int128(row.D) for row in rows) * base
-    max_frame = fld(Int128(typemax(Int)) - margin, frame)
+    max_frame = _max_frame(frame, base, (row.D for row in rows))   # structure.jl's, the trial's too
     max_frame ≥ 1 || return :Δt_base
     bound = wide(h_max) / unit
     (fits(numerator(bound)) && fits(denominator(bound)) &&
@@ -345,13 +242,8 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
     # The attribution over the constraint pool — every anchor's period and every
     # nonzero offset (§9.1) — computed once, ahead of the branch, and handed to
     # every refusal that names the grid as well as to the artifact (§9.2, D-187).
-    # A report whose arithmetic leaves `Int` is `nothing`, and marks a pool no
-    # deployment holds: a base tick divides the pool's gcd, so its denominator
-    # is at least the gcd's, and a leave-one-out factor past `Int` puts some
-    # anchor's count of base ticks past it at every base tick that divides the
-    # pool (D-459). `:derive` refuses it below, and any other `Δt_base` meets
-    # the anchor loop's refusal.
-    grid = _exact_or_nothing(() -> _grid_report(anchors))
+    # The build's trial binding fits its arithmetic in `Int` (D-465).
+    grid = _grid_report(anchors)
 
     # The Δt_base branch is its own premise: derivation reads the tiers and the
     # anchors, the explicit keyword reads only itself, and only the default path
@@ -363,9 +255,6 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
         if !isempty(unanchored)
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :unanchored,
                                            paths = unanchored, grid = grid))
-        elseif grid === nothing
-            push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :range,
-                                           value = :derive))
         elseif grid.admissible === nothing
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :no_constraint))
         else
@@ -380,19 +269,18 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
     # Per anchor, one exact division pair; anchor 0 is the base grid itself. The
     # loop collects into the call's list (§13.1): every anchor the chosen base
     # grid cannot express is named, so the coarsest admissible value is chosen
-    # against the whole list. It reads `Δt_base` alone (D-229). Each division
-    # runs in `Int128`, as `_lattice`'s do, so a count of base ticks past `Int`
-    # is refused as its anchor, never as a raw `OverflowError`.
+    # against the whole list. It reads `Δt_base` alone (D-229). A count of base
+    # ticks past `Int` is refused as its anchor, never as a raw `OverflowError`
+    # (`_anchor_counts`, structure.jl's, the trial binding's too).
     Δt_r === nothing && return nothing
     anchors_on_entry = length(diags)
     Dk, Φk = [1], [0]
     for anchor in anchors
-        D = _as_int(Rational{Int128}(anchor.Δt) / Δt_r)
+        D, Φ = _anchor_counts(anchor, Δt_r)
         D === nothing &&
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period,
                                           value = anchor.Δt, related = Δt_r,
                                           scope = anchor.scope, key = anchor.key, grid = grid))
-        Φ = _as_int(Rational{Int128}(anchor.τ) / Δt_r)
         Φ === nothing &&
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :anchor_offset,
                                           value = anchor.τ, related = Δt_r,
@@ -406,22 +294,19 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
     # rate scopes resolve by the same law, off the timing the fold left them.
     # The law runs in checked `Int`, and a schedule it cannot hold is `nothing`:
     # `Φ < D`, so a divisor past `Int` counts a period in base ticks, and so in
-    # units, past it, the lattices' refusal below.
+    # units, past it, the lattices' refusal below. `_timing_counts` is the
+    # trial binding's law too (structure.jl).
     Δtb = Float64(Δt_r)
-    timing_gates(timing::Timing) =
-        (Base.Checked.checked_mul(timing.m, Dk[timing.anchor + 1]),
-         Base.Checked.checked_add(Φk[timing.anchor + 1],
-                                  Base.Checked.checked_mul(timing.c, Dk[timing.anchor + 1])))
     schedule = _exact_or_nothing() do
         rows = ScheduleEntry[]
         for entry in structure.components
             entry.tier === DISCRETE || continue
-            D, Φ = timing_gates(entry.timing)
+            D, Φ = _timing_counts(entry.timing, Dk, Φk)
             # the rates vector itself: the structure is immutable, so no copy
             push!(rows, ScheduleEntry(entry.path, entry.timing.anchor, D, Φ, D * Δtb, entry.rates))
         end
         scopes = [ScopeEntry(scope.path, scope.key, scope.timing.anchor,
-                             timing_gates(scope.timing)...)
+                             _timing_counts(scope.timing, Dk, Φk)...)
                   for scope in structure.scopes]
         Schedule(rows, scopes)
     end

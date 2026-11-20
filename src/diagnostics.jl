@@ -762,6 +762,9 @@ function message(d::RatesViolation)
     d.reason === :value_vocabulary &&
         return "$(_rates_entry(d)): $(repr(d.value)) — the wrappers are the whole value " *
                "vocabulary; a bare integer or bare quantity is a declaration error (§8.7)"
+    d.reason === :range && d.value isa Absolute &&
+        return "$(_rates_entry(d)): no base tick the model's anchors admit counts " *
+               "Absolute($(d.value.Δt), $(d.value.τ)) in an `Int` (§9.2)"
     d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.K), $(d.value.φ)) composes a divisor past `Int` (§10.5)"
     d.reason === :multiplier && return "$(_rates_entry(d)): K = $(d.value), and K ≥ 1 (§10.5)"
     d.reason === :phase && return "$(_rates_entry(d)): φ = $(d.value), and 0 ≤ φ < K (§10.5)"
@@ -1301,9 +1304,10 @@ message(d::StopRequestInvalid) =
     "model's are $(_namelist(d.candidates)) (§13.5)"
 
 # --- the grid attribution (§9.2, D-187) -----------------------------------------
-# Deployment substrate rather than diagnostics: `deployment.jl`'s `_grid_report`
-# is what fills these two, and the `Deployment` carries one. They are defined
-# here because the two payloads below name them and this file is included first.
+# Structure substrate rather than diagnostics: the report is a function of the
+# structure's anchors, filled by `structure.jl`'s `_grid_report`, and the
+# `Deployment` carries one. They are defined here because the two payloads below
+# name them and this file is included first.
 
 """
 One constraint-pool entry (§9.1, §9.2): an anchor's period or its nonzero offset,
@@ -1455,11 +1459,6 @@ function message(d::DeploymentInvalid)
     d.reason === :no_constraint &&
         return "Δt_base cannot be derived: no anchor declares a constraint to derive it " *
                "from (§9.1)"
-    # A pool whose grid report leaves `Int`: no base tick serves every anchor.
-    d.reason === :range && d.value === :derive &&
-        return "Δt_base cannot be derived: the gcd of the anchors' periods and offsets " *
-               "has a denominator past `Int`, or an anchor counts more of its ticks than " *
-               "`Int` holds, so no `Rational{Int}` base tick serves them all (§9.1, §9.2)"
     d.reason === :anchor_period &&
         return "$(_anchor_label(d.scope, d.key)): period $(d.value) is not an integer " *
                "multiple of Δt_base = $(d.related) (§9.1)" * _grid_block(d.grid)

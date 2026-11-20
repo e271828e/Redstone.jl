@@ -755,6 +755,7 @@ Base.@nospecializeinfer function build(@nospecialize(root::AbstractComponent);
             diags = Diagnostic[]
             draft = StructureDraft(root)
             flatten_tree!(draft, root, diags)    # structure, tiers, claims, the obligation check
+            _check_trial_binding(draft, diags)   # some deployment binds it (§9.1, D-465)
             _check_event_declarations(draft, diags)
             # The dependency rule (§13.1, D-229): the wire pass reads the wiring, which a
             # dirty walk never produced, so it runs on a clean walk alone.

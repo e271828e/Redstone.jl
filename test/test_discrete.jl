@@ -505,15 +505,16 @@ function discrete_deployment()
         @test only(e.alternatives for e in d.grid.pool if e.kind === :offset) ==
               [3//500, 1//125]
 
-        # A period and an offset whose counts of base ticks leave `Int` are
-        # refused as their anchor, never as a raw overflow: about `2^63` seconds
-        # over a quarter-second base tick.
+        # A period and an offset whose counts of base ticks leave `Int` at a base
+        # tick finer than the gcd are refused as their anchor, never as a raw
+        # overflow: `2^62` seconds over a quarter-second base tick, which the build
+        # admits at its gcd of 1 s (D-465).
         huge = Group((; a = TickCounter());
-                     sample_times = (; a = Absolute(Period(typemax(Int)), typemax(Int) - 1)))
+                     sample_times = (; a = Absolute(Period(2^62), 2^62 - 1)))
         err = failure(() -> Deployment(build(huge); Δt_frame = 1//4, Δt_base = 1//4))
         @test Set((d.parameter, d.reason, d.value) for d in diagnostics(err)) ==
-              Set([(:Δt_base, :anchor_period, typemax(Int)//1),
-                   (:Δt_base, :anchor_offset, (typemax(Int) - 1)//1)])
+              Set([(:Δt_base, :anchor_period, (2^62)//1),
+                   (:Δt_base, :anchor_offset, (2^62 - 1)//1)])
     end
 
     @testset "a time quantity of any integer type is taken at its value, and one `Rational{Int}` cannot hold is refused as its parameter's range (§9.2, D-229, D-454, D-459)" begin
@@ -654,30 +655,9 @@ function discrete_deployment()
               warnings(deployment3) == Diagnostic[]
     end
 
-    @testset "a pool whose attribution leaves `Int` admits no deployment, and is refused as one, never raised (§9.1, §9.2, D-187, D-229, D-459)" begin
+    @testset "the prime attribution's trial division stops at its cap and never wraps (§9.2, D-187, D-459)" begin
         anchored(rates) = build(Group(NamedTuple{keys(rates)}(Tuple(TickCounter() for _ in rates));
                                       sample_times = rates))
-        # Two coprime denominators near `2^40`: the pool's gcd has no
-        # `Rational{Int}` denominator, so no base tick divides both periods.
-        coprime = anchored((; a = Absolute(Period(1//(2^40 + 1))), b = Absolute(Period(1//(2^40 + 3)))))
-        err = failure(() -> Deployment(coprime; Δt_frame = 1))
-        @test [(d.reason, d.key, d.grid) for d in diagnostics(err)] ==
-              [(:anchor_period, :a, nothing), (:anchor_period, :b, nothing)]
-        d = only(diagnostics(failure(() -> Deployment(coprime; Δt_frame = 1, Δt_base = :derive))))
-        @test d isa DeploymentInvalid && d.parameter === :Δt_base && d.reason === :range &&
-              d.value === :derive
-        # An offset's leave-one-out factor past `Int`, `2^40·(2^23 + 1)`: the
-        # gcd fits, but no base tick counts the period in an `Int`.
-        refined = anchored((; a = Absolute(Period(2^40), 1//(2^23 + 1))))
-        d = only(diagnostics(failure(() -> Deployment(refined; Δt_frame = 1))))
-        @test d.reason === :anchor_offset && d.grid === nothing
-        d = only(diagnostics(failure(() -> Deployment(refined; Δt_frame = 1, Δt_base = :derive))))
-        @test d.reason === :range && d.value === :derive
-        # The derivation's other premises run beside it (D-229).
-        err = failure(() -> Deployment(coprime; Δt_frame = 1, Δt_base = :derive, h_max = 0))
-        @test Set((d.parameter, d.reason) for d in diagnostics(err)) ==
-              Set([(:h_max, :range), (:Δt_base, :range)])
-
         # The trial division stops at its cap, the cofactor above it whole, and
         # never wraps: a prime denominator near `2^61` derives at once, one
         # near `2^63` is refused rather than hung.
@@ -709,6 +689,142 @@ function discrete_deployment()
             anchored((; a = Absolute(Period(1//4)), b = Absolute(Period(1//2))));
             Δt_frame = 1, Δt_base = :derive)
         @test powers.grid.primes == [(prime = 2, power = 2, suppliers = [1])]
+    end
+
+    # --- the build's trial binding (§9.1, §9.2, D-465) -----------------------------
+    # The build binds once at `Δt_frame = Δt_base = gcd(pool)`, where every count is
+    # least, and refuses a count past `Int` there on the entry that composed it.
+    # Each case is pinned from both sides: the refused tree, and its neighbour
+    # across the frontier, which builds and deploys at the gcd, typed here as a
+    # literal so the oracle shares no code with the trial.
+
+    @testset "a pool whose gcd, or an anchor's count at it, leaves `Int` is refused at the build on the anchor's entry, and its neighbour deploys at the gcd (§9.1, §9.2, D-465)" begin
+        anchored(rates) = Group(NamedTuple{keys(rates)}(Tuple(TickCounter() for _ in rates));
+                                sample_times = rates)
+        refusals(root) = [(d isa RatesViolation && d.reason === :range, d.path, d.key, d.value)
+                          for d in diagnostics(failure(() -> build(root)))]
+        deploys(root, g) = Deployment(build(root); Δt_frame = g, Δt_base = g) isa Deployment
+        # Two coprime denominators near `2^40`: no `Rational{Int}` holds the gcd,
+        # so the refusal lands on every anchor's entry. Near `2^31` the gcd fits.
+        far = (; a = Absolute(Period(1//(2^40 + 1))), b = Absolute(Period(1//(2^40 + 3))))
+        @test refusals(anchored(far)) == [(true, "", :a, far.a), (true, "", :b, far.b)]
+        @test deploys(anchored((; a = Absolute(Period(1//(2^31 + 1))),
+                                  b = Absolute(Period(1//(2^31 + 3))))),
+                      1//((2^31 + 1) * (2^31 + 3)))
+        # An offset that refines a `2^40` s period past `Int` base ticks: the gcd
+        # fits, the anchor's count at it does not. Below the frontier,
+        # `2^40·(2^23 - 1)` fits. The two components under it share one refusal.
+        refined(d) = Group((; s = Group((; x = TickCounter(), y = TickCounter())));
+                           sample_times = (; s = Absolute(Period(2^40), 1//d)))
+        @test refusals(refined(2^23 + 1)) ==
+              [(true, "", :s, Absolute(Period(2^40), 1//(2^23 + 1)))]
+        @test deploys(refined(2^23 - 1), 1//(2^23 - 1))
+        # Three anchors with a whole grid report, no single entry refining much:
+        # the two offsets together push the first anchor's count to `2^40·16850989`,
+        # about `1.85e19`. The report's overflow is no test, so the build's is the
+        # trial's. At `2^38` s the count fits.
+        three(Δt) = anchored((; a = Absolute(Period(Δt)), b = Absolute(Period(1), 1//4099),
+                               c = Absolute(Period(1), 1//4111)))
+        root = three(2^40)
+        draft = StructureDraft(root)
+        flatten_tree!(draft, root, Diagnostic[])
+        report = _grid_report(draft.anchors)
+        @test report.admissible == 1//16850989 &&
+              [e.factor for e in report.pool] == [1, 1, 1, 4099, 4111]
+        @test refusals(three(2^40)) == [(true, "", :a, Absolute(Period(2^40)))]
+        @test deploys(three(2^38), 1//16850989)
+    end
+
+    @testset "a divisor composed past `Int` with its anchor's count at the gcd is refused at the build on the first `Relative` entry its running count passes, once (§9.1, §9.2, D-465)" begin
+        # `nest(leaf, r₁, r₂, …)` keys each level's one child `n`, so the link of
+        # `rᵢ` sits at the scope path of `i - 1` segments.
+        nest(leaf, rates...) =
+            foldr((rate, inner) -> Group((; n = inner); sample_times = (; n = rate)), rates;
+                  init = leaf)
+        refusals(root) = [(d isa RatesViolation && d.reason === :range, d.path, d.key, d.value)
+                          for d in diagnostics(failure(() -> build(root)))]
+        deploys(root, g) = Deployment(build(root); Δt_frame = g, Δt_base = g)
+        # Two `Relative(2^30)` compose `m = 2^60`, which the fold holds, beneath an
+        # anchor that counts 1000 base ticks at its gcd: no base tick counts the
+        # product. The inner entry is the one the running count passes.
+        @test only(build(nest(TickCounter(), Relative(2^30), Relative(2^30))).structure.components).timing ==
+              (anchor = 0, m = 2^60, c = 0)
+        anchor = Absolute(Period(1), 1//1000)
+        @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(2^30))) ==
+              [(true, "n/n", :n, Relative(2^30))]
+        # The frontier itself: `K·1000·2^30` at the last `K` that fits, and one past.
+        K = typemax(Int) ÷ (1000 * 2^30)
+        @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(K + 1))) ==
+              [(true, "n/n", :n, Relative(K + 1))]
+        @test only(deploys(nest(TickCounter(), anchor, Relative(2^30), Relative(K)),
+                           1//1000).schedule.rows).D == K * 1000 * 2^30
+        # A count that reaches `typemax(Int)` exactly still fits: the entry refused
+        # is the next one, which passes it.
+        @test refusals(nest(TickCounter(), Absolute(Period(1), 1//7), Relative(typemax(Int) ÷ 7),
+                            Relative(2))) ==
+              [(true, "n/n", :n, Relative(2))]
+        # The first entry passed is refused, not the last link, and the scope and
+        # the component it covers share the one refusal.
+        @test refusals(nest(TickCounter(), anchor, Relative(2^60), Relative(1))) ==
+              [(true, "n", :n, Relative(2^60))]
+        # Several members under one failing entry, a rate scope among them, give
+        # one refusal.
+        @test refusals(nest(Group((; x = TickCounter(), y = TickCounter())), anchor,
+                            Relative(2^60))) ==
+              [(true, "n", :n, Relative(2^60))]
+        # A rate scope with no discrete member is counted too.
+        K = typemax(Int) ÷ 1000
+        scope_only(K) = nest(Group((; s = Sawtooth(1.0))), anchor, Relative(K))
+        @test refusals(scope_only(K + 1)) == [(true, "n", :n, Relative(K + 1))]
+        @test [scope.D for scope in deploys(scope_only(K), 1//1000).schedule.scopes] ==
+              [1000, K * 1000]
+    end
+
+    @testset "a largest divisor that leaves no frame in an `Int` at the gcd is refused at the build on the entry where its count reaches it (§9.2, §10.5, D-465)" begin
+        nest(leaf, rates...) =
+            foldr((rate, inner) -> Group((; n = inner); sample_times = (; n = rate)), rates;
+                  init = leaf)
+        refusals(root) = [(d isa RatesViolation && d.reason === :range, d.path, d.key, d.value)
+                          for d in diagnostics(failure(() -> build(root)))]
+        # The frame loop indexes one frame past the largest divisor, so at one unit
+        # each `typemax(Int) - 1` leaves frame 1, and `typemax(Int)` none.
+        @test refusals(nest(TickCounter(), Relative(typemax(Int)))) ==
+              [(true, "", :n, Relative(typemax(Int)))]
+        @test Deployment(build(nest(TickCounter(), Relative(typemax(Int) - 1)));
+                         Δt_frame = 1, Δt_base = 1).lattice.max_frame == 1
+        # An anchor's own count at the largest divisor: its entry is refused.
+        @test refusals(nest(TickCounter(), Absolute(Period(typemax(Int)), 1))) ==
+              [(true, "", :n, Absolute(Period(typemax(Int)), 1))]
+        @test Deployment(build(nest(TickCounter(), Absolute(Period(typemax(Int) - 1), 1)));
+                         Δt_frame = 1, Δt_base = 1).lattice.max_frame == 1
+        # Only the components at the largest divisor are refused.
+        pair = Group((; a = TickCounter(), b = TickCounter());
+                     sample_times = (; a = Relative(typemax(Int)), b = Relative(2)))
+        @test refusals(pair) == [(true, "", :a, Relative(typemax(Int)))]
+        # A rate scope's divisor takes no part in the margin, as in `_lattice`.
+        @test Deployment(build(nest(Group((; s = Sawtooth(1.0))), Relative(typemax(Int))));
+                         Δt_frame = 1, Δt_base = 1) isa Deployment
+    end
+
+    @testset "the trial's premise is a fold that recorded no violation, and its refusals join the walk's in one throw (§9.1, §13.1, D-229, D-465)" begin
+        # An unbindable pool beside a fold violation reports the fold's alone.
+        mixed = Group((; a = TickCounter(), b = TickCounter(), c = TickCounter());
+                      sample_times = (; a = Absolute(Period(1//(2^40 + 1))),
+                                      b = Absolute(Period(1//(2^40 + 3))), c = Relative(0)))
+        @test [(typeof(d), d.reason, d.key) for d in diagnostics(failure(() -> build(mixed)))] ==
+              [(RatesViolation, :multiplier, :c)]
+        # A refused `Absolute` still pushes its anchor; the premise keeps its zero
+        # period out of the gcd.
+        zero_period = Group((; a = TickCounter()); sample_times = (; a = Absolute(Period(0))))
+        @test [(typeof(d), d.reason) for d in diagnostics(failure(() -> build(zero_period)))] ==
+              [(RatesViolation, :period)]
+        # The trial runs ahead of the walk's barrier, so an unfed input and an
+        # unbindable count are one throw.
+        unfed = Group((; g = Gain(1.0), c = TickCounter());
+                      sample_times = (; c = Relative(typemax(Int))))
+        @test Set((typeof(d), d.reason) for d in diagnostics(failure(() -> build(unfed)))
+                  if d isa RatesViolation) == Set([(RatesViolation, :range)])
+        @test any(d -> d isa UnconnectedInput, diagnostics(failure(() -> build(unfed))))
     end
 
     @testset "an offset's neighbour `Rational{Int}` cannot hold is not offered, and its pool deploys (§9.2, D-187, D-459)" begin

@@ -87,6 +87,8 @@ Spec: §11.2, §11.4, §11.6, §14.4.
 ### `src/build.jl`
 
 - `build` owns the structure step's one throw.
+- `build` runs the trial binding right after the walk, ahead of the first
+  barrier, so its refusals join the walk's in one throw (§9.1, D-465).
 - `build` binds the warning channel once around its three steps (D-250):
   - a `DiagnosticError` leaving the build is rewrapped with the warning list
     and with the `Structure` when the throw left past the structure step, a
@@ -157,7 +159,7 @@ Spec: §11.2, §11.4, §11.6, §14.4.
 Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
 §13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
 D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316, D-437,
-D-438.
+D-438, D-465.
 
 ### `src/checkpoint.jl`
 
@@ -328,10 +330,13 @@ D-459, D-464.
 ### `src/deployment.jl`
 
 - Deployment binding and its two artifacts (D-254), the `Schedule` and the
-  `Deployment`. The binding is `bind_schedule`, with `_exact`/`_as_int`.
+  `Deployment`. The binding is `bind_schedule`, with `_exact`.
   `_exact` takes an integer or a `Rational` of any integer type through
   declare.jl's `_exact_or_nothing`, refusing what `Rational{Int}` cannot
-  hold as `:range` (§9.2, D-459).
+  hold as `:range` (§9.2, D-459). The anchor loop's division pair, the
+  multiply-add and the frame margin are structure.jl's `_anchor_counts`,
+  `_timing_counts` and `_max_frame`, which the build's trial binding runs
+  too (D-465).
 - The typed `Schedule`, over `ScheduleEntry` and `ScopeEntry` (D-261):
   - the anchor and rates columns beside `(D, Φ, Δt)`, in `ScheduleEntry`;
   - the rate-scope rows, in `ScopeEntry`;
@@ -389,27 +394,18 @@ D-459, D-464.
   one `Float64` are two deployments (D-454), `h_min` and `attempt_budget`
   among them (D-460).
 - `warnings(::Deployment)`.
-- The grid attribution `_grid_report` (D-187):
-  - the constraint pool, with each entry's leave-one-out refinement factor;
-  - the prime attribution of `gcd(pool)`'s denominator, by `_prime_powers`,
-    a trial division stopping at `PRIME_DIVISOR_CAP`, and `_supplies`, the
-    supplier test: a prime power divides the entry's denominator, and an
-    unfactored cofactor shares a factor with it (D-459);
-  - a driving offset's nearest non-refining neighbours, each a product under
-    the shared catch, one whose arithmetic leaves `Int` not offered (D-459).
-- `_grid_report` runs once per call, ahead of the `Δt_base` branch, under
-  the shared catch: a report whose gcd or leave-one-out factor leaves `Int`
-  is `nothing`, and `:derive` is then refused as `:range` (D-459). The
+- structure.jl's `_grid_report` runs once per call, ahead of the `Δt_base`
+  branch, with no catch: a built structure always has a report (D-465). The
   `Deployment` carries its result. The call also hands that result to the
   three refusals whose remedy is a `Δt_base` the pool admits, and to the
-  derivation path's info line.
+  derivation path's info line. `:derive` has no `:range` refusal.
 - The derivation path's info line shows the derived value over the same block,
   with both attribution forms. The derivation path also raises the
   `GridUtilization` advisory at `min_i Dᵢ > 1`.
 
 Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
 D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454,
-D-459, D-460, D-461, D-463.
+D-459, D-460, D-461, D-463, D-465.
 
 ### `src/descriptor.jl`
 
@@ -515,13 +511,15 @@ D-256, D-261, D-268, D-270, D-315.
   renderings.
 - `logline`.
 - The build's warning channel `BUILD_WARNINGS` and `_warn!` (D-250).
-- The grid records `GridEntry` and `GridReport`, and `_anchor_label`.
+- The grid records `GridEntry` and `GridReport`, which structure.jl's
+  `_grid_report` fills, and `_anchor_label`.
 - `DeploymentInvalid`'s and `GridUtilization`'s `grid` payloads, rendered by
   `_grid_block`, which prints a cofactor at or above `PRIME_DIVISOR_CAP`'s
   square as unfactored (D-187, D-459).
-- The time doors' `:range` arms: `RatesViolation`'s composed divisor,
-  `DeploymentInvalid`'s `:derive` over a pool past `Int`, and
-  `ArgumentInvalid`'s on `Period`, `Hz` and `Absolute` (§9.2, §10.5, D-459).
+- The time doors' `:range` arms: `RatesViolation`'s on a `Relative`, a
+  composed divisor, and on an `Absolute`, an anchor no base tick counts in an
+  `Int`, and `ArgumentInvalid`'s on `Period`, `Hz` and `Absolute` (§9.2,
+  §10.5, D-459, D-465). `DeploymentInvalid` has no `:derive` `:range`.
 - `ArgumentInvalid`'s arms off the deployment surface (D-256, D-261).
 - The `Trim*` kinds `TrimProblemInvalid`, `TrimCommitEvents`,
   `TrimCommitResiduals` and `TrimCommitChecks` (D-262).
@@ -577,7 +575,7 @@ Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
 D-261, D-262, D-263, D-272, D-274, D-276, D-277, D-316, D-318, D-319, D-320,
 D-406, D-437, D-438, D-444, D-445, D-449, D-450, D-452, D-459, D-460, D-462,
-D-463.
+D-463, D-465.
 
 ### `src/executor.jl`
 
@@ -1285,7 +1283,9 @@ D-456, D-457, D-458.
   its terminal: one for a producer, one per consumer (§13.7).
 - The flatten pass runs under one structure-step barrier (D-261):
   - `StructureDraft` accumulates the per-component columns the `Structure` is
-    built from, among them the tiers, the rate chains and the fold's `Timing`s;
+    built from, among them the tiers, the rate chains and the fold's `Timing`s,
+    and holds `scope_rates`, each rate scope's chain beside `scopes`, scratch
+    the trial binding reads;
   - resolvers record into the step's list;
   - `Structure.root_types` holds the root-input types the wire pass fixes
     ahead of construction;
@@ -1299,6 +1299,27 @@ D-456, D-457, D-458.
   or phase past `Int` is recorded as `RatesViolation` `:range`, once per
   entry, so a bare container key's elements share one refusal, and a rate
   its own check refused composes nothing (§10.5, D-459).
+- The grid arithmetic the trial binding and deployment.jl's `bind_schedule`
+  and `_lattice` share (§9.2, D-465): `_as_int`; `_anchor_counts`, one
+  anchor's division pair at a base tick in `Int128`; `_timing_counts`, one
+  timing's multiply-add in checked `Int`; `_max_frame`, the frame loop's
+  margin. Beside them the grid attribution `_grid_report` (D-187):
+  - the constraint pool, with each entry's leave-one-out refinement factor;
+  - the prime attribution of `gcd(pool)`'s denominator, by `_prime_powers`,
+    a trial division stopping at `PRIME_DIVISOR_CAP`, and `_supplies`, the
+    supplier test: a prime power divides the entry's denominator, and an
+    unfactored cofactor shares a factor with it (D-459);
+  - a driving offset's nearest non-refining neighbours, each a product under
+    the shared catch, one whose arithmetic leaves `Int` not offered (D-459).
+- The trial binding `_check_trial_binding`, on a fold with no
+  `RatesViolation`: it binds at `Δt_frame = Δt_base = gcd(pool)`, `1//1` for
+  an empty pool, and refuses a count past `Int` there as `RatesViolation`
+  `:range`, once per entry. A gcd no `Rational{Int}` holds refuses every
+  anchor's entry; an anchor count, its `Absolute` entry; a component's or a
+  rate scope's divisor, the first `Relative` link its running count passes
+  (`_composing_link`); a margin with no frame, each component at the largest
+  divisor, at the link where its count reaches it. The rate scopes' divisors
+  take no part in the margin, as in `_lattice` (§9.1, §9.2, D-465).
 - The shadowing check ahead of `classify` in the walk (D-246).
 - The component frame around the walk's two branches (D-248).
 - `_check_face_names` refuses an empty assembly face as `FaceNameIllegal`
@@ -1317,8 +1338,8 @@ D-456, D-457, D-458.
   tuple, as `_fanout` does, still compiles once per connection type.
 
 Spec: §6.1, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §13.1, §13.3, §13.7,
-Appendix C, D-130, D-208, D-210, D-211, D-229, D-236, D-246, D-248, D-253,
-D-261, D-289, D-315, D-437, D-459, D-464.
+Appendix C, D-130, D-187, D-208, D-210, D-211, D-229, D-236, D-246, D-248,
+D-253, D-261, D-289, D-315, D-437, D-445, D-459, D-464, D-465.
 
 ### `src/trace.jl`
 

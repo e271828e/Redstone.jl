@@ -20,25 +20,12 @@ item changes what the spec says, the spec edit is part of the item.
   log commit followed by its code. Part one, the notation, has landed
   (D-464), and parts two to four follow. The session left open whether the
   build refuses a pool that admits no deployment. That was ruled on
-  2026-11-20, and its work runs ahead of part two, as the first sub-bullet
-  below, with a log entry of its own.
-  - **The build refuses a structure that no deployment binds.** A
-    structure admits a deployment exactly when it binds at
-    `Δt_frame = Δt_base = gcd(pool)`, or at any base tick where the pool is
-    empty. Every count the binding forms is least at that point: a base
-    tick is `gcd(pool)/k` and scales each count by `k`, and the frame
-    loop's margin is least when the frame is the base tick. The structure
-    step runs that one trial after the fold, through the deployment's own
-    anchor division, multiply-add and frame margin. A failure is
-    `RatesViolation` `:range`, on the entry whose count leaves `Int`, or on
-    every anchor's entry when the gcd has no `Rational{Int}` value (§9.1,
-    §9.2, D-465, amending D-459). A built structure then always has a grid
-    report, `bind_schedule` loses its arm for a missing one, and
-    `:derive`'s `:range` refusal goes. The report's own overflow is not the
-    test: the anchors `Absolute(Period(2^40))`, `Absolute(Period(1), 1//4099)`
-    and `Absolute(Period(1), 1//4111)` get a whole report, and the first
-    counts about `1.85e19` base ticks at its coarsest value. Stage reached:
-    the spec and the log carry it, and the code is next.
+  2026-11-20 and has landed ahead of part two: the build refuses a
+  structure that no deployment binds, by one trial binding (§9.1, §9.2,
+  D-465). `src/assembly.jl` was split for it, and the grid arithmetic now
+  lives in `src/structure.jl`. The record, with its findings and the items
+  it leaves open for the user, is
+  `design/increments/20261120_structure_trial/notes_structure_trial.md`.
   - **The grid report, derived from the structure.** The report is a pure
     function of the anchors. `show(::Structure)` derives it and prints it
     under the anchor table, as `_grid_block`'s lines under `grid:`, and
