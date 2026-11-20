@@ -448,7 +448,8 @@ D-459, D-460, D-461, D-463, D-465, D-466.
   characters and a `NamedTuple` field opened into dotted entries (D-439),
   the `types` rows `_type_rows`
   with `_docstring` off the docsystem's meta, each bare `@ref` link targeted
-  by `_targeted_link` (D-467), and `_locations` over `LOCATED_DECLARATIONS`.
+  by `_targeted_link`, its name's segments read by `_names_binding` (D-467),
+  and `_locations` over `LOCATED_DECLARATIONS`.
 - Nothing here encodes text. `test_descriptor.jl` holds the round trip, with
   JSON and JSONSchema as the suite's dependencies alone.
 

@@ -357,11 +357,11 @@ _qualified_name(@nospecialize(component_type::Type)) =
 # binds a parameterization of it, `SumJunction` for a `Junction` at `+`, or
 # `nothing`: the base binding itself never counts, and neither does a supertype.
 function _alias(@nospecialize(component_type::Type))
-    mod = parentmodule(component_type)
+    type_module = parentmodule(component_type)
     base = Base.unwrap_unionall(component_type)
     matches = Pair{Symbol,Type}[]
-    for name in names(mod; all = true)
-        bound = _constant(mod, name)
+    for name in names(type_module; all = true)
+        bound = _constant(type_module, name)
         bound isa DataType || bound isa UnionAll || continue
         Base.unwrap_unionall(bound).name === base.name && bound !== base.name.wrapper &&
             component_type <: bound && push!(matches, name => bound)
@@ -369,14 +369,14 @@ function _alias(@nospecialize(component_type::Type))
     isempty(matches) && return nothing
     sort!(matches; by = first)
     narrowest = [m for m in matches if all(m.second <: n.second for n in matches)]
-    string(mod, ".", first(isempty(narrowest) ? matches : narrowest).first)
+    string(type_module, ".", first(isempty(narrowest) ? matches : narrowest).first)
 end
 
 # A module's constant binding by name, or `nothing` for anything else; a binding
 # that is declared but unassigned makes `isconst` throw.
-_constant(mod::Module, name::Symbol) =
+_constant(type_module::Module, name::Symbol) =
     try
-        isconst(mod, name) ? getfield(mod, name) : nothing
+        isconst(type_module, name) ? getfield(type_module, name) : nothing
     catch
         nothing
     end
@@ -433,26 +433,27 @@ end
 # The type's docstring as its Markdown source, `nothing` when it has none, each
 # bare `@ref` link that resolves to an exported binding given its target.
 function _docstring(@nospecialize(component_type::Type))
-    mod = parentmodule(component_type)
-    doc_binding = Base.Docs.Binding(mod, nameof(component_type))
-    meta = Base.Docs.meta(mod; autoinit = false)
+    type_module = parentmodule(component_type)
+    doc_binding = Base.Docs.Binding(type_module, nameof(component_type))
+    meta = Base.Docs.meta(type_module; autoinit = false)
     meta === nothing && return nothing
     haskey(meta, doc_binding) || return nothing
     multidoc = meta[doc_binding]
     signature = haskey(multidoc.docs, Union{}) ? Union{} : first(multidoc.order)
     text = join(multidoc.docs[signature].text)    # an interpolated docstring holds the values among its parts
-    replace(text, r"\[`([^`]+)`\]\(@ref\)" => link -> _targeted_link(link, mod))
+    replace(text, r"\[`([^`]+)`\]\(@ref\)" => link -> _targeted_link(link, type_module))
 end
 
 # A bare `@ref` link, `` [`name`](@ref) ``, with the target its name resolves to
-# from `mod` when the binding's owner exports it: the owner's qualified name, the
-# text kept (D-467). A dotted name resolves segment by segment. Any other link,
-# one naming no identifier or a binding its owner does not export, stays as written.
-function _targeted_link(link::AbstractString, mod::Module)
+# from `type_module` when the binding's owner exports it: the owner's qualified
+# name, the text kept (D-467). A dotted name resolves segment by segment, each an
+# identifier, a macro name or an operator. Any other link, one naming no binding
+# or a binding its owner does not export, stays as written.
+function _targeted_link(link::AbstractString, type_module::Module)
     name = match(r"^\[`([^`]+)`\]", link).captures[1]
     segments = split(name, '.')
-    all(Base.isidentifier, segments) || return link
-    scope = mod
+    all(_names_binding, segments) || return link
+    scope = type_module
     for segment in segments[1:end-1]
         symbol = Symbol(segment)
         isdefined(scope, symbol) || return link
@@ -463,8 +464,18 @@ function _targeted_link(link::AbstractString, mod::Module)
     isdefined(scope, symbol) || return link
     owner = which(scope, symbol)
     Base.isexported(owner, symbol) || return link
-    "[`$name`](@ref $owner.$symbol)"
+    # a module is its own target, never `Owner.Owner`; an operator is quoted,
+    # `Owner.:(⊕)`, since `Owner.⊕` does not parse
+    bound = getfield(owner, symbol)
+    bound isa Module && return "[`$name`](@ref $bound)"
+    target = Base.isoperator(symbol) && !Base.isidentifier(symbol) ? ":($symbol)" : "$symbol"
+    "[`$name`](@ref $owner.$target)"
 end
+
+# A segment a bare link's name may hold: an identifier, a macro name or an operator.
+_names_binding(segment::AbstractString) =
+    Base.isidentifier(segment) || Base.isoperator(segment) ||
+    (startswith(segment, '@') && Base.isidentifier(chop(segment; head = 1, tail = 0)))
 
 # The declaration methods the type defines, by the fixed order of
 # `LOCATED_DECLARATIONS`, each as the file and line Julia reports.

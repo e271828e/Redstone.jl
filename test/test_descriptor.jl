@@ -64,19 +64,35 @@ y_types(::DualUnionEntry) = (y = Float64,)
 y_state(::DualUnionEntry, (; x)) = (y = x,)
 x_deriv(::DualUnionEntry, (; x, u)) = u.u - x
 
+# A `Pinned` vector entry: the root input it pins keeps a type that is no `Float64`.
+struct PinnedVectorEntry <: AbstractComponent end
+x_init(::PinnedVectorEntry) = 0.0
+u_types(::PinnedVectorEntry) = (u = Pinned{SVector{2,Float64}},)
+y_types(::PinnedVectorEntry) = (y = Float64,)
+y_state(::PinnedVectorEntry, (; x)) = (y = x,)
+x_deriv(::PinnedVectorEntry, (; x, u)) = u.u[1] - x
+
 # The fan-out over both, beside a concrete gain that fixes the type: `in` is
 # pinned by `f`, and `loose` by nothing.
 abstract_entries() =
     Group((; g = Gain(2.0), f = FloatEntry(), n = DualUnionEntry(), h = Gain(3.0));
           input_wires = ("in" => ("g/e", "f/u"), "loose" => ("h/e", "n/u")))
 
-# The `@ref` pass (D-467): `RefOwner` exports `owned`, which `RefUser` brings in;
+# The `@ref` pass (D-467): `RefOwner` exports `owned`, a macro and an operator,
+# which `RefUser` brings in with the module's own name, and holds `Deep`, whose
+# export `RefUser` does not see;
 # `RefUser` exports its component and `exported_helper` and keeps `internal_helper`
 # unexported. The docstring holds one link of each kind the pass reads.
 module RefOwner
-export owned
+export owned, @owned_macro, ⊕
 "A binding another module's docstring links to."
 owned() = nothing
+macro owned_macro(x) x end
+⊕(a, b) = a + b
+module Deep
+export deep
+deep() = nothing
+end
 end
 
 module RefUser
@@ -90,7 +106,8 @@ internal_helper() = nothing
 A component whose docstring links [`owned`](@ref), [`Linked`](@ref),
 [`exported_helper`](@ref), [`RefOwner.owned`](@ref), [`internal_helper`](@ref),
 [`missing_name`](@ref), [`exported_helper(x)`](@ref), [`owned`](@ref RefOwner.owned)
-and [the owner](@ref), and the glossary's [state](@ref g-state).
+and [the owner](@ref), and the glossary's [state](@ref g-state), and
+[`@owned_macro`](@ref), [`⊕`](@ref), [`RefOwner.Deep.deep`](@ref) and [`RefOwner`](@ref).
 """
 struct Linked <: Redstone.AbstractComponent end
 x_init(::Linked) = 0.0
@@ -118,14 +135,14 @@ chained_model() =
 # by its headings, a grid pool row's label reduced to its scope and key.
 
 tokens(line) = String.(split(line))
-_q(r) = string(r["num"] // r["den"])
+_rational_text(r) = string(r["num"] // r["den"])
 _rational_of(r) = r["num"] // r["den"]
 _digits(k, glyphs) = join(collect(glyphs)[d - '0' + 1] for d in string(k))
 _anchor_text(k) = "A" * _digits(k, "₀₁₂₃₄₅₆₇₈₉")
 _power_text(p) = p == 1 ? "" : _digits(p, "⁰¹²³⁴⁵⁶⁷⁸⁹")
 _path_text(path) = isempty(path) ? "root" : path
 _link_text(link) = haskey(link, "K") ? "$(link["key"]) = Relative($(link["K"]), $(link["phi"]))" :
-                   "$(link["key"]) = Absolute($(_q(link["dt"])), $(_q(link["tau"])))"
+                   "$(link["key"]) = Absolute($(_rational_text(link["dt"])), $(_rational_text(link["tau"])))"
 _chain_text(links) = isempty(links) ? "—" : join(_link_text.(links), " → ")
 
 # The lines under a two-space heading of a `show` text, up to the next heading.
@@ -161,7 +178,7 @@ function client_structure(structure)
     scopes = [[_path_text(scope["path"]), scope["key"], _anchor_text(scope["timing"]["anchor"]),
                string(scope["timing"]["m"]), string(scope["timing"]["c"])] for scope in structure["scopes"]]
     anchor_rows = vcat([["A₀", "Δt_base", "0//1", "—", "—"]],
-                       [[_anchor_text(k), _q(anchor["dt"]), _q(anchor["tau"]), _path_text(anchor["scope"]), anchor["key"]]
+                       [[_anchor_text(k), _rational_text(anchor["dt"]), _rational_text(anchor["tau"]), _path_text(anchor["scope"]), anchor["key"]]
                         for (k, anchor) in enumerate(anchors)])
     # the grid report, its values and labels read through the anchor positions
     report, grid = Vector{String}[], structure["grid"]
@@ -172,9 +189,9 @@ function client_structure(structure)
         for entry in grid["pool"]
             anchor = anchors[entry["anchor"]]
             row = [anchor["scope"], anchor["key"], entry["kind"],
-                   _q(entry["kind"] == "period" ? anchor["dt"] : anchor["tau"]), "×$(entry["factor"])"]
+                   _rational_text(entry["kind"] == "period" ? anchor["dt"] : anchor["tau"]), "×$(entry["factor"])"]
             haskey(entry, "alternatives") &&
-                append!(row, tokens("declaring " * join(_q.(entry["alternatives"]), " or ") *
+                append!(row, tokens("declaring " * join(_rational_text.(entry["alternatives"]), " or ") *
                                     " keeps $(entry["factor"] * admissible)"))
             push!(report, row)
             push!(labels, "$(anchor["key"]) $(entry["kind"])")
@@ -669,14 +686,19 @@ function test_descriptor()
         abstract_rows = descriptor(build(abstract_entries())).build.structure.root_inputs
         @test [(row.name, row.pinned, row.pinned_by) for row in abstract_rows] ==
               [("in", true, [(path = "f", port = "u")]), ("loose", false, [])]
+        # A primitive root pins its own face, by declaration or by tier alone.
+        @test [(row.name, row.pinned, row.pinned_by) for row in descriptor(build(PinnedGain())).build.structure.root_inputs] ==
+              [("e", true, [(path = "", port = "e")])]
+        @test [(row.name, row.pinned, row.pinned_by) for row in descriptor(build(UnitDelay(0.0))).build.structure.root_inputs] ==
+              [("u", true, [(path = "", port = "u")])]
         # The oracle is the activation's own cell, the meet as the layout takes it:
         # a pinned root input keeps its type at a `Dual`, an unpinned one follows it.
-        for model in (pinned_fanout(), abstract_entries(), fed(PinnedGain(), "e"), Vehicle())
+        for model in (pinned_fanout(), abstract_entries(), fed(PinnedGain(), "e"), fed(PinnedVectorEntry()), Vehicle())
             model_built = build(model)
             act = activation(model_built, ProbeDual)
-            for row in descriptor(model_built).build.structure.root_inputs
+            for (k, row) in enumerate(descriptor(model_built).build.structure.root_inputs)
                 cell_type = Redstone._port_type(act.layout.addr[("", Symbol(row.name))])
-                @test row.pinned == (cell_type === Float64)
+                @test row.pinned == (cell_type === model_built.structure.root_types[k])
             end
         end
         # A failure past the structure step carries the pin, the structure being complete.
@@ -720,6 +742,9 @@ function test_descriptor()
         @test value.build.events.components ==
               [(path = "g", events = [], bundle = []),
                (path = "saw", events = [(name = "wrap", policy = "localized")], bundle = ["x", "y", "t"])]
+        # A row's events stand in declaration order.
+        relay = only(descriptor(build(fed(Relay(lower = 0.0, upper = 1.0)))).build.events.components)
+        @test [event.name for event in relay.events] == ["switch_on", "switch_off"]
         # `state_events` joins the located declarations, after `sample_times`'s
         # place, at the line its method is written on.
         motor = only(row for row in descriptor(build(Motor(1.0))).build.structure.types
@@ -743,6 +768,9 @@ function test_descriptor()
                                         (path = "gnss", D = 10, phi = 0)],
                                 scopes = [(path = "fcs", key = "fcs", D = 1, phi = 0)])
         @test body.warnings == []
+        # The counts are in base ticks, never frames, nor the finer of the two.
+        coarse = Deployment(build(MultiRate()); Δt_frame = 1//500, Δt_base = 1//100)
+        @test descriptor(coarse).deployment.schedule.anchors == [(D = 2, phi = 0)]
         # A proposing method sets its floor, which follows `h_max`; the bound is
         # the resolved one, and every parameter is its own.
         adaptive = Deployment(build(MultiRate()); Δt_frame = 1//500, h_max = 1//1000, h_min = 1//100000,
@@ -802,7 +830,8 @@ function test_descriptor()
             A component whose docstring links [`owned`](@ref Main.RedstoneTests.RefOwner.owned), [`Linked`](@ref Main.RedstoneTests.RefUser.Linked),
             [`exported_helper`](@ref Main.RedstoneTests.RefUser.exported_helper), [`RefOwner.owned`](@ref Main.RedstoneTests.RefOwner.owned), [`internal_helper`](@ref),
             [`missing_name`](@ref), [`exported_helper(x)`](@ref), [`owned`](@ref RefOwner.owned)
-            and [the owner](@ref), and the glossary's [state](@ref g-state).
+            and [the owner](@ref), and the glossary's [state](@ref g-state), and
+            [`@owned_macro`](@ref Main.RedstoneTests.RefOwner.@owned_macro), [`⊕`](@ref Main.RedstoneTests.RefOwner.:(⊕)), [`RefOwner.Deep.deep`](@ref Main.RedstoneTests.RefOwner.Deep.deep) and [`RefOwner`](@ref Main.RedstoneTests.RefOwner).
             """
         # The package exports nothing until its export audit, so a library
         # docstring keeps every link as written.

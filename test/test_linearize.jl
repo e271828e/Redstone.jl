@@ -373,6 +373,14 @@ function test_linearize()
         d = only(diagnostics(failure(() -> linearize(sim, taps(u = (τ = get_input(:τ),)); about = set(u = (τ = 0.0,))))))
         @test d isa TapResolution && d.reason === :unseedable && d.field === :τ && d.tap === :u
         @test d.pinning == [("g", :continuous, Pinned{Float64})] && d.declared === Float64
+        # The consumers named are the refused root input's own, here the second's.
+        second_pinned = Group((; h = Gain(1.0), g = PinnedGain(), c = Pendulum());
+                              local_wires = ("g/out" => "c/u",), input_wires = ("free" => "h/e", "τ" => "g/e"))
+        sim = Simulation(second_pinned; Δt_frame = 1//10)
+        d = only(diagnostics(failure(() -> linearize(sim, taps(u = (τ = get_input(:τ),));
+                                                     about = set(u = (free = 0.0, τ = 0.0))))))
+        @test d isa TapResolution && d.reason === :unseedable && d.field === :τ &&
+              d.pinning == [("g", :continuous, Pinned{Float64})]
     end
 
     @testset "resolution collects every tap violation into one refusal (§14.10, §13.1)" begin
