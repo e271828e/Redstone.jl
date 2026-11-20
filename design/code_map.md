@@ -16,10 +16,10 @@ when its citations change.
 ### `src/Redstone.jl`
 
 The package module: the dependencies and the include order the other files load
-in: leaves, diagnostics, declare, assembly, store, executor, build, tracer,
-readers, deployment, dataplane, checkpoint, trace, roster, bindings, control,
-devices, conditions, model, stepper, frame, trim, linearize, sim, show,
-descriptor, library, precompile.
+in: leaves, diagnostics, declare, assembly, structure, store, executor, build,
+tracer, readers, deployment, dataplane, checkpoint, trace, roster, bindings,
+control, devices, conditions, model, stepper, frame, trim, linearize, sim,
+show, descriptor, library, precompile.
 The model layer sits between the executor layer and the runtime, by the rule
 in the `src/model.jl` entry.
 
@@ -29,32 +29,12 @@ in the `src/model.jl` entry.
   contract at nominal with its pins stripped (D-263).
 - Children and containers, with their collision family.
 - Paths and §6.1's one-level rule.
-- Endpoint and face resolution, with the root's face invariants. The
-  resolvers return routes, the hops `(path, face)` from an endpoint down to
-  its terminal: one for a producer, one per consumer (§13.7).
-- The flatten pass runs under one structure-step barrier (D-261):
-  - `StructureDraft` accumulates the per-component columns the `Structure` is
-    built from, among them the tiers, the rate chains and the fold's `Timing`s;
-  - resolvers record into the step's list;
-  - `Structure.root_types` holds the root-input types the wire pass fixes
-    ahead of construction;
-  - as the step's last act, the artifact is built complete as rows at the
-    barrier, with one `ComponentEntry` per primitive in walk order and one
-    `Anchor` per `Absolute` entry.
-- `LevelEntry` and `Child`, one row per assembly in walk order with its
-  children and its declared wires, the accessor `membership` on a `Child`, and
-  `terminal_producer`/`face_routes` over them (D-315).
-- The sample-time fold, `_child_scope`, in checked `Int`: a composed divisor
-  or phase past `Int` is recorded as `RatesViolation` `:range`, once per
-  entry, so a bare container key's elements share one refusal, and a rate
-  its own check refused composes nothing (§10.5, D-459).
-- The shadowing check ahead of `classify` in the walk (D-246).
 - The store-shape read ahead of the classifier in the walk, `check_store_form`,
   which refuses `(;)` as `EmptyStore` and reads that primitive no further
   (§8.2, §9.1, D-438).
-- The tier classification `classify_tier` (§8.2), in its own section ahead
-  of the walk. It records what it finds instead of throwing, the walk reads
-  the tier beside the class, and the store decides the tier. It records
+- The tier classification `classify_tier` (§8.2), in its own section. It
+  records what it finds instead of throwing, the walk reads the tier beside
+  the class, and the store decides the tier. It records
   `StatelessWithoutOutputs` and runs the pinned-entry check, both from D-263,
   and holds `IllegalPortType`'s nested-marker arm (D-265) and its not-a-type
   arm, a contract declared `nothing` kept as one bare entry for it, both on
@@ -65,14 +45,10 @@ in the `src/model.jl` entry.
   `check_stores` (§7.3, D-231) and the state-leaf vocabulary check
   `check_state_leaves` (§7.1, D-094) iterate it, all taking the component
   unspecialized (D-289).
-- The component frame around the walk's two branches (D-248).
 - `_contract`, a contract at nominal in the keyed form, a bare contract's one
   port under its default face `u` or `y`, read by `pairs` and `haskey` as any
   contract (§8.6, D-437). `check_contract_names` refuses an empty contract key
-  as `FaceNameIllegal` `:empty`, and `_check_face_names` an empty assembly
-  face; the root check `_check_root_faces` collides the keyed names, so two
-  bare contracts collide on nothing, and the root claims a bare `u_types` as
-  the root input `u` (D-210, D-437).
+  as `FaceNameIllegal` `:empty`.
 - §13.3's `resolve`/`resolve_terminal`/face-list primitives `input_faces` and
   `output_faces`. `resolve_terminal` reads the child segment alone, a
   container element's included, as a child with no port, its name `nothing`,
@@ -82,27 +58,20 @@ in the `src/model.jl` entry.
   walk, so the primitives read them once per call (Appendix C) and evaluate a
   body only outside a walk. Beside it `flatten_tree!` binds `WALK_CHILDREN`, a
   fresh cache of each assembly's child list, so endpoint resolution derives a
-  list once per walk rather than once per endpoint (§9.7).
-- The service walk `resolve_authored` runs from the root's level row and
-  follows the structure's children, refusing no traversal past a generically
-  held child (D-414). It searches
-  `Structure.levels`, each assembly's children as the walk derived them, so a
-  service derives none again. A path with no row is a primitive. The walk
-  sits in the file's last section, after the `Structure` it reads.
+  list once per walk rather than once per endpoint (§9.7). The two memos and
+  `_walked_children` sit in the file's last section, read by the primitives
+  here and bound by the walk in `structure.jl`.
 - §8.8's `input_passthrough`/`output_passthrough`, with the three exclusive
   selectors `except`, `only` and `select`, and `EmptyFaceSelection` through the
   channel (D-251). A bare face is labelled as any face (D-437).
-- The walk, the class and child readers, the resolvers and the build
-  primitives take components, assemblies and the root unspecialized, and
-  `_children` reads a container through `_elements` and `_element_keys`, so a
-  new component or root type compiles none of them again (§9.7, D-289). A
-  function that takes a connection or its endpoint tuple, as `_fanout` does,
-  still compiles once per connection type.
+- The class and child readers, the path resolvers and the build primitives
+  take components, assemblies and the root unspecialized, and `_children`
+  reads a container through `_elements` and `_element_keys`, so a new
+  component or root type compiles none of them again (§9.7, D-289).
 
-Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
-§13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
-D-231, D-236, D-246, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
-D-315, D-437, D-438, D-459, D-464.
+Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.7, §13.1, §13.3,
+§14.2, Appendix C, D-061, D-094, D-130, D-171, D-207, D-209, D-211, D-212,
+D-231, D-251, D-263, D-265, D-289, D-437, D-438.
 
 ### `src/bindings.jl`
 
@@ -1308,6 +1277,48 @@ Spec: §10.2, §10.4, §12.6, §14.10, D-017, D-274, D-442, D-452, D-461.
 
 Spec: §9.5, §9.7, §10.5, §13.5, D-162, D-235, D-237, D-260, D-316, D-317, D-437,
 D-456, D-457, D-458.
+
+### `src/structure.jl`
+
+- Endpoint and face resolution, with the root's face invariants. The
+  resolvers return routes, the hops `(path, face)` from an endpoint down to
+  its terminal: one for a producer, one per consumer (§13.7).
+- The flatten pass runs under one structure-step barrier (D-261):
+  - `StructureDraft` accumulates the per-component columns the `Structure` is
+    built from, among them the tiers, the rate chains and the fold's `Timing`s;
+  - resolvers record into the step's list;
+  - `Structure.root_types` holds the root-input types the wire pass fixes
+    ahead of construction;
+  - as the step's last act, the artifact is built complete as rows at the
+    barrier, with one `ComponentEntry` per primitive in walk order and one
+    `Anchor` per `Absolute` entry.
+- `LevelEntry` and `Child`, one row per assembly in walk order with its
+  children and its declared wires, the accessor `membership` on a `Child`, and
+  `terminal_producer`/`face_routes` over them (D-315).
+- The sample-time fold, `_child_scope`, in checked `Int`: a composed divisor
+  or phase past `Int` is recorded as `RatesViolation` `:range`, once per
+  entry, so a bare container key's elements share one refusal, and a rate
+  its own check refused composes nothing (§10.5, D-459).
+- The shadowing check ahead of `classify` in the walk (D-246).
+- The component frame around the walk's two branches (D-248).
+- `_check_face_names` refuses an empty assembly face as `FaceNameIllegal`
+  `:empty`; the root check `_check_root_faces` collides the keyed names, so
+  two bare contracts collide on nothing, and the root claims a bare `u_types`
+  as the root input `u` (D-210, D-437).
+- The service walk `resolve_authored` runs from the root's level row and
+  follows the structure's children, refusing no traversal past a generically
+  held child (D-414). It searches
+  `Structure.levels`, each assembly's children as the walk derived them, so a
+  service derives none again. A path with no row is a primitive. The walk
+  sits in the file's last section, after the `Structure` it reads.
+- The walk and the endpoint resolvers take components, assemblies and the
+  root unspecialized, so a new component or root type compiles none of them
+  again (§9.7, D-289). A function that takes a connection or its endpoint
+  tuple, as `_fanout` does, still compiles once per connection type.
+
+Spec: §6.1, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §13.1, §13.3, §13.7,
+Appendix C, D-130, D-208, D-210, D-211, D-229, D-236, D-246, D-248, D-253,
+D-261, D-289, D-315, D-437, D-459, D-464.
 
 ### `src/trace.jl`
 

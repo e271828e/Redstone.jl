@@ -29,7 +29,9 @@ spec change obliges the code to conform. Nothing deviates silently.
 records, roadmap, increments and rendering spike moved to
 `RedstoneInspector.jl` the same day, cited by older records as
 `design/inspector/`, `design/increments/roadmap_inspector.md` and
-`design/prototypes/render_spike/`. A bare path is this repo's; a path in
+`design/prototypes/render_spike/`. `src/assembly.jl` was split on
+2026-11-20 into `assembly.jl` and `structure.jl`, and older records cite
+the first for both. A bare path is this repo's; a path in
 the inspector repo carries its name as prefix, and the inspector cites this
 repo as `Redstone.jl/design/spec.md`.
 

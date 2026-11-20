@@ -102,7 +102,7 @@ function _grid_report(anchors::Vector{Anchor})
         alternatives = Rational{Int}[]
         if entry_kinds[i] === :offset && factor > 1
             # The grid the rest of the pool supports, and τ's neighbours on it. The
-            # fold requires 0 ≤ τ < Δt (`assembly.jl`), so an upper neighbour reaching
+            # fold requires 0 ≤ τ < Δt (`structure.jl`), so an upper neighbour reaching
             # the anchor's period is no offset; 0 stays, declaring none being a repair.
             # A neighbour whose arithmetic leaves `Int` is not offered, since
             # `Absolute` refuses what `Rational{Int}` cannot hold (D-459). Each is a

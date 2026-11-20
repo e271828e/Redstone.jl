@@ -317,7 +317,7 @@ override:
 
 | touched in `src/` | run |
 | --- | --- |
-| `declare`, `assembly`, `build`, `tracer`, or a new kind in `diagnostics.jl` | `declare assembly build diagnostics leaves show descriptor`; a change in `build.jl`'s `compile` half adds the next row |
+| `declare`, `assembly`, `structure`, `build`, `tracer`, or a new kind in `diagnostics.jl` | `declare assembly build diagnostics leaves show descriptor`; a change in `build.jl`'s `compile` half adds the next row |
 | `executor`, `stepper`, `frame` | `executor stepper continuous discrete events localization failures` |
 | `dataplane`, `roster`, `bindings`, `control`, `devices`, `trace` | `dataplane roster bindings devices trace lifecycle log` |
 | `checkpoint` | the row above, plus `discrete events linearize` |
