@@ -6900,12 +6900,14 @@ fault is one refusal. The anchor's divisor joins the product only at
 deployment, where the same check refuses an overflow on `Δt_base`
 ([§9.2][s9-2]).
 
-Composition preserves the canonical residue `0 ≤ Φ < D`.
-`companions/sample_time_proposal.md` (the declaration design's worked companion)
-carries the one-line induction. All scoping therefore compiles away at build to
-one `(D, Φ)` pair per discrete component. The boundary sweep gates on that pair
-with the `(tick − Φ) % D == 0` test above. The lattice stays static, and the
-interior sweep still holds no discrete entries to gate.
+Composition preserves the canonical residue `0 ≤ Φ < D`. The proof is an
+induction down the tree, and the root scope starts it at `(1, 0)`. If a scope
+has `Φ_s ≤ D_s − 1` and its child declares `φ ≤ K − 1`, then
+`Φ ≤ (D_s − 1) + (K − 1)·D_s = K·D_s − 1 = D − 1`. All scoping therefore
+compiles away at build to one `(D, Φ)` pair per discrete component. The
+boundary sweep gates on that pair with the `(tick − Φ) % D == 0` test above.
+The lattice stays static, and the interior sweep still holds no discrete
+entries to gate.
 
 Relative is the default form because, in a layered control architecture, the
 *ratios* are intrinsic to the design and travel with the assembly type. The
@@ -7029,10 +7031,11 @@ Staggered stacks never share a boundary, so the worst-case cost of one
 boundary is a `max` rather than a sum. A frame's cost is a `max` too when the
 stagger is at least a frame ([§10.7][s10-7]).
 
-Both patterns are worked in `companions/sample_time_proposal.md`, together with
-how silently an offset edit rewires a coincidence structure. The `Schedule` and
-its hyperperiod chart ([§9.2][s9-2]) are how a user audits which pattern a model
-actually has.
+Both patterns are worked in `reports/20260812_sample_time_proposal/report.md`
+(the proposal the sample-time design was adopted from, a dated record in the
+vocabulary of its day), together with how silently an offset edit rewires a
+coincidence structure. The `Schedule` and its hyperperiod chart
+([§9.2][s9-2]) are how a user audits which pattern a model actually has.
 
 #### `Δt` in the bundle
 

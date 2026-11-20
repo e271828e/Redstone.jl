@@ -7377,6 +7377,11 @@ constructor-side range validation below stands. The composition runs in
 checked `Int`, and a composed divisor or phase past `Int` is a
 `RatesViolation` `:range`.
 
+Annotation (2026-11-20): the proposal is no longer a companion. It moved to
+`reports/20260812_sample_time_proposal/report.md` as a dated record, and it is
+not swept at later renames. [§10.5][s10-5] states the residue induction itself and
+cites the report for its worked examples.
+
 **Rejected.**
 - *Bare-value sugar behind a normalization function (`ratespec`: bare `Int` ⇒
   `Relative`, bare quantity ⇒ `Absolute`):* implicit form inference; the

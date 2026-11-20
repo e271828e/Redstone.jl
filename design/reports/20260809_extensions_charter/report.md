@@ -9,7 +9,7 @@ per the guarded-additions rule none of it is built until a demonstrated need arr
 What this document preserves is the *analysis*: where the current design sits relative
 to a general-purpose causal simulation engine, and which gaps are reachable through
 seams the spec deliberately left open. For the sample-time gaps, the worked proposal
-lives in its own companion, [`sample_time_proposal.md`](../../companions/sample_time_proposal.md)
+lives in its own companion, [`sample_time_proposal.md`](../20260812_sample_time_proposal/report.md)
 (adopted into the spec 2026-08-12, decision [D-185][d-185]–[D-187][d-187]).
 
 Source: distilled from the gap-analysis discussion of 2026-08-08/09.
@@ -71,11 +71,11 @@ increasing effort:
    history), not a capability loss. Offline-mode only, which is fine.
 2. **Sample-time phase offsets.** Recorded in [§10.5][s10-5] as "no phase offsets in the first
    cut (no demonstrated use)". The gating machinery extends naturally; worked out in
-   [`sample_time_proposal.md`](../../companions/sample_time_proposal.md).
+   [`sample_time_proposal.md`](../20260812_sample_time_proposal/report.md).
 3. **Non-trivial rate ratios.** Less of a gap than it looks: the harmonic grid
    already admits any *commensurable* rate set (30 Hz and 50 Hz coexist over a 150 Hz
    base as sibling divisors). What is awkward is the declaration ergonomics at the
-   root — also worked out in [`sample_time_proposal.md`](../../companions/sample_time_proposal.md).
+   root — also worked out in [`sample_time_proposal.md`](../20260812_sample_time_proposal/report.md).
 4. **Continuous transport delay.** The engine reference supports delay blocks with
    interpolated history; we have only the discrete `UnitDelay` ([§5.5][s5-5], [§13.7][s13-7]). A
    continuous transport delay is a *library component* with a ring buffer in its
@@ -201,7 +201,7 @@ These are authoring-surface increments, not execution-model changes.
 
 **Superseded (2026-08-12).** The worked proposal for items 2 and 3 of section 1.2 —
 phase offsets and absolute rate declarations — now lives in its own companion,
-[`sample_time_proposal.md`](../../companions/sample_time_proposal.md), which absorbed this section's
+[`sample_time_proposal.md`](../20260812_sample_time_proposal/report.md), which absorbed this section's
 material (the root-declaration pain, the affine composition law, the
 asymmetry between the two forms, the staggered-sensor-suite example) and
 extended it with the `Relative`/`Absolute` declaration surface, mid-tree anchors, the full compilation

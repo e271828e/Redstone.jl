@@ -33,7 +33,6 @@ const FILES = [SPEC,
                "code_map.md",         # the code map, the code rules
                "rules/code_rules.md", # and the work order: plain
                "pending.md",          # citations, never linkified
-               "companions/sample_time_proposal.md",
                "companions/event_visibility_walkthrough.md",
                "companions/inbound_periphery_walkthrough.md",
                "companions/trim_environment_walkthrough.md",
