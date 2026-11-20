@@ -10,7 +10,11 @@ It holds what the spec, the log and `pending.md` do not carry.
 
 - `1537538`: the spec and D-467, the descriptor's content.
 - `df553d8`: the spec and D-468, a root input's pin.
-- The commit that adds this file opens the increment. No code is written.
+- `f5ff3f5`: this file opened, the prototype's base.
+- `be29b3d`: the glossary entry for the grid report.
+- `d844332`: the spec and D-467 amended by the readings.
+- The commit that adds section 11: the record and the prototype's patch,
+  `prototype_descriptor_content.patch` beside this file. No code has landed.
 - The prototype's worktree is
   `/Users/miguel/.julia/dev/Redstone.jl-worktrees/descriptor_content`,
   detached at that commit, with the prototyper's notes and probes beside it
@@ -135,3 +139,164 @@ Rulings on the smaller findings:
   in `tools/gloss_table.md` and `tools/coinage_inventory.md`. Closed.
 - The glossary's `Structure` entry omits the anchor table from what the
   artifact holds.
+
+## 7. The shape built
+
+The prototype is the implementation. Its figures and probes are the
+prototyper's, run in the worktree, and the coordinator re-ran none.
+
+- **`src/build.jl`.** `pinning_consumers(structure, T = ProbeDual)` returns,
+  per root input in `structure.root_inputs`' order, the `(path, port, tier)`
+  of each consumer face the root input reaches whose entry refuses the root
+  input's type walked to `T`. It reads the `Structure` alone, by the test
+  `_seeded_tap` and `_root_input_cell` use.
+- **`src/linearize.jl`.** `_seeded_tap(::Val{:u})` builds its `pinning`
+  payload from that function at the activation's own scalar. The payload,
+  its order, the witness and the message are unchanged.
+- **`src/show.jl`.** `_route_lines` takes the marks, and `_pin_marks` maps
+  each pinning consumer to `pinned by tier` or `pinned by declaration`.
+- **`src/descriptor.jl`.** The build body is structure, outputs, `events`,
+  warnings. `_deployment_body` is flat. `_schedule_section` writes the
+  anchors' counts through `_anchor_counts`, the rows and the scopes. The
+  structure section writes `dt`, the root inputs' `pinned` and `pinned_by`,
+  `_grid_section` over `_grid_report`, and `rates` on each primitive node.
+  `_events_section` writes the rows under `components`. `_docstring` runs
+  the `@ref` pass through `_targeted_link`. `LOCATED_DECLARATIONS` gains
+  `state_events`.
+- **`src/descriptor.json`.** Thirteen new definitions, each new section
+  required, `Anchor` under `dt`, and the description's two stale sentences
+  corrected. The format stays at 1.0.
+- **Tests.** `test/fixtures.jl` gains `pinned_fanout()`. `test/test_show.jl`
+  gains a testset for the mark. `test/test_descriptor.jl` gains seven
+  testsets, the parity client, and the fixtures `FloatEntry`,
+  `DualUnionEntry`, `abstract_entries()`, `RefOwner`, `RefUser.Linked`,
+  `unfactored_model()` and `chained_model()`.
+- **`src/diagnostics.jl`, `src/structure.jl`.** One helper,
+  `_unfactored(prime) = prime ≥ PRIME_DIVISOR_CAP^2`, sits in
+  `diagnostics.jl` beside `GridEntry`, and `_supplies`, `_grid_block` and
+  the writer's `_grid_section` call it. No other copy of the test remains.
+- **`design/code_map.md`.** The entries for `build.jl`, `descriptor.jl`,
+  `diagnostics.jl`, `linearize.jl`, `show.jl` and `fixtures.jl`.
+
+**The figures.** The patch is 11 files, 874 insertions and 67 deletions.
+In the worktree the gate read 10676 of 10676 before and after the helper,
+against 10316 at the base, and the examples 179 of 179 before it. The
+battery passed there. The mutants ran before the helper and were not
+re-run.
+
+**The `@ref` pass, as built.** A bare link is exactly `` [`name`](@ref) ``,
+the name an identifier or a dotted path resolved segment by segment from the
+type's parent module. The owner is `which(scope, sym)`, and the pass
+rewrites only where `Base.isexported(owner, sym)` holds. Calls, unresolved
+names, targeted links, plain-text links and glossary links stay as written.
+
+## 8. What the tests pin
+
+Each mutant ran alone on a scratch copy under its routed subset
+(`mutants.py` and `mutants.log` in the prototyper's notes folder).
+
+| mutant | subset | result |
+|---|---|---|
+| M1, the meet at `Marker` | descriptor, show | red |
+| M2, a pool entry's anchor taken as its pool position | descriptor | red |
+| M3, the `unfactored` flag dropped | descriptor | red |
+| M4, the two marks swapped | descriptor, show | red |
+| M5, `Relative(1)` links dropped from `rates` | descriptor | red |
+| M6, the export test dropped from the `@ref` pass | descriptor | red |
+| M7, an anchor's `phi` written from `D` | descriptor | red |
+| M8, the events bundle dropped | descriptor | red |
+| M9, `h_min` never written | descriptor | red |
+| M10, `linearize` calling the meet at `ProbeDual` | linearize | survives, accepted (section 3a, item 1) |
+| M11, a root input's `pinned` from the face flag | descriptor | red |
+| M12, `state_events` not located | descriptor | red |
+| M13, no route marked | descriptor, show | red |
+| M14, `alternatives` dropped | descriptor | red |
+
+The pin's oracle in the descriptor tests is the activation's own root cell,
+`_root_input_cell`, which is separate code. The grid, schedule and events
+assertions use literals and exact quotients computed in the test.
+
+## 9. Out of scope
+
+- `show(::Deployment)` in the notation, the bullet's next part.
+- The inspector's repo. Its record needs two notes at the pin bump: the
+  suppliers count from 1, and the link counts are 124 in 45 docstrings.
+- The float `Δt` of a schedule row and the docs build's module list, each
+  now a `pending.md` item.
+
+## 10. The cold review's charter
+
+One independent high-tier agent over the whole increment, by
+`increment_rules.md`'s step 5: an open mind, probe scripts outside the tree,
+and "empty is acceptable". Its sources are §13.9, §13.7's paragraph on the
+mark, D-467, D-468, this file and the code commit's diff. It runs the gate
+on the Julia floor `Project.toml` declares. Worth its attention:
+
+- whether the parity client can pass while a fact `show` prints is missing
+  from the file, since the client and the writer were written together;
+- the `@ref` pass on link forms the fixtures do not hold, since no package
+  link exercises it until the audit;
+- `pinning_consumers` at a mount (D-277), where `linearize` reads the face
+  the mount step landed on;
+- the schema's strictness on the new definitions, each object closed and
+  each new section required;
+- the docstring of `descriptor` against `docstring_rules.md`.
+
+## 11. Handover: landing the increment
+
+The session that ran the prototype stopped at about 390k tokens of context,
+at the record's commit, and a fresh session lands the increment.
+
+**The state at the tip.** The spec, the log, `code_rules.md` and
+`pending.md` hold every ruling. Sections 2 and 3a of this file hold the
+reasons the log does not. The code is the patch beside this file, which
+`git apply --check` passed at the tip of this commit. The prototyper checked
+it at `f5ff3f5`; the commits since touch no file it touches.
+
+**What the successor does**, by `increment_rules.md`'s steps 4 to 7:
+
+1. `ListAgents`, then `git status`, before touching the tree.
+2. `git apply design/increments/20261120_descriptor_content/prototype_descriptor_content.patch`
+   from the repository root.
+3. The run. The patch touches `diagnostics.jl` beyond a new kind, the
+   routing table's last row, so the gate runs on the real tree, in the
+   background, then the examples' runner, then the battery, since the patch
+   edits `code_map.md`. Expect 10676 of 10676.
+4. One code commit: the eleven files, the retired `pending.md` sub-bullet
+   "The descriptor", and the parent bullet's sentence on which parts have
+   landed.
+5. Tell the peer session `redstone-jl-15` that the code is on master, with
+   the hash. Its `Period` and `Hz` sweep waits on that, approved by the user
+   and uncommitted in `Redstone.jl-worktrees/period_hz`. It takes D-469. It
+   was sent the nine files of the first report and not yet
+   `src/diagnostics.jl` and `src/structure.jl`, which the helper added.
+6. The cold review, by section 10's charter, then the fixes and the
+   reviewer's check of the delta.
+7. The user diff-verifies the arc. Nothing is pushed without the user's
+   word, and the inspector's increment 10 needs parts one to three pushed.
+
+**Open, and not this increment's.**
+
+- The bullet's next part, `show(::Deployment)` in the notation.
+- The glossary's `Structure` entry omits the anchor table.
+- The inspector's record needs its two notes at the pin bump (section 9).
+
+**Paths.**
+
+- The worktree: `/Users/miguel/.julia/dev/Redstone.jl-worktrees/descriptor_content`,
+  detached at `f5ff3f5` with the patch applied and uncommitted. It can be
+  removed once the code commit is on master.
+- The prototyper's notes, probes, mutants and logs:
+  `/Users/miguel/.julia/dev/Redstone.jl-worktrees/descriptor_content_notes/`,
+  with `notes.txt`, `probe1.jl` to `probe5.jl`, `mutants.py`, `mutants.log`
+  and `gate.log`.
+- The prototyper cannot be resumed by another session. A question for it
+  goes to a fresh agent with this file and those notes.
+
+**The first prompt for the successor.** "Land the descriptor increment.
+Read `AGENTS.md`, the sub-bullet 'The descriptor' of the first bullet of
+`design/pending.md`, `design/rules/increment_rules.md`, and
+`design/increments/20261120_descriptor_content/notes_descriptor_content.md`,
+whose section 11 is the handover. The record and the patch are committed at
+the tip. Apply the patch, run the gate, commit, tell the peer session, then
+run the cold review."

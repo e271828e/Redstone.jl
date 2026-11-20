@@ -42,8 +42,11 @@ item changes what the spec says, the spec edit is part of the item.
     to each bare `@ref` link whose name resolves to an exported binding.
     The schema's record path lands with it. The shapes are the record's
     answers 4 to 7, 14 and 15. Stage reached: the spec and the log have
-    landed (D-467, D-468), and the prototype is next. The notes are
-    `design/increments/20261120_descriptor_content/notes_descriptor_content.md`.
+    landed (D-467, D-468), the prototype is whole and its readings are
+    ratified, and the record and the patch are committed. The code commit
+    and the cold review are next. The notes are
+    `design/increments/20261120_descriptor_content/notes_descriptor_content.md`,
+    whose section 11 is the handover.
   - **`show(::Deployment)` in the notation**, after parts one to three
     and not owed to the inspector. Its tables show each anchor's `Dₖ` and
     `Φₖ` and each component's `m`, `c`, `D`, `Φ`, `Δt` and `τ` in one row,
