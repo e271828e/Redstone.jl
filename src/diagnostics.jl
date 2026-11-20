@@ -765,8 +765,8 @@ function message(d::RatesViolation)
     d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.K), $(d.value.φ)) composes a divisor past `Int` (§10.5)"
     d.reason === :multiplier && return "$(_rates_entry(d)): K = $(d.value), and K ≥ 1 (§10.5)"
     d.reason === :phase && return "$(_rates_entry(d)): φ = $(d.value), and 0 ≤ φ < K (§10.5)"
-    d.reason === :period && return "$(_rates_entry(d)): period $(d.value), and T > 0 (§10.5)"
-    d.reason === :offset && return "$(_rates_entry(d)): offset $(d.value), and 0 ≤ τ < T (§10.5)"
+    d.reason === :period && return "$(_rates_entry(d)): period $(d.value), and Δt > 0 (§10.5)"
+    d.reason === :offset && return "$(_rates_entry(d)): offset $(d.value), and 0 ≤ τ < Δt (§10.5)"
     d.reason === :continuous_child &&
         return "`sample_times` at $(_at_path(d.path)) schedules `$(d.key)`, a continuous " *
                "component — a sample time is a discrete-tier fact; keys name discrete or " *

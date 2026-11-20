@@ -102,7 +102,7 @@ in the `src/model.jl` entry.
 Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.2, §9.7, §13.1, §13.3,
 §13.7, §14.2, Appendix C, D-061, D-094, D-130, D-171, D-207–D-212, D-229,
 D-231, D-236, D-246, D-248, D-251, D-253, D-261, D-263, D-265, D-289,
-D-315, D-437, D-438, D-459.
+D-315, D-437, D-438, D-459, D-464.
 
 ### `src/bindings.jl`
 
@@ -354,7 +354,7 @@ The declaration layer:
 
 Spec: §2.3, §5.2, §8.1, §8.2, §8.5–§8.7, §9.3, §9.7, §13.5, Appendix B, D-051,
 D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438,
-D-459.
+D-459, D-464.
 
 ### `src/deployment.jl`
 
@@ -1127,7 +1127,8 @@ D-261.
   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and
   count-only past it.
 
-Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460.
+Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460,
+D-464.
 
 ### `src/sim.jl`
 

@@ -17,13 +17,8 @@ item changes what the spec says, the spec edit is part of the item.
   in four parts in this order. The session's record is
   `RedstoneInspector.jl/design/deployment_overlay.md`, and its answer 17
   lists the five log entries the parts owe. Each part lands as a spec and
-  log commit followed by its code.
-  - **The notation.** An anchor's period reads `Δtₖ` where the spec and
-    `show(::Structure)` say `T`. An anchor then has `(Δtₖ, τₖ)` as a
-    component has `(Δt, τ)`, and anchor 0 is `Δt₀ = Δt_base`. `Absolute`'s
-    first argument is named `Δt` where it was `q`. The fields `Anchor.T`
-    and `Absolute.T` become `Δt`. `Period.T` keeps its name until the
-    friction review rules on retiring `Period` and `Hz`.
+  log commit followed by its code. Part one, the notation, has landed
+  (D-464), and parts two to four follow.
   - **The grid report, derived from the structure.** The report is a pure
     function of the anchors. `show(::Structure)` derives it and prints it
     under the anchor table, and `Deployment` drops its `grid` field (§9.2,
@@ -46,7 +41,7 @@ item changes what the spec says, the spec edit is part of the item.
     to each bare `@ref` link whose name resolves to an exported binding.
     The schema's record path lands with it. The shapes are the record's
     answers 4 to 7, 14 and 15.
-  - **`show(::Deployment)` in the notation**, after the three parts above
+  - **`show(::Deployment)` in the notation**, after parts one to three
     and not owed to the inspector. Its tables show each anchor's `Dₖ` and
     `Φₖ` and each component's `m`, `c`, `D`, `Φ`, `Δt` and `τ` in one row,
     and its chart marks the frame tops, one column per lattice unit

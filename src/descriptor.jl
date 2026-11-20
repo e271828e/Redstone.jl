@@ -126,7 +126,7 @@ function _structure_section(structure::Structure)
     nodes, node_instances = _nodes(structure)
     (nodes = nodes,
      root_inputs = [_primitive_face(face, T) for (face, T) in zip(structure.root_inputs, structure.root_types)],
-     anchors = [(T = _rational(anchor.T), tau = _rational(anchor.τ),
+     anchors = [(T = _rational(anchor.Δt), tau = _rational(anchor.τ),
                  scope = anchor.scope, key = String(anchor.key))
                 for anchor in structure.anchors],
      scopes = [(path = scope.path, key = String(scope.key), timing = scope.timing)

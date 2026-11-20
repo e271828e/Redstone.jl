@@ -26,7 +26,7 @@ _path_label(path::String) = isempty(path) ? "root" : path
 # A rate entry as its fields spell it. Not the default `show`, whose
 # qualification of the type name depends on the printing module.
 _entry_label(entry::Relative) = "Relative($(entry.K), $(entry.φ))"
-_entry_label(entry::Absolute) = "Absolute($(entry.T), $(entry.τ))"
+_entry_label(entry::Absolute) = "Absolute($(entry.Δt), $(entry.τ))"
 
 # A `RateLink` chain, `key = entry` joined by ` → `; empty is a dash.
 _rates_label(rates::Vector{RateLink}) =
@@ -99,9 +99,9 @@ function _lines(structure::Structure)
                                for scope in structure.scopes]))
     end
     push!(lines, "  anchors:")
-    append!(lines, _table("    ", ["anchor", "T", "τ", "scope", "key"],
+    append!(lines, _table("    ", ["anchor", "Δtₖ", "τₖ", "scope", "key"],
                           vcat([[_anchor_name(0), "Δt_base", string(zero(Rational{Int})), "—", "—"]],
-                               [[_anchor_name(k), string(anchor.T), string(anchor.τ),
+                               [[_anchor_name(k), string(anchor.Δt), string(anchor.τ),
                                  _path_label(anchor.scope), string(anchor.key)]
                                 for (k, anchor) in enumerate(structure.anchors)])))
     root_level = first(structure.levels)

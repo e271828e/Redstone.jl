@@ -79,7 +79,7 @@ derivation path's line and the `Deployment` itself read the same substrate.
 function _grid_report(anchors::Vector{Anchor})
     entry_kinds, entry_values, anchor_indices = Symbol[], Rational{Int}[], Int[]
     for (k, anchor) in enumerate(anchors)
-        push!(entry_kinds, :period); push!(entry_values, anchor.T); push!(anchor_indices, k)
+        push!(entry_kinds, :period); push!(entry_values, anchor.Δt); push!(anchor_indices, k)
     end
     for (k, anchor) in enumerate(anchors)
         anchor.τ == 0 && continue
@@ -102,20 +102,20 @@ function _grid_report(anchors::Vector{Anchor})
         alternatives = Rational{Int}[]
         if entry_kinds[i] === :offset && factor > 1
             # The grid the rest of the pool supports, and τ's neighbours on it. The
-            # fold requires 0 ≤ τ < T (`assembly.jl`), so an upper neighbour reaching
+            # fold requires 0 ≤ τ < Δt (`assembly.jl`), so an upper neighbour reaching
             # the anchor's period is no offset; 0 stays, declaring none being a repair.
             # A neighbour whose arithmetic leaves `Int` is not offered, since
             # `Absolute` refuses what `Rational{Int}` cannot hold (D-459). Each is a
             # product, which Julia reduces before it multiplies, so it fails only
             # for a value past `Int`; a sum could fail in an intermediate product.
-            τ, T = entry_values[i], anchors[anchor_indices[i]].T
+            τ, Δt_k = entry_values[i], anchors[anchor_indices[i]].Δt
             lower_index = _exact_or_nothing(() -> floor(Int, τ / partial))
             if lower_index !== nothing
                 lower = _exact_or_nothing(() -> lower_index * partial)
                 upper = _exact_or_nothing(
                     () -> Base.Checked.checked_add(lower_index, 1) * partial)
                 lower === nothing || push!(alternatives, lower)
-                upper !== nothing && upper < T && push!(alternatives, upper)
+                upper !== nothing && upper < Δt_k && push!(alternatives, upper)
             end
         end
         anchor = anchors[anchor_indices[i]]
@@ -387,10 +387,10 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
     anchors_on_entry = length(diags)
     Dk, Φk = [1], [0]
     for anchor in anchors
-        D = _as_int(Rational{Int128}(anchor.T) / Δt_r)
+        D = _as_int(Rational{Int128}(anchor.Δt) / Δt_r)
         D === nothing &&
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :anchor_period,
-                                          value = anchor.T, related = Δt_r,
+                                          value = anchor.Δt, related = Δt_r,
                                           scope = anchor.scope, key = anchor.key, grid = grid))
         Φ = _as_int(Rational{Int128}(anchor.τ) / Δt_r)
         Φ === nothing &&

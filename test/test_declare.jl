@@ -29,7 +29,7 @@ function test_declare()
         # with path attribution, at the fold.
         @test Relative(5) === Relative(5, 0)
         @test Relative(0).K == 0
-        @test Absolute(Period(0)).T == 0
+        @test Absolute(Period(0)).Δt == 0
     end
 
     @testset "a value `Rational{Int}` cannot hold finitely is refused at its declaration door, any other integer type taken at its value (§10.5, D-185, D-459)" begin

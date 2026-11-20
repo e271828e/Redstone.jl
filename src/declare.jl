@@ -475,37 +475,37 @@ struct Relative
                                               value = K isa Integer ? φ : K)))
 end
 
-# Design: §9.1, §10.5, D-186.
+# Design: §9.1, §9.2, §10.5, D-186, D-464.
 """
-    Absolute(q::Period, τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
+    Absolute(Δt::Period, τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
 
 A sample time in exact rational seconds, with [ticks](@ref g-tick) at
-`t = t₀ + τ + k·T`.
+`t = t₀ + τ + k·Δt`.
 
-`q` is a period `T`, built with [`Period`](@ref) or [`Hz`](@ref), and `τ` is
+`Δt` is the period, built with [`Period`](@ref) or [`Hz`](@ref), and `τ` is
 the offset in seconds.
 
 The [entry](@ref g-entry) is an [anchor](@ref g-anchor). It detaches its child
 from the enclosing [scope](@ref g-rate-scope)'s grid, so the child may tick
 faster than its scope. The child's ticks count in [base ticks](@ref g-tick)
 only once a [`Deployment`](@ref) fixes `Δt_base`. Anchor periods and nonzero
-offsets constrain the base grid together. An offset of `T/1000` can cost a grid
+offsets constrain the base grid together. An offset of `Δt/1000` can cost a grid
 1000 times finer.
 
 A float offset is refused as `ArgumentInvalid`, and so is an offset that
 `Rational{Int}` cannot hold or that is not finite, and a bare number in place
 of a `Period`. Write `Absolute(Hz(50), 1//500)`. The build refuses a period that
-is not positive, or an offset outside `0 ≤ τ < T`, as `RatesViolation`.
+is not positive, or an offset outside `0 ≤ τ < Δt`, as `RatesViolation`.
 """
 struct Absolute
-    T::Rational{Int}
+    Δt::Rational{Int}
     τ::Rational{Int}
-    Absolute(q::Period, τ::Union{Integer,Rational{<:Integer}} = 0) =
-        new(q.T, _declared_quantity(Rational{Int}, :Absolute, τ))
+    Absolute(Δt::Period, τ::Union{Integer,Rational{<:Integer}} = 0) =
+        new(Δt.T, _declared_quantity(Rational{Int}, :Absolute, τ))
     Absolute(::Period, τ::AbstractFloat) =
         throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :inexact, value = τ)))
-    Absolute(q::Real, τ...) =
-        throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = q)))
+    Absolute(Δt::Real, τ...) =
+        throw(DiagnosticError(ArgumentInvalid(call = :Absolute, reason = :not_a_quantity, value = Δt)))
 end
 
 # Design: §8.7, §10.5.

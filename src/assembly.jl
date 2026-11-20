@@ -916,12 +916,12 @@ const Timing = @NamedTuple{anchor::Int, m::Int, c::Int}
 const RateScope = @NamedTuple{path::String, key::Symbol, timing::Timing}
 
 """
-One anchor (§9.1, §9.2): the exact `(T, τ)` an `Absolute` entry seeds, with
+One anchor (§9.1, §9.2): the exact `(Δtₖ, τₖ)` an `Absolute` entry seeds, with
 the `sample_times` entry that declared it, by scope path and key. Anchor 0,
 the base grid, has no record here; it is symbolic until `Δt_base` binds.
 """
 struct Anchor
-    T::Rational{Int}
+    Δt::Rational{Int}
     τ::Rational{Int}
     scope::String
     key::Symbol
@@ -1003,7 +1003,7 @@ A `Structure` holds these fields.
 
 - `components`: one entry per [primitive](@ref g-primitive), in the order the
   build walks the tree.
-- `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(T, τ)`
+- `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(Δtₖ, τₖ)`
   pair (period and offset in rational seconds) with the declaring
   [scope](@ref g-rate-scope) and key.
 - `scopes`: one entry per [assembly](@ref g-assembly) a `sample_times` key
@@ -1128,7 +1128,7 @@ end
 """
 Validate a scope's `sample_times` against §10.5's constraints, with path
 attribution (§9.1, §13.1): wrapper-typed values only, `K ≥ 1`, `0 ≤ φ < K`,
-`T > 0`, `0 ≤ τ < T`, and every key naming an immediate child.
+`Δt > 0`, `0 ≤ τ < Δt`, and every key naming an immediate child.
 """
 function _check_sample_times(path::String, rate_decl, kids, fields, diags::Vector{Diagnostic})
     record_violation(reason; kw...) =
@@ -1143,16 +1143,16 @@ function _check_sample_times(path::String, rate_decl, kids, fields, diags::Vecto
             continue                               # neither residue arm applies
         end
         # The residue bound is stated against the multiplier, so an invalid `K`
-        # (or `T`) leaves `φ` (or `τ`) with nothing to be measured against: the
+        # (or `Δt`) leaves `φ` (or `τ`) with nothing to be measured against: the
         # dependent check is skipped, not doubled up.
         if rate isa Relative
             rate.K ≥ 1 ? (0 ≤ rate.φ < rate.K ||
                           record_violation(:phase; key = key, value = rate.φ)) :
                          record_violation(:multiplier; key = key, value = rate.K)
         else
-            rate.T > 0 ? (0 ≤ rate.τ < rate.T ||
-                          record_violation(:offset; key = key, value = rate.τ)) :
-                         record_violation(:period; key = key, value = rate.T)
+            rate.Δt > 0 ? (0 ≤ rate.τ < rate.Δt ||
+                           record_violation(:offset; key = key, value = rate.τ)) :
+                          record_violation(:period; key = key, value = rate.Δt)
         end
         any(seg == String(key) for (seg, _) in kids) ||
             any(String(fld) == String(key) for fld in fields) ||
@@ -1224,7 +1224,7 @@ function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::S
         anchor_index = findfirst(anchor -> anchor.scope == path && anchor.key === key,
                                  draft.anchors)
         if anchor_index === nothing
-            push!(draft.anchors, Anchor(rate.T, rate.τ, path, key))
+            push!(draft.anchors, Anchor(rate.Δt, rate.τ, path, key))
             anchor_index = length(draft.anchors)
         end
         Timing((anchor_index, 1, 0)), link

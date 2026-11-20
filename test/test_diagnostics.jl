@@ -839,6 +839,11 @@ function diagnostics_kind_set()
                                      value = Relative(2^32 + 1))) ==
               "`sample_times` at `g`, key `a`: Relative(4294967297, 0) composes a divisor " *
               "past `Int` (§10.5)"
+        # An `Absolute` entry's constraints read in its own letters (§10.5, D-464).
+        @test message(RatesViolation(path = "g", reason = :period, key = :a, value = 0//1)) ==
+              "`sample_times` at `g`, key `a`: period 0//1, and Δt > 0 (§10.5)"
+        @test message(RatesViolation(path = "g", reason = :offset, key = :a, value = 3//1)) ==
+              "`sample_times` at `g`, key `a`: offset 3//1, and 0 ≤ τ < Δt (§10.5)"
         # A pool past `Int` has no derivable base tick, for either cause (§9.2).
         @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
                                                    value = :derive)),

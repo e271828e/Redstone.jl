@@ -60,7 +60,7 @@ Structure: 4 components, 1 anchor, 1 rate scope; root inputs: none
     path  key  anchor  m  c
     fcs   fcs  A₀      1  0
   anchors:
-    anchor  T        τ     scope  key
+    anchor  Δtₖ      τₖ    scope  key
     A₀      Δt_base  0//1  —      —
     A₁      1//50    0//1  root   gnss
   output routes:
@@ -136,7 +136,7 @@ function test_show()
         @test startswith(text, "Structure: 1 component, no anchors, no rate scopes; root inputs: u\n")
         @test occursin("\n    root  continuous  A₀      1  0  —\n", text)
         @test !occursin("rate scopes:", text)
-        @test occursin("\n  anchors:\n    anchor  T        τ     scope  key\n    A₀      Δt_base  0//1  —      —", text)
+        @test occursin("\n  anchors:\n    anchor  Δtₖ      τₖ    scope  key\n    A₀      Δt_base  0//1  —      —", text)
         @test count('\n', text) == 6
     end
 
@@ -147,7 +147,7 @@ function test_show()
         # routes print nowhere.
         text = plain(build(routed_pair()).structure)
         @test endswith(text, "\n  anchors:\n" *
-                             "    anchor  T        τ     scope  key\n" *
+                             "    anchor  Δtₖ      τₖ    scope  key\n" *
                              "    A₀      Δt_base  0//1  —      —\n" *
                              "  input routes:\n" *
                              "    u → pair/u → pair/a/e\n" *
