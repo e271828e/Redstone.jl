@@ -418,6 +418,8 @@ function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::S
     end
 end
 
+# --- the walk (§6.1, §9.1) ------------------------------------------------------
+
 """
     flatten_tree!(draft, root, diags)
 

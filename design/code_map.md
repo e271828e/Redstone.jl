@@ -1337,9 +1337,9 @@ D-456, D-457, D-458.
   again (§9.7, D-289). A function that takes a connection or its endpoint
   tuple, as `_fanout` does, still compiles once per connection type.
 
-Spec: §6.1, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §13.1, §13.3, §13.7,
-Appendix C, D-130, D-187, D-208, D-210, D-211, D-229, D-236, D-246, D-248,
-D-253, D-261, D-289, D-315, D-437, D-445, D-459, D-464, D-465.
+Spec: §6.1, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §10.5, §13.1, §13.3,
+§13.7, Appendix C, D-130, D-187, D-208, D-210, D-211, D-229, D-236, D-246,
+D-248, D-253, D-261, D-289, D-315, D-414, D-437, D-445, D-459, D-464, D-465.
 
 ### `src/trace.jl`
 

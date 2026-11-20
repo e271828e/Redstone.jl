@@ -464,6 +464,11 @@ as `ArgumentInvalid`, and so is a float or a rational. A child that ticks faster
 than its scope, or at a period in seconds, takes [`Absolute`](@ref). The
 constructor checks no range. The build refuses `K < 1`, or a `φ` outside
 `0 ≤ φ < K`, as `RatesViolation`.
+
+The build also refuses the entry as `RatesViolation` when the multipliers
+composed down the tree leave no [`Δt_base`](@ref g-dt_base) to deploy at. Their
+count of base ticks then leaves `Int`, or leaves no room in it for one
+[frame](@ref g-frame).
 """
 struct Relative
     K::Int
@@ -496,6 +501,10 @@ A float offset is refused as `ArgumentInvalid`, and so is an offset that
 `Rational{Int}` cannot hold or that is not finite, and a bare number in place
 of a `Period`. Write `Absolute(Hz(50), 1//500)`. The build refuses a period that
 is not positive, or an offset outside `0 ≤ τ < Δt`, as `RatesViolation`.
+
+The build also refuses the entry as `RatesViolation` when it leaves the tree no
+`Δt_base` to deploy at. No common divisor of the anchors' periods and offsets
+then counts its period in an `Int` with room for one [frame](@ref g-frame).
 """
 struct Absolute
     Δt::Rational{Int}
@@ -530,7 +539,9 @@ constructor parameter, and read it off the instance here.
 
 The build refuses a value that is not such a `NamedTuple`, a bare number in
 place of a wrapper, a key that names no immediate child, and a key on a
-continuous child, each as `RatesViolation`.
+continuous child, each as `RatesViolation`. An entry's own refusals, a value
+out of range or a tree left with no base tick to deploy at, are stated at
+`Relative` and `Absolute`.
 """
 sample_times(::Any) = (;)
 

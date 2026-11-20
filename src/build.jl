@@ -10,8 +10,10 @@
 #   3. probe stage 2 in that order (real upstream values available by
 #      construction) and the update law last, against the now-complete table.
 #
-# Its input is the flattened tree (`src/structure.jl`): primitives by absolute
-# path, one resolved producer per input. Assemblies are virtual from here on.
+# Its input is the `Structure` (`src/structure.jl`): primitives by absolute
+# path, and each assembly's wires as declared, a face's terminal producer
+# resolved over them where it is read (D-315). Assemblies are virtual for
+# execution from here on.
 
 # --- 1. declarations at the activation scalar ---------------------------------
 
