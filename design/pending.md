@@ -13,9 +13,11 @@ is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
 - **The core work ahead of the inspector's increment 10**, settled in the
-  design session of the deployment overlay on 2026-11-19, in four parts
-  in this order. The session's record will be
-  `RedstoneInspector.jl/design/deployment_overlay.md`.
+  design session of the deployment overlay on 2026-11-19 and 2026-11-20,
+  in four parts in this order. The session's record is
+  `RedstoneInspector.jl/design/deployment_overlay.md`, and its answer 17
+  lists the five log entries the parts owe. Each part lands as a spec and
+  log commit followed by its code.
   - **The notation.** An anchor's period reads `Δtₖ` where the spec and
     `show(::Structure)` say `T`. An anchor then has `(Δtₖ, τₖ)` as a
     component has `(Δt, τ)`, and anchor 0 is `Δt₀ = Δt_base`. `Absolute`'s
@@ -35,10 +37,15 @@ item changes what the spec says, the spec edit is part of the item.
     exactly, and no internals, where it carried what a client needs to
     draw the component tree. That adds the schedule's rows for anchors,
     discrete primitives and rate scopes, `dt_frame` and `dt_base`, the
-    deployment's warnings and parameters, the events, and the grid report
-    in `structure`. The anchor's key `T` becomes `dt`. The writer's
-    qualified `@ref` links and the schema's record path land with it. The
-    shapes still open are the session's.
+    deployment's warnings and parameters, the events, one row per
+    primitive as the artifact holds them, and the grid report in
+    `structure`. The anchor's key `T` becomes `dt`. A root input's
+    `pinned` becomes the meet's (§8.2, D-168), with `pinned_by` naming the
+    consumers that pin, and `show(::Structure)` marks each input route
+    that ends at one, by tier or by declaration. The writer adds a target
+    to each bare `@ref` link whose name resolves to an exported binding.
+    The schema's record path lands with it. The shapes are the record's
+    answers 4 to 7, 14 and 15.
   - **`show(::Deployment)` in the notation**, after the three parts above
     and not owed to the inspector. Its tables show each anchor's `Dₖ` and
     `Φₖ` and each component's `m`, `c`, `D`, `Φ`, `Δt` and `τ` in one row,
@@ -50,8 +57,10 @@ item changes what the spec says, the spec edit is part of the item.
   that forwards its columns as properties; and labelled access to a
   `Linearization`'s matrices, friction item 10 of that record, which
   chapters 4 and 9 read. The last two take a spec edit each. It runs here
-  after the first bullet's `show(::Deployment)`, while the inspector repo
-  builds its increment 10. A simulation's `show` prints its deployment in
+  after the first bullet's `show(::Deployment)`. The inspector's
+  increment 10 needs the first bullet's parts one to three pushed, and
+  starts then or after this change, beside the tutorial's next
+  increments. A simulation's `show` prints its deployment in
   that bullet's notation, and the two arcs share `src/show.jl`, so they
   run one after the other. Nothing in the inspector's increment 10 reads
   what this change touches.
