@@ -44,11 +44,22 @@ item changes what the spec says, the spec edit is part of the item.
     `Φₖ` and each component's `m`, `c`, `D`, `Φ`, `Δt` and `τ` in one row,
     and its chart marks the frame tops, one column per lattice unit
     (§9.2, amending D-257's chart).
+- **The tutorial's loose change**, owed before its increment 3 by L12 and
+  L23 of `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`:
+  a compact `show` for `Simulation`, `Series` and `TrimReport`; a `Series`
+  that forwards its columns as properties; and labelled access to a
+  `Linearization`'s matrices, friction item 10 of that record, which
+  chapters 4 and 9 read. The last two take a spec edit each. It runs here
+  after the first bullet's `show(::Deployment)`, while the inspector repo
+  builds its increment 10. A simulation's `show` prints its deployment in
+  that bullet's notation, and the two arcs share `src/show.jl`, so they
+  run one after the other. Nothing in the inspector's increment 10 reads
+  what this change touches.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
-  before the release is the bullet above, and after it the later stages.
+  before the release is the first bullet, and after it the later stages.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, each ending at a named function
   of the examples package: the plant, trim, linearization, a first loop,
@@ -70,13 +81,9 @@ item changes what the spec says, the spec edit is part of the item.
   with the brief and the prototype's patch beside it. Increment 2's
   record is
   `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`,
-  with the patch beside it and no brief. Before increment 3 a loose
-  change is proposed apart, by L12 and L23 of that record: a compact
-  `show` for `Simulation`, `Series` and `TrimReport`; a `Series` that
-  forwards its columns as properties; and labelled access to a
-  `Linearization`'s matrices, friction item 10 of that record, which
-  chapters 4 and 9 read. The last two take a spec edit each. The plan, the
-  arc's rulings, the open decisions and the rules for the pages are
+  with the patch beside it and no brief. Increment 3 waits for the
+  tutorial's loose change, the second bullet. The plan, the arc's
+  rulings, the open decisions and the rules for the pages are
   `design/increments/roadmap_tutorial.md`.
 - **The API audit.** The API is reviewed as a whole before the release, in
   two parts, in this order. It comes after the tutorial, which surfaces the
