@@ -4830,9 +4830,10 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
 - `show(::Structure)` prints the anchor table with the `A₀` row and the
   component table with the [rate-scope](#g-rate-scope) rows (an assembly's
   `sample_times` declaration against the enclosing scope).
-  **`show(::Structure)` prints the grid report under the anchor table**
-  ([D-466][d-466]). It derives the report from the anchors and sets the grid
-  block's lines under `grid:` (below). A structure with no anchors prints no
+  **`show(::Structure)` prints the [grid report](#g-grid-report) under the
+  anchor table** ([D-466][d-466]), the report of which base ticks the anchors
+  admit (below). It derives the report from the anchors and sets the grid
+  block's lines under `grid:`. A structure with no anchors prints no
   block. `show(::Structure)` derives each root face's routing chain from the
   declared wires and prints the root's routes, one line per chain, an input
   route marked where its consumer pins the root input ([§13.7][s13-7]).
@@ -12276,7 +12277,8 @@ body has three sections, each the projection of one [artifact](#g-artifact)
   a [root input](#g-root-input) (one of the root component's own input
   faces). `root_inputs`, `anchors` and `scopes` project the remaining rows,
   an anchor's period under the key `dt` ([D-464][d-464], [D-467][d-467]), `grid`
-  is the grid report (below), and a `types` table describes each type once. A root input has a primitive
+  is the [grid report](#g-grid-report) (which base ticks the anchors admit,
+  with each constraint's share), described below, and a `types` table describes each type once. A root input has a primitive
   face's shape. **A root input's `pinned` is the fan-out meet's**
   ([§8.2][s8-2], [D-168][d-168], [D-468][d-468]). It is true when some consumer's
   entry refuses the root input's type walked to a `Dual`. The row also holds
@@ -16117,6 +16119,18 @@ itself when `r` is shorter than `h_min`. When the backend rejects that
 that has spent its attempt budget takes its next attempt there
 ([§10.2][s10-2], [§10.5][s10-5]).
 
+<a id="g-grid-report"></a>**grid report** — what a component tree's
+[anchors](#g-anchor) admit as a base [tick](#g-tick), with each constraint's
+share in it. It holds the constraint pool, every anchor's period and nonzero
+offset; the coarsest admissible [`Δt_base`](#g-dt_base); each pool entry's
+refinement factor, how much coarser the grid would be without it; and the
+prime attribution of the grid's denominator. It is a function of the
+[`Structure`](#g-structure)'s anchors, derived where it is used and held by
+no artifact. `show(::Structure)` prints it, the
+[`Deployment`](#g-deployment) constructor's grid diagnostics carry it, and
+the [descriptor](#g-descriptor) carries it as data ([§9.2][s9-2],
+[§13.9][s13-9], [D-187][d-187], [D-466][d-466]).
+
 <a id="g-guard"></a>**guard** — the declared function that defines an event's
 [predicate](#g-predicate). It pairs with a handler in the ordered, named `state_events`
 collection ([§8.2][s8-2]). Its return type declares its detection policy. A
@@ -16375,7 +16389,8 @@ the foreign names and the missing import ([§8.1][s8-1], [§9.1][s9-1]).
 everything the instance alone fixes. It holds the [components](#g-component) and [tiers](#g-tier), one row
 per [assembly](#g-assembly) with its children and wires, the [root inputs](#g-root-input), the rate chains and
 the scope triples. The [face](#g-face) table and each face's routing chain are functions
-over its wires, and the grid report is a function over its [anchors](#g-anchor).
+over its wires, and the [grid report](#g-grid-report) is a function over its
+[anchors](#g-anchor).
 Nothing in it depends on a scalar type ([§9.1][s9-1], [§9.2][s9-2],
 [D-253][d-253], [D-315][d-315], [D-466][d-466]).
 

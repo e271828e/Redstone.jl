@@ -78,8 +78,10 @@ Each comes back as a reading in the rules' form.
 
 ## 6. Open for the user
 
-- "Grid report" has no glossary entry. D-467 takes it to §13.9, a third
-  place, where the coinage rule gives it one. The battery passes without
-  it, and neither docs commit added it.
+- "Grid report" had no glossary entry. D-467 took it to §13.9, a third
+  place, where the coinage rule gives it one. The user asked for it the
+  same day: the entry is `g-grid-report` in Appendix D.4, linked at the
+  first use in §9.2 and §13.9 and from the `Structure` entry, with its rows
+  in `tools/gloss_table.md` and `tools/coinage_inventory.md`. Closed.
 - The glossary's `Structure` entry omits the anchor table from what the
   artifact holds.

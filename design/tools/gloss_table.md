@@ -104,6 +104,7 @@ the `mandatory instant` row was counted then, when D-449 added the entry.
 | due | g-due | 5 | A | admitted at this boundary by its compiled `(D, Φ)` pair |
 | edge semantics / holding | g-edge-semantics | 7 | A | firing on not-holding → holding transitions, never bare sign changes |
 | firing budget | g-firing-budget | 2 | A | the per-boundary cap on how often each event fires |
+| grid report | g-grid-report | 2 | A | which base ticks the anchors admit, with each constraint's share |
 | guard | g-guard | 29 | B | the declared function defining an event's predicate |
 | harmonic grid | g-harmonic-grid | 3 | A | every discrete period an integer multiple of `Δt_base` |
 | input epoch | g-input-epoch | 3 | A | a maximal span of constant `u`, delimited by frame-top drains |

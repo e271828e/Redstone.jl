@@ -60,6 +60,7 @@ context wants.
 | `Schedule` | — | D-254's typed tick timing; folded into the existing `g-schedule` entry rather than given one of its own |
 | `Run` | — | D-255's run state; Appendix D entry `g-run`, bucket A from here on |
 | `StopPolicy` | — | D-255's per-advance policy value; Appendix D entry `g-stop-policy`, bucket A |
+| grid report | 6 | defined in §9.2; also §13.9 and Appendix D's `Structure` entry, the third place since D-467; Appendix D entry `g-grid-report`, bucket A from here on |
 | leaf address | 7 | D-276's selector argument; §4.2, §4.3, §14.4, §14.7, §14.10, Appendix B; Appendix D entry `g-leaf-address`, bucket A from here on |
 | bare store | 11 | D-435's store declared as one leaf; §5.2, §7.1, §7.3, §8.2, §9.1, §9.5, §14.1, §14.3, §14.4, Appendix B, Appendix C; Appendix D entry `g-bare-store`, bucket A from here on |
 | bare contract | — | D-436's contract declared as one type; §4.3, §5.2, §6.1, §8.2, §8.6, §8.8, §9.1, §9.5, §13.3, §13.9, §14.4, Appendix B, Appendix C; Appendix D entry `g-bare-contract`, bucket A from here on |
