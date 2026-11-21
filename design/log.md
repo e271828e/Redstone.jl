@@ -470,6 +470,8 @@ were derived.
 | [D-469][d-469] | Retire `Period` and `Hz` and give `Absolute` its period as a bare exact number | ratified |
 | [D-470][d-470] | Refuse a non-finite `localization_tol` at the `Deployment` | ratified |
 | [D-471][d-471] | Print a deployment's schedule under the four frames' symbols, and chart it against the frame tops | ratified |
+| [D-472][d-472] | Write an assembly as a `Group` value unless domain code needs its type, with `Group` in the core | ratified |
+| [D-473][d-473] | Give `Group` a copy constructor, and wire keywords that take a function of the `Group` | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -7332,6 +7334,12 @@ the declarations they feed. The rest stands. The first is `local_wires` since
 Annotation (2026-10-19): [§13.7][s13-7]'s starting inventory does not list `Group`.
 `Group` belongs to [§13.7][s13-7]'s library as its one member admitted by persona.
 
+Annotation (2026-11-21): amended by [D-472][d-472] and [D-473][d-473]. `Group` is a type of the
+core, not a library component, and the form an assembly is written in unless
+domain code needs its type. Its wire fields hold the entries or a function of
+the `Group`, and a second constructor copies one. The single type, its
+instance-field declarations and the builder rejection stand.
+
 **Rejected.**
 - *The mutable builder (`Assembly()` + `add!`/`connect!`):* [§8.5][s8-5]'s standing
   rejection — type/recipe drift, mutable state through declaration code, no
@@ -14152,6 +14160,9 @@ Annotation (2026-11-12): a library block is a library component since
 [D-453][d-453], and the library is the submodule `Redstone.Library`. The guidelines
 and the rest stand.
 
+Annotation (2026-11-21): [D-472][d-472] moves `Group` to the core, so the library no
+longer includes it. The rest stands.
+
 **Rejected.**
 - *A Simulink-sized library:* most of it is one-line expressions, and the
   cost model of [§9.7][s9-7] charges per component.
@@ -20682,6 +20693,130 @@ a client derives the line ([D-467][d-467]).
 - *One shape for the base tick's line, ending "divided by 1" at the
   coarsest:* a factor that says nothing.
 
+### D-472 — Write an assembly as a `Group` value unless domain code needs its type, with `Group` in the core
+
+**Status.** ratified
+
+**Position.** An assembly is written as a `Group` value unless domain code
+needs its type, and the core defines `Group`.
+
+- A named type serves an assembly that domain code dispatches on, or that a
+  domain hierarchy holds through an abstract type.
+- The core defines `Group` through the assembly declarations alone, and no
+  build step names it. It leaves `Redstone.Library`.
+- [§8.5][s8-5] opens with the two forms and states the declarations after them.
+
+Amends [D-184][d-184], which folded `Group` in as a library component, and the bullet
+of [D-313][d-313] that includes it in the library. [D-298][d-298]'s trade stands: a `Group`
+gives up dispatch on the assembly. [D-062][d-062]'s doctrine binds `Group` as it binds
+a library component. The assembly declarations, the container rule and
+`transparent_container` stand unchanged.
+
+**Spec.** [§8.5][s8-5], [§13.7][s13-7], [Appendix B][sB]
+
+**Rationale.** The repository's own use decided the first bullet. At this
+entry the examples build every assembly with `Group`, in 16 calls, and
+declare no named assembly. The tutorial shows no named assembly either. The
+tests call `Group` 436 times in 29 files and declare about 60 named
+assemblies, 46 of them in `test_assembly.jl` and `test_build.jl`, where they
+test the rules for named assemblies. [§8.5][s8-5] still opened with "an assembly is
+a plain struct" and reached `Group` in its last subsection, the bias [D-184][d-184]'s
+Rejected list had already named.
+
+The sample is one tutorial package with no domain library behind it. The
+cases [§8.5][s8-5] gives for named types are a domain library's: a model that domain
+code dispatches on, and a field bounded by an abstract type that takes a
+primitive or an assembly alike. The user expects domain code to dispatch on
+assembly identity, so the named type stays, as the form for that case.
+
+Moving `Group` ends an exception. [§13.7][s13-7] admitted it "by persona", as the one
+library member that is no signal-flow component, and [D-184][d-184]'s annotation of
+2026-10-19 records that the starting inventory did not list it. Every model
+file imported from the library the type it is built on.
+
+The second bullet keeps what the submodule gave. [D-313][d-313] put the library in a
+submodule so that it reaches the declarations by import and exercises the
+surface a user extends. `Group` is five one-line methods over the container
+rule and `transparent_container`, and stays so in the core. The most used
+assembly then exercises the declaration rules on every build, which is
+[§13.7][s13-7]'s test of those rules at its strongest.
+
+**Rejected.**
+- *`Group` as the only assembly, with named assembly types removed:* the one
+  move that shrinks the declaration layer. Class becomes `x isa Group`, and
+  `ClassUnreadable`, `ClassMixed`, the container edges and generic holding
+  go. It gives up dispatch of domain code on the assembly, variants by
+  dispatch on a declaration, as in `act_feeds(::Systems{:two})`, and
+  container children, which need no boundary to re-export through where a
+  nested `Group` does. A domain library wants the first.
+- *Named types called a niche pattern, with their rules kept as they are:*
+  no rule goes, because `Group` is written in them, so the declaration layer
+  costs the same however few models use a named type. The standing is a
+  matter of which form the spec teaches first, which the first bullet rules.
+- *A `Group` the structure step knows by name:* a privilege that buys
+  nothing, since the declarations already say everything the step reads, and
+  that ends [§13.7][s13-7]'s test.
+- *`Group` left in `Redstone.Library`:* the exception above, kept.
+
+### D-473 — Give `Group` a copy constructor, and wire keywords that take a function of the `Group`
+
+**Status.** ratified
+
+**Position.** A `Group` is derived from another by a copy constructor, and
+its wire keywords take their entries written out or computed.
+
+- `Group(g; …)` returns a copy of `g` with the given keywords replaced,
+  `children` among them. A function among the fields travels with the copy.
+- `local_wires`, `input_wires` and `output_wires` each take the entries, or
+  a function of the `Group` that returns them. The `Group` stores the
+  function, and the declaration calls it with the `Group` at each read.
+- `sample_times` takes no function.
+
+**Spec.** [§8.5][s8-5]
+
+**Rationale.** Both rulings give a `Group` what a named assembly has by being
+a type.
+
+A named assembly gets its variants by dispatch. A `Group` has no type to
+dispatch on, so its variants are derived values: a bypass, a fault, a
+swapped controller. Derivation had no spelling. The keyword constructor
+defaults each omitted keyword to empty, so a variant respelled the other
+four fields, and one forgotten dropped in silence.
+`examples/test/test_longitudinal.jl` rebuilt `piloted` so and omitted
+`sample_times`, harmlessly, since `piloted` declares no rates. The same
+rebuild of `selection` lost three rates and built without a diagnostic, an
+empty rate scope being legal.
+
+A named assembly calls `input_passthrough` in a declaration body, where the
+instance exists. A `Group`'s declarations are field values, written as
+arguments of the call that creates it, so the helper had no assembly to
+take. `approach` wrote the five inputs of its `vehicle` by hand. A function
+in the field restores the body. It runs when the build reads the
+declaration, so a warning it raises joins the build's list, as a prototype
+on a stand-in type confirmed with `EmptyFaceSelection`. The function also
+answers for the children it is given: a copy of that prototype with
+`autopilot` in place of `piloted` returned two entries where the original
+returned five. [§8.5][s8-5] already called a `Group`'s declarations ordinary
+functions of the instance, so the keywords add no rule.
+
+A field may now hold a function, so the field is not always the entries.
+The declaration is, and readers go through it.
+
+**Rejected.**
+- *`resolve` taking a bare `NamedTuple` of children, so that
+  `input_passthrough(children, "vehicle")` works:* it changes a build
+  primitive of [§13.3][s13-3], and the helper still runs at construction, outside any
+  build. A warning then goes to Julia's log and not to the build's list, a
+  diagnostic names the child without its owner's path, and the entries are
+  fixed at construction, stale once a copy swaps the child.
+- *A throwaway `Group(children)` handed to the helper:* it works with no
+  change, with the same three defects and the throwaway.
+- *Accessors.jl's `@set` for the copy:* expected to work through the
+  positional constructor, and not run. It puts a second package between a
+  user and the one way a `Group` gets a variant.
+- *A function-valued `sample_times`:* its keys are child names, and nothing
+  in a rate scope is computed from a child's contract.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -21128,6 +21263,8 @@ a client derives the line ([D-467][d-467]).
 [d-469]: #d-469--retire-period-and-hz-and-give-absolute-its-period-as-a-bare-exact-number
 [d-470]: #d-470--refuse-a-non-finite-localization_tol-at-the-deployment
 [d-471]: #d-471--print-a-deployments-schedule-under-the-four-frames-symbols-and-chart-it-against-the-frame-tops
+[d-472]: #d-472--write-an-assembly-as-a-group-value-unless-domain-code-needs-its-type-with-group-in-the-core
+[d-473]: #d-473--give-group-a-copy-constructor-and-wire-keywords-that-take-a-function-of-the-group
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

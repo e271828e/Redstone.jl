@@ -3357,7 +3357,29 @@ under inference-by-evaluation too, and in every case the failure surfaced inside
 This section states how an [assembly](#g-assembly) (a [component](#g-component) that holds and wires children) is
 declared, how a type's declarations mark it as an assembly or a primitive, what
 arity those declarations take, how container fields contribute children, and how
-`Group` assembles components on the fly.
+`Group` assembles components on the fly. It opens with the two forms an
+assembly takes.
+
+**An assembly is written as a `Group` value unless domain code needs its
+type** ([D-472][d-472]). A `Group` holds its children and its wires as data, and one
+call builds it.
+
+```julia
+world = Group(
+    (; plant = Plant(), ctrl = PID(kp = 2.0));
+    local_wires = ("ctrl/u" => "plant/u", "plant/y" => "ctrl/y"),
+)
+```
+
+The other form is a named type, a struct with the assembly declarations as
+its methods. It serves an assembly that domain code dispatches on, or that a
+domain hierarchy holds through an abstract type. Dispatch on the assembly is
+what a `Group` gives up ([D-298][d-298]).
+
+`Group` is itself written in that form, under this section's rules and no
+others. The declarations are therefore the machinery under both forms, and
+the subsections state them in order. The last one returns to `Group` and
+gives its definition.
 
 **An assembly is a plain struct** ([D-039][d-039]). Its fields whose type is
 `<: AbstractComponent` are its children, and all its other fields are inert
@@ -3496,8 +3518,10 @@ The edges of the container form are fixed by rule.
 
 The *immutable* version of grouping components by plain calls needs no builder
 (`Assembly()` plus `add!`/`connect!`, rejected below). It is already expressible
-under this section's rules. **`Group` expresses it as a single [library component](#g-library-component)**,
-part of the library ([§13.7][s13-7], [D-184][d-184]). A `NamedTuple` field's elements
+under this section's rules. **`Group` expresses it as a single type**
+([D-184][d-184]). **The core defines `Group` through the assembly declarations
+alone, and no build step names it** ([D-472][d-472]). It is an ordinary component in
+the sense of [§13.7][s13-7], with no privilege a user's assembly lacks. A `NamedTuple` field's elements
 are its children by the container rule, name-transparent so they go by bare key
 ([D-211][d-211]). Its declarations are ordinary functions of the *instance*, free to read
 its fields. The fields that hold wires and rates, and the keywords that set
@@ -3508,25 +3532,29 @@ by bare element name ([D-300][d-300]).
 ```julia
 struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple} <: AbstractComponent
     children::C      # component-typed elements → children by the container rule
-    local_wires::W   # inert parameter data
+    local_wires::W   # inert parameter data: the entries, or a function of the Group
     input_wires::I
     output_wires::O
     sample_times::R  # the ad-hoc rate scope, keyed by bare element name (§8.7)
 end
-local_wires(g::Group)          = g.local_wires
-input_wires(g::Group)          = g.input_wires
-output_wires(g::Group)         = g.output_wires
+local_wires(g::Group)          = _declared(g.local_wires, g)
+input_wires(g::Group)          = _declared(g.input_wires, g)
+output_wires(g::Group)         = _declared(g.output_wires, g)
 sample_times(g::Group)         = g.sample_times
 transparent_container(::Group) = :children
+
+_declared(f::Function, g) = f(g)    # computed: called with the Group at each read
+_declared(wires, g)       = wires   # written out
 
 Group(children; local_wires = (), input_wires = (), output_wires = (),
       sample_times = (;)) =
     Group(children, local_wires, input_wires, output_wires, sample_times)
 
-world = Group(
-    (; plant = Plant(), ctrl = PID(kp = 2.0));
-    local_wires = ("ctrl/u" => "plant/u", "plant/y" => "ctrl/y"),
-)
+# a copy of `g` with the given keywords replaced
+Group(g::Group; children = g.children, local_wires = g.local_wires,
+      input_wires = g.input_wires, output_wires = g.output_wires,
+      sample_times = g.sample_times) =
+    Group(children; local_wires, input_wires, output_wires, sample_times)
 ```
 
 `Group` is one type, defined once, and every ad-hoc topology is a *value* of it.
@@ -3534,6 +3562,33 @@ The type parameters still carry the children's concrete types, so activation is
 unchanged. So is the [executor](#g-executor), the compiled form of the stage execution order
 ([§9.7][s9-7]). Wiring validation, did-you-mean errors and the two-producers error all
 run at build against the instance exactly as for a named assembly.
+
+**A wire keyword takes its entries written out, or as a function of the
+`Group` that returns them** ([D-473][d-473]). The `Group` stores the function without
+calling it, and the declaration calls it with the `Group` at each read. A
+build reads the declarations, so the function runs where a named assembly's
+declaration body runs. `input_passthrough` and its sibling ([§8.8][s8-8]) then have
+the assembly they take, which does not exist while the constructor's
+arguments are written.
+
+```julia
+approach = Group(
+    (; vehicle = Vehicle(), gear = Gear());
+    input_wires = g -> input_passthrough(g, "vehicle"; prefix = ""),
+    local_wires = ("vehicle/h" => "gear/h",),
+)
+```
+
+A field that holds a function does not hold the entries, so a reader takes
+them from the declaration, `input_wires(approach)`. **`sample_times` takes no
+function** ([D-473][d-473]), since its keys are child names and nothing in it is
+computed from a child's contract.
+
+**`Group(g; …)` returns a copy of `g` with the given keywords replaced**
+([D-473][d-473]). A named type gets its variants by dispatch, and a `Group` gets them
+by derivation, as in `Group(world; local_wires = rewired)`. A function among
+the fields travels with the copy and computes its entries from the copy's
+children.
 
 What is given up relative to a named type is exactly what named types are
 *for*. That is dispatching domain code on `::Cessna172X`, and a reusable
@@ -3546,12 +3601,11 @@ intact in the type-based form. A declaration is an ordinary function body, and
 loops and comprehensions build the returned tuple.
 
 The reach of the builder rejection is fixed by [D-184][d-184]. It targets
-mutable recipes, not type-based *semantics*. `Group` is the library's
-anonymous assembly form beside the named types, shipped the way Julia ships
-anonymous functions alongside named ones. It serves the model assembler (the
-persona for whom topology is data rather than a named type, [§13.7][s13-7])
-with a library addition that rests on one opt-in declaration,
-`transparent_container` ([D-211][d-211]). With that declaration, a `Group`'s
+mutable recipes, not type-based *semantics*. `Group` is the anonymous
+assembly form beside the named types, as Julia has anonymous functions
+beside named ones. It serves the model assembler (the persona for whom
+topology is data rather than a named type) and rests on one opt-in
+declaration, `transparent_container` ([D-211][d-211]). With that declaration, a `Group`'s
 wiring and rate declarations read exactly like a named assembly's, child and
 face, with no `children/` boilerplate.
 
@@ -11874,17 +11928,16 @@ loop-breaking remedy ([§5.5][s5-5]) needs. `Constant{V}` is the source componen
 spelling of a [stop request](#g-stop-request) (an output port of the framework enum `StopFlag`)
 ([§13.5][s13-5], [D-316][d-316]).
 
-The library is the submodule `Redstone.Library`, `Group` included, written
+The library is the submodule `Redstone.Library`, written
 against the extension-only surface ([§8.1][s8-1]) as a user's component file
 is ([D-313][d-313], [D-453][d-453]). A workspace sub-package or a separate repository is an
 after-release question.
 
-One member is admitted by persona. `Group` is the on-the-fly
+`Group` is not a member. It is the on-the-fly
 [assembly](#g-assembly) (a component built from children, with no dynamics of
-its own), and
-its declaration-layer treatment lives in [§8.5][s8-5] ([D-184][d-184]). `Group`
-serves the model assembler, for whom topology is data rather than a named
-type. It needs no rule the declaration layer does not already have.
+its own), and the core defines it ([§8.5][s8-5], [D-472][d-472]). The doctrine below
+binds it all the same. It needs no rule the declaration layer does not
+already have.
 
 The doctrine is that **a library component is an ordinary component**, with no
 framework privileges and no special vocabulary ([D-062][d-062]). Ordinary
@@ -14672,6 +14725,10 @@ What a [component](#g-component) or [assembly](#g-assembly) defines ([§8.2][s8-
 - Assembly. `local_wires` (the [class](#g-class) marker),
   `input_wires`, `output_wires` and `sample_times`, and the optional
   `transparent_container` (default `nothing`).
+- The assembly as a value. `Group(children; local_wires = (), input_wires =
+  (), output_wires = (), sample_times = (;))`, a type of the core, and
+  `Group(g; …)`, the copy of `g` with the given keywords replaced
+  ([§8.5][s8-5], [D-472][d-472], [D-473][d-473]).
 - Sample-time entries. `Relative(K, φ = 0)` in scope ticks and
   `Absolute(Δt, τ = 0)` in exact rational seconds, each an integer or a
   `Rational` ([§10.5][s10-5], [D-185][d-185], [D-469][d-469]). The `φ = 0` is shorthand for
@@ -14709,8 +14766,8 @@ section 3, is reached by import from the submodule, as the examples do
 ([§13.7][s13-7], [D-313][d-313], [D-453][d-453]). The inventory, not this appendix, is the list, since a
 listed component is built whenever wanted, and the API reference renders it. The
 spec names a [library component](#g-library-component) only where a ruling spells it
-([§13.7][s13-7]). `Group`, the
-on-the-fly assembly, is a member ([§8.5][s8-5], [D-184][d-184]).
+([§13.7][s13-7]). `Group`, the on-the-fly assembly, is not a member. The
+Authoring list above carries it.
 
 #### Build
 
@@ -17429,6 +17486,8 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-469]: log.md#d-469--retire-period-and-hz-and-give-absolute-its-period-as-a-bare-exact-number
 [d-470]: log.md#d-470--refuse-a-non-finite-localization_tol-at-the-deployment
 [d-471]: log.md#d-471--print-a-deployments-schedule-under-the-four-frames-symbols-and-chart-it-against-the-frame-tops
+[d-472]: log.md#d-472--write-an-assembly-as-a-group-value-unless-domain-code-needs-its-type-with-group-in-the-core
+[d-473]: log.md#d-473--give-group-a-copy-constructor-and-wire-keywords-that-take-a-function-of-the-group
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

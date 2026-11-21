@@ -163,7 +163,6 @@ from pinned data alone need no parameter.
 | Component | Status | Mechanism |
 |---|---|---|
 | `Junction{In, Out, N}(f)`, with `SumJunction{V, N}`, `Or{N}`, `And{N}` | shipped | one wire per input; the consumer's consolidated input |
-| `Group` | shipped | the on-the-fly assembly ([§8.5][s8-5], [D-184][d-184]) |
 | `Pack{V, N}` and `Unpack{V, N}` | shipped | wires name whole ports: between scalar ports and an `SVector{N, V}` port, `Pack` a junction alias at a named fold |
 | `StopRequest`, reason as instance data | shipped | a `Bool` in, a `StopFlag` out, consumed by nobody; the request is the port's type, so any component may publish one |
 | `Fields{V}`, a `y_direct` leaf taking a struct-valued bundle port | shipped | publishes the bundle's fields as loose ports, one level deep, for a consumer wanting less than the bundle, since wiring is port-granular ([§4.3][s4-3], [D-276][d-276]) |
@@ -472,7 +471,6 @@ qualifies the two they share, `StateSpace` and `TransferFunction`.
 [d-033]: ../log.md#d-033--declaration-inventory-by-value-by-type-by-allocation-conventions
 [d-141]: ../log.md#d-141--continuous-state-resets-are-events-owned-by-the-reimplemented-pivector
 [d-179]: ../log.md#d-179--derive-detection-policy-from-the-guards-return-type
-[d-184]: ../log.md#d-184--fold-group-into-the-spec-as-an-ordinary-library-component
 [d-226]: ../log.md#d-226--reach-the-public-surface-by-qualified-name-until-the-export-audit
 [d-231]: ../log.md#d-231--require-isbits-store-values-checked-at-build
 [d-238]: ../log.md#d-238--decide-embed-accept-on-the-type-lift-the-arrival-compare-exactly
@@ -502,7 +500,6 @@ qualifies the two they share, `StateSpace` and `TransferFunction`.
 [s6-2]: ../spec.md#62-aggregation-explicit-summing-junctions
 [s7-1]: ../spec.md#71-continuous-state-structured-immutable-flat-backing
 [s8-2]: ../spec.md#82-the-declaration-inventory
-[s8-5]: ../spec.md#85-assembly-declaration-type-based-class-by-declaration-shape
 [s8-7]: ../spec.md#87-rate-scopes
 [s9-7]: ../spec.md#97-the-compiled-executor
 [sA]: ../spec.md#appendix-a-taught-contracts-the-author-facing-index
