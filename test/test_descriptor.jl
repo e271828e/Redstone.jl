@@ -307,7 +307,7 @@ function client_schedule(body)
         end
     end
     if !isempty(scopes)
-        # a scope's `(m, c)` by its path and key, the file stating no order
+        # a scope's `(m, c)` by its path and key, which needs no order
         scope_timing = Dict((scope["path"], scope["key"]) => scope["timing"] for scope in structure["scopes"])
         push!(lines, ["rate", "scopes:"], ["path", "key", "anchor", "m", "c", "D", "Φ", "Δt", "τ"])
         for row in scopes
@@ -852,6 +852,18 @@ function test_descriptor()
         round_trip(value)
         @test value.deployment.schedule == (anchors = [(D = 10, phi = 5)], rows = [],
                                             scopes = [(path = "s", key = "s", D = 10, phi = 5)])
+        # The rows stand in walk order and the scopes in the structure's order,
+        # here declared against the alphabet, so a client pairs each list with
+        # its nodes and scopes by position (§13.9).
+        reversed = Deployment(build(Group((; h = Group((; b = TickCounter()); sample_times = (; b = Relative(1))),
+                                             g = Group((; a = TickCounter()); sample_times = (; a = Relative(2))));
+                                          sample_times = (; h = Absolute(1//25, 1//50), g = Relative(3, 1))));
+                              Δt_frame = 1//100)
+        body = descriptor(reversed).deployment
+        @test [row.path for row in body.schedule.rows] ==
+              [node.path for node in body.build.structure.nodes if node.class == "primitive"] == ["h/b", "g/a"]
+        @test [(scope.path, scope.key) for scope in body.schedule.scopes] ==
+              [(scope.path, scope.key) for scope in body.build.structure.scopes] == [("h", "h"), ("g", "g")]
     end
 
     @testset "a primitive node carries its rate chain, which the timings do not determine (§9.2, §13.9)" begin

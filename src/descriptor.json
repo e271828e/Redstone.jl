@@ -75,7 +75,7 @@
       "additionalProperties": false
     },
     "ScheduleSection": {
-      "description": "The Schedule's projection (D-467). `anchors` holds each anchor's counts in base ticks, `D` = dt/dt_base and `phi` = tau/dt_base, in the order of the structure's `anchors`; `rows` one row per discrete primitive in walk order; `scopes` one row per rate scope. A row carries no anchor, which its node's timing holds, no rate chain and no Δt.",
+      "description": "The Schedule's projection (D-467). `anchors` holds each anchor's counts in base ticks, `D` = dt/dt_base and `phi` = tau/dt_base, in the order of the structure's `anchors`; `rows` one row per discrete primitive in walk order; `scopes` one row per rate scope, in the order of the structure's `scopes`. A row carries no anchor, which its node's timing holds, no rate chain and no Δt.",
       "type": "object",
       "properties": {
         "anchors": { "type": "array", "items": { "$ref": "#/definitions/AnchorCounts" } },
