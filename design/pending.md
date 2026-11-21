@@ -287,6 +287,20 @@ breaking user code, and each may benefit from user feedback first.
   components' sweep and `x_deriv` bodies and says nothing about the discrete
   ones. The standing rule for new library components is
   `rules/brief_rules.md`'s, under its section on library components.
+- **A component backed by an external library, demonstrated** (§8.2,
+  §14.10, D-266). No component in `src/`, `test/` or `examples/` calls a
+  foreign function, so the FFI door of §8.2 is designed and has never been
+  exercised. Add to the examples package the twin of one discrete
+  controller behind the same contract, its stage bodies calling a C or Rust
+  library through `@ccall`, with a test that compares the two on one input
+  trace within a tolerance. The external code takes its state in and
+  returns it, since a stage mutates nothing (§4.1). The demonstration
+  answers three questions: how the build's checks treat a stage whose body
+  is a foreign call, whether the wrapper steps without allocating, and what
+  trim and linearization need from it, pinned inputs or a local derivative
+  rule. Asked for by the design session of the Simulink explainer on
+  2026-11-21, whose page describes the workflow as not built yet until
+  this lands.
 
 ## Deviations
 
