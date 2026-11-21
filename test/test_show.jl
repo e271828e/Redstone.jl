@@ -682,7 +682,7 @@ function test_show()
         @test occursin("\n  termination: LoopError at t = 0.0, StepError\n  log: 1 snapshot\n", plain(errored))
     end
 
-    @testset "Series: the snapshots' span and each column's element type (§11.2, D-474)" begin
+    @testset "Series: the snapshots' span and each column's element type (§11.2)" begin
         sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         read_set = reads(y = get_output("c", :y), input = get_input(:in))
         @test plain(series(sim, read_set)) ==
