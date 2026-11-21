@@ -396,8 +396,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
             wire.first == "selection/δe_prev" ? ("selection/δe" => wire.second) :
             wire.first == "selection/δt_prev" ? ("selection/δt" => wire.second) : wire
         end
-        bypassed = Group(model.children; local_wires = undelayed, input_wires = input_wires(model),
-                         output_wires = output_wires(model))
+        bypassed = Group(model; local_wires = undelayed)
         refusal = try
             build(bypassed)
             nothing

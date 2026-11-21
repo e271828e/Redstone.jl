@@ -381,6 +381,39 @@ function assembly_transparent_containers()
               [:input_wires, :local_wires, :output_wires, :sample_times, :transparent_container]
         @test isempty(foreign_declarations(Group((; c = Gain(2.0)))))
     end
+
+    @testset "`Group(g; …)` copies a group with the given keywords replaced (§8.5, D-473)" begin
+        original = Group((; a = UnitDelay(0.0), b = UnitDelay(0.0));
+                         local_wires = "a/y" => "b/u", input_wires = "in" => "a/u",
+                         output_wires = "b/y" => "out",
+                         sample_times = (a = Absolute(1//10), b = Absolute(1//50)))
+        declared(group) = (group.children, local_wires(group), input_wires(group),
+                           output_wires(group), sample_times(group))
+
+        # With no keyword the copy holds the five fields of the original.
+        @test declared(Group(original)) === declared(original)
+
+        # Each keyword replaces its own field and carries the other four, the
+        # rates among them. The five replacements differ from one another and
+        # from what they replace, so a field taken from the wrong keyword shows.
+        replacements = (children = (; a = UnitDelay(1.0), b = UnitDelay(2.0)),
+                        local_wires = ("b/y" => "a/u",), input_wires = ("in" => "b/u",),
+                        output_wires = ("a/y" => "out",), sample_times = (a = Absolute(1//4),))
+        for (position, keyword) in enumerate(keys(replacements))
+            derived = Group(original; keyword => replacements[keyword])
+            for (other, (was, is)) in enumerate(zip(declared(original), declared(derived)))
+                @test is === (other == position ? replacements[keyword] : was)
+            end
+        end
+
+        # A bare `Pair` is normalized in a copy as in the keyword form, and the
+        # copy builds with the rates it carried.
+        rewired = Group(original; output_wires = "a/y" => "mid")
+        @test output_wires(rewired) == ("a/y" => "mid",)
+        @test sample_times(rewired) === sample_times(original)
+        @test output_faces(rewired) == ["mid"]
+        @test length(build(rewired).structure.anchors) == 2    # one per `Absolute` rate
+    end
 end
 
 # --- paths and the one-level rule (§6.1, §8.6) --------------------------------

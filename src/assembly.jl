@@ -673,20 +673,31 @@ struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple} <: AbstractComponent
     sample_times::R   # the ad-hoc rate scope, keyed by bare element name (§8.7)
 end
 
-# Design: This is the convenience form. The declarations are ordered collections
+# Design: §8.5, D-303, D-473.
+# This is the convenience form. The declarations are ordered collections
 # of pairs, and a single wire should not have to be written `("a/x" => "b/y",)`.
 """
     Group(children; local_wires = (), input_wires = (), output_wires = (),
           sample_times = (;)) -> Group
+    Group(g::Group; children = g.children, local_wires = g.local_wires,
+          input_wires = g.input_wires, output_wires = g.output_wires,
+          sample_times = g.sample_times) -> Group
 
-Return a `Group` over `children`, with each [assembly](@ref g-assembly)
-declaration given by the keyword of its name.
+Return a `Group` over `children`, or a copy of `g` with the given keywords
+replaced.
+
+The first form takes `children`, a `NamedTuple` of
+[components](@ref g-component), and gives each [assembly](@ref g-assembly)
+declaration by the keyword of its name. The second form takes every field from
+`g` except those a keyword replaces, so `Group(g; local_wires = rewired)` keeps
+the children, the boundary and the rates of `g`.
 
 A bare `Pair` passed for `local_wires`, `input_wires` or `output_wires` is the
 one-entry tuple.
 
 # Keywords
 
+- `children`: the children of the copy, in the second form.
 - `local_wires`: the wires between children, as [`local_wires`](@ref) returns
   them.
 - `input_wires`: the inward boundary, as [`input_wires`](@ref) returns it.
@@ -698,6 +709,15 @@ Group(children; local_wires = (), input_wires = (), output_wires = (),
       sample_times = (;)) =
     Group(children, _entries(local_wires), _entries(input_wires),
           _entries(output_wires), sample_times)
+
+# Design: §8.5, D-473.
+# The copy is how a `Group` gets a variant, where a named assembly dispatches.
+# Every field defaults to the original's, so a keyword left out carries its
+# field and never empties it.
+Group(g::Group; children = g.children, local_wires = g.local_wires,
+      input_wires = g.input_wires, output_wires = g.output_wires,
+      sample_times = g.sample_times) =
+    Group(children; local_wires, input_wires, output_wires, sample_times)
 
 _entries(wires::Pair) = (wires,)
 _entries(wires) = wires
