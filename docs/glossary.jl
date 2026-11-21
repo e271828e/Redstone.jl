@@ -11,7 +11,7 @@ const GROUP = r"(\s*)\(([^()]*)\)"
 
 function strip_cites(text)
     # Hide glossary links so their parentheses do not read as groups.
-    text = replace(text, r"\[([^\]]+)\]\(#(g-[a-z0-9-]+)\)" => s"\x01\1\x02\2\x03")
+    text = replace(text, r"\[([^\]]+)\]\(#(g-[a-z0-9_-]+)\)" => s"\x01\1\x02\2\x03")
     # Drop cites inside parentheses, then any group left empty.
     text = replace(text, GROUP => function (g)
         m = match(GROUP, g)
