@@ -374,9 +374,9 @@ end
 
 # A module's constant binding by name, or `nothing` for anything else; a binding
 # that is declared but unassigned makes `isconst` throw.
-_constant(type_module::Module, name::Symbol) =
+_constant(scope::Module, name::Symbol) =
     try
-        isconst(type_module, name) ? getfield(type_module, name) : nothing
+        isconst(scope, name) ? getfield(scope, name) : nothing
     catch
         nothing
     end
@@ -446,13 +446,13 @@ end
 
 # A bare `@ref` link, `` [`name`](@ref) ``, with the target its name resolves to
 # from `type_module` when the binding's owner exports it: the owner's qualified
-# name, the text kept (D-467). A dotted name resolves segment by segment, each an
-# identifier, a macro name or an operator. Any other link, one naming no binding
-# or a binding its owner does not export, stays as written.
+# name, the text kept (D-467). A dotted name resolves segment by segment. Any
+# other link stays as written: one naming no identifier, a macro's and an
+# operator's among them, or a binding its owner does not export.
 function _targeted_link(link::AbstractString, type_module::Module)
     name = match(r"^\[`([^`]+)`\]", link).captures[1]
     segments = split(name, '.')
-    all(_names_binding, segments) || return link
+    all(Base.isidentifier, segments) || return link
     scope = type_module
     for segment in segments[1:end-1]
         symbol = Symbol(segment)
@@ -464,18 +464,10 @@ function _targeted_link(link::AbstractString, type_module::Module)
     isdefined(scope, symbol) || return link
     owner = which(scope, symbol)
     Base.isexported(owner, symbol) || return link
-    # a module is its own target, never `Owner.Owner`; an operator is quoted,
-    # `Owner.:(⊕)`, since `Owner.⊕` does not parse
     bound = getfield(owner, symbol)
-    bound isa Module && return "[`$name`](@ref $bound)"
-    target = Base.isoperator(symbol) && !Base.isidentifier(symbol) ? ":($symbol)" : "$symbol"
-    "[`$name`](@ref $owner.$target)"
+    bound isa Module && return "[`$name`](@ref $bound)"    # a module is its own target, never `Owner.Owner`
+    "[`$name`](@ref $owner.$symbol)"
 end
-
-# A segment a bare link's name may hold: an identifier, a macro name or an operator.
-_names_binding(segment::AbstractString) =
-    Base.isidentifier(segment) || Base.isoperator(segment) ||
-    (startswith(segment, '@') && Base.isidentifier(chop(segment; head = 1, tail = 0)))
 
 # The declaration methods the type defines, by the fixed order of
 # `LOCATED_DECLARATIONS`, each as the file and line Julia reports.

@@ -82,7 +82,8 @@ abstract_entries() =
 # which `RefUser` brings in with the module's own name, and holds `Deep`, whose
 # export `RefUser` does not see;
 # `RefUser` exports its component and `exported_helper` and keeps `internal_helper`
-# unexported. The docstring holds one link of each kind the pass reads.
+# unexported. The docstring holds one link of each kind the pass reads, and
+# the macro's and the operator's, which it leaves as written though exported.
 module RefOwner
 export owned, @owned_macro, ⊕
 "A binding another module's docstring links to."
@@ -831,7 +832,7 @@ function test_descriptor()
             [`exported_helper`](@ref Main.RedstoneTests.RefUser.exported_helper), [`RefOwner.owned`](@ref Main.RedstoneTests.RefOwner.owned), [`internal_helper`](@ref),
             [`missing_name`](@ref), [`exported_helper(x)`](@ref), [`owned`](@ref RefOwner.owned)
             and [the owner](@ref), and the glossary's [state](@ref g-state), and
-            [`@owned_macro`](@ref Main.RedstoneTests.RefOwner.@owned_macro), [`⊕`](@ref Main.RedstoneTests.RefOwner.:(⊕)), [`RefOwner.Deep.deep`](@ref Main.RedstoneTests.RefOwner.Deep.deep) and [`RefOwner`](@ref Main.RedstoneTests.RefOwner).
+            [`@owned_macro`](@ref), [`⊕`](@ref), [`RefOwner.Deep.deep`](@ref Main.RedstoneTests.RefOwner.Deep.deep) and [`RefOwner`](@ref Main.RedstoneTests.RefOwner).
             """
         # The package exports nothing until its export audit, so a library
         # docstring keeps every link as written.
