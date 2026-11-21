@@ -149,10 +149,16 @@ item changes what the spec says, the spec edit is part of the item.
         instance, the panel kit's verb beside `Base.peek`.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
-  convention `design/rules/docstring_rules.md`). Two passes remain: an examples pass
-  after the tutorial, and a signature-and-link pass after the
-  exported-name audit's renames, since a rename costs a signature line and the Documenter build
-  catches a stale link. Unexported names keep their docstrings as they are.
+  convention `design/rules/docstring_rules.md`). Two passes remain. The
+  examples pass gives each entry point that earns one a `jldoctest` block
+  under the convention's rules 35 to 38. `src/` holds none today, so the
+  pass also proves the Documenter build's doctest run. It follows the
+  tutorial, which shows the calls a user makes, and the exported-name
+  audit, since the module exports nothing until then (D-226) and a block
+  written earlier imports every name it uses. The signature-and-link pass
+  follows the audit's renames, since a rename costs a signature line and
+  the Documenter build catches a stale link. Unexported names keep their
+  docstrings as they are.
 - **The `§` references in diagnostic messages.** Every message ends by
   citing a spec section, which a user without the spec cannot follow. The
   pass drops each reference or replaces it with a pointer into the
