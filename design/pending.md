@@ -19,10 +19,11 @@ item changes what the spec says, the spec edit is part of the item.
   lists the five log entries the parts owe. Each part lands as a spec and
   log commit followed by its code. Parts one to three, the notation, the
   grid report's placement and the descriptor, have landed (D-464, D-466,
-  D-467, D-468), and part four follows. Part three's cold review is next,
-  and its record is
+  D-467, D-468), and part four follows. Part three's cold review has
+  closed and its fixes have landed, with D-470 among them. Its record is
   `design/increments/20261120_descriptor_content/notes_descriptor_content.md`,
-  whose section 11 is the handover. The session left open whether the
+  whose section 12 holds the review. The arc waits for the user's
+  diff-verify and the push. The session left open whether the
   build refuses a pool that admits no deployment. That was ruled on
   2026-11-20 and has landed ahead of part two: the build refuses a
   structure that no deployment binds, by one trial binding (§9.1, §9.2,

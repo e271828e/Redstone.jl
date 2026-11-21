@@ -300,3 +300,132 @@ Read `AGENTS.md`, the sub-bullet 'The descriptor' of the first bullet of
 whose section 11 is the handover. The record and the patch are committed at
 the tip. Apply the patch, run the gate, commit, tell the peer session, then
 run the cold review."
+
+## 12. The landing and the cold review
+
+The successor session landed the code on 2026-11-20 and ran the review into
+2026-11-21. This section is the record of both. Sections 1 to 11 stand as
+written. Section 7's account of the `@ref` pass gains one rule, the module's
+own name below.
+
+**The commits**, oldest first. Nothing is pushed.
+
+- `44d52cc`: the prototype's patch, with the sub-bullet retired. The gate
+  read 10676 of 10676 on the real tree, on Julia 1.13.3, and the examples
+  179 of 179.
+- `5ed966f`, `79a07ca`: the peer session's `Period` and `Hz` sweep, D-469,
+  which waited on `44d52cc`. The suite read 10650 after it.
+- `4f1ff16`: §9.2 and D-470, a `localization_tol` that is not positive and
+  finite refused.
+- `38bd534`: §13.9 and D-467, the pass covering macros and operators, since
+  superseded, and a module's own name.
+- `d999afa`: the review's fixes.
+- `91aafc2`: D-470's code.
+- `ea5f339`: a `pending.md` item and its probe, below.
+- `81d6b76`: §13.9 and D-467, the pass kept to identifiers.
+- `fb4c3dc`: that ruling's code.
+
+**The review.** One high-tier agent by section 10's charter, in the worktree
+`/Users/miguel/.julia/dev/Redstone.jl-worktrees/descriptor_review`, with its
+notes, probes and mutants in `descriptor_review_notes` beside it. Its gate
+read 10676 of 10676 at `44d52cc`. It found no defect on a path the suite
+reaches. The charter's leads came back sound: its extension of the parity
+client to every line `show` prints, over 18 builds and 7 deployments, found
+no printed fact missing from the file; `pinning_consumers` agreed with the
+parent commit's list and with `_root_input_cell` over 13 models at two
+scalars, a mount among them; every new schema object is closed.
+
+| finding | what | outcome |
+|---|---|---|
+| F1 | the anchors' counts asserted only where `Δt_base == Δt_frame` | a deployment with the base coarser than the frame, `D = 2` |
+| F2 | exported macros and operators left bare by the `@ref` pass | fixed, then reversed by ruling, below |
+| F3 | a module's own name targeted as `Owner.Owner` | the module is its own target |
+| F4 | the dotted resolution unpinned | `RefOwner.Deep.deep`, which `RefUser` cannot see |
+| F5, F6 | a primitive root's pin and a pin by tier alone unpinned | the rows of `PinnedGain()` and `UnitDelay(0.0)` |
+| F7 | the pin's oracle compared the cell with `Float64` | compared with `root_types[k]`, with `PinnedVectorEntry` in the loop |
+| F8 | `linearize`'s index into the consumers unpinned | a refusal on `second_pinned` |
+| F9 | the events' order within a row unpinned | `Relay`'s two events |
+| F10 | `localization_tol = Inf` passed `Deployment` and broke an encoder | refused, D-470 |
+| F11 | `mod` as a local's name | renamed, the two older sites with it |
+| F12 | the test helper `_q` | `_rational_text` |
+
+For F1 the fixer did not take the reviewer's deployment, frame `1//100` and
+base `1//500`. There `min(Δt_base, Δt_frame)` is the base, so the mutant
+survives. The reviewer agreed.
+
+**The user's rulings.**
+
+- F3 is fixed, with its clause in §13.9.
+- F10: the constructor refuses a non-finite tolerance, as a commit of its
+  own. The coordinator first told the user that an infinite tolerance made
+  the root-finder accept its first bracket. That was wrong: the run throws
+  at its first crossing, which the fixer's probe confirmed before D-470 said
+  so.
+- The two older `mod` sites in `src/descriptor.jl` are renamed with the new.
+- An operator's target was first ruled as parentheses always, `Owner.:(⊕)`.
+  The delta check then found that the adjoint's `Base.:(')` does not parse,
+  and the coordinator found that `..` stayed bare, the pass splitting a name
+  at its dots. The user asked what the pass was for. The inspector's page
+  links a target under `Redstone.` alone
+  (`RedstoneInspector.jl/design/deployment_overlay.md`, answer 15), and every
+  bare link of the package's component docstrings is a plain identifier. So
+  the user ruled the pass back to identifiers and dotted paths of them,
+  over removing the pass and over keeping macros. D-467 holds the rejected
+  forms.
+- The defect below goes to `pending.md`.
+
+**The coordinator's adjudications.**
+
+- F2 was adjudicated as the code departing from §13.9's "a binding its
+  owner exports", and sent to the fixer without a ruling. That widened the
+  pass beyond its purpose, and the user's last ruling reverses it. A finding
+  that reads a spec sentence more widely than the prototype built it was a
+  question for the user, and the coordinator did not ask it.
+- N1 to N4 are the delta check's findings. N1, a NUL in a link's name
+  making the pass throw, and N3, a clause of the operator test that did
+  nothing, fell with the operator code. N2 is the adjoint, above. N4:
+  `_constant`'s parameter is `scope`.
+
+**The fixes and their pins.** A fixer made `d999afa` and `91aafc2` in the
+worktree `/Users/miguel/.julia/dev/Redstone.jl-worktrees/descriptor_fix`,
+with its logs in `descriptor_fix_notes` beside it. Its gate read 10657 of
+10657 against 10650 at `79a07ca`, seven assertions more, and the examples
+179 of 179. The reviewer verified the delta at `91aafc2`: every finding
+closed, and thirteen mutants, twelve red and one equivalent.
+
+| mutant | subset | result |
+|---|---|---|
+| the counts at `min(Δt_base, Δt_frame)` | descriptor | red |
+| `pinned` only by declaration | descriptor | red |
+| a dotted link resolved from the module alone | descriptor | red |
+| `linearize` reading root input 1's consumers | linearize | red, as an `InternalInvariant` |
+| the events reversed | descriptor | red |
+| a primitive root pinning nothing | descriptor, show | red |
+| the `Float64` oracle restored | descriptor | red |
+| the module's line removed | descriptor | red |
+| `isfinite` dropped | localization, descriptor | red, as an error |
+
+The table leaves out the four mutants of the operator code, which is gone.
+
+**The last change was not reviewed.** The coordinator made `fb4c3dc` in the
+fixer's worktree after the reviewer's delta check: the identifier test
+restored, the operator's quoting and `_names_binding` removed, the macro's
+and the operator's assertions turned to "stays as written", and `_constant`'s
+parameter renamed. With the identifier test removed the descriptor's tests
+go red on those two assertions. The gate read 10657 of 10657 on it. No
+agent has read that commit.
+
+**Found and not this increment's.** With D-470's refusal removed, the throw
+inside the root-finder was reported as a `StepError` naming the bouncer's
+`x_deriv`. It is a `pending.md` item under Unordered, with
+`probe_localization_inf.jl` beside this file.
+
+**Open.**
+
+- The user's diff-verify of the arc, then the push.
+- The inspector's record needs three notes at the pin bump: the suppliers
+  count from 1, the link counts are 124 in 45 docstrings, and the pass
+  reads identifiers alone, with a module as its own target.
+- The scratch worktrees `descriptor_content`, `descriptor_review` and
+  `descriptor_fix` under `/Users/miguel/.julia/dev/Redstone.jl-worktrees/`,
+  with their notes folders, can go once the arc is pushed.
