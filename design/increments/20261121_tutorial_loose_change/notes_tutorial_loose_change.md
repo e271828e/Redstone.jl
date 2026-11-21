@@ -529,6 +529,29 @@ among them. Three points wait for it by name: where the module's
 marker (S7), and whether the labelled testsets loading ComponentArrays
 for the whole suite hides anything (S3.2).
 
+**S11. The landing went back to the rules' order once the peer released
+the tree**, which S9 had turned. The docs landed as `d382b00` and the
+code as `23458b8`, the patch applied unchanged over the peer's `505dd28`.
+Before the code commit, on the real tree: the gate read 10864 of 10864,
+the examples' runner 179 of 179, and the docs build was green. The
+manifest resolved ComponentArrays at 0.15.50. The cold review ran
+meanwhile on the same diff in the worktree, and its fixes follow as a
+third commit.
+
+**S12. The record's claim that the core tests do not load the extension
+was wrong, and the design stands.** T9 says "The core tests do not load
+the extension", and S3.2 says no core testset calls `labeled`. As built,
+`test/test_linearize.jl` loads ComponentArrays at its head, and the suite
+includes every file before any test runs, so every test runs with the
+extension loaded. `test/test_show.jl`'s `Linearization` testset also
+calls `labeled`, to assert that both forms print alike. What holds is
+narrower: the testsets of the plain form never call `labeled`. The
+reviewer probed the cost and found none: loading ComponentArrays adds no
+method on a type it does not own to Base, LinearAlgebra, StaticArrays,
+ForwardDiff or Redstone, and Redstone's ambiguities stay at zero. The
+alternative, for the user to weigh, moves the labelled testsets into a
+child process, as the hint's test already is.
+
 ## 8. The printed forms, as built
 
 From `probe_layouts.jl` and `out_layouts.txt` in the probes' folder, on
@@ -744,3 +767,64 @@ since the typed field converts.
   `Pkg.resolve()` under `--project=test` before any runner there, since
   the root gained a weak dependency and two environments a dependency. The
   peer shares that file, so the resolve waits for its last commit.
+
+## 11. The cold review
+
+One independent high-tier agent, on the staged diff in the prototype's
+worktree at `4907ebb`, by the charter that closes section 7. Its notes
+are `tutorial_loose_change_review_notes.md` beside the worktree and its
+probes `tutorial_loose_change_review_probes/` there. It ended at 275k
+tokens.
+
+**The verdict.** The code does what T3 to T14 say, and behaves correctly
+in every edge case probed: empty tap lists, a `Series` with no columns or
+no snapshots, `labeled` on odd inputs, the printed forms in every
+lifecycle state and both input modes, a report in each status. Nothing
+blocks the landing. One guard lacks a test, and several docs sentences
+are slightly false.
+
+**The findings and the coordinator's rulings.** The fixer's charge is
+`tutorial_loose_change_fix_prompt.md` beside the worktree.
+
+| | Finding | Ruling |
+|---|---|---|
+| F1 | The hint's `err.f === labeled` guard is unpinned: without it every `MethodError` in a session without ComponentArrays carries the hint | fix: the child also raises an unrelated `MethodError`, and the hint must occur once |
+| F2 | The whole suite runs with the extension loaded, against T9's sentence | no fix; S12 corrects the record |
+| F3 | "Eight arrays" is false for an empty tap list: the vector stays plain, and so does a matrix whose two lists are both empty | fix the six sentences, and pin the matrix's type |
+| F4 | The routing row omits `show` and misplaces the load | fix |
+| F5 | D-072's Position says the linearization returns labeled data, and has no annotation | annotate |
+| F6 | `companions/linearization_walkthrough.md` and `companions/lqr_tracker.md` still describe NamedTuples | fix |
+| F7 | Five facts of the printed forms and one of `series` are unpinned: `replay` in the heading, the residue clause, an empty column set, six significant digits, and the refusal standing before the lifecycle check | add a test for each; the last is pinned or its claim dropped |
+| F8 | The `Series` table prints an element type directly, so its qualification depends on the printing module | add the site to `code_rules.md`'s caveat, no code change |
+| F9 | The `show` methods cite D-474 and D-475, which rule no printed form | remove or redirect the citations; nothing enters the spec before the user judges the forms |
+| F10 | D-475's Rejected item on a NamedTuple of matrices says it drops the labels | reword |
+| F11 | §11.2's paragraph uses `flight` unintroduced, and two rulings stand unbolded | fix as the reviewer proposed |
+| F12 | Chapter 1's last block compares `.columns`, a field the page no longer introduces | compare the columns themselves; S3.8 stands for the examples' tests only |
+| F13 | `labeled`'s docstring lacks the glossary link and a warning that `==` between a component vector and a plain one is `false` | fix |
+
+**The three named points.** The module's `__init__` stays in
+`src/linearize.jl`, since a second one elsewhere fails loudly at
+precompilation, and the code map's `src/Redstone.jl` entry gains a
+clause. The hint's print line takes `# COV_EXCL_LINE`, since the child
+test turns red when the print is dropped. Loading ComponentArrays for the
+whole suite hides nothing in behavior, by S12.
+
+**The reviewer's mutants.**
+
+| Mutant | Result |
+|---|---|
+| R1, the hint's print dropped | red, by the child-process test |
+| R2, the `err.f === labeled` guard dropped | survived: F1 |
+| R3, the mode written as the literal `live` | survived: F7 |
+| R4, the residue clause dropped | survived: F7 |
+| R5, the empty-column guard dropped | survived: F7 |
+| R6, the refusal moved after the lifecycle check | survived: F7 |
+| R7, compact printing dropped | survived: F7 |
+
+**Not checked by the reviewer.** The full gate, the examples' runner and
+the docs build, which the prototyper and then the coordinator ran. The
+docs battery, which the coordinator ran. Whether Codecov shows the print
+line as missed. Accessors or ConstructionBase on a `Series`, whose
+property names now differ from its field names. A hand-made
+`Linearization` whose lengths disagree with its labels, which `labeled`
+and `show` accept silently.
