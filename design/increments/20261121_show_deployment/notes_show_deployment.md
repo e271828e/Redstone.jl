@@ -196,3 +196,17 @@ Each is open to the user's review.
   `Redstone.jl-worktrees/show_deployment_review` and
   `Redstone.jl-worktrees/show_deployment_review_probes/`.
 - All four can be removed once the user has verified the diff.
+
+## 8. The user's answers to section 6, 2026-11-21
+
+1. **Item 1: `show(::Deployment)` prints its `Δt_base` against the coarsest
+   admissible one.** Its form waits for the user's word on a rendered
+   candidate, `probe_admissible.jl` among the probes.
+2. **Item 4: fixed.** `hyperperiod 1 base tick` takes the singular in the
+   `Schedule`'s two forms, on its chart's heading and on the deployment's
+   block, in the commit that adds this section.
+3. **Item 5: the user asked for a recommendation** on stating the order of
+   `schedule.scopes`.
+4. **Item 6: fixed** in `121da1a`. §13.9's parity sentence names each
+   schedule row's exact seconds and the deployment's chart over the joint
+   period, with an annotation on D-467.

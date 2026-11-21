@@ -289,7 +289,7 @@ function client_schedule(body)
     hyperperiod = lcm(BigInt[row["D"] for row in rows])
     lines = [tokens("schedule: " * (isempty(rows) ? "no rows" : count_text(length(rows), "row")) *
                     (isempty(scopes) ? "" : ", " * count_text(length(scopes), "rate scope")) *
-                    (isempty(rows) ? "" : ", hyperperiod $hyperperiod base ticks"))]
+                    (isempty(rows) ? "" : ", hyperperiod " * count_text(hyperperiod, "base tick")))]
     isempty(rows) && isempty(scopes) && return lines, nothing
     push!(lines, ["anchors:"], ["anchor", "Δtₖ", "τₖ", "Dₖ", "Φₖ"],
           ["A₀", repr(dt_base), "0//1", "1", "0"])

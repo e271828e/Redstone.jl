@@ -297,6 +297,13 @@ function test_show()
               "and $hyperperiod frames"
         # No rows: the heading alone, no chart line at all.
         @test plain(pendulum_deployed.schedule) == "Schedule: no rows"
+        # A hyperperiod of one base tick takes the singular, in both forms and
+        # on the chart's heading.
+        single_tick = Deployment(build(TickCounter()); Δt_frame = 1//10)
+        @test compact(single_tick.schedule) == "Schedule(1 row, hyperperiod 1 base tick)"
+        @test split(plain(single_tick.schedule), '\n')[[1, 4]] ==
+              ["Schedule: 1 row, hyperperiod 1 base tick", "  hyperperiod chart, 1 base tick:"]
+        @test schedule_block(single_tick)[1] == "schedule: 1 row, hyperperiod 1 base tick"
     end
 
     @testset "Build: the summary and its parts (§9.2, D-257)" begin

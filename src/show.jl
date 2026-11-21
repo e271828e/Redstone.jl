@@ -179,7 +179,7 @@ _hyperperiod(schedule::Schedule) = lcm(big.([row.D for row in schedule.rows]))
 function Base.show(io::IO, schedule::Schedule)
     isempty(schedule.rows) && return print(io, "Schedule(no rows)")
     print(io, "Schedule(", _count(length(schedule.rows), "row"), ", hyperperiod ",
-          _hyperperiod(schedule), " base ticks)")
+          _count(_hyperperiod(schedule), "base tick"), ")")
 end
 
 # The counts a schedule's heading states, the `Schedule`'s own and the
@@ -187,7 +187,7 @@ end
 _schedule_counts(schedule::Schedule) =
     (isempty(schedule.rows) ? "no rows" : _count(length(schedule.rows), "row")) *
     (isempty(schedule.scopes) ? "" : ", " * _count(length(schedule.scopes), "rate scope")) *
-    (isempty(schedule.rows) ? "" : ", hyperperiod $(_hyperperiod(schedule)) base ticks")
+    (isempty(schedule.rows) ? "" : ", hyperperiod " * _count(_hyperperiod(schedule), "base tick"))
 
 # A chart's ruler: the column index at every column divisible by 10.
 function _chart_ruler(columns::Int)
@@ -223,7 +223,7 @@ function _lines(schedule::Schedule)
     hyperperiod > 100 &&
         return push!(lines, "  hyperperiod: $hyperperiod base ticks, chart omitted")
     hyperperiod = Int(hyperperiod)
-    push!(lines, "  hyperperiod chart, $hyperperiod base ticks:")
+    push!(lines, "  hyperperiod chart, " * _count(hyperperiod, "base tick") * ":")
     width = maximum(textwidth(_path_label(row.path)) for row in rows)
     push!(lines, " "^(4 + width + 2) * _chart_ruler(hyperperiod))
     for row in rows
