@@ -504,8 +504,8 @@ Each face of the child, as [`input_faces`](@ref) lists it, becomes the pair
 input is the face `u`, so the default labels an `integrator` child's bare input
 `"integrator.u"`.
 
-A [`Group`](@ref) has no declaration body to call the helper from. It passes
-the helper inside a function of the group, as in
+A [`Group`](@ref) has no declaration body, so its wire keyword takes a
+function of the group that calls the helper, as in
 `input_wires = g -> input_passthrough(g, "aircraft")`.
 
 The default `prefix` folds the path's `/` into `sep`, so a
@@ -560,9 +560,9 @@ Return output wire [entries](@ref g-entry) that expose a child's output
 
 `output_passthrough` is [`input_passthrough`](@ref)'s sibling on the outward
 boundary. Splat its entries into the assembly's [`output_wires`](@ref). A
-[`Group`](@ref) passes the helper inside a function of the group, as in
-`output_wires = g -> output_passthrough(g, "aircraft")`. It takes
-the same keywords over the faces [`output_faces`](@ref) lists, with the same
+[`Group`](@ref)'s wire keyword takes a function of the group that calls the
+helper, as in `output_wires = g -> output_passthrough(g, "aircraft")`. The
+helper takes the same keywords over the faces [`output_faces`](@ref) lists, with the same
 folded default `prefix` and the same three exclusive selection keywords, one per
 call, `select` receiving face names.
 
@@ -639,8 +639,8 @@ function _passthrough_faces(who::String, child_path::AbstractString,
 end
 
 # --- the anonymous assembly (§8.5, D-211, D-472) ------------------------------
-# `Group` is written as a user's assembly is: a struct and the assembly
-# declarations, nothing else. No build step names it, here or in any other
+# `Group` is written as a user's assembly is: a struct, its constructors and
+# the assembly declarations. No build step names it, here or in any other
 # file, so it stays an ordinary component (§13.7, D-472).
 
 # Design: D-184, D-211, D-472.
@@ -702,12 +702,15 @@ the children, the boundary and the rates of `g`.
 
 A wire keyword takes its [entries](@ref g-entry) written out or computed.
 Written out, they are a tuple of pairs, or a bare `Pair` for one entry.
-Computed, they are a function that receives the `Group` and returns the entries.
+Computed, they are a `Function` that receives the `Group` and returns the
+entries in either shape.
 
 The `Group` stores a function without calling it. [`local_wires`](@ref),
 [`input_wires`](@ref) and [`output_wires`](@ref) call it with the `Group` each
-time they are read, and return its result. A build reads them, so the function
-runs inside the build, and a warning it raises joins the build's warnings.
+time they are read, and return its result, a bare `Pair` as the one-entry
+tuple. A build reads them, so the function runs inside the build. A warning a
+helper of the framework raises there, such as `EmptyFaceSelection`, joins the
+build's warnings.
 
 A function serves a helper that needs the assembly in hand, which does not
 exist while the constructor's arguments are written.
@@ -732,7 +735,8 @@ declaration, `input_wires(g)`, never through the field, `g.input_wires`.
 - `output_wires`: the outward boundary, as [`output_wires`](@ref) returns it,
   or a function of the `Group` that returns it.
 - `sample_times`: the rates of the children, keyed by bare child name, as
-  [`sample_times`](@ref) returns them. It takes no function.
+  [`sample_times`](@ref) returns them. It takes no function, and one given is
+  a `MethodError` at construction.
 
 # Examples
 
@@ -744,9 +748,6 @@ julia> import Redstone.Library: UnitDelay
 julia> inner = Group((; hold = UnitDelay(0.0)); input_wires = "u" => "hold/u");
 
 julia> outer = Group((; inner); input_wires = g -> input_passthrough(g, "inner"; prefix = ""));
-
-julia> outer.input_wires isa Function
-true
 
 julia> input_wires(outer)
 ("u" => "inner/u",)

@@ -214,7 +214,7 @@ end
 # --- name-transparent containers (§8.5, D-211) --------------------------------
 # One container field per type may be declared name-transparent, and its
 # elements then go by bare key everywhere a child name appears. `Group` is the
-# library case, exercised throughout these files; below is the rule itself, on
+# everyday case, exercised throughout these files; below is the rule itself, on
 # named types, beside `TupleRoster` — the undeclared container it leaves alone.
 
 struct TransparentRoster{U <: NamedTuple} <: AbstractComponent
@@ -1212,6 +1212,12 @@ function assembly_primitives()
         seen = Ref{Any}(nothing)
         watched = Group((; c = Gain(2.0)); local_wires = g -> (seen[] = g; ()))
         @test local_wires(watched) == () && seen[] === watched
+
+        # And is called at each read, never once and remembered.
+        calls = Ref(0)
+        counted = Group((; c = Gain(2.0)); local_wires = g -> (calls[] += 1; ()))
+        local_wires(counted); local_wires(counted)
+        @test calls[] == 2
 
         # The two builds are the same model.
         computed_build, wired_build = build(computed), build(wired)

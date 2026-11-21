@@ -266,7 +266,7 @@ feedback_wires() = ("plant/h" => "sensing/h", "sensing/h_meas" => "cascade/h_mea
     autopilot(solution; noise_psd = 1.8e-3)
 
 Chapter 5's loop: the aircraft under the cascade, with the actuators and the
-sensing, a `Group` of groups (§13.7) under the root inputs `h_ref` and
+sensing, a `Group` of groups (§8.5) under the root inputs `h_ref` and
 `V_ref`. `solution` is the trim triple `(θ, δe, δt)` of `level_flight()`. The
 cascade is always engaged here, through a `Constant`, and has no standby.
 `cruise(solution)` is its initial condition.

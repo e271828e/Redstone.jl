@@ -3543,12 +3543,16 @@ output_wires(g::Group)         = _declared(g.output_wires, g)
 sample_times(g::Group)         = g.sample_times
 transparent_container(::Group) = :children
 
-_declared(f::Function, g) = f(g)    # computed: called with the Group at each read
-_declared(wires, g)       = wires   # written out
+_declared(f::Function, g) = _entries(f(g))   # computed: called with the Group at each read
+_declared(wires, g)       = wires            # written out
+
+_entries(wires::Pair) = (wires,)   # a bare `Pair` is the one-entry tuple
+_entries(wires)       = wires
 
 Group(children; local_wires = (), input_wires = (), output_wires = (),
       sample_times = (;)) =
-    Group(children, local_wires, input_wires, output_wires, sample_times)
+    Group(children, _entries(local_wires), _entries(input_wires),
+          _entries(output_wires), sample_times)
 
 # a copy of `g` with the given keywords replaced
 Group(g::Group; children = g.children, local_wires = g.local_wires,
@@ -3578,6 +3582,9 @@ approach = Group(
     local_wires = ("vehicle/h" => "gear/h",),
 )
 ```
+
+A bare `Pair` given for a wire keyword, or returned by its function, is the
+one-entry tuple. A named assembly's declaration body has no such shorthand.
 
 A field that holds a function does not hold the entries, so a reader takes
 them from the declaration, `input_wires(approach)`. **`sample_times` takes no

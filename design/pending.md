@@ -151,11 +151,13 @@ item changes what the spec says, the spec edit is part of the item.
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain. The
   examples pass gives each entry point that earns one a `jldoctest` block
-  under the convention's rules 35 to 38. `src/` holds none today, so the
-  pass also proves the Documenter build's doctest run. It follows the
-  tutorial, which shows the calls a user makes, and the exported-name
-  audit, since the module exports nothing until then (D-226) and a block
-  written earlier imports every name it uses. The signature-and-link pass
+  under the convention's rules 35 to 38. `src/` holds one, on `Group`'s
+  constructor, landed ahead of the pass with D-473 as its pilot. The docs
+  build is shown to run it: a wrong expected output failed the build. The
+  pass follows the tutorial, which shows the calls a user makes, and the
+  exported-name audit, since the module exports nothing until then (D-226)
+  and a block written earlier imports every name it uses, as the pilot
+  does. The signature-and-link pass
   follows the audit's renames, since a rename costs a signature line and
   the Documenter build catches a stale link. Unexported names keep their
   docstrings as they are.

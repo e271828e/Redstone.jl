@@ -76,7 +76,8 @@ closed(run::Run) = run.termination !== nothing
 9. **A fallback users extend names its argument**, as in
     `init!(dev::AbstractDevice) -> Nothing`, also where the prose refers to it.
     Otherwise the line keeps the method's form, `frame_top!(::NoHooks) -> Nothing`.
-10. **A library component with a keyword constructor shows the keyword form only.**
+10. **A library component with a keyword constructor shows the keyword form only,
+    and so does `Group`.**
     The positional constructor the struct keeps gets no line, as
     `companions/library_inventory.md` states.
 11. **A forwarded `kw...` is shown as the callee's keywords.**
@@ -108,8 +109,9 @@ closed(run::Run) = run.termination !== nothing
 18. **No citation, no history, no defense.** No section, entry, predecessor or
     alternative. "This is not a defect" is a sentence for the log.
 19. **A library component's summary names its class and tier**, "A continuous
-    primitive that …", "A discrete primitive that …", and `Group`'s "An
-    assembly …". The abstract parents and `AsPort` keep their own forms.
+    primitive that …", "A discrete primitive that …". `Group`, a type of the
+    core, takes "An assembly …". The abstract parents and `AsPort` keep
+    their own forms.
 
 ## Elaboration
 

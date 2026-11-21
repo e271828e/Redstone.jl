@@ -1,6 +1,6 @@
 # The precompile workload (§9.7, D-289). A closed loop of library components
-# runs through the generic machinery a cold process pays, so the package image
-# carries it. The workload sees the library's components alone, so a user's
+# under a `Group` runs through the generic machinery a cold process pays, so the
+# package image carries it. The workload sees those components alone, so a user's
 # component types still pay their own stage methods, the chunks they fill and
 # their `Dual` activation. `test/test_precompile.jl` runs `workload` in a fresh
 # process and pins what it compiles.

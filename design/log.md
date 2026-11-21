@@ -20717,7 +20717,7 @@ a library component. The assembly declarations, the container rule and
 **Rationale.** The repository's own use decided the first bullet. At this
 entry the examples build every assembly with `Group`, in 16 calls, and
 declare no named assembly. The tutorial shows no named assembly either. The
-tests call `Group` 436 times in 29 files and declare about 60 named
+tests call `Group` 436 times in 28 files and declare about 60 named
 assemblies, 46 of them in `test_assembly.jl` and `test_build.jl`, where they
 test the rules for named assemblies. [§8.5][s8-5] still opened with "an assembly is
 a plain struct" and reached `Group` in its last subsection, the bias [D-184][d-184]'s
@@ -20801,6 +20801,11 @@ functions of the instance, so the keywords add no rule.
 
 A field may now hold a function, so the field is not always the entries.
 The declaration is, and readers go through it.
+
+Annotation (2026-11-21): the function's result takes the keyword form's
+shorthand, a bare `Pair` as the one-entry tuple, which [§8.5][s8-5] now states. A
+named assembly's declaration body has no such shorthand. The cold review
+found the code doing it and the spec silent.
 
 **Rejected.**
 - *`resolve` taking a bare `NamedTuple` of children, so that
