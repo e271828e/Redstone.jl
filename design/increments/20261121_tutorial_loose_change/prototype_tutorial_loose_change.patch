@@ -1,0 +1,1163 @@
+diff --git a/Project.toml b/Project.toml
+index 5077450..30476ca 100644
+--- a/Project.toml
++++ b/Project.toml
+@@ -13,6 +13,13 @@ PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+ 
++[weakdeps]
++ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
++
++[extensions]
++RedstoneComponentArraysExt = "ComponentArrays"
++
+ [compat]
++ComponentArrays = "0.15"
+ PrecompileTools = "1"
+ julia = "1.13"
+diff --git a/design/code_map.md b/design/code_map.md
+index c344314..2a3eac3 100644
+--- a/design/code_map.md
++++ b/design/code_map.md
+@@ -13,6 +13,17 @@ when its citations change.
+ 
+ ## What is real here
+ 
++### `ext/RedstoneComponentArraysExt.jl`
++
++The package's one extension, loaded with ComponentArrays, its weak
++dependency in the root `Project.toml`. It adds the one method of
++linearize.jl's `labeled`: the eight arrays of a `Linearization` as component
++arrays over axes built from the label tuples, the data unwrapped first
++(D-475). The suite loads ComponentArrays in `test/test_linearize.jl`, so
++every test file runs with the extension loaded.
++
++Spec: §14.10, D-475.
++
+ ### `src/Redstone.jl`
+ 
+ The package module: the dependencies and the include order the other files load
+@@ -818,7 +829,12 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §10.4, §13.5, §13.7, D-141, D-179, D
+ - `LinearizeTag`, `LINEARIZE_WIDTH` and `LinearizeDual`, the default width's
+   pre-materializable scalar.
+ - `Linearization`, the operating point and the four matrices under the tap
+-  labels.
++  labels, its fields abstract so the plain and the labeled form are one
++  type (D-475). `_linearize` returns the plain form, `y₀` converted to
++  `Float64`.
++- `labeled`, declared with no method, which the ComponentArrays extension
++  supplies, and the module's `__init__`, which registers the `MethodError`
++  hint naming the package while the extension is not loaded (D-475).
+ - `linearize` on a `Model{Float64}`, over D-213's two-half scratch world in
+   passes of `width` directions, the seeds written at the resolved taps' own
+   sites. Each half is a scratch `Model`, built by model.jl's `_scratch`
+@@ -861,7 +877,7 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §10.4, §13.5, §13.7, D-141, D-179, D
+   face `u` (D-437).
+ 
+ Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,
+-D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438, D-458, D-468.
++D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438, D-458, D-468, D-475.
+ 
+ ### `src/model.jl`
+ 
+@@ -1137,9 +1153,23 @@ D-261.
+   prints one block per writer and the pacer's line last. It prints each
+   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and
+   count-only past it.
++- The two forms of four values beside the artifacts, under the same
++  conventions:
++  - the `Simulation`'s lifecycle, mode and clock, its deployment's compact
++    form, the termination record, the retained log's count off `logged`,
++    unread while running, the devices and the warnings;
++  - the `Series`' snapshot count and `t` span, and each column's label and
++    element type, no values (D-474);
++  - the `TrimReport`'s verdict and counts, the decisions with any bound
++    reached, the residuals beside their tolerances and the committed ones,
++    the committed checks and the fired events;
++  - the `Linearization`'s operating point per tap list and each matrix as a
++    table under its labels, read by integer index so the plain and the
++    labeled form print alike, an empty list and its matrices printing no
++    block (D-475).
+ 
+ Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460,
+-D-464, D-466, D-468, D-471.
++D-464, D-466, D-468, D-471, D-474, D-475.
+ 
+ ### `src/sim.jl`
+ 
+@@ -1246,7 +1276,9 @@ D-464, D-466, D-468, D-471.
+ - `series` and `Series`, the post-run extraction from the log through the
+   read resolver for a table source, with the `ReadSetMisuse` fallback for
+   a bare NamedTuple, and `_column`, the function barrier that gathers one
+-  entry over the log (§11.2, D-407).
++  entry over the log (§11.2, D-407). A `Series` forwards its columns as
++  properties after its four fields, `_SERIES_FIELDS`, which `series`
++  refuses as labels with `ReadSetMisuse` `:reserved_label` (D-474).
+ - A one-line forwarding method on the simulation for each of the model's
+   `port`, `state`, `modes`, `phase_bodies`, `apply!`, `evaluate!`,
+   `integrate!`, `boundary!`, `offtick_boundary!` and `boundary_zero!`, which
+@@ -1257,7 +1289,7 @@ Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6
+ §14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
+ D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
+ D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429, D-445,
+-D-447, D-450, D-451, D-452.
++D-447, D-450, D-451, D-452, D-474.
+ 
+ ### `src/stepper.jl`
+ 
+diff --git a/docs/Project.toml b/docs/Project.toml
+index 02d294a..69074c4 100644
+--- a/docs/Project.toml
++++ b/docs/Project.toml
+@@ -1,5 +1,6 @@
+ [deps]
+ CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
++ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
+ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+ Redstone = "653472ee-a41b-4fb0-9ffa-a5db0d34d125"
+ RedstoneExamples = "28cf5f55-110a-4578-bc3c-cf560fa74dd0"
+diff --git a/docs/src/api.md b/docs/src/api.md
+index 65a01c0..0d2c6de 100644
+--- a/docs/src/api.md
++++ b/docs/src/api.md
+@@ -137,6 +137,7 @@ restore!
+ overlay!
+ linearize
+ Linearization
++labeled
+ get_state
+ get_deriv
+ get_output
+diff --git a/docs/src/tutorial/aircraft.md b/docs/src/tutorial/aircraft.md
+index 8db8a4e..1886a1b 100644
+--- a/docs/src/tutorial/aircraft.md
++++ b/docs/src/tutorial/aircraft.md
+@@ -170,7 +170,8 @@ run!(sim; t_end = 120.0)
+ [`series`](@ref) gathers the log into columns, one per entry of a
+ [read set](@ref g-read-set). Each entry is a [selector](@ref g-selector),
+ here [`get_output`](@ref) of a port by path and name. The log holds one
+-snapshot per frame.
++snapshot per frame. The result holds the snapshots' times `t`, and each
++column reads under its label, so `flight.V` is the airspeed at each one.
+ 
+ ```@example aircraft
+ import Redstone: series, reads, get_output
+@@ -179,8 +180,8 @@ using CairoMakie
+ flight = series(sim, reads(V = get_output("plant", :V), h = get_output("plant", :h)))
+ 
+ fig = Figure()
+-lines(fig[1, 1], flight.t, flight.columns.V; color = :royalblue, axis = (; ylabel = "V (m/s)"))
+-lines(fig[2, 1], flight.t, flight.columns.h; color = :darkorange, axis = (; xlabel = "t (s)", ylabel = "h (m)"))
++lines(fig[1, 1], flight.t, flight.V; color = :royalblue, axis = (; ylabel = "V (m/s)"))
++lines(fig[2, 1], flight.t, flight.h; color = :darkorange, axis = (; xlabel = "t (s)", ylabel = "h (m)"))
+ fig
+ ```
+ 
+@@ -188,9 +189,9 @@ The aircraft climbs as it slows and dives as it speeds up. The period is
+ the time between two upward crossings of the trim airspeed.
+ 
+ ```@example aircraft
+-V = flight.columns.V
++V = flight.V
+ upward = [flight.t[i] for i in 2:length(V) if V[i - 1] < 50.0 ≤ V[i]]
+-(snapshots = length(V), V = extrema(V), h = extrema(flight.columns.h), periods = diff(upward))
++(snapshots = length(V), V = extrema(V), h = extrema(flight.h), periods = diff(upward))
+ ```
+ 
+ The log holds 12 001 snapshots over the two minutes. The airspeed swings
+diff --git a/docs/src/tutorial/linearize.md b/docs/src/tutorial/linearize.md
+index 5356672..7f3ead3 100644
+--- a/docs/src/tutorial/linearize.md
++++ b/docs/src/tutorial/linearize.md
+@@ -35,19 +35,22 @@ committed trim, and returns ``\dot x = A x + B u`` in deviations from it.
+ This chapter needs the states and the controls only, so the tap set has no
+ outputs.
+ 
++The matrices come back plain, their rows and columns in the tap set's
++order. With the ComponentArrays package loaded, [`labeled`](@ref) puts the
++tap labels on them, so an entry, a row or a column reads by its labels. The
++arithmetic on labeled arrays still goes by position, and it never checks
++that two operands carry the same labels. The linearization prints the
++operating point, then each matrix under its row and column labels.
++
+ ```@example linearize
+-import Redstone: taps, get_state, get_input, linearize
++import Redstone: taps, get_state, get_input, linearize, labeled
++using ComponentArrays
+ 
+ aircraft_taps = taps(
+     x = (V = get_state("plant", :V), γ = get_state("plant", :γ), θ = get_state("plant", :θ),
+          q = get_state("plant", :q), h = get_state("plant", :h)),
+     u = (δe = get_input(:δe), δt = get_input(:δt)))
+-linearization = linearize(sim, aircraft_taps)
+-round.(linearization.A; digits = 4)
+-```
+-
+-```@example linearize
+-round.(linearization.B; digits = 4)
++linearization = labeled(linearize(sim, aircraft_taps))
+ ```
+ 
+ ## Exact Jacobians
+@@ -57,13 +60,10 @@ differentiation. It needs no perturbation size, and each entry is exact up
+ to the rounding of the arithmetic. Two entries can be checked by eye. The
+ altitude's rate ``V \sin\gamma`` changes with ``\gamma`` at ``V \cos\gamma
+ = 50``, and the pitch angle's rate is ``q`` itself. Nothing depends on the
+-altitude, since the density is constant, so the last column is zero. The
+-indices follow the tap set's order of the states.
++altitude, since the density is constant, so the last column is zero.
+ 
+ ```@example linearize
+-V, γ, θ, q, h = 1:5   # the rows and columns of A, in the tap set's order
+-
+-(linearization.A[h, γ], linearization.A[θ, q], linearization.A[:, h])
++(linearization.A[:h, :γ], linearization.A[:θ, :q], linearization.A[:, :h])
+ ```
+ 
+ [`x_deriv`](@ref) is an ordinary function, so you can call it yourself. The block
+@@ -76,9 +76,9 @@ import Redstone: x_deriv
+ using LinearAlgebra: I
+ 
+ x₀, u₀ = linearization.x₀, linearization.u₀
+-f(v) = collect(x_deriv(Longitudinal(), (x = NamedTuple{keys(x₀)}(Tuple(v)), u = u₀)))
+-v₀, ε = collect(x₀), 1e-6
+-A_fd = reduce(hcat, [(f(v₀ + ε * e) - f(v₀ - ε * e)) / 2ε for e in eachcol(I(5))])
++f(x) = collect(x_deriv(Longitudinal(), (; x, u = u₀)))
++ε = 1e-6
++A_fd = reduce(hcat, [(f(x₀ + ε * e) - f(x₀ - ε * e)) / 2ε for e in eachcol(I(5))])
+ maximum(abs, A_fd - linearization.A)
+ ```
+ 
+@@ -149,7 +149,7 @@ function fly(; deployment...)
+ end
+ 
+ reference = fly(Δt_frame = 1//100)
+-V_at(flight, t) = flight.columns.V[findfirst(==(t), flight.t)]
++V_at(flight, t) = flight.V[findfirst(==(t), flight.t)]
+ compare(flight) = (steps = length(flight.t) - 1,
+                    error = maximum(t -> abs(V_at(flight, t) - V_at(reference, t)), 0.0:1.0:120.0))
+ ```
+@@ -197,7 +197,7 @@ and controls are this chapter's, so its ``A`` and ``B`` are the same.
+ ```@example linearize
+ import RedstoneExamples
+ 
+-package_linearization = linearize(sim, RedstoneExamples.longitudinal_taps())
++package_linearization = labeled(linearize(sim, RedstoneExamples.longitudinal_taps()))
+ (package_linearization.A == linearization.A, package_linearization.B == linearization.B)
+ ```
+ 
+diff --git a/examples/test/test_longitudinal.jl b/examples/test/test_longitudinal.jl
+index 6143674..5ddb160 100644
+--- a/examples/test/test_longitudinal.jl
++++ b/examples/test/test_longitudinal.jl
+@@ -46,7 +46,7 @@ end
+ 
+ # The largest airspeed gap between two flights at the whole seconds of chapter 3's comparison.
+ airspeed_gap(flight, reference) =
+-    maximum(t -> abs(flight.columns.V[findfirst(==(t), flight.t)] - reference.columns.V[findfirst(==(t), reference.t)]),
++    maximum(t -> abs(flight.V[findfirst(==(t), flight.t)] - reference.V[findfirst(==(t), reference.t)]),
+             0.0:1.0:120.0)
+ 
+ # The frame index of time `t` under the loops' frame of 5 ms.
+@@ -203,12 +203,13 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
+         @test A[5, 2] == 50.0
+         @test A[3, 4] == 1.0
+         @test all(iszero, A[:, 5])
+-        # Central differences of the plant's `x_deriv` at the trim, as the page computes them; the
+-        # probe's largest gap is 1.53e-10.
+-        x₀, u₀ = linearization.x₀, linearization.u₀
+-        f(v) = collect(Redstone.x_deriv(Longitudinal(), (x = NamedTuple{keys(x₀)}(Tuple(v)), u = u₀)))
+-        v₀, ε = collect(x₀), 1e-6
+-        A_fd = reduce(hcat, [(f(v₀ + ε * e) - f(v₀ - ε * e)) / 2ε for e in eachcol(I(5))])
++        # Central differences of the plant's `x_deriv` at the trim, the page's in the plain form,
++        # which names the vectors by the label tuples; the probe's largest gap is 1.53e-10.
++        (; x₀, u₀, x_labels, u_labels) = linearization
++        u = NamedTuple{u_labels}(Tuple(u₀))
++        f(v) = collect(Redstone.x_deriv(Longitudinal(), (x = NamedTuple{x_labels}(Tuple(v)), u)))
++        ε = 1e-6
++        A_fd = reduce(hcat, [(f(x₀ + ε * e) - f(x₀ - ε * e)) / 2ε for e in eachcol(I(5))])
+         @test maximum(abs, A_fd - A) < 1e-8
+         diverged = try
+             fly_open_loop(solution; Δt_frame = 1)
+@@ -254,7 +255,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
+     @testset "the staged reference and mode land on their ticks (§11.3)" begin
+         # Snapshot k + 1 is the frame top t = k h, so the step lands at snapshot 1001 and the
+         # switches at snapshots 12001 and 2001.
+-        staged(sim) = series(sim, reads(h_ref = get_input("h_ref"), mode = get_input("mode"))).columns
++        staged(sim) = series(sim, reads(h_ref = get_input("h_ref"), mode = get_input("mode")))
+         @test findfirst(==(1050.0), staged(runs.cascade).h_ref) == 1001
+         @test all(staged(runs.cascade).mode)
+         @test findfirst(!, staged(runs.switch_at_60).mode) == 12001
+@@ -419,7 +420,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
+     @testset "chapter 6: the pilot's staged commands and the engage land on their ticks (§11.3)" begin
+         # Snapshot k + 1 is the frame top t = k h, and a write staged at t applies from the frame
+         # after it, so the pull shows at snapshot 1002, its release at 1402 and the engage at 6002.
+-        staged = series(hand, reads(δe = get_input("δe_pilot"), engage = get_input("engage"))).columns
++        staged = series(hand, reads(δe = get_input("δe_pilot"), engage = get_input("engage")))
+         @test findfirst(!=(solution.δe), staged.δe) == 1002
+         @test findfirst(==(solution.δe), staged.δe[1002:end]) + 1001 == 1402
+         @test findfirst(identity, staged.engage) == 6002
+@@ -449,7 +450,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
+         # The switches act at the same tick, where the selected elevator command first leaves the
+         # pilot's.
+         times = logged_times(hand)
+-        δe_pilot = series(hand, reads(δe = get_input("δe_pilot"))).columns.δe
++        δe_pilot = series(hand, reads(δe = get_input("δe_pilot"))).δe
+         handover = findfirst(k -> times[k] > 29.9 && δe_selected[k] != δe_pilot[k], eachindex(times))
+         @test times[handover] == 30.2
+         # Until the latch publishes, each controller computes exactly what it computes in the same
+@@ -493,7 +494,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
+         @test record.source.reason == "touchdown"
+         @test abs(state(flight, "vehicle/plant").h) <= 1e-6
+         @test modes(flight, "gear").contact === true
+-        h_refs = series(flight, reads(h_ref = get_input("h_ref"))).columns.h_ref
++        h_refs = series(flight, reads(h_ref = get_input("h_ref"))).h_ref
+         # The last staged reference, read back: the probe's -0.04999999989 m, 1000 m less 6667 writes.
+         @test h_refs[end] ≈ -0.05 atol = 1e-6
+         # The probe's largest tracking error over [160 s, the last second): 0.247 m.
+diff --git a/examples/test/utils.jl b/examples/test/utils.jl
+index 7d03de6..ae19e75 100644
+--- a/examples/test/utils.jl
++++ b/examples/test/utils.jl
+@@ -2,8 +2,8 @@
+ 
+ # A port's or a level's exported face's value over the logged snapshots, beside their times.
+ logged_times(sim) = series(sim, reads()).t
+-logged_port(sim, path, name) = series(sim, reads(y = get_output(path, name))).columns.y
+-logged_face(sim, path, name) = series(sim, at(path, reads(y = get_face(name)))).columns.y
++logged_port(sim, path, name) = series(sim, reads(y = get_output(path, name))).y
++logged_face(sim, path, name) = series(sim, at(path, reads(y = get_face(name)))).y
+ 
+ # The times at which `values` crosses `level`, at the snapshot after each crossing.
+ crossings(times, values, level) =
+diff --git a/ext/RedstoneComponentArraysExt.jl b/ext/RedstoneComponentArraysExt.jl
+new file mode 100644
+index 0000000..783b3ae
+--- /dev/null
++++ b/ext/RedstoneComponentArraysExt.jl
+@@ -0,0 +1,24 @@
++# Design: §14.10, D-475.
++# The labeled form of a `Linearization`: the eight arrays as component arrays
++# over axes built from the label tuples, by position. The data is unwrapped
++# first, so a value labeled already is labeled again over the same axes.
++module RedstoneComponentArraysExt
++
++import Redstone
++using Redstone: Linearization
++using ComponentArrays: Axis, ComponentArray, ComponentMatrix, ComponentVector, getdata
++
++_data(array::ComponentArray) = getdata(array)
++_data(array::AbstractArray) = array
++
++function Redstone.labeled(linearization::Linearization)
++    (; ẋ₀, x₀, u₀, y₀, A, B, C, D, x_labels, u_labels, y_labels) = linearization
++    x, u, y = Axis(x_labels), Axis(u_labels), Axis(y_labels)
++    Linearization(ComponentVector(_data(ẋ₀), x), ComponentVector(_data(x₀), x),
++                  ComponentVector(_data(u₀), u), ComponentVector(_data(y₀), y),
++                  ComponentMatrix(_data(A), x, x), ComponentMatrix(_data(B), x, u),
++                  ComponentMatrix(_data(C), y, x), ComponentMatrix(_data(D), y, u),
++                  x_labels, u_labels, y_labels)
++end
++
++end # module RedstoneComponentArraysExt
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index f3e763e..776918f 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -2496,14 +2496,18 @@ function message(d::ArgumentInvalid)
+         "spelling — got $(d.value) (§12.6)"
+ end
+ 
+-"§14.4, §14.10, D-215, D-272, D-278: a non-selector in a read set or a tap list, a tap list that is no NamedTuple, a non-`Reads` where one is expected, or an empty `at` prefix on a read set — `ConditionNodeMisuse`'s twin."
++"§11.2, §14.4, §14.10, D-215, D-272, D-278, D-474: a non-selector in a read set or a tap list, a tap list that is no NamedTuple, a non-`Reads` where one is expected, an empty `at` prefix on a read set, or a read `series` is given under a `Series` field's name — `ConditionNodeMisuse`'s twin."
+ Base.@kwdef struct ReadSetMisuse <: Diagnostic
+     observed::Any                            # the offending argument's type
+-    reason::Symbol = :not_a_read_set         # :not_a_selector | :not_a_read_set | :not_a_tap_list | :empty_prefix
++    reason::Symbol = :not_a_read_set         # :not_a_selector | :not_a_read_set | :not_a_tap_list | :empty_prefix | :reserved_label
+     label::Union{Nothing,Symbol} = nothing   # the read's label, or the tap list's (`x`/`u`/`y`)
+     in_hand::Vector{Symbol} = Symbol[]       # the selector kinds in hand
+ end
+ message(d::ReadSetMisuse) =
++    d.reason === :reserved_label ?
++    "the read labeled `$(d.label)` takes the name of a `Series` field — `t`, `frame`, " *
++    "`boundary` and `columns` are the series' own, so `series` refuses them as labels; " *
++    "label the read otherwise (§11.2)" :
+     d.reason === :empty_prefix ?
+     "`at` was given an empty prefix for a read set, which names no child — a read set " *
+     "meant for the level where it is authored stays unwrapped (§14.9)" :
+diff --git a/src/linearize.jl b/src/linearize.jl
+index 932ce14..9404b03 100644
+--- a/src/linearize.jl
++++ b/src/linearize.jl
+@@ -103,41 +103,78 @@ const LINEARIZE_WIDTH = 8
+ """The default width's scalar, pre-materializable: `build(m; activations = (Float64, LinearizeDual))` (§14.10, D-272)."""
+ const LinearizeDual = ForwardDiff.Dual{LinearizeTag,Float64,LINEARIZE_WIDTH}
+ 
+-# Design: §14.10, D-272.
++# Design: §14.10, D-272, D-475.
++# The fields are abstract, so a plain and a labeled value are one type and a
++# method taking either compiles once (D-475).
+ """
+     Linearization
+ 
+ The result of a linearization, holding the operating point and the four
+ Jacobians, labeled by the [taps](@ref g-taps).
+ 
+-[`linearize`](@ref) returns it. The labels are those of the tap set. A
++[`linearize`](@ref) returns it, its arrays plain `Vector{Float64}`s and
++`Matrix{Float64}`s ordered by the tap labels. [`labeled`](@ref) returns it
++with the same arrays as component arrays under those labels. A
+ `Linearization` holds these fields.
+ 
+ - `x₀`, `u₀`: the seeded states and [root inputs](@ref g-root-input) at the
+-  operating point, as `NamedTuple`s under the `x` and `u` labels.
+-- `ẋ₀`: the state derivative at the operating point, under the `x` labels.
+-- `y₀`: the outputs read at the operating point, under the `y` labels.
+-- `A`, `B`, `C`, `D`: the Jacobians of `ẋ` and `y` with respect to `x` and
+-  `u`, each a `Matrix{Float64}` with its rows and columns ordered by the
++  operating point, in the order of the `x` and `u` labels.
++- `ẋ₀`: the state derivative at the operating point, in the order of the `x`
+   labels.
++- `y₀`: the outputs read at the operating point, in the order of the `y`
++  labels, each converted to `Float64`.
++- `A`, `B`, `C`, `D`: the Jacobians of `ẋ` and `y` with respect to `x` and
++  `u`, their rows and columns ordered by the labels.
+ - `x_labels`, `u_labels`, `y_labels`: the three label tuples.
+ 
+ Every entry is exact to round-off, and none is a finite difference.
+ """
+ struct Linearization
+-    ẋ₀::NamedTuple
+-    x₀::NamedTuple
+-    u₀::NamedTuple
+-    y₀::NamedTuple
+-    A::Matrix{Float64}
+-    B::Matrix{Float64}
+-    C::Matrix{Float64}
+-    D::Matrix{Float64}
++    ẋ₀::AbstractVector{Float64}
++    x₀::AbstractVector{Float64}
++    u₀::AbstractVector{Float64}
++    y₀::AbstractVector{Float64}
++    A::AbstractMatrix{Float64}
++    B::AbstractMatrix{Float64}
++    C::AbstractMatrix{Float64}
++    D::AbstractMatrix{Float64}
+     x_labels::Tuple{Vararg{Symbol}}
+     u_labels::Tuple{Vararg{Symbol}}
+     y_labels::Tuple{Vararg{Symbol}}
+ end
+ 
++# Design: §14.10, D-475.
++# Declared here with no method; the ComponentArrays extension adds the one
++# method (ext/RedstoneComponentArraysExt.jl). Without it, the error hint below
++# names the package.
++"""
++    labeled(linearization::Linearization) -> Linearization
++
++Return the linearization with its eight arrays labeled by the tap labels.
++
++The method comes from the ComponentArrays package, loaded beside Redstone with
++`using ComponentArrays`. The vectors become `ComponentVector`s and the matrices
++`ComponentMatrix`es, so `A[:h, :γ]` reads an entry by its labels and
++`A[(:V, :γ), (:V, :γ)]` a block. The vector of an empty tap list stays a plain
++`Vector{Float64}`. The label tuples are unchanged, and a value labeled already
++is labeled again the same way.
++
++The arithmetic of component arrays goes by position. A product or a sum of two
++of them never checks that their labels agree.
++"""
++function labeled end
++
++# The module's `__init__`: the hint on a call to `labeled` while the extension
++# is not loaded (D-475).
++function __init__()
++    Base.Experimental.register_error_hint(MethodError) do io, err, argument_types, kwargs
++        err.f === labeled || return
++        Base.get_extension(@__MODULE__, :RedstoneComponentArraysExt) === nothing || return
++        print(io, "\n`labeled` comes from the ComponentArrays package — load it with " *
++                  "`using ComponentArrays` beside Redstone")
++    end
++end
++
+ # --- the service (§14.10) -------------------------------------------------------
+ 
+ # Design: §9.7, §13.1, §14.6, §14.10, Appendix B, D-168, D-197, D-213, D-263,
+@@ -311,7 +348,7 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
+     N = n_x + n_u
+     sites = Any[first.(x_entries); u_entries]
+     site_values = Float64[_site_value(seeded_exec, site) for site in sites]
+-    ẋ₀, y₀ = Vector{Any}(undef, n_x), Vector{Any}(undef, n_y)
++    ẋ₀, y₀ = Vector{Float64}(undef, n_x), Vector{Float64}(undef, n_y)
+     A, B = zeros(n_x, n_x), zeros(n_x, n_u)
+     C, D = zeros(n_y, n_x), zeros(n_y, n_u)
+     for group in (N == 0 ? (1:0,) : Iterators.partition(1:N, width))
+@@ -324,16 +361,15 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
+             ẋ₀[i] = _readback!(A, B, i, _read(entry, seeded_exec), group, n_x)
+         end
+         for (i, entry) in enumerate(y_entries)
+-            y₀[i] = _readback!(C, D, i, _read(entry, seeded_exec), group, n_x)
++            # a `y` tap admits any `Real` leaf, a `Bool` or an `Int` among them,
++            # and its value enters the affine model as a float (D-475)
++            y₀[i] = Float64(_readback!(C, D, i, _read(entry, seeded_exec), group, n_x))
+         end
+     end
+ 
+     x_labels, u_labels, y_labels =
+         keys(tap_set.x.selectors), keys(tap_set.u.selectors), keys(tap_set.y.selectors)
+-    Linearization(NamedTuple{x_labels}(Tuple(ẋ₀)),
+-                  NamedTuple{x_labels}(Tuple(site_values[1:n_x])),
+-                  NamedTuple{u_labels}(Tuple(site_values[n_x+1:N])),
+-                  NamedTuple{y_labels}(Tuple(y₀)),
++    Linearization(ẋ₀, site_values[1:n_x], site_values[n_x+1:N], y₀,
+                   A, B, C, D, x_labels, u_labels, y_labels)
+ end
+ 
+diff --git a/src/show.jl b/src/show.jl
+index aa4c842..c32a1a5 100644
+--- a/src/show.jl
++++ b/src/show.jl
+@@ -500,9 +500,153 @@ _lines(status::FrameworkStatus) =
+          _indented(mapreduce(_writer_lines, vcat, status.writers; init = String[])),
+          ["  " * _pacer_line(status.pacer)])
+ 
++# --- Simulation, Series, TrimReport, Linearization (D-474, D-475) -----------------
++
++# A number in a table cell, as a REPL prints it inside a container: six
++# significant digits.
++_value_label(value) = sprint(show, value; context = :compact => true)
++
++# The lifecycle and the mode, then the clock once the simulation holds a state.
++function _simulation_state(sim::Simulation, state_label::Symbol)
++    state_label === :built && return "$state_label, $(mode(sim))"
++    "$state_label, $(mode(sim)), frame $(sim.run.frame) at t = $(sim.model.exec.clock.t)"
++end
++
++Base.show(io::IO, sim::Simulation) = print(io, "Simulation(", _simulation_state(sim, lifecycle(sim)), ")")
++
++# What a termination source holds beyond its kind.
++_source_detail(::TerminationSource) = ""
++_source_detail(source::ModelRequestedStop) =
++    ", by $(_named(source.path, source.port, "/")), reason \"$(source.reason)\""
++_source_detail(source::ControlRequestedStop) = ", by $(source.issuer)"
++_source_detail(source::LoopError) = ", $(nameof(typeof(source.exception)))"
++
++function _termination_line(record::TerminationRecord)
++    line = "termination: $(nameof(typeof(record.source))) at t = $(record.t)" * _source_detail(record.source)
++    isempty(record.residue) ? line : line * ", " * _count(length(record.residue), "residue record")
++end
++
++# The retained snapshots, counted off `logged`, which a running loop refuses.
++function _log_line(sim::Simulation)
++    sim.run.log.enabled || return "log: off"
++    "log: " * _count(length(logged(sim)), "snapshot")
++end
++
++function _devices_line(sim::Simulation)
++    isempty(sim.plane.roster) && return "devices: none"
++    "devices: " * join(("device $(entry.id) ($(_typename(entry.dev)))" for entry in sim.plane.roster), ", ")
++end
++
++# The state line, the deployment in its compact form, the run's outcome and log,
++# the devices and the warnings. A running simulation's log is the loop's, and
++# goes unread; the lifecycle is read once, so the two agree.
++function _lines(sim::Simulation)
++    state_label = lifecycle(sim)
++    record = termination(sim)
++    vcat(["Simulation: " * _simulation_state(sim, state_label),
++          "  deployment: " * sprint(show, sim.model.deployment)],
++         record === nothing ? String[] : ["  " * _termination_line(record)],
++         state_label === :running ? String[] : ["  " * _log_line(sim)],
++         ["  " * _devices_line(sim)],
++         _indented(_warning_lines(warnings(sim))))
++end
++
++# The count of snapshots and the span of `t` they cover.
++function _series_counts(log_series::Series)
++    count_label = _count(length(log_series.t), "snapshot")
++    isempty(log_series.t) ? count_label :
++    count_label * ", t = $(first(log_series.t)) to $(last(log_series.t))"
++end
++
++Base.show(io::IO, log_series::Series) =
++    print(io, "Series(", _series_counts(log_series), "; ", _names_label(keys(log_series.columns)), ")")
++
++# One row per column: its label and its element type, no values.
++_lines(log_series::Series) =
++    vcat(["Series: " * _series_counts(log_series)],
++         isempty(log_series.columns) ? String[] :
++         _table("  ", ["column", "eltype"],
++                [[String(label), string(eltype(column))] for (label, column) in pairs(log_series.columns)]))
++
++_verdict_label(report::TrimReport) =
++    (report.converged ? "converged" : "not converged") * ", " *
++    (report.committed_residuals === nothing ? "nothing committed" : "committed")
++
++Base.show(io::IO, report::TrimReport) =
++    print(io, "TrimReport(", _verdict_label(report), ", ", _count(report.n_iterations, "iteration"), ")")
++
++# The decisions, a bound the solution sits at marked on its row; the residuals
++# beside their tolerances, and the committed state's beside them when one was
++# committed; the committed checks; the events the commit fired.
++function _lines(report::TrimReport)
++    bounds = Dict(report.saturated)
++    solution_rows = [[String(name), _value_label(value),
++                      haskey(bounds, name) ? "at the $(bounds[name]) bound" : ""]
++                     for (name, value) in pairs(report.solution)]
++    committed = report.committed_residuals
++    residual_header = ["residual", "value", "tolerance"]
++    committed === nothing || push!(residual_header, "committed")
++    residual_rows = [vcat([String(name), _value_label(value), _value_label(report.tolerances[name])],
++                          committed === nothing ? String[] : [_value_label(committed[name])])
++                     for (name, value) in pairs(report.residuals)]
++    checks = report.committed_checks
++    vcat(["TrimReport: " * _verdict_label(report) * "; status $(report.status), " *
++          _count(report.n_iterations, "iteration") * ", " * _count(report.n_evaluations, "evaluation")],
++         isempty(solution_rows) ? String[] : _table("  ", ["decision", "value", ""], solution_rows),
++         isempty(residual_rows) ? String[] : _table("  ", residual_header, residual_rows),
++         checks === nothing || isempty(checks) ? String[] :
++         _table("  ", ["check", "committed"],
++                [[String(name), _value_label(value)] for (name, value) in pairs(checks)]),
++         isempty(report.fired_events) ? String[] :
++         ["  fired events: " * join((_named(path, name, "/") for (path, name) in report.fired_events), ", ")])
++end
++
++_linearization_counts(linearization::Linearization) =
++    join((_count(length(linearization.x_labels), "state"),
++          _count(length(linearization.u_labels), "input"),
++          _count(length(linearization.y_labels), "output")), ", ")
++
++Base.show(io::IO, linearization::Linearization) =
++    print(io, "Linearization(", _linearization_counts(linearization), ")")
++
++# One matrix under its row and column labels, read by integer index so a plain
++# and a labeled value print alike (D-475). An empty matrix prints no block.
++function _matrix_lines(heading::String, matrix::AbstractMatrix{Float64},
++                       row_labels::Tuple{Vararg{Symbol}}, column_labels::Tuple{Vararg{Symbol}})
++    isempty(matrix) && return String[]
++    vcat([heading * ":"],
++         _table("  ", ["", String.(column_labels)...],
++                [[String(row_labels[i]); [_value_label(matrix[i, j]) for j in eachindex(column_labels)]]
++                 for i in eachindex(row_labels)]))
++end
++
++# One list's operating point under its labels, beside the derivative for the
++# states. An empty list prints no block.
++function _point_lines(heading::String, labels::Tuple{Vararg{Symbol}}, columns::Vector)
++    isempty(labels) && return String[]
++    vcat([heading * ":"],
++         _table("  ", ["", first.(columns)...],
++                [[String(labels[i]); [_value_label(last(column)[i]) for column in columns]]
++                 for i in eachindex(labels)]))
++end
++
++# The operating point per list, then the four matrices.
++function _lines(linearization::Linearization)
++    (; ẋ₀, x₀, u₀, y₀, A, B, C, D, x_labels, u_labels, y_labels) = linearization
++    vcat(["Linearization: " * _linearization_counts(linearization)],
++         _indented(_point_lines("states", x_labels, ["x₀" => x₀, "ẋ₀" => ẋ₀])),
++         _indented(_point_lines("inputs", u_labels, ["u₀" => u₀])),
++         _indented(_point_lines("outputs", y_labels, ["y₀" => y₀])),
++         _indented(_matrix_lines("A", A, x_labels, x_labels)),
++         _indented(_matrix_lines("B", B, x_labels, u_labels)),
++         _indented(_matrix_lines("C", C, y_labels, x_labels)),
++         _indented(_matrix_lines("D", D, y_labels, u_labels)))
++end
++
+ # --- the REPL forms ---------------------------------------------------------------
+ 
+-for Artifact in (Structure, Outputs, Events, Schedule, Build, Deployment, FrameworkStatus)
++for Artifact in (Structure, Outputs, Events, Schedule, Build, Deployment, FrameworkStatus,
++                 Simulation, Series, TrimReport, Linearization)
+     @eval Base.show(io::IO, ::MIME"text/plain", artifact::$Artifact) =
+         join(io, _lines(artifact), "\n")
+ end
+diff --git a/src/sim.jl b/src/sim.jl
+index 26cde7b..6c292de 100644
+--- a/src/sim.jl
++++ b/src/sim.jl
+@@ -2885,7 +2885,7 @@ function logged(sim::Simulation)
+     retained
+ end
+ 
+-# Design: §11.2, Appendix B, D-407.
++# Design: §11.2, Appendix B, D-407, D-474.
+ """
+     Series
+ 
+@@ -2901,6 +2901,10 @@ per snapshot.
+ - `boundary`: their boundary ordinals.
+ - `columns`: a `NamedTuple` keyed as the [read set](@ref g-read-set) labels its
+   entries, each column a plain vector of the entry's leaf type.
++
++Each column also reads as a property under its label, the same vector
++`columns` holds under it. `propertynames` lists the four fields first, then
++the labels.
+ """
+ struct Series{NT<:NamedTuple}
+     t::Vector{Float64}
+@@ -2909,7 +2913,17 @@ struct Series{NT<:NamedTuple}
+     columns::NT
+ end
+ 
+-# Design: §11.2, §11.3, §14.4, D-406, D-407.
++# The four fields, which `series` refuses as labels.
++const _SERIES_FIELDS = (:t, :frame, :boundary, :columns)
++
++# A column reads as a property, after the four fields (D-474).
++function Base.getproperty(x::Series, name::Symbol)
++    name in _SERIES_FIELDS && return getfield(x, name)
++    getfield(getfield(x, :columns), name)
++end
++Base.propertynames(x::Series) = (_SERIES_FIELDS..., keys(getfield(x, :columns))...)
++
++# Design: §11.2, §11.3, §14.4, D-406, D-407, D-474.
+ # Post-run extraction through the read-selector family. The read set resolves
+ # for a table source through the one resolver every reader shares (§14.4,
+ # D-406). Resolution runs once per call and the gather is one typed loop per
+@@ -2930,11 +2944,18 @@ entries. Before anything is published the columns are empty, typed all the same.
+ 
+ `series` is refused as `ServiceLifecycle` while `running`, as `logged` is. A
+ bare `NamedTuple` of [selectors](@ref g-selector) in place of a read set is
+-refused as `ReadSetMisuse`, a selector or mount whose path names no
+-[component](@ref g-component) as `PathResolution`, and any other selector that
+-does not resolve as `ReadResolution`.
++refused as `ReadSetMisuse`, and so is a read labeled `t`, `frame`, `boundary`
++or `columns`, the names of the series' own fields. A selector or mount whose
++path names no [component](@ref g-component) is refused as `PathResolution`, and
++any other selector that does not resolve as `ReadResolution`.
+ """
+ function series(sim::Simulation, @nospecialize(read_set::Reads))
++    # a label the series' fields already take could not read as a property
++    # (D-474); refused before the lifecycle, as the bare NamedTuple is
++    for label in keys(read_set.selectors)
++        label in _SERIES_FIELDS && throw(DiagnosticError(ReadSetMisuse(
++            observed = typeof(read_set.selectors[label]), reason = :reserved_label, label = label)))
++    end
+     assert_stopped(sim, :series)
+     reader = _compile_reads(read_set, sim.model.deployment.build, Float64; source = :table)
+     snapshots = logged(sim)
+diff --git a/test/Project.toml b/test/Project.toml
+index e892ad8..ca33241 100644
+--- a/test/Project.toml
++++ b/test/Project.toml
+@@ -1,5 +1,6 @@
+ [deps]
+ BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
++ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
+ Redstone = "653472ee-a41b-4fb0-9ffa-a5db0d34d125"
+ ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+ InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+diff --git a/test/imports.jl b/test/imports.jl
+index 7993a6c..76f23ba 100644
+--- a/test/imports.jl
++++ b/test/imports.jl
+@@ -22,7 +22,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
+     DuplicateConditionLeaf, EMPTY_DIAG, EmptyFaceSelection, EmptyGreedyClaim, EmptyStore,
+     EndTimeReached, EntryTypeMismatch, EventHalfMissing, Events,
+     Executor, FaceDirectionConflict, FaceNameCollision, FaceNameIllegal,
+-    FiringBudget, Fragment, FrameHooks, FrameworkStatus, Gated, GetDeriv, GridEntry, GridReport, GridUtilization, Group,
++    FiringBudget, Fragment, FrameHooks, FrameworkStatus, Gated, GetDeriv, GetOutput, GridEntry, GridReport, GridUtilization, Group,
+     GuardForm,
+     HandlerReturnKey, Heun, HeunStepper, IllegalPortType, IllegalStateLeaf, IllegalStoreField, InternalInvariant,
+     KINDS, KindCounts, LEGAL_BUNDLE, LINEARIZE_WIDTH, LevelEntry, LevenbergMarquardt, Linearization, LinearizeDual,
+@@ -42,7 +42,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
+     Taps, TerminationRecord, Tier,
+     ThreadBudget, TierUnreadable, Trace, TraceBatch, Tracer,
+     TransparentContainerUnknown,
+-    TrimCommitChecks, TrimCommitEvents, TrimCommitResiduals, TrimProblem, TrimProblemInvalid,
++    TrimCommitChecks, TrimCommitEvents, TrimCommitResiduals, TrimProblem, TrimProblemInvalid, TrimReport,
+     TrimTag, TwoProducers, UnboundedRun, UnconnectedInput, UndeclaredReturnField, Undecidable,
+     UninitializedInputs, UnknownFaceSelection, UnknownPort, UserCodeFraming,
+     WALK_FACES, WalkingFaceAtFrozenEntry, WireTypeMismatch, WriterStatus,
+@@ -64,7 +64,7 @@ import Redstone: ASSEMBLY, Absolute, AbstractAlgorithm, AbstractBinding, Abstrac
+     invoke_declaration, invoke_probed,
+     input_wires, input_faces, input_passthrough, linearize,
+     is_bare, is_greedy, is_input, is_output, keyed_ins, keyed_outs, kinds,
+-    latest, leaf_declarations, leaf_eltypes, leaf_names, leaf_types, lifecycle, live!, logged,
++    labeled, latest, leaf_declarations, leaf_eltypes, leaf_names, leaf_types, lifecycle, live!, logged,
+     logline, loop, m_init, map_input, map_output, margin, margin!, membership, message, mode, modes,
+     mutable_position, nleaves, offtick_boundary!, orphaned,
+     output_wires, output_faces, output_passthrough, overlay!,
+diff --git a/test/test_diagnostics.jl b/test/test_diagnostics.jl
+index b24dcad..c8616d8 100644
+--- a/test/test_diagnostics.jl
++++ b/test/test_diagnostics.jl
+@@ -651,6 +651,7 @@ function diagnostics_kind_set()
+             ReadSetMisuse(observed = NamedTuple, reason = :not_a_read_set),
+             ReadSetMisuse(observed = Float64, reason = :not_a_tap_list, label = :x),
+             ReadSetMisuse(observed = String, reason = :empty_prefix),
++            ReadSetMisuse(observed = GetDeriv, reason = :reserved_label, label = :t),
+             NotAttached(device = "Pad", roster = ["device 1 (Pad)"]),
+             CheckpointMismatch(what = :scalar, expected = Float64, found = D8),
+             CheckpointMismatch(what = :store, name = :paths, expected = ["a"],
+@@ -739,6 +740,11 @@ function diagnostics_kind_set()
+                           "Δt_base derived as 1//300 s: the grid is 3× finer than the " *
+                           "fastest declared work (`a/b` at D = 3) (§9.2)\n  admissible:")
+         @test occursin("\n    5²  b offset", rendered)
++        # A label `series` reserves names itself and the four fields (D-474).
++        rendered = message(only(d for d in occurrences
++                                if d isa ReadSetMisuse && d.reason === :reserved_label))
++        @test startswith(rendered, "the read labeled `t` takes the name of a `Series` field")
++        @test occursin("`t`, `frame`, `boundary` and `columns`", rendered)
+ 
+         # Every kind of the closed set has an occurrence above: the coverage
+         # check is over `Diagnostic`'s own subtypes, so adding a kind without an
+diff --git a/test/test_linearize.jl b/test/test_linearize.jl
+index 7309ccf..e84b563 100644
+--- a/test/test_linearize.jl
++++ b/test/test_linearize.jl
+@@ -6,6 +6,11 @@
+ # test_trim.jl's, `resume_condition` test_lifecycle.jl's, `LeafPose`
+ # test_readers.jl's, `ClockStamp` test_build.jl's.
+ 
++# The labeled form's testsets at the end of the file: once the suite loads
++# ComponentArrays, its extension is loaded for every file, so the testsets
++# above never call `labeled` (D-475).
++using ComponentArrays: ComponentMatrix, ComponentVector
++
+ # The walkthrough's model: a sum of two root inputs drives the pendulum's
+ # torque, and two faces leave the root, one of them the sum's feedthrough.
+ lin_pend() = Group((; s = Sum(), c = Pendulum()); local_wires = ("s/e" => "c/u",),
+@@ -77,6 +82,11 @@ y_types(::MatrixConsumer) = (q = Float64,)
+ y_state(::MatrixConsumer, (; x)) = (q = x.q,)
+ x_deriv(::MatrixConsumer, (; x, u)) = (q = 2.0 * u.w[1, 2] + 5.0 * u.w[2, 1] - x.q,)
+ 
++# A level filling at a unit rate from 0.8, and a comparator reporting whether it
++# is above 0.5: a `y` tap on a `Bool` leaf.
++lin_tank() = Group((; k = Constant(1.0), i = Integrator(x0 = 0.8), c = Comparator(threshold = 0.5));
++                   local_wires = ("k/y" => "i/u", "i/y" => "c/u"))
++
+ # Two linearizations field for field: the value holds matrices, so `==` on the
+ # struct would compare them by identity.
+ same_linearization(left, right) =
+@@ -98,11 +108,14 @@ function test_linearize()
+         @test isapprox(linearization.B, [0 0; 1 -1]; atol = 1e-12)
+         @test isapprox(linearization.C, [1 0; 0 0]; atol = 1e-12)
+         @test isapprox(linearization.D, [0 0; 1 -1]; atol = 1e-12)
+-        @test linearization.ẋ₀.θ == 0.0 && abs(linearization.ẋ₀.ω) < 1e-12         # a trim point, not assumed
+-        @test linearization.x₀ == (θ = 0.3, ω = 0.0)
+-        @test linearization.u₀.τ == PEND_G_L * sin(0.3) && linearization.u₀.d == 0.0
+-        @test linearization.y₀ == (θ = 0.3, u_eff = linearization.u₀.τ)
++        @test linearization.ẋ₀[1] == 0.0 && abs(linearization.ẋ₀[2]) < 1e-12         # a trim point, not assumed
++        @test linearization.x₀ == [0.3, 0.0]
++        @test linearization.u₀ == [PEND_G_L * sin(0.3), 0.0]
++        @test linearization.y₀ == [0.3, linearization.u₀[1]]
+         @test linearization.x_labels == (:θ, :ω) && linearization.u_labels == (:τ, :d) && linearization.y_labels == (:θ, :u_eff)
++        # The plain form, plain arrays (D-475).
++        @test all(getfield(linearization, f) isa Vector{Float64} for f in (:ẋ₀, :x₀, :u₀, :y₀))
++        @test all(getfield(linearization, f) isa Matrix{Float64} for f in (:A, :B, :C, :D))
+         @test size(linearization.A) == (2, 2) && size(linearization.B) == (2, 2) &&
+               size(linearization.C) == (2, 2) && size(linearization.D) == (2, 2)
+     end
+@@ -175,7 +188,7 @@ function test_linearize()
+         @test state(sim, "ctl").acc != port(sim, "ctl", :u)
+         linearization = linearize(sim, taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)),
+                                             y = (u = get_output("ctl", :u),)))
+-        @test linearization.y₀.u === port(sim, "ctl", :u)
++        @test linearization.y_labels == (:u,) && linearization.y₀[1] === port(sim, "ctl", :u)
+     end
+ 
+     @testset "the default form linearizes at the checkpoint's own time (§14.10, D-274)" begin
+@@ -185,7 +198,7 @@ function test_linearize()
+         t, q = sim.model.exec.clock.t, state(sim, "c").q
+         @test t ≈ 0.5
+         linearization = linearize(sim, taps(x = (q = get_state("c", :q),)))
+-        @test linearization.ẋ₀.q ≈ -t * q^2 && linearization.A ≈ [-2t * q;;]
++        @test linearization.ẋ₀[1] ≈ -t * q^2 && linearization.A ≈ [-2t * q;;]
+     end
+ 
+     @testset "`about` is legal in built and mid-frame, where the default form is refused (§14, D-274)" begin
+@@ -284,8 +297,9 @@ function test_linearize()
+         @test isapprox(linearization.B, [0 0; -2 0]; atol = 1e-12)
+         @test isapprox(linearization.C, [1 0; 0 1; 0 -1.0]; atol = 1e-12)
+         @test isapprox(linearization.D, [0 0; 0 0; -0.4 0]; atol = 1e-12)
+-        @test linearization.x₀ == (q1 = 0.1, q2 = 0.2) && linearization.u₀ == (qin1 = 0.5, qin2 = 0.0)
+-        @test linearization.y₀.power == -0.2
++        @test linearization.x_labels == (:q1, :q2) && linearization.u_labels == (:qin1, :qin2)
++        @test linearization.x₀ == [0.1, 0.2] && linearization.u₀ == [0.5, 0.0]
++        @test linearization.y_labels == (:q1, :q2, :power) && linearization.y₀[3] == -0.2
+     end
+ 
+     @testset "a matrix leaf's `[k,l]` tap seeds the entry its linear `[k]` names (§14.10, D-276)" begin
+@@ -298,7 +312,7 @@ function test_linearize()
+         @test isapprox(by_indices.A, kron(Matrix(1.0I, 2, 2), [-1 0; 0.5 -2]); atol = 1e-12)
+         @test isapprox(by_indices.A[:, 3], [0, 0, -1, 0.5]; atol = 1e-12)     # `m[1,2]`'s column
+         @test by_indices.A == by_linear.A                                    # column for column
+-        @test by_indices.x₀ == (m11 = 1.0, m21 = 2.0, m12 = 3.0, m22 = 4.0)
++        @test by_indices.x_labels == (:m11, :m21, :m12, :m22) && by_indices.x₀ == [1.0, 2.0, 3.0, 4.0]
+         # One entry is one site, whichever spelling names it.
+         d = only(diagnostics(failure(() -> linearize(sim, taps(
+             x = (a = get_state("c", "m[1,2]"), b = get_state("c", "m[3]")))))))
+@@ -351,7 +365,8 @@ function test_linearize()
+         sim = Simulation(lin_sampled(); Δt_frame = 1//10)
+         state_taps = (θ = get_state("c", :θ), ω = get_state("c", :ω))
+         linearization = linearize(sim, taps(x = state_taps); about = lin_sampled_point())
+-        @test abs(linearization.ẋ₀.ω) < 1e-12            # the held torque is the authored 4.0, not the probe's zero
++        @test linearization.x_labels == (:θ, :ω)
++        @test abs(linearization.ẋ₀[2]) < 1e-12            # the held torque is the authored 4.0, not the probe's zero
+         @test isapprox(linearization.A, lin_closed_A(asin(4.0 / PEND_G_L)); atol = 1e-12)
+         @test size(linearization.B) == (2, 0) && size(linearization.C) == (0, 2)
+ 
+@@ -428,7 +443,18 @@ function test_linearize()
+         # A `y` row is a read, not a seed.
+         linearization = linearize(sim, taps(x = (θ = get_state("c", :θ),), y = (a = get_face(:θ), b = get_face(:θ))))
+         @test linearization.C[1, :] == linearization.C[2, :] && isapprox(linearization.C, [1.0; 1.0;;]; atol = 1e-12)
+-        @test linearization.y₀ == (a = 0.3, b = 0.3)
++        @test linearization.y_labels == (:a, :b) && linearization.y₀ == [0.3, 0.3]
++    end
++
++    @testset "a `y` tap on a leaf that is not a `Float64` reads as a float (§14.10, D-475)" begin
++        sim = Simulation(lin_tank(); Δt_frame = 1//100)
++        init!(sim, set())
++        @test port(sim, "c", :y) === true
++        linearization = linearize(sim, taps(x = (level = get_state("i"),),
++                                            y = (level = get_output("i", :y), above = get_output("c", :y))))
++        @test linearization.y₀ isa Vector{Float64}
++        @test linearization.y₀[1] === 0.8 && linearization.y₀[2] === 1.0
++        @test linearization.C == [1.0; 0.0;;]                    # the `Bool` row is zero
+     end
+ 
+     @testset "the tap set is a type, and the misuses are directives (§14.2, D-272)" begin
+@@ -501,7 +527,7 @@ function test_linearize()
+         linearization = linearize(model, taps(x = (q = get_state("c", :q),));
+                                   about = set(u = (in = 0.0,)), t0 = t₀)
+         init!(model, set(u = (in = 0.0,)); t0 = t₀)
+-        @test linearization.ẋ₀.q === -model.exec.clock.t === -1.330442639634298
++        @test linearization.ẋ₀[1] === -model.exec.clock.t === -1.330442639634298
+         @test Float64(t₀) != 1.330442639634298
+         # The nominal half runs every discrete output stage, and the seeded half
+         # takes its frozen cells from there (D-213): a stamp of the clock reads
+@@ -511,6 +537,53 @@ function test_linearize()
+         linearization = linearize(stamped, taps(x = (q = get_state("c", :q),),
+                                                 y = (stamp = get_face(:stamp),));
+                                   about = set(u = (in = 0.0,)), t0 = t₀)
+-        @test linearization.y₀.stamp === -linearization.ẋ₀.q === 1.330442639634298
++        @test linearization.y₀[1] === -linearization.ẋ₀[1] === 1.330442639634298
++    end
++
++    @testset "the labeled form holds the same arrays under the tap labels (§14.10, D-475)" begin
++        sim = Simulation(lin_pend(); Δt_frame = 1//10)
++        init!(sim, lin_point())
++        plain = linearize(sim, lin_taps())
++        linearization = labeled(plain)
++        @test linearization isa Linearization
++        @test all(getfield(linearization, f) isa ComponentVector{Float64} for f in (:ẋ₀, :x₀, :u₀, :y₀))
++        @test all(getfield(linearization, f) isa ComponentMatrix{Float64} for f in (:A, :B, :C, :D))
++        # The values by position; `==` on a component vector also compares the labels.
++        @test all(collect(getfield(linearization, f)) == getfield(plain, f) for f in (:ẋ₀, :x₀, :u₀, :y₀))
++        @test all(getfield(linearization, f) == getfield(plain, f) for f in (:A, :B, :C, :D))
++        @test (linearization.x_labels, linearization.u_labels, linearization.y_labels) ==
++              (plain.x_labels, plain.u_labels, plain.y_labels)
++        @test plain.A isa Matrix{Float64}                                # the plain value is untouched
++        # Each array on its own axes, read at entries a swap of two axes would move.
++        @test propertynames(linearization.x₀) == propertynames(linearization.ẋ₀) == (:θ, :ω)
++        @test propertynames(linearization.u₀) == (:τ, :d) && propertynames(linearization.y₀) == (:θ, :u_eff)
++        @test linearization.x₀.θ == 0.3 && linearization.u₀.τ == plain.u₀[1]
++        @test linearization.y₀.u_eff == plain.y₀[2] && linearization.ẋ₀.ω == plain.ẋ₀[2]
++        @test linearization.A[:ω, :θ] == plain.A[2, 1] && linearization.A[:θ, :ω] == 1.0
++        @test linearization.B[:ω, :d] == plain.B[2, 2] == -1.0
++        @test linearization.C[:u_eff, :θ] == plain.C[2, 1] && linearization.C[:θ, :θ] == 1.0
++        @test linearization.D[:u_eff, :τ] == plain.D[2, 1] == 1.0
++        @test linearization.A[(:θ, :ω), (:ω,)] == plain.A[:, 2:2]
++        # A value labeled already is labeled again the same way.
++        twice = labeled(linearization)
++        @test same_linearization(twice, linearization)
++        @test all(typeof(getfield(twice, f)) === typeof(getfield(linearization, f)) for f in fieldnames(Linearization))
++        # An empty list labels to an empty array, its vector a plain one.
++        bare = labeled(linearize(sim, taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)))))
++        @test bare.y₀ isa Vector{Float64} && isempty(bare.y₀) && bare.u₀ isa Vector{Float64}
++        @test size(bare.C) == (0, 2) && bare.C[:, :ω] == Float64[] && size(bare.D) == (0, 0)
++    end
++
++    @testset "without ComponentArrays, `labeled` names the package (§14.10, D-475)" begin
++        # The suite has the extension loaded, so the hint stays silent here, and
++        # a child process without it shows the hint.
++        err = try labeled(1) catch err; err end
++        @test err isa MethodError && !occursin("comes from the ComponentArrays package", sprint(showerror, err))
++        julia = filter(flag -> !startswith(flag, "--code-coverage"), Base.julia_cmd().exec)
++        script = "using Redstone; try Redstone.labeled(1) catch err; print(sprint(showerror, err)) end"
++        output = read(`$julia --project=$(Base.active_project()) -e $script`, String)
++        @test occursin("no method matching labeled(::Int64)", output)
++        @test occursin("`labeled` comes from the ComponentArrays package — load it with " *
++                       "`using ComponentArrays` beside Redstone", output)
+     end
+ end
+diff --git a/test/test_log.jl b/test/test_log.jl
+index cbf178f..0b5072e 100644
+--- a/test/test_log.jl
++++ b/test/test_log.jl
+@@ -267,6 +267,30 @@ function test_log()
+         @test columns.input == fill(1.0, 6)
+     end
+ 
++    @testset "a column reads as a property, after the four fields (§11.2, D-474)" begin
++        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
++        init!(sim, set(u = (in = 1.0,)))
++        run!(sim; t_end = 0.5)
++        flight = series(sim, reads(power = get_output("c", :power), q = get_output("c", :q)))
++        @test flight.power === getfield(flight, :columns).power
++        @test flight.q === getfield(flight, :columns).q
++        @test flight.t === getfield(flight, :t) && flight.frame === getfield(flight, :frame)
++        @test flight.boundary === getfield(flight, :boundary)
++        @test flight.columns === getfield(flight, :columns)
++        @test propertynames(flight) === (:t, :frame, :boundary, :columns, :power, :q)
++        @test @inferred((x -> x.power)(flight)) isa Vector{Float64}
++        @test @inferred((x -> x.t)(flight)) isa Vector{Float64}
++        # The four field names are refused as labels by `series`, a mounted set's
++        # too, and never by `reads`, since trim's read set may label a read `t`.
++        for label in (:t, :frame, :boundary, :columns)
++            read_set = reads(; NamedTuple{(:q, label)}((get_output("c", :q), get_output("c", :power)))...)
++            d = carried(@test_throws DiagnosticError{ReadSetMisuse} series(sim, read_set))
++            @test d.reason === :reserved_label && d.label === label && d.observed === GetOutput
++        end
++        d = carried(@test_throws DiagnosticError{ReadSetMisuse} series(sim, at("c", reads(frame = get_face(:q)))))
++        @test d.reason === :reserved_label && d.label === :frame
++    end
++
+     @testset "empty before the first init!, typed all the same (§11.2, D-407)" begin
+         sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
+         empty_series = series(sim, reads(q = get_output("c", :q), q2 = get_output("c", "q[2]")))
+diff --git a/test/test_show.jl b/test/test_show.jl
+index 40a8059..cac5fea 100644
+--- a/test/test_show.jl
++++ b/test/test_show.jl
+@@ -624,6 +624,137 @@ function test_show()
+         @test occursin("\n    MalformedDatum: 1 occurrence\n", final) && !occursin(rendered, final)
+     end
+ 
++    @testset "Simulation: the state, the deployment's compact form, the outcome, the log and the devices (§9.2, §12.6)" begin
++        deployment_line = "  deployment: Deployment(Δt_frame = 1//10, Δt_base = 1//10, h_max = 1//10, RK4())"
++        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
++        @test plain(sim) == join(["Simulation: built, live", deployment_line, "  log: no snapshots",
++                                  "  devices: none", "  warnings: none"], "\n")
++        @test compact(sim) == "Simulation(built, live)"
++        init!(sim, set(u = (in = 1.0,)); log = false)
++        attach!(sim, TailProbe(), NoClaim())
++        @test plain(sim) == join(["Simulation: initialized, live, frame 0 at t = 0.0", deployment_line,
++                                  "  log: off", "  devices: device 1 (TailProbe)", "  warnings: none"], "\n")
++        # Each termination source with what it holds; `HookedRamp` and `Tripwire`
++        # are test_failures.jl's.
++        requested = Simulation(tick_alarmed(); Δt_frame = 1//10)
++        init!(requested)
++        run!(requested; t_end = 5.0)
++        @test plain(requested) ==
++              join(["Simulation: stopped, live, frame 9 at t = 0.9", deployment_line,
++                    "  termination: ModelRequestedStop at t = 0.9, by stop/y, reason \"three ticks counted\"",
++                    "  log: 10 snapshots", "  devices: none", "  warnings: none"], "\n")
++        @test compact(requested) == "Simulation(stopped, live, frame 9 at t = 0.9)"
++        ended = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
++        init!(ended, set(u = (in = 1.0,)))
++        run!(ended; t_end = 0.5)
++        @test occursin("\n  termination: EndTimeReached at t = 0.5\n  log: 6 snapshots\n", plain(ended))
++        ramp = HookedRamp()
++        stopped = Simulation(hooked_ramp(ramp); Δt_frame = 1//10)
++        ramp.hook[] = () -> stop!(stopped)
++        init!(stopped)
++        run!(stopped; t_end = 5.0)
++        @test occursin("\n  termination: ControlRequestedStop at t = 0.3, by code\n", plain(stopped))
++        errored = Simulation(fed(Tripwire(0.05), "arm"); Δt_frame = 1//10)
++        init!(errored, set(u = (in = true,)))
++        failure(() -> run!(errored; t_end = 5.0))
++        # A running loop's log goes unread; a rostered device makes the loop yield
++        # every frame, as in test_log.jl's gate.
++        racing = Simulation(fed(Plant(), "u"); Δt_frame = 1//100000)
++        init!(racing, set(u = (in = 0.0,)); log_max = 16)
++        plain(racing)                                        # warms the compile path
++        attach!(racing, TailProbe(), NoClaim())
++        task = Threads.@spawn run!(racing; t_end = 1.0)
++        while lifecycle(racing) !== :running && !istaskdone(task)
++            yield()
++        end
++        text = plain(racing)
++        wait(task)
++        @test startswith(text, "Simulation: running, live, frame ") && !occursin("\n  log:", text)
++        # The clock where the frame threw, past the record's last published boundary.
++        @test startswith(plain(errored), "Simulation: errored, live, frame 1 at t = 0.05\n")
++        @test occursin("\n  termination: LoopError at t = 0.0, StepError\n  log: 1 snapshot\n", plain(errored))
++    end
++
++    @testset "Series: the snapshots' span and each column's element type (§11.2, D-474)" begin
++        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
++        read_set = reads(y = get_output("c", :y), input = get_input(:in))
++        @test plain(series(sim, read_set)) ==
++              join(["Series: no snapshots", "  column  eltype", "  y       Float64", "  input   Float64"], "\n")
++        @test compact(series(sim, read_set)) == "Series(no snapshots; y, input)"
++        init!(sim, set(u = (in = 1.0,)))
++        run!(sim; t_end = 0.5)
++        @test plain(series(sim, read_set)) ==
++              join(["Series: 6 snapshots, t = 0.0 to 0.5", "  column  eltype", "  y       Float64",
++                    "  input   Float64"], "\n")
++        @test compact(series(sim, read_set)) == "Series(6 snapshots, t = 0.0 to 0.5; y, input)"
++        stamped = Simulation(Group((; src = Sawtooth(1.0), s = Stamper(0.315));
++                                   local_wires = ("src/q" => "s/sig",)); Δt_frame = 1//10)
++        init!(stamped)
++        run!(stamped; t_end = 0.5)
++        @test endswith(plain(series(stamped, reads(armed = get_output("s", :armed)))), "\n  armed   Bool")
++    end
++
++    @testset "TrimReport: the verdict, the decisions with their bounds, the residuals and the commit (§14.8)" begin
++        stalled = TrimReport(false, (θ = 0.3, δ = -0.25), (a = 0.125, b = -2.5e-10), (a = 1e-9, b = 1e-9),
++                             nothing, nothing, :stalled, 85, 42, [(:θ, :upper)], Tuple{String,Symbol}[])
++        @test plain(stalled) ==
++              join(["TrimReport: not converged, nothing committed; status stalled, 42 iterations, 85 evaluations",
++                    "  decision  value",
++                    "  θ         0.3    at the upper bound",
++                    "  δ         -0.25",
++                    "  residual  value     tolerance",
++                    "  a         0.125     1.0e-9",
++                    "  b         -2.5e-10  1.0e-9"], "\n")
++        @test compact(stalled) == "TrimReport(not converged, nothing committed, 42 iterations)"
++        committed = TrimReport(true, (θ = 0.3, δ = -0.25), (a = 0.0, b = -2.5e-10), (a = 1e-9, b = 1e-9),
++                               (a = 1.0e-12, b = -2.5e-10), (level = 1.5,), :converged, 5, 4,
++                               [(:δ, :lower)], [("c", :touchdown)])
++        @test plain(committed) ==
++              join(["TrimReport: converged, committed; status converged, 4 iterations, 5 evaluations",
++                    "  decision  value",
++                    "  θ         0.3",
++                    "  δ         -0.25  at the lower bound",
++                    "  residual  value     tolerance  committed",
++                    "  a         0.0       1.0e-9     1.0e-12",
++                    "  b         -2.5e-10  1.0e-9     -2.5e-10",
++                    "  check  committed",
++                    "  level  1.5",
++                    "  fired events: c/touchdown"], "\n")
++        @test compact(committed) == "TrimReport(converged, committed, 4 iterations)"
++        bypassed = TrimReport(true, (;), (;), (;), (;), (;), :bypassed, 1, 0,
++                              Tuple{Symbol,Symbol}[], Tuple{String,Symbol}[])
++        @test plain(bypassed) == "TrimReport: converged, committed; status bypassed, no iterations, 1 evaluation"
++        # A real solve prints through the same method.
++        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
++        @test startswith(plain(trim!(sim, u_problem(); baseline = pend_base(), t0 = 0.25)),
++                         "TrimReport: converged, committed; status converged, ")
++    end
++
++    @testset "Linearization: the operating point per list, then each matrix under its labels (§14.10, D-475)" begin
++        linearization = Linearization([0.0, -1.5], [0.3, 0.0], [2.5, 0.0], [0.3, 2.5], [0.0 1.0; -9.5 -0.5],
++                                      [0.0 0.0; 1.0 -1.0], [1.0 0.0; 0.0 0.25], [0.0 0.0; 1.0 -1.0],
++                                      (:θ, :ω), (:τ, :d), (:θ, :u_eff))
++        @test plain(linearization) ==
++              join(["Linearization: 2 states, 2 inputs, 2 outputs",
++                    "  states:", "       x₀   ẋ₀", "    θ  0.3  0.0", "    ω  0.0  -1.5",
++                    "  inputs:", "       u₀", "    τ  2.5", "    d  0.0",
++                    "  outputs:", "           y₀", "    θ      0.3", "    u_eff  2.5",
++                    "  A:", "       θ     ω", "    θ  0.0   1.0", "    ω  -9.5  -0.5",
++                    "  B:", "       τ    d", "    θ  0.0  0.0", "    ω  1.0  -1.0",
++                    "  C:", "           θ    ω", "    θ      1.0  0.0", "    u_eff  0.0  0.25",
++                    "  D:", "           τ    d", "    θ      0.0  0.0", "    u_eff  1.0  -1.0"], "\n")
++        @test compact(linearization) == "Linearization(2 states, 2 inputs, 2 outputs)"
++        # The labeled form prints alike, read by integer index.
++        @test plain(labeled(linearization)) == plain(linearization)
++        @test compact(labeled(linearization)) == compact(linearization)
++        # An empty list prints no block, and neither do its matrices.
++        states_only = Linearization([0.0], [1.0], Float64[], Float64[], fill(-1.0, 1, 1), zeros(1, 0),
++                                    zeros(0, 1), zeros(0, 0), (:q,), (), ())
++        @test plain(states_only) ==
++              join(["Linearization: 1 state, no inputs, no outputs",
++                    "  states:", "       x₀   ẋ₀", "    q  1.0  0.0", "  A:", "       q", "    q  -1.0"], "\n")
++    end
++
+     @testset "every REPL form ends without a newline and carries no trailing whitespace (D-257)" begin
+         for x in (multirate.structure, multirate.outputs, multirate.events, deployed.schedule,
+                   multirate, deployed, pendulum.structure, pendulum_deployed.schedule, pendulum,

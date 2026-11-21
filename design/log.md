@@ -472,6 +472,8 @@ were derived.
 | [D-471][d-471] | Print a deployment's schedule under the four frames' symbols, and chart it against the frame tops | ratified |
 | [D-472][d-472] | Write an assembly as a `Group` value unless domain code needs its type, with `Group` in the core | ratified |
 | [D-473][d-473] | Give `Group` a copy constructor, and wire keywords that take a function of the `Group` | ratified |
+| [D-474][d-474] | Read a `Series` column as a property under its label | ratified |
+| [D-475][d-475] | Return plain arrays from `linearize`, and label them through a ComponentArrays extension | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -12211,6 +12213,10 @@ Annotation (2026-10-20): the default operating point is the checkpoint of the
 simulation as it stands ([D-274][d-274]), which carries its own time. `capture` no longer
 produces a condition ([D-273][d-273]).
 
+Annotation (2026-11-21): the return's shape is [D-475][d-475]'s. `ẋ₀`, `x₀`, `u₀` and
+`y₀` are plain vectors of `Float64` in the order of the taps, not
+NamedTuples, and `labeled` gives the labeled form.
+
 ### D-273 — A condition is an initial condition: `capture` leaves the algebra
 
 **Status.** ratified
@@ -16804,6 +16810,12 @@ the common leaves.
   beside trim's `reads`, with no mount, and the labels reach the method's
   specialization.
 
+Annotation (2026-11-21): a `Series` forwards its columns as properties
+([D-474][d-474]). Its four field names, which the rejection of `TimeSeries` counted
+as a cost, are reserved, and `series` refuses them as labels. That
+rejection's other reasons stand, and `series` still compiles nothing per
+label set.
+
 ### D-408 — Discard a failed boundary and promote the previous snapshot to final
 
 **Status.** ratified
@@ -20822,6 +20834,124 @@ found the code doing it and the spec silent.
 - *A function-valued `sample_times`:* its keys are child names, and nothing
   in a rate scope is computed from a child's contract.
 
+### D-474 — Read a `Series` column as a property under its label
+
+**Status.** ratified
+
+**Position.** A `Series` forwards its columns as properties, so `flight.V`
+is the column that a read labeled `V` gathered ([§11.2][s11-2]). The bundled rulings:
+
+- The four fields `t`, `frame`, `boundary` and `columns` keep their names,
+  and `propertynames` lists them before the labels.
+- `series` refuses a read set that labels an entry with one of the four, as
+  a `ReadSetMisuse` with the reason `:reserved_label` ([Appendix C][sC]).
+- The refusal sits in `series` and not in `reads`.
+
+**Spec.** [§11.2][s11-2], [Appendix B][sB], [Appendix C][sC]
+
+**Rationale.** The tutorial's first three pages typed `flight.columns.V` in
+every plot call and every comparison, where `flight.V` says the same. The
+forwarding costs one small compiled method per label set, at the first
+property access. Over eight label sets of one to eight labels it measured
+3.0 to 3.6 ms, against 1.1 to 1.4 ms for the indexing it replaces, and the
+access infers inside a function. `series` itself still compiles nothing per
+label set ([D-407][d-407]).
+
+[D-407][d-407] rejected FlightCore's `TimeSeries` partly because overloading
+`getproperty` reserved the wrapper's own field names. That cost is accepted
+here at four names, refused where one would hide a column. The rejection's
+other reasons concern lazy descent into a sample, and they stand: a
+`Series` holds gathered columns and descends into nothing.
+
+The refusal belongs to `series` because a read set serves trim too
+([§14.7][s14-7]), where a read labeled `t` clashes with nothing.
+
+**Rejected.**
+- *Fields prefixed with underscores, leaving every plain name to the
+  labels:* `t` is typed in every plot call.
+- *Indexing by label, `flight[:V]`:* it reserves nothing and reads worse.
+- *A diagnostic kind of its own for the reserved label:* `ReadSetMisuse`
+  already carries the label at fault and a reason.
+- *Refusing the label at `reads`:* trim's read set may label an entry `t`.
+
+### D-475 — Return plain arrays from `linearize`, and label them through a ComponentArrays extension
+
+**Status.** ratified
+
+**Position.** A `Linearization` holds plain arrays in the order of the
+taps, and `labeled(linearization)` returns the same value over component
+arrays when ComponentArrays is loaded ([§14.10][s14-10]). The bundled rulings:
+
+- `ẋ₀`, `x₀`, `u₀` and `y₀` are vectors of `Float64`, and `A`, `B`, `C` and
+  `D` matrices of `Float64`. The three label tuples name each position.
+  This replaces [D-272][d-272]'s ruling that the four vectors are NamedTuples.
+- A `y` tap on a `Real` leaf that is not a `Float64` reads into `y₀` as a
+  `Float64`.
+- The eight fields are typed `AbstractVector{Float64}` and
+  `AbstractMatrix{Float64}` with no type parameter, so the plain and the
+  labeled form are one type.
+- ComponentArrays is a weak dependency. The core declares `labeled` with no
+  method, and a package extension adds the one that builds the eight
+  component arrays over axes made from the label tuples.
+- Without the package loaded, a call to `labeled` fails with a hint that
+  names it.
+- `labeled` on a labeled value labels it again over the same axes.
+- No `subsystem` function is added. The labeled form slices by label.
+
+**Spec.** [§14.10][s14-10], [Appendix B][sB]
+
+**Rationale.** The tutorial read `A` by position, `A[5, 2]`, though the
+labels were in the value. The value was also mixed. Its vectors carried
+labels as NamedTuples and could do no arithmetic, and its matrices did
+arithmetic and carried no labels. [D-272][d-272] fixed the NamedTuples with no
+recorded reason and did not weigh plain vectors.
+
+Plain arrays make the affine model compute as written,
+`ẋ₀ + A * (x - x₀) + B * (u - u₀)`. The labeled form puts all eight arrays
+on shared axes, so operands that come from one linearization agree by
+construction. The price is that the plain form no longer reads the
+operating point by name.
+
+ComponentArrays computes by position, which the probes of
+`increments/20261121_tutorial_loose_change/notes_tutorial_loose_change.md`
+showed. A matrix product takes its labels from the left operand and never
+checks the right one, so a vector whose labels stand in another order
+multiplies wrong and comes back under the matrix's labels. A sum of two
+vectors whose axes differ returns a plain vector, still by position. Only
+`==` compares labels. The labels therefore serve reading and slicing. A
+vector written by hand is ordered by the label tuple before use, as
+`q[x_labels]` does, which throws on a missing label and drops an extra one
+silently.
+
+A type parameter was not needed once the fields took abstract types. A
+`ComponentMatrix` holds its axes in its type, so the four matrices are four
+concrete types, and parameters would carry every label set into compiled
+code. The other fields were abstract already.
+
+**Rejected.**
+- *A label-carrying matrix type in the core:* a small one reinvents part of
+  ComponentArrays and loses its labels at the first broadcast, and one
+  whose algebra checks agreement is most of a labeled-array package.
+- *ComponentArrays as a hard dependency:* every user loads it, and a 0.x
+  package's type sits in the return of a public function.
+- *An extension that changes what `linearize` returns:* the return type
+  would depend on what else the session has loaded.
+- *AxisKeys:* it refuses a product or a sum whose labels disagree, which
+  ComponentArrays does not. Its lookup by label uses round brackets,
+  `A(:h, :γ)`, with square brackets left positional. DimensionalData also
+  refuses, and needs an `At` wrapper on every label. NamedArrays computes
+  by position under one warning.
+- *Four type parameters for the matrices:* they buy concrete inference of
+  `linearization.A`, which design code that runs once does not need.
+- *NamedTuples in the plain form beside component vectors in the labeled
+  one:* a `Union` field type, and the mixed value stays.
+- *A NamedTuple of the four matrices from `labeled`:* it drops the
+  operating point and the labels.
+- *Refusing a `y` tap that is not a `Float64`:* it removes a readout that
+  works, such as a flag at the operating point.
+- *A fallback method of `labeled` in the core:* the extension would have to
+  overwrite it.
+
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
 [d-002]: #d-002--adopt-the-causal-port-based-paradigm
@@ -21270,6 +21400,8 @@ found the code doing it and the spec silent.
 [d-471]: #d-471--print-a-deployments-schedule-under-the-four-frames-symbols-and-chart-it-against-the-frame-tops
 [d-472]: #d-472--write-an-assembly-as-a-group-value-unless-domain-code-needs-its-type-with-group-in-the-core
 [d-473]: #d-473--give-group-a-copy-constructor-and-wire-keywords-that-take-a-function-of-the-group
+[d-474]: #d-474--read-a-series-column-as-a-property-under-its-label
+[d-475]: #d-475--return-plain-arrays-from-linearize-and-label-them-through-a-componentarrays-extension
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

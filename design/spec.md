@@ -7987,6 +7987,15 @@ per call, so a column costs one typed loop over the log and no name lookup
 per snapshot. What a user plots is a column against `t`. A window is a mask
 over `t`, and full density over a segment is replay's ([§11.5][s11-5], [§12.7][s12-7]).
 
+**A `Series` reads each column as a property under its label** ([D-474][d-474]).
+`flight.V` is the column that a read labeled `V` gathered, the same vector
+`flight.columns.V` names. The value's four fields keep their names, `t`,
+`frame`, `boundary` and `columns`, and the last holds the columns whole.
+`series` refuses a read set that labels an entry with one of the four, as a
+`ReadSetMisuse`, since the field would hide the column. The refusal belongs
+to `series` and not to `reads`, because the same read set serves trim, where
+the four names clash with nothing ([§14.7][s14-7]).
+
 #### Output-device bindings
 
 **Output-device [bindings](#g-binding) are snapshot bindings** ([D-083][d-083]). A binding is the value
@@ -14229,9 +14238,24 @@ The table sets seeded and frozen leaves side by side.
 
 #### The returned value
 
-**`linearize` returns a `Linearization` value** ([D-072][d-072], [D-272][d-272]). It holds `ẋ₀`, `x₀`, `u₀` and
-`y₀` as NamedTuples under the tap labels, `A`, `B`, `C` and `D` as matrices, and the three
-label sets of the taps ([D-272][d-272]). On that data, FlightPhysics'
+**`linearize` returns a `Linearization` value** ([D-072][d-072], [D-272][d-272]). **It holds plain
+arrays in the order of the taps** ([D-475][d-475]). `ẋ₀`, `x₀`, `u₀` and `y₀` are
+vectors of `Float64`, and `A`, `B`, `C` and `D` are matrices of `Float64`.
+The three label tuples of the taps stand beside them and name each position
+([D-272][d-272]). A `y` tap on a `Real` leaf that is not a `Float64` reads into `y₀`
+as a `Float64`, and its rows of `C` and `D` are zero. On plain arrays the
+affine model computes as written, `ẋ₀ + A * (x - x₀) + B * (u - u₀)`.
+
+**The labeled form comes from a package extension** ([D-475][d-475]). ComponentArrays
+is a Julia package of arrays whose axes carry names. With it loaded,
+`labeled(linearization)` returns a `Linearization` whose eight arrays are
+component arrays over axes built from the label tuples. An entry or a block
+then reads by label, as `A[:h, :γ]` and `A[(:V, :γ), (:V, :γ)]` do. Without
+the package, the call fails with a hint that names it. ComponentArrays
+computes by position and does not check that two operands carry the same
+labels. The labels therefore serve reading and slicing, and the arrays of
+one linearization agree with one another because they share their axes. On
+the labeled form, FlightPhysics'
 `subsystem`/`delete_vars` survive as pure label-indexed matrix slicing, with no
 model involvement. Flight.jl's `c172x_ctl` LQR (linear-quadratic regulator)
 pipeline consumes it with cosmetic changes. **FlightPhysics' `LinearizedSS`, the
@@ -15060,6 +15084,9 @@ Authoring list above carries it.
   checkpoint of the simulation, and `about` with `t0` (default `0` beside
   `about`) places
   it anywhere else ([§14.10][s14-10], [D-430][d-430]).
+- `labeled(linearization) → Linearization`. The labeled form, its eight
+  arrays as component arrays under the tap labels. A package extension
+  provides the method when ComponentArrays is loaded ([§14.10][s14-10], [D-475][d-475]).
 - `get_state(path, leaf = "")`, `get_deriv(path, leaf = "")`, `get_output(path, leaf = "")`,
   `get_input(leaf = "")` and `get_face(leaf = "")`. The closed
   [read-selector](#g-selector) family, one
@@ -15128,7 +15155,9 @@ Authoring list above carries it.
   `at` mounts ([§11.2][s11-2], [D-407][d-407]).
 - `series(sim, read_set) → ts`. Gathers the retained snapshots into labeled
   columns through the read-selector family, one typed vector per labeled
-  entry beside `t`, frame and boundary ([§11.2][s11-2], [D-407][d-407]).
+  entry beside `t`, frame and boundary ([§11.2][s11-2], [D-407][d-407]). A column
+  also reads as a property of the `Series` under its label, and the labels
+  `t`, `frame`, `boundary` and `columns` are refused ([D-474][d-474]).
 - `trace(sim) → trc`. Retrieves the input trace, on by default
   ([§11.5][s11-5]).
 - `replay!(sim2, trc; to_boundary = nothing, to_time = nothing, pace = Inf,
@@ -15698,8 +15727,10 @@ activation):
   read or tap list at fault, and a `reason`. It is `:not_a_selector` for an entry of
   a [read set](#g-read-set) (a `Reads` value of named selectors) that is no selector,
   `:not_a_read_set` for an argument that is no read set, `:not_a_tap_list` for a tap
-  list that is no NamedTuple, and `:empty_prefix` for an empty prefix handed to `at`
-  on a read set ([§14.9][s14-9]). The read side's twin of `ConditionNodeMisuse`.
+  list that is no NamedTuple, `:empty_prefix` for an empty prefix handed to `at`
+  on a read set ([§14.9][s14-9]), and `:reserved_label` for a read that `series` is
+  given under the name of a `Series` field ([§11.2][s11-2], [D-474][d-474]). The read side's twin of
+  `ConditionNodeMisuse`.
 - **`NotAttached`** ([§11.3][s11-3]). Error · service · fail-fast. The
   device offered to `detach!`, by type, and the roster's device ids.
 
@@ -17495,6 +17526,8 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-471]: log.md#d-471--print-a-deployments-schedule-under-the-four-frames-symbols-and-chart-it-against-the-frame-tops
 [d-472]: log.md#d-472--write-an-assembly-as-a-group-value-unless-domain-code-needs-its-type-with-group-in-the-core
 [d-473]: log.md#d-473--give-group-a-copy-constructor-and-wire-keywords-that-take-a-function-of-the-group
+[d-474]: log.md#d-474--read-a-series-column-as-a-property-under-its-label
+[d-475]: log.md#d-475--return-plain-arrays-from-linearize-and-label-them-through-a-componentarrays-extension
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

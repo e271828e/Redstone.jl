@@ -38,17 +38,21 @@ item changes what the spec says, the spec edit is part of the item.
   `design/increments/20261120_structure_trial/notes_structure_trial.md`.
 - **The tutorial's loose change**, owed before its increment 3 by L12 and
   L23 of `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`:
-  a compact `show` for `Simulation`, `Series` and `TrimReport`; a `Series`
-  that forwards its columns as properties; and labelled access to a
-  `Linearization`'s matrices, friction item 10 of that record, which
-  chapters 4 and 9 read. The last two take a spec edit each. It is next,
-  the first bullet's `show(::Deployment)` having landed. The inspector's
+  a compact `show` for `Simulation`, `Series`, `TrimReport` and
+  `Linearization`; a `Series` that forwards its columns as properties
+  (§11.2, D-474); and a `Linearization` of plain arrays, labeled through a
+  ComponentArrays extension (§14.10, D-475), which answers friction item 10
+  of that record. It grew past a loose change and runs as one small
+  increment with no brief. Stage reached: the design session of 2026-11-21
+  settled it, the prototype is built, and the session then worked on alone
+  while the user was away. The record is
+  `design/increments/20261121_tutorial_loose_change/notes_tutorial_loose_change.md`,
+  whose section 2 holds the user's rulings, section 7 the session's own
+  decisions for the user's review, and section 8 the four printed forms,
+  which the user has not yet judged. What remains: the cold review with
+  its fixes, the user's diff-verify, and the push. The inspector's
   increment 10 needs the first bullet's parts one to three pushed, and
-  starts then or after this change, beside the tutorial's next
-  increments. A simulation's `show` prints its deployment in
-  that bullet's notation, and the two arcs share `src/show.jl`, so they
-  run one after the other. Nothing in the inspector's increment 10 reads
-  what this change touches.
+  nothing in it reads what this change touches.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
@@ -88,8 +92,10 @@ item changes what the spec says, the spec edit is part of the item.
     and the arc's closing increment collates them. The first nineteen are
     section 5 of
     `design/increments/20261118_tutorial_example/notes_tutorial_example.md`,
-    and eleven more are section 6 of
-    `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`.
+    eleven more are section 6 of
+    `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`,
+    and one more, on `lqr_gains`' weights, is section 4 of
+    `design/increments/20261121_tutorial_loose_change/notes_tutorial_loose_change.md`.
     A fix lands as a loose commit or as an increment of its own, and before
     the exported-name audit, since it can add or rename a name.
   - **The exported-name audit.** The export list is to be decided deliberately
@@ -127,7 +133,7 @@ item changes what the spec says, the spec edit is part of the item.
       And D-226 makes a name public by standing on B, so a diagnostic kind is
       public only where B names it; whether Appendix C's kind set is public
       as a whole is the audit's to settle.
-    - **Five boundary cases** the convention does not settle are flagged for
+    - **Six boundary cases** the convention does not settle are flagged for
       the sweep, none a defect of its list:
       - `input_faces`/`output_faces` (§13.3), build primitives named by nouns
         where class (4) asks for plain verbs, mitigated by being
@@ -147,6 +153,9 @@ item changes what the spec says, the spec edit is part of the item.
         with a public Base name when the spec's verb is that word, reached by
         qualified name or explicit import; `peek` (§11.7, D-270) is the first
         instance, the panel kit's verb beside `Base.peek`.
+      - `labeled` (§14.10, D-475), a participle where every class asks for a
+        noun phrase or a verb; it converts a `Linearization` to its labeled
+        form and mutates nothing.
 - **The API docstrings' two later passes.** The sweep to the manual's
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain. The

@@ -310,7 +310,9 @@ order or side by side.
    `selection`, its testset, the companion's numbers and its page. The
    model and the page travel together because the chapter is optional and
    its risk, the bumpless figures across two rates, should not block
-   chapters 1 to 8. Needs 1 and 2.
+   chapters 1 to 8. Needs 1 and 2. It takes up the friction item on
+   `lqr_gains`' weights, which stand by position, section 4 of
+   `20261121_tutorial_loose_change/notes_tutorial_loose_change.md`.
 
 5. **The closing.** The README's condensed chapters, the cold-agent test
    of R13, and the friction list collated from the increments' notes for
