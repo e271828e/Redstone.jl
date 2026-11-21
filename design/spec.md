@@ -4863,14 +4863,19 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
   prints `Δt_base` by its value. The component table has one row per
   discrete component, with its anchor, `m`, `c`, `D`, `Φ`, `Δt` and `τ`. The
   rate-scope table has the same columns after its key. A reader checks the
-  composition
-  law on one row, against the anchor's row above. `show` reads `m` and `c`
+  composition law on one row, against the anchor's row above. `show` reads `m` and `c`
   from the structure and derives each anchor's counts, since the `Schedule`
   holds neither ([D-261][d-261]). The rate chains stay on the structure's
   table and on `show(::Schedule)`'s.
 - **`show(::Deployment)` prints each `Δt` and `τ` exact**, as `D·Δt_base`
   and `Φ·Δt_base` ([D-471][d-471]). `show(::Schedule)` prints the float its row
   holds.
+- **`show(::Deployment)` states its base tick against the coarsest
+  admissible one**, in one line under the block's heading ([D-471][d-471]). The
+  line gives `gcd(pool)` and the whole number `Δt_base` divides it by, and
+  drops that factor where it is 1. Each declared anchor's `Dₖ` and `Φₖ` is
+  then a multiple of the factor. A structure with no anchors admits every
+  base tick, and the block prints no line.
 
 A REPL user gets each table by evaluating the value. A client outside the
 process gets the same facts as data: `descriptor` renders a `Build` or a
@@ -4909,8 +4914,9 @@ the feedthrough graph ([§9.1][s9-1], [D-261][d-261]). `show(::Structure)` print
 a user reads which base ticks a component tree admits before choosing one.
 The `Deployment` constructor's grid diagnostics carry it. They are the
 refusal path's suggestion message, the derivation path's info line and the
-`GridUtilization` advisory. The `Deployment` holds no report, and
-`show(::Deployment)` prints none. Attribution has two forms:
+`GridUtilization` advisory. The `Deployment` holds no report.
+`show(::Deployment)` prints none, only its base tick against the report's
+coarsest admissible one (above). Attribution has two forms:
 
 - Leave-one-out refinement factors are the first form.
   `r_p = gcd(pool ∖ p)/gcd(pool)` is an integer ≥ 1 read as "how much coarser
