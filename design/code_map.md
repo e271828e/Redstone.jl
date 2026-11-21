@@ -1108,6 +1108,10 @@ D-261.
     structure, whose discrete components and scopes stand in the schedule's
     order, and derives the anchors' counts through structure.jl's
     `_anchor_counts`, as `bind_schedule` and the descriptor's writer do;
+  - `_admissible_line` states `Δt_base` against the grid report's coarsest
+    admissible value, structure.jl's `_grid_report` over the anchors, with
+    the whole factor between them, dropped at 1, and no line where the
+    structure has no anchors;
   - `_seconds_label` prints a count of base ticks as exact seconds, the
     product taken in `Int128`;
   - `_chart_lines` draws one column per unit of the `Lattice` over the joint

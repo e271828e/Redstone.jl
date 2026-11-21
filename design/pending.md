@@ -191,16 +191,6 @@ breaking user code, and each may benefit from user feedback first.
   as a rational, which `show(::Deployment)` prints (D-471). Found by the
   descriptor increment's parity check, whose client copied the float
   product.
-- **Whether `show(::Deployment)` prints its `Δt_base` against the coarsest
-  admissible one** (§9.2, D-466). D-466 left the question to the rewrite in
-  the notation, and D-471 does not rule it. The inspector's page shows the
-  comparison on a deployment
-  (`RedstoneInspector.jl/design/deployment_overlay.md`, answer 6). A
-  candidate is one line under the block's heading, and no line for a
-  structure with no anchors. The descriptor carries the admissible value, so
-  the parity rule holds either way (D-467). The question, with the
-  candidate's wording, is section 6 of
-  `design/increments/20261121_show_deployment/notes_show_deployment.md`.
 - **A framework throw inside a step is framed as a component's** (§13.4).
   A `StepError`'s message names the cursor as the catch found it, so a
   throw from the framework's own step code reads as the last stage entered.

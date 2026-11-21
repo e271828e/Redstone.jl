@@ -200,13 +200,22 @@ Each is open to the user's review.
 ## 8. The user's answers to section 6, 2026-11-21
 
 1. **Item 1: `show(::Deployment)` prints its `Δt_base` against the coarsest
-   admissible one.** Its form waits for the user's word on a rendered
-   candidate, `probe_admissible.jl` among the probes.
+   admissible one.** The user approved the candidate as rendered by
+   `probe_admissible.jl`: one line under the block's heading, two shapes,
+   the factor dropped at 1, and no line without anchors. It landed as
+   `d8089d7`, in §9.2 and D-471 with an annotation on D-466, and as the
+   code commit after it.
 2. **Item 4: fixed.** `hyperperiod 1 base tick` takes the singular in the
    `Schedule`'s two forms, on its chart's heading and on the deployment's
    block, in the commit that adds this section.
-3. **Item 5: the user asked for a recommendation** on stating the order of
-   `schedule.scopes`.
+3. **Item 5: fixed on the session's recommendation.** §13.9 states the
+   rows' walk order and the scopes' order in `7388e28`, and the schema's
+   description and a test that pins both orders follow in `7093283`.
 4. **Item 6: fixed** in `121da1a`. §13.9's parity sentence names each
    schedule row's exact seconds and the deployment's chart over the joint
    period, with an annotation on D-467.
+
+The user also asked to see the frame tops' row against the two-shape
+alternative, and then a chart whose periods do not divide each other
+(`probe_frame_row_shapes.jl`, `probe_nondividing.jl`). The row stays as
+ruled for now.

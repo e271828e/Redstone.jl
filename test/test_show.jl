@@ -102,6 +102,7 @@ Schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
 # frames' symbols, the seconds exact, and the chart under its frame tops.
 const MULTIRATE_DEPLOYED_SCHEDULE = """
 schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
+  Δt_base: 1//500, the coarsest admissible 1//50 divided by 10
   anchors:
     anchor  Δtₖ     τₖ    Dₖ  Φₖ
     A₀      1//500  0//1  1   0
@@ -356,7 +357,8 @@ function test_show()
                                           sample_times = (; a = Relative(3, 1), b = Relative(2))));
                              sample_times = (; g = Absolute(1//50, 1//100))))
         block = schedule_block(Deployment(nested; Δt_frame = 1//100, Δt_base = 1//200))
-        @test block[1:11] == ["schedule: 2 rows, 1 rate scope, hyperperiod 24 base ticks",
+        @test block[1:12] == ["schedule: 2 rows, 1 rate scope, hyperperiod 24 base ticks",
+                              "  Δt_base: 1//200, the coarsest admissible 1//100 divided by 2",
                               "  anchors:",
                               "    anchor  Δtₖ     τₖ      Dₖ  Φₖ",
                               "    A₀      1//200  0//1    1   0",
@@ -367,11 +369,11 @@ function test_show()
                               "    g/b   A₁      2  0  8   2  1//25  1//100",
                               "  rate scopes:",
                               "    path  key  anchor  m  c  D  Φ  Δt     τ"]
-        @test block[12] == "    g     g    A₁      1  0  4  2  1//50  1//100"
+        @test block[13] == "    g     g    A₁      1  0  4  2  1//50  1//100"
         # The composition law, read off the printed cells (D-464): `D = m·Dₖ`,
         # `Φ = Φₖ + c·Dₖ`, `Δt = D·Δt_base` and `τ = Φ·Δt_base`.
-        (Dk, Φk) = parse.(Int, split(block[5])[4:5])
-        for line in block[8:9]
+        (Dk, Φk) = parse.(Int, split(block[6])[4:5])
+        for line in block[9:10]
             (m, c, D, Φ) = parse.(Int, split(line)[3:6])
             @test (D, Φ) == (m * Dk, Φk + c * Dk)
             @test split(line)[7:8] == [repr(D * 1//200), repr(Φ * 1//200)]
@@ -386,8 +388,9 @@ function test_show()
         # A base tick coarser than the frame: the anchors' counts are in base
         # ticks, never in the lattices' unit.
         coarse = schedule_block(Deployment(multirate; Δt_frame = 1//500, Δt_base = 1//100))
-        @test coarse[4:5] == ["    A₀      1//100  0//1  1   0", "    A₁      1//50   0//1  2   0"]
-        @test coarse[8:10] == ["    fcs/inner  A₀      1  0  1  0  1//100  0//1",
+        @test coarse[2] == "  Δt_base: 1//100, the coarsest admissible 1//50 divided by 2"
+        @test coarse[5:6] == ["    A₀      1//100  0//1  1   0", "    A₁      1//50   0//1  2   0"]
+        @test coarse[9:11] == ["    fcs/inner  A₀      1  0  1  0  1//100  0//1",
                                "    fcs/outer  A₀      5  2  5  2  1//20   1//50",
                                "    gnss       A₁      1  0  2  0  1//50   0//1"]
         # A rate scope with no discrete member: the anchors and the scope's
@@ -408,7 +411,7 @@ function test_show()
         two = build(Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2))),
                              h = Group((; b = TickCounter()); sample_times = (; b = Relative(1))));
                           sample_times = (; g = Relative(3, 1), h = Absolute(1//25, 1//50))))
-        @test schedule_block(Deployment(two; Δt_frame = 1//100))[11:13] ==
+        @test schedule_block(Deployment(two; Δt_frame = 1//100))[12:14] ==
               ["    path  key  anchor  m  c  D  Φ  Δt      τ",
                "    g     g    A₀      3  1  3  1  3//100  1//100",
                "    h     h    A₁      1  0  4  2  1//25   1//50"]
@@ -427,6 +430,27 @@ function test_show()
                "                0",
                "    frame tops  │",
                "    root        ●"]
+    end
+
+    @testset "Deployment: the base tick against the coarsest admissible one, where the structure has anchors (§9.2, D-466, D-471)" begin
+        admissible(deployment) = schedule_block(deployment)[2]
+        # A tenth of the coarsest, which the structure's grid block names.
+        @test admissible(deployed) == "  Δt_base: 1//500, the coarsest admissible 1//50 divided by 10"
+        @test occursin("admissible: gcd(pool)/k, coarsest 1//50", plain(multirate.structure))
+        # The coarsest itself drops the clause, given or derived.
+        @test admissible(Deployment(multirate; Δt_frame = 1//50, Δt_base = 1//50)) ==
+              "  Δt_base: 1//50, the coarsest admissible"
+        @test admissible(group) == "  Δt_base: 1//1500, the coarsest admissible"
+        # An offset sets the coarsest below every period: `gcd(1//50, 1//100)`.
+        nested = build(Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2))));
+                             sample_times = (; g = Absolute(1//50, 1//100))))
+        @test admissible(Deployment(nested; Δt_frame = 1//100, Δt_base = 1//300)) ==
+              "  Δt_base: 1//300, the coarsest admissible 1//100 divided by 3"
+        # No anchors: every base tick is admissible, and the block has no line.
+        thirds = Deployment(build(Group((; a = TickCounter()); sample_times = (; a = Relative(3))));
+                            Δt_frame = 1//10)
+        @test admissible(thirds) == "  anchors:"
+        @test !occursin("coarsest admissible", plain(thirds))
     end
 
     @testset "Deployment: the chart against the frame tops, one column per exact unit over the joint period (§9.2, §10.5, D-471)" begin

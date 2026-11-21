@@ -275,7 +275,8 @@ end
 
 # The schedule's block as the deployment prints it (D-471). The tables come
 # back as token lines: the heading with the hyperperiod over the rows' `D`, the
-# anchors' rows, and the component and rate-scope rows under the four frames'
+# base tick against the grid report's coarsest where the structure has
+# anchors, the anchors' rows, and the component and rate-scope rows under the four frames'
 # symbols, each `Δt` and `τ` its count times `dt_base`, exact. The chart comes
 # back as its heading and each row's label and marks: one column per gcd of the
 # two periods over the joint period, the frame tops first, and no row past the
@@ -291,6 +292,13 @@ function client_schedule(body)
                     (isempty(scopes) ? "" : ", " * count_text(length(scopes), "rate scope")) *
                     (isempty(rows) ? "" : ", hyperperiod " * count_text(hyperperiod, "base tick")))]
     isempty(rows) && isempty(scopes) && return lines, nothing
+    # the base tick against the grid report's coarsest, where the structure has anchors
+    if haskey(structure["grid"], "admissible")
+        admissible = _rational_of(structure["grid"]["admissible"])
+        k = Int(admissible / dt_base)
+        push!(lines, tokens("Δt_base: $(repr(dt_base)), the coarsest admissible" *
+                            (k == 1 ? "" : " $(repr(admissible)) divided by $k")))
+    end
     push!(lines, ["anchors:"], ["anchor", "Δtₖ", "τₖ", "Dₖ", "Φₖ"],
           ["A₀", repr(dt_base), "0//1", "1", "0"])
     for (k, (anchor, counts)) in enumerate(zip(structure["anchors"], schedule["anchors"]))

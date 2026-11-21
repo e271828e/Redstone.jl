@@ -359,9 +359,24 @@ function _chart_lines(deployment::Deployment)
     lines
 end
 
+# The deployment's base tick against the coarsest admissible one (§9.2,
+# D-471): `gcd(pool)` over the whole number `k` the base tick divides it by,
+# the clause dropped at `k = 1`. A structure with no anchors admits every base
+# tick and gets no line. A bound deployment's base tick divides every pool
+# entry, so `k` is whole, and the division runs in `Int128` as the anchors'
+# counts do.
+function _admissible_line(structure::Structure, Δt_base::Rational{Int})
+    admissible = _grid_report(structure.anchors).admissible
+    admissible === nothing && return nothing
+    k = something(_as_int(Rational{Int128}(admissible) / Δt_base))
+    "Δt_base: $(repr(Δt_base)), the coarsest admissible" *
+        (k == 1 ? "" : " $(repr(admissible)) divided by $k")
+end
+
 # The schedule under the four frames' symbols (§9.2, D-464, D-471), the
-# deployment's own block: the anchor table with each anchor's seconds pair and
-# its counts, `A₀` at `Δt_base` by its value; one row per discrete component
+# deployment's own block: the base tick against the coarsest admissible one,
+# where the structure has anchors; the anchor table with each anchor's seconds
+# pair and its counts, `A₀` at `Δt_base` by its value; one row per discrete component
 # with `(m, c)`, `(D, Φ)` and `(Δt, τ)`, the seconds exact; the rate-scope rows
 # under the same columns; and the chart. `(m, c)` are the structure's, whose
 # discrete components and scopes stand in the schedule's order, and the
@@ -371,7 +386,9 @@ function _schedule_lines(deployment::Deployment)
     schedule, structure, Δt_base = deployment.schedule, deployment.build.structure, deployment.Δt_base
     lines = ["schedule: " * _schedule_counts(schedule)]
     isempty(schedule.rows) && isempty(schedule.scopes) && return lines
-    anchor_rows = [[_anchor_name(0), repr(Δt_base), string(zero(Rational{Int})), "1", "0"]]
+    admissible_line = _admissible_line(structure, Δt_base)
+    admissible_line === nothing || push!(lines, "  " * admissible_line)
+    anchor_rows =[[_anchor_name(0), repr(Δt_base), string(zero(Rational{Int})), "1", "0"]]
     for (k, anchor) in enumerate(structure.anchors)
         Dk, Φk = _anchor_counts(anchor, Δt_base)   # whole on a bound deployment
         push!(anchor_rows, [_anchor_name(k), string(anchor.Δt), string(anchor.τ),
