@@ -98,6 +98,38 @@ Schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
     fcs/outer  ··●····●··
     gnss       ●·········"""
 
+# The schedule's block of the same deployment's own form (D-471): the four
+# frames' symbols, the seconds exact, and the chart under its frame tops.
+const MULTIRATE_DEPLOYED_SCHEDULE = """
+schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
+  anchors:
+    anchor  Δtₖ     τₖ    Dₖ  Φₖ
+    A₀      1//500  0//1  1   0
+    A₁      1//50   0//1  10  0
+  components:
+    path       anchor  m  c  D   Φ  Δt      τ
+    fcs/inner  A₀      1  0  1   0  1//500  0//1
+    fcs/outer  A₀      5  2  5   2  1//100  1//250
+    gnss       A₁      1  0  10  0  1//50   0//1
+  rate scopes:
+    path  key  anchor  m  c  D  Φ  Δt      τ
+    fcs   fcs  A₀      1  0  1  0  1//500  0//1
+  chart, 10 columns of 1//500 s over 10 base ticks and 10 frames:
+                0
+    frame tops  ││││││││││
+    fcs/inner   ●●●●●●●●●●
+    fcs/outer   ··●····●··
+    gnss        ●·········"""
+
+# The schedule's block of a deployment's REPL form, from its heading to the
+# line before the warnings, without the two spaces it is nested by.
+function schedule_block(deployment)
+    lines = split(plain(deployment), '\n')
+    first_line = findfirst(startswith("  schedule:"), lines)
+    last_line = findfirst(startswith("  warnings"), lines) - 1
+    [chopprefix(line, "  ") for line in lines[first_line:last_line]]
+end
+
 function test_show()
     multirate = build(MultiRate())
     deployed = Deployment(multirate; Δt_frame = 1//500)
@@ -259,7 +291,10 @@ function test_show()
         @test compact(coprime.schedule) == "Schedule(2 rows, hyperperiod $hyperperiod base ticks)"
         @test endswith(plain(coprime.schedule),
                        "\n  hyperperiod: $hyperperiod base ticks, chart omitted")
-        @test occursin("\n  Schedule: 2 rows, hyperperiod $hyperperiod base ticks\n", plain(coprime))
+        @test occursin("\n  schedule: 2 rows, hyperperiod $hyperperiod base ticks\n", plain(coprime))
+        @test last(schedule_block(coprime)) ==
+              "  chart omitted: $hyperperiod columns of 1//1 s over $hyperperiod base ticks " *
+              "and $hyperperiod frames"
         # No rows: the heading alone, no chart line at all.
         @test plain(pendulum_deployed.schedule) == "Schedule: no rows"
     end
@@ -282,7 +317,7 @@ function test_show()
         @test endswith(text, "\n  warnings:\n    " * logline(only(warnings(warned))))
     end
 
-    @testset "Deployment: the parameters, the schedule and the warnings, with no grid block (§9.2, D-257, D-466)" begin
+    @testset "Deployment: the parameters, the schedule's block and the warnings, with no grid block (§9.2, D-257, D-466, D-471)" begin
         text = plain(deployed)
         @test startswith(text, "Deployment: Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, " *
                                "RK4(); firing_budget = 4, localization_tol = 1.0e-6, " *
@@ -291,16 +326,171 @@ function test_show()
                                "  build: Build(4 components, activations: Float64)\n")
         # The warnings follow the schedule directly: the grid report is the
         # structure's to print, with or without an anchor.
-        @test endswith(text, "\n" * join("  " .* split(MULTIRATE_SCHEDULE, '\n'), "\n") *
+        @test endswith(text, "\n" * join("  " .* split(MULTIRATE_DEPLOYED_SCHEDULE, '\n'), "\n") *
                              "\n  warnings: none")
         @test !occursin("grid:", text)
+        # The block is the deployment's own: the `Schedule`'s lines, with their
+        # float `Δt` and their rate chains, are not nested in it.
+        @test !occursin("Schedule:", text) && !occursin("0.002", text) && !occursin("Relative", text)
         # An advisory still carries the block, as its own message's lines.
         text = plain(group)
-        @test occursin("chart omitted\n  warnings:\n    GridUtilization: Δt_base derived as 1//1500 s: the grid is 3× finer", text)
+        @test occursin("    chart omitted: 150 columns of 1//1500 s over 150 base ticks and 150 frames\n" *
+                       "  warnings:\n    GridUtilization: Δt_base derived as 1//1500 s: the grid is 3× finer", text)
         @test !occursin("\n  grid:", text)
         text = plain(pendulum_deployed)
-        @test endswith(text, "\n  build: Build(1 component, activations: Float64)\n  Schedule: no rows\n" *
+        @test endswith(text, "\n  build: Build(1 component, activations: Float64)\n  schedule: no rows\n" *
                              "  warnings: none")
+    end
+
+    @testset "Deployment: each row under the four frames' symbols, the seconds exact (§9.2, D-464, D-471)" begin
+        # An anchor off the origin, with a member off its own: every pair of the
+        # two tables differs from its neighbours, so no column stands for another.
+        nested = build(Group((; g = Group((; a = TickCounter(), b = TickCounter());
+                                          sample_times = (; a = Relative(3, 1), b = Relative(2))));
+                             sample_times = (; g = Absolute(1//50, 1//100))))
+        block = schedule_block(Deployment(nested; Δt_frame = 1//100, Δt_base = 1//200))
+        @test block[1:11] == ["schedule: 2 rows, 1 rate scope, hyperperiod 24 base ticks",
+                              "  anchors:",
+                              "    anchor  Δtₖ     τₖ      Dₖ  Φₖ",
+                              "    A₀      1//200  0//1    1   0",
+                              "    A₁      1//50   1//100  4   2",
+                              "  components:",
+                              "    path  anchor  m  c  D   Φ  Δt     τ",
+                              "    g/a   A₁      3  1  12  6  3//50  3//100",
+                              "    g/b   A₁      2  0  8   2  1//25  1//100",
+                              "  rate scopes:",
+                              "    path  key  anchor  m  c  D  Φ  Δt     τ"]
+        @test block[12] == "    g     g    A₁      1  0  4  2  1//50  1//100"
+        # The composition law, read off the printed cells (D-464): `D = m·Dₖ`,
+        # `Φ = Φₖ + c·Dₖ`, `Δt = D·Δt_base` and `τ = Φ·Δt_base`.
+        (Dk, Φk) = parse.(Int, split(block[5])[4:5])
+        for line in block[8:9]
+            (m, c, D, Φ) = parse.(Int, split(line)[3:6])
+            @test (D, Φ) == (m * Dk, Φk + c * Dk)
+            @test split(line)[7:8] == [repr(D * 1//200), repr(Φ * 1//200)]
+        end
+        # Three base ticks of 1//10: the deployment prints the period exact,
+        # where the schedule's row holds a float that is not the nearest to it.
+        thirds = Deployment(build(Group((; a = TickCounter()); sample_times = (; a = Relative(3))));
+                            Δt_frame = 1//10)
+        @test schedule_block(thirds)[7] == "    a     A₀      3  0  3  0  3//10  0//1"
+        @test occursin("0.30000000000000004", plain(thirds.schedule))
+        @test !occursin("0.30000000000000004", plain(thirds))
+        # A base tick coarser than the frame: the anchors' counts are in base
+        # ticks, never in the lattices' unit.
+        coarse = schedule_block(Deployment(multirate; Δt_frame = 1//500, Δt_base = 1//100))
+        @test coarse[4:5] == ["    A₀      1//100  0//1  1   0", "    A₁      1//50   0//1  2   0"]
+        @test coarse[8:10] == ["    fcs/inner  A₀      1  0  1  0  1//100  0//1",
+                               "    fcs/outer  A₀      5  2  5  2  1//20   1//50",
+                               "    gnss       A₁      1  0  2  0  1//50   0//1"]
+        # A rate scope with no discrete member: the anchors and the scope's
+        # row, no component table and no chart.
+        inner = Group((; c = Plant()); input_wires = ("in" => "c/u",))
+        scoped = build(Group((; g = inner); input_wires = ("in" => "g/in",),
+                             sample_times = (; g = Relative(2))))
+        @test schedule_block(Deployment(scoped; Δt_frame = 1//100)) ==
+              ["schedule: no rows, 1 rate scope",
+               "  anchors:",
+               "    anchor  Δtₖ     τₖ    Dₖ  Φₖ",
+               "    A₀      1//100  0//1  1   0",
+               "  rate scopes:",
+               "    path  key  anchor  m  c  D  Φ  Δt     τ",
+               "    g     g    A₀      2  0  2  0  1//50  0//1"]
+        # Two rate scopes on two anchors, each off `(1, 0)`: a scope's row
+        # takes its own `(m, c)`, never its neighbour's.
+        two = build(Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2))),
+                             h = Group((; b = TickCounter()); sample_times = (; b = Relative(1))));
+                          sample_times = (; g = Relative(3, 1), h = Absolute(1//25, 1//50))))
+        @test schedule_block(Deployment(two; Δt_frame = 1//100))[11:13] ==
+              ["    path  key  anchor  m  c  D  Φ  Δt      τ",
+               "    g     g    A₀      3  1  3  1  3//100  1//100",
+               "    h     h    A₁      1  0  4  2  1//25   1//50"]
+        # A period whose seconds leave `Int`: the product is taken wide.
+        wide = Deployment(build(Group((; a = TickCounter()); sample_times = (; a = Relative(2^40 + 15))));
+                          Δt_frame = (2^31 - 1)//2^31)
+        @test split(schedule_block(wide)[7])[7] == repr(big(2^40 + 15) * ((2^31 - 1)//2^31))
+        @test_throws OverflowError (2^40 + 15) * ((2^31 - 1)//2^31)
+        # A discrete primitive at the root reads `root`, in the table and on
+        # the chart, whose one column is a base tick and a frame top.
+        @test schedule_block(Deployment(build(TickCounter()); Δt_frame = 1//10))[5:end] ==
+              ["  components:",
+               "    path  anchor  m  c  D  Φ  Δt     τ",
+               "    root  A₀      1  0  1  0  1//10  0//1",
+               "  chart, 1 column of 1//10 s over 1 base tick and 1 frame:",
+               "                0",
+               "    frame tops  │",
+               "    root        ●"]
+    end
+
+    @testset "Deployment: the chart against the frame tops, one column per exact unit over the joint period (§9.2, §10.5, D-471)" begin
+        chart(deployment) = (block = schedule_block(deployment);
+                             block[findfirst(startswith("  chart"), block):end])
+        # A frame of five base ticks: a column is a base tick, and the frame
+        # tops' row marks every fifth.
+        @test chart(Deployment(multirate; Δt_frame = 1//100, Δt_base = 1//500)) ==
+              ["  chart, 10 columns of 1//500 s over 10 base ticks and 2 frames:",
+               "                0",
+               "    frame tops  │    │",
+               "    fcs/inner   ●●●●●●●●●●",
+               "    fcs/outer   ··●····●··",
+               "    gnss        ●·········"]
+        # Frame tops between base ticks: the unit is 1 ms, a base tick is two
+        # columns and a frame three, and the pattern closes at 60 columns, six
+        # hyperperiods and twenty frames.
+        between = Deployment(multirate; Δt_frame = 3//1000, Δt_base = 1//500)
+        lines = chart(between)
+        @test lines[1] == "  chart, 60 columns of 1//1000 s over 30 base ticks and 20 frames:"
+        @test lines[2] == "                0         10        20        30        40        50"
+        # A row's 60 marks after its label, the blanks `show` strips restored.
+        marks(line, label) = collect(rpad(chopprefix(line, "    " * rpad(label, 10) * "  "), 60))
+        @test [k for k in 0:59 if marks(lines[3], "frame tops")[k+1] == '│'] == collect(0:3:57)
+        @test all(mark in ('│', ' ') for mark in marks(lines[3], "frame tops"))
+        # The gate, computed here: `●` at a base tick where `(n − Φ) % D == 0`,
+        # `·` at every other base tick, blank off the base grid.
+        for (row, line) in zip(between.schedule.rows, lines[4:6])
+            cells = marks(line, row.path)
+            @test [k for k in 0:59 if cells[k+1] == '●'] ==
+                  [k for k in 0:2:59 if (k ÷ 2 - row.Φ) % row.D == 0]
+            @test [k for k in 0:59 if cells[k+1] == ' '] == collect(1:2:59)
+        end
+        # A base tick coarser than the frame: every column is a frame top, and
+        # a base tick falls on every fifth.
+        @test chart(Deployment(multirate; Δt_frame = 1//500, Δt_base = 1//100)) ==
+              ["  chart, 50 columns of 1//500 s over 10 base ticks and 50 frames:",
+               "                0         10        20        30        40",
+               "    frame tops  " * "│"^50,
+               "    fcs/inner   ●    ●    ●    ●    ●    ●    ●    ●    ●    ●",
+               "    fcs/outer   ·    ·    ●    ·    ·    ·    ·    ●    ·    ·",
+               "    gnss        ●    ·    ●    ·    ●    ·    ●    ·    ●    ·"]
+        # The guard is binary, at 100 columns: the chart prints whole at 100
+        # and its place holds one line at 101.
+        ticking(K) = build(Group((; a = TickCounter()); sample_times = (; a = Relative(K))))
+        @test chart(Deployment(ticking(100); Δt_frame = 1)) ==
+              ["  chart, 100 columns of 1//1 s over 100 base ticks and 100 frames:",
+               "                " * join(rpad(string(k), 10) for k in 0:10:80) * "90",
+               "    frame tops  " * "│"^100,
+               "    a           ●" * "·"^99]
+        @test chart(Deployment(ticking(101); Δt_frame = 1)) ==
+              ["  chart omitted: 101 columns of 1//1 s over 101 base ticks and 101 frames"]
+        # The guard counts the joint period's columns, not the hyperperiod's
+        # base ticks: one base tick, and a frame of 150.
+        @test chart(Deployment(ticking(1); Δt_frame = 3//2, Δt_base = 1//100)) ==
+              ["  chart omitted: 150 columns of 1//100 s over 150 base ticks and 1 frame"]
+        # Nor the joint period's base ticks: 51 of them, on 102 columns.
+        @test chart(Deployment(ticking(51); Δt_frame = 1//2, Δt_base = 1)) ==
+              ["  chart omitted: 102 columns of 1//2 s over 51 base ticks and 102 frames"]
+        # A label wider than the frame tops' sets the chart's first column.
+        long = build(Group((; a_very_long_name = TickCounter());
+                           sample_times = (; a_very_long_name = Relative(2))))
+        @test chart(Deployment(long; Δt_frame = 1//50, Δt_base = 1//100)) ==
+              ["  chart, 2 columns of 1//100 s over 2 base ticks and 1 frame:",
+               "                      0",
+               "    frame tops        │",
+               "    a_very_long_name  ●·"]
+        # The `Schedule`'s own chart stays the tick chart over one hyperperiod,
+        # whatever the frame.
+        @test split(plain(between.schedule), '\n')[end-4:end] ==
+              split(MULTIRATE_SCHEDULE, '\n')[end-4:end]
     end
 
     @testset "Deployment: the steps of an unsplit frame, and the components that split frames (§9.2, §10.5, D-449)" begin
@@ -407,6 +597,10 @@ function test_show()
         for x in (multirate.structure, multirate.outputs, multirate.events, deployed.schedule,
                   multirate, deployed, pendulum.structure, pendulum_deployed.schedule, pendulum,
                   pendulum_deployed, group.schedule, group, build(Motor(1.0)).events,
+                  # blank columns at a row's end: frame tops between base ticks,
+                  # and a base tick coarser than the frame
+                  Deployment(multirate; Δt_frame = 3//1000, Δt_base = 1//500),
+                  Deployment(multirate; Δt_frame = 1//500, Δt_base = 1//100),
                   hand_status(malformed_record(0, 0, 0)), hand_status(malformed_record(30, 10, 0)),
                   hand_status(malformed_record(1482, 16, 100)))
             text = plain(x)

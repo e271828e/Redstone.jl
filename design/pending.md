@@ -17,12 +17,17 @@ item changes what the spec says, the spec edit is part of the item.
   in four parts in this order. The session's record is
   `RedstoneInspector.jl/design/deployment_overlay.md`, and its answer 17
   lists the five log entries the parts owe. Each part lands as a spec and
-  log commit followed by its code. Parts one to three, the notation, the
-  grid report's placement and the descriptor, have landed (D-464, D-466,
-  D-467, D-468), and part four follows. Part three's cold review has
-  closed and its fixes have landed, with D-470 among them. Its record is
+  log commit followed by its code. All four have landed: the notation, the
+  grid report's placement, the descriptor and `show(::Deployment)` in the
+  notation (D-464, D-466, D-467, D-468, D-471). Part three's cold review
+  has closed and its fixes have landed, with D-470 among them. Its record
+  is
   `design/increments/20261120_descriptor_content/notes_descriptor_content.md`,
-  whose section 12 holds the review. The arc waits for the user's
+  whose section 12 holds the review. Part four landed on 2026-11-21 while
+  the user was away. Its record is
+  `design/increments/20261121_show_deployment/notes_show_deployment.md`,
+  whose section 3 lists the session's own decisions and whose section 6
+  lists what it leaves open for the user. The arc waits for the user's
   diff-verify and the push. The session left open whether the
   build refuses a pool that admits no deployment. That was ruled on
   2026-11-20 and has landed ahead of part two: the build refuses a
@@ -31,18 +36,13 @@ item changes what the spec says, the spec edit is part of the item.
   lives in `src/structure.jl`. The record, with its findings, the items
   it leaves open for the user and the grid report's part, is
   `design/increments/20261120_structure_trial/notes_structure_trial.md`.
-  - **`show(::Deployment)` in the notation**, after parts one to three
-    and not owed to the inspector. Its tables show each anchor's `Dₖ` and
-    `Φₖ` and each component's `m`, `c`, `D`, `Φ`, `Δt` and `τ` in one row,
-    and its chart marks the frame tops, one column per lattice unit
-    (§9.2, amending D-257's chart).
 - **The tutorial's loose change**, owed before its increment 3 by L12 and
   L23 of `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`:
   a compact `show` for `Simulation`, `Series` and `TrimReport`; a `Series`
   that forwards its columns as properties; and labelled access to a
   `Linearization`'s matrices, friction item 10 of that record, which
-  chapters 4 and 9 read. The last two take a spec edit each. It runs here
-  after the first bullet's `show(::Deployment)`. The inspector's
+  chapters 4 and 9 read. The last two take a spec edit each. It is next,
+  the first bullet's `show(::Deployment)` having landed. The inspector's
   increment 10 needs the first bullet's parts one to three pushed, and
   starts then or after this change, beside the tutorial's next
   increments. A simulation's `show` prints its deployment in
@@ -186,10 +186,21 @@ breaking user code, and each may benefit from user feedback first.
 
 - **A schedule row's `Δt` is not the float nearest its exact period**
   (§9.2, §10.5). `bind_schedule` writes `D * Float64(Δt_base)`, so three
-  base ticks of `1//10` read `0.30000000000000004`, which `show` prints and
-  every discrete bundle receives. The exact value is `D·Δt_base` as a
-  rational. Found by the descriptor increment's parity check, whose client
-  copies the float product.
+  base ticks of `1//10` read `0.30000000000000004`, which `show(::Schedule)`
+  prints and every discrete bundle receives. The exact value is `D·Δt_base`
+  as a rational, which `show(::Deployment)` prints (D-471). Found by the
+  descriptor increment's parity check, whose client copied the float
+  product.
+- **Whether `show(::Deployment)` prints its `Δt_base` against the coarsest
+  admissible one** (§9.2, D-466). D-466 left the question to the rewrite in
+  the notation, and D-471 does not rule it. The inspector's page shows the
+  comparison on a deployment
+  (`RedstoneInspector.jl/design/deployment_overlay.md`, answer 6). A
+  candidate is one line under the block's heading, and no line for a
+  structure with no anchors. The descriptor carries the admissible value, so
+  the parity rule holds either way (D-467). The question, with the
+  candidate's wording, is section 6 of
+  `design/increments/20261121_show_deployment/notes_show_deployment.md`.
 - **A framework throw inside a step is framed as a component's** (§13.4).
   A `StepError`'s message names the cursor as the catch found it, so a
   throw from the framework's own step code reads as the last stage entered.

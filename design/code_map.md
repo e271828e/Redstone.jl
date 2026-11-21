@@ -1100,6 +1100,22 @@ D-261.
   one column after the block's widest route (D-468).
 - The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
   binary guard at 100.
+- The `Deployment`'s `schedule:` block, its own and not the `Schedule`'s
+  lines (D-471):
+  - `_schedule_lines` prints the anchor table with each anchor's `Δtₖ`,
+    `τₖ`, `Dₖ` and `Φₖ`, then one row per discrete component and per rate
+    scope with `m`, `c`, `D`, `Φ`, `Δt` and `τ`. It reads `(m, c)` from the
+    structure, whose discrete components and scopes stand in the schedule's
+    order, and derives the anchors' counts through structure.jl's
+    `_anchor_counts`, as `bind_schedule` and the descriptor's writer do;
+  - `_seconds_label` prints a count of base ticks as exact seconds, the
+    product taken in `Int128`;
+  - `_chart_lines` draws one column per unit of the `Lattice` over the joint
+    period, `lcm(hyperperiod·base, frame)` units, with the frame tops' row
+    first and the binary guard at 100 columns. A row's column is blank
+    where no base tick falls;
+  - `_schedule_counts` and `_chart_ruler` are shared with the `Schedule`'s
+    own form.
 - The `Deployment` prints no grid block (D-466). Its
   parameters line names `h_max` resolved and prints the three time
   quantities exact (D-454), `h_min` where one is set, and the long form
@@ -1115,7 +1131,7 @@ D-261.
   count-only past it.
 
 Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460,
-D-464, D-466, D-468.
+D-464, D-466, D-468, D-471.
 
 ### `src/sim.jl`
 

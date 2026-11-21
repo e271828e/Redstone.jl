@@ -273,20 +273,64 @@ function client_deployment(body)
              "steps per unsplit frame: $steps_text; due instants of " * join(splitting, ", ") * " split frames")]
 end
 
-# The schedule's heading, with the hyperperiod over the rows' `D`, and its rows,
-# each `Δt` the float the `Schedule` holds, `D` times `dt_base` as a float.
+# The schedule's block as the deployment prints it (D-471). The tables come
+# back as token lines: the heading with the hyperperiod over the rows' `D`, the
+# anchors' rows, and the component and rate-scope rows under the four frames'
+# symbols, each `Δt` and `τ` its count times `dt_base`, exact. The chart comes
+# back as its heading and each row's label and marks: one column per gcd of the
+# two periods over the joint period, the frame tops first, and no row past the
+# guard. No rows is no chart.
 function client_schedule(body)
-    dt_base = _rational_of(body["dt_base"])
-    nodes = Dict(node["path"] => node for node in body["build"]["structure"]["nodes"])
-    rows, scopes = body["schedule"]["rows"], body["schedule"]["scopes"]
+    dt_base, dt_frame = _rational_of(body["dt_base"]), _rational_of(body["dt_frame"])
+    structure, schedule = body["build"]["structure"], body["schedule"]
+    nodes = Dict(node["path"] => node for node in structure["nodes"])
+    rows, scopes = schedule["rows"], schedule["scopes"]
     count_text(n, noun) = n == 1 ? "1 $noun" : "$n $(noun)s"
-    heading = "  Schedule: " * (isempty(rows) ? "no rows" : count_text(length(rows), "row")) *
-              (isempty(scopes) ? "" : ", " * count_text(length(scopes), "rate scope")) *
-              (isempty(rows) ? "" : ", hyperperiod $(lcm(big.([row["D"] for row in rows]))) base ticks")
-    heading, [tokens(join([_path_text(row["path"]), _anchor_text(nodes[row["path"]]["timing"]["anchor"]),
-                           string(row["D"]), string(row["phi"]), repr(row["D"] * Float64(dt_base)),
-                           _chain_text(nodes[row["path"]]["rates"])], " "))
-              for row in rows]
+    hyperperiod = lcm(BigInt[row["D"] for row in rows])
+    lines = [tokens("schedule: " * (isempty(rows) ? "no rows" : count_text(length(rows), "row")) *
+                    (isempty(scopes) ? "" : ", " * count_text(length(scopes), "rate scope")) *
+                    (isempty(rows) ? "" : ", hyperperiod $hyperperiod base ticks"))]
+    isempty(rows) && isempty(scopes) && return lines, nothing
+    push!(lines, ["anchors:"], ["anchor", "Δtₖ", "τₖ", "Dₖ", "Φₖ"],
+          ["A₀", repr(dt_base), "0//1", "1", "0"])
+    for (k, (anchor, counts)) in enumerate(zip(structure["anchors"], schedule["anchors"]))
+        push!(lines, [_anchor_text(k), _rational_text(anchor["dt"]), _rational_text(anchor["tau"]),
+                      string(counts["D"]), string(counts["phi"])])
+    end
+    timing_cells(timing, row) =
+        [_anchor_text(timing["anchor"]), string(timing["m"]), string(timing["c"]),
+         string(row["D"]), string(row["phi"]), repr(row["D"] * dt_base), repr(row["phi"] * dt_base)]
+    if !isempty(rows)
+        push!(lines, ["components:"], ["path", "anchor", "m", "c", "D", "Φ", "Δt", "τ"])
+        for row in rows
+            push!(lines, [_path_text(row["path"]); timing_cells(nodes[row["path"]]["timing"], row)])
+        end
+    end
+    if !isempty(scopes)
+        # a scope's `(m, c)` by its path and key, the file stating no order
+        scope_timing = Dict((scope["path"], scope["key"]) => scope["timing"] for scope in structure["scopes"])
+        push!(lines, ["rate", "scopes:"], ["path", "key", "anchor", "m", "c", "D", "Φ", "Δt", "τ"])
+        for row in scopes
+            push!(lines, [_path_text(row["path"]); row["key"];
+                          timing_cells(scope_timing[(row["path"], row["key"])], row)])
+        end
+    end
+    isempty(rows) && return lines, nothing
+    unit = gcd(dt_frame, dt_base)
+    frame, base = Int(dt_frame / unit), Int(dt_base / unit)
+    span = lcm(hyperperiod * base, big(frame))
+    extent = "$(count_text(span, "column")) of $(repr(unit)) s over " *
+             "$(count_text(span ÷ base, "base tick")) and $(count_text(span ÷ frame, "frame"))"
+    span > 100 && return lines, (heading = "chart omitted: " * extent, rows = Tuple{String,String}[])
+    columns = 0:Int(span)-1
+    chart_rows = [("frame tops", String(rstrip(join(k % frame == 0 ? '│' : ' ' for k in columns))))]
+    for row in rows
+        push!(chart_rows,
+              (_path_text(row["path"]),
+               String(rstrip(join(k % base != 0 ? ' ' : (k ÷ base - row["phi"]) % row["D"] == 0 ? '●' : '·'
+                                  for k in columns)))))
+    end
+    lines, (heading = "chart, " * extent * ":", rows = chart_rows)
 end
 
 function test_descriptor()
@@ -847,6 +891,9 @@ function test_descriptor()
         multirate = build(MultiRate())
         anchored = Group((; a = TickCounter(), b = TickCounter());
                          sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150)))
+        two_scopes = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2))),
+                              h = Group((; b = TickCounter()); sample_times = (; b = Relative(1))));
+                           sample_times = (; g = Relative(3, 1), h = Absolute(1//25, 1//50)))
         for built in (multirate, build(pinned_fanout()), build(abstract_entries()), build(chained_model()),
                       build(unfactored_model()), build(anchored), build(routed_pair()), build(FannedLoops(2)),
                       build(Motor(1.0)), build(bare_ports_world()))
@@ -858,14 +905,33 @@ function test_descriptor()
                            Deployment(multirate; Δt_frame = 1//1000, Δt_base = 1//500, h_max = 1//3000,
                                       h_min = 1//100000, algorithm = BS3()),
                            Deployment(build(anchored); Δt_frame = 1//100, Δt_base = 1//1500),
-                           Deployment(build(chained_model()); Δt_frame = 3//10, Δt_base = 1//10))
+                           Deployment(build(chained_model()); Δt_frame = 3//10, Δt_base = 1//10),
+                           # frame tops between base ticks, then no discrete
+                           # component, then two rate scopes on two anchors
+                           Deployment(multirate; Δt_frame = 3//1000, Δt_base = 1//500),
+                           Deployment(build(Plant()); Δt_frame = 1//100),
+                           Deployment(build(two_scopes); Δt_frame = 1//100))
             file = round_trip(descriptor(deployment))["deployment"]
             printed = split(sprint(show, MIME("text/plain"), deployment), '\n')
             @test client_deployment(file) == printed[1:2]
-            # the schedule's heading, then its table's rows after the header
-            heading, rows = client_schedule(file)
-            @test heading == printed[4]
-            @test rows == tokens.(printed[6:5+length(rows)])
+            # the schedule's block (D-471): its tables' lines as tokens, then the
+            # chart's heading and each row's label and marks, read at the column
+            # the ruler's zero stands in
+            block_start = findfirst(startswith("  schedule:"), printed)
+            block = printed[block_start:findfirst(startswith("  warnings"), printed)-1]
+            table_lines, chart = client_schedule(file)
+            chart_at = something(findfirst(startswith("    chart"), block), length(block) + 1)
+            @test table_lines == tokens.(block[1:chart_at-1])
+            @test (chart === nothing) == (chart_at > length(block))
+            chart === nothing && continue
+            @test strip(block[chart_at]) == chart.heading
+            if isempty(chart.rows)
+                @test chart_at == length(block)
+            else
+                zero_column = findfirst(==('0'), collect(block[chart_at+1]))
+                @test [(strip(String(collect(line)[1:zero_column-1])), String(collect(line)[zero_column:end]))
+                       for line in block[chart_at+2:end]] == chart.rows
+            end
         end
     end
 end

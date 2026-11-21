@@ -8,8 +8,10 @@
 # block indented two spaces under its heading, and a nested artifact's lines two
 # spaces further in. The grid block itself stays in `diagnostics.jl`, since the
 # messages use it; the `Structure` sets its lines under `grid:` here. The
-# published `FrameworkStatus` renders here too, under the same conventions, with
-# §11.8's `maxlog` cap its presentation policy.
+# `Deployment` prints the schedule in a block of its own, under the four frames'
+# symbols and against the frame tops, since the `Schedule` holds neither an
+# anchor nor a period (D-471). The published `FrameworkStatus` renders here too,
+# under the same conventions, with §11.8's `maxlog` cap its presentation policy.
 
 const _SUBSCRIPTS = collect("₀₁₂₃₄₅₆₇₈₉")
 
@@ -17,7 +19,7 @@ const _SUBSCRIPTS = collect("₀₁₂₃₄₅₆₇₈₉")
 _anchor_name(anchor::Int) = "A" * join(_SUBSCRIPTS[c - '0' + 1] for c in string(anchor))
 
 # A count with its noun: `no anchors`, `1 anchor`, `4 components`.
-_count(number::Int, noun::String) =
+_count(number::Integer, noun::String) =
     number == 0 ? "no $(noun)s" : number == 1 ? "1 $noun" : "$number $(noun)s"
 
 # The root's path in a table column; a primitive at the root is its own component.
@@ -180,6 +182,22 @@ function Base.show(io::IO, schedule::Schedule)
           _hyperperiod(schedule), " base ticks)")
 end
 
+# The counts a schedule's heading states, the `Schedule`'s own and the
+# deployment's block's alike.
+_schedule_counts(schedule::Schedule) =
+    (isempty(schedule.rows) ? "no rows" : _count(length(schedule.rows), "row")) *
+    (isempty(schedule.scopes) ? "" : ", " * _count(length(schedule.scopes), "rate scope")) *
+    (isempty(schedule.rows) ? "" : ", hyperperiod $(_hyperperiod(schedule)) base ticks")
+
+# A chart's ruler: the column index at every column divisible by 10.
+function _chart_ruler(columns::Int)
+    ruler = ""
+    for k in 0:10:columns-1
+        ruler = rpad(ruler, k) * string(k)
+    end
+    ruler
+end
+
 # The rows, the rate-scope rows when any exist, and the hyperperiod chart: one
 # row per schedule row, one character per base tick `k = 0 … hyperperiod−1`, `●`
 # where `(k − Φ) % D == 0`, under a ruler carrying the tick index at every
@@ -187,10 +205,7 @@ end
 # the chart's place holds one line naming the length instead.
 function _lines(schedule::Schedule)
     rows = schedule.rows
-    heading = "Schedule: " * (isempty(rows) ? "no rows" : _count(length(rows), "row")) *
-              (isempty(schedule.scopes) ? "" : ", " * _count(length(schedule.scopes), "rate scope")) *
-              (isempty(rows) ? "" : ", hyperperiod $(_hyperperiod(schedule)) base ticks")
-    lines = [heading]
+    lines = ["Schedule: " * _schedule_counts(schedule)]
     isempty(rows) ||
         append!(lines, _table("  ", ["path", "anchor", "D", "Φ", "Δt", "rates"],
                               [[_path_label(row.path), _anchor_name(row.anchor), string(row.D),
@@ -210,11 +225,7 @@ function _lines(schedule::Schedule)
     hyperperiod = Int(hyperperiod)
     push!(lines, "  hyperperiod chart, $hyperperiod base ticks:")
     width = maximum(textwidth(_path_label(row.path)) for row in rows)
-    ruler = ""
-    for k in 0:10:hyperperiod-1
-        ruler = rpad(ruler, k) * string(k)
-    end
-    push!(lines, " "^(4 + width + 2) * ruler)
+    push!(lines, " "^(4 + width + 2) * _chart_ruler(hyperperiod))
     for row in rows
         push!(lines, "    " * rpad(_path_label(row.path), width) * "  " *
                      join(((k - row.Φ) % row.D == 0 ? '●' : '·') for k in 0:hyperperiod-1))
@@ -315,9 +326,83 @@ function _steps_line(deployment::Deployment)
         " split frames"
 end
 
+# A count of base ticks in seconds, exact (D-471). The product of two `Int`s
+# fits `Int128`, and a `Rational` prints alike at every width.
+_seconds_label(ticks::Int, Δt_base::Rational{Int}) = repr(ticks * Rational{Int128}(Δt_base))
+
+# The chart against the frame tops (§9.2, D-471): one column per exact unit
+# over the joint period, the least common multiple of the hyperperiod and the
+# frame in units, where the frame tops and the ticks repeat together. The first
+# row marks the frame tops, in every deployment. A row's column is `●` at a
+# base tick where it is due, `·` at one where it is not, and blank where no
+# base tick falls. The guard is binary, at 100 columns: past it the chart's
+# place holds one line naming the span. The span is a `BigInt`, as the
+# hyperperiod is.
+function _chart_lines(deployment::Deployment)
+    rows, lattice = deployment.schedule.rows, deployment.lattice
+    span = lcm(_hyperperiod(deployment.schedule) * lattice.base, big(lattice.frame))
+    extent = _count(span, "column") * " of $(repr(lattice.unit)) s over " *
+             _count(span ÷ lattice.base, "base tick") * " and " *
+             _count(span ÷ lattice.frame, "frame")
+    span > 100 && return ["chart omitted: " * extent]
+    columns = 0:Int(span)-1
+    labels = [_path_label(row.path) for row in rows]
+    width = maximum(textwidth, ["frame tops"; labels])
+    chart_row(label, marks) = rstrip("  " * rpad(label, width) * "  " * join(marks))
+    lines = ["chart, " * extent * ":", " "^(2 + width + 2) * _chart_ruler(length(columns)),
+             chart_row("frame tops", (k % lattice.frame == 0 ? '│' : ' ' for k in columns))]
+    for (row, label) in zip(rows, labels)
+        push!(lines, chart_row(label, (k % lattice.base != 0 ? ' ' :
+                                       (k ÷ lattice.base - row.Φ) % row.D == 0 ? '●' : '·'
+                                       for k in columns)))
+    end
+    lines
+end
+
+# The schedule under the four frames' symbols (§9.2, D-464, D-471), the
+# deployment's own block: the anchor table with each anchor's seconds pair and
+# its counts, `A₀` at `Δt_base` by its value; one row per discrete component
+# with `(m, c)`, `(D, Φ)` and `(Δt, τ)`, the seconds exact; the rate-scope rows
+# under the same columns; and the chart. `(m, c)` are the structure's, whose
+# discrete components and scopes stand in the schedule's order, and the
+# anchors' counts are derived by the constructor's own division, since the
+# `Schedule` holds neither (D-261). No rows and no scopes is the heading alone.
+function _schedule_lines(deployment::Deployment)
+    schedule, structure, Δt_base = deployment.schedule, deployment.build.structure, deployment.Δt_base
+    lines = ["schedule: " * _schedule_counts(schedule)]
+    isempty(schedule.rows) && isempty(schedule.scopes) && return lines
+    anchor_rows = [[_anchor_name(0), repr(Δt_base), string(zero(Rational{Int})), "1", "0"]]
+    for (k, anchor) in enumerate(structure.anchors)
+        Dk, Φk = _anchor_counts(anchor, Δt_base)   # whole on a bound deployment
+        push!(anchor_rows, [_anchor_name(k), string(anchor.Δt), string(anchor.τ),
+                            string(something(Dk)), string(something(Φk))])
+    end
+    push!(lines, "  anchors:")
+    append!(lines, _table("    ", ["anchor", "Δtₖ", "τₖ", "Dₖ", "Φₖ"], anchor_rows))
+    timing_cells(timing::Timing, D::Int, Φ::Int) =
+        [_anchor_name(timing.anchor), string(timing.m), string(timing.c), string(D), string(Φ),
+         _seconds_label(D, Δt_base), _seconds_label(Φ, Δt_base)]
+    if !isempty(schedule.rows)
+        discrete = [entry for entry in structure.components if entry.tier === DISCRETE]
+        push!(lines, "  components:")
+        append!(lines, _table("    ", ["path", "anchor", "m", "c", "D", "Φ", "Δt", "τ"],
+                              Vector{String}[[_path_label(row.path); timing_cells(entry.timing, row.D, row.Φ)]
+                                             for (row, entry) in zip(schedule.rows, discrete)]))
+    end
+    if !isempty(schedule.scopes)
+        push!(lines, "  rate scopes:")
+        append!(lines, _table("    ", ["path", "key", "anchor", "m", "c", "D", "Φ", "Δt", "τ"],
+                              Vector{String}[[_path_label(row.path); string(row.key);
+                                              timing_cells(scope.timing, row.D, row.Φ)]
+                                             for (row, scope) in zip(schedule.scopes, structure.scopes)]))
+    end
+    isempty(schedule.rows) || append!(lines, _indented(_chart_lines(deployment)))
+    lines
+end
+
 # The parameters, the steps per frame, the build in its compact form (a reader
-# wanting it evaluates `deployment.build`), the schedule and the warnings. The
-# grid report is the structure's to print (D-466).
+# wanting it evaluates `deployment.build`), the schedule's block and the
+# warnings. The grid report is the structure's to print (D-466).
 function _lines(deployment::Deployment)
     vcat(["Deployment: " * _deployment_parameters(deployment) *
           "; firing_budget = $(deployment.firing_budget), " *
@@ -326,7 +411,7 @@ function _lines(deployment::Deployment)
           "attempt_budget = $(deployment.attempt_budget)",
           "  " * _steps_line(deployment),
           "  build: " * sprint(show, deployment.build)],
-         _indented(_lines(deployment.schedule)),
+         _indented(_schedule_lines(deployment)),
          _indented(_warning_lines(deployment.warnings)))
 end
 
