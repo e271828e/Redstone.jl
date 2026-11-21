@@ -504,6 +504,10 @@ Each face of the child, as [`input_faces`](@ref) lists it, becomes the pair
 input is the face `u`, so the default labels an `integrator` child's bare input
 `"integrator.u"`.
 
+A [`Group`](@ref) has no declaration body to call the helper from. It passes
+the helper inside a function of the group, as in
+`input_wires = g -> input_passthrough(g, "aircraft")`.
+
 The default `prefix` folds the path's `/` into `sep`, so a
 [container](@ref g-container-children) element `"units/1"` labels its faces
 `"units.1.…"`, a legal face name. The helper uses an explicit `prefix` verbatim.
@@ -555,7 +559,9 @@ Return output wire [entries](@ref g-entry) that expose a child's output
 [faces](@ref g-face) on the [assembly](@ref g-assembly)'s own boundary.
 
 `output_passthrough` is [`input_passthrough`](@ref)'s sibling on the outward
-boundary. Splat its entries into the assembly's [`output_wires`](@ref). It takes
+boundary. Splat its entries into the assembly's [`output_wires`](@ref). A
+[`Group`](@ref) passes the helper inside a function of the group, as in
+`output_wires = g -> output_passthrough(g, "aircraft")`. It takes
 the same keywords over the faces [`output_faces`](@ref) lists, with the same
 folded default `prefix` and the same three exclusive selection keywords, one per
 call, `select` receiving face names.
@@ -653,7 +659,9 @@ A `Group` is an assembly that holds its children and its declarations as field
 values. The elements of its `children` field, a `NamedTuple` of
 [components](@ref g-component), are its children. Its [`local_wires`](@ref),
 [`input_wires`](@ref), [`output_wires`](@ref) and [`sample_times`](@ref) are
-ordinary functions of the instance, which return its fields.
+ordinary functions of the instance, which read its fields. A wire field holds
+the [entries](@ref g-entry) or a function that computes them, as the
+constructor states.
 
 The one declaration it adds is [`transparent_container`](@ref). `children` is
 [name-transparent](@ref g-container-children), so its elements go by bare key
@@ -667,7 +675,7 @@ field rather than on a path segment, keeps working as
 """
 struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple} <: AbstractComponent
     children::C       # component-typed elements → children by the container rule
-    local_wires::W    # inert parameter data
+    local_wires::W    # inert parameter data: the entries, or a function of the `Group`
     input_wires::I
     output_wires::O
     sample_times::R   # the ad-hoc rate scope, keyed by bare element name (§8.7)
@@ -692,18 +700,57 @@ declaration by the keyword of its name. The second form takes every field from
 `g` except those a keyword replaces, so `Group(g; local_wires = rewired)` keeps
 the children, the boundary and the rates of `g`.
 
-A bare `Pair` passed for `local_wires`, `input_wires` or `output_wires` is the
-one-entry tuple.
+A wire keyword takes its [entries](@ref g-entry) written out or computed.
+Written out, they are a tuple of pairs, or a bare `Pair` for one entry.
+Computed, they are a function that receives the `Group` and returns the entries.
+
+The `Group` stores a function without calling it. [`local_wires`](@ref),
+[`input_wires`](@ref) and [`output_wires`](@ref) call it with the `Group` each
+time they are read, and return its result. A build reads them, so the function
+runs inside the build, and a warning it raises joins the build's warnings.
+
+A function serves a helper that needs the assembly in hand, which does not
+exist while the constructor's arguments are written.
+`input_wires = g -> input_passthrough(g, "inner")` exposes the input
+[faces](@ref g-face) of the child `inner`, as [`input_passthrough`](@ref)
+computes them. The result may mix computed and written entries, as in
+`g -> (input_passthrough(g, "inner")..., "cmd" => "act/cmd")`.
+
+A function travels with the second form. A copy with other children computes
+its entries from those children.
+
+A field that holds a function does not hold the entries. Read them through the
+declaration, `input_wires(g)`, never through the field, `g.input_wires`.
 
 # Keywords
 
 - `children`: the children of the copy, in the second form.
 - `local_wires`: the wires between children, as [`local_wires`](@ref) returns
-  them.
-- `input_wires`: the inward boundary, as [`input_wires`](@ref) returns it.
-- `output_wires`: the outward boundary, as [`output_wires`](@ref) returns it.
+  them, or a function of the `Group` that returns them.
+- `input_wires`: the inward boundary, as [`input_wires`](@ref) returns it, or
+  a function of the `Group` that returns it.
+- `output_wires`: the outward boundary, as [`output_wires`](@ref) returns it,
+  or a function of the `Group` that returns it.
 - `sample_times`: the rates of the children, keyed by bare child name, as
-  [`sample_times`](@ref) returns them.
+  [`sample_times`](@ref) returns them. It takes no function.
+
+# Examples
+
+```jldoctest
+julia> import Redstone: Group, input_passthrough, input_wires
+
+julia> import Redstone.Library: UnitDelay
+
+julia> inner = Group((; hold = UnitDelay(0.0)); input_wires = "u" => "hold/u");
+
+julia> outer = Group((; inner); input_wires = g -> input_passthrough(g, "inner"; prefix = ""));
+
+julia> outer.input_wires isa Function
+true
+
+julia> input_wires(outer)
+("u" => "inner/u",)
+```
 """
 Group(children; local_wires = (), input_wires = (), output_wires = (),
       sample_times = (;)) =
@@ -722,9 +769,18 @@ Group(g::Group; children = g.children, local_wires = g.local_wires,
 _entries(wires::Pair) = (wires,)
 _entries(wires) = wires
 
-local_wires(g::Group) = g.local_wires
-input_wires(g::Group) = g.input_wires
-output_wires(g::Group) = g.output_wires
+# Design: §8.5, §8.8, D-473.
+# A wire field holds the entries or a function of the `Group`. The function is
+# called here, at the read, so it runs in the build's walk as a named
+# assembly's declaration body does: the passthrough helpers get the assembly
+# they take, and their warnings reach the build's list. `g` is untyped so that
+# no function of the package but the five declarations dispatches on a `Group`.
+_declared(fn::Function, g) = _entries(fn(g))
+_declared(wires, g) = wires
+
+local_wires(g::Group) = _declared(g.local_wires, g)
+input_wires(g::Group) = _declared(g.input_wires, g)
+output_wires(g::Group) = _declared(g.output_wires, g)
 sample_times(g::Group) = g.sample_times
 transparent_container(::Group) = :children  # COV_EXCL_LINE
 

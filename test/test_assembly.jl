@@ -1193,6 +1193,62 @@ function assembly_primitives()
         @test build(component).structure.root_inputs == [:var"k.c", :var"k.a", :var"k.b"]
     end
 
+    @testset "a `Group`'s wire keyword takes a function of the group, called at each read (§8.5, §8.8, D-473)" begin
+        computed = Group((; inner = faced(), trim = Gain(3.0));
+                         local_wires = g -> ("trim/out" => "inner/a"),
+                         input_wires = g -> (input_passthrough(g, "inner"; except = ("a",))...,
+                                             "e" => "trim/e"),
+                         output_wires = g -> output_passthrough(g, "inner"; only = ("scaled",)))
+        wired = HandWired(faced(), Gain(3.0))
+
+        # The field holds the function, and the declaration returns its entries,
+        # a bare `Pair` normalized as the keyword form normalizes one.
+        @test computed.input_wires isa Function
+        @test local_wires(computed) == local_wires(wired) == ("trim/out" => "inner/a",)
+        @test input_wires(computed) == input_wires(wired)
+        @test output_wires(computed) == output_wires(wired)
+
+        # The function receives the group itself.
+        seen = Ref{Any}(nothing)
+        watched = Group((; c = Gain(2.0)); local_wires = g -> (seen[] = g; ()))
+        @test local_wires(watched) == () && seen[] === watched
+
+        # The two builds are the same model.
+        computed_build, wired_build = build(computed), build(wired)
+        @test computed_build.structure.root_inputs == wired_build.structure.root_inputs ==
+              [:var"inner.b", :e]
+        @test paths(computed_build.structure) == paths(wired_build.structure)
+        computed_sim = Simulation(computed; Δt_frame = 1//10)
+        wired_sim = Simulation(wired; Δt_frame = 1//10)
+        authored = set(u = (var"inner.b" = 1.0, e = 2.0))
+        init!(computed_sim, authored); init!(wired_sim, authored)
+        @test port(computed_sim, "", :var"inner.scaled") === port(wired_sim, "", :var"inner.scaled")
+
+        # The function runs inside the build. A selector that keeps nothing
+        # warns on the build's list, the child named under its owner's path.
+        muted = Group(computed; output_wires = g -> output_passthrough(g, "inner"; select = _ -> false))
+        nested = Group((; outer = muted); input_wires = g -> input_passthrough(g, "outer"; prefix = ""))
+        nested_build = @test_logs match_mode = :any (:warn, r"^EmptyFaceSelection") build(nested)
+        empty_selections = [d for d in warnings(nested_build) if d isa EmptyFaceSelection]
+        @test only(empty_selections).who == "output_passthrough"
+        @test only(empty_selections).path == "outer/inner"
+
+        # A copy computes its entries from its own children.
+        other = Group((; s = Sum()); input_wires = ("a" => "s/a", "c" => "s/b"),
+                      output_wires = "s/e" => "scaled")
+        swapped = Group(computed; children = merge(computed.children, (; inner = other)))
+        @test input_wires(swapped) == ("inner.c" => "inner/c", "e" => "trim/e")
+        @test input_wires(computed) == input_wires(wired)
+
+        # `sample_times` takes no function.
+        @test_throws MethodError Group((; c = Gain(2.0)); sample_times = g -> (;))
+
+        # A throw inside the function is framed as the declaration's (§13.2).
+        throwing = Group((; c = Gain(2.0)); local_wires = g -> error("local_wires boom"))
+        d = diagnostic(failure(() -> build(Group((; a = throwing)))))
+        @test d.fn == "local_wires" && path(d) == "a"
+    end
+
     @testset "the passthrough filters, and refuses what it cannot mean (§8.8)" begin
         component = faced()
 

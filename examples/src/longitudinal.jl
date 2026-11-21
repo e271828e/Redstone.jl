@@ -366,8 +366,7 @@ termination record (§13.5). The run flies the approach by staging a descending
 """
 approach(solution; noise_psd = 1.8e-3) =
     Group((; vehicle = piloted(solution; noise_psd), gear = GroundContact(), stop = StopRequest(reason = "touchdown"));
-          input_wires = ("h_ref" => "vehicle/h_ref", "V_ref" => "vehicle/V_ref", "δe_pilot" => "vehicle/δe_pilot",
-                         "δt_pilot" => "vehicle/δt_pilot", "engage" => "vehicle/engage"),
+          input_wires = g -> input_passthrough(g, "vehicle"; prefix = ""),
           local_wires = ("vehicle/h" => "gear/h", "gear/contact" => "stop/u"))
 
 """

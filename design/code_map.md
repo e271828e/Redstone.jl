@@ -64,8 +64,9 @@ in the `src/model.jl` entry.
 - §8.8's `input_passthrough`/`output_passthrough`, with the three exclusive
   selectors `except`, `only` and `select`, and `EmptyFaceSelection` through the
   channel (D-251). A bare face is labelled as any face (D-437).
-- The anonymous assembly `Group`, with `_entries` and its copy constructor
-  (D-473), written through the
+- The anonymous assembly `Group`, with `_entries`, its copy constructor and
+  `_declared`, which calls a wire field that holds a function (D-473),
+  written through the
   assembly declarations alone. No build step names it, and `precompile.jl`'s
   workload is its one caller in `src/` (§8.5, D-184, D-472).
 - The class and child readers, the path resolvers and the build primitives
