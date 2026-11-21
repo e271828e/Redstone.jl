@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://e271828e.github.io/Redstone.jl/stable/descriptor.json",
   "title": "Redstone descriptor",
-  "description": "The projection of a Build, a Deployment or a carrier exception, a failed build's or a service's, to data (spec §13.9, D-432, D-434). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is design/inspector/descriptor_design.md. `name` is optional, a label for the model that a writer outside the core supplies; `descriptor` never writes it.",
+  "description": "The projection of a Build, a Deployment or a carrier exception, a failed build's or a service's, to data (spec §13.9, D-432, D-434, D-467, D-468). Version 1.0. The writer is `descriptor` in src/descriptor.jl; this file is the shape of record, strict about the writer's output: every object closes with additionalProperties false, and a field that does not apply is omitted, never null. The design record is RedstoneInspector.jl/design/descriptor_design.md. Until the first release the format stays at version 1.0 and changes freely, the schema requiring each section it gains (D-467). `name` is optional, a label for the model that a writer outside the core supplies; `descriptor` never writes it.",
   "type": "object",
   "properties": {
     "format_version": { "$ref": "#/definitions/FormatVersion" },
@@ -44,23 +44,87 @@
       "additionalProperties": false
     },
     "DeploymentBody": {
-      "description": "The deployment's body: in version one, the build body alone. The schedule rows, the concrete Δt values, the hyperperiod and the grid report wait for a minor bump.",
+      "description": "The deployment's body, flat in the order of the Deployment's fields (D-467): the build body whole; the frame period, the base tick and the step bound `h_max`, resolved, each exact; the step floor `h_min`, present only when set; the algorithm; the four budgets; the schedule; and the deployment's own warnings, each a Diagnostic, an empty array when none. A client derives the hyperperiod and the steps per frame, and each schedule row's Δt as D times `dt_base`.",
       "type": "object",
       "properties": {
-        "build": { "$ref": "#/definitions/BuildBody" }
+        "build": { "$ref": "#/definitions/BuildBody" },
+        "dt_frame": { "$ref": "#/definitions/Rational" },
+        "dt_base": { "$ref": "#/definitions/Rational" },
+        "h_max": { "$ref": "#/definitions/Rational" },
+        "h_min": { "$ref": "#/definitions/Rational" },
+        "algorithm": { "$ref": "#/definitions/Algorithm" },
+        "firing_budget": { "type": "integer", "minimum": 1 },
+        "localization_tol": { "type": "number", "exclusiveMinimum": 0 },
+        "localization_budget": { "type": "integer", "minimum": 1 },
+        "attempt_budget": { "type": "integer", "minimum": 1 },
+        "schedule": { "$ref": "#/definitions/ScheduleSection" },
+        "warnings": { "type": "array", "items": { "$ref": "#/definitions/Diagnostic" } }
       },
-      "required": ["build"],
+      "required": ["build", "dt_frame", "dt_base", "h_max", "algorithm", "firing_budget", "localization_tol",
+                   "localization_budget", "attempt_budget", "schedule", "warnings"],
+      "additionalProperties": false
+    },
+    "Algorithm": {
+      "description": "The integration method: `text`, what the token's show prints, and `proposes`, whether the method proposes its steps' lengths, which decides whether the steps per frame are a count or a range.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "proposes": { "type": "boolean" }
+      },
+      "required": ["text", "proposes"],
+      "additionalProperties": false
+    },
+    "ScheduleSection": {
+      "description": "The Schedule's projection (D-467). `anchors` holds each anchor's counts in base ticks, `D` = dt/dt_base and `phi` = tau/dt_base, in the order of the structure's `anchors`; `rows` one row per discrete primitive in walk order; `scopes` one row per rate scope, in the order of the structure's `scopes`. A row carries no anchor, which its node's timing holds, no rate chain and no Δt.",
+      "type": "object",
+      "properties": {
+        "anchors": { "type": "array", "items": { "$ref": "#/definitions/AnchorCounts" } },
+        "rows": { "type": "array", "items": { "$ref": "#/definitions/ScheduleRow" } },
+        "scopes": { "type": "array", "items": { "$ref": "#/definitions/ScheduleScope" } }
+      },
+      "required": ["anchors", "rows", "scopes"],
+      "additionalProperties": false
+    },
+    "AnchorCounts": {
+      "type": "object",
+      "properties": {
+        "D": { "type": "integer", "minimum": 1 },
+        "phi": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["D", "phi"],
+      "additionalProperties": false
+    },
+    "ScheduleRow": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "D": { "type": "integer", "minimum": 1 },
+        "phi": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["path", "D", "phi"],
+      "additionalProperties": false
+    },
+    "ScheduleScope": {
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "key": { "type": "string" },
+        "D": { "type": "integer", "minimum": 1 },
+        "phi": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["path", "key", "D", "phi"],
       "additionalProperties": false
     },
     "BuildBody": {
-      "description": "The build's body, one section per artifact, `structure` projects the Structure and `outputs` projects the Outputs, and the warnings the build kept, each a Diagnostic, an empty array when none.",
+      "description": "The build's body, one section per artifact, `structure` projects the Structure, `outputs` the Outputs and `events` the Events, and the warnings the build kept, each a Diagnostic, an empty array when none.",
       "type": "object",
       "properties": {
         "structure": { "$ref": "#/definitions/StructureSection" },
         "outputs": { "$ref": "#/definitions/OutputsSection" },
+        "events": { "$ref": "#/definitions/EventsSection" },
         "warnings": { "type": "array", "items": { "$ref": "#/definitions/Diagnostic" } }
       },
-      "required": ["structure", "outputs", "warnings"],
+      "required": ["structure", "outputs", "events", "warnings"],
       "additionalProperties": false
     },
     "FailureBody": {
@@ -134,16 +198,17 @@
       "additionalProperties": false
     },
     "StructureSection": {
-      "description": "The Structure's projection: every component as a node in walk order, the root's input faces typed (their `pinned` false in version one, the wire pass having stripped the marker), the anchors, the keyed rate scopes, and one row per type.",
+      "description": "The Structure's projection: every component as a node in walk order, the root inputs typed with their pin, the anchors, the keyed rate scopes, the grid report derived from the anchors, and one row per type.",
       "type": "object",
       "properties": {
         "nodes": { "type": "array", "items": { "$ref": "#/definitions/Node" } },
-        "root_inputs": { "type": "array", "items": { "$ref": "#/definitions/PrimitiveFace" } },
+        "root_inputs": { "type": "array", "items": { "$ref": "#/definitions/RootInput" } },
         "anchors": { "type": "array", "items": { "$ref": "#/definitions/Anchor" } },
         "scopes": { "type": "array", "items": { "$ref": "#/definitions/Scope" } },
+        "grid": { "$ref": "#/definitions/Grid" },
         "types": { "type": "array", "items": { "$ref": "#/definitions/TypeRow" } }
       },
-      "required": ["nodes", "root_inputs", "anchors", "scopes", "types"],
+      "required": ["nodes", "root_inputs", "anchors", "scopes", "grid", "types"],
       "additionalProperties": false
     },
     "Node": {
@@ -183,10 +248,11 @@
             "class": { "const": "primitive" },
             "tier": { "type": "string", "enum": ["continuous", "discrete"] },
             "timing": { "$ref": "#/definitions/Timing" },
+            "rates": { "type": "array", "items": { "$ref": "#/definitions/RateLink" } },
             "inputs": { "type": "array", "items": { "$ref": "#/definitions/PrimitiveFace" } },
             "outputs": { "type": "array", "items": { "$ref": "#/definitions/PrimitiveFace" } }
           },
-          "required": ["path", "class", "tier", "timing", "type", "signature", "inputs", "outputs", "parameters"],
+          "required": ["path", "class", "tier", "timing", "rates", "type", "signature", "inputs", "outputs", "parameters"],
           "additionalProperties": false
         }
       ]
@@ -225,6 +291,19 @@
         "pinned": { "type": "boolean" }
       },
       "required": ["name", "type", "kind", "pinned"],
+      "additionalProperties": false
+    },
+    "RootInput": {
+      "description": "A root input: a primitive face's fields, its type the one the wire pass fixed, and `pinned`, the fan-out meet's (D-168, D-468): true when some consumer's entry refuses the type walked to a Dual. `pinned_by` lists those consumers as endpoints, an empty array when none; a discrete consumer pins by tier and a continuous one by declaration, which its node's tier tells.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "kind": { "$ref": "#/definitions/KindMarker" },
+        "pinned": { "type": "boolean" },
+        "pinned_by": { "type": "array", "items": { "$ref": "#/definitions/Endpoint" } }
+      },
+      "required": ["name", "type", "kind", "pinned", "pinned_by"],
       "additionalProperties": false
     },
     "AssemblyFace": {
@@ -307,6 +386,33 @@
       "required": ["anchor", "m", "c"],
       "additionalProperties": false
     },
+    "RateLink": {
+      "description": "One `sample_times` link of a primitive's chain, outermost first, as the component row holds it: `scope`, the declaring assembly's path, \"\" for the root; `key`, the key as written, a container's bare field name included; and the entry, a Relative's `K` and `phi` or an Absolute's `dt` and `tau`. The timing alone does not determine the chain: an explicit Relative(1) changes no timing.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "scope": { "type": "string" },
+            "key": { "type": "string" },
+            "K": { "type": "integer", "minimum": 1 },
+            "phi": { "type": "integer", "minimum": 0 }
+          },
+          "required": ["scope", "key", "K", "phi"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "scope": { "type": "string" },
+            "key": { "type": "string" },
+            "dt": { "$ref": "#/definitions/Rational" },
+            "tau": { "$ref": "#/definitions/Rational" }
+          },
+          "required": ["scope", "key", "dt", "tau"],
+          "additionalProperties": false
+        }
+      ]
+    },
     "Rational": {
       "type": "object",
       "properties": {
@@ -320,12 +426,12 @@
       "description": "One Absolute anchor, numbered from 1 by position; anchor 0, the base grid, has no row. `scope` is the declaring assembly's path, \"\" for the root.",
       "type": "object",
       "properties": {
-        "T": { "$ref": "#/definitions/Rational" },
+        "dt": { "$ref": "#/definitions/Rational" },
         "tau": { "$ref": "#/definitions/Rational" },
         "scope": { "type": "string" },
         "key": { "type": "string" }
       },
-      "required": ["T", "tau", "scope", "key"],
+      "required": ["dt", "tau", "scope", "key"],
       "additionalProperties": false
     },
     "Scope": {
@@ -337,6 +443,41 @@
         "timing": { "$ref": "#/definitions/Timing" }
       },
       "required": ["path", "key", "timing"],
+      "additionalProperties": false
+    },
+    "Grid": {
+      "description": "The grid report as data (§9.2, D-466, D-467), derived from the anchors. `admissible` is the coarsest admissible Δt_base, gcd(pool), absent when there are no anchors. `pool` lists the constraint entries, every anchor's period then every nonzero offset, in anchor order. `primes` lists each prime power of the grid's denominator. Every stored position counts from 1.",
+      "type": "object",
+      "properties": {
+        "admissible": { "$ref": "#/definitions/Rational" },
+        "pool": { "type": "array", "items": { "$ref": "#/definitions/PoolEntry" } },
+        "primes": { "type": "array", "items": { "$ref": "#/definitions/PrimeRow" } }
+      },
+      "required": ["pool", "primes"],
+      "additionalProperties": false
+    },
+    "PoolEntry": {
+      "description": "One pool entry: `anchor`, the anchor's position in `anchors` from 1, whose row holds the entry's value, scope and key; `kind`, its period or its offset; `factor`, the leave-one-out refinement factor gcd(pool without it)/gcd(pool); and `alternatives`, present on a driving offset that has some, the nearest offsets the rest of the pool supports.",
+      "type": "object",
+      "properties": {
+        "anchor": { "type": "integer", "minimum": 1 },
+        "kind": { "type": "string", "enum": ["period", "offset"] },
+        "factor": { "type": "integer", "minimum": 1 },
+        "alternatives": { "type": "array", "items": { "$ref": "#/definitions/Rational" }, "minItems": 1 }
+      },
+      "required": ["anchor", "kind", "factor"],
+      "additionalProperties": false
+    },
+    "PrimeRow": {
+      "description": "One prime power of the grid's denominator: `prime`, `power` and `suppliers`, the positions in `pool` from 1 of the entries whose denominators it divides. `unfactored`, present only when true, marks a cofactor the trial division left whole, which may be composite; its suppliers are the entries whose denominators share a factor with it.",
+      "type": "object",
+      "properties": {
+        "prime": { "type": "integer", "minimum": 2 },
+        "power": { "type": "integer", "minimum": 1 },
+        "suppliers": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1 },
+        "unfactored": { "const": true }
+      },
+      "required": ["prime", "power", "suppliers"],
       "additionalProperties": false
     },
     "TypeRow": {
@@ -355,7 +496,7 @@
       "properties": {
         "function": {
           "type": "string",
-          "enum": ["u_types", "y_types", "x_init", "s_init", "m_init", "sample_times",
+          "enum": ["u_types", "y_types", "x_init", "s_init", "m_init", "sample_times", "state_events",
                    "local_wires", "input_wires", "output_wires", "stop_reason", "transparent_container"]
         },
         "file": { "type": "string" },
@@ -382,6 +523,35 @@
         "components": { "type": "array", "items": { "$ref": "#/definitions/ComponentOutputs" } }
       },
       "required": ["order", "components"],
+      "additionalProperties": false
+    },
+    "EventsSection": {
+      "description": "The Events' projection (D-467): one row per primitive in walk order, as the artifact holds them, so a position addresses a row here and in the outputs' `components` alike.",
+      "type": "object",
+      "properties": {
+        "components": { "type": "array", "items": { "$ref": "#/definitions/ComponentEvents" } }
+      },
+      "required": ["components"],
+      "additionalProperties": false
+    },
+    "ComponentEvents": {
+      "description": "A primitive's events in declaration order, which is their priority order, and the event bundle's field names; both empty for a primitive that declares none.",
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "events": { "type": "array", "items": { "$ref": "#/definitions/Event" } },
+        "bundle": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["path", "events", "bundle"],
+      "additionalProperties": false
+    },
+    "Event": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "policy": { "type": "string", "enum": ["localized", "non_localized"] }
+      },
+      "required": ["name", "policy"],
       "additionalProperties": false
     },
     "ComponentOutputs": {
