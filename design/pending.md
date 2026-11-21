@@ -49,8 +49,11 @@ item changes what the spec says, the spec edit is part of the item.
   `design/increments/20261121_tutorial_loose_change/notes_tutorial_loose_change.md`,
   whose section 2 holds the user's rulings, section 7 the session's own
   decisions for the user's review, and section 8 the four printed forms,
-  which the user has not yet judged. What remains: the cold review with
-  its fixes, the user's diff-verify, and the push. The inspector's
+  which the user has not yet judged. It has landed, unpushed: the docs as
+  `d382b00`, the code as `23458b8` and the cold review's fixes as
+  `7410031`, with the gate at 10870 of 10870. The review has closed, and
+  its record is section 11. What remains is the user's: the printed forms,
+  the session's decisions, the diff-verify and the push. The inspector's
   increment 10 needs the first bullet's parts one to three pushed, and
   nothing in it reads what this change touches.
 - **The inspector, stage 1**: the static inspector over the descriptor,

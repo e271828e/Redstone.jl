@@ -22,11 +22,17 @@ The three parts keep their numbers from the session:
 
 - The design is settled except for the printed layouts, which the user
   has yet to judge on the output of section 8.
-- The prototype is built and green at `4907ebb` (S10). The docs commit
-  that adds this file is the first on the real tree, the code follows as
-  the patch beside this file, and the cold review's fixes come third. The
-  session's own decisions, S1 to S10, wait for the user's review in
-  section 7. Nothing is pushed.
+- The increment has landed on the real tree, unpushed: the docs as
+  `d382b00`, the code as `23458b8`, the patch beside this file applied
+  unchanged, and the cold review's fixes as `7410031`. Two small commits
+  stand beside them, `623dbc5` for this file and one that renames a
+  testset. The gate reads 10870 of 10870 at `7410031`, and the examples'
+  runner 179 of 179 at `23458b8`. The cold review has closed, with its
+  record in sections 11 and 12.
+- What waits for the user: the four printed forms of section 8, the
+  session's own decisions S1 to S13 in section 7, the wording of D-474,
+  D-475 and the two spec passages, the open points of section 12, the
+  diff-verify and the push.
 - The peer finished at `505dd28` and released the tree. Both patches pass
   `git apply --check` there.
 - **The peer.** The session `group-promotion` works on the same tree. Its
@@ -552,6 +558,21 @@ ForwardDiff or Redstone, and Redstone's ambiguities stay at zero. The
 alternative, for the user to weigh, moves the labelled testsets into a
 child process, as the hint's test already is.
 
+**S13. Three leftovers of the fix, ruled with the reviewer's view.**
+
+- D-475's Rationale says the labeled form "puts all eight arrays on
+  shared axes", and §14.10 says the arrays of one linearization agree
+  because they share their axes. Both are loose where a tap list is
+  empty. They stay: each is reasoning and no ruling, and agreement holds
+  vacuously for an empty array.
+- The `Series` testset of `test/test_show.jl` cited D-474, which rules no
+  printed form. The citation went, in a commit of its own, with the
+  `show` file green at 230. The `Linearization` testset keeps D-475,
+  since it exercises the labeled form.
+- The child process that runs the hint strips the coverage flag, so the
+  coverage workflow never records the marked print line. The marker
+  stands for that reason, as `src/precompile.jl`'s workload does.
+
 ## 8. The printed forms, as built
 
 From `probe_layouts.jl` and `out_layouts.txt` in the probes' folder, on
@@ -828,3 +849,46 @@ line as missed. Accessors or ConstructionBase on a `Series`, whose
 property names now differ from its field names. A hand-made
 `Linearization` whose lengths disagree with its labels, which `labeled`
 and `show` accept silently.
+
+## 12. The fixes and the delta
+
+One fixer landed `7410031`, 14 files, +94 −51, by the charge the
+coordinator wrote from section 11. Its probes are
+`tutorial_loose_change_fix_probes/` beside the worktree.
+
+- Every finding ruled "fix" is fixed as charged. The reviewer's mutants R2
+  to R7 each turn a test red now.
+- F7's last item is pinned and its claim kept. In `test/test_log.jl`'s
+  running-loop testset, `series` refuses a reserved label first, and the
+  call after it still meets the lifecycle refusal, which shows the loop
+  was running.
+- The routed files read 1557 of 1557, the docs battery was green, the
+  gate read 10870 of 10870 with no warning, six assertions above the
+  landing, and the docs build was green.
+
+The reviewer, resumed with its context, read the commit file by file and
+found that every fix holds and widens nothing. It saw nothing new.
+
+**Open, for the user.**
+
+- **The printed forms** of section 8, with the reservations of S4.
+- **S12.** The whole suite runs with the extension loaded. The
+  alternative moves the labelled testsets into a child process.
+- **Position bullets the spec states nowhere**, which the fixer listed
+  and nobody acted on: that `propertynames` lists the four fields first
+  (D-474); that the fields are typed abstractly with no type parameter,
+  that ComponentArrays is a weak dependency and the core declares
+  `labeled` with no method, that `labeled` on a labeled value labels it
+  again, and that no `subsystem` is added (D-475). The spec's rule asks
+  each ruling to be bold where a section states it, so either the spec
+  gains these sentences or the entries' Positions shed them.
+- **The printed forms have no home in the spec or the log.** §9.2 and
+  §13.7 cover the artifacts, and these four values are none. A home waits
+  for the user's judgment of the forms.
+- **Not verified.** Whether Codecov shows the marked line as excluded.
+  Accessors or ConstructionBase on a `Series`. The docs build on Linux.
+- **Scratch to delete once the increment is pushed**, all under
+  `/Users/miguel/.julia/dev/Redstone.jl-worktrees/`: the worktrees
+  `tutorial_loose_change`, `tutorial_loose_change_docs` and
+  `tutorial_loose_change_review`, the four `tutorial_loose_change_*probes`
+  folders, the two prompts and the three agents' notes.
