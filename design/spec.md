@@ -12386,8 +12386,9 @@ tick table), with the anchors' counts beside its rows. `anchors` holds each
 anchor's `(Dₖ, Φₖ)` in the order of `structure`'s `anchors`. The writer
 computes them as `Δtₖ/Δt_base` and `τₖ/Δt_base`, since a client cannot solve
 them back for an anchor with no discrete primitive beneath it. `rows` holds
-each discrete primitive's path with its `D` and `phi`, and `scopes` each rate
-scope's path and key with its `D` and `phi`. A row carries no anchor and no
+each discrete primitive's path with its `D` and `phi`, in walk order. `scopes`
+holds each rate scope's path and key with its `D` and `phi`, in the order of
+`structure`'s `scopes`. A row carries no anchor and no
 rate chain, which its node holds, and no `Δt`, which a client computes exact
 as `D` times `dt_base`.
 
