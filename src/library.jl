@@ -2,8 +2,7 @@ module Library
 
 import ..Redstone: AbstractComponent, Pinned, StateEvent, StopFlag, NO_STOP, STOP_REQUESTED,
     x_init, s_init, m_init, u_types, y_types, y_direct, y_state, x_deriv, s_update,
-    state_events, local_wires, input_wires, output_wires, sample_times, transparent_container,
-    stop_reason
+    state_events, stop_reason
 using StaticArrays: StaticArray, SArray, SMatrix, SVector, SOneTo, SUnitRange, similar_type
 using LinearAlgebra: I
 import ForwardDiff
@@ -3060,78 +3059,5 @@ function s_update(c::DiscreteLQRTracker, (; s, u, y, Δt))
     (q = s.q + Δt .* gated_error(c, p.K_int * (u.z_ref - u.z), u) + β .* (correction_reference(c, u, y) - y.u_raw),
      saturated = saturation_code.(y.u_raw, p.u_min, p.u_max))
 end
-
-# --- the anonymous assembly (§8.5, D-211) -------------------------------------
-
-# Design: D-211.
-# It needs no new rule: the container-children rule makes the `children`
-# field's elements children of the `Group` itself.
-# The type parameters carry the children's concrete types, so the executor
-# specializes on them as on a named assembly. What a `Group` gives up against a
-# named type is dispatch, which exploratory composition does not want.
-"""
-    Group
-
-An [assembly](@ref g-assembly) built on the fly, whose values are the ad-hoc
-topologies.
-
-A `Group` is an assembly that holds its children and its declarations as field
-values. The elements of its `children` field, a `NamedTuple` of
-[components](@ref g-component), are its children. Its [`local_wires`](@ref),
-[`input_wires`](@ref), [`output_wires`](@ref) and [`sample_times`](@ref) are
-ordinary functions of the instance, which return its fields.
-
-The one declaration it adds is [`transparent_container`](@ref). `children` is
-[name-transparent](@ref g-container-children), so its elements go by bare key
-everywhere a child name appears. That is `"ctl/out" => "plant/u"` for a wire,
-`(ctl = Relative(2),)` for a rate, `at("ctl", …)` for a
-[condition](@ref g-condition) prefix and `"plant"` for a read path, as in
-`port(sim, "plant", :y)`. A `Group`'s declarations are then textually identical
-to a named assembly's. The rate declaration's field-name sugar, keying on the
-field rather than on a path segment, keeps working as
-`(children = Relative(2),)` for the uniform case.
-"""
-struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple} <: AbstractComponent
-    children::C       # component-typed elements → children by the container rule
-    local_wires::W    # inert parameter data
-    input_wires::I
-    output_wires::O
-    sample_times::R   # the ad-hoc rate scope, keyed by bare element name (§8.7)
-end
-
-# Design: This is the convenience form. The declarations are ordered collections
-# of pairs, and a single wire should not have to be written `("a/x" => "b/y",)`.
-"""
-    Group(children; local_wires = (), input_wires = (), output_wires = (),
-          sample_times = (;)) -> Group
-
-Return a `Group` over `children`, with each [assembly](@ref g-assembly)
-declaration given by the keyword of its name.
-
-A bare `Pair` passed for `local_wires`, `input_wires` or `output_wires` is the
-one-entry tuple.
-
-# Keywords
-
-- `local_wires`: the wires between children, as [`local_wires`](@ref) returns
-  them.
-- `input_wires`: the inward boundary, as [`input_wires`](@ref) returns it.
-- `output_wires`: the outward boundary, as [`output_wires`](@ref) returns it.
-- `sample_times`: the rates of the children, keyed by bare child name, as
-  [`sample_times`](@ref) returns them.
-"""
-Group(children; local_wires = (), input_wires = (), output_wires = (),
-      sample_times = (;)) =
-    Group(children, _entries(local_wires), _entries(input_wires),
-          _entries(output_wires), sample_times)
-
-_entries(wires::Pair) = (wires,)
-_entries(wires) = wires
-
-local_wires(g::Group) = g.local_wires
-input_wires(g::Group) = g.input_wires
-output_wires(g::Group) = g.output_wires
-sample_times(g::Group) = g.sample_times
-transparent_container(::Group) = :children  # COV_EXCL_LINE
 
 end # module Library

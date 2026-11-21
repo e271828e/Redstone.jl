@@ -1,3 +1,5 @@
+using InteractiveUtils: methodswith    # the `Group` dispatch check below
+
 # Shared fixture: the container-children, name-transparency and §13.3-primitives
 # sections all build a `TupleRoster`.
 
@@ -360,6 +362,24 @@ function assembly_transparent_containers()
         sim = Simulation(pair_group; Δt_frame = 1//10)
         init!(sim, set(u = (in = 2.0,)))
         @test port(sim, "", :y) === 4.0
+    end
+
+    @testset "`Group` is the core's, known to the package through the assembly declarations alone (§8.5, §13.7, D-472)" begin
+        @test parentmodule(Group) === Redstone
+        @test !isdefined(Redstone.Library, :Group)
+        # The functions of the package with a method that takes a `Group`: the
+        # five declarations and nothing else, so no build step dispatches on it.
+        # A name beginning with `#` is one the compiler generated.
+        dispatching = Symbol[]
+        for name in names(Redstone; all = true)
+            (isdefined(Redstone, name) && !startswith(String(name), "#")) || continue
+            fn = getfield(Redstone, name)
+            fn isa Function || continue
+            isempty(methodswith(Group, fn; supertypes = false)) || push!(dispatching, name)
+        end
+        @test sort!(dispatching) ==
+              [:input_wires, :local_wires, :output_wires, :sample_times, :transparent_container]
+        @test isempty(foreign_declarations(Group((; c = Gain(2.0)))))
     end
 end
 

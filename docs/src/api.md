@@ -28,6 +28,7 @@ input_wires
 output_wires
 sample_times
 transparent_container
+Group
 Relative
 Absolute
 stop_reason
@@ -213,7 +214,6 @@ Fn
 Pack
 Unpack
 Fields
-Group
 Switch
 Select
 StopRequest

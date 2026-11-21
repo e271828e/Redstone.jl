@@ -57,8 +57,7 @@ A continuous plant under a discrete PI controller running at 50 Hz:
 using Redstone
 import Redstone: AbstractComponent, x_init, s_init, u_types, y_types,
     y_state, y_direct, x_deriv, s_update            # extended by components
-import Redstone: Absolute, Simulation, init!, run!, set, port, state, build
-import Redstone.Library: Group
+import Redstone: Absolute, Group, Simulation, init!, run!, set, port, state, build
 
 struct Plant <: AbstractComponent
     ω::Float64

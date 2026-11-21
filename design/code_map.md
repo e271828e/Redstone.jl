@@ -64,14 +64,17 @@ in the `src/model.jl` entry.
 - §8.8's `input_passthrough`/`output_passthrough`, with the three exclusive
   selectors `except`, `only` and `select`, and `EmptyFaceSelection` through the
   channel (D-251). A bare face is labelled as any face (D-437).
+- The anonymous assembly `Group`, with `_entries`, written through the
+  assembly declarations alone. No build step names it, and `precompile.jl`'s
+  workload is its one caller in `src/` (§8.5, D-184, D-472).
 - The class and child readers, the path resolvers and the build primitives
   take components, assemblies and the root unspecialized, and `_children`
   reads a container through `_elements` and `_element_keys`, so a new
   component or root type compiles none of them again (§9.7, D-289).
 
 Spec: §6.1, §7.1, §7.3, §8.1, §8.2, §8.5–§8.8, §9.1, §9.7, §13.1, §13.3,
-§14.2, Appendix C, D-061, D-094, D-130, D-171, D-207, D-209, D-211, D-212,
-D-231, D-251, D-263, D-265, D-289, D-437, D-438.
+§14.2, Appendix C, D-061, D-094, D-130, D-171, D-184, D-207, D-209, D-211,
+D-212, D-231, D-251, D-263, D-265, D-289, D-437, D-438, D-472.
 
 ### `src/bindings.jl`
 
@@ -792,7 +795,6 @@ The standard component library, the submodule `Redstone.Library`:
   `realization(c, Δt)` and `initial_state`, the held system's `s0` or `x0`,
   over `DiscreteStateSpace`, `DiscreteTransferFunction`, `DiscretizedStateSpace`
   and `DiscretizedTransferFunction` (D-313).
-- The anonymous assembly `Group`, with `_entries` (D-184).
 - Every component with one state field or one mode declares it bare, and every
   stateless component declares `nothing` (§8.2, D-438). Every component with one
   input or one output declares that contract bare, its face `u` or `y`, the
@@ -805,7 +807,7 @@ It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
 includes it last.
 
-Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §8.5, §10.4, §13.5, §13.7, D-141, D-179, D-184, D-211, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
+Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §10.4, §13.5, §13.7, D-141, D-179, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
 
 ### `src/linearize.jl`
 

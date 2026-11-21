@@ -15,7 +15,7 @@ The workload's model: a `Step` reference into a `DiscretePID` at 50 Hz, a
 a second-order `TransferFunction` plant whose output is the root output `y`,
 and a `LimitedIntegrator` on that output, for the event machinery.
 """
-workload_loop() = Library.Group((
+workload_loop() = Group((
         reference = Library.Step(t_step = 0.5, after = 1.0),
         controller = Library.DiscretePID(Kp = 2.0, Ki = 1.0, Tt = 1.0, u_min = -1.0, u_max = 1.0),
         actuator = Library.FirstOrderLag(τ = 0.05),

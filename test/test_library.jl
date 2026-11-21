@@ -3775,8 +3775,7 @@ function test_library()
                      LQRTracker(; tracker_gains()..., hold = true, tracking = true),
                      DiscreteLQRTracker(; tracker_gains()..., Tt = 0.0, hold = true, tracking = true),
                      GaussianWhiteNoise(seed = 1, σ = 1.0),
-                     GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0)),
-                     Group((; k = Constant(1.0))))
+                     GaussianWhiteNoise(seed = 7, μ = SVector(1.0, -1.0), σ = SVector(1.0, 2.0)))
             @test parentmodule(typeof(comp)) === Redstone.Library
             @test isempty(foreign_declarations(comp))
             # A bare input is no root input, so the component builds under the

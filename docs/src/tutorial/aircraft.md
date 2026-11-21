@@ -114,14 +114,14 @@ Each line of the returned value is one equation of motion.
 ## The model
 
 A model is a tree of components with one root. The aircraft sits under a
-[`Group`](@ref Redstone.Library.Group), an [assembly](@ref g-assembly) that
+[`Group`](@ref), an [assembly](@ref g-assembly) that
 names its children and wires them. Here the group has one child, `plant`,
 and hands it the group's own inputs `δe` and `δt`, the model's
 [root inputs](@ref g-root-input). Every later read addresses the aircraft
 by the path `"plant"`.
 
 ```@example aircraft
-import Redstone.Library: Group
+import Redstone: Group
 
 aircraft() = Group((; plant = Longitudinal());
                    input_wires = ("δe" => "plant/δe", "δt" => "plant/δt"))
