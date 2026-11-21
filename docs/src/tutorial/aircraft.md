@@ -170,7 +170,8 @@ run!(sim; t_end = 120.0)
 [`series`](@ref) gathers the log into columns, one per entry of a
 [read set](@ref g-read-set). Each entry is a [selector](@ref g-selector),
 here [`get_output`](@ref) of a port by path and name. The log holds one
-snapshot per frame.
+snapshot per frame. The result holds the snapshots' times `t`, and each
+column reads under its label, so `flight.V` is the airspeed at each one.
 
 ```@example aircraft
 import Redstone: series, reads, get_output
@@ -179,8 +180,8 @@ using CairoMakie
 flight = series(sim, reads(V = get_output("plant", :V), h = get_output("plant", :h)))
 
 fig = Figure()
-lines(fig[1, 1], flight.t, flight.columns.V; color = :royalblue, axis = (; ylabel = "V (m/s)"))
-lines(fig[2, 1], flight.t, flight.columns.h; color = :darkorange, axis = (; xlabel = "t (s)", ylabel = "h (m)"))
+lines(fig[1, 1], flight.t, flight.V; color = :royalblue, axis = (; ylabel = "V (m/s)"))
+lines(fig[2, 1], flight.t, flight.h; color = :darkorange, axis = (; xlabel = "t (s)", ylabel = "h (m)"))
 fig
 ```
 
@@ -188,9 +189,9 @@ The aircraft climbs as it slows and dives as it speeds up. The period is
 the time between two upward crossings of the trim airspeed.
 
 ```@example aircraft
-V = flight.columns.V
+V = flight.V
 upward = [flight.t[i] for i in 2:length(V) if V[i - 1] < 50.0 ≤ V[i]]
-(snapshots = length(V), V = extrema(V), h = extrema(flight.columns.h), periods = diff(upward))
+(snapshots = length(V), V = extrema(V), h = extrema(flight.h), periods = diff(upward))
 ```
 
 The log holds 12 001 snapshots over the two minutes. The airspeed swings

@@ -2,8 +2,8 @@
 
 # A port's or a level's exported face's value over the logged snapshots, beside their times.
 logged_times(sim) = series(sim, reads()).t
-logged_port(sim, path, name) = series(sim, reads(y = get_output(path, name))).columns.y
-logged_face(sim, path, name) = series(sim, at(path, reads(y = get_face(name)))).columns.y
+logged_port(sim, path, name) = series(sim, reads(y = get_output(path, name))).y
+logged_face(sim, path, name) = series(sim, at(path, reads(y = get_face(name)))).y
 
 # The times at which `values` crosses `level`, at the snapshot after each crossing.
 crossings(times, values, level) =

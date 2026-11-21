@@ -137,6 +137,7 @@ restore!
 overlay!
 linearize
 Linearization
+labeled
 get_state
 get_deriv
 get_output

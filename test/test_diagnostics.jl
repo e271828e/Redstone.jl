@@ -651,6 +651,7 @@ function diagnostics_kind_set()
             ReadSetMisuse(observed = NamedTuple, reason = :not_a_read_set),
             ReadSetMisuse(observed = Float64, reason = :not_a_tap_list, label = :x),
             ReadSetMisuse(observed = String, reason = :empty_prefix),
+            ReadSetMisuse(observed = GetDeriv, reason = :reserved_label, label = :t),
             NotAttached(device = "Pad", roster = ["device 1 (Pad)"]),
             CheckpointMismatch(what = :scalar, expected = Float64, found = D8),
             CheckpointMismatch(what = :store, name = :paths, expected = ["a"],
@@ -739,6 +740,11 @@ function diagnostics_kind_set()
                           "Δt_base derived as 1//300 s: the grid is 3× finer than the " *
                           "fastest declared work (`a/b` at D = 3) (§9.2)\n  admissible:")
         @test occursin("\n    5²  b offset", rendered)
+        # A label `series` reserves names itself and the four fields (D-474).
+        rendered = message(only(d for d in occurrences
+                                if d isa ReadSetMisuse && d.reason === :reserved_label))
+        @test startswith(rendered, "the read labeled `t` takes the name of a `Series` field")
+        @test occursin("`t`, `frame`, `boundary` and `columns`", rendered)
 
         # Every kind of the closed set has an occurrence above: the coverage
         # check is over `Diagnostic`'s own subtypes, so adding a kind without an

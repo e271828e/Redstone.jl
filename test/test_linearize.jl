@@ -6,6 +6,11 @@
 # test_trim.jl's, `resume_condition` test_lifecycle.jl's, `LeafPose`
 # test_readers.jl's, `ClockStamp` test_build.jl's.
 
+# The labeled form's testsets at the end of the file: once the suite loads
+# ComponentArrays, its extension is loaded for every file, so the testsets
+# above never call `labeled` (D-475).
+using ComponentArrays: ComponentMatrix, ComponentVector
+
 # The walkthrough's model: a sum of two root inputs drives the pendulum's
 # torque, and two faces leave the root, one of them the sum's feedthrough.
 lin_pend() = Group((; s = Sum(), c = Pendulum()); local_wires = ("s/e" => "c/u",),
@@ -77,6 +82,11 @@ y_types(::MatrixConsumer) = (q = Float64,)
 y_state(::MatrixConsumer, (; x)) = (q = x.q,)
 x_deriv(::MatrixConsumer, (; x, u)) = (q = 2.0 * u.w[1, 2] + 5.0 * u.w[2, 1] - x.q,)
 
+# A level filling at a unit rate from 0.8, and a comparator reporting whether it
+# is above 0.5: a `y` tap on a `Bool` leaf.
+lin_tank() = Group((; k = Constant(1.0), i = Integrator(x0 = 0.8), c = Comparator(threshold = 0.5));
+                   local_wires = ("k/y" => "i/u", "i/y" => "c/u"))
+
 # Two linearizations field for field: the value holds matrices, so `==` on the
 # struct would compare them by identity.
 same_linearization(left, right) =
@@ -98,11 +108,14 @@ function test_linearize()
         @test isapprox(linearization.B, [0 0; 1 -1]; atol = 1e-12)
         @test isapprox(linearization.C, [1 0; 0 0]; atol = 1e-12)
         @test isapprox(linearization.D, [0 0; 1 -1]; atol = 1e-12)
-        @test linearization.ẋ₀.θ == 0.0 && abs(linearization.ẋ₀.ω) < 1e-12         # a trim point, not assumed
-        @test linearization.x₀ == (θ = 0.3, ω = 0.0)
-        @test linearization.u₀.τ == PEND_G_L * sin(0.3) && linearization.u₀.d == 0.0
-        @test linearization.y₀ == (θ = 0.3, u_eff = linearization.u₀.τ)
+        @test linearization.ẋ₀[1] == 0.0 && abs(linearization.ẋ₀[2]) < 1e-12         # a trim point, not assumed
+        @test linearization.x₀ == [0.3, 0.0]
+        @test linearization.u₀ == [PEND_G_L * sin(0.3), 0.0]
+        @test linearization.y₀ == [0.3, linearization.u₀[1]]
         @test linearization.x_labels == (:θ, :ω) && linearization.u_labels == (:τ, :d) && linearization.y_labels == (:θ, :u_eff)
+        # The plain form, plain arrays (D-475).
+        @test all(getfield(linearization, f) isa Vector{Float64} for f in (:ẋ₀, :x₀, :u₀, :y₀))
+        @test all(getfield(linearization, f) isa Matrix{Float64} for f in (:A, :B, :C, :D))
         @test size(linearization.A) == (2, 2) && size(linearization.B) == (2, 2) &&
               size(linearization.C) == (2, 2) && size(linearization.D) == (2, 2)
     end
@@ -175,7 +188,7 @@ function test_linearize()
         @test state(sim, "ctl").acc != port(sim, "ctl", :u)
         linearization = linearize(sim, taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)),
                                             y = (u = get_output("ctl", :u),)))
-        @test linearization.y₀.u === port(sim, "ctl", :u)
+        @test linearization.y_labels == (:u,) && linearization.y₀[1] === port(sim, "ctl", :u)
     end
 
     @testset "the default form linearizes at the checkpoint's own time (§14.10, D-274)" begin
@@ -185,7 +198,7 @@ function test_linearize()
         t, q = sim.model.exec.clock.t, state(sim, "c").q
         @test t ≈ 0.5
         linearization = linearize(sim, taps(x = (q = get_state("c", :q),)))
-        @test linearization.ẋ₀.q ≈ -t * q^2 && linearization.A ≈ [-2t * q;;]
+        @test linearization.ẋ₀[1] ≈ -t * q^2 && linearization.A ≈ [-2t * q;;]
     end
 
     @testset "`about` is legal in built and mid-frame, where the default form is refused (§14, D-274)" begin
@@ -284,8 +297,9 @@ function test_linearize()
         @test isapprox(linearization.B, [0 0; -2 0]; atol = 1e-12)
         @test isapprox(linearization.C, [1 0; 0 1; 0 -1.0]; atol = 1e-12)
         @test isapprox(linearization.D, [0 0; 0 0; -0.4 0]; atol = 1e-12)
-        @test linearization.x₀ == (q1 = 0.1, q2 = 0.2) && linearization.u₀ == (qin1 = 0.5, qin2 = 0.0)
-        @test linearization.y₀.power == -0.2
+        @test linearization.x_labels == (:q1, :q2) && linearization.u_labels == (:qin1, :qin2)
+        @test linearization.x₀ == [0.1, 0.2] && linearization.u₀ == [0.5, 0.0]
+        @test linearization.y_labels == (:q1, :q2, :power) && linearization.y₀[3] == -0.2
     end
 
     @testset "a matrix leaf's `[k,l]` tap seeds the entry its linear `[k]` names (§14.10, D-276)" begin
@@ -298,7 +312,7 @@ function test_linearize()
         @test isapprox(by_indices.A, kron(Matrix(1.0I, 2, 2), [-1 0; 0.5 -2]); atol = 1e-12)
         @test isapprox(by_indices.A[:, 3], [0, 0, -1, 0.5]; atol = 1e-12)     # `m[1,2]`'s column
         @test by_indices.A == by_linear.A                                    # column for column
-        @test by_indices.x₀ == (m11 = 1.0, m21 = 2.0, m12 = 3.0, m22 = 4.0)
+        @test by_indices.x_labels == (:m11, :m21, :m12, :m22) && by_indices.x₀ == [1.0, 2.0, 3.0, 4.0]
         # One entry is one site, whichever spelling names it.
         d = only(diagnostics(failure(() -> linearize(sim, taps(
             x = (a = get_state("c", "m[1,2]"), b = get_state("c", "m[3]")))))))
@@ -351,7 +365,8 @@ function test_linearize()
         sim = Simulation(lin_sampled(); Δt_frame = 1//10)
         state_taps = (θ = get_state("c", :θ), ω = get_state("c", :ω))
         linearization = linearize(sim, taps(x = state_taps); about = lin_sampled_point())
-        @test abs(linearization.ẋ₀.ω) < 1e-12            # the held torque is the authored 4.0, not the probe's zero
+        @test linearization.x_labels == (:θ, :ω)
+        @test abs(linearization.ẋ₀[2]) < 1e-12            # the held torque is the authored 4.0, not the probe's zero
         @test isapprox(linearization.A, lin_closed_A(asin(4.0 / PEND_G_L)); atol = 1e-12)
         @test size(linearization.B) == (2, 0) && size(linearization.C) == (0, 2)
 
@@ -428,7 +443,18 @@ function test_linearize()
         # A `y` row is a read, not a seed.
         linearization = linearize(sim, taps(x = (θ = get_state("c", :θ),), y = (a = get_face(:θ), b = get_face(:θ))))
         @test linearization.C[1, :] == linearization.C[2, :] && isapprox(linearization.C, [1.0; 1.0;;]; atol = 1e-12)
-        @test linearization.y₀ == (a = 0.3, b = 0.3)
+        @test linearization.y_labels == (:a, :b) && linearization.y₀ == [0.3, 0.3]
+    end
+
+    @testset "a `y` tap on a leaf that is not a `Float64` reads as a float (§14.10, D-475)" begin
+        sim = Simulation(lin_tank(); Δt_frame = 1//100)
+        init!(sim, set())
+        @test port(sim, "c", :y) === true
+        linearization = linearize(sim, taps(x = (level = get_state("i"),),
+                                            y = (level = get_output("i", :y), above = get_output("c", :y))))
+        @test linearization.y₀ isa Vector{Float64}
+        @test linearization.y₀[1] === 0.8 && linearization.y₀[2] === 1.0
+        @test linearization.C == [1.0; 0.0;;]                    # the `Bool` row is zero
     end
 
     @testset "the tap set is a type, and the misuses are directives (§14.2, D-272)" begin
@@ -501,7 +527,7 @@ function test_linearize()
         linearization = linearize(model, taps(x = (q = get_state("c", :q),));
                                   about = set(u = (in = 0.0,)), t0 = t₀)
         init!(model, set(u = (in = 0.0,)); t0 = t₀)
-        @test linearization.ẋ₀.q === -model.exec.clock.t === -1.330442639634298
+        @test linearization.ẋ₀[1] === -model.exec.clock.t === -1.330442639634298
         @test Float64(t₀) != 1.330442639634298
         # The nominal half runs every discrete output stage, and the seeded half
         # takes its frozen cells from there (D-213): a stamp of the clock reads
@@ -511,6 +537,53 @@ function test_linearize()
         linearization = linearize(stamped, taps(x = (q = get_state("c", :q),),
                                                 y = (stamp = get_face(:stamp),));
                                   about = set(u = (in = 0.0,)), t0 = t₀)
-        @test linearization.y₀.stamp === -linearization.ẋ₀.q === 1.330442639634298
+        @test linearization.y₀[1] === -linearization.ẋ₀[1] === 1.330442639634298
+    end
+
+    @testset "the labeled form holds the same arrays under the tap labels (§14.10, D-475)" begin
+        sim = Simulation(lin_pend(); Δt_frame = 1//10)
+        init!(sim, lin_point())
+        plain = linearize(sim, lin_taps())
+        linearization = labeled(plain)
+        @test linearization isa Linearization
+        @test all(getfield(linearization, f) isa ComponentVector{Float64} for f in (:ẋ₀, :x₀, :u₀, :y₀))
+        @test all(getfield(linearization, f) isa ComponentMatrix{Float64} for f in (:A, :B, :C, :D))
+        # The values by position; `==` on a component vector also compares the labels.
+        @test all(collect(getfield(linearization, f)) == getfield(plain, f) for f in (:ẋ₀, :x₀, :u₀, :y₀))
+        @test all(getfield(linearization, f) == getfield(plain, f) for f in (:A, :B, :C, :D))
+        @test (linearization.x_labels, linearization.u_labels, linearization.y_labels) ==
+              (plain.x_labels, plain.u_labels, plain.y_labels)
+        @test plain.A isa Matrix{Float64}                                # the plain value is untouched
+        # Each array on its own axes, read at entries a swap of two axes would move.
+        @test propertynames(linearization.x₀) == propertynames(linearization.ẋ₀) == (:θ, :ω)
+        @test propertynames(linearization.u₀) == (:τ, :d) && propertynames(linearization.y₀) == (:θ, :u_eff)
+        @test linearization.x₀.θ == 0.3 && linearization.u₀.τ == plain.u₀[1]
+        @test linearization.y₀.u_eff == plain.y₀[2] && linearization.ẋ₀.ω == plain.ẋ₀[2]
+        @test linearization.A[:ω, :θ] == plain.A[2, 1] && linearization.A[:θ, :ω] == 1.0
+        @test linearization.B[:ω, :d] == plain.B[2, 2] == -1.0
+        @test linearization.C[:u_eff, :θ] == plain.C[2, 1] && linearization.C[:θ, :θ] == 1.0
+        @test linearization.D[:u_eff, :τ] == plain.D[2, 1] == 1.0
+        @test linearization.A[(:θ, :ω), (:ω,)] == plain.A[:, 2:2]
+        # A value labeled already is labeled again the same way.
+        twice = labeled(linearization)
+        @test same_linearization(twice, linearization)
+        @test all(typeof(getfield(twice, f)) === typeof(getfield(linearization, f)) for f in fieldnames(Linearization))
+        # An empty list labels to an empty array, its vector a plain one.
+        bare = labeled(linearize(sim, taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)))))
+        @test bare.y₀ isa Vector{Float64} && isempty(bare.y₀) && bare.u₀ isa Vector{Float64}
+        @test size(bare.C) == (0, 2) && bare.C[:, :ω] == Float64[] && size(bare.D) == (0, 0)
+    end
+
+    @testset "without ComponentArrays, `labeled` names the package (§14.10, D-475)" begin
+        # The suite has the extension loaded, so the hint stays silent here, and
+        # a child process without it shows the hint.
+        err = try labeled(1) catch err; err end
+        @test err isa MethodError && !occursin("comes from the ComponentArrays package", sprint(showerror, err))
+        julia = filter(flag -> !startswith(flag, "--code-coverage"), Base.julia_cmd().exec)
+        script = "using Redstone; try Redstone.labeled(1) catch err; print(sprint(showerror, err)) end"
+        output = read(`$julia --project=$(Base.active_project()) -e $script`, String)
+        @test occursin("no method matching labeled(::Int64)", output)
+        @test occursin("`labeled` comes from the ComponentArrays package — load it with " *
+                       "`using ComponentArrays` beside Redstone", output)
     end
 end

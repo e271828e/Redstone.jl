@@ -624,6 +624,137 @@ function test_show()
         @test occursin("\n    MalformedDatum: 1 occurrence\n", final) && !occursin(rendered, final)
     end
 
+    @testset "Simulation: the state, the deployment's compact form, the outcome, the log and the devices (§9.2, §12.6)" begin
+        deployment_line = "  deployment: Deployment(Δt_frame = 1//10, Δt_base = 1//10, h_max = 1//10, RK4())"
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
+        @test plain(sim) == join(["Simulation: built, live", deployment_line, "  log: no snapshots",
+                                  "  devices: none", "  warnings: none"], "\n")
+        @test compact(sim) == "Simulation(built, live)"
+        init!(sim, set(u = (in = 1.0,)); log = false)
+        attach!(sim, TailProbe(), NoClaim())
+        @test plain(sim) == join(["Simulation: initialized, live, frame 0 at t = 0.0", deployment_line,
+                                  "  log: off", "  devices: device 1 (TailProbe)", "  warnings: none"], "\n")
+        # Each termination source with what it holds; `HookedRamp` and `Tripwire`
+        # are test_failures.jl's.
+        requested = Simulation(tick_alarmed(); Δt_frame = 1//10)
+        init!(requested)
+        run!(requested; t_end = 5.0)
+        @test plain(requested) ==
+              join(["Simulation: stopped, live, frame 9 at t = 0.9", deployment_line,
+                    "  termination: ModelRequestedStop at t = 0.9, by stop/y, reason \"three ticks counted\"",
+                    "  log: 10 snapshots", "  devices: none", "  warnings: none"], "\n")
+        @test compact(requested) == "Simulation(stopped, live, frame 9 at t = 0.9)"
+        ended = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
+        init!(ended, set(u = (in = 1.0,)))
+        run!(ended; t_end = 0.5)
+        @test occursin("\n  termination: EndTimeReached at t = 0.5\n  log: 6 snapshots\n", plain(ended))
+        ramp = HookedRamp()
+        stopped = Simulation(hooked_ramp(ramp); Δt_frame = 1//10)
+        ramp.hook[] = () -> stop!(stopped)
+        init!(stopped)
+        run!(stopped; t_end = 5.0)
+        @test occursin("\n  termination: ControlRequestedStop at t = 0.3, by code\n", plain(stopped))
+        errored = Simulation(fed(Tripwire(0.05), "arm"); Δt_frame = 1//10)
+        init!(errored, set(u = (in = true,)))
+        failure(() -> run!(errored; t_end = 5.0))
+        # A running loop's log goes unread; a rostered device makes the loop yield
+        # every frame, as in test_log.jl's gate.
+        racing = Simulation(fed(Plant(), "u"); Δt_frame = 1//100000)
+        init!(racing, set(u = (in = 0.0,)); log_max = 16)
+        plain(racing)                                        # warms the compile path
+        attach!(racing, TailProbe(), NoClaim())
+        task = Threads.@spawn run!(racing; t_end = 1.0)
+        while lifecycle(racing) !== :running && !istaskdone(task)
+            yield()
+        end
+        text = plain(racing)
+        wait(task)
+        @test startswith(text, "Simulation: running, live, frame ") && !occursin("\n  log:", text)
+        # The clock where the frame threw, past the record's last published boundary.
+        @test startswith(plain(errored), "Simulation: errored, live, frame 1 at t = 0.05\n")
+        @test occursin("\n  termination: LoopError at t = 0.0, StepError\n  log: 1 snapshot\n", plain(errored))
+    end
+
+    @testset "Series: the snapshots' span and each column's element type (§11.2, D-474)" begin
+        sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
+        read_set = reads(y = get_output("c", :y), input = get_input(:in))
+        @test plain(series(sim, read_set)) ==
+              join(["Series: no snapshots", "  column  eltype", "  y       Float64", "  input   Float64"], "\n")
+        @test compact(series(sim, read_set)) == "Series(no snapshots; y, input)"
+        init!(sim, set(u = (in = 1.0,)))
+        run!(sim; t_end = 0.5)
+        @test plain(series(sim, read_set)) ==
+              join(["Series: 6 snapshots, t = 0.0 to 0.5", "  column  eltype", "  y       Float64",
+                    "  input   Float64"], "\n")
+        @test compact(series(sim, read_set)) == "Series(6 snapshots, t = 0.0 to 0.5; y, input)"
+        stamped = Simulation(Group((; src = Sawtooth(1.0), s = Stamper(0.315));
+                                   local_wires = ("src/q" => "s/sig",)); Δt_frame = 1//10)
+        init!(stamped)
+        run!(stamped; t_end = 0.5)
+        @test endswith(plain(series(stamped, reads(armed = get_output("s", :armed)))), "\n  armed   Bool")
+    end
+
+    @testset "TrimReport: the verdict, the decisions with their bounds, the residuals and the commit (§14.8)" begin
+        stalled = TrimReport(false, (θ = 0.3, δ = -0.25), (a = 0.125, b = -2.5e-10), (a = 1e-9, b = 1e-9),
+                             nothing, nothing, :stalled, 85, 42, [(:θ, :upper)], Tuple{String,Symbol}[])
+        @test plain(stalled) ==
+              join(["TrimReport: not converged, nothing committed; status stalled, 42 iterations, 85 evaluations",
+                    "  decision  value",
+                    "  θ         0.3    at the upper bound",
+                    "  δ         -0.25",
+                    "  residual  value     tolerance",
+                    "  a         0.125     1.0e-9",
+                    "  b         -2.5e-10  1.0e-9"], "\n")
+        @test compact(stalled) == "TrimReport(not converged, nothing committed, 42 iterations)"
+        committed = TrimReport(true, (θ = 0.3, δ = -0.25), (a = 0.0, b = -2.5e-10), (a = 1e-9, b = 1e-9),
+                               (a = 1.0e-12, b = -2.5e-10), (level = 1.5,), :converged, 5, 4,
+                               [(:δ, :lower)], [("c", :touchdown)])
+        @test plain(committed) ==
+              join(["TrimReport: converged, committed; status converged, 4 iterations, 5 evaluations",
+                    "  decision  value",
+                    "  θ         0.3",
+                    "  δ         -0.25  at the lower bound",
+                    "  residual  value     tolerance  committed",
+                    "  a         0.0       1.0e-9     1.0e-12",
+                    "  b         -2.5e-10  1.0e-9     -2.5e-10",
+                    "  check  committed",
+                    "  level  1.5",
+                    "  fired events: c/touchdown"], "\n")
+        @test compact(committed) == "TrimReport(converged, committed, 4 iterations)"
+        bypassed = TrimReport(true, (;), (;), (;), (;), (;), :bypassed, 1, 0,
+                              Tuple{Symbol,Symbol}[], Tuple{String,Symbol}[])
+        @test plain(bypassed) == "TrimReport: converged, committed; status bypassed, no iterations, 1 evaluation"
+        # A real solve prints through the same method.
+        sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
+        @test startswith(plain(trim!(sim, u_problem(); baseline = pend_base(), t0 = 0.25)),
+                         "TrimReport: converged, committed; status converged, ")
+    end
+
+    @testset "Linearization: the operating point per list, then each matrix under its labels (§14.10, D-475)" begin
+        linearization = Linearization([0.0, -1.5], [0.3, 0.0], [2.5, 0.0], [0.3, 2.5], [0.0 1.0; -9.5 -0.5],
+                                      [0.0 0.0; 1.0 -1.0], [1.0 0.0; 0.0 0.25], [0.0 0.0; 1.0 -1.0],
+                                      (:θ, :ω), (:τ, :d), (:θ, :u_eff))
+        @test plain(linearization) ==
+              join(["Linearization: 2 states, 2 inputs, 2 outputs",
+                    "  states:", "       x₀   ẋ₀", "    θ  0.3  0.0", "    ω  0.0  -1.5",
+                    "  inputs:", "       u₀", "    τ  2.5", "    d  0.0",
+                    "  outputs:", "           y₀", "    θ      0.3", "    u_eff  2.5",
+                    "  A:", "       θ     ω", "    θ  0.0   1.0", "    ω  -9.5  -0.5",
+                    "  B:", "       τ    d", "    θ  0.0  0.0", "    ω  1.0  -1.0",
+                    "  C:", "           θ    ω", "    θ      1.0  0.0", "    u_eff  0.0  0.25",
+                    "  D:", "           τ    d", "    θ      0.0  0.0", "    u_eff  1.0  -1.0"], "\n")
+        @test compact(linearization) == "Linearization(2 states, 2 inputs, 2 outputs)"
+        # The labeled form prints alike, read by integer index.
+        @test plain(labeled(linearization)) == plain(linearization)
+        @test compact(labeled(linearization)) == compact(linearization)
+        # An empty list prints no block, and neither do its matrices.
+        states_only = Linearization([0.0], [1.0], Float64[], Float64[], fill(-1.0, 1, 1), zeros(1, 0),
+                                    zeros(0, 1), zeros(0, 0), (:q,), (), ())
+        @test plain(states_only) ==
+              join(["Linearization: 1 state, no inputs, no outputs",
+                    "  states:", "       x₀   ẋ₀", "    q  1.0  0.0", "  A:", "       q", "    q  -1.0"], "\n")
+    end
+
     @testset "every REPL form ends without a newline and carries no trailing whitespace (D-257)" begin
         for x in (multirate.structure, multirate.outputs, multirate.events, deployed.schedule,
                   multirate, deployed, pendulum.structure, pendulum_deployed.schedule, pendulum,

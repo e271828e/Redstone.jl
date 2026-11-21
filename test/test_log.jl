@@ -267,6 +267,30 @@ function test_log()
         @test columns.input == fill(1.0, 6)
     end
 
+    @testset "a column reads as a property, after the four fields (§11.2, D-474)" begin
+        sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
+        init!(sim, set(u = (in = 1.0,)))
+        run!(sim; t_end = 0.5)
+        flight = series(sim, reads(power = get_output("c", :power), q = get_output("c", :q)))
+        @test flight.power === getfield(flight, :columns).power
+        @test flight.q === getfield(flight, :columns).q
+        @test flight.t === getfield(flight, :t) && flight.frame === getfield(flight, :frame)
+        @test flight.boundary === getfield(flight, :boundary)
+        @test flight.columns === getfield(flight, :columns)
+        @test propertynames(flight) === (:t, :frame, :boundary, :columns, :power, :q)
+        @test @inferred((x -> x.power)(flight)) isa Vector{Float64}
+        @test @inferred((x -> x.t)(flight)) isa Vector{Float64}
+        # The four field names are refused as labels by `series`, a mounted set's
+        # too, and never by `reads`, since trim's read set may label a read `t`.
+        for label in (:t, :frame, :boundary, :columns)
+            read_set = reads(; NamedTuple{(:q, label)}((get_output("c", :q), get_output("c", :power)))...)
+            d = carried(@test_throws DiagnosticError{ReadSetMisuse} series(sim, read_set))
+            @test d.reason === :reserved_label && d.label === label && d.observed === GetOutput
+        end
+        d = carried(@test_throws DiagnosticError{ReadSetMisuse} series(sim, at("c", reads(frame = get_face(:q)))))
+        @test d.reason === :reserved_label && d.label === :frame
+    end
+
     @testset "empty before the first init!, typed all the same (§11.2, D-407)" begin
         sim = Simulation(fed(VectorPlant(), "u"); Δt_frame = 1//10)
         empty_series = series(sim, reads(q = get_output("c", :q), q2 = get_output("c", "q[2]")))

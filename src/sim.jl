@@ -2885,7 +2885,7 @@ function logged(sim::Simulation)
     retained
 end
 
-# Design: §11.2, Appendix B, D-407.
+# Design: §11.2, Appendix B, D-407, D-474.
 """
     Series
 
@@ -2901,6 +2901,10 @@ per snapshot.
 - `boundary`: their boundary ordinals.
 - `columns`: a `NamedTuple` keyed as the [read set](@ref g-read-set) labels its
   entries, each column a plain vector of the entry's leaf type.
+
+Each column also reads as a property under its label, the same vector
+`columns` holds under it. `propertynames` lists the four fields first, then
+the labels.
 """
 struct Series{NT<:NamedTuple}
     t::Vector{Float64}
@@ -2909,7 +2913,17 @@ struct Series{NT<:NamedTuple}
     columns::NT
 end
 
-# Design: §11.2, §11.3, §14.4, D-406, D-407.
+# The four fields, which `series` refuses as labels.
+const _SERIES_FIELDS = (:t, :frame, :boundary, :columns)
+
+# A column reads as a property, after the four fields (D-474).
+function Base.getproperty(x::Series, name::Symbol)
+    name in _SERIES_FIELDS && return getfield(x, name)
+    getfield(getfield(x, :columns), name)
+end
+Base.propertynames(x::Series) = (_SERIES_FIELDS..., keys(getfield(x, :columns))...)
+
+# Design: §11.2, §11.3, §14.4, D-406, D-407, D-474.
 # Post-run extraction through the read-selector family. The read set resolves
 # for a table source through the one resolver every reader shares (§14.4,
 # D-406). Resolution runs once per call and the gather is one typed loop per
@@ -2930,11 +2944,18 @@ entries. Before anything is published the columns are empty, typed all the same.
 
 `series` is refused as `ServiceLifecycle` while `running`, as `logged` is. A
 bare `NamedTuple` of [selectors](@ref g-selector) in place of a read set is
-refused as `ReadSetMisuse`, a selector or mount whose path names no
-[component](@ref g-component) as `PathResolution`, and any other selector that
-does not resolve as `ReadResolution`.
+refused as `ReadSetMisuse`, and so is a read labeled `t`, `frame`, `boundary`
+or `columns`, the names of the series' own fields. A selector or mount whose
+path names no [component](@ref g-component) is refused as `PathResolution`, and
+any other selector that does not resolve as `ReadResolution`.
 """
 function series(sim::Simulation, @nospecialize(read_set::Reads))
+    # a label the series' fields already take could not read as a property
+    # (D-474); refused before the lifecycle, as the bare NamedTuple is
+    for label in keys(read_set.selectors)
+        label in _SERIES_FIELDS && throw(DiagnosticError(ReadSetMisuse(
+            observed = typeof(read_set.selectors[label]), reason = :reserved_label, label = label)))
+    end
     assert_stopped(sim, :series)
     reader = _compile_reads(read_set, sim.model.deployment.build, Float64; source = :table)
     snapshots = logged(sim)

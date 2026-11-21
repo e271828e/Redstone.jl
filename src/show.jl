@@ -500,9 +500,153 @@ _lines(status::FrameworkStatus) =
          _indented(mapreduce(_writer_lines, vcat, status.writers; init = String[])),
          ["  " * _pacer_line(status.pacer)])
 
+# --- Simulation, Series, TrimReport, Linearization (D-474, D-475) -----------------
+
+# A number in a table cell, as a REPL prints it inside a container: six
+# significant digits.
+_value_label(value) = sprint(show, value; context = :compact => true)
+
+# The lifecycle and the mode, then the clock once the simulation holds a state.
+function _simulation_state(sim::Simulation, state_label::Symbol)
+    state_label === :built && return "$state_label, $(mode(sim))"
+    "$state_label, $(mode(sim)), frame $(sim.run.frame) at t = $(sim.model.exec.clock.t)"
+end
+
+Base.show(io::IO, sim::Simulation) = print(io, "Simulation(", _simulation_state(sim, lifecycle(sim)), ")")
+
+# What a termination source holds beyond its kind.
+_source_detail(::TerminationSource) = ""
+_source_detail(source::ModelRequestedStop) =
+    ", by $(_named(source.path, source.port, "/")), reason \"$(source.reason)\""
+_source_detail(source::ControlRequestedStop) = ", by $(source.issuer)"
+_source_detail(source::LoopError) = ", $(nameof(typeof(source.exception)))"
+
+function _termination_line(record::TerminationRecord)
+    line = "termination: $(nameof(typeof(record.source))) at t = $(record.t)" * _source_detail(record.source)
+    isempty(record.residue) ? line : line * ", " * _count(length(record.residue), "residue record")
+end
+
+# The retained snapshots, counted off `logged`, which a running loop refuses.
+function _log_line(sim::Simulation)
+    sim.run.log.enabled || return "log: off"
+    "log: " * _count(length(logged(sim)), "snapshot")
+end
+
+function _devices_line(sim::Simulation)
+    isempty(sim.plane.roster) && return "devices: none"
+    "devices: " * join(("device $(entry.id) ($(_typename(entry.dev)))" for entry in sim.plane.roster), ", ")
+end
+
+# The state line, the deployment in its compact form, the run's outcome and log,
+# the devices and the warnings. A running simulation's log is the loop's, and
+# goes unread; the lifecycle is read once, so the two agree.
+function _lines(sim::Simulation)
+    state_label = lifecycle(sim)
+    record = termination(sim)
+    vcat(["Simulation: " * _simulation_state(sim, state_label),
+          "  deployment: " * sprint(show, sim.model.deployment)],
+         record === nothing ? String[] : ["  " * _termination_line(record)],
+         state_label === :running ? String[] : ["  " * _log_line(sim)],
+         ["  " * _devices_line(sim)],
+         _indented(_warning_lines(warnings(sim))))
+end
+
+# The count of snapshots and the span of `t` they cover.
+function _series_counts(log_series::Series)
+    count_label = _count(length(log_series.t), "snapshot")
+    isempty(log_series.t) ? count_label :
+    count_label * ", t = $(first(log_series.t)) to $(last(log_series.t))"
+end
+
+Base.show(io::IO, log_series::Series) =
+    print(io, "Series(", _series_counts(log_series), "; ", _names_label(keys(log_series.columns)), ")")
+
+# One row per column: its label and its element type, no values.
+_lines(log_series::Series) =
+    vcat(["Series: " * _series_counts(log_series)],
+         isempty(log_series.columns) ? String[] :
+         _table("  ", ["column", "eltype"],
+                [[String(label), string(eltype(column))] for (label, column) in pairs(log_series.columns)]))
+
+_verdict_label(report::TrimReport) =
+    (report.converged ? "converged" : "not converged") * ", " *
+    (report.committed_residuals === nothing ? "nothing committed" : "committed")
+
+Base.show(io::IO, report::TrimReport) =
+    print(io, "TrimReport(", _verdict_label(report), ", ", _count(report.n_iterations, "iteration"), ")")
+
+# The decisions, a bound the solution sits at marked on its row; the residuals
+# beside their tolerances, and the committed state's beside them when one was
+# committed; the committed checks; the events the commit fired.
+function _lines(report::TrimReport)
+    bounds = Dict(report.saturated)
+    solution_rows = [[String(name), _value_label(value),
+                      haskey(bounds, name) ? "at the $(bounds[name]) bound" : ""]
+                     for (name, value) in pairs(report.solution)]
+    committed = report.committed_residuals
+    residual_header = ["residual", "value", "tolerance"]
+    committed === nothing || push!(residual_header, "committed")
+    residual_rows = [vcat([String(name), _value_label(value), _value_label(report.tolerances[name])],
+                          committed === nothing ? String[] : [_value_label(committed[name])])
+                     for (name, value) in pairs(report.residuals)]
+    checks = report.committed_checks
+    vcat(["TrimReport: " * _verdict_label(report) * "; status $(report.status), " *
+          _count(report.n_iterations, "iteration") * ", " * _count(report.n_evaluations, "evaluation")],
+         isempty(solution_rows) ? String[] : _table("  ", ["decision", "value", ""], solution_rows),
+         isempty(residual_rows) ? String[] : _table("  ", residual_header, residual_rows),
+         checks === nothing || isempty(checks) ? String[] :
+         _table("  ", ["check", "committed"],
+                [[String(name), _value_label(value)] for (name, value) in pairs(checks)]),
+         isempty(report.fired_events) ? String[] :
+         ["  fired events: " * join((_named(path, name, "/") for (path, name) in report.fired_events), ", ")])
+end
+
+_linearization_counts(linearization::Linearization) =
+    join((_count(length(linearization.x_labels), "state"),
+          _count(length(linearization.u_labels), "input"),
+          _count(length(linearization.y_labels), "output")), ", ")
+
+Base.show(io::IO, linearization::Linearization) =
+    print(io, "Linearization(", _linearization_counts(linearization), ")")
+
+# One matrix under its row and column labels, read by integer index so a plain
+# and a labeled value print alike (D-475). An empty matrix prints no block.
+function _matrix_lines(heading::String, matrix::AbstractMatrix{Float64},
+                       row_labels::Tuple{Vararg{Symbol}}, column_labels::Tuple{Vararg{Symbol}})
+    isempty(matrix) && return String[]
+    vcat([heading * ":"],
+         _table("  ", ["", String.(column_labels)...],
+                [[String(row_labels[i]); [_value_label(matrix[i, j]) for j in eachindex(column_labels)]]
+                 for i in eachindex(row_labels)]))
+end
+
+# One list's operating point under its labels, beside the derivative for the
+# states. An empty list prints no block.
+function _point_lines(heading::String, labels::Tuple{Vararg{Symbol}}, columns::Vector)
+    isempty(labels) && return String[]
+    vcat([heading * ":"],
+         _table("  ", ["", first.(columns)...],
+                [[String(labels[i]); [_value_label(last(column)[i]) for column in columns]]
+                 for i in eachindex(labels)]))
+end
+
+# The operating point per list, then the four matrices.
+function _lines(linearization::Linearization)
+    (; ẋ₀, x₀, u₀, y₀, A, B, C, D, x_labels, u_labels, y_labels) = linearization
+    vcat(["Linearization: " * _linearization_counts(linearization)],
+         _indented(_point_lines("states", x_labels, ["x₀" => x₀, "ẋ₀" => ẋ₀])),
+         _indented(_point_lines("inputs", u_labels, ["u₀" => u₀])),
+         _indented(_point_lines("outputs", y_labels, ["y₀" => y₀])),
+         _indented(_matrix_lines("A", A, x_labels, x_labels)),
+         _indented(_matrix_lines("B", B, x_labels, u_labels)),
+         _indented(_matrix_lines("C", C, y_labels, x_labels)),
+         _indented(_matrix_lines("D", D, y_labels, u_labels)))
+end
+
 # --- the REPL forms ---------------------------------------------------------------
 
-for Artifact in (Structure, Outputs, Events, Schedule, Build, Deployment, FrameworkStatus)
+for Artifact in (Structure, Outputs, Events, Schedule, Build, Deployment, FrameworkStatus,
+                 Simulation, Series, TrimReport, Linearization)
     @eval Base.show(io::IO, ::MIME"text/plain", artifact::$Artifact) =
         join(io, _lines(artifact), "\n")
 end

@@ -13,6 +13,17 @@ when its citations change.
 
 ## What is real here
 
+### `ext/RedstoneComponentArraysExt.jl`
+
+The package's one extension, loaded with ComponentArrays, its weak
+dependency in the root `Project.toml`. It adds the one method of
+linearize.jl's `labeled`: the eight arrays of a `Linearization` as component
+arrays over axes built from the label tuples, the data unwrapped first
+(D-475). The suite loads ComponentArrays in `test/test_linearize.jl`, so
+every test file runs with the extension loaded.
+
+Spec: §14.10, D-475.
+
 ### `src/Redstone.jl`
 
 The package module: the dependencies and the include order the other files load
@@ -818,7 +829,12 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §10.4, §13.5, §13.7, D-141, D-179, D
 - `LinearizeTag`, `LINEARIZE_WIDTH` and `LinearizeDual`, the default width's
   pre-materializable scalar.
 - `Linearization`, the operating point and the four matrices under the tap
-  labels.
+  labels, its fields abstract so the plain and the labeled form are one
+  type (D-475). `_linearize` returns the plain form, `y₀` converted to
+  `Float64`.
+- `labeled`, declared with no method, which the ComponentArrays extension
+  supplies, and the module's `__init__`, which registers the `MethodError`
+  hint naming the package while the extension is not loaded (D-475).
 - `linearize` on a `Model{Float64}`, over D-213's two-half scratch world in
   passes of `width` directions, the seeds written at the resolved taps' own
   sites. Each half is a scratch `Model`, built by model.jl's `_scratch`
@@ -861,7 +877,7 @@ Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §10.4, §13.5, §13.7, D-141, D-179, D
   face `u` (D-437).
 
 Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,
-D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438, D-458, D-468.
+D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438, D-458, D-468, D-475.
 
 ### `src/model.jl`
 
@@ -1137,9 +1153,23 @@ D-261.
   prints one block per writer and the pacer's line last. It prints each
   writer × kind in full up to `STATUS_MAXLOG` cumulative occurrences, and
   count-only past it.
+- The two forms of four values beside the artifacts, under the same
+  conventions:
+  - the `Simulation`'s lifecycle, mode and clock, its deployment's compact
+    form, the termination record, the retained log's count off `logged`,
+    unread while running, the devices and the warnings;
+  - the `Series`' snapshot count and `t` span, and each column's label and
+    element type, no values (D-474);
+  - the `TrimReport`'s verdict and counts, the decisions with any bound
+    reached, the residuals beside their tolerances and the committed ones,
+    the committed checks and the fired events;
+  - the `Linearization`'s operating point per tap list and each matrix as a
+    table under its labels, read by integer index so the plain and the
+    labeled form print alike, an empty list and its matrices printing no
+    block (D-475).
 
 Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460,
-D-464, D-466, D-468, D-471.
+D-464, D-466, D-468, D-471, D-474, D-475.
 
 ### `src/sim.jl`
 
@@ -1246,7 +1276,9 @@ D-464, D-466, D-468, D-471.
 - `series` and `Series`, the post-run extraction from the log through the
   read resolver for a table source, with the `ReadSetMisuse` fallback for
   a bare NamedTuple, and `_column`, the function barrier that gathers one
-  entry over the log (§11.2, D-407).
+  entry over the log (§11.2, D-407). A `Series` forwards its columns as
+  properties after its four fields, `_SERIES_FIELDS`, which `series`
+  refuses as labels with `ReadSetMisuse` `:reserved_label` (D-474).
 - A one-line forwarding method on the simulation for each of the model's
   `port`, `state`, `modes`, `phase_bodies`, `apply!`, `evaluate!`,
   `integrate!`, `boundary!`, `offtick_boundary!` and `boundary_zero!`, which
@@ -1257,7 +1289,7 @@ Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6
 §14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
 D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
 D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429, D-445,
-D-447, D-450, D-451, D-452.
+D-447, D-450, D-451, D-452, D-474.
 
 ### `src/stepper.jl`
 

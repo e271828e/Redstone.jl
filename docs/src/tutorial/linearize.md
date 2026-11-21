@@ -35,19 +35,22 @@ committed trim, and returns ``\dot x = A x + B u`` in deviations from it.
 This chapter needs the states and the controls only, so the tap set has no
 outputs.
 
+The matrices come back plain, their rows and columns in the tap set's
+order. With the ComponentArrays package loaded, [`labeled`](@ref) puts the
+tap labels on them, so an entry, a row or a column reads by its labels. The
+arithmetic on labeled arrays still goes by position, and it never checks
+that two operands carry the same labels. The linearization prints the
+operating point, then each matrix under its row and column labels.
+
 ```@example linearize
-import Redstone: taps, get_state, get_input, linearize
+import Redstone: taps, get_state, get_input, linearize, labeled
+using ComponentArrays
 
 aircraft_taps = taps(
     x = (V = get_state("plant", :V), γ = get_state("plant", :γ), θ = get_state("plant", :θ),
          q = get_state("plant", :q), h = get_state("plant", :h)),
     u = (δe = get_input(:δe), δt = get_input(:δt)))
-linearization = linearize(sim, aircraft_taps)
-round.(linearization.A; digits = 4)
-```
-
-```@example linearize
-round.(linearization.B; digits = 4)
+linearization = labeled(linearize(sim, aircraft_taps))
 ```
 
 ## Exact Jacobians
@@ -57,13 +60,10 @@ differentiation. It needs no perturbation size, and each entry is exact up
 to the rounding of the arithmetic. Two entries can be checked by eye. The
 altitude's rate ``V \sin\gamma`` changes with ``\gamma`` at ``V \cos\gamma
 = 50``, and the pitch angle's rate is ``q`` itself. Nothing depends on the
-altitude, since the density is constant, so the last column is zero. The
-indices follow the tap set's order of the states.
+altitude, since the density is constant, so the last column is zero.
 
 ```@example linearize
-V, γ, θ, q, h = 1:5   # the rows and columns of A, in the tap set's order
-
-(linearization.A[h, γ], linearization.A[θ, q], linearization.A[:, h])
+(linearization.A[:h, :γ], linearization.A[:θ, :q], linearization.A[:, :h])
 ```
 
 [`x_deriv`](@ref) is an ordinary function, so you can call it yourself. The block
@@ -76,9 +76,9 @@ import Redstone: x_deriv
 using LinearAlgebra: I
 
 x₀, u₀ = linearization.x₀, linearization.u₀
-f(v) = collect(x_deriv(Longitudinal(), (x = NamedTuple{keys(x₀)}(Tuple(v)), u = u₀)))
-v₀, ε = collect(x₀), 1e-6
-A_fd = reduce(hcat, [(f(v₀ + ε * e) - f(v₀ - ε * e)) / 2ε for e in eachcol(I(5))])
+f(x) = collect(x_deriv(Longitudinal(), (; x, u = u₀)))
+ε = 1e-6
+A_fd = reduce(hcat, [(f(x₀ + ε * e) - f(x₀ - ε * e)) / 2ε for e in eachcol(I(5))])
 maximum(abs, A_fd - linearization.A)
 ```
 
@@ -149,7 +149,7 @@ function fly(; deployment...)
 end
 
 reference = fly(Δt_frame = 1//100)
-V_at(flight, t) = flight.columns.V[findfirst(==(t), flight.t)]
+V_at(flight, t) = flight.V[findfirst(==(t), flight.t)]
 compare(flight) = (steps = length(flight.t) - 1,
                    error = maximum(t -> abs(V_at(flight, t) - V_at(reference, t)), 0.0:1.0:120.0))
 ```
@@ -197,7 +197,7 @@ and controls are this chapter's, so its ``A`` and ``B`` are the same.
 ```@example linearize
 import RedstoneExamples
 
-package_linearization = linearize(sim, RedstoneExamples.longitudinal_taps())
+package_linearization = labeled(linearize(sim, RedstoneExamples.longitudinal_taps()))
 (package_linearization.A == linearization.A, package_linearization.B == linearization.B)
 ```
 

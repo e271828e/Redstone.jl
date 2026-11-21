@@ -2496,14 +2496,18 @@ function message(d::ArgumentInvalid)
         "spelling — got $(d.value) (§12.6)"
 end
 
-"§14.4, §14.10, D-215, D-272, D-278: a non-selector in a read set or a tap list, a tap list that is no NamedTuple, a non-`Reads` where one is expected, or an empty `at` prefix on a read set — `ConditionNodeMisuse`'s twin."
+"§11.2, §14.4, §14.10, D-215, D-272, D-278, D-474: a non-selector in a read set or a tap list, a tap list that is no NamedTuple, a non-`Reads` where one is expected, an empty `at` prefix on a read set, or a read `series` is given under a `Series` field's name — `ConditionNodeMisuse`'s twin."
 Base.@kwdef struct ReadSetMisuse <: Diagnostic
     observed::Any                            # the offending argument's type
-    reason::Symbol = :not_a_read_set         # :not_a_selector | :not_a_read_set | :not_a_tap_list | :empty_prefix
+    reason::Symbol = :not_a_read_set         # :not_a_selector | :not_a_read_set | :not_a_tap_list | :empty_prefix | :reserved_label
     label::Union{Nothing,Symbol} = nothing   # the read's label, or the tap list's (`x`/`u`/`y`)
     in_hand::Vector{Symbol} = Symbol[]       # the selector kinds in hand
 end
 message(d::ReadSetMisuse) =
+    d.reason === :reserved_label ?
+    "the read labeled `$(d.label)` takes the name of a `Series` field — `t`, `frame`, " *
+    "`boundary` and `columns` are the series' own, so `series` refuses them as labels; " *
+    "label the read otherwise (§11.2)" :
     d.reason === :empty_prefix ?
     "`at` was given an empty prefix for a read set, which names no child — a read set " *
     "meant for the level where it is authored stays unwrapped (§14.9)" :

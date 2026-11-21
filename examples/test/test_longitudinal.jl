@@ -46,7 +46,7 @@ end
 
 # The largest airspeed gap between two flights at the whole seconds of chapter 3's comparison.
 airspeed_gap(flight, reference) =
-    maximum(t -> abs(flight.columns.V[findfirst(==(t), flight.t)] - reference.columns.V[findfirst(==(t), reference.t)]),
+    maximum(t -> abs(flight.V[findfirst(==(t), flight.t)] - reference.V[findfirst(==(t), reference.t)]),
             0.0:1.0:120.0)
 
 # The frame index of time `t` under the loops' frame of 5 ms.
@@ -203,12 +203,13 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         @test A[5, 2] == 50.0
         @test A[3, 4] == 1.0
         @test all(iszero, A[:, 5])
-        # Central differences of the plant's `x_deriv` at the trim, as the page computes them; the
-        # probe's largest gap is 1.53e-10.
-        x₀, u₀ = linearization.x₀, linearization.u₀
-        f(v) = collect(Redstone.x_deriv(Longitudinal(), (x = NamedTuple{keys(x₀)}(Tuple(v)), u = u₀)))
-        v₀, ε = collect(x₀), 1e-6
-        A_fd = reduce(hcat, [(f(v₀ + ε * e) - f(v₀ - ε * e)) / 2ε for e in eachcol(I(5))])
+        # Central differences of the plant's `x_deriv` at the trim, the page's in the plain form,
+        # which names the vectors by the label tuples; the probe's largest gap is 1.53e-10.
+        (; x₀, u₀, x_labels, u_labels) = linearization
+        u = NamedTuple{u_labels}(Tuple(u₀))
+        f(v) = collect(Redstone.x_deriv(Longitudinal(), (x = NamedTuple{x_labels}(Tuple(v)), u)))
+        ε = 1e-6
+        A_fd = reduce(hcat, [(f(x₀ + ε * e) - f(x₀ - ε * e)) / 2ε for e in eachcol(I(5))])
         @test maximum(abs, A_fd - A) < 1e-8
         diverged = try
             fly_open_loop(solution; Δt_frame = 1)
@@ -254,7 +255,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
     @testset "the staged reference and mode land on their ticks (§11.3)" begin
         # Snapshot k + 1 is the frame top t = k h, so the step lands at snapshot 1001 and the
         # switches at snapshots 12001 and 2001.
-        staged(sim) = series(sim, reads(h_ref = get_input("h_ref"), mode = get_input("mode"))).columns
+        staged(sim) = series(sim, reads(h_ref = get_input("h_ref"), mode = get_input("mode")))
         @test findfirst(==(1050.0), staged(runs.cascade).h_ref) == 1001
         @test all(staged(runs.cascade).mode)
         @test findfirst(!, staged(runs.switch_at_60).mode) == 12001
@@ -419,7 +420,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
     @testset "chapter 6: the pilot's staged commands and the engage land on their ticks (§11.3)" begin
         # Snapshot k + 1 is the frame top t = k h, and a write staged at t applies from the frame
         # after it, so the pull shows at snapshot 1002, its release at 1402 and the engage at 6002.
-        staged = series(hand, reads(δe = get_input("δe_pilot"), engage = get_input("engage"))).columns
+        staged = series(hand, reads(δe = get_input("δe_pilot"), engage = get_input("engage")))
         @test findfirst(!=(solution.δe), staged.δe) == 1002
         @test findfirst(==(solution.δe), staged.δe[1002:end]) + 1001 == 1402
         @test findfirst(identity, staged.engage) == 6002
@@ -449,7 +450,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         # The switches act at the same tick, where the selected elevator command first leaves the
         # pilot's.
         times = logged_times(hand)
-        δe_pilot = series(hand, reads(δe = get_input("δe_pilot"))).columns.δe
+        δe_pilot = series(hand, reads(δe = get_input("δe_pilot"))).δe
         handover = findfirst(k -> times[k] > 29.9 && δe_selected[k] != δe_pilot[k], eachindex(times))
         @test times[handover] == 30.2
         # Until the latch publishes, each controller computes exactly what it computes in the same
@@ -493,7 +494,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         @test record.source.reason == "touchdown"
         @test abs(state(flight, "vehicle/plant").h) <= 1e-6
         @test modes(flight, "gear").contact === true
-        h_refs = series(flight, reads(h_ref = get_input("h_ref"))).columns.h_ref
+        h_refs = series(flight, reads(h_ref = get_input("h_ref"))).h_ref
         # The last staged reference, read back: the probe's -0.04999999989 m, 1000 m less 6667 writes.
         @test h_refs[end] ≈ -0.05 atol = 1e-6
         # The probe's largest tracking error over [160 s, the last second): 0.247 m.

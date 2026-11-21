@@ -103,39 +103,76 @@ const LINEARIZE_WIDTH = 8
 """The default width's scalar, pre-materializable: `build(m; activations = (Float64, LinearizeDual))` (§14.10, D-272)."""
 const LinearizeDual = ForwardDiff.Dual{LinearizeTag,Float64,LINEARIZE_WIDTH}
 
-# Design: §14.10, D-272.
+# Design: §14.10, D-272, D-475.
+# The fields are abstract, so a plain and a labeled value are one type and a
+# method taking either compiles once (D-475).
 """
     Linearization
 
 The result of a linearization, holding the operating point and the four
 Jacobians, labeled by the [taps](@ref g-taps).
 
-[`linearize`](@ref) returns it. The labels are those of the tap set. A
+[`linearize`](@ref) returns it, its arrays plain `Vector{Float64}`s and
+`Matrix{Float64}`s ordered by the tap labels. [`labeled`](@ref) returns it
+with the same arrays as component arrays under those labels. A
 `Linearization` holds these fields.
 
 - `x₀`, `u₀`: the seeded states and [root inputs](@ref g-root-input) at the
-  operating point, as `NamedTuple`s under the `x` and `u` labels.
-- `ẋ₀`: the state derivative at the operating point, under the `x` labels.
-- `y₀`: the outputs read at the operating point, under the `y` labels.
-- `A`, `B`, `C`, `D`: the Jacobians of `ẋ` and `y` with respect to `x` and
-  `u`, each a `Matrix{Float64}` with its rows and columns ordered by the
+  operating point, in the order of the `x` and `u` labels.
+- `ẋ₀`: the state derivative at the operating point, in the order of the `x`
   labels.
+- `y₀`: the outputs read at the operating point, in the order of the `y`
+  labels, each converted to `Float64`.
+- `A`, `B`, `C`, `D`: the Jacobians of `ẋ` and `y` with respect to `x` and
+  `u`, their rows and columns ordered by the labels.
 - `x_labels`, `u_labels`, `y_labels`: the three label tuples.
 
 Every entry is exact to round-off, and none is a finite difference.
 """
 struct Linearization
-    ẋ₀::NamedTuple
-    x₀::NamedTuple
-    u₀::NamedTuple
-    y₀::NamedTuple
-    A::Matrix{Float64}
-    B::Matrix{Float64}
-    C::Matrix{Float64}
-    D::Matrix{Float64}
+    ẋ₀::AbstractVector{Float64}
+    x₀::AbstractVector{Float64}
+    u₀::AbstractVector{Float64}
+    y₀::AbstractVector{Float64}
+    A::AbstractMatrix{Float64}
+    B::AbstractMatrix{Float64}
+    C::AbstractMatrix{Float64}
+    D::AbstractMatrix{Float64}
     x_labels::Tuple{Vararg{Symbol}}
     u_labels::Tuple{Vararg{Symbol}}
     y_labels::Tuple{Vararg{Symbol}}
+end
+
+# Design: §14.10, D-475.
+# Declared here with no method; the ComponentArrays extension adds the one
+# method (ext/RedstoneComponentArraysExt.jl). Without it, the error hint below
+# names the package.
+"""
+    labeled(linearization::Linearization) -> Linearization
+
+Return the linearization with its eight arrays labeled by the tap labels.
+
+The method comes from the ComponentArrays package, loaded beside Redstone with
+`using ComponentArrays`. The vectors become `ComponentVector`s and the matrices
+`ComponentMatrix`es, so `A[:h, :γ]` reads an entry by its labels and
+`A[(:V, :γ), (:V, :γ)]` a block. The vector of an empty tap list stays a plain
+`Vector{Float64}`. The label tuples are unchanged, and a value labeled already
+is labeled again the same way.
+
+The arithmetic of component arrays goes by position. A product or a sum of two
+of them never checks that their labels agree.
+"""
+function labeled end
+
+# The module's `__init__`: the hint on a call to `labeled` while the extension
+# is not loaded (D-475).
+function __init__()
+    Base.Experimental.register_error_hint(MethodError) do io, err, argument_types, kwargs
+        err.f === labeled || return
+        Base.get_extension(@__MODULE__, :RedstoneComponentArraysExt) === nothing || return
+        print(io, "\n`labeled` comes from the ComponentArrays package — load it with " *
+                  "`using ComponentArrays` beside Redstone")
+    end
 end
 
 # --- the service (§14.10) -------------------------------------------------------
@@ -311,7 +348,7 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
     N = n_x + n_u
     sites = Any[first.(x_entries); u_entries]
     site_values = Float64[_site_value(seeded_exec, site) for site in sites]
-    ẋ₀, y₀ = Vector{Any}(undef, n_x), Vector{Any}(undef, n_y)
+    ẋ₀, y₀ = Vector{Float64}(undef, n_x), Vector{Float64}(undef, n_y)
     A, B = zeros(n_x, n_x), zeros(n_x, n_u)
     C, D = zeros(n_y, n_x), zeros(n_y, n_u)
     for group in (N == 0 ? (1:0,) : Iterators.partition(1:N, width))
@@ -324,16 +361,15 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
             ẋ₀[i] = _readback!(A, B, i, _read(entry, seeded_exec), group, n_x)
         end
         for (i, entry) in enumerate(y_entries)
-            y₀[i] = _readback!(C, D, i, _read(entry, seeded_exec), group, n_x)
+            # a `y` tap admits any `Real` leaf, a `Bool` or an `Int` among them,
+            # and its value enters the affine model as a float (D-475)
+            y₀[i] = Float64(_readback!(C, D, i, _read(entry, seeded_exec), group, n_x))
         end
     end
 
     x_labels, u_labels, y_labels =
         keys(tap_set.x.selectors), keys(tap_set.u.selectors), keys(tap_set.y.selectors)
-    Linearization(NamedTuple{x_labels}(Tuple(ẋ₀)),
-                  NamedTuple{x_labels}(Tuple(site_values[1:n_x])),
-                  NamedTuple{u_labels}(Tuple(site_values[n_x+1:N])),
-                  NamedTuple{y_labels}(Tuple(y₀)),
+    Linearization(ẋ₀, site_values[1:n_x], site_values[n_x+1:N], y₀,
                   A, B, C, D, x_labels, u_labels, y_labels)
 end
 
