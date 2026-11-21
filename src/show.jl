@@ -500,7 +500,7 @@ _lines(status::FrameworkStatus) =
          _indented(mapreduce(_writer_lines, vcat, status.writers; init = String[])),
          ["  " * _pacer_line(status.pacer)])
 
-# --- Simulation, Series, TrimReport, Linearization (D-474, D-475) -----------------
+# --- Simulation, Series, TrimReport, Linearization (§11.2, §14.10) ----------------
 
 # A number in a table cell, as a REPL prints it inside a container: six
 # significant digits.
@@ -610,7 +610,7 @@ Base.show(io::IO, linearization::Linearization) =
     print(io, "Linearization(", _linearization_counts(linearization), ")")
 
 # One matrix under its row and column labels, read by integer index so a plain
-# and a labeled value print alike (D-475). An empty matrix prints no block.
+# and a labeled value print alike (§14.10). An empty matrix prints no block.
 function _matrix_lines(heading::String, matrix::AbstractMatrix{Float64},
                        row_labels::Tuple{Vararg{Symbol}}, column_labels::Tuple{Vararg{Symbol}})
     isempty(matrix) && return String[]

@@ -572,18 +572,21 @@ function test_linearize()
         bare = labeled(linearize(sim, taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)))))
         @test bare.y₀ isa Vector{Float64} && isempty(bare.y₀) && bare.u₀ isa Vector{Float64}
         @test size(bare.C) == (0, 2) && bare.C[:, :ω] == Float64[] && size(bare.D) == (0, 0)
+        @test bare.D isa Matrix{Float64}                                 # both its lists empty
     end
 
     @testset "without ComponentArrays, `labeled` names the package (§14.10, D-475)" begin
         # The suite has the extension loaded, so the hint stays silent here, and
-        # a child process without it shows the hint.
+        # a child process without it shows the hint, on `labeled`'s error alone.
         err = try labeled(1) catch err; err end
         @test err isa MethodError && !occursin("comes from the ComponentArrays package", sprint(showerror, err))
         julia = filter(flag -> !startswith(flag, "--code-coverage"), Base.julia_cmd().exec)
-        script = "using Redstone; try Redstone.labeled(1) catch err; print(sprint(showerror, err)) end"
+        script = "using Redstone; for call in (() -> Redstone.labeled(1), () -> identity(1, 2)); " *
+                 "try call() catch err; println(sprint(showerror, err)) end; end"
         output = read(`$julia --project=$(Base.active_project()) -e $script`, String)
         @test occursin("no method matching labeled(::Int64)", output)
-        @test occursin("`labeled` comes from the ComponentArrays package — load it with " *
-                       "`using ComponentArrays` beside Redstone", output)
+        @test occursin("no method matching identity(::Int64, ::Int64)", output)
+        @test count("`labeled` comes from the ComponentArrays package — load it with " *
+                    "`using ComponentArrays` beside Redstone", output) == 1
     end
 end

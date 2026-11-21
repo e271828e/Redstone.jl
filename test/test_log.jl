@@ -345,16 +345,21 @@ function test_log()
         sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//100000)
         init!(sim, set(u = (in = 0.0,)); log_max = 16)
         read_set = reads(y = get_output("c", :y))
+        reserved = reads(t = get_output("c", :y))
         series(sim, read_set)                                # warms the compile path, so the
-                                                             # mid-run check below races no JIT
+        failure(() -> series(sim, reserved))                 # mid-run checks below race no JIT
         attach!(sim, TailProbe(), NoClaim())   # a rostered device makes the loop yield every
                                                # frame (§12.2), so the spin gets its turn on one thread
         task = Threads.@spawn run!(sim; t_end = 1.0)
         while lifecycle(sim) !== :running && !istaskdone(task)   # a missed start fails below, never hangs
             yield()
         end
+        # A reserved label is refused before the lifecycle; the refusal below
+        # shows the loop was still running.
+        reserved_err = try series(sim, reserved) catch err; err end
         err = try series(sim, read_set) catch err; err end
         wait(task)
+        @test reserved_err isa DiagnosticError && diagnostic(reserved_err) isa ReadSetMisuse
         @test err isa DiagnosticError && diagnostic(err) isa ServiceLifecycle
         @test diagnostic(err).op === :series
         @test diagnostic(err).legal == [:built, :initialized, :stopped, :errored]

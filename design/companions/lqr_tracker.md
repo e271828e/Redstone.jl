@@ -381,13 +381,15 @@ sibling's fallback to its own `u` rules out.
 
 The tracker takes designed gains, as `StateSpace` takes matrices. `trim!`
 finds the trim point and `linearize` returns the `Linearization`, whose
-`x₀`, `u₀` and `y₀` under their tap labels are `x_trim`, `u_trim` and
-`z_trim`, and whose `A`, `B`, `C` and `D` feed section 2's inverse and the
+`x₀`, `u₀` and `y₀`, plain vectors in the taps' order with the label tuples
+beside them, are `x_trim`, `u_trim` and `z_trim`, and whose `A`, `B`, `C`
+and `D` feed section 2's inverse and the
 Riccati solve, `lqr` in ControlSystemsBase. `K_fwd` needs the inverse alone,
 and it stays outside the tracker with the rest: a helper reading a
 `Linearization` is a design-script convenience, not library material, and
 the Riccati solve brings a dependency the package does not want. The tap
 labels are the user's bookkeeping; the model packs `x` in the same order.
+`labeled` gives the form that reads each array by name.
 
 The acceptance tests follow. The continuous tracker closing the loop on a
 `StateSpace` plant linearizes to `A - B K_fbk`. Without integral action and

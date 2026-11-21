@@ -17,9 +17,9 @@ when its citations change.
 
 The package's one extension, loaded with ComponentArrays, its weak
 dependency in the root `Project.toml`. It adds the one method of
-linearize.jl's `labeled`: the eight arrays of a `Linearization` as component
-arrays over axes built from the label tuples, the data unwrapped first
-(D-475). The suite loads ComponentArrays in `test/test_linearize.jl`, so
+linearize.jl's `labeled`: the arrays of a `Linearization` as component
+arrays over axes built from the label tuples, except an array whose tap
+lists are all empty, the data unwrapped first (D-475). The suite loads ComponentArrays in `test/test_linearize.jl`, so
 every test file runs with the extension loaded.
 
 Spec: §14.10, D-475.
@@ -30,7 +30,8 @@ The package module: the dependencies and the include order the other files load
 in: leaves, diagnostics, declare, assembly, structure, store, executor, build,
 tracer, readers, deployment, dataplane, checkpoint, trace, roster, bindings,
 control, devices, conditions, model, stepper, frame, trim, linearize, sim,
-show, descriptor, library, precompile.
+show, descriptor, library, precompile. The module's `__init__` stays in
+linearize.jl, beside the `labeled` whose hint it registers.
 The model layer sits between the executor layer and the runtime, by the rule
 in the `src/model.jl` entry.
 
@@ -1159,17 +1160,17 @@ D-261.
     form, the termination record, the retained log's count off `logged`,
     unread while running, the devices and the warnings;
   - the `Series`' snapshot count and `t` span, and each column's label and
-    element type, no values (D-474);
+    element type, no values (§11.2);
   - the `TrimReport`'s verdict and counts, the decisions with any bound
     reached, the residuals beside their tolerances and the committed ones,
     the committed checks and the fired events;
   - the `Linearization`'s operating point per tap list and each matrix as a
     table under its labels, read by integer index so the plain and the
     labeled form print alike, an empty list and its matrices printing no
-    block (D-475).
+    block (§14.10).
 
-Spec: §9.2, §11.8, §13.7, D-136, D-257, D-261, D-315, D-437, D-449, D-454, D-460,
-D-464, D-466, D-468, D-471, D-474, D-475.
+Spec: §9.2, §11.2, §11.8, §13.7, §14.10, D-136, D-257, D-261, D-315, D-437, D-449,
+D-454, D-460, D-464, D-466, D-468, D-471.
 
 ### `src/sim.jl`
 

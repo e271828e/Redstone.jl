@@ -150,17 +150,20 @@ end
 """
     labeled(linearization::Linearization) -> Linearization
 
-Return the linearization with its eight arrays labeled by the tap labels.
+Return the linearization with its arrays labeled by the [taps](@ref g-taps).
 
 The method comes from the ComponentArrays package, loaded beside Redstone with
 `using ComponentArrays`. The vectors become `ComponentVector`s and the matrices
 `ComponentMatrix`es, so `A[:h, :γ]` reads an entry by its labels and
-`A[(:V, :γ), (:V, :γ)]` a block. The vector of an empty tap list stays a plain
-`Vector{Float64}`. The label tuples are unchanged, and a value labeled already
-is labeled again the same way.
+`A[(:V, :γ), (:V, :γ)]` a block. An empty tap list is the exception. Its vector
+stays a plain `Vector{Float64}`, and a matrix both of whose lists are empty
+stays a plain `Matrix{Float64}`. A matrix with one empty list is a
+`ComponentMatrix` with no rows or no columns. The label tuples are unchanged,
+and a value labeled already is labeled again the same way.
 
 The arithmetic of component arrays goes by position. A product or a sum of two
-of them never checks that their labels agree.
+of them never checks that their labels agree. `==` between a component vector
+and a plain one is `false`, so compare them with `collect` or `≈`.
 """
 function labeled end
 
@@ -170,7 +173,7 @@ function __init__()
     Base.Experimental.register_error_hint(MethodError) do io, err, argument_types, kwargs
         err.f === labeled || return
         Base.get_extension(@__MODULE__, :RedstoneComponentArraysExt) === nothing || return
-        print(io, "\n`labeled` comes from the ComponentArrays package — load it with " *
+        print(io, "\n`labeled` comes from the ComponentArrays package — load it with " *  # COV_EXCL_LINE
                   "`using ComponentArrays` beside Redstone")
     end
 end

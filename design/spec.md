@@ -7987,12 +7987,18 @@ per call, so a column costs one typed loop over the log and no name lookup
 per snapshot. What a user plots is a column against `t`. A window is a mask
 over `t`, and full density over a segment is replay's ([§11.5][s11-5], [§12.7][s12-7]).
 
-**A `Series` reads each column as a property under its label** ([D-474][d-474]).
-`flight.V` is the column that a read labeled `V` gathered, the same vector
+**The `Series` that `series` returns reads each column as a property under its
+label** ([D-474][d-474]). Take the series of one read labeled `V`.
+
+```julia
+flight = series(sim, reads(V = get_output("plant", :V)))
+```
+
+`flight.V` is the column that the read gathered, the same vector
 `flight.columns.V` names. The value's four fields keep their names, `t`,
 `frame`, `boundary` and `columns`, and the last holds the columns whole.
-`series` refuses a read set that labels an entry with one of the four, as a
-`ReadSetMisuse`, since the field would hide the column. The refusal belongs
+**`series` refuses a read set that labels an entry with one of the four**
+([D-474][d-474]), as a `ReadSetMisuse`, since the field would hide the column. The refusal belongs
 to `series` and not to `reads`, because the same read set serves trim, where
 the four names clash with nothing ([§14.7][s14-7]).
 
@@ -14242,14 +14248,17 @@ The table sets seeded and frozen leaves side by side.
 arrays in the order of the taps** ([D-475][d-475]). `ẋ₀`, `x₀`, `u₀` and `y₀` are
 vectors of `Float64`, and `A`, `B`, `C` and `D` are matrices of `Float64`.
 The three label tuples of the taps stand beside them and name each position
-([D-272][d-272]). A `y` tap on a `Real` leaf that is not a `Float64` reads into `y₀`
-as a `Float64`, and its rows of `C` and `D` are zero. On plain arrays the
+([D-272][d-272]). **A `y` tap on a `Real` leaf that is not a `Float64` reads into `y₀`
+as a `Float64`** ([D-475][d-475]), and its rows of `C` and `D` are zero. On plain arrays the
 affine model computes as written, `ẋ₀ + A * (x - x₀) + B * (u - u₀)`.
 
 **The labeled form comes from a package extension** ([D-475][d-475]). ComponentArrays
 is a Julia package of arrays whose axes carry names. With it loaded,
-`labeled(linearization)` returns a `Linearization` whose eight arrays are
-component arrays over axes built from the label tuples. An entry or a block
+`labeled(linearization)` returns a `Linearization` whose arrays are
+component arrays over axes built from the label tuples. An empty tap list is
+the exception. Its vector stays a plain vector, and a matrix both of whose
+lists are empty stays a plain matrix. A matrix with one empty list is a
+component matrix with no rows or no columns. An entry or a block
 then reads by label, as `A[:h, :γ]` and `A[(:V, :γ), (:V, :γ)]` do. Without
 the package, the call fails with a hint that names it. ComponentArrays
 computes by position and does not check that two operands carry the same
@@ -15084,8 +15093,9 @@ Authoring list above carries it.
   checkpoint of the simulation, and `about` with `t0` (default `0` beside
   `about`) places
   it anywhere else ([§14.10][s14-10], [D-430][d-430]).
-- `labeled(linearization) → Linearization`. The labeled form, its eight
-  arrays as component arrays under the tap labels. A package extension
+- `labeled(linearization) → Linearization`. The labeled form, its arrays as
+  component arrays under the tap labels, except an array whose tap lists are
+  all empty. A package extension
   provides the method when ComponentArrays is loaded ([§14.10][s14-10], [D-475][d-475]).
 - `get_state(path, leaf = "")`, `get_deriv(path, leaf = "")`, `get_output(path, leaf = "")`,
   `get_input(leaf = "")` and `get_face(leaf = "")`. The closed

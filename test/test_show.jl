@@ -648,6 +648,13 @@ function test_show()
         init!(ended, set(u = (in = 1.0,)))
         run!(ended; t_end = 0.5)
         @test occursin("\n  termination: EndTimeReached at t = 0.5\n  log: 6 snapshots\n", plain(ended))
+        record = termination(ended)
+        with_residue = TerminationRecord(record.t, record.policy, record.source,
+                                         [ResidueRecord("loop", [], KindCounts()), ResidueRecord("device 1", [], KindCounts())])
+        @test _termination_line(with_residue) == "termination: EndTimeReached at t = 0.5, 2 residue records"
+        replayed = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
+        replay!(replayed, trace(ended); to_boundary = 2)
+        @test compact(replayed) == "Simulation(initialized, replay, frame 2 at t = 0.2)"
         ramp = HookedRamp()
         stopped = Simulation(hooked_ramp(ramp); Δt_frame = 1//10)
         ramp.hook[] = () -> stop!(stopped)
@@ -680,6 +687,7 @@ function test_show()
         read_set = reads(y = get_output("c", :y), input = get_input(:in))
         @test plain(series(sim, read_set)) ==
               join(["Series: no snapshots", "  column  eltype", "  y       Float64", "  input   Float64"], "\n")
+        @test plain(series(sim, reads())) == "Series: no snapshots"          # no columns, no table
         @test compact(series(sim, read_set)) == "Series(no snapshots; y, input)"
         init!(sim, set(u = (in = 1.0,)))
         run!(sim; t_end = 0.5)
@@ -707,7 +715,7 @@ function test_show()
                     "  b         -2.5e-10  1.0e-9"], "\n")
         @test compact(stalled) == "TrimReport(not converged, nothing committed, 42 iterations)"
         committed = TrimReport(true, (θ = 0.3, δ = -0.25), (a = 0.0, b = -2.5e-10), (a = 1e-9, b = 1e-9),
-                               (a = 1.0e-12, b = -2.5e-10), (level = 1.5,), :converged, 5, 4,
+                               (a = 1.0e-12, b = -2.5e-10), (level = 0.019930198715528237,), :converged, 5, 4,
                                [(:δ, :lower)], [("c", :touchdown)])
         @test plain(committed) ==
               join(["TrimReport: converged, committed; status converged, 4 iterations, 5 evaluations",
@@ -718,7 +726,7 @@ function test_show()
                     "  a         0.0       1.0e-9     1.0e-12",
                     "  b         -2.5e-10  1.0e-9     -2.5e-10",
                     "  check  committed",
-                    "  level  1.5",
+                    "  level  0.0199302",                                     # six significant digits
                     "  fired events: c/touchdown"], "\n")
         @test compact(committed) == "TrimReport(converged, committed, 4 iterations)"
         bypassed = TrimReport(true, (;), (;), (;), (;), (;), :bypassed, 1, 0,

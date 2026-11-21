@@ -572,8 +572,9 @@ die with the call. The simulation's own `Model` was never touched, and the
 sim's lifecycle is what it was. This is [§14.10][s14-10]'s "pure query": no commit
 and no boundary zero. The default form's restore, in step 2, goes into the
 scratch executor, and nothing is restored into the simulation. The return is a `Linearization` value holding the four vectors
-as NamedTuples under the tap labels, the four matrices, and the three label
-tuples so a consumer can slice by name.
+and the four matrices as plain arrays in the order of the taps, with the three
+label tuples beside them. `labeled` turns it into the form a consumer reads
+and slices by name.
 
 ## 7. The width: why the passes are grouped
 

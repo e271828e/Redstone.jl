@@ -78,10 +78,12 @@ Traps the code does not warn about, each hit more than once while building:
   reads `Pad` from `Main` and `Main.RedstoneTests.Pad` from the test module).
   Every payload field and writer label naming a *user* type goes through
   `_typename` (`diagnostics.jl`), which is `nameof` and so module-independent.
-  Four sites print a type directly: one `string(typeof(other))` in `trim.jl`
-  and one in `linearize.jl`, which render whatever type the caller passed, and
-  the two `"Model{$T}"` values of the `:non_nominal` methods, which render a
-  *framework* type, parameters and all. `Symbol(::Type)` has the same
+  Five sites print a type directly: one `string(typeof(other))` in `trim.jl`
+  and one in `linearize.jl`, which render whatever type the caller passed, the
+  two `"Model{$T}"` values of the `:non_nominal` methods, which render a
+  *framework* type, parameters and all, and the `Series` table in `show.jl`,
+  whose `string(eltype(column))` renders a column's leaf type, a user's
+  included. `Symbol(::Type)` has the same
   dependence — key buffers with `_cell_key`;
 - the init-service keyword is `t0` (the spec's signatures, D-110) while the
   *concept* and `Clock`'s field stay `t₀` — `clock.t₀ = t0` inside `init!`
@@ -325,7 +327,7 @@ override:
 | `dataplane`, `roster`, `bindings`, `control`, `devices`, `trace` | `dataplane roster bindings devices trace lifecycle log` |
 | `checkpoint` | the row above, plus `discrete events linearize` |
 | `readers`, `conditions`, `trim`, `linearize` | `readers conditions trim linearize` |
-| the extension under `ext/` | `linearize`, whose last testsets load ComponentArrays |
+| the extension under `ext/` | `linearize show`, since `test_linearize.jl` loads ComponentArrays at its head and `test_show.jl`'s `Linearization` testset calls `labeled` |
 | a new `AbstractComponent` fixture in any test file | add `build`, since `test_build.jl`'s Dual-activation sweep pins the skipped count |
 | `library` | `library build` |
 | `show` | `show` |

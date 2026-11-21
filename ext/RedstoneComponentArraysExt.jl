@@ -1,7 +1,8 @@
 # Design: §14.10, D-475.
-# The labeled form of a `Linearization`: the eight arrays as component arrays
-# over axes built from the label tuples, by position. The data is unwrapped
-# first, so a value labeled already is labeled again over the same axes.
+# The labeled form of a `Linearization`: its arrays as component arrays over
+# axes built from the label tuples, by position. ComponentArrays leaves plain an
+# array whose tap lists are all empty. The data is unwrapped first, so a value
+# labeled already is labeled again over the same axes.
 module RedstoneComponentArraysExt
 
 import Redstone

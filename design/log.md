@@ -2489,6 +2489,10 @@ Annotation (2026-10-20): the default operating point is the checkpoint of the
 simulation as it stands ([D-274][d-274]), and `capture` no longer produces a condition
 ([D-273][d-273]).
 
+Annotation (2026-11-21): `linearize` returns plain arrays in the order of the
+taps, and label-indexed slicing, `subsystem`/`delete_vars` included, now
+needs the labeled form that `labeled` returns ([D-475][d-475]).
+
 **Rejected.**
 - *Four `FiniteDiff` jacobians:* step-size heuristics, ~4n evaluations,
   exactness lost.
@@ -20891,8 +20895,9 @@ arrays when ComponentArrays is loaded ([§14.10][s14-10]). The bundled rulings:
   `AbstractMatrix{Float64}` with no type parameter, so the plain and the
   labeled form are one type.
 - ComponentArrays is a weak dependency. The core declares `labeled` with no
-  method, and a package extension adds the one that builds the eight
-  component arrays over axes made from the label tuples.
+  method, and a package extension adds the one that builds component
+  arrays over axes made from the label tuples, except an array whose tap
+  lists are all empty.
 - Without the package loaded, a call to `labeled` fails with a hint that
   names it.
 - `labeled` on a labeled value labels it again over the same axes.
@@ -20946,7 +20951,8 @@ code. The other fields were abstract already.
 - *NamedTuples in the plain form beside component vectors in the labeled
   one:* a `Union` field type, and the mixed value stays.
 - *A NamedTuple of the four matrices from `labeled`:* it drops the
-  operating point and the labels.
+  operating point and the label tuples, and prints through no method of
+  ours.
 - *Refusing a `y` tap that is not a `Float64`:* it removes a readout that
   works, such as a flag at the operating point.
 - *A fallback method of `labeled` in the core:* the extension would have to

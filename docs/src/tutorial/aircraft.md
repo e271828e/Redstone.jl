@@ -211,7 +211,8 @@ import RedstoneExamples
 package_sim = Simulation(RedstoneExamples.aircraft(); Δt_frame = 1//100)
 init!(package_sim, off_trim)
 run!(package_sim; t_end = 120.0)
-series(package_sim, reads(V = get_output("plant", :V), h = get_output("plant", :h))).columns == flight.columns
+package_flight = series(package_sim, reads(V = get_output("plant", :V), h = get_output("plant", :h)))
+(package_flight.V, package_flight.h) == (flight.V, flight.h)
 ```
 
 To start from this chapter's end, import the aircraft and its model:
