@@ -20400,6 +20400,10 @@ and the flag.
   evaluates it to the module, and a client that matches the target as text
   finds no anchor under the doubled name.
 
+Annotation (2026-11-21): a client also derives each schedule row's exact
+seconds and the deployment's chart over the joint period, which
+`show(::Deployment)` prints since [D-471][d-471].
+
 ### D-468 — Show and carry a root input's pin with the consumers that cause it
 
 **Status.** ratified

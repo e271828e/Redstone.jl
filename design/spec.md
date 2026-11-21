@@ -12280,8 +12280,10 @@ section the format gains, and a reader keeps no path for an older file.
 **The descriptor carries every fact `show` prints of a `Build` or a
 `Deployment`, or the facts from which a client derives it exactly, and no
 internals** ([D-467][d-467]). The second clause covers what a client computes
-from the file: the routes, the feedthrough edges, the hyperperiod and the
-steps per frame. One printed thing stays out, the
+from the file: the routes, the feedthrough edges, the hyperperiod, the steps
+per frame, each schedule row's exact seconds, and the deployment's chart over
+the joint period (the span after which the frame tops and the ticks repeat
+together, [§9.2][s9-2]). One printed thing stays out, the
 build's list of [activations](#g-activation) (the build's typed products at
 a given scalar type), which is the state of a cache ([§9.4][s9-4]). The build
 body has three sections, each the projection of one [artifact](#g-artifact)
