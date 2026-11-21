@@ -152,7 +152,9 @@ Each is open to the user's review.
 - **The docs battery**: green at both docs commits and at the code commit.
 - **Not verified:** the examples' runner, since no name the examples
   import changed; the Documenter build; and `show` on a terminal narrower
-  than its widest line, which no `show` here adapts to.
+  than its widest line, which no `show` here adapts to. The reviewer did
+  not read the tests added after its report or the docs fix. The session
+  ran its six mutants against them itself.
 - **One test robustness limit.** The parity test splits a chart line at
   the character index of the ruler's zero. That holds while every label
   character is one column wide, as the fixtures' are. `show` itself pads
