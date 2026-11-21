@@ -20571,15 +20571,16 @@ tops.
   row prints `Δt_base` by its value.
 - The component table has one row per discrete component, with its anchor,
   `m`, `c`, `D`, `Φ`, `Δt` and `τ`. The rate-scope table has the same
-  columns. Neither prints a rate chain.
+  columns after its key. Neither prints a rate chain.
 - `Δt` and `τ` print exact, as `D·Δt_base` and `Φ·Δt_base`.
 - The chart has one column per exact unit, `gcd(Δt_frame, Δt_base)`. It
   spans the joint period, the least common multiple of the hyperperiod and
   `Δt_frame` taken in time.
-- The chart's first row marks the frame tops, in every deployment. A
-  component's row marks each base tick as due or not due, and leaves blank a
-  column that is no base tick.
-- The guard stays binary, at 100 columns of the joint period.
+- The chart's first row marks the frame tops, in every chart, also where
+  every column is one. A component's row marks each base tick as due or not
+  due, and leaves blank a column that is no base tick.
+- The guard stays binary, at 100 columns of the joint period. A deployment
+  with no discrete component prints no chart.
 - `show(::Schedule)` is unchanged. It prints its rows with the float `Δt`
   and the rate chains, and the tick chart over one hyperperiod.
 
@@ -20626,8 +20627,8 @@ hyperperiod and a column is a base tick, so the chart is [D-257][d-257]'s with o
 more row.
 
 Every fact the block prints follows from what the descriptor carries
-([D-467][d-467]): the anchors' counts, each node's `(m, c)`, `Δt_base` and
-`Δt_frame`. The format is unchanged. The inspector's design session of
+([D-467][d-467]): the anchors' counts, each node's and each rate scope's
+`(m, c)`, `Δt_base` and `Δt_frame`. The format is unchanged. The inspector's design session of
 2026-11-19 and 2026-11-20 settled the content
 (`RedstoneInspector.jl/design/deployment_overlay.md`, answers 11 and 17),
 and the user ruled the printed form on 2026-11-21.

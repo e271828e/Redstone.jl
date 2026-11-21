@@ -4862,7 +4862,8 @@ divisor is `D = m·D₁`, with `D₁ = T₁/Δt_base = (1//50)/(1//500) = 10`.
   table gives each anchor's `Δtₖ`, `τₖ`, `Dₖ` and `Φₖ`, and its `A₀` row
   prints `Δt_base` by its value. The component table has one row per
   discrete component, with its anchor, `m`, `c`, `D`, `Φ`, `Δt` and `τ`. The
-  rate-scope table has the same columns. A reader checks the composition
+  rate-scope table has the same columns after its key. A reader checks the
+  composition
   law on one row, against the anchor's row above. `show` reads `m` and `c`
   from the structure and derives each anchor's counts, since the `Schedule`
   holds neither ([D-261][d-261]). The rate chains stay on the structure's
@@ -4890,12 +4891,13 @@ can fall between two base ticks, so a column per base tick has no place for
 it. The chart spans the joint period, the least common multiple of the
 hyperperiod and `Δt_frame` taken in time. The frame tops and the ticks
 repeat together there, and over no shorter span. The first row marks the
-frame tops, in every deployment. A component's row marks each base tick as
-due or not due, and leaves blank a column that is no base tick. **The
-guard stays binary, at 100 columns of the joint period** ([D-471][d-471]). Past it
-`show` prints the span's length and "chart omitted". `show(::Schedule)`
-keeps the tick chart over one hyperperiod, since a `Schedule` holds neither
-`Δt_frame` nor `Δt_base`.
+frame tops, in every chart, also where every column is one. A component's
+row marks each base tick as due or not due, and leaves blank a column that
+is no base tick. **The guard stays binary, at 100 columns of the joint
+period** ([D-471][d-471]). Past it `show` prints the span's length and
+"chart omitted". A deployment with no discrete component prints no chart.
+`show(::Schedule)` keeps the tick chart over one hyperperiod, since a
+`Schedule` holds neither `Δt_frame` nor `Δt_base`.
 
 #### Grid diagnostics
 
