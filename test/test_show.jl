@@ -624,15 +624,15 @@ function test_show()
         @test occursin("\n    MalformedDatum: 1 occurrence\n", final) && !occursin(rendered, final)
     end
 
-    @testset "Simulation: the state, the deployment's compact form, the outcome, the log and the devices (§9.2, §12.6)" begin
+    @testset "Simulation: the state, the input mode, the deployment's compact form, the outcome, the log and the devices (§9.2, §12.6)" begin
         deployment_line = "  deployment: Deployment(Δt_frame = 1//10, Δt_base = 1//10, h_max = 1//10, RK4())"
         sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
-        @test plain(sim) == join(["Simulation: built, live", deployment_line, "  log: no snapshots",
+        @test plain(sim) == join(["Simulation: built", "  input mode: live", deployment_line, "  log: no snapshots",
                                   "  devices: none", "  warnings: none"], "\n")
-        @test compact(sim) == "Simulation(built, live)"
+        @test compact(sim) == "Simulation(built)"
         init!(sim, set(u = (in = 1.0,)); log = false)
         attach!(sim, TailProbe(), NoClaim())
-        @test plain(sim) == join(["Simulation: initialized, live, frame 0 at t = 0.0", deployment_line,
+        @test plain(sim) == join(["Simulation: initialized, frame 0 at t = 0.0", "  input mode: live", deployment_line,
                                   "  log: off", "  devices: device 1 (TailProbe)", "  warnings: none"], "\n")
         # Each termination source with what it holds; `HookedRamp` and `Tripwire`
         # are test_failures.jl's.
@@ -640,10 +640,10 @@ function test_show()
         init!(requested)
         run!(requested; t_end = 5.0)
         @test plain(requested) ==
-              join(["Simulation: stopped, live, frame 9 at t = 0.9", deployment_line,
+              join(["Simulation: stopped, frame 9 at t = 0.9", "  input mode: live", deployment_line,
                     "  termination: ModelRequestedStop at t = 0.9, by stop/y, reason \"three ticks counted\"",
                     "  log: 10 snapshots", "  devices: none", "  warnings: none"], "\n")
-        @test compact(requested) == "Simulation(stopped, live, frame 9 at t = 0.9)"
+        @test compact(requested) == "Simulation(stopped, frame 9 at t = 0.9)"
         ended = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         init!(ended, set(u = (in = 1.0,)))
         run!(ended; t_end = 0.5)
@@ -654,7 +654,8 @@ function test_show()
         @test _termination_line(with_residue) == "termination: EndTimeReached at t = 0.5, 2 residue records"
         replayed = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         replay!(replayed, trace(ended); to_boundary = 2)
-        @test compact(replayed) == "Simulation(initialized, replay, frame 2 at t = 0.2)"
+        @test compact(replayed) == "Simulation(initialized, frame 2 at t = 0.2)"
+        @test startswith(plain(replayed), "Simulation: initialized, frame 2 at t = 0.2\n  input mode: replay\n")
         ramp = HookedRamp()
         stopped = Simulation(hooked_ramp(ramp); Δt_frame = 1//10)
         ramp.hook[] = () -> stop!(stopped)
@@ -676,9 +677,9 @@ function test_show()
         end
         text = plain(racing)
         wait(task)
-        @test startswith(text, "Simulation: running, live, frame ") && !occursin("\n  log:", text)
+        @test startswith(text, "Simulation: running, frame ") && !occursin("\n  log:", text)
         # The clock where the frame threw, past the record's last published boundary.
-        @test startswith(plain(errored), "Simulation: errored, live, frame 1 at t = 0.05\n")
+        @test startswith(plain(errored), "Simulation: errored, frame 1 at t = 0.05\n")
         @test occursin("\n  termination: LoopError at t = 0.0, StepError\n  log: 1 snapshot\n", plain(errored))
     end
 
@@ -702,28 +703,30 @@ function test_show()
         @test endswith(plain(series(stamped, reads(armed = get_output("s", :armed)))), "\n  armed   Bool")
     end
 
-    @testset "TrimReport: the verdict, the decisions with their bounds, the residuals and the commit (§14.8)" begin
+    @testset "TrimReport: the verdict, the backend's status, the decisions with their bounds, the residuals and the commit (§14.8)" begin
         stalled = TrimReport(false, (θ = 0.3, δ = -0.25), (a = 0.125, b = -2.5e-10), (a = 1e-9, b = 1e-9),
                              nothing, nothing, :stalled, 85, 42, [(:θ, :upper)], Tuple{String,Symbol}[])
         @test plain(stalled) ==
-              join(["TrimReport: not converged, nothing committed; status stalled, 42 iterations, 85 evaluations",
+              join(["TrimReport: not converged, nothing committed",
+                    "  backend: status stalled, 42 iterations, 85 evaluations",
                     "  decision  value",
-                    "  θ         0.3    at the upper bound",
+                    "  θ          0.3   at the upper bound",
                     "  δ         -0.25",
                     "  residual  value     tolerance",
-                    "  a         0.125     1.0e-9",
+                    "  a          0.125    1.0e-9",
                     "  b         -2.5e-10  1.0e-9"], "\n")
         @test compact(stalled) == "TrimReport(not converged, nothing committed, 42 iterations)"
         committed = TrimReport(true, (θ = 0.3, δ = -0.25), (a = 0.0, b = -2.5e-10), (a = 1e-9, b = 1e-9),
                                (a = 1.0e-12, b = -2.5e-10), (level = 0.019930198715528237,), :converged, 5, 4,
                                [(:δ, :lower)], [("c", :touchdown)])
         @test plain(committed) ==
-              join(["TrimReport: converged, committed; status converged, 4 iterations, 5 evaluations",
+              join(["TrimReport: converged, committed",
+                    "  backend: status converged, 4 iterations, 5 evaluations",
                     "  decision  value",
-                    "  θ         0.3",
+                    "  θ          0.3",
                     "  δ         -0.25  at the lower bound",
                     "  residual  value     tolerance  committed",
-                    "  a         0.0       1.0e-9     1.0e-12",
+                    "  a          0.0      1.0e-9      1.0e-12",
                     "  b         -2.5e-10  1.0e-9     -2.5e-10",
                     "  check  committed",
                     "  level  0.0199302",                                     # six significant digits
@@ -731,26 +734,30 @@ function test_show()
         @test compact(committed) == "TrimReport(converged, committed, 4 iterations)"
         bypassed = TrimReport(true, (;), (;), (;), (;), (;), :bypassed, 1, 0,
                               Tuple{Symbol,Symbol}[], Tuple{String,Symbol}[])
-        @test plain(bypassed) == "TrimReport: converged, committed; status bypassed, no iterations, 1 evaluation"
+        @test plain(bypassed) == "TrimReport: converged, committed\n  backend: status bypassed, no iterations, 1 evaluation"
+        # A check that is no float stands with its last digit at the point.
+        mixed = TrimReport(true, (θ = 0.3,), (a = 0.0,), (a = 1e-9,), (a = 0.0,), (armed = true, count = 12, level = 1234.5),
+                           :converged, 5, 4, Tuple{Symbol,Symbol}[], Tuple{String,Symbol}[])
+        @test endswith(plain(mixed), join(["  check  committed", "  armed  true", "  count    12", "  level  1234.5"], "\n"))
         # A real solve prints through the same method.
         sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         @test startswith(plain(trim!(sim, u_problem(); baseline = pend_base(), t0 = 0.25)),
-                         "TrimReport: converged, committed; status converged, ")
+                         "TrimReport: converged, committed\n  backend: status converged, ")
     end
 
-    @testset "Linearization: the operating point per list, then each matrix under its labels (§14.10, D-475)" begin
+    @testset "Linearization: the operating point per list, then each matrix under its labels, on the decimal point (§14.10, D-475)" begin
         linearization = Linearization([0.0, -1.5], [0.3, 0.0], [2.5, 0.0], [0.3, 2.5], [0.0 1.0; -9.5 -0.5],
                                       [0.0 0.0; 1.0 -1.0], [1.0 0.0; 0.0 0.25], [0.0 0.0; 1.0 -1.0],
                                       (:θ, :ω), (:τ, :d), (:θ, :u_eff))
         @test plain(linearization) ==
               join(["Linearization: 2 states, 2 inputs, 2 outputs",
-                    "  states:", "       x₀   ẋ₀", "    θ  0.3  0.0", "    ω  0.0  -1.5",
+                    "  states:", "       x₀   ẋ₀", "    θ  0.3   0.0", "    ω  0.0  -1.5",
                     "  inputs:", "       u₀", "    τ  2.5", "    d  0.0",
                     "  outputs:", "           y₀", "    θ      0.3", "    u_eff  2.5",
-                    "  A:", "       θ     ω", "    θ  0.0   1.0", "    ω  -9.5  -0.5",
-                    "  B:", "       τ    d", "    θ  0.0  0.0", "    ω  1.0  -1.0",
+                    "  A:", "        θ     ω", "    θ   0.0   1.0", "    ω  -9.5  -0.5",
+                    "  B:", "       τ     d", "    θ  0.0   0.0", "    ω  1.0  -1.0",
                     "  C:", "           θ    ω", "    θ      1.0  0.0", "    u_eff  0.0  0.25",
-                    "  D:", "           τ    d", "    θ      0.0  0.0", "    u_eff  1.0  -1.0"], "\n")
+                    "  D:", "           τ     d", "    θ      0.0   0.0", "    u_eff  1.0  -1.0"], "\n")
         @test compact(linearization) == "Linearization(2 states, 2 inputs, 2 outputs)"
         # The labeled form prints alike, read by integer index.
         @test plain(labeled(linearization)) == plain(linearization)
@@ -760,7 +767,14 @@ function test_show()
                                     zeros(0, 1), zeros(0, 0), (:q,), (), ())
         @test plain(states_only) ==
               join(["Linearization: 1 state, no inputs, no outputs",
-                    "  states:", "       x₀   ẋ₀", "    q  1.0  0.0", "  A:", "       q", "    q  -1.0"], "\n")
+                    "  states:", "       x₀   ẋ₀", "    q  1.0  0.0", "  A:", "        q", "    q  -1.0"], "\n")
+        # A header no wider than the digits before the point ends there.
+        wide = Linearization([0.0, 0.0], [1000.0, 0.0199302], Float64[], Float64[], [-0.0372263 20.4167; 1.04807e-14 -3.675],
+                             zeros(2, 0), zeros(0, 2), zeros(0, 0), (:h, :θ), (), ())
+        @test plain(wide) ==
+              join(["Linearization: 2 states, no inputs, no outputs",
+                    "  states:", "         x₀          ẋ₀", "    h  1000.0        0.0", "    θ     0.0199302  0.0",
+                    "  A:", "        h             θ", "    h  -0.0372263    20.4167", "    θ   1.04807e-14  -3.675"], "\n")
     end
 
     @testset "every REPL form ends without a newline and carries no trailing whitespace (D-257)" begin

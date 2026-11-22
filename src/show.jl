@@ -506,10 +506,26 @@ _lines(status::FrameworkStatus) =
 # significant digits.
 _value_label(value) = sprint(show, value; context = :compact => true)
 
-# The lifecycle and the mode, then the clock once the simulation holds a state.
+# A column of numbers under its header, aligned on the decimal point as a REPL
+# aligns a matrix. The header ends at the point where it fits, and starts at
+# the column's edge otherwise.
+function _number_column(header::String, value_labels::Vector{String})
+    splits = [match(r"^([^.]*)(.*)$", label).captures for label in value_labels]
+    whole_width = maximum(textwidth(whole) for (whole, _) in splits; init = 0)
+    fraction_width = maximum(textwidth(fraction) for (_, fraction) in splits; init = 0)
+    [lpad(header, whole_width);
+     [lpad(whole, whole_width) * rpad(fraction, fraction_width) for (whole, fraction) in splits]]
+end
+
+# One aligned table from its columns, each a header over its cells.
+_column_table(indent::String, columns::Vector{Vector{String}}) =
+    _table(indent, first.(columns),
+           [[column[i] for column in columns] for i in 2:length(first(columns))])
+
+# The lifecycle, then the clock once the simulation holds a state.
 function _simulation_state(sim::Simulation, state_label::Symbol)
-    state_label === :built && return "$state_label, $(mode(sim))"
-    "$state_label, $(mode(sim)), frame $(sim.run.frame) at t = $(sim.model.exec.clock.t)"
+    state_label === :built && return String(state_label)
+    "$state_label, frame $(sim.run.frame) at t = $(sim.model.exec.clock.t)"
 end
 
 Base.show(io::IO, sim::Simulation) = print(io, "Simulation(", _simulation_state(sim, lifecycle(sim)), ")")
@@ -537,13 +553,14 @@ function _devices_line(sim::Simulation)
     "devices: " * join(("device $(entry.id) ($(_typename(entry.dev)))" for entry in sim.plane.roster), ", ")
 end
 
-# The state line, the deployment in its compact form, the run's outcome and log,
-# the devices and the warnings. A running simulation's log is the loop's, and
-# goes unread; the lifecycle is read once, so the two agree.
+# The state line, the input mode, the deployment in its compact form, the run's
+# outcome and log, the devices and the warnings. A running simulation's log is
+# the loop's, and goes unread; the lifecycle is read once, so the two agree.
 function _lines(sim::Simulation)
     state_label = lifecycle(sim)
     record = termination(sim)
     vcat(["Simulation: " * _simulation_state(sim, state_label),
+          "  input mode: $(mode(sim))",
           "  deployment: " * sprint(show, sim.model.deployment)],
          record === nothing ? String[] : ["  " * _termination_line(record)],
          state_label === :running ? String[] : ["  " * _log_line(sim)],
@@ -575,28 +592,37 @@ _verdict_label(report::TrimReport) =
 Base.show(io::IO, report::TrimReport) =
     print(io, "TrimReport(", _verdict_label(report), ", ", _count(report.n_iterations, "iteration"), ")")
 
-# The decisions, a bound the solution sits at marked on its row; the residuals
-# beside their tolerances, and the committed state's beside them when one was
-# committed; the committed checks; the events the commit fired.
+# A table's first column, the names under their header.
+_name_column(header::String, name_list) = [header; [String(name) for name in name_list]]
+
+# A NamedTuple's values as a column of numbers under `header`.
+_number_column(header::String, labeled_values::NamedTuple) =
+    _number_column(header, String[_value_label(value) for value in labeled_values])
+
+# The verdict; the backend's own status and counts; the decisions, a bound the
+# solution sits at marked on its row; the residuals beside their tolerances, and
+# the committed state's beside them when one was committed; the committed
+# checks; the events the commit fired.
 function _lines(report::TrimReport)
     bounds = Dict(report.saturated)
-    solution_rows = [[String(name), _value_label(value),
-                      haskey(bounds, name) ? "at the $(bounds[name]) bound" : ""]
-                     for (name, value) in pairs(report.solution)]
+    bound_marks = [""; [haskey(bounds, name) ? "at the $(bounds[name]) bound" : ""
+                        for name in keys(report.solution)]]
     committed = report.committed_residuals
-    residual_header = ["residual", "value", "tolerance"]
-    committed === nothing || push!(residual_header, "committed")
-    residual_rows = [vcat([String(name), _value_label(value), _value_label(report.tolerances[name])],
-                          committed === nothing ? String[] : [_value_label(committed[name])])
-                     for (name, value) in pairs(report.residuals)]
+    residual_columns = [_name_column("residual", keys(report.residuals)),
+                        _number_column("value", report.residuals),
+                        _number_column("tolerance", report.tolerances[keys(report.residuals)])]
+    committed === nothing ||
+        push!(residual_columns, _number_column("committed", committed[keys(report.residuals)]))
     checks = report.committed_checks
-    vcat(["TrimReport: " * _verdict_label(report) * "; status $(report.status), " *
-          _count(report.n_iterations, "iteration") * ", " * _count(report.n_evaluations, "evaluation")],
-         isempty(solution_rows) ? String[] : _table("  ", ["decision", "value", ""], solution_rows),
-         isempty(residual_rows) ? String[] : _table("  ", residual_header, residual_rows),
+    vcat(["TrimReport: " * _verdict_label(report),
+          "  backend: status $(report.status), " * _count(report.n_iterations, "iteration") * ", " *
+          _count(report.n_evaluations, "evaluation")],
+         isempty(report.solution) ? String[] :
+         _column_table("  ", [_name_column("decision", keys(report.solution)),
+                              _number_column("value", report.solution), bound_marks]),
+         isempty(report.residuals) ? String[] : _column_table("  ", residual_columns),
          checks === nothing || isempty(checks) ? String[] :
-         _table("  ", ["check", "committed"],
-                [[String(name), _value_label(value)] for (name, value) in pairs(checks)]),
+         _column_table("  ", [_name_column("check", keys(checks)), _number_column("committed", checks)]),
          isempty(report.fired_events) ? String[] :
          ["  fired events: " * join((_named(path, name, "/") for (path, name) in report.fired_events), ", ")])
 end
@@ -615,9 +641,10 @@ function _matrix_lines(heading::String, matrix::AbstractMatrix{Float64},
                        row_labels::Tuple{Vararg{Symbol}}, column_labels::Tuple{Vararg{Symbol}})
     isempty(matrix) && return String[]
     vcat([heading * ":"],
-         _table("  ", ["", String.(column_labels)...],
-                [[String(row_labels[i]); [_value_label(matrix[i, j]) for j in eachindex(column_labels)]]
-                 for i in eachindex(row_labels)]))
+         _column_table("  ", [[_name_column("", row_labels)];
+                              [_number_column(String(column_labels[j]),
+                                              [_value_label(matrix[i, j]) for i in eachindex(row_labels)])
+                               for j in eachindex(column_labels)]]))
 end
 
 # One list's operating point under its labels, beside the derivative for the
@@ -625,9 +652,9 @@ end
 function _point_lines(heading::String, labels::Tuple{Vararg{Symbol}}, columns::Vector)
     isempty(labels) && return String[]
     vcat([heading * ":"],
-         _table("  ", ["", first.(columns)...],
-                [[String(labels[i]); [_value_label(last(column)[i]) for column in columns]]
-                 for i in eachindex(labels)]))
+         _column_table("  ", [[_name_column("", labels)];
+                              [_number_column(header, [_value_label(point[i]) for i in eachindex(labels)])
+                               for (header, point) in columns]]))
 end
 
 # The operating point per list, then the four matrices.

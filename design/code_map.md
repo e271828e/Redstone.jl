@@ -1156,18 +1156,24 @@ D-261.
   count-only past it.
 - The two forms of four values beside the artifacts, under the same
   conventions:
-  - the `Simulation`'s lifecycle, mode and clock, its deployment's compact
-    form, the termination record, the retained log's count off `logged`,
-    unread while running, the devices and the warnings;
+  - the `Simulation`'s lifecycle and clock, its input mode on a line of its
+    own, its deployment's compact form, the termination record, the
+    retained log's count off `logged`, unread while running, the devices
+    and the warnings;
   - the `Series`' snapshot count and `t` span, and each column's label and
     element type, no values (§11.2);
-  - the `TrimReport`'s verdict and counts, the decisions with any bound
-    reached, the residuals beside their tolerances and the committed ones,
-    the committed checks and the fired events;
+  - the `TrimReport`'s verdict, the backend's status and counts on a line
+    of their own, the decisions with any bound reached, the residuals
+    beside their tolerances and the committed ones, the committed checks
+    and the fired events;
   - the `Linearization`'s operating point per tap list and each matrix as a
     table under its labels, read by integer index so the plain and the
     labeled form print alike, an empty list and its matrices printing no
-    block (§14.10).
+    block (§14.10);
+  - `_number_column` aligns a column of numbers on the decimal point, in
+    the `TrimReport`'s and the `Linearization`'s tables. Its header ends at
+    the point where it fits and starts at the column's edge otherwise.
+    `_column_table` builds `_table`'s rows from such columns.
 
 Spec: §9.2, §11.2, §11.8, §13.7, §14.10, D-136, D-257, D-261, D-315, D-437, D-449,
 D-454, D-460, D-464, D-466, D-468, D-471.
