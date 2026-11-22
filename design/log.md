@@ -20721,7 +20721,6 @@ needs its type, and the core defines `Group`.
   domain hierarchy holds through an abstract type.
 - The core defines `Group` through the assembly declarations alone, and no
   build step names it. It leaves `Redstone.Library`.
-- [§8.5][s8-5] opens with the two forms and states the declarations after them.
 
 Amends [D-184][d-184], which folded `Group` in as a library component, and the bullet
 of [D-313][d-313] that includes it in the library. [D-298][d-298]'s trade stands: a `Group`
@@ -20731,14 +20730,15 @@ a library component. The assembly declarations, the container rule and
 
 **Spec.** [§8.5][s8-5], [§13.7][s13-7], [Appendix B][sB]
 
-**Rationale.** The repository's own use decided the first bullet. At this
+**Rationale.** The repository's own use decided the headline. At this
 entry the examples build every assembly with `Group`, in 16 calls, and
 declare no named assembly. The tutorial shows no named assembly either. The
 tests call `Group` 436 times in 28 files and declare about 60 named
 assemblies, 46 of them in `test_assembly.jl` and `test_build.jl`, where they
 test the rules for named assemblies. [§8.5][s8-5] still opened with "an assembly is
 a plain struct" and reached `Group` in its last subsection, the bias [D-184][d-184]'s
-Rejected list had already named.
+Rejected list had already named. [§8.5][s8-5] now opens with the two forms and
+states the declarations after them.
 
 The sample is one tutorial package with no domain library behind it. The
 cases [§8.5][s8-5] gives for named types are a domain library's: a model that domain
@@ -20769,7 +20769,7 @@ assembly then exercises the declaration rules on every build, which is
 - *Named types called a niche pattern, with their rules kept as they are:*
   no rule goes, because `Group` is written in them, so the declaration layer
   costs the same however few models use a named type. The standing is a
-  matter of which form the spec teaches first, which the first bullet rules.
+  matter of which form the spec teaches first, which the headline rules.
 - *A `Group` the structure step knows by name:* a privilege that buys
   nothing, since the declarations already say everything the step reads, and
   that ends [§13.7][s13-7]'s test.
@@ -20809,7 +20809,8 @@ instance exists. A `Group`'s declarations are field values, written as
 arguments of the call that creates it, so the helper had no assembly to
 take. `approach` wrote the five inputs of its `vehicle` by hand. A function
 in the field restores the body. It runs when the build reads the
-declaration, so a warning it raises joins the build's list, as a prototype
+declaration, so a warning a helper of the framework raises there joins the
+build's list, as a prototype
 on a stand-in type confirmed with `EmptyFaceSelection`. The function also
 answers for the children it is given: a copy of that prototype with
 `autopilot` in place of `piloted` returned two entries where the original
