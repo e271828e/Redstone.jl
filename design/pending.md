@@ -12,36 +12,20 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The core work ahead of the inspector's increment 10**, settled in the
-  design session of the deployment overlay on 2026-11-19 and 2026-11-20,
-  in four parts in this order. The session's record is
-  `RedstoneInspector.jl/design/deployment_overlay.md`, and its answer 17
-  lists the five log entries the parts owe. Each part lands as a spec and
-  log commit followed by its code. All four have landed: the notation, the
-  grid report's placement, the descriptor and `show(::Deployment)` in the
-  notation (D-464, D-466, D-467, D-468, D-471). Part three's cold review
-  has closed and its fixes have landed, with D-470 among them. Its record
-  is
-  `design/increments/20261120_descriptor_content/notes_descriptor_content.md`,
-  whose section 12 holds the review. Part four landed on 2026-11-21 while
-  the user was away. Its record is
-  `design/increments/20261121_show_deployment/notes_show_deployment.md`,
-  whose section 3 lists the session's own decisions and whose section 6
-  lists what it leaves open for the user. The arc waits for the user's
-  diff-verify and the push. The session left open whether the
-  build refuses a pool that admits no deployment. That was ruled on
-  2026-11-20 and has landed ahead of part two: the build refuses a
-  structure that no deployment binds, by one trial binding (§9.1, §9.2,
-  D-465). `src/assembly.jl` was split for it, and the grid arithmetic now
-  lives in `src/structure.jl`. The record, with its findings, the items
-  it leaves open for the user and the grid report's part, is
-  `design/increments/20261120_structure_trial/notes_structure_trial.md`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
-  `design/roadmap.md` stages its eleven increments. What this repo owes it
-  before the release is the first bullet, and after it the later stages.
-  Its increment 10 needs that bullet's parts one to three pushed.
+  `design/roadmap.md` stages its eleven increments. What this repo owed its
+  increment 10 has landed and is pushed, with the user's diff-verify done:
+  the notation, the grid report's placement, the descriptor and
+  `show(::Deployment)` in the notation (D-464, D-466, D-467, D-468, D-470,
+  D-471), and the build's refusal of a structure that no deployment binds
+  (D-465). The records are
+  `RedstoneInspector.jl/design/deployment_overlay.md`,
+  `design/increments/20261120_structure_trial/notes_structure_trial.md`,
+  `design/increments/20261120_descriptor_content/notes_descriptor_content.md`
+  and `design/increments/20261121_show_deployment/notes_show_deployment.md`.
+  After the release this repo owes it the later stages.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, each ending at a named function
   of the examples package: the plant, trim, linearization, a first loop,
