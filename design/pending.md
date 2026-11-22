@@ -43,13 +43,13 @@ item changes what the spec says, the spec edit is part of the item.
   properties (§11.2, D-474); and a `Linearization` of plain arrays, labeled
   through a ComponentArrays extension (§14.10, D-475), which answers
   friction item 10 of that record. It grew past a loose change and ran as
-  one small increment with no brief. Stage reached: closed on 2026-11-22,
-  pushed through `1616c10`, with the user's last rulings in `ba1dd8e`,
-  `591ec3e` and `5544d6d`, unpushed. The record is
+  one small increment with no brief. Stage reached: closed on 2026-11-22
+  and pushed through `5171c56`, with the session's decisions accepted and
+  the diff verified by the user. The record is
   `design/increments/20261121_tutorial_loose_change/notes_tutorial_loose_change.md`,
-  whose section 13 holds those rulings. One finding remains, for the user:
-  Codecov never measures `ext/`, since the Coverage workflow instruments
-  `src/` alone. The inspector's increment 10 needs the first bullet's parts
+  whose section 13 holds the user's last rulings and what it leaves: the
+  user's reading of the new spec passages, and Codecov's blindness to
+  `ext/`, which went to a session of its own. The inspector's increment 10 needs the first bullet's parts
   one to three pushed, and nothing in it reads what this change touches.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose

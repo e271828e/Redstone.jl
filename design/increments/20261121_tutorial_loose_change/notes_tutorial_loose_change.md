@@ -20,10 +20,10 @@ The three parts keep their numbers from the session:
 
 ## 1. The state on 2026-11-21
 
-- **On 2026-11-22** the increment is pushed through `1616c10` and closed
-  but for one finding on coverage. The user ruled on every open point of
-  section 12, the printed forms included, and section 13 records it. The
-  bullets below are the state of 2026-11-21.
+- **On 2026-11-22** the increment is closed and pushed through `5171c56`.
+  The user ruled on every open point of section 12, the printed forms
+  included, and accepted the session's decisions of section 7. Section 13
+  records it. The bullets below are the state of 2026-11-21.
 - The design is settled except for the printed layouts, which the user
   has yet to judge on the output of section 8.
 - The increment has landed on the real tree, unpushed: the docs as
@@ -908,7 +908,8 @@ found that every fix holds and widens nothing. It saw nothing new.
 
 The user read section 12's open points with a fresh session's
 recommendations and ruled on each. The session's commits are `ba1dd8e`,
-`591ec3e` and `5544d6d`, and the record's own. None is pushed.
+`591ec3e`, `5544d6d` and `5171c56`, pushed on the user's word, and the
+record's last commit after them.
 
 - **The push.** `origin/master` stood at `1616c10` when the session
   began. CI, the examples, Coverage and the docs build ran green on it,
@@ -957,8 +958,22 @@ recommendations and ruled on each. The session's commits are `ba1dd8e`,
   `julia-processcoverage` reads `src` and `ext` by default. Codecov shows
   `ext/RedstoneComponentArraysExt.jl` at 0%, its 6 lines missed though the
   suite runs them, and `1616c10` went from 59 misses to 65. A second
-  `--code-coverage=@ext` does not help, since the last flag wins. Open, for
-  the user, with the session's proposal.
+  `--code-coverage=@ext` does not help, since the last flag wins. The user
+  gave it to a session of its own, so it is closed here.
 - **The scratch is deleted**: the three worktrees, the three probe folders,
   the two prompts and the two agents' notes that stood beside them. The
   probes that sections 3, 9 and 11 cite are gone with them.
+- **The session's decisions S1 to S13 stand**, by the user, S5 among them:
+  chapter 3 displays the `Linearization` itself.
+- **The diff-verify** of the increment as pushed at `1616c10` is done, by
+  the user.
+- **Not checked, and tracked nowhere else.** A hand-made `Linearization`
+  whose arrays disagree in size with its label tuples, which section 11
+  lists. The tables of `show` were rewritten in `ba1dd8e` and no test
+  builds such a value. `linearize` never returns one.
+- **Left for the user**: the wording of D-474, D-475 and D-476 and of
+  their spec passages, which the user means to read once the `Group`
+  promotion closes too. They stand in §11.2 under "The log", in §12.6
+  under "Lifecycle states and the input mode", in §14.8 under "The
+  report", in §14.10 under "The returned value", and in Appendices B and
+  C.
