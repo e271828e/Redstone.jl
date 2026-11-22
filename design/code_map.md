@@ -1175,8 +1175,8 @@ D-261.
     the point where it fits and starts at the column's edge otherwise.
     `_column_table` builds `_table`'s rows from such columns.
 
-Spec: §9.2, §11.2, §11.8, §13.7, §14.10, D-136, D-257, D-261, D-315, D-437, D-449,
-D-454, D-460, D-464, D-466, D-468, D-471.
+Spec: §9.2, §11.2, §11.8, §12.6, §13.7, §14.8, §14.10, D-136, D-257, D-261, D-315, D-437,
+D-449, D-454, D-460, D-464, D-466, D-468, D-471, D-476.
 
 ### `src/sim.jl`
 

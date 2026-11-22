@@ -500,7 +500,7 @@ _lines(status::FrameworkStatus) =
          _indented(mapreduce(_writer_lines, vcat, status.writers; init = String[])),
          ["  " * _pacer_line(status.pacer)])
 
-# --- Simulation, Series, TrimReport, Linearization (§11.2, §14.10) ----------------
+# --- Simulation, Series, TrimReport, Linearization (§11.2, §14.10, D-476) ---------
 
 # A number in a table cell, as a REPL prints it inside a container: six
 # significant digits.

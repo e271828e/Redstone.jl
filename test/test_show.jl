@@ -624,7 +624,7 @@ function test_show()
         @test occursin("\n    MalformedDatum: 1 occurrence\n", final) && !occursin(rendered, final)
     end
 
-    @testset "Simulation: the state, the input mode, the deployment's compact form, the outcome, the log and the devices (§9.2, §12.6)" begin
+    @testset "Simulation: the state, the input mode, the deployment's compact form, the outcome, the log and the devices (§9.2, §12.6, D-476)" begin
         deployment_line = "  deployment: Deployment(Δt_frame = 1//10, Δt_base = 1//10, h_max = 1//10, RK4())"
         sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         @test plain(sim) == join(["Simulation: built", "  input mode: live", deployment_line, "  log: no snapshots",
@@ -683,7 +683,7 @@ function test_show()
         @test occursin("\n  termination: LoopError at t = 0.0, StepError\n  log: 1 snapshot\n", plain(errored))
     end
 
-    @testset "Series: the snapshots' span and each column's element type (§11.2)" begin
+    @testset "Series: the snapshots' span and each column's element type (§11.2, D-476)" begin
         sim = Simulation(fed(Plant(), "u"); Δt_frame = 1//10)
         read_set = reads(y = get_output("c", :y), input = get_input(:in))
         @test plain(series(sim, read_set)) ==
@@ -703,7 +703,7 @@ function test_show()
         @test endswith(plain(series(stamped, reads(armed = get_output("s", :armed)))), "\n  armed   Bool")
     end
 
-    @testset "TrimReport: the verdict, the backend's status, the decisions with their bounds, the residuals and the commit (§14.8)" begin
+    @testset "TrimReport: the verdict, the backend's status, the decisions with their bounds, the residuals and the commit (§14.8, D-476)" begin
         stalled = TrimReport(false, (θ = 0.3, δ = -0.25), (a = 0.125, b = -2.5e-10), (a = 1e-9, b = 1e-9),
                              nothing, nothing, :stalled, 85, 42, [(:θ, :upper)], Tuple{String,Symbol}[])
         @test plain(stalled) ==
@@ -745,7 +745,7 @@ function test_show()
                          "TrimReport: converged, committed\n  backend: status converged, ")
     end
 
-    @testset "Linearization: the operating point per list, then each matrix under its labels, on the decimal point (§14.10, D-475)" begin
+    @testset "Linearization: the operating point per list, then each matrix under its labels, on the decimal point (§14.10, D-475, D-476)" begin
         linearization = Linearization([0.0, -1.5], [0.3, 0.0], [2.5, 0.0], [0.3, 2.5], [0.0 1.0; -9.5 -0.5],
                                       [0.0 0.0; 1.0 -1.0], [1.0 0.0; 0.0 0.25], [0.0 0.0; 1.0 -1.0],
                                       (:θ, :ω), (:τ, :d), (:θ, :u_eff))
