@@ -36,26 +36,12 @@ item changes what the spec says, the spec edit is part of the item.
   lives in `src/structure.jl`. The record, with its findings, the items
   it leaves open for the user and the grid report's part, is
   `design/increments/20261120_structure_trial/notes_structure_trial.md`.
-- **The tutorial's loose change**, owed before its increment 3 by L12 and
-  L23 of `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`:
-  a compact `show` for `Simulation`, `Series`, `TrimReport` and
-  `Linearization` (D-476); a `Series` that forwards its columns as
-  properties (§11.2, D-474); and a `Linearization` of plain arrays, labeled
-  through a ComponentArrays extension (§14.10, D-475), which answers
-  friction item 10 of that record. It grew past a loose change and ran as
-  one small increment with no brief. Stage reached: closed on 2026-11-22
-  and pushed through `5171c56`, with the session's decisions accepted and
-  the diff verified by the user. The record is
-  `design/increments/20261121_tutorial_loose_change/notes_tutorial_loose_change.md`,
-  whose section 13 holds the user's last rulings and what it leaves: the
-  user's reading of the new spec passages, and Codecov's blindness to
-  `ext/`, which went to a session of its own. The inspector's increment 10 needs the first bullet's parts
-  one to three pushed, and nothing in it reads what this change touches.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
   `design/roadmap.md` stages its eleven increments. What this repo owes it
   before the release is the first bullet, and after it the later stages.
+  Its increment 10 needs that bullet's parts one to three pushed.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, each ending at a named function
   of the examples package: the plant, trim, linearization, a first loop,
@@ -77,10 +63,15 @@ item changes what the spec says, the spec edit is part of the item.
   with the brief and the prototype's patch beside it. Increment 2's
   record is
   `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`,
-  with the patch beside it and no brief. Increment 3 waits for the
-  tutorial's loose change, the second bullet. The plan, the arc's
-  rulings, the open decisions and the rules for the pages are
-  `design/increments/roadmap_tutorial.md`.
+  with the patch beside it and no brief. Increment 3 is next. The loose
+  change it waited for closed on 2026-11-22 and is pushed: a compact `show`
+  for `Simulation`, `Series`, `TrimReport` and `Linearization` (D-476), a
+  `Series` that reads its columns as properties (§11.2, D-474), and a
+  `Linearization` of plain arrays, labeled through a ComponentArrays
+  extension (§14.10, D-475). Its record is
+  `design/increments/20261121_tutorial_loose_change/notes_tutorial_loose_change.md`.
+  The plan, the arc's rulings, the open decisions and the rules for the
+  pages are `design/increments/roadmap_tutorial.md`.
 - **The API audit.** The API is reviewed as a whole before the release, in
   two parts, in this order. It comes after the tutorial, which surfaces the
   names a user types and the friction a user meets.

@@ -967,13 +967,16 @@ record's last commit after them.
   chapter 3 displays the `Linearization` itself.
 - **The diff-verify** of the increment as pushed at `1616c10` is done, by
   the user.
-- **Not checked, and tracked nowhere else.** A hand-made `Linearization`
-  whose arrays disagree in size with its label tuples, which section 11
-  lists. The tables of `show` were rewritten in `ba1dd8e` and no test
-  builds such a value. `linearize` never returns one.
+- **Dropped by the user.** A hand-made `Linearization` whose arrays
+  disagree in size with its label tuples, which section 11 lists as not
+  checked. The tables of `show` were rewritten in `ba1dd8e` and no test
+  builds such a value. `linearize` never returns one, so nothing pursues
+  it.
 - **Left for the user**: the wording of D-474, D-475 and D-476 and of
   their spec passages, which the user means to read once the `Group`
   promotion closes too. They stand in §11.2 under "The log", in §12.6
   under "Lifecycle states and the input mode", in §14.8 under "The
   report", in §14.10 under "The returned value", and in Appendices B and
   C.
+- **The `pending.md` bullet is retired.** The tutorial's bullet there now
+  names this change as closed and points at this file.
