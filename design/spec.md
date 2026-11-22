@@ -8002,6 +8002,10 @@ flight = series(sim, reads(V = get_output("plant", :V)))
 to `series` and not to `reads`, because the same read set serves trim, where
 the four names clash with nothing ([§14.7][s14-7]).
 
+**A `Series` prints each column's label and element type, and no values**
+([D-476][d-476]), under the count of snapshots and the span of `t` they cover. A
+column holds any leaf type, so no summary of values suits every column.
+
 #### Output-device bindings
 
 **Output-device [bindings](#g-binding) are snapshot bindings** ([D-083][d-083]). A binding is the value
@@ -10345,6 +10349,12 @@ device's pending batch waits between drains) or the attached recording ([§12.7]
 the root inputs, and a batch is a device's staged set of writes. State and mode
 are orthogonal. The state says whether the simulation may advance, and the mode
 says what it will advance on.
+
+**A `Simulation` prints its input mode on a line of its own** ([D-476][d-476]), apart
+from the state and the clock in its heading, since the two are separate
+facts. Its deployment follows in the deployment's one-line form ([§9.2][s9-2]), then
+the run's termination record, the retained log's count, the devices and the
+warnings.
 
 **`init!` is mandatory** ([D-088][d-088]). `run!` or `step!` on a simulation
 whose boundary zero has not completed is `MissingInit`, an error in the kind
@@ -13845,6 +13855,15 @@ The list below takes the fields in turn.
   event names. The list is empty when boundary zero ran quiet
   ([§14.5][s14-5], [D-126][d-126]).
 
+**A `TrimReport`'s heading states the verdict alone** ([D-476][d-476]). The backend's
+status and counts stand on the next line, since the status decides nothing
+and in the common case repeats the verdict's word. The decisions follow, each
+with any bound it sits at, then the residuals beside their tolerances and the
+committed residuals, the committed checks and the fired events. **Each number
+prints with six significant digits, and a column of numbers aligns on its
+decimal point** ([D-476][d-476]), as a REPL aligns a matrix. A column's header ends at
+the point where it fits, and starts at the column's edge otherwise.
+
 The committed-state residuals are nearly free ([D-155][d-155]). Boundary zero's sweep has
 already run, so the residuals' declared reads need one derivative evaluation and
 a gather from it. There is no offset caveat to carry. Every output stage
@@ -14260,13 +14279,21 @@ the exception. Its vector stays a plain vector, and a matrix both of whose
 lists are empty stays a plain matrix. A matrix with one empty list is a
 component matrix with no rows or no columns. An entry or a block
 then reads by label, as `A[:h, :γ]` and `A[(:V, :γ), (:V, :γ)]` do. Without
-the package, the call fails with a hint that names it. ComponentArrays
-computes by position and does not check that two operands carry the same
-labels. The labels therefore serve reading and slicing, and the arrays of
-one linearization agree with one another because they share their axes. On
-the labeled form, FlightPhysics'
-`subsystem`/`delete_vars` survive as pure label-indexed matrix slicing, with no
-model involvement. Flight.jl's `c172x_ctl` LQR (linear-quadratic regulator)
+the package, the call fails with a hint that names it.
+
+**The plain and the labeled form are one type** ([D-475][d-475]). A `Linearization`'s
+eight arrays are typed `AbstractVector{Float64}` and `AbstractMatrix{Float64}`
+with no type parameter, so a method that takes a `Linearization` serves both.
+**A `Linearization` prints each matrix as a table under its row and column
+labels** ([D-476][d-476]), read from the label tuples by integer index, so the two
+forms print alike. Its operating point prints per tap list, and its numbers
+print as a trim report's do ([§14.8][s14-8]).
+
+ComponentArrays computes by position and does not check that two operands
+carry the same labels. The labels therefore serve reading and slicing, and the
+arrays of one linearization agree with one another because they share their
+axes. On the labeled form, **FlightPhysics' `subsystem`/`delete_vars` survive
+as pure label-indexed matrix slicing** ([D-475][d-475]), with no model involvement. Flight.jl's `c172x_ctl` LQR (linear-quadratic regulator)
 pipeline consumes it with cosmetic changes. **FlightPhysics' `LinearizedSS`, the
 [component](#g-component), survives separately, as an ordinary [continuous component](#g-continuous-component)** in the
 migrated library ([D-072][d-072]). Its `x_init` is the state vector, its faces are labeled,
@@ -17538,6 +17565,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-473]: log.md#d-473--give-group-a-copy-constructor-and-wire-keywords-that-take-a-function-of-the-group
 [d-474]: log.md#d-474--read-a-series-column-as-a-property-under-its-label
 [d-475]: log.md#d-475--return-plain-arrays-from-linearize-and-label-them-through-a-componentarrays-extension
+[d-476]: log.md#d-476--print-a-simulation-a-series-a-trimreport-and-a-linearization-in-two-forms
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

@@ -474,6 +474,7 @@ were derived.
 | [D-473][d-473] | Give `Group` a copy constructor, and wire keywords that take a function of the `Group` | ratified |
 | [D-474][d-474] | Read a `Series` column as a property under its label | ratified |
 | [D-475][d-475] | Return plain arrays from `linearize`, and label them through a ComponentArrays extension | ratified |
+| [D-476][d-476] | Print a `Simulation`, a `Series`, a `TrimReport` and a `Linearization` in two forms | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -20845,8 +20846,7 @@ found the code doing it and the spec silent.
 **Position.** A `Series` forwards its columns as properties, so `flight.V`
 is the column that a read labeled `V` gathered ([§11.2][s11-2]). The bundled rulings:
 
-- The four fields `t`, `frame`, `boundary` and `columns` keep their names,
-  and `propertynames` lists them before the labels.
+- The four fields `t`, `frame`, `boundary` and `columns` keep their names.
 - `series` refuses a read set that labels an entry with one of the four, as
   a `ReadSetMisuse` with the reason `:reserved_label` ([Appendix C][sC]).
 - The refusal sits in `series` and not in `reads`.
@@ -20894,13 +20894,11 @@ arrays when ComponentArrays is loaded ([§14.10][s14-10]). The bundled rulings:
 - The eight fields are typed `AbstractVector{Float64}` and
   `AbstractMatrix{Float64}` with no type parameter, so the plain and the
   labeled form are one type.
-- ComponentArrays is a weak dependency. The core declares `labeled` with no
-  method, and a package extension adds the one that builds component
-  arrays over axes made from the label tuples, except an array whose tap
-  lists are all empty.
+- ComponentArrays is a weak dependency, and a package extension adds the
+  method of `labeled` that builds component arrays over axes made from the
+  label tuples, except an array whose tap lists are all empty.
 - Without the package loaded, a call to `labeled` fails with a hint that
   names it.
-- `labeled` on a labeled value labels it again over the same axes.
 - No `subsystem` function is added. The labeled form slices by label.
 
 **Spec.** [§14.10][s14-10], [Appendix B][sB]
@@ -20933,6 +20931,9 @@ A type parameter was not needed once the fields took abstract types. A
 concrete types, and parameters would carry every label set into compiled
 code. The other fields were abstract already.
 
+The core declares `labeled` with no method, so the extension adds the one
+method and overwrites nothing.
+
 **Rejected.**
 - *A label-carrying matrix type in the core:* a small one reinvents part of
   ComponentArrays and loses its labels at the first broadcast, and one
@@ -20957,6 +20958,72 @@ code. The other fields were abstract already.
   works, such as a flag at the operating point.
 - *A fallback method of `labeled` in the core:* the extension would have to
   overwrite it.
+
+### D-476 — Print a `Simulation`, a `Series`, a `TrimReport` and a `Linearization` in two forms
+
+**Status.** ratified
+
+**Position.** A `Simulation`, a `Series`, a `TrimReport` and a
+`Linearization` each print a one-line form and a REPL form, as an artifact
+does ([§9.2][s9-2], [D-257][d-257]). The bundled rulings:
+
+- A `Simulation`'s heading states its lifecycle state and clock, its input
+  mode stands on a line of its own, and its deployment prints in the
+  deployment's one-line form ([§12.6][s12-6]).
+- A `Series` prints each column's label and element type, and no values
+  ([§11.2][s11-2]).
+- A `TrimReport`'s heading states the verdict alone, and the backend's
+  status and counts stand on the next line ([§14.8][s14-8]).
+- A `Linearization` prints its operating point per tap list and each matrix
+  as a table under its row and column labels, read from the label tuples by
+  integer index, so the plain and the labeled form print alike ([§14.10][s14-10]).
+- A number in these tables prints with six significant digits, and a column
+  of numbers aligns on its decimal point. The column's header ends at the
+  point where it fits, and starts at the column's edge otherwise ([§14.8][s14-8]).
+
+**Spec.** [§11.2][s11-2], [§12.6][s12-6], [§14.8][s14-8], [§14.10][s14-10]
+
+**Rationale.** The tutorial displays each of the four values on its pages,
+and each printed as its bare struct. Every page opens with
+`sim = Simulation(...)`, so the deployment's full block would repeat on
+each. Its one-line form names the parameters a reader checks.
+
+The input mode first stood in the heading beside the state, as
+`initialized, live`. The bare word did not say what it named, and state and
+mode are orthogonal facts ([§12.6][s12-6]). Its own line names it.
+
+A trim report's `status` is the backend's own and decides nothing. In the
+heading it put "converged" twice in the common case, once for the verdict
+and once for the backend. Its own line keeps the verdict the one word a
+reader takes away.
+
+A `Linearization`'s labels sit in its label tuples in both forms, so one
+method serves both, and ComponentArrays' own `show` prints a matrix with its
+axes in a header over bare rows. Six significant digits are what a REPL
+prints inside a container. Alignment on the decimal point is what it prints
+for a matrix, and it lines up the points whatever the count of decimals.
+
+**Rejected.**
+- *A `Simulation` heading that also names the input mode:* the bare word did
+  not say what it named.
+- *A summary of values in a `Series`, such as each column's range:* a column
+  holds any leaf type.
+- *The backend's status in a `TrimReport`'s heading:* it repeats the
+  verdict's word in the common case.
+- *Full precision:* it doubles the width of the tutorial's `A`.
+- *A mark on the labeled form's heading:* the two forms would print
+  differently.
+- *Numbers aligned left:* a column with minus signs is ragged.
+- *Numbers aligned right:* the points do not line up where the counts of
+  decimals differ.
+- *An exact zero printed as `0` or `⋅`:* the first mixes two spellings of a
+  float in one table, and Julia keeps the second for structural zeros, where
+  these are computed.
+- *Round-off snapped to zero:* any threshold hides a value the Jacobian
+  holds.
+- *A header always ending at the decimal point:* a long header such as
+  `tolerance` pushes its numbers far right. A centered header sits at a
+  different offset in each column.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -21408,6 +21475,7 @@ code. The other fields were abstract already.
 [d-473]: #d-473--give-group-a-copy-constructor-and-wire-keywords-that-take-a-function-of-the-group
 [d-474]: #d-474--read-a-series-column-as-a-property-under-its-label
 [d-475]: #d-475--return-plain-arrays-from-linearize-and-label-them-through-a-componentarrays-extension
+[d-476]: #d-476--print-a-simulation-a-series-a-trimreport-and-a-linearization-in-two-forms
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
