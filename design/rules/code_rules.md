@@ -354,9 +354,12 @@ green at every push. CI (`.github/workflows/CI.yml`) runs the gate on Linux
 and Windows for every push to master and every pull request, and skips
 changes that touch only `docs/`, `design/` and Markdown files. A separate workflow
 (`.github/workflows/Coverage.yml`) runs the gate on Linux under
-`--code-coverage=@src` on the same triggers and uploads the result to
-Codecov. It is kept apart so that a failure under instrumentation, such as an
-allocation the compiler adds, leaves the gate and its badge green.
+`--code-coverage=@.` on the same triggers and uploads the result to
+Codecov. Julia tracks one path, and the repository root is the one that holds
+both `src/` and `ext/`. `test/` is instrumented with them, and the upload reads
+`src` and `ext` alone. The workflow is kept apart so that a failure under
+instrumentation, such as an allocation the compiler adds, leaves the gate and
+its badge green.
 
 A one-liner returning a constant can run and still read as a miss. Julia
 writes `-` for its line in the `.cov` file, and CoverageTools turns a `-` inside
