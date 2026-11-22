@@ -173,7 +173,7 @@ function __init__()
     Base.Experimental.register_error_hint(MethodError) do io, err, argument_types, kwargs
         err.f === labeled || return
         Base.get_extension(@__MODULE__, :RedstoneComponentArraysExt) === nothing || return
-        print(io, "\n`labeled` comes from the ComponentArrays package — load it with " *  # COV_EXCL_LINE
+        print(io, "\n`labeled` comes from the ComponentArrays package — load it with " *
                   "`using ComponentArrays` beside Redstone")
     end
 end

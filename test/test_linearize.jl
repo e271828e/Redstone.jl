@@ -580,10 +580,9 @@ function test_linearize()
         # a child process without it shows the hint, on `labeled`'s error alone.
         err = try labeled(1) catch err; err end
         @test err isa MethodError && !occursin("comes from the ComponentArrays package", sprint(showerror, err))
-        julia = filter(flag -> !startswith(flag, "--code-coverage"), Base.julia_cmd().exec)
         script = "using Redstone; for call in (() -> Redstone.labeled(1), () -> identity(1, 2)); " *
                  "try call() catch err; println(sprint(showerror, err)) end; end"
-        output = read(`$julia --project=$(Base.active_project()) -e $script`, String)
+        output = read(`$(Base.julia_cmd()) --project=$(Base.active_project()) -e $script`, String)
         @test occursin("no method matching labeled(::Int64)", output)
         @test occursin("no method matching identity(::Int64, ::Int64)", output)
         @test count("`labeled` comes from the ComponentArrays package — load it with " *
