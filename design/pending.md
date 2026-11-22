@@ -39,23 +39,18 @@ item changes what the spec says, the spec edit is part of the item.
 - **The tutorial's loose change**, owed before its increment 3 by L12 and
   L23 of `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`:
   a compact `show` for `Simulation`, `Series`, `TrimReport` and
-  `Linearization`; a `Series` that forwards its columns as properties
-  (§11.2, D-474); and a `Linearization` of plain arrays, labeled through a
-  ComponentArrays extension (§14.10, D-475), which answers friction item 10
-  of that record. It grew past a loose change and runs as one small
-  increment with no brief. Stage reached: the design session of 2026-11-21
-  settled it, the prototype is built, and the session then worked on alone
-  while the user was away. The record is
+  `Linearization` (D-476); a `Series` that forwards its columns as
+  properties (§11.2, D-474); and a `Linearization` of plain arrays, labeled
+  through a ComponentArrays extension (§14.10, D-475), which answers
+  friction item 10 of that record. It grew past a loose change and ran as
+  one small increment with no brief. Stage reached: closed on 2026-11-22,
+  pushed through `1616c10`, with the user's last rulings in `ba1dd8e`,
+  `591ec3e` and `5544d6d`, unpushed. The record is
   `design/increments/20261121_tutorial_loose_change/notes_tutorial_loose_change.md`,
-  whose section 2 holds the user's rulings, section 7 the session's own
-  decisions for the user's review, and section 8 the four printed forms,
-  which the user has not yet judged. It has landed, unpushed: the docs as
-  `d382b00`, the code as `23458b8` and the cold review's fixes as
-  `7410031`, with the gate at 10870 of 10870. The review has closed, and
-  its record is section 11. What remains is the user's: the printed forms,
-  the session's decisions, the diff-verify and the push. The inspector's
-  increment 10 needs the first bullet's parts one to three pushed, and
-  nothing in it reads what this change touches.
+  whose section 13 holds those rulings. One finding remains, for the user:
+  Codecov never measures `ext/`, since the Coverage workflow instruments
+  `src/` alone. The inspector's increment 10 needs the first bullet's parts
+  one to three pushed, and nothing in it reads what this change touches.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

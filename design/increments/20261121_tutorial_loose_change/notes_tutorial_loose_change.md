@@ -20,6 +20,10 @@ The three parts keep their numbers from the session:
 
 ## 1. The state on 2026-11-21
 
+- **On 2026-11-22** the increment is pushed through `1616c10` and closed
+  but for one finding on coverage. The user ruled on every open point of
+  section 12, the printed forms included, and section 13 records it. The
+  bullets below are the state of 2026-11-21.
 - The design is settled except for the printed layouts, which the user
   has yet to judge on the output of section 8.
 - The increment has landed on the real tree, unpushed: the docs as
@@ -575,40 +579,44 @@ child process, as the hint's test already is.
 
 ## 8. The printed forms, as built
 
-From `probe_layouts.jl` and `out_layouts.txt` in the probes' folder, on
-the tutorial's own calls. Each REPL form is followed by its one-line form.
+From `probe_layouts.jl` in the probes' folder, on the tutorial's own
+calls, run again on the real tree at `ba1dd8e` after the user's rulings of
+section 13. Each REPL form is followed by its one-line form.
 
 A `Simulation`, as built, after `init!` and after `run!`:
 
 ```
-Simulation: built, live
+Simulation: built
+  input mode: live
   deployment: Deployment(Δt_frame = 1//100, Δt_base = 1//100, h_max = 1//100, RK4())
   log: no snapshots
   devices: none
   warnings: none
 
-Simulation(built, live)
+Simulation(built)
 ```
 
 ```
-Simulation: initialized, live, frame 0 at t = 0.0
+Simulation: initialized, frame 0 at t = 0.0
+  input mode: live
   deployment: Deployment(Δt_frame = 1//100, Δt_base = 1//100, h_max = 1//100, RK4())
   log: 1 snapshot
   devices: none
   warnings: none
 
-Simulation(initialized, live, frame 0 at t = 0.0)
+Simulation(initialized, frame 0 at t = 0.0)
 ```
 
 ```
-Simulation: stopped, live, frame 12000 at t = 120.0
+Simulation: stopped, frame 12000 at t = 120.0
+  input mode: live
   deployment: Deployment(Δt_frame = 1//100, Δt_base = 1//100, h_max = 1//100, RK4())
   termination: EndTimeReached at t = 120.0
   log: 12001 snapshots
   devices: none
   warnings: none
 
-Simulation(stopped, live, frame 12000 at t = 120.0)
+Simulation(stopped, frame 12000 at t = 120.0)
 ```
 
 Other lines the suite's fixtures show: `termination: ModelRequestedStop at
@@ -630,7 +638,8 @@ Series(12001 snapshots, t = 0.0 to 120.0; V, h)
 Chapter 2's `trim!` report, converged, and stalled at 20 m/s:
 
 ```
-TrimReport: converged, committed; status converged, 4 iterations, 5 evaluations
+TrimReport: converged, committed
+  backend: status converged, 4 iterations, 5 evaluations
   decision  value
   θ         0.0199302
   δe        0.0250582
@@ -644,15 +653,16 @@ TrimReport(converged, committed, 4 iterations)
 ```
 
 ```
-TrimReport: not converged, nothing committed; status stalled, 42 iterations, 85 evaluations
+TrimReport: not converged, nothing committed
+  backend: status stalled, 42 iterations, 85 evaluations
   decision  value
-  θ         0.3        at the upper bound
+  θ          0.3       at the upper bound
   δe        -0.238337
-  δt        0.373034
-  residual  value     tolerance
-  V̇         0.138292  1.0e-9
-  γ̇         -0.12392  1.0e-9
-  q̇         0.117614  1.0e-9
+  δt         0.373034
+  residual  value      tolerance
+  V̇          0.138292  1.0e-9
+  γ̇         -0.12392   1.0e-9
+  q̇          0.117614  1.0e-9
 
 TrimReport(not converged, nothing committed, 42 iterations)
 ```
@@ -665,30 +675,30 @@ byte for byte, which the suite asserts:
 ```
 Linearization: 5 states, 2 inputs, no outputs
   states:
-       x₀         ẋ₀
-    V  50.0       5.33191e-14
-    γ  0.0        4.59138e-12
-    θ  0.0199302  0.0
-    q  0.0        2.62017e-13
-    h  1000.0     0.0
+         x₀          ẋ₀
+    V    50.0        5.33191e-14
+    γ     0.0        4.59138e-12
+    θ     0.0199302  0.0
+    q     0.0        2.62017e-13
+    h  1000.0        0.0
   inputs:
         u₀
     δe  0.0250582
     δt  0.372337
   A:
-       V            γ         θ         q       h
-    V  -0.0372263   -4.89572  -4.91428  0.0     0.0
-    γ  0.00783316   -2.46861  2.46861   0.0     0.0
-    θ  0.0          0.0       0.0       1.0     0.0
-    q  1.04807e-14  20.4167   -20.4167  -3.675  0.0
-    h  0.0          50.0      0.0       0.0     0.0
+        V             γ          θ         q      h
+    V  -0.0372263    -4.89572   -4.91428   0.0    0.0
+    γ   0.00783316   -2.46861    2.46861   0.0    0.0
+    θ   0.0           0.0        0.0       1.0    0.0
+    q   1.04807e-14  20.4167   -20.4167   -3.675  0.0
+    h   0.0          50.0        0.0       0.0    0.0
   B:
-       δe     δt
-    V  0.0    2.4995
-    γ  0.0    0.000996444
-    θ  0.0    0.0
+        δe    δt
+    V    0.0  2.4995
+    γ    0.0  0.000996444
+    θ    0.0  0.0
     q  -24.5  0.0
-    h  0.0    0.0
+    h    0.0  0.0
 
 Linearization(5 states, 2 inputs, no outputs)
 ```
@@ -699,7 +709,8 @@ With outputs tapped, an `outputs:` block with `y₀` follows the inputs, and
 Values print as a REPL prints them inside a container, six significant
 digits. The prototyper weighed full precision, which doubles the width of
 `A`'s table, and a mark on the labelled form's heading, which would make
-the two forms print differently against T14.
+the two forms print differently against T14. Since section 13 a column of
+numbers aligns on its decimal point.
 
 ## 9. The shape built, the measurement and the pins
 
@@ -869,7 +880,7 @@ coordinator wrote from section 11. Its probes are
 The reviewer, resumed with its context, read the commit file by file and
 found that every fix holds and widens nothing. It saw nothing new.
 
-**Open, for the user.**
+**Open, for the user.** Each is closed in section 13.
 
 - **The printed forms** of section 8, with the reservations of S4.
 - **S12.** The whole suite runs with the extension loaded. The
@@ -892,3 +903,62 @@ found that every fix holds and widens nothing. It saw nothing new.
   `tutorial_loose_change`, `tutorial_loose_change_docs` and
   `tutorial_loose_change_review`, the four `tutorial_loose_change_*probes`
   folders, the two prompts and the three agents' notes.
+
+## 13. The user's rulings of 2026-11-22
+
+The user read section 12's open points with a fresh session's
+recommendations and ruled on each. The session's commits are `ba1dd8e`,
+`591ec3e` and `5544d6d`, and the record's own. None is pushed.
+
+- **The push.** `origin/master` stood at `1616c10` when the session
+  began. CI, the examples, Coverage and the docs build ran green on it,
+  the last on Linux.
+- **The printed forms**, by `ba1dd8e`. Section 8 shows them as they now
+  stand.
+  - A `Simulation`'s input mode stands on a line of its own,
+    `input mode: live`, and leaves the heading and the one-line form. The
+    user asked what `live` meant, which showed the bare word did not say.
+  - A `TrimReport`'s heading states the verdict alone, and the backend's
+    status and counts stand on a `backend:` line. This answers S4's first
+    reservation.
+  - The numbers of a `TrimReport` and a `Linearization` align on the
+    decimal point, as Julia aligns a matrix. This answers S4's second
+    reservation. A header ends at the point where it fits and starts at the
+    column's edge otherwise, after the user found `δe` over `-24.5` odd. A
+    value with no point, such as `true` or `12`, stands with its last
+    character at the point.
+  - S4's third reservation stands, and round-off prints as it is. An exact
+    zero prints as `0.0`, and not as a bare `0`, by the user.
+  - The `Series` form stands as built.
+  - The `show` file read 233 of 233 and the gate 10873 of 10873, with no
+    warning.
+- **D-476** rules the four forms and the alignment, by `591ec3e`. §11.2,
+  §12.6, §14.8 and §14.10 each gain a bold sentence for it. `5544d6d` cites
+  it in `src/show.jl`, the four testsets and the code map.
+- **The Position bullets** of section 12, in `591ec3e`. D-474 sheds the
+  order of `propertynames`. D-475 sheds `labeled` on a labeled value, and
+  moves the core's declaration with no method to its Rationale. §14.10
+  gains a bold sentence for one type in both forms, and bolds the slicing
+  that stands for `subsystem`. The user counted the two entries as drafts,
+  so their Positions were edited and not annotated.
+- **S12 stands.** The suite runs with the extension loaded. The examples'
+  runner covers the path without it, since its environment has no
+  ComponentArrays.
+- **Not verified, now checked.**
+  - Accessors and ConstructionBase on a `Series`, by a probe in the
+    session's scratchpad. `setproperties` refuses with ConstructionBase's
+    message naming the missing method, so `@set` fails loudly.
+    `getproperties` returns the four fields and then the columns, which
+    stand twice. `constructorof` works.
+  - Codecov shows `src/linearize.jl` at 100%, the marked line excluded and
+    the lines around it hit.
+- **A finding: Codecov never measures `ext/`.** Coverage runs the gate
+  under `--code-coverage=@src`, so Julia instruments `src/` alone, while
+  `julia-processcoverage` reads `src` and `ext` by default. Codecov shows
+  `ext/RedstoneComponentArraysExt.jl` at 0%, its 6 lines missed though the
+  suite runs them, and `1616c10` went from 59 misses to 65. A second
+  `--code-coverage=@ext` does not help, since the last flag wins. Open, for
+  the user, with the session's proposal.
+- **The scratch is deleted**: the three worktrees, the three probe folders,
+  the two prompts and the two agents' notes that stood beside them. The
+  probes that sections 3, 9 and 11 cite are gone with them.
