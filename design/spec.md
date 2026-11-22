@@ -3599,8 +3599,8 @@ children.
 
 What is given up relative to a named type is exactly what named types are
 *for*. That is dispatching domain code on `::Cessna172X`, and a reusable
-identity for the topology. The exploratory and programmatic composition
-`Group` serves does not want it anyway ([D-298][d-298]).
+identity for the topology. A model that domain code does not dispatch on
+does not want it ([D-298][d-298]).
 
 **The builder (`Assembly()` plus `add!`/`connect!`) is rejected**
 ([D-039][d-039], [D-298][d-298]). Its one real advantage, programmatic generation, survives

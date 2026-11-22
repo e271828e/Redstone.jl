@@ -1,8 +1,9 @@
 # Hierarchy (§8.5, §8.6, §6.1): the assembly as a declaration. Class by
 # declaration shape, children and containers, paths, §13.3's build primitives,
 # §8.8's passthrough helpers, the tier and store checks a primitive's
-# declarations meet (§8.2), and the walk's memos those primitives read. The
-# structure step that walks the tree into a `Structure` is `structure.jl`.
+# declarations meet (§8.2), the walk's memos those primitives read, and last
+# `Group`, an assembly written in those declarations alone. The structure step
+# that walks the tree into a `Structure` is `structure.jl`.
 
 # --- class (§8.5) -------------------------------------------------------------
 # Class is not announced either: `local_wires` is the assembly marker, any
@@ -638,153 +639,6 @@ function _passthrough_faces(who::String, child_path::AbstractString,
     wanted
 end
 
-# --- the anonymous assembly (§8.5, D-211, D-472) ------------------------------
-# `Group` is written as a user's assembly is: a struct, its constructors and
-# the assembly declarations. No build step names it, here or in any other
-# file, so it stays an ordinary component (§13.7, D-472).
-
-# Design: D-184, D-211, D-472.
-# It needs no new rule: the container-children rule makes the `children`
-# field's elements children of the `Group` itself.
-# The type parameters carry the children's concrete types, so the executor
-# specializes on them as on a named assembly. What a `Group` gives up against a
-# named type is dispatch, which exploratory composition does not want.
-"""
-    Group
-
-An [assembly](@ref g-assembly) built on the fly, whose values are the ad-hoc
-topologies.
-
-A `Group` is an assembly that holds its children and its declarations as field
-values. The elements of its `children` field, a `NamedTuple` of
-[components](@ref g-component), are its children. Its [`local_wires`](@ref),
-[`input_wires`](@ref), [`output_wires`](@ref) and [`sample_times`](@ref) are
-ordinary functions of the instance, which read its fields. A wire field holds
-the [entries](@ref g-entry) or a function that computes them, as the
-constructor states.
-
-The one declaration it adds is [`transparent_container`](@ref). `children` is
-[name-transparent](@ref g-container-children), so its elements go by bare key
-everywhere a child name appears. That is `"ctl/out" => "plant/u"` for a wire,
-`(ctl = Relative(2),)` for a rate, `at("ctl", …)` for a
-[condition](@ref g-condition) prefix and `"plant"` for a read path, as in
-`port(sim, "plant", :y)`. A `Group`'s declarations are then textually identical
-to a named assembly's. The rate declaration's field-name sugar, keying on the
-field rather than on a path segment, keeps working as
-`(children = Relative(2),)` for the uniform case.
-"""
-struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple} <: AbstractComponent
-    children::C       # component-typed elements → children by the container rule
-    local_wires::W    # inert parameter data: the entries, or a function of the `Group`
-    input_wires::I
-    output_wires::O
-    sample_times::R   # the ad-hoc rate scope, keyed by bare element name (§8.7)
-end
-
-# Design: §8.5, D-303, D-473.
-# This is the convenience form. The declarations are ordered collections
-# of pairs, and a single wire should not have to be written `("a/x" => "b/y",)`.
-"""
-    Group(children; local_wires = (), input_wires = (), output_wires = (),
-          sample_times = (;)) -> Group
-    Group(g::Group; children = g.children, local_wires = g.local_wires,
-          input_wires = g.input_wires, output_wires = g.output_wires,
-          sample_times = g.sample_times) -> Group
-
-Return a `Group` over `children`, or a copy of `g` with the given keywords
-replaced.
-
-The first form takes `children`, a `NamedTuple` of
-[components](@ref g-component), and gives each [assembly](@ref g-assembly)
-declaration by the keyword of its name. The second form takes every field from
-`g` except those a keyword replaces, so `Group(g; local_wires = rewired)` keeps
-the children, the boundary and the rates of `g`.
-
-A wire keyword takes its [entries](@ref g-entry) written out or computed.
-Written out, they are a tuple of pairs, or a bare `Pair` for one entry.
-Computed, they are a `Function` that receives the `Group` and returns the
-entries in either shape.
-
-The `Group` stores a function without calling it. [`local_wires`](@ref),
-[`input_wires`](@ref) and [`output_wires`](@ref) call it with the `Group` each
-time they are read, and return its result, a bare `Pair` as the one-entry
-tuple. A build reads them, so the function runs inside the build. A warning a
-helper of the framework raises there, such as `EmptyFaceSelection`, joins the
-build's warnings.
-
-A function serves a helper that needs the assembly in hand, which does not
-exist while the constructor's arguments are written.
-`input_wires = g -> input_passthrough(g, "inner")` exposes the input
-[faces](@ref g-face) of the child `inner`, as [`input_passthrough`](@ref)
-computes them. The result may mix computed and written entries, as in
-`g -> (input_passthrough(g, "inner")..., "cmd" => "act/cmd")`.
-
-A function travels with the second form. A copy with other children computes
-its entries from those children.
-
-A field that holds a function does not hold the entries. Read them through the
-declaration, `input_wires(g)`, never through the field, `g.input_wires`.
-
-# Keywords
-
-- `children`: the children of the copy, in the second form.
-- `local_wires`: the wires between children, as [`local_wires`](@ref) returns
-  them, or a function of the `Group` that returns them.
-- `input_wires`: the inward boundary, as [`input_wires`](@ref) returns it, or
-  a function of the `Group` that returns it.
-- `output_wires`: the outward boundary, as [`output_wires`](@ref) returns it,
-  or a function of the `Group` that returns it.
-- `sample_times`: the rates of the children, keyed by bare child name, as
-  [`sample_times`](@ref) returns them. It takes no function, and one given is
-  a `MethodError` at construction.
-
-# Examples
-
-```jldoctest
-julia> import Redstone: Group, input_passthrough, input_wires
-
-julia> import Redstone.Library: UnitDelay
-
-julia> inner = Group((; hold = UnitDelay(0.0)); input_wires = "u" => "hold/u");
-
-julia> outer = Group((; inner); input_wires = g -> input_passthrough(g, "inner"; prefix = ""));
-
-julia> input_wires(outer)
-("u" => "inner/u",)
-```
-"""
-Group(children; local_wires = (), input_wires = (), output_wires = (),
-      sample_times = (;)) =
-    Group(children, _entries(local_wires), _entries(input_wires),
-          _entries(output_wires), sample_times)
-
-# Design: §8.5, D-473.
-# The copy is how a `Group` gets a variant, where a named assembly dispatches.
-# Every field defaults to the original's, so a keyword left out carries its
-# field and never empties it.
-Group(g::Group; children = g.children, local_wires = g.local_wires,
-      input_wires = g.input_wires, output_wires = g.output_wires,
-      sample_times = g.sample_times) =
-    Group(children; local_wires, input_wires, output_wires, sample_times)
-
-_entries(wires::Pair) = (wires,)
-_entries(wires) = wires
-
-# Design: §8.5, §8.8, D-473.
-# A wire field holds the entries or a function of the `Group`. The function is
-# called here, at the read, so it runs in the build's walk as a named
-# assembly's declaration body does: the passthrough helpers get the assembly
-# they take, and their warnings reach the build's list. `g` is untyped so that
-# no function of the package but the five declarations dispatches on a `Group`.
-_declared(fn::Function, g) = _entries(fn(g))
-_declared(wires, g) = wires
-
-local_wires(g::Group) = _declared(g.local_wires, g)
-input_wires(g::Group) = _declared(g.input_wires, g)
-output_wires(g::Group) = _declared(g.output_wires, g)
-sample_times(g::Group) = g.sample_times
-transparent_container(::Group) = :children  # COV_EXCL_LINE
-
 # --- tier classification (§8.2) -----------------------------------------------
 # Tier is declared by the store every leaf declares, `x_init` continuous against
 # `s_init` discrete, the two disjoint (D-195), and empty on a stateless leaf
@@ -974,3 +828,151 @@ function _walked_children(base::String, @nospecialize(assembly))
     hit === nothing || return hit
     memo[assembly] = children(base, assembly)
 end
+
+# --- the anonymous assembly (§8.5, D-211, D-472) ------------------------------
+# `Group` is written as a user's assembly is: a struct, its constructors and
+# the assembly declarations. No build step names it, here or in any other
+# file, so it stays an ordinary component (§13.7, D-472).
+
+# Design: D-184, D-211, D-472.
+# It needs no new rule: the container-children rule makes the `children`
+# field's elements children of the `Group` itself.
+# The type parameters carry the children's concrete types, so the executor
+# specializes on them as on a named assembly. Every ad-hoc topology is a value
+# of the one type. What a `Group` gives up against a named type is dispatch on
+# the assembly.
+"""
+    Group
+
+An [assembly](@ref g-assembly) written as a value, the form an assembly takes
+unless domain code needs its type.
+
+A `Group` is an assembly that holds its children and its declarations as field
+values. The elements of its `children` field, a `NamedTuple` of
+[components](@ref g-component), are its children. Its [`local_wires`](@ref),
+[`input_wires`](@ref), [`output_wires`](@ref) and [`sample_times`](@ref) are
+ordinary functions of the instance, which read its fields. A wire field holds
+the [entries](@ref g-entry) or a function that computes them, as the
+constructor states.
+
+The one declaration it adds is [`transparent_container`](@ref). `children` is
+[name-transparent](@ref g-container-children), so its elements go by bare key
+everywhere a child name appears. That is `"ctl/out" => "plant/u"` for a wire,
+`(ctl = Relative(2),)` for a rate, `at("ctl", …)` for a
+[condition](@ref g-condition) prefix and `"plant"` for a read path, as in
+`port(sim, "plant", :y)`. A `Group`'s declarations are then textually identical
+to a named assembly's. The rate declaration's field-name sugar, keying on the
+field rather than on a path segment, keeps working as
+`(children = Relative(2),)` for the uniform case.
+"""
+struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple} <: AbstractComponent
+    children::C       # component-typed elements → children by the container rule
+    local_wires::W    # inert parameter data: the entries, or a function of the `Group`
+    input_wires::I
+    output_wires::O
+    sample_times::R   # the ad-hoc rate scope, keyed by bare element name (§8.7)
+end
+
+# Design: §8.5, D-303, D-473.
+# This is the convenience form. The declarations are ordered collections
+# of pairs, and a single wire should not have to be written `("a/x" => "b/y",)`.
+"""
+    Group(children; local_wires = (), input_wires = (), output_wires = (),
+          sample_times = (;)) -> Group
+    Group(g::Group; children = g.children, local_wires = g.local_wires,
+          input_wires = g.input_wires, output_wires = g.output_wires,
+          sample_times = g.sample_times) -> Group
+
+Return a `Group` over `children`, or a copy of `g` with the given keywords
+replaced.
+
+The first form takes `children`, a `NamedTuple` of
+[components](@ref g-component), and gives each [assembly](@ref g-assembly)
+declaration by the keyword of its name. The second form takes every field from
+`g` except those a keyword replaces, so `Group(g; local_wires = rewired)` keeps
+the children, the boundary and the rates of `g`.
+
+A wire keyword takes its [entries](@ref g-entry) written out or computed.
+Written out, they are a tuple of pairs, or a bare `Pair` for one entry.
+Computed, they are a `Function` that receives the `Group` and returns the
+entries in either shape.
+
+The `Group` stores a function without calling it. [`local_wires`](@ref),
+[`input_wires`](@ref) and [`output_wires`](@ref) call it with the `Group` each
+time they are read, and return its result, a bare `Pair` as the one-entry
+tuple. A build reads them, so the function runs inside the build. A warning a
+helper of the framework raises there, such as `EmptyFaceSelection`, joins the
+build's warnings.
+
+A function serves a helper that needs the assembly in hand, which does not
+exist while the constructor's arguments are written.
+`input_wires = g -> input_passthrough(g, "inner")` exposes the input
+[faces](@ref g-face) of the child `inner`, as [`input_passthrough`](@ref)
+computes them. The result may mix computed and written entries, as in
+`g -> (input_passthrough(g, "inner")..., "cmd" => "act/cmd")`.
+
+A function travels with the second form. A copy with other children computes
+its entries from those children.
+
+A field that holds a function does not hold the entries. Read them through the
+declaration, `input_wires(g)`, never through the field, `g.input_wires`.
+
+# Keywords
+
+- `children`: the children of the copy, in the second form.
+- `local_wires`: the wires between children, as [`local_wires`](@ref) returns
+  them, or a function of the `Group` that returns them.
+- `input_wires`: the inward boundary, as [`input_wires`](@ref) returns it, or
+  a function of the `Group` that returns it.
+- `output_wires`: the outward boundary, as [`output_wires`](@ref) returns it,
+  or a function of the `Group` that returns it.
+- `sample_times`: the rates of the children, keyed by bare child name, as
+  [`sample_times`](@ref) returns them. It takes no function, and one given is
+  a `MethodError` at construction.
+
+# Examples
+
+```jldoctest
+julia> import Redstone: Group, input_passthrough, input_wires
+
+julia> import Redstone.Library: UnitDelay
+
+julia> inner = Group((; hold = UnitDelay(0.0)); input_wires = "u" => "hold/u");
+
+julia> outer = Group((; inner); input_wires = g -> input_passthrough(g, "inner"; prefix = ""));
+
+julia> input_wires(outer)
+("u" => "inner/u",)
+```
+"""
+Group(children; local_wires = (), input_wires = (), output_wires = (),
+      sample_times = (;)) =
+    Group(children, _entries(local_wires), _entries(input_wires),
+          _entries(output_wires), sample_times)
+
+# Design: §8.5, D-473.
+# The copy is how a `Group` gets a variant, where a named assembly dispatches.
+# Every field defaults to the original's, so a keyword left out carries its
+# field and never empties it.
+Group(g::Group; children = g.children, local_wires = g.local_wires,
+      input_wires = g.input_wires, output_wires = g.output_wires,
+      sample_times = g.sample_times) =
+    Group(children; local_wires, input_wires, output_wires, sample_times)
+
+_entries(wires::Pair) = (wires,)
+_entries(wires) = wires
+
+# Design: §8.5, §8.8, D-473.
+# A wire field holds the entries or a function of the `Group`. The function is
+# called here, at the read, so it runs in the build's walk as a named
+# assembly's declaration body does: the passthrough helpers get the assembly
+# they take, and their warnings reach the build's list. `g` is untyped so that
+# no function of the package but the five declarations dispatches on a `Group`.
+_declared(fn::Function, g) = _entries(fn(g))
+_declared(wires, g) = wires
+
+local_wires(g::Group) = _declared(g.local_wires, g)
+input_wires(g::Group) = _declared(g.input_wires, g)
+output_wires(g::Group) = _declared(g.output_wires, g)
+sample_times(g::Group) = g.sample_times
+transparent_container(::Group) = :children  # COV_EXCL_LINE

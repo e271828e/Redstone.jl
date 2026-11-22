@@ -44,7 +44,7 @@ a chapter imports its end state.
 | 4 | A first loop | pitch hold, continuous then discrete | one PID on pitch attitude | `Group`, wires, root inputs, sample time, the base tick | margins from `A` and `B`, the gap between the tiers |
 | 5 | The autopilot | the cascade, actuators, sensing | cascade, actuator, sensor noise | hierarchy, faces, the library, two rates, the inspector's diagram | the altitude step |
 | 6 | Hands on and off | the engage switch, the tracking wires | bumpless engage | `stage!`, the loop error, `UnitDelay` | a bumpless engage |
-| 7 | Approach and touchdown | the ground and a stop request | a descent to the ground | localized event, `StopRequest`, the termination record | `h = 0` at the stop |
+| 7 | Approach and touchdown | the ground and a stop request | a descent to the ground | localized event, `StopRequest`, the termination record, a boundary computed by `input_passthrough` through a function of the `Group` | `h = 0` at the stop |
 | 8 | The flight, again | nothing new in the model | none | trace and replay, checkpoint and restore | a bit-identical replay of the whole flight, a second approach from a checkpoint |
 | 9 | A second controller, optional | the LQR tracker, a new `selection` | multivariable control | the trim and linearize pipeline feeding parameters, vector signals, `Select` over an enum | the eigenvalue match, the airspeed excursion against the cascade's |
 

@@ -158,7 +158,8 @@ item changes what the spec says, the spec edit is part of the item.
   conventions landed (record `design/increments/20261027_docstring_sweep/notes_docstring_sweep.md`,
   convention `design/rules/docstring_rules.md`). Two passes remain. The
   examples pass gives each entry point that earns one a `jldoctest` block
-  under the convention's rules 35 to 38. `src/` holds one, on `Group`'s
+  under the convention's rules 35 to 38. `output_passthrough` earns one,
+  since no example calls it. `src/` holds one, on `Group`'s
   constructor, landed ahead of the pass with D-473 as its pilot. The docs
   build is shown to run it: a wrong expected output failed the build. The
   pass follows the tutorial, which shows the calls a user makes, and the
