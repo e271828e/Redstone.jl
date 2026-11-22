@@ -472,7 +472,11 @@ output_faces(@nospecialize(comp)) = classify("", comp) === PRIMITIVE ?
 function _walked_faces(@nospecialize(comp), side::Int, fn, face_of)
     memo = WALK_FACES[]
     memo !== nothing && haskey(memo, comp) && return copy(memo[comp][side])
-    String[String(face_of(pair)) for pair in invoke_declaration(fn, comp)]
+    entries = invoke_declaration(fn, comp)
+    # The walk's shape check, which a miss has not met (D-477).
+    shape_diags = _check_wire_shape("", nameof(fn), entries, Diagnostic[])
+    isempty(shape_diags) || throw(DiagnosticError(shape_diags))
+    String[String(face_of(pair)) for pair in entries]
 end
 
 # --- §8.8's passthrough helpers -----------------------------------------------

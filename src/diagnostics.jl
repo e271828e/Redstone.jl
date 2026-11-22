@@ -689,6 +689,28 @@ message(d::FaceNameCollision) =
     "are unique across `input_wires` and `output_wires` together; to route " *
     "one input face to several children, write `name => (path, path, …)` (§8.6)"
 
+"§8.6, D-477: a wire declaration whose value is no collection of pairs, a bare `Pair` included."
+Base.@kwdef struct IllegalWireEntry <: Diagnostic
+    path::String
+    declaration::Symbol                      # :local_wires | :input_wires | :output_wires
+    reason::Symbol                           # :bare_pair | :not_a_pair | :not_a_collection
+    spelling::String                         # the value or the entry at fault, as `repr` text
+end
+path(d::IllegalWireEntry) = d.path
+function message(d::IllegalWireEntry)
+    at = "`$(d.declaration)` of $(_at_path(d.path))"
+    d.reason === :bare_pair &&
+        return "$at returns the bare `Pair` `$(d.spelling)` — a wire declaration returns a " *
+               "collection of pairs, so write the one-entry tuple `($(d.spelling),)` (§8.6)"
+    shape = d.declaration === :local_wires ? "`\"child/face\" => \"child/face\"`" :
+            d.declaration === :input_wires ? "`face => \"child/face\"`" : "`\"child/face\" => face`"
+    d.reason === :not_a_pair &&
+        return "$at holds the entry `$(d.spelling)`, which is not a `Pair` — every entry is " *
+               "written $shape (§8.6)"
+    "$at returns `$(d.spelling)`, which is no collection of pairs — it returns a tuple of " *
+    "entries written $shape, and `()` for none (§8.6)"
+end
+
 "§8.6: an entry whose endpoint resolves to a port of the opposite direction."
 Base.@kwdef struct FaceDirectionConflict <: Diagnostic
     entry::String                            # the declaring method and entry

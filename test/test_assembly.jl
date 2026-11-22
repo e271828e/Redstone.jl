@@ -527,6 +527,29 @@ local_wires(::CollidingFaces) = ("a/out" => "b/e",)
 input_wires(::CollidingFaces) = ("y" => "b/e",)
 output_wires(::CollidingFaces) = ("b/out" => "y",)
 
+struct BarePairWire <: AbstractComponent         # the one-entry tuple's comma forgotten
+    a::ModedSource
+    b::Gain
+end
+BarePairWire() = BarePairWire(ModedSource(), Gain(1.0))
+local_wires(::BarePairWire) = "a/out" => "b/e"
+
+struct MalformedBoundary <: AbstractComponent    # two of its three declarations at fault
+    g::Gain
+end
+MalformedBoundary() = MalformedBoundary(Gain(1.0))
+local_wires(::MalformedBoundary) = ()
+input_wires(::MalformedBoundary) = ("e" => "g/e", "g/out")
+output_wires(::MalformedBoundary) = nothing
+
+struct VectorWires <: AbstractComponent          # a collection that is no tuple
+    a::ModedSource
+    b::Gain
+end
+VectorWires() = VectorWires(ModedSource(), Gain(1.0))
+local_wires(::VectorWires) = ["a/out" => "b/e"]
+output_wires(::VectorWires) = ["b/out" => "y"]
+
 function assembly_wires()
     @testset "direction is declared by the method, endpoints cross-check it (§8.6)" begin
         err = failure(() -> build(BackwardsWire(ModedSource(), Gain(1.0))))
@@ -607,6 +630,35 @@ function assembly_wires()
         err = failure(() -> resolve_condition(at("sub", set(u = (dead = 1.0,))),
                                     build(nested)))
         @test only(diagnostics(err)) isa UnknownPort      # never a ConditionResolution
+    end
+
+    @testset "a wire declaration that returns no collection of pairs is refused, every one of its level (§8.6, §13.1, D-477)" begin
+        # A bare `Pair` names its declaration and the entry, which the message
+        # writes back as the one-entry tuple.
+        d = only(diagnostics(failure(() -> build(BarePairWire()))))
+        @test d isa IllegalWireEntry && d.path == "" && d.declaration === :local_wires &&
+              d.reason === :bare_pair && d.spelling == repr("a/out" => "b/e")
+
+        # Below the root the level is named, and both declarations at fault report
+        # in one throw. It is thrown at once, so the input `g/e` the level fails to
+        # hand up reports no `UnconnectedInput` behind it.
+        ds = diagnostics(failure(() -> build(Group((; m = MalformedBoundary());
+                                                   input_wires = "x" => "m/e"))))
+        @test all(d -> d isa IllegalWireEntry && d.path == "m", ds)
+        @test [(d.declaration, d.reason, d.spelling) for d in ds] ==
+              [(:input_wires, :not_a_pair, repr("g/out")), (:output_wires, :not_a_collection, "nothing")]
+
+        # A collection that is no tuple is read entry by entry, and a string counts
+        # as none, though it iterates.
+        @test build(VectorWires()) isa Build
+        d = only(diagnostics(failure(() -> build(Group((; g = Gain(1.0)); local_wires = g -> ["e"])))))
+        @test d.declaration === :local_wires && d.reason === :not_a_pair && d.spelling == repr("e")
+        d = only(diagnostics(failure(() -> build(Group((; g = Gain(1.0)); output_wires = "g/out")))))
+        @test d.declaration === :output_wires && d.reason === :not_a_collection
+
+        # Outside a build the face primitive refuses the same way.
+        d = only(diagnostics(failure(() -> input_faces(MalformedBoundary()))))
+        @test d isa IllegalWireEntry && d.declaration === :input_wires && d.reason === :not_a_pair
     end
 end
 

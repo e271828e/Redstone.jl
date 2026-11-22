@@ -3584,7 +3584,8 @@ approach = Group(
 ```
 
 A bare `Pair` given for a wire keyword, or returned by its function, is the
-one-entry tuple. A named assembly's declaration body has no such shorthand.
+one-entry tuple. A named assembly's declaration body has no such shorthand,
+and the build refuses a bare `Pair` it returns ([§8.6][s8-6]).
 
 A field that holds a function does not hold the entries, so a reader takes
 them from the declaration, `input_wires(approach)`. **`sample_times` takes no
@@ -3671,6 +3672,13 @@ with `endpoint = :connection`. `output_wires(::A)` runs the
 other way, internal source path => face name (`"aircraft/pose" => "view_pose"`),
 so that its pairs, like every other pair in the three declarations, read along
 the flow.
+
+**A wire declaration whose value is no collection of pairs is refused as
+`IllegalWireEntry`** ([D-477][d-477]). The build checks an assembly's three
+declarations when it reads them. A bare `Pair` is the one-entry tuple with its
+comma forgotten. It has a reason of its own, and the message writes it back as
+that tuple. A `Group` takes a bare `Pair` as the one-entry tuple ([§8.5][s8-5]),
+so that reason reaches only a named assembly.
 
 **Direction is declared by the method**, not inferred ([D-170][d-170]). The reason is one
 invariant that spans all three declarations. Every pair's arrow points the way
@@ -10980,7 +10988,8 @@ fails to resolve is recorded and claims nothing, so the obligation check reports
 its input as unfed. Tier and event checking read only the component list, so
 they run and merge. A structural failure leaves the subtree behind it unknown.
 An unreadable or mixed [class](#g-class) (a component's primitive-vs-assembly status) or a
-malformed container is such a failure. No pass can read past it, so it throws
+malformed container is such a failure, and so is a wire declaration whose
+value is no collection of pairs ([D-477][d-477]). No pass can read past it, so it throws
 at once, and no other pass merges into the throw. In the two evaluating steps
 the probe chain consumes each check's subject as it goes. A check that reads a
 failed probe does not run, so the chain's fail-fast follows from the same rule.
@@ -10988,7 +10997,8 @@ failed probe does not run, so the chain's fail-fast follows from the same rule.
 **A check that stops the step still reports every violation in its own unit**
 ([D-431][d-431]). It collects over the unit and throws the list at once, so the
 carrier is the collection type ([§13.2][s13-2]). The unit is one component's
-child-naming pass, one probe stage's port check, one handler's return, or one
+child-naming pass, one assembly's three wire declarations, one probe stage's
+port check, one handler's return, or one
 probe pass over the component list. Three mixed containers on one component
 then cost one build cycle, not three. A user-code exception still aborts the
 phase alone, and so does a return that is not a NamedTuple. An unreadable or
@@ -15401,6 +15411,14 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   contract counting as its default face `u` or `y` ([D-210][d-210], [D-437][d-437]). No
   per-entry declaration: a computed entry
   collides like a hand-written one ([§8.8][s8-8], [D-249][d-249]).
+- **`IllegalWireEntry`** ([§8.6][s8-6], [§13.1][s13-1], [D-477][d-477]). Error · build ·
+  collected over the assembly's three wire declarations, thrown at once
+  ([D-431][d-431]). Assembly path, the declaration, the value or entry at
+  fault as `repr` text, and a `reason`. The reasons are `:bare_pair` (the
+  declaration returns one `Pair`), `:not_a_pair` (an entry that is not a
+  `Pair`) and `:not_a_collection` (a value that is no collection, a string
+  included). A face primitive called outside a build refuses the same way,
+  at the empty path.
 - **`FaceDirectionConflict`** ([§8.6][s8-6]). Error · build · collected.
   The declaring method and offending entry, the endpoint as written, the
   child it resolved to, the resolved port's actual direction, the side the
@@ -17566,6 +17584,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-474]: log.md#d-474--read-a-series-column-as-a-property-under-its-label
 [d-475]: log.md#d-475--return-plain-arrays-from-linearize-and-label-them-through-a-componentarrays-extension
 [d-476]: log.md#d-476--print-a-simulation-a-series-a-trimreport-and-a-linearization-in-two-forms
+[d-477]: log.md#d-477--refuse-a-wire-declaration-that-returns-no-collection-of-pairs
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

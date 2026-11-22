@@ -2157,7 +2157,7 @@ end
 const DECLARATION_LAYER = (
     build, flatten_tree!, _walk!, StructureDraft, at_component,
     invoke_declaration, invoke_probed, declarations, classify, classify_tier,
-    check_store_form, check_stores, check_state_leaves, _check_root_faces,
+    check_store_form, check_stores, check_state_leaves, _check_root_faces, _check_wire_shape,
     leaf_declarations, declarations_found, foreign_declarations,
     has_stage, _declares, _declares_workspace, declared_at, bundle_names,
     event_bundle_names, children, _children, _walked_children, _contract,

@@ -607,6 +607,15 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
         # fires once per call (Appendix C).
         input_entries = invoke_declaration(input_wires, comp)
         output_entries = invoke_declaration(output_wires, comp)
+        local_entries = invoke_declaration(local_wires, comp)
+        # A value that is no collection of pairs leaves this level's faces
+        # undefined, so no pass reads past it: the three declarations are checked
+        # as one unit, and every one at fault is thrown at once (§13.1, D-431, D-477).
+        shape_diags = Diagnostic[]
+        _check_wire_shape(path, :local_wires, local_entries, shape_diags)
+        _check_wire_shape(path, :input_wires, input_entries, shape_diags)
+        _check_wire_shape(path, :output_wires, output_entries, shape_diags)
+        isempty(shape_diags) || throw(DiagnosticError(shape_diags))
         # The evaluated lists, recorded for the primitives (`WALK_FACES`): the
         # readers are a parent's own body and its wire resolution, both later, so
         # nothing below this line reads the row just written.
@@ -614,7 +623,7 @@ Base.@nospecializeinfer function _walk!(draft::StructureDraft, path::String,
                              String[String(f) for (_, f) in output_entries])
         _check_face_names(path, input_entries, output_entries, diags)
 
-        for pair in invoke_declaration(local_wires, comp)
+        for pair in local_entries
             entry = _entry("local_wires", path, pair)
             route = resolve_source(draft, entry, path, comp, first(pair), diags)
             route === nothing && continue      # recorded; the destination stays unfed
@@ -708,6 +717,37 @@ function _claim!(draft::StructureDraft, consumer, producer, entry::String,
     draft.feeds[consumer] = producer
     draft.claims[consumer] = entry
     nothing
+end
+
+# §8.6's shape: a wire declaration is a collection of pairs (D-477). The value is
+# unspecialized and a tuple is read through `nfields` and `getfield`, so a new
+# model compiles nothing here (§9.7, D-289). A string iterates its characters,
+# so it counts as no collection. Returns `diags`.
+function _check_wire_shape(path::String, declaration::Symbol, @nospecialize(entries),
+                           diags::Vector{Diagnostic})
+    refuse(reason, @nospecialize(value)) =
+        push!(diags, IllegalWireEntry(path = path, declaration = declaration, reason = reason,
+                                      spelling = _spelled(value)))
+    if entries isa Pair
+        refuse(:bare_pair, entries)
+    elseif entries isa Tuple
+        for i in 1:nfields(entries)
+            getfield(entries, i) isa Pair || refuse(:not_a_pair, getfield(entries, i))
+        end
+    elseif entries isa AbstractString || !applicable(iterate, entries)
+        refuse(:not_a_collection, entries)
+    else
+        for entry in entries
+            entry isa Pair || refuse(:not_a_pair, entry)
+        end
+    end
+    diags
+end
+
+# A value as compact `repr` text, cut at 80 characters.
+function _spelled(@nospecialize(value))
+    text = repr(value; context = :limit => true)
+    length(text) > 80 ? first(text, 80) * "…" : text
 end
 
 # §8.6's two face-name invariants, over the boundary entries the walk already

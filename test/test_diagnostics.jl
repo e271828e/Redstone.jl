@@ -313,6 +313,12 @@ function diagnostics_kind_set()
             FaceNameIllegal(path = "a", face = "u/v", invariant = :contains_slash),
             FaceNameCollision(path = "a", faces = ["u"], site = :assembly),
             FaceNameCollision(path = "", faces = ["u"], site = :root),
+            IllegalWireEntry(path = "a", declaration = :local_wires, reason = :bare_pair,
+                             spelling = repr("b/y" => "c/u")),
+            IllegalWireEntry(path = "a", declaration = :input_wires, reason = :not_a_pair,
+                             spelling = repr("b/u")),
+            IllegalWireEntry(path = "", declaration = :output_wires, reason = :not_a_collection,
+                             spelling = "nothing"),
             FaceDirectionConflict(entry = "local_wires at `a`", path = "a/b",
                                   spelling = "b/u", found = :input, wanted = :producer),
             UnknownFaceSelection(who = "input_passthrough", path = "a/b",
@@ -952,6 +958,22 @@ function diagnostics_kind_set()
               "`u` or `y` (§8.6, D-437)"
         @test startswith(message(FaceNameCollision(path = "", faces = ["u"], site = :root)),
                          "the root component: face name(s) u appear twice — ")
+        # A bare `Pair` is written back as the one-entry tuple, and every other
+        # reason spells the declaration's entry shape (D-477).
+        @test message(IllegalWireEntry(path = "a", declaration = :local_wires, reason = :bare_pair,
+                                       spelling = repr("b/y" => "c/u"))) ==
+              "`local_wires` of `a` returns the bare `Pair` `\"b/y\" => \"c/u\"` — a wire " *
+              "declaration returns a collection of pairs, so write the one-entry tuple " *
+              "`(\"b/y\" => \"c/u\",)` (§8.6)"
+        @test message(IllegalWireEntry(path = "a", declaration = :input_wires, reason = :not_a_pair,
+                                       spelling = repr("b/u"))) ==
+              "`input_wires` of `a` holds the entry `\"b/u\"`, which is not a `Pair` — every " *
+              "entry is written `face => \"child/face\"` (§8.6)"
+        @test message(IllegalWireEntry(path = "", declaration = :output_wires,
+                                       reason = :not_a_collection, spelling = "nothing")) ==
+              "`output_wires` of the root component returns `nothing`, which is no collection " *
+              "of pairs — it returns a tuple of entries written `\"child/face\" => face`, and " *
+              "`()` for none (§8.6)"
         @test startswith(message(ProducedByTwoStages(path = "c", ports = [:y])),
                          "`c`: `y` by `y_state` and by `y_direct` — ")
         @test startswith(message(DeclaredNotProduced(path = "", ports = [:y])),

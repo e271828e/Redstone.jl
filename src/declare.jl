@@ -254,7 +254,7 @@ Pinned
 # along the signal flow. Direction is declared by the method, never inferred: the
 # resolved endpoints only cross-check it.
 
-# Design: §8.5, §8.6, D-170.
+# Design: §8.5, §8.6, D-170, D-477.
 # Defining it is the assembly class marker, which is why it has no fallback to
 # match.
 """
@@ -278,10 +278,14 @@ The build refuses an endpoint whose [port](@ref g-port) has the wrong direction
 as `FaceDirectionConflict`, an input fed twice as `TwoProducers`, and a
 component that defines `local_wires` beside any
 [primitive](@ref g-primitive) declaration as `ClassMixed`.
+
+A value that is no collection of pairs is refused as `IllegalWireEntry`. A bare
+`Pair` is one, so a single wire is written as the one-entry tuple
+`("a/y" => "b/u",)`. The same holds for the two boundary declarations.
 """
 function local_wires end
 
-# Design: §8.6, D-170, D-210.
+# Design: §8.6, D-170, D-210, D-477.
 """
     input_wires(c) -> collection of Pair
 
@@ -297,12 +301,13 @@ root of a build these faces are the [root inputs](@ref g-root-input).
 Face names contain no `/`, and are unique across `input_wires` and
 [`output_wires`](@ref) together. The build refuses a face name holding `/` as
 `FaceNameIllegal`, a name declared twice as `FaceNameCollision`, an endpoint
-that resolves to an output as `FaceDirectionConflict`, and an empty tuple of
-paths as `UnknownPort`.
+that resolves to an output as `FaceDirectionConflict`, an empty tuple of
+paths as `UnknownPort`, and a value that is no collection of pairs as
+`IllegalWireEntry`.
 """
 input_wires(::Any) = ()
 
-# Design: §8.6, D-170.
+# Design: §8.6, D-170, D-477.
 """
     output_wires(c) -> collection of Pair
 
@@ -316,8 +321,9 @@ so the pairs read along the signal flow, like every pair of
 face.
 
 The build refuses a face name holding `/` as `FaceNameIllegal`, a name declared
-twice across the two boundary declarations as `FaceNameCollision`, and a source
-that resolves to an input as `FaceDirectionConflict`.
+twice across the two boundary declarations as `FaceNameCollision`, a source
+that resolves to an input as `FaceDirectionConflict`, and a value that is no
+collection of pairs as `IllegalWireEntry`.
 """
 output_wires(::Any) = ()
 

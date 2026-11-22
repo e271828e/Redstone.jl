@@ -68,10 +68,11 @@ in the `src/model.jl` entry.
   side's faces; the face lists list a bare contract as `u` or `y` (D-437). The walk records each assembly's evaluated face lists in
   `StructureDraft.faces`, and `flatten_tree!` binds them as `WALK_FACES` around the
   walk, so the primitives read them once per call (Appendix C) and evaluate a
-  body only outside a walk. Beside it `flatten_tree!` binds `WALK_CHILDREN`, a
+  body only outside a walk, where they check its shape as the walk does
+  (D-477). Beside it `flatten_tree!` binds `WALK_CHILDREN`, a
   fresh cache of each assembly's child list, so endpoint resolution derives a
   list once per walk rather than once per endpoint (§9.7). The two memos and
-  `_walked_children` sit in the file's last section, read by the primitives
+  `_walked_children` sit in the section before `Group`'s, read by the primitives
   here and bound by the walk in `structure.jl`.
 - §8.8's `input_passthrough`/`output_passthrough`, with the three exclusive
   selectors `except`, `only` and `select`, and `EmptyFaceSelection` through the
@@ -1407,6 +1408,11 @@ D-456, D-457, D-458.
   take no part in the margin, as in `_lattice` (§9.1, §9.2, D-465).
 - The shadowing check ahead of `classify` in the walk (D-246).
 - The component frame around the walk's two branches (D-248).
+- `_check_wire_shape` refuses a wire declaration whose value is no collection
+  of pairs as `IllegalWireEntry`. The walk checks a level's three
+  declarations together, ahead of every other read of them, and throws at
+  once. A tuple is read through `nfields` and `getfield`, so a new model
+  compiles nothing there (§8.6, §13.1, D-477).
 - `_check_face_names` refuses an empty assembly face as `FaceNameIllegal`
   `:empty`; the root check `_check_root_faces` collides the keyed names, so
   two bare contracts collide on nothing, and the root claims a bare `u_types`
