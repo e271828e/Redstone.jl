@@ -24,7 +24,7 @@ line serves.
 The running example is a deployment with `Δt_frame = 1//100` and
 `Δt_base = 1//25`, so only every fourth frame top is a base tick. The model
 holds a continuous plant with a localized sign-form guard, and a discrete
-controller with `(D, Φ) = (1, 0)`, which ticks at every base tick. The frame
+controller with `(D₀, Φ₀) = (1, 0)`, which ticks at every base tick. The frame
 followed is `k = 8`, whose top `t = 0.08` is base tick `2`; section 3 notes
 where frame `k = 7`, an off-tick frame top, differs. The deployment sets no
 `h_max`, so each frame is one span taken in one step, and its end is the
@@ -324,7 +324,7 @@ wears a `Gated` wrapper whose `run_at!` is the [§10.5][s10-5] gate:
 (tick - entry.Φ) % entry.D == 0 && run_entry!(entry.entry, store, xbuf, ẋbuf)
 ```
 
-With `tick = 2` and `(D, Φ) = (1, 0)` the controller is due. Its
+With `tick = 2` and `(D₀, Φ₀) = (1, 0)` the controller is due. Its
 `y_state` runs in the stage-1 walk from the current `s`, its
 `y_direct` in the stage-2 walk from the freshly swept inputs, and its
 cells now carry `y[k]` computed from `s[k]`. The event iteration proceeds as
@@ -375,7 +375,7 @@ The sequence is the ordinary one with one difference:
 due or not ([§14.5][s14-5], [D-205][d-205]), so the `t₀` snapshot carries the authored world
 fully evaluated. The update block runs as `bodies.ticks(0)`, the ordinary
 gate at index `0`, which under the canonical residue admits exactly the
-`Φ = 0` components ([§10.5][s10-5]). The model's `init!` then calls `settled!(hooks)`,
+`Φ₀ = 0` components ([§10.5][s10-5]). The model's `init!` then calls `settled!(hooks)`,
 which publishes the `t₀` snapshot. Nothing in the frame loop above is entered:
 boundary zero has no integrate and no drain.
 
@@ -391,7 +391,7 @@ quotes the step lengths it took.
 
 **The example.** A first-order lag with `τ = 0.05 s` prefilters the root
 input `ref`. A damped oscillator, the plant, is driven by a discrete
-proportional controller due at every base tick, `(D, Φ) = (1, 0)`, which
+proportional controller due at every base tick, `(D₀, Φ₀) = (1, 0)`, which
 reads the lag's output against the plant's. A localized sign-form guard
 watches the lag's output rise through `0.75`, and its handler writes only
 its own mode. The deployment is:
@@ -438,7 +438,7 @@ floor_steps = max(1.0, floor((r + slack) / h_min))
 cap ≥ r ? 1.0 : max(1.0, min(ceil((r - slack) / cap), floor_steps))
 ```
 
-From `0.6` the distance to the due instant is `0.05`, so `n = ⌈0.05 /
+From `0.6` the distance to the due instant is `0.05`, so `N = ⌈0.05 /
 0.0308⌉ = 2` and the step is `0.025`. Taking `0.0308` and then a sliver of
 `0.0192` would end the span on a step the controller never asked for;
 equal division leaves no sliver. The rule runs again at every step's start,

@@ -12,6 +12,15 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **The timing notation in the code** (D-478, D-479): the spec, its
+  companions and the log are swept; `src/`, `test/`, `docs/` and
+  `code_map.md` still use the letters of D-464. The increment renames
+  `Relative`'s fields to `D` and `Φ`, prints `show`'s timing tables and the
+  grid report under the new symbols, renames `r_p` to `Qₚ` in the
+  diagnostics' docstrings, and rules on the descriptor's keys (`m`, `c` and
+  `K` in the `Timing` and `RateLink` schemas, §13.9). The inspector follows
+  with a pin bump and its own adaptation, before its increment 10b. Not
+  started.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

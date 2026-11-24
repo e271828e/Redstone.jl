@@ -462,7 +462,7 @@ were derived.
 | [D-461][d-461] | Ship Bogacki–Shampine 3(2) under proportional-integral control as the first adaptive backend | ratified |
 | [D-462][d-462] | Compare the algorithm as one value and name its differing fields | ratified |
 | [D-463][d-463] | Refuse a floor above half the step bound | ratified |
-| [D-464][d-464] | Write a discrete component's timing in four frames, and an anchor's period as `Δtₖ` | ratified |
+| [D-464][d-464] | Write a discrete component's timing in four frames, and an anchor's period as `Δtₖ` | superseded → [D-478][d-478] |
 | [D-465][d-465] | Refuse at the build a structure that no deployment binds | ratified |
 | [D-466][d-466] | Derive the grid report from the structure's anchors, and print it with the structure | ratified |
 | [D-467][d-467] | The descriptor carries what `show` prints, at version 1.0 until the first release | ratified |
@@ -476,6 +476,8 @@ were derived.
 | [D-475][d-475] | Return plain arrays from `linearize`, and label them through a ComponentArrays extension | ratified |
 | [D-476][d-476] | Print a `Simulation`, a `Series`, a `TrimReport` and a `Linearization` in two forms | ratified |
 | [D-477][d-477] | Refuse a wire declaration that returns no collection of pairs | ratified |
+| [D-478][d-478] | Write a tick count as `D` or `Φ`, subscripted by the lattice it counts in | ratified |
+| [D-479][d-479] | Give each count, length and index of the timing passages its own letter | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -7417,6 +7419,10 @@ Annotation (2026-11-20): amended by [D-469][d-469]. `Period` and `Hz` retire, an
 `Absolute` takes its period as an integer or a `Rational` in seconds, as it
 takes its offset. The two forms, the composition and the gate stand.
 
+Annotation (2026-11-24): [D-478][d-478] writes `Relative`'s arguments `(D, Φ)`, the
+child's `Dₛ` and `Φₛ`, with the constraints `D ≥ 1` and `0 ≤ Φ < D`. A
+component's pair in base ticks is `(D₀, Φ₀)`.
+
 **Rejected.**
 - *Bare-value sugar behind a normalization function (`ratespec`: bare `Int` ⇒
   `Relative`, bare quantity ⇒ `Absolute`):* implicit form inference; the
@@ -7485,6 +7491,9 @@ Annotation (2026-11-20): an anchor's pair is written `(Δtₖ, τₖ)` ([D-464][
 Annotation (2026-11-20): amended by [D-469][d-469]. The explicit `Δt_base` keyword is
 an integer or a `Rational`, and `Period` and `Hz` retire.
 
+Annotation (2026-11-24): an anchor `a`'s pair is written `(Δt(a), τ(a))`, and
+the pair a relative child holds under it `(Dₐ, Φₐ)` ([D-478][d-478]).
+
 **Rejected.**
 - *Root-only absolute declaration (the superseded [§10.5][s10-5] clause):* right about
   deployment preferences, wrong for device-intrinsic rates; kept only as the
@@ -7545,6 +7554,9 @@ block.
 Annotation (2026-11-20): amended by [D-466][d-466]. The grid report reads the
 structure's anchors and is derived where it is used. Of the grid
 diagnostics, `GridUtilization` alone reads the `Schedule`'s rows.
+
+Annotation (2026-11-24): the admissible set is written `gcd(pool)/Q`, and the
+leave-one-out factor `Qₚ` ([D-479][d-479]).
 
 **Rejected.**
 - *The simple-fraction-of-its-period offset test as the engine's warning:*
@@ -11157,6 +11169,9 @@ Annotation (2026-11-20): [D-466][d-466] supersedes the clause keeping
 `Deployment.grid`, under this entry's artifact rule. The grid report is
 derived from the structure's anchors where it is used.
 
+Annotation (2026-11-24): an `Anchor` row's pair is written `(Δt(a), τ(a))`
+([D-478][d-478]).
+
 **Rejected.**
 - *The recording flags as a sixth `Simulation` field:* a parameter nothing
   on the simulation reads, on the struct whose five fields are the five
@@ -12905,6 +12920,10 @@ and a component's phase in seconds is `τ = Φ·Δt_base` ([D-464][d-464]).
 Annotation (2026-11-20): amended by [D-469][d-469]. The explicit keyword is an integer
 or a `Rational`, and `Period` and `Hz` retire.
 
+Annotation (2026-11-24): the triple is written `(a, Dₐ, Φₐ)`, the per-anchor
+division `D₀(a) = Δt(a)/Δt_base`, and a component's phase in seconds `τ(i) =
+Φ₀(i)·Δt_base` ([D-478][d-478]).
+
 **Rejected.**
 - *Silent `Δt_base` derivation with unanchored components present:* the
   logger-rescaled-by-an-offset-edit case. (As recorded in [D-186][d-186].)
@@ -12934,6 +12953,8 @@ drives it, measured against what is declared.
 above 1 is listed (as recorded in [D-187][d-187]). Demand is relational: `τ = T/10`
 can cost nothing and `τ = T/15` cost 3× against the same pool, so blame is
 computed against what is actually declared (as recorded in [D-187][d-187]).
+
+Annotation (2026-11-24): the leave-one-out factor is written `Qₚ` ([D-479][d-479]).
 
 **Rejected.**
 - *The simple-fraction-of-its-period offset test as the engine's warning:*
@@ -19653,6 +19674,9 @@ Annotation (2026-11-20): amended by [D-469][d-469]. `Period` and `Hz` retire. Th
 bullet's constructors are `Absolute` and `Relative`, and `Absolute`'s period
 is refused as its offset is.
 
+Annotation (2026-11-24): `Relative`'s arguments are written `(D, Φ)`, with the
+constraints `D ≥ 1` and `0 ≤ Φ < D` ([D-478][d-478]).
+
 **Rejected.**
 - *Floats everywhere:* a float period keeps the integer schedule and adds a
   tolerance at the doors, and a float clock misses the typed float, as
@@ -20027,7 +20051,7 @@ under every method, as [D-460][d-460]'s door did.
 
 ### D-464 — Write a discrete component's timing in four frames, and an anchor's period as `Δtₖ`
 
-**Status.** ratified
+**Status.** superseded → [D-478][d-478]
 
 **Position.** A discrete component's timing is one period and one phase,
 written in four frames. The symbol is the quantity's name wherever the
@@ -20146,6 +20170,9 @@ left the question open
 (`RedstoneInspector.jl/design/deployment_overlay.md`, under its pending
 questions), and the session on the grid report's part ruled it on
 2026-11-20.
+
+Annotation (2026-11-24): the base tick is written `gcd(pool)/Q`, and the counts
+it scales `D₀(a)`, `Φ₀(a)`, `D₀` and `Φ₀` ([D-478][d-478], [D-479][d-479]).
 
 **Rejected.**
 - *The refusal left at the deployment ([D-459][d-459]'s fourth bullet):* a tree no
@@ -20376,6 +20403,9 @@ settled the content is recorded in
 `RedstoneInspector.jl/design/deployment_overlay.md`, answers 1, 2, 4 to 7
 and 15, and the session of 2026-11-20 on this part ruled the positions' base
 and the flag.
+
+Annotation (2026-11-24): the anchors' counts link `(Dₐ, Φₐ)` to `(D₀, Φ₀)`
+([D-478][d-478]).
 
 **Rejected.**
 - *"The `Model` as a whole" as the content rule:* it has no boundary, a
@@ -20683,6 +20713,11 @@ beside it. One line carries the comparison, and the anchor table under it
 shows the factor as a common divisor of every declared anchor's `Dₖ` and
 `Φₖ`. The descriptor carries the coarsest value in `structure`'s `grid`, so
 a client derives the line ([D-467][d-467]).
+
+Annotation (2026-11-24): the tables print under [D-478][d-478]'s symbols. The anchor
+table gives each anchor's `Δt`, `τ`, `D₀` and `Φ₀`, and the component table each
+component's anchor, `Dₐ`, `Φₐ`, `D₀`, `Φ₀`, `Δt` and `τ`. The chart's unit is
+`Δt_unit` ([D-479][d-479]).
 
 **Rejected.**
 - *The columns added to `show(::Schedule)`:* the `Schedule` holds none of
@@ -21072,6 +21107,154 @@ malformed declarations reports both ([D-431][d-431]).
   assembly:* its faces would be unknown. The parent's wires to them would
   report as `UnknownPort`, and the inputs of its children as
   `UnconnectedInput`, errors the user did not make.
+
+### D-478 — Write a tick count as `D` or `Φ`, subscripted by the lattice it counts in
+
+**Status.** ratified
+
+**Position.** A discrete component's period and phase in ticks are written
+`D` and `Φ`. A subscript names the lattice they count in, and an argument
+names the node they belong to.
+
+- The subscript is `ₛ` for the node's rate scope, `ₐ` for its anchor and `₀`
+  for the base grid, which is anchor `A₀`. A particular anchor's number may
+  stand as the subscript, so `D₁(i)` counts in ticks of `A₁`.
+- The argument names the subject, as in `D₀(i)`, `Φₐ(s)` and `D₀(a)`. A
+  table leaves it out, since its row names the subject.
+- The seconds pair keeps `Δt` and `τ`. It takes no subscript and names its
+  subject in an argument, as in `Δt(a)` and `τ(i)`. `Δt_base = Δt(A₀)`.
+- The spec and printed output always write the subscript. A bare `D` or `Φ`
+  is a field name only, where its struct fixes the lattice.
+- One constraint holds in every lattice, `D ≥ 1` and `0 ≤ Φ < D`.
+- One law composes the counts. For a node `i` under a node `j` under a node
+  `k`, `Dₖ(i) = Dⱼ(i)·Dₖ(j)` and `Φₖ(i) = Φₖ(j) + Φⱼ(i)·Dₖ(j)`. In seconds
+  the law reads `Δt(i) = Dⱼ(i)·Δt(j)` and `τ(i) = τ(j) + Φⱼ(i)·Δt(j)`.
+- `Relative` takes `(D, Φ)`, its child's `Dₛ` and `Φₛ`. Its fields `K` and
+  `φ` become `D` and `Φ`.
+- A generic anchor is the node `a`. Particular anchors keep their numbers,
+  `A₀` and `A₁`. The fold's triple is `(a, Dₐ, Φₐ)`.
+
+**Spec.** [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [§9.7][s9-7], [§10.5][s10-5], [Appendix B][sB], [Appendix D][sD]
+
+**Rationale.** [D-464][d-464] wrote one kind of quantity with four letter pairs,
+`(K, φ)` in scope ticks, `(m, c)` in anchor ticks, `(D, Φ)` in base ticks
+and `(Δt, τ)` in seconds. The first three count one lattice in the ticks of
+another and differ only in that other lattice. The letters did not show
+which, so a table printing all three read as six unrelated numbers. The
+scope phase `φ` and the base phase `Φ` differed only in case, while
+measuring different units. [D-464][d-464] also stated three composition laws, the
+fold's, the binding's and the seconds law, which are one chain rule in
+three alphabets.
+
+Each reference is the lattice of a node. The scope's is the parent's. The
+anchor's is the lattice of the nearest node at or above the subject that an
+`Absolute` entry declares. The base grid is the root's, since the root sits
+at `(1, 0)` in base ticks. With one pair and a subscript for the reference,
+a table's columns read by unit, `Dₛ Φₛ | Dₐ Φₐ | D₀ Φ₀ | Δt τ`. A fully
+relative model's anchor is the base grid, so its `Dₐ` is its `D₀`, which
+[D-464][d-464] stated as a special case. In the subtree `rx = Absolute(1//50)`,
+`dsp = Relative(2)`, `fix = Relative(5, 1)` at `Δt_base = 2 ms`, `fix` has
+`(Dₛ, Φₛ) = (5, 1)`, `(Dₐ, Φₐ) = (10, 2)`, `(D₀, Φ₀) = (100, 20)` and
+`(Δt, τ) = (200 ms, 40 ms)`.
+
+A count has a subject and a reference. A table's row names the subject, so
+the reference is the mark a table needs, and the subject goes in an
+argument where prose needs both. The seconds pair has no reference, so a
+subscript on it would mark the subject, the opposite of its meaning on `D`
+and `Φ`. `i`, `j` and `k` have Unicode subscripts, so the generic law is
+written in the same form as its instances, and their order follows the tree
+from the subject up. A generic anchor index `k` would collide with the
+law's `k` in the [§9.2][s9-2] passage that states both, and the node `a` already
+named the anchor in the fold. A bare letter read as base ticks would
+contradict `Relative(D, Φ)`, whose counts are in scope ticks.
+
+Records written before this entry, the reports and increments included,
+write `Dₖ` for anchor `k`'s divisor in base ticks. Here it reads "counted in
+ticks of anchor `k`". A reader of those records meets the subscript in its
+old role.
+
+**Rejected.**
+- *[D-464][d-464]'s four pairs:* four letters for one kind of count, a scope phase
+  `φ` beside a base phase `Φ` in another unit, and three laws for one.
+- *`P` for the phase in ticks:* readers take `P` for a period, and `p` is
+  already the proposed step and, in flight dynamics, the roll rate. With `φ`
+  retired, `Φ` has no partner to be confused with.
+- *The reference as a superscript, as in `D⁰`:* it reads as a power.
+- *A slash index, as in `D_{i/0}`:* it is no Julia identifier, and it is
+  heavy in monospace.
+- *The subscript on the subject, as [D-464][d-464] had it in `Dₖ` and `Dₛ`:* a table
+  needs the reference marked, and the row already names the subject.
+- *A bare `D` or `Φ` read as base ticks:* it contradicts `Relative(D, Φ)`.
+- *`x`, `y` and `z` for the generic law:* `x` and `y` are the state and the
+  output, `z` is the delay `z⁻¹`, and `y` and `z` have no Unicode subscripts.
+- *`Relative(K, φ)` kept as the constructor's argument names:* a second
+  letter pair on the surface the user writes.
+
+### D-479 — Give each count, length and index of the timing passages its own letter
+
+**Status.** ratified
+
+**Position.** The timing passages give each count, length and index a letter
+that means nothing else nearby. A count is uppercase, and a length or an
+index lowercase.
+
+- `k` indexes frames, `n` base ticks and `i` the steps of a span. `n` is the
+  tick index in every formula, and the gate reads `(n − Φ₀) % D₀ == 0`.
+  `tick` stays the argument name of `sweep_1`, `sweep_2` and `ticks`.
+- A span has length `l` and takes `N = ⌈l / h_max⌉` steps of `l / N`. Under
+  a proposal `p`, a step over the distance `r` takes `r / N`, with
+  `N = ⌈r / min(p, h_max)⌉`.
+- The admissible set is `gcd(pool)/Q`, for integer `Q ≥ 1`. The
+  leave-one-out factor of a pool entry `p` is
+  `Qₚ = gcd(pool ∖ p)/gcd(pool)`.
+- The hyperperiod is `H = lcm D₀(i)` over the discrete components `i`.
+- `Δt_unit` is the loop's exact unit, `gcd(Δt_frame, Δt_base)`, or
+  `Δt_frame` when no discrete component exists. The loop derives it, and no
+  deployment keyword sets it.
+- An `Absolute` entry's tick instants are written in words, `t₀ + τ` and
+  then every `Δt`, with no index.
+
+**Spec.** [§2.2][s2-2], [§9.2][s9-2], [§9.7][s9-7], [§10.2][s10-2], [§10.5][s10-5], [Appendix D][sD]
+
+**Rationale.** In [§10.5][s10-5] `n` was the base tick index and, a paragraph later,
+the step count of a span. `k` was the frame index, the anchor index, the
+divisor of the admissible set, the base tick index of the hyperperiod chart
+and the tick count of the `Absolute` table. `g`, the span's length, is the
+jump map among the formula letters ([§5.3][s5-3]). [D-478][d-478] makes the periods and
+phases in ticks uppercase counts, and `N`, `Q`, `Qₚ` and `H` are counts of
+the same kind, integers of at least 1. A length is a real number, so `l`
+stays lowercase. The spec's code font draws `l` apart from `1`, which
+matters only where both stand in one formula, as in
+`N = ⌈l / h_max⌉ < l / h_max + 1`.
+
+`Q` and `Qₚ` are each the ratio of two grid periods. A pool of a 20 ms
+period and a 10/3 ms offset, deployed at `Δt_base = 1//600`, has
+`gcd(pool) = 1//300` and `Q = 2`. Without the offset the grid would be
+`1//50`, so the offset's `Qₚ = 6`. The user chose a base tick twice as fine
+as needed, and the offset alone made the grid six times finer.
+
+`Δt_unit` names what the spec called the lattices' unit, in the family of
+`Δt_frame` and `Δt_base`. The loop counts every mandatory instant in it. At
+`Δt_frame = 3//10` and `Δt_base = 1//4` it is `1//20`, with frame tops every
+6 units and base ticks every 5. The least gap between two mandatory instants
+is one `Δt_unit`.
+
+An `Absolute` entry's instants need no index, since the `Relative` row
+beside it states its instants in words. An index `j` there would sit beside
+the node `i` of [D-478][d-478] in `t₀ + τ(i) + j·Δt(i)`.
+
+**Rejected.**
+- *`L` for the span length:* a length is a real number, and uppercase marks
+  a count.
+- *`ℓ` for the span length:* it removes the doubt between `l` and `1`, which
+  the code font already removes, and it is harder to type.
+- *`q` for the admissible divisor:* a count is uppercase.
+- *`r_p` kept:* a lowercase count, a letter unrelated to `Q`'s kind, and `r`
+  is the distance to the next mandatory instant.
+- *`m` for the step count:* [D-478][d-478] retires `m` from the timing notation, and
+  reusing it at once would mislead readers of older records.
+- *`j` for an `Absolute` entry's tick index:* it would sit beside the node
+  `i`.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -21525,6 +21708,8 @@ malformed declarations reports both ([D-431][d-431]).
 [d-475]: #d-475--return-plain-arrays-from-linearize-and-label-them-through-a-componentarrays-extension
 [d-476]: #d-476--print-a-simulation-a-series-a-trimreport-and-a-linearization-in-two-forms
 [d-477]: #d-477--refuse-a-wire-declaration-that-returns-no-collection-of-pairs
+[d-478]: #d-478--write-a-tick-count-as-d-or-φ-subscripted-by-the-lattice-it-counts-in
+[d-479]: #d-479--give-each-count-length-and-index-of-the-timing-passages-its-own-letter
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
