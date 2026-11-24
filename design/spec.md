@@ -2618,8 +2618,9 @@ The check looks for a binding of a declaration name (a name in the import list
 above) in the component's parent module. If the module holds one distinct from
 the framework's function, **the build throws `DeclarationShadowed` alone**
 ([D-246][d-246]). The diagnostic names the module, the foreign names and the
-missing import. Its message reads "`MyEngine`'s module defines its own
-`x_deriv`, distinct from `Redstone.x_deriv`; add `import Redstone: x_deriv`".
+missing import. Its message reads "`engine`: its module `MyEngine` defines
+its own `x_deriv`, distinct from `Redstone.x_deriv`; add `import Redstone:
+x_deriv`".
 
 The check is a two-line `isdefined`/`!==` test on those names. Those names are
 distinctive by design ([D-220][d-220]), so a foreign binding of one of them in a
@@ -3083,7 +3084,8 @@ choice, and the probe checks the promotion.
 1. No `::Float64` argument annotations in math. Use `<:Real` or nothing.
 2. No `Float64`-pinned intermediates. Write `zero(SVector{3,T})`.
 3. No `::SomeType{Float64}` return-type annotations on the continuous path,
-   because they force converts and hence `InexactError`.
+   because they force a convert to `Float64`, which fails on a `Dual` with a
+   `MethodError`.
 
 The permissive reading is the operative one ([D-263][d-263]). It escapes two
 other readings. The *predictive* reading has the entry saying what *will*
@@ -3269,7 +3271,9 @@ participating struct leaf is declared with `Float64` in its parameter position,
 parameters ([D-263][d-263]). A struct with a hardcoded `Float64` field offers no such
 position. The walk therefore leaves it as written, a pinned leaf by shape, and
 `Pinned{GearContact}` says so on the page. Any `Dual`-carrying construction then
-fails inside the stage with an `InexactError` naming the offending constructor.
+fails inside the stage with a `MethodError`, because `Float64` has no conversion
+from a `Dual`. The build's `Dual` probe reports it as `UserCodeFraming`, naming
+the stage.
 That is the CI invariant of [§7.2][s7-2], reached through the declaration layer with
 no extra machinery.
 
@@ -3343,12 +3347,12 @@ show.
 
 - "`x_init` field `gear_count::Int` is not a continuous state — integers,
   `Bool`s and enums belong in `m_init`";
-- "`x_init` field `q_nb::RQuat` is not a state leaf — declare the `SVector{4}`
-  backing and cast where rotation semantics are wanted ([§7.1][s7-1])";
+- "`x_init` field `q_nb::RQuat` is not a state leaf — declare the `SVector`
+  backing and cast where the domain semantics are wanted ([§7.1][s7-1])";
 - "`x_init` field `pose::NamedTuple` is not a state leaf — a field is one
   scalar or `SArray`; split it into fields, structure comes from the component
   tree ([§7.1][s7-1])";
-- "`s_init` field `label::String` is not a store value — store fields are
+- "`s_init` field `label::String` is not a store value — store values are
   isbits or `Symbol`s; text and bulk data belong on the component instance
   ([§7.3][s7-3])".
 
@@ -3470,14 +3474,15 @@ The build checks three rules in the structure step ([§9.1][s9-1]). They are
 stated here because they are properties of the declarations, not of the
 wiring.
 
-A state declaration holding a store needs its update. `x_init` holding a store
-and no `x_deriv` method, or `s_init` holding a store and no `s_update` method,
+A state declaration holding a store needs its update. An `x_init` or `s_init`
+holding a store, on a primitive that defines neither `x_deriv` nor `s_update`,
 is a build error,
-`StoreWithoutUpdate` ([D-263][d-263]). The first case is continuous state with no [flow](#g-flow) (the
-continuous derivative function, `x_deriv`), the second a discrete store nothing
+`StoreWithoutUpdate` ([D-263][d-263]). Under `x_init` the store is continuous state with no [flow](#g-flow) (the
+continuous derivative function, `x_deriv`), under `s_init` a discrete store nothing
 updates. The framework will not silently supply `ẋ = 0`, which is a model, not a
 default. An unupdated discrete store is a parameter in disguise, and parameters
-are plain struct fields.
+are plain struct fields. A store beside the other tier's update law is
+`DeclarationOnWrongTier` instead (below).
 
 A state declaration of `nothing` owes nothing (above). `m_init` carries no such
 obligation either.
@@ -3653,7 +3658,7 @@ call builds it.
 
 ```julia
 world = Group(
-    (; plant = Plant(), ctrl = PID(kp = 2.0));
+    (; plant = Plant(), ctrl = PID(Kp = 2.0));
     local_wires = ("ctrl/u" => "plant/u", "plant/y" => "ctrl/y"),
 )
 ```
@@ -3937,7 +3942,7 @@ child keeps its key segment as part of that child segment, so
 `"aircraft/2/face"` is one level and not two. The read side
 walks the full depth, as `"systems/ldg/left/trn"` does in a [snapshot](#g-snapshot) (the
 immutable per-boundary publication) or the log tree. Snapshot and log
-inspection walk instances ([§13.3][s13-3]). One fact behind the rejection of instance navigation is
+inspection read the address table ([§13.3][s13-3]). One fact behind the rejection of instance navigation is
 relied on downstream. Symmetric immutable siblings are `===`-identical, so a
 path is unrecoverable from an instance. That is why the helpers
 ([§8.8][s8-8]) name the child by path.
@@ -3975,7 +3980,8 @@ only *cross-check* the direction. An entry whose endpoint resolves to a port of
 the wrong direction is a build error. The error names the method, the entry and
 the resolved port's actual direction. A mixed entry is not expressible, because
 the single list that made that error class possible does not exist. Two entries
-producing the same output face remain the ordinary two-producers error ([§6.1][s6-1]).
+producing the same output face break the uniqueness of face names (below), and
+the build refuses them as `FaceNameCollision`.
 
 **Face *types and [tiers](#g-tier)* are derived from the internal endpoints** ([D-041][d-041]). A
 tier is the continuous or discrete side of the hybrid formalism. This derivation
@@ -4148,7 +4154,8 @@ term.
   \int_{t_0}^{t_{k-1}} R^{c_0}_{c} f^{c} \, dt \right)
   = q(t_{k-1})' \, \big( V(t_k) - V(t_{k-1}) \big)$$
 
-In code, the sculling result is the sampler line `υ_c_sc = s.q'(u.V - s.V)`. The
+In code, the sculling result is the sampler line `υ_c_sc = q_s'(u.V - s.V)`,
+with `q_s` the latched `s.q` cast to `RQuat`. The
 factor leaving the integral is the *anchor change between two inertially-fixed
 frames*. It is constant because $t_{k-1}$ is in the past and latched. The
 physical intra-interval rotation stays inside the integrand via $q(t)$. That
@@ -4607,8 +4614,8 @@ Every error stays first-class.
   unconnected input.
 - A face both fed by a [local wire](#g-local-wire) and passed through is a two-producers error
   ([D-145][d-145]).
-- `except` or `only` naming a nonexistent face errors with the child's face
-  list in hand.
+- `except` or `only` naming a nonexistent face is `UnknownFaceSelection`
+  with reason `:unknown_names`, the child's face list in hand.
 - A `prefix = ""` collision is caught by the build's uniqueness check like
   any hand-written duplicate.
 
@@ -4616,7 +4623,8 @@ Every error stays first-class.
 `only` or `select`, one of the three and no more. `select` is a predicate
 over the child's face names, and the helper keeps the names it accepts. More
 than one selector given is `UnknownFaceSelection` with reason
-`:multiple_selectors`, "more than one selector given", its payload naming the
+`:multiple_selectors`. Its message names the selectors given together and
+states that the three are exclusive, one per call. Its payload names the
 selectors given.
 
 **A call that gives a selector and keeps nothing raises
@@ -4626,10 +4634,11 @@ nothing through is what it asked for. The payload names the helper, the child's
 full path, the selector given with its names, and the child's face list.
 
 The warning exists because an empty selection is almost always a typo the
-unknown-names check cannot see. An `only` may name faces that exist while a
-`select` matches none, or an `except` may list every face. It warns rather
-than errors because a level may legitimately pass nothing through under one
-configuration of a generic child.
+unknown-names check cannot see. An `except` may list every face, or a
+`select` may match none. It warns rather than errors because a level may
+legitimately pass nothing through under one configuration of a generic child.
+An `only` passes the unknown-names check only by naming faces that exist, and
+it then keeps them all, so it never raises the warning.
 
 `select` exists for feed lists, the idiom of "One authored feed list" below.
 There the feed list already computes the `except` tuple. A closure over the same
@@ -15570,8 +15579,9 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   its contract ([D-263][d-263]). `x_projection` is reason `:continuous_only` on a discrete
   primitive and `:no_manifold` on a primitive with an empty `x_init`.
 - **`FaceNameIllegal`** ([§8.6][s8-6]). Error · build · collected. Component
-  path, face name, the violated invariant (contains `/`, or empty, a
-  primitive's contract key included, [D-437][d-437]).
+  path, face name, and the violated `invariant`, `:contains_slash` (the name
+  contains `/`) or `:empty` (the name is empty, a primitive's contract key
+  included, [D-437][d-437]).
 - **`FaceNameCollision`** ([§8.6][s8-6]). Error · build · collected. Assembly
   path, the colliding face names, the site. The site is `:assembly` for a
   name repeated among an assembly's input and output faces, and `:root` for
@@ -15592,8 +15602,9 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   child it resolved to, the resolved port's actual direction, the side the
   entry requires (`:producer` or `:consumer`).
 - **`UnknownFaceSelection`** ([§8.8][s8-8]). Error · build · fail-fast. The
-  helper, the child's full path, reason (unknown names / more than one selector given), the
-  offending names or the selectors given, the child's face list.
+  helper, the child's full path, a `reason`, `:unknown_names` (an `except` or
+  `only` name the child lacks) or `:multiple_selectors` (more than one selector
+  given), the offending names or the selectors given, the child's face list.
 - **`EmptyFaceSelection`** ([§8.8][s8-8]). Warning · build · logged, on the
   `Build`'s warnings. The helper, the child's full path, the selector given
   and its names, the child's face list. A selector was given and nothing survived it;
@@ -15609,9 +15620,11 @@ collection ([§9.2][s9-2], [D-250][d-250]).
 - **`MissingProbeValue`** ([§9.3][s9-3]). Error · build · collected. Face
   name, type.
 - **`ChildNameCollision`** ([§8.5][s8-5]). Error · build · collected as
-  `ContainerMixed` is. Assembly path, the colliding child name, reason (a bare container key
-  against the `sample_times` sugar, [D-211][d-211] / against a sibling field,
-  [D-212][d-212] / two children with one name), the declarations. Those are
+  `ContainerMixed` is. Assembly path, the colliding child name, a `reason`,
+  `:sample_times_sugar` (a bare container key against the `sample_times` sugar,
+  [D-211][d-211]), `:sibling_field` (a bare key against a sibling field,
+  [D-212][d-212]) or `:two_children` (two children with one name), and the
+  declarations. Those are
   both children for two with one name, and the one element for a bare key,
   with the container field on the `sample_times` arm.
 - **`TransparentContainerUnknown`** ([§8.5][s8-5], [D-211][d-211]). Error ·
@@ -15693,8 +15706,9 @@ activation):
 - **`BundleFieldError`** ([§5.2][s5-2], [§13.2][s13-2]). Error · build, at
   probe; runtime thereafter · fail-fast, a `StepError` species at runtime.
   Component path, function family, the primitive's tier, requested field, the
-  legal field set, classification (undeclared store / wrong-tier fact / illegal
-  for this function family).
+  legal field set, and a `reason`, `:undeclared` (an undeclared store),
+  `:wrong_tier` (a wrong-tier fact) or `:illegal_for_family` (illegal for this
+  function family).
 - **`HandlerReturnKey`** ([§5.2][s5-2], [§9.5][s9-5]). Error · build ·
   collected over the handler's return, with its `ConformanceFailure`s,
   thrown at once ([D-431][d-431]). Component path, event name, offending key, the legal set

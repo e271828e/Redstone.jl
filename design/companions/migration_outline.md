@@ -25,7 +25,7 @@ whose disposition exceeds a cell are expanded below the table.
 | The state-declaration conversion to the closed vocabulary | each `RQuat` state field becomes its `SVector{4}` backing, each `Ranged` state field a plain scalar | [§7.1][s7-1] | — |
 | *Residual*: the `q_sf` home | aircraft design, so it belongs on this list | — | — |
 | *Residual*: the engage-boundary write-order check | verify the FCS latch and the GUI input sync-write commute on one boundary — believed order-free, both deriving from the same measurements | — | — |
-| *Residual*: the C172 AD audit for trim | Interpolations tables (prefer cubic knots), saturation rank-deficiency (LM-tolerated, reported), the gear identically zero airborne (Flight.jl's model alone, below) | [§14.8][s14-8] | [D-070][d-070] |
+| *Residual*: the C172 AD audit for trim | Interpolations tables (prefer cubic knots), saturation rank-deficiency (LM-tolerated, shown in the Jacobian's zero columns rather than in the report), the gear identically zero airborne (Flight.jl's model alone, below) | [§14.8][s14-8] | [D-070][d-070] |
 
 **The parametrization pass.** `Ranged` survives at ports and
 parameters, and there the rewrite targets the walk rule ([§8.2][s8-2]). The

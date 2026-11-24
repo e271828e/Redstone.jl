@@ -347,9 +347,10 @@ The declaration is optional, and a component may name at most one field. The
 default, `nothing`, keeps every container's key segment.
 
 On an [assembly](@ref g-assembly), the build refuses a name that matches no
-container field as `TransparentContainerUnknown`, and a bare key that collides
-with a sibling child's name as `ChildNameCollision`. A
-[primitive](@ref g-primitive)'s is never read.
+container field as `TransparentContainerUnknown`. It refuses a bare key as
+`ChildNameCollision` when the key collides with a sibling child's name, equals
+its own field's name, or equals the name of a sibling container field that
+holds children. A [primitive](@ref g-primitive)'s is never read.
 """
 transparent_container(::Any) = nothing
 

@@ -242,8 +242,8 @@ end
 _bears_component(@nospecialize(v)) = (v isa NamedTuple || v isa Tuple) &&
                       any(e -> e isa AbstractComponent || _bears_component(e), _elements(v))
 
-# The declaration is checked after the walk, so a mixed container reports as one
-# rather than as a bad transparency declaration.
+# The declaration is checked after the walk, so a mixed container it names reports
+# `ContainerMixed` first, then `TransparentContainerUnknown`.
 function _check_transparent(path::String, @nospecialize(comp), transparent_field, diags::Vector{Diagnostic})
     transparent_field === nothing && return nothing
     ok = transparent_field in fieldnames(typeof(comp)) &&
@@ -768,7 +768,7 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
     # Both contracts read on the declaration as written, one report per entry:
     # an entry that is no type is refused and read no further (§8.2), the
     # marker below the top of an entry is refused on both tiers (§8.2, D-265),
-    # and a top marker says nothing where every leaf pins (§8.5, D-263).
+    # and a top marker says nothing where every leaf pins (§8.2, D-263).
     for (name, fn) in ((:u_types, u_types), (:y_types, y_types))
         _declares(fn, comp) || continue
         site = name === :u_types ? :face : :port
