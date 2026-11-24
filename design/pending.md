@@ -20,17 +20,6 @@ item changes what the spec says, the spec edit is part of the item.
   stated only in §10.5. Found by the review of the rates restructure,
   `design/reports/20261124_rates_restructure/review.md`, finding 14. Not
   started.
-- **The timing notation in the code** (D-478, D-479): the spec, its
-  companions and the log are swept; `src/`, `test/`, `docs/` and
-  `code_map.md` still use the letters of D-464. The increment renames
-  `Relative`'s fields to `D` and `Φ`, prints `show`'s timing tables and the
-  grid report under the new symbols, renames `r_p` to `Qₚ` in the
-  diagnostics' docstrings, and rules on the descriptor's keys (`m`, `c` and
-  `K` in the `Timing` and `RateLink` schemas, §13.9). The inspector follows
-  with a pin bump and its own adaptation, before its increment 10b. In
-  flight: the code, the review and its fixes have landed, and the user's
-  diff-verify is next, all recorded in
-  `design/increments/20261124_timing_notation/notes_timing_notation.md`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
@@ -44,6 +33,11 @@ item changes what the spec says, the spec edit is part of the item.
   `design/increments/20261120_structure_trial/notes_structure_trial.md`,
   `design/increments/20261120_descriptor_content/notes_descriptor_content.md`
   and `design/increments/20261121_show_deployment/notes_show_deployment.md`.
+  The timing notation of D-478 and D-479 has landed and is pushed since: the
+  descriptor's `Timing` keys are `{anchor, D, phi}` and a `Relative` link's
+  `{D, phi}`, where the inspector reads `m`, `c` and `K`, so the inspector
+  follows with a pin bump and its own adaptation before its increment 10b
+  (`design/increments/20261124_timing_notation/notes_timing_notation.md`).
   After the release this repo owes it the later stages.
 - **The docs conformance audit.** The spec, the log, the docstrings, the
   companions and the rest of the docs are checked against the code, which
