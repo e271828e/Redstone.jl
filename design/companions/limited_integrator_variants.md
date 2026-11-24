@@ -121,8 +121,9 @@ gate, about 15 extra interior sweeps per leave.
 
 **The `±1` gate, equivalent and not chosen.** Writing `one(u)` instead
 of `-u` on the holding side defines the same predicate and converges at
-the same bisection count, because both ends of the bracket are then fake
-constants. It states more plainly that the gate alone decides the predicate.
+plain bisection's count, 20 trials, one or two fewer per leave than the
+strict gate, because both ends of the bracket are then fake constants. It
+states more plainly that the gate alone decides the predicate.
 It was not chosen because it teaches a pattern the design forbids: a `Bool`
 predicate dressed as a sign form to force localization, which [D-179][d-179] says
 cannot be written. The chosen form is [§10.4][s10-4]'s idiom with one more `Bool`
@@ -219,7 +220,8 @@ They persist, since an integrator has no restoring dynamics, so the offset
 stays in `x` until feedback elsewhere removes it. And they are small: with
 an input slope of 1 per second, the bound is 5e-5 at `h = 0.01` and 5e-3 at
 `h = 0.1`, where the localized policy lands within the root-finder's
-tolerance, about 1e-8 in time.
+tolerance, `localization_tol · Δt_frame` in time, about 1e-8 at `h = 0.01`
+and 1e-7 at `h = 0.1`.
 
 | variant | cost per departure | error per departure | corner-safe | mode kept |
 |---|---|---|---|---|
@@ -231,8 +233,9 @@ tolerance, about 1e-8 in time.
 ## 6. The decision
 
 The integrator ships both detection policies for its departures, selected by a
-type parameter in `Step`'s shape, `LimitedIntegrator{V, L}` with the
-keyword `localized = true`. Arrivals are localized in both, since that kink
+type parameter in `Step`'s shape, `LimitedIntegrator{V, L, R}` with the
+keyword `localized = true`, where `R` is the later `reset` keyword's
+parameter. Arrivals are localized in both, since that kink
 is first-order and the exact clamp depends on it. The localized departure
 is the accurate form and the default; the non-localized departure is the
 cheap form, exact at every zero input, and off by at most `a h² / 2` per

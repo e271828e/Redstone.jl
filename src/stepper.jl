@@ -19,14 +19,15 @@
 # The Model's side is model.jl's `integrate_step!`: it shapes the proposal into
 # a length between the deployment's `h_min` and `h_max`, counts the attempts,
 # discards a rejected one, accepts one at the floor whatever its verdict,
-# checks and commits an accepted one, writes the clock, and raises the notice. One-step methods only:
-# handlers reset state discontinuously, and a one-step method restarts from a
-# new state for free (D-017). The seam is never entered empty (§10.2): an empty
-# state never reaches `attempt!`, so no backend faces N = 0. `RK4` and `Heun`
-# are fixed-step and always accept, and `BS3` adapts under error control; all
-# three are zero-allocation and generic in the scalar. The backend is a
-# deployment binding (`algorithm = RK4()`, the default), and nothing outside
-# this file knows which one ran.
+# checks and commits an accepted one, and writes the clock. The Model raises the
+# notice elsewhere, at `run_boundary!`, `overlay!` and the frame top. One-step
+# methods only: handlers reset state discontinuously, and a one-step method
+# restarts from a new state for free (D-017). The seam is never entered empty
+# (§10.2): an empty state never reaches `attempt!`, so no backend faces N = 0.
+# `RK4` and `Heun` are fixed-step and always accept, and `BS3` adapts under
+# error control; all three are zero-allocation and generic in the scalar. The
+# backend is a deployment binding (`algorithm = RK4()`, the default), and
+# nothing outside this file knows which one ran.
 #
 # Each backend is two types (D-442): the token the deployment records, `RK4()`
 # (deployment.jl), and the stepper it binds to here, which owns scratch sized by

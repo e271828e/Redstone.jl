@@ -631,6 +631,9 @@ D-463, D-465.
   it.
 - `_merge_modes!`, one generated method, which replaces a bare `m` whole and
   merges a named one, a bare one's failure on the field `m` (§9.5, D-438).
+- `_store_successor!`, the update entry's runtime check that a discrete
+  successor is the store's own type exactly, raising `ConformanceFailure`
+  (§9.5, D-235).
 - The bundles, from `_bundle_expr`: the stage, RHS and guard bundles gather
   their sides inline, the update entry's and the handler's
   (`make_handler_bundle`) through `gather_input_barrier`, since a body whose
@@ -643,6 +646,9 @@ D-463, D-465.
 - The guard/fire/project walks `_guards!`, `_fire!` and `_projects!`, each one
   non-inlined call per `EventChunk`, over the executor's buffers the caller
   hands them (D-261).
+- `_event_bodies` and `_project_body`, the per-event guard and handler
+  callables and the per-projection callables that `phase_bodies` returns
+  beside the four blocks (§9.7).
 - The execution cursor, which every entry stores into. The cursor holds its
   dispatch fields alone, and whether a frame was abandoned is `frame!`'s
   `Bool` return (§13.5, D-261, D-317). Its `attempt` is the step's attempt
@@ -675,9 +681,10 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
   shortened ends where `_step_end` says, the clock plus its length (D-452,
   D-460). It resets the frame's floor latch, `floor_reported`, at its top.
   The span's last step runs `run_boundary!` with its tick index when due,
-  every other step end with the empty due set. Every step integrates by the
-  float distance between its two clocks, the bare path and the localized one
-  alike (§10.5, D-455).
+  every other step end with the empty due set. A step whose end's clock is
+  known beforehand integrates by the float distance between its two clocks,
+  the bare path and the localized one alike, and a proposed step by its
+  length (§10.5, D-455).
 - The next due instant is recomputed after each due boundary, one `mod` per
   schedule row (`_next_due`, model.jl's). Nothing is cached, so nothing needs
   invalidating at a restore, an overlay or `init!`.
@@ -685,10 +692,11 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
   step's end, which a rejection may bring short of the offer but never past
   the span's end, a remainder never past the step's (D-452). It keeps
   `xₙ₊₁` in the trial buffer `xnext` the step was committed from, with the arrival
-  sweep, the θ = 0 validation, ITP bracketing `_crossing`, `t*` boundaries,
-  the remainder step to the step's end under a fixed-step method, a `t*` that
-  ends the step under a proposing one, returned as a settled end the frame
-  loop shapes the next step from (D-460), the localization budget counted
+  sweep, the θ = 0 validation, ITP bracketing `_crossing` over `_trial!`'s
+  trial evaluations, `t*` boundaries, the remainder step to the step's end
+  under a fixed-step method, a `t*` that ends the step under a proposing
+  one, returned as a settled end the frame loop shapes the next step from
+  (D-460), the localization budget counted
   across the frame's steps, and the `ChatteringBudget` degradation, reported
   into the model's diagnostic cell (D-446). The report folds at the next
   frame top and its delta rides the first publication after the fold, which
@@ -1303,13 +1311,14 @@ D-447, D-450, D-451, D-452, D-474.
 
 ### `src/stepper.jl`
 
-The seam's backend side (D-452): the protocol's generics `propose`,
-`attempt!`, which returns the backend's verdict, `discontinuity!`, a no-op by
-default, the retained `startpoint` and the generic `dense!`, and the steppers
-`RK4Stepper` and `HeunStepper`, each bound from its algorithm token by
-`bind_stepper` at `compile` (D-442), each proposing `nothing` and accepting
-every attempt, which writes the step's end into the executor's trial buffer
-`xnext`. `checkpoint_stepper` and `restore_stepper!` are the checkpoint pair,
+The seam's backend side (D-452): the abstract type `AbstractStepper` every
+stepper subtypes, the protocol's generics `propose`, `attempt!`, which returns
+the backend's verdict, `discontinuity!`, a no-op by default, the retained
+`startpoint` and the generic `dense!`, the default and `dense!` both over
+`AbstractStepper`, and the steppers `RK4Stepper` and `HeunStepper`, each
+bound from its algorithm token by `bind_stepper` at `compile` (D-442), each
+proposing `nothing` and accepting every attempt, which writes the step's end
+into the executor's trial buffer `xnext`. `checkpoint_stepper` and `restore_stepper!` are the checkpoint pair,
 and `reset_stepper!` puts the carried state back as bound, at `init!`. None
 of the three nor `propose` has a default, and both steppers carry `nothing`
 (D-274). `BS3Stepper`, the Bogacki–Shampine 3(2) pair under

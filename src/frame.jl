@@ -22,9 +22,11 @@
 # the next one and every coincidence are integer comparisons, and each
 # boundary's clock is written once: a frame top `t₀ + k·Δt_frame`, a due instant
 # from its base-tick index, an interior step end from its span's start and its
-# count in the span. Every step integrates by the float distance between its two
-# clocks, the bare step and a localized one alike (D-455), and every clock the
-# model knows exactly is the float nearest its instant (D-456). A model with no
+# count in the span. A step whose end's clock is known beforehand integrates by
+# the float distance between its two clocks, the bare step and a localized one
+# alike, and a proposed step integrates by its length, its end's clock the
+# start's plus it (D-455). Every clock the model knows exactly is the float
+# nearest its instant (D-456). A model with no
 # localized events, every non-nominal activation included since its events
 # compiled out, takes the bare step: no arrival machinery, no extra sweep. The
 # whole frame is §13.4's one `try`, and the `StepError` is the one

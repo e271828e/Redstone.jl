@@ -6512,7 +6512,10 @@ The seam contract has four clauses.
   a step at every [due](#g-due) instant (an instant at which a discrete
   component is scheduled to run), so that [ticks](#g-tick) land on
   [boundaries](#g-boundary), and it divides the span between two such
-  instants into equal steps ([§10.5][s10-5], [D-449][d-449]). It also
+  instants into equal steps under a fixed-step method ([§10.5][s10-5],
+  [D-449][d-449]). Under a proposing method it shapes each step from the
+  backend's proposal and the distance left to the next such instant
+  ([D-460][d-460]). It also
   resumes from a [localized](#g-localized) event time (the crossing instant
   bracketed by root-finding over [trial evaluations](#g-trial-evaluation)).
 - The backend provides dense output on demand over the last accepted step.
@@ -6555,8 +6558,10 @@ fixed-step method proposes nothing, and the `Model` takes the span in equal
 steps no longer than `h_max` ([§10.5][s10-5], [D-449][d-449]). **A proposal
 is clamped into `[h_min, h_max]`, and the distance to the next mandatory
 instant is taken in equal steps no longer than it** ([§10.5][s10-5],
-[D-460][d-460]). The `Model` owns both bounds, so a backend never reads
-`h_min`. A step that
+[D-460][d-460]). Their count is capped at `⌊r / h_min⌋`, with `r` the
+distance, so that division never cuts a step below `h_min`. Near `h_min` the
+cap can make a step longer than its proposal. The `Model` owns both bounds,
+so a backend never reads `h_min`. A step that
 reaches the span's end ends on that [mandatory instant](#g-mandatory-instant)
 (a frame top or a due instant) and takes its clock. A proposed step that
 stops short ends at its start's clock plus its length, an instant on no
@@ -7108,8 +7113,11 @@ step's length ([§10.5][s10-5], [D-455][d-455]). Tick gating is counter-modulo i
 spirit ([§10.5][s10-5]). The clock is written once per boundary. An instant
 on both lattices takes the first formula above that applies to it, so a
 frame top is always `t₀ + k·Δt_frame`. The remainder step targets the
-step's end, with `h′` (the remainder step's length) derived at use. `t*` is a
-float inside a step, never an anchor from which anything else is computed. A
+step's end, with `h′` (the remainder step's length) derived at use. Under a
+fixed-step method `t*` is a float inside a step, never an anchor from which
+anything else is computed. Under a proposing method `t*` ends its step, and
+the next step is shaped from its clock ([D-460][d-460]). No scheduled instant
+is computed from `t*` under either method. A
 near-degenerate `t*` leaves a tiny remainder step. Numerically that is
 harmless, since increments scale with `h′`. The real hazard is bookkeeping,
 and this rule removes it.
@@ -7366,7 +7374,7 @@ from `t₀` may reach an instant `t` only while
 The left side bounds `|t|`, and the clocks stay distinct while it is below
 `2⁵²·δ`. The bound keeps a factor of 4 inside that, as margin for the float
 arithmetic that computes the last frame ([D-458][d-458]). With a `Δt_unit` of 1 µs and no
-finer bound, a run from `t₀ = 0` resolves about 17 years. A base tick of
+finer bound, a run from `t₀ = 0` resolves about 18 years. A base tick of
 `1e-17` seconds leaves no 10 ms frame resolved at all. The refusal does not
 cover a `t*` boundary, which lies on no lattice and is located only to
 `localization_tol·Δt_frame` ([§10.4][s10-4]).
