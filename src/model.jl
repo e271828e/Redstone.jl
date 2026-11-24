@@ -57,7 +57,7 @@ there. [`Δt_frame`](@ref g-dt_frame) is required, as for [`Deployment`](@ref). 
 `chunk_size` that is not an integer of at least 1 is refused as
 `ArgumentInvalid`.
 
-A model holds six values, each a field.
+A model holds seven values, each a field.
 
 - `deployment`: the deployment it materializes, and through it the build.
 - `exec`: the executor this model owns, with its stepper and its buffers.
@@ -66,11 +66,13 @@ A model holds six values, each a field.
 - `claimed`: whether a `Simulation` has taken the model.
 - `frame_diag`: the [frame](@ref g-frame)'s own
   [diagnostic cell](@ref g-diagnostic-cell), where the
-  [chattering](@ref g-chattering) and [firing-budget](@ref g-firing-budget)
-  reports go.
+  [chattering](@ref g-chattering), [firing-budget](@ref g-firing-budget) and
+  `StepFloor` reports go.
 - `fresh`: whether the stage the integrator evaluates next may read the table
   the last [boundary](@ref g-boundary) left. Only the frame loop sets it, and
   that stage clears it.
+- `floor_reported`: whether the frame has filed its one `StepFloor` report.
+  The frame loop clears it at the start of each frame.
 
 `status` is `:built` until [boundary zero](@ref g-boundary-zero) completes, and
 `:consistent` once it has completed or a state has been restored. A throw inside
@@ -995,8 +997,8 @@ or a [primitive](@ref g-primitive) root's own ports.
 A path naming no component is refused as `PathResolution`, with the children of
 the level it stopped at. A name the component has no port of is refused as an
 `ArgumentError` listing its ports. A name left out at a component whose output
-[contract](@ref g-contract) is named is an `ArgumentError` too, which tells the
-caller to name the port.
+[contract](@ref g-contract) is named, or at an assembly, is an `ArgumentError`
+too, which tells the caller to name the port.
 
 A simulation's `port(sim, path, name)` reads its model's. To read a port off a
 published [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
@@ -1290,10 +1292,11 @@ produced.
 
 A state whose [fingerprint](@ref g-fingerprint) or deployment does not match
 this model is refused as `CheckpointMismatch`. One whose clock is off its own
-grid is refused as `CheckpointMidFrame`. All the mismatches come in one throw
-before any write. A state taken at another scalar type is refused as
-`CheckpointMismatch` too. A model claimed by a [`Simulation`](@ref) is refused
-as `ArgumentInvalid`.
+grid is refused as `CheckpointMidFrame`. One built by hand, with an origin the
+clock's integers cannot carry, is refused as `ArgumentInvalid`. All the
+mismatches come in one throw before any write. A state taken at another scalar
+type is refused as `CheckpointMismatch` too. A model claimed by a
+[`Simulation`](@ref) is refused as `ArgumentInvalid`.
 
 A throw inside the copy or the settling returns the status to `:built` and
 arrives as a `StepError` with host `:restore`, an `InterruptException` included.

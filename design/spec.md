@@ -4964,7 +4964,7 @@ instance alone fixes), and that is its whole product ([D-253][d-253]).
 - one row per assembly, the root included: its children in declaration
   order, each with the field that contributed it, and the wires it declares
   as producer-to-consumer pairs in declaration order;
-- the root inputs;
+- the root inputs, each with its root-input type ([§8.2][s8-2]);
 - per component, its rate chain of `Relative`/`Absolute` links;
 - for each assembly an explicit `sample_times` key names, the scope triple
   that key gives it.
@@ -5558,11 +5558,12 @@ computes nothing any consumer can read. The rule is the inert-component check
 Exactly one kind of terminal has no producer, the
 [root inputs](#g-root-input). **The build
 synthesizes their values via `probe_value(::Type)`** ([D-051][d-051]).
-Framework methods cover three kinds of type:
+Framework methods cover four kinds of type:
 
 - `Real`, with `zero(T)`;
 - `Bool`, with `false`;
-- enums, with their first instance.
+- enums, with their first instance;
+- `StaticArray`, with `zero(T)`.
 
 The ultimate fallback is the zero-argument constructor `T()`. That is where
 well-behaved constrained types already put their valid default. For the
@@ -5580,8 +5581,10 @@ constructor".
 
 Synthesis never meets an abstract type. Root inputs are concrete by the
 tight-bound rule, and the root-input type is the consuming entry evaluated at
-`Float64` ([§8.2][s8-2]). [Abstract entries](#g-abstract-entry) only occur on
-component-fed inputs, which the probe sources from upstream products.
+`Float64` ([§8.2][s8-2]). [Abstract entries](#g-abstract-entry) occur only on
+component-fed inputs, which the probe sources from upstream products, and on a
+root input's abstract co-consumers ([D-236][d-236]). Those read the value
+synthesized for the one concrete declaration.
 
 Physically silly values are acceptable by construction. The probe checks
 types, and return types that depend on input *values* are type instabilities,
@@ -5703,8 +5706,8 @@ evaluates the model at a frozen instant.
   frozen-constant semantics of [§8.2][s8-2].
 - [Guards](#g-guard) and handlers never run, because event localization runs
   as `Float64` [sweeps](#g-sweep) by design ([§9.5][s9-5], [D-052][d-052]).
-- Only the continuous output stages (`y_state`/`y_direct`) and `x_deriv` ever
-  see a `Dual`. So only they are probed at it.
+- Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and
+  `x_projection` ever see a `Dual`. So only they are probed at it.
 
 Probing the discrete stages, `s_update` or the guards at `Dual` would check
 code against a number type it cannot receive.
@@ -5763,8 +5766,9 @@ though [§14.10][s14-10] chunks at whatever widths it needs.
 **The activation cache lives on the `Build` and holds only immutable compiled
 artifacts** ([D-135][d-135]). It lives there because an activation is a pure
 function of the build and the concrete scalar type. The cache is one
-activation dictionary, keyed by concrete scalar type. Each entry holds
-layouts, compiled plans and a validated flag. An entry is immutable once
+activation dictionary, keyed by concrete scalar type. Each entry holds the
+declarations retyped at its scalar, the complete probe products and the cell
+layout. An entry is immutable once
 constructed, and so it is freely shareable. The nominal `Float64` entry is one
 key in the activation dictionary like any other ([D-253][d-253]). **Whether an
 activation is cached never changes a result** ([D-052][d-052]).
@@ -5881,8 +5885,9 @@ is equally why the payload's diff never has to express one.
 At the nominal activation, the only one that ever runs in real time, **the
 check is an exact type match**, with no convert-on-write ([D-053][d-053]). It
 is decided at generation and absent from the conformant path ([D-235][d-235]).
-The error can afford to be didactic, as in "field `M_shaft`: expected
-`Float64`, got `Int64` — return `zero(x.ω)`, not `0`".
+The error can afford to be didactic, as in "`shaft`: y_state returns
+`M_shaft`::Int64, declared Float64 — an integer literal where a real was
+declared: return `zero(…)` of a value at the activation, not `0`".
 
 Under a non-nominal activation (the build's typed products at a given scalar
 type), the two tiers the declaration ([§8.2][s8-2]) distinguishes,
@@ -6056,7 +6061,8 @@ service loop and linearization in turn.
 The [execution order](#g-execution-order) exists in two representations at two
 lifecycle stages. On [`Outputs`](#g-outputs) (the nominal evaluation's product,
 the port classes and the execution order) it is plain printable data
-([§9.2][s9-2]), namely paths, stage names and order. That data is the authoring
+([§9.2][s9-2]), namely paths, the port names each stage produces, and order.
+That data is the authoring
 and diagnostic form. The [executor](#g-executor) compiles from that order
 ([D-253][d-253]). This section covers the other form, the one the loop runs.
 
@@ -6088,8 +6094,10 @@ entries to test ([§10.5][s10-5]).
 **Cells are stored per element type**, not per cell ([D-162][d-162]). The
 [signal table](#g-signal-table) is one contiguous block per element type, the
 construction pointed at signals rather than state ([§7.1][s7-1]). A cell
-address is a build-time offset into it. The offset is carried in an entry
-*field*, with the [port](#g-port) type as the address's own parameter.
+address holds one build-time offset per element type its leaves take, each
+into that type's block. A cell whose leaves mix element types thus spans
+several blocks. The offsets are carried in an entry *field*, with the
+[port](#g-port) type as the address's own parameter.
 Gathers reconstruct and scatters flatten through the same leaf walk, so the
 closed vocabulary earns its keep twice. This is the entry rule above paying
 off. Two instances of one component type then differ only in field values,
@@ -15084,7 +15092,7 @@ Authoring list above carries it.
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
-  | `chunk_size` | `16` | the [executor](#g-executor)'s unroll width, a performance knob that never moves the trajectory | [§9.7][s9-7], [§12.6][s12-6] |
+  | `chunk_size` | `16` | the [executor](#g-executor)'s unroll width, an integer ≥ 1, a performance knob that never moves the trajectory; any other value is refused as `ArgumentInvalid` `:range` | [§9.7][s9-7], [§12.6][s12-6] |
 
 - `Model(build, T = Float64; kw...)` and `Model(root, T = Float64; kw...)`.
   The two composed forms. The first composes the `Deployment` constructor
@@ -15123,8 +15131,8 @@ Authoring list above carries it.
     and `modes(sim, path)`. The reads of a [port](#g-port)'s value, a component's state
     from whichever home owns it, and its modes ([§7.3][s7-3], [D-317][d-317]).
     The name may be left out, which names a bare output's face `y`; left
-    out at a component whose output contract is named, the call throws
-    `ArgumentError` ([D-437][d-437]). A path naming no component is refused as
+    out at a component whose output contract is named, or at an assembly,
+    the call throws `ArgumentError` ([D-437][d-437]). A path naming no component is refused as
     `PathResolution`, with the children of the level it stopped at, and a
     name the component has no port of as `ArgumentError` listing its ports
     ([D-440][d-440]). `state` and `modes` return `nothing` at a component with no
@@ -15944,7 +15952,8 @@ activation):
   `:range` ([§8.7][s8-7], [D-459][d-459], [D-469][d-469]). `Relative` refuses a count that `Int` cannot
   hold as `:range`, and a float or a rational as `:not_a_count`. `BS3`
   refuses a tolerance that is not positive and finite as `:range`
-  ([D-461][d-461]). A `:range`
+  ([D-461][d-461]). `Model` refuses a `chunk_size` that is not an integer
+  of at least 1 as `:range`. A `:range`
   refusal of
   `frame!`'s `k` also carries the last frame the run may take, the lesser of
   the last the lattices index in an `Int` and the last the origin's clock
@@ -15966,6 +15975,8 @@ activation):
   `trim!` refuses a second argument that is no `TrimProblem` as
   `:not_a_problem`. A `t0` handed to `init!`, `trim!` or `linearize` that is
   not exact, or whose run the clock's integers cannot carry, is `:range`
+  ([D-457][d-457]). `restore!` refuses a state whose origin fails the same
+  check as `:range` on `t0`, collected beside the mismatches
   ([D-457][d-457]). `Model` at a scalar other than
   `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not,
   raises it with reason `:scalar`, alone
@@ -16812,7 +16823,7 @@ the foreign names and the missing import ([§8.1][s8-1], [§9.1][s9-1]).
 
 <a id="g-structure"></a>**`Structure`** — the structure step's product,
 everything the instance alone fixes. It holds the [components](#g-component) and [tiers](#g-tier), one row
-per [assembly](#g-assembly) with its children and wires, the [root inputs](#g-root-input), the rate chains and
+per [assembly](#g-assembly) with its children and wires, the [root inputs](#g-root-input) with their types, the rate chains and
 the scope triples. The [face](#g-face) table and each face's routing chain are functions
 over its wires, and the [grid report](#g-grid-report) is a function over its
 [anchors](#g-anchor).

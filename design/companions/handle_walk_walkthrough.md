@@ -254,8 +254,8 @@ end
 `MixedRight{Float64}` walks to `MixedRight{Dual}` with leaves `Dual` and
 `Float64`, because the walk substitutes type parameters and never fields.
 The struct's own constructor enforces the freeze on the producer side: a
-stage that hands a `Dual` for `b` dies in `convert(Float64, ::Dual)`, which
-has no method. What the concrete field cannot express is a freeze that
+stage that hands a `Dual` for `b` dies in `convert(Float64, ::Dual)`, whose
+fallback calls `Float64(::Dual)`, which has no method. What the concrete field cannot express is a freeze that
 differs per declaration, the same struct with `b` walking in one component's
 contract and pinned in another's. That is the recorded limit. In practice a
 field that must not walk is frozen by nature, a count, a mode flag, a

@@ -1067,9 +1067,9 @@ _frozen(tier::Tier, ::Type{T}) where {T} = tier === DISCRETE && T !== Float64
 
 """
 Probe stage 2 in topological order — real upstream values available by
-construction — and the update laws last, checking every return against the
-declaration (§9.3); then the declaration-completeness check, for every
-component. Frozen components are not probed: their complete products come from
+construction — then the declaration-completeness check, for every component,
+then the update laws and last `x_projection`, checking every return against the
+declaration (§9.3). Frozen components are not probed: their complete products come from
 `carry`, the nominal activation (§9.4). The discrete bundles' `Δt` is the
 probe-scoped placeholder of `probe_stage1`. Returns the complete probe
 products.

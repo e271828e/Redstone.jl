@@ -25,9 +25,9 @@ instantaneous dependence that the hybrid semantics never had.
 
 B is a sampled-data component — the model of a digital device. Its execution
 contract ([§6.3][s6-3]'s gated scheduling) is: at B's tick times $t_k$, its stages
-run — `y_state`/`y_direct` read whatever their inputs *are at that
-instant*, compute
-B's outputs, write them to B's cells, and `s_update` updates B's `s`. Between ticks, B's
+run — `y_direct` reads whatever B's inputs *are at that instant*,
+`y_state` reads B's `s`, the two compute B's outputs and write them to
+B's cells, and `s_update` updates B's `s`. Between ticks, B's
 stages do not run at all; its cells **hold** — the zero-order hold (ZOH) that
 a real DAC performs. This is true in every nominal simulation sweep, before
 AD ever enters the picture.

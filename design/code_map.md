@@ -1415,8 +1415,10 @@ D-456, D-457, D-458.
   declarations together, ahead of every other read of them, and throws at
   once. A tuple is read through `nfields` and `getfield`, so a new model
   compiles nothing there (§8.6, §13.1, D-477).
-- `_check_face_names` refuses an empty assembly face as `FaceNameIllegal`
-  `:empty`; the root check `_check_root_faces` collides the keyed names, so
+- `_check_face_names` refuses an assembly face containing `/` or empty as
+  `FaceNameIllegal` `:contains_slash` or `:empty`, and a face name repeated
+  among its input and output faces as `FaceNameCollision` `:assembly`; the
+  root check `_check_root_faces` collides the keyed names, so
   two bare contracts collide on nothing, and the root claims a bare `u_types`
   as the root input `u` (D-210, D-437).
 - The service walk `resolve_authored` runs from the root's level row and

@@ -426,7 +426,7 @@ end
 
 The tree walk of the structure step (§9.1): components collected by path, classes and
 tiers read, wiring resolved to absolute leaf terminals, sample times folded to
-`(anchor, m, c)` timings, the one-producer-per-input and whole-tree obligation
+`(anchor, Dₐ, Φₐ)` timings, the one-producer-per-input and whole-tree obligation
 rules checked. Violations are recorded in `diags` and the walk runs on; the
 throw is `build`'s, at the step barrier. Any component may be the root
 (D-208) — a primitive one flattens to the single leaf at the root path, its
