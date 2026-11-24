@@ -1,0 +1,814 @@
+{
+ "rows": [
+  {
+   "id": "S11d-001",
+   "file": "design/spec.md",
+   "line": 9516,
+   "kind": "law",
+   "claim": "The device tasks write `MalformedDatum`, and the writers list names where each diagnostic is written (device cell side)",
+   "evidence": "src/devices.jl:414 (the task wrapper files `DeviceCrash` through `report!(entry, ...)` into the device's cell); src/sim.jl:2749 (`ReplayDiscardedStaging` goes to each device's and the harness's cell at the drain). Neither kind appears in the list.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add two bullets: 'The task wrapper writes `DeviceCrash` into the device's cell when the loop body throws (§12.4).' and 'The loop writes `ReplayDiscardedStaging` into the discarded batch's own writer cell during a replay drain (§12.7).'",
+   "note": "The sentence 'The diagnostics are written in these places' reads as exhaustive; the closed set in src/dataplane.jl:36 has 14 kinds and the list covers 9."
+  },
+  {
+   "id": "S11d-002",
+   "file": "design/spec.md",
+   "line": 9518,
+   "kind": "law",
+   "claim": "The loop itself writes `DebtReanchor` and `UnboundedRun`",
+   "evidence": "src/control.jl:180 and src/sim.jl:1572 write those two. src/sim.jl:1804 also writes `ThreadBudget` and src/sim.jl:1938 writes `DeviceJoinTimeout`, both into `plane.loop_diag`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The loop itself writes `DebtReanchor`, `UnboundedRun`, `ThreadBudget` and `DeviceJoinTimeout`.",
+   "note": "ThreadBudget is specified in §12.2 and DeviceJoinTimeout in §12.4; §11.8 does not list them."
+  },
+  {
+   "id": "S11d-003",
+   "file": "design/spec.md",
+   "line": 9520,
+   "kind": "law",
+   "claim": "The frame writes `ChatteringBudget` and `FiringBudget` into the Model's cell (and 9541: its frame writes the chattering and firing-budget reports there)",
+   "evidence": "src/frame.jl:240 and src/model.jl:756 write those two into `model.frame_diag`; src/model.jl:897 also writes `StepFloor` into `model.frame_diag`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The frame that the loop runs writes `ChatteringBudget`, `FiringBudget` and `StepFloor` (D-460); at 9541: 'Its frame writes the chattering, firing-budget and step-floor reports there.'",
+   "note": "StepFloor entered the closed set with D-460 (code_map.md:296 and :540 record it); §11.8 was not updated."
+  },
+  {
+   "id": "S11d-004",
+   "file": "design/spec.md",
+   "line": 9483,
+   "kind": "law",
+   "claim": "`incumbent_status(view, snapshot)` returns the incumbent's writer record, or `nothing` for a port no device writes",
+   "evidence": "src/devices.jl:590-594 returns `nothing` only when `view.incumbent` is empty (component-driven or produced port). For a root input no device claims the incumbent is \"harness\" and the call returns the harness record; probe:21 prints a `WriterStatus(\"harness\", ...)` for `inner/g/e`, and test/test_devices.jl:1131 asserts it.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "returns the incumbent's writer record from the snapshot's status, the harness writer's for a root input no device claims, or `nothing` for a port no writer drives (a component-driven port or an output).",
+   "note": "The spec's own table (incumbent column) names the harness as incumbent of an unclaimed root input, so 'no device writes' is the wrong cut."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S11d-005",
+   "file": "design/spec.md",
+   "line": 9322,
+   "kind": "law",
+   "claim": "Resolution is total: every input port resolves to a root input or a component output (two outcomes)",
+   "evidence": "src/structure.jl:1051 terminal_producer returns a root input or a primitive's port for every face; probe:20 shows 12 views"
+  },
+  {
+   "id": "S11d-006",
+   "file": "design/spec.md",
+   "line": 9326,
+   "kind": "law",
+   "claim": "A root-driven port inside the front end's claim is live",
+   "evidence": "src/devices.jl:523-524 live = producer_path == \"\" && face in faces; test/test_devices.jl:1123"
+  },
+  {
+   "id": "S11d-007",
+   "file": "design/spec.md",
+   "line": 9327,
+   "kind": "mech",
+   "claim": "A live widget peeks and stages the resolved root input through the front end's own staging cell",
+   "evidence": "src/devices.jl:569-575 peek; src/devices.jl:340-343 stage! into handle.writer"
+  },
+  {
+   "id": "S11d-008",
+   "file": "design/spec.md",
+   "line": 9330,
+   "kind": "law",
+   "claim": "A port that is component-driven, or root-driven under another device's claim, is not live",
+   "evidence": "src/devices.jl:524; test/test_devices.jl:1125-1126, 1135-1137"
+  },
+  {
+   "id": "S11d-009",
+   "file": "design/spec.md",
+   "line": 9332,
+   "kind": "mech",
+   "claim": "A read-only view reads the driven value from the snapshot",
+   "evidence": "src/devices.jl:569-575 (non-live views skip pending and call gather_cell on the snapshot store)"
+  },
+  {
+   "id": "S11d-010",
+   "file": "design/spec.md",
+   "line": 9350,
+   "kind": "law",
+   "claim": "Liveness is transitive: the feed chain is walked through local wires and interface connections across all levels",
+   "evidence": "src/structure.jl:1051-1071 terminal_producer loops through levels; src/devices.jl:543 uses it; test/test_devices.jl:1127-1130"
+  },
+  {
+   "id": "S11d-011",
+   "file": "design/spec.md",
+   "line": 9353,
+   "kind": "law",
+   "claim": "Live iff the feed chain terminates in a root input and that input lies in the front end's own claim",
+   "evidence": "src/devices.jl:523-524"
+  },
+  {
+   "id": "S11d-012",
+   "file": "design/spec.md",
+   "line": 9358,
+   "kind": "mech",
+   "claim": "A greedy binding's claim is the unclaimed complement",
+   "evidence": "src/roster.jl:358"
+  },
+  {
+   "id": "S11d-013",
+   "file": "design/spec.md",
+   "line": 9359,
+   "kind": "mech",
+   "claim": "A partial-claims binding enumerates the claim one face at a time",
+   "evidence": "src/roster.jl:360-366 (claims(b) iterated, face by face, AttachUnknownFace on a bad one)"
+  },
+  {
+   "id": "S11d-014",
+   "file": "design/spec.md",
+   "line": 9364,
+   "kind": "law",
+   "claim": "attach! and detach! are stopped-sim operations, so the roster is frozen for a run",
+   "evidence": "src/sim.jl:2515 region (same gate as detach!, D-244); test/test_devices.jl:1085-1090"
+  },
+  {
+   "id": "S11d-015",
+   "file": "design/spec.md",
+   "line": 9366,
+   "kind": "mech",
+   "claim": "Liveness is baked once at run start and never consulted against mutable claim state at render",
+   "evidence": "src/devices.jl:518-553 builds views once per call; peek reads only view.live, view.slot, view.addr (src/devices.jl:569); test/test_devices.jl:1116-1147 (alone_views keeps harness incumbent)"
+  },
+  {
+   "id": "S11d-016",
+   "file": "design/spec.md",
+   "line": 9371,
+   "kind": "law",
+   "claim": "There is no per-port GUI-controlled marking; the export chain decides commandability",
+   "evidence": "src/devices.jl:518-553 (views computed from structure and claim alone); no marking field in PortView, src/devices.jl:478"
+  },
+  {
+   "id": "S11d-017",
+   "file": "design/spec.md",
+   "line": 9386,
+   "kind": "law",
+   "claim": "A widget displays its own pending write if any, else the snapshot value",
+   "evidence": "src/devices.jl:569-575; test/test_devices.jl:1167-1168"
+  },
+  {
+   "id": "S11d-018",
+   "file": "design/spec.md",
+   "line": 9387,
+   "kind": "law",
+   "claim": "A widget peeks its own staging cell only; another device's pending write is invisible",
+   "evidence": "src/devices.jl:307-312 reads handle.writer.cell; test/test_devices.jl:1166 (pending(greedy_handle,1) === nothing)"
+  },
+  {
+   "id": "S11d-019",
+   "file": "design/spec.md",
+   "line": 9391,
+   "kind": "law",
+   "claim": "While paused, staged edits display and apply at the un-pause drain",
+   "evidence": "test/test_devices.jl:1197-1228 (peeked 7.0, held_back 1.0, applied after resume)"
+  },
+  {
+   "id": "S11d-020",
+   "file": "design/spec.md",
+   "line": 9393,
+   "kind": "law",
+   "claim": "Widgets on ports resolving to the same root input peek the same pending value",
+   "evidence": "test/test_devices.jl:1149-1152 (same slot and addr); src/devices.jl:529"
+  },
+  {
+   "id": "S11d-021",
+   "file": "design/spec.md",
+   "line": 9400,
+   "kind": "law",
+   "claim": "Repeated staging of the same level within a drain window is idempotent (newest wins per face)",
+   "evidence": "src/dataplane.jl:462-470 _merge; test/test_devices.jl:1171-1172"
+  },
+  {
+   "id": "S11d-022",
+   "file": "design/spec.md",
+   "line": 9402,
+   "kind": "ex",
+   "claim": "Multi-click counts correctly through the own-pending-first peek (k stages k+1, then k+2)",
+   "evidence": "test/test_devices.jl:1182-1190 stages three times and pending is Some(4.0)"
+  },
+  {
+   "id": "S11d-023",
+   "file": "design/spec.md",
+   "line": 9416,
+   "kind": "law",
+   "claim": "No claim transition occurs mid-run",
+   "evidence": "src/sim.jl:2515 stopped-sim gate on attach!/detach!"
+  },
+  {
+   "id": "S11d-024",
+   "file": "design/spec.md",
+   "line": 9422,
+   "kind": "law",
+   "claim": "An orphan widget shows the ordinary snapshot value, not a blanked one",
+   "evidence": "src/devices.jl:569-575 (a read-only view reads gather_cell regardless of task state)"
+  },
+  {
+   "id": "S11d-025",
+   "file": "design/spec.md",
+   "line": 9432,
+   "kind": "mech",
+   "claim": "A panel reaches the framework through a port view, the device handle and a snapshot",
+   "evidence": "src/devices.jl:569, 590 signatures take view, handle, snapshot"
+  },
+  {
+   "id": "S11d-026",
+   "file": "design/spec.md",
+   "line": 9434,
+   "kind": "mech",
+   "claim": "The handle supplies the two reads the peek composes and the one write, stage!",
+   "evidence": "src/devices.jl:307 pending, src/devices.jl:285 latest, src/devices.jl:340 stage!"
+  },
+  {
+   "id": "S11d-027",
+   "file": "design/spec.md",
+   "line": 9436,
+   "kind": "mech",
+   "claim": "The snapshot supplies the writer status the orphan label reads",
+   "evidence": "src/dataplane.jl:303 FrameworkStatus on every snapshot; src/devices.jl:590-594"
+  },
+  {
+   "id": "S11d-028",
+   "file": "design/spec.md",
+   "line": 9439,
+   "kind": "decl",
+   "claim": "The four functions are port_views(handle), pending(handle, slot), peek(view, handle, snapshot), incumbent_status(view, snapshot)",
+   "evidence": "src/devices.jl:518, 307, 569, 590"
+  },
+  {
+   "id": "S11d-029",
+   "file": "design/spec.md",
+   "line": 9446,
+   "kind": "law",
+   "claim": "port_views builds one view per port of every component, input and output, keyed by (path, port)",
+   "evidence": "src/devices.jl:532-551; probe:20 nviews=12 and test/test_devices.jl:1119"
+  },
+  {
+   "id": "S11d-030",
+   "file": "design/spec.md",
+   "line": 9448,
+   "kind": "mech",
+   "claim": "A view carries the terminal producer, with (\"\", face) when root-driven",
+   "evidence": "src/devices.jl:543 terminal_producer; PortView.source, src/devices.jl:482"
+  },
+  {
+   "id": "S11d-031",
+   "file": "design/spec.md",
+   "line": 9449,
+   "kind": "mech",
+   "claim": "A view carries liveness, the slot in the handle's staging schema when live, the producer's cell address and the incumbent",
+   "evidence": "src/devices.jl:478-486 (live, slot, addr, incumbent); slot 0 when not live, probe:23"
+  },
+  {
+   "id": "S11d-032",
+   "file": "design/spec.md",
+   "line": 9452,
+   "kind": "mech",
+   "claim": "The front end's loop body builds the table once at its top, after the roster freeze",
+   "evidence": "src/devices.jl:514-516 docstring; the call reads handle.claimedby at call time, src/devices.jl:527"
+  },
+  {
+   "id": "S11d-033",
+   "file": "design/spec.md",
+   "line": 9455,
+   "kind": "mech",
+   "claim": "The handle carries the build's Structure and the nominal Layout by reference",
+   "evidence": "src/sim.jl:2536-2537 passes build.structure and exec.act.layout into DeviceHandle; src/devices.jl:524-536 reads handle.structure, handle.layout"
+  },
+  {
+   "id": "S11d-034",
+   "file": "design/spec.md",
+   "line": 9457,
+   "kind": "law",
+   "claim": "An output port's view is read-only with itself as producer",
+   "evidence": "src/devices.jl:548-550; test/test_devices.jl:1139-1140"
+  },
+  {
+   "id": "S11d-035",
+   "file": "design/spec.md",
+   "line": 9459,
+   "kind": "law",
+   "claim": "Table row 1: a root input in the claim is live, slot is its position, incumbent the front end",
+   "evidence": "src/devices.jl:524-529; test/test_devices.jl:1123-1124"
+  },
+  {
+   "id": "S11d-036",
+   "file": "design/spec.md",
+   "line": 9460,
+   "kind": "law",
+   "claim": "Table row 2: a root input in another device's claim is not live, no slot, incumbent that device",
+   "evidence": "src/devices.jl:525-526; test/test_devices.jl:1125-1126"
+  },
+  {
+   "id": "S11d-037",
+   "file": "design/spec.md",
+   "line": 9461,
+   "kind": "law",
+   "claim": "Table row 3: a root input no device claims is not live, no slot, incumbent the harness",
+   "evidence": "src/devices.jl:526 get(handle.claimedby, face, \"harness\"); test/test_devices.jl:1165"
+  },
+  {
+   "id": "S11d-038",
+   "file": "design/spec.md",
+   "line": 9462,
+   "kind": "law",
+   "claim": "Table row 4: another component's port, or its own output, is not live, no slot, no incumbent",
+   "evidence": "test/test_devices.jl:1131-1134 (incumbent \"\"); probe:22 incumbent_status nothing"
+  },
+  {
+   "id": "S11d-039",
+   "file": "design/spec.md",
+   "line": 9465,
+   "kind": "mech",
+   "claim": "pending reads the handle's own staging cell with one acquire load and never takes it",
+   "evidence": "src/devices.jl:309 @atomic :acquire load; test/test_devices.jl:1163"
+  },
+  {
+   "id": "S11d-040",
+   "file": "design/spec.md",
+   "line": 9467,
+   "kind": "law",
+   "claim": "pending returns Some(value) when the slot is touched, else nothing",
+   "evidence": "src/devices.jl:310-311; test/test_devices.jl:1161-1162"
+  },
+  {
+   "id": "S11d-041",
+   "file": "design/spec.md",
+   "line": 9468,
+   "kind": "law",
+   "claim": "A staged batch is never mutated after publication into the cell",
+   "evidence": "src/dataplane.jl:462-480 (CAS merge builds a new Batch each time)"
+  },
+  {
+   "id": "S11d-042",
+   "file": "design/spec.md",
+   "line": 9471,
+   "kind": "mech",
+   "claim": "peek returns the own pending value for a live view, else the producer's cell off the snapshot; a read-only view skips the staging cell",
+   "evidence": "src/devices.jl:569-575"
+  },
+  {
+   "id": "S11d-043",
+   "file": "design/spec.md",
+   "line": 9475,
+   "kind": "law",
+   "claim": "Between the drain and publication a live widget finds nothing pending and shows the previous snapshot's value",
+   "evidence": "src/sim.jl:2661 drain runs before publish!; src/devices.jl:569-575; test_devices.jl:1167-1169"
+  },
+  {
+   "id": "S11d-044",
+   "file": "design/spec.md",
+   "line": 9479,
+   "kind": "law",
+   "claim": "A click inside that window stages a level already drained, which is idempotent",
+   "evidence": "src/dataplane.jl:462 newest-wins merge of an absolute level"
+  },
+  {
+   "id": "S11d-045",
+   "file": "design/spec.md",
+   "line": 9486,
+   "kind": "mech",
+   "claim": "orphaned is a task that returned or crashed; stale is the silent heartbeat",
+   "evidence": "src/devices.jl:611 task_state === :done, and crash ends :done (src/devices.jl:604-607); src/dataplane.jl:337-338 stale"
+  },
+  {
+   "id": "S11d-046",
+   "file": "design/spec.md",
+   "line": 9488,
+   "kind": "law",
+   "claim": "The record tells an exited loop from a crashed one",
+   "evidence": "src/devices.jl:604-607 and test/test_devices.jl:1236 comment: DeviceCrash count in totals tells them apart"
+  },
+  {
+   "id": "S11d-047",
+   "file": "design/spec.md",
+   "line": 9512,
+   "kind": "mech",
+   "claim": "Whichever task stages writes OutOfClaimEntry, ClaimedFaceEntry and EntryTypeMismatch at staging",
+   "evidence": "src/dataplane.jl:427-438; src/devices.jl:343; probe:63 harness cell gets ClaimedFaceEntry and OutOfClaimEntry"
+  },
+  {
+   "id": "S11d-048",
+   "file": "design/spec.md",
+   "line": 9514,
+   "kind": "mech",
+   "claim": "Staging can also go through the harness writer, stage!(sim, ...)",
+   "evidence": "src/sim.jl:2620; probe:63"
+  },
+  {
+   "id": "S11d-049",
+   "file": "design/spec.md",
+   "line": 9516,
+   "kind": "mech",
+   "claim": "MalformedDatum is written from the author's loop body via report!(handle, ...)",
+   "evidence": "src/devices.jl:401-403; probe:52 total 30"
+  },
+  {
+   "id": "S11d-050",
+   "file": "design/spec.md",
+   "line": 9521,
+   "kind": "mech",
+   "claim": "attach! writes EmptyGreedyClaim into the roster entry being created",
+   "evidence": "src/sim.jl:2543-2548 report_cell!(diag_cell, empty_claim) on the handle the entry holds"
+  },
+  {
+   "id": "S11d-051",
+   "file": "design/spec.md",
+   "line": 9526,
+   "kind": "why",
+   "claim": "The device's task does not exist until run!, so the new cell has no other writer yet",
+   "evidence": "src/sim.jl:2548 and the run-task spawn at run!; roster.jl entry holds handle"
+  },
+  {
+   "id": "S11d-052",
+   "file": "design/spec.md",
+   "line": 9532,
+   "kind": "mech",
+   "claim": "The loop folds the diagnostics into the published framework status that every snapshot carries",
+   "evidence": "src/sim.jl:2661-2678 drain! folds; src/sim.jl:2822-2840 _status; src/dataplane.jl:303"
+  },
+  {
+   "id": "S11d-053",
+   "file": "design/spec.md",
+   "line": 9539,
+   "kind": "law",
+   "claim": "There is one cell per rostered device, one for the harness writer and one for the loop",
+   "evidence": "src/sim.jl:2675-2677 (entry cells, harness_diag, loop_diag); probe:25 writers list"
+  },
+  {
+   "id": "S11d-054",
+   "file": "design/spec.md",
+   "line": 9541,
+   "kind": "law",
+   "claim": "The Model owns one more cell and the drain folds it into the loop's account beside the loop's own",
+   "evidence": "src/model.jl:102 frame_diag; src/sim.jl:2678"
+  },
+  {
+   "id": "S11d-055",
+   "file": "design/spec.md",
+   "line": 9547,
+   "kind": "law",
+   "claim": "No locking, no arbitration, no new primitive: the cells are single-writer, taken by atomic swap",
+   "evidence": "src/dataplane.jl:132-156 (atomic fields, CAS and swap only)"
+  },
+  {
+   "id": "S11d-056",
+   "file": "design/spec.md",
+   "line": 9549,
+   "kind": "mech",
+   "claim": "The harness writer's cell is written from whichever task stages, arbitrated by the same CAS append",
+   "evidence": "src/dataplane.jl:141-150 report_cell! with @atomicreplace; src/sim.jl:2620"
+  },
+  {
+   "id": "S11d-057",
+   "file": "design/spec.md",
+   "line": 9551,
+   "kind": "law",
+   "claim": "The harness's and the loop's status records carry no heartbeat and no task_state",
+   "evidence": "src/sim.jl:2838-2839; probe:52 hb=nothing ts=nothing"
+  },
+  {
+   "id": "S11d-058",
+   "file": "design/spec.md",
+   "line": 9555,
+   "kind": "decl",
+   "claim": "A cell holds a bounded accumulation and one atomic liveness timestamp",
+   "evidence": "src/dataplane.jl:132-135 DiagCell batch and heartbeat atomic fields"
+  },
+  {
+   "id": "S11d-059",
+   "file": "design/spec.md",
+   "line": 9557,
+   "kind": "law",
+   "claim": "The ring has capacity 16, plus a count per kind of what it could not hold",
+   "evidence": "src/dataplane.jl:93 DIAG_RING = 16; src/dataplane.jl:105-108; probe:32 ring=16 suppressed=4"
+  },
+  {
+   "id": "S11d-060",
+   "file": "design/spec.md",
+   "line": 9562,
+   "kind": "law",
+   "claim": "Past the ring's capacity the value is not stored and its kind's suppressed count increments",
+   "evidence": "src/dataplane.jl:144-146; probe:32"
+  },
+  {
+   "id": "S11d-061",
+   "file": "design/spec.md",
+   "line": 9564,
+   "kind": "law",
+   "claim": "The drop policy retains the earliest in the frame",
+   "evidence": "src/dataplane.jl:144 (first 16 kept); probe:32 first=1"
+  },
+  {
+   "id": "S11d-062",
+   "file": "design/spec.md",
+   "line": 9570,
+   "kind": "law",
+   "claim": "A flooding writer costs at most sixteen retained values and one integer increment per kind per frame",
+   "evidence": "src/dataplane.jl:144-146; probe:32"
+  },
+  {
+   "id": "S11d-063",
+   "file": "design/spec.md",
+   "line": 9572,
+   "kind": "law",
+   "claim": "No writer can starve another, because the cells are disjoint",
+   "evidence": "src/sim.jl:2543 one DiagCell per entry; src/dataplane.jl:132"
+  },
+  {
+   "id": "S11d-064",
+   "file": "design/spec.md",
+   "line": 9574,
+   "kind": "mech",
+   "claim": "The loop performs one atomicswap per diagnostic cell at frame top, at the staging drain's point",
+   "evidence": "src/dataplane.jl:156 _take!; src/sim.jl:2670-2678 inside drain!"
+  },
+  {
+   "id": "S11d-065",
+   "file": "design/spec.md",
+   "line": 9577,
+   "kind": "mech",
+   "claim": "The loop swaps in a shared empty sentinel and a quiet frame gets it back",
+   "evidence": "src/dataplane.jl:111, 156, 197 (batch === EMPTY_DIAG && return); probe:33"
+  },
+  {
+   "id": "S11d-066",
+   "file": "design/spec.md",
+   "line": 9579,
+   "kind": "law",
+   "claim": "A quiet-frame take allocates nothing and leaves no load-only path",
+   "evidence": "probe:35 take alloc=0, probe:38 fold alloc=0; src/dataplane.jl:152-156"
+  },
+  {
+   "id": "S11d-067",
+   "file": "design/spec.md",
+   "line": 9581,
+   "kind": "law",
+   "claim": "The taken ring is exclusively the loop's before it is reachable from a snapshot; the live accumulator is never reachable from a published value",
+   "evidence": "src/dataplane.jl:195-206 fold copies the ring into the account; src/sim.jl:2815-2820 status takes the account's vector"
+  },
+  {
+   "id": "S11d-068",
+   "file": "design/spec.md",
+   "line": 9589,
+   "kind": "decl",
+   "claim": "The heartbeat rides in the same cell as an atomic timestamp field",
+   "evidence": "src/dataplane.jl:134"
+  },
+  {
+   "id": "S11d-069",
+   "file": "design/spec.md",
+   "line": 9590,
+   "kind": "mech",
+   "claim": "The device task stores the heartbeat on every loop pass from inside the handle primitives",
+   "evidence": "src/devices.jl:230, 285, 308, 342, 368, 402, 435 call _beat!"
+  },
+  {
+   "id": "S11d-070",
+   "file": "design/spec.md",
+   "line": 9593,
+   "kind": "mech",
+   "claim": "The loop acquire-loads the heartbeat at publication when it assembles the status",
+   "evidence": "src/dataplane.jl:161; src/sim.jl:2835"
+  },
+  {
+   "id": "S11d-071",
+   "file": "design/spec.md",
+   "line": 9596,
+   "kind": "law",
+   "claim": "The staleness threshold is 2 s, read against this field",
+   "evidence": "src/dataplane.jl:322 STALE_S = 2.0; src/dataplane.jl:337-338"
+  },
+  {
+   "id": "S11d-072",
+   "file": "design/spec.md",
+   "line": 9598,
+   "kind": "law",
+   "claim": "The heartbeat is a field, never a diagnostic kind and never enumerated",
+   "evidence": "src/dataplane.jl:36-37 KINDS has no heartbeat"
+  },
+  {
+   "id": "S11d-073",
+   "file": "design/spec.md",
+   "line": 9601,
+   "kind": "law",
+   "claim": "The published framework status is a concrete frozen value",
+   "evidence": "src/dataplane.jl:303-306 immutable FrameworkStatus; src/sim.jl:2822"
+  },
+  {
+   "id": "S11d-074",
+   "file": "design/spec.md",
+   "line": 9603,
+   "kind": "mech",
+   "claim": "`recent` is the ring the frame's drain took, carried by the first publication after that drain, at most sixteen per cell",
+   "evidence": "src/dataplane.jl:166-172, 210; src/sim.jl:2815-2820 (account.recent re-armed to EMPTY_RECENT after the first status)"
+  },
+  {
+   "id": "S11d-075",
+   "file": "design/spec.md",
+   "line": 9605,
+   "kind": "mech",
+   "claim": "The loop's record folds two cells, its own and the Model's",
+   "evidence": "src/sim.jl:2677-2678"
+  },
+  {
+   "id": "S11d-076",
+   "file": "design/spec.md",
+   "line": 9606,
+   "kind": "mech",
+   "claim": "`suppressed` is the per-kind counts the ring refused in that drain",
+   "evidence": "src/dataplane.jl:204; src/sim.jl:2819"
+  },
+  {
+   "id": "S11d-077",
+   "file": "design/spec.md",
+   "line": 9607,
+   "kind": "mech",
+   "claim": "`totals` is the cumulative per-writer per-kind count since the run began, owned privately by the loop and copied into each status",
+   "evidence": "src/dataplane.jl:166-172, 205 (isbits totals copied by read); reset at run start per src/dataplane.jl:183-188"
+  },
+  {
+   "id": "S11d-078",
+   "file": "design/spec.md",
+   "line": 9609,
+   "kind": "mech",
+   "claim": "`heartbeat` rides beside `task_state`, which the loop reads off its own device Task handle at publication",
+   "evidence": "src/sim.jl:2834-2836; src/dataplane.jl:341 _task_state"
+  },
+  {
+   "id": "S11d-079",
+   "file": "design/spec.md",
+   "line": 9610,
+   "kind": "mech",
+   "claim": "The pacer diagnostics ride beside the per-writer records",
+   "evidence": "src/dataplane.jl:303-306 FrameworkStatus.pacer"
+  },
+  {
+   "id": "S11d-080",
+   "file": "design/spec.md",
+   "line": 9614,
+   "kind": "decl",
+   "claim": "WriterStatus has fields who, recent, suppressed, totals, heartbeat, task_state with the stated types",
+   "evidence": "src/dataplane.jl:251-258; probe:26 field types"
+  },
+  {
+   "id": "S11d-081",
+   "file": "design/spec.md",
+   "line": 9623,
+   "kind": "decl",
+   "claim": "DiagValue is the union of the channel's kinds and KindCounts is the per-kind counter record",
+   "evidence": "src/dataplane.jl:41, 50"
+  },
+  {
+   "id": "S11d-082",
+   "file": "design/spec.md",
+   "line": 9628,
+   "kind": "law",
+   "claim": "A consumer sampling occasionally still reads a complete account from `totals`",
+   "evidence": "src/dataplane.jl:205 totals count retained and suppressed alike; probe:52 tot=30 against 16-ring"
+  },
+  {
+   "id": "S11d-083",
+   "file": "design/spec.md",
+   "line": 9633,
+   "kind": "law",
+   "claim": "A renderer presents each value under its record's writer",
+   "evidence": "src/show.jl:470-480 _writer_lines per record"
+  },
+  {
+   "id": "S11d-084",
+   "file": "design/spec.md",
+   "line": 9637,
+   "kind": "law",
+   "claim": "A status renderer prints a writer x kind up to 25 cumulative occurrences, then count-only",
+   "evidence": "src/show.jl:443 STATUS_MAXLOG = 25; src/show.jl:460-472"
+  },
+  {
+   "id": "S11d-085",
+   "file": "design/spec.md",
+   "line": 9641,
+   "kind": "law",
+   "claim": "The threshold is presentation policy: counts keep accumulating regardless",
+   "evidence": "src/show.jl:436-443 docstring; src/dataplane.jl:205"
+  },
+  {
+   "id": "S11d-086",
+   "file": "design/spec.md",
+   "line": 9646,
+   "kind": "law",
+   "claim": "The terminal snapshot carries the run's final cumulative counters, final at the last frame top",
+   "evidence": "src/sim.jl:2661-2678 drain precedes the boundary's publish!; src/sim.jl:2835 totals copied; src/sim.jl:1746"
+  },
+  {
+   "id": "S11d-087",
+   "file": "design/spec.md",
+   "line": 9652,
+   "kind": "law",
+   "claim": "What lands after the final drain (device exit report, DeviceJoinTimeout) reaches no snapshot",
+   "evidence": "src/sim.jl:1938 writes the join timeout into the loop cell after the terminal snapshot; src/sim.jl:1955-1976 sweep records it as residue only"
+  },
+  {
+   "id": "S11d-088",
+   "file": "design/spec.md",
+   "line": 9654,
+   "kind": "mech",
+   "claim": "The loop takes each diagnostic cell once more at the run's end",
+   "evidence": "src/sim.jl:1746, 1955-1966 _sweep_tail!"
+  },
+  {
+   "id": "S11d-089",
+   "file": "design/spec.md",
+   "line": 9656,
+   "kind": "mech",
+   "claim": "A replaying run first takes each staging cell once more and reports a discarded batch in that take",
+   "evidence": "src/sim.jl:1745 _discard_late_staging! before the sweep; src/sim.jl:2759-2768"
+  },
+  {
+   "id": "S11d-090",
+   "file": "design/spec.md",
+   "line": 9658,
+   "kind": "mech",
+   "claim": "The last take is folded into the termination record as the tail residue, per writer the final ring and suppressed counts",
+   "evidence": "src/dataplane.jl:261-271 ResidueRecord; src/sim.jl:1973-1976, 2291"
+  },
+  {
+   "id": "S11d-091",
+   "file": "design/spec.md",
+   "line": 9662,
+   "kind": "mech",
+   "claim": "The take is presented through the standard logging backend and never published",
+   "evidence": "src/sim.jl:1977-1985 @warn per residue entry; src/sim.jl:1955-1960 docstring"
+  },
+  {
+   "id": "S11d-092",
+   "file": "design/spec.md",
+   "line": 9666,
+   "kind": "law",
+   "claim": "On a quiet frame nothing allocated scales with diagnostic activity; the sentinel swap allocates nothing",
+   "evidence": "probe:35, probe:38"
+  },
+  {
+   "id": "S11d-093",
+   "file": "design/spec.md",
+   "line": 9668,
+   "kind": "mech",
+   "claim": "The per-writer status costs one small vector of records per publication, beside the snapshot allocation",
+   "evidence": "src/sim.jl:2832 Vector{WriterStatus}(undef, length(roster)+2) in _status"
+  },
+  {
+   "id": "S11d-094",
+   "file": "design/spec.md",
+   "line": 9673,
+   "kind": "law",
+   "claim": "The per-kind counters are a fixed-shape isbits record, never a Dict",
+   "evidence": "src/dataplane.jl:50-64; probe:26 isbitstype(KindCounts) true"
+  },
+  {
+   "id": "S11d-095",
+   "file": "design/spec.md",
+   "line": 9677,
+   "kind": "mech",
+   "claim": "On a noisy frame values are allocated at emission on the writer's task; a drained non-empty ring is frozen and the writer allocates a fresh ring lazily",
+   "evidence": "src/dataplane.jl:141-150 (push!(copy(ring)) on the writer's task); src/dataplane.jl:156 swap in the shared sentinel"
+  },
+  {
+   "id": "S11d-096",
+   "file": "design/spec.md",
+   "line": 9683,
+   "kind": "law",
+   "claim": "Worst case is one ring of sixteen values per cell per frame; everything past it is an integer increment",
+   "evidence": "src/dataplane.jl:144-146; probe:32"
+  },
+  {
+   "id": "S11d-097",
+   "file": "design/spec.md",
+   "line": 9686,
+   "kind": "law",
+   "claim": "The diagnostic cells sit outside the zero-allocation scope of the stepping loop",
+   "evidence": "src/dataplane.jl:141 report_cell! runs on the writer task and the framework side; D-305 scope in src/sim.jl publish! docstring 2777-2790"
+  },
+  {
+   "id": "S11d-098",
+   "file": "design/spec.md",
+   "line": 9690,
+   "kind": "law",
+   "claim": "`totals` is monotone across logged snapshots, so log_every decimation loses which boundary but never how many",
+   "evidence": "src/dataplane.jl:166-172 docstring (totals never decrease between resets); src/sim.jl:2780-2790 log! stores the published snapshot; src/sim.jl:829 log_every"
+  }
+ ],
+ "counts": {
+  "law": 58,
+  "mech": 52,
+  "decl": 6,
+  "ptr": 22,
+  "why": 36,
+  "ex": 6
+ }
+}

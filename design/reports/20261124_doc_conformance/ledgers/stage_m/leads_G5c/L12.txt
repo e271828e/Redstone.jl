@@ -1,0 +1,39 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-028: 1118-1139
+D-030: 1157-1180
+D-059: 1986-2011
+D-088: 3007-3040
+D-097: 3296-3323
+D-110: 3798-3829
+D-198: 7925-7969
+D-219: 8858-8907
+D-223: 9094-9134
+D-273: 12241-12333
+D-386: 16211-16225
+D-387: 16226-16242
+D-388: 16243-16271
+D-389: 16272-16290
+D-390: 16291-16311
+D-391: 16312-16340
+D-392: 16341-16359
+D-393: 16360-16374
+D-394: 16375-16410
+D-395: 16411-16430
+D-396: 16431-16466
+D-397: 16467-16482
+D-398: 16483-16511
+D-399: 16512-16531
+D-400: 16532-16553
+D-401: 16554-16570
+D-403: 16597-16612
+D-404: 16613-16648
+D-441: 18435-18527
+D-462: 19995-20019
+
+# Stage M leads
+names missing: `UninitializedSlots` at log.md:3013 (D-088)
+names missing: `capture` at log.md:3807 (D-110)
+names missing: `capture` at log.md:12246 (D-273)
+names missing: `capture` at log.md:12261 (D-273)
+names missing: `should_close` at log.md:1164 (D-030)
+names test-only: `Libc.systemsleep` at log.md:16536 (D-400)

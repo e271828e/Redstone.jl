@@ -1,0 +1,6 @@
+names missing: `SavingCallback` at spec.md:8049
+names missing: `SimControl` at spec.md:7861
+names missing: `VelocityData` at spec.md:8228
+names missing: `XPlane12Control` at spec.md:8190
+names missing: `io_lock` at spec.md:7861
+names missing: `v_eb_b` at spec.md:8229

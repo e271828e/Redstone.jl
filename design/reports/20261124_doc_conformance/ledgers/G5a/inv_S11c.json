@@ -1,0 +1,1136 @@
+{
+ "rows": [
+  {
+   "id": "S11c-014",
+   "file": "design/spec.md",
+   "line": 8819,
+   "kind": "decl",
+   "claim": "A checkpoint holds x, the s and m stores, the signal table, the guard priors, t and t0, the counters, the fingerprint and the deployment (no other field)",
+   "evidence": "src/checkpoint.jl:74-85 ModelState also has `stepper` (what the integration method carries); probe:10 lists (:x,:s,:m,:table,:prior,:stepper,:t,:t₀,:deployment,:layout)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A checkpoint holds the flat buffer `x`, the `s` and `m` stores, the whole signal table, the guard priors, the stepper's carried state, `t` and `t₀`, the frame and boundary counters, and the fingerprint and the deployment.",
+   "note": "src/checkpoint.jl:68-72 cites D-452 for the stepper field; the spec list never gained it. A verifier should check whether the log records the stepper."
+  },
+  {
+   "id": "S11c-041",
+   "file": "design/spec.md",
+   "line": 8978,
+   "kind": "ex",
+   "claim": "Wrapper sketch files the crash as `report!(entry, DeviceCrash(e))`",
+   "evidence": "src/devices.jl:668 `report!(entry, DeviceCrash(err, entry.should_abort))`; src/diagnostics.jl:1688 DeviceCrash has two fields, cause and abort; the sketch also omits the InterruptException and unblock-provoked-throw branches at src/devices.jl:652-668",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "report!(entry, DeviceCrash(e, should_abort))    # §12.4(6): sim continues, device absent  (and note that an InterruptException and a raise provoked by `unblock!` skip this report)",
+   "note": "The sketch shows real API (the constructor) with the wrong arity. The prose at lines 9021-9025 and 9015 does describe the two skipped branches."
+  },
+  {
+   "id": "S11c-050",
+   "file": "design/spec.md",
+   "line": 9022,
+   "kind": "law",
+   "claim": "On an operator interrupt the wrapper makes no should_abort consultation",
+   "evidence": "src/devices.jl:670-671: the `finally` runs `entry.should_abort && stop!(entry.handle)` on every path including the InterruptException arm; the code comment at src/devices.jl:658 calls it inert after the stop is requested",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "There is no crash report for what is not a crash. The `should_abort` consultation still runs in the wrapper's exit path but is inert, since a stop is already requested.",
+   "note": "Observable behavior is as the spec intends (first stop issuer wins). Only the mechanism differs."
+  },
+  {
+   "id": "S11c-089",
+   "file": "design/spec.md",
+   "line": 9199,
+   "kind": "law",
+   "claim": "Neither side declared gives an attach-time error naming both traits; every violation report names the trait",
+   "evidence": "src/diagnostics.jl:1816-1818 and probe:31: the `:neither_side` message is \"X declares neither side — a binding that touches nothing is a configuration mistake\"; it names neither `is_input` nor `is_output`. The payload has only `binding`, `reason` and `observed` (src/diagnostics.jl:1803-1808)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Neither side declared ⇒ attach-time error, `BindingContractMismatch` with reason `:neither_side`, whose message says the binding declares neither side. (And the report carries the binding type and a reason that fixes the trait, method and direction, not four separate fields.)",
+   "note": "Other reasons' messages do name the method and the trait, so the sentence at 9212-9213 is true for them. Only `:neither_side` and the field list differ."
+  },
+  {
+   "id": "S11c-107",
+   "file": "design/spec.md",
+   "line": 9258,
+   "kind": "decl",
+   "claim": "The standard GUI binding is greedy: declares is_input and is_greedy, defines no claims and no reads; the same GUI device type also attaches under explicit claims",
+   "evidence": "no GUI device or GUI binding exists in src/ (rg -i gui src finds only comments); test/fixtures.jl:1721 `Greedy` is the stand-in",
+   "verdict": "unverifiable",
+   "note": "The shipped GUI binding lives in the inspector repo, which the audit does not read. The greedy and explicit-claim attach paths themselves are verified (probe:34, probe:38)."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S11c-001",
+   "file": "design/spec.md",
+   "line": 8756,
+   "kind": "mech",
+   "claim": "The trace is the sequence of drained, device-tagged batches per frame",
+   "evidence": "src/trace.jl:22-26 TraceBatch(frame, writer, entries); src/trace.jl:78-83"
+  },
+  {
+   "id": "S11c-002",
+   "file": "design/spec.md",
+   "line": 8759,
+   "kind": "mech",
+   "claim": "The drain is the frame-top swap applying staged device writes to the root inputs",
+   "evidence": "src/dataplane.jl:491-498 atomicswap then _apply!"
+  },
+  {
+   "id": "S11c-003",
+   "file": "design/spec.md",
+   "line": 8761,
+   "kind": "mech",
+   "claim": "Replay re-runs the ordinary loop on a recorded trace",
+   "evidence": "src/sim.jl:2666 the drain substitution is the only branch"
+  },
+  {
+   "id": "S11c-004",
+   "file": "design/spec.md",
+   "line": 8762,
+   "kind": "law",
+   "claim": "Replaying a recorded session reproduces the trajectory bit-identically",
+   "evidence": "test/test_trace.jl:594 and :831 assert the identity; probe:87 replay completes at frame 5"
+  },
+  {
+   "id": "S11c-005",
+   "file": "design/spec.md",
+   "line": 8763,
+   "kind": "mech",
+   "claim": "Under replay staging is fed from the recording, so no device or mapping feeds inputs",
+   "evidence": "src/sim.jl:2706-2730 _replay_drain! discards live cells and applies the feed"
+  },
+  {
+   "id": "S11c-006",
+   "file": "design/spec.md",
+   "line": 8767,
+   "kind": "law",
+   "claim": "The trace retains every batch sparse, in one record format",
+   "evidence": "src/trace.jl:121-134 _record! is the only recorder; TraceBatch has one shape"
+  },
+  {
+   "id": "S11c-007",
+   "file": "design/spec.md",
+   "line": 8768,
+   "kind": "mech",
+   "claim": "At the drain each drained staging cell is scanned",
+   "evidence": "src/dataplane.jl:491-498 _drain! calls _record! per taken batch"
+  },
+  {
+   "id": "S11c-008",
+   "file": "design/spec.md",
+   "line": 8770,
+   "kind": "mech",
+   "claim": "Masked entries are recorded as (position => value) pairs",
+   "evidence": "src/trace.jl:129-131"
+  },
+  {
+   "id": "S11c-009",
+   "file": "design/spec.md",
+   "line": 8771,
+   "kind": "mech",
+   "claim": "Positions are against the writer's face-name to position schema in `schemas`",
+   "evidence": "src/trace.jl:80; src/roster.jl:415-419 _writer_schemas; probe:11"
+  },
+  {
+   "id": "S11c-010",
+   "file": "design/spec.md",
+   "line": 8773,
+   "kind": "mech",
+   "claim": "The recording is an O(surface-width) scan",
+   "evidence": "src/trace.jl:124-131 two linear passes over the mask"
+  },
+  {
+   "id": "S11c-011",
+   "file": "design/spec.md",
+   "line": 8774,
+   "kind": "mech",
+   "claim": "One small allocation per drained batch plus the values boxed",
+   "evidence": "probe:109 (3 allocations for one entry, 6 for three: the vector and the boxes); src/trace.jl:127"
+  },
+  {
+   "id": "S11c-012",
+   "file": "design/spec.md",
+   "line": 8777,
+   "kind": "mech",
+   "claim": "A claim's width is a fact of one binding, enumerated at attach",
+   "evidence": "src/roster.jl:356-368 _claim from the binding's enumeration"
+  },
+  {
+   "id": "S11c-013",
+   "file": "design/spec.md",
+   "line": 8781,
+   "kind": "mech",
+   "claim": "A greedy claim is the unclaimed complement computed at attach, as wide as the root contract",
+   "evidence": "src/roster.jl:358; probe:34 claims [:a,:b,:c]"
+  },
+  {
+   "id": "S11c-015",
+   "file": "design/spec.md",
+   "line": 8784,
+   "kind": "law",
+   "claim": "There is no per-record format flag",
+   "evidence": "src/trace.jl:22-26 TraceBatch has frame, writer, entries only"
+  },
+  {
+   "id": "S11c-016",
+   "file": "design/spec.md",
+   "line": 8786,
+   "kind": "mech",
+   "claim": "One inverse conversion in replay, paid once up front off the loop",
+   "evidence": "src/trace.jl:197-266 _compile_records! run by _compile_feed, src/sim.jl:1195"
+  },
+  {
+   "id": "S11c-017",
+   "file": "design/spec.md",
+   "line": 8788,
+   "kind": "mech",
+   "claim": "The conversion site is the drain, where the tuple is the coalesced truth",
+   "evidence": "src/dataplane.jl:491-498; src/trace.jl:113-118"
+  },
+  {
+   "id": "S11c-018",
+   "file": "design/spec.md",
+   "line": 8806,
+   "kind": "law",
+   "claim": "The conversion is lossless in both directions",
+   "evidence": "src/trace.jl:130 records staged values as they are; src/trace.jl:243-256 converts back to declared types"
+  },
+  {
+   "id": "S11c-019",
+   "file": "design/spec.md",
+   "line": 8814,
+   "kind": "mech",
+   "claim": "A checkpoint is the Model's state at a frame top as one value",
+   "evidence": "src/checkpoint.jl:106-110; src/sim.jl:892-895"
+  },
+  {
+   "id": "S11c-020",
+   "file": "design/spec.md",
+   "line": 8815,
+   "kind": "law",
+   "claim": "The header is the checkpoint init! takes at the end of boundary zero, after the first snapshot is published",
+   "evidence": "src/sim.jl:846-857; probe:11 header.boundary == 1, header.frame == 0"
+  },
+  {
+   "id": "S11c-021",
+   "file": "design/spec.md",
+   "line": 8817,
+   "kind": "law",
+   "claim": "overlay! takes the header after the overlaid state settles and publishes",
+   "evidence": "src/sim.jl:972-981; probe:84"
+  },
+  {
+   "id": "S11c-022",
+   "file": "design/spec.md",
+   "line": 8821,
+   "kind": "mech",
+   "claim": "The deployment is the scalar-free artifact the grid parameters fix",
+   "evidence": "src/deployment.jl:539 struct Deployment has no type parameter"
+  },
+  {
+   "id": "S11c-023",
+   "file": "design/spec.md",
+   "line": 8823,
+   "kind": "mech",
+   "claim": "The executor's clock holds t and t0; the Run holds the frame index and boundary ordinal",
+   "evidence": "src/checkpoint.jl:129-135 reads exec.clock; src/sim.jl:856 sim.run.frame, sim.run.boundary"
+  },
+  {
+   "id": "S11c-024",
+   "file": "design/spec.md",
+   "line": 8826,
+   "kind": "law",
+   "claim": "The header holds the root inputs as values in the table, never the sparse authored overlay",
+   "evidence": "probe:12 header table holds a,b,c = 0.0 after init! with set(...)"
+  },
+  {
+   "id": "S11c-025",
+   "file": "design/spec.md",
+   "line": 8831,
+   "kind": "ex",
+   "claim": "An unfed root input (illustrative `mixture = 0.5`) never appears in a batch",
+   "evidence": "placeholder name from the Stage M lead; the batch holds only touched positions, src/trace.jl:129-131"
+  },
+  {
+   "id": "S11c-026",
+   "file": "design/spec.md",
+   "line": 8833,
+   "kind": "mech",
+   "claim": "The fingerprint and the deployment are compared by replay, not restored",
+   "evidence": "src/model.jl:1212-1250 _check_checkpoint!; src/checkpoint.jl:129-135 does not copy the deployment"
+  },
+  {
+   "id": "S11c-027",
+   "file": "design/spec.md",
+   "line": 8837,
+   "kind": "decl",
+   "claim": "The deployment carries Δt_frame, Δt_base, h_max, h_min, the algorithm, attempt budget, localization_tol, localization_budget, firing_budget",
+   "evidence": "src/deployment.jl:539-553 (it also holds build, schedule, lattice, warnings; the sentence does not say it holds only these)"
+  },
+  {
+   "id": "S11c-028",
+   "file": "design/spec.md",
+   "line": 8838,
+   "kind": "mech",
+   "claim": "The algorithm carries its tolerances",
+   "evidence": "src/deployment.jl:413-415 BS3 reltol, abstol"
+  },
+  {
+   "id": "S11c-029",
+   "file": "design/spec.md",
+   "line": 8841,
+   "kind": "decl",
+   "claim": "The fingerprint holds each component's x type, every cell's address with its type, and the events in prior order",
+   "evidence": "src/checkpoint.jl:18-27 xtypes, addrs, events (plus sizes, paths, stypes, mtypes)"
+  },
+  {
+   "id": "S11c-030",
+   "file": "design/spec.md",
+   "line": 8843,
+   "kind": "law",
+   "claim": "The deployment holds no policy; t_end and ignore_stop_requests are keywords of each advance",
+   "evidence": "src/deployment.jl:539-553 no such field; src/sim.jl:1248 and :1335 keywords; src/sim.jl:348"
+  },
+  {
+   "id": "S11c-031",
+   "file": "design/spec.md",
+   "line": 8845,
+   "kind": "mech",
+   "claim": "The termination record carries the terminating advance's policy",
+   "evidence": "src/sim.jl:180; probe:92 TerminationRecord(0.3, StopPolicy(...), ...)"
+  },
+  {
+   "id": "S11c-032",
+   "file": "design/spec.md",
+   "line": 8851,
+   "kind": "mech",
+   "claim": "A checkpoint is the one full-state capture, taken by init! for the header and by checkpoint(sim) on demand",
+   "evidence": "src/sim.jl:856 and :892-895"
+  },
+  {
+   "id": "S11c-033",
+   "file": "design/spec.md",
+   "line": 8862,
+   "kind": "decl",
+   "claim": "Trace is the fixed header plus two append-only lists, schemas and batches, and its length",
+   "evidence": "src/trace.jl:78-83; probe:10 fields (:header,:schemas,:batches,:frames)"
+  },
+  {
+   "id": "S11c-034",
+   "file": "design/spec.md",
+   "line": 8863,
+   "kind": "law",
+   "claim": "Trace takes no scalar parameter",
+   "evidence": "src/trace.jl:78 `mutable struct Trace` unparametrized; probe:13"
+  },
+  {
+   "id": "S11c-035",
+   "file": "design/spec.md",
+   "line": 8865,
+   "kind": "mech",
+   "claim": "The door that builds the run (init!, overlay!, restore!, replay!) writes the header once",
+   "evidence": "src/sim.jl:856, :980 write it; src/sim.jl:999 opens restore! and replay! with it"
+  },
+  {
+   "id": "S11c-036",
+   "file": "design/spec.md",
+   "line": 8867,
+   "kind": "mech",
+   "claim": "The batches list grows at every drain and the schemas list at every roster change",
+   "evidence": "src/trace.jl:132; src/roster.jl:441-453 _install_writers!; probe:20"
+  },
+  {
+   "id": "S11c-037",
+   "file": "design/spec.md",
+   "line": 8869,
+   "kind": "law",
+   "claim": "The length is the frame index of the last drain, advancing at the top of each drain",
+   "evidence": "src/sim.jl:2664 trc.frames += 1 before any thunk; probe:11 and probe:14"
+  },
+  {
+   "id": "S11c-038",
+   "file": "design/spec.md",
+   "line": 8870,
+   "kind": "mech",
+   "claim": "The length is frozen into the value trace(sim) hands back, and every record of a drain carries it",
+   "evidence": "src/sim.jl:3022 copies trc.frames; src/trace.jl:132; probe:22"
+  },
+  {
+   "id": "S11c-039",
+   "file": "design/spec.md",
+   "line": 8872,
+   "kind": "law",
+   "claim": "Under init! the length is the number of drains since the header was taken",
+   "evidence": "probe:11 frames == 0 after init!; src/sim.jl:846 starts at 0"
+  },
+  {
+   "id": "S11c-040",
+   "file": "design/spec.md",
+   "line": 8873,
+   "kind": "law",
+   "claim": "A trace restore! opens starts at the checkpoint's frame",
+   "evidence": "src/sim.jl:999; probe:80 frames == 3 == header.frame"
+  },
+  {
+   "id": "S11c-042",
+   "file": "design/spec.md",
+   "line": 8876,
+   "kind": "law",
+   "claim": "Every advance in :replay is capped at the recording's last frame",
+   "evidence": "src/sim.jl:1585-1588 _replay_bound, used at :1631 and :2264"
+  },
+  {
+   "id": "S11c-043",
+   "file": "design/spec.md",
+   "line": 8879,
+   "kind": "mech",
+   "claim": "Each writer's face-name to position schema lives in the schemas list",
+   "evidence": "src/trace.jl:80; src/roster.jl:415-419"
+  },
+  {
+   "id": "S11c-044",
+   "file": "design/spec.md",
+   "line": 8880,
+   "kind": "law",
+   "claim": "Replay does not reconstruct claims",
+   "evidence": "src/trace.jl:174-183 _replay_writer builds a Writer from the recorded schema"
+  },
+  {
+   "id": "S11c-045",
+   "file": "design/spec.md",
+   "line": 8881,
+   "kind": "law",
+   "claim": "The schemas list only grows; attach! and detach! push the current writer set in place",
+   "evidence": "src/roster.jl:441-453 append!; probe:20 and probe:29"
+  },
+  {
+   "id": "S11c-046",
+   "file": "design/spec.md",
+   "line": 8884,
+   "kind": "law",
+   "claim": "Earlier records keep their index; a record resolves only through its own schema entry",
+   "evidence": "src/trace.jl:227 schemas[record.writer]; src/roster.jl:448 appended range"
+  },
+  {
+   "id": "S11c-047",
+   "file": "design/spec.md",
+   "line": 8890,
+   "kind": "law",
+   "claim": "Trace recording is on by default; init! builds a fresh trace under its trace keyword",
+   "evidence": "src/sim.jl:834 `trace = true`; src/sim.jl:697-699"
+  },
+  {
+   "id": "S11c-048",
+   "file": "design/spec.md",
+   "line": 8892,
+   "kind": "mech",
+   "claim": "The trace is retrievable after the run; a kill switch (trace = false) disables it",
+   "evidence": "src/sim.jl:3015-3023; probe:85 ArgumentInvalid under trace = false"
+  },
+  {
+   "id": "S11c-049",
+   "file": "design/spec.md",
+   "line": 8899,
+   "kind": "law",
+   "claim": "There is no sampling and no rolling window",
+   "evidence": "src/trace.jl:132 every batch pushed to an unbounded Vector"
+  },
+  {
+   "id": "S11c-051",
+   "file": "design/spec.md",
+   "line": 8906,
+   "kind": "mech",
+   "claim": "A device is an attached participant; input-only or output-only are degenerate uses, not framework classes",
+   "evidence": "src/roster.jl:40 AbstractDevice; src/roster.jl:70 sides declared by traits; src/sim.jl:2505"
+  },
+  {
+   "id": "S11c-052",
+   "file": "design/spec.md",
+   "line": 8909,
+   "kind": "law",
+   "claim": "Every attached device receives the same handle",
+   "evidence": "src/sim.jl:2528-2531 one DeviceHandle; src/devices.jl:650-652 _wrap passes entry.handle"
+  },
+  {
+   "id": "S11c-053",
+   "file": "design/spec.md",
+   "line": 8918,
+   "kind": "decl",
+   "claim": "The handle carries read, stage and control (observe running, request shutdown)",
+   "evidence": "src/devices.jl:229, :253, :285, :340; probe:95"
+  },
+  {
+   "id": "S11c-054",
+   "file": "design/spec.md",
+   "line": 8919,
+   "kind": "mech",
+   "claim": "Read returns the latest snapshot and can first wait for the next boundary",
+   "evidence": "src/devices.jl:285 latest; src/devices.jl:434-447 wait_next_snapshot"
+  },
+  {
+   "id": "S11c-055",
+   "file": "design/spec.md",
+   "line": 8925,
+   "kind": "law",
+   "claim": "detach! retires the roster entry and compiled writer; the caller may still hold the handle",
+   "evidence": "src/sim.jl:2581-2584; probe:26-28"
+  },
+  {
+   "id": "S11c-056",
+   "file": "design/spec.md",
+   "line": 8927,
+   "kind": "law",
+   "claim": "After detach!, stage! and report! refuse as DeviceContractMismatch",
+   "evidence": "src/devices.jl:79-81, :341, :402; probe:26 and probe:27"
+  },
+  {
+   "id": "S11c-057",
+   "file": "design/spec.md",
+   "line": 8935,
+   "kind": "law",
+   "claim": "The read primitives stay legal after detach!",
+   "evidence": "probe:28 latest(handle) === latest(sim); src/devices.jl:285 no attach check"
+  },
+  {
+   "id": "S11c-058",
+   "file": "design/spec.md",
+   "line": 8941,
+   "kind": "decl",
+   "claim": "A device type subtypes AbstractDevice, the neutral root, and attach! dispatches on it",
+   "evidence": "src/roster.jl:40; src/sim.jl:2505"
+  },
+  {
+   "id": "S11c-059",
+   "file": "design/spec.md",
+   "line": 8946,
+   "kind": "decl",
+   "claim": "attach!(sim, dev::AbstractDevice, new_binding::AbstractBinding; should_abort::Bool = false)",
+   "evidence": "src/sim.jl:2505-2506"
+  },
+  {
+   "id": "S11c-060",
+   "file": "design/spec.md",
+   "line": 8955,
+   "kind": "decl",
+   "claim": "The four functions are init!(dev), loop(dev, handle), shutdown!(dev), unblock!(dev)",
+   "evidence": "src/devices.jl:113, :136, :162, :202"
+  },
+  {
+   "id": "S11c-061",
+   "file": "design/spec.md",
+   "line": 8957,
+   "kind": "law",
+   "claim": "Only loop is mandatory; init!, shutdown! and unblock! are optional no-op hooks",
+   "evidence": "src/devices.jl:113, :136, :162 default to nothing"
+  },
+  {
+   "id": "S11c-062",
+   "file": "design/spec.md",
+   "line": 8958,
+   "kind": "law",
+   "claim": "attach! refuses a device with no loop method as DeviceContractMismatch",
+   "evidence": "src/roster.jl:227-237; probe:32"
+  },
+  {
+   "id": "S11c-063",
+   "file": "design/spec.md",
+   "line": 8962,
+   "kind": "mech",
+   "claim": "The framework wraps loop in a task whose finally runs shutdown! on any exit path",
+   "evidence": "src/devices.jl:650-673 _wrap; src/devices.jl:683 Threads.@spawn"
+  },
+  {
+   "id": "S11c-064",
+   "file": "design/spec.md",
+   "line": 8973,
+   "kind": "mech",
+   "claim": "init! runs in its own pre-spawn bracket; a throw is shutdown! plus DeviceCrash by name",
+   "evidence": "src/sim.jl:1837-1855 _init_devices!; probe:70 initthrow log [:init,:shutdown]"
+  },
+  {
+   "id": "S11c-065",
+   "file": "design/spec.md",
+   "line": 8979,
+   "kind": "law",
+   "claim": "A crashed loop leaves the sim running and the device absent",
+   "evidence": "probe:70 crash/abort=false run reaches frame 10; src/devices.jl:668"
+  },
+  {
+   "id": "S11c-066",
+   "file": "design/spec.md",
+   "line": 8982,
+   "kind": "law",
+   "claim": "Nothing marks the device dead; task_state shows the end and claims stay",
+   "evidence": "probe:71 task_state :done after init throw; src/devices.jl:635-673 no dead marking"
+  },
+  {
+   "id": "S11c-067",
+   "file": "design/spec.md",
+   "line": 8988,
+   "kind": "law",
+   "claim": "shutdown! runs after a partially failed init! so nothing opened is leaked",
+   "evidence": "src/sim.jl:1842-1843; probe:70 initthrow log [:init,:shutdown]"
+  },
+  {
+   "id": "S11c-068",
+   "file": "design/spec.md",
+   "line": 8989,
+   "kind": "mech",
+   "claim": "The initialization step brackets each init!",
+   "evidence": "src/sim.jl:1837-1855"
+  },
+  {
+   "id": "S11c-069",
+   "file": "design/spec.md",
+   "line": 8996,
+   "kind": "mech",
+   "claim": "On an interrupt before the tail run! releases never-spawned devices directly, advancing a cursor after each shutdown!",
+   "evidence": "src/sim.jl:1708-1716 direct_releases"
+  },
+  {
+   "id": "S11c-070",
+   "file": "design/spec.md",
+   "line": 8999,
+   "kind": "mech",
+   "claim": "An interrupt between a shutdown!'s return and the cursor advance repeats that call",
+   "evidence": "src/sim.jl:1691-1694 comment; src/sim.jl:1714-1716"
+  },
+  {
+   "id": "S11c-071",
+   "file": "design/spec.md",
+   "line": 9007,
+   "kind": "mech",
+   "claim": "The init step lists each device for release before its init! begins",
+   "evidence": "src/sim.jl:1838-1839 push!(live, entry) then init!"
+  },
+  {
+   "id": "S11c-072",
+   "file": "design/spec.md",
+   "line": 9010,
+   "kind": "law",
+   "claim": "A repeated or init-less shutdown! call is never reported",
+   "evidence": "src/devices.jl:619-632 _shutdown! reports only a throw"
+  },
+  {
+   "id": "S11c-073",
+   "file": "design/spec.md",
+   "line": 9017,
+   "kind": "law",
+   "claim": "A raise provoked by a device's unblock! is shutdown, not a crash",
+   "evidence": "src/devices.jl:666-668"
+  },
+  {
+   "id": "S11c-074",
+   "file": "design/spec.md",
+   "line": 9019,
+   "kind": "law",
+   "claim": "An InterruptException is never a DeviceCrash",
+   "evidence": "src/devices.jl:652-657 only _request_stop!(:interrupt)"
+  },
+  {
+   "id": "S11c-075",
+   "file": "design/spec.md",
+   "line": 9021,
+   "kind": "mech",
+   "claim": "The wrapper forwards the interrupt as a control-plane stop",
+   "evidence": "src/devices.jl:657 _request_stop!(entry.handle.control, :interrupt)"
+  },
+  {
+   "id": "S11c-076",
+   "file": "design/spec.md",
+   "line": 9027,
+   "kind": "why",
+   "claim": "Placeholder: a framework-owned hook loop would resurrect a taxonomy trait",
+   "evidence": "design rationale, no code claim"
+  },
+  {
+   "id": "S11c-077",
+   "file": "design/spec.md",
+   "line": 9031,
+   "kind": "ex",
+   "claim": "T16000M, UDPInput and Telemetry are FlightCore or illustrative device types",
+   "evidence": "Stage M leads: placeholder and prior-art names, no src definition expected"
+  },
+  {
+   "id": "S11c-078",
+   "file": "design/spec.md",
+   "line": 9036,
+   "kind": "ex",
+   "claim": "Loop sketches use running(handle), stage!(handle, map_input(datum, binding(handle))...), report!(handle, MalformedDatum(e)), wait_next_snapshot, gather, map_output, binding",
+   "evidence": "src/devices.jl:229, :270, :340, :367, :401, :434; src/bindings.jl:165-200; probe:101"
+  },
+  {
+   "id": "S11c-079",
+   "file": "design/spec.md",
+   "line": 9060,
+   "kind": "law",
+   "claim": "A forgotten running(handle) check surfaces as DeviceJoinTimeout with the device's name",
+   "evidence": "src/diagnostics.jl:1699-1704 `who`; src/sim.jl:1939"
+  },
+  {
+   "id": "S11c-080",
+   "file": "design/spec.md",
+   "line": 9062,
+   "kind": "mech",
+   "claim": "Liveness timestamps ride inside the handle primitives, stored in the device's own diagnostic cell",
+   "evidence": "src/devices.jl:230, :285, :308, :342, :368, :402, :435 _beat!; src/dataplane.jl:160"
+  },
+  {
+   "id": "S11c-081",
+   "file": "design/spec.md",
+   "line": 9076,
+   "kind": "ex",
+   "claim": "FlightCore's should_close hook dissolves (no such name in Redstone)",
+   "evidence": "probe:97 isdefined(Redstone, :should_close) == false; prior-art lead"
+  },
+  {
+   "id": "S11c-082",
+   "file": "design/spec.md",
+   "line": 9078,
+   "kind": "law",
+   "claim": "The task's end shows as task_state at the next publication and the heartbeat goes stale",
+   "evidence": "probe:71 task_state :done; src/devices.jl:660 orphaned"
+  },
+  {
+   "id": "S11c-083",
+   "file": "design/spec.md",
+   "line": 9084,
+   "kind": "law",
+   "claim": "Claims and the roster entry persist to run end",
+   "evidence": "src/sim.jl:1642-1645 roster read once at the freeze; src/sim.jl:1840-1850"
+  },
+  {
+   "id": "S11c-084",
+   "file": "design/spec.md",
+   "line": 9088,
+   "kind": "decl",
+   "claim": "should_abort is an attach! keyword defaulting to false, per attachment",
+   "evidence": "src/sim.jl:2506; src/roster.jl:272 RosterEntry.should_abort"
+  },
+  {
+   "id": "S11c-085",
+   "file": "design/spec.md",
+   "line": 9092,
+   "kind": "law",
+   "claim": "With should_abort clear a departure is reported and the run continues; with it set it also requests a stop",
+   "evidence": "probe:70 crash abort=false frame 10, abort=true frame 4; initthrow abort=true frame 0; src/devices.jl:671"
+  },
+  {
+   "id": "S11c-086",
+   "file": "design/spec.md",
+   "line": 9094,
+   "kind": "law",
+   "claim": "A departure is the loop returning, a crash or a failed init!",
+   "evidence": "src/devices.jl:671 (return and crash), src/sim.jl:1850 (init)"
+  },
+  {
+   "id": "S11c-087",
+   "file": "design/spec.md",
+   "line": 9101,
+   "kind": "law",
+   "claim": "A bad datum is tolerated in the loop body: catch, stage nothing, report!(handle, MalformedDatum(cause)), continue",
+   "evidence": "src/devices.jl:401; probe:70 malformed mode: device alive, one MalformedDatum count"
+  },
+  {
+   "id": "S11c-088",
+   "file": "design/spec.md",
+   "line": 9105,
+   "kind": "law",
+   "claim": "Any other exception propagates and the wrapper turns it into DeviceCrash",
+   "evidence": "src/devices.jl:668; probe:70 crash"
+  },
+  {
+   "id": "S11c-090",
+   "file": "design/spec.md",
+   "line": 9108,
+   "kind": "ex",
+   "claim": "InputMappingError is FlightCore prior art; a marked exception type is not provided",
+   "evidence": "probe:99 isdefined(Redstone, :InputMappingError) == false"
+  },
+  {
+   "id": "S11c-091",
+   "file": "design/spec.md",
+   "line": 9112,
+   "kind": "law",
+   "claim": "report!(handle, ...) writes device-attributed warnings into the device's diagnostic cell and nothing more",
+   "evidence": "src/devices.jl:401-403 accepts only MalformedDatum; src/dataplane.jl:93 DIAG_RING = 16"
+  },
+  {
+   "id": "S11c-092",
+   "file": "design/spec.md",
+   "line": 9119,
+   "kind": "decl",
+   "claim": "A binding subtypes AbstractBinding, the second mandatory root",
+   "evidence": "src/roster.jl:70; src/sim.jl:2505"
+  },
+  {
+   "id": "S11c-093",
+   "file": "design/spec.md",
+   "line": 9121,
+   "kind": "mech",
+   "claim": "The legible half is called once at attach on the calling task; the opaque half per datum on the device task",
+   "evidence": "src/sim.jl:2505-2539 claims and reads called in attach!; the framework never calls map_input (src/bindings.jl:7-9)"
+  },
+  {
+   "id": "S11c-094",
+   "file": "design/spec.md",
+   "line": 9127,
+   "kind": "ex",
+   "claim": "T16000MBinding sketch: roots mandatory, is_input/is_output/is_greedy traits, claims, map_input, reads, map_output",
+   "evidence": "src/roster.jl:93, :112, :132, :158, :188; src/bindings.jl:200; names are placeholders, `...` bodies are not runnable"
+  },
+  {
+   "id": "S11c-095",
+   "file": "design/spec.md",
+   "line": 9131,
+   "kind": "law",
+   "claim": "The root carries false defaults for is_input, is_output and is_greedy, so silence is absence",
+   "evidence": "src/roster.jl:93, :112, :132; probe:30 (false,false,false)"
+  },
+  {
+   "id": "S11c-096",
+   "file": "design/spec.md",
+   "line": 9144,
+   "kind": "law",
+   "claim": "One attach! reads each side trait more than once",
+   "evidence": "src/roster.jl:203 (check_binding), src/sim.jl:2512, :2531, :2541 read is_input, is_output, is_greedy again"
+  },
+  {
+   "id": "S11c-097",
+   "file": "design/spec.md",
+   "line": 9152,
+   "kind": "law",
+   "claim": "The framework needs no contract on the datum's shape",
+   "evidence": "src/bindings.jl:7-9; no framework call site of map_input"
+  },
+  {
+   "id": "S11c-098",
+   "file": "design/spec.md",
+   "line": 9156,
+   "kind": "law",
+   "claim": "map_input is bounded by the staging checks",
+   "evidence": "src/devices.jl:340-346 _normalize on every stage!"
+  },
+  {
+   "id": "S11c-099",
+   "file": "design/spec.md",
+   "line": 9157,
+   "kind": "law",
+   "claim": "map_output receives exactly the compiled gather's NamedTuple",
+   "evidence": "src/devices.jl:367-372; probe:101"
+  },
+  {
+   "id": "S11c-100",
+   "file": "design/spec.md",
+   "line": 9159,
+   "kind": "law",
+   "claim": "The framework never calls map_input or map_output; they are conventions of the loop idiom",
+   "evidence": "rg finds no framework call; src/bindings.jl:7-9, :198 `function map_output end`"
+  },
+  {
+   "id": "S11c-101",
+   "file": "design/spec.md",
+   "line": 9165,
+   "kind": "law",
+   "claim": "reads(b) returns a labeled NamedTuple of selectors",
+   "evidence": "src/bindings.jl:165-175 refuses otherwise (:reads_not_namedtuple, :reads_not_selectors)"
+  },
+  {
+   "id": "S11c-102",
+   "file": "design/spec.md",
+   "line": 9168,
+   "kind": "law",
+   "claim": "Labels are carried through compilation in declaration order, keying map_output's NamedTuple",
+   "evidence": "probe:101 keys (:zed,:alpha,:mid) as declared"
+  },
+  {
+   "id": "S11c-103",
+   "file": "design/spec.md",
+   "line": 9170,
+   "kind": "law",
+   "claim": "reads gets the same attach-time validation as claims",
+   "evidence": "src/sim.jl:2520-2523; probe:105 ReadResolution at attach"
+  },
+  {
+   "id": "S11c-104",
+   "file": "design/spec.md",
+   "line": 9171,
+   "kind": "law",
+   "claim": "The read set resolves at the root, with no mount; a path selector's path is absolute",
+   "evidence": "src/bindings.jl:175 _compile_reads(...; source = :table) with Reads((), selectors)"
+  },
+  {
+   "id": "S11c-105",
+   "file": "design/spec.md",
+   "line": 9173,
+   "kind": "law",
+   "claim": "A face selector names a root input (get_input) or a root-exported face (get_face)",
+   "evidence": "src/readers.jl:815-835 get_input at root; :839-880 get_face; probe:105 get_face(root input) refused, probe:106 get_input accepted"
+  },
+  {
+   "id": "S11c-106",
+   "file": "design/spec.md",
+   "line": 9178,
+   "kind": "ex",
+   "claim": "AbstractAircraft and engine families are illustrative domain hierarchies",
+   "evidence": "Stage M lead: placeholder, no src definition expected"
+  },
+  {
+   "id": "S11c-108",
+   "file": "design/spec.md",
+   "line": 9186,
+   "kind": "law",
+   "claim": "claims and reads have error-throwing fallbacks on the root",
+   "evidence": "src/roster.jl:158-159, :188-189; probe:60 :reads_missing"
+  },
+  {
+   "id": "S11c-109",
+   "file": "design/spec.md",
+   "line": 9190,
+   "kind": "law",
+   "claim": "A declared side with no method fails loudly at attach (is_input without claims)",
+   "evidence": "probe:31 NoEnum2 => claims_missing; OutNo => reads_missing"
+  },
+  {
+   "id": "S11c-110",
+   "file": "design/spec.md",
+   "line": 9193,
+   "kind": "law",
+   "claim": "is_input && !is_greedy: claims(b) is called once and its faces staked",
+   "evidence": "src/roster.jl:356-368 one `for claimed in claims(b)`; probe:40"
+  },
+  {
+   "id": "S11c-111",
+   "file": "design/spec.md",
+   "line": 9195,
+   "kind": "law",
+   "claim": "is_input && is_greedy: the claim is computed, and a claims method for the binding is an error",
+   "evidence": "src/roster.jl:211-212; probe:31 GP => greedy_with_claims"
+  },
+  {
+   "id": "S11c-112",
+   "file": "design/spec.md",
+   "line": 9198,
+   "kind": "law",
+   "claim": "is_output: reads(b) is called and the gather compiled",
+   "evidence": "src/sim.jl:2520-2523; probe:101"
+  },
+  {
+   "id": "S11c-113",
+   "file": "design/spec.md",
+   "line": 9200,
+   "kind": "law",
+   "claim": "Neither side declared is an attach-time BindingContractMismatch",
+   "evidence": "src/roster.jl:209-210; probe:31 NoSides2 => neither_side (message wording is finding S11c-089)"
+  },
+  {
+   "id": "S11c-114",
+   "file": "design/spec.md",
+   "line": 9202,
+   "kind": "law",
+   "claim": "is_greedy without is_input is an error",
+   "evidence": "src/roster.jl:207-208; probe:31 Src => greedy_without_input"
+  },
+  {
+   "id": "S11c-115",
+   "file": "design/spec.md",
+   "line": 9205,
+   "kind": "law",
+   "claim": "A claims or reads method defined while its trait reads false is an error",
+   "evidence": "src/roster.jl:213-216; probe:31 Dr => claims_without_input, Dr2 => reads_without_output"
+  },
+  {
+   "id": "S11c-116",
+   "file": "design/spec.md",
+   "line": 9208,
+   "kind": "mech",
+   "claim": "Detection is one `which` against the fallback method",
+   "evidence": "src/roster.jl:204-205"
+  },
+  {
+   "id": "S11c-117",
+   "file": "design/spec.md",
+   "line": 9211,
+   "kind": "law",
+   "claim": "The which detection runs once at a stopped-sim service point, not inside a frame",
+   "evidence": "src/sim.jl:2508-2509 attach! after assert_configurable"
+  },
+  {
+   "id": "S11c-118",
+   "file": "design/spec.md",
+   "line": 9212,
+   "kind": "law",
+   "claim": "Every violation reports BindingContractMismatch naming the binding type",
+   "evidence": "src/roster.jl:207-216; probe:31 seven cases, all BindingContractMismatch with the binding name"
+  },
+  {
+   "id": "S11c-119",
+   "file": "design/spec.md",
+   "line": 9216,
+   "kind": "law",
+   "claim": "gather against a binding with no output side reports DeviceContractMismatch",
+   "evidence": "src/devices.jl:369-370; probe:103"
+  },
+  {
+   "id": "S11c-120",
+   "file": "design/spec.md",
+   "line": 9224,
+   "kind": "ex",
+   "claim": "The rejected `sides(b)` trait does not exist",
+   "evidence": "probe:98 isdefined(Redstone, :sides) == false"
+  },
+  {
+   "id": "S11c-121",
+   "file": "design/spec.md",
+   "line": 9229,
+   "kind": "law",
+   "claim": "is_greedy is a claim source; past the attach point a greedy claim is indistinguishable from a returned one",
+   "evidence": "src/roster.jl:356-368; src/roster.jl:250-253 RosterEntry doc; RosterEntry holds no source flag (src/roster.jl:272-279)"
+  },
+  {
+   "id": "S11c-122",
+   "file": "design/spec.md",
+   "line": 9234,
+   "kind": "law",
+   "claim": "Greediness is orthogonal to reads: a greedy front end may drive a compiled output gather",
+   "evidence": "probe:107 GreedyRead attaches, claim [:a,:b,:c]; no shipped binding does both"
+  },
+  {
+   "id": "S11c-123",
+   "file": "design/spec.md",
+   "line": 9239,
+   "kind": "law",
+   "claim": "The binding stays an attach! argument, never a device field",
+   "evidence": "src/sim.jl:2505-2506; src/devices.jl:63-76 handle holds b"
+  },
+  {
+   "id": "S11c-124",
+   "file": "design/spec.md",
+   "line": 9242,
+   "kind": "law",
+   "claim": "The complement is computed against the roster as it stands; a second greedy attach gets the empty claim",
+   "evidence": "src/roster.jl:358; probe:35 hg2 claim == Symbol[]"
+  },
+  {
+   "id": "S11c-125",
+   "file": "design/spec.md",
+   "line": 9245,
+   "kind": "law",
+   "claim": "The empty greedy attach succeeds and records EmptyGreedyClaim, a warning naming device and binding, in the entry's diagnostic cell",
+   "evidence": "src/sim.jl:2541-2549; src/diagnostics.jl:1542-1546; probe:36 count 1 on device 4"
+  },
+  {
+   "id": "S11c-126",
+   "file": "design/spec.md",
+   "line": 9248,
+   "kind": "mech",
+   "claim": "The log line at return is presentation; the warning lives in the status",
+   "evidence": "src/sim.jl:2548-2549 report_cell! then @warn; probe:36"
+  },
+  {
+   "id": "S11c-127",
+   "file": "design/spec.md",
+   "line": 9251,
+   "kind": "law",
+   "claim": "Several interactive front ends may be rostered at once; with explicit claims they partition the surface",
+   "evidence": "probe:38 claims [:a] and [:b]; src/roster.jl:390-399 exclusivity index"
+  },
+  {
+   "id": "S11c-128",
+   "file": "design/spec.md",
+   "line": 9272,
+   "kind": "law",
+   "claim": "is_input(b) = true with claims(b) = () is a legal device that may write nothing",
+   "evidence": "test/fixtures.jl NoClaim; probe:33 attach succeeds with empty claim"
+  },
+  {
+   "id": "S11c-129",
+   "file": "design/spec.md",
+   "line": 9273,
+   "kind": "law",
+   "claim": "A write by an empty-claim device onto any face is OutOfClaimEntry",
+   "evidence": "src/dataplane.jl:427-431 OutOfClaimEntry for a device writer; probe:33 no batch recorded"
+  },
+  {
+   "id": "S11c-130",
+   "file": "design/spec.md",
+   "line": 9277,
+   "kind": "law",
+   "claim": "The maximal surface is reachable only through is_greedy(b) = true",
+   "evidence": "src/roster.jl:356-368 only the greedy branch computes a complement"
+  },
+  {
+   "id": "S11c-131",
+   "file": "design/spec.md",
+   "line": 9280,
+   "kind": "law",
+   "claim": "claims never returns nothing or a sentinel to mean compute it for me",
+   "evidence": "src/roster.jl:362-366 no sentinel handling; the loop would throw on `nothing`"
+  },
+  {
+   "id": "S11c-132",
+   "file": "design/spec.md",
+   "line": 9286,
+   "kind": "decl",
+   "claim": "TableBinding is the one shipped binding type and is data-driven",
+   "evidence": "rg `<: AbstractBinding` in src finds only src/bindings.jl:55"
+  },
+  {
+   "id": "S11c-133",
+   "file": "design/spec.md",
+   "line": 9290,
+   "kind": "ex",
+   "claim": "TableBinding(stick_y = (face, deadzone, expo), throttle = (face,), trigger = (face,)) constructs",
+   "evidence": "probe:50 builds it; claims [\"a\",\"b\",\"c\"]"
+  },
+  {
+   "id": "S11c-134",
+   "file": "design/spec.md",
+   "line": 9297,
+   "kind": "law",
+   "claim": "A malformed table reports ArgumentInvalid, collected over the entries",
+   "evidence": "src/bindings.jl:60-87; probe:53 four ArgumentInvalid in one throw"
+  },
+  {
+   "id": "S11c-135",
+   "file": "design/spec.md",
+   "line": 9299,
+   "kind": "mech",
+   "claim": "TableBinding's generic map_input is the shared pure conditioning helper and its owner",
+   "evidence": "src/bindings.jl:127-146, :207-220 _condition"
+  },
+  {
+   "id": "S11c-136",
+   "file": "design/spec.md",
+   "line": 9300,
+   "kind": "mech",
+   "claim": "The entry tuple rides in the type so the mapping specializes per table",
+   "evidence": "src/bindings.jl:55 `TableBinding{T<:NamedTuple}`; :131 @generated map_input"
+  },
+  {
+   "id": "S11c-137",
+   "file": "design/spec.md",
+   "line": 9302,
+   "kind": "mech",
+   "claim": "A code-driven binding looks identical to the framework",
+   "evidence": "src/roster.jl:201-218 check_binding reads traits and methods only"
+  },
+  {
+   "id": "S11c-138",
+   "file": "design/spec.md",
+   "line": 9305,
+   "kind": "law",
+   "claim": "Cross-datum state lives in the device struct and arrives inside the datum; map_input stays pure",
+   "evidence": "src/bindings.jl:123-125 docstring; src/bindings.jl:207-220 _condition has no state"
+  }
+ ],
+ "counts": {
+  "law": 78,
+  "mech": 50,
+  "decl": 18,
+  "ex": 14,
+  "ptr": 30,
+  "why": 60
+ }
+}

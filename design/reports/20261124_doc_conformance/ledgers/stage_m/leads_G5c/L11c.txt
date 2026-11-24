@@ -1,0 +1,34 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-309: 13938-13955
+D-310: 13956-14015
+D-366: 15577-15598
+D-367: 15599-15615
+D-368: 15616-15648
+D-369: 15649-15690
+D-370: 15691-15725
+D-371: 15726-15759
+D-372: 15760-15778
+D-373: 15779-15797
+D-374: 15798-15824
+D-375: 15825-15855
+D-376: 15856-15878
+D-377: 15879-15898
+D-378: 15899-15919
+D-379: 15920-15938
+D-380: 15939-15956
+D-381: 15957-15976
+D-382: 15977-16011
+D-402: 16571-16596
+D-406: 16701-16770
+D-407: 16771-16845
+D-429: 17414-17506
+D-451: 19045-19090
+D-474: 20879-20917
+D-476: 20999-21064
+
+# Stage M leads
+names missing: `CallerTaskConflict` at log.md:13965 (D-310)
+names missing: `ReadBindingUnresolved` at log.md:16715 (D-406)
+names missing: `gui` at log.md:13966 (D-310)
+names missing: `needs_calling_task` at log.md:13964 (D-310)
+names missing: `should_close` at log.md:15785 (D-373)

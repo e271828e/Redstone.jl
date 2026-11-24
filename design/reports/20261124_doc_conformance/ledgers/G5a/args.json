@@ -1,0 +1,55 @@
+{
+ "group": "G5a",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "f14dbc1d",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "S11a",
+   "kind": "spec",
+   "range": [
+    7842,
+    8231
+   ],
+   "desc": "§11 preamble, §11.1 staged writes and snapshot reads, §11.2 snapshot publication",
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl), 1082-1108 (src/roster.jl), 1192-1311 (src/sim.jl)"
+  },
+  {
+   "key": "S11b",
+   "kind": "spec",
+   "range": [
+    8232,
+    8753
+   ],
+   "desc": "§11.3 root inputs, claims and the frozen roster, §11.4 per-device staging and the drain",
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl), 1082-1108 (src/roster.jl), 94-104 (src/bindings.jl)"
+  },
+  {
+   "key": "S11c",
+   "kind": "spec",
+   "range": [
+    8754,
+    9307
+   ],
+   "desc": "§11.5 the input trace, §11.6 devices",
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl), 1082-1108 (src/roster.jl), 1449-1471 (src/trace.jl)"
+  },
+  {
+   "key": "S11d",
+   "kind": "spec",
+   "range": [
+    9308,
+    9697
+   ],
+   "desc": "§11.7 the GUI write path, §11.8 the per-writer diagnostic cell",
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl), 1082-1108 (src/roster.jl), 516-613 (src/diagnostics.jl)"
+  },
+  {
+   "key": "K11b",
+   "kind": "companion",
+   "file": "design/companions/inbound_periphery_walkthrough.md, whole",
+   "lines": 296,
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl), 1082-1108 (src/roster.jl)"
+  }
+ ]
+}

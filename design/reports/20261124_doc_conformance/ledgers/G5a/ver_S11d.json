@@ -1,0 +1,84 @@
+{
+ "judgments": [
+  {
+   "id": "S11d-005",
+   "conforms": true,
+   "evidence": "src/structure.jl:1051-1072 terminal_producer ends at a root input (line 1064) or a primitive's port (line 1068), and a build with an unwired input is refused. Probe: every input view of panel_model resolves to :root (3) or :component (2), the rest being their own sources (7 outputs and root inputs). Simulation(Group((; g = Gain(1.0)))) throws UnconnectedInput."
+  },
+  {
+   "id": "S11d-014",
+   "conforms": true,
+   "evidence": "src/sim.jl:628-635 assert_configurable refuses while :running and once :errored. attach! (sim.jl:2508) and detach! (sim.jl:2580) both call it. Probe: attach! and detach! issued mid-run! both throw DiagnosticError{ServiceLifecycle}, with lifecycle :running."
+  },
+  {
+   "id": "S11d-024",
+   "conforms": true,
+   "evidence": "src/devices.jl:569-575 peek never reads task state. A read-only view returns gather_cell(snapshot.store, view.addr), the ordinary snapshot value, whatever orphaned(record) says (devices.jl:607)."
+  },
+  {
+   "id": "S11d-033",
+   "conforms": true,
+   "evidence": "src/devices.jl:71-72 holds the fields structure::Structure and layout::Layout. src/sim.jl:2533-2536 attach! passes sim.model.deployment.build.structure and sim.model.exec.act.layout. Probe: h.structure === sim.model.deployment.build.structure is true, and h.layout === sim.model.exec.act.layout is true."
+  },
+  {
+   "id": "S11d-042",
+   "conforms": true,
+   "evidence": "src/devices.jl:569-575 tries pending only when view.live and otherwise reads gather_cell(snapshot.store, view.addr). Probe: the live view peeks 5.0 against a snapshot value of 1.0, and the read-only view peeks 2.0, its producer's snapshot cell."
+  },
+  {
+   "id": "S11d-004",
+   "conforms": false,
+   "evidence": "src/devices.jl:590-594 returns nothing only when view.incumbent is empty, which means no root input drives the port. src/devices.jl:525-527 makes \"harness\" the incumbent of a root input no device claims, and src/sim.jl:2839 publishes a harness record. So a port no device writes gets the harness's WriterStatus, not nothing. test/test_devices.jl:1167 asserts this. Probe: the unclaimed root input view has incumbent \"harness\" and its status has who == harness, and only the component-driven view returns nothing.",
+   "class": "deviation",
+   "fix": "**`incumbent_status(view, snapshot)` returns the incumbent's writer record** from the snapshot's status ([§11.8][s11-8]), the harness writer's for a root input no device claims, or `nothing` for a port no root input drives ([D-270][d-270]).",
+   "clear": true,
+   "backing_entry": "D-270 (its Position bullet carries the same wording: 'or `nothing` for a port no device writes'). The spec's own incumbent table in §11.7 already names the harness as the incumbent of an unclaimed root input, as the code does."
+  },
+  {
+   "id": "S11d-001",
+   "conforms": true,
+   "evidence": "src/devices.jl:401-403 report!(handle, ::MalformedDatum) writes the handle's own diag_cell, and MalformedDatum is the one kind it takes. Probe: a device that reports from its loop shows totals.malformed == 1 in its own record ('device 1 (Reporter)')."
+  },
+  {
+   "id": "S11d-002",
+   "conforms": true,
+   "evidence": "src/control.jl:180 writes DebtReanchor into loop_diag, reached from the loop's _advance! at sim.jl:2109. src/sim.jl:1572 writes UnboundedRun into sim.plane.loop_diag at run! entry, on the loop's task. Probe: a DebtReanchor reported into loop_diag shows in the 'loop' record."
+  },
+  {
+   "id": "S11d-003",
+   "conforms": true,
+   "evidence": "src/frame.jl:240-243 writes ChatteringBudget into model.frame_diag, and src/model.jl:756-758 writes FiringBudget there. src/model.jl:102 shows the Model owns frame_diag. src/sim.jl:2678 folds it into loop_account. Probe: a ChatteringBudget in frame_diag reaches the loop record's recent and totals.chattering."
+  },
+  {
+   "id": "S11d-052",
+   "conforms": true,
+   "evidence": "src/sim.jl:2656-2680 drain! folds each cell into its account. src/sim.jl:2789-2794 publish! builds every snapshot with _status (sim.jl:2829-2841), a FrameworkStatus of per-writer records."
+  },
+  {
+   "id": "S11d-061",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:141-150 report_cell! appends only while length(ring) < DIAG_RING and otherwise bumps the kind's suppressed count. Probe: after 20 reports the ring holds causes 1..16, and suppressed.malformed == 4."
+  },
+  {
+   "id": "S11d-070",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:161 _heartbeat is '@atomic :acquire cell.heartbeat'. publish! calls it while it assembles the status, in _status at src/sim.jl:2835. Probe: the published heartbeat is about 0.05 s behind time()."
+  },
+  {
+   "id": "S11d-079",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:303-306 FrameworkStatus has fields writers::Vector{WriterStatus} and pacer::PacerStatus. src/sim.jl:2840 fills them. Probe: the fields are (:writers, :pacer)."
+  },
+  {
+   "id": "S11d-088",
+   "conforms": true,
+   "evidence": "src/sim.jl:1746 calls _sweep_tail! in run!'s outer finally. src/sim.jl:1955-1969 folds every device cell, the harness cell, the loop cell and frame_diag once more. Probe: a MalformedDatum reported on a device's exit path appears in termination.residue and not in the terminal snapshot's totals."
+  },
+  {
+   "id": "S11d-097",
+   "conforms": true,
+   "evidence": "src/model.jl:521 phase_bodies, the seam the invariant measures, returns model.exec.bodies, the compiled phase bodies. The cell writes (report_cell!, dataplane.jl:141) and folds (_fold!, dataplane.jl:195, called from drain!, sim.jl:2656) live in the frame hooks and the frame/event code outside those bodies."
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S11d_v/probe.jl. It ran twice. The first run failed in the observer's catch clause, which called diagnostics() on a single-diagnostic error; the second run is clean. I edited no tracked file and committed nothing. 14 of the 15 claims conform. S11d-004 does not: the code, and the §11.7 table in the same section, treat the harness as the incumbent of an unclaimed root input, and incumbent_status then returns the harness's record. The sentence at spec.md:9483 and D-270's Position bullet both say nothing comes back for such a port. A fix would also want D-270's wording aligned, or a dated annotation on it. One adjacent finding outside the claims: D-270 says orphaned is 'a :done or :failed task', but src/devices.jl:607 checks :done alone."
+}

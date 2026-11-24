@@ -1,0 +1,20 @@
+{
+ "CV11a": {
+  "code": [
+   "src/dataplane.jl",
+   "src/devices.jl"
+  ]
+ },
+ "CV11b": {
+  "code": [
+   "src/roster.jl",
+   "src/control.jl",
+   "src/checkpoint.jl"
+  ]
+ },
+ "CV12": {
+  "code": [
+   "src/sim.jl"
+  ]
+ }
+}

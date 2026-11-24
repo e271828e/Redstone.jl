@@ -1,0 +1,122 @@
+{
+ "judgments": [
+  {
+   "id": "S11c-001",
+   "conforms": false,
+   "evidence": "src/trace.jl:22-25 tags a record by writer index into trace.schemas, and the harness writer is a schema entry (src/sim.jl:2671 drains plane.harness_drain into the same trace). Probe P3 (probe.jl:26) with no device rostered records 300 batches whose only writer tag is \"harness\".",
+   "class": "deviation",
+   "fix": "The input trace is the sequence of drained, writer-tagged batches per frame, each batch tagged by the device or the harness writer that staged it.",
+   "clear": true,
+   "note": "This is a wording issue. The harness writer is not a device (glossary g-harness-writer), but its batches are recorded and replayed like a device's. The glossary entry g-trace (spec.md:17118) repeats \"device-tagged\"."
+  },
+  {
+   "id": "S11c-010",
+   "conforms": true,
+   "evidence": "src/trace.jl:121-133. _record! runs two passes over the mask, one to count and one to fill, so the cost is O(width). It allocates one entries vector at its final length per drained batch and boxes the values into it.",
+   "note": "The code makes two O(width) passes, not one. The order of cost the doc states still holds."
+  },
+  {
+   "id": "S11c-020",
+   "conforms": true,
+   "evidence": "src/sim.jl:848-856. init!(sim.model, …) runs boundary zero and publishes through settled!, then trc.header = Checkpoint(checkpoint(sim.model), …). Probe P1 (probe.jl:14) gives a header with frame 0 and boundary 1, so it was taken after the first publication."
+  },
+  {
+   "id": "S11c-014",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:85-96. ModelState also has a `stepper` field, the stepper's carried state. Probe P4 (probe.jl:29) prints (:x, :s, :m, :table, :prior, :stepper, :t, :t₀, :deployment, :layout).",
+   "class": "drift",
+   "fix": "A checkpoint holds the flat buffer `x`, the `s` and `m` stores, the whole signal table (the collection of cells holding every produced signal), the guard priors, the stepper's carried state, `t` and `t₀`, the frame and boundary counters, and the fingerprint (the structural layout) and the deployment ([D-319][d-319], [D-452][d-452]).",
+   "clear": true,
+   "note": "The move is recorded in the D-274 annotation of 2026-11-11 (log.md:12433-12436), in D-452, in commit e7dacf9e, and in §12.6's list (spec.md:10629)."
+  },
+  {
+   "id": "S11c-030",
+   "conforms": true,
+   "evidence": "src/deployment.jl:539-553 has no policy field; probe P5 (probe.jl:32) confirms this. t_end and ignore_stop_requests are keywords of run!, step! and replay!, bound per call by _bind_policy (src/sim.jl:474, 1386, 1488)."
+  },
+  {
+   "id": "S11c-039",
+   "conforms": true,
+   "evidence": "src/sim.jl:697-699 opens the trace at the frame index, 0 under init!. src/sim.jl:2664 adds one per drain, empty drains included. Probes P1 and P2 (probe.jl:13,16) read 0 after init! and 3 after three empty frames. Probe P3 (probe.jl:23) reads 303 after 303 frames."
+  },
+  {
+   "id": "S11c-049",
+   "conforms": true,
+   "evidence": "src/trace.jl:132 pushes every drained batch unconditionally, and nothing drops or samples records. Probe P3 (probe.jl:24) keeps all 300 staged batches over 303 frames. The kill switch at src/sim.jl:699 is the only alternative."
+  },
+  {
+   "id": "S11c-059",
+   "conforms": true,
+   "evidence": "src/sim.jl:2505-2506: function attach!(sim::Simulation, dev::AbstractDevice, new_binding::AbstractBinding; should_abort::Bool = false)"
+  },
+  {
+   "id": "S11c-041",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1688-1691 gives DeviceCrash two fields, cause and abort. The wrapper files report!(entry, DeviceCrash(err, entry.should_abort)) at src/devices.jl:667. Probe P6 (probe.jl:35) shows the one-argument DeviceCrash(e) is not applicable.",
+   "class": "drift",
+   "fix": "    report!(entry, DeviceCrash(e, entry.should_abort))   # §12.4(6): sim continues, device absent",
+   "clear": true,
+   "note": "D-097 records the payload, which carries the should_abort disposition (log.md:3302). §12.4's bracket sketch already uses the two-argument form (spec.md:10138). Commit 51741261 added report!(entry, DeviceCrash)."
+  },
+  {
+   "id": "S11c-068",
+   "conforms": true,
+   "evidence": "src/sim.jl:1837-1852. _init_devices! wraps each init!(entry.dev) in its own try. A throw runs _shutdown!(entry) and files DeviceCrash, or the :interrupt stop on an interrupt."
+  },
+  {
+   "id": "S11c-050",
+   "conforms": true,
+   "evidence": "src/devices.jl:654-659. The InterruptException branch forwards _request_stop!(…, :interrupt) and files no report. The finally line `entry.should_abort && stop!(entry.handle)` (src/devices.jl:671) still runs, but it changes nothing because the stop word keeps its first issuer (src/control.jl:82). Probe P9 (probe.jl:72) attaches with should_abort = true and ends with ControlRequestedStop(:interrupt).",
+   "note": "Read literally, the code does still evaluate should_abort, and the code comment calls that consult 'inert'. The doc's claim holds in effect."
+  },
+  {
+   "id": "S11c-080",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:160 _beat! stores time() into the DiagCell heartbeat. running, latest, stage!, gather, report! and wait_next_snapshot call it on handle.diag_cell (src/devices.jl:230, 285, 308, 342, 368, 402, 435)."
+  },
+  {
+   "id": "S11c-092",
+   "conforms": true,
+   "evidence": "src/roster.jl:70 `abstract type AbstractBinding end`. attach! dispatches on new_binding::AbstractBinding (src/sim.jl:2505)."
+  },
+  {
+   "id": "S11c-102",
+   "conforms": true,
+   "evidence": "src/bindings.jl:176 compiles reads(b) as Reads((), selectors), keeping the NamedTuple's order. Probe P7 (probe.jl:42) gives gather keys (:z, :a) for Readout(z = …, a = …)."
+  },
+  {
+   "id": "S11c-089",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1803-1808: the BindingContractMismatch payload is binding, reason and observed. The :neither_side message (src/diagnostics.jl:1821-1823) reads \"declares neither side\" and names neither `is_input` nor `is_output`. Probe P8 (probe.jl:58-60) prints that message. The :claims_missing message names \"an input side\", not the trait `is_input`.",
+   "class": "defect",
+   "fix": "Make the :neither_side message name both traits, for example \"$(d.binding) declares neither `is_input` nor `is_output` — …\". Make :claims_missing and :reads_missing name `is_input` and `is_output` in the same way.",
+   "clear": true,
+   "note": "Appendix C (spec.md:15790-15802) now says a `reason` tells the cases apart. The trait is named in words in most messages, but not as the trait in the two missing-enumeration cases or the neither-side case."
+  },
+  {
+   "id": "S11c-113",
+   "conforms": true,
+   "evidence": "src/roster.jl:208-209 throws BindingContractMismatch(reason = :neither_side) inside check_binding, which attach! calls first (src/sim.jl:2509). Probe P8 (probe.jl:58) shows the kind BindingContractMismatch."
+  },
+  {
+   "id": "S11c-123",
+   "conforms": true,
+   "evidence": "src/sim.jl:2505 takes the binding as an attach! argument and stores it on the DeviceHandle (src/devices.jl:65, field b), read back by binding(handle) (src/devices.jl:258-267). No device field is read."
+  },
+  {
+   "id": "S11c-107",
+   "conforms": false,
+   "evidence": "src/ ships no GUI binding: the only AbstractBinding subtype in src is TableBinding (src/bindings.jl:55). The greedy shape exists only as the test fixture Greedy (test/fixtures.jl:1725-1727), whose docstring calls it 'the shipped GUI binding's shape'.",
+   "class": "gap",
+   "fix": "The standard GUI binding, owed with the GUI the inspector's later stages build, is a greedy one. It declares `is_input` and `is_greedy`, stakes the computed claim, and defines no `claims` of its own.",
+   "clear": false,
+   "note": "The GUI is owed by the pending.md bullet 'The inspector, stages 2 to 4' (pending.md:177-183), whose cockpit stage holds the GUI package's half. The framework already accepts this shape (src/roster.jl:201-217, 358)."
+  },
+  {
+   "id": "S11c-132",
+   "conforms": true,
+   "evidence": "src/bindings.jl:55 `struct TableBinding{T<:NamedTuple} <: AbstractBinding`, the only binding type in src. Its map_input is generic over the entry table (src/bindings.jl:96-120), so the binding is data-driven."
+  }
+ ],
+ "notes": "I created one probe script, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S11c_v/probe.jl, run against W at f14dbc1d, and edited no tracked file. Probe lines P1 to P9 are cited above. After its last run I deleted one line that threw (a `status` call); no reported result depends on it. Spec line N is line N of W's design/spec.md. Five claims fail. S11c-014 and S11c-041 are drift: stepper state in the checkpoint, and the two-argument DeviceCrash. S11c-089 is a defect: the neither-side message names no trait. S11c-107 is a gap: no GUI binding ships, owed by the inspector stages. S11c-001 is a deviation in wording: the harness writer's batches are recorded, so the tags are writer tags, not device tags."
+}

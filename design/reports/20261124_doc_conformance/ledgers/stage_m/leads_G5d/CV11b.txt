@@ -1,0 +1,5 @@
+names missing: `MyBinding` in a docstring near src/roster.jl:48
+names missing: `MyBinding` in a docstring near src/roster.jl:83
+names missing: `MyBinding` in a docstring near src/roster.jl:102
+names missing: `MyDevice` in a docstring near src/roster.jl:26
+names missing: `service` in a docstring near src/roster.jl:224

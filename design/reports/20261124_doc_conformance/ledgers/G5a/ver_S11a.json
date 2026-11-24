@@ -1,0 +1,122 @@
+{
+ "judgments": [
+  {
+   "id": "S11a-005",
+   "conforms": false,
+   "evidence": "src/frame.jl:117-176 (_frame_steps!): after frame_top! (the drain, src/sim.jl:2020-2023) the frame loops over spans and steps, and each step end runs run_boundary! then settled!, which publishes (src/sim.jl:2040-2042). Probe P2: one frame under h_max = Δt_frame/3 publishes 3 boundaries. The drain-first order holds, but integrate, boundary sequence and publish repeat at every step end and every t*, not once per frame.",
+   "class": "drift",
+   "fix": "Each frame is one iteration of the loop. The loop runs the drain (the frame-top swap that applies staged device writes to the root inputs), then integrates to each boundary in turn, every step end and every `t*` included, and runs the boundary sequence and publishes at each one ([§10.5][s10-5]).",
+   "clear": true,
+   "backing_entry": "D-445, D-449 (frame advanced through boundaries on the lattices, spans taken in equal steps under h_max)"
+  },
+  {
+   "id": "S11a-014",
+   "conforms": true,
+   "evidence": "src/sim.jl:2856 latest(sim) = @atomic :acquire sim.plane.published.latest; src/devices.jl:285 handle latest is the same acquire-load; publish! is a release-store at src/sim.jl:2797. No lock on the read path."
+  },
+  {
+   "id": "S11a-184",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:25-27 StagingCell `@atomic pending::Union{Nothing,Base.RefValue{B}}` (one pointer word); src/dataplane.jl:594-596 Published `@atomic latest`. Published is accessed :release/:acquire (src/sim.jl:2797, 2856). The staging cell's CAS and swap (src/dataplane.jl:463-465, 492) use Julia's default sequentially consistent order, which includes release/acquire."
+  },
+  {
+   "id": "S11a-024",
+   "conforms": true,
+   "evidence": "src/sim.jl:1648-1655: _init_devices! runs init! per roster entry first, then _spawn!(live) (src/devices.jl:678-683) spawns one Threads.@spawn task per entry. An entry whose init! failed is popped from `live` (src/sim.jl:1844), which spec 7942 states separately."
+  },
+  {
+   "id": "S11a-033",
+   "conforms": true,
+   "evidence": "src/build.jl:767-800: build(root; activations::Tuple = ()) calls activation(built, scalar) for each listed scalar before returning."
+  },
+  {
+   "id": "S11a-185",
+   "conforms": false,
+   "evidence": "src/build.jl:969-975: activation(build, T) takes build.lock (a ReentrantLock) on every lookup, a cache hit included. Model construction (src/model.jl:123) and init! (src/model.jl:328) both look up the activation. Probe P4: with activations pre-materialized, Model(dep) and init!(model) each block about 1.7 s while another task holds build.lock. So sweep workers still synchronize on the build's lock, briefly and off the hot path.",
+   "class": "deviation",
+   "fix": "Pre-materializing the sweep's activations with `build(world; activations = …)` ([§9.4][s9-4], [D-135][d-135]) then leaves the workers sharing an artifact nothing writes. Their only synchronization is the build's lock, which each activation lookup holds briefly at construction and `init!`, never on the stepping path.",
+   "clear": false,
+   "backing_entry": "D-135 (its Rationale: pre-materialize and the shared artifact is fully immutable, with no synchronization on any path)"
+  },
+  {
+   "id": "S11a-042",
+   "conforms": true,
+   "evidence": "src/sim.jl:1628-1670 and 2088-2140: run! with an empty roster runs the same _advance!/run_frame! path. Only `isempty(roster) || yield()` (in _advance!) differs, and publish! still runs at every boundary with no reader required."
+  },
+  {
+   "id": "S11a-052",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:539-546 Snapshot field `boundary::Int` (the trajectory's published-boundary ordinal), set from run.boundary in publish! (src/sim.jl:2792-2796). Probe P1 field list: (:t, :frame, :boundary, :store, :layout, :status)."
+  },
+  {
+   "id": "S11a-061",
+   "conforms": true,
+   "evidence": "src/sim.jl:2810-2840: _status builds one WriterStatus per writer at each publication. It takes the account's pending `recent` (the account re-arms to EMPTY_RECENT, so the status owns the vector) and copies the isbits totals. src/dataplane.jl:251-258 and 303-306 are immutable structs."
+  },
+  {
+   "id": "S11a-070",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:539-546: the Snapshot fields are t, frame, boundary, store (the signal-table StoreBundle of cell buffers, captured by capture_stores at src/sim.jl:2794), layout and status. There is no x, s or m field (probe P1)."
+  },
+  {
+   "id": "S11a-081",
+   "conforms": true,
+   "evidence": "Probe P3: the Motor fixture (test/fixtures.jl:156-165) returns mode field `running` from y_state, and port(s, \"c\", :running) reads it from every logged snapshot: Bool[0, 1, 1, 1]. The whole cell store is captured at src/sim.jl:2794."
+  },
+  {
+   "id": "S11a-093",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:490-497: _drain! records every taken batch into the trace, and src/sim.jl:2663 counts every frame, independent of the log's switch or stride. Probe P8 under log_every = 5: trace batches at frames [1, 2, 3, 4, 5, 6], frames = 6."
+  },
+  {
+   "id": "S11a-102",
+   "conforms": true,
+   "evidence": "src/sim.jl:834-835: init!(sim::Simulation, condition = set(); t0 = 0, trace = true, log = true, log_every = 1, log_max = 65536). The block shows the four recording keywords and their exact defaults, as its prose says. It omits t0, which is not a recording keyword."
+  },
+  {
+   "id": "S11a-114",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:723-739 _retain!: once the log is full, each retained append first releases one predecessor (live -= 1) before the push. Probe P7: under log_max = 3, the live count and the non-nothing middle never exceed 3 over 200 single-frame steps. test/test_log.jl:93-100 checks the same at log_max = 8."
+  },
+  {
+   "id": "S11a-123",
+   "conforms": true,
+   "evidence": "src/sim.jl:2656-2681: totals fold only at drain!, and every publication copies them (src/sim.jl:2810-2840). The terminal snapshot therefore carries the totals as of the last frame-top drain. src/sim.jl:1764-1766: _sweep_tail! takes what landed after that drain into the termination record and never publishes it, which matches 'final at the last frame top' (spec 9649-9661)."
+  },
+  {
+   "id": "S11a-133",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:731: thinning only overwrites the log's slot with `nothing`, and compaction is filter! (src/dataplane.jl:735). Nothing frees or reuses a snapshot, so a reader's reference keeps it reachable under GC."
+  },
+  {
+   "id": "S11a-142",
+   "conforms": true,
+   "evidence": "src/sim.jl:2964: series compiles the read set with _compile_reads(read_set, sim.model.deployment.build, Float64; source = :table), the shared resolver at src/readers.jl:665-671 and 684-708."
+  },
+  {
+   "id": "S11a-151",
+   "conforms": true,
+   "evidence": "src/sim.jl:2918-2922: Base.getproperty(x::Series, name) returns getfield(columns, name) for any name outside the four fields. Probe P6: flight.V === flight.columns.V is true, and propertynames lists (:t, :frame, :boundary, :columns, :V)."
+  },
+  {
+   "id": "S11a-161",
+   "conforms": true,
+   "evidence": "src/sim.jl:2505-2541: attach!(sim, dev, new_binding::AbstractBinding) takes the binding and uses it to derive the claim (_claim) and the compiled reads (_compile_binding_reads). The handle carries it (src/devices.jl:63)."
+  },
+  {
+   "id": "S11a-186",
+   "conforms": false,
+   "evidence": "src/readers.jl:757-762: _rebase walks the read's path with resolve_authored, which pushes a PathResolution for a path naming no component (src/structure.jl:1128-1139). Probe P5: attach! with get_output(\"q\", \"y\") on a model with no component q raises PathResolution beside the ReadResolution values. test/test_bindings.jl:213-215 asserts the same. The attach! docstring (src/sim.jl:2496-2499), the _compile_binding_reads docstring (src/bindings.jl:160-163) and spec 11455-11456 all name both kinds. Spec 8200 names ReadResolution alone.",
+   "class": "drift",
+   "fix": "**Attach refuses such a binding with the read's own kind, `ReadResolution`, or the path walk's `PathResolution` for a path that names no component, every violation collected** ([§13.1][s13-1], [§13.3][s13-3], [D-406][d-406]).",
+   "clear": true,
+   "backing_entry": "D-406 (its Position says the resolver's refusals are one kind, ReadResolution; its Rationale already places PathResolution beside it). Commit 401b858e recorded both kinds in the docstrings."
+  },
+  {
+   "id": "S11a-171",
+   "conforms": true,
+   "evidence": "src/readers.jl:684-708: _resolve_reads pushes every selector's violation into one list, and _compile_reads throws it whole (src/readers.jl:669-670). Probe P5: three bad reads give three diagnostics [PathResolution, ReadResolution, ReadResolution]. test/test_bindings.jl:229-234 checks the same."
+  }
+ ],
+ "notes": "I checked all 21 claims against the code at W (detached at f14dbc1d) and changed no tracked file. 18 conform and 3 do not.\n\n- S11a-005 (drift): the frame does drain first. After that, integrate, the boundary sequence and publish repeat at every step end and every t*. They do not run once per frame, as D-445 and D-449 recorded.\n- S11a-185 (deviation, backed by D-135): activation(build, T) holds build.lock on every lookup, a cache hit included. Model construction and init! go through that lookup, so sweep workers still synchronize on the lock briefly, even with activations pre-materialized. Two fixes are possible. The code could add a lock-free read once nothing can be inserted, or the doc could be reworded as proposed. The choice is a design ruling, so clear=false.\n- S11a-186 (drift): at attach, a path naming no component is refused as PathResolution, not ReadResolution. The docstrings, the tests and spec 11456 already say so. Spec 8200 names ReadResolution alone.\n\nOne borderline call: S11a-184 conforms. The staging cell's CAS and swap use Julia's default sequentially consistent order rather than explicit :release/:acquire, and that order includes release/acquire.\n\nMy probe script is at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S11a_v/probe.jl and ran three times. The first two runs stopped on errors in my own probe code, not in Redstone. The third run printed probes P1 to P8."
+}

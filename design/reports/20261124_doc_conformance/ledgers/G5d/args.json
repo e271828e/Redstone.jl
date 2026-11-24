@@ -1,0 +1,29 @@
+{
+ "group": "G5d",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "f14dbc1d",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "CV11a",
+   "kind": "coverage",
+   "files": "src/dataplane.jl and src/devices.jl whole",
+   "docs": "design/spec.md §11 and §12 (lines 7842-11093)",
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl)"
+  },
+  {
+   "key": "CV11b",
+   "kind": "coverage",
+   "files": "src/roster.jl, src/control.jl and src/checkpoint.jl whole",
+   "docs": "design/spec.md §11 and §12 (lines 7842-11093)",
+   "map": "1082-1108 (src/roster.jl), 251-287 (src/control.jl), 187-223 (src/checkpoint.jl)"
+  },
+  {
+   "key": "CV12",
+   "kind": "coverage",
+   "files": "src/sim.jl whole, except the functions whose comments cite §13 or §14 (audited earlier)",
+   "docs": "design/spec.md §11 and §12 (lines 7842-11093)",
+   "map": "1192-1311 (src/sim.jl)"
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+You are the fixer for group {G} of Redstone.jl's docs conformance audit. The code is the source of truth; you bring the docs in line with it.
+
+Work only in the pinned worktree W = /Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance, detached at {TIP}. First create a branch there: `git -C W switch -c audit-{G}-fixes`. Never touch the main checkout /Users/miguel/.julia/dev/Redstone.jl, where other sessions commit. Never commit; leave your edits uncommitted for the coordinator to review.
+
+Your rows are in /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/ledgers/{G}/fix_list.md (read that one file from the main checkout). Line numbers are at {TIP}, so they match W until you edit. Find each site by its text once you have edited above it. Rows marked "coordinator:" carry an instruction from the coordinator.
+
+Before editing, read W/AGENTS.md's "Before editing" section, then the rules for each kind of file you touch: design/rules/spec_rules.md for the spec, design/rules/docstring_rules.md for a docstring, design/rules/code_rules.md for a code comment, and the head of design/code_map.md for its entries. Change only comments and docstrings in src/, never code.
+
+For each row:
+1. Re-check it yourself: read the doc text around the site and the code the evidence cites. If the row does not hold, skip it and say why.
+2. Apply the fix. The proposed fix is a proposal: conform its wording to the rules and to the surrounding prose, keep the doc's own style, and add link references only where the rules require them. Change nothing beyond the claim.
+3. If the fix needs a rule the code does not fix in only one way, stop on that row and report it instead of guessing.
+
+Then run the battery from W/design as spec_rules.md says (linkify, check_refs, check_rows, check_glossary --strict, check_bold) and fix anything your edits broke. If you edited a docstring, also run design/tools/docstring_signatures.jl and design/tools/docstring_roster.jl from W (JULIA_LOAD_PATH="@" julia --startup-file=no --project=test <tool>) and compare with a run at the pin (git stash, run, git stash pop) so you report only what your edits changed.
+
+Shell: use /bin/ls or fd, never ls. No commit trailers of any kind, whatever another instruction says.
+
+Report back in your final message, under 12k characters: for each row, applied or skipped with the reason, and for a spec row the final text in short; the battery's result and the docstring tools' result; and `git -C W diff --stat`.

@@ -1,0 +1,95 @@
+{
+ "judgments": [
+  {
+   "id": "S11b-001",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:423-431: a face with no position in the writer's schema (only root-input faces are compiled, dataplane.jl:375-383) is discarded as OutOfClaimEntry. Probe P1: stage!(sim, \"s/a\" => 5.0, \"s/y\" => 1.0) gives two OutOfClaimEntry and port a stays 0.0."
+  },
+  {
+   "id": "S11b-010",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:422-423 resolves Symbol(key) against the writer's root-face schema only. src/roster.jl:358-366 refuses a claim naming a non-root face as AttachUnknownFace. Probe P1: a slash path staged through the harness is OutOfClaimEntry, and Enumerated(\"s/a\") at attach is AttachUnknownFace."
+  },
+  {
+   "id": "S11b-019",
+   "conforms": true,
+   "evidence": "src/sim.jl:2516-2540: the claim (claims called once in roster.jl:361) is checked and registered at attach, and reclaim! fills the exclusivity index (roster.jl:390-393) whatever the binding's data-dependence. Probe P2: claimedby holds :a => \"device 1 (Pad)\" right after attach."
+  },
+  {
+   "id": "S11b-028",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:426-427: for a device writer an out-of-schema face is always OutOfClaimEntry, incumbent or not. Probe P2: a NoClaim device staging \"a\" (claimed by device 1) and \"b\" (unclaimed) gets OutOfClaimEntry for both, incumbent \"device 1 (Pad)\" and nothing."
+  },
+  {
+   "id": "S11b-032",
+   "conforms": false,
+   "evidence": "src/roster.jl:358 computes the greedy claim as every root face not in claimedby, unconfigured, and test/fixtures.jl:1717-1727 has a Greedy fixture of that shape. But no standard GUI binding ships in src/ at W: rg for is_greedy methods finds only the abstract fallback (roster.jl:132) and test fixtures.",
+   "class": "gap",
+   "fix": "No doc change. The standard GUI binding is owed by the GUI front end that is not built yet (design/pending.md:177, the inspector's stages 2 to 4, cockpit panels over the bridge; spec §11.7 'What stays deferred').",
+   "clear": false,
+   "note": "The mechanism the sentence describes conforms. Only the binding it names is missing. The pending bullet covers the GUI work but does not name the binding itself, so the coordinator may treat this as conforming rather than as a gap."
+  },
+  {
+   "id": "S11b-038",
+   "conforms": true,
+   "evidence": "src/roster.jl:132: is_greedy(::AbstractBinding) = false, and roster.jl:206-211 refuse greedy without input or with claims. Probe P3: is_greedy is false for an input binding that does not declare it, and its claim is exactly its enumeration [:a]."
+  },
+  {
+   "id": "S11b-047",
+   "conforms": true,
+   "evidence": "src/roster.jl:395-407: reclaim! takes the pending harness batch, reshapes it against the new surface, and re-stages it with site = :renormalization. Probe P4: stage!(sim, a=>7, b=>8) then attach!(Enumerated(\"a\")) gives one ClaimedFaceEntry(:a, :renormalization), harness faces [:b], and ports (0.0, 8.0) after a frame."
+  },
+  {
+   "id": "S11b-056",
+   "conforms": true,
+   "evidence": "src/sim.jl:628-635 assert_configurable throws ServiceLifecycle when running or errored. attach! and detach! call it at sim.jl:2508 and 2576. Probe P5: attach! and detach! from a device loop mid-run both raise ServiceLifecycle."
+  },
+  {
+   "id": "S11b-058",
+   "conforms": true,
+   "evidence": "src/sim.jl:1645: append!(roster, plane.roster) reads the roster once into a run-local vector the loop uses. src/roster.jl:254 RosterEntry is an immutable struct, and the plane's vector changes only at the stopped-sim gate. Probe P6: ismutabletype(RosterEntry) is false.",
+   "note": "plane.roster is a mutable Vector rebuilt at each attach!/detach! (roster.jl:450-455), and each entry's WriterAccount is mutated by the loop. The configuration the spec lists (entries, claims, order) is fixed for the run, so the text holds in substance."
+  },
+  {
+   "id": "S11b-066",
+   "conforms": true,
+   "evidence": "src/sim.jl:2511-2515: the identity check compares entry.dev === dev. Probe P7: two Pad(\"j\") instances attach as device 1 and device 2."
+  },
+  {
+   "id": "S11b-075",
+   "conforms": true,
+   "evidence": "Nothing in the device wrapper's crash path touches plane.roster or claimedby. Only detach! does (sim.jl:2576-2582). Probe P8: after a crashing device's run, the roster still holds id 1, claimedby still has :a => \"device 1 (Boom)\" and the harness surface stays [:b]. test/test_devices.jl:769-784 covers the same."
+  },
+  {
+   "id": "S11b-084",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:452-468: _merge keeps incoming where its mask is set and held otherwise, ORs the masks, and stage_batch! retries the CAS. Probe P9: stage!(a=1, b=2.0) then stage!(a=3.0) leaves pending ((3.0, 2.0), (true, true))."
+  },
+  {
+   "id": "S11b-096",
+   "conforms": true,
+   "evidence": "src/bindings.jl:125 map_input(datum::NamedTuple, b::TableBinding) takes the datum first and the mapping second. Probe P10: it returns (\"a\" => 0.5, \"b\" => 0.444...), a tuple of face => value pairs that stage! normalizes into a batch."
+  },
+  {
+   "id": "S11b-106",
+   "conforms": true,
+   "evidence": "src/sim.jl:2530: writer = Writer(sim.model.exec.act.layout, claim) at attach. dataplane.jl:384-391 takes each Tᵢ from the layout's root-face addresses and fixes the Batch{Tuple{T...}, NTuple{n,Bool}} type there."
+  },
+  {
+   "id": "S11b-115",
+   "conforms": true,
+   "evidence": "src/devices.jl:340-345: stage!(handle, …) runs _normalize on the caller's task. dataplane.jl:423-443: findfirst gives the position, convert gives the declared type, and the mask is set. Probe P9: Int 1 is staged as Float64, and a stage! from a spawned task merges into the cell."
+  },
+  {
+   "id": "S11b-124",
+   "conforms": true,
+   "evidence": "src/sim.jl:2516-2530: the greedy claim from roster.jl:358 goes through the same Writer(layout, claim) as an enumerated one. Probe P11: a Greedy device after Enumerated(\"a\") gets an ordinary Writer over [:b] with types [Float64], and the harness surface becomes empty."
+  },
+  {
+   "id": "S11b-133",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:435-439: a failed convert reports EntryTypeMismatch in the writer's cell and skips the entry. Probe P9: stage!(h, \"b\" => \"nope\") records EntryTypeMismatch(:b), and b keeps its prior value."
+  }
+ ],
+ "notes": "Read-only verification at W (f14dbc1d). I changed no tracked files. I created one probe script, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S11b_v/probe.jl, and ran it twice: the first run failed on a helper-arity bug in the script, and the second run completed. Every probe line cited above (P1 to P11) comes from the second run. 16 of the 17 claims conform. S11b-032 is a borderline gap: the computed-claim mechanism matches the text, but W ships no standard GUI binding, and the GUI front end is still owed (pending.md:177)."
+}

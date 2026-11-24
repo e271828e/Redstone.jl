@@ -1,0 +1,7 @@
+signature: sim.jl:1105 trim!: on a signature, not listed: [:baseline, :t0, :backend]
+signature: sim.jl:1246 replay!: on a signature, not listed: [:margin, :ignore_stop_requests, :log, :log_every, :log_max]
+signature: sim.jl:917 overlay!: on a signature, not listed: [:trace, :log, :log_every, :log_max]
+signature: sim.jl:1017 restore!: on a signature, not listed: [:trace, :log, :log_every, :log_max]
+signature: sim.jl:309 Simulation: on a signature, not listed: [:chunk_size, :Δt_frame, :Δt_base, :h_max, :h_min, :algorithm, :firing_budget, :localization_tol, :localization_budget, :attempt_budget]
+signature: sim.jl:2166 step!: on a signature, not listed: [:ignore_stop_requests]
+signature: sim.jl:1139 linearize: on a signature, not listed: [:about, :t0, :width]

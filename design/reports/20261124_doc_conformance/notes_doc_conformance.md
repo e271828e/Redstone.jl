@@ -69,9 +69,26 @@ the tools.
   under a proposing method. pid_anti_windup.md, near line 445, still writes
   `LimitedIntegrator{V, L}`. limited_integrator_variants.md, near line 117,
   gives the strict gate 21 trials where the probe counts 21 or 22.
-- **Paused here on 2026-11-24, at the user's request, before G5.** Re-pin
-  the worktree at master's tip, re-run Stage M, and cut G5 (§11 and §12)
-  from the group plan.
+- **G5, §11 and §12, in four runs at the pin `f14dbc1d`.** Their args and
+  leads are cut, in `ledgers/G5a/` to `ledgers/G5d/`, by
+  `probes/coord/g5.py`. G5a (§11's spec slices and the inbound
+  walkthrough) ran as `wf_8c6a2747-902`: 10 agents, 1.43M tokens, 15 min,
+  8 of 29 flags overturned, 2 misses in 73 sampled rows. Its 12 clear rows
+  wait in `ledgers/G5a/fix_list.md`.
+- **Paused here on 2026-11-24, at the user's request, inside G5.** G5b
+  (§12's spec slices and the flight case studies) was launched and stopped
+  within minutes, so it has no results; launch it afresh. Resume with G5b,
+  G5c (the log, 4 slices) and G5d (coverage, 3 slices) at `f14dbc1d`: pin
+  the worktree there with `git -C W switch --detach f14dbc1d`. Then one
+  fixer takes the clear rows of all four runs. Check `git -C W status`
+  after each run.
+- **The coordinator's helpers** are in `probes/coord/`. `coordlib.py`
+  holds the paths and the code_map and heading lookups. `g5.py` writes a
+  group's args, slices and leads. `tri2.py` merges a run and prints one
+  line per finding. `fixlist.py` writes a fix list, and `logrows.py`
+  appends a run's log rows to the log ledger. `fixer_brief.txt` is the
+  fixer's brief as a template. Each run's args JSON is passed inline to the
+  Workflow tool; the task text comes from `taskOf` in `audit_run.js`.
 
 ## Rulings since the trial
 

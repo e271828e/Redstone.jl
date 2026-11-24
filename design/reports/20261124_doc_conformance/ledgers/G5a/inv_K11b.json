@@ -1,0 +1,1197 @@
+{
+ "rows": [
+  {
+   "id": "K11b-023",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 59,
+   "kind": "decl",
+   "claim": "RosterEntry has fields id::DeviceId, cell::StagingCell, claims::NTuple{N,String}, schema::Schema",
+   "evidence": "src/roster.jl:254 (fields dev, id::Int, drain::Function, should_abort, account, handle); no DeviceId, Schema or claims field. Cell, claims and schema live on handle.writer (src/dataplane.jl:372)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Show the real struct: `dev::AbstractDevice`, `id::Int`, `drain::Function` (the compiled cell+scatter thunk), `should_abort::Bool`, `account::WriterAccount`, `handle::Any`; say the cell, claim (as `writer.faces`) and schema ride on the handle's compiled `Writer` (D-261).",
+   "note": "Later log entry D-261 records the handle holding the writer."
+  },
+  {
+   "id": "K11b-023a",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 61,
+   "kind": "mech",
+   "claim": "the entry's id is stable across runs and is the trace tag",
+   "evidence": "src/roster.jl:254 id::Int; trace tags are the who string, e.g. \"device 1 (Pad)\" (probe:37; src/trace.jl:82 comment says tags are _who(entry) and \"harness\"). The id is stable (src/sim.jl:2525 plane.next_id, never reused), but it is not the tag.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`id::Int  # stable across runs; the trace tags the writer by its name \"device <id> (<Type>)\"`."
+  },
+  {
+   "id": "K11b-027",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 68,
+   "kind": "law",
+   "claim": "attach! validates face names (AttachUnknownFace) first, then admits through identity and claims, then compiles",
+   "evidence": "src/sim.jl:2510-2530: identity check runs before _claim, so an already-attached device with an unknown face gets AlreadyAttached (probe:42); AttachUnknownFace comes between identity and ClaimConflict (probe:44).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Order the sentence as identity (`AlreadyAttached`), then face validation (`AttachUnknownFace`), then claims (`ClaimConflict`), then compile the staging shape and add the entry.",
+   "note": "Spec 11.3 text (design/spec.md:8324) states the unknown-face refusal without an order; test_roster.jl:73 asserts identity first."
+  },
+  {
+   "id": "K11b-033",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 81,
+   "kind": "ex",
+   "claim": "`joystick_binding = (stick_y = (...), throttle = (...))` is a binding",
+   "evidence": "A bare NamedTuple is not an AbstractBinding (src/roster.jl:60); the shipped table binding is `TableBinding(; entries...)` (src/bindings.jl:60, claims at 94). Entry vocabulary face/deadzone/expo is correct.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`joystick_binding = TableBinding(stick_y = (face = \"elevator\", expo = 0.6), throttle = (face = \"throttle\",))`."
+  },
+  {
+   "id": "K11b-056",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 116,
+   "kind": "decl",
+   "claim": "mutable struct StagingCell with `@atomic pending::Union{Nothing, Batch}`",
+   "evidence": "src/dataplane.jl:25: `mutable struct StagingCell{B}` with `@atomic pending::Union{Nothing,Base.RefValue{B}}`; the batch rides boxed in a Ref for one pointer-width CAS (docstring dataplane.jl:15-24).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`mutable struct StagingCell{B}; @atomic pending::Union{Nothing,Base.RefValue{B}}; end  # the latest not-yet-applied batch, boxed so each handoff is one atomic pointer`."
+  },
+  {
+   "id": "K11b-063",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 129,
+   "kind": "ex",
+   "claim": "map_input(datum, binding) returns the NamedTuple `(throttle = 0.70, elevator = -0.05)`",
+   "evidence": "src/bindings.jl:102-125: map_input returns a tuple of `\"face\" => value` pairs, one per datum field, and the datum is keyed by channel (stick_y), not face. Same form at lines 232 (`(flaps = 0.5,)`) and 263.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write `# ⇒ (\"throttle\" => 0.70, \"elevator\" => -0.05)` (pairs, as `stage!` takes them); likewise `(\"flaps\" => 0.5,)` at line 232 and the staged pairs at line 263.",
+   "note": "Low severity, shorthand notation."
+  },
+  {
+   "id": "K11b-082",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 166,
+   "kind": "mech",
+   "claim": "the cells and scatters form a known tuple the frame function specializes on, with no dynamic dispatch at frame top",
+   "evidence": "src/sim.jl:2672-2675: the drain iterates the roster Vector and calls `entry.drain()::Bool`, a thunk held in a `Function` field (src/roster.jl:254), so each entry costs one dynamic call; src/roster.jl:278-281 says this iteration is used in place of tuple specialization.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Say the roster is fixed at `run!`, so the cells and scatters could form a known tuple the frame function specializes on; the code instead iterates the roster, one dynamic call per entry, with each scatter compiled concretely at the stopped-sim point.",
+   "note": "Spec design/spec.md:8683-8690 carries the same wording but calls the specialization 'an implementation freedom ... not an obligation' and licenses iterating a roster array."
+  },
+  {
+   "id": "K11b-087",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 174,
+   "kind": "mech",
+   "claim": "the trace's header holds the initial state, root-input values and per-writer schemas",
+   "evidence": "src/trace.jl:78-83: header is a `Checkpoint` (state, frame, boundary; src/checkpoint.jl:106) and the per-writer schemas are the separate `schemas` field of `Trace`; root-input values sit inside the checkpoint state's table.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "...plus the header (the opening checkpoint: state, root-input values in its table, frame and boundary) and the trace's `schemas` list of per-writer face names."
+  },
+  {
+   "id": "K11b-088",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 176,
+   "kind": "mech",
+   "claim": "replay feeds the same batches to the same drain",
+   "evidence": "src/sim.jl:2656-2660, 2690-2720: under replay `drain!` returns `_replay_drain!`, a separate path that discards live cells and applies compiled feed records (D-274). The loop is the same, the drain is a substituted path.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replay feeds the recorded batches through the ordinary loop, with the drain's one substitution reading the trace instead of the cells, and gets a bit-identical trajectory.",
+   "note": "Low severity."
+  },
+  {
+   "id": "K11b-112",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 217,
+   "kind": "law",
+   "claim": "Two warning kinds cover the violations: OutOfClaimEntry is a device-surface violation, ClaimedFaceEntry the harness violation 'and only that'",
+   "evidence": "src/dataplane.jl:424-431: a harness `stage!` naming a face that is no root input also gives OutOfClaimEntry (probe:33, face :nope, incumbent nothing); stage! docstring src/sim.jl:2609-2611 records it.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add that a harness `stage!` naming no root input at all is also `OutOfClaimEntry` (no incumbent); `ClaimedFaceEntry` stays the harness's kind for a claimed face.",
+   "note": "Spec design/spec.md:16035-16039 says ClaimedFaceEntry is 'Harness writer only' and does not restrict OutOfClaimEntry; the doc agrees with the spec on ClaimedFaceEntry."
+  },
+  {
+   "id": "K11b-113",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 220,
+   "kind": "decl",
+   "claim": "OutOfClaimEntry payload includes the writer id",
+   "evidence": "src/diagnostics.jl:1602-1607: fields are face, value, surface (the claim set) and incumbent; no writer id. The writer is known from whose cell and status record carry it (probe:30).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Face, discarded value, the claim set, and the incumbent's id when the face is claimed elsewhere; the writer is named by the status record that carries it.",
+   "note": "Spec design/spec.md:16040-16042 lists the same four fields without a writer id, agreeing with the code."
+  },
+  {
+   "id": "K11b-137",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 258,
+   "kind": "mech",
+   "claim": "run! bakes widget liveness",
+   "evidence": "src/devices.jl:518-524, 514: liveness is baked by the GUI device's own `port_views(handle)` call at its loop top after the freeze; run! (src/sim.jl:1628-1655) bakes nothing.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`run!` reads the roster and spawns the GUI task, whose loop bakes widget liveness once with `port_views` ([§11.7]), and the drain was specialized at the last stopped-sim point.",
+   "note": "Spec design/spec.md:8301 says liveness is 'baked once at run start', consistent with this at run granularity."
+  },
+  {
+   "id": "K11b-138",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 259,
+   "kind": "mech",
+   "claim": "run! specializes the drain",
+   "evidence": "src/roster.jl:431-441: drain thunks are compiled in `_install_writers!`, called from `attach!`, `detach!` and the doors `init!`, `restore!`, `replay!` (src/sim.jl:703), never from `run!`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "...the drain was specialized when the roster last changed or a door (`init!`, `restore!`, `replay!`) opened the run."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K11b-003",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 17,
+   "kind": "mech",
+   "claim": "the pipeline hands off immutable values",
+   "evidence": "src/dataplane.jl:354"
+  },
+  {
+   "id": "K11b-004",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 18,
+   "kind": "law",
+   "claim": "configured only while stopped, frozen for each run",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "K11b-006",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 25,
+   "kind": "decl",
+   "claim": "root exports input faces, listed by input_faces",
+   "evidence": "probe:13"
+  },
+  {
+   "id": "K11b-007",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 25,
+   "kind": "mech",
+   "claim": "input faces are typed inputs no inner component produces",
+   "evidence": "src/structure.jl:106"
+  },
+  {
+   "id": "K11b-009",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 32,
+   "kind": "mech",
+   "claim": "a root input is a source cell of the signal table",
+   "evidence": "src/dataplane.jl:382"
+  },
+  {
+   "id": "K11b-011",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 40,
+   "kind": "law",
+   "claim": "root inputs are constant within a frame",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "K11b-012",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 41,
+   "kind": "mech",
+   "claim": "the sweep reads root inputs like any signal",
+   "evidence": "src/dataplane.jl:474"
+  },
+  {
+   "id": "K11b-013",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 43,
+   "kind": "law",
+   "claim": "the periphery may write only root inputs",
+   "evidence": "src/dataplane.jl:425"
+  },
+  {
+   "id": "K11b-014",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 44,
+   "kind": "law",
+   "claim": "the outside world acts only by proposing root-input values",
+   "evidence": "src/dataplane.jl:425"
+  },
+  {
+   "id": "K11b-015",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 45,
+   "kind": "decl",
+   "claim": "writes address a root input by face name, not path",
+   "evidence": "src/sim.jl:2605"
+  },
+  {
+   "id": "K11b-016",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 46,
+   "kind": "mech",
+   "claim": "reads address table cells by path or face",
+   "evidence": "src/dataplane.jl:576"
+  },
+  {
+   "id": "K11b-017",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 51,
+   "kind": "law",
+   "claim": "the roster changes only while stopped",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "K11b-018",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 53,
+   "kind": "law",
+   "claim": "attach is legal in built, initialized, stopped; refused running",
+   "evidence": "probe:59"
+  },
+  {
+   "id": "K11b-019",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 54,
+   "kind": "law",
+   "claim": "pause lies inside a run, so the roster stays frozen",
+   "evidence": "src/sim.jl:2441"
+  },
+  {
+   "id": "K11b-020",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 55,
+   "kind": "mech",
+   "claim": "attach!/detach! are stopped-sim gates like init!",
+   "evidence": "src/sim.jl:838"
+  },
+  {
+   "id": "K11b-021",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 56,
+   "kind": "mech",
+   "claim": "a run reads the roster once into its own copy",
+   "evidence": "src/sim.jl:1637"
+  },
+  {
+   "id": "K11b-022",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 57,
+   "kind": "law",
+   "claim": "the roster does not move until the run ends",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "K11b-024",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 69,
+   "kind": "law",
+   "claim": "an unknown claimed face is refused AttachUnknownFace",
+   "evidence": "src/roster.jl:362"
+  },
+  {
+   "id": "K11b-025",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 70,
+   "kind": "law",
+   "claim": "admission checks identity (AlreadyAttached) then claims (ClaimConflict)",
+   "evidence": "src/sim.jl:2510"
+  },
+  {
+   "id": "K11b-026",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 71,
+   "kind": "law",
+   "claim": "ordering makes a ClaimConflict name two distinct devices",
+   "evidence": "src/sim.jl:2444"
+  },
+  {
+   "id": "K11b-027a",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 72,
+   "kind": "mech",
+   "claim": "the writer is compiled, then the entry added",
+   "evidence": "src/sim.jl:2530"
+  },
+  {
+   "id": "K11b-028",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 74,
+   "kind": "law",
+   "claim": "a claim is exclusive, one writer per root input",
+   "evidence": "src/sim.jl:2520"
+  },
+  {
+   "id": "K11b-029",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 75,
+   "kind": "law",
+   "claim": "detach! releases the device's claims",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "K11b-030",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 76,
+   "kind": "mech",
+   "claim": "the claim comes from the binding, returned or computed",
+   "evidence": "src/roster.jl:358"
+  },
+  {
+   "id": "K11b-031",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 76,
+   "kind": "mech",
+   "claim": "the returned claim is the table that drives the mapping",
+   "evidence": "src/bindings.jl:94"
+  },
+  {
+   "id": "K11b-032",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 78,
+   "kind": "law",
+   "claim": "a computed claim needs is_greedy",
+   "evidence": "src/roster.jl:358"
+  },
+  {
+   "id": "K11b-034",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 83,
+   "kind": "mech",
+   "claim": "the table claims (\"elevator\",\"throttle\") in table order",
+   "evidence": "src/bindings.jl:94"
+  },
+  {
+   "id": "K11b-035",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 85,
+   "kind": "decl",
+   "claim": "StandardGUIBinding is a placeholder for the spec's standard GUI binding",
+   "evidence": "src/roster.jl:132"
+  },
+  {
+   "id": "K11b-036",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 86,
+   "kind": "mech",
+   "claim": "a greedy claim is every face unclaimed at attach",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "K11b-037",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 89,
+   "kind": "law",
+   "claim": "nothing tells the claim sources apart after attach",
+   "evidence": "src/sim.jl:2519"
+  },
+  {
+   "id": "K11b-038",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 90,
+   "kind": "mech",
+   "claim": "the complement validates for exclusivity like any claim",
+   "evidence": "src/sim.jl:2519"
+  },
+  {
+   "id": "K11b-039",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 91,
+   "kind": "mech",
+   "claim": "a computed claim gets the same schema, cell, drain, trace",
+   "evidence": "src/sim.jl:2530"
+  },
+  {
+   "id": "K11b-040",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 92,
+   "kind": "law",
+   "claim": "a later greedy binding gets an empty claim, which is legal",
+   "evidence": "probe:47"
+  },
+  {
+   "id": "K11b-041",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 93,
+   "kind": "law",
+   "claim": "the empty greedy claim warns EmptyGreedyClaim",
+   "evidence": "src/sim.jl:2541"
+  },
+  {
+   "id": "K11b-042",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 95,
+   "kind": "law",
+   "claim": "the partition of faces is frozen per run",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "K11b-043",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 96,
+   "kind": "law",
+   "claim": "each face is claimed once or belongs to the harness",
+   "evidence": "src/roster.jl:399"
+  },
+  {
+   "id": "K11b-044",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 98,
+   "kind": "mech",
+   "claim": "the partition is recorded by the trace schemas",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "K11b-045",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 100,
+   "kind": "law",
+   "claim": "device death is not detach; the entry persists",
+   "evidence": "probe:58"
+  },
+  {
+   "id": "K11b-046",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 101,
+   "kind": "mech",
+   "claim": "a crashed or returned task stops filling its cell",
+   "evidence": "src/devices.jl:611"
+  },
+  {
+   "id": "K11b-047",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 102,
+   "kind": "mech",
+   "claim": "a dead task is reported by name through the writer status",
+   "evidence": "src/devices.jl:611"
+  },
+  {
+   "id": "K11b-048",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 103,
+   "kind": "law",
+   "claim": "the entry keeps its claims to run end",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K11b-049",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 103,
+   "kind": "law",
+   "claim": "orphaned root inputs hold last drained values",
+   "evidence": "src/dataplane.jl:491"
+  },
+  {
+   "id": "K11b-050",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 105,
+   "kind": "mech",
+   "claim": "the GUI can show claimed-by and task dead via incumbent_status",
+   "evidence": "src/devices.jl:586"
+  },
+  {
+   "id": "K11b-051",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 106,
+   "kind": "mech",
+   "claim": "recovery is stop, detach!, then init!",
+   "evidence": "src/sim.jl:2576"
+  },
+  {
+   "id": "K11b-052",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 107,
+   "kind": "mech",
+   "claim": "replay! to the end then run! continues the run",
+   "evidence": "src/sim.jl:1280"
+  },
+  {
+   "id": "K11b-053",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 111,
+   "kind": "mech",
+   "claim": "a writer deposits a batch in its staging cell",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "K11b-054",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 112,
+   "kind": "mech",
+   "claim": "a staging cell is a one-slot atomic mailbox per device",
+   "evidence": "src/dataplane.jl:25"
+  },
+  {
+   "id": "K11b-055",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 113,
+   "kind": "mech",
+   "claim": "one device task writes its cell",
+   "evidence": "src/devices.jl:340"
+  },
+  {
+   "id": "K11b-057",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 121,
+   "kind": "law",
+   "claim": "a batch shape is fixed at attach",
+   "evidence": "src/sim.jl:2530"
+  },
+  {
+   "id": "K11b-058",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 121,
+   "kind": "mech",
+   "claim": "a batch is a values tuple plus a Bool mask tuple",
+   "evidence": "src/dataplane.jl:354"
+  },
+  {
+   "id": "K11b-059",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 123,
+   "kind": "mech",
+   "claim": "a set mask position means staged this time",
+   "evidence": "src/dataplane.jl:354"
+  },
+  {
+   "id": "K11b-060",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 123,
+   "kind": "mech",
+   "claim": "untouched positions hold placeholders that are never read",
+   "evidence": "src/dataplane.jl:354"
+  },
+  {
+   "id": "K11b-061",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 125,
+   "kind": "mech",
+   "claim": "map_input returns sparse face=>value pairs",
+   "evidence": "src/bindings.jl:102"
+  },
+  {
+   "id": "K11b-062",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 125,
+   "kind": "mech",
+   "claim": "stage! normalizes pairs through the compiled schema",
+   "evidence": "src/dataplane.jl:416"
+  },
+  {
+   "id": "K11b-064",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 130,
+   "kind": "mech",
+   "claim": "schema maps elevator to 1 and throttle to 2; mask marks touched",
+   "evidence": "probe:27"
+  },
+  {
+   "id": "K11b-065",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 135,
+   "kind": "law",
+   "claim": "staging runs on the device task and touches no loop data",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "K11b-066",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 137,
+   "kind": "mech",
+   "claim": "staging repeatedly CAS-merges into one pending batch",
+   "evidence": "probe:27"
+  },
+  {
+   "id": "K11b-067",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 138,
+   "kind": "law",
+   "claim": "a clear mask keeps pending, a set one wins as newest",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "K11b-068",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 139,
+   "kind": "law",
+   "claim": "merge is the only coalescing policy",
+   "evidence": "src/dataplane.jl:452"
+  },
+  {
+   "id": "K11b-070",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 143,
+   "kind": "law",
+   "claim": "staged values are levels, never deltas",
+   "evidence": "src/bindings.jl:114"
+  },
+  {
+   "id": "K11b-073",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 149,
+   "kind": "law",
+   "claim": "the drain happens at each frame top only",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "K11b-074",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 150,
+   "kind": "mech",
+   "claim": "the loop swaps each cell and applies its scatter",
+   "evidence": "src/dataplane.jl:491"
+  },
+  {
+   "id": "K11b-075",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 151,
+   "kind": "mech",
+   "claim": "the scatter is statically typed and skips unmasked positions",
+   "evidence": "src/dataplane.jl:474"
+  },
+  {
+   "id": "K11b-076",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 152,
+   "kind": "mech",
+   "claim": "the scatter mirrors the output gather",
+   "evidence": "src/dataplane.jl:582"
+  },
+  {
+   "id": "K11b-077",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 153,
+   "kind": "law",
+   "claim": "cells drain in attachment order",
+   "evidence": "src/sim.jl:2672"
+  },
+  {
+   "id": "K11b-079",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 164,
+   "kind": "law",
+   "claim": "the drain validates nothing",
+   "evidence": "src/dataplane.jl:491"
+  },
+  {
+   "id": "K11b-080",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 165,
+   "kind": "law",
+   "claim": "every check runs at staging",
+   "evidence": "src/dataplane.jl:382"
+  },
+  {
+   "id": "K11b-081",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 166,
+   "kind": "mech",
+   "claim": "the roster is fixed at run!, so the drain compiles ahead",
+   "evidence": "src/roster.jl:441"
+  },
+  {
+   "id": "K11b-083",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 168,
+   "kind": "mech",
+   "claim": "no face name is resolved at frame top",
+   "evidence": "src/dataplane.jl:474"
+  },
+  {
+   "id": "K11b-084",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 170,
+   "kind": "law",
+   "claim": "the drain is where proposals become root-input constants",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "K11b-085",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 172,
+   "kind": "law",
+   "claim": "the frame after the drain is a pure function of drained batches",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "K11b-086",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 173,
+   "kind": "mech",
+   "claim": "the trace is a sequence of writer-tagged drained batches",
+   "evidence": "src/trace.jl:22"
+  },
+  {
+   "id": "K11b-089",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 177,
+   "kind": "mech",
+   "claim": "every drained batch is recorded sparse as position=>value",
+   "evidence": "src/trace.jl:121"
+  },
+  {
+   "id": "K11b-090",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 178,
+   "kind": "mech",
+   "claim": "trace size follows touched positions, one record format",
+   "evidence": "src/trace.jl:121"
+  },
+  {
+   "id": "K11b-091",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 180,
+   "kind": "mech",
+   "claim": "replay converts the trace once, up front, off the loop",
+   "evidence": "src/trace.jl:95"
+  },
+  {
+   "id": "K11b-093",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 188,
+   "kind": "decl",
+   "claim": "a claimed binding enumerates faces or declares is_greedy",
+   "evidence": "src/roster.jl:121"
+  },
+  {
+   "id": "K11b-094",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 190,
+   "kind": "mech",
+   "claim": "the GUI is an ordinary claimed writer with a computed claim",
+   "evidence": "src/roster.jl:356"
+  },
+  {
+   "id": "K11b-095",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 192,
+   "kind": "law",
+   "claim": "several front ends coexist if claims are disjoint",
+   "evidence": "src/sim.jl:2520"
+  },
+  {
+   "id": "K11b-096",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 196,
+   "kind": "decl",
+   "claim": "the harness entry point is stage!(sim, \"face\" => value, ...)",
+   "evidence": "src/sim.jl:2605"
+  },
+  {
+   "id": "K11b-097",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 196,
+   "kind": "mech",
+   "claim": "the harness cell is always present and task-free",
+   "evidence": "src/roster.jl:329"
+  },
+  {
+   "id": "K11b-098",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 198,
+   "kind": "mech",
+   "claim": "the harness surface is the complement of all claims",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "K11b-099",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 200,
+   "kind": "mech",
+   "claim": "the harness has its own compiled positional shape and scatter",
+   "evidence": "src/roster.jl:399"
+  },
+  {
+   "id": "K11b-100",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 201,
+   "kind": "mech",
+   "claim": "the harness is recompiled at each stopped-sim attach!/detach!",
+   "evidence": "src/roster.jl:399"
+  },
+  {
+   "id": "K11b-101",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 202,
+   "kind": "mech",
+   "claim": "no device declares residency in the harness surface",
+   "evidence": "src/roster.jl:399"
+  },
+  {
+   "id": "K11b-102",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 204,
+   "kind": "law",
+   "claim": "the harness cell drains last",
+   "evidence": "src/sim.jl:2675"
+  },
+  {
+   "id": "K11b-103",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 205,
+   "kind": "law",
+   "claim": "with disjoint surfaces drain order is unobservable",
+   "evidence": "src/sim.jl:2672"
+  },
+  {
+   "id": "K11b-104",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 210,
+   "kind": "law",
+   "claim": "every writer has a write surface enforced at staging",
+   "evidence": "src/dataplane.jl:425"
+  },
+  {
+   "id": "K11b-105",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 210,
+   "kind": "law",
+   "claim": "an entry reaches a root input iff its face is in the surface",
+   "evidence": "src/dataplane.jl:425"
+  },
+  {
+   "id": "K11b-106",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 212,
+   "kind": "law",
+   "claim": "a rejected entry is dropped with a runtime warning in stage!",
+   "evidence": "src/diagnostics.jl:1727"
+  },
+  {
+   "id": "K11b-107",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 214,
+   "kind": "law",
+   "claim": "a device surface is its claim set",
+   "evidence": "src/sim.jl:2530"
+  },
+  {
+   "id": "K11b-108",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 214,
+   "kind": "law",
+   "claim": "the harness surface is the derived remainder",
+   "evidence": "src/roster.jl:399"
+  },
+  {
+   "id": "K11b-109",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 215,
+   "kind": "law",
+   "claim": "both surfaces are static per run",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "K11b-115",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 222,
+   "kind": "law",
+   "claim": "GUI out-of-surface writes are OutOfClaimEntry",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "K11b-116",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 223,
+   "kind": "mech",
+   "claim": "widgets for out-of-claim faces render read-only (live false)",
+   "evidence": "src/devices.jl:524"
+  },
+  {
+   "id": "K11b-117",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 225,
+   "kind": "decl",
+   "claim": "ClaimedFaceEntry carries face, incumbent, value, site",
+   "evidence": "src/diagnostics.jl:1610"
+  },
+  {
+   "id": "K11b-118",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 225,
+   "kind": "law",
+   "claim": "ClaimedFaceEntry fires for a harness write to a claimed face",
+   "evidence": "probe:33"
+  },
+  {
+   "id": "K11b-119",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 229,
+   "kind": "law",
+   "claim": "a peer's unenumerated unclaimed face gives OutOfClaimEntry at staging",
+   "evidence": "src/dataplane.jl:430"
+  },
+  {
+   "id": "K11b-121",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 234,
+   "kind": "law",
+   "claim": "the rejection happens before the value nears the loop",
+   "evidence": "src/dataplane.jl:382"
+  },
+  {
+   "id": "K11b-122",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 236,
+   "kind": "law",
+   "claim": "GUI shares the contract, claim mechanism, staging and checkless drain",
+   "evidence": "src/roster.jl:356"
+  },
+  {
+   "id": "K11b-123",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 238,
+   "kind": "law",
+   "claim": "autonomous opportunistic writing does not exist",
+   "evidence": "src/roster.jl:121"
+  },
+  {
+   "id": "K11b-124",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 239,
+   "kind": "law",
+   "claim": "a device wanting a face must enumerate it or declare greedy",
+   "evidence": "src/roster.jl:121"
+  },
+  {
+   "id": "K11b-125",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 240,
+   "kind": "law",
+   "claim": "cross-writer races on a root input cannot arise",
+   "evidence": "src/sim.jl:2520"
+  },
+  {
+   "id": "K11b-126",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 241,
+   "kind": "law",
+   "claim": "every claim is exclusive whatever its source",
+   "evidence": "src/sim.jl:2520"
+  },
+  {
+   "id": "K11b-127",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 242,
+   "kind": "law",
+   "claim": "the unclaimed remainder admits only the harness",
+   "evidence": "src/dataplane.jl:430"
+  },
+  {
+   "id": "K11b-128",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 243,
+   "kind": "law",
+   "claim": "drain order is not arbitration",
+   "evidence": "src/sim.jl:2672"
+  },
+  {
+   "id": "K11b-129",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 245,
+   "kind": "mech",
+   "claim": "stage! works while stopped",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "K11b-130",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 246,
+   "kind": "mech",
+   "claim": "a pending harness batch can predate an attach that reshapes the remainder",
+   "evidence": "src/roster.jl:404"
+  },
+  {
+   "id": "K11b-131",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 247,
+   "kind": "mech",
+   "claim": "attach renormalizes it, discarding newly claimed faces as ClaimedFaceEntry",
+   "evidence": "src/roster.jl:404"
+  },
+  {
+   "id": "K11b-132",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 249,
+   "kind": "law",
+   "claim": "every run starts with cells matching the schemas",
+   "evidence": "src/roster.jl:404"
+  },
+  {
+   "id": "K11b-133",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 250,
+   "kind": "law",
+   "claim": "attach! also enforces AttachUnknownFace and ClaimConflict",
+   "evidence": "src/sim.jl:2516"
+  },
+  {
+   "id": "K11b-135",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 256,
+   "kind": "mech",
+   "claim": "joystick then greedy GUI claims flaps, brake at attach",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "K11b-136",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 257,
+   "kind": "mech",
+   "claim": "run! reads the roster",
+   "evidence": "src/sim.jl:1637"
+  },
+  {
+   "id": "K11b-139",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 261,
+   "kind": "mech",
+   "claim": "map_input applies deadzone and expo purely on the device task",
+   "evidence": "src/bindings.jl:125"
+  },
+  {
+   "id": "K11b-140",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 262,
+   "kind": "mech",
+   "claim": "staging normalizes to the two-position tuple",
+   "evidence": "probe:27"
+  },
+  {
+   "id": "K11b-141",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 264,
+   "kind": "mech",
+   "claim": "three stagings leave only the newest in the cell",
+   "evidence": "probe:27"
+  },
+  {
+   "id": "K11b-142",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 265,
+   "kind": "mech",
+   "claim": "GUI stages flaps at its claim's flaps position",
+   "evidence": "probe:38"
+  },
+  {
+   "id": "K11b-143",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 266,
+   "kind": "mech",
+   "claim": "a face claimed elsewhere is read-only for the GUI, baked at the port_views call",
+   "evidence": "src/devices.jl:524"
+  },
+  {
+   "id": "K11b-144",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 269,
+   "kind": "mech",
+   "claim": "frame top swaps and scatters both cells without checks",
+   "evidence": "src/dataplane.jl:491"
+  },
+  {
+   "id": "K11b-145",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 270,
+   "kind": "law",
+   "claim": "root inputs after the drain match the scenario",
+   "evidence": "probe:35"
+  },
+  {
+   "id": "K11b-146",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 271,
+   "kind": "law",
+   "claim": "root inputs are frozen for the frame",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "K11b-147",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 272,
+   "kind": "mech",
+   "claim": "both batches enter the trace in one sparse format",
+   "evidence": "probe:38"
+  },
+  {
+   "id": "K11b-149",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 275,
+   "kind": "mech",
+   "claim": "sweep, boundary, then snapshot publication follow the drain",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "K11b-150",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 276,
+   "kind": "mech",
+   "claim": "the GUI view shows the snapshot value once nothing is pending",
+   "evidence": "src/devices.jl:569"
+  },
+  {
+   "id": "K11b-152",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 105,
+   "kind": "decl",
+   "claim": "T16000M is an illustrative device name (lead: names missing)",
+   "evidence": "illustrative name, no code claim"
+  },
+  {
+   "id": "K11b-153",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 256,
+   "kind": "decl",
+   "claim": "elevator is the illustrative root face name (lead)",
+   "evidence": "probe:13"
+  },
+  {
+   "id": "K11b-154",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 256,
+   "kind": "decl",
+   "claim": "throttle is the illustrative root face name (lead)",
+   "evidence": "probe:13"
+  },
+  {
+   "id": "K11b-155",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 258,
+   "kind": "decl",
+   "claim": "brake is the illustrative root face name (lead)",
+   "evidence": "probe:13"
+  },
+  {
+   "id": "K11b-156",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 233,
+   "kind": "decl",
+   "claim": "flaps is the illustrative root face name (lead)",
+   "evidence": "probe:13"
+  },
+  {
+   "id": "K11b-157",
+   "file": "design/companions/inbound_periphery_walkthrough.md",
+   "line": 144,
+   "kind": "decl",
+   "claim": "press_count and presses are illustrative counter names (lead)",
+   "evidence": "illustrative name, no code claim"
+  }
+ ],
+ "counts": {
+  "law": 59,
+  "mech": 66,
+  "decl": 15,
+  "ex": 6,
+  "why": 10,
+  "ptr": 5
+ }
+}

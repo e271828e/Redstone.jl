@@ -151,3 +151,7 @@ L10-191	design/log.md:19109	law	drift	D-452: the Model refuses a shaped length t
 L10-195	design/log.md:19114	law	drift	D-452: the Model clamps a proposal to `h_max` and to the span's end	The `Model` clamps a proposal into `[h_min, h_max]` and takes the distance to the span's end in equal steps no longer than that.	src/model.jl:879-881 clamps into [h_min, h_max], then divides the distance r to the span's end into ⌈r/cap⌉ equal steps (capped at ⌊r/h_min⌋), rather than clamping to the span's end.	The D-452 annotation says this 'replaces the clamp to h_max and to the span's end' (D-460).	log slice (flagged)
 S9d2-042	D-147
 S9d2-074	D-289
+S11d-004	D-270
+K11b-027	D-216
+K11b-082	D-374
+S11a-185	D-135

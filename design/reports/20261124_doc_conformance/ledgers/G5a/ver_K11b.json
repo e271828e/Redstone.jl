@@ -1,0 +1,189 @@
+{
+ "judgments": [
+  {
+   "id": "K11b-003",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:354 Batch is an immutable struct (probe: `Batch ismutable => false`); src/dataplane.jl:460-466 stage_batch! installs a fresh RefValue by CAS and never mutates a published batch; src/sim.jl:1645 the run copies the roster once."
+  },
+  {
+   "id": "K11b-015",
+   "conforms": true,
+   "evidence": "src/sim.jl:2620-2623 stage!(sim, writes::Pair...) normalizes `\"face\" => value` pairs; src/dataplane.jl:416-421 _normalize resolves Symbol(key) against writer.faces, never a path."
+  },
+  {
+   "id": "K11b-023",
+   "conforms": false,
+   "evidence": "src/roster.jl:254-261 RosterEntry has fields dev, id::Int, drain::Function, should_abort, account, handle (probe K023). No cell, claims or schema field: the writer (faces, cell) sits on the handle (roster.jl:246-249). No DeviceId or Schema type exists in src.",
+   "class": "drift",
+   "fix": "struct RosterEntry\n    dev::AbstractDevice       # the device instance: its identity\n    id::Int                   # stable across runs: names the trace's writer tag\n    drain::Function           # this device's compiled take-and-scatter (§4)\n    should_abort::Bool        # the per-attachment failure policy\n    account::WriterAccount    # the loop's diagnostic account\n    handle::DeviceHandle      # binding, claim and compiled writer: schema and cell (§3)\nend",
+   "clear": false,
+   "backing_entry": "D-261 (the entry keeps the stable id and reads its writer, diagnostic cell and binding through the handle)"
+  },
+  {
+   "id": "K11b-023a",
+   "conforms": true,
+   "evidence": "src/sim.jl:2528-2533 the id is assigned at admission, monotonic, and named in the handle's who \"device $id (Type)\"; src/roster.jl:414-415 _writer_schemas tags the trace by that name; probe K089 schemas \"device 1 (Pad)\" => [:elevator, :throttle]. Entries persist across runs until detach!."
+  },
+  {
+   "id": "K11b-027",
+   "conforms": false,
+   "evidence": "src/sim.jl:2511-2517 the identity check (AlreadyAttached) runs before _claim, which raises AttachUnknownFace (src/roster.jl:361-364), then ClaimConflict (sim.jl:2519-2523). Probe K027: re-attaching a rostered instance under a binding naming an unknown face raises AlreadyAttached, not AttachUnknownFace.",
+   "class": "deviation",
+   "fix": "**Attaching** (`attach!(sim, device, binding)`) is: admit through §11.3's two-part ordered check, **identity** first (`AlreadyAttached`), then validate the binding's face names against the root contract (unknown face → `AttachUnknownFace`), then **claims** (face exclusivity, `ClaimConflict`), ordered so a failing later check always names two *distinct* devices; then compile the staging shape and add the entry.",
+   "clear": false,
+   "backing_entry": "D-216 says AttachUnknownFace is \"a refusal that precedes admission\", which reads as backing the doc's order, though it may mean only that it precedes id assignment; spec §11.3 and D-375 do not place it."
+  },
+  {
+   "id": "K11b-025",
+   "conforms": true,
+   "evidence": "src/sim.jl:2511-2523 identity loop (AlreadyAttached) then claim exclusivity (ClaimConflict); probe K025: same instance with an overlapping claim gives AlreadyAttached."
+  },
+  {
+   "id": "K11b-033",
+   "conforms": false,
+   "evidence": "src/sim.jl:2505 attach! takes new_binding::AbstractBinding; src/bindings.jl:55 the shipped table binding is TableBinding. Probe K033: the bare NamedTuple is not an AbstractBinding, and attach! with it throws MethodError. TableBinding with the same entries gives claims [\"elevator\", \"throttle\"].",
+   "class": "drift",
+   "fix": "joystick_binding = TableBinding(stick_y  = (face = \"elevator\", expo = 0.6),\n                               throttle = (face = \"throttle\",))",
+   "clear": true,
+   "backing_entry": "D-103 (TableBinding as the one shipped data-driven binding); spec §11.6 TableBinding example"
+  },
+  {
+   "id": "K11b-035",
+   "conforms": true,
+   "evidence": "No StandardGUIBinding type in src or test, and none in the inspector repo's src. The spec (§11.6, spec.md:9256) names only \"the standard GUI binding\" and gives it as greedy. src/roster.jl:116-132 is_greedy is the trait the doc's line declares; test/fixtures.jl:1725-1727 Greedy() is the suite's stand-in for the same shape. The name is illustrative."
+  },
+  {
+   "id": "K11b-044",
+   "conforms": true,
+   "evidence": "src/roster.jl:414-418 _writer_schemas pushes each device's faces and the harness remainder onto the trace's schema list at every roster change. Probe K089: schemas [device 1 => [:elevator, :throttle], device 2 => [:flaps, :brake], harness => []]. The doc's own wording is \"a static, printable fact of the run\"."
+  },
+  {
+   "id": "K11b-053",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:460-466 stage_batch! CAS-merges the batch into writer.cell, the writer's own staging cell; probe K064 shows the pending batch in the joystick's cell."
+  },
+  {
+   "id": "K11b-056",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:25-27 `mutable struct StagingCell{B}; @atomic pending::Union{Nothing,Base.RefValue{B}}`: parametric, and the batch is boxed in a Ref (probe K056). Present since increment 9 (bccd9a56). The docstring gives the reason (one pointer-width atomic, CAS on identity), and no log entry records it.",
+   "class": "deviation",
+   "fix": "mutable struct StagingCell{B}\n    @atomic pending::Union{Nothing, Base.RefValue{B}}   # the latest not-yet-applied batch, boxed\nend",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "K11b-063",
+   "conforms": false,
+   "evidence": "src/bindings.jl:126-127 map_input returns a Tuple of \"face\" => value Pairs (docstring :101 `-> Tuple`). Probe K063 gives type Tuple{Pair{String,Float64},Pair{String,Float64}} and value (\"throttle\" => 0.7, \"elevator\" => ...), not a NamedTuple. The doc's own line 125 says pairs.",
+   "class": "drift",
+   "fix": "map_input(datum, binding)      # ⇒ (\"throttle\" => 0.70, \"elevator\" => -0.05)",
+   "clear": true,
+   "backing_entry": "spec §11.4 (map_input returns face ⇒ value pairs, D-104)"
+  },
+  {
+   "id": "K11b-064",
+   "conforms": true,
+   "evidence": "src/roster.jl:356-367 the returned claim keeps the table's enumeration order; src/dataplane.jl:416-438 _normalize maps name to position and sets the mask. Probe K064: schema [:elevator, :throttle], staged (elevator, throttle) with mask (true, true)."
+  },
+  {
+   "id": "K11b-076",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:474-475 _apply! does scatter_cell!(store, addrs[i], staged[i]) per masked position. The output side reads through gather_cell/gather_reads over the same cell addresses (dataplane.jl:574, 579-580). Spec §11.4 says the same."
+  },
+  {
+   "id": "K11b-082",
+   "conforms": false,
+   "evidence": "src/roster.jl:274-280 and src/sim.jl:2670-2673 the drain iterates a Vector{RosterEntry} and calls each entry's drain::Function thunk, which leaves one dynamic dispatch per entry. The code comment calls this \"the iteration §11.4 licenses in place of the tuple specialization\". No known tuple is built. The doc's \"can specialize\" names a freedom the code does not take, and \"no dynamic dispatch at frame top\" does not hold.",
+   "class": "drift",
+   "fix": "...the whole thing is compilable: the cells and their scatters could form a known tuple the frame function specializes on, with no name resolved and no dynamic dispatch at frame top. The freeze makes that a freedom, not an obligation ([D-374][d-374]). The drain iterates the roster through per-writer compiled thunks, a handful of dispatches per frame, and still resolves no name.",
+   "clear": false,
+   "backing_entry": "D-374 (the specialization is an implementation freedom, not an obligation); spec §11.4"
+  },
+  {
+   "id": "K11b-087",
+   "conforms": false,
+   "evidence": "src/trace.jl:78-83 Trace has header::Checkpoint and a separate schemas list; src/checkpoint.jl:106-110 Checkpoint holds state, frame and boundary, so the root-input values come with the state's table and the schemas are not in it (probe K087).",
+   "class": "drift",
+   "fix": "(the per-frame sequence of device-tagged drained batches, plus the header's initial state and root-input values and the per-writer schemas beside it)",
+   "clear": true,
+   "backing_entry": "D-255 (the trace split: a fixed header plus the append-only schemas and batches lists)"
+  },
+  {
+   "id": "K11b-088",
+   "conforms": true,
+   "evidence": "src/sim.jl:2665-2666 the drain point substitutes the feed under :replay. src/sim.jl:2706-2740 _replay_drain! applies the recording's records through compiled scatters at the same frame-top position, in the same order, through the ordinary loop. The conversion back is done once, up front, in _compile_feed (trace.jl:85-104), as the doc's line 180 says."
+  },
+  {
+   "id": "K11b-089",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:495 _drain! calls _record!. src/trace.jl:121-133 builds Vector{Pair{Int,Any}} position => value over the masked positions. Probe K089: [(1, 1, [1 => -0.02, 2 => 0.7]), (1, 2, [1 => 1.0])]."
+  },
+  {
+   "id": "K11b-099",
+   "conforms": true,
+   "evidence": "src/roster.jl:397-400 reclaim! builds a fresh Writer over the unclaimed complement and installs its own drain thunk (roster.jl:458-459). sim.jl:2540 and 2582 call it at attach! and detach!. Probe K132: harness faces go from 4 to 3 after an attach."
+  },
+  {
+   "id": "K11b-108",
+   "conforms": true,
+   "evidence": "src/roster.jl:397-398 the harness surface is the root faces not in claimedby. Probe K108: a greedy device leaves the harness []; probe K132: an explicit claim of brake leaves [:throttle, :elevator, :flaps]."
+  },
+  {
+   "id": "K11b-112",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:426-431 ClaimedFaceEntry is raised for the harness alone (true), but the harness writer also raises OutOfClaimEntry for a face naming no root input. Probe K112: stage!(sim, \"nosuch\" => 1.0) puts an OutOfClaimEntry in the harness cell. The doc presents OutOfClaimEntry as the device-surface kind only.",
+   "class": "drift",
+   "fix": "- `OutOfClaimEntry` — a device-surface violation: the face has no position in the writer's schema; also a harness write naming no root input at all. ...\n- `ClaimedFaceEntry` — a harness-writer violation, and only that: `stage!` named a face some device claims in this run's partition. ...",
+   "clear": true,
+   "backing_entry": "D-200 (the harness writer's staging diagnostics include the no-such-face OutOfClaimEntry)"
+  },
+  {
+   "id": "K11b-113",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1602-1607 OutOfClaimEntry has fields face, value, surface, incumbent, and no writer id (probe K113). src/diagnostics.jl:1562-1564: \"Writer attribution is never a payload field: the channel is per-writer, so the cell supplies it\". Spec Appendix C lists the payload without it.",
+   "class": "drift",
+   "fix": "Face, discarded value, the claim set (plus the incumbent's id when the face is claimed elsewhere); the writer is named by the cell the warning lands in, never by the payload.",
+   "clear": true,
+   "backing_entry": "D-200 (attribution: the cell supplies the writer identity); spec §11.8, Appendix C"
+  },
+  {
+   "id": "K11b-123",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:421-431 a device's write to any face outside its schema is discarded as OutOfClaimEntry, so no device writes a face it did not claim; src/roster.jl:356-358 greed is the explicit is_greedy trait."
+  },
+  {
+   "id": "K11b-132",
+   "conforms": true,
+   "evidence": "src/roster.jl:396-407 reclaim! takes the pending harness batch, reshapes it through the new schema and re-stages it, with newly claimed faces discarded as ClaimedFaceEntry at site :renormalization. Probe K132: brake is dropped with ClaimedFaceEntry(:renormalization), flaps survives at its new position."
+  },
+  {
+   "id": "K11b-137",
+   "conforms": false,
+   "evidence": "src/sim.jl:1562-1578 run! does no liveness work. src/devices.jl:514-518 port_views(handle) bakes the liveness verdict, and the GUI device's loop calls it once at its top (spec §11.7: \"the front end's loop body builds the table once at its top\").",
+   "class": "drift",
+   "fix": "`run!` reads the roster and starts the device tasks; the GUI's loop bakes widget liveness ([§11.7][s11-7]) once at its top with `port_views`; root inputs as above.",
+   "clear": false,
+   "backing_entry": "D-270 (the framework's half of the panel convention: port views built by the front end's loop)"
+  },
+  {
+   "id": "K11b-155",
+   "conforms": true,
+   "evidence": "Probe K155: with throttle, elevator, flaps and brake as root faces, the joystick TableBinding attached first and Greedy() next, the computed claim is [:flaps, :brake], as at doc lines 256-258 and consistent with line 29. src/roster.jl:358 computes it."
+  },
+  {
+   "id": "K11b-138",
+   "conforms": false,
+   "evidence": "src/roster.jl:441-460 the per-writer drain thunks are compiled in _install_writers!. It is called only from reclaim! (attach!/detach!) and from the doors' _open_run! (sim.jl:697-703, from init!/overlay!/restore!/replay!), never from run! (sim.jl:1562-1578). Probe K138: the thunk is compiled after init! and before any advance.",
+   "class": "drift",
+   "fix": "`run!` reads the roster, and the drain it runs was compiled per writer at the stopped-sim attach points and at the door (`init!`); root inputs as above.",
+   "clear": false,
+   "backing_entry": "D-261 (drain thunks compiled at each door and each roster change, at one site)"
+  },
+  {
+   "id": "K11b-144",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:491-496 _drain! does @atomicswap then _apply! with no check, and src/sim.jl:2670-2673 drains every entry then the harness. Probe K144: after one frame the root inputs are [0.7, -0.02, 1.0, 0.0] from both cells."
+  }
+ ],
+ "notes": "Read-only verification of slice K11b at W = f14dbc1d. I changed no tracked file. Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K11b_v/probe.jl. It ran twice: once to find a helper bug, once clean. It loads test/RedstoneTests.jl for the fixtures and builds a four-face aircraft (throttle, elevator, flaps, brake) from two Sum blocks.\n\nJudgment calls:\n- K11b-082: the doc says \\\"can specialize\\\", which the spec also says. I marked it non-conforming because the clause \\\"no dynamic dispatch at frame top\\\" reads as a property of the code, and lines 258-259 state \\\"specializes the drain\\\" as fact. The code takes the licensed iteration.\n- K11b-027: the order between AttachUnknownFace and AlreadyAttached is not fixed by spec §11.3 or D-375. D-216's \\\"precedes admission\\\" may back the doc's order, so the class could be argued as a defect in the code rather than a deviation.\n- K11b-063: the probe shows TableBinding's expo conditioning changes -0.05 to -0.020, so the doc's elevator value reads as a post-conditioning datum. That is illustrative and not judged.\n- K11b-023a: the trace record carries a writer index into schemas whose tag embeds the id (\\\"device N (Type)\\\"), not the bare id. I judged this conforming."
+}

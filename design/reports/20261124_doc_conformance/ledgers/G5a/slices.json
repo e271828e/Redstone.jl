@@ -1,0 +1,39 @@
+{
+ "S11a": {
+  "spec": [
+   [
+    7842,
+    8231
+   ]
+  ]
+ },
+ "S11b": {
+  "spec": [
+   [
+    8232,
+    8753
+   ]
+  ]
+ },
+ "S11c": {
+  "spec": [
+   [
+    8754,
+    9307
+   ]
+  ]
+ },
+ "S11d": {
+  "spec": [
+   [
+    9308,
+    9697
+   ]
+  ]
+ },
+ "K11b": {
+  "files": [
+   "design/companions/inbound_periphery_walkthrough.md"
+  ]
+ }
+}

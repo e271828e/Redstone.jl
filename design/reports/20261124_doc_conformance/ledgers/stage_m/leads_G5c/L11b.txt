@@ -1,0 +1,62 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-144: 5532-5589
+D-149: 5847-5889
+D-160: 6241-6262
+D-174: 6912-6965
+D-177: 7035-7104
+D-189: 7593-7616
+D-192: 7672-7706
+D-193: 7707-7733
+D-199: 7970-7998
+D-200: 7999-8013
+D-201: 8014-8028
+D-202: 8029-8077
+D-203: 8078-8174
+D-216: 8673-8738
+D-217: 8739-8804
+D-218: 8805-8857
+D-228: 9316-9346
+D-232: 9509-9538
+D-240: 9849-9872
+D-241: 9873-9907
+D-244: 10010-10043
+D-255: 10633-10729
+D-260: 10947-11037
+D-268: 11738-11890
+D-270: 11985-12114
+
+# Stage M leads
+names missing: `ReadBindingUnresolved` at log.md:8684 (D-216)
+names missing: `ReplayHeaderMismatch` at log.md:8756 (D-217)
+names missing: `ReplayHeaderMismatch` at log.md:8758 (D-217)
+names missing: `RunPolicy` at log.md:10658 (D-255)
+names missing: `StopFaceInvalid` at log.md:8680 (D-216)
+names missing: `TraceRegister` at log.md:10970 (D-260)
+names missing: `UninitializedSlots` at log.md:5853 (D-149)
+names missing: `_types` at log.md:5543 (D-144)
+names missing: `_types` at log.md:5554 (D-144)
+names missing: `connections` at log.md:5543 (D-144)
+names missing: `exports` at log.md:5543 (D-144)
+names missing: `failed` at log.md:12007 (D-270)
+names missing: `get_` at log.md:5547 (D-144)
+names missing: `get_local` at log.md:5547 (D-144)
+names missing: `get_slot` at log.md:5548 (D-144)
+names missing: `h_x` at log.md:5545 (D-144)
+names missing: `h_xu` at log.md:5545 (D-144)
+names missing: `h_z` at log.md:5545 (D-144)
+names missing: `h_zu` at log.md:5545 (D-144)
+names missing: `init_` at log.md:5543 (D-144)
+names missing: `init_m` at log.md:5544 (D-144)
+names missing: `init_x` at log.md:5544 (D-144)
+names missing: `init_z` at log.md:5544 (D-144)
+names missing: `input_types` at log.md:5544 (D-144)
+names missing: `local_types` at log.md:5544 (D-144)
+names missing: `mark_dead!` at log.md:6248 (D-160)
+names missing: `output_types` at log.md:5544 (D-144)
+names missing: `passthrough` at log.md:5536 (D-144)
+names missing: `peek_port` at log.md:12003 (D-270)
+names missing: `stop_on` at log.md:8759 (D-217)
+names missing: `stop_on` at log.md:10663 (D-255)
+names no_field: `Control.lifecycle` at log.md:10647 (D-255)
+names no_field: `Run.policy` at log.md:10660 (D-255)
+names no_field: `Run.policy` at log.md:10978 (D-260)

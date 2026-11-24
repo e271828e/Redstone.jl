@@ -1,0 +1,43 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-024: 1004-1035
+D-025: 1036-1059
+D-026: 1060-1086
+D-029: 1140-1156
+D-031: 1181-1207
+D-038: 1413-1442
+D-044: 1564-1602
+D-047: 1677-1705
+D-083: 2855-2887
+D-087: 2980-3006
+D-093: 3126-3178
+D-095: 3222-3258
+D-096: 3259-3295
+D-102: 3474-3512
+D-103: 3513-3550
+D-104: 3551-3595
+D-105: 3596-3624
+D-106: 3625-3672
+D-108: 3710-3749
+D-122: 4192-4245
+D-127: 4373-4418
+D-129: 4454-4477
+D-130: 4478-4519
+D-134: 4753-4827
+D-138: 5037-5132
+
+# Stage M leads
+names missing: `ControlLaws` at log.md:1686 (D-047)
+names missing: `ReadBindingUnresolved` at log.md:4490 (D-130)
+names missing: `ReplayHeaderMismatch` at log.md:4382 (D-127)
+names missing: `StaleInteractiveEntry` at log.md:1578 (D-044)
+names missing: `capture` at log.md:3717 (D-108)
+names missing: `capture` at log.md:3721 (D-108)
+names missing: `event_budget` at log.md:4381 (D-127)
+names missing: `get_` at log.md:3226 (D-095)
+names missing: `get_local` at log.md:3227 (D-095)
+names missing: `get_local` at log.md:3230 (D-095)
+names missing: `get_slot` at log.md:3227 (D-095)
+names missing: `interactive` at log.md:4757 (D-134)
+names missing: `local_types` at log.md:3230 (D-095)
+names missing: `stop_on` at log.md:4378 (D-127)
+names missing: `user_callback!` at log.md:1187 (D-031)

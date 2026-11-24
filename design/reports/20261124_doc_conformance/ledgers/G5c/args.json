@@ -1,0 +1,32 @@
+{
+ "group": "G5c",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "f14dbc1d",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "L11a",
+   "kind": "log",
+   "n": 25,
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl), 1082-1108 (src/roster.jl)"
+  },
+  {
+   "key": "L11b",
+   "kind": "log",
+   "n": 25,
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl), 1082-1108 (src/roster.jl)"
+  },
+  {
+   "key": "L11c",
+   "kind": "log",
+   "n": 26,
+   "map": "288-315 (src/dataplane.jl), 477-515 (src/devices.jl), 1082-1108 (src/roster.jl), 1449-1471 (src/trace.jl)"
+  },
+  {
+   "key": "L12",
+   "kind": "log",
+   "n": 30,
+   "map": "1192-1311 (src/sim.jl), 251-287 (src/control.jl), 187-223 (src/checkpoint.jl)"
+  }
+ ]
+}

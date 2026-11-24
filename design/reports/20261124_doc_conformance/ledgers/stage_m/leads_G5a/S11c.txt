@@ -1,0 +1,10 @@
+names missing: `AbstractAircraft` at spec.md:9178
+names missing: `InputMappingError` at spec.md:9108
+names missing: `MyDevice` at spec.md:8942
+names missing: `T16000M` at spec.md:9031
+names missing: `T16000M` at spec.md:9237
+names missing: `UDPInput` at spec.md:9032
+names missing: `should_close` at spec.md:9076
+names missing: `sides` at spec.md:9224
+names test-only: `Telemetry` at spec.md:9032
+names test-only: `mixture` at spec.md:8831

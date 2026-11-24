@@ -135,3 +135,24 @@ the verifier's probe.
   equal steps "no longer than" the proposal. The code caps the count at
   `⌊r / h_min⌋`, so near `h_min` a step can be longer. The fixer added an
   unbolded sentence saying so; the bold ruling itself is yours to reword.
+
+## G5, §11 and §12
+
+- **K11b-023, K11b-137 and K11b-138, wording.** The inbound walkthrough's
+  `RosterEntry` sketch has the wrong fields, and it says `run!` bakes widget
+  liveness and specializes the drain; the GUI's loop bakes liveness through
+  `port_views`, and the drain is compiled at the attach points and the door.
+- **K11b-027, wording.** `attach!`'s order is identity, then face names,
+  then claims; the walkthrough puts face names first. D-216 backs it.
+- **K11b-082, wording.** The walkthrough says the drain is a known tuple with
+  no dynamic dispatch; it iterates a vector of thunks, one dispatch each.
+  D-374 makes the tuple a freedom, not an obligation.
+- **S11a-185, wording.** §11.1 says pre-materialized workers synchronize on
+  nothing; each activation lookup takes the build's lock. Rule it with
+  S9c-055.
+- **S11c-089, defect.** `BindingContractMismatch` messages do not name the
+  `is_input` and `is_output` traits, as §11.6 says every violation report
+  does. Proposed: name both traits in the `:neither_side`, `:claims_missing`
+  and `:reads_missing` messages.
+- **S11b-032 and S11c-107, gap.** The greedy standard GUI binding is owed by
+  `pending.md`; no action.

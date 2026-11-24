@@ -1,0 +1,9 @@
+names missing: `T16000M` at design/companions/inbound_periphery_walkthrough.md:105
+names missing: `elevator` at design/companions/inbound_periphery_walkthrough.md:256
+names missing: `press_count` at design/companions/inbound_periphery_walkthrough.md:144
+names missing: `presses` at design/companions/inbound_periphery_walkthrough.md:144
+names test-only: `brake` at design/companions/inbound_periphery_walkthrough.md:258
+names test-only: `flaps` at design/companions/inbound_periphery_walkthrough.md:233
+names test-only: `flaps` at design/companions/inbound_periphery_walkthrough.md:258
+names test-only: `flaps` at design/companions/inbound_periphery_walkthrough.md:265
+names test-only: `throttle` at design/companions/inbound_periphery_walkthrough.md:256

@@ -1,0 +1,1156 @@
+{
+ "rows": [
+  {
+   "id": "S11b-032",
+   "file": "design/spec.md",
+   "line": 8330,
+   "kind": "decl",
+   "claim": "Standard GUI binding is greedy (everything unclaimed)",
+   "evidence": "no GUI binding in this repo (src, docs, examples)",
+   "verdict": "unverifiable",
+   "note": "The GUI binding lives in RedstoneInspector.jl, outside the pinned worktree."
+  },
+  {
+   "id": "S11b-058",
+   "file": "design/spec.md",
+   "line": 8416,
+   "kind": "mech",
+   "claim": "The roster is a plain immutable value",
+   "evidence": "src/roster.jl:326; src/sim.jl:2536; src/sim.jl:2581",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "plane.roster is a mutable Vector in a mutable DataPlane. attach!/detach! push!/deleteat! it and _install_writers! replaces entries in place (src/roster.jl:451). The run copies it once (src/sim.jl:1645). D-087 states the immutable-value wording, but nothing records the mutable holder as a deviation from it beyond the DataPlane docstring.",
+   "fix": "The roster (roster entries, claims, attachment order) is fixed for the run. It changes only at stopped-sim `attach!`/`detach!`. The loop copies it once at `run!`, and nothing republishes it."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S11b-001",
+   "file": "design/spec.md",
+   "line": 8235,
+   "kind": "law",
+   "claim": "Periphery writes only through root inputs",
+   "evidence": "src/dataplane.jl:382"
+  },
+  {
+   "id": "S11b-002",
+   "file": "design/spec.md",
+   "line": 8236,
+   "kind": "law",
+   "claim": "Each root input has at most one writer at a time",
+   "evidence": "src/sim.jl:2520"
+  },
+  {
+   "id": "S11b-003",
+   "file": "design/spec.md",
+   "line": 8237,
+   "kind": "law",
+   "claim": "Root-input-to-writer assignment is fixed for the run",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "S11b-004",
+   "file": "design/spec.md",
+   "line": 8246,
+   "kind": "mech",
+   "claim": "Write surface is the faces a writer batch may reach (writer.faces)",
+   "evidence": "src/dataplane.jl:424"
+  },
+  {
+   "id": "S11b-005",
+   "file": "design/spec.md",
+   "line": 8248,
+   "kind": "decl",
+   "claim": "Root input is root input_wires key or primitive u_types key",
+   "evidence": "probe:20"
+  },
+  {
+   "id": "S11b-006",
+   "file": "design/spec.md",
+   "line": 8251,
+   "kind": "mech",
+   "claim": "A root input is produced by no component",
+   "evidence": "src/build.jl:445"
+  },
+  {
+   "id": "S11b-007",
+   "file": "design/spec.md",
+   "line": 8253,
+   "kind": "decl",
+   "claim": "Bare u_types is root input `u` at a primitive root",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "S11b-008",
+   "file": "design/spec.md",
+   "line": 8262,
+   "kind": "law",
+   "claim": "Root inputs are constants within a frame (written only at drain)",
+   "evidence": "src/sim.jl:2023"
+  },
+  {
+   "id": "S11b-009",
+   "file": "design/spec.md",
+   "line": 8263,
+   "kind": "law",
+   "claim": "Periphery writes only root inputs, through stage!",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "S11b-010",
+   "file": "design/spec.md",
+   "line": 8266,
+   "kind": "law",
+   "claim": "Slash paths never reach writes; face names only",
+   "evidence": "src/dataplane.jl:422"
+  },
+  {
+   "id": "S11b-011",
+   "file": "design/spec.md",
+   "line": 8270,
+   "kind": "mech",
+   "claim": "Read side chooses per binding: paths for inspection, face names for integration",
+   "evidence": "src/bindings.jl:148"
+  },
+  {
+   "id": "S11b-012",
+   "file": "design/spec.md",
+   "line": 8277,
+   "kind": "law",
+   "claim": "Claiming a claimed root input is an attach-time error",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "S11b-013",
+   "file": "design/spec.md",
+   "line": 8279,
+   "kind": "law",
+   "claim": "Detach releases claims and harness writer takes the faces",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "S11b-014",
+   "file": "design/spec.md",
+   "line": 8280,
+   "kind": "mech",
+   "claim": "Widget liveness comes from the handle claim at port_views time, not recomputed",
+   "evidence": "src/devices.jl:524"
+  },
+  {
+   "id": "S11b-015",
+   "file": "design/spec.md",
+   "line": 8283,
+   "kind": "law",
+   "claim": "No cross-device conflict policy at the drain",
+   "evidence": "src/sim.jl:2671"
+  },
+  {
+   "id": "S11b-016",
+   "file": "design/spec.md",
+   "line": 8285,
+   "kind": "mech",
+   "claim": "Per-device staging cells, CAS merge and atomicswap drain exist",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "S11b-017",
+   "file": "design/spec.md",
+   "line": 8297,
+   "kind": "law",
+   "claim": "A claim bounds what a device may write; batches may touch less",
+   "evidence": "src/dataplane.jl:441"
+  },
+  {
+   "id": "S11b-018",
+   "file": "design/spec.md",
+   "line": 8298,
+   "kind": "decl",
+   "claim": "Data-dependent device claims the binding enumerated set",
+   "evidence": "src/roster.jl:356"
+  },
+  {
+   "id": "S11b-019",
+   "file": "design/spec.md",
+   "line": 8300,
+   "kind": "mech",
+   "claim": "Claim is registered at attach like a joystick claim",
+   "evidence": "src/sim.jl:2518"
+  },
+  {
+   "id": "S11b-020",
+   "file": "design/spec.md",
+   "line": 8302,
+   "kind": "law",
+   "claim": "Enumerated faces stay claimed whole attachment; widgets read-only",
+   "evidence": "src/devices.jl:524"
+  },
+  {
+   "id": "S11b-021",
+   "file": "design/spec.md",
+   "line": 8310,
+   "kind": "law",
+   "claim": "A batch entry reaches a root input iff its face is in the surface",
+   "evidence": "probe:48"
+  },
+  {
+   "id": "S11b-022",
+   "file": "design/spec.md",
+   "line": 8311,
+   "kind": "law",
+   "claim": "Out-of-surface entries are discarded with a warning-severity diagnostic",
+   "evidence": "src/diagnostics.jl:1727"
+  },
+  {
+   "id": "S11b-023",
+   "file": "design/spec.md",
+   "line": 8313,
+   "kind": "mech",
+   "claim": "All enforcement runs at staging on the writer task",
+   "evidence": "src/dataplane.jl:416"
+  },
+  {
+   "id": "S11b-024",
+   "file": "design/spec.md",
+   "line": 8314,
+   "kind": "law",
+   "claim": "The drain performs no checks",
+   "evidence": "src/dataplane.jl:474"
+  },
+  {
+   "id": "S11b-025",
+   "file": "design/spec.md",
+   "line": 8319,
+   "kind": "decl",
+   "claim": "Returned claim: is_input true plus claims(b)",
+   "evidence": "src/roster.jl:362"
+  },
+  {
+   "id": "S11b-026",
+   "file": "design/spec.md",
+   "line": 8320,
+   "kind": "mech",
+   "claim": "claims(b) is called once at attach",
+   "evidence": "probe:143"
+  },
+  {
+   "id": "S11b-027",
+   "file": "design/spec.md",
+   "line": 8322,
+   "kind": "law",
+   "claim": "Returned claim is static and disjoint by attach-time check",
+   "evidence": "src/sim.jl:2519"
+  },
+  {
+   "id": "S11b-028",
+   "file": "design/spec.md",
+   "line": 8324,
+   "kind": "law",
+   "claim": "Unenumerated face write is OutOfClaimEntry, claimed or not",
+   "evidence": "probe:48"
+  },
+  {
+   "id": "S11b-029",
+   "file": "design/spec.md",
+   "line": 8325,
+   "kind": "law",
+   "claim": "Enumeration naming a non-root face is AttachUnknownFace at attach",
+   "evidence": "probe:74"
+  },
+  {
+   "id": "S11b-030",
+   "file": "design/spec.md",
+   "line": 8328,
+   "kind": "decl",
+   "claim": "Computed claim when is_greedy(b) is true",
+   "evidence": "src/roster.jl:358"
+  },
+  {
+   "id": "S11b-031",
+   "file": "design/spec.md",
+   "line": 8329,
+   "kind": "law",
+   "claim": "Computed claim is all root faces minus rostered claims",
+   "evidence": "src/roster.jl:358"
+  },
+  {
+   "id": "S11b-033",
+   "file": "design/spec.md",
+   "line": 8331,
+   "kind": "law",
+   "claim": "Computed claim is disjoint from incumbents by construction",
+   "evidence": "probe:58"
+  },
+  {
+   "id": "S11b-034",
+   "file": "design/spec.md",
+   "line": 8333,
+   "kind": "law",
+   "claim": "Empty complement is legal",
+   "evidence": "probe:63"
+  },
+  {
+   "id": "S11b-035",
+   "file": "design/spec.md",
+   "line": 8334,
+   "kind": "law",
+   "claim": "attach! records EmptyGreedyClaim warning for empty complement",
+   "evidence": "src/sim.jl:2546"
+  },
+  {
+   "id": "S11b-036",
+   "file": "design/spec.md",
+   "line": 8337,
+   "kind": "mech",
+   "claim": "Past attach a computed claim is stored and drained like a returned one",
+   "evidence": "src/sim.jl:2533"
+  },
+  {
+   "id": "S11b-037",
+   "file": "design/spec.md",
+   "line": 8343,
+   "kind": "law",
+   "claim": "Computed claim taken at attach, never recomputed; order decisive",
+   "evidence": "src/roster.jl:358"
+  },
+  {
+   "id": "S11b-038",
+   "file": "design/spec.md",
+   "line": 8346,
+   "kind": "law",
+   "claim": "Greediness is an explicit declaration, never a default",
+   "evidence": "src/roster.jl:201"
+  },
+  {
+   "id": "S11b-039",
+   "file": "design/spec.md",
+   "line": 8348,
+   "kind": "law",
+   "claim": "Cross-writer races on a root input cannot arise",
+   "evidence": "src/sim.jl:2520"
+  },
+  {
+   "id": "S11b-040",
+   "file": "design/spec.md",
+   "line": 8360,
+   "kind": "decl",
+   "claim": "stage!(sim, \"face\" => value, ...) signature",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "S11b-041",
+   "file": "design/spec.md",
+   "line": 8363,
+   "kind": "law",
+   "claim": "Harness stage! works from any task, calling task included",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "S11b-042",
+   "file": "design/spec.md",
+   "line": 8364,
+   "kind": "mech",
+   "claim": "Harness cell is always present and drained, traced, checked like a device cell",
+   "evidence": "src/roster.jl:459"
+  },
+  {
+   "id": "S11b-043",
+   "file": "design/spec.md",
+   "line": 8367,
+   "kind": "law",
+   "claim": "Harness surface is the unclaimed complement",
+   "evidence": "src/roster.jl:397"
+  },
+  {
+   "id": "S11b-044",
+   "file": "design/spec.md",
+   "line": 8369,
+   "kind": "mech",
+   "claim": "Harness surface recomputed at every stopped-sim roster change",
+   "evidence": "src/roster.jl:390"
+  },
+  {
+   "id": "S11b-045",
+   "file": "design/spec.md",
+   "line": 8371,
+   "kind": "law",
+   "claim": "Harness write to a claimed face is ClaimedFaceEntry naming incumbent",
+   "evidence": "probe:41"
+  },
+  {
+   "id": "S11b-046",
+   "file": "design/spec.md",
+   "line": 8373,
+   "kind": "law",
+   "claim": "A rostered greedy claimant empties harness surface; every stage! rejected",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "S11b-047",
+   "file": "design/spec.md",
+   "line": 8376,
+   "kind": "mech",
+   "claim": "A harness batch staged while stopped is renormalized by a later attach",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "S11b-048",
+   "file": "design/spec.md",
+   "line": 8378,
+   "kind": "law",
+   "claim": "The harness cell drains last",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S11b-049",
+   "file": "design/spec.md",
+   "line": 8382,
+   "kind": "mech",
+   "claim": "Writers, claims and harness compile against the activation layout",
+   "evidence": "src/sim.jl:2529"
+  },
+  {
+   "id": "S11b-050",
+   "file": "design/spec.md",
+   "line": 8384,
+   "kind": "mech",
+   "claim": "Layout carries root faces in structure order with probe values",
+   "evidence": "probe:20"
+  },
+  {
+   "id": "S11b-051",
+   "file": "design/spec.md",
+   "line": 8388,
+   "kind": "mech",
+   "claim": "Services take their schema from the Build structure",
+   "evidence": "src/conditions.jl:701"
+  },
+  {
+   "id": "S11b-052",
+   "file": "design/spec.md",
+   "line": 8398,
+   "kind": "law",
+   "claim": "init! establishes every root input (totality refusal otherwise)",
+   "evidence": "probe:153"
+  },
+  {
+   "id": "S11b-053",
+   "file": "design/spec.md",
+   "line": 8399,
+   "kind": "mech",
+   "claim": "Trace header is the checkpoint init! takes",
+   "evidence": "src/sim.jl:856"
+  },
+  {
+   "id": "S11b-054",
+   "file": "design/spec.md",
+   "line": 8400,
+   "kind": "law",
+   "claim": "Totality enforced at init!, trim setup, trim commit, linearize about",
+   "evidence": "src/linearize.jl:316"
+  },
+  {
+   "id": "S11b-055",
+   "file": "design/spec.md",
+   "line": 8406,
+   "kind": "law",
+   "claim": "attach!/detach! legal in built, initialized, stopped",
+   "evidence": "probe:85"
+  },
+  {
+   "id": "S11b-056",
+   "file": "design/spec.md",
+   "line": 8408,
+   "kind": "law",
+   "claim": "attach!/detach! while running is ServiceLifecycle",
+   "evidence": "probe:104"
+  },
+  {
+   "id": "S11b-057",
+   "file": "design/spec.md",
+   "line": 8410,
+   "kind": "law",
+   "claim": "errored simulation refuses both with ServiceLifecycle",
+   "evidence": "src/sim.jl:633"
+  },
+  {
+   "id": "S11b-059",
+   "file": "design/spec.md",
+   "line": 8417,
+   "kind": "mech",
+   "claim": "Loop reads the roster once at run!, nothing republishes",
+   "evidence": "src/sim.jl:1645"
+  },
+  {
+   "id": "S11b-060",
+   "file": "design/spec.md",
+   "line": 8418,
+   "kind": "mech",
+   "claim": "Root-face partition into surfaces plus harness is static per run",
+   "evidence": "src/roster.jl:390"
+  },
+  {
+   "id": "S11b-061",
+   "file": "design/spec.md",
+   "line": 8420,
+   "kind": "mech",
+   "claim": "Attachment order is the roster own order",
+   "evidence": "src/sim.jl:2536"
+  },
+  {
+   "id": "S11b-062",
+   "file": "design/spec.md",
+   "line": 8421,
+   "kind": "mech",
+   "claim": "Trace tags records by writer name carrying the stable device id",
+   "evidence": "src/roster.jl:414"
+  },
+  {
+   "id": "S11b-063",
+   "file": "design/spec.md",
+   "line": 8425,
+   "kind": "mech",
+   "claim": "Validation, claims and shape compilation run at the attach point",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "S11b-064",
+   "file": "design/spec.md",
+   "line": 8427,
+   "kind": "law",
+   "claim": "Configuration is immutable while running",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "S11b-065",
+   "file": "design/spec.md",
+   "line": 8434,
+   "kind": "law",
+   "claim": "Device identity is the instance (===)",
+   "evidence": "src/sim.jl:2512"
+  },
+  {
+   "id": "S11b-066",
+   "file": "design/spec.md",
+   "line": 8435,
+   "kind": "law",
+   "claim": "Two instances of one type are two devices",
+   "evidence": "src/sim.jl:2512"
+  },
+  {
+   "id": "S11b-067",
+   "file": "design/spec.md",
+   "line": 8437,
+   "kind": "mech",
+   "claim": "Device id assigned at attach, monotonic, never reused",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "S11b-068",
+   "file": "design/spec.md",
+   "line": 8438,
+   "kind": "law",
+   "claim": "Id lives as long as the roster entry, across runs",
+   "evidence": "src/roster.jl:254"
+  },
+  {
+   "id": "S11b-069",
+   "file": "design/spec.md",
+   "line": 8441,
+   "kind": "law",
+   "claim": "Admission checks identity then claims, in order",
+   "evidence": "src/sim.jl:2511"
+  },
+  {
+   "id": "S11b-070",
+   "file": "design/spec.md",
+   "line": 8445,
+   "kind": "law",
+   "claim": "Rostered instance rejected as AlreadyAttached naming entry and binding",
+   "evidence": "probe:51"
+  },
+  {
+   "id": "S11b-071",
+   "file": "design/spec.md",
+   "line": 8447,
+   "kind": "law",
+   "claim": "Claim conflict is ClaimConflict naming two distinct devices",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "S11b-072",
+   "file": "design/spec.md",
+   "line": 8451,
+   "kind": "law",
+   "claim": "Rebinding is detach! then attach!, both legal when stopped",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "S11b-073",
+   "file": "design/spec.md",
+   "line": 8454,
+   "kind": "mech",
+   "claim": "Identity check first keeps ClaimConflict between distinct devices",
+   "evidence": "src/sim.jl:2511"
+  },
+  {
+   "id": "S11b-074",
+   "file": "design/spec.md",
+   "line": 8456,
+   "kind": "law",
+   "claim": "Detaching an unrostered device is NotAttached",
+   "evidence": "probe:55"
+  },
+  {
+   "id": "S11b-075",
+   "file": "design/spec.md",
+   "line": 8461,
+   "kind": "law",
+   "claim": "Device death does not detach; entry and claims persist to run end",
+   "evidence": "src/devices.jl:650"
+  },
+  {
+   "id": "S11b-076",
+   "file": "design/spec.md",
+   "line": 8463,
+   "kind": "mech",
+   "claim": "Heartbeat and task state show the death by writer name",
+   "evidence": "src/devices.jl:611"
+  },
+  {
+   "id": "S11b-077",
+   "file": "design/spec.md",
+   "line": 8466,
+   "kind": "law",
+   "claim": "Dead device root inputs hold last drained values; no one inherits",
+   "evidence": "probe:129"
+  },
+  {
+   "id": "S11b-078",
+   "file": "design/spec.md",
+   "line": 8467,
+   "kind": "mech",
+   "claim": "Read-only widgets render the orphan via incumbent_status/orphaned",
+   "evidence": "src/devices.jl:590"
+  },
+  {
+   "id": "S11b-079",
+   "file": "design/spec.md",
+   "line": 8468,
+   "kind": "law",
+   "claim": "Recovery between runs: stop, detach!, init! or replay!-to-end then run!",
+   "evidence": "src/sim.jl:1272"
+  },
+  {
+   "id": "S11b-080",
+   "file": "design/spec.md",
+   "line": 8478,
+   "kind": "law",
+   "claim": "Mid-run attach is refused (the reader addition is not built)",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "S11b-081",
+   "file": "design/spec.md",
+   "line": 8478,
+   "kind": "law",
+   "claim": "A pure reader claims nothing",
+   "evidence": "src/sim.jl:2515"
+  },
+  {
+   "id": "S11b-082",
+   "file": "design/spec.md",
+   "line": 8482,
+   "kind": "mech",
+   "claim": "Thread-budget warning once per run against the frozen roster",
+   "evidence": "src/sim.jl:1801"
+  },
+  {
+   "id": "S11b-083",
+   "file": "design/spec.md",
+   "line": 8505,
+   "kind": "law",
+   "claim": "One atomic staging cell per attached device",
+   "evidence": "src/sim.jl:2532"
+  },
+  {
+   "id": "S11b-084",
+   "file": "design/spec.md",
+   "line": 8505,
+   "kind": "law",
+   "claim": "One coalescing policy: CAS merge, newest wins per face",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "S11b-085",
+   "file": "design/spec.md",
+   "line": 8507,
+   "kind": "law",
+   "claim": "A device staging cell has a single writer, its own task",
+   "evidence": "src/devices.jl:340"
+  },
+  {
+   "id": "S11b-086",
+   "file": "design/spec.md",
+   "line": 8509,
+   "kind": "mech",
+   "claim": "Staging merges incoming batch into the pending one",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "S11b-087",
+   "file": "design/spec.md",
+   "line": 8510,
+   "kind": "law",
+   "claim": "Untouched faces survive; re-staged faces take newest level",
+   "evidence": "probe:31"
+  },
+  {
+   "id": "S11b-088",
+   "file": "design/spec.md",
+   "line": 8511,
+   "kind": "law",
+   "claim": "Device CAS fails only on a drain intercept; retry bounded",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "S11b-089",
+   "file": "design/spec.md",
+   "line": 8513,
+   "kind": "law",
+   "claim": "Intercepted writes are applied and not re-staged",
+   "evidence": "src/dataplane.jl:25"
+  },
+  {
+   "id": "S11b-090",
+   "file": "design/spec.md",
+   "line": 8514,
+   "kind": "mech",
+   "claim": "Harness cell takes concurrent stagers with the same CAS retry",
+   "evidence": "src/dataplane.jl:460"
+  },
+  {
+   "id": "S11b-091",
+   "file": "design/spec.md",
+   "line": 8525,
+   "kind": "ex",
+   "claim": "`flaps` and `gear` are placeholder face names in the hazard example",
+   "evidence": "lead: placeholder"
+  },
+  {
+   "id": "S11b-092",
+   "file": "design/spec.md",
+   "line": 8527,
+   "kind": "law",
+   "claim": "No user-facing overwrite opt-in `complete(binding)` exists",
+   "evidence": "lead: rg complete( src finds none"
+  },
+  {
+   "id": "S11b-093",
+   "file": "design/spec.md",
+   "line": 8533,
+   "kind": "ex",
+   "claim": "`press_count` and `presses` are illustrative names",
+   "evidence": "lead: placeholder"
+  },
+  {
+   "id": "S11b-094",
+   "file": "design/spec.md",
+   "line": 8540,
+   "kind": "mech",
+   "claim": "map_input and conditioning run on the device task; framework never calls it",
+   "evidence": "src/bindings.jl:6"
+  },
+  {
+   "id": "S11b-095",
+   "file": "design/spec.md",
+   "line": 8541,
+   "kind": "ex",
+   "claim": "`assign_input!` is the FlightCore predecessor name (prior art)",
+   "evidence": "lead: prior art"
+  },
+  {
+   "id": "S11b-096",
+   "file": "design/spec.md",
+   "line": 8542,
+   "kind": "decl",
+   "claim": "map_input(data, mapping) returns face => value pairs",
+   "evidence": "src/bindings.jl:125"
+  },
+  {
+   "id": "S11b-097",
+   "file": "design/spec.md",
+   "line": 8543,
+   "kind": "law",
+   "claim": "map_input is pure, run outside the loop frame",
+   "evidence": "src/bindings.jl:6"
+  },
+  {
+   "id": "S11b-098",
+   "file": "design/spec.md",
+   "line": 8544,
+   "kind": "law",
+   "claim": "Trace holds root-input-level batches",
+   "evidence": "src/trace.jl:121"
+  },
+  {
+   "id": "S11b-099",
+   "file": "design/spec.md",
+   "line": 8546,
+   "kind": "decl",
+   "claim": "Mapping is a declarative table: channel to face, plus deadzone and expo",
+   "evidence": "src/bindings.jl:55"
+  },
+  {
+   "id": "S11b-100",
+   "file": "design/spec.md",
+   "line": 8548,
+   "kind": "mech",
+   "claim": "TableBinding applies deadzone/expo in its generic map_input",
+   "evidence": "src/bindings.jl:209"
+  },
+  {
+   "id": "S11b-101",
+   "file": "design/spec.md",
+   "line": 8550,
+   "kind": "mech",
+   "claim": "TableBinding owns the shared pure conditioning helper",
+   "evidence": "src/bindings.jl:3"
+  },
+  {
+   "id": "S11b-102",
+   "file": "design/spec.md",
+   "line": 8559,
+   "kind": "ex",
+   "claim": "`q_ref`, `q_sf` and `axis` are illustrative names",
+   "evidence": "lead: placeholder"
+  },
+  {
+   "id": "S11b-103",
+   "file": "design/spec.md",
+   "line": 8562,
+   "kind": "law",
+   "claim": "Trace records post-conditioning levels",
+   "evidence": "src/trace.jl:121"
+  },
+  {
+   "id": "S11b-104",
+   "file": "design/spec.md",
+   "line": 8564,
+   "kind": "law",
+   "claim": "Raw stick levels are not recorded",
+   "evidence": "src/trace.jl:121"
+  },
+  {
+   "id": "S11b-105",
+   "file": "design/spec.md",
+   "line": 8569,
+   "kind": "mech",
+   "claim": "Staged representation is fixed per attachment at attach",
+   "evidence": "src/sim.jl:2532"
+  },
+  {
+   "id": "S11b-106",
+   "file": "design/spec.md",
+   "line": 8571,
+   "kind": "mech",
+   "claim": "Claim set and root-input types known at attach from the layout",
+   "evidence": "src/dataplane.jl:382"
+  },
+  {
+   "id": "S11b-107",
+   "file": "design/spec.md",
+   "line": 8574,
+   "kind": "decl",
+   "claim": "Content type is a pair of positional tuples over the claim set",
+   "evidence": "probe:22"
+  },
+  {
+   "id": "S11b-108",
+   "file": "design/spec.md",
+   "line": 8575,
+   "kind": "decl",
+   "claim": "Values tuple concrete Tuple{T1..Tn} with parallel Bool mask",
+   "evidence": "probe:22"
+  },
+  {
+   "id": "S11b-109",
+   "file": "design/spec.md",
+   "line": 8576,
+   "kind": "law",
+   "claim": "Set mask means staged this time; clear means untouched",
+   "evidence": "src/dataplane.jl:441"
+  },
+  {
+   "id": "S11b-110",
+   "file": "design/spec.md",
+   "line": 8577,
+   "kind": "law",
+   "claim": "Untouched positions hold placeholders and are never read",
+   "evidence": "src/dataplane.jl:474"
+  },
+  {
+   "id": "S11b-111",
+   "file": "design/spec.md",
+   "line": 8578,
+   "kind": "law",
+   "claim": "The mask guards every consumer",
+   "evidence": "src/trace.jl:121"
+  },
+  {
+   "id": "S11b-112",
+   "file": "design/spec.md",
+   "line": 8579,
+   "kind": "law",
+   "claim": "Batch is isbits with one concrete layout per writer",
+   "evidence": "probe:22"
+  },
+  {
+   "id": "S11b-113",
+   "file": "design/spec.md",
+   "line": 8580,
+   "kind": "law",
+   "claim": "Root inputs only receive masked positions",
+   "evidence": "src/dataplane.jl:474"
+  },
+  {
+   "id": "S11b-114",
+   "file": "design/spec.md",
+   "line": 8581,
+   "kind": "mech",
+   "claim": "Writer holds the face-name to position schema, reached through the entry handle",
+   "evidence": "src/dataplane.jl:372"
+  },
+  {
+   "id": "S11b-115",
+   "file": "design/spec.md",
+   "line": 8592,
+   "kind": "mech",
+   "claim": "Shim maps name to position, converts, sets mask on the device task",
+   "evidence": "src/dataplane.jl:416"
+  },
+  {
+   "id": "S11b-116",
+   "file": "design/spec.md",
+   "line": 8595,
+   "kind": "mech",
+   "claim": "Merge sketch: values by incoming mask, masks OR-ed",
+   "evidence": "src/dataplane.jl:452"
+  },
+  {
+   "id": "S11b-117",
+   "file": "design/spec.md",
+   "line": 8598,
+   "kind": "mech",
+   "claim": "Drain sketch: scatter skips unmasked positions",
+   "evidence": "src/dataplane.jl:474"
+  },
+  {
+   "id": "S11b-118",
+   "file": "design/spec.md",
+   "line": 8609,
+   "kind": "law",
+   "claim": "Placeholders come from probe values, constructible for each declared type",
+   "evidence": "src/dataplane.jl:386"
+  },
+  {
+   "id": "S11b-119",
+   "file": "design/spec.md",
+   "line": 8612,
+   "kind": "mech",
+   "claim": "Merge is positional, mask-driven, unrolled, width-independent",
+   "evidence": "src/dataplane.jl:452"
+  },
+  {
+   "id": "S11b-120",
+   "file": "design/spec.md",
+   "line": 8615,
+   "kind": "mech",
+   "claim": "Drain applies each cell through an attach-compiled scatter",
+   "evidence": "src/roster.jl:284"
+  },
+  {
+   "id": "S11b-121",
+   "file": "design/spec.md",
+   "line": 8617,
+   "kind": "mech",
+   "claim": "Scatter mirrors the compiled output gather",
+   "evidence": "src/store.jl:59"
+  },
+  {
+   "id": "S11b-122",
+   "file": "design/spec.md",
+   "line": 8619,
+   "kind": "decl",
+   "claim": "map_input returns face => value pairs for what the datum touched",
+   "evidence": "src/bindings.jl:125"
+  },
+  {
+   "id": "S11b-123",
+   "file": "design/spec.md",
+   "line": 8621,
+   "kind": "mech",
+   "claim": "stage! normalizes pairs through the attach-compiled shim",
+   "evidence": "src/dataplane.jl:416"
+  },
+  {
+   "id": "S11b-124",
+   "file": "design/spec.md",
+   "line": 8628,
+   "kind": "law",
+   "claim": "Greedy claim device is compiled like any claim set",
+   "evidence": "src/sim.jl:2533"
+  },
+  {
+   "id": "S11b-125",
+   "file": "design/spec.md",
+   "line": 8633,
+   "kind": "mech",
+   "claim": "Harness cell compiled to a positional shape with shim, merge, scatter",
+   "evidence": "src/roster.jl:397"
+  },
+  {
+   "id": "S11b-126",
+   "file": "design/spec.md",
+   "line": 8636,
+   "kind": "mech",
+   "claim": "Harness shape recompiled at each attach!/detach!",
+   "evidence": "src/roster.jl:390"
+  },
+  {
+   "id": "S11b-127",
+   "file": "design/spec.md",
+   "line": 8641,
+   "kind": "law",
+   "claim": "No name-keyed dynamic path; no face name resolved in the frame",
+   "evidence": "src/dataplane.jl:491"
+  },
+  {
+   "id": "S11b-128",
+   "file": "design/spec.md",
+   "line": 8645,
+   "kind": "law",
+   "claim": "Attach renormalizes a pending harness batch; ClaimedFaceEntry for newly claimed faces",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "S11b-129",
+   "file": "design/spec.md",
+   "line": 8649,
+   "kind": "law",
+   "claim": "Run starts with cells matching the run schemas",
+   "evidence": "src/roster.jl:400"
+  },
+  {
+   "id": "S11b-130",
+   "file": "design/spec.md",
+   "line": 8655,
+   "kind": "law",
+   "claim": "Every check runs in stage! normalization on the writer task",
+   "evidence": "src/dataplane.jl:416"
+  },
+  {
+   "id": "S11b-131",
+   "file": "design/spec.md",
+   "line": 8659,
+   "kind": "law",
+   "claim": "Device out-of-claim face is OutOfClaimEntry",
+   "evidence": "probe:48"
+  },
+  {
+   "id": "S11b-132",
+   "file": "design/spec.md",
+   "line": 8661,
+   "kind": "law",
+   "claim": "Harness write to claimed face is ClaimedFaceEntry naming incumbent",
+   "evidence": "probe:41"
+  },
+  {
+   "id": "S11b-133",
+   "file": "design/spec.md",
+   "line": 8663,
+   "kind": "law",
+   "claim": "Unconvertible value is EntryTypeMismatch",
+   "evidence": "probe:45"
+  },
+  {
+   "id": "S11b-134",
+   "file": "design/spec.md",
+   "line": 8666,
+   "kind": "law",
+   "claim": "Nothing remains at the drain; it is pure application",
+   "evidence": "src/dataplane.jl:491"
+  },
+  {
+   "id": "S11b-135",
+   "file": "design/spec.md",
+   "line": 8671,
+   "kind": "law",
+   "claim": "Drain takes each cell with one atomicswap(cell, nothing)",
+   "evidence": "src/dataplane.jl:492"
+  },
+  {
+   "id": "S11b-136",
+   "file": "design/spec.md",
+   "line": 8673,
+   "kind": "law",
+   "claim": "Drain applies cells in attachment order, harness last",
+   "evidence": "src/sim.jl:2671"
+  },
+  {
+   "id": "S11b-137",
+   "file": "design/spec.md",
+   "line": 8679,
+   "kind": "law",
+   "claim": "Frame outcome is a pure function of the drained batches",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "S11b-138",
+   "file": "design/spec.md",
+   "line": 8682,
+   "kind": "mech",
+   "claim": "Drain thunks are compiled per entry at stopped-sim points",
+   "evidence": "src/roster.jl:284"
+  },
+  {
+   "id": "S11b-139",
+   "file": "design/spec.md",
+   "line": 8686,
+   "kind": "mech",
+   "claim": "Code iterates the roster (the permitted alternative to tuple specialization)",
+   "evidence": "src/sim.jl:2671"
+  },
+  {
+   "id": "S11b-140",
+   "file": "design/spec.md",
+   "line": 8688,
+   "kind": "law",
+   "claim": "Tuple specialization is a freedom, not an obligation",
+   "evidence": "src/sim.jl:2671"
+  },
+  {
+   "id": "S11b-141",
+   "file": "design/spec.md",
+   "line": 8700,
+   "kind": "ex",
+   "claim": "`u_cmd` and `τ` are placeholder root inputs of the worked example",
+   "evidence": "lead: placeholder"
+  },
+  {
+   "id": "S11b-142",
+   "file": "design/spec.md",
+   "line": 8715,
+   "kind": "mech",
+   "claim": "Peek rule: widget shows own pending write, else snapshot value",
+   "evidence": "src/devices.jl:569"
+  }
+ ],
+ "counts": {
+  "law": 78,
+  "mech": 47,
+  "decl": 12,
+  "ex": 5,
+  "ptr": 50,
+  "why": 55
+ }
+}

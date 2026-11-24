@@ -1,0 +1,1514 @@
+{
+ "rows": [
+  {
+   "id": "S11a-184",
+   "file": "design/spec.md",
+   "line": 7908,
+   "kind": "mech",
+   "claim": "Staging cells and the published reference are release/acquire @atomic fields",
+   "evidence": "src/dataplane.jl:26 (`@atomic pending`, default ordering); src/dataplane.jl:492 (`@atomicswap`, default); src/dataplane.jl:465 (`@atomicreplace`, default); src/sim.jl:2797 (release-store), src/sim.jl:2857 (acquire-load)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Say the published reference is stored with release and loaded with acquire, and the staging cell's operations (`@atomicreplace` merge, `@atomicswap` take, `@atomic` load) use Julia's default sequentially consistent ordering, which is stronger. Or: 'single words, `@atomic` fields, the published reference with release/acquire ordering'.",
+   "note": "Only the published reference and the heartbeat/flag fields name :release/:acquire. Soundness is unaffected since seq_cst implies release/acquire."
+  },
+  {
+   "id": "S11a-185",
+   "file": "design/spec.md",
+   "line": 7938,
+   "kind": "law",
+   "claim": "Pre-materializing activations leaves no worker synchronizing on anything",
+   "evidence": "src/build.jl:970-974 (`activation` takes `@lock build.lock` on every lookup, hit included); src/build.jl:708",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Replace 'leaves no worker synchronizing on anything' with 'leaves every activation lookup a hit under the build's short lock, with no first-request race and no re-derivation'. Or, as a defect, make the hit path lock-free (read the dictionary without the lock once all activations are materialized).",
+   "note": "Same overstatement at spec.md:5750 ('no synchronization on any path'), outside this slice. Each Simulation constructs one activation lookup, so the lock is brief and uncontended in practice."
+  },
+  {
+   "id": "S11a-186",
+   "file": "design/spec.md",
+   "line": 8200,
+   "kind": "law",
+   "claim": "Attach refuses a binding whose read fails with the read's own kind, ReadResolution",
+   "evidence": "probe:66 (a path naming no component gives PathResolution :unknown_child beside ReadResolution :store_selector and :undeclared in one collected throw); src/sim.jl:2525; src/readers.jl:546; log D-440",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Attach refuses such a binding with the read's own kind, `ReadResolution`, or `PathResolution` where a path names no component (D-440), every violation collected in one throw.",
+   "note": "D-440 (log.md:18390) moved an unknown path's refusal to PathResolution. The series docstring (src/sim.jl:2951-2953) already states both kinds. The spec sentence at 8200 omits the carve-out. The same sentence at 8160 ('refused as it is at attach') is unaffected."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S11a-001",
+   "file": "design/spec.md",
+   "line": 7860,
+   "kind": "why",
+   "claim": "FlightCore guards SimControl and Model by io_lock (prior art name, lead)",
+   "evidence": "FlightCore name, not Redstone code"
+  },
+  {
+   "id": "S11a-002",
+   "file": "design/spec.md",
+   "line": 7864,
+   "kind": "why",
+   "claim": "Lock only free between steps enforces boundary visibility",
+   "evidence": "prior art rationale"
+  },
+  {
+   "id": "S11a-003",
+   "file": "design/spec.md",
+   "line": 7865,
+   "kind": "why",
+   "claim": "Lock transplant rejected on three structural costs (D-022)",
+   "evidence": "log reference"
+  },
+  {
+   "id": "S11a-004",
+   "file": "design/spec.md",
+   "line": 7866,
+   "kind": "why",
+   "claim": "Under a lock input timing is unrecorded so no trace and no bit-identical replay",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-005",
+   "file": "design/spec.md",
+   "line": 7875,
+   "kind": "mech",
+   "claim": "Frame loop order is drain, integrate, boundary sequence, publish",
+   "evidence": "src/sim.jl:2021, src/sim.jl:2042"
+  },
+  {
+   "id": "S11a-006",
+   "file": "design/spec.md",
+   "line": 7877,
+   "kind": "decl",
+   "claim": "A frame is what step! counts",
+   "evidence": "src/sim.jl:2220"
+  },
+  {
+   "id": "S11a-007",
+   "file": "design/spec.md",
+   "line": 7878,
+   "kind": "mech",
+   "claim": "The frame ordinal keys the trace records",
+   "evidence": "src/sim.jl:2663, src/trace.jl:21"
+  },
+  {
+   "id": "S11a-008",
+   "file": "design/spec.md",
+   "line": 7886,
+   "kind": "law",
+   "claim": "Devices stage writes at any wall-clock moment, via staging cells",
+   "evidence": "src/dataplane.jl:25"
+  },
+  {
+   "id": "S11a-009",
+   "file": "design/spec.md",
+   "line": 7888,
+   "kind": "law",
+   "claim": "Devices never touch live root inputs; only the drain applies batches",
+   "evidence": "src/dataplane.jl:492"
+  },
+  {
+   "id": "S11a-010",
+   "file": "design/spec.md",
+   "line": 7889,
+   "kind": "law",
+   "claim": "Drain occurs once per frame at its top",
+   "evidence": "src/sim.jl:2021, src/frame.jl:91"
+  },
+  {
+   "id": "S11a-011",
+   "file": "design/spec.md",
+   "line": 7891,
+   "kind": "law",
+   "claim": "Drain never happens at a t* boundary",
+   "evidence": "src/sim.jl:2021 (only frame_top! calls drain!)"
+  },
+  {
+   "id": "S11a-012",
+   "file": "design/spec.md",
+   "line": 7892,
+   "kind": "mech",
+   "claim": "No lock is held while stepping",
+   "evidence": "src/sim.jl:2656 (drain lock-free), src/frame.jl:91"
+  },
+  {
+   "id": "S11a-013",
+   "file": "design/spec.md",
+   "line": 7894,
+   "kind": "law",
+   "claim": "Loop publishes an immutable snapshot at each settled boundary",
+   "evidence": "src/sim.jl:2042"
+  },
+  {
+   "id": "S11a-014",
+   "file": "design/spec.md",
+   "line": 7896,
+   "kind": "law",
+   "claim": "Readers observe snapshot without coordinating with the loop",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "S11a-015",
+   "file": "design/spec.md",
+   "line": 7898,
+   "kind": "mech",
+   "claim": "Control holds pause, pace, stop as atomic fields",
+   "evidence": "src/control.jl:62"
+  },
+  {
+   "id": "S11a-016",
+   "file": "design/spec.md",
+   "line": 7900,
+   "kind": "mech",
+   "claim": "One loop on the calling task and one spawned task per rostered device",
+   "evidence": "src/sim.jl:1654, src/devices.jl:678"
+  },
+  {
+   "id": "S11a-017",
+   "file": "design/spec.md",
+   "line": 7905,
+   "kind": "mech",
+   "claim": "Staging cell and published reference are single-word atomic fields",
+   "evidence": "src/dataplane.jl:26, src/dataplane.jl:595"
+  },
+  {
+   "id": "S11a-018",
+   "file": "design/spec.md",
+   "line": 7909,
+   "kind": "mech",
+   "claim": "GC reclaims; no hazard pointers or epochs in the code",
+   "evidence": "src/dataplane.jl:586"
+  },
+  {
+   "id": "S11a-019",
+   "file": "design/spec.md",
+   "line": 7912,
+   "kind": "law",
+   "claim": "Exchanged objects are deeply immutable (Snapshot, Batch)",
+   "evidence": "src/dataplane.jl:539"
+  },
+  {
+   "id": "S11a-020",
+   "file": "design/spec.md",
+   "line": 7914,
+   "kind": "law",
+   "claim": "No user code runs inside a framework critical section",
+   "evidence": "src/sim.jl:2789"
+  },
+  {
+   "id": "S11a-021",
+   "file": "design/spec.md",
+   "line": 7915,
+   "kind": "mech",
+   "claim": "Mappings run on device tasks, not the loop",
+   "evidence": "src/bindings.jl:196"
+  },
+  {
+   "id": "S11a-022",
+   "file": "design/spec.md",
+   "line": 7917,
+   "kind": "mech",
+   "claim": "A stalled device cannot stall the loop (loop never waits on devices mid-run)",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "S11a-023",
+   "file": "design/spec.md",
+   "line": 7918,
+   "kind": "why",
+   "claim": "GC pauses and OS scheduling are residual exposures; pacer debt absorbs them",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-024",
+   "file": "design/spec.md",
+   "line": 7925,
+   "kind": "mech",
+   "claim": "run! spawns one task per roster entry after device init!",
+   "evidence": "src/sim.jl:1645-1654"
+  },
+  {
+   "id": "S11a-025",
+   "file": "design/spec.md",
+   "line": 7927,
+   "kind": "mech",
+   "claim": "Tail joins all device tasks at every stop",
+   "evidence": "src/sim.jl:1895"
+  },
+  {
+   "id": "S11a-026",
+   "file": "design/spec.md",
+   "line": 7927,
+   "kind": "law",
+   "claim": "attach! never spawns a task",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "S11a-027",
+   "file": "design/spec.md",
+   "line": 7928,
+   "kind": "law",
+   "claim": "attach! is refused while running or errored (stopped-sim only)",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "S11a-028",
+   "file": "design/spec.md",
+   "line": 7930,
+   "kind": "law",
+   "claim": "The loop runs on the calling task",
+   "evidence": "src/sim.jl:1658"
+  },
+  {
+   "id": "S11a-029",
+   "file": "design/spec.md",
+   "line": 7931,
+   "kind": "law",
+   "claim": "Loop-side throw is rethrown synchronously where no device is rostered",
+   "evidence": "src/sim.jl:1736"
+  },
+  {
+   "id": "S11a-030",
+   "file": "design/spec.md",
+   "line": 7932,
+   "kind": "mech",
+   "claim": "Parallel sweeps thread run! inline with no nested fan-out",
+   "evidence": "src/sim.jl:1658"
+  },
+  {
+   "id": "S11a-031",
+   "file": "design/spec.md",
+   "line": 7933,
+   "kind": "mech",
+   "claim": "One Build is shared; Simulation(::Build) makes its own Model",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S11a-032",
+   "file": "design/spec.md",
+   "line": 7934,
+   "kind": "mech",
+   "claim": "Each Simulation owns its Model, and the Model owns its buffers",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S11a-033",
+   "file": "design/spec.md",
+   "line": 7937,
+   "kind": "decl",
+   "claim": "build(world; activations = ...) pre-materializes activations",
+   "evidence": "src/build.jl:768"
+  },
+  {
+   "id": "S11a-034",
+   "file": "design/spec.md",
+   "line": 7938,
+   "kind": "law",
+   "claim": "run! blocks its caller until the run ends",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "S11a-035",
+   "file": "design/spec.md",
+   "line": 7940,
+   "kind": "law",
+   "claim": "Task set is decided after init! from the frozen roster, not from run! keywords",
+   "evidence": "src/sim.jl:1645-1648"
+  },
+  {
+   "id": "S11a-036",
+   "file": "design/spec.md",
+   "line": 7941,
+   "kind": "decl",
+   "claim": "run! has no keyword choosing devices",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "S11a-037",
+   "file": "design/spec.md",
+   "line": 7942,
+   "kind": "law",
+   "claim": "A device whose init! failed gets no task",
+   "evidence": "src/sim.jl:1844"
+  },
+  {
+   "id": "S11a-038",
+   "file": "design/spec.md",
+   "line": 7944,
+   "kind": "law",
+   "claim": "A task exists only once the run exists (spawn inside run!)",
+   "evidence": "src/sim.jl:1654"
+  },
+  {
+   "id": "S11a-039",
+   "file": "design/spec.md",
+   "line": 7945,
+   "kind": "mech",
+   "claim": "First-boundary sync is a counter-plus-condition predicate wait",
+   "evidence": "src/devices.jl:439"
+  },
+  {
+   "id": "S11a-040",
+   "file": "design/spec.md",
+   "line": 7946,
+   "kind": "law",
+   "claim": "No Base.Event latch is used",
+   "evidence": "rg Base.Event src: no match"
+  },
+  {
+   "id": "S11a-041",
+   "file": "design/spec.md",
+   "line": 7950,
+   "kind": "law",
+   "claim": "Interactive and unattended runs are one loop, not two modes",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "S11a-042",
+   "file": "design/spec.md",
+   "line": 7951,
+   "kind": "mech",
+   "claim": "Unattended run is the same loop with empty staging and no snapshot readers",
+   "evidence": "src/sim.jl:1654"
+  },
+  {
+   "id": "S11a-043",
+   "file": "design/spec.md",
+   "line": 7952,
+   "kind": "mech",
+   "claim": "Replay is the same loop with the drain fed from a recording",
+   "evidence": "src/sim.jl:2666"
+  },
+  {
+   "id": "S11a-044",
+   "file": "design/spec.md",
+   "line": 7957,
+   "kind": "why",
+   "claim": "Consumers need a held-still picture without making the loop wait",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-045",
+   "file": "design/spec.md",
+   "line": 7961,
+   "kind": "law",
+   "claim": "One immutable value is published per boundary",
+   "evidence": "src/sim.jl:2042"
+  },
+  {
+   "id": "S11a-046",
+   "file": "design/spec.md",
+   "line": 7962,
+   "kind": "mech",
+   "claim": "Published through a single atomic reference",
+   "evidence": "src/dataplane.jl:594"
+  },
+  {
+   "id": "S11a-047",
+   "file": "design/spec.md",
+   "line": 7969,
+   "kind": "mech",
+   "claim": "Loop builds each snapshot in private memory",
+   "evidence": "src/sim.jl:2794"
+  },
+  {
+   "id": "S11a-048",
+   "file": "design/spec.md",
+   "line": 7970,
+   "kind": "mech",
+   "claim": "Publication is a single release-store to latest",
+   "evidence": "src/sim.jl:2797"
+  },
+  {
+   "id": "S11a-049",
+   "file": "design/spec.md",
+   "line": 7971,
+   "kind": "mech",
+   "claim": "Snapshot carries the signal table",
+   "evidence": "src/dataplane.jl:542"
+  },
+  {
+   "id": "S11a-050",
+   "file": "design/spec.md",
+   "line": 7971,
+   "kind": "decl",
+   "claim": "Snapshot carries t",
+   "evidence": "src/dataplane.jl:540"
+  },
+  {
+   "id": "S11a-051",
+   "file": "design/spec.md",
+   "line": 7973,
+   "kind": "decl",
+   "claim": "Snapshot carries the frame index",
+   "evidence": "src/dataplane.jl:541"
+  },
+  {
+   "id": "S11a-052",
+   "file": "design/spec.md",
+   "line": 7974,
+   "kind": "decl",
+   "claim": "Snapshot carries the published-boundary ordinal",
+   "evidence": "src/dataplane.jl:542"
+  },
+  {
+   "id": "S11a-053",
+   "file": "design/spec.md",
+   "line": 7975,
+   "kind": "decl",
+   "claim": "Snapshot carries the framework status",
+   "evidence": "src/dataplane.jl:545"
+  },
+  {
+   "id": "S11a-054",
+   "file": "design/spec.md",
+   "line": 7976,
+   "kind": "law",
+   "claim": "A t* snapshot shares its frame index but has its own boundary ordinal",
+   "evidence": "probe:73"
+  },
+  {
+   "id": "S11a-055",
+   "file": "design/spec.md",
+   "line": 7977,
+   "kind": "mech",
+   "claim": "Readers acquire-load latest",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "S11a-056",
+   "file": "design/spec.md",
+   "line": 7978,
+   "kind": "mech",
+   "claim": "Calling task reads the same value through latest(sim)",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "S11a-057",
+   "file": "design/spec.md",
+   "line": 7982,
+   "kind": "law",
+   "claim": "The exchange is wait-free in both directions",
+   "evidence": "src/sim.jl:2797, src/sim.jl:2857"
+  },
+  {
+   "id": "S11a-058",
+   "file": "design/spec.md",
+   "line": 7984,
+   "kind": "law",
+   "claim": "Publication happens only after the boundary sequence completes",
+   "evidence": "src/sim.jl:2042"
+  },
+  {
+   "id": "S11a-059",
+   "file": "design/spec.md",
+   "line": 7986,
+   "kind": "law",
+   "claim": "Nothing reachable from a published snapshot is written again",
+   "evidence": "src/sim.jl:2794 (capture_stores copy), src/store.jl:149"
+  },
+  {
+   "id": "S11a-060",
+   "file": "design/spec.md",
+   "line": 7991,
+   "kind": "mech",
+   "claim": "Framework status is a concrete frozen value",
+   "evidence": "src/dataplane.jl:303, probe:13"
+  },
+  {
+   "id": "S11a-061",
+   "file": "design/spec.md",
+   "line": 7992,
+   "kind": "mech",
+   "claim": "Status holds per-writer records copied at publication",
+   "evidence": "src/sim.jl:2840"
+  },
+  {
+   "id": "S11a-062",
+   "file": "design/spec.md",
+   "line": 7996,
+   "kind": "law",
+   "claim": "The captured table is the whole table, every declared port",
+   "evidence": "src/store.jl:149"
+  },
+  {
+   "id": "S11a-063",
+   "file": "design/spec.md",
+   "line": 7999,
+   "kind": "law",
+   "claim": "Undeclared intermediates are not in the table",
+   "evidence": "src/build.jl:1476"
+  },
+  {
+   "id": "S11a-064",
+   "file": "design/spec.md",
+   "line": 8001,
+   "kind": "decl",
+   "claim": "Adding a line in y_types makes a value appear in the snapshot",
+   "evidence": "src/declare.jl:189"
+  },
+  {
+   "id": "S11a-065",
+   "file": "design/spec.md",
+   "line": 8005,
+   "kind": "law",
+   "claim": "The captured table includes the root inputs",
+   "evidence": "probe:13"
+  },
+  {
+   "id": "S11a-066",
+   "file": "design/spec.md",
+   "line": 8007,
+   "kind": "mech",
+   "claim": "Root inputs are source cells of the table",
+   "evidence": "probe:13"
+  },
+  {
+   "id": "S11a-067",
+   "file": "design/spec.md",
+   "line": 8009,
+   "kind": "mech",
+   "claim": "peek falls back to the snapshot value when no pending write",
+   "evidence": "code_map.md:493 (src/devices.jl)"
+  },
+  {
+   "id": "S11a-068",
+   "file": "design/spec.md",
+   "line": 8013,
+   "kind": "law",
+   "claim": "Root input values in the log are recomputable from the trace",
+   "evidence": "src/trace.jl:21, src/sim.jl:2663"
+  },
+  {
+   "id": "S11a-069",
+   "file": "design/spec.md",
+   "line": 8014,
+   "kind": "law",
+   "claim": "Snapshots are derived wholesale",
+   "evidence": "src/sim.jl:2794"
+  },
+  {
+   "id": "S11a-070",
+   "file": "design/spec.md",
+   "line": 8017,
+   "kind": "law",
+   "claim": "Snapshot does not carry the state stores x, s, m",
+   "evidence": "probe:10, probe:14"
+  },
+  {
+   "id": "S11a-071",
+   "file": "design/spec.md",
+   "line": 8019,
+   "kind": "law",
+   "claim": "State trajectory is recomputable from trace header plus batches",
+   "evidence": "src/sim.jl:2666"
+  },
+  {
+   "id": "S11a-072",
+   "file": "design/spec.md",
+   "line": 8025,
+   "kind": "mech",
+   "claim": "Private state at t is read by replaying and inspecting live stores",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "S11a-073",
+   "file": "design/spec.md",
+   "line": 8026,
+   "kind": "decl",
+   "claim": "A state field is exposed by declaring it public and returning it from y_state",
+   "evidence": "src/declare.jl:189"
+  },
+  {
+   "id": "S11a-074",
+   "file": "design/spec.md",
+   "line": 8028,
+   "kind": "mech",
+   "claim": "Exposing a state field costs one cell per sweep",
+   "evidence": "src/build.jl:1476"
+  },
+  {
+   "id": "S11a-075",
+   "file": "design/spec.md",
+   "line": 8029,
+   "kind": "mech",
+   "claim": "Post-run continuation reads the live stores directly",
+   "evidence": "src/sim.jl:892"
+  },
+  {
+   "id": "S11a-076",
+   "file": "design/spec.md",
+   "line": 8033,
+   "kind": "decl",
+   "claim": "checkpoint(sim) returns the Model state at a frame top as one value",
+   "evidence": "src/sim.jl:892"
+  },
+  {
+   "id": "S11a-077",
+   "file": "design/spec.md",
+   "line": 8030,
+   "kind": "why",
+   "claim": "Periodic checkpoints are a guarded addition shaped as a log policy",
+   "evidence": "no code; claim of absence confirmed by src/dataplane.jl:626"
+  },
+  {
+   "id": "S11a-078",
+   "file": "design/spec.md",
+   "line": 8034,
+   "kind": "why",
+   "claim": "A dev-mode state-reader flag is a possible future diagnostic",
+   "evidence": "no code; absence"
+  },
+  {
+   "id": "S11a-079",
+   "file": "design/spec.md",
+   "line": 8038,
+   "kind": "law",
+   "claim": "Event firings are not recorded in the log or the trace",
+   "evidence": "src/dataplane.jl:539, src/trace.jl:21"
+  },
+  {
+   "id": "S11a-080",
+   "file": "design/spec.md",
+   "line": 8040,
+   "kind": "mech",
+   "claim": "Replay plus published modes recovers which events fired",
+   "evidence": "src/sim.jl:2666"
+  },
+  {
+   "id": "S11a-081",
+   "file": "design/spec.md",
+   "line": 8042,
+   "kind": "law",
+   "claim": "A public mode field returned from y_state is in every snapshot",
+   "evidence": "src/dataplane.jl:539"
+  },
+  {
+   "id": "S11a-082",
+   "file": "design/spec.md",
+   "line": 8043,
+   "kind": "why",
+   "claim": "An event-firing stream is a guarded addition",
+   "evidence": "absence"
+  },
+  {
+   "id": "S11a-083",
+   "file": "design/spec.md",
+   "line": 8047,
+   "kind": "mech",
+   "claim": "The log is a vector of retained snapshot references",
+   "evidence": "src/dataplane.jl:626"
+  },
+  {
+   "id": "S11a-084",
+   "file": "design/spec.md",
+   "line": 8048,
+   "kind": "mech",
+   "claim": "Retained references are the same objects, zero copies",
+   "evidence": "test/test_log.jl:42"
+  },
+  {
+   "id": "S11a-085",
+   "file": "design/spec.md",
+   "line": 8049,
+   "kind": "why",
+   "claim": "FlightCore SavingCallback deepcopy detour (prior art name, lead)",
+   "evidence": "FlightCore name"
+  },
+  {
+   "id": "S11a-086",
+   "file": "design/spec.md",
+   "line": 8050,
+   "kind": "mech",
+   "claim": "Cost is one snapshot allocation per boundary",
+   "evidence": "src/sim.jl:2794"
+  },
+  {
+   "id": "S11a-087",
+   "file": "design/spec.md",
+   "line": 8052,
+   "kind": "why",
+   "claim": "Logged snapshots are not garbage, unlogged die young",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-088",
+   "file": "design/spec.md",
+   "line": 8053,
+   "kind": "law",
+   "claim": "Preallocated snapshot buffers are not used",
+   "evidence": "src/sim.jl:2794"
+  },
+  {
+   "id": "S11a-089",
+   "file": "design/spec.md",
+   "line": 8055,
+   "kind": "decl",
+   "claim": "The log takes the trace's plain on/off switch",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "S11a-090",
+   "file": "design/spec.md",
+   "line": 8057,
+   "kind": "decl",
+   "claim": "Decimation is log_every, a keep-every-kth policy",
+   "evidence": "src/dataplane.jl:668"
+  },
+  {
+   "id": "S11a-091",
+   "file": "design/spec.md",
+   "line": 8060,
+   "kind": "law",
+   "claim": "The log is recomputable from the trace by replay",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "S11a-092",
+   "file": "design/spec.md",
+   "line": 8063,
+   "kind": "law",
+   "claim": "Decimation affects retention only, not publication",
+   "evidence": "test/test_log.jl:90"
+  },
+  {
+   "id": "S11a-093",
+   "file": "design/spec.md",
+   "line": 8064,
+   "kind": "law",
+   "claim": "The trace still records every frame's inputs under decimation",
+   "evidence": "src/sim.jl:2663"
+  },
+  {
+   "id": "S11a-094",
+   "file": "design/spec.md",
+   "line": 8066,
+   "kind": "mech",
+   "claim": "Decimation slows growth but does not stop it (unbounded log with no log_max)",
+   "evidence": "src/dataplane.jl:675"
+  },
+  {
+   "id": "S11a-095",
+   "file": "design/spec.md",
+   "line": 8067,
+   "kind": "decl",
+   "claim": "init! defaults are log = true, log_every = 1",
+   "evidence": "src/sim.jl:834, probe:20"
+  },
+  {
+   "id": "S11a-096",
+   "file": "design/spec.md",
+   "line": 8067,
+   "kind": "decl",
+   "claim": "run! defaults t_end = Inf",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "S11a-097",
+   "file": "design/spec.md",
+   "line": 8073,
+   "kind": "decl",
+   "claim": "The log takes a retention bound log_max beside switch and stride",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "S11a-098",
+   "file": "design/spec.md",
+   "line": 8074,
+   "kind": "decl",
+   "claim": "log_max counts retained snapshot references",
+   "evidence": "src/dataplane.jl:628"
+  },
+  {
+   "id": "S11a-099",
+   "file": "design/spec.md",
+   "line": 8075,
+   "kind": "decl",
+   "claim": "log_max default is 65536",
+   "evidence": "probe:20"
+  },
+  {
+   "id": "S11a-100",
+   "file": "design/spec.md",
+   "line": 8075,
+   "kind": "law",
+   "claim": "log_max = Inf is the explicit opt-out",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "S11a-101",
+   "file": "design/spec.md",
+   "line": 8076,
+   "kind": "decl",
+   "claim": "The four recording keywords appear on init!",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "S11a-102",
+   "file": "design/spec.md",
+   "line": 8079,
+   "kind": "decl",
+   "claim": "Code block init!(sim, condition; trace, log, log_every, log_max) with those defaults",
+   "evidence": "probe:18"
+  },
+  {
+   "id": "S11a-103",
+   "file": "design/spec.md",
+   "line": 8082,
+   "kind": "law",
+   "claim": "The bound is a count, not a memory budget",
+   "evidence": "src/dataplane.jl:628"
+  },
+  {
+   "id": "S11a-104",
+   "file": "design/spec.md",
+   "line": 8083,
+   "kind": "mech",
+   "claim": "Snapshots are immutable object graphs with internal sharing",
+   "evidence": "src/dataplane.jl:539"
+  },
+  {
+   "id": "S11a-105",
+   "file": "design/spec.md",
+   "line": 8087,
+   "kind": "decl",
+   "claim": "Base.summarysize of a snapshot converts count to memory",
+   "evidence": "exists in Base"
+  },
+  {
+   "id": "S11a-106",
+   "file": "design/spec.md",
+   "line": 8090,
+   "kind": "law",
+   "claim": "Default log_max is finite regardless of t_end",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "S11a-107",
+   "file": "design/spec.md",
+   "line": 8093,
+   "kind": "why",
+   "claim": "2^16 boundaries at 50 Hz is about 22 minutes",
+   "evidence": "65536/50 = 1311 s"
+  },
+  {
+   "id": "S11a-108",
+   "file": "design/spec.md",
+   "line": 8094,
+   "kind": "mech",
+   "claim": "h_max or adaptive stepping publishes a boundary at each step end",
+   "evidence": "src/sim.jl:2041"
+  },
+  {
+   "id": "S11a-109",
+   "file": "design/spec.md",
+   "line": 8098,
+   "kind": "law",
+   "claim": "When the log fills, the retention stride doubles",
+   "evidence": "src/dataplane.jl:684"
+  },
+  {
+   "id": "S11a-110",
+   "file": "design/spec.md",
+   "line": 8099,
+   "kind": "why",
+   "claim": "A rolling window was rejected",
+   "evidence": "log reference"
+  },
+  {
+   "id": "S11a-111",
+   "file": "design/spec.md",
+   "line": 8101,
+   "kind": "law",
+   "claim": "After k generations the effective stride is log_every * 2^k",
+   "evidence": "src/dataplane.jl:629, probe:31"
+  },
+  {
+   "id": "S11a-112",
+   "file": "design/spec.md",
+   "line": 8102,
+   "kind": "law",
+   "claim": "The whole run stays plottable (coverage global)",
+   "evidence": "probe:31"
+  },
+  {
+   "id": "S11a-113",
+   "file": "design/spec.md",
+   "line": 8105,
+   "kind": "why",
+   "claim": "Doubling serves the whole-session plot; replay recovers segments",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-114",
+   "file": "design/spec.md",
+   "line": 8111,
+   "kind": "law",
+   "claim": "Retained count never exceeds log_max, continuously",
+   "evidence": "probe:31"
+  },
+  {
+   "id": "S11a-115",
+   "file": "design/spec.md",
+   "line": 8112,
+   "kind": "law",
+   "claim": "Coverage is global at the effective stride",
+   "evidence": "src/dataplane.jl:675"
+  },
+  {
+   "id": "S11a-116",
+   "file": "design/spec.md",
+   "line": 8112,
+   "kind": "law",
+   "claim": "Endpoints are retained unconditionally",
+   "evidence": "src/dataplane.jl:662"
+  },
+  {
+   "id": "S11a-117",
+   "file": "design/spec.md",
+   "line": 8115,
+   "kind": "law",
+   "claim": "First and terminal snapshots survive any log_every and log_max",
+   "evidence": "src/dataplane.jl:662, probe:38"
+  },
+  {
+   "id": "S11a-118",
+   "file": "design/spec.md",
+   "line": 8116,
+   "kind": "law",
+   "claim": "The endpoints do not count against the bound",
+   "evidence": "src/dataplane.jl:633, probe:38"
+  },
+  {
+   "id": "S11a-119",
+   "file": "design/spec.md",
+   "line": 8117,
+   "kind": "mech",
+   "claim": "The endpoints are two extra references",
+   "evidence": "probe:38"
+  },
+  {
+   "id": "S11a-120",
+   "file": "design/spec.md",
+   "line": 8117,
+   "kind": "mech",
+   "claim": "The first snapshot is the boundary-zero snapshot under init!",
+   "evidence": "src/dataplane.jl:662"
+  },
+  {
+   "id": "S11a-121",
+   "file": "design/spec.md",
+   "line": 8118,
+   "kind": "mech",
+   "claim": "restore! or replay! publishes the first snapshot as it builds the run",
+   "evidence": "probe:35"
+  },
+  {
+   "id": "S11a-122",
+   "file": "design/spec.md",
+   "line": 8119,
+   "kind": "law",
+   "claim": "The stride counts boundaries from the first snapshot",
+   "evidence": "src/dataplane.jl:667, probe:42"
+  },
+  {
+   "id": "S11a-123",
+   "file": "design/spec.md",
+   "line": 8120,
+   "kind": "law",
+   "claim": "The terminal snapshot status carries the final cumulative counters (final at the last frame top)",
+   "evidence": "src/sim.jl:2840, src/sim.jl:1768; spec 9648 qualifies final as the last frame top (D-201)"
+  },
+  {
+   "id": "S11a-124",
+   "file": "design/spec.md",
+   "line": 8124,
+   "kind": "mech",
+   "claim": "Thinning is amortized: the stride doubles immediately on fill",
+   "evidence": "src/dataplane.jl:684"
+  },
+  {
+   "id": "S11a-125",
+   "file": "design/spec.md",
+   "line": 8125,
+   "kind": "mech",
+   "claim": "Each retained append releases one predecessor of the previous generation",
+   "evidence": "src/dataplane.jl:690"
+  },
+  {
+   "id": "S11a-126",
+   "file": "design/spec.md",
+   "line": 8126,
+   "kind": "mech",
+   "claim": "A cursor over odd indices does the release",
+   "evidence": "src/dataplane.jl:686, src/dataplane.jl:692"
+  },
+  {
+   "id": "S11a-127",
+   "file": "design/spec.md",
+   "line": 8127,
+   "kind": "mech",
+   "claim": "Compaction is physical, once per generation",
+   "evidence": "src/dataplane.jl:693"
+  },
+  {
+   "id": "S11a-128",
+   "file": "design/spec.md",
+   "line": 8128,
+   "kind": "law",
+   "claim": "A generation's thinning completes exactly when its refill does",
+   "evidence": "src/dataplane.jl:693"
+  },
+  {
+   "id": "S11a-129",
+   "file": "design/spec.md",
+   "line": 8136,
+   "kind": "mech",
+   "claim": "Amortized form drops one old snapshot per retained append",
+   "evidence": "src/dataplane.jl:690"
+  },
+  {
+   "id": "S11a-130",
+   "file": "design/spec.md",
+   "line": 8137,
+   "kind": "why",
+   "claim": "Global coverage costs nothing extra in GC pressure",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-131",
+   "file": "design/spec.md",
+   "line": 8138,
+   "kind": "mech",
+   "claim": "The loop's log work is pointer bookkeeping",
+   "evidence": "src/dataplane.jl:658"
+  },
+  {
+   "id": "S11a-132",
+   "file": "design/spec.md",
+   "line": 8140,
+   "kind": "law",
+   "claim": "Publication stays wait-free and readers never block",
+   "evidence": "src/sim.jl:2797"
+  },
+  {
+   "id": "S11a-133",
+   "file": "design/spec.md",
+   "line": 8141,
+   "kind": "law",
+   "claim": "A reader holding a released snapshot keeps it alive",
+   "evidence": "GC semantics"
+  },
+  {
+   "id": "S11a-134",
+   "file": "design/spec.md",
+   "line": 8143,
+   "kind": "law",
+   "claim": "totals are monotone across logged snapshots",
+   "evidence": "src/sim.jl:2822"
+  },
+  {
+   "id": "S11a-135",
+   "file": "design/spec.md",
+   "line": 8146,
+   "kind": "law",
+   "claim": "Re-decimation loses which boundary an occurrence fell on, never how many",
+   "evidence": "src/sim.jl:2822"
+  },
+  {
+   "id": "S11a-136",
+   "file": "design/spec.md",
+   "line": 8146,
+   "kind": "law",
+   "claim": "log_max is a view policy, not trajectory-determining",
+   "evidence": "test/test_log.jl:133"
+  },
+  {
+   "id": "S11a-137",
+   "file": "design/spec.md",
+   "line": 8148,
+   "kind": "law",
+   "claim": "log_max stays out of the trace header Deployment",
+   "evidence": "rg log_max src/trace.jl src/checkpoint.jl src/deployment.jl: none"
+  },
+  {
+   "id": "S11a-138",
+   "file": "design/spec.md",
+   "line": 8149,
+   "kind": "law",
+   "claim": "replay neither records nor compares log_max",
+   "evidence": "src/sim.jl:1349"
+  },
+  {
+   "id": "S11a-139",
+   "file": "design/spec.md",
+   "line": 8150,
+   "kind": "mech",
+   "claim": "A finite log_max is the log's sizehint!",
+   "evidence": "src/dataplane.jl:642, probe:79"
+  },
+  {
+   "id": "S11a-140",
+   "file": "design/spec.md",
+   "line": 8153,
+   "kind": "decl",
+   "claim": "series(sim, read_set) is the post-run extraction",
+   "evidence": "src/sim.jl:2956"
+  },
+  {
+   "id": "S11a-141",
+   "file": "design/spec.md",
+   "line": 8154,
+   "kind": "decl",
+   "claim": "series takes a read set built by reads and mounted by at",
+   "evidence": "src/sim.jl:2956"
+  },
+  {
+   "id": "S11a-142",
+   "file": "design/spec.md",
+   "line": 8156,
+   "kind": "mech",
+   "claim": "series resolves against the Build for a table source",
+   "evidence": "src/sim.jl:2964"
+  },
+  {
+   "id": "S11a-143",
+   "file": "design/spec.md",
+   "line": 8156,
+   "kind": "mech",
+   "claim": "Resolution is the one every reader shares (_compile_reads)",
+   "evidence": "src/readers.jl:675"
+  },
+  {
+   "id": "S11a-144",
+   "file": "design/spec.md",
+   "line": 8157,
+   "kind": "mech",
+   "claim": "series gathers each labeled entry over retained snapshots into one column",
+   "evidence": "src/sim.jl:2966"
+  },
+  {
+   "id": "S11a-145",
+   "file": "design/spec.md",
+   "line": 8158,
+   "kind": "decl",
+   "claim": "Each column is a plain vector of the entry's leaf type",
+   "evidence": "src/sim.jl:2980, probe:50"
+  },
+  {
+   "id": "S11a-146",
+   "file": "design/spec.md",
+   "line": 8159,
+   "kind": "decl",
+   "claim": "Columns come back labeled as the read set labels them",
+   "evidence": "src/sim.jl:2968"
+  },
+  {
+   "id": "S11a-147",
+   "file": "design/spec.md",
+   "line": 8160,
+   "kind": "decl",
+   "claim": "Series holds t, frame and boundary beside the columns",
+   "evidence": "src/sim.jl:2913"
+  },
+  {
+   "id": "S11a-148",
+   "file": "design/spec.md",
+   "line": 8160,
+   "kind": "law",
+   "claim": "A store selector is refused in series as at attach",
+   "evidence": "src/readers.jl:696, probe:61"
+  },
+  {
+   "id": "S11a-149",
+   "file": "design/spec.md",
+   "line": 8161,
+   "kind": "mech",
+   "claim": "Resolution runs once per call",
+   "evidence": "src/sim.jl:2964"
+  },
+  {
+   "id": "S11a-150",
+   "file": "design/spec.md",
+   "line": 8162,
+   "kind": "mech",
+   "claim": "A column costs one typed loop over the log, no name lookup per snapshot",
+   "evidence": "src/sim.jl:2980"
+  },
+  {
+   "id": "S11a-151",
+   "file": "design/spec.md",
+   "line": 8166,
+   "kind": "decl",
+   "claim": "The Series reads each column as a property under its label",
+   "evidence": "src/sim.jl:2924"
+  },
+  {
+   "id": "S11a-152",
+   "file": "design/spec.md",
+   "line": 8173,
+   "kind": "law",
+   "claim": "flight.V is the same vector as flight.columns.V",
+   "evidence": "probe:50"
+  },
+  {
+   "id": "S11a-153",
+   "file": "design/spec.md",
+   "line": 8174,
+   "kind": "decl",
+   "claim": "The four Series fields are t, frame, boundary, columns",
+   "evidence": "src/sim.jl:2913"
+  },
+  {
+   "id": "S11a-154",
+   "file": "design/spec.md",
+   "line": 8175,
+   "kind": "decl",
+   "claim": "columns holds the columns whole",
+   "evidence": "src/sim.jl:2917"
+  },
+  {
+   "id": "S11a-155",
+   "file": "design/spec.md",
+   "line": 8176,
+   "kind": "law",
+   "claim": "series refuses a read set labeling an entry with one of the four",
+   "evidence": "src/sim.jl:2959, probe:55"
+  },
+  {
+   "id": "S11a-156",
+   "file": "design/spec.md",
+   "line": 8177,
+   "kind": "law",
+   "claim": "The refusal is ReadSetMisuse",
+   "evidence": "probe:55"
+  },
+  {
+   "id": "S11a-157",
+   "file": "design/spec.md",
+   "line": 8178,
+   "kind": "law",
+   "claim": "The refusal belongs to series, not reads",
+   "evidence": "probe:58"
+  },
+  {
+   "id": "S11a-158",
+   "file": "design/spec.md",
+   "line": 8181,
+   "kind": "mech",
+   "claim": "A Series prints each column's label and element type, no values",
+   "evidence": "src/show.jl:582, probe:52"
+  },
+  {
+   "id": "S11a-159",
+   "file": "design/spec.md",
+   "line": 8182,
+   "kind": "mech",
+   "claim": "Series print shows snapshot count and span of t",
+   "evidence": "src/show.jl:572, probe:51"
+  },
+  {
+   "id": "S11a-160",
+   "file": "design/spec.md",
+   "line": 8187,
+   "kind": "why",
+   "claim": "Output-device bindings are snapshot bindings (D-083)",
+   "evidence": "src/bindings.jl:176"
+  },
+  {
+   "id": "S11a-161",
+   "file": "design/spec.md",
+   "line": 8188,
+   "kind": "decl",
+   "claim": "A binding is the value passed at attach! making a device framework-legible",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "S11a-162",
+   "file": "design/spec.md",
+   "line": 8190,
+   "kind": "why",
+   "claim": "XPlane12Control is FlightCore's output device (prior art name, lead)",
+   "evidence": "FlightCore name"
+  },
+  {
+   "id": "S11a-163",
+   "file": "design/spec.md",
+   "line": 8191,
+   "kind": "mech",
+   "claim": "An output device addresses reads with selectors",
+   "evidence": "src/bindings.jl:165"
+  },
+  {
+   "id": "S11a-164",
+   "file": "design/spec.md",
+   "line": 8192,
+   "kind": "law",
+   "claim": "Selectors reach any cell the structure has",
+   "evidence": "src/readers.jl:696"
+  },
+  {
+   "id": "S11a-165",
+   "file": "design/spec.md",
+   "line": 8193,
+   "kind": "mech",
+   "claim": "A binding's reads resolve at attach",
+   "evidence": "src/sim.jl:2525"
+  },
+  {
+   "id": "S11a-166",
+   "file": "design/spec.md",
+   "line": 8194,
+   "kind": "mech",
+   "claim": "Resolution runs through the shared resolver against the Build",
+   "evidence": "src/bindings.jl:176"
+  },
+  {
+   "id": "S11a-167",
+   "file": "design/spec.md",
+   "line": 8195,
+   "kind": "mech",
+   "claim": "Violations carry did-you-mean (name plus candidate list)",
+   "evidence": "probe:67 (message lists children and output port names)"
+  },
+  {
+   "id": "S11a-168",
+   "file": "design/spec.md",
+   "line": 8196,
+   "kind": "mech",
+   "claim": "Reads compile to one gather",
+   "evidence": "src/dataplane.jl:582"
+  },
+  {
+   "id": "S11a-169",
+   "file": "design/spec.md",
+   "line": 8197,
+   "kind": "mech",
+   "claim": "map_output receives a labeled NamedTuple",
+   "evidence": "src/bindings.jl:188"
+  },
+  {
+   "id": "S11a-170",
+   "file": "design/spec.md",
+   "line": 8198,
+   "kind": "law",
+   "claim": "A binding broken by model substitution fails at attach",
+   "evidence": "probe:66"
+  },
+  {
+   "id": "S11a-171",
+   "file": "design/spec.md",
+   "line": 8201,
+   "kind": "law",
+   "claim": "Attach collects every violation",
+   "evidence": "probe:66"
+  },
+  {
+   "id": "S11a-172",
+   "file": "design/spec.md",
+   "line": 8204,
+   "kind": "law",
+   "claim": "An output device's read of the snapshot is inspection with no effect on run semantics",
+   "evidence": "src/dataplane.jl:582"
+  },
+  {
+   "id": "S11a-173",
+   "file": "design/spec.md",
+   "line": 8207,
+   "kind": "law",
+   "claim": "Every cell is reachable because the table is public",
+   "evidence": "src/dataplane.jl:539"
+  },
+  {
+   "id": "S11a-174",
+   "file": "design/spec.md",
+   "line": 8210,
+   "kind": "why",
+   "claim": "A deep path is an inspection read, a face an integration read",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-175",
+   "file": "design/spec.md",
+   "line": 8212,
+   "kind": "decl",
+   "claim": "An exported output face is spelled get_face(name)",
+   "evidence": "src/readers.jl:293"
+  },
+  {
+   "id": "S11a-176",
+   "file": "design/spec.md",
+   "line": 8215,
+   "kind": "why",
+   "claim": "Faces are meaning-stable through writer-independent semantics",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-177",
+   "file": "design/spec.md",
+   "line": 8217,
+   "kind": "law",
+   "claim": "Attach validation turns structural drift into loud errors on both sides",
+   "evidence": "probe:66, src/sim.jl:2520"
+  },
+  {
+   "id": "S11a-178",
+   "file": "design/spec.md",
+   "line": 8218,
+   "kind": "why",
+   "claim": "Only faces protect against semantic drift",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-179",
+   "file": "design/spec.md",
+   "line": 8224,
+   "kind": "why",
+   "claim": "Generic consumers should bind faces",
+   "evidence": "rationale"
+  },
+  {
+   "id": "S11a-180",
+   "file": "design/spec.md",
+   "line": 8226,
+   "kind": "why",
+   "claim": "Aircraft families export the conventional surface (library deliverable)",
+   "evidence": "pointer"
+  },
+  {
+   "id": "S11a-181",
+   "file": "design/spec.md",
+   "line": 8228,
+   "kind": "ex",
+   "claim": "VelocityData is an illustrative wrapper type (lead, placeholder)",
+   "evidence": "spec says illustrative"
+  },
+  {
+   "id": "S11a-182",
+   "file": "design/spec.md",
+   "line": 8229,
+   "kind": "ex",
+   "claim": "v_eb_b defined at the type as body-origin velocity (lead, placeholder)",
+   "evidence": "placeholder"
+  },
+  {
+   "id": "S11a-183",
+   "file": "design/spec.md",
+   "line": 8229,
+   "kind": "ex",
+   "claim": "A bare vector does not wire; wrapping the wrong quantity is a deliberate lie",
+   "evidence": "illustration"
+  }
+ ],
+ "counts": {
+  "law": 70,
+  "mech": 61,
+  "decl": 30,
+  "ex": 3,
+  "why": 22,
+  "ptr": 12
+ }
+}
