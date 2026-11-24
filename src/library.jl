@@ -483,9 +483,9 @@ function broadcast_keywords(given)
     map(v -> Float64.(as_static(v) .+ shape), given)
 end
 
-# --- the discrete tier (§7.3, §10.5, D-313) -------------------------------------
+# --- the discrete tier (§6.3, §7.3, D-313) --------------------------------------
 
-# Design: §5.5, §10.5, D-437.
+# Design: §5.5, §6.3, D-437.
 # `Taps` is the `taps` keyword as a type parameter, so the output side stays
 # bare without it.
 # The slot under the cursor holds the value from `K` ticks ago. Each tick
@@ -551,7 +551,7 @@ y_state(::Delay{V, K, true}, (; s)) where {V, K} =
 s_update(::Delay{V, K}, (; s, u)) where {V, K} =
     (ring = Base.setindex(s.ring, u, s.cursor), cursor = s.cursor == K ? 1 : s.cursor + 1)
 
-# Design: §5.5, §9.4, §10.5, D-263, D-437, D-438.
+# Design: §5.5, §6.3, §9.4, D-263, D-437, D-438.
 # `R` is the `reset` keyword as a type parameter.
 # A same-tick reset would read the flag in an output stage, which makes every
 # input a feedthrough edge and costs the loop break, so it is not offered.
@@ -672,7 +672,7 @@ s_update(c::DiscreteLimitedIntegrator{V, false}, (; s, u, Δt)) where {V} = clam
 s_update(c::DiscreteLimitedIntegrator{V, true}, (; s, u, Δt)) where {V} =
     clamp.(ifelse(u.reset, c.s0, s + Δt * signal(u)), c.lower, c.upper)
 
-# Design: §5.3, §5.5, §10.5, D-437, D-438.
+# Design: §5.3, §5.5, §6.3, D-437, D-438.
 # A form publishing the stored value from stage 1 would break that loop, but it
 # lags its input by one tick at every rate. That form is this component followed
 # by a `UnitDelay`, a modelling decision the model makes by placing the delay.
@@ -727,7 +727,7 @@ y_types(::RateLimiter{V}) where {V} = V
 y_direct(c::RateLimiter, (; s, u, Δt)) = s + clamp.(u - s, -c.falling * Δt, c.rising * Δt)
 s_update(::RateLimiter, (; y)) = y
 
-# Design: §5.3, §5.5, §10.5, D-437, D-438.
+# Design: §5.3, §5.5, §6.3, D-437, D-438.
 # The continuous backlash needs the sign of the input's rate, which no stage
 # sees, so the component lives on the discrete tier alone.
 """
@@ -781,7 +781,7 @@ s_update(::Backlash, (; y)) = y
 
 # --- the noise source (§7.3, §2.5, D-231, D-313) --------------------------------
 
-# Design: §2.4, §2.5, §10.5, D-231, D-437, D-438.
+# Design: §2.4, §2.5, §6.3, D-231, D-437, D-438.
 # The stage draws with no generator and no workspace. `seed` is held as instance
 # data.
 """
@@ -1338,7 +1338,7 @@ function y_direct(c::AbstractDiscreteLinearSystem{true}, (; s, u))
     as_port(C * s + D * as_vector(u))
 end
 
-# Design: §5.3, §5.5, §9.4, §10.5, D-263, D-437, D-438.
+# Design: §5.3, §5.5, §8.7, §9.4, D-263, D-437, D-438.
 # `linear_systems.md`, section 9, gives the reasoning.
 """
     DiscreteStateSpace(; A::AbstractMatrix, B::AbstractMatrix, C::AbstractMatrix,
@@ -1476,7 +1476,7 @@ end
 held(c::DiscreteTransferFunction) = c.realization
 realization(c::DiscreteTransferFunction, _) = c.realization
 
-# Design: §9.4, §10.5, D-263.
+# Design: §6.3, §8.7, §9.4, D-263.
 # `linear_systems.md`, section 9.2, gives the reasoning.
 # `A_d` and `B_d` are the top row of one exponential of the augmented matrix
 # `[A B; 0 0] Δt`.
@@ -1536,7 +1536,7 @@ function realization(c::DiscretizedStateSpace{NX, NU}, Δt) where {NX, NU}
     (; A = exponential[SOneTo(NX), SOneTo(NX)], B = exponential[SOneTo(NX), SUnitRange(NX + 1, NX + NU)], C, D)
 end
 
-# Design: §10.5.
+# Design: §6.3.
 # `linear_systems.md`, section 9.2, gives the reasoning.
 # The component keeps the coefficients and holds the realization wrapped for the
 # hold. Tustin's method would give every component feedthrough.
@@ -2567,7 +2567,7 @@ function x_deriv(c::PID, (; x, u, y))
      yf = (u.y - p.c .* u.r - x.yf) ./ p.τd)
 end
 
-# Design: §10.5, §13.8.
+# Design: §6.3, §8.7, §13.8.
 # `pid_anti_windup.md`, sections 9 to 11, gives the reasoning.
 # `PID` publishes no code, since a continuous one would need a mode and events.
 # `hold` is the parameter `Hold` and `tracking` the parameter `Track`. The shape
@@ -2928,7 +2928,7 @@ function x_deriv(c::LQRTracker, (; x, u, y))
     gated_error(c, p.K_int * (u.z_ref - u.z), u) + (correction_reference(c, u, y) - y.u_raw) ./ p.Tt
 end
 
-# Design: §10.5, §13.8.
+# Design: §6.3, §13.8.
 # `lqr_tracker.md`, sections 4, 6 and 7, gives the reasoning. The sizeless
 # method forwards `kw...`, so its line shows the sized method's keywords.
 # `hold` is the parameter `Hold` and `tracking` the parameter `Track`.

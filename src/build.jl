@@ -560,7 +560,7 @@ One activation: the typed products at a concrete scalar `T` (§9.1) —
 declarations retyped at `T`, the probe chain run over exactly the function
 set this activation can execute (§9.4), cells laid out. Immutable once
 constructed; the probe products are what a cell holds until first written
-(§10.5).
+(§6.3).
 """
 struct Activation{T}
     decls::Vector{Decls}
@@ -1062,7 +1062,7 @@ _workspace(entry::ComponentEntry, ::Type{T}) where {T} =
 # A discrete component's stages never run at a non-nominal activation: its
 # cells are frozen `Float64` constants with zero partials, holding what the
 # probe wrote, which is exactly what a tick at `t₀⁻` would have produced
-# (§7.2, §10.5; `frozen_discrete_walkthrough.md`).
+# (§6.3, §7.2; `frozen_discrete_walkthrough.md`).
 _frozen(tier::Tier, ::Type{T}) where {T} = tier === DISCRETE && T !== Float64
 
 """
@@ -1500,7 +1500,7 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
         NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple((input_addr(ci, face) for face in keys(keyed_ins(decl)))...))
 
     # A cell holds what the build probe populated until a sweep first writes it
-    # (§10.5): this is the table's pre-`init!` content, and a frozen
+    # (§6.3): this is the table's pre-`init!` content, and a frozen
     # component's pinned cells are this seed for the whole run (§9.4). It is
     # also what leaves no handle cell unassigned: an opaque-leaf buffer starts
     # `undef`, every handle port is a component product this seed writes, and a

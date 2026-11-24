@@ -767,7 +767,7 @@ function message(d::EmptyFaceSelection)
     "of the child, so nothing passes through (§8.8)"
 end
 
-"§8.7, §10.5: a `sample_times` declaration outside the value vocabulary, the residue bounds or the key rule."
+"§6.3, §8.7: a `sample_times` declaration outside the value vocabulary, the residue bounds or the key rule."
 Base.@kwdef struct RatesViolation <: Diagnostic
     path::String
     reason::Symbol   # :declaration_shape|:value_vocabulary|:multiplier|:phase|:range|:period|:offset|:unknown_child|:continuous_child
@@ -787,15 +787,15 @@ function message(d::RatesViolation)
     d.reason === :range && d.value isa Absolute &&
         return "$(_rates_entry(d)): no base tick the model's anchors admit counts " *
                "Absolute($(d.value.Δt), $(d.value.τ)) in an `Int` (§9.2)"
-    d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.D), $(d.value.Φ)) composes a divisor past `Int` (§10.5)"
-    d.reason === :multiplier && return "$(_rates_entry(d)): Dₛ = $(d.value), and Dₛ ≥ 1 (§10.5)"
-    d.reason === :phase && return "$(_rates_entry(d)): Φₛ = $(d.value), and 0 ≤ Φₛ < Dₛ (§10.5)"
-    d.reason === :period && return "$(_rates_entry(d)): period $(d.value), and Δt > 0 (§10.5)"
-    d.reason === :offset && return "$(_rates_entry(d)): offset $(d.value), and 0 ≤ τ < Δt (§10.5)"
+    d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.D), $(d.value.Φ)) composes a divisor past `Int` (§9.1)"
+    d.reason === :multiplier && return "$(_rates_entry(d)): Dₛ = $(d.value), and Dₛ ≥ 1 (§6.3)"
+    d.reason === :phase && return "$(_rates_entry(d)): Φₛ = $(d.value), and 0 ≤ Φₛ < Dₛ (§6.3)"
+    d.reason === :period && return "$(_rates_entry(d)): period $(d.value), and Δt > 0 (§6.3)"
+    d.reason === :offset && return "$(_rates_entry(d)): offset $(d.value), and 0 ≤ τ < Δt (§6.3)"
     d.reason === :continuous_child &&
         return "`sample_times` at $(_at_path(d.path)) schedules `$(d.key)`, a continuous " *
                "component — a sample time is a discrete-tier fact; keys name discrete or " *
-               "scope children (§8.7, §10.5)"
+               "scope children (§8.7)"
     "$(_rates_entry(d)): names no immediate child of $(_at_path(d.path)) — keys are " *
     "immediate child names only; a deep key would edit another type's design from " *
     "outside (§8.7)" *
@@ -1468,7 +1468,7 @@ function message(d::DeploymentInvalid)
                "(`$(d.parameter) = 1//100`): " *
                (d.parameter in (:h_max, :h_min) ? "a span's step count is exact arithmetic" :
                                          "grid derivation is GCD arithmetic") *
-               ", ill-defined over floats (§9.1, §10.5)"
+               ", ill-defined over floats (§9.2, §10.5)"
     d.reason === :not_a_quantity &&
         return "`$(d.parameter)` must be an integer or a Rational, got $(d.value)"
     d.reason === :missing && d.parameter === :h_min &&
@@ -2351,7 +2351,7 @@ message(d::ConditionShapeDrift) =
     "evaluated at — a branch that authors a different field set, a different nesting or a " *
     "different leaf type is a different shape, and needs its own plan (§14.4, §9.5, D-066)"
 
-"§10.5, §11.6, §12.4, §12.6, §14.7, D-215: an argument outside its constraint — `DeploymentInvalid`'s twin off the deployment surface."
+"§8.7, §10.5, §11.6, §12.4, §12.6, §14.7, D-215: an argument outside its constraint — `DeploymentInvalid`'s twin off the deployment surface."
 Base.@kwdef struct ArgumentInvalid <: Diagnostic
     call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Absolute|:Relative|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
     reason::Symbol
@@ -2366,21 +2366,21 @@ function message(d::ArgumentInvalid)
     d.reason === :inexact &&
         return d.argument === :Δt ?
                "a period is an exact Rational in seconds — write `Absolute(1//50)` for 50 Hz, " *
-               "not $(repr(d.value)): grid derivation is GCD arithmetic (§10.5)" :
+               "not $(repr(d.value)): grid derivation is GCD arithmetic (§8.7)" :
                "an offset is an exact Rational in seconds — write `Absolute(1//50, 1//500)`, " *
-               "not $(repr(d.value)): grid derivation is GCD arithmetic (§10.5)"
+               "not $(repr(d.value)): grid derivation is GCD arithmetic (§8.7)"
     # `Relative`'s two refusals: a fraction, which teaches `Absolute`, and a
     # count past `Int` (D-459).
     d.reason === :not_a_count &&
         return "`Relative` counts ticks of the enclosing scope, so `Dₛ` and `Φₛ` are integers — " *
                "got $(repr(d.value)). A child that ticks faster than its scope, or at a " *
-               "period in seconds, takes `Absolute`, as in `Absolute(1//100)` (§10.5)"
+               "period in seconds, takes `Absolute`, as in `Absolute(1//100)` (§8.7)"
     d.reason === :range && d.call === :Relative &&
-        return "`Relative` holds its counts in `Int`, and $(repr(d.value)) is past it (§10.5)"
+        return "`Relative` holds its counts in `Int`, and $(repr(d.value)) is past it (§8.7)"
     # A declaration door's value that `Rational{Int}` cannot hold finitely.
     d.reason === :range && d.call === :Absolute &&
         return "`Absolute` holds an exact `Rational{Int}`, and $(repr(d.value)) " *
-               "is past `Int` or not finite (§10.5)"
+               "is past `Int` or not finite (§8.7)"
     d.reason === :both_given &&
         return d.call === :replay! ?
                "replay! takes `to_boundary` or `to_time`, not both — the boundary index and " *

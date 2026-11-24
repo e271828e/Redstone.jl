@@ -1,5 +1,5 @@
-# --- the discrete tier: one rate, then several (§10.5) ------------------------
-# §10.5 is "Multi-rate tick scheduling", and the single-rate case is its D₀ = 1,
+# --- the discrete tier: one rate, then several (§6.3) -------------------------
+# §6.3 is "Rates down the hierarchy", and the single-rate case is its D₀ = 1,
 # Φ₀ = 0 corner — which is why the ZOH proof runs twice in this file. Once at one
 # rate, where the closed form is the plain sampled-data recursion and the only
 # claim is that the hold is real; and once at several, where the same reference
@@ -38,7 +38,7 @@ function discrete_one_rate()
         @test state(sim, "plant").q ≈ q rtol = 1e-6
         # The cell holds `s[n_samples]` — the output stage ran at this boundary — while
         # the store already holds `s[n_samples+1]`. That gap *is* the sampled-data
-        # ordering: output stages before updates, within one boundary (§10.5).
+        # ordering: output stages before updates, within one boundary (§6.3).
         @test port(sim, "ctl", :u) ≈ s rtol = 1e-6
         @test state(sim, "ctl").acc ≈ snext rtol = 1e-6
     end
@@ -156,7 +156,7 @@ function discrete_rate_fold()
         @test all(e.D == 2 && e.Φ == 1 for e in rows)
     end
 
-    @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, §10.5, D-459)" begin
+    @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, D-459)" begin
         # `Relative(D_inner)` inside `Relative(D_outer)` composes the multiplier
         # `D_inner·D_outer`. Past `Int` it wrapped to a wrong divisor, to 0 or
         # below; now the inner key is refused as `:range`, alone.
@@ -233,7 +233,7 @@ function discrete_rate_fold()
         @test gated(sim.model.exec.bodies.sweep_1) == 0            # the ramp is continuous
     end
 
-    @testset "the hyperperiod chart is readable off the cells (§10.5)" begin
+    @testset "the hyperperiod chart is readable off the cells (§6.3)" begin
         # The ramp makes every sample carry its acquisition time (1 + t), so each
         # cell says when its owner last ticked — the chart's dots, and the
         # deterministic aging of the stagger, in the spec's own numbers.
@@ -254,7 +254,7 @@ function discrete_rate_fold()
         @test port(sim, "fcs/outer", :out) ≈ 1.02        # re-aged two ticks at k = 12
     end
 
-    @testset "relative scopes compose affinely; anchors sever (§10.5, §9.1)" begin
+    @testset "relative scopes compose affinely; anchors sever (§6.3, §9.1)" begin
         # Under a scope at Relative(2, 1): D₀(i) = Dₛ(i)·D₀(s), Φ₀(i) = Φ₀(s) + Φₛ(i)·D₀(s).
         inner_group = Group((; a = TickCounter(), b = TickCounter());
                             sample_times = (; a = Relative(1), b = Relative(5, 2)))
@@ -287,7 +287,7 @@ function discrete_rate_fold()
     end
 end
 
-# --- deployment binding, and the gate at run time (§9.1, §9.2, §10.5) ---------
+# --- deployment binding, and the gate at run time (§6.3, §9.1, §9.2) ----------
 
 function discrete_deployment()
     # The artifact deployment binding produces (§9.1, §9.2, D-254): the build plus
@@ -877,13 +877,13 @@ function discrete_deployment()
               [6004799505956864 // 8589934597, 6004799507005440 // 8589934597]
     end
 
-    # --- multi-rate: the gate at run time (§10.5) -----------------------------------
+    # --- multi-rate: the gate at run time (§6.3) ------------------------------------
 
     @testset "boundary zero admits Φ₀ = 0 for updates, and publishes every output stage" begin
         # `z` at Relative(2, 1) is not due at boundary zero: its first tick is at
         # Φ₀·Δt_base. Its output stage runs there all the same (D-205), publishing
         # from the t₀ table — the ramp *at t₀*, not the build probe's value; the
-        # dueness the gate reads at index 0 governs the `s_update` updates alone (§10.5).
+        # dueness the gate reads at index 0 governs the `s_update` updates alone (§6.3).
         late = Group((; src = Ramp(5.0), z = ZOH());
                      local_wires = ("src/out" => "z/in",),
                      output_wires = ("z/out" => "y",),
@@ -903,7 +903,7 @@ function discrete_deployment()
         # recursion runs at Δt_ctl = D·Δt_base = 4h — and only matches if the gate
         # admits `ctl` at exactly its own ticks, the hold spans the sub-ticks and
         # off-tick boundaries, and the bundle's Δt is the compiled schedule's
-        # (§10.5's single source of truth), not h or Δt_base.
+        # (§8.7's single source of truth), not h or Δt_base.
         kI, ω, ζ, r, n_samples = 3.0, 2.0, 0.1, 0.7, 50
         Δt_ctl = 0.02
         A = SMatrix{2,2}(0.0, -ω^2, 1.0, -2ζ * ω)
@@ -915,7 +915,7 @@ function discrete_deployment()
             q, s = Ad * q + Bd * s, s + kI * Δt_ctl * (r - q[1])
         end
 
-        # §10.5's exposed-multiplier idiom: the deployment preference arrives as a
+        # §8.7's exposed-multiplier idiom: the deployment preference arrives as a
         # constructor parameter, and the declaration stays the assembly's.
         sim = Simulation(SampledLoop(; kI, ω, ζ, ctl_rate = Relative(2)); Δt_frame = 1//200, Δt_base = 1//100)
         @test [(e.path, e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [("ctl", 2, 0)]
@@ -926,7 +926,7 @@ function discrete_deployment()
         @test port(sim, "ctl", :u) ≈ s rtol = 1e-6
     end
 
-    @testset "a restore continues the controller on the original lattice (§10.5, §12.6, D-274)" begin
+    @testset "a restore continues the controller on the original lattice (§6.3, §12.6, D-274)" begin
         # The loop above: the controller ticks every fourth frame from `t₀`. The
         # checkpoint is taken at frame 6, a base tick where the controller is not
         # due, so its store holds the state its next tick decodes beside the cell
@@ -986,7 +986,7 @@ function discrete_deployment()
         @test port(fresh, "c", :n) == 10 && state(fresh, "c").n == 11
     end
 
-    @testset "an overlay keeps the lattice: the controller moves at its own ticks (§10.5, §12.6, D-429)" begin
+    @testset "an overlay keeps the lattice: the controller moves at its own ticks (§6.3, §12.6, D-429)" begin
         # The loop of the restore test above, overlaid at frame 6, a base tick
         # where the controller is not due: its held command stays until frame 8.
         sim = Simulation(SampledLoop(; ctl_rate = Relative(2)); Δt_frame = 1//200, Δt_base = 1//100)

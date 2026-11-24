@@ -335,7 +335,7 @@ function conditions_algebra()
         @test port(latest(sim), "", :held) === 3.0     # and the t₀ snapshot carries both
         @test port(latest(sim), "", :acc) === 7.0
 
-        # `s_update` stays gated by Φ₀ (§10.5): the evaluation above is establishment, not a
+        # `s_update` stays gated by Φ₀ (§6.3): the evaluation above is establishment, not a
         # scheduled sample, so the authored `s` survives boundary zero untouched and
         # the first sample `off` *consumes* is its own tick's, at Φ₀·Δt_base.
         @test state(sim, "off").acc === 7.0

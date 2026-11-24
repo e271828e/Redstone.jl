@@ -26,7 +26,7 @@ _exact(name::Symbol, value, diags::Vector{Diagnostic}) =
     (push!(diags, DeploymentInvalid(parameter = name, reason = :not_a_quantity,
                                     value = typeof(value))); nothing)
 
-# --- the typed schedule (§9.2, §10.5, D-254) ------------------------------------
+# --- the typed schedule (§6.3, §8.7, §9.2, D-254) -------------------------------
 
 """
 One discrete component's row of the schedule (§9.2): its `(D₀, Φ₀, Δt)` with the
@@ -53,7 +53,7 @@ Base.hash(entry::ScheduleEntry, seed::UInt) =
         hash(entry.anchor, hash(entry.path, seed))))))
 
 """
-One rate scope's row (§9.2, §10.5): the assembly an explicit `sample_times` key
+One rate scope's row (§6.3, §9.2): the assembly an explicit `sample_times` key
 opened, resolved to its own `(D₀, Φ₀)` by the same multiply-add its members use.
 """
 struct ScopeEntry
@@ -64,9 +64,9 @@ struct ScopeEntry
     Φ::Int
 end
 
-# Design: §9.2, §10.5, D-254, D-261, D-478. The per-component `(D₀, Φ₀, Δt)` the
-# executor compiles over are derived from the rows at `compile`, never stored
-# beside them (D-261). The component rows sit in walk order.
+# Design: §6.3, §8.7, §9.2, D-254, D-261, D-478. The per-component
+# `(D₀, Φ₀, Δt)` the executor compiles over are derived from the rows at
+# `compile`, never stored beside them (D-261). The component rows sit in walk order.
 """
     Schedule
 
@@ -291,7 +291,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
     length(diags) == anchors_on_entry || return nothing
 
     # Per component, one multiply-add; the canonical residue 0 ≤ Φ₀ < D₀ survives
-    # composition (§10.5), which is what the gate's truncated rem relies on. The
+    # composition (§6.3), which is what the gate's truncated rem relies on. The
     # rate scopes resolve by the same law, off the timing the fold left them.
     # The law runs in checked `Int`, and a schedule it cannot hold is `nothing`:
     # `Φ₀ < D₀`, so a divisor past `Int` counts a period in base ticks, and so in

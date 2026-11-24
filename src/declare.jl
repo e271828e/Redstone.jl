@@ -368,7 +368,7 @@ reason on its [`ModelRequestedStop`](@ref) source.
 """
 stop_reason(::Any) = ""  # COV_EXCL_LINE
 
-# --- rate scopes (§8.7, §10.5) --------------------------------------------------
+# --- rate scopes (§6.3, §8.7) ---------------------------------------------------
 # The two forms of the sample-time declaration are the whole value vocabulary,
 # and a bare number in a `sample_times` entry is a declaration error. They are
 # plain data carriers (D-185): range validation is the structure step's, with
@@ -401,7 +401,7 @@ function _declared_quantity(to_exact, call::Symbol, value)
     throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, value = value)))
 end
 
-# Design: §10.5, D-459, D-478.
+# Design: §6.3, §8.7, §9.1, D-459, D-478.
 """
     Relative(D::Integer, Φ::Integer = 0) -> Relative
 
@@ -441,7 +441,7 @@ struct Relative
                                               value = D isa Integer ? Φ : D)))
 end
 
-# Design: §9.1, §9.2, §10.5, D-186, D-464, D-469, D-479.
+# Design: §6.3, §8.7, §9.1, §9.2, D-186, D-464, D-469, D-479.
 """
     Absolute(Δt::Union{Integer,Rational{<:Integer}},
              τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
@@ -484,7 +484,7 @@ struct Absolute
     end
 end
 
-# Design: §8.7, §10.5.
+# Design: §8.7.
 """
     sample_times(c) -> NamedTuple
 
@@ -617,7 +617,7 @@ _holding(σ) = σ ≥ 0
 # and it is a question about method existence, not a declaration the author
 # repeats — the definition site is the single source of truth.
 
-# Design: §5.2, §5.3, §8.2, §10.5, D-220, D-252.
+# Design: §5.2, §5.3, §6.3, §8.2, D-220, D-252.
 """
     y_state(c, bundle) -> NamedTuple or value
 
@@ -713,7 +713,7 @@ as `DeclarationOnWrongTier`.
 """
 function x_deriv end
 
-# Design: §5.2, §5.3, §8.2, §10.5, D-195, D-220.
+# Design: §5.2, §5.3, §6.3, §8.2, D-195, D-220.
 """
     s_update(c, bundle) -> NamedTuple or value
 

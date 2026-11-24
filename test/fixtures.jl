@@ -723,7 +723,7 @@ s_update(::TickAlarm, (; s)) = (n = s.n + 1,)
     tick_alarmed()
 
 A `TickAlarm` at `Relative(3)` feeding a stop request: a tick-detected stop,
-which the continuous request publishes at the tick's own boundary (§10.5, §13.5).
+which the continuous request publishes at the tick's own boundary (§6.3, §13.5).
 """
 tick_alarmed() = Group((; counter = TickAlarm(),
                           stop = StopRequest(reason = "three ticks counted"));
@@ -1164,7 +1164,7 @@ declared fields. An ancestor reaches none of them: every signal leaving this
 level does so through a face declared here (§6.1, D-207), which is why the
 plant's `power` port is re-exported below beside `y` and `cmd`.
 
-`ctl_rate` is §10.5's exposed-multiplier idiom: a deployment preference surfaces
+`ctl_rate` is §8.7's exposed-multiplier idiom: a deployment preference surfaces
 as a constructor parameter, the declaration stays the assembly's own
 `sample_times`, and the component type stays rate-agnostic — `ctl` reads its
 period from its bundle's `Δt` and nowhere else.
@@ -1334,7 +1334,7 @@ declares.
 condition(vehicle::Vehicle; ref = 0.0, kw...) =
     combine(at("loop", condition(vehicle.loop; kw...)), set(u = (ref = ref,)))
 
-# --- the multi-rate coverage set (§10.5) ----------------------------------------
+# --- the multi-rate coverage set (§6.3) -----------------------------------------
 
 """
 Zero-order hold: a stateless discrete pass-through. Its one cell takes a fresh
@@ -1358,7 +1358,7 @@ y_types(::Ramp) = (out = Float64,)
 y_state(c::Ramp, (; t)) = (out = c.c₀ + t,)
 
 """
-The rate scope of the spec's worked example (§9.2, §10.5): `inner` at the scope
+The rate scope of the spec's worked example (§6.3, §9.2): `inner` at the scope
 base, `outer` staggered at `Relative(5, 2)`. `outer` samples a signal handed in
 through the `g` face, so what it reads between that producer's ticks is the ZOH
 aging the example computes.

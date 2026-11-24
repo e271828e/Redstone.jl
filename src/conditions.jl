@@ -611,7 +611,7 @@ _condition_violation(entry::CEntry, reason::Symbol; kw...) =
 # The component a non-input entry addresses. Every `at` prefix was walked at its
 # own authoring level (§13.3), so the path names a level of this build: what is
 # left to say is that the level owns no state. Assemblies are virtual for
-# execution (§10.5) and own no state, so an `at` prefix stopping at one has
+# execution (§6.3) and own no state, so an `at` prefix stopping at one has
 # nothing to write — and saying so beats "no such path".
 function _component(structure::Structure, entry::CEntry, diags::Vector{Diagnostic})
     ci = findfirst(comp_entry -> comp_entry.path == entry.path, structure.components)

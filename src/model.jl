@@ -634,8 +634,8 @@ end
 end
 
 # Design: §5.3, §10.6, §14.5, D-205, D-429, D-445.
-# The one boundary routine, over its due set (§10.5, D-185): a tick index at a
-# due instant, `nothing` at a boundary where nothing is due, and `ESTABLISH` at
+# The one boundary routine, over its due set (§6.3, §10.5, D-185): a tick
+# index at a due instant, `nothing` at a boundary where nothing is due, and `ESTABLISH` at
 # boundary zero, whose sweep admits every discrete output stage and whose
 # updates keep the ordinary gate at index 0 (D-205). The empty due set is arity
 # selection, never a sentinel index failing every gate. Projection comes first,
@@ -687,7 +687,7 @@ published cell holds the probe's synthesized values (§14.6's barrier extended
 from the root inputs to the whole table).
 
 The `s_update` calls keep the ordinary gate at index 0, which under the
-canonical residue admits exactly `Φ₀ = 0` (§10.5): that evaluation is
+canonical residue admits exactly `Φ₀ = 0` (§6.3): that evaluation is
 establishment, not a scheduled sample, and an offset component's first
 *consumed* sample stays its `Φ₀·Δt_base` tick's. A component frozen at a
 non-nominal activation has no entries here at all (§9.4's executable set), so

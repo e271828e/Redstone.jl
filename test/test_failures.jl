@@ -205,7 +205,7 @@ function failures_runtime()
         step!(sim; t_end = 1.0)
         cursor = sim.model.exec.cursor
         # nothing is due at these frame tops, so the boundary takes the empty due
-        # set and its last block is the event phase's round (§10.5, D-445)
+        # set and its last block is the event phase's round (§6.3, §10.5, D-445)
         @test cursor.phase === :round
         @test cursor.fn === :y_direct              # the last dispatch the sweep walked
         @test cursor.comp == index_of(sim.model.deployment.build.structure, "plant")

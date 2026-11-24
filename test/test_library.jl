@@ -1210,7 +1210,7 @@ function test_library()
         @test Delay(K = 2).v0 === 0.0 && Delay(K = 2) isa Delay{Float64, 2, false}
     end
 
-    @testset "the discrete integrator accumulates `Δt in` per tick from `s0`, at its own period, and breaks a loop from stage 1 (§7.3, §10.5, §5.5, D-313)" begin
+    @testset "the discrete integrator accumulates `Δt in` per tick from `s0`, at its own period, and breaks a loop from stage 1 (§7.3, §6.3, §5.5, D-313)" begin
         sim = Simulation(fed_by(Constant(1.0), DiscreteIntegrator()); Δt_frame = 1//100)
         init!(sim, set())
         @test port(sim, "c") == 0.0
@@ -1459,7 +1459,7 @@ function test_library()
         @test build(noise_integrator_model(); activations = (Float64, LinearizeDual)) isa Build
     end
 
-    @testset "the noise's density form scales by the period (§7.3, §10.5)" begin
+    @testset "the noise's density form scales by the period (§7.3, §6.3)" begin
         # `psd = 4` reads `σ = 2 / sqrt(Δt)`: 20 at the base period and `sqrt(200)`
         # at twice it, where each sample is read at two base steps.
         for (rates, σ) in (((;), 20.0), ((c = Relative(2),), sqrt(200.0)))
@@ -2029,7 +2029,7 @@ function test_library()
         @test !Redstone.has_stage(y_state, proper)
     end
 
-    @testset "the zero-order hold reproduces the exact solution at every period and keeps the class (§10.5, §13.7, D-313)" begin
+    @testset "the zero-order hold reproduces the exact solution at every period and keeps the class (§6.3, §8.7, §13.7, D-313)" begin
         for sample_times in ((;), (c = Relative(2),))
             sim = Simulation(fed_by(Constant(1.0), scalar_hold(); sample_times); Δt_frame = 1//100)
             init!(sim, set())

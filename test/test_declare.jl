@@ -30,7 +30,7 @@ function test_declare()
         @test Absolute(0).Δt == 0
     end
 
-    @testset "a value `Rational{Int}` cannot hold finitely is refused at its declaration door, any other integer type taken at its value (§10.5, D-185, D-459)" begin
+    @testset "a value `Rational{Int}` cannot hold finitely is refused at its declaration door, any other integer type taken at its value (§8.7, D-185, D-459)" begin
         # Past `Int`, in a numerator, a denominator or an offset, and a period
         # that is not finite: the normalization fails, as a float's does, and
         # the door names itself and the value.
@@ -51,7 +51,7 @@ function test_declare()
         @test Absolute(true).Δt === 1//1 && Absolute(2, true).τ === 1//1
     end
 
-    @testset "`Relative` takes an integer count of any type, and refuses a count past `Int` and a fraction (§10.5, D-459)" begin
+    @testset "`Relative` takes an integer count of any type, and refuses a count past `Int` and a fraction (§8.7, D-459)" begin
         @test Relative(Int8(5), 0x02) === Relative(5, 2) && Relative(big(5)) === Relative(5, 0)
         @test Relative(true) === Relative(1, 0)
         for (f, value) in ((() -> Relative(big(2)^70), big(2)^70),

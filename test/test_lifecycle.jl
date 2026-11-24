@@ -577,7 +577,7 @@ function test_lifecycle()
         @test termination(sim).t == 0.0
     end
 
-    @testset "a tick-detected request stops at the tick's own boundary (§10.5, D-316)" begin
+    @testset "a tick-detected request stops at the tick's own boundary (§6.3, D-316)" begin
         # Ignored, the run shows where the detector first holds: the third tick
         # at `Relative(3)`, frame 9, with the request already publishing there.
         free = Simulation(tick_alarmed(); Δt_frame = 1//10)

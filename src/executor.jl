@@ -476,7 +476,7 @@ function _event_bodies(entry::EventEntry, store, xbuf)
 end
 _project_body(entry::ProjectEntry, xbuf) = () -> run_project!(entry, xbuf)
 
-# --- the gate (§10.5, D-185, D-205) ---------------------------------------------
+# --- the gate (§6.3, §10.5, D-185, D-205) ---------------------------------------
 # The boundary sweep walks the full list with *discrete* entries gated by
 # `(n − Φ₀) % D₀ == 0`. The gate is a wrapper only discrete entries wear, so a
 # continuous entry pays nothing at a boundary, and the interior walk — compiled
@@ -514,7 +514,7 @@ const ESTABLISH = Establish()
     # Under the canonical residue 0 ≤ Φ₀ < D₀, truncated rem is never 0 on the
     # negative pre-first-tick differences, so one subtraction and one remainder
     # are the whole admission test — and "everything with Φ₀ = 0" is this same
-    # gate at index 0, implemented by nothing (§10.5).
+    # gate at index 0, implemented by nothing (§6.3, §10.5).
     (tick - entry.Φ) % entry.D == 0 && run_entry!(entry.entry, store, xbuf, ẋbuf)
     nothing
 end

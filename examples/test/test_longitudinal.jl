@@ -341,7 +341,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
         @test Set((d.reason, d.tap) for d in diagnostics(refusal)) == Set([(:discrete_state, :x), (:unseedable, :u)])
     end
 
-    @testset "chapter 4: the discrete pitch hold at 50 Hz follows the continuous one through a step (§10.5)" begin
+    @testset "chapter 4: the discrete pitch hold at 50 Hz follows the continuous one through a step (§6.3)" begin
         θs = map((false, true)) do discrete
             sim = pitch_hold_at_trim(solution; discrete, θ_step = 0.05)
             run!(sim; t_end = 9.0)
@@ -363,7 +363,7 @@ on_10_hz(t) = isapprox(10t, round(10t); atol = 1e-6)
 
     climb = fly_autopilot(solution)
 
-    @testset "chapter 5: the altitude and airspeed loops tick at 10 Hz and the pitch loops at 50 Hz (§10.5)" begin
+    @testset "chapter 5: the altitude and airspeed loops tick at 10 Hz and the pitch loops at 50 Hz (§6.3)" begin
         for (loop, ten_hz) in (("h_ctl", true), ("V_ctl", true), ("θ_ctl", false), ("q_ctl", false))
             changes = change_times(climb, logged_port(climb, "cascade/$loop", :u))
             @test !isempty(changes)

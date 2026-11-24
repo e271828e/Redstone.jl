@@ -807,7 +807,7 @@ function diagnostics_kind_set()
         @test message(DeploymentInvalid(parameter = :h_max, reason = :inexact, value = 0.001)) ==
               "`h_max` must be exact — an integer or a Rational (`h_max = 1//100`): " *
               "a span's step count is exact arithmetic, ill-defined over floats " *
-              "(§9.1, §10.5)"
+              "(§9.2, §10.5)"
         # A unit too fine to index one frame, or to count a period, names `Δt_base`
         # and the frame (§10.5, D-445, D-459).
         @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
@@ -833,43 +833,43 @@ function diagnostics_kind_set()
                          "frame 922 is past frame 921, the last a run of this deployment " *
                          "from this origin may take: past it the frame's positions, counted " *
                          "in Δt_unit")
-        # A value a time door cannot hold names the door and the value (§10.5).
+        # A value a time door cannot hold names the door and the value (§8.7).
         @test message(ArgumentInvalid(call = :Absolute, reason = :inexact, argument = :Δt,
                                       value = 50.0)) ==
               "a period is an exact Rational in seconds — write `Absolute(1//50)` for 50 Hz, " *
-              "not 50.0: grid derivation is GCD arithmetic (§10.5)"
+              "not 50.0: grid derivation is GCD arithmetic (§8.7)"
         @test message(ArgumentInvalid(call = :Absolute, reason = :inexact, argument = :τ,
                                       value = 0.001)) ==
               "an offset is an exact Rational in seconds — write `Absolute(1//50, 1//500)`, " *
-              "not 0.001: grid derivation is GCD arithmetic (§10.5)"
+              "not 0.001: grid derivation is GCD arithmetic (§8.7)"
         @test message(ArgumentInvalid(call = :Absolute, reason = :range, value = 1//0)) ==
-              "`Absolute` holds an exact `Rational{Int}`, and 1//0 is past `Int` or not finite (§10.5)"
+              "`Absolute` holds an exact `Rational{Int}`, and 1//0 is past `Int` or not finite (§8.7)"
         @test message(ArgumentInvalid(call = :Relative, reason = :range, value = big(2)^70)) ==
-              "`Relative` holds its counts in `Int`, and 1180591620717411303424 is past it (§10.5)"
+              "`Relative` holds its counts in `Int`, and 1180591620717411303424 is past it (§8.7)"
         @test message(ArgumentInvalid(call = :Relative, reason = :not_a_count, value = 1//2)) ==
               "`Relative` counts ticks of the enclosing scope, so `Dₛ` and `Φₛ` are integers — " *
               "got 1//2. A child that ticks faster than its scope, or at a period in seconds, " *
-              "takes `Absolute`, as in `Absolute(1//100)` (§10.5)"
+              "takes `Absolute`, as in `Absolute(1//100)` (§8.7)"
         @test message(DeploymentInvalid(parameter = :Δt_frame, reason = :range,
                                         value = big(2)^70)) ==
               "`Δt_frame` must be positive and finite in `Rational{Int}`, got " *
               "1180591620717411303424 (§9.2)"
-        # A composed divisor past `Int` names the entry that composed it (§10.5).
+        # A composed divisor past `Int` names the entry that composed it (§9.1).
         @test message(RatesViolation(path = "g", reason = :range, key = :a,
                                      value = Relative(2^32 + 1))) ==
               "`sample_times` at `g`, key `a`: Relative(4294967297, 0) composes a divisor " *
-              "past `Int` (§10.5)"
+              "past `Int` (§9.1)"
         # A `Relative` entry's constraints read in scope ticks, its child's `Dₛ`
-        # and `Φₛ` (§10.5, D-478).
+        # and `Φₛ` (§6.3, D-478).
         @test message(RatesViolation(path = "g", reason = :multiplier, key = :a, value = 0)) ==
-              "`sample_times` at `g`, key `a`: Dₛ = 0, and Dₛ ≥ 1 (§10.5)"
+              "`sample_times` at `g`, key `a`: Dₛ = 0, and Dₛ ≥ 1 (§6.3)"
         @test message(RatesViolation(path = "g", reason = :phase, key = :a, value = 5)) ==
-              "`sample_times` at `g`, key `a`: Φₛ = 5, and 0 ≤ Φₛ < Dₛ (§10.5)"
-        # An `Absolute` entry's constraints read in its own letters (§10.5, D-464).
+              "`sample_times` at `g`, key `a`: Φₛ = 5, and 0 ≤ Φₛ < Dₛ (§6.3)"
+        # An `Absolute` entry's constraints read in its own letters (§6.3, D-464).
         @test message(RatesViolation(path = "g", reason = :period, key = :a, value = 0//1)) ==
-              "`sample_times` at `g`, key `a`: period 0//1, and Δt > 0 (§10.5)"
+              "`sample_times` at `g`, key `a`: period 0//1, and Δt > 0 (§6.3)"
         @test message(RatesViolation(path = "g", reason = :offset, key = :a, value = 3//1)) ==
-              "`sample_times` at `g`, key `a`: offset 3//1, and 0 ≤ τ < Δt (§10.5)"
+              "`sample_times` at `g`, key `a`: offset 3//1, and 0 ≤ τ < Δt (§6.3)"
         # An anchor no base tick counts in an `Int` names its entry by its fields
         # (§9.2, D-465).
         @test message(RatesViolation(path = "g", reason = :range, key = :a,

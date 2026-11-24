@@ -701,8 +701,8 @@ function _open_run!(sim::Simulation, header, schemas, feed, frame::Int, boundary
     nothing
 end
 
-# Design: §10.5, §10.6, §11.2, §11.4, §11.5, §11.8, §12.6, §12.7, §13.4, §13.5,
-# §13.6, §14.1, §14.3, §14.5, §14.6, Appendix B, D-029, D-038, D-063, D-205,
+# Design: §6.3, §10.5, §10.6, §11.2, §11.4, §11.5, §11.8, §12.6, §12.7, §13.4,
+# §13.5, §13.6, §14.1, §14.3, §14.5, §14.6, Appendix B, D-029, D-038, D-063, D-205,
 # D-218, D-223, D-255, D-260, D-261, D-274.
 # The condition is §14.1's overlay, and its base is always the declared
 # defaults: `init!` re-establishes the three state homes, `xbuf` and the `s`/`m`
@@ -714,8 +714,8 @@ end
 # condition entry, since time is not a store of any component (§14.5). It is
 # held as an exact origin on the clock (D-457) while the clock's `t` stays in
 # the model's scalar, so a `Dual` model takes `t0 = 0.25` like any other.
-# Boundary zero is an ordinary boundary with an empty integrate (§10.5, §14.5),
-# run with the sweep's one amendment: every discrete output stage publishes, due
+# Boundary zero is an ordinary boundary with an empty integrate (§6.3, §10.5,
+# §14.5), run with the sweep's one amendment: every discrete output stage publishes, due
 # or not (D-205, `boundary_zero!`), while the `s_update` calls keep the gate at
 # index 0, which admits exactly the components with `Φ₀ = 0`, implemented by
 # nothing. It establishes every event prior as not-holding (§10.6), so a firing

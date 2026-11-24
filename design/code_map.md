@@ -179,7 +179,7 @@ Spec: §11.2, §11.4, §11.6, §14.4.
   - An entry's side is `entry_addrs`' one `CellAddr` where the side is bare,
     by the declared shape, a `NamedTuple` group otherwise (D-437).
 
-Spec: §5.3, §5.5, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
+Spec: §5.3, §5.5, §6.3, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
 §13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
 D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316, D-437,
 D-438, D-465, D-468.
@@ -245,7 +245,7 @@ D-452, D-461, D-462.
 - `apply!` and `init!` on a model are model.jl's, and `apply!`'s forwarding
   method on the simulation is sim.jl's.
 
-Spec: §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,
+Spec: §6.3, §9.5, §13.1, §13.3, §14.1–§14.6, §14.9, Appendix B, D-063–D-068,
 D-117, D-130, D-204, D-205, D-207, D-226, D-277, D-315, D-429, D-437, D-438.
 
 ### `src/control.jl`
@@ -346,7 +346,7 @@ The declaration layer:
   bundle-name functions and `foreign_declarations`, take it unspecialized, so a
   new component type compiles none of them again (§9.7, D-289).
 
-Spec: §2.3, §5.2, §8.1, §8.2, §8.5–§8.7, §9.3, §9.7, §13.5, Appendix B, D-051,
+Spec: §2.3, §5.2, §6.3, §8.1, §8.2, §8.5–§8.7, §9.3, §9.7, §13.5, Appendix B, D-051,
 D-179, D-185, D-195, D-211, D-246, D-248, D-263, D-289, D-316, D-437, D-438,
 D-459, D-464.
 
@@ -426,7 +426,7 @@ D-459, D-464.
   with both attribution forms. The derivation path also raises the
   `GridUtilization` advisory at `min D₀(i) > 1`.
 
-Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
+Spec: §6.3, §8.7, §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
 D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454,
 D-459, D-460, D-461, D-463, D-465, D-466.
 
@@ -602,7 +602,7 @@ D-256, D-261, D-268, D-270, D-315.
   and `attempt_budget`'s `:range`; `CheckpointMismatch`'s message counts
   nine parameters (D-460, D-462, D-463).
 
-Spec: §9.1, §9.2, §10.4, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
+Spec: §6.3, §8.7, §9.1, §9.2, §10.4, §10.5, §10.6, §10.7, §11.4, §11.6, §11.8, §12.2, §12.4,
 §12.6, §12.7, §13.1, §13.2, §13.4, §13.5, §14.4, §14.8, §14.9, §14.10,
 Appendix C, D-027, D-058, D-059, D-157, D-187, D-203, D-214, D-215, D-222,
 D-225, D-250, D-255, D-256,
@@ -648,7 +648,7 @@ D-463, D-465.
   ordinal, which `_phase!` clears and model.jl's attempt loop writes
   (D-452).
 
-Spec: §5.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
+Spec: §5.3, §6.3, §9.5, §9.7, §10.4–§10.6, §13.4, §13.5, §14.5, D-059, D-205, D-235,
 D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
 
 ### `src/frame.jl`
@@ -823,7 +823,7 @@ It reaches the parent through its import list alone, as a user's component
 file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
 includes it last.
 
-Spec: §2.3, §5.4, §5.5, §6.2, §8.1, §10.4, §13.5, §13.7, D-141, D-179, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
+Spec: §2.3, §5.4, §5.5, §6.2, §6.3, §8.1, §8.7, §10.4, §13.5, §13.7, D-141, D-179, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
 
 ### `src/linearize.jl`
 
@@ -996,7 +996,7 @@ soon as nothing in it names a `Simulation` in a signature, and below
   collecting `CheckpointMidFrame` into the same list, and an `ArgumentInvalid`
   on `t0` where a state's origin fails `_clock_integers` (D-457).
 
-Spec: §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+Spec: §6.3, §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
 §13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
 D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447,
 D-449, D-450, D-452, D-454, D-460.
@@ -1177,7 +1177,7 @@ D-261.
     the point where it fits and starts at the column's edge otherwise.
     `_column_table` builds `_table`'s rows from such columns.
 
-Spec: §9.2, §11.2, §11.8, §12.6, §13.7, §14.8, §14.10, D-136, D-257, D-261, D-315, D-437,
+Spec: §9.2, §10.5, §11.2, §11.8, §12.6, §13.7, §14.8, §14.10, D-136, D-257, D-261, D-315, D-437,
 D-449, D-454, D-460, D-464, D-466, D-468, D-471, D-476.
 
 ### `src/sim.jl`
@@ -1294,7 +1294,7 @@ D-449, D-454, D-460, D-464, D-466, D-468, D-471, D-476.
   are model.jl's (D-317). `apply!` forwards to the ungated `_apply_plan!`
   (D-318).
 
-Spec: §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6,
+Spec: §6.3, §10.2–§10.7, §11.1–§11.5, §11.8, §12.1–§12.7, §13.4–§13.6,
 §14, §14.1, §14.5, §14.6, §14.8, §14.10, D-027, D-101, D-198, D-203, D-218,
 D-219, D-223, D-232, D-233, D-250, D-253, D-254, D-255, D-256, D-260, D-261,
 D-268, D-269, D-270, D-274, D-316, D-317, D-318, D-319, D-407, D-429, D-445,
@@ -1429,7 +1429,7 @@ D-456, D-457, D-458.
   again (§9.7, D-289). A function that takes a connection or its endpoint
   tuple, as `_fanout` does, still compiles once per connection type.
 
-Spec: §6.1, §6.3, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §13.1, §13.3,
+Spec: §6.1, §6.3, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §10.5, §13.1, §13.3,
 §13.7, Appendix C, D-130, D-187, D-208, D-210, D-211, D-229, D-236, D-246,
 D-248, D-253, D-261, D-289, D-315, D-414, D-437, D-445, D-459, D-464, D-465,
 D-466.
@@ -1511,7 +1511,7 @@ The suite's fixtures:
   bare ports two levels down, wired by their faces `u` and `y` (D-437).
 - `pinned_fanout()`, a root input pinned by tier and by declaration beside a
   tolerant consumer, and one pinned by nothing (D-468).
-- `tick_alarmed`, the tick-detected stop request over `TickAlarm` (§10.5,
+- `tick_alarmed`, the tick-detected stop request over `TickAlarm` (§6.3,
   §13.5, D-316).
 - The `ForgottenImport` module and the forgotten-import fixtures `Inventory`,
   `Update`, `Events`, `Rates` and `Reason`, which import nothing, and

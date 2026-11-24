@@ -302,7 +302,7 @@ function index_of(draft::StructureDraft, path::String)
     ci
 end
 
-# --- the sample-time fold (§8.7, §9.1, §10.5) -----------------------------------
+# --- the sample-time fold (§6.3, §8.7, §9.1) ------------------------------------
 # Nested rate declarations compile to one `(a, Dₐ, Φₐ)` timing per component,
 # folding down the tree beside the wiring walk: the root scope seeds
 # `(A₀, 1, 0)`, `Relative(D, Φ)` under a scope `s` at `(a, Dₐ(s), Φₐ(s))` steps to
@@ -314,8 +314,8 @@ end
 # induction (D-478).
 
 """
-Validate a scope's `sample_times` against §10.5's constraints, with path
-attribution (§9.1, §13.1): wrapper-typed values only, `Dₛ ≥ 1`, `0 ≤ Φₛ < Dₛ`,
+Validate a scope's `sample_times` against §6.3's and §8.7's constraints, with
+path attribution (§9.1, §13.1): wrapper-typed values only, `Dₛ ≥ 1`, `0 ≤ Φₛ < Dₛ`,
 `Δt > 0`, `0 ≤ τ < Δt`, and every key naming an immediate child.
 """
 function _check_sample_times(path::String, rate_decl, kids, fields, diags::Vector{Diagnostic})
