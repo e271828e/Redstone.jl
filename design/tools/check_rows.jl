@@ -51,7 +51,9 @@ const FILES = [SPEC,
                "companions/lqr_tracker.md",
                "companions/linear_systems.md",
                "companions/store_at_rest_walkthrough.md",
-               "companions/fused_evaluation_lineage.md"]
+               "companions/fused_evaluation_lineage.md",
+               "increments/roadmap_api_audit.md",
+               "increments/roadmap_publication_garbage.md"]
 
 # One citation group: "row 80", "rows 185–187", "rows 7 and 37", "rows 33, 34
 # and 55". The inner token is a number or an (en- or hyphen-dashed) range.

@@ -80,7 +80,9 @@ const ROSTER = [DECISIONS,
                 "companions/pid_anti_windup.md",
                 "companions/lqr_tracker.md",
                 "companions/linear_systems.md",
-                "companions/fused_evaluation_lineage.md"]
+                "companions/fused_evaluation_lineage.md",
+                "increments/roadmap_api_audit.md",
+                "increments/roadmap_publication_garbage.md"]
 
 # The companions that cite their own numbered sections (see the advisory above).
 const SELF_CITING = ["companions/event_visibility_walkthrough.md",
