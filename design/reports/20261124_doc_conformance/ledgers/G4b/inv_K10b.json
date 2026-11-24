@@ -1,0 +1,1282 @@
+{
+ "rows": [
+  {
+   "id": "K10b-043",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 117,
+   "kind": "law",
+   "claim": "the minmax projection falls back to bisection's count, 21 trials for the default tolerance",
+   "evidence": "probe:160 (strict leave pays 22 trial sweeps, pm1 20; bisection alone needs 20 at tol 1e-6)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace with: pays 22 trials for the default tolerance, two more than bisection's 20.",
+   "note": "The table's 'about 22' on line 226 agrees with the probe."
+  },
+  {
+   "id": "K10b-048",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 123,
+   "kind": "law",
+   "claim": "the +-1 gate converges at the same bisection count as the strict gate",
+   "evidence": "probe:160 and probe:145 (pm1 20 trials per departure and 167/166 in the cos run; strict 22 and 177)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace with: converges at bisection's count, 20 trials, two fewer than the strict gate.",
+   "note": ""
+  },
+  {
+   "id": "K10b-051",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 133,
+   "kind": "law",
+   "claim": "the floatmin nudge keeps the 87 trials and the original leave instants, and every routed test stays green",
+   "evidence": "no code in src or test builds the nudge",
+   "verdict": "unverifiable",
+   "note": "A rejected, unbuilt variant; the claim is a historical measurement."
+  },
+  {
+   "id": "K10b-077",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 221,
+   "kind": "law",
+   "claim": "the localized policy lands within the root-finder's tolerance, about 1e-8 in time, at h = 0.01 and 0.1",
+   "evidence": "probe:197 (tolerance is localization_tol * Delta_t_frame = 1e-6 * frame: 1e-8 at 0.01, 1e-7 at 0.1)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace with: within the root-finder's tolerance, localization_tol times the frame, about 1e-8 at h = 0.01 and 1e-7 at h = 0.1.",
+   "note": "Reading h as the frame; low confidence."
+  },
+  {
+   "id": "K10b-083",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 234,
+   "kind": "decl",
+   "claim": "the type parameters are LimitedIntegrator{V, L}",
+   "evidence": "src/library.jl:1830 (LimitedIntegrator{V, L, R}, R the reset form)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace with: LimitedIntegrator{V, L, R}, R being the reset form.",
+   "note": "Library inventory line 238 already writes {V, L, R}."
+  },
+  {
+   "id": "K10b-106",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 311,
+   "kind": "law",
+   "claim": "reading u at rest alone gives about 9000 hit firings over one second on a ramp of slope 1e-10 at h = 1e-3",
+   "evidence": "probe:257 (an emulation with hit guard first_nonzero(q-limit,u) gave 2 firings, localized or not)",
+   "verdict": "unverifiable",
+   "note": "Could not reproduce the pre-fix guard's refiring; my emulation may differ from the original model."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K10b-001",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 13,
+   "kind": "mech",
+   "claim": "the limited integrator is a mode read by the derivative, not a clamp",
+   "evidence": "src/library.jl:1845"
+  },
+  {
+   "id": "K10b-002",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 25,
+   "kind": "decl",
+   "claim": "one continuous state x and a three-valued mode (now Int8 -1/0/+1)",
+   "evidence": "src/library.jl:1841"
+  },
+  {
+   "id": "K10b-003",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 27,
+   "kind": "law",
+   "claim": "xdot = in while free",
+   "evidence": "src/library.jl:1845"
+  },
+  {
+   "id": "K10b-004",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 27,
+   "kind": "law",
+   "claim": "xdot = 0 while saturated",
+   "evidence": "src/library.jl:1845"
+  },
+  {
+   "id": "K10b-005",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 27,
+   "kind": "law",
+   "claim": "four state events move the mode",
+   "evidence": "src/library.jl:1880"
+  },
+  {
+   "id": "K10b-006",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 28,
+   "kind": "law",
+   "claim": "a sign-form predicate holds when sigma >= 0",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "K10b-007",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 29,
+   "kind": "law",
+   "claim": "an event fires on the not-holding to holding edge",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "K10b-008",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 30,
+   "kind": "mech",
+   "claim": "the edge is detected against the prior, the value at the last quiescent boundary",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "K10b-009",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 34,
+   "kind": "ex",
+   "claim": "ungated hit guard x - upper",
+   "evidence": "src/library.jl:1851"
+  },
+  {
+   "id": "K10b-010",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 36,
+   "kind": "ex",
+   "claim": "first-form leave guard gated on the mode alone: -u when saturated, else -1",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "K10b-011",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 40,
+   "kind": "law",
+   "claim": "the hit guards are deliberately ungated",
+   "evidence": "src/library.jl:1851"
+  },
+  {
+   "id": "K10b-012",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 41,
+   "kind": "law",
+   "claim": "a hit guard gated on :free reads -1 while saturated",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K10b-013",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 41,
+   "kind": "law",
+   "claim": "a gated hit guard reads x - upper = 0 the instant a leave frees the mode",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K10b-014",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "that edge fires and saturates the integrator again",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K10b-015",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 43,
+   "kind": "law",
+   "claim": "the leave guard then sees a fresh edge of its own",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K10b-016",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 45,
+   "kind": "law",
+   "claim": "the boundary chatters until the firing budget breaks the tie",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K10b-017",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 46,
+   "kind": "law",
+   "claim": "the budget exhaustion is a FiringBudget warning",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K10b-018",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 46,
+   "kind": "law",
+   "claim": "a release mid-run ends saturated and stuck",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K10b-019",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 48,
+   "kind": "law",
+   "claim": "a release at boundary zero ends free",
+   "evidence": "probe:233"
+  },
+  {
+   "id": "K10b-020",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 48,
+   "kind": "law",
+   "claim": "both results hold under both policies",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K10b-021",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 49,
+   "kind": "decl",
+   "claim": "the leave guards use the gate form (gate) ? sigma : -one(sigma)",
+   "evidence": "src/library.jl:1860"
+  },
+  {
+   "id": "K10b-022",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 50,
+   "kind": "law",
+   "claim": "the mode is constant through a localization",
+   "evidence": "src/frame.jl:338"
+  },
+  {
+   "id": "K10b-023",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 56,
+   "kind": "law",
+   "claim": "at input 0.0 the first leave guard computes -u = -0.0",
+   "evidence": "probe:187"
+  },
+  {
+   "id": "K10b-024",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 57,
+   "kind": "law",
+   "claim": "-0.0 >= 0 is true",
+   "evidence": "probe:187"
+  },
+  {
+   "id": "K10b-025",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 58,
+   "kind": "law",
+   "claim": "the leave fires: mode free with x exactly on the limit",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "K10b-026",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 61,
+   "kind": "law",
+   "claim": "the hit guard reads 0 and holds, and has held since the hit fired",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "K10b-027",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 62,
+   "kind": "law",
+   "claim": "an outward push gives no edge, so the hit never fires again",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "K10b-028",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 65,
+   "kind": "ex",
+   "claim": "input 1 to 0 at 1.05 and back at 2.05 with limit 0.5 gives x = 1.45, mode free at t = 3",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "K10b-029",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 67,
+   "kind": "law",
+   "claim": "the mirror case at the lower limit reads -1.45",
+   "evidence": "probe:90"
+  },
+  {
+   "id": "K10b-030",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 68,
+   "kind": "law",
+   "claim": "boundary zero sets every prior to not-holding",
+   "evidence": "src/model.jl:332"
+  },
+  {
+   "id": "K10b-031",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 69,
+   "kind": "law",
+   "claim": "x0 on the limit with zero input frees there and overshoots later (first form)",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "K10b-032",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 99,
+   "kind": "decl",
+   "claim": "the leave guards gate on strictly inward input and on the mode",
+   "evidence": "src/library.jl:1860"
+  },
+  {
+   "id": "K10b-033",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 103,
+   "kind": "ex",
+   "claim": "strict-gate leave guards",
+   "evidence": "src/library.jl:1860"
+  },
+  {
+   "id": "K10b-034",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 107,
+   "kind": "law",
+   "claim": "an input of exactly zero at a limit keeps the mode saturated",
+   "evidence": "probe:99"
+  },
+  {
+   "id": "K10b-035",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 108,
+   "kind": "law",
+   "claim": "x is unchanged since the derivative is zero in both modes at zero input",
+   "evidence": "src/library.jl:1845"
+  },
+  {
+   "id": "K10b-036",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 110,
+   "kind": "law",
+   "claim": "the gate u < 0 reads a wired signal, so the fixed-gate argument does not cover it",
+   "evidence": "src/library.jl:1854"
+  },
+  {
+   "id": "K10b-037",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 111,
+   "kind": "law",
+   "claim": "across a bracket sigma is -1 on one side and a small positive -in on the other",
+   "evidence": "src/library.jl:1860"
+  },
+  {
+   "id": "K10b-038",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 113,
+   "kind": "mech",
+   "claim": "the bracket update reads only the sign of sigma",
+   "evidence": "src/frame.jl:389"
+  },
+  {
+   "id": "K10b-039",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 113,
+   "kind": "law",
+   "claim": "the root-finder still converges on the input's zero crossing",
+   "evidence": "probe:204"
+  },
+  {
+   "id": "K10b-040",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 115,
+   "kind": "law",
+   "claim": "located instants lie within 4.6e-9 of the true zeros",
+   "evidence": "probe:204"
+  },
+  {
+   "id": "K10b-041",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 115,
+   "kind": "law",
+   "claim": "the bracket is 1e-8 (localization_tol 1e-6 times a 0.01 frame)",
+   "evidence": "probe:197"
+  },
+  {
+   "id": "K10b-042",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 116,
+   "kind": "mech",
+   "claim": "with one end stuck at -1 the secant estimate lands next to the other end and ITP falls back to bisection",
+   "evidence": "src/frame.jl:372"
+  },
+  {
+   "id": "K10b-044",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 118,
+   "kind": "law",
+   "claim": "cos(t) into [-0.5,0.5] over 20 s makes seven hits and six leaves",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "K10b-045",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 119,
+   "kind": "law",
+   "claim": "177 trial sweeps with the gate against 87 before",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "K10b-046",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 120,
+   "kind": "law",
+   "claim": "about 15 extra interior sweeps per leave",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "K10b-047",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 122,
+   "kind": "law",
+   "claim": "the +-1 gate defines the same predicate",
+   "evidence": "probe:99"
+  },
+  {
+   "id": "K10b-049",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 124,
+   "kind": "mech",
+   "claim": "with the +-1 gate both ends of the bracket are fake constants",
+   "evidence": "probe:160"
+  },
+  {
+   "id": "K10b-050",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 128,
+   "kind": "decl",
+   "claim": "the chosen form is the gate idiom with one more Bool factor, -in the continuous atom",
+   "evidence": "src/library.jl:1860"
+  },
+  {
+   "id": "K10b-052",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 135,
+   "kind": "law",
+   "claim": "floatmin has no method for a Dual",
+   "evidence": "probe:186"
+  },
+  {
+   "id": "K10b-053",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 136,
+   "kind": "mech",
+   "claim": "events compile out at non-nominal activations",
+   "evidence": "src/frame.jl:53"
+  },
+  {
+   "id": "K10b-054",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 152,
+   "kind": "law",
+   "claim": "an ungated release guard localizes every downward zero crossing of the input",
+   "evidence": "probe:239"
+  },
+  {
+   "id": "K10b-055",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 154,
+   "kind": "law",
+   "claim": "a computed-clamp departure costs about 7 trial sweeps",
+   "evidence": "probe:239"
+  },
+  {
+   "id": "K10b-056",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 154,
+   "kind": "law",
+   "claim": "the strict gate costs 22 trial sweeps per departure",
+   "evidence": "probe:160"
+  },
+  {
+   "id": "K10b-057",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 155,
+   "kind": "law",
+   "claim": "the computed clamp wins only above three departures per other crossing (22/7)",
+   "evidence": "probe:239"
+  },
+  {
+   "id": "K10b-058",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 159,
+   "kind": "mech",
+   "claim": "each spurious firing ends the step at the crossing",
+   "evidence": "src/frame.jl:314"
+  },
+  {
+   "id": "K10b-059",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 165,
+   "kind": "law",
+   "claim": "the computed clamp with no release event costs nothing at a departure",
+   "evidence": "probe:239"
+  },
+  {
+   "id": "K10b-060",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 167,
+   "kind": "law",
+   "claim": "its departure error is a one-time offset of order a h^2",
+   "evidence": "probe:183"
+  },
+  {
+   "id": "K10b-061",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 170,
+   "kind": "decl",
+   "claim": "non-localized form: the guard returns the predicate instead of the sign value",
+   "evidence": "src/library.jl:1866"
+  },
+  {
+   "id": "K10b-062",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 175,
+   "kind": "ex",
+   "claim": "non-localized leave guard m == upper && u < 0",
+   "evidence": "src/library.jl:1866"
+  },
+  {
+   "id": "K10b-063",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 179,
+   "kind": "law",
+   "claim": "a Bool predicate is strict by construction",
+   "evidence": "probe:99"
+  },
+  {
+   "id": "K10b-064",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 180,
+   "kind": "law",
+   "claim": "a non-localized departure has no root-finding and no grid split",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "K10b-065",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 182,
+   "kind": "mech",
+   "claim": "the mode is kept, so the derivative, the hit events and modes() are unchanged",
+   "evidence": "src/library.jl:1845"
+  },
+  {
+   "id": "K10b-066",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 183,
+   "kind": "law",
+   "claim": "the departure fires at the end of the step where in < 0 was first observed, up to one step late",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "K10b-067",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 191,
+   "kind": "law",
+   "claim": "the arrival stays localized in every variant",
+   "evidence": "src/library.jl:1851"
+  },
+  {
+   "id": "K10b-068",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 194,
+   "kind": "law",
+   "claim": "the hit handler writes x to the limit exactly",
+   "evidence": "src/library.jl:1870"
+  },
+  {
+   "id": "K10b-069",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 199,
+   "kind": "law",
+   "claim": "a Step carries its own event, localized or boundary-aligned",
+   "evidence": "src/library.jl:1643"
+  },
+  {
+   "id": "K10b-070",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 201,
+   "kind": "law",
+   "claim": "a Relay likewise carries its own event",
+   "evidence": "src/library.jl:2144"
+  },
+  {
+   "id": "K10b-071",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 204,
+   "kind": "ex",
+   "claim": "lead t_c: local name for the crossing instant t_n + theta h, defined by the sentence",
+   "evidence": "design/companions/limited_integrator_variants.md:204"
+  },
+  {
+   "id": "K10b-072",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 212,
+   "kind": "law",
+   "claim": "the non-localized policy lands exactly on upper",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "K10b-073",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 213,
+   "kind": "law",
+   "claim": "its error is a(1-theta)^2 h^2/2, at most a h^2/2",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "K10b-074",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 216,
+   "kind": "law",
+   "claim": "the computed clamp's RK4 error is a h^2 theta(1-3theta)/6 for theta < 1/2",
+   "evidence": "probe:183"
+  },
+  {
+   "id": "K10b-075",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 217,
+   "kind": "law",
+   "claim": "the one-time errors persist in x",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "K10b-076",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 220,
+   "kind": "law",
+   "claim": "with slope 1 the bound is 5e-5 at h = 0.01 and 5e-3 at h = 0.1",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "K10b-078",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 226,
+   "kind": "law",
+   "claim": "table: localized strict gate costs about 22 sweeps and a grid split",
+   "evidence": "probe:160"
+  },
+  {
+   "id": "K10b-079",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 227,
+   "kind": "law",
+   "claim": "table: non-localized Bool costs one Bool per step, error at most a h^2/2",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "K10b-080",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 228,
+   "kind": "law",
+   "claim": "table: computed clamp with release costs about 7 sweeps per input zero crossing",
+   "evidence": "probe:239"
+  },
+  {
+   "id": "K10b-081",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 229,
+   "kind": "law",
+   "claim": "table: computed clamp without release costs nothing, error a h^2 theta(1-3theta)/6",
+   "evidence": "probe:183"
+  },
+  {
+   "id": "K10b-082",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 233,
+   "kind": "decl",
+   "claim": "the integrator ships both departure policies by a type parameter",
+   "evidence": "src/library.jl:1830"
+  },
+  {
+   "id": "K10b-084",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 235,
+   "kind": "decl",
+   "claim": "the keyword is localized = true",
+   "evidence": "src/library.jl:1835"
+  },
+  {
+   "id": "K10b-085",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 236,
+   "kind": "law",
+   "claim": "arrivals are localized in both policies",
+   "evidence": "src/library.jl:1851"
+  },
+  {
+   "id": "K10b-086",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 238,
+   "kind": "law",
+   "claim": "the cheap form is exact at every zero input",
+   "evidence": "probe:99"
+  },
+  {
+   "id": "K10b-087",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 239,
+   "kind": "mech",
+   "claim": "the two forms differ in one method per leave guard",
+   "evidence": "src/library.jl:1860"
+  },
+  {
+   "id": "K10b-088",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 240,
+   "kind": "mech",
+   "claim": "the policy is a type parameter because the build reads it off the guard's return type",
+   "evidence": "src/library.jl:1830"
+  },
+  {
+   "id": "K10b-089",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 245,
+   "kind": "decl",
+   "claim": "modes are signed Int8 codes -1, 0, +1",
+   "evidence": "src/library.jl:1841"
+  },
+  {
+   "id": "K10b-090",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 254,
+   "kind": "law",
+   "claim": "at (upper, 0) the hit predicate holds and neither guard can produce an edge",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "K10b-091",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 267,
+   "kind": "law",
+   "claim": "a Step at t_step = t0 fires at boundary zero",
+   "evidence": "src/library.jl:1620"
+  },
+  {
+   "id": "K10b-092",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 267,
+   "kind": "law",
+   "claim": "a relay fed exactly its threshold fires",
+   "evidence": "src/library.jl:2144"
+  },
+  {
+   "id": "K10b-093",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 268,
+   "kind": "law",
+   "claim": "a state initialized exactly on a level fires at boundary zero",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "K10b-094",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 283,
+   "kind": "law",
+   "claim": "a dip and return inside one step shows no edge and runs past the limit",
+   "evidence": "probe:215"
+  },
+  {
+   "id": "K10b-095",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 286,
+   "kind": "law",
+   "claim": "under the non-localized leave one reversal is enough",
+   "evidence": "probe:215"
+  },
+  {
+   "id": "K10b-096",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 287,
+   "kind": "ex",
+   "claim": "u=(t-0.45)(t-0.52), h=0.5, upper=0.02 leaves x 1.16 past the limit at t=2 (old hit guard)",
+   "evidence": "probe:215"
+  },
+  {
+   "id": "K10b-097",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 288,
+   "kind": "law",
+   "claim": "a localized leave observes the crossing only when u is negative at the step end",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "K10b-098",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 296,
+   "kind": "ex",
+   "claim": "hit_upper_guard = first_nonzero(x - upper, u)",
+   "evidence": "src/library.jl:1851"
+  },
+  {
+   "id": "K10b-099",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 299,
+   "kind": "law",
+   "claim": "a freed integrator has u < 0, the hit predicate does not hold and the return is a fresh edge",
+   "evidence": "probe:215"
+  },
+  {
+   "id": "K10b-100",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 300,
+   "kind": "law",
+   "claim": "at u = 0 the hit guard holds",
+   "evidence": "src/library.jl:1737"
+  },
+  {
+   "id": "K10b-101",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 302,
+   "kind": "law",
+   "claim": "the new sigma is discontinuous at x = upper for u < 0",
+   "evidence": "src/library.jl:1851"
+  },
+  {
+   "id": "K10b-102",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 303,
+   "kind": "law",
+   "claim": "a hit at x = upper under u = 0 while free cannot arise, the leave being strict",
+   "evidence": "src/library.jl:1860"
+  },
+  {
+   "id": "K10b-103",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 305,
+   "kind": "law",
+   "claim": "cos(t) 20 s: 865 derivative calls localized, 835 non-localized, same under either hit guard (probe 866/836)",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "K10b-104",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 306,
+   "kind": "law",
+   "claim": "both hit guards reach the same state",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "K10b-105",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 308,
+   "kind": "decl",
+   "claim": "the double integrator's hit guard reads q - limit, then v, then u",
+   "evidence": "src/library.jl:2025"
+  },
+  {
+   "id": "K10b-107",
+   "file": "design/companions/limited_integrator_variants.md",
+   "line": 312,
+   "kind": "law",
+   "claim": "the single integrator has no such case, u being negative when x rounds back",
+   "evidence": "test/test_library.jl:2383"
+  },
+  {
+   "id": "K10b-108",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 5,
+   "kind": "law",
+   "claim": "detection policy is declared by the guard's return type",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "K10b-109",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 6,
+   "kind": "law",
+   "claim": "honest priors: the prior is updated unconditionally at quiescence",
+   "evidence": "src/model.jl:729"
+  },
+  {
+   "id": "K10b-110",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 6,
+   "kind": "decl",
+   "claim": "localization_budget and firing_budget are the two event budgets",
+   "evidence": "src/deployment.jl:546"
+  },
+  {
+   "id": "K10b-111",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 9,
+   "kind": "mech",
+   "claim": "the mechanism is one extra guard evaluation at the start of a localization",
+   "evidence": "src/frame.jl:257"
+  },
+  {
+   "id": "K10b-112",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 19,
+   "kind": "law",
+   "claim": "order is boundary sequence, input drain, integrate",
+   "evidence": "src/frame.jl:88"
+  },
+  {
+   "id": "K10b-113",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 23,
+   "kind": "law",
+   "claim": "priors are sampled at quiescence, before the drain",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "K10b-114",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 25,
+   "kind": "law",
+   "claim": "trial evaluations run against the post-drain inputs",
+   "evidence": "src/frame.jl:257"
+  },
+  {
+   "id": "K10b-115",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 36,
+   "kind": "law",
+   "claim": "the trigger is prior not-holding and holding now",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "K10b-116",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 38,
+   "kind": "law",
+   "claim": "x-hat(0) = x_n exactly",
+   "evidence": "src/stepper.jl:361"
+  },
+  {
+   "id": "K10b-117",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 51,
+   "kind": "law",
+   "claim": "x at theta = 0 is x_n, written into the state buffer",
+   "evidence": "src/frame.jl:257"
+  },
+  {
+   "id": "K10b-118",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 52,
+   "kind": "law",
+   "claim": "y and ws are recomputed by the interior sweep from x_n",
+   "evidence": "src/frame.jl:261"
+  },
+  {
+   "id": "K10b-119",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 53,
+   "kind": "law",
+   "claim": "m is unchanged since handlers run only at boundaries",
+   "evidence": "src/frame.jl:338"
+  },
+  {
+   "id": "K10b-120",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 54,
+   "kind": "law",
+   "claim": "discrete cells ZOH-hold because interior sweeps exclude discrete entries",
+   "evidence": "src/frame.jl:338"
+  },
+  {
+   "id": "K10b-121",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 55,
+   "kind": "law",
+   "claim": "t at theta = 0 is the indexed instant t_n at a frame top",
+   "evidence": "src/frame.jl:258"
+  },
+  {
+   "id": "K10b-122",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 56,
+   "kind": "law",
+   "claim": "u at theta = 0 is the post-drain root input",
+   "evidence": "src/frame.jl:89"
+  },
+  {
+   "id": "K10b-123",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 58,
+   "kind": "law",
+   "claim": "the drain is the only possible source of disagreement",
+   "evidence": "src/frame.jl:252"
+  },
+  {
+   "id": "K10b-124",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 60,
+   "kind": "law",
+   "claim": "with honest priors the prior is the quiescent sample",
+   "evidence": "src/model.jl:729"
+  },
+  {
+   "id": "K10b-125",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 66,
+   "kind": "law",
+   "claim": "trigger checks run on the arrival sweep before any discrete cell refreshes",
+   "evidence": "src/frame.jl:208"
+  },
+  {
+   "id": "K10b-126",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 68,
+   "kind": "law",
+   "claim": "t* firings precede the t_(n+1) boundary sequence",
+   "evidence": "src/frame.jl:314"
+  },
+  {
+   "id": "K10b-127",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 73,
+   "kind": "law",
+   "claim": "the drain runs once per frame at the frame top",
+   "evidence": "src/frame.jl:88"
+  },
+  {
+   "id": "K10b-128",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 79,
+   "kind": "law",
+   "claim": "a within-epoch edge is a genuine crossing with a bracket",
+   "evidence": "src/frame.jl:265"
+  },
+  {
+   "id": "K10b-129",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 82,
+   "kind": "law",
+   "claim": "at a seam sigma can jump with no crossing: an epoch-caused edge",
+   "evidence": "src/frame.jl:252"
+  },
+  {
+   "id": "K10b-130",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 96,
+   "kind": "law",
+   "claim": "a bracketing root-finder cannot start with both ends holding",
+   "evidence": "src/frame.jl:379"
+  },
+  {
+   "id": "K10b-131",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 99,
+   "kind": "decl",
+   "claim": "the gate idiom (gate) ? sigma : -one(sigma) is the supported form for u-reading localized guards",
+   "evidence": "src/library.jl:1860"
+  },
+  {
+   "id": "K10b-132",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 106,
+   "kind": "law",
+   "claim": "nothing per-guard is stored across the boundary except predicate samples and a counter",
+   "evidence": "src/executor.jl:302"
+  },
+  {
+   "id": "K10b-133",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 108,
+   "kind": "mech",
+   "claim": "validation is a reconstruction through the trial mechanics",
+   "evidence": "src/frame.jl:257"
+  },
+  {
+   "id": "K10b-134",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 111,
+   "kind": "mech",
+   "claim": "step 1: arrival sweep, guards evaluated, trigger raised",
+   "evidence": "src/frame.jl:213"
+  },
+  {
+   "id": "K10b-135",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 113,
+   "kind": "mech",
+   "claim": "step 2: x_n into the buffer, one interior sweep, guard gives sigma0 before anything is built",
+   "evidence": "src/frame.jl:257"
+  },
+  {
+   "id": "K10b-136",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 114,
+   "kind": "mech",
+   "claim": "the stepper already retains x_n",
+   "evidence": "src/stepper.jl:98"
+  },
+  {
+   "id": "K10b-137",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 116,
+   "kind": "law",
+   "claim": "the theta = 0 trial needs no interpolant",
+   "evidence": "src/frame.jl:257"
+  },
+  {
+   "id": "K10b-138",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 118,
+   "kind": "law",
+   "claim": "sigma0 < 0 is a trajectory-caused edge with a genuine bracket",
+   "evidence": "src/frame.jl:265"
+  },
+  {
+   "id": "K10b-139",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 119,
+   "kind": "mech",
+   "claim": "the sweep for x-dot_(n+1) is paid only after validation",
+   "evidence": "src/frame.jl:279"
+  },
+  {
+   "id": "K10b-140",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 120,
+   "kind": "mech",
+   "claim": "the bracket carries both endpoint values sigma0 and sigma1",
+   "evidence": "src/frame.jl:292"
+  },
+  {
+   "id": "K10b-141",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 121,
+   "kind": "mech",
+   "claim": "sigma1 is retained transiently from the arrival evaluation",
+   "evidence": "src/frame.jl:216"
+  },
+  {
+   "id": "K10b-142",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 122,
+   "kind": "mech",
+   "claim": "ITP is value-based and the prior stores only a predicate (Brent is spec-intended, not built)",
+   "evidence": "src/frame.jl:359"
+  },
+  {
+   "id": "K10b-143",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 125,
+   "kind": "law",
+   "claim": "sigma0 >= 0 is epoch-caused and the localization is discarded",
+   "evidence": "src/frame.jl:265"
+  },
+  {
+   "id": "K10b-144",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 128,
+   "kind": "mech",
+   "claim": "not localizing is the action: the boundary event phase fires E as non-localized",
+   "evidence": "src/frame.jl:268"
+  },
+  {
+   "id": "K10b-145",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 131,
+   "kind": "mech",
+   "claim": "the buffer is restored on the discard path",
+   "evidence": "src/frame.jl:270"
+  },
+  {
+   "id": "K10b-146",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 134,
+   "kind": "law",
+   "claim": "the degenerate path costs one interior sweep",
+   "evidence": "src/frame.jl:260"
+  },
+  {
+   "id": "K10b-147",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 135,
+   "kind": "law",
+   "claim": "the x-dot_(n+1) sweep and the interpolant are never paid on that path",
+   "evidence": "src/frame.jl:268"
+  },
+  {
+   "id": "K10b-148",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 136,
+   "kind": "law",
+   "claim": "localization_budget is untouched on that path",
+   "evidence": "src/frame.jl:323"
+  },
+  {
+   "id": "K10b-149",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 136,
+   "kind": "law",
+   "claim": "no warning is emitted on that path",
+   "evidence": "src/frame.jl:268"
+  },
+  {
+   "id": "K10b-150",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 143,
+   "kind": "law",
+   "claim": "no drain happens at t* boundaries",
+   "evidence": "src/frame.jl:314"
+  },
+  {
+   "id": "K10b-151",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 156,
+   "kind": "law",
+   "claim": "t* = t_(n+1) discards the localization and fires in the ordinary iteration",
+   "evidence": "src/frame.jl:294"
+  },
+  {
+   "id": "K10b-152",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 158,
+   "kind": "mech",
+   "claim": "the left-end discard falls into the same ordinary boundary iteration",
+   "evidence": "src/frame.jl:268"
+  },
+  {
+   "id": "K10b-153",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 168,
+   "kind": "law",
+   "claim": "the returned endpoint is strictly later than t_n",
+   "evidence": "src/frame.jl:292"
+  },
+  {
+   "id": "K10b-154",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 169,
+   "kind": "law",
+   "claim": "the guard observably holds at t*",
+   "evidence": "src/frame.jl:389"
+  },
+  {
+   "id": "K10b-155",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 170,
+   "kind": "law",
+   "claim": "the post-fire prior records an actual observation",
+   "evidence": "src/model.jl:729"
+  },
+  {
+   "id": "K10b-156",
+   "file": "design/companions/localization_validation_walkthrough.md",
+   "line": 171,
+   "kind": "law",
+   "claim": "sigma0 holding routes the event to boundary firing",
+   "evidence": "src/frame.jl:268"
+  }
+ ],
+ "counts": {
+  "law": 114,
+  "mech": 22,
+  "decl": 12,
+  "ex": 11,
+  "ptr": 9,
+  "why": 33
+ }
+}

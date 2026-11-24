@@ -1,0 +1,134 @@
+{
+ "judgments": [
+  {
+   "id": "K10b-001",
+   "conforms": true,
+   "evidence": "src/library.jl:1845 x_deriv reads the mode, ifelse.(m .== 0, v, zero(v)); the handlers at 1870-1872 move m, and nothing clamps the output"
+  },
+  {
+   "id": "K10b-012",
+   "conforms": true,
+   "evidence": "Counterfactual in the gate form (gate) ? σ : -one(σ): a hit guard gated on the free code returns -1 whenever m != 0. src/library.jl:1846-1850 states the same counterfactual and keeps the shipped hit guards ungated (1851-1852)."
+  },
+  {
+   "id": "K10b-021",
+   "conforms": true,
+   "evidence": "src/library.jl:1860-1863: localized leave guards are m == 1 && v < 0 ? -v : -one(v) (and the mirror), i.e. the gate form with the mode in the gate. The strict u term is the section 4 addition."
+  },
+  {
+   "id": "K10b-031",
+   "conforms": true,
+   "evidence": "probe.jl P1 (line 84): a first-form copy (hit x - upper, leave m == 1 ? -u : -1) with x0 = upper = 0.5 under zero input fires hit_upper then leave_upper at t = 0 and ends mode 0. After the input steps to 1 at 0.5 it reads x = 1.0 at t = 1. The shipped LimitedIntegrator stays saturated (x = 0.5, mode 1).",
+   "note": "Describes the first form's defect, which the shipped code no longer has (test/test_library.jl:2368-2380)."
+  },
+  {
+   "id": "K10b-041",
+   "conforms": true,
+   "evidence": "src/frame.jl:365: the stop width is localization_tol * Δt_frame = 1e-6 * 0.01 = 1e-8. probe.jl P2 at Δt_frame = 1//100 with the strict gate gives max |leave - true zero| = 4.615e-9, which matches the doc's 4.6e-9."
+  },
+  {
+   "id": "K10b-043",
+   "conforms": false,
+   "evidence": "probe.jl P2 (line 118): the strict-gate leaves take 21,22,22,22,22,22 trials at Δt_frame = 1//100 and 21,22,22,21,21,22 at 1//10. Plain bisection (the ±1 gate) takes 20. src/frame.jl:372 n_max = ceil(-log2(tol)) + 1 = 21 is ITP's minmax bound, not bisection's count. The totals, 177 against 87, match the doc.",
+   "class": "deviation",
+   "fix": "its minmax projection holds it at about ITP's worst case, 21 or 22 trials for the default tolerance against plain bisection's 20.",
+   "clear": false,
+   "note": "The doc's total of 177 matches exactly at Δt_frame = 1//100, so only the per-leave figure and the 'bisection's count' label are off. A leave taking 22 trials passes ITP's n_max of 21 by one, probably because the stop test is the strict hi - lo > tol."
+  },
+  {
+   "id": "K10b-048",
+   "conforms": false,
+   "evidence": "probe.jl P2: the ±1 gate takes exactly 20 trials per leave (166 total at 1//100, 167 at 1//10). The strict gate takes 21-22 per leave (177 and 176). With σlo = -1 and σhi = 1 the regula falsi point is the midpoint (src/frame.jl:377), so ±1 is pure bisection and needs one or two fewer trials than the strict gate.",
+   "class": "deviation",
+   "fix": "Writing `one(u)` instead of `-u` on the holding side defines the same predicate and converges at plain bisection's count, 20 trials, one or two fewer per leave than the strict gate, because both ends of the bracket are then fake constants.",
+   "clear": true
+  },
+  {
+   "id": "K10b-051",
+   "conforms": true,
+   "evidence": "probe.jl P2 (lines 118, 125): the floatmin nudge gives 87 trials, the same per-localization counts as the first form, and leave instants identical to the first form (max difference 0.0) at both Δt_frame = 1//10 and 1//100, under both hit guards.",
+   "note": "'Every routed test stays green' was not checked, since running the suite is forbidden in this task. The measurable parts conform."
+  },
+  {
+   "id": "K10b-053",
+   "conforms": true,
+   "evidence": "src/build.jl:1573-1583: the event system compiles only when T === Float64. Guards and handlers sit outside every other activation's executable set."
+  },
+  {
+   "id": "K10b-063",
+   "conforms": true,
+   "evidence": "src/library.jl:1866-1869: the non-localized leave guards are m == 1 && signal(u) < 0 (mirror > 0), a strict comparison. test/test_library.jl:2283-2292 keeps it saturated at an exact zero for localized = false."
+  },
+  {
+   "id": "K10b-073",
+   "conforms": true,
+   "evidence": "probe.jl P3 (line 150): on the ramp 1.05 - t at Δt_frame = 1//10 (θ = 0.5, a = 1), the non-localized result minus the exact result is 0.00125 = a(1-θ)²h²/2, and a h²/2 = 0.005 bounds it. test/test_library.jl:2420-2433 pins the same offset."
+  },
+  {
+   "id": "K10b-077",
+   "conforms": false,
+   "evidence": "src/frame.jl:365: the tolerance is localization_tol * Δt_frame, so 1e-8 at h = 0.01 but 1e-7 at h = 0.1 (RK4, frame = step). probe.jl P2: max |leave - true zero| is 4.6e-9 at 1//100 and 9.27e-8 at 1//10.",
+   "class": "deviation",
+   "fix": "with an input slope of 1 per second, the bound is 5e-5 at `h = 0.01` and 5e-3 at `h = 0.1`, where the localized policy lands within the root-finder's tolerance, `localization_tol · Δt_frame` in time, about 1e-8 at `h = 0.01` and 1e-7 at `h = 0.1`.",
+   "clear": true,
+   "note": "D-446 says the tolerance stays a frame quantity, so it was frame-relative when the companion was written as well. Nothing records a fixed 1e-8."
+  },
+  {
+   "id": "K10b-083",
+   "conforms": false,
+   "evidence": "src/library.jl:1830 struct LimitedIntegrator{V <: ..., L, R}; 1838 LimitedIntegrator{typeof(x0), localized, reset}. Step keeps {V, L} (1630).",
+   "class": "drift",
+   "fix": "selected by a type parameter in `Step`'s shape, `LimitedIntegrator{V, L, R}` with the keyword `localized = true`, where `R` is the later reset form",
+   "clear": true,
+   "note": "Commit 94a1bc21 ('Add the reset keyword to the limited integrator ...') added R. design/code_map.md:769 records LimitedIntegrator{V, L, R}."
+  },
+  {
+   "id": "K10b-084",
+   "conforms": true,
+   "evidence": "src/library.jl:1835 function LimitedIntegrator(; lower, upper, x0 = zero(lower), localized::Bool = true, reset::Bool = false)"
+  },
+  {
+   "id": "K10b-093",
+   "conforms": true,
+   "evidence": "probe.jl P4 (line 165): a component with x0 = 1.0 and the sign-form guard x - 1.0 shows mode true after init!. src/model.jl:332 sets every prior to not-holding at boundary zero."
+  },
+  {
+   "id": "K10b-104",
+   "conforms": true,
+   "evidence": "probe.jl P2 (line 130): on cos(t) into [-0.5, 0.5] over 20 s, the hit guard x - upper and first_nonzero(x - upper, u) end in the same state (x = 0.5, mode 1) under the strict gate and the Bool leave. They also make the same derivative calls, 865 localized and 835 non-localized at Δt_frame = 1//10, which matches the doc's figures."
+  },
+  {
+   "id": "K10b-106",
+   "conforms": true,
+   "evidence": "probe.jl P5 (line 200): the increment-87 review's form, x.q == upper && x.v == 0 ? u : x.q - upper, on the slow_departure_model setup (ramp slope -1e-10, Δt_frame = 1//1000) fires hit_upper 9000 times in (1, 2] and leaves v = 0. The shipped first_nonzero(q - upper, v, u) (src/library.jl:2025) fires no hit after the leave and keeps v = -5e-11.",
+   "note": "'Reading u at rest alone' must be read as the review's form. The variant first_nonzero(q - upper, u) does not re-fire, because u is already negative."
+  },
+  {
+   "id": "K10b-114",
+   "conforms": true,
+   "evidence": "src/frame.jl:88-91: the drain (frame_top!) runs before _frame_steps!. Trials (_trial!, frame.jl:338) run the interior sweep inside the frame, against the root inputs the drain wrote."
+  },
+  {
+   "id": "K10b-123",
+   "conforms": true,
+   "evidence": "src/frame.jl:250-256: the validation comment says σ₀ holding means the frame-top drain flipped the guard ('`u` is the only thing that can differ from the prior's evaluation context'). A step starting inside the frame has no drain, so σ₀ reproduces the prior there. The prior is the honest quiescent sample (src/model.jl:777)."
+  },
+  {
+   "id": "K10b-132",
+   "conforms": true,
+   "evidence": "src/executor.jl:288-300, 309-319: the registers carried across a boundary are prior and last (Bool) and count (Int, reset at each boundary, src/model.jl:742). σ, σ0 and σ1 are scratch, overwritten before each use. No σ value crosses a boundary.",
+   "note": "Strictly, loc_warned is also a per-event Bool latch that persists across boundaries within a frame (reset at frame.jl:120). It is a warning latch, not a value, so the sentence's point holds."
+  },
+  {
+   "id": "K10b-141",
+   "conforms": true,
+   "evidence": "src/frame.jl:215-216: the arrival _guards! is copied into events.σ1. frame.jl:289 passes σ1 to _crossing as the right bracket value, and the guard is not evaluated again."
+  },
+  {
+   "id": "K10b-150",
+   "conforms": true,
+   "evidence": "src/frame.jl:316: the t* boundary runs run_boundary!(model, nothing) inside the step loop. The drain (frame_top!) runs only at frame.jl:89, at the frame top."
+  }
+ ],
+ "notes": "I changed no tracked file. I created one probe script at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K10b_v/probe.jl and ran it three times in total. It contains copies of LimitedIntegrator with switchable hit and leave guards (old or new hit; first-form, strict, ±1, floatmin or Bool leave) and a LimitedDoubleIntegrator copy, and it counts trials and validations by reading the model's ExecutionCursor phase from inside the guard. The cos(t) figures in the companion are reproduced exactly: 87 and 177 trials at Δt_frame = 1//100, 865 and 835 derivative calls at 1//10, and 4.6e-9 for the leave instants at 1//100. So the doc's measurements mix the two frames. Four claims do not conform. K10b-083 is drift: the R parameter came in with commit 94a1bc21. Three are deviations: the per-leave trial count is 21 or 22, not bisection's count of 21 (043); the ±1 gate is pure bisection at 20 trials, fewer than the strict gate (048); and the tolerance at h = 0.1 is 1e-7, not 1e-8 (077). The 'every routed test stays green' part of 051 was not verified, because the suite may not be run."
+}

@@ -1,0 +1,889 @@
+{
+ "rows": [
+  {
+   "id": "S9d2-042",
+   "file": "design/spec.md",
+   "line": 6146,
+   "kind": "decl",
+   "claim": "`rhs` takes no index.",
+   "evidence": "src/executor.jl:578 gives every PhaseBody with no gated entry, `rhs` included, a one-argument method that walks the interior. test/test_executor.jl:139-143 calls `rhs(3)` and asserts it writes what `rhs()` writes. test/test_executor.jl:2-3 and :15 describe the roster as total in both arities, and :17-22 assert `@ballocated($body(1)) == 0` for `rhs` too.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "`rhs` gates on no index. Its one-argument form walks the same continuous entries, so the roster stays total in both arities.",
+   "note": "The loop itself calls `rhs()` alone (src/model.jl:621, :634). The difference is in the accessor's surface, not in the loop."
+  },
+  {
+   "id": "S9d2-074",
+   "file": "design/spec.md",
+   "line": 6304,
+   "kind": "mech",
+   "claim": "At -O0 the trajectories differ from -O2's by round-off, so a trace recorded at one level does not replay bit for bit at the other.",
+   "evidence": "probe:92 prints feedback_model's xbuf after run! to t=1. It is [0.43970864059724774, 0.18270426549422475] at both -O2 and -O0, bit for bit.",
+   "verdict": "unverifiable",
+   "note": "One small linear fixture agrees bit for bit, which does not refute a general caution. Settling it needs a model whose arithmetic the optimizer reassociates or contracts, such as a muladd or SIMD reduction, or the measurement in design/reports/20261001_compile_cost_reeval/."
+  },
+  {
+   "id": "S9d2-106",
+   "file": "design/spec.md",
+   "line": 6409,
+   "kind": "law",
+   "claim": "The snapshot's reference fields (field handles) add no per-boundary allocation either way.",
+   "evidence": "src/store.jl:149 `capture_stores` copies every eltype block, and a handle type is its own eltype block (test/test_store.jl:263-264). So a handle adds one buffer copy per published boundary. probe:79-80 counts 8 allocations per capture on handle_model (two blocks) against 6 on feedback_model (one block). probe:85 confirms the bulk data is shared, not copied.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The reference fields add no garbage beyond their block's one buffer copy per boundary, a copy that shares the bulk data.",
+   "note": "Borderline. Any extra eltype costs the same one copy, so the verifier may read 'either way' (isbits or not) as satisfied. The two probe models differ, so the count is indicative, but store.jl:149 settles the mechanism."
+  },
+  {
+   "id": "S9d2-107",
+   "file": "design/spec.md",
+   "line": 6414,
+   "kind": "mech",
+   "claim": "A scheduled `GC.gc(false)` at frame boundaries moves collection out of the critical path.",
+   "evidence": "No `GC.` call exists in src/ (rg 'GC\\.' src/ finds none). design/pending.md:229-233 records that §9.8 names `GC.gc(false)` at frame boundaries and nothing in `src/` builds it. Lead: `GC.gc` missing at spec.md:6415.",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Docs: 'A scheduled `GC.gc(false)` at frame boundaries would move collection out of the critical path. Nothing schedules it yet (pending).' Code: schedule a young collection in the pacer's wait, per design/pending.md:229.",
+   "note": "pending.md records the gap as open analysis work, not a settled build. The verifier may prefer drift or a recorded deviation over defect. The Bumper.jl sentence beside it is advice, with no framework support claimed, and is counted as why."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S9d2-001",
+   "file": "design/spec.md",
+   "line": 6063,
+   "kind": "mech",
+   "claim": "Outputs hold paths, the port names each stage produces, and the order",
+   "evidence": "src/build.jl:576"
+  },
+  {
+   "id": "S9d2-002",
+   "file": "design/spec.md",
+   "line": 6064,
+   "kind": "mech",
+   "claim": "Outputs are printable data",
+   "evidence": "src/show.jl:137"
+  },
+  {
+   "id": "S9d2-003",
+   "file": "design/spec.md",
+   "line": 6066,
+   "kind": "mech",
+   "claim": "The executor compiles from the Outputs' order",
+   "evidence": "src/build.jl:1537"
+  },
+  {
+   "id": "S9d2-004",
+   "file": "design/spec.md",
+   "line": 6071,
+   "kind": "mech",
+   "claim": "The execution form is compiled at Model construction",
+   "evidence": "src/model.jl:124"
+  },
+  {
+   "id": "S9d2-005",
+   "file": "design/spec.md",
+   "line": 6072,
+   "kind": "mech",
+   "claim": "The execution form is compiled per activation",
+   "evidence": "src/build.jl:1461"
+  },
+  {
+   "id": "S9d2-006",
+   "file": "design/spec.md",
+   "line": 6073,
+   "kind": "law",
+   "claim": "Execution form is a concretely typed entry tuple over statically typed cell storage",
+   "evidence": "src/executor.jl:531"
+  },
+  {
+   "id": "S9d2-007",
+   "file": "design/spec.md",
+   "line": 6075,
+   "kind": "mech",
+   "claim": "The walk is unrolled at compile time",
+   "evidence": "src/executor.jl:541"
+  },
+  {
+   "id": "S9d2-008",
+   "file": "design/spec.md",
+   "line": 6079,
+   "kind": "mech",
+   "claim": "The loop runs one ordered sequence of (component, stage) entries",
+   "evidence": "src/executor.jl:55"
+  },
+  {
+   "id": "S9d2-009",
+   "file": "design/spec.md",
+   "line": 6082,
+   "kind": "law",
+   "claim": "Component type and stage sit in the entry's type parameters",
+   "evidence": "src/executor.jl:55"
+  },
+  {
+   "id": "S9d2-010",
+   "file": "design/spec.md",
+   "line": 6084,
+   "kind": "law",
+   "claim": "Tick divisor and phase are plain Int fields, on the Gated wrapper",
+   "evidence": "src/executor.jl:486"
+  },
+  {
+   "id": "S9d2-011",
+   "file": "design/spec.md",
+   "line": 6084,
+   "kind": "mech",
+   "claim": "D and Φ are counted in base ticks, from the schedule row",
+   "evidence": "src/deployment.jl:31"
+  },
+  {
+   "id": "S9d2-012",
+   "file": "design/spec.md",
+   "line": 6085,
+   "kind": "law",
+   "claim": "The bundle's Δt is an entry field",
+   "evidence": "src/executor.jl:66"
+  },
+  {
+   "id": "S9d2-013",
+   "file": "design/spec.md",
+   "line": 6086,
+   "kind": "law",
+   "claim": "Layout offsets are entry fields",
+   "evidence": "src/executor.jl:61"
+  },
+  {
+   "id": "S9d2-014",
+   "file": "design/spec.md",
+   "line": 6087,
+   "kind": "law",
+   "claim": "The gate is (n − Φ₀) % D₀ == 0 on the tick index",
+   "evidence": "src/executor.jl:518"
+  },
+  {
+   "id": "S9d2-015",
+   "file": "design/spec.md",
+   "line": 6089,
+   "kind": "mech",
+   "claim": "Gating sits in the boundary body",
+   "evidence": "src/executor.jl:595"
+  },
+  {
+   "id": "S9d2-016",
+   "file": "design/spec.md",
+   "line": 6090,
+   "kind": "law",
+   "claim": "Interior bodies hold no discrete entries",
+   "evidence": "probe:36"
+  },
+  {
+   "id": "S9d2-017",
+   "file": "design/spec.md",
+   "line": 6094,
+   "kind": "law",
+   "claim": "Cells are stored per element type, not per cell",
+   "evidence": "src/build.jl:1476"
+  },
+  {
+   "id": "S9d2-018",
+   "file": "design/spec.md",
+   "line": 6095,
+   "kind": "mech",
+   "claim": "The signal table is one contiguous block per element type",
+   "evidence": "src/store.jl:15"
+  },
+  {
+   "id": "S9d2-019",
+   "file": "design/spec.md",
+   "line": 6096,
+   "kind": "mech",
+   "claim": "An address holds one build-time offset per leaf eltype, into that type's block",
+   "evidence": "src/store.jl:11"
+  },
+  {
+   "id": "S9d2-020",
+   "file": "design/spec.md",
+   "line": 6098,
+   "kind": "mech",
+   "claim": "A cell with mixed leaf eltypes spans several blocks",
+   "evidence": "src/store.jl:46"
+  },
+  {
+   "id": "S9d2-021",
+   "file": "design/spec.md",
+   "line": 6099,
+   "kind": "decl",
+   "claim": "Offsets are a field and the port type is the address's parameter",
+   "evidence": "src/store.jl:11"
+  },
+  {
+   "id": "S9d2-022",
+   "file": "design/spec.md",
+   "line": 6101,
+   "kind": "mech",
+   "claim": "Gather and scatter go through the same leaf walk",
+   "evidence": "src/leaves.jl:176"
+  },
+  {
+   "id": "S9d2-023",
+   "file": "design/spec.md",
+   "line": 6103,
+   "kind": "law",
+   "claim": "Two instances of one type share an entry type and one body",
+   "evidence": "test/test_store.jl:224"
+  },
+  {
+   "id": "S9d2-024",
+   "file": "design/spec.md",
+   "line": 6110,
+   "kind": "law",
+   "claim": "An opaque leaf is stored whole in its eltype's block",
+   "evidence": "test/test_store.jl:263"
+  },
+  {
+   "id": "S9d2-025",
+   "file": "design/spec.md",
+   "line": 6112,
+   "kind": "mech",
+   "claim": "A handle's gather and scatter are one load and one store",
+   "evidence": "src/store.jl:46"
+  },
+  {
+   "id": "S9d2-026",
+   "file": "design/spec.md",
+   "line": 6113,
+   "kind": "law",
+   "claim": "A handle is rebuilt per evaluation without allocating",
+   "evidence": "test/test_store.jl:288"
+  },
+  {
+   "id": "S9d2-027",
+   "file": "design/spec.md",
+   "line": 6115,
+   "kind": "law",
+   "claim": "A handle is never stored in a Ref",
+   "evidence": "src/store.jl:15"
+  },
+  {
+   "id": "S9d2-028",
+   "file": "design/spec.md",
+   "line": 6119,
+   "kind": "law",
+   "claim": "The phase bodies are the executor's outer decomposition",
+   "evidence": "src/build.jl:1625"
+  },
+  {
+   "id": "S9d2-029",
+   "file": "design/spec.md",
+   "line": 6122,
+   "kind": "mech",
+   "claim": "The stage-1 block holds both tiers' y_state entries",
+   "evidence": "src/build.jl:1524"
+  },
+  {
+   "id": "S9d2-030",
+   "file": "design/spec.md",
+   "line": 6123,
+   "kind": "mech",
+   "claim": "Stage-1 entries read no u and walk in component order",
+   "evidence": "src/build.jl:1530"
+  },
+  {
+   "id": "S9d2-031",
+   "file": "design/spec.md",
+   "line": 6125,
+   "kind": "law",
+   "claim": "Stage-2 gates its discrete entries by the compiled (D₀, Φ₀)",
+   "evidence": "src/build.jl:1547"
+  },
+  {
+   "id": "S9d2-032",
+   "file": "design/spec.md",
+   "line": 6126,
+   "kind": "law",
+   "claim": "Stage-2 is the only topologically ordered block",
+   "evidence": "src/build.jl:1537"
+  },
+  {
+   "id": "S9d2-033",
+   "file": "design/spec.md",
+   "line": 6128,
+   "kind": "mech",
+   "claim": "rhs is the x_deriv block, run on every RHS evaluation",
+   "evidence": "src/model.jl:617"
+  },
+  {
+   "id": "S9d2-034",
+   "file": "design/spec.md",
+   "line": 6129,
+   "kind": "mech",
+   "claim": "ticks is the s_update block",
+   "evidence": "src/build.jl:1566"
+  },
+  {
+   "id": "S9d2-035",
+   "file": "design/spec.md",
+   "line": 6129,
+   "kind": "law",
+   "claim": "rhs and ticks are order-free and their writes are disjoint",
+   "evidence": "src/executor.jl:173"
+  },
+  {
+   "id": "S9d2-036",
+   "file": "design/spec.md",
+   "line": 6131,
+   "kind": "mech",
+   "claim": "Guards and handlers are separate callables inside the §10.6 iteration",
+   "evidence": "src/model.jl:746"
+  },
+  {
+   "id": "S9d2-037",
+   "file": "design/spec.md",
+   "line": 6134,
+   "kind": "mech",
+   "claim": "Each sweep compiles two arities from one entry list",
+   "evidence": "src/executor.jl:588"
+  },
+  {
+   "id": "S9d2-038",
+   "file": "design/spec.md",
+   "line": 6138,
+   "kind": "law",
+   "claim": "The zero-arg sweeps are interior variants over continuous entries only",
+   "evidence": "src/executor.jl:594"
+  },
+  {
+   "id": "S9d2-039",
+   "file": "design/spec.md",
+   "line": 6139,
+   "kind": "ex",
+   "claim": "Lead: @ballocated is BenchmarkTools' macro, a test dependency, and fits a measurement",
+   "evidence": "test/test_executor.jl:20"
+  },
+  {
+   "id": "S9d2-040",
+   "file": "design/spec.md",
+   "line": 6142,
+   "kind": "law",
+   "claim": "The one-arg sweeps are boundary variants that gate by the tick they take",
+   "evidence": "src/executor.jl:573"
+  },
+  {
+   "id": "S9d2-041",
+   "file": "design/spec.md",
+   "line": 6144,
+   "kind": "mech",
+   "claim": "The sweeps' boundary arity matches ticks(tick)",
+   "evidence": "src/model.jl:663"
+  },
+  {
+   "id": "S9d2-043",
+   "file": "design/spec.md",
+   "line": 6146,
+   "kind": "law",
+   "claim": "One per-component gate serves sweep_1, sweep_2 and ticks",
+   "evidence": "src/build.jl:1519"
+  },
+  {
+   "id": "S9d2-044",
+   "file": "design/spec.md",
+   "line": 6147,
+   "kind": "law",
+   "claim": "At t* the empty due set is chosen by arity, with no index",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "S9d2-045",
+   "file": "design/spec.md",
+   "line": 6150,
+   "kind": "mech",
+   "claim": "The t* iteration runs the zero-arg arities",
+   "evidence": "src/model.jl:709"
+  },
+  {
+   "id": "S9d2-046",
+   "file": "design/spec.md",
+   "line": 6153,
+   "kind": "law",
+   "claim": "Bodies return nothing and pass values only through the stores and the table",
+   "evidence": "src/executor.jl:347"
+  },
+  {
+   "id": "S9d2-047",
+   "file": "design/spec.md",
+   "line": 6156,
+   "kind": "mech",
+   "claim": "A chunk barrier takes its chunk by reference and copies nothing",
+   "evidence": "src/executor.jl:531"
+  },
+  {
+   "id": "S9d2-048",
+   "file": "design/spec.md",
+   "line": 6169,
+   "kind": "mech",
+   "claim": "Discrete entries exist only in boundary variants; the RHS body holds none",
+   "evidence": "src/build.jl:1560"
+  },
+  {
+   "id": "S9d2-049",
+   "file": "design/spec.md",
+   "line": 6174,
+   "kind": "mech",
+   "claim": "Every entry builds its bundle at its own position",
+   "evidence": "src/executor.jl:169"
+  },
+  {
+   "id": "S9d2-050",
+   "file": "design/spec.md",
+   "line": 6175,
+   "kind": "mech",
+   "claim": "The framework neither hoists nor caches views",
+   "evidence": "src/executor.jl:128"
+  },
+  {
+   "id": "S9d2-051",
+   "file": "design/spec.md",
+   "line": 6179,
+   "kind": "mech",
+   "claim": "The state view is reconstructed in each call",
+   "evidence": "src/executor.jl:130"
+  },
+  {
+   "id": "S9d2-052",
+   "file": "design/spec.md",
+   "line": 6185,
+   "kind": "mech",
+   "claim": "u and y_x/y_s are gathered on every call",
+   "evidence": "src/executor.jl:133"
+  },
+  {
+   "id": "S9d2-053",
+   "file": "design/spec.md",
+   "line": 6187,
+   "kind": "mech",
+   "claim": "The aggregate y is rebuilt from cells on every call and never stored",
+   "evidence": "src/executor.jl:136"
+  },
+  {
+   "id": "S9d2-054",
+   "file": "design/spec.md",
+   "line": 6191,
+   "kind": "mech",
+   "claim": "Construction is type-opaque: untyped buffers are splatted once per chunk",
+   "evidence": "src/executor.jl:591"
+  },
+  {
+   "id": "S9d2-055",
+   "file": "design/spec.md",
+   "line": 6196,
+   "kind": "mech",
+   "claim": "The unrolled walk is the compiled tuple's only consumer",
+   "evidence": "src/executor.jl:584"
+  },
+  {
+   "id": "S9d2-056",
+   "file": "design/spec.md",
+   "line": 6201,
+   "kind": "mech",
+   "claim": "Chunks sit behind non-inlined, statically typed barriers",
+   "evidence": "src/executor.jl:538"
+  },
+  {
+   "id": "S9d2-057",
+   "file": "design/spec.md",
+   "line": 6204,
+   "kind": "law",
+   "claim": "Zero allocation holds across chunked walks",
+   "evidence": "test/test_executor.jl:51"
+  },
+  {
+   "id": "S9d2-058",
+   "file": "design/spec.md",
+   "line": 6206,
+   "kind": "mech",
+   "claim": "The event set holds the projections, guards and handlers",
+   "evidence": "src/executor.jl:302"
+  },
+  {
+   "id": "S9d2-059",
+   "file": "design/spec.md",
+   "line": 6208,
+   "kind": "mech",
+   "claim": "The event set's three walks are chunked the same way",
+   "evidence": "src/executor.jl:277"
+  },
+  {
+   "id": "S9d2-060",
+   "file": "design/spec.md",
+   "line": 6211,
+   "kind": "mech",
+   "claim": "A chunk's type is its entries' types in order",
+   "evidence": "src/executor.jl:531"
+  },
+  {
+   "id": "S9d2-061",
+   "file": "design/spec.md",
+   "line": 6212,
+   "kind": "mech",
+   "claim": "Chunks of one type share one compiled method",
+   "evidence": "src/executor.jl:538"
+  },
+  {
+   "id": "S9d2-062",
+   "file": "design/spec.md",
+   "line": 6218,
+   "kind": "mech",
+   "claim": "Shifting the entry order changes the type of each shifted chunk",
+   "evidence": "src/executor.jl:591"
+  },
+  {
+   "id": "S9d2-063",
+   "file": "design/spec.md",
+   "line": 6227,
+   "kind": "decl",
+   "claim": "The default chunk size is 16",
+   "evidence": "src/model.jl:113"
+  },
+  {
+   "id": "S9d2-064",
+   "file": "design/spec.md",
+   "line": 6229,
+   "kind": "law",
+   "claim": "Every walk over an entry or chunk tuple is a generated unroll",
+   "evidence": "src/executor.jl:347"
+  },
+  {
+   "id": "S9d2-065",
+   "file": "design/spec.md",
+   "line": 6235,
+   "kind": "law",
+   "claim": "The executor holds one pointer per chunk",
+   "evidence": "test/test_executor.jl:111"
+  },
+  {
+   "id": "S9d2-066",
+   "file": "design/spec.md",
+   "line": 6236,
+   "kind": "law",
+   "claim": "The event set is held by reference",
+   "evidence": "test/test_executor.jl:115"
+  },
+  {
+   "id": "S9d2-067",
+   "file": "design/spec.md",
+   "line": 6243,
+   "kind": "law",
+   "claim": "Per-build code takes components, assemblies and the root unspecialized",
+   "evidence": "src/build.jl:767"
+  },
+  {
+   "id": "S9d2-068",
+   "file": "design/spec.md",
+   "line": 6245,
+   "kind": "mech",
+   "claim": "Per-component closures read the instance, never capture a typed local",
+   "evidence": "src/build.jl:879"
+  },
+  {
+   "id": "S9d2-069",
+   "file": "design/spec.md",
+   "line": 6249,
+   "kind": "mech",
+   "claim": "Helpers taking a declared value such as a connection compile per type",
+   "evidence": "src/structure.jl:702"
+  },
+  {
+   "id": "S9d2-070",
+   "file": "design/spec.md",
+   "line": 6291,
+   "kind": "mech",
+   "claim": "Activations are lazy: Dual is derived on first request",
+   "evidence": "src/build.jl:969"
+  },
+  {
+   "id": "S9d2-071",
+   "file": "design/spec.md",
+   "line": 6293,
+   "kind": "mech",
+   "claim": "A precompile workload runs while the package precompiles",
+   "evidence": "src/precompile.jl:68"
+  },
+  {
+   "id": "S9d2-072",
+   "file": "design/spec.md",
+   "line": 6294,
+   "kind": "mech",
+   "claim": "The workload loop runs build through linearize, as listed",
+   "evidence": "src/precompile.jl:41"
+  },
+  {
+   "id": "S9d2-073",
+   "file": "design/spec.md",
+   "line": 6304,
+   "kind": "law",
+   "claim": "The allocation invariant holds at -O0",
+   "evidence": "probe:17"
+  },
+  {
+   "id": "S9d2-075",
+   "file": "design/spec.md",
+   "line": 6310,
+   "kind": "mech",
+   "claim": "The phase bodies, via the accessor, are the measurement seam",
+   "evidence": "src/model.jl:521"
+  },
+  {
+   "id": "S9d2-076",
+   "file": "design/spec.md",
+   "line": 6311,
+   "kind": "mech",
+   "claim": "The accessor returns the nominal bodies over the simulation's own buffers",
+   "evidence": "src/sim.jl:638"
+  },
+  {
+   "id": "S9d2-077",
+   "file": "design/spec.md",
+   "line": 6316,
+   "kind": "decl",
+   "claim": "phase_bodies(sim) exists",
+   "evidence": "src/sim.jl:638"
+  },
+  {
+   "id": "S9d2-078",
+   "file": "design/spec.md",
+   "line": 6319,
+   "kind": "mech",
+   "claim": "It returns four blocks",
+   "evidence": "probe:13"
+  },
+  {
+   "id": "S9d2-079",
+   "file": "design/spec.md",
+   "line": 6322,
+   "kind": "mech",
+   "claim": "sweep_1 and sweep_2 come in both arities",
+   "evidence": "src/executor.jl:572"
+  },
+  {
+   "id": "S9d2-080",
+   "file": "design/spec.md",
+   "line": 6324,
+   "kind": "mech",
+   "claim": "ticks takes the tick index its entries are gated on",
+   "evidence": "src/model.jl:663"
+  },
+  {
+   "id": "S9d2-081",
+   "file": "design/spec.md",
+   "line": 6326,
+   "kind": "mech",
+   "claim": "Event and projection callables are keyed by (path, name) and by path",
+   "evidence": "src/build.jl:1619"
+  },
+  {
+   "id": "S9d2-082",
+   "file": "design/spec.md",
+   "line": 6329,
+   "kind": "law",
+   "claim": "The roster is fixed and always returned whole",
+   "evidence": "src/build.jl:1625"
+  },
+  {
+   "id": "S9d2-083",
+   "file": "design/spec.md",
+   "line": 6331,
+   "kind": "law",
+   "claim": "A model with no discrete, event or continuous parts still gets every body",
+   "evidence": "probe:24"
+  },
+  {
+   "id": "S9d2-084",
+   "file": "design/spec.md",
+   "line": 6332,
+   "kind": "law",
+   "claim": "Empty bodies are no-ops and measure zero",
+   "evidence": "probe:28"
+  },
+  {
+   "id": "S9d2-085",
+   "file": "design/spec.md",
+   "line": 6333,
+   "kind": "ex",
+   "claim": "Lead: @ballocated is BenchmarkTools' macro, a test dependency",
+   "evidence": "test/test_executor.jl:14"
+  },
+  {
+   "id": "S9d2-086",
+   "file": "design/spec.md",
+   "line": 6338,
+   "kind": "law",
+   "claim": "The accessor's bodies are the ones the loop runs",
+   "evidence": "test/test_continuous.jl:30"
+  },
+  {
+   "id": "S9d2-087",
+   "file": "design/spec.md",
+   "line": 6339,
+   "kind": "mech",
+   "claim": "The callables carry the loop's real argument types",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "S9d2-088",
+   "file": "design/spec.md",
+   "line": 6344,
+   "kind": "mech",
+   "claim": "CI warms each body, then asserts zero allocation over the roster",
+   "evidence": "test/test_executor.jl:17"
+  },
+  {
+   "id": "S9d2-089",
+   "file": "design/spec.md",
+   "line": 6348,
+   "kind": "ex",
+   "claim": "@ballocated(body()) == 0 holds as written",
+   "evidence": "probe:17"
+  },
+  {
+   "id": "S9d2-090",
+   "file": "design/spec.md",
+   "line": 6351,
+   "kind": "mech",
+   "claim": "Asserted per body and per arity: interior bare, boundary at a due index",
+   "evidence": "test/test_executor.jl:20"
+  },
+  {
+   "id": "S9d2-091",
+   "file": "design/spec.md",
+   "line": 6355,
+   "kind": "law",
+   "claim": "Publication is not a phase body",
+   "evidence": "src/build.jl:1625"
+  },
+  {
+   "id": "S9d2-092",
+   "file": "design/spec.md",
+   "line": 6357,
+   "kind": "law",
+   "claim": "A tick body run alone advances s and leaves the clock unchanged",
+   "evidence": "probe:47"
+  },
+  {
+   "id": "S9d2-093",
+   "file": "design/spec.md",
+   "line": 6377,
+   "kind": "law",
+   "claim": "Publication is not a phase body (§9.8 restatement)",
+   "evidence": "src/build.jl:1625"
+  },
+  {
+   "id": "S9d2-094",
+   "file": "design/spec.md",
+   "line": 6378,
+   "kind": "mech",
+   "claim": "Publication allocates its snapshot per boundary, outside the bodies",
+   "evidence": "src/sim.jl:2791"
+  },
+  {
+   "id": "S9d2-095",
+   "file": "design/spec.md",
+   "line": 6384,
+   "kind": "mech",
+   "claim": "Guards run every boundary, whether or not they fire",
+   "evidence": "src/model.jl:746"
+  },
+  {
+   "id": "S9d2-096",
+   "file": "design/spec.md",
+   "line": 6386,
+   "kind": "mech",
+   "claim": "x_projection runs at both of its positions",
+   "evidence": "src/model.jl:654"
+  },
+  {
+   "id": "S9d2-097",
+   "file": "design/spec.md",
+   "line": 6387,
+   "kind": "law",
+   "claim": "The zero budget is CI-enforced at the seam, guards and projections included",
+   "evidence": "test/test_executor.jl:161"
+  },
+  {
+   "id": "S9d2-098",
+   "file": "design/spec.md",
+   "line": 6391,
+   "kind": "mech",
+   "claim": "A tick runs only when due and a handler only on firing",
+   "evidence": "src/executor.jl:391"
+  },
+  {
+   "id": "S9d2-099",
+   "file": "design/spec.md",
+   "line": 6392,
+   "kind": "law",
+   "claim": "Tick and handler bodies allocate nothing",
+   "evidence": "test/test_executor.jl:188"
+  },
+  {
+   "id": "S9d2-100",
+   "file": "design/spec.md",
+   "line": 6393,
+   "kind": "decl",
+   "claim": "The workspace reaches the body as the ws bundle field",
+   "evidence": "src/executor.jl:137"
+  },
+  {
+   "id": "S9d2-101",
+   "file": "design/spec.md",
+   "line": 6397,
+   "kind": "law",
+   "claim": "The log holds the published snapshots by reference",
+   "evidence": "src/dataplane.jl:696"
+  },
+  {
+   "id": "S9d2-102",
+   "file": "design/spec.md",
+   "line": 6399,
+   "kind": "mech",
+   "claim": "The log keeps one slot per retained boundary and copies nothing",
+   "evidence": "src/dataplane.jl:683"
+  },
+  {
+   "id": "S9d2-103",
+   "file": "design/spec.md",
+   "line": 6400,
+   "kind": "mech",
+   "claim": "The log is sizehint!ed to its retention bound",
+   "evidence": "src/dataplane.jl:642"
+  },
+  {
+   "id": "S9d2-104",
+   "file": "design/spec.md",
+   "line": 6404,
+   "kind": "mech",
+   "claim": "A handle model's snapshot type has reference fields",
+   "evidence": "src/dataplane.jl:539"
+  },
+  {
+   "id": "S9d2-105",
+   "file": "design/spec.md",
+   "line": 6407,
+   "kind": "law",
+   "claim": "Handle fields ride as shared references, and the bulk data is never copied",
+   "evidence": "probe:85"
+  }
+ ],
+ "counts": {
+  "law": 39,
+  "mech": 60,
+  "decl": 5,
+  "ex": 3,
+  "ptr": 18,
+  "why": 61,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ },
+ "notes": "I edited no tracked file and made no commit. My only new file is the probe script at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S9d2/probe.jl, which the task named. All line numbers are lines of the worktree W at 2ea85438.\n\nWhat I checked: I read the slice, spec.md 6059-6440, in full, along with the four code_map.md entries the task named. In the code I read src/executor.jl, src/store.jl, the compile, activation and Outputs parts of src/build.jl, and phase_bodies, evaluate!, run_boundary! and event_phase! in src/model.jl. I also read the t* boundary in src/frame.jl, SnapshotLog and publish! in src/dataplane.jl and src/sim.jl, and src/precompile.jl, plus test_executor.jl and test_store.jl.\n\nProbe runs: three in all. Two at -O2; the first failed on missing imports and was fixed by including test/imports.jl. One at -O0, in the background.\n\nWhat the probe showed:\n- Allocation is zero in both arities at -O0 as well as -O2.\n- A no-continuous, no-event model still gets the full roster.\n- A tick body run alone advances s and leaves the clock unchanged.\n- sweep_2 walks outputs.order.\n- A Dual model gets an empty events dict.\n- Simulation refuses a Dual model.\n- The snapshot capture shares a handle's bulk data.\n\nThe spec's two code blocks were run as written over feedback_model and TickCounter fixtures.\n\nLeads: both `ballocated` leads are ok (S9d2-039, -085), because @ballocated is BenchmarkTools' macro, listed in test/Project.toml. The `GC.gc` lead is finding S9d2-107, and design/pending.md:229 already records it as unbuilt.\n\nBorderline items for the verifier:\n- S9d2-010: the tick divisor and phase sit on the `Gated` wrapper that discrete entries wear (executor.jl:486), not on StageEntry itself. The spec's point, data in fields rather than type parameters, holds.\n- S9d2-106: this turns on reading 'either way'. A handle eltype's block costs one buffer copy per snapshot, the same as any other added eltype.\n- S9d2-042: the loop itself honours 'rhs takes no index'. Only the accessor's surface is total in both arities.\n\nCounts: the measured compile-cost figures and the rationale behind them (6212-6306, 6230-6241, 6251-6287) are counted as why. Part III's intro (6422-6438) is counted as ptr. I checked its 'five run states' against sim.jl:481-484, and it is correct."
+}

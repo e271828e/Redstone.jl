@@ -38,8 +38,9 @@ item changes what the spec says, the spec edit is part of the item.
   reached: the §14 trial and its two follow-up batches have landed. Group
   G1a to G3b (§13, Appendix C, §8 and §9) have run, and their clear
   fixes have landed. The rows that wait on the user are in
-  `ledgers/user_rows.md` beside the brief. G4a (§10) has run, and the
-  audit is paused before G4b; the notes give the resume point.
+  `ledgers/user_rows.md` beside the brief. G4 (§10) has run and its
+  clear fixes have landed. The audit is paused before G5; the notes give
+  the resume point.
   The brief is `design/reports/20261124_doc_conformance/00_brief.md`; the
   state, the rulings, the group plan and the tools are in
   `notes_doc_conformance.md` beside it.

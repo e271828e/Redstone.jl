@@ -1,0 +1,230 @@
+{
+ "judgments": [
+  {
+   "id": "CV10-213",
+   "conforms": true,
+   "evidence": "src/executor.jl:347 (_unrolled) and :353 (_unrolled_tuple); _unrolled_tuple used at src/readers.jl:637, src/bindings.jl:126, src/conditions.jl:813; Chunk src/executor.jl:531, chunked_body :588"
+  },
+  {
+   "id": "CV10-221",
+   "conforms": false,
+   "evidence": "src/model.jl:618 and :633 `cursor.index += 1` per RHS evaluation (a read and a store outside the catch site), src/model.jl:774 per event round, src/model.jl:827 `cursor.attempt = attempt`, src/model.jl:943-944 the nonfinite check's store; probe.jl:161 prints index 2 after two evaluate! calls",
+   "class": "drift",
+   "fix": "Where in the compiled schedule execution is (§13.4): one plain mutable struct the executor owns, overwritten by one cheap store per user-code dispatch and one per phase transition, beside the ordinals it counts, the stage per RHS evaluation, the event round and the attempt. Outside those counts it is read only at the catch site (`_wrap_step`, model.jl).",
+   "clear": false,
+   "note": "The stage counter came in with the docstring (e3ed29b8), so that part was never accurate. The attempt store came with D-452 (e7dacf9e), which §13.4 records. I classed the row as drift because of the recorded attempt half. The wording can go more than one way."
+  },
+  {
+   "id": "CV10-224",
+   "conforms": true,
+   "evidence": "src/executor.jl:168 stores entry.fn_name, which is nameof(y_state) or nameof(y_direct) (src/build.jl:1529, :1543); the other stores are :x_deriv :174, :s_update :185, :x_projection :261/:458, :guard :372, :handler :392, and :none at src/frame.jl:87 and src/model.jl:906/943/1334"
+  },
+  {
+   "id": "CV10-236",
+   "conforms": true,
+   "evidence": "src/declare.jl:856-879 and :887-897 build BN from the closed set x, m, s, u, y_x, y_s, y, ws, t, Δt, every one of which _bundle_expr maps (src/executor.jl:130-139), so the throw at :140 is a self-check nothing reaches"
+  },
+  {
+   "id": "CV10-247",
+   "conforms": true,
+   "evidence": "src/executor.jl:309-312 prior, last, count are Vector{Bool}/Vector{Int} sized n_events (:328-329), indexed by entry.event_index"
+  },
+  {
+   "id": "CV10-253",
+   "conforms": false,
+   "evidence": "src/frame.jl:222 rewrites events.triggered on every segment of _localized_step!'s loop (the whole step, then each remainder), and src/frame.jl:265 prunes it by the θ = 0 validation",
+   "class": "deviation",
+   "fix": "`triggered` is the current segment's triggered set, pruned by the θ = 0 validation, and `loc_warned` the `ChatteringBudget` once-per-event-per-frame latch.",
+   "clear": true,
+   "note": "The docstring and the per-segment rewrite both date from c3bd771b. Nothing records the wording as a move."
+  },
+  {
+   "id": "CV10-257",
+   "conforms": true,
+   "evidence": "src/executor.jl:390-397 _fire_entry! runs the handler only where fire[event_index], then _fire_project!; _latch! :399-407 writes x through flatten_state! into xbuf and merges m through _merge_modes!"
+  },
+  {
+   "id": "CV10-262",
+   "conforms": false,
+   "evidence": "src/executor.jl:413-422 _store_successor! raises ConformanceFailure for a wrong s_update return, called at :186. rg finds no `_store_successor` in design/code_map.md, whose executor.jl entry (lines 614-653) does list the mode-side twin _merge_modes!",
+   "class": "deviation",
+   "fix": "Add to code_map's executor.jl entry: \"- `_store_successor!`, the update entry's runtime check that a discrete successor is the store's own type exactly, raising `ConformanceFailure` (§9.5, D-235).\"",
+   "clear": true
+  },
+  {
+   "id": "CV10-263",
+   "conforms": false,
+   "evidence": "src/executor.jl:417-422: for a named S and a NamedTuple return, reason is :field_set and field is nothing. probe.jl:37 prints reason=field_set field=nothing observed=@NamedTuple{n::Int64} declared=@NamedTuple{n::Float64} observed_fields=[] declared_fields=[]. test/test_store.jl:252 asserts :field_set for the same shape at build",
+   "class": "deviation",
+   "fix": "Appendix C's ConformanceFailure row, after the reason sentence: \"A named discrete store's successor of another type, from `s_update`, reports `:field_set` against the whole store type, observed and declared, with no per-field diff.\" (The other way is a code fix: `_store_successor!` reports `:field_type` with the field's expected and observed types where the field names match.)",
+   "clear": false,
+   "backing_entry": "",
+   "note": "A test locks in the code's behaviour (test_store.jl:252), and the comment at src/executor.jl:409-412 says why: a named store's field set or return type. I found no log entry that rules on which reason this case should report."
+  },
+  {
+   "id": "CV10-270",
+   "conforms": false,
+   "evidence": "src/executor.jl:469-477 define _event_bodies and _project_body. src/build.jl:1619-1624 builds the events and projections callables of phase_bodies from them. Neither name appears in design/code_map.md",
+   "class": "deviation",
+   "fix": "Add to code_map's executor.jl entry: \"- `_event_bodies` and `_project_body`, the per-event guard and handler callables and the per-projection callables that `phase_bodies` returns beside the four blocks (§9.7).\"",
+   "clear": true
+  },
+  {
+   "id": "CV10-273",
+   "conforms": true,
+   "evidence": "src/executor.jl:524-525 run_at!(::Gated, …, ::Establish) runs every gated entry. ESTABLISH reaches only the sweep bodies (src/model.jl:711-712), while the ticks block takes index 0 (src/model.jl:664-665), as the docstring says"
+  },
+  {
+   "id": "CV10-284",
+   "conforms": true,
+   "evidence": "src/build.jl:1519 gate(ci) = tier === DISCRETE ? (D_c[ci], Φ_c[ci]) : nothing, pushed in step with each entry (:1533, :1546); src/executor.jl:594-596"
+  },
+  {
+   "id": "CV10-001",
+   "conforms": true,
+   "evidence": "src/frame.jl:125 target = min(lattice.frame, due_at - origin), the frame lattice against the base lattice's next due instant from _next_due (:119, :173)"
+  },
+  {
+   "id": "CV10-012",
+   "conforms": false,
+   "evidence": "src/frame.jl:142-144: under a proposal h_step = _shaped(...) and t_next = t + h_step, so the step integrates by its length, not by the float distance t_next - t. probe.jl:119 prints 112 of 155 accepted BS3 steps whose float clock distance differs from the length integrated",
+   "class": "drift",
+   "fix": "Every step whose end clock is known beforehand integrates by the float distance between its two clocks, the bare step and a localized one alike, and a proposed step integrates by its length, its end the start's clock plus it (D-455).",
+   "clear": true,
+   "note": "D-455's own second bullet rules the proposal case as the code does, so only the header comment's \"every step\" overstates it. The code_map frame.jl entry repeats the same sentence (\"Every step integrates by the float distance between its two clocks\") and needs the same fix."
+  },
+  {
+   "id": "CV10-021",
+   "conforms": true,
+   "evidence": "src/frame.jl:86-89: before frame_top!(hooks) only the claim gate and range check read the model and the cursor is reset. No store, buffer or clock is written before the hook"
+  },
+  {
+   "id": "CV10-030",
+   "conforms": true,
+   "evidence": "src/build.jl:1066 _frozen(tier, T) = DISCRETE && T !== Float64; src/build.jl:1583 compiles events only at Float64. probe.jl:63 prints the Dual TickCounter s=(n=0,) after 6 frames with events=0, against n=9 at Float64 (probe.jl:68)"
+  },
+  {
+   "id": "CV10-036",
+   "conforms": true,
+   "evidence": "src/model.jl:260-262 (:claimed) and src/frame.jl:83-84 (:range) throw ArgumentInvalid, which the docstring names. design/rules/docstring_rules.md rule 21 asks for the diagnostic kind only, as Appendix B names it, and Appendix C's ArgumentInvalid row carries the reasons. probe.jl:49/55 print reason=range and reason=claimed",
+   "note": "Leaving the reasons out is within the docstring rules, so the docstring does not disagree with the code."
+  },
+  {
+   "id": "CV10-040",
+   "conforms": true,
+   "evidence": "src/frame.jl:80-84 come before the try at :85. probe.jl:49 shows the status consistent before and after a k = typemax(Int) refusal, and probe.jl:55 shows a claimed model left consistent"
+  },
+  {
+   "id": "CV10-049",
+   "conforms": true,
+   "evidence": "src/frame.jl:91 passes `continued && !wrote` as _frame_steps!'s fresh flag, which integrate_step! arms (src/model.jl:828)"
+  },
+  {
+   "id": "CV10-058",
+   "conforms": true,
+   "evidence": "src/frame.jl:118 origin = (k - 1) * lattice.frame in units, :123 position = 0 as an offset from it, :174 position = target"
+  },
+  {
+   "id": "CV10-067",
+   "conforms": true,
+   "evidence": "src/frame.jl:142 h_step = _shaped(model, proposal, t, t_to); :155 t_end = _step_end(...) (and src/frame.jl:206 on the localized path); src/model.jl:921-923 _step_end returns t + h_accepted for a shortened step"
+  },
+  {
+   "id": "CV10-076",
+   "conforms": true,
+   "evidence": "src/frame.jl:121 resets floor_reported per frame; src/model.jl:888-893 _report_floor! reports once while it is set. Appendix C's StepFloor row (spec.md line 16019) reads \"rate-limited, at most one report per frame\""
+  },
+  {
+   "id": "CV10-088",
+   "conforms": true,
+   "evidence": "src/frame.jl:122 localizations = 0 per frame, threaded through each step (:147-148), incremented per t* at :323. probe.jl:151 shows 7 settled boundaries per frame under budget 3 and 4 steps, so 3 t* boundaries across the frame, not per step"
+  },
+  {
+   "id": "CV10-097",
+   "conforms": true,
+   "evidence": "src/frame.jl:232-243 reports ChatteringBudget and returns without throwing. probe.jl:151 prints threw=false over 4 chattering frames"
+  },
+  {
+   "id": "CV10-106",
+   "conforms": true,
+   "evidence": "src/frame.jl:268-272 returns before ẋₙ₊₁ when no trigger survives the validation; the arrival evaluate! runs only at :276-280"
+  },
+  {
+   "id": "CV10-114",
+   "conforms": false,
+   "evidence": "src/frame.jl:338-345 _trial! carries a docstring and is called from _crossing at :387. rg finds no `_trial!` in design/code_map.md, whose frame.jl entry names _crossing and the trial phase only",
+   "class": "deviation",
+   "fix": "In code_map's frame.jl entry: \"ITP bracketing `_crossing` over `_trial!`'s trial evaluations\".",
+   "clear": true,
+   "note": "This is a minor helper, so the call is close. I ruled it a mismatch to stay consistent with the other omitted constructs that carry a docstring."
+  },
+  {
+   "id": "CV10-116",
+   "conforms": true,
+   "evidence": "src/frame.jl:365 tol = localization_tol·Δt_frame/h′ in θ and :374 `while hi - lo > tol`, a bracket width in time of localization_tol·Δt_frame. :376 also stops at float resolution"
+  },
+  {
+   "id": "CV10-126",
+   "conforms": true,
+   "evidence": "src/stepper.jl:287 discontinuity! clears memory; :298-307 four evaluate! calls per attempt; :324 bounds a rejected starting attempt by _starting_bound"
+  },
+  {
+   "id": "CV10-135",
+   "conforms": false,
+   "evidence": "src/model.jl:812-850 integrate_step! never calls discontinuity!. The only calls are src/model.jl:657 (run_boundary!), src/model.jl:474 (overlay!) and src/frame.jl:90 (the frame top)",
+   "class": "deviation",
+   "fix": "The Model's side is model.jl's `integrate_step!`: it shapes the proposal into a length between the deployment's `h_min` and `h_max`, counts the attempts, discards a rejected one, accepts one at the floor whatever its verdict, checks and commits an accepted one, and writes the clock. The Model raises the notice elsewhere, at `run_boundary!`, `overlay!` and the frame top.",
+   "clear": true,
+   "note": "The header sentence and the three raise sites all come from one commit, e7dacf9e. The header was never accurate."
+  },
+  {
+   "id": "CV10-136",
+   "conforms": true,
+   "evidence": "src/model.jl:821-849: attempt counter, _report_floor! acceptance at the floor (:830-831), _check_finite! and commit (:833-835), discard from startpoint (:837-838), retries shaped by _shaped (:843-845)"
+  },
+  {
+   "id": "CV10-146",
+   "conforms": false,
+   "evidence": "src/stepper.jl:35 abstract type AbstractStepper, which RK4Stepper/HeunStepper/BS3Stepper subtype (:133, :175, :266) and discontinuity!'s default (:86) and dense! (:361) dispatch on. rg finds no AbstractStepper in design/code_map.md",
+   "class": "deviation",
+   "fix": "In code_map's stepper.jl entry: \"…the retained `startpoint` and the generic `dense!`, both over the abstract type `AbstractStepper` every stepper subtypes, and the steppers `RK4Stepper` and `HeunStepper`…\"",
+   "clear": true
+  },
+  {
+   "id": "CV10-147",
+   "conforms": true,
+   "evidence": "The package exports nothing (src/Redstone.jl). docs/src/api.md lists RK4, Heun and BS3 (lines 60-62) and no stepper or seam name. The tests reach them by import (test/imports.jl:5-7). Spec §10.2 (spec.md 6541-6549) lists the seven seam calls"
+  },
+  {
+   "id": "CV10-156",
+   "conforms": true,
+   "evidence": "src/stepper.jl:58 `function propose end`. probe.jl:136 prints 4 methods (RK4, Heun, BS3 and the probe's own) and hasmethod(propose, (AbstractStepper,)) = false"
+  },
+  {
+   "id": "CV10-165",
+   "conforms": true,
+   "evidence": "src/model.jl:657 `(fired || due !== nothing) && discontinuity!` in run_boundary! (a handler fired or a tick ran, ESTABLISH included), src/frame.jl:90 a frame-top hook that wrote, src/model.jl:474 overlay!"
+  },
+  {
+   "id": "CV10-174",
+   "conforms": true,
+   "evidence": "src/model.jl:1330-1345 and src/checkpoint.jl:129 restore through restore_stepper! with no discontinuity! call. probe.jl:131 shows the memory 0.2046 restored intact, so no notice cleared it"
+  },
+  {
+   "id": "CV10-185",
+   "conforms": true,
+   "evidence": "src/stepper.jl:306-307 the fourth stage evaluates at x_trial, t + h on every attempt; k₄ is read only by the estimate at :315"
+  },
+  {
+   "id": "CV10-194",
+   "conforms": true,
+   "evidence": "src/stepper.jl:310-317 the error reads _seconds (src/diagnostics.jl:210 takes the Dual value). probe.jl:81 prints that 155 boundary clocks at Float64 equal those at D8"
+  },
+  {
+   "id": "CV10-203",
+   "conforms": true,
+   "evidence": "src/stepper.jl:266-278: x₀, k₁-k₄ (five vectors), proposal and memory fields, bound with proposal Inf and memory 0.0"
+  }
+ ],
+ "notes": "I judged all 37 claims. 11 do not conform: CV10-221, 253, 262, 263, 270, 012, 114, 135 and 146 are code_map omissions, header comments or docstrings; CV10-263 is the Appendix C reason mismatch. 26 conform. I changed no tracked file. My one probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV10_v/probe.jl. It ran three times against the pinned worktree W; the third run only re-checked CV10-174 after I moved the checkpoint to a frame top where no tick is due. Every line number cited is a line of W. Points the coordinator should know: (1) In CV10-012 the same overbroad sentence also sits in code_map's frame.jl entry, around W line 681. (2) The CV10-263 code behaviour is deliberate and covered by test/test_store.jl:252, so the user has to choose which way the fix goes. (3) I ruled the code_map omissions (114, 146, 262, 270) as deviations under the brief's rule that internals are owed to code_map.md. CV10-114 (_trial!) is the weakest of them."
+}

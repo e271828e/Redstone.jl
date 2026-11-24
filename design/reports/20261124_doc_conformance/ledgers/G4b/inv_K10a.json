@@ -1,0 +1,2276 @@
+{
+ "rows": [
+  {
+   "id": "K10a-203",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 421,
+   "kind": "ex",
+   "claim": "The proposal the backend keeps entering frame 7 is frame 6's last, 0.0308",
+   "evidence": "probe:76 prints 0.0316 for the probe's own plant",
+   "verdict": "unverifiable",
+   "note": "The proposal at frame 6's end depends on the plant and controller of the section 5 example. The text names only the lag, a damped oscillator and a proportional controller, with no parameters. The probe rebuilt the example with an oscillator of omega 2 and zeta 0.1 and gain 1, and got 0.0316. Every other figure of the example (scores 9.3, 1.13, 0.70, 0.53, 0.065; proposals 0.0107, 0.00865, 0.008465, 0.00829, 0.00741, 0.0115, 0.00795, 0.0133, 0.0096; t* 0.634652; 15 attempts, 2 rejected, 13 snapshots) reproduced exactly (probe:76-91). The 0.0308 follows from the omitted plant parameters and could not be settled."
+  },
+  {
+   "id": "K10a-263",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 544,
+   "kind": "ex",
+   "claim": "Under RK4 the t* of the section 5 example is 0.635221",
+   "evidence": "probe:91,122 give 0.6352201156775973",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Its `t*` is `0.635220`, located on the dense output of one step across the whole span.",
+   "note": "The guard watches the lag alone, so the plant parameters do not move this value. The code at W places the RK4 t* at 0.6352201, which rounds to 0.635220. The text's 0.635221 differs by about 9e-7 s, more than the localization bracket (about 1e-7 s here). Likely a figure from the 16c67dc run that later clock or ITP changes moved. The BS3 figure 0.634652 reproduces (probe:122: 0.6346516). Low severity. Re-run the figure at the pinned tree before settling."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K10a-001",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 5,
+   "kind": "ptr",
+   "claim": "Lead: `e6696a7` is a commit hash, the tree the companion was written against",
+   "evidence": "git cat-file -t e6696a7 gives commit (e6696a7a, spec readability rewrite)"
+  },
+  {
+   "id": "K10a-002",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 8,
+   "kind": "ptr",
+   "claim": "Lead: `grep` is the shell tool the reader uses to find a function, not a repo name",
+   "evidence": "placeholder, no code name; names a command-line tool"
+  },
+  {
+   "id": "K10a-003",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 16,
+   "kind": "mech",
+   "claim": "sim.jl owns the advance loop, the drain and publication",
+   "evidence": "src/sim.jl:2088 _advance!, :2656 drain!, :2789 publish!"
+  },
+  {
+   "id": "K10a-004",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 17,
+   "kind": "mech",
+   "claim": "frame.jl owns the frame and its localization",
+   "evidence": "src/frame.jl:79 run_frame!, :195 _localized_step!"
+  },
+  {
+   "id": "K10a-005",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 18,
+   "kind": "mech",
+   "claim": "model.jl owns the boundary routine, event phase, seam's framework side, attempt loop, shaping rule",
+   "evidence": "src/model.jl:652 run_boundary!, :734 event_phase!, :814 integrate_step!, :864 _shaped"
+  },
+  {
+   "id": "K10a-006",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 19,
+   "kind": "mech",
+   "claim": "stepper.jl owns the backends",
+   "evidence": "src/stepper.jl:133 RK4Stepper, :175 HeunStepper, :266 BS3Stepper"
+  },
+  {
+   "id": "K10a-007",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 20,
+   "kind": "mech",
+   "claim": "executor.jl owns the compiled sweeps and the event registers",
+   "evidence": "src/executor.jl:567 PhaseBody, :350 EventSet registers"
+  },
+  {
+   "id": "K10a-008",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 24,
+   "kind": "ex",
+   "claim": "Example deployment Δt_frame = 1//100, Δt_base = 1//25, so every fourth frame top is a base tick",
+   "evidence": "probe:109-117 (Model(...; Δt_frame=1//100, Δt_base=1//25); ticks at 0.04 and 0.08)"
+  },
+  {
+   "id": "K10a-009",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 27,
+   "kind": "ex",
+   "claim": "Controller with (D₀,Φ₀)=(1,0) ticks at every base tick",
+   "evidence": "probe:117 ctl store n=3 after frame 8 (ticks at 0, 0.04, 0.08)"
+  },
+  {
+   "id": "K10a-010",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 28,
+   "kind": "ex",
+   "claim": "Frame k=8 has top t=0.08, which is base tick 2",
+   "evidence": "probe:117 frame 8 settles at :ticks, 0.08 = 2·(1/25)"
+  },
+  {
+   "id": "K10a-011",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 29,
+   "kind": "mech",
+   "claim": "With no h_max each frame is one span taken in one step",
+   "evidence": "src/deployment.jl:225 h_max defaults to Δt_frame; src/frame.jl:130 steps = cld(...)"
+  },
+  {
+   "id": "K10a-012",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 31,
+   "kind": "decl",
+   "claim": "The default method is RK4",
+   "evidence": "src/deployment.jl:467 algorithm = RK4()"
+  },
+  {
+   "id": "K10a-013",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 36,
+   "kind": "mech",
+   "claim": "One iteration of _advance! is one frame",
+   "evidence": "src/sim.jl:2116 one run_frame! per loop turn"
+  },
+  {
+   "id": "K10a-014",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 37,
+   "kind": "mech",
+   "claim": "run! and step! both enter the _advance! loop",
+   "evidence": "src/sim.jl:1658 (run! body), :2265 (step!)"
+  },
+  {
+   "id": "K10a-015",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 38,
+   "kind": "mech",
+   "claim": "The loop checks the stop word and the frame bounds before a frame",
+   "evidence": "src/sim.jl:2104-2107 stop_issuer, t_end_frame, upto"
+  },
+  {
+   "id": "K10a-016",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 38,
+   "kind": "mech",
+   "claim": "It hands frame run.frame + 1 to the model's run_frame!",
+   "evidence": "src/sim.jl:2116"
+  },
+  {
+   "id": "K10a-017",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 39,
+   "kind": "mech",
+   "claim": "run_frame! in frame.jl is the frame behind the public frame!",
+   "evidence": "src/frame.jl:69 frame! = run_frame!(...)"
+  },
+  {
+   "id": "K10a-018",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 40,
+   "kind": "mech",
+   "claim": "run_frame! drains and hands the rest to _frame_steps!",
+   "evidence": "src/frame.jl:88-91"
+  },
+  {
+   "id": "K10a-019",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 41,
+   "kind": "mech",
+   "claim": "_frame_steps! integrates, runs the boundary and publishes",
+   "evidence": "src/frame.jl:154-168"
+  },
+  {
+   "id": "K10a-020",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 45,
+   "kind": "mech",
+   "claim": "Quoted sim.jl lines: run_frame! call and requester via _stop_hit",
+   "evidence": "src/sim.jl:2116,2119"
+  },
+  {
+   "id": "K10a-021",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 49,
+   "kind": "mech",
+   "claim": "Quoted run_frame! lines: :drain phase, frame_top!, discontinuity! on write",
+   "evidence": "src/frame.jl:88-90"
+  },
+  {
+   "id": "K10a-022",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 53,
+   "kind": "mech",
+   "claim": "Quoted _frame_steps! lines: clock stamp, due/nothing boundary, settled!",
+   "evidence": "src/frame.jl:159-168"
+  },
+  {
+   "id": "K10a-023",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 62,
+   "kind": "mech",
+   "claim": "hooks is the advance's LoopHooks, built once per advance",
+   "evidence": "src/sim.jl:2092"
+  },
+  {
+   "id": "K10a-024",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 63,
+   "kind": "mech",
+   "claim": "LoopHooks carries roster, the run's copy of the frozen roster",
+   "evidence": "src/sim.jl:1995"
+  },
+  {
+   "id": "K10a-025",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 64,
+   "kind": "mech",
+   "claim": "LoopHooks carries ignore_mask, the stop policy compiled into a mask",
+   "evidence": "src/sim.jl:1998"
+  },
+  {
+   "id": "K10a-026",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 65,
+   "kind": "mech",
+   "claim": "LoopHooks carries pacer, the run's pacer",
+   "evidence": "src/sim.jl:1997"
+  },
+  {
+   "id": "K10a-027",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 66,
+   "kind": "mech",
+   "claim": "step! leaves the pacer nothing",
+   "evidence": "src/sim.jl:2265 passes nothing"
+  },
+  {
+   "id": "K10a-028",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 66,
+   "kind": "mech",
+   "claim": "The model reaches the simulation only through the two hooks",
+   "evidence": "src/frame.jl:89,168; src/model.jl:239,255"
+  },
+  {
+   "id": "K10a-029",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 67,
+   "kind": "mech",
+   "claim": "frame_top! advances the frame index and runs drain!",
+   "evidence": "src/sim.jl:2022-2023"
+  },
+  {
+   "id": "K10a-030",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 68,
+   "kind": "mech",
+   "claim": "settled! runs publish! and then _stop_hit",
+   "evidence": "src/sim.jl:2041-2043"
+  },
+  {
+   "id": "K10a-031",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 70,
+   "kind": "law",
+   "claim": "Top hook, integration and boundary all run inside the frame's one try",
+   "evidence": "src/frame.jl:85-96"
+  },
+  {
+   "id": "K10a-032",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 71,
+   "kind": "mech",
+   "claim": "The top hook applies the device writes",
+   "evidence": "src/sim.jl:2668-2674 roster drains and harness drain"
+  },
+  {
+   "id": "K10a-033",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 71,
+   "kind": "mech",
+   "claim": "Integration carries the state across [t7,t8] and fires any localized event inside",
+   "evidence": "src/frame.jl:204,314-316"
+  },
+  {
+   "id": "K10a-034",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 73,
+   "kind": "mech",
+   "claim": "One boundary routine then runs at the frame top over its due set",
+   "evidence": "src/frame.jl:160-164"
+  },
+  {
+   "id": "K10a-035",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 74,
+   "kind": "mech",
+   "claim": "The due instant is the base-tick index _next_due computes from the schedule rows",
+   "evidence": "src/model.jl:544-552; src/frame.jl:119"
+  },
+  {
+   "id": "K10a-036",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 75,
+   "kind": "mech",
+   "claim": "For k=8 the loop calls run_boundary!(model, 2)",
+   "evidence": "src/frame.jl:161; probe:117 frame 8 ends at :ticks phase"
+  },
+  {
+   "id": "K10a-037",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 76,
+   "kind": "mech",
+   "claim": "For k=7 nothing is due and the loop calls run_boundary!(model, nothing)",
+   "evidence": "src/frame.jl:163; probe:117 frame 7 ends at :round, no :ticks"
+  },
+  {
+   "id": "K10a-038",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 77,
+   "kind": "mech",
+   "claim": "The due/nothing selection is the frame/tick discrimination; the gate reads a tick index",
+   "evidence": "src/executor.jl:513-518; src/model.jl:705-709"
+  },
+  {
+   "id": "K10a-039",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 81,
+   "kind": "mech",
+   "claim": "run_frame! sets phase :drain, then calls the top hook",
+   "evidence": "src/frame.jl:88-89"
+  },
+  {
+   "id": "K10a-040",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 82,
+   "kind": "mech",
+   "claim": "The hook advances the frame index to k inside the frame's try",
+   "evidence": "src/sim.jl:2022; src/frame.jl:85-89"
+  },
+  {
+   "id": "K10a-041",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 83,
+   "kind": "mech",
+   "claim": "The hook calls drain! in sim.jl",
+   "evidence": "src/sim.jl:2023, :2656"
+  },
+  {
+   "id": "K10a-042",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 83,
+   "kind": "mech",
+   "claim": "drain! counts the frame in the trace",
+   "evidence": "src/sim.jl:2664-2665 trc.frames += 1"
+  },
+  {
+   "id": "K10a-043",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 84,
+   "kind": "mech",
+   "claim": "It swaps each roster entry's staged batch into root-input cells via its drain thunk",
+   "evidence": "src/sim.jl:2669 entry.drain()"
+  },
+  {
+   "id": "K10a-044",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 85,
+   "kind": "mech",
+   "claim": "The index already reads k, so the trace files the batches under k",
+   "evidence": "src/sim.jl:2022 then 2023; comment at 2660-2663"
+  },
+  {
+   "id": "K10a-045",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 87,
+   "kind": "mech",
+   "claim": "The harness cell drains last",
+   "evidence": "src/sim.jl:2673 after the roster loop"
+  },
+  {
+   "id": "K10a-046",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 87,
+   "kind": "mech",
+   "claim": "Diagnostic cells fold into the per-writer accounts at the same point",
+   "evidence": "src/sim.jl:2670,2674"
+  },
+  {
+   "id": "K10a-047",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 88,
+   "kind": "mech",
+   "claim": "The model's frame_diag folds into the loop's account there too",
+   "evidence": "src/sim.jl:2676"
+  },
+  {
+   "id": "K10a-048",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 89,
+   "kind": "mech",
+   "claim": "In :replay, _replay_drain! reads the recording instead",
+   "evidence": "src/sim.jl:2665-2666, :2706"
+  },
+  {
+   "id": "K10a-049",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 91,
+   "kind": "law",
+   "claim": "A root input flipping a guard at the drain is an edge with no in-frame crossing",
+   "evidence": "src/frame.jl:249-266 validation drops it when σ0 holds"
+  },
+  {
+   "id": "K10a-050",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 93,
+   "kind": "law",
+   "claim": "A drain that wrote a value raises the stepper's discontinuity notice",
+   "evidence": "src/frame.jl:89-90"
+  },
+  {
+   "id": "K10a-051",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 94,
+   "kind": "mech",
+   "claim": "RK4 ignores the notice, BS3 reads it",
+   "evidence": "src/stepper.jl:86 default no-op; :287 BS3 clears memory"
+  },
+  {
+   "id": "K10a-052",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 98,
+   "kind": "mech",
+   "claim": "_frame_steps! computes the span's end from its index, never by accumulation",
+   "evidence": "src/frame.jl:125-128, model.jl:532-537"
+  },
+  {
+   "id": "K10a-053",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 99,
+   "kind": "mech",
+   "claim": "It asks the backend for a proposal",
+   "evidence": "src/frame.jl:136"
+  },
+  {
+   "id": "K10a-054",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 99,
+   "kind": "mech",
+   "claim": "With no proposal it takes the span's equal steps",
+   "evidence": "src/frame.jl:137-140"
+  },
+  {
+   "id": "K10a-055",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 103,
+   "kind": "mech",
+   "claim": "Quoted _frame_steps! excerpt matches the code",
+   "evidence": "src/frame.jl:128-156"
+  },
+  {
+   "id": "K10a-056",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 127,
+   "kind": "mech",
+   "claim": "An interior step's end is _instant, the float nearest span start plus i/n of its length",
+   "evidence": "src/frame.jl:139; src/store.jl:202-205"
+  },
+  {
+   "id": "K10a-057",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 128,
+   "kind": "law",
+   "claim": "Every step integrates by the distance between its two clocks",
+   "evidence": "src/frame.jl:140; :328"
+  },
+  {
+   "id": "K10a-058",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 129,
+   "kind": "mech",
+   "claim": "One span ends at the frame top in one step, t_next is _grid_time(model, 8)",
+   "evidence": "src/frame.jl:128,138-139"
+  },
+  {
+   "id": "K10a-059",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 130,
+   "kind": "mech",
+   "claim": "A model with no localized events takes one bare step",
+   "evidence": "src/frame.jl:153-155"
+  },
+  {
+   "id": "K10a-060",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 131,
+   "kind": "mech",
+   "claim": "_localized_step! integrates one segment per turn: whole step, then a remainder from each t*",
+   "evidence": "src/frame.jl:202-204,328"
+  },
+  {
+   "id": "K10a-061",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 133,
+   "kind": "mech",
+   "claim": "Its first return value is true only when a t* boundary's settled! stops the frame",
+   "evidence": "src/frame.jl:322 sole true; other returns false at 226,243,271,302,326"
+  },
+  {
+   "id": "K10a-062",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 136,
+   "kind": "mech",
+   "claim": "integrate_step!(model,h′,t_limit,k,fresh) in model.jl is the Model's attempt loop",
+   "evidence": "src/model.jl:814"
+  },
+  {
+   "id": "K10a-063",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 138,
+   "kind": "mech",
+   "claim": "It sets the phase :integrate and the attempt to 1",
+   "evidence": "src/model.jl:823-827"
+  },
+  {
+   "id": "K10a-064",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 139,
+   "kind": "mech",
+   "claim": "It crosses the seam to attempt!(::RK4Stepper, model, h) in stepper.jl",
+   "evidence": "src/model.jl:829; src/stepper.jl:148"
+  },
+  {
+   "id": "K10a-065",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 140,
+   "kind": "mech",
+   "claim": "attempt! writes the step's end into exec.xnext and returns true",
+   "evidence": "src/stepper.jl:163-166"
+  },
+  {
+   "id": "K10a-066",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 143,
+   "kind": "mech",
+   "claim": "Quoted RK4 stage lines match",
+   "evidence": "src/stepper.jl:153-164"
+  },
+  {
+   "id": "K10a-067",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 152,
+   "kind": "mech",
+   "claim": "Each RK stage is one evaluate!",
+   "evidence": "src/stepper.jl:155-161"
+  },
+  {
+   "id": "K10a-068",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 155,
+   "kind": "mech",
+   "claim": "evaluate! runs cursor.index += 1, sweep_1, sweep_2, rhs",
+   "evidence": "src/model.jl:617-621"
+  },
+  {
+   "id": "K10a-069",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 162,
+   "kind": "mech",
+   "claim": "The zero-arg PhaseBody call walks the interior tuple, compiled by chunked_body from continuous entries",
+   "evidence": "src/executor.jl:581, :594"
+  },
+  {
+   "id": "K10a-070",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 164,
+   "kind": "mech",
+   "claim": "run_entry!(StageEntry) calls the stage on a bundle and scatters returned ports",
+   "evidence": "src/executor.jl:167-171"
+  },
+  {
+   "id": "K10a-071",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 165,
+   "kind": "mech",
+   "claim": "run_entry!(RHSEntry) writes the derivative into ẋbuf",
+   "evidence": "src/executor.jl:173-178"
+  },
+  {
+   "id": "K10a-072",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 166,
+   "kind": "law",
+   "claim": "Controller outputs are untouched by the four stages, a ZOH by absence not a runtime test",
+   "evidence": "src/executor.jl:594 interior holds continuous entries only"
+  },
+  {
+   "id": "K10a-073",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 168,
+   "kind": "mech",
+   "claim": "A continued frame with nothing drained: first evaluate! runs rhs() alone",
+   "evidence": "src/frame.jl:91; src/model.jl:628-634"
+  },
+  {
+   "id": "K10a-074",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 171,
+   "kind": "mech",
+   "claim": "On acceptance integrate_step! writes the clock at the step's end",
+   "evidence": "src/model.jl:835"
+  },
+  {
+   "id": "K10a-075",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 172,
+   "kind": "mech",
+   "claim": "It runs _check_finite! over the trial before anything reads it",
+   "evidence": "src/model.jl:836"
+  },
+  {
+   "id": "K10a-076",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 173,
+   "kind": "mech",
+   "claim": "It then copies the trial into the state buffer",
+   "evidence": "src/model.jl:837"
+  },
+  {
+   "id": "K10a-077",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 173,
+   "kind": "law",
+   "claim": "RK4 never rejects",
+   "evidence": "src/stepper.jl:166 returns true"
+  },
+  {
+   "id": "K10a-078",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 174,
+   "kind": "ptr",
+   "claim": "Section 5 follows a backend that rejects",
+   "evidence": "BS3 rejects at src/stepper.jl:320-325"
+  },
+  {
+   "id": "K10a-079",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 176,
+   "kind": "mech",
+   "claim": "After integration the state is at t8 in the buffer and the phase is :arrival",
+   "evidence": "src/frame.jl:204,213"
+  },
+  {
+   "id": "K10a-080",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 178,
+   "kind": "mech",
+   "claim": "One interior sweep refreshes the table at arrival",
+   "evidence": "src/frame.jl:214"
+  },
+  {
+   "id": "K10a-081",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 179,
+   "kind": "mech",
+   "claim": "_guards! in executor.jl writes each guard into predicate register now and numeric σ",
+   "evidence": "src/executor.jl:363-381"
+  },
+  {
+   "id": "K10a-082",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 180,
+   "kind": "mech",
+   "claim": "The arrival samples are kept as σ1",
+   "evidence": "src/frame.jl:216"
+  },
+  {
+   "id": "K10a-083",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 183,
+   "kind": "mech",
+   "claim": "Quoted trigger line matches",
+   "evidence": "src/frame.jl:222-223"
+  },
+  {
+   "id": "K10a-084",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 186,
+   "kind": "law",
+   "claim": "An event triggers when localized, prior not holding, and holding now",
+   "evidence": "src/frame.jl:222-223"
+  },
+  {
+   "id": "K10a-085",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 188,
+   "kind": "mech",
+   "claim": "If nothing triggers the function returns false and the frame goes on",
+   "evidence": "src/frame.jl:226"
+  },
+  {
+   "id": "K10a-086",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 191,
+   "kind": "mech",
+   "claim": "The arrival state stays in exec.xnext, the trial the step was committed from",
+   "evidence": "src/frame.jl:246-247,270,276"
+  },
+  {
+   "id": "K10a-087",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 192,
+   "kind": "mech",
+   "claim": "The frame-start state is recovered from the seam's retained startpoint",
+   "evidence": "src/frame.jl:200,257"
+  },
+  {
+   "id": "K10a-088",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 193,
+   "kind": "mech",
+   "claim": "It is put back in the buffer, clock at t_seg, and swept under :validation",
+   "evidence": "src/frame.jl:257-260"
+  },
+  {
+   "id": "K10a-089",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 196,
+   "kind": "mech",
+   "claim": "Quoted validation lines match",
+   "evidence": "src/frame.jl:257-265"
+  },
+  {
+   "id": "K10a-090",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 204,
+   "kind": "law",
+   "claim": "A guard already holding at θ=0 means no crossing: the trigger is dropped",
+   "evidence": "src/frame.jl:265"
+  },
+  {
+   "id": "K10a-091",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 206,
+   "kind": "mech",
+   "claim": "The arrival state is restored when the trigger is dropped",
+   "evidence": "src/frame.jl:270"
+  },
+  {
+   "id": "K10a-092",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 206,
+   "kind": "law",
+   "claim": "The event then fires in the frame-top boundary's own iteration",
+   "evidence": "src/frame.jl:268-271 returns without localizing; event_phase! edge at model.jl:750"
+  },
+  {
+   "id": "K10a-093",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 207,
+   "kind": "law",
+   "claim": "The dropped trigger consumes no localization budget",
+   "evidence": "src/frame.jl:268-271 returns before localizations += 1 (:323)"
+  },
+  {
+   "id": "K10a-094",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 208,
+   "kind": "ptr",
+   "claim": "The reasoning is localization_validation_walkthrough.md's",
+   "evidence": "design/companions/localization_validation_walkthrough.md exists"
+  },
+  {
+   "id": "K10a-095",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 210,
+   "kind": "mech",
+   "claim": "One evaluate! at the arrival state pays ẋₙ₊₁ into exec.ẋnext",
+   "evidence": "src/frame.jl:276-280"
+  },
+  {
+   "id": "K10a-096",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 211,
+   "kind": "mech",
+   "claim": "That completes the four values the cubic Hermite interpolant needs",
+   "evidence": "src/stepper.jl:361-370"
+  },
+  {
+   "id": "K10a-097",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 212,
+   "kind": "mech",
+   "claim": "_crossing runs ITP on θ in [0,1]",
+   "evidence": "src/frame.jl:359-392"
+  },
+  {
+   "id": "K10a-098",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 213,
+   "kind": "mech",
+   "claim": "Each ITP iteration is one _trial!",
+   "evidence": "src/frame.jl:386-387"
+  },
+  {
+   "id": "K10a-099",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 215,
+   "kind": "mech",
+   "claim": "Quoted _trial! lines match",
+   "evidence": "src/frame.jl:340-343"
+  },
+  {
+   "id": "K10a-100",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 222,
+   "kind": "mech",
+   "claim": "dense! writes x̂(θ) from the startpoint pair and the arrival pair",
+   "evidence": "src/stepper.jl:361-370"
+  },
+  {
+   "id": "K10a-101",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 223,
+   "kind": "law",
+   "claim": "A trial is an interior sweep on raw unprojected state; discrete cells hold",
+   "evidence": "src/frame.jl:340-343 interior sweeps, no projection"
+  },
+  {
+   "id": "K10a-102",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 225,
+   "kind": "mech",
+   "claim": "Phase :trial with the ordinal is what a StepError reports for a guard throw",
+   "evidence": "src/frame.jl:386"
+  },
+  {
+   "id": "K10a-103",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 226,
+   "kind": "law",
+   "claim": "The earliest θ★ across triggered events wins",
+   "evidence": "src/frame.jl:287-290 min"
+  },
+  {
+   "id": "K10a-104",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 227,
+   "kind": "law",
+   "claim": "A θ★ of exactly one is discarded as a crossing at the step's end",
+   "evidence": "src/frame.jl:294-303"
+  },
+  {
+   "id": "K10a-105",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 229,
+   "kind": "mech",
+   "claim": "Interpolated state goes in the buffer and the clock moves to t* = t_seg + θ★·h′",
+   "evidence": "src/frame.jl:293,314-315"
+  },
+  {
+   "id": "K10a-106",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 230,
+   "kind": "law",
+   "claim": "Where that sum rounds onto t_seg, the clock is the next float after t_seg",
+   "evidence": "src/frame.jl:293 max(..., nextfloat(t_seg))"
+  },
+  {
+   "id": "K10a-107",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 231,
+   "kind": "mech",
+   "claim": "The t* boundary runs over the empty due set",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "K10a-108",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 233,
+   "kind": "mech",
+   "claim": "Quoted t* boundary lines match",
+   "evidence": "src/frame.jl:314-322"
+  },
+  {
+   "id": "K10a-109",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 240,
+   "kind": "mech",
+   "claim": "run_boundary!(model, nothing) is projection followed by the event phase",
+   "evidence": "src/model.jl:652-657"
+  },
+  {
+   "id": "K10a-110",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 241,
+   "kind": "mech",
+   "claim": "With nothing there is no tick argument and no ticks block",
+   "evidence": "src/model.jl:661"
+  },
+  {
+   "id": "K10a-111",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 243,
+   "kind": "mech",
+   "claim": "Quoted run_boundary! lines match",
+   "evidence": "src/model.jl:653-657"
+  },
+  {
+   "id": "K10a-112",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 251,
+   "kind": "mech",
+   "claim": "_projects! walks every ProjectEntry; run_project! reconstructs x, applies x_projection, writes back",
+   "evidence": "src/executor.jl:260-268,356-361"
+  },
+  {
+   "id": "K10a-113",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 253,
+   "kind": "law",
+   "claim": "Authority over the state rests at projection, not with the raw trials",
+   "evidence": "src/frame.jl:341-343 trials unprojected; model.jl:653 projects first"
+  },
+  {
+   "id": "K10a-114",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 256,
+   "kind": "mech",
+   "claim": "event_phase! lives in model.jl",
+   "evidence": "src/model.jl:734"
+  },
+  {
+   "id": "K10a-115",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 256,
+   "kind": "mech",
+   "claim": "Round one is the boundary sweep _round!(model, nothing), the two zero-arg sweeps",
+   "evidence": "src/model.jl:735-737,708-709"
+  },
+  {
+   "id": "K10a-116",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 258,
+   "kind": "mech",
+   "claim": "That is the same interior walk, with no discrete entry in it",
+   "evidence": "src/executor.jl:581,594"
+  },
+  {
+   "id": "K10a-117",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 259,
+   "kind": "mech",
+   "claim": "Registers are armed: last from prior, counts and warned cleared",
+   "evidence": "src/model.jl:741-743"
+  },
+  {
+   "id": "K10a-118",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 262,
+   "kind": "mech",
+   "claim": "Quoted event iteration lines match",
+   "evidence": "src/model.jl:750-775"
+  },
+  {
+   "id": "K10a-119",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 274,
+   "kind": "law",
+   "claim": "An event fires on an edge, count below firing_budget, no same-component event fired this round",
+   "evidence": "src/model.jl:750-762"
+  },
+  {
+   "id": "K10a-120",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 276,
+   "kind": "law",
+   "claim": "An eligible-but-blocked event keeps its edge for the next round",
+   "evidence": "src/model.jl:769-770 (last not overwritten)"
+  },
+  {
+   "id": "K10a-121",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 277,
+   "kind": "mech",
+   "claim": "_fire! in executor.jl runs the handler",
+   "evidence": "src/executor.jl:382-394"
+  },
+  {
+   "id": "K10a-122",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 278,
+   "kind": "mech",
+   "claim": "_latch! writes the returned x into the buffer and merges m into the mode store",
+   "evidence": "src/executor.jl:399-406"
+  },
+  {
+   "id": "K10a-123",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 279,
+   "kind": "mech",
+   "claim": "_fire_project! re-projects that component",
+   "evidence": "src/executor.jl:456-463"
+  },
+  {
+   "id": "K10a-124",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 280,
+   "kind": "mech",
+   "claim": "A fresh sweep follows and the loop repeats until a round fires nothing",
+   "evidence": "src/model.jl:771-775"
+  },
+  {
+   "id": "K10a-125",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 281,
+   "kind": "mech",
+   "claim": "At quiescence priors are updated from the settled samples",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "K10a-126",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 282,
+   "kind": "law",
+   "claim": "At t* the due set is empty by construction, so the controller plays no part",
+   "evidence": "src/frame.jl:316; src/model.jl:661; probe:117 frame 8 t* boundary at :round"
+  },
+  {
+   "id": "K10a-127",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 283,
+   "kind": "mech",
+   "claim": "A fired handler makes the boundary raise the discontinuity notice",
+   "evidence": "src/model.jl:656-657"
+  },
+  {
+   "id": "K10a-128",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 286,
+   "kind": "mech",
+   "claim": "publish! captures a snapshot, appends it to the log, bumps the wait counter",
+   "evidence": "src/sim.jl:2793-2807"
+  },
+  {
+   "id": "K10a-129",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 288,
+   "kind": "mech",
+   "claim": "The t* snapshot is published like any other",
+   "evidence": "src/frame.jl:322 settled!; probe:86,117 t* snapshot present"
+  },
+  {
+   "id": "K10a-130",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 288,
+   "kind": "mech",
+   "claim": "_stop_hit scans the stop requests on that snapshot",
+   "evidence": "src/sim.jl:2043"
+  },
+  {
+   "id": "K10a-131",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 289,
+   "kind": "mech",
+   "claim": "settled! returns true if a stop request holds",
+   "evidence": "src/sim.jl:2043"
+  },
+  {
+   "id": "K10a-132",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 290,
+   "kind": "mech",
+   "claim": "_frame_steps! returns at once, remainder unrun, clock at t*",
+   "evidence": "src/frame.jl:150,322"
+  },
+  {
+   "id": "K10a-133",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 291,
+   "kind": "mech",
+   "claim": "If none holds, the localization count increments and the loop turns again",
+   "evidence": "src/frame.jl:323"
+  },
+  {
+   "id": "K10a-134",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 293,
+   "kind": "mech",
+   "claim": "The next turn reads t_seg = t* off the clock and sets h′ = t₈ − t*",
+   "evidence": "src/frame.jl:203,328"
+  },
+  {
+   "id": "K10a-135",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 294,
+   "kind": "mech",
+   "claim": "integrate_step! runs a full RK4 step from the post-handler state",
+   "evidence": "src/frame.jl:204,327"
+  },
+  {
+   "id": "K10a-136",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 295,
+   "kind": "why",
+   "claim": "A one-step method restarts at no cost, which is why the seam admits nothing else",
+   "evidence": "src/stepper.jl:22-24 (D-017)"
+  },
+  {
+   "id": "K10a-137",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 296,
+   "kind": "mech",
+   "claim": "The arrival sweep at t₈ finds no new edge, _localized_step! returns false",
+   "evidence": "src/frame.jl:226"
+  },
+  {
+   "id": "K10a-138",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 297,
+   "kind": "mech",
+   "claim": "_frame_steps! stamps the clock at t₈",
+   "evidence": "src/frame.jl:159"
+  },
+  {
+   "id": "K10a-139",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 298,
+   "kind": "law",
+   "claim": "A re-trigger localizes again, up to localization_budget per frame across its steps",
+   "evidence": "src/frame.jl:232,323; model.jl:122 localizations frame-wide"
+  },
+  {
+   "id": "K10a-140",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 300,
+   "kind": "law",
+   "claim": "Past the budget, crossings are left to the step's end boundary under a ChatteringBudget warning",
+   "evidence": "src/frame.jl:232-243"
+  },
+  {
+   "id": "K10a-141",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 301,
+   "kind": "mech",
+   "claim": "The warning goes into the model's frame_diag",
+   "evidence": "src/frame.jl:238"
+  },
+  {
+   "id": "K10a-142",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 302,
+   "kind": "mech",
+   "claim": "That is the fixed-step path; under a proposing method t* ends its step",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "K10a-143",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 309,
+   "kind": "mech",
+   "claim": "Quoted tick boundary lines match",
+   "evidence": "src/model.jl:653-657"
+  },
+  {
+   "id": "K10a-144",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 317,
+   "kind": "mech",
+   "claim": "_round! with an Int tick calls sweep_1(tick) and sweep_2(tick), the full-tuple boundary variant",
+   "evidence": "src/model.jl:705-707; src/executor.jl:582"
+  },
+  {
+   "id": "K10a-145",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 320,
+   "kind": "mech",
+   "claim": "Continuous entries run through the fallback run_at! unchanged",
+   "evidence": "src/executor.jl:511"
+  },
+  {
+   "id": "K10a-146",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 320,
+   "kind": "mech",
+   "claim": "Each discrete entry wears a Gated wrapper whose run_at! is the gate",
+   "evidence": "src/executor.jl:486,513-518,595"
+  },
+  {
+   "id": "K10a-147",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 323,
+   "kind": "mech",
+   "claim": "Quoted gate line matches",
+   "evidence": "src/executor.jl:518"
+  },
+  {
+   "id": "K10a-148",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 327,
+   "kind": "mech",
+   "claim": "With tick 2 and (1,0) the controller is due",
+   "evidence": "src/executor.jl:518; probe:117 ctl n advances at frame 8"
+  },
+  {
+   "id": "K10a-149",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 328,
+   "kind": "mech",
+   "claim": "Its y_state runs in the stage-1 walk",
+   "evidence": "src/build.jl:1625 sweep_1 = stage1 entries"
+  },
+  {
+   "id": "K10a-150",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 329,
+   "kind": "mech",
+   "claim": "Its y_direct runs in the stage-2 walk from freshly swept inputs",
+   "evidence": "src/build.jl:1626 sweep_2"
+  },
+  {
+   "id": "K10a-151",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 330,
+   "kind": "mech",
+   "claim": "Its cells carry y[k] computed from s[k]",
+   "evidence": "src/model.jl:644-647 (updates after outputs)"
+  },
+  {
+   "id": "K10a-152",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 331,
+   "kind": "law",
+   "claim": "Every re-sweep of the iteration uses the same due set",
+   "evidence": "src/model.jl:775 _round!(model, tick)"
+  },
+  {
+   "id": "K10a-153",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 332,
+   "kind": "law",
+   "claim": "The tick index is the boundary's and does not change between rounds",
+   "evidence": "src/model.jl:734-775 tick passed unchanged"
+  },
+  {
+   "id": "K10a-154",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 334,
+   "kind": "mech",
+   "claim": "After quiescence bodies.ticks(tick) walks the update block through the same gate",
+   "evidence": "src/model.jl:655-656,662-663; build.jl:1628"
+  },
+  {
+   "id": "K10a-155",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 335,
+   "kind": "mech",
+   "claim": "The ticks walk runs under cursor phase :ticks",
+   "evidence": "src/model.jl:663"
+  },
+  {
+   "id": "K10a-156",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 336,
+   "kind": "mech",
+   "claim": "run_entry!(UpdateEntry) computes s_update off the settled table and writes s[k+1] into the store",
+   "evidence": "src/executor.jl:184-189"
+  },
+  {
+   "id": "K10a-157",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 337,
+   "kind": "law",
+   "claim": "Updates run last, so they read post-transition values",
+   "evidence": "src/model.jl:653-657 run_ticks! after event_phase!"
+  },
+  {
+   "id": "K10a-158",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 339,
+   "kind": "law",
+   "claim": "Outputs from s[k], then the update to s[k+1]",
+   "evidence": "src/model.jl:653-657; executor.jl:184"
+  },
+  {
+   "id": "K10a-159",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 340,
+   "kind": "mech",
+   "claim": "A tick raises the discontinuity notice",
+   "evidence": "src/model.jl:657 due !== nothing"
+  },
+  {
+   "id": "K10a-160",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 342,
+   "kind": "why",
+   "claim": "The controller's new output is a step in the next step's stage input",
+   "evidence": "rationale only; no code claim"
+  },
+  {
+   "id": "K10a-161",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 344,
+   "kind": "mech",
+   "claim": "For k=7 the loop calls run_boundary!(model, nothing)",
+   "evidence": "src/frame.jl:163; probe:117"
+  },
+  {
+   "id": "K10a-162",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 345,
+   "kind": "mech",
+   "claim": "Off-tick: projection and event phase run in full, zero-arg sweeps, no ticks body",
+   "evidence": "src/model.jl:653-661"
+  },
+  {
+   "id": "K10a-163",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 347,
+   "kind": "mech",
+   "claim": "The controller's cells hold the t=0.04 values and its s is untouched until 0.08",
+   "evidence": "probe:117 ctl n=2 after frames 6 and 7, 3 after frame 8"
+  },
+  {
+   "id": "K10a-164",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 350,
+   "kind": "mech",
+   "claim": "_frame_steps! ends with settled!(hooks)",
+   "evidence": "src/frame.jl:168-169"
+  },
+  {
+   "id": "K10a-165",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 350,
+   "kind": "mech",
+   "claim": "publish! builds the snapshot from clock, frame index, boundary ordinal and a store capture",
+   "evidence": "src/sim.jl:2793-2795"
+  },
+  {
+   "id": "K10a-166",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 352,
+   "kind": "mech",
+   "claim": "It releases the snapshot, logs it and wakes waiters",
+   "evidence": "src/sim.jl:2797-2807"
+  },
+  {
+   "id": "K10a-167",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 353,
+   "kind": "mech",
+   "claim": "_stop_hit scans the stop requests on that snapshot",
+   "evidence": "src/sim.jl:2043"
+  },
+  {
+   "id": "K10a-168",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 354,
+   "kind": "mech",
+   "claim": "If an honoured request holds, run_frame! returns true",
+   "evidence": "src/frame.jl:91,169"
+  },
+  {
+   "id": "K10a-169",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 355,
+   "kind": "mech",
+   "claim": "The loop re-reads the requester and returns ModelRequestedStop(requester)",
+   "evidence": "src/sim.jl:2119,2144"
+  },
+  {
+   "id": "K10a-170",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 356,
+   "kind": "mech",
+   "claim": "Otherwise the loop proceeds to the next frame top",
+   "evidence": "src/sim.jl:2144 loop continues"
+  },
+  {
+   "id": "K10a-171",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 357,
+   "kind": "mech",
+   "claim": "Cursor phases are :drain, :integrate, :arrival, :validation, :trial, :project, :round, :ticks",
+   "evidence": "src/executor.jl:21"
+  },
+  {
+   "id": "K10a-172",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 359,
+   "kind": "mech",
+   "claim": "The phase sequence is what a StepError's frame is read from",
+   "evidence": "src/executor.jl:17-22; model.jl:1077 _wrap_step"
+  },
+  {
+   "id": "K10a-173",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 361,
+   "kind": "ex",
+   "claim": "Frame 8 publishes twice, at the t* boundary and at the tick boundary",
+   "evidence": "probe:117 frame 8 settled at 0.075 :round and 0.08 :ticks"
+  },
+  {
+   "id": "K10a-174",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 362,
+   "kind": "ex",
+   "claim": "Frame 7 without an event publishes once, at the off-tick boundary",
+   "evidence": "probe:117 frame 7 settled once at 0.07 :round"
+  },
+  {
+   "id": "K10a-175",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 363,
+   "kind": "mech",
+   "claim": "The frame index advances by one per frame, the tick index only at frame 8",
+   "evidence": "src/sim.jl:2022; src/model.jl:544-552; probe:117 ctl n 2 to 3"
+  },
+  {
+   "id": "K10a-176",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 370,
+   "kind": "mech",
+   "claim": "The simulation's init! runs boundary zero through the model's init!",
+   "evidence": "src/sim.jl:851"
+  },
+  {
+   "id": "K10a-177",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 371,
+   "kind": "mech",
+   "claim": "The model's init! calls boundary_zero! under a catch returning a throwing model to :built",
+   "evidence": "src/model.jl:335-340"
+  },
+  {
+   "id": "K10a-178",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 371,
+   "kind": "mech",
+   "claim": "boundary_zero! is run_boundary!(model, ESTABLISH)",
+   "evidence": "src/model.jl:702"
+  },
+  {
+   "id": "K10a-179",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 372,
+   "kind": "mech",
+   "claim": "event_phase!(model, ESTABLISH) passes a marker in place of a tick index",
+   "evidence": "src/model.jl:654,712; executor.jl:504-505"
+  },
+  {
+   "id": "K10a-180",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 373,
+   "kind": "law",
+   "claim": "run_at! on a Gated entry admits every discrete output stage against ESTABLISH, due or not",
+   "evidence": "src/executor.jl:524-525"
+  },
+  {
+   "id": "K10a-181",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 375,
+   "kind": "mech",
+   "claim": "The t₀ snapshot carries the authored world fully evaluated",
+   "evidence": "src/executor.jl:524; model.jl:664-665 sweeps then ticks(0)"
+  },
+  {
+   "id": "K10a-182",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 376,
+   "kind": "mech",
+   "claim": "The update block runs as bodies.ticks(0), the ordinary gate at index 0",
+   "evidence": "src/model.jl:664-665"
+  },
+  {
+   "id": "K10a-183",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 377,
+   "kind": "law",
+   "claim": "At index 0 under the canonical residue the gate admits exactly the Φ₀=0 components",
+   "evidence": "src/executor.jl:518 (0 - Φ) % D == 0"
+  },
+  {
+   "id": "K10a-184",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 378,
+   "kind": "mech",
+   "claim": "init! then calls settled!(hooks), publishing the t₀ snapshot",
+   "evidence": "src/model.jl:341"
+  },
+  {
+   "id": "K10a-185",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 379,
+   "kind": "mech",
+   "claim": "Boundary zero has no integrate and no drain",
+   "evidence": "src/model.jl:320-342 (no frame_top!, no integrate_step!)"
+  },
+  {
+   "id": "K10a-186",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 384,
+   "kind": "why",
+   "claim": "An adaptive method chooses each step's length under error control",
+   "evidence": "src/stepper.jl:213-216"
+  },
+  {
+   "id": "K10a-187",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 386,
+   "kind": "mech",
+   "claim": "The frame loop's inner loop shapes a proposal into a step",
+   "evidence": "src/frame.jl:142"
+  },
+  {
+   "id": "K10a-188",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 387,
+   "kind": "mech",
+   "claim": "The attempt loop now meets rejections",
+   "evidence": "src/model.jl:829-846"
+  },
+  {
+   "id": "K10a-189",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 387,
+   "kind": "mech",
+   "claim": "The localization loop ends a step at its t* instead of running a remainder",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "K10a-190",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 389,
+   "kind": "mech",
+   "claim": "Drain, validation, root-finding, boundaries and publication are as before",
+   "evidence": "src/frame.jl:89,257-290,160-168"
+  },
+  {
+   "id": "K10a-191",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 392,
+   "kind": "ex",
+   "claim": "Example: lag tau 0.05 on root input ref, oscillator, discrete controller, localized guard at 0.75 writing its own mode",
+   "evidence": "probe:55-62 builds it; src/library.jl:2229-2260 Comparator guard and mode handler"
+  },
+  {
+   "id": "K10a-192",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 400,
+   "kind": "decl",
+   "claim": "Simulation(model; Δt_frame, Δt_base, h_min, algorithm = BS3(reltol, abstol)) is a legal declaration",
+   "evidence": "src/deployment.jl:466-469; probe:73 builds it"
+  },
+  {
+   "id": "K10a-193",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 404,
+   "kind": "mech",
+   "claim": "With no h_max it resolves to the frame",
+   "evidence": "src/deployment.jl:225"
+  },
+  {
+   "id": "K10a-194",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 404,
+   "kind": "ex",
+   "claim": "Run starts at rest with ref=0.5, the operator stages ref=1.0 before frame 7",
+   "evidence": "probe:64-72"
+  },
+  {
+   "id": "K10a-195",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 406,
+   "kind": "ex",
+   "claim": "Mandatory instants are due 0.65 (tick 13) and frame top 0.7 (tick 14)",
+   "evidence": "probe:86 snapshots at 0.65 and 0.7; 13/20 and 14/20"
+  },
+  {
+   "id": "K10a-196",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 407,
+   "kind": "ex",
+   "claim": "The frame has two spans",
+   "evidence": "probe:86 span ends at 0.65 and 0.7"
+  },
+  {
+   "id": "K10a-197",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 408,
+   "kind": "ex",
+   "claim": "Figures come from Julia 1.13.3 at 16c67dc",
+   "evidence": "probe:123 prints 1.13.3; git cat-file confirms 16c67dc is a commit"
+  },
+  {
+   "id": "K10a-198",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 411,
+   "kind": "mech",
+   "claim": "A drain that wrote ref makes run_frame! raise the notice before the first step",
+   "evidence": "src/frame.jl:89-91; probe:77 notice at attempt count 38 before frame 7's attempts"
+  },
+  {
+   "id": "K10a-199",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 412,
+   "kind": "mech",
+   "claim": "BS3 clears the controller's memory and keeps its proposal on a notice",
+   "evidence": "src/stepper.jl:287"
+  },
+  {
+   "id": "K10a-200",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 415,
+   "kind": "mech",
+   "claim": "Quoted BS3 discontinuity! line matches",
+   "evidence": "src/stepper.jl:287"
+  },
+  {
+   "id": "K10a-201",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 419,
+   "kind": "mech",
+   "claim": "Memory was clear already: the tick at 0.6 closing frame 6 raised a notice too",
+   "evidence": "probe:77 notices list shows 38 twice; probe:80 first attempt mem 0.0"
+  },
+  {
+   "id": "K10a-202",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 420,
+   "kind": "law",
+   "claim": "Two notices before a step mean one",
+   "evidence": "src/stepper.jl:84; discontinuity! idempotent at :287"
+  },
+  {
+   "id": "K10a-204",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 426,
+   "kind": "mech",
+   "claim": "Quoted shaping lines match",
+   "evidence": "src/frame.jl:142-144"
+  },
+  {
+   "id": "K10a-205",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 431,
+   "kind": "mech",
+   "claim": "_shaped clamps the proposal into [h_min, h_max]",
+   "evidence": "src/model.jl:879"
+  },
+  {
+   "id": "K10a-206",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 432,
+   "kind": "mech",
+   "claim": "It divides the distance r to the span's end into equal steps no longer than the cap",
+   "evidence": "src/model.jl:864-870,882"
+  },
+  {
+   "id": "K10a-207",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 433,
+   "kind": "mech",
+   "claim": "The step count comes from _shaped_steps",
+   "evidence": "src/model.jl:866,875"
+  },
+  {
+   "id": "K10a-208",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 435,
+   "kind": "mech",
+   "claim": "Quoted _shaped_steps lines match",
+   "evidence": "src/model.jl:879,881,882"
+  },
+  {
+   "id": "K10a-209",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 441,
+   "kind": "ex",
+   "claim": "From 0.6, distance 0.05 and proposal 0.0308 give N=2 and a step of 0.025",
+   "evidence": "probe:80 first attempt h=0.025; ceil(0.05/0.0308)=2"
+  },
+  {
+   "id": "K10a-210",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 442,
+   "kind": "why",
+   "claim": "Equal division leaves no sliver of 0.0192",
+   "evidence": "src/model.jl:864-870 equal steps"
+  },
+  {
+   "id": "K10a-211",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 444,
+   "kind": "law",
+   "claim": "The rule runs at every step's start from the clock; no plan is carried across steps",
+   "evidence": "src/frame.jl:132-142"
+  },
+  {
+   "id": "K10a-212",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 446,
+   "kind": "mech",
+   "claim": "An interior step's end is the clock plus the accepted length, on no lattice",
+   "evidence": "src/frame.jl:144; src/model.jl:917-919"
+  },
+  {
+   "id": "K10a-213",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 447,
+   "kind": "mech",
+   "claim": "slack is four ulps of the larger of the clock and the span's end",
+   "evidence": "src/model.jl:880"
+  },
+  {
+   "id": "K10a-214",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 448,
+   "kind": "law",
+   "claim": "A proposal that divides the distance exactly takes its count and no step more",
+   "evidence": "src/model.jl:880-882 (r - slack)/cap"
+  },
+  {
+   "id": "K10a-215",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 451,
+   "kind": "mech",
+   "claim": "attempt!(::BS3Stepper) evaluates four stages",
+   "evidence": "src/stepper.jl:298-307"
+  },
+  {
+   "id": "K10a-216",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 452,
+   "kind": "mech",
+   "claim": "The fourth stage is the derivative at the trial's end",
+   "evidence": "src/stepper.jl:306-307"
+  },
+  {
+   "id": "K10a-217",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 453,
+   "kind": "mech",
+   "claim": "The four give the third-order minus embedded second-order difference",
+   "evidence": "src/stepper.jl:261,314-315"
+  },
+  {
+   "id": "K10a-218",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 454,
+   "kind": "mech",
+   "claim": "Error = difference over abstol + reltol·max(|xₙ|,|xₙ₊₁|), maximum over the state, on values alone",
+   "evidence": "src/stepper.jl:310-318"
+  },
+  {
+   "id": "K10a-219",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 457,
+   "kind": "ex",
+   "claim": "The drained reference moves the lag's derivative from about zero to 10 per second",
+   "evidence": "(1.0-0.5)/0.05 = 10; probe:80 error scores match"
+  },
+  {
+   "id": "K10a-220",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 458,
+   "kind": "ex",
+   "claim": "The step of 0.025 scores about 9.3",
+   "evidence": "probe:80 rejection proposal 0.010694 implies (0.9·0.025/0.010694)^3 = 9.31"
+  },
+  {
+   "id": "K10a-221",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 459,
+   "kind": "mech",
+   "claim": "The backend rejects with a shrunken proposal",
+   "evidence": "src/stepper.jl:320-325"
+  },
+  {
+   "id": "K10a-222",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 461,
+   "kind": "mech",
+   "claim": "Quoted rejection lines match",
+   "evidence": "src/stepper.jl:321-323"
+  },
+  {
+   "id": "K10a-223",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 466,
+   "kind": "mech",
+   "claim": "integrate_step! discards the trial unread and puts the step's start back",
+   "evidence": "src/model.jl:831-841"
+  },
+  {
+   "id": "K10a-224",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 469,
+   "kind": "mech",
+   "claim": "Quoted restore lines match",
+   "evidence": "src/model.jl:840-842,848-849"
+  },
+  {
+   "id": "K10a-225",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 477,
+   "kind": "mech",
+   "claim": "The stages wrote the state buffer and clock as scratch; the two lines undo both",
+   "evidence": "src/stepper.jl:299-306; model.jl:840-841"
+  },
+  {
+   "id": "K10a-226",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 478,
+   "kind": "mech",
+   "claim": "fresh = false since the stages left the table at a stage point, so the next attempt sweeps",
+   "evidence": "src/model.jl:842; evaluate!(model) at :628-634"
+  },
+  {
+   "id": "K10a-227",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 480,
+   "kind": "mech",
+   "claim": "The retry is shaped by the same rule toward the same span's end",
+   "evidence": "src/model.jl:848-849 t_limit"
+  },
+  {
+   "id": "K10a-228",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 481,
+   "kind": "ex",
+   "claim": "Proposal 0.0107 gives n=5, step 0.01, scoring 1.13, rejected",
+   "evidence": "probe:80 second attempt h=0.01 ok=false prop 0.008649 (score 1.127)"
+  },
+  {
+   "id": "K10a-229",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 482,
+   "kind": "ex",
+   "claim": "Proposal 0.00865 gives n=6, step 0.008333, scoring 0.70, accepted",
+   "evidence": "probe:80 third attempt h=0.008333 ok mem 0.6956"
+  },
+  {
+   "id": "K10a-230",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 483,
+   "kind": "mech",
+   "claim": "The cursor's attempt reads 3 at that point",
+   "evidence": "src/model.jl:827; probe:80 shows three attempts at t=0.6"
+  },
+  {
+   "id": "K10a-231",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 486,
+   "kind": "law",
+   "claim": "With memory clear the factor is 0.9·err^(-1/3); step 0.008333 proposes 0.008465",
+   "evidence": "src/stepper.jl:327; probe:80 prop 0.008465"
+  },
+  {
+   "id": "K10a-232",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 488,
+   "kind": "mech",
+   "claim": "With a memory the factor is the PI one weighing the previous error",
+   "evidence": "src/stepper.jl:327-328"
+  },
+  {
+   "id": "K10a-233",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 492,
+   "kind": "mech",
+   "claim": "Quoted controller lines match",
+   "evidence": "src/stepper.jl:327-330"
+  },
+  {
+   "id": "K10a-234",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 499,
+   "kind": "ex",
+   "claim": "The second step from 0.608333 scores 0.53 and proposes 0.00829",
+   "evidence": "probe:80 mem 0.5292, prop 0.008289"
+  },
+  {
+   "id": "K10a-235",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 500,
+   "kind": "ex",
+   "claim": "From 0.616667, distance 0.033333 with proposal 0.00829 gives n=5, step 0.006667",
+   "evidence": "probe:80 h=0.006667 at t=0.616667"
+  },
+  {
+   "id": "K10a-236",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 502,
+   "kind": "law",
+   "claim": "A step never exceeds the proposal, except by slack or at the floor",
+   "evidence": "src/model.jl:864-870,879-882"
+  },
+  {
+   "id": "K10a-237",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 503,
+   "kind": "ex",
+   "claim": "Boundaries publish at 0.608333, 0.616667, 0.623333, 0.63",
+   "evidence": "probe:86 snapshot list"
+  },
+  {
+   "id": "K10a-238",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 506,
+   "kind": "ex",
+   "claim": "From 0.63 the step of 0.006667 is accepted and arrival finds the guard holding",
+   "evidence": "probe:80 t=0.63 h=0.006667 ok; t* snapshot follows"
+  },
+  {
+   "id": "K10a-239",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 508,
+   "kind": "ex",
+   "claim": "Root-finding places t* at 0.634652",
+   "evidence": "probe:122 BS3 t* = 0.6346516"
+  },
+  {
+   "id": "K10a-240",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 509,
+   "kind": "ex",
+   "claim": "The lag's exact crossing is 0.6+0.05 ln 2 ≈ 0.634657",
+   "evidence": "probe:122 exact = 0.6346574"
+  },
+  {
+   "id": "K10a-241",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 510,
+   "kind": "mech",
+   "claim": "After the t* boundary settles _localized_step! returns where the fixed path integrates a remainder",
+   "evidence": "src/frame.jl:322-328"
+  },
+  {
+   "id": "K10a-242",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 513,
+   "kind": "mech",
+   "claim": "Quoted proposing return matches",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "K10a-243",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 517,
+   "kind": "mech",
+   "claim": "The step ends at t* and the frame loop shapes the next one from there",
+   "evidence": "src/frame.jl:152,142"
+  },
+  {
+   "id": "K10a-244",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 518,
+   "kind": "why",
+   "claim": "A remainder would run at a length no proposal asked for",
+   "evidence": "rationale; src/frame.jl:324-326"
+  },
+  {
+   "id": "K10a-245",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 519,
+   "kind": "ex",
+   "claim": "The handler fired, the notice cleared memory again",
+   "evidence": "probe:80 t=0.634652 attempt starts with mem 0.0"
+  },
+  {
+   "id": "K10a-246",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 520,
+   "kind": "ex",
+   "claim": "The proposal still held is the whole accepted step's, 0.00741",
+   "evidence": "probe:80 prior attempt (t=0.63) prop 0.007408"
+  },
+  {
+   "id": "K10a-247",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 521,
+   "kind": "ex",
+   "claim": "Distance to the due instant 0.015348 gives n=3, step 0.005116",
+   "evidence": "probe:80 t=0.634652 h=0.005116"
+  },
+  {
+   "id": "K10a-248",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 522,
+   "kind": "ex",
+   "claim": "That step scores 0.065 and proposes 0.0115",
+   "evidence": "probe:80 mem 0.0646, prop 0.011475"
+  },
+  {
+   "id": "K10a-249",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 523,
+   "kind": "ex",
+   "claim": "0.0115 exceeds the 0.010232 left; the last step is the remainder",
+   "evidence": "probe:80 t=0.639768 h=0.010232"
+  },
+  {
+   "id": "K10a-250",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 524,
+   "kind": "mech",
+   "claim": "A cap above the distance gives one step, span_end by equality, clock exactly on the due instant",
+   "evidence": "src/model.jl:882; src/frame.jl:143-144"
+  },
+  {
+   "id": "K10a-251",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 528,
+   "kind": "ex",
+   "claim": "The boundary at 0.65 runs the controller's output stage and update",
+   "evidence": "src/frame.jl:160-161; probe:86 snapshot at 0.65"
+  },
+  {
+   "id": "K10a-252",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 529,
+   "kind": "ex",
+   "claim": "The tick raises the notice",
+   "evidence": "src/model.jl:657; probe:77 notice at attempt 47"
+  },
+  {
+   "id": "K10a-253",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 529,
+   "kind": "ex",
+   "claim": "Proposal 0.00795 divides the second span into seven steps of 0.007143, first taken",
+   "evidence": "probe:80 t=0.65 h=0.007143 after prop 0.007951"
+  },
+  {
+   "id": "K10a-254",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 531,
+   "kind": "ex",
+   "claim": "Proposal 0.0133 divides the remaining 0.042857 into four; one step of 0.010714",
+   "evidence": "probe:80 t=0.657143 h=0.010714"
+  },
+  {
+   "id": "K10a-255",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 533,
+   "kind": "ex",
+   "claim": "Proposal 0.0096 divides the remaining 0.032143 into four steps of 0.008036",
+   "evidence": "probe:80 t=0.667857 h=0.008036"
+  },
+  {
+   "id": "K10a-256",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 535,
+   "kind": "ex",
+   "claim": "The next proposals keep that length to the frame top",
+   "evidence": "probe:80 steps 0.675893, 0.683929, 0.691964 at 0.008036"
+  },
+  {
+   "id": "K10a-257",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 535,
+   "kind": "ex",
+   "claim": "The tick at 0.7 raises the notice; frame 8 starts with clear memory",
+   "evidence": "probe:77 notice at attempt 53; src/model.jl:657"
+  },
+  {
+   "id": "K10a-258",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 538,
+   "kind": "ex",
+   "claim": "The frame made 15 attempts, 2 rejected",
+   "evidence": "probe:79 prints 15 and 2"
+  },
+  {
+   "id": "K10a-259",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 538,
+   "kind": "ex",
+   "claim": "It published 13 snapshots: t*, due instant, frame top and ten other step ends",
+   "evidence": "probe:86 prints 13 snapshots incl. 0.634652, 0.65, 0.7"
+  },
+  {
+   "id": "K10a-260",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 541,
+   "kind": "mech",
+   "claim": "Every attempt evaluates four stages, rejected or not",
+   "evidence": "src/stepper.jl:298-307 before the verdict at :320"
+  },
+  {
+   "id": "K10a-261",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 541,
+   "kind": "ex",
+   "claim": "RK4 under the same deployment takes each span in one step",
+   "evidence": "probe:91 three snapshots; src/frame.jl:130-140"
+  },
+  {
+   "id": "K10a-262",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 542,
+   "kind": "ex",
+   "claim": "RK4's frame publishes three snapshots at the t*, due instant and frame top",
+   "evidence": "probe:91 prints 0.63522, 0.65, 0.7"
+  },
+  {
+   "id": "K10a-264",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 544,
+   "kind": "mech",
+   "claim": "The RK4 t* is located on the dense output of one step across the whole span",
+   "evidence": "src/frame.jl:314,293; probe:91 single t* before 0.65"
+  },
+  {
+   "id": "K10a-265",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 547,
+   "kind": "mech",
+   "claim": "From 0.6 the shortest step allowed is 0.05/⌊0.05/0.0001⌋ = 0.0001",
+   "evidence": "src/model.jl:881-882,883-885 floor steps by count"
+  },
+  {
+   "id": "K10a-266",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 549,
+   "kind": "mech",
+   "claim": "Two branches of integrate_step! reach the floor",
+   "evidence": "src/model.jl:832-833,843-845"
+  },
+  {
+   "id": "K10a-267",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 551,
+   "kind": "mech",
+   "claim": "Quoted floor branches match",
+   "evidence": "src/model.jl:832-833,843-845"
+  },
+  {
+   "id": "K10a-268",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 559,
+   "kind": "law",
+   "claim": "A rejected attempt no proposal could shorten is committed anyway",
+   "evidence": "src/model.jl:832-834"
+  },
+  {
+   "id": "K10a-269",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 560,
+   "kind": "law",
+   "claim": "StepFloor records it with reason :rejected",
+   "evidence": "src/model.jl:833"
+  },
+  {
+   "id": "K10a-270",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 561,
+   "kind": "law",
+   "claim": "Attempts reaching attempt_budget take the next attempt at the floor, reason :budget",
+   "evidence": "src/model.jl:843-845"
+  },
+  {
+   "id": "K10a-271",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 561,
+   "kind": "decl",
+   "claim": "attempt_budget is 7 by default",
+   "evidence": "src/deployment.jl:469"
+  },
+  {
+   "id": "K10a-272",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 562,
+   "kind": "law",
+   "claim": "The warning goes to frame_diag, at most once per frame",
+   "evidence": "src/model.jl:894-897"
+  },
+  {
+   "id": "K10a-273",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 563,
+   "kind": "mech",
+   "claim": "_frame_steps! clears the floor_reported latch at each frame top",
+   "evidence": "src/frame.jl:121"
+  },
+  {
+   "id": "K10a-274",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 564,
+   "kind": "law",
+   "claim": "A forced step may be up to just under 2·h_min long, since the floor is read by count",
+   "evidence": "src/model.jl:881-882; deployment.jl:209-210 (D-463)"
+  },
+  {
+   "id": "K10a-275",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 567,
+   "kind": "mech",
+   "claim": "checkpoint_stepper reads the proposal and the memory into the checkpoint",
+   "evidence": "src/stepper.jl:281"
+  },
+  {
+   "id": "K10a-276",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 568,
+   "kind": "mech",
+   "claim": "restore_stepper! writes them back with no notice",
+   "evidence": "src/stepper.jl:282-283"
+  },
+  {
+   "id": "K10a-277",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 569,
+   "kind": "mech",
+   "claim": "A restored run proposes what the original proposed",
+   "evidence": "src/stepper.jl:104-109"
+  },
+  {
+   "id": "K10a-278",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 570,
+   "kind": "mech",
+   "claim": "init! calls reset_stepper! before boundary zero",
+   "evidence": "src/model.jl:331-336"
+  },
+  {
+   "id": "K10a-279",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 571,
+   "kind": "mech",
+   "claim": "reset_stepper! sets the pair to (Inf, 0.0)",
+   "evidence": "src/stepper.jl:284"
+  },
+  {
+   "id": "K10a-280",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 572,
+   "kind": "mech",
+   "claim": "The first attempt of a run takes all that h_max and the span allow",
+   "evidence": "src/stepper.jl:278,295; model.jl:879"
+  },
+  {
+   "id": "K10a-281",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 573,
+   "kind": "mech",
+   "claim": "If the first attempt is rejected, _starting_bound limits the retry from the first stage's derivative",
+   "evidence": "src/stepper.jl:324,338-347"
+  },
+  {
+   "id": "K10a-282",
+   "file": "design/companions/frame_walkthrough.md",
+   "line": 574,
+   "kind": "law",
+   "claim": "A Dual model takes the steps its Float64 twin takes, since the error reads values alone",
+   "evidence": "src/stepper.jl:310-318 _seconds on all error terms"
+  }
+ ],
+ "counts": {
+  "ptr": 12,
+  "why": 7,
+  "decl": 3,
+  "ex": 40,
+  "law": 37,
+  "mech": 194
+ }
+}

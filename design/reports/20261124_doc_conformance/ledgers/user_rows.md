@@ -118,3 +118,20 @@ the verifier's probe.
   20 ms budget and lands within µs of the deadline. The coarse phase now
   overshoots more. Proposed: recalibrate the default to about 3 ms, after a
   measurement on the dev machine.
+- **CV10-221, wording.** The `ExecutionCursor` docstring's account of when
+  the cursor is written and read misses one store.
+- **CV10-263, wording.** A named discrete store whose `s_update` returns the
+  right field names with a wrong value type reports `:field_set`; Appendix C
+  does not say so.
+- **K10b-043, wording.** The limited-integrator companion's trial count for
+  the minmax projection: about ITP's worst case, 21 or 22, not bisection's.
+- **S9d2-042, wording.** §9.7 says `rhs` takes no index; it has a one-arg
+  form that walks the same entries. D-147 backs the doc's text.
+- **S9d2-074, wording.** §9.7 says `-O0` trajectories differ from `-O2`'s;
+  the code shows they can, not that they must. D-289 backs the doc's text.
+- **S9d2-107, gap.** The scheduled `GC.gc(false)` at frame boundaries is
+  owed by `pending.md`; no action.
+- **S10a-064, bold ruling.** §10.2's bold span says the distance is taken in
+  equal steps "no longer than" the proposal. The code caps the count at
+  `⌊r / h_min⌋`, so near `h_min` a step can be longer. The fixer added an
+  unbolded sentence saying so; the bold ruling itself is yours to reword.

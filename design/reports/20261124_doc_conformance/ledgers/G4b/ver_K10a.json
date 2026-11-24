@@ -1,0 +1,149 @@
+{
+ "judgments": [
+  {
+   "id": "K10a-003",
+   "conforms": true,
+   "evidence": "src/sim.jl:2088 defines _advance!, src/sim.jl:2656 drain! and src/sim.jl:2789 publish!. All three are in sim.jl."
+  },
+  {
+   "id": "K10a-015",
+   "conforms": true,
+   "evidence": "src/sim.jl:2102-2104 read the stop word (control.stop_issuer), then run.frame < t_end_frame and run.frame < upto, before run_frame! at src/sim.jl:2115."
+  },
+  {
+   "id": "K10a-024",
+   "conforms": true,
+   "evidence": "src/sim.jl:1996 `roster::Vector{RosterEntry}  # the run's copy (§11.3)`. _advance! builds it from the frozen copy at src/sim.jl:2092, and that copy is filled at src/sim.jl:1645 (run!) and src/sim.jl:2260 (step!)."
+  },
+  {
+   "id": "K10a-033",
+   "conforms": true,
+   "evidence": "src/frame.jl:204 integrates the segment. src/frame.jl:314-316 fire the localized event at a t* boundary inside the step."
+  },
+  {
+   "id": "K10a-042",
+   "conforms": true,
+   "evidence": "src/sim.jl:2663-2664 `trc === nothing || (trc.frames += 1)`. This runs once per drain, before any thunk, on both paths."
+  },
+  {
+   "id": "K10a-051",
+   "conforms": true,
+   "evidence": "src/stepper.jl:86 has the default `discontinuity!(::AbstractStepper) = nothing`, which RK4Stepper inherits. src/stepper.jl:287 has BS3's method, which clears the memory."
+  },
+  {
+   "id": "K10a-060",
+   "conforms": true,
+   "evidence": "src/frame.jl:202-204: each turn of the while loop integrates one segment from the clock. src/frame.jl:328 sets h′ to the remainder from t*. The comment at src/frame.jl:179-180 agrees."
+  },
+  {
+   "id": "K10a-069",
+   "conforms": true,
+   "evidence": "src/executor.jl:570 `(body::PhaseBody)() = _walk_chunks(body.interior)`. src/executor.jl:595 builds the interior tuple from the entries whose gate is nothing, that is the continuous entries only."
+  },
+  {
+   "id": "K10a-079",
+   "conforms": true,
+   "evidence": "src/model.jl:838-840 write the clock at t + h and copy the trial into xbuf. Then src/frame.jl:213 sets `_phase!(cursor, :arrival)`."
+  },
+  {
+   "id": "K10a-088",
+   "conforms": true,
+   "evidence": "src/frame.jl:257-260 run copyto!(exec.xbuf, x₀), then exec.clock.t = t_seg, then _phase!(cursor, :validation), then sweep_1(); sweep_2(). x₀ comes from startpoint (src/frame.jl:200).",
+   "note": "The doc at line 192 calls x₀ the frame-start state. It is the segment's start x(t_seg). The two coincide in the running example's first segment but not in a remainder."
+  },
+  {
+   "id": "K10a-098",
+   "conforms": true,
+   "evidence": "src/frame.jl:374-391: each ITP iteration sets the :trial phase and calls `_trial!(model, θ, t_seg, h′)` once (src/frame.jl:386-387)."
+  },
+  {
+   "id": "K10a-107",
+   "conforms": true,
+   "evidence": "src/frame.jl:316 `run_boundary!(model, nothing)` at the t* boundary."
+  },
+  {
+   "id": "K10a-116",
+   "conforms": true,
+   "evidence": "src/model.jl:717-718 `_round!(exec, ::Nothing) = (exec.bodies.sweep_1(); exec.bodies.sweep_2(); nothing)`. The zero-argument call walks the interior tuple (src/executor.jl:570), which holds no discrete entry."
+  },
+  {
+   "id": "K10a-125",
+   "conforms": true,
+   "evidence": "src/model.jl:780 `copyto!(events.prior, events.last)` runs after the loop breaks at quiescence. When no event fires, every last[i] equals now[i] (src/model.jl:770)."
+  },
+  {
+   "id": "K10a-134",
+   "conforms": true,
+   "evidence": "src/frame.jl:328 sets h′ = t_to - exec.clock.t at the end of the turn that fired t*. The next turn reads t_seg = exec.clock.t at src/frame.jl:203.",
+   "note": "In the code, h′ is set at the end of the previous turn, not in the next turn. The outcome is the same."
+  },
+  {
+   "id": "K10a-144",
+   "conforms": true,
+   "evidence": "src/model.jl:715-716 `_round!(exec, tick::Int) = (exec.bodies.sweep_1(tick); exec.bodies.sweep_2(tick); nothing)`. The one-argument call walks body.boundary, the full tuple with discrete entries wrapped in Gated (src/executor.jl:571, 595-596)."
+  },
+  {
+   "id": "K10a-153",
+   "conforms": true,
+   "evidence": "src/model.jl:734-737, 777: event_phase!(model, tick) passes the same tick to _round! in round 1 and in every re-sweep."
+  },
+  {
+   "id": "K10a-163",
+   "conforms": true,
+   "evidence": "Probe line 'K10a-163 after frame k': a TickCounter at Δt_frame 1/100 and Δt_base 1/25 reads (port n, s.n) = (1, 2) after frames 4 to 7 and (2, 3) after frame 8. The cells keep the t=0.04 values, and s does not change until 0.08."
+  },
+  {
+   "id": "K10a-172",
+   "conforms": true,
+   "evidence": "src/executor.jl:21 lists the phases :drain | :integrate | :arrival | :validation | :trial | :project | :round | :ticks. src/model.jl:1082-1084 builds StepError's CursorFrame from cursor.phase, index and attempt."
+  },
+  {
+   "id": "K10a-183",
+   "conforms": true,
+   "evidence": "src/model.jl:665 runs ticks(0) under ESTABLISH. src/executor.jl:518 is the gate `(tick - entry.Φ) % entry.D == 0`, and src/structure.jl:336 holds 0 ≤ Φ < D. Probe 'K10a-183': at init, Relative(2,0) updates to s.n=1 and Relative(2,1) stays at 0."
+  },
+  {
+   "id": "K10a-198",
+   "conforms": true,
+   "evidence": "src/frame.jl:89-90 `wrote = frame_top!(hooks); wrote && discontinuity!(model.exec.stepper)`. This runs before _frame_steps! takes its first step."
+  },
+  {
+   "id": "K10a-203",
+   "conforms": true,
+   "evidence": "Probe 'K10a-203 force=false': the first attempt of frame 7 is shaped from frame 6's last proposal, because discontinuity! keeps it (src/stepper.jl:287). Probe 'K10a-203 force=true': with frame 6's last proposal set to 0.0308, frame 7 runs 0.025 rejected (proposal 0.010694), 0.01 rejected (0.008649), 0.008333 accepted (0.008465), then 0.008333 (0.00829), 0.006667, and t* at 0.6346516. This is the walkthrough's chain digit for digit.",
+   "note": "The value 0.0308 itself depends on the plant and controller, whose parameters the walkthrough does not state. The probe cannot reproduce it directly. The chain that follows from it does match."
+  },
+  {
+   "id": "K10a-208",
+   "conforms": true,
+   "evidence": "src/model.jl:879, 881 and 882 read exactly as quoted: `cap = max(min(proposal, Float64(deployment.h_max)), h_min)`, `floor_steps = max(1.0, floor((r + slack) / h_min))`, `cap ≥ r ? 1.0 : max(1.0, min(ceil((r - slack) / cap), floor_steps))`."
+  },
+  {
+   "id": "K10a-221",
+   "conforms": true,
+   "evidence": "src/stepper.jl:320-325: a rejection sets stepper.proposal = h_value * shrink and returns false. src/stepper.jl:321-323 match the quoted lines."
+  },
+  {
+   "id": "K10a-232",
+   "conforms": true,
+   "evidence": "src/stepper.jl:327-330 match the quote. A nonzero memory selects the PI branch, and memory holds the previous accepted step's error, floored, as set at src/stepper.jl:330."
+  },
+  {
+   "id": "K10a-263",
+   "conforms": true,
+   "evidence": "Probe 'K10a-263 RK4 x0=0.0 t_fired' gives 0.6352205170681525, which rounds to 0.635221. The snapshots of frame 7 are [t*, 0.65, 0.7], three as the doc says.",
+   "note": "The figure depends on the lag's initial state. With the lag at rest at 0 it is 0.6352205, which is 0.635221. With the lag starting at 0.5 it is 0.6352201, which is 0.635220. The RK4 t* reads only the lag, so the unstated plant does not move it."
+  },
+  {
+   "id": "K10a-265",
+   "conforms": true,
+   "evidence": "Probe 'K10a-265 floor steps, shortest step' gives _floor_steps from the clock 0.6 to 0.65 = 500.0 and a step of 0.00010000000000000009 (src/model.jl:881, 884-885)."
+  },
+  {
+   "id": "K10a-274",
+   "conforms": true,
+   "evidence": "Probe 'K10a-274': _shaped(model, h_min, 0.6, 0.6 + r) gives 1.999e-4 at r = 1.999e-4, and 1e-4 at r = 2e-4. A forced step stays below 2·h_min because floor_steps = ⌊r/h_min⌋ (src/model.jl:881-882, 852-853)."
+  }
+ ],
+ "notes": "All 28 K10a claims conform. I edited no tracked file and committed nothing. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K10a_v/probe.jl. It ran once from W with --project=test. Three points stay open. (1) K10a-203: the value 0.0308 depends on the walkthrough's plant and controller, which it does not specify. The probe forced the proposal to 0.0308 and reproduced every later figure in section 5, including the BS3 t* of 0.634652. (2) K10a-263: the RK4 t* of 0.635221 holds only if the lag starts at 0. It reads 0.635220 if the lag starts at 0.5. The walkthrough says only that the run starts at rest, so stating the lag's initial state would settle it. (3) Two wordings are loose but not wrong: line 192 calls the validation's x₀ the frame-start state, though it is the segment start; line 293 has the next turn set h′, though the previous turn sets it."
+}

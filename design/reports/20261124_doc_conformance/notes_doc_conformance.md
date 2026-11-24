@@ -59,12 +59,19 @@ the tools.
   1.57M tokens, 18 min. The verifiers overturned 4 of 24 flags and found 5
   misses in 107 sampled rows. Its 4 clear rows wait in
   `ledgers/G4a/fix_list.md` for one fixer with G4b.
-- **Paused here on 2026-11-24, at the user's request.** Resume with G4b at
-  the same pin, `2ea85438`: its args are in `ledgers/G4b/args.json` and its
-  leads are cut. They add S9d2, a high-tier re-inventory of §9.7 and §9.8.
-  If master has moved, either re-pin the worktree at `2ea85438` or
-  regenerate G4b's args and leads at the new tip; G4a's fix list is at
-  `2ea85438` either way. Then one fixer takes G4a's and G4b's clear rows.
+- **G4b, §10's companions and code.** It ran at `2ea85438` as
+  `wf_608a017e-1ae`: 8 agents, 1.39M tokens, 21 min, S9d2 included. The
+  verifiers overturned 6 of 21 flags and found 1 miss in 81 sampled rows;
+  S9d2 missed none of its 10. One fixer took G4a's and G4b's 14 clear rows,
+  which landed as `ec4f51b3`.
+- **Seen by G4's fixer, not yet fixed.** src/frame.jl's header still says
+  the method takes the span in the fewest equal steps `h_max` allows, false
+  under a proposing method. pid_anti_windup.md, near line 445, still writes
+  `LimitedIntegrator{V, L}`. limited_integrator_variants.md, near line 117,
+  gives the strict gate 21 trials where the probe counts 21 or 22.
+- **Paused here on 2026-11-24, at the user's request, before G5.** Re-pin
+  the worktree at master's tip, re-run Stage M, and cut G5 (§11 and §12)
+  from the group plan.
 
 ## Rulings since the trial
 

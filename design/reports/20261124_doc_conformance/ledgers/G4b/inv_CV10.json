@@ -1,0 +1,2319 @@
+{
+ "rows": [
+  {
+   "id": "CV10-036",
+   "file": "src/frame.jl",
+   "line": 62,
+   "kind": "docstring",
+   "claim": "the docstring names ArgumentInvalid for the claim and range refusals but not their reasons :claimed and :range",
+   "evidence": "design/rules/docstring_rules.md rule 21; Appendix B spec.md:15103,15117; probe:24,30",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Name the reasons: \"A model claimed by a Simulation is refused as ArgumentInvalid with reason :claimed, and so is a k past the last frame, with reason :range.\""
+  },
+  {
+   "id": "CV10-114",
+   "file": "src/frame.jl",
+   "line": 338,
+   "kind": "map",
+   "claim": "code_map's frame.jl entry omits _trial!, the trial evaluation that _crossing calls (the ITP and arrival machinery around it is listed)",
+   "evidence": "design/code_map.md:655-711",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add to the _localized_step! bullet: \"`_crossing` runs each trial through `_trial!`, which writes x(theta) by `dense!`, sets the mid-step clock, runs the interior sweep and evaluates the guards.\""
+  },
+  {
+   "id": "CV10-135",
+   "file": "src/stepper.jl",
+   "line": 19,
+   "kind": "docstring",
+   "claim": "header says model.jl's integrate_step! raises the discontinuity notice, but its body never calls discontinuity!; the notice is raised by run_boundary!, overlay! and the frame top",
+   "evidence": "src/model.jl:657,474 and src/frame.jl:90; probe:77",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace \"writes the clock, and raises the notice\" with \"and writes the clock. The notice is raised by `run_boundary!`, `overlay!` and the frame top (model.jl, frame.jl).\""
+  },
+  {
+   "id": "CV10-146",
+   "file": "src/stepper.jl",
+   "line": 35,
+   "kind": "map",
+   "claim": "code_map's stepper.jl entry never names AbstractStepper, the abstract type every stepper and the seam's generic dense! dispatch on",
+   "evidence": "design/code_map.md:1304-1325",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add to the entry: \"`AbstractStepper`, the abstract type of the steppers; the generic `dense!` and the `discontinuity!` default dispatch on it.\""
+  },
+  {
+   "id": "CV10-221",
+   "file": "src/executor.jl",
+   "line": 9,
+   "kind": "docstring",
+   "claim": "ExecutionCursor says it is overwritten by one store per dispatch and one per phase transition and read only at the catch site; it also takes a store per RHS evaluation (index += 1), a store of the attempt ordinal, and a read in the stage counter",
+   "evidence": "src/model.jl:618,633,827",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Say: \"overwritten by one cheap store per user-code dispatch and per phase transition, and bumped per RHS evaluation and per attempt; read at the catch site (`_wrap_step`, model.jl).\""
+  },
+  {
+   "id": "CV10-253",
+   "file": "src/executor.jl",
+   "line": 299,
+   "kind": "docstring",
+   "claim": "EventSet says triggered is the frame's triggered set, but the frame loop rewrites it for every localization segment (and the validation prunes it), so it is the current segment's set",
+   "evidence": "src/frame.jl:221,265",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Say: \"`triggered` is the current localization segment's triggered set\"."
+  },
+  {
+   "id": "CV10-262",
+   "file": "src/executor.jl",
+   "line": 413,
+   "kind": "map",
+   "claim": "code_map's executor.jl entry omits _store_successor!, the runtime check that raises ConformanceFailure for a wrong s_update return",
+   "evidence": "design/code_map.md:614-654",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add a bullet: \"`_store_successor!`, the write of an `s_update` return, which refuses a value not of the store's own type as `ConformanceFailure` (§9.5, D-235).\""
+  },
+  {
+   "id": "CV10-263",
+   "file": "src/executor.jl",
+   "line": 413,
+   "kind": "surface",
+   "claim": "the runtime s_update check labels a named store whose returned NamedTuple has the same field names but a wrong value type as reason :field_set with no field; Appendix C says the reason names the failed clause (:field_type with the field's expected and observed types)",
+   "evidence": "design/spec.md:15703 Appendix C ConformanceFailure; probe:43",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "In _store_successor!, give reason :field_type with the first mismatching field when the field names match, and :field_set only when the names differ."
+  },
+  {
+   "id": "CV10-270",
+   "file": "src/executor.jl",
+   "line": 469,
+   "kind": "map",
+   "claim": "code_map's executor.jl entry omits _event_bodies and _project_body, which build the per-event guard and handler callables and the per-component projection callables that phase_bodies returns",
+   "evidence": "design/code_map.md:614-654; spec.md:6308",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add a bullet: \"`_event_bodies` and `_project_body`, the measurement seam's callables for one event's guard and handler and one projection, closed over the entry and the buffers (§9.7); `phase_bodies` returns them keyed by the model's roster.\""
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV10-001",
+   "file": "src/frame.jl",
+   "line": 2,
+   "kind": "docstring",
+   "claim": "frame tops and due instants are the mandatory instants on two lattices",
+   "evidence": "src/frame.jl:125"
+  },
+  {
+   "id": "CV10-002",
+   "file": "src/frame.jl",
+   "line": 5,
+   "kind": "docstring",
+   "claim": "a span takes the fewest equal steps h_max allows",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "CV10-003",
+   "file": "src/frame.jl",
+   "line": 7,
+   "kind": "docstring",
+   "claim": "a due instant inside the frame ends a span; every step end is a boundary",
+   "evidence": "src/frame.jl:160"
+  },
+  {
+   "id": "CV10-004",
+   "file": "src/frame.jl",
+   "line": 8,
+   "kind": "docstring",
+   "claim": "localized step runs integrate, arrival sweep, trigger, validation, bracket, root-find, t*, remainder",
+   "evidence": "src/frame.jl:204"
+  },
+  {
+   "id": "CV10-005",
+   "file": "src/frame.jl",
+   "line": 9,
+   "kind": "docstring",
+   "claim": "the chain iterates under the frame's localization_budget",
+   "evidence": "src/frame.jl:232"
+  },
+  {
+   "id": "CV10-006",
+   "file": "src/frame.jl",
+   "line": 10,
+   "kind": "docstring",
+   "claim": "crossing bracketed over dense output, fired at a t* strictly inside the step",
+   "evidence": "src/frame.jl:314"
+  },
+  {
+   "id": "CV10-007",
+   "file": "src/frame.jl",
+   "line": 14,
+   "kind": "cite",
+   "claim": "Frame vs boundary (§10.1, D-317) cites a section that treats it",
+   "evidence": "design/spec.md:6451 §10.1 frame and boundary bullets"
+  },
+  {
+   "id": "CV10-008",
+   "file": "src/frame.jl",
+   "line": 15,
+   "kind": "docstring",
+   "claim": "every step end and every t* goes to settled! as the frame top does",
+   "evidence": "src/frame.jl:168"
+  },
+  {
+   "id": "CV10-009",
+   "file": "src/frame.jl",
+   "line": 19,
+   "kind": "cite",
+   "claim": "Design line cites §10.3-§10.5, §13.4-§13.5 and D-261..D-456 on matching topics",
+   "evidence": "log.md D-261, D-268, D-317, D-444..D-456 read"
+  },
+  {
+   "id": "CV10-010",
+   "file": "src/frame.jl",
+   "line": 21,
+   "kind": "docstring",
+   "claim": "mandatory instants are whole Lattice units; next one and coincidences are integer comparisons",
+   "evidence": "src/frame.jl:125"
+  },
+  {
+   "id": "CV10-011",
+   "file": "src/frame.jl",
+   "line": 23,
+   "kind": "docstring",
+   "claim": "each boundary clock is written once from an index: top, due tick, interior step",
+   "evidence": "src/frame.jl:128"
+  },
+  {
+   "id": "CV10-012",
+   "file": "src/frame.jl",
+   "line": 26,
+   "kind": "docstring",
+   "claim": "every step integrates by the float distance between its two clocks, bare and localized alike",
+   "evidence": "src/frame.jl:140"
+  },
+  {
+   "id": "CV10-013",
+   "file": "src/frame.jl",
+   "line": 28,
+   "kind": "docstring",
+   "claim": "every exactly known clock is the float nearest its instant",
+   "evidence": "src/store.jl:202"
+  },
+  {
+   "id": "CV10-014",
+   "file": "src/frame.jl",
+   "line": 29,
+   "kind": "docstring",
+   "claim": "a model with no localized events, a non-nominal one included, takes the bare step",
+   "evidence": "src/frame.jl:154"
+  },
+  {
+   "id": "CV10-015",
+   "file": "src/frame.jl",
+   "line": 30,
+   "kind": "docstring",
+   "claim": "the whole frame is one try and the StepError is the one constructor's",
+   "evidence": "src/frame.jl:85"
+  },
+  {
+   "id": "CV10-016",
+   "file": "src/frame.jl",
+   "line": 31,
+   "kind": "docstring",
+   "claim": "the catch wraps every throw, an interrupt included",
+   "evidence": "src/frame.jl:92"
+  },
+  {
+   "id": "CV10-017",
+   "file": "src/frame.jl",
+   "line": 33,
+   "kind": "docstring",
+   "claim": "the index bound and the claim's gate precede the try",
+   "evidence": "src/frame.jl:80"
+  },
+  {
+   "id": "CV10-018",
+   "file": "src/frame.jl",
+   "line": 35,
+   "kind": "docstring",
+   "claim": "signature frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool",
+   "evidence": "src/frame.jl:69"
+  },
+  {
+   "id": "CV10-019",
+   "file": "src/frame.jl",
+   "line": 37,
+   "kind": "docstring",
+   "claim": "frame! advances the model through frame k and settles every boundary in it",
+   "evidence": "src/frame.jl:85"
+  },
+  {
+   "id": "CV10-020",
+   "file": "src/frame.jl",
+   "line": 40,
+   "kind": "docstring",
+   "claim": "frame! does not check that k follows the clock",
+   "evidence": "src/frame.jl:82"
+  },
+  {
+   "id": "CV10-021",
+   "file": "src/frame.jl",
+   "line": 41,
+   "kind": "docstring",
+   "claim": "frame_top!(hooks) runs first, before the model touches any state",
+   "evidence": "src/frame.jl:89"
+  },
+  {
+   "id": "CV10-022",
+   "file": "src/frame.jl",
+   "line": 42,
+   "kind": "docstring",
+   "claim": "integration runs from each mandatory instant to the next",
+   "evidence": "src/frame.jl:124"
+  },
+  {
+   "id": "CV10-023",
+   "file": "src/frame.jl",
+   "line": 44,
+   "kind": "docstring",
+   "claim": "an adaptive method takes proposed steps between h_min and h_max, each the distance divided equally",
+   "evidence": "src/model.jl:875"
+  },
+  {
+   "id": "CV10-024",
+   "file": "src/frame.jl",
+   "line": 47,
+   "kind": "docstring",
+   "claim": "at a due instant the due discrete components run stages and updates",
+   "evidence": "src/frame.jl:161"
+  },
+  {
+   "id": "CV10-025",
+   "file": "src/frame.jl",
+   "line": 48,
+   "kind": "docstring",
+   "claim": "a localized event adds a boundary at t*",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "CV10-026",
+   "file": "src/frame.jl",
+   "line": 49,
+   "kind": "docstring",
+   "claim": "under an adaptive method t* ends its step",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "CV10-027",
+   "file": "src/frame.jl",
+   "line": 50,
+   "kind": "docstring",
+   "claim": "every step end is a boundary and the last is the frame top",
+   "evidence": "src/frame.jl:169"
+  },
+  {
+   "id": "CV10-028",
+   "file": "src/frame.jl",
+   "line": 51,
+   "kind": "docstring",
+   "claim": "settled!(hooks) follows every boundary",
+   "evidence": "src/frame.jl:168"
+  },
+  {
+   "id": "CV10-029",
+   "file": "src/frame.jl",
+   "line": 53,
+   "kind": "docstring",
+   "claim": "a Dual model has no events",
+   "evidence": "src/build.jl:1637"
+  },
+  {
+   "id": "CV10-030",
+   "file": "src/frame.jl",
+   "line": 53,
+   "kind": "docstring",
+   "claim": "a Dual model freezes its discrete components",
+   "evidence": "src/model.jl:431"
+  },
+  {
+   "id": "CV10-031",
+   "file": "src/frame.jl",
+   "line": 54,
+   "kind": "docstring",
+   "claim": "a Dual model takes the same steps as Float64",
+   "evidence": "probe:69"
+  },
+  {
+   "id": "CV10-032",
+   "file": "src/frame.jl",
+   "line": 56,
+   "kind": "docstring",
+   "claim": "frame! returns whether settled! asked to abandon the frame",
+   "evidence": "src/frame.jl:169"
+  },
+  {
+   "id": "CV10-033",
+   "file": "src/frame.jl",
+   "line": 57,
+   "kind": "docstring",
+   "claim": "a true before the frame top leaves the rest unrun and the top unreached",
+   "evidence": "src/frame.jl:169"
+  },
+  {
+   "id": "CV10-034",
+   "file": "src/frame.jl",
+   "line": 58,
+   "kind": "docstring",
+   "claim": "the clock stays at the abandoning boundary",
+   "evidence": "src/frame.jl:159"
+  },
+  {
+   "id": "CV10-035",
+   "file": "src/frame.jl",
+   "line": 62,
+   "kind": "docstring",
+   "claim": "a claimed model is refused as ArgumentInvalid",
+   "evidence": "probe:24"
+  },
+  {
+   "id": "CV10-037",
+   "file": "src/frame.jl",
+   "line": 63,
+   "kind": "docstring",
+   "claim": "a k past the last frame is refused as ArgumentInvalid",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "CV10-038",
+   "file": "src/frame.jl",
+   "line": 64,
+   "kind": "docstring",
+   "claim": "last frame is the lesser of the lattices' Int range and the origin's clock resolution",
+   "evidence": "src/model.jl:590"
+  },
+  {
+   "id": "CV10-039",
+   "file": "src/frame.jl",
+   "line": 64,
+   "kind": "map",
+   "claim": "frame! entry: top hook, discontinuity notice on true, one try, _wrap_step catch",
+   "evidence": "src/frame.jl:89"
+  },
+  {
+   "id": "CV10-040",
+   "file": "src/frame.jl",
+   "line": 64,
+   "kind": "map",
+   "claim": "claim gate and k refusal precede the try; refusal leaves the model :consistent",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "CV10-041",
+   "file": "src/frame.jl",
+   "line": 64,
+   "kind": "map",
+   "claim": "_last_frame is the lesser of max_frame and the clock's resolution",
+   "evidence": "src/model.jl:590"
+  },
+  {
+   "id": "CV10-042",
+   "file": "src/frame.jl",
+   "line": 65,
+   "kind": "docstring",
+   "claim": "a throw inside the frame writes status :inconsistent",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "CV10-043",
+   "file": "src/frame.jl",
+   "line": 66,
+   "kind": "docstring",
+   "claim": "the throw arrives as StepError with host :loop",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "CV10-044",
+   "file": "src/frame.jl",
+   "line": 66,
+   "kind": "docstring",
+   "claim": "an InterruptException is wrapped too",
+   "evidence": "src/frame.jl:92"
+  },
+  {
+   "id": "CV10-045",
+   "file": "src/frame.jl",
+   "line": 67,
+   "kind": "docstring",
+   "claim": "the StepError boundary is k - 1",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "CV10-046",
+   "file": "src/frame.jl",
+   "line": 69,
+   "kind": "surface",
+   "claim": "frame! signature and Bool return are in Appendix B",
+   "evidence": "design/spec.md:15112"
+  },
+  {
+   "id": "CV10-047",
+   "file": "src/frame.jl",
+   "line": 71,
+   "kind": "docstring",
+   "claim": "run_frame!'s continued flag is only given by a simulation's advance; frame! passes false",
+   "evidence": "src/frame.jl:69"
+  },
+  {
+   "id": "CV10-048",
+   "file": "src/frame.jl",
+   "line": 75,
+   "kind": "docstring",
+   "claim": "a value written by the top hook raises the discontinuity notice",
+   "evidence": "src/frame.jl:90"
+  },
+  {
+   "id": "CV10-049",
+   "file": "src/frame.jl",
+   "line": 77,
+   "kind": "docstring",
+   "claim": "the table is the last boundary's when continued and the hook wrote nothing",
+   "evidence": "src/frame.jl:91"
+  },
+  {
+   "id": "CV10-050",
+   "file": "src/frame.jl",
+   "line": 79,
+   "kind": "map",
+   "claim": "run_frame! takes the caller's continued word; first step fresh iff continued and top hook wrote nothing",
+   "evidence": "src/frame.jl:91"
+  },
+  {
+   "id": "CV10-051",
+   "file": "src/frame.jl",
+   "line": 83,
+   "kind": "surface",
+   "claim": "ArgumentInvalid :range on k with the last frame as related is in Appendix C",
+   "evidence": "design/spec.md:15958"
+  },
+  {
+   "id": "CV10-052",
+   "file": "src/frame.jl",
+   "line": 83,
+   "kind": "surface",
+   "claim": "ArgumentInvalid :claimed from frame! is in Appendix B and C",
+   "evidence": "design/spec.md:15103,15966"
+  },
+  {
+   "id": "CV10-053",
+   "file": "src/frame.jl",
+   "line": 87,
+   "kind": "docstring",
+   "claim": "cursor reset to no component and :drain phase before the top hook",
+   "evidence": "src/frame.jl:87"
+  },
+  {
+   "id": "CV10-054",
+   "file": "src/frame.jl",
+   "line": 87,
+   "kind": "map",
+   "claim": "cursor phases drain, arrival, validation, trial are written here",
+   "evidence": "src/frame.jl:88"
+  },
+  {
+   "id": "CV10-055",
+   "file": "src/frame.jl",
+   "line": 95,
+   "kind": "surface",
+   "claim": "StepError host :loop, boundary index k-1 are in section 13.4",
+   "evidence": "design/spec.md:11552"
+  },
+  {
+   "id": "CV10-056",
+   "file": "src/frame.jl",
+   "line": 99,
+   "kind": "docstring",
+   "claim": "outer loop over mandatory instants, inner over a span's steps",
+   "evidence": "src/frame.jl:124"
+  },
+  {
+   "id": "CV10-057",
+   "file": "src/frame.jl",
+   "line": 99,
+   "kind": "map",
+   "claim": "_frame_steps! two nested loops, integer comparisons over Lattice units",
+   "evidence": "src/frame.jl:124"
+  },
+  {
+   "id": "CV10-058",
+   "file": "src/frame.jl",
+   "line": 101,
+   "kind": "docstring",
+   "claim": "origin is the frame top's position and position the span start, in units",
+   "evidence": "src/frame.jl:118"
+  },
+  {
+   "id": "CV10-059",
+   "file": "src/frame.jl",
+   "line": 102,
+   "kind": "docstring",
+   "claim": "the next due instant is recomputed only after one is reached",
+   "evidence": "src/frame.jl:173"
+  },
+  {
+   "id": "CV10-060",
+   "file": "src/frame.jl",
+   "line": 103,
+   "kind": "docstring",
+   "claim": "without a proposal a span takes N = cld over the bound's exact ratio",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "CV10-061",
+   "file": "src/frame.jl",
+   "line": 103,
+   "kind": "map",
+   "claim": "inner loop asks propose before each step, never for a model with no continuous state",
+   "evidence": "src/frame.jl:136"
+  },
+  {
+   "id": "CV10-062",
+   "file": "src/frame.jl",
+   "line": 103,
+   "kind": "map",
+   "claim": "under nothing a span takes cld(units*q, p) equal steps",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "CV10-063",
+   "file": "src/frame.jl",
+   "line": 105,
+   "kind": "docstring",
+   "claim": "an interior end is the float nearest span start plus i*l/N, never accumulated",
+   "evidence": "src/store.jl:202"
+  },
+  {
+   "id": "CV10-064",
+   "file": "src/frame.jl",
+   "line": 105,
+   "kind": "map",
+   "claim": "interior step end by store.jl's _instant, never accumulated",
+   "evidence": "src/store.jl:233"
+  },
+  {
+   "id": "CV10-065",
+   "file": "src/frame.jl",
+   "line": 107,
+   "kind": "docstring",
+   "claim": "a step integrates by the distance from its start clock to its end clock",
+   "evidence": "src/frame.jl:140"
+  },
+  {
+   "id": "CV10-066",
+   "file": "src/frame.jl",
+   "line": 108,
+   "kind": "docstring",
+   "claim": "a proposed length is shaped by _shaped and the span's distance divided equally",
+   "evidence": "src/model.jl:864"
+  },
+  {
+   "id": "CV10-067",
+   "file": "src/frame.jl",
+   "line": 108,
+   "kind": "map",
+   "claim": "under a proposal the length is shaped by _shaped and _step_end gives the end",
+   "evidence": "src/frame.jl:142"
+  },
+  {
+   "id": "CV10-068",
+   "file": "src/frame.jl",
+   "line": 110,
+   "kind": "docstring",
+   "claim": "an interior end under a proposal is the clock plus the accepted length",
+   "evidence": "src/model.jl:917"
+  },
+  {
+   "id": "CV10-069",
+   "file": "src/frame.jl",
+   "line": 111,
+   "kind": "docstring",
+   "claim": "the span ends at the step that reaches its end",
+   "evidence": "src/frame.jl:158"
+  },
+  {
+   "id": "CV10-070",
+   "file": "src/frame.jl",
+   "line": 112,
+   "kind": "docstring",
+   "claim": "under a proposal a t* ends its step and the next is shaped from it",
+   "evidence": "src/frame.jl:152"
+  },
+  {
+   "id": "CV10-071",
+   "file": "src/frame.jl",
+   "line": 113,
+   "kind": "docstring",
+   "claim": "returns settled!'s answer at the top and true where it abandoned earlier",
+   "evidence": "src/frame.jl:169"
+  },
+  {
+   "id": "CV10-072",
+   "file": "src/frame.jl",
+   "line": 119,
+   "kind": "map",
+   "claim": "next due instant by model.jl's _next_due, one mod per row, nothing cached",
+   "evidence": "src/model.jl:544"
+  },
+  {
+   "id": "CV10-073",
+   "file": "src/frame.jl",
+   "line": 120,
+   "kind": "docstring",
+   "claim": "loc_warned reset once per frame",
+   "evidence": "src/frame.jl:120"
+  },
+  {
+   "id": "CV10-074",
+   "file": "src/frame.jl",
+   "line": 121,
+   "kind": "docstring",
+   "claim": "floor_reported reset once per frame",
+   "evidence": "src/frame.jl:121"
+  },
+  {
+   "id": "CV10-075",
+   "file": "src/frame.jl",
+   "line": 121,
+   "kind": "map",
+   "claim": "_frame_steps! resets floor_reported at its top",
+   "evidence": "src/frame.jl:121"
+  },
+  {
+   "id": "CV10-076",
+   "file": "src/frame.jl",
+   "line": 121,
+   "kind": "surface",
+   "claim": "StepFloor at most one report per frame is in Appendix C",
+   "evidence": "design/spec.md:16018"
+  },
+  {
+   "id": "CV10-077",
+   "file": "src/frame.jl",
+   "line": 122,
+   "kind": "docstring",
+   "claim": "localization count is the frame's, across its steps",
+   "evidence": "src/frame.jl:148"
+  },
+  {
+   "id": "CV10-078",
+   "file": "src/frame.jl",
+   "line": 135,
+   "kind": "cite",
+   "claim": "D-156 comment: a model with no continuous state asks no proposal",
+   "evidence": "design/log.md:6126 D-156; src/model.jl:818"
+  },
+  {
+   "id": "CV10-079",
+   "file": "src/frame.jl",
+   "line": 136,
+   "kind": "docstring",
+   "claim": "empty state attempts no step and asks no proposal",
+   "evidence": "src/frame.jl:136"
+  },
+  {
+   "id": "CV10-080",
+   "file": "src/frame.jl",
+   "line": 152,
+   "kind": "cite",
+   "claim": "D-460 comment on a t* ending a step under a proposal",
+   "evidence": "design/log.md:19727 D-460"
+  },
+  {
+   "id": "CV10-081",
+   "file": "src/frame.jl",
+   "line": 160,
+   "kind": "map",
+   "claim": "the last step of a span runs run_boundary! with the tick index, other ends with the empty set",
+   "evidence": "src/frame.jl:160"
+  },
+  {
+   "id": "CV10-082",
+   "file": "src/frame.jl",
+   "line": 165,
+   "kind": "cite",
+   "claim": "§13.5, D-261, D-317 comment on settled! abandoning the frame",
+   "evidence": "design/log.md:11038 D-261 cursor clause; D-317"
+  },
+  {
+   "id": "CV10-083",
+   "file": "src/frame.jl",
+   "line": 168,
+   "kind": "map",
+   "claim": "settled! at every step end, every t* and the frame top; true abandons and is frame!'s return",
+   "evidence": "src/frame.jl:168"
+  },
+  {
+   "id": "CV10-084",
+   "file": "src/frame.jl",
+   "line": 178,
+   "kind": "docstring",
+   "claim": "each turn integrates one segment and returns or fires one t*",
+   "evidence": "src/frame.jl:202"
+  },
+  {
+   "id": "CV10-085",
+   "file": "src/frame.jl",
+   "line": 182,
+   "kind": "docstring",
+   "claim": "the whole step integrates by the bare path's length, a remainder by t* to t_to",
+   "evidence": "src/frame.jl:328"
+  },
+  {
+   "id": "CV10-086",
+   "file": "src/frame.jl",
+   "line": 184,
+   "kind": "docstring",
+   "claim": "a rejection may shorten the first segment no further than t_limit",
+   "evidence": "src/frame.jl:206"
+  },
+  {
+   "id": "CV10-087",
+   "file": "src/frame.jl",
+   "line": 186,
+   "kind": "docstring",
+   "claim": "a remainder targets the step's end",
+   "evidence": "src/frame.jl:209"
+  },
+  {
+   "id": "CV10-088",
+   "file": "src/frame.jl",
+   "line": 187,
+   "kind": "docstring",
+   "claim": "budget counts one per t* boundary across the frame's steps",
+   "evidence": "src/frame.jl:323"
+  },
+  {
+   "id": "CV10-089",
+   "file": "src/frame.jl",
+   "line": 189,
+   "kind": "docstring",
+   "claim": "root-finding runs are at most one per declared event per segment",
+   "evidence": "src/frame.jl:287"
+  },
+  {
+   "id": "CV10-090",
+   "file": "src/frame.jl",
+   "line": 190,
+   "kind": "docstring",
+   "claim": "under a proposing backend a t* ends the step, no remainder runs",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "CV10-091",
+   "file": "src/frame.jl",
+   "line": 192,
+   "kind": "docstring",
+   "claim": "returns abandoned flag, localization count, step end, settled-end flag",
+   "evidence": "src/frame.jl:322"
+  },
+  {
+   "id": "CV10-092",
+   "file": "src/frame.jl",
+   "line": 195,
+   "kind": "map",
+   "claim": "_localized_step! returns the step end, never past the span's end",
+   "evidence": "src/frame.jl:206"
+  },
+  {
+   "id": "CV10-093",
+   "file": "src/frame.jl",
+   "line": 195,
+   "kind": "map",
+   "claim": "_localized_step! keeps xn+1 in xnext and does the arrival sweep, validation, ITP, t*, remainder",
+   "evidence": "src/frame.jl:204"
+  },
+  {
+   "id": "CV10-094",
+   "file": "src/frame.jl",
+   "line": 210,
+   "kind": "docstring",
+   "claim": "arrival sweep is interior, on raw state, before discrete cells refresh",
+   "evidence": "src/frame.jl:213"
+  },
+  {
+   "id": "CV10-095",
+   "file": "src/frame.jl",
+   "line": 219,
+   "kind": "docstring",
+   "claim": "trigger is localized, prior not-holding, holding at arrival",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "CV10-096",
+   "file": "src/frame.jl",
+   "line": 226,
+   "kind": "map",
+   "claim": "budget counted across the frame's steps; ChatteringBudget reported into the diagnostic cell",
+   "evidence": "src/frame.jl:238"
+  },
+  {
+   "id": "CV10-097",
+   "file": "src/frame.jl",
+   "line": 228,
+   "kind": "docstring",
+   "claim": "budget exhaustion degrades and does not throw",
+   "evidence": "src/frame.jl:232"
+  },
+  {
+   "id": "CV10-098",
+   "file": "src/frame.jl",
+   "line": 232,
+   "kind": "surface",
+   "claim": "localization budget exhaustion degrades without a throw is in section 10.4",
+   "evidence": "design/spec.md:7179"
+  },
+  {
+   "id": "CV10-099",
+   "file": "src/frame.jl",
+   "line": 235,
+   "kind": "docstring",
+   "claim": "at most one ChatteringBudget report per event per frame",
+   "evidence": "src/frame.jl:234"
+  },
+  {
+   "id": "CV10-100",
+   "file": "src/frame.jl",
+   "line": 237,
+   "kind": "docstring",
+   "claim": "the report goes to the frame's own diagnostic cell",
+   "evidence": "src/frame.jl:238"
+  },
+  {
+   "id": "CV10-101",
+   "file": "src/frame.jl",
+   "line": 238,
+   "kind": "map",
+   "claim": "the report folds at the next frame top",
+   "evidence": "src/sim.jl:1965"
+  },
+  {
+   "id": "CV10-102",
+   "file": "src/frame.jl",
+   "line": 238,
+   "kind": "surface",
+   "claim": "ChatteringBudget fields (path, event, t, budget, count) are in Appendix C",
+   "evidence": "design/spec.md:16012"
+  },
+  {
+   "id": "CV10-103",
+   "file": "src/frame.jl",
+   "line": 246,
+   "kind": "docstring",
+   "claim": "xn+1 stays in the trial buffer the trials never write",
+   "evidence": "src/frame.jl:340"
+  },
+  {
+   "id": "CV10-104",
+   "file": "src/frame.jl",
+   "line": 249,
+   "kind": "docstring",
+   "claim": "theta = 0 validation writes x(t_seg) back, one interior sweep, no interpolant",
+   "evidence": "src/frame.jl:257"
+  },
+  {
+   "id": "CV10-105",
+   "file": "src/frame.jl",
+   "line": 252,
+   "kind": "docstring",
+   "claim": "sigma0 holding discards the trigger and consumes no budget",
+   "evidence": "src/frame.jl:268"
+  },
+  {
+   "id": "CV10-106",
+   "file": "src/frame.jl",
+   "line": 274,
+   "kind": "docstring",
+   "claim": "the derivative at the arrival is paid only past a validated trigger",
+   "evidence": "src/frame.jl:279"
+  },
+  {
+   "id": "CV10-107",
+   "file": "src/frame.jl",
+   "line": 282,
+   "kind": "docstring",
+   "claim": "the boundary fires at the earliest t*",
+   "evidence": "src/frame.jl:289"
+  },
+  {
+   "id": "CV10-108",
+   "file": "src/frame.jl",
+   "line": 291,
+   "kind": "docstring",
+   "claim": "t* is at least nextfloat(t_seg)",
+   "evidence": "src/frame.jl:293"
+  },
+  {
+   "id": "CV10-109",
+   "file": "src/frame.jl",
+   "line": 295,
+   "kind": "docstring",
+   "claim": "a crossing at the step's end is discarded and fires in the ordinary iteration",
+   "evidence": "src/frame.jl:294"
+  },
+  {
+   "id": "CV10-110",
+   "file": "src/frame.jl",
+   "line": 305,
+   "kind": "docstring",
+   "claim": "at t* the interpolated state goes in and the empty due set runs the boundary",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "CV10-111",
+   "file": "src/frame.jl",
+   "line": 318,
+   "kind": "docstring",
+   "claim": "a true from settled! at t* ends the frame with the remainder abandoned",
+   "evidence": "src/frame.jl:322"
+  },
+  {
+   "id": "CV10-112",
+   "file": "src/frame.jl",
+   "line": 333,
+   "kind": "docstring",
+   "claim": "_trial! writes x(theta), sets the mid-step clock, runs the interior sweep, evaluates guards",
+   "evidence": "src/frame.jl:340"
+  },
+  {
+   "id": "CV10-113",
+   "file": "src/frame.jl",
+   "line": 334,
+   "kind": "docstring",
+   "claim": "discrete cells ZOH-hold through a trial and the state is raw",
+   "evidence": "src/executor.jl:572"
+  },
+  {
+   "id": "CV10-115",
+   "file": "src/frame.jl",
+   "line": 348,
+   "kind": "docstring",
+   "claim": "_crossing is ITP on the unit bracket with observed signs",
+   "evidence": "src/frame.jl:374"
+  },
+  {
+   "id": "CV10-116",
+   "file": "src/frame.jl",
+   "line": 351,
+   "kind": "docstring",
+   "claim": "stops when the bracket is narrower than localization_tol times the frame period in time",
+   "evidence": "src/frame.jl:365"
+  },
+  {
+   "id": "CV10-117",
+   "file": "src/frame.jl",
+   "line": 353,
+   "kind": "docstring",
+   "claim": "a shorter segment stops sooner",
+   "evidence": "src/frame.jl:365"
+  },
+  {
+   "id": "CV10-118",
+   "file": "src/frame.jl",
+   "line": 354,
+   "kind": "docstring",
+   "claim": "returns the holding endpoint of the final bracket",
+   "evidence": "src/frame.jl:392"
+  },
+  {
+   "id": "CV10-119",
+   "file": "src/frame.jl",
+   "line": 356,
+   "kind": "docstring",
+   "claim": "a return of 1.0 or one rounding onto the step's end is discarded by the caller",
+   "evidence": "src/frame.jl:294"
+  },
+  {
+   "id": "CV10-120",
+   "file": "src/frame.jl",
+   "line": 365,
+   "kind": "surface",
+   "claim": "localization_tol scaled by the frame period and ITP or bisection stop are in section 10.4",
+   "evidence": "design/spec.md:7034"
+  },
+  {
+   "id": "CV10-121",
+   "file": "src/frame.jl",
+   "line": 368,
+   "kind": "docstring",
+   "claim": "ITP constants kappa1 = 0.2, kappa2 = 2, n0 = 1",
+   "evidence": "src/frame.jl:372"
+  },
+  {
+   "id": "CV10-122",
+   "file": "src/frame.jl",
+   "line": 386,
+   "kind": "docstring",
+   "claim": "trial ordinal runs from 1",
+   "evidence": "src/frame.jl:386"
+  },
+  {
+   "id": "CV10-123",
+   "file": "src/stepper.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "header cites §10.2, D-452, D-017, §10.4, D-449, D-442",
+   "evidence": "design/log.md:794 D-017; spec.md:6499 §10.2"
+  },
+  {
+   "id": "CV10-124",
+   "file": "src/stepper.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "stepper entry lists propose, attempt!, discontinuity!, startpoint, dense!, steppers, bind_stepper at compile",
+   "evidence": "src/build.jl:1636"
+  },
+  {
+   "id": "CV10-125",
+   "file": "src/stepper.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "checkpoint pair and reset_stepper! (at init!) exist and have no default",
+   "evidence": "src/stepper.jl:114"
+  },
+  {
+   "id": "CV10-126",
+   "file": "src/stepper.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "BS3Stepper clears memory at a notice, pays four stages, bounds the first rejection",
+   "evidence": "src/stepper.jl:287"
+  },
+  {
+   "id": "CV10-127",
+   "file": "src/stepper.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "RK4 and Heun propose nothing, accept every attempt and write xnext",
+   "evidence": "src/stepper.jl:166"
+  },
+  {
+   "id": "CV10-128",
+   "file": "src/stepper.jl",
+   "line": 6,
+   "kind": "docstring",
+   "claim": "seam calls propose, attempt!, discontinuity!, startpoint, dense!, checkpoint pair, reset_stepper!",
+   "evidence": "src/stepper.jl:58"
+  },
+  {
+   "id": "CV10-129",
+   "file": "src/stepper.jl",
+   "line": 7,
+   "kind": "docstring",
+   "claim": "propose returns nothing for a method that proposes none; spans take equal steps",
+   "evidence": "src/stepper.jl:143"
+  },
+  {
+   "id": "CV10-130",
+   "file": "src/stepper.jl",
+   "line": 9,
+   "kind": "docstring",
+   "claim": "attempt! returns whether the backend accepts",
+   "evidence": "src/stepper.jl:166"
+  },
+  {
+   "id": "CV10-131",
+   "file": "src/stepper.jl",
+   "line": 11,
+   "kind": "docstring",
+   "claim": "a backend may ignore discontinuity!",
+   "evidence": "src/stepper.jl:86"
+  },
+  {
+   "id": "CV10-132",
+   "file": "src/stepper.jl",
+   "line": 12,
+   "kind": "docstring",
+   "claim": "dense output built lazily, only localization asks",
+   "evidence": "src/frame.jl:314"
+  },
+  {
+   "id": "CV10-133",
+   "file": "src/stepper.jl",
+   "line": 14,
+   "kind": "docstring",
+   "claim": "checkpoint pair read into the model's state and written back",
+   "evidence": "src/checkpoint.jl:129"
+  },
+  {
+   "id": "CV10-134",
+   "file": "src/stepper.jl",
+   "line": 16,
+   "kind": "docstring",
+   "claim": "reset_stepper! is asked by init!",
+   "evidence": "src/model.jl:334"
+  },
+  {
+   "id": "CV10-136",
+   "file": "src/stepper.jl",
+   "line": 20,
+   "kind": "docstring",
+   "claim": "integrate_step! shapes the proposal, counts attempts, discards a rejected one, accepts at the floor",
+   "evidence": "src/model.jl:827"
+  },
+  {
+   "id": "CV10-137",
+   "file": "src/stepper.jl",
+   "line": 21,
+   "kind": "cite",
+   "claim": "D-460, D-461, D-274, §12.6, §14.10 cites on seam, checkpoint and BS3",
+   "evidence": "design/log.md:12334 D-274; spec.md:10395 §12.6"
+  },
+  {
+   "id": "CV10-138",
+   "file": "src/stepper.jl",
+   "line": 23,
+   "kind": "docstring",
+   "claim": "the seam is never entered with an empty state",
+   "evidence": "src/model.jl:818"
+  },
+  {
+   "id": "CV10-139",
+   "file": "src/stepper.jl",
+   "line": 26,
+   "kind": "docstring",
+   "claim": "RK4 and Heun are fixed-step and always accept",
+   "evidence": "src/stepper.jl:166"
+  },
+  {
+   "id": "CV10-140",
+   "file": "src/stepper.jl",
+   "line": 26,
+   "kind": "docstring",
+   "claim": "BS3 adapts under error control",
+   "evidence": "src/stepper.jl:320"
+  },
+  {
+   "id": "CV10-141",
+   "file": "src/stepper.jl",
+   "line": 27,
+   "kind": "docstring",
+   "claim": "all three backends are zero-allocation",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "CV10-142",
+   "file": "src/stepper.jl",
+   "line": 27,
+   "kind": "docstring",
+   "claim": "all three backends are generic in the scalar",
+   "evidence": "probe:69"
+  },
+  {
+   "id": "CV10-143",
+   "file": "src/stepper.jl",
+   "line": 28,
+   "kind": "docstring",
+   "claim": "the backend is the algorithm binding, RK4() by default",
+   "evidence": "src/deployment.jl:467"
+  },
+  {
+   "id": "CV10-144",
+   "file": "src/stepper.jl",
+   "line": 29,
+   "kind": "docstring",
+   "claim": "nothing outside the file knows which backend ran; the loop dispatches on the stepper",
+   "evidence": "src/model.jl:847"
+  },
+  {
+   "id": "CV10-145",
+   "file": "src/stepper.jl",
+   "line": 31,
+   "kind": "docstring",
+   "claim": "each backend is a token (deployment.jl) and a stepper bound at Model construction",
+   "evidence": "src/build.jl:1636"
+  },
+  {
+   "id": "CV10-147",
+   "file": "src/stepper.jl",
+   "line": 35,
+   "kind": "surface",
+   "claim": "stepper names are internal; the spec describes the seam calls in section 10.2",
+   "evidence": "design/spec.md:6543"
+  },
+  {
+   "id": "CV10-148",
+   "file": "src/stepper.jl",
+   "line": 37,
+   "kind": "docstring",
+   "claim": "bind_stepper(algorithm, T, n_x) -> AbstractStepper signature",
+   "evidence": "src/stepper.jl:140"
+  },
+  {
+   "id": "CV10-149",
+   "file": "src/stepper.jl",
+   "line": 40,
+   "kind": "docstring",
+   "claim": "bind_stepper allocates scratch over n_x scalars of type T",
+   "evidence": "src/stepper.jl:141"
+  },
+  {
+   "id": "CV10-150",
+   "file": "src/stepper.jl",
+   "line": 42,
+   "kind": "docstring",
+   "claim": "neither the token nor the stepper holds a fixed step's length",
+   "evidence": "src/stepper.jl:133"
+  },
+  {
+   "id": "CV10-151",
+   "file": "src/stepper.jl",
+   "line": 48,
+   "kind": "docstring",
+   "claim": "propose signature and Union{Float64, Nothing} return",
+   "evidence": "src/stepper.jl:280"
+  },
+  {
+   "id": "CV10-152",
+   "file": "src/stepper.jl",
+   "line": 50,
+   "kind": "docstring",
+   "claim": "proposal is in seconds",
+   "evidence": "src/stepper.jl:329"
+  },
+  {
+   "id": "CV10-153",
+   "file": "src/stepper.jl",
+   "line": 51,
+   "kind": "docstring",
+   "claim": "the Model asks before every step and after every rejected attempt",
+   "evidence": "src/frame.jl:136"
+  },
+  {
+   "id": "CV10-154",
+   "file": "src/stepper.jl",
+   "line": 53,
+   "kind": "docstring",
+   "claim": "under nothing a span takes equal steps no longer than h_max",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "CV10-155",
+   "file": "src/stepper.jl",
+   "line": 54,
+   "kind": "docstring",
+   "claim": "otherwise the proposal is clamped into [h_min, h_max] and the distance divided equally",
+   "evidence": "src/model.jl:875"
+  },
+  {
+   "id": "CV10-156",
+   "file": "src/stepper.jl",
+   "line": 55,
+   "kind": "docstring",
+   "claim": "propose has no default",
+   "evidence": "src/stepper.jl:58"
+  },
+  {
+   "id": "CV10-157",
+   "file": "src/stepper.jl",
+   "line": 61,
+   "kind": "docstring",
+   "claim": "attempt!(stepper, model, h) -> Bool signature",
+   "evidence": "src/stepper.jl:148"
+  },
+  {
+   "id": "CV10-158",
+   "file": "src/stepper.jl",
+   "line": 64,
+   "kind": "docstring",
+   "claim": "backend reads state from the state buffer and writes the step end to model.exec.xnext",
+   "evidence": "src/stepper.jl:163"
+  },
+  {
+   "id": "CV10-159",
+   "file": "src/stepper.jl",
+   "line": 66,
+   "kind": "docstring",
+   "claim": "stages may write the state buffer and the clock as scratch",
+   "evidence": "src/stepper.jl:156"
+  },
+  {
+   "id": "CV10-160",
+   "file": "src/stepper.jl",
+   "line": 68,
+   "kind": "docstring",
+   "claim": "on acceptance the Model commits the trial and the clock",
+   "evidence": "src/model.jl:835"
+  },
+  {
+   "id": "CV10-161",
+   "file": "src/stepper.jl",
+   "line": 69,
+   "kind": "docstring",
+   "claim": "on rejection the Model restores state from startpoint and the clock, then asks propose",
+   "evidence": "src/model.jl:840"
+  },
+  {
+   "id": "CV10-162",
+   "file": "src/stepper.jl",
+   "line": 71,
+   "kind": "docstring",
+   "claim": "an attempt at the floor is accepted whatever the verdict",
+   "evidence": "src/model.jl:832"
+  },
+  {
+   "id": "CV10-163",
+   "file": "src/stepper.jl",
+   "line": 72,
+   "kind": "docstring",
+   "claim": "a method that proposes nothing always accepts",
+   "evidence": "src/stepper.jl:202"
+  },
+  {
+   "id": "CV10-164",
+   "file": "src/stepper.jl",
+   "line": 77,
+   "kind": "docstring",
+   "claim": "discontinuity!(stepper) -> Nothing signature",
+   "evidence": "src/stepper.jl:86"
+  },
+  {
+   "id": "CV10-165",
+   "file": "src/stepper.jl",
+   "line": 79,
+   "kind": "docstring",
+   "claim": "notice at a handler boundary, a tick, a drain write, and overlay! settling",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "CV10-166",
+   "file": "src/stepper.jl",
+   "line": 81,
+   "kind": "docstring",
+   "claim": "a notice arrives when its boundary settles, before a checkpoint",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "CV10-167",
+   "file": "src/stepper.jl",
+   "line": 82,
+   "kind": "docstring",
+   "claim": "two notices before a step mean one",
+   "evidence": "src/stepper.jl:287"
+  },
+  {
+   "id": "CV10-168",
+   "file": "src/stepper.jl",
+   "line": 84,
+   "kind": "docstring",
+   "claim": "the default does nothing",
+   "evidence": "src/stepper.jl:86"
+  },
+  {
+   "id": "CV10-169",
+   "file": "src/stepper.jl",
+   "line": 91,
+   "kind": "docstring",
+   "claim": "startpoint returns the state and derivative at the start of the last attempt",
+   "evidence": "src/stepper.jl:169"
+  },
+  {
+   "id": "CV10-170",
+   "file": "src/stepper.jl",
+   "line": 93,
+   "kind": "docstring",
+   "claim": "the θ = 0 validation reads the state half",
+   "evidence": "src/frame.jl:200"
+  },
+  {
+   "id": "CV10-171",
+   "file": "src/stepper.jl",
+   "line": 95,
+   "kind": "docstring",
+   "claim": "the Model puts the state half back when it discards a rejected attempt",
+   "evidence": "src/model.jl:840"
+  },
+  {
+   "id": "CV10-172",
+   "file": "src/stepper.jl",
+   "line": 104,
+   "kind": "docstring",
+   "claim": "checkpoint pair carries proposal and controller memory",
+   "evidence": "src/stepper.jl:281"
+  },
+  {
+   "id": "CV10-173",
+   "file": "src/stepper.jl",
+   "line": 106,
+   "kind": "docstring",
+   "claim": "the checkpoint value is immutable",
+   "evidence": "src/stepper.jl:281"
+  },
+  {
+   "id": "CV10-174",
+   "file": "src/stepper.jl",
+   "line": 107,
+   "kind": "docstring",
+   "claim": "a restore raises no notice",
+   "evidence": "src/stepper.jl:282"
+  },
+  {
+   "id": "CV10-175",
+   "file": "src/stepper.jl",
+   "line": 109,
+   "kind": "docstring",
+   "claim": "the checkpoint pair has no default",
+   "evidence": "src/stepper.jl:114"
+  },
+  {
+   "id": "CV10-176",
+   "file": "src/stepper.jl",
+   "line": 111,
+   "kind": "docstring",
+   "claim": "both fixed-step backends carry nothing",
+   "evidence": "src/stepper.jl:144"
+  },
+  {
+   "id": "CV10-177",
+   "file": "src/stepper.jl",
+   "line": 118,
+   "kind": "docstring",
+   "claim": "reset_stepper!(stepper) -> Nothing signature",
+   "evidence": "src/stepper.jl:284"
+  },
+  {
+   "id": "CV10-178",
+   "file": "src/stepper.jl",
+   "line": 121,
+   "kind": "docstring",
+   "claim": "init! calls reset_stepper! before boundary zero",
+   "evidence": "src/model.jl:334"
+  },
+  {
+   "id": "CV10-179",
+   "file": "src/stepper.jl",
+   "line": 123,
+   "kind": "docstring",
+   "claim": "reset_stepper! has no default; fixed-step ones do nothing",
+   "evidence": "src/stepper.jl:146"
+  },
+  {
+   "id": "CV10-180",
+   "file": "src/stepper.jl",
+   "line": 129,
+   "kind": "cite",
+   "claim": "Design: §10.2, D-442, D-452 on the RK4 stepper",
+   "evidence": "design/log.md:18528 D-442"
+  },
+  {
+   "id": "CV10-181",
+   "file": "src/stepper.jl",
+   "line": 133,
+   "kind": "docstring",
+   "claim": "RK4Stepper owns x0 and four stage derivatives",
+   "evidence": "src/stepper.jl:134"
+  },
+  {
+   "id": "CV10-182",
+   "file": "src/stepper.jl",
+   "line": 175,
+   "kind": "docstring",
+   "claim": "HeunStepper owns x0 and two stage derivatives",
+   "evidence": "src/stepper.jl:176"
+  },
+  {
+   "id": "CV10-183",
+   "file": "src/stepper.jl",
+   "line": 213,
+   "kind": "cite",
+   "claim": "Design: §10.2, §14.10, D-461 on BS3",
+   "evidence": "design/spec.md:14540 §14.10 values alone; log.md:19839 D-461"
+  },
+  {
+   "id": "CV10-184",
+   "file": "src/stepper.jl",
+   "line": 214,
+   "kind": "docstring",
+   "claim": "BS3 pair: third-order solution advances, embedded second-order gives the estimate",
+   "evidence": "src/stepper.jl:304"
+  },
+  {
+   "id": "CV10-185",
+   "file": "src/stepper.jl",
+   "line": 216,
+   "kind": "docstring",
+   "claim": "the fourth stage is the derivative at the step's end, paid at every attempt",
+   "evidence": "src/stepper.jl:307"
+  },
+  {
+   "id": "CV10-186",
+   "file": "src/stepper.jl",
+   "line": 218,
+   "kind": "docstring",
+   "claim": "the next step's first stage is evaluated again",
+   "evidence": "src/model.jl:633"
+  },
+  {
+   "id": "CV10-187",
+   "file": "src/stepper.jl",
+   "line": 221,
+   "kind": "docstring",
+   "claim": "controller constants are fixed constants, not keywords",
+   "evidence": "src/stepper.jl:248"
+  },
+  {
+   "id": "CV10-188",
+   "file": "src/stepper.jl",
+   "line": 223,
+   "kind": "docstring",
+   "claim": "accepted step proposes h*SAFETY*err^-PI_ERROR*last^PI_MEMORY",
+   "evidence": "src/stepper.jl:327"
+  },
+  {
+   "id": "CV10-189",
+   "file": "src/stepper.jl",
+   "line": 225,
+   "kind": "docstring",
+   "claim": "with no history the proposal is h*SAFETY*err^(-1/3)",
+   "evidence": "src/stepper.jl:327"
+  },
+  {
+   "id": "CV10-190",
+   "file": "src/stepper.jl",
+   "line": 226,
+   "kind": "docstring",
+   "claim": "the factor lies in [SHRINK, GROWTH]",
+   "evidence": "src/stepper.jl:329"
+  },
+  {
+   "id": "CV10-191",
+   "file": "src/stepper.jl",
+   "line": 226,
+   "kind": "docstring",
+   "claim": "a rejected step proposes h*max(STRONGEST, SAFETY*err^(-1/3))",
+   "evidence": "src/stepper.jl:321"
+  },
+  {
+   "id": "CV10-192",
+   "file": "src/stepper.jl",
+   "line": 227,
+   "kind": "docstring",
+   "claim": "a nonfinite estimate or trial is a rejection at STRONGEST",
+   "evidence": "src/stepper.jl:318"
+  },
+  {
+   "id": "CV10-193",
+   "file": "src/stepper.jl",
+   "line": 229,
+   "kind": "docstring",
+   "claim": "error is the max over the state of |err|/(abstol + reltol*max(|xn|,|xn+1|))",
+   "evidence": "src/stepper.jl:316"
+  },
+  {
+   "id": "CV10-194",
+   "file": "src/stepper.jl",
+   "line": 230,
+   "kind": "docstring",
+   "claim": "the error reads values alone so a Dual takes the Float64 steps",
+   "evidence": "probe:69"
+  },
+  {
+   "id": "CV10-195",
+   "file": "src/stepper.jl",
+   "line": 232,
+   "kind": "docstring",
+   "claim": "the first attempt after reset runs under the infinite proposal",
+   "evidence": "src/stepper.jl:278"
+  },
+  {
+   "id": "CV10-196",
+   "file": "src/stepper.jl",
+   "line": 233,
+   "kind": "docstring",
+   "claim": "a rejection of the first attempt is bounded by _starting_bound",
+   "evidence": "src/stepper.jl:324"
+  },
+  {
+   "id": "CV10-197",
+   "file": "src/stepper.jl",
+   "line": 235,
+   "kind": "docstring",
+   "claim": "the proposal is finite after any attempt; the checkpoint carries the infinite one with no extra field",
+   "evidence": "src/stepper.jl:281"
+  },
+  {
+   "id": "CV10-198",
+   "file": "src/stepper.jl",
+   "line": 240,
+   "kind": "docstring",
+   "claim": "constants SAFETY 9/10, SHRINK 1/5, GROWTH 10, MEMORY_FLOOR 1e-4, PI gains 0.7/3 and 0.4/3",
+   "evidence": "src/stepper.jl:248"
+  },
+  {
+   "id": "CV10-199",
+   "file": "src/stepper.jl",
+   "line": 243,
+   "kind": "docstring",
+   "claim": "after a rejection the factor is the elementary one; scaled error 8 gives 0.45",
+   "evidence": "src/stepper.jl:321"
+  },
+  {
+   "id": "CV10-200",
+   "file": "src/stepper.jl",
+   "line": 245,
+   "kind": "docstring",
+   "claim": "STRONGEST equals SHRINK",
+   "evidence": "src/stepper.jl:250"
+  },
+  {
+   "id": "CV10-201",
+   "file": "src/stepper.jl",
+   "line": 246,
+   "kind": "docstring",
+   "claim": "this backend starts under the elementary controller",
+   "evidence": "src/stepper.jl:327"
+  },
+  {
+   "id": "CV10-202",
+   "file": "src/stepper.jl",
+   "line": 248,
+   "kind": "surface",
+   "claim": "BS3 tolerances reltol and abstol and BS3's fixed constants are in section 10.2",
+   "evidence": "design/spec.md:6684"
+  },
+  {
+   "id": "CV10-203",
+   "file": "src/stepper.jl",
+   "line": 263,
+   "kind": "docstring",
+   "claim": "BS3Stepper owns five scratch vectors, proposal and memory, bound with proposal Inf",
+   "evidence": "src/stepper.jl:278"
+  },
+  {
+   "id": "CV10-204",
+   "file": "src/stepper.jl",
+   "line": 285,
+   "kind": "docstring",
+   "claim": "a discontinuity clears the history and keeps the proposal",
+   "evidence": "src/stepper.jl:287"
+  },
+  {
+   "id": "CV10-205",
+   "file": "src/stepper.jl",
+   "line": 334,
+   "kind": "docstring",
+   "claim": "_starting_bound is START_FRACTION*reltol^(1/3) of the scale max(|x|, abstol/reltol)",
+   "evidence": "src/stepper.jl:345"
+  },
+  {
+   "id": "CV10-206",
+   "file": "src/stepper.jl",
+   "line": 336,
+   "kind": "docstring",
+   "claim": "a vanishing or NaN derivative gives no bound",
+   "evidence": "src/stepper.jl:346"
+  },
+  {
+   "id": "CV10-207",
+   "file": "src/stepper.jl",
+   "line": 349,
+   "kind": "docstring",
+   "claim": "dense!(stepper, x, x1, xdot1, theta, h') writes x(theta), theta in [0,1]",
+   "evidence": "src/stepper.jl:361"
+  },
+  {
+   "id": "CV10-208",
+   "file": "src/stepper.jl",
+   "line": 354,
+   "kind": "docstring",
+   "claim": "generic dense! is the cubic Hermite over the retained and arrival pairs",
+   "evidence": "src/stepper.jl:364"
+  },
+  {
+   "id": "CV10-209",
+   "file": "src/stepper.jl",
+   "line": 359,
+   "kind": "docstring",
+   "claim": "RK4, Heun and BS3 inherit the generic dense!",
+   "evidence": "src/stepper.jl:361"
+  },
+  {
+   "id": "CV10-210",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "header §9.7 on the compiled executor",
+   "evidence": "design/spec.md:6059 §9.7"
+  },
+  {
+   "id": "CV10-211",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "executor entries carry the component's path; event entry adds its event name",
+   "evidence": "src/executor.jl:67"
+  },
+  {
+   "id": "CV10-212",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "SideAddrs is a group or one CellAddr gathered through gather_input",
+   "evidence": "src/executor.jl:53"
+  },
+  {
+   "id": "CV10-213",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "Chunk and chunked_body; _unrolled and _unrolled_tuple serve readers, bindings, conditions",
+   "evidence": "src/readers.jl:637"
+  },
+  {
+   "id": "CV10-214",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "PhaseBody, Gated and ESTABLISH as described",
+   "evidence": "src/executor.jl:486"
+  },
+  {
+   "id": "CV10-215",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "_merge_modes! is one generated method, bare replaced whole, named merged",
+   "evidence": "src/executor.jl:428"
+  },
+  {
+   "id": "CV10-216",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "bundles from _bundle_expr; update and handler gather through the barrier",
+   "evidence": "src/executor.jl:128"
+  },
+  {
+   "id": "CV10-217",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "event set is mutable and its chunks are EventChunks",
+   "evidence": "src/executor.jl:302"
+  },
+  {
+   "id": "CV10-218",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "_guards!, _fire! and _projects! are one non-inlined call per EventChunk",
+   "evidence": "src/executor.jl:363"
+  },
+  {
+   "id": "CV10-219",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "the cursor's attempt is cleared by _phase! and written by the attempt loop",
+   "evidence": "src/executor.jl:32"
+  },
+  {
+   "id": "CV10-220",
+   "file": "src/executor.jl",
+   "line": 6,
+   "kind": "cite",
+   "claim": "§13.4, D-059 on the cursor",
+   "evidence": "design/spec.md:11480 §13.4; log.md:1986 D-059"
+  },
+  {
+   "id": "CV10-222",
+   "file": "src/executor.jl",
+   "line": 12,
+   "kind": "docstring",
+   "claim": "the cursor allocates nothing and installs no exception frames",
+   "evidence": "src/executor.jl:17"
+  },
+  {
+   "id": "CV10-223",
+   "file": "src/executor.jl",
+   "line": 13,
+   "kind": "docstring",
+   "claim": "the cursor holds dispatch fields alone; abandonment is frame!'s return",
+   "evidence": "src/executor.jl:17"
+  },
+  {
+   "id": "CV10-224",
+   "file": "src/executor.jl",
+   "line": 19,
+   "kind": "docstring",
+   "claim": "cursor fn takes the seven function names or :none",
+   "evidence": "src/executor.jl:19"
+  },
+  {
+   "id": "CV10-225",
+   "file": "src/executor.jl",
+   "line": 21,
+   "kind": "docstring",
+   "claim": "cursor phase takes the eight phases the code writes",
+   "evidence": "src/model.jl:663"
+  },
+  {
+   "id": "CV10-226",
+   "file": "src/executor.jl",
+   "line": 22,
+   "kind": "docstring",
+   "claim": "index is the RK stage, event round or trial ordinal",
+   "evidence": "src/frame.jl:386"
+  },
+  {
+   "id": "CV10-227",
+   "file": "src/executor.jl",
+   "line": 23,
+   "kind": "docstring",
+   "claim": "attempt is the step's attempt ordinal, from 1 inside :integrate",
+   "evidence": "src/model.jl:827"
+  },
+  {
+   "id": "CV10-228",
+   "file": "src/executor.jl",
+   "line": 28,
+   "kind": "docstring",
+   "claim": "_phase! clears the attempt, which only the attempt loop writes",
+   "evidence": "src/executor.jl:35"
+  },
+  {
+   "id": "CV10-229",
+   "file": "src/executor.jl",
+   "line": 40,
+   "kind": "docstring",
+   "claim": "three entry kinds: stage writes cells, RHS writes xdot, update writes its own store",
+   "evidence": "src/executor.jl:167"
+  },
+  {
+   "id": "CV10-230",
+   "file": "src/executor.jl",
+   "line": 42,
+   "kind": "cite",
+   "claim": "D-220 on one shared pair of names over both tiers",
+   "evidence": "design/log.md:8908 D-220"
+  },
+  {
+   "id": "CV10-231",
+   "file": "src/executor.jl",
+   "line": 47,
+   "kind": "docstring",
+   "claim": "the state store is a Ref whose type is shared by all instances of a component type",
+   "evidence": "src/executor.jl:55"
+  },
+  {
+   "id": "CV10-232",
+   "file": "src/executor.jl",
+   "line": 53,
+   "kind": "cite",
+   "claim": "D-437 on a bare side's one CellAddr",
+   "evidence": "design/log.md:18128 D-437"
+  },
+  {
+   "id": "CV10-233",
+   "file": "src/executor.jl",
+   "line": 117,
+   "kind": "docstring",
+   "claim": "absent bundle names are absent, never nothing-filled",
+   "evidence": "src/executor.jl:142"
+  },
+  {
+   "id": "CV10-234",
+   "file": "src/executor.jl",
+   "line": 121,
+   "kind": "cite",
+   "claim": "D-195 on the letters x and s naming the two state homes",
+   "evidence": "design/log.md:7811 D-195"
+  },
+  {
+   "id": "CV10-235",
+   "file": "src/executor.jl",
+   "line": 123,
+   "kind": "docstring",
+   "claim": "gather_input inline for stage, RHS and guard bundles; barrier for update and handler",
+   "evidence": "src/executor.jl:149"
+  },
+  {
+   "id": "CV10-236",
+   "file": "src/executor.jl",
+   "line": 140,
+   "kind": "surface",
+   "claim": "InternalInvariant for an unknown bundle field is unreachable internals",
+   "evidence": "src/executor.jl:140"
+  },
+  {
+   "id": "CV10-237",
+   "file": "src/executor.jl",
+   "line": 167,
+   "kind": "docstring",
+   "claim": "update entry reads the fresh table and writes only its own store",
+   "evidence": "src/executor.jl:186"
+  },
+  {
+   "id": "CV10-238",
+   "file": "src/executor.jl",
+   "line": 191,
+   "kind": "docstring",
+   "claim": "one event entry per declared event with guard, handler and x_projection or nothing",
+   "evidence": "src/executor.jl:201"
+  },
+  {
+   "id": "CV10-239",
+   "file": "src/executor.jl",
+   "line": 191,
+   "kind": "cite",
+   "claim": "§10.6, §5.3 on the event machinery",
+   "evidence": "design/spec.md:7395 §10.6"
+  },
+  {
+   "id": "CV10-240",
+   "file": "src/executor.jl",
+   "line": 196,
+   "kind": "docstring",
+   "claim": "event global order is executor component order, then declaration order",
+   "evidence": "src/build.jl:1600"
+  },
+  {
+   "id": "CV10-241",
+   "file": "src/executor.jl",
+   "line": 199,
+   "kind": "docstring",
+   "claim": "event bundle names are x, m, u, y, ws, t as the law fixed them",
+   "evidence": "src/declare.jl:887"
+  },
+  {
+   "id": "CV10-242",
+   "file": "src/executor.jl",
+   "line": 200,
+   "kind": "cite",
+   "claim": "D-261 on walks over buffers the caller hands them",
+   "evidence": "design/log.md:11038 D-261"
+  },
+  {
+   "id": "CV10-243",
+   "file": "src/executor.jl",
+   "line": 244,
+   "kind": "docstring",
+   "claim": "ProjectEntry reconstructs, projects, writes back wholesale",
+   "evidence": "src/executor.jl:262"
+  },
+  {
+   "id": "CV10-244",
+   "file": "src/executor.jl",
+   "line": 271,
+   "kind": "docstring",
+   "claim": "EventChunk holds entries behind a pointer, a mutable chunk",
+   "evidence": "src/executor.jl:271"
+  },
+  {
+   "id": "CV10-245",
+   "file": "src/executor.jl",
+   "line": 281,
+   "kind": "docstring",
+   "claim": "EventSet is held by reference; entries and projects hold chunks so length counts chunks",
+   "evidence": "src/executor.jl:302"
+  },
+  {
+   "id": "CV10-246",
+   "file": "src/executor.jl",
+   "line": 286,
+   "kind": "docstring",
+   "claim": "the event count is length(prior)",
+   "evidence": "src/frame.jl:199"
+  },
+  {
+   "id": "CV10-247",
+   "file": "src/executor.jl",
+   "line": 288,
+   "kind": "docstring",
+   "claim": "prior, last-observed sample and firing count are plain vectors by global event index",
+   "evidence": "src/executor.jl:309"
+  },
+  {
+   "id": "CV10-248",
+   "file": "src/executor.jl",
+   "line": 291,
+   "kind": "docstring",
+   "claim": "now, fire and comp_fired are round-scoped scratch",
+   "evidence": "src/model.jl:743"
+  },
+  {
+   "id": "CV10-249",
+   "file": "src/executor.jl",
+   "line": 292,
+   "kind": "docstring",
+   "claim": "warned gives at most one FiringBudget report per event per boundary",
+   "evidence": "src/model.jl:752"
+  },
+  {
+   "id": "CV10-250",
+   "file": "src/executor.jl",
+   "line": 295,
+   "kind": "docstring",
+   "claim": "localized is fixed at compilation from the Events policies",
+   "evidence": "src/build.jl:1602"
+  },
+  {
+   "id": "CV10-251",
+   "file": "src/executor.jl",
+   "line": 297,
+   "kind": "docstring",
+   "claim": "sigma holds the numeric sample and now holds sigma >= 0",
+   "evidence": "src/executor.jl:374"
+  },
+  {
+   "id": "CV10-252",
+   "file": "src/executor.jl",
+   "line": 298,
+   "kind": "docstring",
+   "claim": "sigma0 and sigma1 retain the validation and arrival samples",
+   "evidence": "src/frame.jl:216"
+  },
+  {
+   "id": "CV10-254",
+   "file": "src/executor.jl",
+   "line": 300,
+   "kind": "docstring",
+   "claim": "loc_warned is the ChatteringBudget once-per-event-per-frame latch",
+   "evidence": "src/frame.jl:235"
+  },
+  {
+   "id": "CV10-255",
+   "file": "src/executor.jl",
+   "line": 334,
+   "kind": "docstring",
+   "claim": "walks run over the buffers the caller hands them, one non-inlined call per chunk",
+   "evidence": "src/executor.jl:367"
+  },
+  {
+   "id": "CV10-256",
+   "file": "src/executor.jl",
+   "line": 337,
+   "kind": "docstring",
+   "claim": "guard walk writes each predicate sample into now by global index",
+   "evidence": "src/executor.jl:374"
+  },
+  {
+   "id": "CV10-257",
+   "file": "src/executor.jl",
+   "line": 338,
+   "kind": "docstring",
+   "claim": "fire walk runs handler then x_projection for the masked entries, x to the flat buffer, m merged",
+   "evidence": "src/executor.jl:393"
+  },
+  {
+   "id": "CV10-258",
+   "file": "src/executor.jl",
+   "line": 342,
+   "kind": "docstring",
+   "claim": "generated walks inline one statement per element so no Base.tail recursion",
+   "evidence": "src/executor.jl:347"
+  },
+  {
+   "id": "CV10-259",
+   "file": "src/executor.jl",
+   "line": 350,
+   "kind": "docstring",
+   "claim": "_unrolled_tuple builds a value as one inlined tuple",
+   "evidence": "src/executor.jl:353"
+  },
+  {
+   "id": "CV10-260",
+   "file": "src/executor.jl",
+   "line": 409,
+   "kind": "docstring",
+   "claim": "a discrete successor must be the store's own type exactly",
+   "evidence": "src/executor.jl:413"
+  },
+  {
+   "id": "CV10-261",
+   "file": "src/executor.jl",
+   "line": 409,
+   "kind": "cite",
+   "claim": "§9.5, D-235 on the successor check at the generated write",
+   "evidence": "design/log.md:9595 D-235"
+  },
+  {
+   "id": "CV10-264",
+   "file": "src/executor.jl",
+   "line": 413,
+   "kind": "surface",
+   "claim": "ConformanceFailure at s_update with shape :s_init, field-level reasons, bare store by its letter is in §9.5 and App C",
+   "evidence": "design/spec.md:15698"
+  },
+  {
+   "id": "CV10-265",
+   "file": "src/executor.jl",
+   "line": 424,
+   "kind": "docstring",
+   "claim": "_merge_modes! checks at generation; a named store takes a partial write, a bare one is replaced whole",
+   "evidence": "src/executor.jl:430"
+  },
+  {
+   "id": "CV10-266",
+   "file": "src/executor.jl",
+   "line": 424,
+   "kind": "cite",
+   "claim": "§9.5 and the m predicate at the write",
+   "evidence": "design/spec.md:5810 §9.5"
+  },
+  {
+   "id": "CV10-267",
+   "file": "src/executor.jl",
+   "line": 428,
+   "kind": "surface",
+   "claim": "ConformanceFailure at a handler's m (shape :mode, event, declared_fields) is in Appendix C",
+   "evidence": "design/spec.md:15703"
+  },
+  {
+   "id": "CV10-268",
+   "file": "src/executor.jl",
+   "line": 465,
+   "kind": "docstring",
+   "claim": "_event_bodies closes the guard and handler over the entry and buffers",
+   "evidence": "src/executor.jl:469"
+  },
+  {
+   "id": "CV10-269",
+   "file": "src/executor.jl",
+   "line": 465,
+   "kind": "cite",
+   "claim": "§9.8 seam and §9.7 on the view of one event and projection",
+   "evidence": "design/spec.md:6308 measurement seam in §9.7, named by §9.8"
+  },
+  {
+   "id": "CV10-271",
+   "file": "src/executor.jl",
+   "line": 479,
+   "kind": "docstring",
+   "claim": "the gate is a wrapper only discrete entries wear",
+   "evidence": "src/executor.jl:595"
+  },
+  {
+   "id": "CV10-272",
+   "file": "src/executor.jl",
+   "line": 479,
+   "kind": "cite",
+   "claim": "§6.3, §10.5, D-185, D-205 on the gate",
+   "evidence": "design/log.md:7363 D-185, 8209 D-205"
+  },
+  {
+   "id": "CV10-273",
+   "file": "src/executor.jl",
+   "line": 492,
+   "kind": "docstring",
+   "claim": "Establish is a marker that admits every gated entry at boundary zero",
+   "evidence": "src/executor.jl:524"
+  },
+  {
+   "id": "CV10-274",
+   "file": "src/executor.jl",
+   "line": 492,
+   "kind": "cite",
+   "claim": "§14.5, D-205 on boundary zero's wide gate",
+   "evidence": "design/spec.md:13391 §14.5"
+  },
+  {
+   "id": "CV10-275",
+   "file": "src/executor.jl",
+   "line": 500,
+   "kind": "docstring",
+   "claim": "s_update updates stay gated by Phi0 at index 0",
+   "evidence": "src/model.jl:665"
+  },
+  {
+   "id": "CV10-276",
+   "file": "src/executor.jl",
+   "line": 511,
+   "kind": "docstring",
+   "claim": "run_at! on an Int is the compiled frame path with the (tick - Phi) % D gate",
+   "evidence": "src/executor.jl:518"
+  },
+  {
+   "id": "CV10-277",
+   "file": "src/executor.jl",
+   "line": 513,
+   "kind": "cite",
+   "claim": "§6.3, §10.5 on canonical residue gating",
+   "evidence": "design/spec.md:1883 §6.3"
+  },
+  {
+   "id": "CV10-278",
+   "file": "src/executor.jl",
+   "line": 529,
+   "kind": "docstring",
+   "claim": "Chunk is mutable so a barrier call loads one pointer",
+   "evidence": "src/executor.jl:531"
+  },
+  {
+   "id": "CV10-279",
+   "file": "src/executor.jl",
+   "line": 547,
+   "kind": "docstring",
+   "claim": "a PhaseBody holds two chunk tuples compiled from one entry list",
+   "evidence": "src/executor.jl:567"
+  },
+  {
+   "id": "CV10-280",
+   "file": "src/executor.jl",
+   "line": 550,
+   "kind": "docstring",
+   "claim": "the zero-arg call is the interior variant over continuous entries only",
+   "evidence": "src/executor.jl:572"
+  },
+  {
+   "id": "CV10-281",
+   "file": "src/executor.jl",
+   "line": 556,
+   "kind": "docstring",
+   "claim": "the one-arg call is the boundary variant gated by (n - Phi0) % D0, or ESTABLISH",
+   "evidence": "src/executor.jl:573"
+  },
+  {
+   "id": "CV10-282",
+   "file": "src/executor.jl",
+   "line": 563,
+   "kind": "docstring",
+   "claim": "a body with no discrete entry has two tuples of one type and walks the interior",
+   "evidence": "src/executor.jl:578"
+  },
+  {
+   "id": "CV10-283",
+   "file": "src/executor.jl",
+   "line": 583,
+   "kind": "docstring",
+   "claim": "construction is type-opaque, splatted once per chunk",
+   "evidence": "src/executor.jl:591"
+  },
+  {
+   "id": "CV10-284",
+   "file": "src/executor.jl",
+   "line": 585,
+   "kind": "docstring",
+   "claim": "gates run parallel to entries: nothing for continuous, (D0, Phi0) for discrete",
+   "evidence": "src/executor.jl:594"
+  },
+  {
+   "id": "CV10-285",
+   "file": "src/executor.jl",
+   "line": 587,
+   "kind": "cite",
+   "claim": "D-147 and §10.5 on the interior subset",
+   "evidence": "design/log.md:5711 D-147"
+  }
+ ],
+ "counts": {
+  "docstring": 213,
+  "cite": 23,
+  "map": 35,
+  "surface": 14
+ }
+}

@@ -1,0 +1,92 @@
+{
+ "judgments": [
+  {
+   "id": "S9d2-001",
+   "conforms": true,
+   "evidence": "src/build.jl:616-619 (Outputs = components, order) and src/build.jl:576-579 (ComponentOutputs = path, stage1, stage2); probe line 'Outputs fields (:components, :order); ComponentOutputs fields (:path, :stage1, :stage2)'"
+  },
+  {
+   "id": "S9d2-011",
+   "conforms": true,
+   "evidence": "src/deployment.jl:307 builds each row as ScheduleEntry(path, anchor, D, Φ, D * Δtb, rates), so D is in base ticks; src/deployment.jl:100-101 and src/build.jl:1519 carry row.D/row.Φ into the gate; probe: Relative(3,1) at Δt_base 1//100 gives row (\"tri\", 3, 1, 0.03)",
+   "note": "D and Φ ride as fields of the Gated wrapper (src/executor.jl:487-491) and not of the entry itself. They are still plain data in fields, as the doc says."
+  },
+  {
+   "id": "S9d2-021",
+   "conforms": true,
+   "evidence": "src/store.jl:11-13 `struct CellAddr{P,K}; offsets::NTuple{K,Int}; end`; probe: address type CellAddr{Float64, 1} with the single field :offsets"
+  },
+  {
+   "id": "S9d2-031",
+   "conforms": true,
+   "evidence": "src/build.jl:1547 push!(stage2_gates, gate(ci)) with gate(ci) = (D_c[ci], Φ_c[ci]) for a discrete component (src/build.jl:1519); src/executor.jl:516-523 tests (tick − Φ) % D == 0; probe: sweep_2 boundary variant holds tri gated (3, 1), and ticks(n) advanced at n = 1, 4, 7"
+  },
+  {
+   "id": "S9d2-042",
+   "conforms": false,
+   "evidence": "src/build.jl:1627 builds rhs as a PhaseBody like the other three, and src/executor.jl:578 gives it a one-arg method that walks the interior tuple; test/test_executor.jl:7 says 'the four blocks, both arities' and asserts @ballocated(rhs(1)) == 0; probe: rhs(5) returns nothing, interior and boundary tuple types equal",
+   "class": "deviation",
+   "fix": "`rhs` gates nothing. Its one-arg form, which every phase body has, walks the same continuous entries as the zero-arg one, and the loop calls it bare.",
+   "clear": false,
+   "backing_entry": "D-147",
+   "note": "The loop only calls rhs() (src/model.jl:621, 634; src/trim.jl:602, 744). The roster is total in both arities for all four bodies, ticks() included, while the measurement-seam text lists rhs with no arity and ticks as taking the index. The 20261001 compile-cost report (section 10) also calls rhs(0) and ticks() walks the loop never runs."
+  },
+  {
+   "id": "S9d2-043",
+   "conforms": true,
+   "evidence": "src/build.jl:1534, 1547, 1569 push the same gate(ci) for stage-1, stage-2 and update entries; src/model.jl:663 and 707 pass one tick to ticks and to both sweeps; probe: tri appears gated (3, 1) in sweep_1, sweep_2 and ticks, and rhs has no gated entry",
+   "note": "Boundary zero is the documented exception (D-205): the sweeps take ESTABLISH while ticks take index 0 (src/model.jl:665, 710-712)."
+  },
+  {
+   "id": "S9d2-053",
+   "conforms": true,
+   "evidence": "src/executor.jl:136 builds the bundle's `y` per call as gather(entry.y, store) from cell addresses; RHSEntry/UpdateEntry/EventEntry hold only addresses in `y` (src/executor.jl:76, 89, 208), never a stored aggregate"
+  },
+  {
+   "id": "S9d2-063",
+   "conforms": true,
+   "evidence": "src/build.jl:1461 compile(...; chunk_size::Int = 16); src/model.jl:113 Model(...; chunk_size = 16); probe: default chunk_size 16"
+  },
+  {
+   "id": "S9d2-074",
+   "conforms": false,
+   "evidence": "probe lines [074] O2 and O0: feedback_model after 3 s gives xbuf hash cee248c44a0a9b62 at both levels, and Rotor+Sawtooth after 5 s gives 52fbfb1cc7a2f413 at both levels, bit for bit; nothing in src/ records or checks the optimization level (rg 'opt_level' in src finds nothing)",
+   "class": "deviation",
+   "fix": "Its trajectories can differ from `-O2`'s by round-off, so a trace recorded at one level need not replay bit for bit at the other.",
+   "clear": false,
+   "backing_entry": "D-289",
+   "note": "The claim rests on design/reports/20261001_compile_cost_reeval/report.md:734-735, where the measured exports differed in one state in seven. On the suite's own fixtures the two levels agree bit for bit, so 'differ' and 'does not replay' overstate it. D-289 (design/log.md:13253-13254) carries the same sentence."
+  },
+  {
+   "id": "S9d2-073",
+   "conforms": true,
+   "evidence": "probe lines [073] O0: integrate! alloc 0; sweep_1, sweep_2, rhs and ticks alloc 0 in both arities; Model frame! alloc 0 (the test/test_stepper.jl:593 form)"
+  },
+  {
+   "id": "S9d2-084",
+   "conforms": true,
+   "evidence": "test/test_executor.jl:13-21 (ticks() === nothing, ticks(3) === nothing, @ballocated 0); probe [084]: feedback ticks with 0 entries, and TickCounter's empty sweep_2 and rhs, return nothing and measure 0 in both arities"
+  },
+  {
+   "id": "S9d2-096",
+   "conforms": true,
+   "evidence": "src/model.jl:654 runs _projects! first in every boundary; src/executor.jl:394 runs _fire_project! after each fired handler; probe [096]: 10 boundaries with 3 firings give 13 projection calls",
+   "note": "The post-handler position runs only when a handler fires, and after every firing, not only after an x-reset. The doc's 'unconditional' grouping of x_projection therefore covers only the post-integration position strictly."
+  },
+  {
+   "id": "S9d2-106",
+   "conforms": true,
+   "evidence": "src/store.jl:149 capture_stores copies each eltype buffer shallowly, so the handle's bulk data is shared (test/test_store.jl:272); probe [106]: handle_model capture allocates 4 objects/144 B, the same count as an Int-port twin (4 objects/128 B)",
+   "note": "Against an all-Float64 twin, the handle model allocates 2 more objects and 64 B more per boundary (publish! 928 B vs 864 B). That cost comes from the handle's extra eltype block, which any non-Float64 eltype adds, and not from its references. The reading 'no allocation beyond the snapshot's own table copy' holds. The stricter reading 'nothing more than a numeric port' does not."
+  },
+  {
+   "id": "S9d2-107",
+   "conforms": false,
+   "evidence": "rg 'GC\\.' src finds only GC.safepoint() at src/control.jl:188, so no scheduled GC.gc(false) exists; design/pending.md:229-233 ('§9.8 names GC.gc(false) at frame boundaries, and nothing in src/ builds it') under the 'Publication's garbage' bullet at design/pending.md:213",
+   "class": "gap",
+   "fix": "A `GC.gc(false)` scheduled at frame boundaries would move collection out of the critical path; nothing builds it yet (pending: Publication's garbage).",
+   "clear": false
+  }
+ ],
+ "notes": "I checked all 14 claims against W at 2ea85438. Three do not conform. S9d2-042 is a deviation: rhs is a PhaseBody with a one-arg method, and the tests assert both arities on all four bodies. S9d2-074 is a deviation backed by D-289: -O0 and -O2 trajectories match bit for bit on two fixtures. S9d2-107 is a gap recorded at pending.md:229. The other 11 conform; S9d2-106 holds under the reading 'beyond the snapshot's own table copy', as its note explains. I created one file, the probe /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S9d2_v/probe.jl. It ran three times: twice at -O2 (the first stopped on a run! keyword error, fixed) and once at -O0. I edited no tracked file and ran no git command that changes the worktree. Open point on S9d2-074: the -O0 run reports opt_level 0, but I did not confirm that Redstone's package image was rebuilt at -O0. The fixture code compiled in Main ran at -O0 either way."
+}
