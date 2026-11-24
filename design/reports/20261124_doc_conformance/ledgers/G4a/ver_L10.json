@@ -1,0 +1,294 @@
+{
+ "judgments": [
+  {
+   "id": "L10-001",
+   "conforms": true,
+   "evidence": "src/sim.jl:2088 `_advance!` is the framework's frame loop, shared by run!/step!/replay!; the backend is only called across the seam (src/model.jl:814 integrate_step!)."
+  },
+  {
+   "id": "L10-010",
+   "conforms": true,
+   "evidence": "src/sim.jl:2101-2102 re-anchors when the pause block parked (finite pace); src/control.jl reanchor! adds the cleared debt to `forgiven` and counts `reanchors`."
+  },
+  {
+   "id": "L10-019",
+   "conforms": true,
+   "evidence": "src/sim.jl:2793 publish! builds one new Snapshot per publication from capture_stores (src/store.jl:147 'fresh buffers, one allocation per boundary')."
+  },
+  {
+   "id": "L10-028",
+   "conforms": false,
+   "evidence": "src/model.jl:665 boundary zero's updates run ticks(0), so only Φ₀ = 0 components update, while the ESTABLISH sweep runs every output stage. Probe L10_v/probe.jl: after init!, n = (1, 0) for the Φ=0 and Φ=1 TickCounters, and both publish n = 0 from the authored s.",
+   "class": "drift",
+   "fix": "project → sweep (every discrete output stage runs, due or not, publishing from the authored `z`) → events to quiescence → the `s_update` calls of the components due at index 0 (`Φ₀ = 0`) → header capture + first snapshot.",
+   "clear": true,
+   "note": "The D-067 annotation (2026-10-02) already records D-205's amendment."
+  },
+  {
+   "id": "L10-033",
+   "conforms": false,
+   "evidence": "Probe: isdefined(Redstone, :capture) == false; commit d9d22d6c 'Retire capture and take linearize's default operating point from the checkpoint' (D-273, D-274).",
+   "class": "drift",
+   "fix": "`t₀` is an init-service argument anchoring the harmonic grid (conditions time-free).",
+   "clear": true
+  },
+  {
+   "id": "L10-038",
+   "conforms": true,
+   "evidence": "src/frame.jl:41 and :125 frame k runs from tₖ₋₁ to tₖ = t₀ + k·Δt_frame, one step of the frame grid."
+  },
+  {
+   "id": "L10-040",
+   "conforms": false,
+   "evidence": "src/frame.jl:161 ticks run at due instants inside a frame (run_boundary!(model, due)), keyed to base-tick indices, not to frames.",
+   "class": "drift",
+   "fix": "frames = frame-grid steps, the scheduling unit (input drain, pacer deadlines); tick eligibility keys to due instants, not to frames.",
+   "clear": true,
+   "note": "The D-081 annotation (2026-11-11) records the D-445 supersession."
+  },
+  {
+   "id": "L10-042",
+   "conforms": false,
+   "evidence": "src/frame.jl:168 settled! (publication) follows every step end, including interior step ends and due instants, besides frame tops, t* (frame.jl:322) and boundary zero.",
+   "class": "drift",
+   "fix": "boundaries = published consistency points (every integration step end, the frame tops among them, `t*`, boundary zero).",
+   "clear": true,
+   "note": "Recorded by D-445 and by the D-081 annotation."
+  },
+  {
+   "id": "L10-044",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:542 the snapshot carries run.boundary; src/control.jl:69 the wait counter is separate. Probe: after re-init!, counter 5→6 while the boundary ordinal goes 4→0.",
+   "class": "drift",
+   "fix": "the boundary index is carried in the snapshot (with `t`); the loop state the wait predicate tests is a separate monotone counter, never reset, which no longer mirrors it.",
+   "clear": true,
+   "note": "The D-114 annotation (2026-10-15) records the D-230 amendment."
+  },
+  {
+   "id": "L10-050",
+   "conforms": true,
+   "evidence": "src/sim.jl:1403 replay halts at run.frame == to_boundary, a frame top; a t* stop is reproduced (frame.jl:322) but no halt targets it."
+  },
+  {
+   "id": "L10-055",
+   "conforms": false,
+   "evidence": "Probe: run!(sim; stop_on = …) throws MethodError; src/sim.jl:1562 run! takes `ignore_stop_requests`, and src/sim.jl:2041 settled! scans the StopFlag requests. Commit a682407c retired stop_on (D-316).",
+   "class": "drift",
+   "fix": "It joins `t_end`, the model's stop requests and the GUI/handle/code stop among §12.4(1)'s initiation sources.",
+   "clear": true
+  },
+  {
+   "id": "L10-060",
+   "conforms": true,
+   "evidence": "src/frame.jl:365 stops when the bracket is narrower than localization_tol·Δt_frame in time; default 1e-6 (src/deployment.jl:468, probe)."
+  },
+  {
+   "id": "L10-062",
+   "conforms": false,
+   "evidence": "src/deployment.jl:548 the field is `localization_budget`, default 8; probe: the `event_budget` keyword throws MethodError.",
+   "class": "drift",
+   "fix": "`localization_budget`, the per-frame localization allowance, default 8",
+   "clear": true,
+   "note": "Renamed by D-181; the D-133 annotation (2026-10-02) records it."
+  },
+  {
+   "id": "L10-068",
+   "conforms": false,
+   "evidence": "src/sim.jl:358 `Simulation(...; join_timeout = 5.0)` is a user keyword; probe: join_timeout = 1.5 is accepted and stored.",
+   "class": "drift",
+   "fix": "shutdown join timeout 5 s, the default of the `Simulation` keyword `join_timeout` (§12.4(5))",
+   "clear": true,
+   "note": "Recorded by D-198 and the D-133 annotation (2026-10-15)."
+  },
+  {
+   "id": "L10-072",
+   "conforms": false,
+   "evidence": "src/sim.jl:2412 margin!(sim, m) and the `margin` keyword of run!/replay! (sim.jl:1562, 1335) set it; probe: margin!(sim, 0.005) reads back 0.005. Commit c84ebfd0 (D-269).",
+   "class": "drift",
+   "fix": "`margin` defaults to 2 ms (§10.7's own arithmetic), set by `margin!` and the `margin` keyword of `run!` and `replay!`, replacing Appendix B's `margin = <default>` placeholder.",
+   "clear": true,
+   "note": "D-021 already called margin 'the single knob'; D-269 makes it a user knob."
+  },
+  {
+   "id": "L10-071",
+   "conforms": true,
+   "evidence": "src/control.jl:74 Control's margin starts at 0.002; src/sim.jl:1562 run!(; margin = 0.002); probe: margin(sim) == 0.002."
+  },
+  {
+   "id": "L10-075",
+   "conforms": false,
+   "evidence": "src/model.jl event_phase! (around line 735) keeps prior, last, count, warned and comp_fired; there is no fired or re-arm flag.",
+   "class": "drift",
+   "fix": "The event phase's per-event loop state is named and normative: the prior, the last-observed sample and the firing count.",
+   "clear": true,
+   "note": "The D-153 annotation (2026-10-02) records D-181's retirement."
+  },
+  {
+   "id": "L10-076",
+   "conforms": false,
+   "evidence": "src/model.jl event_phase!: no re-arm flag exists; eligibility is `!events.last[i] && events.now[i]` under the firing budget.",
+   "class": "drift",
+   "fix": "An event is eligible again within a boundary on a not-holding → holding edge of its last-observed sample, up to `firing_budget` firings.",
+   "clear": true,
+   "note": "Retired by D-181."
+  },
+  {
+   "id": "L10-077",
+   "conforms": false,
+   "evidence": "rg finds no EventDeferred in src/ or test/; src/model.jl event_phase! reports FiringBudget at most once per event per boundary instead.",
+   "class": "drift",
+   "fix": "`EventDeferred` is retired; an edge past `firing_budget` is lost under a `FiringBudget` warning, at most once per event per boundary.",
+   "clear": true,
+   "note": "Retired by D-181 (D-153 annotation)."
+  },
+  {
+   "id": "L10-084",
+   "conforms": true,
+   "evidence": "src/build.jl:1625-1629 bodies always hold sweep_1, sweep_2, rhs and ticks (plus the events and projections dicts); src/model.jl:521; probe: the same keys for a model with no discrete component."
+  },
+  {
+   "id": "L10-093",
+   "conforms": true,
+   "evidence": "src/frame.jl:214-222 the arrival sweep and guard walk, then the trigger test; the due-gated boundary sweep comes later in run_boundary!."
+  },
+  {
+   "id": "L10-102",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:542 'boundary zero = 0'; probe: latest(sim).boundary == 0 after init!."
+  },
+  {
+   "id": "L10-111",
+   "conforms": true,
+   "evidence": "src/sim.jl:2265 step! passes pacer = nothing to _advance!; sim.jl:2220 step! takes no pace or margin; probe: step!(sim; pace = 2.0) throws MethodError."
+  },
+  {
+   "id": "L10-120",
+   "conforms": true,
+   "evidence": "src/sim.jl:2096 anchor!(pacer, …) as _advance! starts, before the first frame."
+  },
+  {
+   "id": "L10-126",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:107 `struct Checkpoint` has no type parameter and wraps ModelState{Float64} with frame and boundary; probe: Checkpoint isa UnionAll == false.",
+   "class": "drift",
+   "fix": "A `Checkpoint` is the executor's state at a frame top, a `ModelState{Float64}` beside the run's frame index and boundary ordinal, taken by `checkpoint(sim)` and by `init!` and put back by `restore!`.",
+   "clear": true,
+   "note": "The D-274 annotation (2026-10-09) records the D-319 amendment."
+  },
+  {
+   "id": "L10-130",
+   "conforms": true,
+   "evidence": "src/trace.jl:79 `header::Union{Nothing,Checkpoint}`; probe: typeof(trace(sim).header) == Checkpoint."
+  },
+  {
+   "id": "L10-135",
+   "conforms": false,
+   "evidence": "design/spec.md:12805 '## 14. Stopped-sim services'; §13.7 (spec.md:12064) is tooling consequences. Code: src/sim.jl:892 checkpoint(sim) is legal in initialized/stopped.",
+   "class": "drift",
+   "fix": "`checkpoint(sim)` is a stopped-sim service ([§14][s14]): legal in `initialized` and `stopped`, …",
+   "clear": true,
+   "note": "The D-274 annotation (2026-10-15) records the change of citation."
+  },
+  {
+   "id": "L10-140",
+   "conforms": true,
+   "evidence": "src/model.jl:1331-1345 the restore copies the state and calls settled! once, with no sweep, guard, update or prior reset; probe: cursor index 0→0, one snapshot logged, counter n kept (5, 5)."
+  },
+  {
+   "id": "L10-149",
+   "conforms": true,
+   "evidence": "src/linearize.jl:275 operating_point = checkpoint(model); linearize.jl:311 restores it into the scratch nominal executor."
+  },
+  {
+   "id": "L10-159",
+   "conforms": true,
+   "evidence": "src/frame.jl:255-265 the θ=0 sweep over x(t_seg) at t_seg. Guard bundles read x, m, u, y, ws and t, not s (src/executor.jl:196), and the interior sweep has no discrete entries, so only the drain's u can differ from the prior's context."
+  },
+  {
+   "id": "L10-166",
+   "conforms": true,
+   "evidence": "src/frame.jl:328 the remainder's length is t_to − t*, toward the step's indexed end (never accumulated). Under a proposing backend no remainder runs (frame.jl:326)."
+  },
+  {
+   "id": "L10-169",
+   "conforms": false,
+   "evidence": "src/frame.jl:322 settled!(hooks) at the t* boundary; src/sim.jl:2041-2043 settled! publishes, then scans the stop requests; stop_on was retired by a682407c (D-316).",
+   "class": "drift",
+   "fix": "At `t*` the full §10.6 iteration runs, a snapshot publishes, the §12.3 boundary counter increments and the stop requests are checked.",
+   "clear": true
+  },
+  {
+   "id": "L10-170",
+   "conforms": true,
+   "evidence": "src/frame.jl:316 the t* boundary runs run_boundary!(model, nothing), the empty due set."
+  },
+  {
+   "id": "L10-179",
+   "conforms": true,
+   "evidence": "src/control.jl:186 `remaining > 0 && sleep(remaining)`; no resolution threshold, only margin."
+  },
+  {
+   "id": "L10-188",
+   "conforms": false,
+   "evidence": "src/frame.jl:136 propose before each frame step and src/model.jl:847 after a rejection. But src/model.jl:843-845 calls no propose after the rejection that spends attempt_budget: that next attempt is shaped from h_min (D-460).",
+   "class": "drift",
+   "fix": "The `Model` reads `propose` before every step and after every rejection, except after the rejection that spends the attempt budget, whose next attempt is the floor's.",
+   "clear": false,
+   "note": "integrate!(model, h) (model.jl:796) also offers h whole with no proposal, like the fixed-step remainder; the fix may need to name it too."
+  },
+  {
+   "id": "L10-189",
+   "conforms": false,
+   "evidence": "src/frame.jl:326 under a proposing backend a t* ends its step, and the next step is shaped from a fresh propose (frame.jl:136). Only the fixed-step path offers the remainder whole (frame.jl:328).",
+   "class": "drift",
+   "fix": "Under a fixed-step method the remainder of a step after a `t*` is offered whole, with no proposal asked; under a proposing method a `t*` ends its step and the next is shaped from a new proposal.",
+   "clear": true,
+   "note": "Recorded by D-460 and the D-452 annotation (2026-11-15)."
+  },
+  {
+   "id": "L10-191",
+   "conforms": false,
+   "evidence": "src/model.jl:864-869 _shaped refuses only a NaN proposal; its comment says no shaped length fails to advance the clock, since the clamp lifts to h_min and the doors refuse an unresolvable clock. There is no non-advancing refusal.",
+   "class": "drift",
+   "fix": "The `Model` refuses a proposal that is not a number, as an internal invariant; no shaped length fails to advance the clock, since the clamp lifts every proposal to `h_min` and the doors refuse a run whose clock cannot resolve it.",
+   "clear": true,
+   "note": "The D-452 annotation records the withdrawal by D-460."
+  },
+  {
+   "id": "L10-195",
+   "conforms": false,
+   "evidence": "src/model.jl:879-881 clamps into [h_min, h_max], then divides the distance r to the span's end into ⌈r/cap⌉ equal steps (capped at ⌊r/h_min⌋), rather than clamping to the span's end.",
+   "class": "drift",
+   "fix": "The `Model` clamps a proposal into `[h_min, h_max]` and takes the distance to the span's end in equal steps no longer than that.",
+   "clear": true,
+   "note": "The D-452 annotation says this 'replaces the clamp to h_max and to the span's end' (D-460)."
+  },
+  {
+   "id": "L10-200",
+   "conforms": true,
+   "evidence": "src/model.jl:842 fresh = false after a rejection; model.jl:828 arms model.fresh from it, and model.jl:631 evaluate! then sweeps."
+  },
+  {
+   "id": "L10-209",
+   "conforms": true,
+   "evidence": "src/frame.jl:91 `_frame_steps!(…, continued && !wrote)`; src/sim.jl:2116 the advance passes `advanced > 0`, and frame! passes false (frame.jl:75)."
+  },
+  {
+   "id": "L10-218",
+   "conforms": true,
+   "evidence": "src/deployment.jl:419 `value > 0 && isfinite(value)` or ArgumentInvalid; probe: reltol 0, -1, NaN and abstol Inf, 0 all throw ArgumentInvalid.",
+   "note": "A non-Real tolerance throws TypeError, not ArgumentInvalid (keyword typed ::Real), though D-461 says 'not a positive finite real'."
+  },
+  {
+   "id": "L10-227",
+   "conforms": true,
+   "evidence": "src/stepper.jl:287 discontinuity! zeroes memory only; probe: (proposal, memory) goes from (0.125, 0.5) to (0.125, 0.0)."
+  },
+  {
+   "id": "L10-236",
+   "conforms": true,
+   "evidence": "src/stepper.jl:324 a rejected starting attempt proposes min(shrink, _starting_bound); probe: Expo(10), h = 1 rejected, then proposal 0.008 = the ode23 bound (elementary shrink would give ≥ 0.2)."
+  }
+ ],
+ "notes": "Read-only verification of slice L10 at W (2ea85438). Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L10_v/probe.jl, run twice. Result: 23 claims conform and 21 do not. All 21 are drift, each recorded by a later log entry or annotation (D-181, D-198, D-205, D-230, D-269, D-273, D-316, D-319, D-445, D-460, and the D-274 annotation on §13.7→§14). Found no deviation, defect or gap. An out-of-slice finding from the probe: ArgumentInvalid(call = :BS3, reason = :range, argument = :reltol/:abstol) renders as the t_plus message ('t_plus must be a finite real > 0 …', src/diagnostics.jl:2517 fallthrough). The diagnostic kind is right, but its message is wrong for BS3's tolerances. L10-188 is a borderline call. The general 'propose before every step and after every rejection' holds except after the rejection that spends the attempt budget (D-460's floor attempt) and for the public integrate!(model, h)."
+}

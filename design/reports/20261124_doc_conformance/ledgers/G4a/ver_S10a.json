@@ -1,0 +1,138 @@
+{
+ "judgments": [
+  {
+   "id": "S10a-001",
+   "conforms": true,
+   "evidence": "src/frame.jl:118 `origin = (k - 1) * lattice.frame` and frame.jl:37-38 (frame! runs frame k from tₖ₋₁ to tₖ); probe P181: frame 1 ends at 0.125 = Δt_frame."
+  },
+  {
+   "id": "S10a-010",
+   "conforms": true,
+   "evidence": "src/frame.jl:161-168 run_boundary! then settled!(hooks) at every step end; frame.jl:316-322 the same at a t* boundary; model.jl:653-659 run_boundary! is the projection, event phase and ticks sequence."
+  },
+  {
+   "id": "S10a-019",
+   "conforms": true,
+   "evidence": "src/frame.jl:289 θ★ from _crossing (root-finding over the bracket σ0/σ1, frame.jl:359), t★ = t_seg + θ★·h′ strictly inside the step (frame.jl:293-305), then run_boundary! at t★ (frame.jl:316)."
+  },
+  {
+   "id": "S10a-028",
+   "conforms": true,
+   "evidence": "Project.toml [deps] lists ForwardDiff, LinearAlgebra, PrecompileTools, Random, StaticArrays only; the loop is src/frame.jl:116-178 _frame_steps!, calling the seam's attempt! through model.jl:814 integrate_step!."
+  },
+  {
+   "id": "S10a-037",
+   "conforms": false,
+   "evidence": "src/frame.jl:136-147: under a proposing backend each step is _shaped (model.jl:864) from the clock and re-shaped every step, so a span's steps differ. Probe P037: Scheduled stub in one span [0.0417, 0.0208, 0.03125, 0.03125]; BS3 on Kepler accepted lengths 3.2e-6, 3.2e-5, 1.5e-4, ... all unequal.",
+   "class": "drift",
+   "fix": "It ends a step at every due instant (...), so that ticks land on boundaries, and it divides the span between two such instants into equal steps under a fixed-step method, or the distance left to the next one into equal steps no longer than a proposal under a proposing method ([§10.5][s10-5], [D-449][d-449], [D-460][d-460]).",
+   "clear": true,
+   "note": "The sentence dates from commit 8ba044ce (D-449, fixed-step only); D-460 (commit 106cb8ad) later added proposal shaping, which §10.5 and §2.2 already describe."
+  },
+  {
+   "id": "S10a-046",
+   "conforms": true,
+   "evidence": "src/stepper.jl:144 and :184 checkpoint_stepper(::RK4Stepper)/(::HeunStepper) = nothing; BS3 carries (proposal, memory) at stepper.jl:281."
+  },
+  {
+   "id": "S10a-055",
+   "conforms": true,
+   "evidence": "src/stepper.jl:153-155 copyto!(x₀, x) then k₁ = ẋ at the attempt's start; startpoint returns (x₀, k₁) at stepper.jl:169, 205, 288."
+  },
+  {
+   "id": "S10a-064",
+   "conforms": false,
+   "evidence": "src/model.jl:879-882: N = ⌈r/cap⌉ is capped at ⌊r/h_min⌋, so near the floor a step runs past the clamped proposal. Probe P064: proposal 0.055, h_min 0.05, r 0.125 gives two steps of 0.0625 > 0.055 (_shaped returns 0.0625).",
+   "class": "drift",
+   "fix": "**A proposal is clamped into `[h_min, h_max]`, and the distance to the next mandatory instant is taken in equal steps no longer than it** ([§10.5][s10-5], [D-460][d-460]), their count capped at `⌊r / h_min⌋`, so near the floor a step can run past its proposal.",
+   "clear": true,
+   "note": "D-460's own bullet (log.md:19744) and rationale (log.md:19783-19786) record the cap and that it can lengthen a step past its proposal; §10.5 (spec.md:7286-7293) states it too. Only this §10.2 sentence omits it."
+  },
+  {
+   "id": "S10a-073",
+   "conforms": true,
+   "evidence": "src/model.jl:868 isnan(proposal) && _refuse_nan_proposal → InternalInvariant (model.jl:905-912); probe P073: _shaped(m, NaN, ...) throws Redstone.InternalInvariant."
+  },
+  {
+   "id": "S10a-082",
+   "conforms": true,
+   "evidence": "src/stepper.jl:156 `_stage_point!(x, x₀, k₁, h / 2); exec.clock.t = t + h / 2` writes the state buffer and clock in the stages; BS3 likewise at stepper.jl:299-306; model.jl:840-841 puts the start and clock back on rejection."
+  },
+  {
+   "id": "S10a-091",
+   "conforms": true,
+   "evidence": "src/model.jl:824-827 `attempt += 1 ... cursor.attempt = attempt` per step."
+  },
+  {
+   "id": "S10a-100",
+   "conforms": true,
+   "evidence": "src/deployment.jl:235-237 refuses h_min > h_max/2 as DeploymentInvalid :range; probe P100: h_min 1//150 against h_max 1//100 refused (DeploymentInvalid(:h_min, :range, 1//150, 1//100)), 1//200 accepted."
+  },
+  {
+   "id": "S10a-109",
+   "conforms": true,
+   "evidence": "src/model.jl:832-836: an attempt at the floor is accepted, then _check_finite! throws NonfiniteState; probe P109: Cliff under BS3 ends with a rejected floor attempt and StepError{NonfiniteState}."
+  },
+  {
+   "id": "S10a-118",
+   "conforms": true,
+   "evidence": "src/model.jl:334-336 reset_stepper! then boundary_zero!, which is run_boundary!(model, ESTABLISH) (model.jl:702), raising discontinuity! since due !== nothing (model.jl:657); probe P118: notices after init! = [0]."
+  },
+  {
+   "id": "S10a-127",
+   "conforms": true,
+   "evidence": "src/frame.jl:89-90 `wrote = frame_top!(hooks); wrote && discontinuity!(...)`; probe P127: a quiet frame top raises none ([0]), a frame top whose hook returned true raises one ([0, 1])."
+  },
+  {
+   "id": "S10a-136",
+   "conforms": true,
+   "evidence": "src/declare.jl:63-65,75: a primitive defines one of x_init and s_init, x_init defaulting to nothing; probe P145: Group(a = TickCounter()) builds with an empty xbuf."
+  },
+  {
+   "id": "S10a-145",
+   "conforms": true,
+   "evidence": "src/model.jl:818-821 an empty xbuf only advances the clock, and frame.jl:161-168 still runs run_boundary!; probe P145: TickCounter-only model under RK4 and BS3 reaches n = 4 after three frames at t = 0.3."
+  },
+  {
+   "id": "S10a-154",
+   "conforms": true,
+   "evidence": "src/stepper.jl:298-307: three stages build the third-order xtrial, a fourth evaluate! at t + h gives k₄ for the embedded error estimate (stepper.jl:314-315)."
+  },
+  {
+   "id": "S10a-163",
+   "conforms": true,
+   "evidence": "src/stepper.jl:320-323: on rejection (scaled_error > 1 or nonfinite) proposal = h·max(0.2, 0.9/cbrt(err)) < h, capped further by _starting_bound on the first attempt (stepper.jl:324)."
+  },
+  {
+   "id": "S10a-172",
+   "conforms": true,
+   "evidence": "src/stepper.jl:295-307: the starting attempt (proposal Inf) runs all four stages up to t + h; probe P037 BS3 Kepler: the first attempt over the whole 1 s frame was run and rejected before the 3.2e-6 retry."
+  },
+  {
+   "id": "S10a-181",
+   "conforms": true,
+   "evidence": "src/frame.jl:130 `steps = cld(units * denominator(lattice.bound), numerator(lattice.bound))`, bound = h_max/unit (deployment.jl:159); probe P181: h_max 1/20 over a 1/8 frame gives 3 equal steps ending 0.0417, 0.0833, 0.125."
+  },
+  {
+   "id": "S10a-190",
+   "conforms": true,
+   "evidence": "ext/ holds only RedstoneComponentArraysExt.jl, and Project.toml [weakdeps]/[extensions] name ComponentArrays alone; no OrdinaryDiffEq anywhere in src/ beyond comments citing its constants (stepper.jl:238-246)."
+  },
+  {
+   "id": "S10a-199",
+   "conforms": true,
+   "evidence": "src/model.jl:616-621 evaluate!(exec) runs sweep_1, sweep_2 (the interior variant, per its docstring at model.jl:611-615) then rhs; every RK stage calls evaluate!(model) at its stage state (stepper.jl:155-161)."
+  },
+  {
+   "id": "S10a-208",
+   "conforms": true,
+   "evidence": "src/sim.jl:2629-2631: the drain is exactly one point in each frame, at its top, and never at a t* boundary; stage! (sim.jl:2620) only stages batches for the next frame top."
+  },
+  {
+   "id": "S10a-217",
+   "conforms": true,
+   "evidence": "src/model.jl:631-637 fresh evaluate! runs rhs alone; probe P217: on seam_rig at boundary zero and after frames 1 and 2 the fresh derivative equals the swept one bit for bit (all(map(===, a, b)) true)."
+  }
+ ],
+ "notes": "Read-only verification at W (2ea85438). The probe is at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S10a_v/probe.jl. It ran twice: the first run stopped on a wrong field name in my own probe (DiagnosticError has no `.diagnostics`, it is `.carried`), and the second run completed. It loads test/RedstoneTests.jl to reuse the fixtures (Scheduled, Watched, Cliff, Kepler, BareRamp, TickCounter, seam_rig, RecordingHooks) and does not run the suite. Two rows do not conform. Both are drift. S10a-037: the §10.2 seam clause still says the loop divides a span into equal steps. That holds only for fixed-step methods since D-460. S10a-064: the §10.2 shaping sentence leaves out the cap at ⌊r/h_min⌋. D-460 and §10.5 both record that cap, which can make a step longer than its proposal near the floor. No pending.md bullet covers either row."
+}

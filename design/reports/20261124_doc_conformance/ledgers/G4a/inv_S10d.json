@@ -1,0 +1,513 @@
+{
+ "rows": [
+  {
+   "id": "S10d-040",
+   "file": "design/spec.md",
+   "line": 7755,
+   "kind": "law",
+   "claim": "Measured on the dev machine, idle, against 2 ms requests (2026-07), Julia `sleep` overshoots by about 1.4 ms median and `Libc.systemsleep` by about 0.5 ms",
+   "evidence": "probe:9 (today, not idle: sleep 1.79 ms, systemsleep 1.02 ms); design/log.md:11955 records 1.41 ms for sleep",
+   "verdict": "unverifiable",
+   "note": "A 2026-07 measurement on another machine state. The sleep figure has a log record. The systemsleep 0.5 ms has none, and today's run gives 1.0 ms."
+  },
+  {
+   "id": "S10d-054",
+   "file": "design/spec.md",
+   "line": 7783,
+   "kind": "law",
+   "claim": "margin = 2 ms sleeps about 90% of a 20 ms budget and lands within µs of the deadline at a few percent of one core",
+   "evidence": "probe:26-31: 20 ms budget, 2 ms margin, spin median 0.1 µs and wake-up 1.05 ms late",
+   "verdict": "unverifiable",
+   "note": "The 90% is arithmetic (18 of 20 ms). The landing and CPU share depend on the machine's sleep overshoot. On today's machine sleep overshoots by 1.8 ms, past the margin, so the spin is skipped and the wake lands about 1 ms late."
+  },
+  {
+   "id": "S10d-064",
+   "file": "design/spec.md",
+   "line": 7734,
+   "kind": "mech",
+   "claim": "Staggered stacks never share a boundary, so the worst-case cost of one boundary is a max rather than a sum; a frame's cost is a max too when the stagger is at least a frame",
+   "evidence": "no pacing code reads the stagger; the cost model is §6.3's and the schedule's",
+   "verdict": "unverifiable",
+   "note": "A load-shaping claim about cost, with no code that checks it. The slice's files do not hold it, and no cheap probe settles it."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S10d-001",
+   "file": "design/spec.md",
+   "line": 7689,
+   "kind": "mech",
+   "claim": "The pacer inserts waits between completed frames",
+   "evidence": "src/sim.jl:2108"
+  },
+  {
+   "id": "S10d-002",
+   "file": "design/spec.md",
+   "line": 7690,
+   "kind": "law",
+   "claim": "The pacer never reorders, skips or alters the boundary sequence",
+   "evidence": "src/sim.jl:2108 (the wait takes no part in run_frame!, src/sim.jl:2117)"
+  },
+  {
+   "id": "S10d-003",
+   "file": "design/spec.md",
+   "line": 7691,
+   "kind": "law",
+   "claim": "Paced and unpaced runs with identical input traces give bit-identical trajectories",
+   "evidence": "probe:63-68; test/test_devices.jl:529"
+  },
+  {
+   "id": "S10d-004",
+   "file": "design/spec.md",
+   "line": 7697,
+   "kind": "law",
+   "claim": "Event localization runs identically paced or unpaced",
+   "evidence": "src/frame.jl and src/model.jl hold no reference to the pacer (rg empty); src/sim.jl:2108"
+  },
+  {
+   "id": "S10d-005",
+   "file": "design/spec.md",
+   "line": 7698,
+   "kind": "mech",
+   "claim": "Sweep cost is absorbed as debt like any expensive frame",
+   "evidence": "src/control.jl:168-176"
+  },
+  {
+   "id": "S10d-006",
+   "file": "design/spec.md",
+   "line": 7703,
+   "kind": "law",
+   "claim": "The wall-clock map is piecewise affine, re-anchored at every knee",
+   "evidence": "src/control.jl:165-168"
+  },
+  {
+   "id": "S10d-007",
+   "file": "design/spec.md",
+   "line": 7705,
+   "kind": "mech",
+   "claim": "A pace change, an un-pause and a forgiveness re-anchor each make a knee",
+   "evidence": "src/control.jl:165,179; src/sim.jl:2101"
+  },
+  {
+   "id": "S10d-008",
+   "file": "design/spec.md",
+   "line": 7706,
+   "kind": "decl",
+   "claim": "τ(t) = τ_anchor + (t − t_anchor)/p",
+   "evidence": "src/control.jl:168"
+  },
+  {
+   "id": "S10d-009",
+   "file": "design/spec.md",
+   "line": 7709,
+   "kind": "mech",
+   "claim": "A live pace change re-anchors at the current (t, τ) and the new slope applies only forward",
+   "evidence": "src/control.jl:165,137-143; probe:51-53"
+  },
+  {
+   "id": "S10d-010",
+   "file": "design/spec.md",
+   "line": 7711,
+   "kind": "mech",
+   "claim": "Un-pause re-anchors",
+   "evidence": "src/sim.jl:2101-2102"
+  },
+  {
+   "id": "S10d-011",
+   "file": "design/spec.md",
+   "line": 7712,
+   "kind": "law",
+   "claim": "Debt is cleared at re-anchor",
+   "evidence": "src/control.jl:141,147-150"
+  },
+  {
+   "id": "S10d-012",
+   "file": "design/spec.md",
+   "line": 7713,
+   "kind": "mech",
+   "claim": "The counters record what was forgiven",
+   "evidence": "src/control.jl:148-149"
+  },
+  {
+   "id": "S10d-013",
+   "file": "design/spec.md",
+   "line": 7713,
+   "kind": "law",
+   "claim": "The frame that follows an anchor has no wait (its deadline is the anchor)",
+   "evidence": "src/control.jl:167; probe:41"
+  },
+  {
+   "id": "S10d-014",
+   "file": "design/spec.md",
+   "line": 7714,
+   "kind": "law",
+   "claim": "The run's first anchor is taken when its loop starts, so the first frame runs at once",
+   "evidence": "src/sim.jl:2096; probe:41"
+  },
+  {
+   "id": "S10d-015",
+   "file": "design/spec.md",
+   "line": 7717,
+   "kind": "law",
+   "claim": "The deadline law is an absolute schedule: frame deadlines come from the map",
+   "evidence": "src/control.jl:168"
+  },
+  {
+   "id": "S10d-016",
+   "file": "design/spec.md",
+   "line": 7718,
+   "kind": "mech",
+   "claim": "A frame that exceeds its wall budget leaves debt",
+   "evidence": "src/control.jl:172-176; probe:43-47 area; test/test_devices.jl:574"
+  },
+  {
+   "id": "S10d-017",
+   "file": "design/spec.md",
+   "line": 7719,
+   "kind": "mech",
+   "claim": "Later frames repay debt by running short or without waiting",
+   "evidence": "src/control.jl:172-182,184"
+  },
+  {
+   "id": "S10d-018",
+   "file": "design/spec.md",
+   "line": 7720,
+   "kind": "law",
+   "claim": "The long-run rate is exact; ms hiccups are invisible",
+   "evidence": "src/control.jl:168 (deadline off the anchor, never off the last frame); test/test_devices.jl:545"
+  },
+  {
+   "id": "S10d-019",
+   "file": "design/spec.md",
+   "line": 7723,
+   "kind": "law",
+   "claim": "Under an adaptive method a frame's cost is bounded by Δt_frame/h_min",
+   "evidence": "src/model.jl:875-882"
+  },
+  {
+   "id": "S10d-020",
+   "file": "design/spec.md",
+   "line": 7725,
+   "kind": "law",
+   "claim": "No shaped step is shorter than the floor h_min",
+   "evidence": "src/model.jl:877-882 (N capped at floor(r/h_min), clamp lifts proposal to h_min)"
+  },
+  {
+   "id": "S10d-021",
+   "file": "design/spec.md",
+   "line": 7726,
+   "kind": "law",
+   "claim": "No step makes more than attempt_budget + 1 attempts",
+   "evidence": "src/model.jl:831-846 (comment 808-812)"
+  },
+  {
+   "id": "S10d-022",
+   "file": "design/spec.md",
+   "line": 7727,
+   "kind": "law",
+   "claim": "A frame no due instant or t* splits takes at most ⌊Δt_frame/h_min⌋ steps",
+   "evidence": "src/model.jl:881-882"
+  },
+  {
+   "id": "S10d-023",
+   "file": "design/spec.md",
+   "line": 7728,
+   "kind": "law",
+   "claim": "A proposing method's per-frame work is bounded only by Δt_frame/h_min",
+   "evidence": "src/model.jl:881; src/deployment.jl:397"
+  },
+  {
+   "id": "S10d-024",
+   "file": "design/spec.md",
+   "line": 7729,
+   "kind": "law",
+   "claim": "Nothing refuses or warns when a proposing method runs paced",
+   "evidence": "probe:75-78 (paced BS3 run stopped, 0 warnings); rg 'proposing' src/sim.jl empty"
+  },
+  {
+   "id": "S10d-025",
+   "file": "design/spec.md",
+   "line": 7730,
+   "kind": "law",
+   "claim": "A frame past h_min's bound is debt like any other",
+   "evidence": "src/control.jl:172-176"
+  },
+  {
+   "id": "S10d-026",
+   "file": "design/spec.md",
+   "line": 7738,
+   "kind": "law",
+   "claim": "Debt past 5·Δt_frame/p is forgiven by re-anchor plus a warning",
+   "evidence": "src/control.jl:177-180; probe:44-50"
+  },
+  {
+   "id": "S10d-027",
+   "file": "design/spec.md",
+   "line": 7738,
+   "kind": "decl",
+   "claim": "The threshold is five frames' worth of budget, 5·Δt_frame/p",
+   "evidence": "src/control.jl:177; probe:44-50 (4.5h no, 5.5h yes)"
+  },
+  {
+   "id": "S10d-028",
+   "file": "design/spec.md",
+   "line": 7739,
+   "kind": "law",
+   "claim": "Forgiveness avoids catch-up bursts after long stalls",
+   "evidence": "src/control.jl:177-182"
+  },
+  {
+   "id": "S10d-029",
+   "file": "design/spec.md",
+   "line": 7745,
+   "kind": "law",
+   "claim": "p = ∞ is pacer-off, with no deadline",
+   "evidence": "src/control.jl:166"
+  },
+  {
+   "id": "S10d-030",
+   "file": "design/spec.md",
+   "line": 7746,
+   "kind": "law",
+   "claim": "Unpaced mode has no waits, no debt and no warnings",
+   "evidence": "src/control.jl:166; probe:63-66 (Inf run's pacer record is all zeros)"
+  },
+  {
+   "id": "S10d-031",
+   "file": "design/spec.md",
+   "line": 7747,
+   "kind": "law",
+   "claim": "Unpaced is the same execution with the waits deleted",
+   "evidence": "probe:63-66; src/sim.jl:2108"
+  },
+  {
+   "id": "S10d-032",
+   "file": "design/spec.md",
+   "line": 7751,
+   "kind": "mech",
+   "claim": "The wait is a hybrid sleep-then-spin with one knob",
+   "evidence": "src/control.jl:184-189"
+  },
+  {
+   "id": "S10d-033",
+   "file": "design/spec.md",
+   "line": 7758,
+   "kind": "mech",
+   "claim": "Sub-ms sleep requests are accepted and rounded up",
+   "evidence": "probe:10 (0.1 ms and 0.4 ms requests took at least 1 ms)"
+  },
+  {
+   "id": "S10d-034",
+   "file": "design/spec.md",
+   "line": 7759,
+   "kind": "mech",
+   "claim": "The pacer sleeps toward deadline − margin and spins the remainder",
+   "evidence": "src/control.jl:184-189"
+  },
+  {
+   "id": "S10d-035",
+   "file": "design/spec.md",
+   "line": 7762,
+   "kind": "ex",
+   "claim": "The code block runs as written and its comments hold (sleep at most once, spin to the deadline, safepoint)",
+   "evidence": "probe:18-31; src/control.jl:184-189"
+  },
+  {
+   "id": "S10d-036",
+   "file": "design/spec.md",
+   "line": 7770,
+   "kind": "law",
+   "claim": "margin is a single constant with no second threshold",
+   "evidence": "src/control.jl:67,184-189"
+  },
+  {
+   "id": "S10d-037",
+   "file": "design/spec.md",
+   "line": 7775,
+   "kind": "law",
+   "claim": "The default margin is 2 ms",
+   "evidence": "src/sim.jl:1248,1562; probe:70"
+  },
+  {
+   "id": "S10d-038",
+   "file": "design/spec.md",
+   "line": 7780,
+   "kind": "law",
+   "claim": "margin = 0 is pure sleep",
+   "evidence": "src/control.jl:184-189; probe:32 (spin about 0.1 µs)"
+  },
+  {
+   "id": "S10d-039",
+   "file": "design/spec.md",
+   "line": 7780,
+   "kind": "law",
+   "claim": "margin = 0 still gives the exact average rate through debt repayment",
+   "evidence": "src/control.jl:168,172-176"
+  },
+  {
+   "id": "S10d-041",
+   "file": "design/spec.md",
+   "line": 7785,
+   "kind": "law",
+   "claim": "margin = ∞ is pure busy-wait",
+   "evidence": "src/control.jl:185-188; src/sim.jl:420; probe:33,72 (spin 19.99 ms of 20; Inf accepted)"
+  },
+  {
+   "id": "S10d-042",
+   "file": "design/spec.md",
+   "line": 7789,
+   "kind": "law",
+   "claim": "A budget at or below the margin degenerates to pure spin (0.01 s at p = 5 is 2 ms)",
+   "evidence": "src/control.jl:185-188; probe:34 (spin 2.0 ms of 2 ms)"
+  },
+  {
+   "id": "S10d-043",
+   "file": "design/spec.md",
+   "line": 7791,
+   "kind": "mech",
+   "claim": "A wake-up past the deadline is an overrun absorbed as debt",
+   "evidence": "src/control.jl:172-176 (the next frame's lateness)"
+  },
+  {
+   "id": "S10d-044",
+   "file": "design/spec.md",
+   "line": 7794,
+   "kind": "mech",
+   "claim": "The coarse phase uses task-yielding sleep, not Libc.systemsleep",
+   "evidence": "src/control.jl:186; rg systemsleep src empty; design/log.md:16536 (D-400 unbuilt)"
+  },
+  {
+   "id": "S10d-045",
+   "file": "design/spec.md",
+   "line": 7798,
+   "kind": "law",
+   "claim": "The wait sits at the frame top, after the control plane is consulted",
+   "evidence": "src/sim.jl:2099-2109"
+  },
+  {
+   "id": "S10d-046",
+   "file": "design/spec.md",
+   "line": 7800,
+   "kind": "law",
+   "claim": "A control change issued during a wait is observed at the next frame top",
+   "evidence": "src/control.jl:163,165 (knobs read once); src/sim.jl:2103-2104"
+  },
+  {
+   "id": "S10d-047",
+   "file": "design/spec.md",
+   "line": 7802,
+   "kind": "law",
+   "claim": "The wait is an unmask point for the operator interrupt",
+   "evidence": "src/sim.jl:2106-2109 (before sigatomic_begin at 2110)"
+  },
+  {
+   "id": "S10d-048",
+   "file": "design/spec.md",
+   "line": 7804,
+   "kind": "mech",
+   "claim": "The interrupt raises out of the coarse phase's sleep",
+   "evidence": "src/control.jl:186; src/sim.jl:2108"
+  },
+  {
+   "id": "S10d-049",
+   "file": "design/spec.md",
+   "line": 7809,
+   "kind": "mech",
+   "claim": "Overrun, debt, peak debt, forgiven and wait statistics are published as framework status",
+   "evidence": "src/dataplane.jl:282-306; src/sim.jl:2840"
+  },
+  {
+   "id": "S10d-050",
+   "file": "design/spec.md",
+   "line": 7812,
+   "kind": "decl",
+   "claim": "The record carries `pace`, the pace the loop's frames run under, Inf where no frame waits",
+   "evidence": "src/dataplane.jl:283; src/control.jl:138; probe:65"
+  },
+  {
+   "id": "S10d-051",
+   "file": "design/spec.md",
+   "line": 7813,
+   "kind": "decl",
+   "claim": "The record carries `debt` and `peak_debt` in seconds",
+   "evidence": "src/dataplane.jl:284-285"
+  },
+  {
+   "id": "S10d-052",
+   "file": "design/spec.md",
+   "line": 7814,
+   "kind": "decl",
+   "claim": "`overruns` counts the frames that exceeded their budget",
+   "evidence": "src/dataplane.jl:286; src/control.jl:174"
+  },
+  {
+   "id": "S10d-053",
+   "file": "design/spec.md",
+   "line": 7815,
+   "kind": "decl",
+   "claim": "`reanchors` counts every re-anchor after the run's first",
+   "evidence": "src/dataplane.jl:287; src/control.jl:149"
+  },
+  {
+   "id": "S10d-055",
+   "file": "design/spec.md",
+   "line": 7815,
+   "kind": "decl",
+   "claim": "`forgiven` is the seconds of debt those re-anchors cleared",
+   "evidence": "src/dataplane.jl:288; src/control.jl:148"
+  },
+  {
+   "id": "S10d-056",
+   "file": "design/spec.md",
+   "line": 7816,
+   "kind": "decl",
+   "claim": "`waits` and `waited` count the frames that waited and their total wall time",
+   "evidence": "src/dataplane.jl:289-290; src/control.jl:190-191"
+  },
+  {
+   "id": "S10d-057",
+   "file": "design/spec.md",
+   "line": 7819,
+   "kind": "law",
+   "claim": "A pace change or un-pause re-anchor is counted and raises no warning",
+   "evidence": "src/control.jl:147-151,165; probe:55-57 (ring empty)"
+  },
+  {
+   "id": "S10d-058",
+   "file": "design/spec.md",
+   "line": 7820,
+   "kind": "law",
+   "claim": "The forgiveness re-anchor is counted and reports `DebtReanchor`",
+   "evidence": "src/control.jl:179-180; probe:44-50"
+  },
+  {
+   "id": "S10d-059",
+   "file": "design/spec.md",
+   "line": 7821,
+   "kind": "law",
+   "claim": "A live switch to p = ∞ re-anchors, and the debt it clears is counted as forgiven, with no warning",
+   "evidence": "src/control.jl:165,148; probe:51-53 (forgiven 0.0202 s, ring empty)"
+  },
+  {
+   "id": "S10d-060",
+   "file": "design/spec.md",
+   "line": 7827,
+   "kind": "mech",
+   "claim": "Externally injected inputs are drained at the next frame top",
+   "evidence": "src/sim.jl:2117 (the top hook drains)"
+  }
+ ],
+ "counts": {
+  "law": 38,
+  "mech": 15,
+  "decl": 8,
+  "ptr": 8,
+  "why": 6,
+  "ex": 1,
+  "surface": 0,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "decl_": 0
+ }
+}

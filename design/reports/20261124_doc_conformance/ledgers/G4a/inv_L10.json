@@ -1,0 +1,2031 @@
+{
+ "rows": [
+  {
+   "id": "L10-033",
+   "file": "design/log.md",
+   "line": 2276,
+   "kind": "decl",
+   "claim": "D-067: `capture` returns condition and time separately (lead: `capture`)",
+   "evidence": "no `capture` in src/; the state past t₀ is `checkpoint(sim)`, a `Checkpoint` whose state holds `t` and `t₀` (src/checkpoint.jl:74-85, src/sim.jl:892)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: `capture` no longer produces a condition (D-273); conditions stay time-free, and the state past t₀ is a checkpoint, which carries `t` and `t₀` (D-274).",
+   "note": "Moved by D-273 (`capture` leaves the algebra) and D-274."
+  },
+  {
+   "id": "L10-040",
+   "file": "design/log.md",
+   "line": 2783,
+   "kind": "law",
+   "claim": "D-081: the frame is the scheduling unit for tick eligibility",
+   "evidence": "src/frame.jl:131-170: due instants come from the base-tick lattice inside a frame (`_next_due`, `run_boundary!(model, due)` at a span's end); only drain, control read, pacer deadline and trace ordinal stay at the frame top",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-445 ticks are due at due instants on the base-tick lattice, which may fall inside a frame; the frame top alone keeps the drain, the control read, the pacer's deadline and the trace's ordinal.",
+   "note": "Moved by D-445, whose position names exactly the frame-top-only set (drain, control read, pacer deadline, trace ordinal) and drops tick eligibility."
+  },
+  {
+   "id": "L10-042",
+   "file": "design/log.md",
+   "line": 2784,
+   "kind": "law",
+   "claim": "D-081: the boundaries are grid tops, t* and boundary zero",
+   "evidence": "src/frame.jl:13-17 and 159-170: every step end and every due instant runs `run_boundary!` and `settled!`, so interior step ends are published boundaries too",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-445 every end of an integration step is a boundary as well (grid tops, due instants, interior step ends, t*, boundary zero).",
+   "note": "Moved by D-445 (every step end is a boundary) and D-449 (spans taken in several steps)."
+  },
+  {
+   "id": "L10-044",
+   "file": "design/log.md",
+   "line": 3927,
+   "kind": "law",
+   "claim": "D-114: the snapshot's boundary index is mirrored in the loop state the wait predicate tests",
+   "evidence": "probe:54 prints ordinal 0 beside counter 5 after a re-init; src/sim.jl:2794-2803 stamps `run.boundary` and increments the separate `control.counter`",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-230 the wait counter is a separate monotone count, never reset and not the snapshot's ordinal; the publication order (release-store before increment) stands.",
+   "note": "Moved by D-230, in this slice."
+  },
+  {
+   "id": "L10-055",
+   "file": "design/log.md",
+   "line": 4577,
+   "kind": "decl",
+   "claim": "D-132: `stop_on` is one of the stop initiation sources (lead: `stop_on`)",
+   "evidence": "no `stop_on` in src/; the advance keyword is `ignore_stop_requests` and stop requests are scanned at every publication (src/sim.jl:1562, src/sim.jl:2041-2043)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: `stop_on` retired with D-316; the source is a holding stop request, honoured unless the advance's `ignore_stop_requests` names it.",
+   "note": "Retired by D-316 (log.md:14440: 'The `stop_on` keyword and `StopFaceInvalid` retire')."
+  },
+  {
+   "id": "L10-062",
+   "file": "design/log.md",
+   "line": 4665,
+   "kind": "decl",
+   "claim": "D-133: `event_budget` is the per-frame localization allowance (lead: `event_budget`)",
+   "evidence": "probe:29 `Deployment(...; event_budget = 8)` is a MethodError; the keyword is `localization_budget` (src/deployment.jl:548, 567)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: `event_budget` is `localization_budget` since D-181; default 8 and the integer-≥-1 check stand.",
+   "note": "Renamed by D-181 (log.md:7228); D-127's annotation at log.md:4399 already records it."
+  },
+  {
+   "id": "L10-068",
+   "file": "design/log.md",
+   "line": 4671,
+   "kind": "law",
+   "claim": "D-133: the shutdown join timeout is a spec-fixed default with no user knob",
+   "evidence": "src/sim.jl:310-321: `Simulation(...; join_timeout = 5.0)`, validated as a positive real (src/sim.jl:344)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: the join timeout became the `join_timeout` keyword of `Simulation`, default 5 s (D-198).",
+   "note": "Moved by D-198, which says it amends D-133."
+  },
+  {
+   "id": "L10-072",
+   "file": "design/log.md",
+   "line": 4673,
+   "kind": "law",
+   "claim": "D-133: `margin` (2 ms) is a spec-fixed default with no user knob",
+   "evidence": "src/sim.jl:2412-2413 `margin!(sim, m)`, src/sim.jl:2436 `margin(sim)`, and the `margin` keyword of `run!`/`replay!` (src/sim.jl:1562, 1335)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: `margin` is a user knob since D-269, set by `margin!` or the `run!`/`replay!` keyword, default 2 ms.",
+   "note": "Moved by D-269 (in this slice); D-021 already called margin 'the single knob'."
+  },
+  {
+   "id": "L10-075",
+   "file": "design/log.md",
+   "line": 6010,
+   "kind": "law",
+   "claim": "D-153: the per-event loop state is the prior, a `fired` flag and a within-boundary `re-arm` flag",
+   "evidence": "src/model.jl:742-768: registers are `prior`, `last` (last-observed sample) and `count` (firings this boundary); no fired or re-arm flag",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-181 the registers are the prior, the last-observed sample and the per-boundary firing count; the fired and re-arm flags retired.",
+   "note": "Moved by D-181 (in this slice); D-153's own annotation at log.md:6030 also records the retirement."
+  },
+  {
+   "id": "L10-076",
+   "file": "design/log.md",
+   "line": 6012,
+   "kind": "law",
+   "claim": "D-153: re-arm is set when a round observes the event fired and its guard not-holding",
+   "evidence": "src/model.jl:749-768: eligibility is `!last && now` under `count < budget`; no re-arm register exists",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: re-arm retired by D-181; a fresh not-holding → holding edge on the last-observed sample makes the event eligible again.",
+   "note": "Moved by D-181."
+  },
+  {
+   "id": "L10-077",
+   "file": "design/log.md",
+   "line": 6013,
+   "kind": "law",
+   "claim": "D-153: `EventDeferred` emits at most once per event per boundary on fired ∧ re-armed ∧ holding (lead: `EventDeferred`)",
+   "evidence": "no `EventDeferred` in src/; an edge past the budget warns `FiringBudget` once per event per boundary (src/model.jl:752-759)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: `EventDeferred` retired by D-181; an edge beyond `firing_budget` is lost under a `FiringBudget` warning, at most once per event per boundary.",
+   "note": "Moved by D-181."
+  },
+  {
+   "id": "L10-126",
+   "file": "design/log.md",
+   "line": 12338,
+   "kind": "decl",
+   "claim": "D-274: the checkpoint is a `Checkpoint{T}`",
+   "evidence": "probe:80 `Checkpoint isa UnionAll` is false and `ModelState isa UnionAll` true; src/checkpoint.jl:106-110 `Checkpoint(state::ModelState{Float64}, frame, boundary)`",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-319 the scalar-parametric value is `ModelState{T}`, and `Checkpoint` is a nominal `ModelState{Float64}` beside the frame index and boundary ordinal.",
+   "note": "Moved by D-319 (split of the checkpoint into ModelState and Checkpoint)."
+  },
+  {
+   "id": "L10-135",
+   "file": "design/log.md",
+   "line": 12350,
+   "kind": "ptr",
+   "claim": "D-274: `checkpoint(sim)` is a stopped-sim service, cited as §13.7",
+   "evidence": "design/spec.md:12064 §13.7 is 'Tooling consequences: face routes and the component library'; the stopped-sim services are §14 (spec.md:11069, 17240); src/sim.jl:883 gates checkpoint as a stopped-sim read",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Cite §14 (stopped-sim services) in place of §13.7.",
+   "note": "The anchor resolves but names an unrelated section. I could not tell from history whether §13.7 once held the services, so the class is a guess."
+  },
+  {
+   "id": "L10-166",
+   "file": "design/log.md",
+   "line": 13310,
+   "kind": "law",
+   "claim": "D-290: the remainder step after a t* targets the grid point",
+   "evidence": "src/frame.jl:323-328: a fixed-step remainder runs `t_to - clock.t` to the step's end, which may be an interior step end; under a proposing method no remainder runs and the frame loop shapes the next step from t*",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-449 the remainder targets its step's end, an interior step end or a mandatory instant; under a proposing method a t* ends its step (D-460).",
+   "note": "Moved by D-449 (several steps per span) and D-460 (t* ends the step under a proposal)."
+  },
+  {
+   "id": "L10-169",
+   "file": "design/log.md",
+   "line": 13313,
+   "kind": "decl",
+   "claim": "D-290: at t* `stop_on` is checked (lead: `stop_on`)",
+   "evidence": "src/frame.jl:319 calls `settled!`, which publishes and scans the stop requests (src/sim.jl:2041-2043); no `stop_on` in src/",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: `stop_on` is the stop requests since D-316; at t* they are scanned as at every publication.",
+   "note": "Retired by D-316."
+  },
+  {
+   "id": "L10-189",
+   "file": "design/log.md",
+   "line": 19105,
+   "kind": "law",
+   "claim": "D-452: the remainder of a step after a t* is offered whole, with no proposal asked",
+   "evidence": "src/frame.jl:324-326: under a proposing backend a t* returns as a settled end and the frame loop asks `propose` again (src/frame.jl:141); only a fixed-step method takes the remainder whole (src/frame.jl:327)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-460 this holds for a fixed-step method only; under a proposing method a t* ends its step and the Model asks `propose` for the next.",
+   "note": "Moved by D-460, which lists this bullet among its rejected alternatives (log.md:19825)."
+  },
+  {
+   "id": "L10-191",
+   "file": "design/log.md",
+   "line": 19109,
+   "kind": "law",
+   "claim": "D-452: the Model refuses a shaped length that does not advance the clock, as an internal invariant",
+   "evidence": "src/model.jl:852-869: `_shaped` refuses only a NaN proposal; its comment says no shaped length fails to advance the clock because the clamp lifts it to `h_min` and the doors refuse an unresolvable clock",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-460 no such refusal exists; the clamp to `h_min` and the doors' clock checks leave no non-advancing length. The NaN refusal stands.",
+   "note": "Moved by D-460 (superseded position at log.md:19835)."
+  },
+  {
+   "id": "L10-195",
+   "file": "design/log.md",
+   "line": 19114,
+   "kind": "law",
+   "claim": "D-452: the Model clamps a proposal to `h_max` and to the span's end",
+   "evidence": "src/model.jl:875-882: the proposal is clamped into `[h_min, h_max]`, and the distance to the span's end is taken in `⌈r/cap⌉` equal steps capped at `⌊r/h_min⌋`, not clamped",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: since D-460 the Model clamps the proposal into `[h_min, h_max]` and takes the distance to the next mandatory instant in equal steps.",
+   "note": "Moved by D-460 (superseded position at log.md:19822)."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L10-001",
+   "file": "design/log.md",
+   "line": 798,
+   "kind": "law",
+   "claim": "D-017: the framework owns the simulation loop",
+   "evidence": "src/sim.jl:2088"
+  },
+  {
+   "id": "L10-002",
+   "file": "design/log.md",
+   "line": 798,
+   "kind": "decl",
+   "claim": "D-017: the stepper seam advances by an arbitrary h",
+   "evidence": "src/model.jl:797"
+  },
+  {
+   "id": "L10-003",
+   "file": "design/log.md",
+   "line": 799,
+   "kind": "mech",
+   "claim": "D-017: on-demand dense output over the last step",
+   "evidence": "src/stepper.jl:361"
+  },
+  {
+   "id": "L10-004",
+   "file": "design/log.md",
+   "line": 799,
+   "kind": "law",
+   "claim": "D-017: one-step methods only",
+   "evidence": "src/stepper.jl:22"
+  },
+  {
+   "id": "L10-005",
+   "file": "design/log.md",
+   "line": 800,
+   "kind": "mech",
+   "claim": "D-017: in-house fixed-step RK4/Heun are the first-cut backends",
+   "evidence": "src/stepper.jl:133"
+  },
+  {
+   "id": "L10-006",
+   "file": "design/log.md",
+   "line": 801,
+   "kind": "decl",
+   "claim": "D-017: OrdinaryDiffEq is not a dependency (lead: prior art)",
+   "evidence": "src/stepper.jl:238 (cited as prior art only; Project.toml has no OrdinaryDiffEq)"
+  },
+  {
+   "id": "L10-007",
+   "file": "design/log.md",
+   "line": 938,
+   "kind": "law",
+   "claim": "D-021: paced and unpaced trajectories are bit-identical",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "L10-008",
+   "file": "design/log.md",
+   "line": 939,
+   "kind": "mech",
+   "claim": "D-021: piecewise-affine wall-clock map",
+   "evidence": "src/control.jl:168"
+  },
+  {
+   "id": "L10-009",
+   "file": "design/log.md",
+   "line": 939,
+   "kind": "law",
+   "claim": "D-021: anchor re-established at a pace change",
+   "evidence": "src/control.jl:165"
+  },
+  {
+   "id": "L10-010",
+   "file": "design/log.md",
+   "line": 940,
+   "kind": "law",
+   "claim": "D-021: anchor re-established at un-pause",
+   "evidence": "src/sim.jl:2101"
+  },
+  {
+   "id": "L10-011",
+   "file": "design/log.md",
+   "line": 940,
+   "kind": "law",
+   "claim": "D-021: a re-anchor clears the debt and counts it",
+   "evidence": "src/control.jl:147"
+  },
+  {
+   "id": "L10-012",
+   "file": "design/log.md",
+   "line": 940,
+   "kind": "law",
+   "claim": "D-021: absolute deadlines, bounded debt, re-anchor on excess",
+   "evidence": "src/control.jl:177"
+  },
+  {
+   "id": "L10-013",
+   "file": "design/log.md",
+   "line": 941,
+   "kind": "law",
+   "claim": "D-021: p = ∞ is explicit pacer-off",
+   "evidence": "src/control.jl:166"
+  },
+  {
+   "id": "L10-014",
+   "file": "design/log.md",
+   "line": 942,
+   "kind": "mech",
+   "claim": "D-021: hybrid sleep-then-spin toward deadline − margin",
+   "evidence": "src/control.jl:185"
+  },
+  {
+   "id": "L10-015",
+   "file": "design/log.md",
+   "line": 942,
+   "kind": "law",
+   "claim": "D-021: margin the single knob, 0 pure sleep, ∞ pure busy-wait",
+   "evidence": "src/control.jl:185"
+  },
+  {
+   "id": "L10-016",
+   "file": "design/log.md",
+   "line": 985,
+   "kind": "mech",
+   "claim": "D-023: snapshot built private, then release-store of latest",
+   "evidence": "src/sim.jl:2797"
+  },
+  {
+   "id": "L10-017",
+   "file": "design/log.md",
+   "line": 986,
+   "kind": "mech",
+   "claim": "D-023: readers acquire-load, wait-free",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "L10-018",
+   "file": "design/log.md",
+   "line": 986,
+   "kind": "law",
+   "claim": "D-023: nothing reachable from a published snapshot is written again",
+   "evidence": "src/sim.jl:2795"
+  },
+  {
+   "id": "L10-019",
+   "file": "design/log.md",
+   "line": 987,
+   "kind": "mech",
+   "claim": "D-023: one snapshot allocated per boundary",
+   "evidence": "src/sim.jl:2793"
+  },
+  {
+   "id": "L10-020",
+   "file": "design/log.md",
+   "line": 987,
+   "kind": "mech",
+   "claim": "D-023: the log retains snapshot references",
+   "evidence": "src/sim.jl:2799"
+  },
+  {
+   "id": "L10-021",
+   "file": "design/log.md",
+   "line": 1091,
+   "kind": "mech",
+   "claim": "D-027: coarse phase is a task-yielding sleep",
+   "evidence": "src/control.jl:186"
+  },
+  {
+   "id": "L10-022",
+   "file": "design/log.md",
+   "line": 1092,
+   "kind": "law",
+   "claim": "D-027: with devices every frame yields at least once",
+   "evidence": "src/sim.jl:2107"
+  },
+  {
+   "id": "L10-023",
+   "file": "design/log.md",
+   "line": 1093,
+   "kind": "law",
+   "claim": "D-027: the spin never yields",
+   "evidence": "src/control.jl:187"
+  },
+  {
+   "id": "L10-024",
+   "file": "design/log.md",
+   "line": 1094,
+   "kind": "mech",
+   "claim": "D-027: thread budget sizing rule with a startup warning",
+   "evidence": "src/sim.jl:1647"
+  },
+  {
+   "id": "L10-025",
+   "file": "design/log.md",
+   "line": 1094,
+   "kind": "mech",
+   "claim": "D-027: per-device liveness heartbeat in the framework status",
+   "evidence": "src/sim.jl:2835"
+  },
+  {
+   "id": "L10-026",
+   "file": "design/log.md",
+   "line": 2265,
+   "kind": "law",
+   "claim": "D-067: boundary zero is the macro-sequence with an empty integrate",
+   "evidence": "src/model.jl:702"
+  },
+  {
+   "id": "L10-027",
+   "file": "design/log.md",
+   "line": 2266,
+   "kind": "law",
+   "claim": "D-067: order project, sweep, events to quiescence, due updates",
+   "evidence": "src/model.jl:652"
+  },
+  {
+   "id": "L10-028",
+   "file": "design/log.md",
+   "line": 2266,
+   "kind": "law",
+   "claim": "D-067: every tick due at boundary zero; stages publish from authored state",
+   "evidence": "src/model.jl:711"
+  },
+  {
+   "id": "L10-029",
+   "file": "design/log.md",
+   "line": 2267,
+   "kind": "mech",
+   "claim": "D-067: header capture and first snapshot at boundary zero",
+   "evidence": "src/sim.jl:851"
+  },
+  {
+   "id": "L10-030",
+   "file": "design/log.md",
+   "line": 2271,
+   "kind": "law",
+   "claim": "D-067: a boundary's update is the outgoing transition (leads z_, t_k: notation)",
+   "evidence": "src/model.jl:656"
+  },
+  {
+   "id": "L10-031",
+   "file": "design/log.md",
+   "line": 2275,
+   "kind": "decl",
+   "claim": "D-067: t₀ is an init-service argument",
+   "evidence": "src/model.jl:320"
+  },
+  {
+   "id": "L10-032",
+   "file": "design/log.md",
+   "line": 2275,
+   "kind": "law",
+   "claim": "D-067: conditions are time-free",
+   "evidence": "src/model.jl:320"
+  },
+  {
+   "id": "L10-034",
+   "file": "design/log.md",
+   "line": 2277,
+   "kind": "mech",
+   "claim": "D-067: trim iterations bypass boundaries, raw write-sweep-read",
+   "evidence": "src/trim.jl:597"
+  },
+  {
+   "id": "L10-035",
+   "file": "design/log.md",
+   "line": 2278,
+   "kind": "law",
+   "claim": "D-067: only the trim commit runs boundary zero",
+   "evidence": "src/trim.jl:725"
+  },
+  {
+   "id": "L10-036",
+   "file": "design/log.md",
+   "line": 2278,
+   "kind": "mech",
+   "claim": "D-067: a guard firing at the commit is reported",
+   "evidence": "src/trim.jl:738"
+  },
+  {
+   "id": "L10-037",
+   "file": "design/log.md",
+   "line": 2782,
+   "kind": "law",
+   "claim": "D-081: t* is a boundary, not a frame",
+   "evidence": "src/frame.jl:14"
+  },
+  {
+   "id": "L10-038",
+   "file": "design/log.md",
+   "line": 2782,
+   "kind": "law",
+   "claim": "D-081: frames are frame-grid steps",
+   "evidence": "src/frame.jl:14"
+  },
+  {
+   "id": "L10-039",
+   "file": "design/log.md",
+   "line": 2783,
+   "kind": "law",
+   "claim": "D-081: frame is the unit of input drain and pacer deadlines",
+   "evidence": "src/sim.jl:2109"
+  },
+  {
+   "id": "L10-041",
+   "file": "design/log.md",
+   "line": 2784,
+   "kind": "law",
+   "claim": "D-081: boundaries are published consistency points",
+   "evidence": "src/sim.jl:2041"
+  },
+  {
+   "id": "L10-043",
+   "file": "design/log.md",
+   "line": 3926,
+   "kind": "law",
+   "claim": "D-114: the boundary index rides in the snapshot with t",
+   "evidence": "src/sim.jl:2793"
+  },
+  {
+   "id": "L10-045",
+   "file": "design/log.md",
+   "line": 3929,
+   "kind": "law",
+   "claim": "D-114: release-store of latest precedes the counter increment under the lock",
+   "evidence": "src/sim.jl:2797"
+  },
+  {
+   "id": "L10-046",
+   "file": "design/log.md",
+   "line": 3930,
+   "kind": "law",
+   "claim": "D-114: counter > last_seen implies latest holds that boundary",
+   "evidence": "src/devices.jl:439"
+  },
+  {
+   "id": "L10-047",
+   "file": "design/log.md",
+   "line": 3931,
+   "kind": "mech",
+   "claim": "D-114: a waiter may wake onto a newer snapshot, newest-wins",
+   "evidence": "src/devices.jl:446"
+  },
+  {
+   "id": "L10-048",
+   "file": "design/log.md",
+   "line": 4423,
+   "kind": "decl",
+   "claim": "D-128: to_boundary = k runs through frame k and halts at a frame top",
+   "evidence": "src/sim.jl:1399"
+  },
+  {
+   "id": "L10-049",
+   "file": "design/log.md",
+   "line": 4425,
+   "kind": "law",
+   "claim": "D-128: a replay halt ends initialized",
+   "evidence": "src/sim.jl:1622"
+  },
+  {
+   "id": "L10-050",
+   "file": "design/log.md",
+   "line": 4426,
+   "kind": "law",
+   "claim": "D-128: exact for grid boundaries; a t* boundary is not a halt point",
+   "evidence": "src/sim.jl:1379"
+  },
+  {
+   "id": "L10-051",
+   "file": "design/log.md",
+   "line": 4427,
+   "kind": "law",
+   "claim": "D-128: StepError's pointer is the frame-entry boundary index",
+   "evidence": "src/frame.jl:96"
+  },
+  {
+   "id": "L10-052",
+   "file": "design/log.md",
+   "line": 4430,
+   "kind": "mech",
+   "claim": "D-128: replay! to k then step! re-executes the failing frame",
+   "evidence": "src/sim.jl:1399"
+  },
+  {
+   "id": "L10-053",
+   "file": "design/log.md",
+   "line": 4432,
+   "kind": "law",
+   "claim": "D-128: the trace is frame-indexed",
+   "evidence": "src/trace.jl:23"
+  },
+  {
+   "id": "L10-054",
+   "file": "design/log.md",
+   "line": 4576,
+   "kind": "law",
+   "claim": "D-132: Ctrl-C is a control-plane stop, not a failure",
+   "evidence": "src/sim.jl:2150"
+  },
+  {
+   "id": "L10-056",
+   "file": "design/log.md",
+   "line": 4578,
+   "kind": "law",
+   "claim": "D-132: an interrupt completes the current boundary first",
+   "evidence": "src/sim.jl:2110"
+  },
+  {
+   "id": "L10-057",
+   "file": "design/log.md",
+   "line": 4579,
+   "kind": "law",
+   "claim": "D-132: final snapshot, graceful tail, ends stopped",
+   "evidence": "src/sim.jl:1665"
+  },
+  {
+   "id": "L10-058",
+   "file": "design/log.md",
+   "line": 4580,
+   "kind": "law",
+   "claim": "D-132: an interrupted run is serviceable and resumable",
+   "evidence": "src/sim.jl:902"
+  },
+  {
+   "id": "L10-059",
+   "file": "design/log.md",
+   "line": 4662,
+   "kind": "decl",
+   "claim": "D-133: the semantic constants are Simulation keywords beside the algorithm",
+   "evidence": "src/sim.jl:313"
+  },
+  {
+   "id": "L10-060",
+   "file": "design/log.md",
+   "line": 4663,
+   "kind": "law",
+   "claim": "D-133: localization_tol is a relative bracket-width test (h = frame step)",
+   "evidence": "src/frame.jl:353"
+  },
+  {
+   "id": "L10-061",
+   "file": "design/log.md",
+   "line": 4665,
+   "kind": "decl",
+   "claim": "D-133: localization_tol defaults to 1e-6",
+   "evidence": "probe:25"
+  },
+  {
+   "id": "L10-063",
+   "file": "design/log.md",
+   "line": 4666,
+   "kind": "decl",
+   "claim": "D-133: the localization budget defaults to 8",
+   "evidence": "probe:25"
+  },
+  {
+   "id": "L10-064",
+   "file": "design/log.md",
+   "line": 4667,
+   "kind": "law",
+   "claim": "D-133: DeploymentInvalid on non-positive tol or non-integer budget < 1",
+   "evidence": "probe:27"
+  },
+  {
+   "id": "L10-065",
+   "file": "design/log.md",
+   "line": 4668,
+   "kind": "law",
+   "claim": "D-133: both are grid-independent, outside the grid check",
+   "evidence": "src/deployment.jl:565"
+  },
+  {
+   "id": "L10-066",
+   "file": "design/log.md",
+   "line": 4669,
+   "kind": "law",
+   "claim": "D-133: both are recorded in the header and replay-compared (set grew later)",
+   "evidence": "probe:32"
+  },
+  {
+   "id": "L10-067",
+   "file": "design/log.md",
+   "line": 4671,
+   "kind": "decl",
+   "claim": "D-133: shutdown join timeout defaults to 5 s",
+   "evidence": "probe:45"
+  },
+  {
+   "id": "L10-069",
+   "file": "design/log.md",
+   "line": 4672,
+   "kind": "law",
+   "claim": "D-133: debt forgiven past 5·h/p, no knob",
+   "evidence": "src/control.jl:177"
+  },
+  {
+   "id": "L10-070",
+   "file": "design/log.md",
+   "line": 4673,
+   "kind": "decl",
+   "claim": "D-133: heartbeat staleness 2 s, no knob",
+   "evidence": "src/dataplane.jl:309"
+  },
+  {
+   "id": "L10-071",
+   "file": "design/log.md",
+   "line": 4673,
+   "kind": "decl",
+   "claim": "D-133: margin defaults to 2 ms",
+   "evidence": "src/control.jl:74"
+  },
+  {
+   "id": "L10-073",
+   "file": "design/log.md",
+   "line": 4677,
+   "kind": "law",
+   "claim": "D-133: t_end lands on the first grid top at or past it, whole frames",
+   "evidence": "probe:61"
+  },
+  {
+   "id": "L10-074",
+   "file": "design/log.md",
+   "line": 4679,
+   "kind": "law",
+   "claim": "D-133: the termination record carries the actual final t",
+   "evidence": "probe:61"
+  },
+  {
+   "id": "L10-078",
+   "file": "design/log.md",
+   "line": 6015,
+   "kind": "law",
+   "claim": "D-153: fired-and-keeps-holding warns nothing",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "L10-079",
+   "file": "design/log.md",
+   "line": 6131,
+   "kind": "law",
+   "claim": "D-156: TrimProblem(guess = (;)) bypasses the solver",
+   "evidence": "src/trim.jl:611"
+  },
+  {
+   "id": "L10-080",
+   "file": "design/log.md",
+   "line": 6133,
+   "kind": "mech",
+   "claim": "D-156: residuals evaluated once at the baseline",
+   "evidence": "src/trim.jl:614"
+  },
+  {
+   "id": "L10-081",
+   "file": "design/log.md",
+   "line": 6133,
+   "kind": "law",
+   "claim": "D-156: the box test decides converged and commit as usual",
+   "evidence": "test/test_trim.jl:333"
+  },
+  {
+   "id": "L10-082",
+   "file": "design/log.md",
+   "line": 6135,
+   "kind": "law",
+   "claim": "D-156: empty continuous block advances t only",
+   "evidence": "probe:92"
+  },
+  {
+   "id": "L10-083",
+   "file": "design/log.md",
+   "line": 6136,
+   "kind": "law",
+   "claim": "D-156: the seam is never invoked with an empty buffer",
+   "evidence": "src/model.jl:818"
+  },
+  {
+   "id": "L10-084",
+   "file": "design/log.md",
+   "line": 6139,
+   "kind": "decl",
+   "claim": "D-156: phase_bodies always returns the four bodies",
+   "evidence": "probe:93"
+  },
+  {
+   "id": "L10-085",
+   "file": "design/log.md",
+   "line": 6140,
+   "kind": "mech",
+   "claim": "D-156: a missing phase is a no-op body (lead `ballocated`: test macro)",
+   "evidence": "src/model.jl:500"
+  },
+  {
+   "id": "L10-086",
+   "file": "design/log.md",
+   "line": 7211,
+   "kind": "law",
+   "claim": "D-181: once-per-boundary firing replaced by budgeted re-firing",
+   "evidence": "src/model.jl:745"
+  },
+  {
+   "id": "L10-087",
+   "file": "design/log.md",
+   "line": 7212,
+   "kind": "law",
+   "claim": "D-181: an event fires up to firing_budget times per boundary",
+   "evidence": "src/model.jl:752"
+  },
+  {
+   "id": "L10-088",
+   "file": "design/log.md",
+   "line": 7213,
+   "kind": "decl",
+   "claim": "D-181: firing_budget is a deployment keyword, default 4",
+   "evidence": "probe:25"
+  },
+  {
+   "id": "L10-089",
+   "file": "design/log.md",
+   "line": 7213,
+   "kind": "law",
+   "claim": "D-181: firing_budget must be an integer ≥ 1",
+   "evidence": "probe:26"
+  },
+  {
+   "id": "L10-090",
+   "file": "design/log.md",
+   "line": 7214,
+   "kind": "law",
+   "claim": "D-181: firing_budget is recorded and replay-compared",
+   "evidence": "probe:32"
+  },
+  {
+   "id": "L10-091",
+   "file": "design/log.md",
+   "line": 7214,
+   "kind": "law",
+   "claim": "D-181: eligibility is a not-holding to holding edge on last-observed",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "L10-092",
+   "file": "design/log.md",
+   "line": 7215,
+   "kind": "law",
+   "claim": "D-181: the last-observed sample starts from the prior",
+   "evidence": "src/model.jl:743"
+  },
+  {
+   "id": "L10-093",
+   "file": "design/log.md",
+   "line": 7252,
+   "kind": "law",
+   "claim": "D-182: triggers are checked against the arrival sweep",
+   "evidence": "src/frame.jl:213"
+  },
+  {
+   "id": "L10-094",
+   "file": "design/log.md",
+   "line": 7252,
+   "kind": "law",
+   "claim": "D-182: the trigger check precedes the boundary sweep",
+   "evidence": "src/frame.jl:213"
+  },
+  {
+   "id": "L10-095",
+   "file": "design/log.md",
+   "line": 7253,
+   "kind": "mech",
+   "claim": "D-182: on trigger xₙ is written back first",
+   "evidence": "src/frame.jl:254"
+  },
+  {
+   "id": "L10-096",
+   "file": "design/log.md",
+   "line": 7254,
+   "kind": "mech",
+   "claim": "D-182: one sweep at θ = 0 under post-drain u",
+   "evidence": "src/frame.jl:256"
+  },
+  {
+   "id": "L10-097",
+   "file": "design/log.md",
+   "line": 7255,
+   "kind": "mech",
+   "claim": "D-182: θ = 0 gives the left bracket value and the edge's cause",
+   "evidence": "src/frame.jl:259"
+  },
+  {
+   "id": "L10-098",
+   "file": "design/log.md",
+   "line": 7642,
+   "kind": "law",
+   "claim": "D-191: a blocked event's last-observed sample is not overwritten",
+   "evidence": "src/model.jl:768"
+  },
+  {
+   "id": "L10-099",
+   "file": "design/log.md",
+   "line": 7645,
+   "kind": "law",
+   "claim": "D-191: a still-holding blocked guard fires next round on the same edge",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "L10-100",
+   "file": "design/log.md",
+   "line": 7646,
+   "kind": "law",
+   "claim": "D-191: a falsified blocked guard records not-holding; re-rise is fresh",
+   "evidence": "src/model.jl:768"
+  },
+  {
+   "id": "L10-101",
+   "file": "design/log.md",
+   "line": 9415,
+   "kind": "law",
+   "claim": "D-230: snapshot index is the trajectory's published-boundary ordinal",
+   "evidence": "src/sim.jl:2793"
+  },
+  {
+   "id": "L10-102",
+   "file": "design/log.md",
+   "line": 9416,
+   "kind": "law",
+   "claim": "D-230: boundary zero is ordinal 0",
+   "evidence": "probe:50"
+  },
+  {
+   "id": "L10-103",
+   "file": "design/log.md",
+   "line": 9416,
+   "kind": "law",
+   "claim": "D-230: every later publication counts one",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "L10-104",
+   "file": "design/log.md",
+   "line": 9417,
+   "kind": "law",
+   "claim": "D-230: a new trajectory restarts the ordinal",
+   "evidence": "probe:54"
+  },
+  {
+   "id": "L10-105",
+   "file": "design/log.md",
+   "line": 9417,
+   "kind": "law",
+   "claim": "D-230: the wait counter is separate, monotone, never reset",
+   "evidence": "probe:54"
+  },
+  {
+   "id": "L10-106",
+   "file": "design/log.md",
+   "line": 11897,
+   "kind": "decl",
+   "claim": "D-269: pace!/margin! work from any task in any lifecycle state",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "L10-107",
+   "file": "design/log.md",
+   "line": 11898,
+   "kind": "decl",
+   "claim": "D-269: pace(sim) and margin(sim) read the knobs",
+   "evidence": "src/sim.jl:2424"
+  },
+  {
+   "id": "L10-108",
+   "file": "design/log.md",
+   "line": 11898,
+   "kind": "decl",
+   "claim": "D-269: run! and replay! take pace and margin keywords",
+   "evidence": "probe:44"
+  },
+  {
+   "id": "L10-109",
+   "file": "design/log.md",
+   "line": 11899,
+   "kind": "law",
+   "claim": "D-269: run!/replay! write the knobs at entry",
+   "evidence": "src/sim.jl:1573"
+  },
+  {
+   "id": "L10-110",
+   "file": "design/log.md",
+   "line": 11900,
+   "kind": "decl",
+   "claim": "D-269: step! takes neither knob",
+   "evidence": "probe:43"
+  },
+  {
+   "id": "L10-111",
+   "file": "design/log.md",
+   "line": 11900,
+   "kind": "law",
+   "claim": "D-269: step! never waits",
+   "evidence": "src/sim.jl:2265"
+  },
+  {
+   "id": "L10-112",
+   "file": "design/log.md",
+   "line": 11900,
+   "kind": "law",
+   "claim": "D-269: pace is a positive real, Inf admitted",
+   "evidence": "probe:38"
+  },
+  {
+   "id": "L10-113",
+   "file": "design/log.md",
+   "line": 11901,
+   "kind": "law",
+   "claim": "D-269: margin is a non-negative real, Inf admitted",
+   "evidence": "probe:40"
+  },
+  {
+   "id": "L10-114",
+   "file": "design/log.md",
+   "line": 11901,
+   "kind": "law",
+   "claim": "D-269: other values refused as ArgumentInvalid",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "L10-115",
+   "file": "design/log.md",
+   "line": 11903,
+   "kind": "decl",
+   "claim": "D-269: pace defaults to Inf for run! and replay!",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "L10-116",
+   "file": "design/log.md",
+   "line": 11904,
+   "kind": "law",
+   "claim": "D-269: the loop reads the control plane at frame top alone",
+   "evidence": "src/sim.jl:2099"
+  },
+  {
+   "id": "L10-117",
+   "file": "design/log.md",
+   "line": 11905,
+   "kind": "law",
+   "claim": "D-269: a change during a wait lands at the next frame top",
+   "evidence": "src/control.jl:164"
+  },
+  {
+   "id": "L10-118",
+   "file": "design/log.md",
+   "line": 11906,
+   "kind": "law",
+   "claim": "D-269: the pause block is the one wait woken at once",
+   "evidence": "src/control.jl:102"
+  },
+  {
+   "id": "L10-119",
+   "file": "design/log.md",
+   "line": 11907,
+   "kind": "law",
+   "claim": "D-269: the frame after an anchor has no wait",
+   "evidence": "src/control.jl:167"
+  },
+  {
+   "id": "L10-120",
+   "file": "design/log.md",
+   "line": 11908,
+   "kind": "law",
+   "claim": "D-269: the run's first anchor is taken when its loop starts",
+   "evidence": "src/sim.jl:2096"
+  },
+  {
+   "id": "L10-121",
+   "file": "design/log.md",
+   "line": 11909,
+   "kind": "mech",
+   "claim": "D-269: the pacer is created per run! call",
+   "evidence": "src/sim.jl:1638"
+  },
+  {
+   "id": "L10-122",
+   "file": "design/log.md",
+   "line": 11910,
+   "kind": "mech",
+   "claim": "D-269: the pacer is passed to the loop and to publication",
+   "evidence": "src/sim.jl:1658"
+  },
+  {
+   "id": "L10-123",
+   "file": "design/log.md",
+   "line": 11910,
+   "kind": "law",
+   "claim": "D-269: no field of plane, run or control holds the pacer",
+   "evidence": "src/control.jl:62"
+  },
+  {
+   "id": "L10-124",
+   "file": "design/log.md",
+   "line": 11912,
+   "kind": "decl",
+   "claim": "D-269: the published pacer record has the eight named fields",
+   "evidence": "probe:72"
+  },
+  {
+   "id": "L10-125",
+   "file": "design/log.md",
+   "line": 11913,
+   "kind": "decl",
+   "claim": "D-269: DebtReanchor carries forgiven debt, t and τ",
+   "evidence": "src/diagnostics.jl:1658"
+  },
+  {
+   "id": "L10-127",
+   "file": "design/log.md",
+   "line": 12338,
+   "kind": "mech",
+   "claim": "D-274: a checkpoint is the state at a frame top",
+   "evidence": "src/model.jl:1203"
+  },
+  {
+   "id": "L10-128",
+   "file": "design/log.md",
+   "line": 12339,
+   "kind": "mech",
+   "claim": "D-274: taken by checkpoint(sim) and by init!",
+   "evidence": "src/sim.jl:856"
+  },
+  {
+   "id": "L10-129",
+   "file": "design/log.md",
+   "line": 12339,
+   "kind": "mech",
+   "claim": "D-274: put back by restore!",
+   "evidence": "src/sim.jl:1063"
+  },
+  {
+   "id": "L10-130",
+   "file": "design/log.md",
+   "line": 12340,
+   "kind": "law",
+   "claim": "D-274: the checkpoint is the trace's header",
+   "evidence": "probe:87"
+  },
+  {
+   "id": "L10-131",
+   "file": "design/log.md",
+   "line": 12340,
+   "kind": "mech",
+   "claim": "D-274: replay is a restore followed by the feed",
+   "evidence": "src/sim.jl:1394"
+  },
+  {
+   "id": "L10-132",
+   "file": "design/log.md",
+   "line": 12342,
+   "kind": "decl",
+   "claim": "D-274: holds x, s, m, table, priors, clock, fingerprint, deployment",
+   "evidence": "probe:79"
+  },
+  {
+   "id": "L10-133",
+   "file": "design/log.md",
+   "line": 12346,
+   "kind": "law",
+   "claim": "D-274: derivative buffer, arrival pair, samples, cursor stay out",
+   "evidence": "probe:79"
+  },
+  {
+   "id": "L10-134",
+   "file": "design/log.md",
+   "line": 12348,
+   "kind": "mech",
+   "claim": "D-274: the seam's checkpoint hook is empty for a fixed-step method",
+   "evidence": "src/stepper.jl:144"
+  },
+  {
+   "id": "L10-136",
+   "file": "design/log.md",
+   "line": 12350,
+   "kind": "law",
+   "claim": "D-274: checkpoint legal initialized/stopped, refused running",
+   "evidence": "src/sim.jl:902"
+  },
+  {
+   "id": "L10-137",
+   "file": "design/log.md",
+   "line": 12352,
+   "kind": "law",
+   "claim": "D-274: checkpoint refused mid-frame after a t* stop",
+   "evidence": "src/model.jl:1203"
+  },
+  {
+   "id": "L10-138",
+   "file": "design/log.md",
+   "line": 12354,
+   "kind": "law",
+   "claim": "D-274: restore! checks the fingerprint",
+   "evidence": "src/sim.jl:1071"
+  },
+  {
+   "id": "L10-139",
+   "file": "design/log.md",
+   "line": 12355,
+   "kind": "mech",
+   "claim": "D-274: restore! copies back, opens a run, publishes one snapshot",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "L10-140",
+   "file": "design/log.md",
+   "line": 12356,
+   "kind": "law",
+   "claim": "D-274: restore runs no boundary zero, sweep, guard, update or prior reset",
+   "evidence": "src/checkpoint.jl:118"
+  },
+  {
+   "id": "L10-141",
+   "file": "design/log.md",
+   "line": 12357,
+   "kind": "law",
+   "claim": "D-274: the next frame is the original's next frame",
+   "evidence": "probe:86"
+  },
+  {
+   "id": "L10-142",
+   "file": "design/log.md",
+   "line": 12359,
+   "kind": "law",
+   "claim": "D-274: the boundary ordinal continues after restore",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "L10-143",
+   "file": "design/log.md",
+   "line": 12360,
+   "kind": "mech",
+   "claim": "D-274: header taken at end of boundary zero after first publication",
+   "evidence": "probe:87"
+  },
+  {
+   "id": "L10-144",
+   "file": "design/log.md",
+   "line": 12361,
+   "kind": "decl",
+   "claim": "D-274: TraceHeader retires into the checkpoint (lead)",
+   "evidence": "probe:87"
+  },
+  {
+   "id": "L10-145",
+   "file": "design/log.md",
+   "line": 12362,
+   "kind": "mech",
+   "claim": "D-274: header stores and root inputs are values",
+   "evidence": "src/checkpoint.jl:74"
+  },
+  {
+   "id": "L10-146",
+   "file": "design/log.md",
+   "line": 12363,
+   "kind": "mech",
+   "claim": "D-274: replay restores the header and feeds from frame 1",
+   "evidence": "src/sim.jl:1399"
+  },
+  {
+   "id": "L10-147",
+   "file": "design/log.md",
+   "line": 12365,
+   "kind": "law",
+   "claim": "D-274: init! is the only door that runs boundary zero",
+   "evidence": "src/model.jl:700"
+  },
+  {
+   "id": "L10-148",
+   "file": "design/log.md",
+   "line": 12366,
+   "kind": "mech",
+   "claim": "D-274: parametric what-if is init! then the batches, header aside",
+   "evidence": "src/sim.jl:1288"
+  },
+  {
+   "id": "L10-149",
+   "file": "design/log.md",
+   "line": 12371,
+   "kind": "mech",
+   "claim": "D-274: linearize's default point is the checkpoint in scratch",
+   "evidence": "src/linearize.jl:311"
+  },
+  {
+   "id": "L10-150",
+   "file": "design/log.md",
+   "line": 12373,
+   "kind": "mech",
+   "claim": "D-274: frozen tier's cells are the checkpoint's held cells",
+   "evidence": "src/linearize.jl:347"
+  },
+  {
+   "id": "L10-151",
+   "file": "design/log.md",
+   "line": 12374,
+   "kind": "decl",
+   "claim": "D-274: about = <condition> stays",
+   "evidence": "src/linearize.jl:266"
+  },
+  {
+   "id": "L10-152",
+   "file": "design/log.md",
+   "line": 12376,
+   "kind": "law",
+   "claim": "D-274: a restore from another activation is refused by dispatch",
+   "evidence": "src/sim.jl:1097"
+  },
+  {
+   "id": "L10-153",
+   "file": "design/log.md",
+   "line": 12378,
+   "kind": "law",
+   "claim": "D-274: a boundary-zero throw leaves no trace or checkpoint; built",
+   "evidence": "src/model.jl:337"
+  },
+  {
+   "id": "L10-154",
+   "file": "design/log.md",
+   "line": 12379,
+   "kind": "mech",
+   "claim": "D-274: the run init! opened stays behind, empty",
+   "evidence": "src/sim.jl:846"
+  },
+  {
+   "id": "L10-155",
+   "file": "design/log.md",
+   "line": 12381,
+   "kind": "law",
+   "claim": "D-274: frame one shares pointer 0; host tells the two apart",
+   "evidence": "src/frame.jl:96"
+  },
+  {
+   "id": "L10-156",
+   "file": "design/log.md",
+   "line": 12382,
+   "kind": "mech",
+   "claim": "D-274: restore to the pointer then step! holds from pointer 0",
+   "evidence": "src/sim.jl:1394"
+  },
+  {
+   "id": "L10-157",
+   "file": "design/log.md",
+   "line": 13297,
+   "kind": "law",
+   "claim": "D-290: a guard over u and m alone is detected exactly",
+   "evidence": "src/frame.jl:92"
+  },
+  {
+   "id": "L10-158",
+   "file": "design/log.md",
+   "line": 13298,
+   "kind": "ex",
+   "claim": "D-290: gate idiom (gate) ? σ : -one(σ) (illustration)",
+   "evidence": "src/frame.jl:221"
+  },
+  {
+   "id": "L10-159",
+   "file": "design/log.md",
+   "line": 13300,
+   "kind": "law",
+   "claim": "D-290: the frame-top drain is the sole source of θ = 0 disagreement",
+   "evidence": "src/frame.jl:250"
+  },
+  {
+   "id": "L10-160",
+   "file": "design/log.md",
+   "line": 13302,
+   "kind": "law",
+   "claim": "D-290: σ₀ not-holding pays ẋₙ₊₁ and the interpolant and root-finds",
+   "evidence": "src/frame.jl:273"
+  },
+  {
+   "id": "L10-161",
+   "file": "design/log.md",
+   "line": 13303,
+   "kind": "law",
+   "claim": "D-290: σ₀ holding discards, fires at the boundary, no budget, no warning",
+   "evidence": "src/frame.jl:262"
+  },
+  {
+   "id": "L10-162",
+   "file": "design/log.md",
+   "line": 13307,
+   "kind": "law",
+   "claim": "D-290: the root-finder returns the holding endpoint",
+   "evidence": "src/frame.jl:392"
+  },
+  {
+   "id": "L10-163",
+   "file": "design/log.md",
+   "line": 13307,
+   "kind": "law",
+   "claim": "D-290: t* = tₙ impossible; the guard holds at t*",
+   "evidence": "src/frame.jl:291"
+  },
+  {
+   "id": "L10-164",
+   "file": "design/log.md",
+   "line": 13309,
+   "kind": "law",
+   "claim": "D-290: t* = tₙ₊₁ degenerates to the step-end boundary, one snapshot",
+   "evidence": "src/frame.jl:292"
+  },
+  {
+   "id": "L10-165",
+   "file": "design/log.md",
+   "line": 13310,
+   "kind": "law",
+   "claim": "D-290: grid times are indexed, never accumulated",
+   "evidence": "src/frame.jl:136"
+  },
+  {
+   "id": "L10-167",
+   "file": "design/log.md",
+   "line": 13312,
+   "kind": "law",
+   "claim": "D-290: the full §10.6 iteration runs at t*",
+   "evidence": "src/frame.jl:313"
+  },
+  {
+   "id": "L10-168",
+   "file": "design/log.md",
+   "line": 13312,
+   "kind": "law",
+   "claim": "D-290: a snapshot publishes and the counter increments at t*",
+   "evidence": "src/frame.jl:319"
+  },
+  {
+   "id": "L10-170",
+   "file": "design/log.md",
+   "line": 13313,
+   "kind": "law",
+   "claim": "D-290: ticks are never due at t*",
+   "evidence": "src/frame.jl:313"
+  },
+  {
+   "id": "L10-171",
+   "file": "design/log.md",
+   "line": 13314,
+   "kind": "law",
+   "claim": "D-290: staged inputs are not drained at t*",
+   "evidence": "src/frame.jl:92"
+  },
+  {
+   "id": "L10-172",
+   "file": "design/log.md",
+   "line": 13314,
+   "kind": "law",
+   "claim": "D-290: a t* publication is not separately paced",
+   "evidence": "src/sim.jl:2109"
+  },
+  {
+   "id": "L10-173",
+   "file": "design/log.md",
+   "line": 13315,
+   "kind": "law",
+   "claim": "D-290: the trace stays frame-indexed",
+   "evidence": "src/trace.jl:23"
+  },
+  {
+   "id": "L10-174",
+   "file": "design/log.md",
+   "line": 13424,
+   "kind": "law",
+   "claim": "D-293: no snapshot is published mid-step",
+   "evidence": "src/frame.jl:163"
+  },
+  {
+   "id": "L10-175",
+   "file": "design/log.md",
+   "line": 13425,
+   "kind": "mech",
+   "claim": "D-293: external readers acquire-load the snapshot",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "L10-176",
+   "file": "design/log.md",
+   "line": 13426,
+   "kind": "law",
+   "claim": "D-293: readers see the table only at boundaries",
+   "evidence": "src/sim.jl:2797"
+  },
+  {
+   "id": "L10-177",
+   "file": "design/log.md",
+   "line": 13444,
+   "kind": "law",
+   "claim": "D-294: the pacer's wait is an unmask point",
+   "evidence": "src/sim.jl:2108"
+  },
+  {
+   "id": "L10-178",
+   "file": "design/log.md",
+   "line": 13446,
+   "kind": "mech",
+   "claim": "D-294: a signal raises out of the coarse sleep",
+   "evidence": "src/control.jl:186"
+  },
+  {
+   "id": "L10-179",
+   "file": "design/log.md",
+   "line": 13447,
+   "kind": "law",
+   "claim": "D-294: no separate threshold for the sleep's resolution",
+   "evidence": "src/control.jl:185"
+  },
+  {
+   "id": "L10-180",
+   "file": "design/log.md",
+   "line": 13449,
+   "kind": "law",
+   "claim": "D-294: the spin takes a GC.safepoint per iteration",
+   "evidence": "src/control.jl:188"
+  },
+  {
+   "id": "L10-181",
+   "file": "design/log.md",
+   "line": 13449,
+   "kind": "law",
+   "claim": "D-294: the spin stays non-yielding",
+   "evidence": "src/control.jl:187"
+  },
+  {
+   "id": "L10-182",
+   "file": "design/log.md",
+   "line": 13451,
+   "kind": "law",
+   "claim": "D-294: switch to pace = Inf re-anchors, forgives and counts debt",
+   "evidence": "src/control.jl:165"
+  },
+  {
+   "id": "L10-183",
+   "file": "design/log.md",
+   "line": 19095,
+   "kind": "decl",
+   "claim": "D-452: the seam is a protocol of seven calls",
+   "evidence": "src/stepper.jl:4"
+  },
+  {
+   "id": "L10-184",
+   "file": "design/log.md",
+   "line": 19095,
+   "kind": "law",
+   "claim": "D-452: the Model owns length, attempts, commit, clock, notice",
+   "evidence": "src/model.jl:814"
+  },
+  {
+   "id": "L10-185",
+   "file": "design/log.md",
+   "line": 19099,
+   "kind": "decl",
+   "claim": "D-452: the backend answers the seven named calls",
+   "evidence": "src/stepper.jl:58"
+  },
+  {
+   "id": "L10-186",
+   "file": "design/log.md",
+   "line": 19102,
+   "kind": "law",
+   "claim": "D-452: a non-proposing method takes equal steps and always accepts",
+   "evidence": "src/frame.jl:142"
+  },
+  {
+   "id": "L10-187",
+   "file": "design/log.md",
+   "line": 19103,
+   "kind": "decl",
+   "claim": "D-452: attempt! returns only whether the backend accepts",
+   "evidence": "src/stepper.jl:166"
+  },
+  {
+   "id": "L10-188",
+   "file": "design/log.md",
+   "line": 19104,
+   "kind": "law",
+   "claim": "D-452: propose read before every step and after every rejection",
+   "evidence": "src/model.jl:847"
+  },
+  {
+   "id": "L10-190",
+   "file": "design/log.md",
+   "line": 19107,
+   "kind": "law",
+   "claim": "D-452: no proposal asked of a model with no continuous state",
+   "evidence": "src/frame.jl:141"
+  },
+  {
+   "id": "L10-192",
+   "file": "design/log.md",
+   "line": 19110,
+   "kind": "law",
+   "claim": "D-452: a NaN proposal is refused as an internal invariant",
+   "evidence": "src/model.jl:868"
+  },
+  {
+   "id": "L10-193",
+   "file": "design/log.md",
+   "line": 19111,
+   "kind": "law",
+   "claim": "D-452: propose, checkpoint pair, reset_stepper! have no default",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "L10-194",
+   "file": "design/log.md",
+   "line": 19112,
+   "kind": "law",
+   "claim": "D-452: fixed-step answers nothing and does nothing at reset",
+   "evidence": "probe:20"
+  },
+  {
+   "id": "L10-196",
+   "file": "design/log.md",
+   "line": 19115,
+   "kind": "law",
+   "claim": "D-452: a step reaching the span's end takes its clock, else t + length",
+   "evidence": "src/model.jl:917"
+  },
+  {
+   "id": "L10-197",
+   "file": "design/log.md",
+   "line": 19117,
+   "kind": "mech",
+   "claim": "D-452: an attempt writes the step's end into a trial buffer",
+   "evidence": "src/stepper.jl:163"
+  },
+  {
+   "id": "L10-198",
+   "file": "design/log.md",
+   "line": 19118,
+   "kind": "law",
+   "claim": "D-452: acceptance writes clock, checks nonfinite, copies trial",
+   "evidence": "src/model.jl:835"
+  },
+  {
+   "id": "L10-199",
+   "file": "design/log.md",
+   "line": 19119,
+   "kind": "law",
+   "claim": "D-452: rejection restores start and clock, asks a new proposal",
+   "evidence": "src/model.jl:840"
+  },
+  {
+   "id": "L10-200",
+   "file": "design/log.md",
+   "line": 19121,
+   "kind": "law",
+   "claim": "D-452: the next attempt's first evaluation sweeps",
+   "evidence": "src/model.jl:842"
+  },
+  {
+   "id": "L10-201",
+   "file": "design/log.md",
+   "line": 19122,
+   "kind": "mech",
+   "claim": "D-452: attempts counted; the cursor records the ordinal",
+   "evidence": "src/model.jl:827"
+  },
+  {
+   "id": "L10-202",
+   "file": "design/log.md",
+   "line": 19123,
+   "kind": "mech",
+   "claim": "D-452: a rendered cursor names the attempt past the first",
+   "evidence": "src/diagnostics.jl:268"
+  },
+  {
+   "id": "L10-203",
+   "file": "design/log.md",
+   "line": 19125,
+   "kind": "law",
+   "claim": "D-452: notice where a handler fired or a tick ran, boundary zero too",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "L10-204",
+   "file": "design/log.md",
+   "line": 19126,
+   "kind": "law",
+   "claim": "D-452: notice at a frame top whose drain wrote",
+   "evidence": "src/frame.jl:93"
+  },
+  {
+   "id": "L10-205",
+   "file": "design/log.md",
+   "line": 19127,
+   "kind": "law",
+   "claim": "D-452: notice when overlay! settles",
+   "evidence": "src/model.jl:474"
+  },
+  {
+   "id": "L10-206",
+   "file": "design/log.md",
+   "line": 19127,
+   "kind": "law",
+   "claim": "D-452: the notice arrives before its boundary's settled!",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "L10-207",
+   "file": "design/log.md",
+   "line": 19128,
+   "kind": "law",
+   "claim": "D-452: an advance's first frame and a restore raise no notice",
+   "evidence": "src/checkpoint.jl:131"
+  },
+  {
+   "id": "L10-208",
+   "file": "design/log.md",
+   "line": 19130,
+   "kind": "decl",
+   "claim": "D-452: frame_top! returns a Bool, whether it wrote",
+   "evidence": "src/frame.jl:92"
+  },
+  {
+   "id": "L10-209",
+   "file": "design/log.md",
+   "line": 19132,
+   "kind": "law",
+   "claim": "D-452: table fresh when continued and the hook wrote nothing",
+   "evidence": "src/frame.jl:94"
+  },
+  {
+   "id": "L10-210",
+   "file": "design/log.md",
+   "line": 19133,
+   "kind": "law",
+   "claim": "D-452: an advance continues frames after its first; frame! never",
+   "evidence": "src/sim.jl:2114"
+  },
+  {
+   "id": "L10-211",
+   "file": "design/log.md",
+   "line": 19135,
+   "kind": "decl",
+   "claim": "D-452: ModelState holds the stepper's carried state",
+   "evidence": "probe:79"
+  },
+  {
+   "id": "L10-212",
+   "file": "design/log.md",
+   "line": 19136,
+   "kind": "law",
+   "claim": "D-452: a restore writes the carried state back",
+   "evidence": "src/checkpoint.jl:131"
+  },
+  {
+   "id": "L10-213",
+   "file": "design/log.md",
+   "line": 19137,
+   "kind": "law",
+   "claim": "D-452: init! calls reset_stepper! before boundary zero",
+   "evidence": "src/model.jl:334"
+  },
+  {
+   "id": "L10-214",
+   "file": "design/log.md",
+   "line": 19138,
+   "kind": "law",
+   "claim": "D-452: reset puts the carried state back as bound",
+   "evidence": "probe:19"
+  },
+  {
+   "id": "L10-215",
+   "file": "design/log.md",
+   "line": 19843,
+   "kind": "decl",
+   "claim": "D-461: BS3(; reltol = 1e-3, abstol = 1e-6)",
+   "evidence": "probe:11"
+  },
+  {
+   "id": "L10-216",
+   "file": "design/log.md",
+   "line": 19843,
+   "kind": "mech",
+   "claim": "D-461: Bogacki–Shampine 3(2) under PI control",
+   "evidence": "src/stepper.jl:259"
+  },
+  {
+   "id": "L10-217",
+   "file": "design/log.md",
+   "line": 19847,
+   "kind": "law",
+   "claim": "D-461: tolerances compared as part of the algorithm's value",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "L10-218",
+   "file": "design/log.md",
+   "line": 19848,
+   "kind": "law",
+   "claim": "D-461: a non-positive or non-finite tolerance is ArgumentInvalid",
+   "evidence": "probe:12"
+  },
+  {
+   "id": "L10-219",
+   "file": "design/log.md",
+   "line": 19849,
+   "kind": "decl",
+   "claim": "D-461: token and stepper are two types",
+   "evidence": "src/stepper.jl:266"
+  },
+  {
+   "id": "L10-220",
+   "file": "design/log.md",
+   "line": 19850,
+   "kind": "decl",
+   "claim": "D-461: controller constants are fixed, never keywords",
+   "evidence": "src/deployment.jl:427"
+  },
+  {
+   "id": "L10-221",
+   "file": "design/log.md",
+   "line": 19852,
+   "kind": "law",
+   "claim": "D-461: gains 7/(10k) and 2/(5k) at k = 3",
+   "evidence": "src/stepper.jl:252"
+  },
+  {
+   "id": "L10-222",
+   "file": "design/log.md",
+   "line": 19853,
+   "kind": "law",
+   "claim": "D-461: safety factor 0.9",
+   "evidence": "src/stepper.jl:248"
+  },
+  {
+   "id": "L10-223",
+   "file": "design/log.md",
+   "line": 19853,
+   "kind": "law",
+   "claim": "D-461: each factor inside [0.2, 10]",
+   "evidence": "src/stepper.jl:329"
+  },
+  {
+   "id": "L10-224",
+   "file": "design/log.md",
+   "line": 19853,
+   "kind": "law",
+   "claim": "D-461: memory floor 1e-4",
+   "evidence": "src/stepper.jl:330"
+  },
+  {
+   "id": "L10-225",
+   "file": "design/log.md",
+   "line": 19854,
+   "kind": "law",
+   "claim": "D-461: the strongest shrink is 0.2",
+   "evidence": "src/stepper.jl:251"
+  },
+  {
+   "id": "L10-226",
+   "file": "design/log.md",
+   "line": 19855,
+   "kind": "law",
+   "claim": "D-461: with no history the integral gain alone proposes",
+   "evidence": "src/stepper.jl:327"
+  },
+  {
+   "id": "L10-227",
+   "file": "design/log.md",
+   "line": 19856,
+   "kind": "law",
+   "claim": "D-461: a notice clears history and keeps the proposal",
+   "evidence": "probe:18"
+  },
+  {
+   "id": "L10-228",
+   "file": "design/log.md",
+   "line": 19857,
+   "kind": "law",
+   "claim": "D-461: a rejection uses the integral gain and keeps history",
+   "evidence": "src/stepper.jl:321"
+  },
+  {
+   "id": "L10-229",
+   "file": "design/log.md",
+   "line": 19859,
+   "kind": "law",
+   "claim": "D-461: error test |err| ≤ abstol + reltol·max(|xₙ|, |xₙ₊₁|)",
+   "evidence": "src/stepper.jl:316"
+  },
+  {
+   "id": "L10-230",
+   "file": "design/log.md",
+   "line": 19860,
+   "kind": "law",
+   "claim": "D-461: the norm is the maximum over the state",
+   "evidence": "src/stepper.jl:317"
+  },
+  {
+   "id": "L10-231",
+   "file": "design/log.md",
+   "line": 19861,
+   "kind": "law",
+   "claim": "D-461: the error reads values, never Dual partials",
+   "evidence": "src/stepper.jl:313"
+  },
+  {
+   "id": "L10-232",
+   "file": "design/log.md",
+   "line": 19862,
+   "kind": "law",
+   "claim": "D-461: a nonfinite estimate or trial rejects at the strongest shrink",
+   "evidence": "src/stepper.jl:318"
+  },
+  {
+   "id": "L10-233",
+   "file": "design/log.md",
+   "line": 19864,
+   "kind": "decl",
+   "claim": "D-461: checkpoint pair is proposal and memory, two Float64s",
+   "evidence": "src/stepper.jl:281"
+  },
+  {
+   "id": "L10-234",
+   "file": "design/log.md",
+   "line": 19865,
+   "kind": "law",
+   "claim": "D-461: reset gives an infinite proposal and no memory",
+   "evidence": "probe:19"
+  },
+  {
+   "id": "L10-235",
+   "file": "design/log.md",
+   "line": 19866,
+   "kind": "law",
+   "claim": "D-461: the first attempt takes what h_max and the span allow",
+   "evidence": "src/model.jl:880"
+  },
+  {
+   "id": "L10-236",
+   "file": "design/log.md",
+   "line": 19867,
+   "kind": "law",
+   "claim": "D-461: a rejected first attempt proposes at most the starting bound",
+   "evidence": "src/stepper.jl:324"
+  },
+  {
+   "id": "L10-237",
+   "file": "design/log.md",
+   "line": 19868,
+   "kind": "law",
+   "claim": "D-461: starting bound 0.8·reltol^(1/3) of max(|xᵢ|, abstol/reltol) (lead ode23: prior art)",
+   "evidence": "src/stepper.jl:338"
+  },
+  {
+   "id": "L10-238",
+   "file": "design/log.md",
+   "line": 19870,
+   "kind": "law",
+   "claim": "D-461: a vanishing derivative gives no bound",
+   "evidence": "src/stepper.jl:346"
+  },
+  {
+   "id": "L10-239",
+   "file": "design/log.md",
+   "line": 19870,
+   "kind": "mech",
+   "claim": "D-461: the infinite proposal is the starting state, carried by the pair",
+   "evidence": "src/stepper.jl:295"
+  },
+  {
+   "id": "L10-240",
+   "file": "design/log.md",
+   "line": 19872,
+   "kind": "mech",
+   "claim": "D-461: every attempt pays all four stages",
+   "evidence": "src/stepper.jl:298"
+  },
+  {
+   "id": "L10-241",
+   "file": "design/log.md",
+   "line": 19873,
+   "kind": "mech",
+   "claim": "D-461: the fourth stage serves the error estimate alone",
+   "evidence": "src/stepper.jl:314"
+  },
+  {
+   "id": "L10-242",
+   "file": "design/log.md",
+   "line": 19873,
+   "kind": "mech",
+   "claim": "D-461: the next step's first stage is evaluated again",
+   "evidence": "src/stepper.jl:298"
+  },
+  {
+   "id": "L10-243",
+   "file": "design/log.md",
+   "line": 19874,
+   "kind": "mech",
+   "claim": "D-461: the generic cubic Hermite is the dense output",
+   "evidence": "src/stepper.jl:361"
+  }
+ ],
+ "counts": {
+  "law": 157,
+  "mech": 48,
+  "decl": 36,
+  "ptr": 13,
+  "why": 10,
+  "ex": 1
+ },
+ "notes": "Slice L10: 23 ratified entries, Status and Position only, read in worktree W at 2ea85438. Probe at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L10/probe.jl. Output cited as probe:<line> is the line of the P(...) call that printed the value. I ran it three times; the first two runs failed on probe-helper bugs.\n\nResults: 18 findings, 0 unverifiable, 225 ok.\n- 17 findings are drift. Each names the later entry that moved the rule: D-181, D-198, D-230, D-269, D-273, D-316, D-319, D-445, D-449 and D-460.\n- The other finding is a § citation that resolves but points to the wrong section (L10-135, D-274 cites §13.7 where the stopped-sim services are §14). I guessed its class as deviation.\n- Every lead has an entry:\n  - Findings: `capture`, `event_budget`, `EventDeferred` and `stop_on` (both).\n  - ok: OrdinaryDiffEq (prior art), ode23 (prior art), TraceHeader (the entry says it is retired, and it is absent from src), t_k and z_ (notation), ballocated (test macro).\n\nCitation checks:\n- None of the 23 entries carries a superseded → chain. All are ratified.\n- Every D-nnn cited in a Position has a link definition, and every one of those entries is ratified: D-027, D-038, D-082, D-101, D-127, D-136, D-150, D-154, D-156, D-213, D-223, D-230, D-261, D-268, D-272 and D-449.\n- Every § link cited resolves to a spec heading.\n\nOpen: one bug outside the slice, seen while probing. A BS3 tolerance refusal renders the wrong message. `BS3(reltol = 0)` throws ArgumentInvalid(:BS3, :range, :reltol, 0), whose message reads \"t_plus must be a finite real > 0 whose end frame the run may take — the duration spelling\". The `:range` renderer at src/diagnostics.jl:2507-2518 falls through to the t_plus text for any argument it does not name, so `:reltol` and `:abstol` get it.\n\nJudgment calls:\n- D-081 \"frames = grid steps\" is ok, read as frame-grid intervals.\n- D-133's \"localization_tol · h\" and \"four to six\" are ok as old notation. h was the frame step, and the code divides by Δt_frame.\n- D-290 \"t* = tₙ₊₁ degenerates to the grid boundary\" is ok, read as the step-end boundary."
+}

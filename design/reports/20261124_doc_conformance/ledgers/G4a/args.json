@@ -1,0 +1,54 @@
+{
+ "group": "G4a",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "2ea85438",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "S10a",
+   "kind": "spec",
+   "range": [
+    6441,
+    6802
+   ],
+   "desc": "§10 preamble, §10.1 loop ownership, §10.2 the stepper seam, §10.3 signal-table consistency",
+   "map": "655-711 (src/frame.jl), 1304-1325 (src/stepper.jl), 614-654 (src/executor.jl), 886-1004 (src/model.jl), 353-432 (src/deployment.jl)"
+  },
+  {
+   "key": "S10b",
+   "kind": "spec",
+   "range": [
+    6803,
+    7212
+   ],
+   "desc": "§10.4 localization mechanics",
+   "map": "655-711 (src/frame.jl), 1304-1325 (src/stepper.jl), 614-654 (src/executor.jl), 886-1004 (src/model.jl), 353-432 (src/deployment.jl)"
+  },
+  {
+   "key": "S10c",
+   "kind": "spec",
+   "range": [
+    7213,
+    7677
+   ],
+   "desc": "§10.5 multi-rate execution, §10.6 event iteration at boundaries",
+   "map": "655-711 (src/frame.jl), 1304-1325 (src/stepper.jl), 614-654 (src/executor.jl), 886-1004 (src/model.jl), 353-432 (src/deployment.jl), 1365-1439 (src/structure.jl)"
+  },
+  {
+   "key": "S10d",
+   "kind": "spec",
+   "range": [
+    7678,
+    7833
+   ],
+   "desc": "§10.7 real-time pacing",
+   "map": "251-287 (src/control.jl), 1184-1303 (src/sim.jl), 655-711 (src/frame.jl)"
+  },
+  {
+   "key": "L10",
+   "kind": "log",
+   "n": 23,
+   "map": "655-711 (src/frame.jl), 1304-1325 (src/stepper.jl), 614-654 (src/executor.jl), 886-1004 (src/model.jl), 353-432 (src/deployment.jl), 251-287 (src/control.jl)"
+  }
+ ]
+}

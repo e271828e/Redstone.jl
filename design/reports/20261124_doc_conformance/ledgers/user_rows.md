@@ -97,7 +97,7 @@ the verifier's probe.
   it. Proposed: establish the frozen discrete cells from a nominal round, as
   the services' seeded half does.
 - **S9d, a thin inventory.** Its mid-tier inventory missed 3 of 9 sampled
-  rows. A high-tier re-inventory of §9.7 and §9.8 costs about 0.3M tokens.
+  rows. A high-tier re-inventory of §9.7 and §9.8 is in G4b's args as S9d2.
 - **CV9a-049, wording.** §9.3's probe-scoped values: `compile` seeds every
   fresh table from the probe's values. Rule it with S9b-300.
 - **CV9a-050, wording.** Appendix C and D-431 say a misshapen return throws
@@ -109,3 +109,12 @@ the verifier's probe.
   deck's output would also need a stripping stage; the grid copy is kept off
   by the shape rule, not D-263; `Freeze` cannot take a handle, its `V` being
   bounded at the type.
+
+## G4, §10
+
+- **S10b-224, wording.** §10.4's chattering example: the code keeps a
+  latching predicate ungated on the mode, and gating it would chatter.
+- **S10d-054, defect.** §10.7 says `margin = 2 ms` sleeps about 90% of a
+  20 ms budget and lands within µs of the deadline. The coarse phase now
+  overshoots more. Proposed: recalibrate the default to about 3 ms, after a
+  measurement on the dev machine.

@@ -1,0 +1,37 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-017: 794-832
+D-021: 934-959
+D-023: 981-1003
+D-027: 1087-1117
+D-067: 2261-2299
+D-081: 2778-2812
+D-114: 3921-3958
+D-128: 4419-4453
+D-132: 4572-4655
+D-133: 4656-4752
+D-153: 6006-6044
+D-156: 6126-6154
+D-181: 7207-7246
+D-182: 7247-7281
+D-191: 7637-7671
+D-230: 9411-9448
+D-269: 11891-11984
+D-274: 12334-12450
+D-290: 13291-13344
+D-293: 13420-13437
+D-294: 13438-13463
+D-452: 19091-19246
+D-461: 19839-19994
+
+# Stage M leads
+names missing: `EventDeferred` at log.md:6013 (D-153)
+names missing: `OrdinaryDiffEq` at log.md:801 (D-017)
+names missing: `TraceHeader` at log.md:12361 (D-274)
+names missing: `capture` at log.md:2276 (D-067)
+names missing: `event_budget` at log.md:4665 (D-133)
+names missing: `ode23` at log.md:19869 (D-461)
+names missing: `stop_on` at log.md:4577 (D-132)
+names missing: `stop_on` at log.md:13313 (D-290)
+names missing: `t_k` at log.md:2272 (D-067)
+names missing: `z_` at log.md:2271 (D-067)
+names test-only: `ballocated` at log.md:6140 (D-156)

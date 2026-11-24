@@ -1,0 +1,143 @@
+{
+ "judgments": [
+  {
+   "id": "S10b-001",
+   "conforms": true,
+   "evidence": "src/frame.jl:286-293 root-finds θ★ in (0,1) and sets t★ = max(t_seg + θ★·h′, nextfloat(t_seg)) strictly inside the step; Bool guards are only checked at boundaries (src/model.jl event_phase!, src/frame.jl:222 requires events.localized[i]). The doc's two treatments (step-resolution notice, or localize and publish) match."
+  },
+  {
+   "id": "S10b-010",
+   "conforms": true,
+   "evidence": "src/frame.jl:326 `proposing && return (false, localizations, t★, true)`; src/frame.jl:152 continues the step loop from the t* clock, and :144 shapes the next step from it. test/test_adaptive.jl:260-277 checks this (the rest of the span from t* is shaped into 4 equal steps, and 0.325 never appears)."
+  },
+  {
+   "id": "S10b-019",
+   "conforms": true,
+   "evidence": "src/build.jl:1287-1288 `policy = σ isa Bool ? :non_localized : σ isa Float64 ? :localized : throw(GuardForm…)`, read off the probed guard value."
+  },
+  {
+   "id": "S10b-028",
+   "conforms": true,
+   "evidence": "src/declare.jl:602-603 `_holding(σ::Bool) = σ; _holding(σ) = σ ≥ 0`. The predicate of a sign-form guard is exactly the cast σ ≥ 0, so returning `σ ≥ 0` gives the same predicate as a Bool guard."
+  },
+  {
+   "id": "S10b-037",
+   "conforms": true,
+   "evidence": "src/frame.jl:222 triggers only events with events.localized[i]. Bool guards are evaluated only in event_phase! at boundaries (src/model.jl:652-655), after the boundary sweep has recomputed the inputs, so they are seen at step resolution."
+  },
+  {
+   "id": "S10b-047",
+   "conforms": true,
+   "evidence": "probe.jl S10b-047 output: at u = 0.0 the sign form -u holds (true) and `u < 0 ? -u : -one(u)` does not (false). The shipped leave guard uses this gate, src/library.jl:1867-1868."
+  },
+  {
+   "id": "S10b-224",
+   "conforms": false,
+   "evidence": "probe.jl S10b-224 runs a copy of the upper side of LimitedIntegrator with the strict leave gate. With the shipped hit guard `first_nonzero(x - upper, u)` (src/library.jl:1851) gated on the free mode (variant gated_fn), it does not chatter: the result is leaves = 1, hits = 1, 0 FiringBudget reports and the run ends free, under both a ramp input and a step input. Only the position-only latch `x - upper`, gated (variant gated_bare), chatters: leaves = 4, hits = 5, one FiringBudget report, and it ends saturated.",
+   "class": "drift",
+   "fix": "The latching predicate of such a pair stays ungated on the mode. A latching predicate that reads only the position, `x - limit`, would chatter if gated on the free mode. Each handler hands the other guard a fresh edge, and the boundary chatters until the firing budget breaks the tie, under a `FiringBudget` warning, with the mode decided by which event runs out first ([§10.6][s10-6], [D-181][d-181]). The library's hit guard reads the input on the limit, so a leave hands it no edge.",
+   "clear": false,
+   "note": "The spec sentence dates from a3640c3f (2026-10-20). Commit 19d7cd01 (2026-11-04) then made the hit guards read u on the limit, and the companion's §8 (64cba9e2) records the change. The code comment at src/library.jl:1846-1850 ('Gated, a hit guard would read 0 …') is stale in the same way."
+  },
+  {
+   "id": "S10b-057",
+   "conforms": true,
+   "evidence": "src/declare.jl:907 `(:guard, CONTINUOUS) => (:x, :m, :y, :u, :t, :ws)`. src/frame.jl:338-345 `_trial!` writes x̂(θ), runs sweep_1/sweep_2 (the interior sweep), then evaluates the guards."
+  },
+  {
+   "id": "S10b-066",
+   "conforms": true,
+   "evidence": "src/frame.jl:222-223 `events.triggered[i] = events.localized[i] && !events.prior[i] && events.σ1[i] ≥ 0`. The trigger needs prior not-holding and arrival holding, so a holding → not-holding change does not trigger."
+  },
+  {
+   "id": "S10b-075",
+   "conforms": true,
+   "evidence": "src/frame.jl:265-272: σ0 holding clears the trigger. With none remaining, x_{n+1} goes back into the buffer and the step returns to t_to with no localization. test/test_localization.jl:62 shows the event firing at the frame top exactly."
+  },
+  {
+   "id": "S10b-084",
+   "conforms": true,
+   "evidence": "src/frame.jl:200 `(x₀, _) = startpoint(exec.stepper)`, which is the stepper's retained x₀ (src/stepper.jl:169). Line 257 `copyto!(exec.xbuf, x₀)` writes it back, and nothing new is allocated or stored."
+  },
+  {
+   "id": "S10b-093",
+   "conforms": true,
+   "evidence": "src/frame.jl:257-262 runs the θ = 0 sweep at clock = t_seg exactly, with x₀ and the interior sweep (no discrete entries). Guards read only x, m, y, u, t, ws (src/declare.jl:907). Priors are set at quiescence (src/model.jl:791), after the handlers. s_update runs after the event phase (src/model.jl:655) and writes no cell a guard reads. The only hook that writes at frame top is the drain (src/sim.jl:2021-2023)."
+  },
+  {
+   "id": "S10b-102",
+   "conforms": true,
+   "evidence": "src/frame.jl:249-256 comment and 265-272 code: σ0 holding means the drain flipped the guard. The event is not localized, so it falls through to the step-end boundary's ordinary iteration."
+  },
+  {
+   "id": "S10b-112",
+   "conforms": true,
+   "evidence": "src/frame.jl:201 `h′ = h` for the first segment (the accepted length after a rejection, :204-207). :328 `h′ = t_to - exec.clock.t` for a remainder from t*. dense! is called with h′ (:314, :340)."
+  },
+  {
+   "id": "S10b-121",
+   "conforms": true,
+   "evidence": "src/frame.jl:347-393 `_crossing` is ITP over the [lo, hi] bracket. It uses only σ values (regula falsi, truncation, projection, a bisection fallback) and no derivatives."
+  },
+  {
+   "id": "S10b-131",
+   "conforms": true,
+   "evidence": "probe.jl S10b-131 output: one localization of a smooth crossing takes 7 trials (cos t = 0.3, and the linear q = 0.315). The strict-gate leave localization takes 26 − 7 = 19 trials. The ITP stop is src/frame.jl:374."
+  },
+  {
+   "id": "S10b-140",
+   "conforms": true,
+   "evidence": "src/frame.jl:122 counts localizations per frame across steps. src/frame.jl:232-243 checks the budget on each segment, the remainder included, and reports ChatteringBudget."
+  },
+  {
+   "id": "S10b-149",
+   "conforms": true,
+   "evidence": "src/frame.jl:265 `events.triggered[i] = events.triggered[i] && events.σ0[i] < 0`. `_crossing` (:289) runs only for events still triggered after the θ = 0 measurement."
+  },
+  {
+   "id": "S10b-158",
+   "conforms": true,
+   "evidence": "src/frame.jl:222-223: σ1 = 0 satisfies σ1 ≥ 0 and triggers. ITP keeps hi = 1.0 when every interior trial is not-holding. src/frame.jl:294-302 discards θ★ ≥ 1 and the event fires at t_to. test/test_localization.jl:77 tests this."
+  },
+  {
+   "id": "S10b-167",
+   "conforms": true,
+   "evidence": "src/model.jl:537 `_tick_time(model, n) = _instant(model.exec.clock, n * model.deployment.lattice.base)`, which is computed from the base-tick index and not accumulated."
+  },
+  {
+   "id": "S10b-176",
+   "conforms": false,
+   "evidence": "src/frame.jl:326 ends the step at t★ under a proposing method. On the next turn of the loop, src/frame.jl:144 computes `t_next = t + h_step` with t = t★, and _shaped divides the distance from t★. So t* anchors the next step's end and is not inside a step there. Only the fixed-step remainder (:328) leaves t* unused as an anchor.",
+   "class": "drift",
+   "fix": "Under a fixed-step method `t*` is a float inside a step, never an anchor from which anything else is computed. Under a proposing method `t*` ends its step, and the next step's end is its clock plus that step's length, as for any proposing step. No scheduled instant is ever computed from it.",
+   "clear": true,
+   "note": "D-460 (a t* ends its step under a proposing method, and the next step is shaped from it) records the change. The spec updated lines 6820-6823 and 7104-7106 but not this sentence."
+  },
+  {
+   "id": "S10b-185",
+   "conforms": true,
+   "evidence": "probe.jl S10b-185 output: a localized crash whose handler publishes STOP_REQUESTED ends run! with clock = latest snapshot t = 0.3150000007607409 (t*), and termination is ModelRequestedStop(\"f\", :stop, \"crash\") at that t. src/frame.jl:322 together with src/sim.jl:2041-2043 (settled! publishes and then scans the stop flags)."
+  },
+  {
+   "id": "S10b-194",
+   "conforms": true,
+   "evidence": "src/model.jl:1077-1085 builds StepError with `_seconds(clock.t)` and entry_boundary. src/frame.jl's run_frame! passes k − 1 (src/diagnostics.jl:247-249). replay!(; to_boundary) takes a frame-top index (src/sim.jl:1225-1227, 1322-1324)."
+  },
+  {
+   "id": "S10b-203",
+   "conforms": true,
+   "evidence": "src/model.jl:652-655 run_boundary! runs `_projects!` before `event_phase!`, so the edge checks at the t* boundary (src/frame.jl:314-316) read the projected state, and an edge undone by projection does not fire. The boundary is still settled and published (:322)."
+  },
+  {
+   "id": "S10b-212",
+   "conforms": true,
+   "evidence": "src/frame.jl:232-243: when the budget is exhausted the step returns (false, localizations, t_to, false), and _frame_steps! then runs run_boundary! at the step's end (src/frame.jl:157-162), where the edge fires in the ordinary iteration."
+  },
+  {
+   "id": "S10b-221",
+   "conforms": true,
+   "evidence": "The trace header is the init! Checkpoint (src/sim.jl:856), and it holds the Deployment (src/checkpoint.jl:83). Replay compares the deployments (src/model.jl:1249-1250) and walks localization_tol, localization_budget and firing_budget by name (src/checkpoint.jl:197-198). The descriptor records all three (src/descriptor.jl:71-73)."
+  }
+ ],
+ "notes": "I edited no tracked file. The one probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S10b_v/probe.jl, which I ran twice; the first run stopped on a missing helper. Two claims do not conform. S10b-224 is drift: commit 19d7cd01 changed the hit guard to first_nonzero, and once it reads u on the limit, gating it on the free mode no longer causes chatter. The code comment at src/library.jl:1846-1850 has the same staleness, which is outside this slice. S10b-176 is drift from D-460: under a proposing method t* ends the step and anchors the next step's end. One observation outside the claims: in the probe, the strict-gate leave took about 19 ITP trials. That differs from the library comments' 'about 15 extra' (src/library.jl:1859) and 'about 22 trial sweeps' (src/library.jl:1752), though neither comment is a claim in this slice."
+}

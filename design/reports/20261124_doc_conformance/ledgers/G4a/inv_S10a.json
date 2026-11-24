@@ -1,0 +1,1804 @@
+{
+ "rows": [],
+ "ok": [
+  {
+   "id": "S10a-001",
+   "file": "design/spec.md",
+   "line": 6457,
+   "kind": "law",
+   "claim": "A frame is one period [tₖ₋₁,tₖ] of the lattice, Δt_frame long",
+   "evidence": "src/frame.jl:118"
+  },
+  {
+   "id": "S10a-002",
+   "file": "design/spec.md",
+   "line": 6459,
+   "kind": "mech",
+   "claim": "The input drain runs once at the frame top",
+   "evidence": "src/frame.jl:89"
+  },
+  {
+   "id": "S10a-003",
+   "file": "design/spec.md",
+   "line": 6460,
+   "kind": "mech",
+   "claim": "The drain swaps staged device writes into the root inputs",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "S10a-004",
+   "file": "design/spec.md",
+   "line": 6461,
+   "kind": "mech",
+   "claim": "The control plane's stop word is read at the frame top",
+   "evidence": "src/sim.jl:2103"
+  },
+  {
+   "id": "S10a-005",
+   "file": "design/spec.md",
+   "line": 6462,
+   "kind": "mech",
+   "claim": "The pacer's deadline wait is keyed to the frame top",
+   "evidence": "src/sim.jl:2108"
+  },
+  {
+   "id": "S10a-006",
+   "file": "design/spec.md",
+   "line": 6462,
+   "kind": "mech",
+   "claim": "The trace's frame ordinal counts drains, one per frame",
+   "evidence": "src/sim.jl:2664"
+  },
+  {
+   "id": "S10a-007",
+   "file": "design/spec.md",
+   "line": 6463,
+   "kind": "law",
+   "claim": "Ticks are not keyed to the frame top",
+   "evidence": "src/frame.jl:161"
+  },
+  {
+   "id": "S10a-008",
+   "file": "design/spec.md",
+   "line": 6464,
+   "kind": "law",
+   "claim": "A tick falls at its own due instant inside the frame",
+   "evidence": "src/frame.jl:125"
+  },
+  {
+   "id": "S10a-009",
+   "file": "design/spec.md",
+   "line": 6466,
+   "kind": "law",
+   "claim": "A boundary is a published consistency point (settled! after every boundary)",
+   "evidence": "src/frame.jl:168"
+  },
+  {
+   "id": "S10a-010",
+   "file": "design/spec.md",
+   "line": 6467,
+   "kind": "law",
+   "claim": "The boundary sequence completes at each boundary",
+   "evidence": "src/model.jl:652"
+  },
+  {
+   "id": "S10a-011",
+   "file": "design/spec.md",
+   "line": 6468,
+   "kind": "mech",
+   "claim": "A snapshot goes out at each boundary",
+   "evidence": "src/sim.jl:2041"
+  },
+  {
+   "id": "S10a-012",
+   "file": "design/spec.md",
+   "line": 6470,
+   "kind": "law",
+   "claim": "Every frame top is a boundary",
+   "evidence": "src/frame.jl:168"
+  },
+  {
+   "id": "S10a-013",
+   "file": "design/spec.md",
+   "line": 6470,
+   "kind": "law",
+   "claim": "Not every boundary is a frame top",
+   "evidence": "src/frame.jl:163"
+  },
+  {
+   "id": "S10a-014",
+   "file": "design/spec.md",
+   "line": 6471,
+   "kind": "law",
+   "claim": "Every end of an integration step is a boundary",
+   "evidence": "src/frame.jl:159"
+  },
+  {
+   "id": "S10a-015",
+   "file": "design/spec.md",
+   "line": 6472,
+   "kind": "law",
+   "claim": "Step ends inside a span, at a due instant and at the top are all boundaries",
+   "evidence": "src/frame.jl:161"
+  },
+  {
+   "id": "S10a-016",
+   "file": "design/spec.md",
+   "line": 6474,
+   "kind": "law",
+   "claim": "The full boundary runs at each step end",
+   "evidence": "src/frame.jl:163"
+  },
+  {
+   "id": "S10a-017",
+   "file": "design/spec.md",
+   "line": 6475,
+   "kind": "law",
+   "claim": "Only the frame top adds the drain, control read and pacer wait",
+   "evidence": "src/sim.jl:2103"
+  },
+  {
+   "id": "S10a-018",
+   "file": "design/spec.md",
+   "line": 6476,
+   "kind": "law",
+   "claim": "The frame sets the coarsest snapshot spacing, not the actual one",
+   "evidence": "src/frame.jl:168"
+  },
+  {
+   "id": "S10a-019",
+   "file": "design/spec.md",
+   "line": 6477,
+   "kind": "mech",
+   "claim": "t* is the crossing instant bracketed by root-finding",
+   "evidence": "src/frame.jl:289"
+  },
+  {
+   "id": "S10a-020",
+   "file": "design/spec.md",
+   "line": 6478,
+   "kind": "law",
+   "claim": "The localized t* is a boundary but not a frame top",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "S10a-021",
+   "file": "design/spec.md",
+   "line": 6480,
+   "kind": "law",
+   "claim": "Boundary zero is a boundary",
+   "evidence": "src/model.jl:702"
+  },
+  {
+   "id": "S10a-022",
+   "file": "design/spec.md",
+   "line": 6481,
+   "kind": "law",
+   "claim": "Boundary zero is not a frame top (init! runs no frame_top!)",
+   "evidence": "src/model.jl:341"
+  },
+  {
+   "id": "S10a-023",
+   "file": "design/spec.md",
+   "line": 6483,
+   "kind": "mech",
+   "claim": "Loop activities: boundary sequence, ticks, events, logging, staging, pacing",
+   "evidence": "src/model.jl:652"
+  },
+  {
+   "id": "S10a-024",
+   "file": "design/spec.md",
+   "line": 6485,
+   "kind": "law",
+   "claim": "Pacing inserts waits between completed frames",
+   "evidence": "src/sim.jl:2108"
+  },
+  {
+   "id": "S10a-025",
+   "file": "design/spec.md",
+   "line": 6485,
+   "kind": "law",
+   "claim": "Pacing never alters the boundary sequence",
+   "evidence": "src/sim.jl:2109"
+  },
+  {
+   "id": "S10a-026",
+   "file": "design/spec.md",
+   "line": 6488,
+   "kind": "law",
+   "claim": "All six activities are framework code",
+   "evidence": "Project.toml:9"
+  },
+  {
+   "id": "S10a-027",
+   "file": "design/spec.md",
+   "line": 6489,
+   "kind": "mech",
+   "claim": "The framework writes the loop itself",
+   "evidence": "src/frame.jl:117"
+  },
+  {
+   "id": "S10a-028",
+   "file": "design/spec.md",
+   "line": 6489,
+   "kind": "mech",
+   "claim": "The loop is not assembled from third-party solver callbacks",
+   "evidence": "Project.toml:9"
+  },
+  {
+   "id": "S10a-029",
+   "file": "design/spec.md",
+   "line": 6491,
+   "kind": "law",
+   "claim": "At every boundary the macro-sequence completes before the snapshot",
+   "evidence": "src/frame.jl:161"
+  },
+  {
+   "id": "S10a-030",
+   "file": "design/spec.md",
+   "line": 6496,
+   "kind": "law",
+   "claim": "OrdinaryDiffEq is not a dependency (lead: dropped, absent from deps)",
+   "evidence": "Project.toml:9"
+  },
+  {
+   "id": "S10a-031",
+   "file": "design/spec.md",
+   "line": 6501,
+   "kind": "mech",
+   "claim": "The loop delegates one operation, advance x from t by h",
+   "evidence": "src/model.jl:814"
+  },
+  {
+   "id": "S10a-032",
+   "file": "design/spec.md",
+   "line": 6502,
+   "kind": "mech",
+   "claim": "The delegation runs through the stepper seam",
+   "evidence": "src/model.jl:829"
+  },
+  {
+   "id": "S10a-033",
+   "file": "design/spec.md",
+   "line": 6503,
+   "kind": "decl",
+   "claim": "The seam is a narrow internal interface of seven calls",
+   "evidence": "src/stepper.jl:4"
+  },
+  {
+   "id": "S10a-034",
+   "file": "design/spec.md",
+   "line": 6511,
+   "kind": "law",
+   "claim": "The backend advances by an arbitrary h",
+   "evidence": "src/stepper.jl:74"
+  },
+  {
+   "id": "S10a-035",
+   "file": "design/spec.md",
+   "line": 6511,
+   "kind": "law",
+   "claim": "The loop ends a step at every due instant",
+   "evidence": "src/frame.jl:125"
+  },
+  {
+   "id": "S10a-036",
+   "file": "design/spec.md",
+   "line": 6513,
+   "kind": "law",
+   "claim": "Ticks land on boundaries",
+   "evidence": "src/frame.jl:161"
+  },
+  {
+   "id": "S10a-037",
+   "file": "design/spec.md",
+   "line": 6514,
+   "kind": "law",
+   "claim": "The loop divides a span into equal steps",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "S10a-038",
+   "file": "design/spec.md",
+   "line": 6515,
+   "kind": "mech",
+   "claim": "The loop resumes from a localized event time",
+   "evidence": "src/frame.jl:328"
+  },
+  {
+   "id": "S10a-039",
+   "file": "design/spec.md",
+   "line": 6518,
+   "kind": "decl",
+   "claim": "The backend offers dense output over the last accepted step",
+   "evidence": "src/stepper.jl:361"
+  },
+  {
+   "id": "S10a-040",
+   "file": "design/spec.md",
+   "line": 6519,
+   "kind": "law",
+   "claim": "Only event localization asks for dense output",
+   "evidence": "src/frame.jl:314"
+  },
+  {
+   "id": "S10a-041",
+   "file": "design/spec.md",
+   "line": 6520,
+   "kind": "mech",
+   "claim": "Dense output is built lazily, on each call",
+   "evidence": "src/stepper.jl:361"
+  },
+  {
+   "id": "S10a-042",
+   "file": "design/spec.md",
+   "line": 6521,
+   "kind": "law",
+   "claim": "The backends are one-step methods only",
+   "evidence": "src/stepper.jl:133"
+  },
+  {
+   "id": "S10a-043",
+   "file": "design/spec.md",
+   "line": 6524,
+   "kind": "mech",
+   "claim": "The seam carries state across a frame top through a checkpoint pair",
+   "evidence": "src/model.jl:1187"
+  },
+  {
+   "id": "S10a-044",
+   "file": "design/spec.md",
+   "line": 6525,
+   "kind": "mech",
+   "claim": "A checkpoint is the Model's state at a frame top",
+   "evidence": "src/model.jl:1183"
+  },
+  {
+   "id": "S10a-045",
+   "file": "design/spec.md",
+   "line": 6527,
+   "kind": "law",
+   "claim": "The pair carries an adaptive method's proposal and controller memory",
+   "evidence": "src/stepper.jl:281"
+  },
+  {
+   "id": "S10a-046",
+   "file": "design/spec.md",
+   "line": 6528,
+   "kind": "law",
+   "claim": "The pair carries nothing for a fixed-step method",
+   "evidence": "src/stepper.jl:144"
+  },
+  {
+   "id": "S10a-047",
+   "file": "design/spec.md",
+   "line": 6528,
+   "kind": "law",
+   "claim": "init! asks the backend to restore its carried state as bound",
+   "evidence": "src/model.jl:334"
+  },
+  {
+   "id": "S10a-048",
+   "file": "design/spec.md",
+   "line": 6530,
+   "kind": "law",
+   "claim": "A run init! opens is a function of its condition under any method",
+   "evidence": "probe:149"
+  },
+  {
+   "id": "S10a-049",
+   "file": "design/spec.md",
+   "line": 6535,
+   "kind": "mech",
+   "claim": "One step is split between the Model and the backend",
+   "evidence": "src/model.jl:814"
+  },
+  {
+   "id": "S10a-050",
+   "file": "design/spec.md",
+   "line": 6536,
+   "kind": "law",
+   "claim": "The backend knows its method and the step's error",
+   "evidence": "src/stepper.jl:320"
+  },
+  {
+   "id": "S10a-051",
+   "file": "design/spec.md",
+   "line": 6536,
+   "kind": "law",
+   "claim": "The Model knows the bound instants, h_max, the clock and boundaries",
+   "evidence": "src/model.jl:875"
+  },
+  {
+   "id": "S10a-052",
+   "file": "design/spec.md",
+   "line": 6542,
+   "kind": "decl",
+   "claim": "propose(stepper) returns the next length or nothing",
+   "evidence": "src/stepper.jl:58"
+  },
+  {
+   "id": "S10a-053",
+   "file": "design/spec.md",
+   "line": 6543,
+   "kind": "decl",
+   "claim": "attempt!(stepper, model, h) returns whether the step is accepted",
+   "evidence": "src/stepper.jl:74"
+  },
+  {
+   "id": "S10a-054",
+   "file": "design/spec.md",
+   "line": 6544,
+   "kind": "decl",
+   "claim": "discontinuity!(stepper) is the notice call",
+   "evidence": "src/stepper.jl:86"
+  },
+  {
+   "id": "S10a-055",
+   "file": "design/spec.md",
+   "line": 6545,
+   "kind": "decl",
+   "claim": "startpoint(stepper) returns (xₙ, ẋₙ) of the last attempt",
+   "evidence": "src/stepper.jl:169"
+  },
+  {
+   "id": "S10a-056",
+   "file": "design/spec.md",
+   "line": 6546,
+   "kind": "decl",
+   "claim": "dense!(stepper, x̂, x₁, ẋ₁, θ, h′) writes the interpolant",
+   "evidence": "src/stepper.jl:361"
+  },
+  {
+   "id": "S10a-057",
+   "file": "design/spec.md",
+   "line": 6547,
+   "kind": "decl",
+   "claim": "checkpoint_stepper/restore_stepper! are the checkpoint pair",
+   "evidence": "src/stepper.jl:114"
+  },
+  {
+   "id": "S10a-058",
+   "file": "design/spec.md",
+   "line": 6548,
+   "kind": "decl",
+   "claim": "reset_stepper!(stepper) restores the carried state as bound",
+   "evidence": "src/stepper.jl:126"
+  },
+  {
+   "id": "S10a-059",
+   "file": "design/spec.md",
+   "line": 6551,
+   "kind": "law",
+   "claim": "The Model shapes every step's length, the backend only proposes",
+   "evidence": "src/frame.jl:142"
+  },
+  {
+   "id": "S10a-060",
+   "file": "design/spec.md",
+   "line": 6552,
+   "kind": "law",
+   "claim": "The Model asks propose before each step",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "S10a-061",
+   "file": "design/spec.md",
+   "line": 6552,
+   "kind": "law",
+   "claim": "The Model asks propose after a rejected attempt (not past the budget)",
+   "evidence": "src/model.jl:847"
+  },
+  {
+   "id": "S10a-062",
+   "file": "design/spec.md",
+   "line": 6554,
+   "kind": "law",
+   "claim": "A fixed-step method takes a span in equal steps no longer than h_max",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "S10a-063",
+   "file": "design/spec.md",
+   "line": 6556,
+   "kind": "law",
+   "claim": "A proposal is clamped into [h_min, h_max]",
+   "evidence": "src/model.jl:879"
+  },
+  {
+   "id": "S10a-064",
+   "file": "design/spec.md",
+   "line": 6556,
+   "kind": "law",
+   "claim": "The distance to the next instant is taken in equal steps no longer than the proposal",
+   "evidence": "src/model.jl:882"
+  },
+  {
+   "id": "S10a-065",
+   "file": "design/spec.md",
+   "line": 6558,
+   "kind": "law",
+   "claim": "A backend never reads h_min",
+   "evidence": "src/stepper.jl:295"
+  },
+  {
+   "id": "S10a-066",
+   "file": "design/spec.md",
+   "line": 6560,
+   "kind": "law",
+   "claim": "A step reaching the span's end ends on that instant and takes its clock",
+   "evidence": "src/frame.jl:144"
+  },
+  {
+   "id": "S10a-067",
+   "file": "design/spec.md",
+   "line": 6562,
+   "kind": "law",
+   "claim": "A short step ends at its start's clock plus its length",
+   "evidence": "src/frame.jl:144"
+  },
+  {
+   "id": "S10a-068",
+   "file": "design/spec.md",
+   "line": 6563,
+   "kind": "law",
+   "claim": "Under a proposing method a t* boundary ends its step",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "S10a-069",
+   "file": "design/spec.md",
+   "line": 6564,
+   "kind": "law",
+   "claim": "The next step is shaped from the t* boundary",
+   "evidence": "src/frame.jl:152"
+  },
+  {
+   "id": "S10a-070",
+   "file": "design/spec.md",
+   "line": 6565,
+   "kind": "law",
+   "claim": "propose is asked after the handler's notice",
+   "evidence": "src/frame.jl:136"
+  },
+  {
+   "id": "S10a-071",
+   "file": "design/spec.md",
+   "line": 6566,
+   "kind": "law",
+   "claim": "The remainder after t* is offered whole to the step's end, no proposal asked",
+   "evidence": "src/frame.jl:328"
+  },
+  {
+   "id": "S10a-072",
+   "file": "design/spec.md",
+   "line": 6568,
+   "kind": "law",
+   "claim": "That remainder is a fixed-step method's",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "S10a-073",
+   "file": "design/spec.md",
+   "line": 6569,
+   "kind": "law",
+   "claim": "The Model refuses a proposal that is not a number",
+   "evidence": "probe:121"
+  },
+  {
+   "id": "S10a-074",
+   "file": "design/spec.md",
+   "line": 6570,
+   "kind": "law",
+   "claim": "The refusal is an InternalInvariant",
+   "evidence": "src/model.jl:908"
+  },
+  {
+   "id": "S10a-075",
+   "file": "design/spec.md",
+   "line": 6571,
+   "kind": "law",
+   "claim": "A proposal below h_min, zero and negative included, is clamped to the floor",
+   "evidence": "probe:116"
+  },
+  {
+   "id": "S10a-076",
+   "file": "design/spec.md",
+   "line": 6573,
+   "kind": "law",
+   "claim": "The doors refuse a run whose clock cannot resolve the floor",
+   "evidence": "probe:225"
+  },
+  {
+   "id": "S10a-077",
+   "file": "design/spec.md",
+   "line": 6574,
+   "kind": "law",
+   "claim": "No shaped length fails to advance the clock",
+   "evidence": "src/model.jl:879"
+  },
+  {
+   "id": "S10a-078",
+   "file": "design/spec.md",
+   "line": 6576,
+   "kind": "mech",
+   "claim": "The backend takes each step in attempts it accepts or rejects",
+   "evidence": "src/model.jl:826"
+  },
+  {
+   "id": "S10a-079",
+   "file": "design/spec.md",
+   "line": 6577,
+   "kind": "law",
+   "claim": "An attempt writes the step's end into the trial buffer",
+   "evidence": "src/stepper.jl:164"
+  },
+  {
+   "id": "S10a-080",
+   "file": "design/spec.md",
+   "line": 6578,
+   "kind": "law",
+   "claim": "The Model commits the trial only on acceptance",
+   "evidence": "src/model.jl:835"
+  },
+  {
+   "id": "S10a-081",
+   "file": "design/spec.md",
+   "line": 6579,
+   "kind": "law",
+   "claim": "The backend reads the step's start from the state buffer",
+   "evidence": "src/stepper.jl:153"
+  },
+  {
+   "id": "S10a-082",
+   "file": "design/spec.md",
+   "line": 6580,
+   "kind": "mech",
+   "claim": "Stages write the state buffer and the clock as scratch",
+   "evidence": "src/stepper.jl:156"
+  },
+  {
+   "id": "S10a-083",
+   "file": "design/spec.md",
+   "line": 6581,
+   "kind": "law",
+   "claim": "On acceptance the Model writes the clock at the step's end",
+   "evidence": "src/model.jl:835"
+  },
+  {
+   "id": "S10a-084",
+   "file": "design/spec.md",
+   "line": 6582,
+   "kind": "law",
+   "claim": "On acceptance the Model checks the trial for a nonfinite value",
+   "evidence": "src/model.jl:836"
+  },
+  {
+   "id": "S10a-085",
+   "file": "design/spec.md",
+   "line": 6583,
+   "kind": "law",
+   "claim": "On acceptance the Model copies the trial into the state buffer",
+   "evidence": "src/model.jl:837"
+  },
+  {
+   "id": "S10a-086",
+   "file": "design/spec.md",
+   "line": 6583,
+   "kind": "law",
+   "claim": "On rejection the Model restores the start state from startpoint and the clock",
+   "evidence": "src/model.jl:840"
+  },
+  {
+   "id": "S10a-087",
+   "file": "design/spec.md",
+   "line": 6585,
+   "kind": "law",
+   "claim": "After a rejection the Model asks a new proposal, shaped as the first",
+   "evidence": "src/model.jl:847"
+  },
+  {
+   "id": "S10a-088",
+   "file": "design/spec.md",
+   "line": 6586,
+   "kind": "law",
+   "claim": "After a rejection the next attempt's first evaluation runs the sweep",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S10a-089",
+   "file": "design/spec.md",
+   "line": 6588,
+   "kind": "law",
+   "claim": "A method that proposes nothing always accepts",
+   "evidence": "src/stepper.jl:166"
+  },
+  {
+   "id": "S10a-090",
+   "file": "design/spec.md",
+   "line": 6588,
+   "kind": "mech",
+   "claim": "The trial buffer is the xₙ₊₁ the localization loop keeps",
+   "evidence": "src/frame.jl:276"
+  },
+  {
+   "id": "S10a-091",
+   "file": "design/spec.md",
+   "line": 6591,
+   "kind": "law",
+   "claim": "The Model counts the attempts of each step",
+   "evidence": "src/model.jl:827"
+  },
+  {
+   "id": "S10a-092",
+   "file": "design/spec.md",
+   "line": 6592,
+   "kind": "mech",
+   "claim": "The count names the attempt in a cursor frame",
+   "evidence": "src/diagnostics.jl:268"
+  },
+  {
+   "id": "S10a-093",
+   "file": "design/spec.md",
+   "line": 6593,
+   "kind": "law",
+   "claim": "Fixed-step backends accept every attempt, one per step",
+   "evidence": "src/stepper.jl:166"
+  },
+  {
+   "id": "S10a-094",
+   "file": "design/spec.md",
+   "line": 6595,
+   "kind": "law",
+   "claim": "A rejected floor step is committed by the Model",
+   "evidence": "src/model.jl:832"
+  },
+  {
+   "id": "S10a-095",
+   "file": "design/spec.md",
+   "line": 6596,
+   "kind": "law",
+   "claim": "A rejected floor step files StepFloor",
+   "evidence": "src/model.jl:894"
+  },
+  {
+   "id": "S10a-096",
+   "file": "design/spec.md",
+   "line": 6598,
+   "kind": "law",
+   "claim": "The floor is read by step count, not length",
+   "evidence": "src/model.jl:875"
+  },
+  {
+   "id": "S10a-097",
+   "file": "design/spec.md",
+   "line": 6599,
+   "kind": "law",
+   "claim": "The floor's step over r is r/⌊r/h_min⌋",
+   "evidence": "probe:92"
+  },
+  {
+   "id": "S10a-098",
+   "file": "design/spec.md",
+   "line": 6599,
+   "kind": "law",
+   "claim": "The floor's step is r when r < h_min",
+   "evidence": "probe:101"
+  },
+  {
+   "id": "S10a-099",
+   "file": "design/spec.md",
+   "line": 6600,
+   "kind": "law",
+   "claim": "The floor's step can be up to just under 2·h_min",
+   "evidence": "probe:101"
+  },
+  {
+   "id": "S10a-100",
+   "file": "design/spec.md",
+   "line": 6601,
+   "kind": "law",
+   "claim": "The deployment refuses a floor above half the bound",
+   "evidence": "src/deployment.jl:235"
+  },
+  {
+   "id": "S10a-101",
+   "file": "design/spec.md",
+   "line": 6603,
+   "kind": "law",
+   "claim": "A step that spent its budget takes its next attempt at the floor",
+   "evidence": "probe:90"
+  },
+  {
+   "id": "S10a-102",
+   "file": "design/spec.md",
+   "line": 6604,
+   "kind": "decl",
+   "claim": "The budget is attempt_budget, 7 by default",
+   "evidence": "src/deployment.jl:557"
+  },
+  {
+   "id": "S10a-103",
+   "file": "design/spec.md",
+   "line": 6605,
+   "kind": "law",
+   "claim": "A step makes at most budget + 1 attempts",
+   "evidence": "probe:90"
+  },
+  {
+   "id": "S10a-104",
+   "file": "design/spec.md",
+   "line": 6606,
+   "kind": "law",
+   "claim": "A span of length l takes at most l/h_min steps and one more",
+   "evidence": "src/model.jl:881"
+  },
+  {
+   "id": "S10a-105",
+   "file": "design/spec.md",
+   "line": 6607,
+   "kind": "law",
+   "claim": "Either case files one StepFloor warning",
+   "evidence": "src/model.jl:845"
+  },
+  {
+   "id": "S10a-106",
+   "file": "design/spec.md",
+   "line": 6607,
+   "kind": "law",
+   "claim": "At most one StepFloor report per frame",
+   "evidence": "src/frame.jl:121"
+  },
+  {
+   "id": "S10a-107",
+   "file": "design/spec.md",
+   "line": 6608,
+   "kind": "mech",
+   "claim": "The report goes into the model's own diagnostic cell",
+   "evidence": "src/model.jl:897"
+  },
+  {
+   "id": "S10a-108",
+   "file": "design/spec.md",
+   "line": 6610,
+   "kind": "law",
+   "claim": "The Model checks accepted trials only",
+   "evidence": "src/model.jl:836"
+  },
+  {
+   "id": "S10a-109",
+   "file": "design/spec.md",
+   "line": 6610,
+   "kind": "law",
+   "claim": "A nonfinite trial accepted at the floor throws NonfiniteState",
+   "evidence": "src/model.jl:832"
+  },
+  {
+   "id": "S10a-110",
+   "file": "design/spec.md",
+   "line": 6613,
+   "kind": "law",
+   "claim": "propose, the checkpoint pair and reset_stepper! have no default",
+   "evidence": "probe:181"
+  },
+  {
+   "id": "S10a-111",
+   "file": "design/spec.md",
+   "line": 6618,
+   "kind": "law",
+   "claim": "A fixed-step backend answers nothing to propose and the pair, and no-ops at reset",
+   "evidence": "src/stepper.jl:143"
+  },
+  {
+   "id": "S10a-112",
+   "file": "design/spec.md",
+   "line": 6622,
+   "kind": "mech",
+   "claim": "The Model sends a discontinuity notice to the backend",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "S10a-113",
+   "file": "design/spec.md",
+   "line": 6624,
+   "kind": "mech",
+   "claim": "The notice lets an adaptive method drop stale history",
+   "evidence": "src/stepper.jl:287"
+  },
+  {
+   "id": "S10a-114",
+   "file": "design/spec.md",
+   "line": 6624,
+   "kind": "law",
+   "claim": "The notice is raised where a handler fired",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "S10a-115",
+   "file": "design/spec.md",
+   "line": 6625,
+   "kind": "law",
+   "claim": "The notice is raised where a tick ran",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "S10a-116",
+   "file": "design/spec.md",
+   "line": 6625,
+   "kind": "law",
+   "claim": "The notice is raised at a frame top whose drain wrote a value",
+   "evidence": "src/frame.jl:90"
+  },
+  {
+   "id": "S10a-117",
+   "file": "design/spec.md",
+   "line": 6626,
+   "kind": "law",
+   "claim": "The notice is raised when overlay! settles",
+   "evidence": "src/model.jl:474"
+  },
+  {
+   "id": "S10a-118",
+   "file": "design/spec.md",
+   "line": 6627,
+   "kind": "law",
+   "claim": "init! raises the notice, boundary zero running every tick",
+   "evidence": "probe:128"
+  },
+  {
+   "id": "S10a-119",
+   "file": "design/spec.md",
+   "line": 6627,
+   "kind": "law",
+   "claim": "The notice arrives as its boundary settles, before a checkpoint",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "S10a-120",
+   "file": "design/spec.md",
+   "line": 6629,
+   "kind": "law",
+   "claim": "A checkpoint at that boundary holds what the backend did with the notice",
+   "evidence": "src/model.jl:1187"
+  },
+  {
+   "id": "S10a-121",
+   "file": "design/spec.md",
+   "line": 6629,
+   "kind": "law",
+   "claim": "Two notices before a step mean one",
+   "evidence": "src/stepper.jl:287"
+  },
+  {
+   "id": "S10a-122",
+   "file": "design/spec.md",
+   "line": 6631,
+   "kind": "law",
+   "claim": "A fixed-step method ignores the notice",
+   "evidence": "src/stepper.jl:86"
+  },
+  {
+   "id": "S10a-123",
+   "file": "design/spec.md",
+   "line": 6632,
+   "kind": "mech",
+   "claim": "BS3 keeps its proposal and clears its history at a notice",
+   "evidence": "src/stepper.jl:287"
+  },
+  {
+   "id": "S10a-124",
+   "file": "design/spec.md",
+   "line": 6635,
+   "kind": "law",
+   "claim": "Projection raises no notice",
+   "evidence": "src/model.jl:652"
+  },
+  {
+   "id": "S10a-125",
+   "file": "design/spec.md",
+   "line": 6636,
+   "kind": "mech",
+   "claim": "x_projection writes the state at every boundary",
+   "evidence": "src/model.jl:654"
+  },
+  {
+   "id": "S10a-126",
+   "file": "design/spec.md",
+   "line": 6640,
+   "kind": "law",
+   "claim": "The notice depends on the trajectory alone",
+   "evidence": "src/frame.jl:90"
+  },
+  {
+   "id": "S10a-127",
+   "file": "design/spec.md",
+   "line": 6641,
+   "kind": "law",
+   "claim": "At a frame top only a value the hook wrote raises the notice",
+   "evidence": "src/frame.jl:90"
+  },
+  {
+   "id": "S10a-128",
+   "file": "design/spec.md",
+   "line": 6641,
+   "kind": "decl",
+   "claim": "frame_top! returns a Bool",
+   "evidence": "src/model.jl:239"
+  },
+  {
+   "id": "S10a-129",
+   "file": "design/spec.md",
+   "line": 6642,
+   "kind": "law",
+   "claim": "The first frame of an advance raises no notice for being first",
+   "evidence": "probe:155"
+  },
+  {
+   "id": "S10a-130",
+   "file": "design/spec.md",
+   "line": 6643,
+   "kind": "law",
+   "claim": "That frame's first stage runs the sweep",
+   "evidence": "probe:155"
+  },
+  {
+   "id": "S10a-131",
+   "file": "design/spec.md",
+   "line": 6644,
+   "kind": "law",
+   "claim": "A stepped simulation is bit-identical to the same frames under run!",
+   "evidence": "test/test_lifecycle.jl:716"
+  },
+  {
+   "id": "S10a-132",
+   "file": "design/spec.md",
+   "line": 6645,
+   "kind": "law",
+   "claim": "A restore raises no notice",
+   "evidence": "probe:148"
+  },
+  {
+   "id": "S10a-133",
+   "file": "design/spec.md",
+   "line": 6646,
+   "kind": "mech",
+   "claim": "A restore hands the backend its carried state back",
+   "evidence": "src/checkpoint.jl:129"
+  },
+  {
+   "id": "S10a-134",
+   "file": "design/spec.md",
+   "line": 6647,
+   "kind": "law",
+   "claim": "The restored run proposes what the original proposed",
+   "evidence": "probe:148"
+  },
+  {
+   "id": "S10a-135",
+   "file": "design/spec.md",
+   "line": 6651,
+   "kind": "law",
+   "claim": "A model with no continuous state is legal",
+   "evidence": "probe:112"
+  },
+  {
+   "id": "S10a-136",
+   "file": "design/spec.md",
+   "line": 6652,
+   "kind": "law",
+   "claim": "No component is required to declare an x block",
+   "evidence": "probe:112"
+  },
+  {
+   "id": "S10a-137",
+   "file": "design/spec.md",
+   "line": 6655,
+   "kind": "law",
+   "claim": "The seam is never entered empty",
+   "evidence": "src/model.jl:818"
+  },
+  {
+   "id": "S10a-138",
+   "file": "design/spec.md",
+   "line": 6656,
+   "kind": "mech",
+   "claim": "The framework short-circuits the empty case",
+   "evidence": "src/model.jl:818"
+  },
+  {
+   "id": "S10a-139",
+   "file": "design/spec.md",
+   "line": 6657,
+   "kind": "mech",
+   "claim": "With an empty x the step advances t to the next boundary",
+   "evidence": "src/model.jl:819"
+  },
+  {
+   "id": "S10a-140",
+   "file": "design/spec.md",
+   "line": 6658,
+   "kind": "law",
+   "claim": "The stepper is not called when x is empty",
+   "evidence": "probe:112"
+  },
+  {
+   "id": "S10a-141",
+   "file": "design/spec.md",
+   "line": 6658,
+   "kind": "law",
+   "claim": "The Model asks no proposal when x is empty",
+   "evidence": "src/frame.jl:136"
+  },
+  {
+   "id": "S10a-142",
+   "file": "design/spec.md",
+   "line": 6659,
+   "kind": "law",
+   "claim": "An empty-state model takes each span in equal steps under any backend",
+   "evidence": "probe:112"
+  },
+  {
+   "id": "S10a-143",
+   "file": "design/spec.md",
+   "line": 6660,
+   "kind": "law",
+   "claim": "No backend faces N = 0",
+   "evidence": "src/model.jl:818"
+  },
+  {
+   "id": "S10a-144",
+   "file": "design/spec.md",
+   "line": 6667,
+   "kind": "mech",
+   "claim": "With no state the buffer and the step over it disappear",
+   "evidence": "src/model.jl:818"
+  },
+  {
+   "id": "S10a-145",
+   "file": "design/spec.md",
+   "line": 6669,
+   "kind": "law",
+   "claim": "Sweeps, events and ticks run unchanged for an empty-state model",
+   "evidence": "src/frame.jl:158"
+  },
+  {
+   "id": "S10a-146",
+   "file": "design/spec.md",
+   "line": 6674,
+   "kind": "decl",
+   "claim": "RK4 and Heun ship in-house, fixed-step, over the flat state buffer",
+   "evidence": "src/stepper.jl:133"
+  },
+  {
+   "id": "S10a-147",
+   "file": "design/spec.md",
+   "line": 6675,
+   "kind": "mech",
+   "claim": "RK4 and Heun together take about a hundred lines (about 75)",
+   "evidence": "src/stepper.jl:133"
+  },
+  {
+   "id": "S10a-148",
+   "file": "design/spec.md",
+   "line": 6676,
+   "kind": "law",
+   "claim": "RK4 and Heun are zero-allocation",
+   "evidence": "probe:235"
+  },
+  {
+   "id": "S10a-149",
+   "file": "design/spec.md",
+   "line": 6677,
+   "kind": "law",
+   "claim": "RK4 and Heun are generic in the scalar",
+   "evidence": "src/stepper.jl:133"
+  },
+  {
+   "id": "S10a-150",
+   "file": "design/spec.md",
+   "line": 6678,
+   "kind": "law",
+   "claim": "Linearization and the tracer drive the sweep, never the integrator",
+   "evidence": "src/linearize.jl:362"
+  },
+  {
+   "id": "S10a-151",
+   "file": "design/spec.md",
+   "line": 6679,
+   "kind": "mech",
+   "claim": "The feedthrough tracer classifies a cycle as real or artificial",
+   "evidence": "src/tracer.jl:374"
+  },
+  {
+   "id": "S10a-152",
+   "file": "design/spec.md",
+   "line": 6683,
+   "kind": "decl",
+   "claim": "The first adaptive backend is BS3 under proportional-integral control",
+   "evidence": "src/stepper.jl:266"
+  },
+  {
+   "id": "S10a-153",
+   "file": "design/spec.md",
+   "line": 6684,
+   "kind": "decl",
+   "claim": "BS3(; reltol = 1e-3, abstol = 1e-6)",
+   "evidence": "src/deployment.jl:427"
+  },
+  {
+   "id": "S10a-154",
+   "file": "design/spec.md",
+   "line": 6685,
+   "kind": "mech",
+   "claim": "Three stages reach the third-order solution",
+   "evidence": "src/stepper.jl:298"
+  },
+  {
+   "id": "S10a-155",
+   "file": "design/spec.md",
+   "line": 6686,
+   "kind": "mech",
+   "claim": "A fourth stage at the step's end completes the embedded error estimate",
+   "evidence": "src/stepper.jl:307"
+  },
+  {
+   "id": "S10a-156",
+   "file": "design/spec.md",
+   "line": 6687,
+   "kind": "law",
+   "claim": "A step passes when every component's estimate is at most abstol + reltol·max(|xₙ|,|xₙ₊₁|)",
+   "evidence": "src/stepper.jl:316"
+  },
+  {
+   "id": "S10a-157",
+   "file": "design/spec.md",
+   "line": 6688,
+   "kind": "law",
+   "claim": "The error is the maximum over the state",
+   "evidence": "src/stepper.jl:317"
+  },
+  {
+   "id": "S10a-158",
+   "file": "design/spec.md",
+   "line": 6689,
+   "kind": "law",
+   "claim": "A quiet component never loosens the rest's tolerance",
+   "evidence": "src/stepper.jl:316"
+  },
+  {
+   "id": "S10a-159",
+   "file": "design/spec.md",
+   "line": 6690,
+   "kind": "law",
+   "claim": "The estimate reads the values alone",
+   "evidence": "src/stepper.jl:310"
+  },
+  {
+   "id": "S10a-160",
+   "file": "design/spec.md",
+   "line": 6691,
+   "kind": "law",
+   "claim": "The controller's constants are fixed, never keywords",
+   "evidence": "src/stepper.jl:248"
+  },
+  {
+   "id": "S10a-161",
+   "file": "design/spec.md",
+   "line": 6692,
+   "kind": "law",
+   "claim": "An accepted step proposes from its error and the last accepted step's",
+   "evidence": "src/stepper.jl:327"
+  },
+  {
+   "id": "S10a-162",
+   "file": "design/spec.md",
+   "line": 6693,
+   "kind": "law",
+   "claim": "With no history it proposes from its own error alone",
+   "evidence": "src/stepper.jl:327"
+  },
+  {
+   "id": "S10a-163",
+   "file": "design/spec.md",
+   "line": 6694,
+   "kind": "law",
+   "claim": "A rejected step proposes a shorter one",
+   "evidence": "probe:219"
+  },
+  {
+   "id": "S10a-164",
+   "file": "design/spec.md",
+   "line": 6695,
+   "kind": "law",
+   "claim": "A nonfinite estimate is a rejection at the strongest shrink",
+   "evidence": "probe:219"
+  },
+  {
+   "id": "S10a-165",
+   "file": "design/spec.md",
+   "line": 6696,
+   "kind": "law",
+   "claim": "The proposal never becomes NaN",
+   "evidence": "src/stepper.jl:320"
+  },
+  {
+   "id": "S10a-166",
+   "file": "design/spec.md",
+   "line": 6697,
+   "kind": "mech",
+   "claim": "An overshoot into a singular region recovers",
+   "evidence": "src/stepper.jl:320"
+  },
+  {
+   "id": "S10a-167",
+   "file": "design/spec.md",
+   "line": 6697,
+   "kind": "law",
+   "claim": "The first proposal after reset_stepper! is unbounded",
+   "evidence": "probe:192"
+  },
+  {
+   "id": "S10a-168",
+   "file": "design/spec.md",
+   "line": 6698,
+   "kind": "law",
+   "claim": "The first attempt takes what h_max and the span allow",
+   "evidence": "probe:116"
+  },
+  {
+   "id": "S10a-169",
+   "file": "design/spec.md",
+   "line": 6699,
+   "kind": "law",
+   "claim": "A rejected first attempt proposes at most the starting bound",
+   "evidence": "probe:209"
+  },
+  {
+   "id": "S10a-170",
+   "file": "design/spec.md",
+   "line": 6700,
+   "kind": "law",
+   "claim": "The starting bound is 0.8·reltol^(1/3) of max(|xᵢ|,abstol/reltol) over the first stage",
+   "evidence": "probe:209"
+  },
+  {
+   "id": "S10a-171",
+   "file": "design/spec.md",
+   "line": 6702,
+   "kind": "law",
+   "claim": "A vanishing derivative gives no bound",
+   "evidence": "src/stepper.jl:346"
+  },
+  {
+   "id": "S10a-172",
+   "file": "design/spec.md",
+   "line": 6703,
+   "kind": "law",
+   "claim": "The first attempt still runs whole",
+   "evidence": "src/stepper.jl:295"
+  },
+  {
+   "id": "S10a-173",
+   "file": "design/spec.md",
+   "line": 6704,
+   "kind": "law",
+   "claim": "Every attempt pays all four stages",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "S10a-174",
+   "file": "design/spec.md",
+   "line": 6704,
+   "kind": "law",
+   "claim": "The next step evaluates its first stage again",
+   "evidence": "src/stepper.jl:298"
+  },
+  {
+   "id": "S10a-175",
+   "file": "design/spec.md",
+   "line": 6706,
+   "kind": "law",
+   "claim": "With abstol 1e-6 a state far below that scale has no error control",
+   "evidence": "src/stepper.jl:316"
+  },
+  {
+   "id": "S10a-176",
+   "file": "design/spec.md",
+   "line": 6709,
+   "kind": "decl",
+   "claim": "The algorithm keyword takes an instance: RK4(), Heun() or BS3(…)",
+   "evidence": "src/deployment.jl:556"
+  },
+  {
+   "id": "S10a-177",
+   "file": "design/spec.md",
+   "line": 6710,
+   "kind": "decl",
+   "claim": "The algorithm is set on the Deployment, which is scalar-free",
+   "evidence": "src/deployment.jl:540"
+  },
+  {
+   "id": "S10a-178",
+   "file": "design/spec.md",
+   "line": 6711,
+   "kind": "decl",
+   "claim": "RK4() is the default",
+   "evidence": "probe:168"
+  },
+  {
+   "id": "S10a-179",
+   "file": "design/spec.md",
+   "line": 6712,
+   "kind": "law",
+   "claim": "A fixed-step instance carries no step",
+   "evidence": "probe:172"
+  },
+  {
+   "id": "S10a-180",
+   "file": "design/spec.md",
+   "line": 6713,
+   "kind": "law",
+   "claim": "h_max bounds every method",
+   "evidence": "src/model.jl:879"
+  },
+  {
+   "id": "S10a-181",
+   "file": "design/spec.md",
+   "line": 6714,
+   "kind": "law",
+   "claim": "A fixed-step method takes each span in the fewest equal steps h_max allows",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "S10a-182",
+   "file": "design/spec.md",
+   "line": 6715,
+   "kind": "law",
+   "claim": "An instance carries what the deployment fixes for the method alone",
+   "evidence": "src/deployment.jl:413"
+  },
+  {
+   "id": "S10a-183",
+   "file": "design/spec.md",
+   "line": 6717,
+   "kind": "law",
+   "claim": "The token states whether its method proposes",
+   "evidence": "src/deployment.jl:434"
+  },
+  {
+   "id": "S10a-184",
+   "file": "design/spec.md",
+   "line": 6718,
+   "kind": "law",
+   "claim": "A proposing method requires the floor h_min",
+   "evidence": "probe:174"
+  },
+  {
+   "id": "S10a-185",
+   "file": "design/spec.md",
+   "line": 6719,
+   "kind": "decl",
+   "claim": "The instance is a token",
+   "evidence": "src/deployment.jl:342"
+  },
+  {
+   "id": "S10a-186",
+   "file": "design/spec.md",
+   "line": 6719,
+   "kind": "decl",
+   "claim": "The stepper is a separate runtime object",
+   "evidence": "src/stepper.jl:133"
+  },
+  {
+   "id": "S10a-187",
+   "file": "design/spec.md",
+   "line": 6720,
+   "kind": "mech",
+   "claim": "The stepper owns scratch sized by the state and typed by the scalar",
+   "evidence": "src/stepper.jl:140"
+  },
+  {
+   "id": "S10a-188",
+   "file": "design/spec.md",
+   "line": 6722,
+   "kind": "mech",
+   "claim": "Model construction binds the token to its stepper over the state buffer",
+   "evidence": "src/build.jl:1636"
+  },
+  {
+   "id": "S10a-189",
+   "file": "design/spec.md",
+   "line": 6723,
+   "kind": "mech",
+   "claim": "The bound stepper lives on the executor",
+   "evidence": "src/build.jl:1427"
+  },
+  {
+   "id": "S10a-190",
+   "file": "design/spec.md",
+   "line": 6725,
+   "kind": "law",
+   "claim": "An OrdinaryDiffEq-backed stepper does not exist yet (lead: future extension)",
+   "evidence": "Project.toml:9"
+  },
+  {
+   "id": "S10a-191",
+   "file": "design/spec.md",
+   "line": 6728,
+   "kind": "law",
+   "claim": "The guarded addition is not built",
+   "evidence": "Project.toml:9"
+  },
+  {
+   "id": "S10a-192",
+   "file": "design/spec.md",
+   "line": 6740,
+   "kind": "law",
+   "claim": "The integrator lands on every tick boundary regardless of method",
+   "evidence": "src/frame.jl:125"
+  },
+  {
+   "id": "S10a-193",
+   "file": "design/spec.md",
+   "line": 6741,
+   "kind": "law",
+   "claim": "The execution model caps the stretch at the next mandatory instant",
+   "evidence": "src/frame.jl:125"
+  },
+  {
+   "id": "S10a-194",
+   "file": "design/spec.md",
+   "line": 6743,
+   "kind": "law",
+   "claim": "An adaptive method chooses the step between two such instants",
+   "evidence": "src/model.jl:882"
+  },
+  {
+   "id": "S10a-195",
+   "file": "design/spec.md",
+   "line": 6745,
+   "kind": "law",
+   "claim": "The first adaptive backend is of order 3",
+   "evidence": "src/stepper.jl:261"
+  },
+  {
+   "id": "S10a-196",
+   "file": "design/spec.md",
+   "line": 6753,
+   "kind": "mech",
+   "claim": "Lowering h_max subcycles the stepper inside each span",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "S10a-197",
+   "file": "design/spec.md",
+   "line": 6754,
+   "kind": "law",
+   "claim": "The implicit method comes through the OrdinaryDiffEq extension (lead: future)",
+   "evidence": "Project.toml:9"
+  },
+  {
+   "id": "S10a-198",
+   "file": "design/spec.md",
+   "line": 6756,
+   "kind": "mech",
+   "claim": "Eltype genericity gives exact ForwardDiff Jacobians through the sweep",
+   "evidence": "src/linearize.jl:305"
+  },
+  {
+   "id": "S10a-199",
+   "file": "design/spec.md",
+   "line": 6764,
+   "kind": "law",
+   "claim": "RK stages evaluate the interior sweep at internal stage states",
+   "evidence": "src/stepper.jl:155"
+  },
+  {
+   "id": "S10a-200",
+   "file": "design/spec.md",
+   "line": 6765,
+   "kind": "mech",
+   "claim": "The interior sweep walks continuous entries only",
+   "evidence": "src/executor.jl:550"
+  },
+  {
+   "id": "S10a-201",
+   "file": "design/spec.md",
+   "line": 6766,
+   "kind": "law",
+   "claim": "Each evaluation runs the sweep and then the flow",
+   "evidence": "src/model.jl:617"
+  },
+  {
+   "id": "S10a-202",
+   "file": "design/spec.md",
+   "line": 6767,
+   "kind": "law",
+   "claim": "There is no incremental x_deriv-only re-evaluation outside a fresh first stage",
+   "evidence": "src/model.jl:630"
+  },
+  {
+   "id": "S10a-203",
+   "file": "design/spec.md",
+   "line": 6768,
+   "kind": "mech",
+   "claim": "Linearization and trim seed x and run the composite",
+   "evidence": "src/trim.jl:648"
+  },
+  {
+   "id": "S10a-204",
+   "file": "design/spec.md",
+   "line": 6771,
+   "kind": "law",
+   "claim": "A step's first evaluation over a fresh table runs the flow alone",
+   "evidence": "src/model.jl:632"
+  },
+  {
+   "id": "S10a-205",
+   "file": "design/spec.md",
+   "line": 6772,
+   "kind": "law",
+   "claim": "The table is fresh when it is the boundary's quiescent table",
+   "evidence": "src/frame.jl:170"
+  },
+  {
+   "id": "S10a-206",
+   "file": "design/spec.md",
+   "line": 6773,
+   "kind": "law",
+   "claim": "The table is fresh after every boundary inside a frame",
+   "evidence": "src/frame.jl:170"
+  },
+  {
+   "id": "S10a-207",
+   "file": "design/spec.md",
+   "line": 6774,
+   "kind": "law",
+   "claim": "Nothing writes the table between a boundary and the next step",
+   "evidence": "src/model.jl:175"
+  },
+  {
+   "id": "S10a-208",
+   "file": "design/spec.md",
+   "line": 6775,
+   "kind": "law",
+   "claim": "Root inputs change only at frame tops",
+   "evidence": "src/sim.jl:2656"
+  },
+  {
+   "id": "S10a-209",
+   "file": "design/spec.md",
+   "line": 6777,
+   "kind": "law",
+   "claim": "A settled! hook writes nothing into the model (a contract, unenforced)",
+   "evidence": "src/model.jl:201"
+  },
+  {
+   "id": "S10a-210",
+   "file": "design/spec.md",
+   "line": 6778,
+   "kind": "law",
+   "claim": "It writes no store, root input or table",
+   "evidence": "src/model.jl:201"
+  },
+  {
+   "id": "S10a-211",
+   "file": "design/spec.md",
+   "line": 6779,
+   "kind": "law",
+   "claim": "A hook that writes does so in frame_top! and returns true",
+   "evidence": "src/model.jl:200"
+  },
+  {
+   "id": "S10a-212",
+   "file": "design/spec.md",
+   "line": 6780,
+   "kind": "law",
+   "claim": "At a frame top the table is fresh if the frame continues and the hook wrote nothing",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "S10a-213",
+   "file": "design/spec.md",
+   "line": 6782,
+   "kind": "law",
+   "claim": "A frame continues when nothing wrote the model since the last top boundary",
+   "evidence": "src/frame.jl:79"
+  },
+  {
+   "id": "S10a-214",
+   "file": "design/spec.md",
+   "line": 6784,
+   "kind": "law",
+   "claim": "The caller of the frame says whether it continues",
+   "evidence": "src/frame.jl:79"
+  },
+  {
+   "id": "S10a-215",
+   "file": "design/spec.md",
+   "line": 6785,
+   "kind": "law",
+   "claim": "An advance says it for every frame after its first",
+   "evidence": "probe:155"
+  },
+  {
+   "id": "S10a-216",
+   "file": "design/spec.md",
+   "line": 6785,
+   "kind": "law",
+   "claim": "frame! never says it",
+   "evidence": "probe:160"
+  },
+  {
+   "id": "S10a-217",
+   "file": "design/spec.md",
+   "line": 6786,
+   "kind": "law",
+   "claim": "The fresh-table derivative is the sweep's, to the bit",
+   "evidence": "test/test_lattices.jl:294"
+  },
+  {
+   "id": "S10a-218",
+   "file": "design/spec.md",
+   "line": 6788,
+   "kind": "mech",
+   "claim": "The rule is on the framework side of the seam; a backend's first stage is the same call",
+   "evidence": "src/model.jl:630"
+  },
+  {
+   "id": "S10a-219",
+   "file": "design/spec.md",
+   "line": 6790,
+   "kind": "law",
+   "claim": "During the stages the signal table is integrator scratch",
+   "evidence": "src/model.jl:617"
+  },
+  {
+   "id": "S10a-220",
+   "file": "design/spec.md",
+   "line": 6791,
+   "kind": "law",
+   "claim": "The boundary sweep restores consistency at each accepted boundary",
+   "evidence": "src/model.jl:736"
+  },
+  {
+   "id": "S10a-221",
+   "file": "design/spec.md",
+   "line": 6795,
+   "kind": "law",
+   "claim": "External readers observe the table only at step boundaries",
+   "evidence": "src/sim.jl:2041"
+  },
+  {
+   "id": "S10a-222",
+   "file": "design/spec.md",
+   "line": 6797,
+   "kind": "law",
+   "claim": "Mid-step contents carry no meaning",
+   "evidence": "src/model.jl:617"
+  },
+  {
+   "id": "S10a-223",
+   "file": "design/spec.md",
+   "line": 6797,
+   "kind": "law",
+   "claim": "The rule binds the periphery",
+   "evidence": "src/sim.jl:2789"
+  },
+  {
+   "id": "S10a-224",
+   "file": "design/spec.md",
+   "line": 6799,
+   "kind": "law",
+   "claim": "Readers observe the table only after the boundary sequence completes",
+   "evidence": "src/frame.jl:161"
+  }
+ ],
+ "counts": {
+  "law": 162,
+  "mech": 43,
+  "decl": 19,
+  "ptr": 14,
+  "why": 24
+ }
+}

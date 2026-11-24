@@ -1,0 +1,28 @@
+{
+ "K10a": {
+  "files": [
+   "design/companions/frame_walkthrough.md"
+  ]
+ },
+ "K10b": {
+  "files": [
+   "design/companions/limited_integrator_variants.md",
+   "design/companions/localization_validation_walkthrough.md"
+  ]
+ },
+ "CV10": {
+  "code": [
+   "src/frame.jl",
+   "src/stepper.jl",
+   "src/executor.jl"
+  ]
+ },
+ "S9d2": {
+  "spec": [
+   [
+    6059,
+    6440
+   ]
+  ]
+ }
+}

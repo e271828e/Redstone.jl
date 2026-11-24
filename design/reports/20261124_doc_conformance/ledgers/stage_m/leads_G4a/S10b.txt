@@ -1,0 +1,2 @@
+names missing: `fuel_available` at spec.md:6877
+names missing: `ω_idle` at spec.md:6877

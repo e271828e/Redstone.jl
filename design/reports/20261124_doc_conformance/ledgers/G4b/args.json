@@ -1,0 +1,41 @@
+{
+ "group": "G4b",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "2ea85438",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "K10a",
+   "kind": "companion",
+   "file": "design/companions/frame_walkthrough.md, whole",
+   "lines": 610,
+   "map": "655-711 (src/frame.jl), 1304-1325 (src/stepper.jl), 614-654 (src/executor.jl), 886-1004 (src/model.jl), 353-432 (src/deployment.jl)"
+  },
+  {
+   "key": "K10b",
+   "kind": "companion",
+   "file": "design/companions/limited_integrator_variants.md and design/companions/localization_validation_walkthrough.md, both whole",
+   "lines": 515,
+   "map": "655-711 (src/frame.jl), 1304-1325 (src/stepper.jl), 614-654 (src/executor.jl), 886-1004 (src/model.jl), 353-432 (src/deployment.jl), 738-828 (src/library.jl)"
+  },
+  {
+   "key": "CV10",
+   "kind": "coverage",
+   "files": "src/frame.jl, src/stepper.jl and src/executor.jl whole",
+   "docs": "design/spec.md §10 (lines 6441-7833) and §9.7 (rg -n '^### 9.7' design/spec.md)",
+   "map": "655-711 (src/frame.jl), 1304-1325 (src/stepper.jl), 614-654 (src/executor.jl)"
+  },
+  {
+   "key": "S9d2",
+   "kind": "spec",
+   "agent": "high-tier",
+   "range": [
+    6059,
+    6440
+   ],
+   "desc": "§9.7 the compiled executor, §9.8 allocation policy",
+   "map": "105-186 (src/build.jl), 614-654 (src/executor.jl), 1326-1364 (src/store.jl), 886-1004 (src/model.jl)",
+   "extra": "This range was inventoried once at mid-tier, and its verifier found 3 misses in 9 sampled ok rows, so this is a fresh, finer inventory. Mark as ok only what you checked against the code."
+  }
+ ]
+}

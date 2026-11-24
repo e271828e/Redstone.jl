@@ -1,0 +1,1958 @@
+{
+ "rows": [
+  {
+   "id": "S10c-029",
+   "file": "design/spec.md",
+   "line": 7271,
+   "kind": "law",
+   "claim": "Nothing implements boundary zero due set; it falls out of the ordinary gate at tick index 0",
+   "evidence": "src/executor.jl:524 (ESTABLISH admits every discrete sweep entry); src/model.jl:699-700; log D-205",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Nothing implements the due set of boundary zero. It falls out of the ordinary gate at tick index 0 and governs the updates alone, since the sweeps admit every discrete output stage there, due or not ([D-205][d-205]).",
+   "note": "D-205 amends D-185/D-291; spec 1948-1955 already says so"
+  },
+  {
+   "id": "S10c-109",
+   "file": "design/spec.md",
+   "line": 7369,
+   "kind": "ex",
+   "claim": "With a Δt_unit of 1 µs and no finer bound, a run from t₀=0 resolves about 17 years",
+   "evidence": "probe:P5 (last_frame 56294995342, 17.84 years; reach/2 = 5.63e8 s)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "a run from `t₀ = 0` resolves about 18 years.",
+   "note": "2^49 µs = 17.84 years"
+  }
+ ],
+ "ok": [
+  {
+   "id": "S10c-001",
+   "file": "design/spec.md",
+   "line": 7216,
+   "kind": "law",
+   "claim": "Discrete outputs hold between own ticks",
+   "evidence": "src/executor.jl:513-518"
+  },
+  {
+   "id": "S10c-002",
+   "file": "design/spec.md",
+   "line": 7226,
+   "kind": "mech",
+   "claim": "D₀, Φ₀ are period and offset in base ticks",
+   "evidence": "src/deployment.jl:307"
+  },
+  {
+   "id": "S10c-003",
+   "file": "design/spec.md",
+   "line": 7228,
+   "kind": "mech",
+   "claim": "Two sweep variants compiled from one entry list",
+   "evidence": "src/executor.jl:590-596"
+  },
+  {
+   "id": "S10c-004",
+   "file": "design/spec.md",
+   "line": 7230,
+   "kind": "mech",
+   "claim": "A sweep is one pass through the execution order",
+   "evidence": "src/model.jl:704-712"
+  },
+  {
+   "id": "S10c-005",
+   "file": "design/spec.md",
+   "line": 7231,
+   "kind": "law",
+   "claim": "Split is static, a build-time fact, no runtime test",
+   "evidence": "src/executor.jl:590-596; src/build.jl:1519"
+  },
+  {
+   "id": "S10c-006",
+   "file": "design/spec.md",
+   "line": 7234,
+   "kind": "mech",
+   "claim": "Interior sweep walks continuous entries only",
+   "evidence": "src/executor.jl:572,594"
+  },
+  {
+   "id": "S10c-007",
+   "file": "design/spec.md",
+   "line": 7235,
+   "kind": "mech",
+   "claim": "RK stage evaluations run the interior variant",
+   "evidence": "src/model.jl:619-620"
+  },
+  {
+   "id": "S10c-008",
+   "file": "design/spec.md",
+   "line": 7236,
+   "kind": "mech",
+   "claim": "Guard trial evaluations run the interior variant",
+   "evidence": "src/frame.jl:260"
+  },
+  {
+   "id": "S10c-009",
+   "file": "design/spec.md",
+   "line": 7237,
+   "kind": "law",
+   "claim": "ZOH holds mid-step by construction",
+   "evidence": "src/executor.jl:594"
+  },
+  {
+   "id": "S10c-010",
+   "file": "design/spec.md",
+   "line": 7238,
+   "kind": "law",
+   "claim": "Discrete entries absent from walk at compile time",
+   "evidence": "src/executor.jl:594-596"
+  },
+  {
+   "id": "S10c-011",
+   "file": "design/spec.md",
+   "line": 7239,
+   "kind": "law",
+   "claim": "Hot path carries no gating test",
+   "evidence": "src/executor.jl:572"
+  },
+  {
+   "id": "S10c-012",
+   "file": "design/spec.md",
+   "line": 7240,
+   "kind": "mech",
+   "claim": "Boundary sweep walks the full list",
+   "evidence": "src/executor.jl:573,595"
+  },
+  {
+   "id": "S10c-013",
+   "file": "design/spec.md",
+   "line": 7240,
+   "kind": "law",
+   "claim": "Discrete entries gated by (n-Φ₀)%D₀ on tick index n",
+   "evidence": "src/executor.jl:513-518"
+  },
+  {
+   "id": "S10c-014",
+   "file": "design/spec.md",
+   "line": 7242,
+   "kind": "mech",
+   "claim": "Boundary sweep is the variant the macro-sequence runs",
+   "evidence": "src/model.jl:652-658,704-712"
+  },
+  {
+   "id": "S10c-015",
+   "file": "design/spec.md",
+   "line": 7243,
+   "kind": "law",
+   "claim": "Boundaries run different subsets of the execution order",
+   "evidence": "src/model.jl:704-712 (tick, nothing, ESTABLISH)"
+  },
+  {
+   "id": "S10c-016",
+   "file": "design/spec.md",
+   "line": 7246,
+   "kind": "law",
+   "claim": "Split applies to both sweep blocks",
+   "evidence": "src/build.jl:1625-1626"
+  },
+  {
+   "id": "S10c-017",
+   "file": "design/spec.md",
+   "line": 7247,
+   "kind": "law",
+   "claim": "Discrete y_state entries absent from interior stage-1 walk",
+   "evidence": "src/build.jl:1534,1625"
+  },
+  {
+   "id": "S10c-018",
+   "file": "design/spec.md",
+   "line": 7248,
+   "kind": "law",
+   "claim": "Discrete y_direct entries absent from interior stage-2 walk",
+   "evidence": "src/build.jl:1626; src/executor.jl:594"
+  },
+  {
+   "id": "S10c-019",
+   "file": "design/spec.md",
+   "line": 7249,
+   "kind": "decl",
+   "claim": "Interior bodies take no arguments",
+   "evidence": "src/executor.jl:572"
+  },
+  {
+   "id": "S10c-020",
+   "file": "design/spec.md",
+   "line": 7250,
+   "kind": "decl",
+   "claim": "Boundary bodies take the tick index",
+   "evidence": "src/executor.jl:573"
+  },
+  {
+   "id": "S10c-021",
+   "file": "design/spec.md",
+   "line": 7252,
+   "kind": "mech",
+   "claim": "Gate is one subtraction and a remainder",
+   "evidence": "src/executor.jl:518"
+  },
+  {
+   "id": "S10c-022",
+   "file": "design/spec.md",
+   "line": 7253,
+   "kind": "law",
+   "claim": "The lattice is static",
+   "evidence": "src/deployment.jl:121 (immutable Lattice)"
+  },
+  {
+   "id": "S10c-023",
+   "file": "design/spec.md",
+   "line": 7254,
+   "kind": "law",
+   "claim": "Interior sweep holds no discrete entries to gate",
+   "evidence": "src/executor.jl:594"
+  },
+  {
+   "id": "S10c-024",
+   "file": "design/spec.md",
+   "line": 7258,
+   "kind": "mech",
+   "claim": "Due set fixed once per boundary, reused by every re-sweep",
+   "evidence": "src/model.jl:737,775"
+  },
+  {
+   "id": "S10c-025",
+   "file": "design/spec.md",
+   "line": 7259,
+   "kind": "mech",
+   "claim": "Quiescence is the fixed point where a round fires nothing",
+   "evidence": "src/model.jl:772"
+  },
+  {
+   "id": "S10c-026",
+   "file": "design/spec.md",
+   "line": 7266,
+   "kind": "law",
+   "claim": "Empty due set is arity selection, not failing tick index",
+   "evidence": "src/model.jl:659-660,707-709"
+  },
+  {
+   "id": "S10c-027",
+   "file": "design/spec.md",
+   "line": 7267,
+   "kind": "law",
+   "claim": "Frame top or step end that is no due instant has empty due set",
+   "evidence": "src/frame.jl:164-167"
+  },
+  {
+   "id": "S10c-028",
+   "file": "design/spec.md",
+   "line": 7268,
+   "kind": "law",
+   "claim": "A t* boundary has the empty due set",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "S10c-030",
+   "file": "design/spec.md",
+   "line": 7275,
+   "kind": "law",
+   "claim": "Mandatory instants are frame tops and due instants",
+   "evidence": "src/frame.jl:121-125"
+  },
+  {
+   "id": "S10c-031",
+   "file": "design/spec.md",
+   "line": 7276,
+   "kind": "mech",
+   "claim": "A span runs from one mandatory instant to the next",
+   "evidence": "src/frame.jl:123-173"
+  },
+  {
+   "id": "S10c-032",
+   "file": "design/spec.md",
+   "line": 7277,
+   "kind": "mech",
+   "claim": "Loop advances mandatory instant to mandatory instant",
+   "evidence": "src/frame.jl:122-173"
+  },
+  {
+   "id": "S10c-033",
+   "file": "design/spec.md",
+   "line": 7278,
+   "kind": "law",
+   "claim": "Fixed-step span l takes N=ceil(l/h_max) equal steps of l/N",
+   "evidence": "src/frame.jl:130,139; probe:P2"
+  },
+  {
+   "id": "S10c-034",
+   "file": "design/spec.md",
+   "line": 7279,
+   "kind": "law",
+   "claim": "One step per span when no bound is set",
+   "evidence": "src/deployment.jl:244; probe:P1"
+  },
+  {
+   "id": "S10c-035",
+   "file": "design/spec.md",
+   "line": 7281,
+   "kind": "mech",
+   "claim": "Seam integrates by whatever length a step has",
+   "evidence": "src/model.jl:814"
+  },
+  {
+   "id": "S10c-036",
+   "file": "design/spec.md",
+   "line": 7282,
+   "kind": "law",
+   "claim": "Method never makes a short step of its own",
+   "evidence": "src/frame.jl:130-140"
+  },
+  {
+   "id": "S10c-037",
+   "file": "design/spec.md",
+   "line": 7284,
+   "kind": "mech",
+   "claim": "Proposing backend step shaped over distance to next instant",
+   "evidence": "src/frame.jl:142; src/model.jl:864"
+  },
+  {
+   "id": "S10c-038",
+   "file": "design/spec.md",
+   "line": 7285,
+   "kind": "law",
+   "claim": "Model takes r/N",
+   "evidence": "src/model.jl:866-868; probe:P10"
+  },
+  {
+   "id": "S10c-039",
+   "file": "design/spec.md",
+   "line": 7286,
+   "kind": "law",
+   "claim": "N=ceil(r/min(p,h_max)) (lifted to h_min, equivalent)",
+   "evidence": "src/model.jl:875-884; probe:P10"
+  },
+  {
+   "id": "S10c-040",
+   "file": "design/spec.md",
+   "line": 7287,
+   "kind": "law",
+   "claim": "N capped at floor(r/h_min), at least 1",
+   "evidence": "src/model.jl:882-884; probe:P10"
+  },
+  {
+   "id": "S10c-041",
+   "file": "design/spec.md",
+   "line": 7288,
+   "kind": "law",
+   "claim": "Fixed-step is the same rule under infinite proposal",
+   "evidence": "probe:P10 (p=Inf gives 4)"
+  },
+  {
+   "id": "S10c-042",
+   "file": "design/spec.md",
+   "line": 7289,
+   "kind": "law",
+   "claim": "Division never cuts a step below the floor",
+   "evidence": "src/model.jl:882-884"
+  },
+  {
+   "id": "S10c-043",
+   "file": "design/spec.md",
+   "line": 7290,
+   "kind": "law",
+   "claim": "Distance shorter than floor is one step",
+   "evidence": "src/model.jl:883; probe:P10"
+  },
+  {
+   "id": "S10c-044",
+   "file": "design/spec.md",
+   "line": 7291,
+   "kind": "law",
+   "claim": "Equal division leaves no sliver before an instant",
+   "evidence": "src/model.jl:866-868"
+  },
+  {
+   "id": "S10c-045",
+   "file": "design/spec.md",
+   "line": 7291,
+   "kind": "law",
+   "claim": "Proposal never cut to less than half",
+   "evidence": "probe:P10; src/model.jl:884"
+  },
+  {
+   "id": "S10c-046",
+   "file": "design/spec.md",
+   "line": 7292,
+   "kind": "law",
+   "claim": "Cap can lengthen a step past its proposal near floor",
+   "evidence": "probe:P10 (r=2e-4,p=1e-9 gives 1e-4)"
+  },
+  {
+   "id": "S10c-047",
+   "file": "design/spec.md",
+   "line": 7293,
+   "kind": "law",
+   "claim": "Such an attempt is the floor attempt",
+   "evidence": "src/model.jl:906-907"
+  },
+  {
+   "id": "S10c-048",
+   "file": "design/spec.md",
+   "line": 7294,
+   "kind": "mech",
+   "claim": "Rule recomputed at every step from the clock",
+   "evidence": "src/frame.jl:136,142"
+  },
+  {
+   "id": "S10c-049",
+   "file": "design/spec.md",
+   "line": 7295,
+   "kind": "law",
+   "claim": "Proposal growing inside a span can cost one step",
+   "evidence": "src/frame.jl:136-146"
+  },
+  {
+   "id": "S10c-050",
+   "file": "design/spec.md",
+   "line": 7297,
+   "kind": "mech",
+   "claim": "Loop compares instants as whole multiples of one exact unit",
+   "evidence": "src/frame.jl:121-129; src/deployment.jl:121-128"
+  },
+  {
+   "id": "S10c-051",
+   "file": "design/spec.md",
+   "line": 7298,
+   "kind": "law",
+   "claim": "Δt_unit=gcd(Δt_frame,Δt_base)",
+   "evidence": "src/deployment.jl:153; probe:P4c"
+  },
+  {
+   "id": "S10c-052",
+   "file": "design/spec.md",
+   "line": 7298,
+   "kind": "law",
+   "claim": "Δt_unit=Δt_frame with no discrete component",
+   "evidence": "src/deployment.jl:153; probe:P4b"
+  },
+  {
+   "id": "S10c-053",
+   "file": "design/spec.md",
+   "line": 7298,
+   "kind": "decl",
+   "claim": "Δt_unit is a spec name for Lattice.unit, no code identifier",
+   "evidence": "src/deployment.jl:121-128"
+  },
+  {
+   "id": "S10c-054",
+   "file": "design/spec.md",
+   "line": 7299,
+   "kind": "law",
+   "claim": "The loop derives Δt_unit",
+   "evidence": "src/deployment.jl:153,170-176"
+  },
+  {
+   "id": "S10c-055",
+   "file": "design/spec.md",
+   "line": 7300,
+   "kind": "law",
+   "claim": "No deployment keyword sets Δt_unit",
+   "evidence": "src/deployment.jl:467; probe:P4 (MethodError)"
+  },
+  {
+   "id": "S10c-056",
+   "file": "design/spec.md",
+   "line": 7301,
+   "kind": "mech",
+   "claim": "Next instant and coincidence are integer comparisons",
+   "evidence": "src/frame.jl:126-128"
+  },
+  {
+   "id": "S10c-057",
+   "file": "design/spec.md",
+   "line": 7302,
+   "kind": "mech",
+   "claim": "Next due is one modular computation per schedule row",
+   "evidence": "src/model.jl:548-552"
+  },
+  {
+   "id": "S10c-058",
+   "file": "design/spec.md",
+   "line": 7304,
+   "kind": "mech",
+   "claim": "It is the first base-tick index past the instant the gate admits",
+   "evidence": "src/model.jl:547-551"
+  },
+  {
+   "id": "S10c-059",
+   "file": "design/spec.md",
+   "line": 7305,
+   "kind": "mech",
+   "claim": "Nearest due instant is the minimum over rows",
+   "evidence": "src/model.jl:550-552"
+  },
+  {
+   "id": "S10c-060",
+   "file": "design/spec.md",
+   "line": 7305,
+   "kind": "mech",
+   "claim": "Bound enters as exact ratio to the unit",
+   "evidence": "src/deployment.jl:161"
+  },
+  {
+   "id": "S10c-061",
+   "file": "design/spec.md",
+   "line": 7306,
+   "kind": "mech",
+   "claim": "Span step count is one integer division rounded up",
+   "evidence": "src/frame.jl:130"
+  },
+  {
+   "id": "S10c-062",
+   "file": "design/spec.md",
+   "line": 7306,
+   "kind": "law",
+   "claim": "A step end inside a span has no position on the unit",
+   "evidence": "src/frame.jl:139; src/store.jl:202-206"
+  },
+  {
+   "id": "S10c-063",
+   "file": "design/spec.md",
+   "line": 7308,
+   "kind": "law",
+   "claim": "Due instants a unit apart make a one-unit span",
+   "evidence": "src/frame.jl:124-129"
+  },
+  {
+   "id": "S10c-064",
+   "file": "design/spec.md",
+   "line": 7309,
+   "kind": "law",
+   "claim": "Such a span is its own step, never merged",
+   "evidence": "src/frame.jl:171-172"
+  },
+  {
+   "id": "S10c-065",
+   "file": "design/spec.md",
+   "line": 7311,
+   "kind": "law",
+   "claim": "A step integrates by float distance between its two clocks",
+   "evidence": "src/frame.jl:140,155; src/model.jl:917"
+  },
+  {
+   "id": "S10c-066",
+   "file": "design/spec.md",
+   "line": 7313,
+   "kind": "mech",
+   "claim": "Known end: length is end clock minus start clock",
+   "evidence": "src/frame.jl:140"
+  },
+  {
+   "id": "S10c-067",
+   "file": "design/spec.md",
+   "line": 7314,
+   "kind": "mech",
+   "claim": "Proposing: step integrates by chosen length",
+   "evidence": "src/frame.jl:142"
+  },
+  {
+   "id": "S10c-068",
+   "file": "design/spec.md",
+   "line": 7316,
+   "kind": "mech",
+   "claim": "Proposing: end clock is start plus length",
+   "evidence": "src/frame.jl:144"
+  },
+  {
+   "id": "S10c-069",
+   "file": "design/spec.md",
+   "line": 7317,
+   "kind": "law",
+   "claim": "Localized and non-localized models integrate by one length",
+   "evidence": "src/frame.jl:150-155,205"
+  },
+  {
+   "id": "S10c-070",
+   "file": "design/spec.md",
+   "line": 7318,
+   "kind": "law",
+   "claim": "Localized event finding no crossing moves no trajectory",
+   "evidence": "src/frame.jl:226-227,205"
+  },
+  {
+   "id": "S10c-071",
+   "file": "design/spec.md",
+   "line": 7319,
+   "kind": "law",
+   "claim": "Fixed-step steps of a span are equal; harmonic bound steps by h_max",
+   "evidence": "src/frame.jl:139-140; test/test_lattices.jl:118"
+  },
+  {
+   "id": "S10c-072",
+   "file": "design/spec.md",
+   "line": 7320,
+   "kind": "law",
+   "claim": "A step can exceed h_max by an ulp of the clock",
+   "evidence": "src/frame.jl:140 (float distance)"
+  },
+  {
+   "id": "S10c-073",
+   "file": "design/spec.md",
+   "line": 7322,
+   "kind": "mech",
+   "claim": "Clock at step end written once, from an index",
+   "evidence": "src/frame.jl:128,139,172"
+  },
+  {
+   "id": "S10c-074",
+   "file": "design/spec.md",
+   "line": 7323,
+   "kind": "law",
+   "claim": "Frame top is t₀+k·Δt_frame",
+   "evidence": "src/model.jl:532"
+  },
+  {
+   "id": "S10c-075",
+   "file": "design/spec.md",
+   "line": 7324,
+   "kind": "law",
+   "claim": "Due instant off frame tops is t₀+n·Δt_base",
+   "evidence": "src/model.jl:537"
+  },
+  {
+   "id": "S10c-076",
+   "file": "design/spec.md",
+   "line": 7325,
+   "kind": "law",
+   "claim": "Fixed-step interior end is span start plus i·(l/N)",
+   "evidence": "src/store.jl:202-206; src/frame.jl:139"
+  },
+  {
+   "id": "S10c-077",
+   "file": "design/spec.md",
+   "line": 7326,
+   "kind": "law",
+   "claim": "Interior clock never accumulated (fixed-step)",
+   "evidence": "src/frame.jl:139"
+  },
+  {
+   "id": "S10c-078",
+   "file": "design/spec.md",
+   "line": 7327,
+   "kind": "law",
+   "claim": "Every exactly known instant is the nearest Float64",
+   "evidence": "src/store.jl:210-215"
+  },
+  {
+   "id": "S10c-079",
+   "file": "design/spec.md",
+   "line": 7328,
+   "kind": "law",
+   "claim": "The origin is exact",
+   "evidence": "src/store.jl:152-157"
+  },
+  {
+   "id": "S10c-080",
+   "file": "design/spec.md",
+   "line": 7328,
+   "kind": "law",
+   "claim": "Rule holds from any origin",
+   "evidence": "src/store.jl:202-206; probe:P9"
+  },
+  {
+   "id": "S10c-081",
+   "file": "design/spec.md",
+   "line": 7329,
+   "kind": "mech",
+   "claim": "Origin and unit put over one denominator where origin is set",
+   "evidence": "src/store.jl:184-189"
+  },
+  {
+   "id": "S10c-082",
+   "file": "design/spec.md",
+   "line": 7330,
+   "kind": "mech",
+   "claim": "A clock is one integer multiply-add and one division",
+   "evidence": "src/store.jl:202-206"
+  },
+  {
+   "id": "S10c-083",
+   "file": "design/spec.md",
+   "line": 7331,
+   "kind": "law",
+   "claim": "Division rounds once to nearest at every magnitude",
+   "evidence": "src/store.jl:210-229"
+  },
+  {
+   "id": "S10c-084",
+   "file": "design/spec.md",
+   "line": 7332,
+   "kind": "law",
+   "claim": "Boundary zero clock is same formula at position 0",
+   "evidence": "src/store.jl:187"
+  },
+  {
+   "id": "S10c-085",
+   "file": "design/spec.md",
+   "line": 7333,
+   "kind": "mech",
+   "claim": "Both integers below 2^53: one float division",
+   "evidence": "src/store.jl:210-213"
+  },
+  {
+   "id": "S10c-086",
+   "file": "design/spec.md",
+   "line": 7334,
+   "kind": "mech",
+   "claim": "Beyond 2^53 an exact long division",
+   "evidence": "src/store.jl:213,222-229"
+  },
+  {
+   "id": "S10c-087",
+   "file": "design/spec.md",
+   "line": 7335,
+   "kind": "mech",
+   "claim": "Wall-clock float origin needs long division from frame 0",
+   "evidence": "probe:P9c (origin>2^53)"
+  },
+  {
+   "id": "S10c-088",
+   "file": "design/spec.md",
+   "line": 7336,
+   "kind": "ex",
+   "claim": "Δt_frame=3//10, frame 3 reads 0.9; Step(0.9) fires in one snapshot",
+   "evidence": "probe:P8"
+  },
+  {
+   "id": "S10c-089",
+   "file": "design/spec.md",
+   "line": 7339,
+   "kind": "law",
+   "claim": "Split follows the schedule, not the state",
+   "evidence": "src/frame.jl:119-125"
+  },
+  {
+   "id": "S10c-090",
+   "file": "design/spec.md",
+   "line": 7339,
+   "kind": "law",
+   "claim": "Dual model takes the Float64 model steps",
+   "evidence": "src/frame.jl:113-176; src/build.jl:1066"
+  },
+  {
+   "id": "S10c-091",
+   "file": "design/spec.md",
+   "line": 7340,
+   "kind": "law",
+   "claim": "Dual model discrete tier is frozen",
+   "evidence": "src/build.jl:1066"
+  },
+  {
+   "id": "S10c-092",
+   "file": "design/spec.md",
+   "line": 7345,
+   "kind": "law",
+   "claim": "Run refused whose positions in Δt_unit leave Int",
+   "evidence": "src/deployment.jl:149-161; probe:P6"
+  },
+  {
+   "id": "S10c-093",
+   "file": "design/spec.md",
+   "line": 7347,
+   "kind": "law",
+   "claim": "Clock bounds a run more tightly than Int",
+   "evidence": "src/model.jl:590-593"
+  },
+  {
+   "id": "S10c-094",
+   "file": "design/spec.md",
+   "line": 7349,
+   "kind": "law",
+   "claim": "Run refused where two boundaries could take equal or unordered clocks",
+   "evidence": "src/model.jl:349-353,590-593"
+  },
+  {
+   "id": "S10c-095",
+   "file": "design/spec.md",
+   "line": 7350,
+   "kind": "law",
+   "claim": "Every written clock is nearest float, within half ulp",
+   "evidence": "src/store.jl:210-215"
+  },
+  {
+   "id": "S10c-096",
+   "file": "design/spec.md",
+   "line": 7352,
+   "kind": "law",
+   "claim": "Rounding to nearest keeps order",
+   "evidence": "src/store.jl:210; monotone rounding"
+  },
+  {
+   "id": "S10c-097",
+   "file": "design/spec.md",
+   "line": 7353,
+   "kind": "law",
+   "claim": "Two clocks stay distinct while ulp(t) is below the gap",
+   "evidence": "src/model.jl:583-588"
+  },
+  {
+   "id": "S10c-098",
+   "file": "design/spec.md",
+   "line": 7354,
+   "kind": "law",
+   "claim": "Consecutive boundaries lie at least gap δ apart",
+   "evidence": "src/deployment.jl:166-173"
+  },
+  {
+   "id": "S10c-099",
+   "file": "design/spec.md",
+   "line": 7355,
+   "kind": "law",
+   "claim": "Gap is Δt_unit between two mandatory instants",
+   "evidence": "src/deployment.jl:170-171"
+  },
+  {
+   "id": "S10c-100",
+   "file": "design/spec.md",
+   "line": 7355,
+   "kind": "law",
+   "claim": "Gap is more than h_max/2 between two equal steps",
+   "evidence": "src/deployment.jl:171; probe:P7,P7b"
+  },
+  {
+   "id": "S10c-101",
+   "file": "design/spec.md",
+   "line": 7357,
+   "kind": "law",
+   "claim": "Span l>h_max takes N<l/h_max+1 steps",
+   "evidence": "src/deployment.jl:168-171 (ceil)"
+  },
+  {
+   "id": "S10c-102",
+   "file": "design/spec.md",
+   "line": 7357,
+   "kind": "law",
+   "claim": "Proposing: gap is lesser of Δt_unit and h_min",
+   "evidence": "src/deployment.jl:170; probe:P7c"
+  },
+  {
+   "id": "S10c-103",
+   "file": "design/spec.md",
+   "line": 7358,
+   "kind": "law",
+   "claim": "No shaped step is shorter than the floor",
+   "evidence": "src/model.jl:882-884"
+  },
+  {
+   "id": "S10c-104",
+   "file": "design/spec.md",
+   "line": 7360,
+   "kind": "law",
+   "claim": "Run may reach t only while |t₀|+2(t-t₀)<2^50·δ",
+   "evidence": "src/model.jl:590-593; src/deployment.jl:176"
+  },
+  {
+   "id": "S10c-105",
+   "file": "design/spec.md",
+   "line": 7366,
+   "kind": "law",
+   "claim": "Left side bounds |t|",
+   "evidence": "src/model.jl:586-588"
+  },
+  {
+   "id": "S10c-106",
+   "file": "design/spec.md",
+   "line": 7366,
+   "kind": "law",
+   "claim": "Clocks stay distinct while |t| below 2^52·δ",
+   "evidence": "src/model.jl:583-585"
+  },
+  {
+   "id": "S10c-107",
+   "file": "design/spec.md",
+   "line": 7367,
+   "kind": "law",
+   "claim": "Bound keeps a factor 4 inside 2^52·δ",
+   "evidence": "src/deployment.jl:176 (exp2(50))"
+  },
+  {
+   "id": "S10c-108",
+   "file": "design/spec.md",
+   "line": 7368,
+   "kind": "mech",
+   "claim": "Margin covers float arithmetic computing last frame",
+   "evidence": "src/model.jl:588"
+  },
+  {
+   "id": "S10c-110",
+   "file": "design/spec.md",
+   "line": 7370,
+   "kind": "ex",
+   "claim": "Base tick 1e-17 leaves no 10 ms frame resolved",
+   "evidence": "probe:P6,P6b"
+  },
+  {
+   "id": "S10c-111",
+   "file": "design/spec.md",
+   "line": 7371,
+   "kind": "law",
+   "claim": "Refusal does not cover a t* boundary",
+   "evidence": "src/frame.jl:314-318 (t★ off lattice)"
+  },
+  {
+   "id": "S10c-112",
+   "file": "design/spec.md",
+   "line": 7372,
+   "kind": "law",
+   "claim": "t* is located only to localization_tol·Δt_frame",
+   "evidence": "src/frame.jl:365,386"
+  },
+  {
+   "id": "S10c-113",
+   "file": "design/spec.md",
+   "line": 7374,
+   "kind": "law",
+   "claim": "Last frame is lesser of Int-index frame and clock-resolved frame",
+   "evidence": "src/model.jl:590-593"
+  },
+  {
+   "id": "S10c-114",
+   "file": "design/spec.md",
+   "line": 7376,
+   "kind": "law",
+   "claim": "Advance naming a run past it is refused by end time",
+   "evidence": "src/sim.jl:408-412,2244-2248"
+  },
+  {
+   "id": "S10c-115",
+   "file": "design/spec.md",
+   "line": 7377,
+   "kind": "law",
+   "claim": "Advance past it is refused by frame count",
+   "evidence": "src/sim.jl:2233"
+  },
+  {
+   "id": "S10c-116",
+   "file": "design/spec.md",
+   "line": 7377,
+   "kind": "law",
+   "claim": "frame! refuses a frame past it",
+   "evidence": "src/frame.jl:81-84"
+  },
+  {
+   "id": "S10c-117",
+   "file": "design/spec.md",
+   "line": 7378,
+   "kind": "law",
+   "claim": "init! refuses origin whose first frame is past it",
+   "evidence": "src/model.jl:349-353; probe:P6b"
+  },
+  {
+   "id": "S10c-118",
+   "file": "design/spec.md",
+   "line": 7379,
+   "kind": "law",
+   "claim": "Unbounded run ends at the last frame top",
+   "evidence": "src/sim.jl:2116; src/frame.jl:81; test/test_lattices.jl:402-405"
+  },
+  {
+   "id": "S10c-119",
+   "file": "design/spec.md",
+   "line": 7380,
+   "kind": "law",
+   "claim": "The refusal is its loop error",
+   "evidence": "test/test_lattices.jl:406 (LoopError)"
+  },
+  {
+   "id": "S10c-120",
+   "file": "design/spec.md",
+   "line": 7386,
+   "kind": "ex",
+   "claim": "First component ticks fall on frame tops",
+   "evidence": "test/test_lattices.jl:108; probe:P1"
+  },
+  {
+   "id": "S10c-121",
+   "file": "design/spec.md",
+   "line": 7387,
+   "kind": "ex",
+   "claim": "Second component ticks fall one base tick later each period",
+   "evidence": "probe:P3b (D₀ 1000 vs 1001)"
+  },
+  {
+   "id": "S10c-122",
+   "file": "design/spec.md",
+   "line": 7387,
+   "kind": "ex",
+   "claim": "Frame holding a second-component tick splits into two spans",
+   "evidence": "probe:P1 (995 two-step frames)"
+  },
+  {
+   "id": "S10c-123",
+   "file": "design/spec.md",
+   "line": 7388,
+   "kind": "ex",
+   "claim": "Two coincide at 100.1 s, a frame top",
+   "evidence": "test/test_lattices.jl:111"
+  },
+  {
+   "id": "S10c-124",
+   "file": "design/spec.md",
+   "line": 7388,
+   "kind": "ex",
+   "claim": "Run spans 5005 frames",
+   "evidence": "probe:P1"
+  },
+  {
+   "id": "S10c-125",
+   "file": "design/spec.md",
+   "line": 7389,
+   "kind": "ex",
+   "claim": "6000 steps without a bound",
+   "evidence": "probe:P1"
+  },
+  {
+   "id": "S10c-126",
+   "file": "design/spec.md",
+   "line": 7389,
+   "kind": "ex",
+   "claim": "One more step in each of 995 frames holding a due instant",
+   "evidence": "probe:P1"
+  },
+  {
+   "id": "S10c-127",
+   "file": "design/spec.md",
+   "line": 7390,
+   "kind": "ex",
+   "claim": "h_max=5 ms: unsplit frame takes 4 steps of 5 ms",
+   "evidence": "probe:P2c"
+  },
+  {
+   "id": "S10c-128",
+   "file": "design/spec.md",
+   "line": 7391,
+   "kind": "ex",
+   "claim": "Split frame takes 4 or 5 equal steps over its two spans",
+   "evidence": "probe:P2b"
+  },
+  {
+   "id": "S10c-129",
+   "file": "design/spec.md",
+   "line": 7392,
+   "kind": "ex",
+   "claim": "h_max=5 ms run takes 21000 steps",
+   "evidence": "probe:P2"
+  },
+  {
+   "id": "S10c-130",
+   "file": "design/spec.md",
+   "line": 7392,
+   "kind": "ex",
+   "claim": "show reports 4 steps per unsplit frame",
+   "evidence": "probe:P3b"
+  },
+  {
+   "id": "S10c-131",
+   "file": "design/spec.md",
+   "line": 7393,
+   "kind": "ex",
+   "claim": "show names the 0.1001 s component as splitting frames",
+   "evidence": "probe:P3b (b split frames)"
+  },
+  {
+   "id": "S10c-132",
+   "file": "design/spec.md",
+   "line": 7402,
+   "kind": "mech",
+   "claim": "The event phase iterates rounds",
+   "evidence": "src/model.jl:743-776"
+  },
+  {
+   "id": "S10c-133",
+   "file": "design/spec.md",
+   "line": 7403,
+   "kind": "mech",
+   "claim": "A round re-runs the boundary sweep",
+   "evidence": "src/model.jl:775"
+  },
+  {
+   "id": "S10c-134",
+   "file": "design/spec.md",
+   "line": 7404,
+   "kind": "mech",
+   "claim": "A round evaluates all guards",
+   "evidence": "src/model.jl:744"
+  },
+  {
+   "id": "S10c-135",
+   "file": "design/spec.md",
+   "line": 7405,
+   "kind": "mech",
+   "claim": "A round fires the eligible events",
+   "evidence": "src/model.jl:759-774"
+  },
+  {
+   "id": "S10c-136",
+   "file": "design/spec.md",
+   "line": 7406,
+   "kind": "law",
+   "claim": "A component fires at most one event per round",
+   "evidence": "src/model.jl:760-763"
+  },
+  {
+   "id": "S10c-137",
+   "file": "design/spec.md",
+   "line": 7407,
+   "kind": "mech",
+   "claim": "Each firing is handler then x_projection",
+   "evidence": "src/executor.jl:390-396,456"
+  },
+  {
+   "id": "S10c-138",
+   "file": "design/spec.md",
+   "line": 7408,
+   "kind": "law",
+   "claim": "Rounds continue to quiescence",
+   "evidence": "src/model.jl:772"
+  },
+  {
+   "id": "S10c-139",
+   "file": "design/spec.md",
+   "line": 7411,
+   "kind": "law",
+   "claim": "Event fires iff the three conditions hold",
+   "evidence": "src/model.jl:748-751"
+  },
+  {
+   "id": "S10c-140",
+   "file": "design/spec.md",
+   "line": 7414,
+   "kind": "law",
+   "claim": "Predicate observed holding in that round",
+   "evidence": "src/model.jl:749"
+  },
+  {
+   "id": "S10c-141",
+   "file": "design/spec.md",
+   "line": 7415,
+   "kind": "law",
+   "claim": "Sample observed before was not-holding",
+   "evidence": "src/model.jl:749"
+  },
+  {
+   "id": "S10c-142",
+   "file": "design/spec.md",
+   "line": 7416,
+   "kind": "law",
+   "claim": "Firing count below firing_budget",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "S10c-143",
+   "file": "design/spec.md",
+   "line": 7419,
+   "kind": "law",
+   "claim": "Predicate is Bool true or σ≥0",
+   "evidence": "src/declare.jl:602-603"
+  },
+  {
+   "id": "S10c-144",
+   "file": "design/spec.md",
+   "line": 7420,
+   "kind": "decl",
+   "claim": "firing_budget is a deployment keyword",
+   "evidence": "src/deployment.jl:467"
+  },
+  {
+   "id": "S10c-145",
+   "file": "design/spec.md",
+   "line": 7420,
+   "kind": "law",
+   "claim": "firing_budget is an integer ≥1",
+   "evidence": "src/deployment.jl:563; probe:P15b"
+  },
+  {
+   "id": "S10c-146",
+   "file": "design/spec.md",
+   "line": 7421,
+   "kind": "law",
+   "claim": "firing_budget defaults to 4",
+   "evidence": "src/deployment.jl:467; probe:P15"
+  },
+  {
+   "id": "S10c-147",
+   "file": "design/spec.md",
+   "line": 7421,
+   "kind": "law",
+   "claim": "firing_budget caps firings per event per boundary",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "S10c-148",
+   "file": "design/spec.md",
+   "line": 7431,
+   "kind": "why",
+   "claim": "f_step! named as FlightCore prior art (placeholder)",
+   "evidence": "not code"
+  },
+  {
+   "id": "S10c-149",
+   "file": "design/spec.md",
+   "line": 7450,
+   "kind": "mech",
+   "claim": "Prior is the previous boundary quiescent sample",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S10c-150",
+   "file": "design/spec.md",
+   "line": 7451,
+   "kind": "law",
+   "claim": "First round tests against the prior",
+   "evidence": "src/model.jl:741,749"
+  },
+  {
+   "id": "S10c-151",
+   "file": "design/spec.md",
+   "line": 7452,
+   "kind": "mech",
+   "claim": "Last-observed is initialized from prior at boundary open",
+   "evidence": "src/model.jl:741"
+  },
+  {
+   "id": "S10c-152",
+   "file": "design/spec.md",
+   "line": 7453,
+   "kind": "mech",
+   "claim": "Last-observed overwritten by every round evaluation",
+   "evidence": "src/model.jl:769"
+  },
+  {
+   "id": "S10c-153",
+   "file": "design/spec.md",
+   "line": 7454,
+   "kind": "law",
+   "claim": "Eligible-but-blocked event keeps its sample",
+   "evidence": "src/model.jl:769"
+  },
+  {
+   "id": "S10c-154",
+   "file": "design/spec.md",
+   "line": 7457,
+   "kind": "mech",
+   "claim": "Firing count incremented at each firing",
+   "evidence": "src/model.jl:764"
+  },
+  {
+   "id": "S10c-155",
+   "file": "design/spec.md",
+   "line": 7457,
+   "kind": "mech",
+   "claim": "Firing count resets with each boundary (zeroed at entry)",
+   "evidence": "src/model.jl:742"
+  },
+  {
+   "id": "S10c-156",
+   "file": "design/spec.md",
+   "line": 7460,
+   "kind": "law",
+   "claim": "Eligibility is a not-holding to holding edge",
+   "evidence": "src/model.jl:748-749"
+  },
+  {
+   "id": "S10c-157",
+   "file": "design/spec.md",
+   "line": 7462,
+   "kind": "law",
+   "claim": "Edge read against last-observed sample, not the entry prior",
+   "evidence": "src/model.jl:749"
+  },
+  {
+   "id": "S10c-158",
+   "file": "design/spec.md",
+   "line": 7466,
+   "kind": "law",
+   "claim": "Sticky predicate fires once",
+   "evidence": "probe:P11b"
+  },
+  {
+   "id": "S10c-159",
+   "file": "design/spec.md",
+   "line": 7469,
+   "kind": "law",
+   "claim": "Falsified and re-enabled predicate fires again in boundary",
+   "evidence": "src/model.jl:748-751,769"
+  },
+  {
+   "id": "S10c-160",
+   "file": "design/spec.md",
+   "line": 7476,
+   "kind": "mech",
+   "claim": "Sketch: rounds, eligibility, one firing per component, last update",
+   "evidence": "src/model.jl:734-778"
+  },
+  {
+   "id": "S10c-161",
+   "file": "design/spec.md",
+   "line": 7487,
+   "kind": "law",
+   "claim": "Prior updated at quiescence from final samples",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S10c-162",
+   "file": "design/spec.md",
+   "line": 7488,
+   "kind": "law",
+   "claim": "Prior update is unconditional",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S10c-163",
+   "file": "design/spec.md",
+   "line": 7492,
+   "kind": "law",
+   "claim": "Registers are absent from every state store",
+   "evidence": "src/executor.jl:302-320"
+  },
+  {
+   "id": "S10c-164",
+   "file": "design/spec.md",
+   "line": 7494,
+   "kind": "law",
+   "claim": "A checkpoint carries the prior",
+   "evidence": "src/checkpoint.jl:79; src/model.jl:1186"
+  },
+  {
+   "id": "S10c-165",
+   "file": "design/spec.md",
+   "line": 7495,
+   "kind": "law",
+   "claim": "Prior is the one register crossing a boundary",
+   "evidence": "src/checkpoint.jl:30"
+  },
+  {
+   "id": "S10c-166",
+   "file": "design/spec.md",
+   "line": 7496,
+   "kind": "mech",
+   "claim": "Trace header is such a checkpoint",
+   "evidence": "src/trace.jl:1"
+  },
+  {
+   "id": "S10c-167",
+   "file": "design/spec.md",
+   "line": 7497,
+   "kind": "mech",
+   "claim": "restore! copies the checkpoint prior back",
+   "evidence": "src/checkpoint.jl:123"
+  },
+  {
+   "id": "S10c-168",
+   "file": "design/spec.md",
+   "line": 7498,
+   "kind": "law",
+   "claim": "Other two registers reset on entering each boundary",
+   "evidence": "src/model.jl:741-743"
+  },
+  {
+   "id": "S10c-169",
+   "file": "design/spec.md",
+   "line": 7499,
+   "kind": "mech",
+   "claim": "Beyond prior, cost is one Bool and one counter per event",
+   "evidence": "src/executor.jl:309-312"
+  },
+  {
+   "id": "S10c-170",
+   "file": "design/spec.md",
+   "line": 7502,
+   "kind": "law",
+   "claim": "Boundary zero sets every prior not-holding",
+   "evidence": "src/model.jl:332"
+  },
+  {
+   "id": "S10c-171",
+   "file": "design/spec.md",
+   "line": 7504,
+   "kind": "law",
+   "claim": "Predicate holding in authored state fires at t₀",
+   "evidence": "probe:P11"
+  },
+  {
+   "id": "S10c-172",
+   "file": "design/spec.md",
+   "line": 7506,
+   "kind": "law",
+   "claim": "Re-run from a condition resets all three registers",
+   "evidence": "src/model.jl:332,741-743"
+  },
+  {
+   "id": "S10c-173",
+   "file": "design/spec.md",
+   "line": 7507,
+   "kind": "mech",
+   "claim": "init! re-runs boundary zero",
+   "evidence": "src/model.jl:333-341"
+  },
+  {
+   "id": "S10c-174",
+   "file": "design/spec.md",
+   "line": 7508,
+   "kind": "law",
+   "claim": "Predicates holding in new state fire again at new t₀",
+   "evidence": "src/model.jl:332-341"
+  },
+  {
+   "id": "S10c-175",
+   "file": "design/spec.md",
+   "line": 7509,
+   "kind": "law",
+   "claim": "restore! keeps the checkpoint priors",
+   "evidence": "src/checkpoint.jl:123-124"
+  },
+  {
+   "id": "S10c-176",
+   "file": "design/spec.md",
+   "line": 7510,
+   "kind": "law",
+   "claim": "restore! runs no boundary zero",
+   "evidence": "src/model.jl:1326-1340"
+  },
+  {
+   "id": "S10c-177",
+   "file": "design/spec.md",
+   "line": 7515,
+   "kind": "mech",
+   "claim": "Each round re-runs whole boundary sweep, gated entries included",
+   "evidence": "src/model.jl:706-712,775"
+  },
+  {
+   "id": "S10c-178",
+   "file": "design/spec.md",
+   "line": 7517,
+   "kind": "law",
+   "claim": "A transition reaches the table only through a sweep",
+   "evidence": "src/executor.jl:399-405"
+  },
+  {
+   "id": "S10c-179",
+   "file": "design/spec.md",
+   "line": 7519,
+   "kind": "law",
+   "claim": "Handler writes its component state stores and nothing else",
+   "evidence": "src/executor.jl:399-405"
+  },
+  {
+   "id": "S10c-180",
+   "file": "design/spec.md",
+   "line": 7524,
+   "kind": "law",
+   "claim": "Table has one writer within a round, the sweep",
+   "evidence": "src/executor.jl:390-396"
+  },
+  {
+   "id": "S10c-181",
+   "file": "design/spec.md",
+   "line": 7525,
+   "kind": "law",
+   "claim": "Handler writes nothing to the table",
+   "evidence": "src/executor.jl:399-405"
+  },
+  {
+   "id": "S10c-182",
+   "file": "design/spec.md",
+   "line": 7526,
+   "kind": "mech",
+   "claim": "Framework latches returned transitions into state stores",
+   "evidence": "src/executor.jl:393,399"
+  },
+  {
+   "id": "S10c-183",
+   "file": "design/spec.md",
+   "line": 7527,
+   "kind": "mech",
+   "claim": "x_projection normalizes the latched state",
+   "evidence": "src/executor.jl:394,456"
+  },
+  {
+   "id": "S10c-184",
+   "file": "design/spec.md",
+   "line": 7530,
+   "kind": "law",
+   "claim": "Handler runs against exactly the world its guard fired on",
+   "evidence": "src/model.jl:759-775; src/executor.jl:393"
+  },
+  {
+   "id": "S10c-185",
+   "file": "design/spec.md",
+   "line": 7533,
+   "kind": "law",
+   "claim": "Own y, foreign u, own x/m come from firing round sweep",
+   "evidence": "src/executor.jl:236,393"
+  },
+  {
+   "id": "S10c-186",
+   "file": "design/spec.md",
+   "line": 7534,
+   "kind": "law",
+   "claim": "No bundle straddles two epochs",
+   "evidence": "src/executor.jl:393"
+  },
+  {
+   "id": "S10c-187",
+   "file": "design/spec.md",
+   "line": 7537,
+   "kind": "law",
+   "claim": "State stores written only by own handlers",
+   "evidence": "src/executor.jl:399-405"
+  },
+  {
+   "id": "S10c-188",
+   "file": "design/spec.md",
+   "line": 7538,
+   "kind": "law",
+   "claim": "No same-round writer precedes any handler entry",
+   "evidence": "src/model.jl:760; src/executor.jl:399"
+  },
+  {
+   "id": "S10c-189",
+   "file": "design/spec.md",
+   "line": 7541,
+   "kind": "law",
+   "claim": "Other eligible events are blocked, not lost",
+   "evidence": "src/model.jl:769"
+  },
+  {
+   "id": "S10c-190",
+   "file": "design/spec.md",
+   "line": 7542,
+   "kind": "law",
+   "claim": "Each is re-decided next round on post-transition sweep",
+   "evidence": "src/model.jl:744-775"
+  },
+  {
+   "id": "S10c-191",
+   "file": "design/spec.md",
+   "line": 7543,
+   "kind": "law",
+   "claim": "Declaration order is priority with re-decision",
+   "evidence": "src/model.jl:760; probe:P14b"
+  },
+  {
+   "id": "S10c-192",
+   "file": "design/spec.md",
+   "line": 7545,
+   "kind": "law",
+   "claim": "Event whose premise was falsified does not fire",
+   "evidence": "probe:P14b"
+  },
+  {
+   "id": "S10c-193",
+   "file": "design/spec.md",
+   "line": 7548,
+   "kind": "law",
+   "claim": "Blocked event last sample is not overwritten",
+   "evidence": "src/model.jl:769"
+  },
+  {
+   "id": "S10c-194",
+   "file": "design/spec.md",
+   "line": 7550,
+   "kind": "law",
+   "claim": "Still-holding blocked guard fires next round on same edge",
+   "evidence": "probe:P14"
+  },
+  {
+   "id": "S10c-195",
+   "file": "design/spec.md",
+   "line": 7551,
+   "kind": "law",
+   "claim": "Falsified guard records not-holding; later re-rise is a fresh edge",
+   "evidence": "src/model.jl:769"
+  },
+  {
+   "id": "S10c-196",
+   "file": "design/spec.md",
+   "line": 7553,
+   "kind": "law",
+   "claim": "Quiescent round blocks nothing; samples final before prior written",
+   "evidence": "src/model.jl:748-777"
+  },
+  {
+   "id": "S10c-197",
+   "file": "design/spec.md",
+   "line": 7556,
+   "kind": "law",
+   "claim": "Handler order across components is unobservable",
+   "evidence": "src/executor.jl:390-405"
+  },
+  {
+   "id": "S10c-198",
+   "file": "design/spec.md",
+   "line": 7561,
+   "kind": "mech",
+   "claim": "Execution order is executor component order then declaration order",
+   "evidence": "src/build.jl:1578-1599"
+  },
+  {
+   "id": "S10c-199",
+   "file": "design/spec.md",
+   "line": 7566,
+   "kind": "mech",
+   "claim": "Single-pass executor builds each handler bundle at dispatch",
+   "evidence": "src/executor.jl:390-393"
+  },
+  {
+   "id": "S10c-200",
+   "file": "design/spec.md",
+   "line": 7568,
+   "kind": "law",
+   "claim": "The handler path allocates nothing",
+   "evidence": "test/test_events.jl:462-464"
+  },
+  {
+   "id": "S10c-201",
+   "file": "design/spec.md",
+   "line": 7570,
+   "kind": "law",
+   "claim": "A handler cannot see a same-round foreign transition",
+   "evidence": "src/executor.jl:390-396"
+  },
+  {
+   "id": "S10c-202",
+   "file": "design/spec.md",
+   "line": 7571,
+   "kind": "law",
+   "claim": "Same-instant cross-component coupling is a cascade, one round per link",
+   "evidence": "test/test_events.jl:300-312; probe:P11"
+  },
+  {
+   "id": "S10c-203",
+   "file": "design/spec.md",
+   "line": 7578,
+   "kind": "mech",
+   "claim": "Serializing costs one extra sweep per serialized round",
+   "evidence": "src/model.jl:775"
+  },
+  {
+   "id": "S10c-204",
+   "file": "design/spec.md",
+   "line": 7584,
+   "kind": "law",
+   "claim": "Per-event budget lets a re-enabled event fire at its boundary",
+   "evidence": "src/model.jl:748-751"
+  },
+  {
+   "id": "S10c-205",
+   "file": "design/spec.md",
+   "line": 7585,
+   "kind": "law",
+   "claim": "Every prior is a sample actually taken",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S10c-206",
+   "file": "design/spec.md",
+   "line": 7592,
+   "kind": "law",
+   "claim": "Termination is budget-bounded",
+   "evidence": "src/model.jl:751,764"
+  },
+  {
+   "id": "S10c-207",
+   "file": "design/spec.md",
+   "line": 7593,
+   "kind": "law",
+   "claim": "A boundary admits at most firing_budget·E firings",
+   "evidence": "src/model.jl:751,764"
+  },
+  {
+   "id": "S10c-208",
+   "file": "design/spec.md",
+   "line": 7595,
+   "kind": "law",
+   "claim": "Livelock: each toggler spends budget and warns",
+   "evidence": "probe:P12,P12b"
+  },
+  {
+   "id": "S10c-209",
+   "file": "design/spec.md",
+   "line": 7597,
+   "kind": "law",
+   "claim": "Run proceeds after exhaustion and replays identically",
+   "evidence": "src/model.jl:748-777 (deterministic)"
+  },
+  {
+   "id": "S10c-210",
+   "file": "design/spec.md",
+   "line": 7598,
+   "kind": "law",
+   "claim": "Exhaustion is degradation, not an error",
+   "evidence": "probe:P12"
+  },
+  {
+   "id": "S10c-211",
+   "file": "design/spec.md",
+   "line": 7599,
+   "kind": "law",
+   "claim": "Warning names the chatterer; other events untouched",
+   "evidence": "probe:P12b; src/model.jl:751-757"
+  },
+  {
+   "id": "S10c-212",
+   "file": "design/spec.md",
+   "line": 7606,
+   "kind": "law",
+   "claim": "Budget exhaustion degrades and does not throw",
+   "evidence": "probe:P12"
+  },
+  {
+   "id": "S10c-213",
+   "file": "design/spec.md",
+   "line": 7607,
+   "kind": "law",
+   "claim": "Further edges lost for the rest of that boundary",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "S10c-214",
+   "file": "design/spec.md",
+   "line": 7609,
+   "kind": "law",
+   "claim": "Eligibility test skips the exhausted event only",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "S10c-215",
+   "file": "design/spec.md",
+   "line": 7610,
+   "kind": "law",
+   "claim": "A lost edge emits a FiringBudget warning",
+   "evidence": "src/model.jl:754-757; src/diagnostics.jl:1634"
+  },
+  {
+   "id": "S10c-216",
+   "file": "design/spec.md",
+   "line": 7611,
+   "kind": "law",
+   "claim": "Warning at most once per event per boundary",
+   "evidence": "src/model.jl:743,752-753"
+  },
+  {
+   "id": "S10c-217",
+   "file": "design/spec.md",
+   "line": 7612,
+   "kind": "law",
+   "claim": "Event that fires its budget out then quiesces warns nothing",
+   "evidence": "probe:P13"
+  },
+  {
+   "id": "S10c-218",
+   "file": "design/spec.md",
+   "line": 7612,
+   "kind": "law",
+   "claim": "Warning carries path, event, time, budget, firing count",
+   "evidence": "src/diagnostics.jl:1634-1640; probe:P12b"
+  },
+  {
+   "id": "S10c-219",
+   "file": "design/spec.md",
+   "line": 7615,
+   "kind": "law",
+   "claim": "Localization budget default is 8",
+   "evidence": "src/deployment.jl:467; probe:P15"
+  },
+  {
+   "id": "S10c-220",
+   "file": "design/spec.md",
+   "line": 7617,
+   "kind": "law",
+   "claim": "Localization budget counts localizations per frame",
+   "evidence": "src/frame.jl:118,220-222"
+  },
+  {
+   "id": "S10c-221",
+   "file": "design/spec.md",
+   "line": 7625,
+   "kind": "law",
+   "claim": "Boundary iteration takes firing_budget per event per boundary",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "S10c-222",
+   "file": "design/spec.md",
+   "line": 7626,
+   "kind": "law",
+   "claim": "Re-localization takes localization_budget per frame",
+   "evidence": "src/frame.jl:220-222"
+  },
+  {
+   "id": "S10c-223",
+   "file": "design/spec.md",
+   "line": 7626,
+   "kind": "law",
+   "claim": "Both degrade under a warning naming the event",
+   "evidence": "src/frame.jl:224-231; src/model.jl:754-757"
+  },
+  {
+   "id": "S10c-224",
+   "file": "design/spec.md",
+   "line": 7628,
+   "kind": "law",
+   "claim": "Localization sheds precision, keeps every firing at boundary granularity",
+   "evidence": "src/frame.jl:215-223"
+  },
+  {
+   "id": "S10c-225",
+   "file": "design/spec.md",
+   "line": 7629,
+   "kind": "law",
+   "claim": "Firing budget sheds firings",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "S10c-226",
+   "file": "design/spec.md",
+   "line": 7634,
+   "kind": "law",
+   "claim": "Ticks run after quiescence, outside the iteration",
+   "evidence": "src/model.jl:655-656"
+  },
+  {
+   "id": "S10c-227",
+   "file": "design/spec.md",
+   "line": 7637,
+   "kind": "mech",
+   "claim": "Due output stages gated into sweep against a fixed due set",
+   "evidence": "src/model.jl:737,775"
+  },
+  {
+   "id": "S10c-228",
+   "file": "design/spec.md",
+   "line": 7640,
+   "kind": "law",
+   "claim": "Every round refreshes them against same s and new inputs",
+   "evidence": "src/model.jl:775"
+  },
+  {
+   "id": "S10c-229",
+   "file": "design/spec.md",
+   "line": 7642,
+   "kind": "law",
+   "claim": "Their s_update has not run during the iteration",
+   "evidence": "src/model.jl:655-656"
+  },
+  {
+   "id": "S10c-230",
+   "file": "design/spec.md",
+   "line": 7643,
+   "kind": "law",
+   "claim": "At quiescence published outputs reflect the settled instant",
+   "evidence": "src/model.jl:775-777"
+  },
+  {
+   "id": "S10c-231",
+   "file": "design/spec.md",
+   "line": 7644,
+   "kind": "law",
+   "claim": "Earlier rounds values are scratch overwritten by later sweeps",
+   "evidence": "src/model.jl:775"
+  },
+  {
+   "id": "S10c-232",
+   "file": "design/spec.md",
+   "line": 7647,
+   "kind": "law",
+   "claim": "Tick to event coupling impossible within the boundary",
+   "evidence": "src/model.jl:655-656; test/test_events.jl:~340"
+  },
+  {
+   "id": "S10c-233",
+   "file": "design/spec.md",
+   "line": 7650,
+   "kind": "law",
+   "claim": "s⁺ is first decoded at the owner next tick",
+   "evidence": "src/executor.jl:513-518"
+  },
+  {
+   "id": "S10c-234",
+   "file": "design/spec.md",
+   "line": 7656,
+   "kind": "mech",
+   "claim": "Macro-sequence: integrate, project, iterate, due updates, settle",
+   "evidence": "src/model.jl:652-658; src/frame.jl:160-168"
+  },
+  {
+   "id": "S10c-235",
+   "file": "design/spec.md",
+   "line": 7661,
+   "kind": "law",
+   "claim": "Boundary zero is the same sequence with empty integrate",
+   "evidence": "src/model.jl:333-341"
+  },
+  {
+   "id": "S10c-236",
+   "file": "design/spec.md",
+   "line": 7662,
+   "kind": "law",
+   "claim": "Every end of an integration step runs the whole sequence",
+   "evidence": "src/frame.jl:160-168"
+  },
+  {
+   "id": "S10c-237",
+   "file": "design/spec.md",
+   "line": 7663,
+   "kind": "law",
+   "claim": "At frame top, due instant, or inside a span alike",
+   "evidence": "src/frame.jl:160-168"
+  },
+  {
+   "id": "S10c-238",
+   "file": "design/spec.md",
+   "line": 7666,
+   "kind": "law",
+   "claim": "Due updates run where the instant is due",
+   "evidence": "src/frame.jl:160-162"
+  },
+  {
+   "id": "S10c-239",
+   "file": "design/spec.md",
+   "line": 7667,
+   "kind": "law",
+   "claim": "Only the frame top adds the drain",
+   "evidence": "src/frame.jl:88"
+  },
+  {
+   "id": "S10c-240",
+   "file": "design/spec.md",
+   "line": 7669,
+   "kind": "law",
+   "claim": "Handler fires in iteration segment, before the due updates",
+   "evidence": "src/model.jl:655-656"
+  },
+  {
+   "id": "S10c-241",
+   "file": "design/spec.md",
+   "line": 7675,
+   "kind": "law",
+   "claim": "Re-sweep re-runs the FCS stages on new-mode ports",
+   "evidence": "src/model.jl:775"
+  },
+  {
+   "id": "S10c-242",
+   "file": "design/spec.md",
+   "line": 7676,
+   "kind": "law",
+   "claim": "Its s_update runs from post-transition values",
+   "evidence": "test/test_events.jl (due updates after quiescence)"
+  }
+ ],
+ "counts": {
+  "law": 166,
+  "mech": 56,
+  "decl": 4,
+  "ex": 15,
+  "why": 23,
+  "ptr": 48
+ }
+}

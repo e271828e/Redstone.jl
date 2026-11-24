@@ -1,0 +1,1808 @@
+{
+ "rows": [
+  {
+   "id": "S10b-224",
+   "file": "design/spec.md",
+   "line": 6902,
+   "kind": "law",
+   "claim": "Gating the latching predicate on the free mode makes each handler hand the other guard a fresh edge, so the boundary chatters until FiringBudget breaks the tie, the mode decided by which event runs out first",
+   "evidence": "src/model.jl:734-777 is consistent with it (per-event firing counts, one warn per event per boundary), but no probe built the paired-mode scenario",
+   "verdict": "unverifiable",
+   "note": "Needs the companion's limited-integrator pair as a fixture; not probed. The event-phase mechanics (count < budget, blocked edge left standing) do not contradict it."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S10b-001",
+   "file": "design/spec.md",
+   "line": 6805,
+   "kind": "law",
+   "claim": "A guard predicate can cross strictly inside a step and is noticed only at arrival",
+   "evidence": "src/frame.jl:213-226"
+  },
+  {
+   "id": "S10b-002",
+   "file": "design/spec.md",
+   "line": 6806,
+   "kind": "mech",
+   "claim": "Non-localized events are seen at step resolution",
+   "evidence": "src/model.jl:750-751"
+  },
+  {
+   "id": "S10b-003",
+   "file": "design/spec.md",
+   "line": 6808,
+   "kind": "mech",
+   "claim": "Localized events find the crossing instant and publish it",
+   "evidence": "src/frame.jl:314-322"
+  },
+  {
+   "id": "S10b-004",
+   "file": "design/spec.md",
+   "line": 6811,
+   "kind": "law",
+   "claim": "t* is a published boundary",
+   "evidence": "src/frame.jl:316-322"
+  },
+  {
+   "id": "S10b-005",
+   "file": "design/spec.md",
+   "line": 6812,
+   "kind": "law",
+   "claim": "t* is not a frame top",
+   "evidence": "src/frame.jl:128,315"
+  },
+  {
+   "id": "S10b-006",
+   "file": "design/spec.md",
+   "line": 6815,
+   "kind": "law",
+   "claim": "Localization runs inside each integration step against the frame period",
+   "evidence": "src/frame.jl:146-149,195-204"
+  },
+  {
+   "id": "S10b-007",
+   "file": "design/spec.md",
+   "line": 6817,
+   "kind": "mech",
+   "claim": "Each step end is a boundary: frame top, due instant or span-interior step end",
+   "evidence": "src/frame.jl:125-175"
+  },
+  {
+   "id": "S10b-008",
+   "file": "design/spec.md",
+   "line": 6820,
+   "kind": "law",
+   "claim": "Fixed-step localizing step has boundaries tn, t*, tn+1",
+   "evidence": "src/frame.jl:322-328"
+  },
+  {
+   "id": "S10b-009",
+   "file": "design/spec.md",
+   "line": 6821,
+   "kind": "law",
+   "claim": "Under a proposing method t* ends the step",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "S10b-010",
+   "file": "design/spec.md",
+   "line": 6822,
+   "kind": "law",
+   "claim": "Next step after t* is shaped from t*",
+   "evidence": "src/frame.jl:142,152"
+  },
+  {
+   "id": "S10b-011",
+   "file": "design/spec.md",
+   "line": 6825,
+   "kind": "mech",
+   "claim": "Chain order integrate, arrival, trigger, theta=0, bracket, root-find, t*, remainder",
+   "evidence": "src/frame.jl:204-328"
+  },
+  {
+   "id": "S10b-012",
+   "file": "design/spec.md",
+   "line": 6828,
+   "kind": "mech",
+   "claim": "The arrival sweep at tn+1 raises the trigger",
+   "evidence": "src/frame.jl:213-226"
+  },
+  {
+   "id": "S10b-013",
+   "file": "design/spec.md",
+   "line": 6830,
+   "kind": "mech",
+   "claim": "Integration resumes from t*, which lies before tn+1",
+   "evidence": "src/frame.jl:314-328"
+  },
+  {
+   "id": "S10b-014",
+   "file": "design/spec.md",
+   "line": 6835,
+   "kind": "law",
+   "claim": "The guard return type declares detection policy",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "S10b-015",
+   "file": "design/spec.md",
+   "line": 6836,
+   "kind": "decl",
+   "claim": "No detection flag is involved",
+   "evidence": "probe:statevent kw (MethodError)"
+  },
+  {
+   "id": "S10b-016",
+   "file": "design/spec.md",
+   "line": 6838,
+   "kind": "law",
+   "claim": "A Bool guard is non-localized",
+   "evidence": "src/build.jl:1287; probe:policy bool"
+  },
+  {
+   "id": "S10b-017",
+   "file": "design/spec.md",
+   "line": 6839,
+   "kind": "law",
+   "claim": "A Bool guard is checked at step boundaries only",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "S10b-018",
+   "file": "design/spec.md",
+   "line": 6839,
+   "kind": "law",
+   "claim": "A Bool guard is never root-found",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "S10b-019",
+   "file": "design/spec.md",
+   "line": 6840,
+   "kind": "law",
+   "claim": "A Float64 sign-form guard is localized",
+   "evidence": "src/build.jl:1288; test/test_localization.jl:232-236"
+  },
+  {
+   "id": "S10b-020",
+   "file": "design/spec.md",
+   "line": 6841,
+   "kind": "mech",
+   "claim": "The crossing is bracketed by root-finding over trial evaluations",
+   "evidence": "src/frame.jl:289,359-393"
+  },
+  {
+   "id": "S10b-021",
+   "file": "design/spec.md",
+   "line": 6844,
+   "kind": "mech",
+   "claim": "The build reads the policy off the probe it already runs",
+   "evidence": "src/build.jl:1252-1288"
+  },
+  {
+   "id": "S10b-022",
+   "file": "design/spec.md",
+   "line": 6844,
+   "kind": "law",
+   "claim": "The probe runs at the nominal activation",
+   "evidence": "src/build.jl:1252"
+  },
+  {
+   "id": "S10b-023",
+   "file": "design/spec.md",
+   "line": 6845,
+   "kind": "decl",
+   "claim": "StateEvent(guard, handler) has no detection keyword",
+   "evidence": "src/declare.jl:545; probe:statevent kw"
+  },
+  {
+   "id": "S10b-024",
+   "file": "design/spec.md",
+   "line": 6848,
+   "kind": "law",
+   "claim": "Only the sign form offers a root to bracket",
+   "evidence": "src/build.jl:1287-1290"
+  },
+  {
+   "id": "S10b-025",
+   "file": "design/spec.md",
+   "line": 6849,
+   "kind": "law",
+   "claim": "A localized Bool guard cannot be written",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "S10b-026",
+   "file": "design/spec.md",
+   "line": 6850,
+   "kind": "law",
+   "claim": "It needs no diagnostic",
+   "evidence": "src/build.jl:1287-1290"
+  },
+  {
+   "id": "S10b-027",
+   "file": "design/spec.md",
+   "line": 6852,
+   "kind": "law",
+   "claim": "Returning sigma>=0 instead of sigma makes the guard non-localized",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "S10b-028",
+   "file": "design/spec.md",
+   "line": 6854,
+   "kind": "law",
+   "claim": "The cast sigma>=0 is the definition of the predicate",
+   "evidence": "src/frame.jl:223; src/declare.jl:533"
+  },
+  {
+   "id": "S10b-029",
+   "file": "design/spec.md",
+   "line": 6855,
+   "kind": "law",
+   "claim": "Predicate and edges stay the same; only the resolution changes",
+   "evidence": "src/model.jl:750-751"
+  },
+  {
+   "id": "S10b-030",
+   "file": "design/spec.md",
+   "line": 6858,
+   "kind": "law",
+   "claim": "Non-localized detection is exact for guards over modes, root inputs and held discrete outputs",
+   "evidence": "src/model.jl:652-657"
+  },
+  {
+   "id": "S10b-031",
+   "file": "design/spec.md",
+   "line": 6860,
+   "kind": "law",
+   "claim": "Such a predicate is constant between boundaries",
+   "evidence": "src/executor.jl:572; src/frame.jl:154-164"
+  },
+  {
+   "id": "S10b-032",
+   "file": "design/spec.md",
+   "line": 6861,
+   "kind": "mech",
+   "claim": "Root inputs change only at the frame-top drain",
+   "evidence": "src/sim.jl:2020-2023"
+  },
+  {
+   "id": "S10b-033",
+   "file": "design/spec.md",
+   "line": 6863,
+   "kind": "mech",
+   "claim": "Held discrete outputs change only at ticks, which fall on boundaries",
+   "evidence": "src/frame.jl:160-164"
+  },
+  {
+   "id": "S10b-034",
+   "file": "design/spec.md",
+   "line": 6864,
+   "kind": "mech",
+   "claim": "m changes only through handlers at boundaries",
+   "evidence": "src/model.jl:652-657"
+  },
+  {
+   "id": "S10b-035",
+   "file": "design/spec.md",
+   "line": 6869,
+   "kind": "law",
+   "claim": "A guard on an input fed by continuous state or time can cross inside a step",
+   "evidence": "src/executor.jl:572"
+  },
+  {
+   "id": "S10b-036",
+   "file": "design/spec.md",
+   "line": 6872,
+   "kind": "mech",
+   "claim": "Every interior sweep recomputes such an input",
+   "evidence": "src/executor.jl:572; src/frame.jl:260"
+  },
+  {
+   "id": "S10b-037",
+   "file": "design/spec.md",
+   "line": 6873,
+   "kind": "law",
+   "claim": "Non-localized detection sees such a crossing at step resolution",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "S10b-038",
+   "file": "design/spec.md",
+   "line": 6877,
+   "kind": "ex",
+   "claim": "Leads fuel_available and omega_idle are placeholders in an illustrative predicate",
+   "evidence": "lead rows: placeholder names, no code counterpart claimed"
+  },
+  {
+   "id": "S10b-039",
+   "file": "design/spec.md",
+   "line": 6879,
+   "kind": "decl",
+   "claim": "Gate form is (gate) ? sigma : -one(sigma)",
+   "evidence": "test/fixtures.jl:610; test/test_localization.jl:232-236"
+  },
+  {
+   "id": "S10b-040",
+   "file": "design/spec.md",
+   "line": 6879,
+   "kind": "law",
+   "claim": "The gate form keeps the guard localized",
+   "evidence": "test/test_localization.jl:232-236"
+  },
+  {
+   "id": "S10b-041",
+   "file": "design/spec.md",
+   "line": 6881,
+   "kind": "decl",
+   "claim": "Bool factors go in the branch condition, the continuous factor in the value",
+   "evidence": "test/fixtures.jl:610"
+  },
+  {
+   "id": "S10b-042",
+   "file": "design/spec.md",
+   "line": 6884,
+   "kind": "mech",
+   "claim": "Trial evaluations vary only theta (state and mid-step clock)",
+   "evidence": "src/frame.jl:338-344"
+  },
+  {
+   "id": "S10b-043",
+   "file": "design/spec.md",
+   "line": 6885,
+   "kind": "law",
+   "claim": "Modes, root inputs and held discrete outputs stay fixed through a localization",
+   "evidence": "src/frame.jl:195-330"
+  },
+  {
+   "id": "S10b-044",
+   "file": "design/spec.md",
+   "line": 6886,
+   "kind": "law",
+   "claim": "Gates over those are constant over the bracket",
+   "evidence": "src/frame.jl:338-344"
+  },
+  {
+   "id": "S10b-045",
+   "file": "design/spec.md",
+   "line": 6892,
+   "kind": "law",
+   "claim": "Sign form -u holds at u exactly zero",
+   "evidence": "probe:negzero (-0.0>=0 is true)"
+  },
+  {
+   "id": "S10b-046",
+   "file": "design/spec.md",
+   "line": 6894,
+   "kind": "decl",
+   "claim": "Strict gate is u < 0 ? -u : -one(u)",
+   "evidence": "probe:negzero gate(u=0) = -1.0"
+  },
+  {
+   "id": "S10b-047",
+   "file": "design/spec.md",
+   "line": 6894,
+   "kind": "law",
+   "claim": "The strict gate does not hold at u = 0",
+   "evidence": "probe:negzero"
+  },
+  {
+   "id": "S10b-048",
+   "file": "design/spec.md",
+   "line": 6895,
+   "kind": "law",
+   "claim": "sigma jumps from -1 to a small positive value at the crossing",
+   "evidence": "probe:jump"
+  },
+  {
+   "id": "S10b-049",
+   "file": "design/spec.md",
+   "line": 6896,
+   "kind": "law",
+   "claim": "Only the sign drives the bracket; it still converges",
+   "evidence": "src/frame.jl:374-390; probe:jump t*=0.31730005"
+  },
+  {
+   "id": "S10b-050",
+   "file": "design/spec.md",
+   "line": 6897,
+   "kind": "law",
+   "claim": "Root-finder pays bisection's count on a jump event",
+   "evidence": "probe:jump trials=21 vs probe:sign trials=6"
+  },
+  {
+   "id": "S10b-051",
+   "file": "design/spec.md",
+   "line": 6899,
+   "kind": "law",
+   "claim": "Bool form u < 0 is the same predicate non-localized, strict",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "S10b-052",
+   "file": "design/spec.md",
+   "line": 6900,
+   "kind": "ptr",
+   "claim": "companions/limited_integrator_variants.md exists",
+   "evidence": "design/companions listing"
+  },
+  {
+   "id": "S10b-053",
+   "file": "design/spec.md",
+   "line": 6910,
+   "kind": "law",
+   "claim": "A trial computes a guard value at one instant theta inside the step",
+   "evidence": "src/frame.jl:338-344"
+  },
+  {
+   "id": "S10b-054",
+   "file": "design/spec.md",
+   "line": 6911,
+   "kind": "law",
+   "claim": "At theta=0 the trial state is xn",
+   "evidence": "src/frame.jl:257"
+  },
+  {
+   "id": "S10b-055",
+   "file": "design/spec.md",
+   "line": 6912,
+   "kind": "mech",
+   "claim": "Elsewhere the state is on the cubic Hermite interpolant",
+   "evidence": "src/stepper.jl:361-374"
+  },
+  {
+   "id": "S10b-056",
+   "file": "design/spec.md",
+   "line": 6915,
+   "kind": "law",
+   "claim": "Trial evaluations run the interior sweep",
+   "evidence": "src/frame.jl:342"
+  },
+  {
+   "id": "S10b-057",
+   "file": "design/spec.md",
+   "line": 6916,
+   "kind": "law",
+   "claim": "Guards read y",
+   "evidence": "src/frame.jl:342-343"
+  },
+  {
+   "id": "S10b-058",
+   "file": "design/spec.md",
+   "line": 6917,
+   "kind": "mech",
+   "claim": "A trial writes x-hat(theta) into the state buffer then sweeps",
+   "evidence": "src/frame.jl:340-342"
+  },
+  {
+   "id": "S10b-059",
+   "file": "design/spec.md",
+   "line": 6918,
+   "kind": "mech",
+   "claim": "The RHS runs under the interior sweep rule",
+   "evidence": "src/model.jl:617-623"
+  },
+  {
+   "id": "S10b-060",
+   "file": "design/spec.md",
+   "line": 6920,
+   "kind": "law",
+   "claim": "Discrete cells hold tick values through localization",
+   "evidence": "src/frame.jl:342; src/executor.jl:572"
+  },
+  {
+   "id": "S10b-061",
+   "file": "design/spec.md",
+   "line": 6922,
+   "kind": "law",
+   "claim": "A guard on a sampled output sees what the controller holds",
+   "evidence": "src/executor.jl:572"
+  },
+  {
+   "id": "S10b-062",
+   "file": "design/spec.md",
+   "line": 6923,
+   "kind": "mech",
+   "claim": "Each trial costs one interior sweep",
+   "evidence": "src/frame.jl:342"
+  },
+  {
+   "id": "S10b-063",
+   "file": "design/spec.md",
+   "line": 6927,
+   "kind": "law",
+   "claim": "Trigger: prior not-holding and holding at tn+1",
+   "evidence": "src/frame.jl:222-223"
+  },
+  {
+   "id": "S10b-064",
+   "file": "design/spec.md",
+   "line": 6928,
+   "kind": "mech",
+   "claim": "Quiescence is the fixed point where a round fires nothing",
+   "evidence": "src/model.jl:747-777"
+  },
+  {
+   "id": "S10b-065",
+   "file": "design/spec.md",
+   "line": 6930,
+   "kind": "mech",
+   "claim": "The tn sample is the prior stored at the previous boundary",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S10b-066",
+   "file": "design/spec.md",
+   "line": 6933,
+   "kind": "law",
+   "claim": "The trigger is the directional edge, not a bare sign change",
+   "evidence": "src/frame.jl:222-223"
+  },
+  {
+   "id": "S10b-067",
+   "file": "design/spec.md",
+   "line": 6934,
+   "kind": "law",
+   "claim": "Holding to not-holding neither fires nor localizes",
+   "evidence": "src/frame.jl:222-223"
+  },
+  {
+   "id": "S10b-068",
+   "file": "design/spec.md",
+   "line": 6936,
+   "kind": "law",
+   "claim": "The trigger check runs against the arrival sweep",
+   "evidence": "src/frame.jl:213-224"
+  },
+  {
+   "id": "S10b-069",
+   "file": "design/spec.md",
+   "line": 6937,
+   "kind": "mech",
+   "claim": "The arrival sweep closes the integration step",
+   "evidence": "src/frame.jl:213"
+  },
+  {
+   "id": "S10b-070",
+   "file": "design/spec.md",
+   "line": 6938,
+   "kind": "law",
+   "claim": "The check precedes the due-gated boundary sweep",
+   "evidence": "src/frame.jl:213-226,161"
+  },
+  {
+   "id": "S10b-071",
+   "file": "design/spec.md",
+   "line": 6941,
+   "kind": "law",
+   "claim": "Every t* firing precedes tn+1's boundary sequence",
+   "evidence": "src/frame.jl:314-328"
+  },
+  {
+   "id": "S10b-072",
+   "file": "design/spec.md",
+   "line": 6952,
+   "kind": "mech",
+   "claim": "sigma1 is already computed by the arrival sweep",
+   "evidence": "src/frame.jl:216"
+  },
+  {
+   "id": "S10b-073",
+   "file": "design/spec.md",
+   "line": 6953,
+   "kind": "law",
+   "claim": "No trigger, nothing to localize",
+   "evidence": "src/frame.jl:226"
+  },
+  {
+   "id": "S10b-074",
+   "file": "design/spec.md",
+   "line": 6955,
+   "kind": "mech",
+   "claim": "sigma0 is a trial at theta=0 with no interpolant",
+   "evidence": "src/frame.jl:257-262"
+  },
+  {
+   "id": "S10b-075",
+   "file": "design/spec.md",
+   "line": 6956,
+   "kind": "law",
+   "claim": "sigma0 holding falls through to tn+1",
+   "evidence": "src/frame.jl:265-272"
+  },
+  {
+   "id": "S10b-076",
+   "file": "design/spec.md",
+   "line": 6958,
+   "kind": "mech",
+   "claim": "Interpolant built from xn, xdot_n, xn+1, xdot_n+1",
+   "evidence": "src/frame.jl:276-280,314; src/stepper.jl:361"
+  },
+  {
+   "id": "S10b-077",
+   "file": "design/spec.md",
+   "line": 6958,
+   "kind": "mech",
+   "claim": "The sweep for xdot_n+1 is paid only past a validated trigger",
+   "evidence": "src/frame.jl:274-280"
+  },
+  {
+   "id": "S10b-078",
+   "file": "design/spec.md",
+   "line": 6959,
+   "kind": "mech",
+   "claim": "Bracket is lo,hi = 0,1 in theta",
+   "evidence": "src/frame.jl:366"
+  },
+  {
+   "id": "S10b-079",
+   "file": "design/spec.md",
+   "line": 6960,
+   "kind": "law",
+   "claim": "Loop stops when the time width reaches localization_tol*dt_frame",
+   "evidence": "src/frame.jl:365,374"
+  },
+  {
+   "id": "S10b-080",
+   "file": "design/spec.md",
+   "line": 6962,
+   "kind": "mech",
+   "claim": "A holding trial sets hi, else lo",
+   "evidence": "src/frame.jl:389"
+  },
+  {
+   "id": "S10b-081",
+   "file": "design/spec.md",
+   "line": 6964,
+   "kind": "law",
+   "claim": "t* is the holding endpoint of the final bracket",
+   "evidence": "src/frame.jl:293,392"
+  },
+  {
+   "id": "S10b-082",
+   "file": "design/spec.md",
+   "line": 6967,
+   "kind": "law",
+   "claim": "On trigger the first act is the theta=0 trial",
+   "evidence": "src/frame.jl:257-262"
+  },
+  {
+   "id": "S10b-083",
+   "file": "design/spec.md",
+   "line": 6968,
+   "kind": "mech",
+   "claim": "Write xn into the buffer, one interior sweep, evaluate guard",
+   "evidence": "src/frame.jl:257-262"
+  },
+  {
+   "id": "S10b-084",
+   "file": "design/spec.md",
+   "line": 6969,
+   "kind": "mech",
+   "claim": "Nothing new is kept; the stepper retains xn",
+   "evidence": "src/frame.jl:200; src/stepper.jl:169"
+  },
+  {
+   "id": "S10b-085",
+   "file": "design/spec.md",
+   "line": 6970,
+   "kind": "law",
+   "claim": "The theta=0 trial needs no interpolant",
+   "evidence": "src/frame.jl:257-262"
+  },
+  {
+   "id": "S10b-086",
+   "file": "design/spec.md",
+   "line": 6972,
+   "kind": "law",
+   "claim": "It runs before any interpolant cost",
+   "evidence": "src/frame.jl:257-280"
+  },
+  {
+   "id": "S10b-087",
+   "file": "design/spec.md",
+   "line": 6974,
+   "kind": "mech",
+   "claim": "sigma0 is the left bracket value",
+   "evidence": "src/frame.jl:262,289"
+  },
+  {
+   "id": "S10b-088",
+   "file": "design/spec.md",
+   "line": 6975,
+   "kind": "mech",
+   "claim": "sigma1 is retained from the arrival evaluation",
+   "evidence": "src/frame.jl:216"
+  },
+  {
+   "id": "S10b-089",
+   "file": "design/spec.md",
+   "line": 6976,
+   "kind": "law",
+   "claim": "sigma0 tells the edge's cause apart",
+   "evidence": "src/frame.jl:264-272"
+  },
+  {
+   "id": "S10b-090",
+   "file": "design/spec.md",
+   "line": 6978,
+   "kind": "decl",
+   "claim": "Input epoch is a maximal span of constant root inputs between frame-top drains",
+   "evidence": "src/sim.jl:2020-2023"
+  },
+  {
+   "id": "S10b-091",
+   "file": "design/spec.md",
+   "line": 6980,
+   "kind": "law",
+   "claim": "Within an epoch a guard changes only through the trajectory",
+   "evidence": "src/frame.jl:249-256"
+  },
+  {
+   "id": "S10b-092",
+   "file": "design/spec.md",
+   "line": 6981,
+   "kind": "law",
+   "claim": "At an epoch seam a guard can jump without crossing",
+   "evidence": "src/frame.jl:249-256"
+  },
+  {
+   "id": "S10b-093",
+   "file": "design/spec.md",
+   "line": 6984,
+   "kind": "law",
+   "claim": "Only root inputs and values computed from them differ between the prior's context and the trial",
+   "evidence": "src/frame.jl:251-256"
+  },
+  {
+   "id": "S10b-094",
+   "file": "design/spec.md",
+   "line": 6986,
+   "kind": "mech",
+   "claim": "m changes only via handlers; priors sampled after handlers",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S10b-095",
+   "file": "design/spec.md",
+   "line": 6987,
+   "kind": "mech",
+   "claim": "Cells hold under ZOH; interior sweep excludes discrete entries",
+   "evidence": "src/executor.jl:572,587"
+  },
+  {
+   "id": "S10b-096",
+   "file": "design/spec.md",
+   "line": 6989,
+   "kind": "law",
+   "claim": "t = tn exactly in the theta=0 trial",
+   "evidence": "src/frame.jl:258"
+  },
+  {
+   "id": "S10b-097",
+   "file": "design/spec.md",
+   "line": 6990,
+   "kind": "law",
+   "claim": "The frame-top drain is the only possible source of disagreement",
+   "evidence": "src/frame.jl:249-256"
+  },
+  {
+   "id": "S10b-098",
+   "file": "design/spec.md",
+   "line": 6991,
+   "kind": "law",
+   "claim": "A step starting inside a frame has sigma0 equal to the prior",
+   "evidence": "src/frame.jl:254-256"
+  },
+  {
+   "id": "S10b-099",
+   "file": "design/spec.md",
+   "line": 6993,
+   "kind": "law",
+   "claim": "Its edges are always trajectory-caused",
+   "evidence": "src/frame.jl:254-256"
+  },
+  {
+   "id": "S10b-100",
+   "file": "design/spec.md",
+   "line": 6995,
+   "kind": "law",
+   "claim": "sigma0 not-holding is a trajectory-caused edge",
+   "evidence": "src/frame.jl:265"
+  },
+  {
+   "id": "S10b-101",
+   "file": "design/spec.md",
+   "line": 6996,
+   "kind": "mech",
+   "claim": "Then pay xdot_n+1, build interpolant, root-find the bracket",
+   "evidence": "src/frame.jl:276-290"
+  },
+  {
+   "id": "S10b-102",
+   "file": "design/spec.md",
+   "line": 6998,
+   "kind": "law",
+   "claim": "sigma0 holding is an epoch-caused edge with no in-frame crossing",
+   "evidence": "src/frame.jl:265-272"
+  },
+  {
+   "id": "S10b-103",
+   "file": "design/spec.md",
+   "line": 7001,
+   "kind": "law",
+   "claim": "An epoch-caused edge is discarded, not degraded",
+   "evidence": "src/frame.jl:268-272"
+  },
+  {
+   "id": "S10b-104",
+   "file": "design/spec.md",
+   "line": 7002,
+   "kind": "law",
+   "claim": "The event fires in tn+1's ordinary iteration",
+   "evidence": "src/frame.jl:268-272; test/test_localization.jl:62-75"
+  },
+  {
+   "id": "S10b-105",
+   "file": "design/spec.md",
+   "line": 7003,
+   "kind": "mech",
+   "claim": "Not localizing is the action; the frame falls through",
+   "evidence": "src/frame.jl:270-271"
+  },
+  {
+   "id": "S10b-106",
+   "file": "design/spec.md",
+   "line": 7005,
+   "kind": "law",
+   "claim": "The path costs one interior sweep beyond the arrival sweep",
+   "evidence": "src/frame.jl:257-262"
+  },
+  {
+   "id": "S10b-107",
+   "file": "design/spec.md",
+   "line": 7005,
+   "kind": "law",
+   "claim": "It never pays for xdot_n+1 or an interpolant",
+   "evidence": "src/frame.jl:268-280"
+  },
+  {
+   "id": "S10b-108",
+   "file": "design/spec.md",
+   "line": 7006,
+   "kind": "law",
+   "claim": "It consumes no localization_budget",
+   "evidence": "src/frame.jl:268-272,323"
+  },
+  {
+   "id": "S10b-109",
+   "file": "design/spec.md",
+   "line": 7007,
+   "kind": "law",
+   "claim": "It warns nothing",
+   "evidence": "src/frame.jl:268-272"
+  },
+  {
+   "id": "S10b-110",
+   "file": "design/spec.md",
+   "line": 7010,
+   "kind": "ptr",
+   "claim": "Left-end mirror of the t*=tn+1 degeneracy",
+   "evidence": "src/frame.jl:294-303"
+  },
+  {
+   "id": "S10b-111",
+   "file": "design/spec.md",
+   "line": 7013,
+   "kind": "mech",
+   "claim": "The interpolant is the seam's dense output",
+   "evidence": "src/stepper.jl:361"
+  },
+  {
+   "id": "S10b-112",
+   "file": "design/spec.md",
+   "line": 7014,
+   "kind": "mech",
+   "claim": "It spans the segment; first segment is the step's own length",
+   "evidence": "src/frame.jl:204,314"
+  },
+  {
+   "id": "S10b-113",
+   "file": "design/spec.md",
+   "line": 7015,
+   "kind": "mech",
+   "claim": "A remainder spans the clock to the step's end",
+   "evidence": "src/frame.jl:328"
+  },
+  {
+   "id": "S10b-114",
+   "file": "design/spec.md",
+   "line": 7016,
+   "kind": "mech",
+   "claim": "It is built lazily",
+   "evidence": "src/frame.jl:276-314"
+  },
+  {
+   "id": "S10b-115",
+   "file": "design/spec.md",
+   "line": 7017,
+   "kind": "mech",
+   "claim": "Cubic Hermite extension in theta in [0,1]",
+   "evidence": "src/stepper.jl:361-374"
+  },
+  {
+   "id": "S10b-116",
+   "file": "design/spec.md",
+   "line": 7019,
+   "kind": "mech",
+   "claim": "xdot_n is the step's first stage",
+   "evidence": "src/stepper.jl:169,200"
+  },
+  {
+   "id": "S10b-117",
+   "file": "design/spec.md",
+   "line": 7020,
+   "kind": "mech",
+   "claim": "xdot_n+1 costs one sweep",
+   "evidence": "src/frame.jl:278-280"
+  },
+  {
+   "id": "S10b-118",
+   "file": "design/spec.md",
+   "line": 7021,
+   "kind": "law",
+   "claim": "xdot_n+1 is paid only on a validated trigger",
+   "evidence": "src/frame.jl:276-280"
+  },
+  {
+   "id": "S10b-119",
+   "file": "design/spec.md",
+   "line": 7021,
+   "kind": "law",
+   "claim": "An epoch-caused edge never pays for xdot_n+1",
+   "evidence": "src/frame.jl:257-280"
+  },
+  {
+   "id": "S10b-120",
+   "file": "design/spec.md",
+   "line": 7022,
+   "kind": "law",
+   "claim": "Interpolant uniform accuracy O(h^4)",
+   "evidence": "src/stepper.jl:350-358"
+  },
+  {
+   "id": "S10b-121",
+   "file": "design/spec.md",
+   "line": 7027,
+   "kind": "law",
+   "claim": "Root-finding is bracketed and derivative-free",
+   "evidence": "src/frame.jl:359-393"
+  },
+  {
+   "id": "S10b-122",
+   "file": "design/spec.md",
+   "line": 7028,
+   "kind": "mech",
+   "claim": "ITP is the root-finder in use",
+   "evidence": "src/frame.jl:348-393"
+  },
+  {
+   "id": "S10b-123",
+   "file": "design/spec.md",
+   "line": 7028,
+   "kind": "ptr",
+   "claim": "Brent intended alternative; bisection fallback (ITP degrades to bisection)",
+   "evidence": "src/frame.jl:368-370"
+  },
+  {
+   "id": "S10b-124",
+   "file": "design/spec.md",
+   "line": 7030,
+   "kind": "law",
+   "claim": "The observed bracket is the convergence certificate",
+   "evidence": "src/frame.jl:359-392"
+  },
+  {
+   "id": "S10b-125",
+   "file": "design/spec.md",
+   "line": 7031,
+   "kind": "law",
+   "claim": "Newton and AD localization are not used",
+   "evidence": "src/frame.jl:359-393"
+  },
+  {
+   "id": "S10b-126",
+   "file": "design/spec.md",
+   "line": 7033,
+   "kind": "law",
+   "claim": "Convergence is a relative bracket width",
+   "evidence": "src/frame.jl:365"
+  },
+  {
+   "id": "S10b-127",
+   "file": "design/spec.md",
+   "line": 7034,
+   "kind": "law",
+   "claim": "Stops once the bracket is narrower than localization_tol*dt_frame",
+   "evidence": "src/frame.jl:365,374"
+  },
+  {
+   "id": "S10b-128",
+   "file": "design/spec.md",
+   "line": 7036,
+   "kind": "law",
+   "claim": "Same resolution in every step of the frame however shortened",
+   "evidence": "src/frame.jl:365"
+  },
+  {
+   "id": "S10b-129",
+   "file": "design/spec.md",
+   "line": 7038,
+   "kind": "decl",
+   "claim": "localization_tol is a Deployment constructor keyword",
+   "evidence": "src/deployment.jl:467-468"
+  },
+  {
+   "id": "S10b-130",
+   "file": "design/spec.md",
+   "line": 7039,
+   "kind": "law",
+   "claim": "localization_tol defaults to 1e-6",
+   "evidence": "src/deployment.jl:468; probe:defaults"
+  },
+  {
+   "id": "S10b-131",
+   "file": "design/spec.md",
+   "line": 7044,
+   "kind": "mech",
+   "claim": "ITP needs a handful of trials",
+   "evidence": "probe:sign trials=6"
+  },
+  {
+   "id": "S10b-132",
+   "file": "design/spec.md",
+   "line": 7044,
+   "kind": "mech",
+   "claim": "Bisection worst case is around 20 trials",
+   "evidence": "probe:jump trials=21; probe:log2 19.9"
+  },
+  {
+   "id": "S10b-133",
+   "file": "design/spec.md",
+   "line": 7046,
+   "kind": "mech",
+   "claim": "The boundary sequence runs at t* after the event",
+   "evidence": "src/frame.jl:314-316"
+  },
+  {
+   "id": "S10b-134",
+   "file": "design/spec.md",
+   "line": 7047,
+   "kind": "mech",
+   "claim": "The interpolant is invalidated afterwards",
+   "evidence": "src/frame.jl:312-313,328"
+  },
+  {
+   "id": "S10b-135",
+   "file": "design/spec.md",
+   "line": 7048,
+   "kind": "law",
+   "claim": "Fixed-step: integration resumes from t* with the remainder step",
+   "evidence": "src/frame.jl:327-328"
+  },
+  {
+   "id": "S10b-136",
+   "file": "design/spec.md",
+   "line": 7050,
+   "kind": "law",
+   "claim": "The remainder targets tn+1, never a later instant",
+   "evidence": "src/frame.jl:328"
+  },
+  {
+   "id": "S10b-137",
+   "file": "design/spec.md",
+   "line": 7052,
+   "kind": "law",
+   "claim": "Under a proposing method t* ends the step",
+   "evidence": "src/frame.jl:326"
+  },
+  {
+   "id": "S10b-138",
+   "file": "design/spec.md",
+   "line": 7053,
+   "kind": "law",
+   "claim": "The next step is shaped from t* to the span's end",
+   "evidence": "src/frame.jl:142-144"
+  },
+  {
+   "id": "S10b-139",
+   "file": "design/spec.md",
+   "line": 7053,
+   "kind": "law",
+   "claim": "Guards are re-checked on the remainder",
+   "evidence": "src/frame.jl:202-226"
+  },
+  {
+   "id": "S10b-140",
+   "file": "design/spec.md",
+   "line": 7054,
+   "kind": "law",
+   "claim": "The re-check runs under the per-frame budget",
+   "evidence": "src/frame.jl:232"
+  },
+  {
+   "id": "S10b-141",
+   "file": "design/spec.md",
+   "line": 7055,
+   "kind": "law",
+   "claim": "Exhaustion carries a chattering diagnostic",
+   "evidence": "src/frame.jl:238-241"
+  },
+  {
+   "id": "S10b-142",
+   "file": "design/spec.md",
+   "line": 7057,
+   "kind": "law",
+   "claim": "Multiple localizing events fire at the earliest t*",
+   "evidence": "src/frame.jl:286-293"
+  },
+  {
+   "id": "S10b-143",
+   "file": "design/spec.md",
+   "line": 7058,
+   "kind": "law",
+   "claim": "Ties fire at one boundary, one eligible event per component per round, declaration order",
+   "evidence": "src/model.jl:750-771"
+  },
+  {
+   "id": "S10b-144",
+   "file": "design/spec.md",
+   "line": 7060,
+   "kind": "law",
+   "claim": "Later crossings re-localize on the remainder",
+   "evidence": "src/frame.jl:282-285"
+  },
+  {
+   "id": "S10b-145",
+   "file": "design/spec.md",
+   "line": 7062,
+   "kind": "law",
+   "claim": "An even number of crossings in one step is unobserved",
+   "evidence": "src/frame.jl:222-223"
+  },
+  {
+   "id": "S10b-146",
+   "file": "design/spec.md",
+   "line": 7069,
+   "kind": "law",
+   "claim": "The root-finder returns the holding endpoint of its final bracket",
+   "evidence": "src/frame.jl:392"
+  },
+  {
+   "id": "S10b-147",
+   "file": "design/spec.md",
+   "line": 7070,
+   "kind": "law",
+   "claim": "It is the smallest trial point where the predicate holds",
+   "evidence": "src/frame.jl:389"
+  },
+  {
+   "id": "S10b-148",
+   "file": "design/spec.md",
+   "line": 7071,
+   "kind": "law",
+   "claim": "t* = tn is structurally impossible",
+   "evidence": "src/frame.jl:293"
+  },
+  {
+   "id": "S10b-149",
+   "file": "design/spec.md",
+   "line": 7074,
+   "kind": "law",
+   "claim": "Root-finding starts only after sigma0 measured not-holding",
+   "evidence": "src/frame.jl:265,289"
+  },
+  {
+   "id": "S10b-150",
+   "file": "design/spec.md",
+   "line": 7077,
+   "kind": "law",
+   "claim": "The returned point is strictly later than tn",
+   "evidence": "src/frame.jl:293"
+  },
+  {
+   "id": "S10b-151",
+   "file": "design/spec.md",
+   "line": 7079,
+   "kind": "law",
+   "claim": "The disagreement case never reaches the root-finder",
+   "evidence": "src/frame.jl:265-272"
+  },
+  {
+   "id": "S10b-152",
+   "file": "design/spec.md",
+   "line": 7082,
+   "kind": "mech",
+   "claim": "The clock tn + theta*h can round onto tn late in a long run",
+   "evidence": "src/frame.jl:291-293; test/test_localization.jl:78-101"
+  },
+  {
+   "id": "S10b-153",
+   "file": "design/spec.md",
+   "line": 7083,
+   "kind": "law",
+   "claim": "The clock is at least nextfloat(tn)",
+   "evidence": "src/frame.jl:293"
+  },
+  {
+   "id": "S10b-154",
+   "file": "design/spec.md",
+   "line": 7085,
+   "kind": "law",
+   "claim": "The guard observably holds at t*",
+   "evidence": "probe:sign sigma at t* >= 0"
+  },
+  {
+   "id": "S10b-155",
+   "file": "design/spec.md",
+   "line": 7086,
+   "kind": "law",
+   "claim": "Handlers fire where their predicate holds",
+   "evidence": "probe:sign"
+  },
+  {
+   "id": "S10b-156",
+   "file": "design/spec.md",
+   "line": 7087,
+   "kind": "mech",
+   "claim": "The post-fire prior records an observation",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S10b-157",
+   "file": "design/spec.md",
+   "line": 7089,
+   "kind": "law",
+   "claim": "t* = tn+1 exactly is legitimate",
+   "evidence": "src/frame.jl:294-303"
+  },
+  {
+   "id": "S10b-158",
+   "file": "design/spec.md",
+   "line": 7090,
+   "kind": "law",
+   "claim": "sigma(tn+1)=0 triggers and is the root",
+   "evidence": "src/frame.jl:223,294"
+  },
+  {
+   "id": "S10b-159",
+   "file": "design/spec.md",
+   "line": 7091,
+   "kind": "law",
+   "claim": "It degenerates to the boundary at that end",
+   "evidence": "src/frame.jl:294-303"
+  },
+  {
+   "id": "S10b-160",
+   "file": "design/spec.md",
+   "line": 7092,
+   "kind": "law",
+   "claim": "A clock rounding onto tn+1 degenerates too",
+   "evidence": "src/frame.jl:294"
+  },
+  {
+   "id": "S10b-161",
+   "file": "design/spec.md",
+   "line": 7093,
+   "kind": "law",
+   "claim": "Result discarded; event fires in tn+1's ordinary iteration",
+   "evidence": "src/frame.jl:301-302"
+  },
+  {
+   "id": "S10b-162",
+   "file": "design/spec.md",
+   "line": 7094,
+   "kind": "law",
+   "claim": "Outcome identical to the non-localized one",
+   "evidence": "src/frame.jl:301; test/test_localization.jl:78-101"
+  },
+  {
+   "id": "S10b-163",
+   "file": "design/spec.md",
+   "line": 7095,
+   "kind": "law",
+   "claim": "One boundary, one snapshot",
+   "evidence": "test/test_localization.jl:99-101"
+  },
+  {
+   "id": "S10b-164",
+   "file": "design/spec.md",
+   "line": 7096,
+   "kind": "law",
+   "claim": "No zero-length remainder",
+   "evidence": "src/frame.jl:301-302"
+  },
+  {
+   "id": "S10b-165",
+   "file": "design/spec.md",
+   "line": 7098,
+   "kind": "law",
+   "claim": "Every scheduled instant is computed from its index, never accumulated",
+   "evidence": "src/frame.jl:128,139; src/model.jl:1210"
+  },
+  {
+   "id": "S10b-166",
+   "file": "design/spec.md",
+   "line": 7100,
+   "kind": "mech",
+   "claim": "Frame top is t0 + k*dt_frame from the frame index",
+   "evidence": "src/frame.jl:128"
+  },
+  {
+   "id": "S10b-167",
+   "file": "design/spec.md",
+   "line": 7101,
+   "kind": "mech",
+   "claim": "Off-top due instant is t0 + n*dt_base from the tick index",
+   "evidence": "src/frame.jl:128"
+  },
+  {
+   "id": "S10b-168",
+   "file": "design/spec.md",
+   "line": 7102,
+   "kind": "mech",
+   "claim": "Fixed-step interior end is span start plus i times the span's step",
+   "evidence": "src/frame.jl:139"
+  },
+  {
+   "id": "S10b-169",
+   "file": "design/spec.md",
+   "line": 7105,
+   "kind": "mech",
+   "claim": "Each instant's clock is the Float64 nearest it",
+   "evidence": "src/frame.jl:139"
+  },
+  {
+   "id": "S10b-170",
+   "file": "design/spec.md",
+   "line": 7106,
+   "kind": "mech",
+   "claim": "Proposing method's end clock is start's clock plus step length",
+   "evidence": "src/frame.jl:144"
+  },
+  {
+   "id": "S10b-171",
+   "file": "design/spec.md",
+   "line": 7108,
+   "kind": "mech",
+   "claim": "Tick gating is counter-modulo",
+   "evidence": "src/executor.jl:518"
+  },
+  {
+   "id": "S10b-172",
+   "file": "design/spec.md",
+   "line": 7108,
+   "kind": "law",
+   "claim": "The clock is written once per boundary",
+   "evidence": "src/frame.jl:159"
+  },
+  {
+   "id": "S10b-173",
+   "file": "design/spec.md",
+   "line": 7109,
+   "kind": "law",
+   "claim": "An instant on both lattices takes the first formula that applies",
+   "evidence": "src/frame.jl:128"
+  },
+  {
+   "id": "S10b-174",
+   "file": "design/spec.md",
+   "line": 7110,
+   "kind": "law",
+   "claim": "A frame top is always t0 + k*dt_frame",
+   "evidence": "src/frame.jl:126-128"
+  },
+  {
+   "id": "S10b-175",
+   "file": "design/spec.md",
+   "line": 7111,
+   "kind": "mech",
+   "claim": "Remainder targets the step's end, h' derived at use",
+   "evidence": "src/frame.jl:328"
+  },
+  {
+   "id": "S10b-176",
+   "file": "design/spec.md",
+   "line": 7112,
+   "kind": "law",
+   "claim": "t* is a float inside a step, never an anchor",
+   "evidence": "src/frame.jl:293,328"
+  },
+  {
+   "id": "S10b-177",
+   "file": "design/spec.md",
+   "line": 7113,
+   "kind": "mech",
+   "claim": "A near-degenerate t* leaves a tiny remainder",
+   "evidence": "src/frame.jl:293,328"
+  },
+  {
+   "id": "S10b-178",
+   "file": "design/spec.md",
+   "line": 7119,
+   "kind": "law",
+   "claim": "At t* the full event phase runs",
+   "evidence": "src/frame.jl:316; src/model.jl:652-657"
+  },
+  {
+   "id": "S10b-179",
+   "file": "design/spec.md",
+   "line": 7120,
+   "kind": "mech",
+   "claim": "Sweep, guards, handlers iterate to quiescence",
+   "evidence": "src/model.jl:734-780"
+  },
+  {
+   "id": "S10b-180",
+   "file": "design/spec.md",
+   "line": 7121,
+   "kind": "law",
+   "claim": "Firing-budget accounting is scoped to this boundary",
+   "evidence": "src/model.jl:742"
+  },
+  {
+   "id": "S10b-181",
+   "file": "design/spec.md",
+   "line": 7122,
+   "kind": "law",
+   "claim": "Firing budget is fresh at every later boundary, a second t* included",
+   "evidence": "src/model.jl:742"
+  },
+  {
+   "id": "S10b-182",
+   "file": "design/spec.md",
+   "line": 7124,
+   "kind": "mech",
+   "claim": "The settled t* state is published as a snapshot",
+   "evidence": "src/frame.jl:322; src/sim.jl:2041"
+  },
+  {
+   "id": "S10b-183",
+   "file": "design/spec.md",
+   "line": 7125,
+   "kind": "mech",
+   "claim": "The boundary counter increments at the t* publication",
+   "evidence": "src/sim.jl:2796"
+  },
+  {
+   "id": "S10b-184",
+   "file": "design/spec.md",
+   "line": 7126,
+   "kind": "mech",
+   "claim": "The stop scan reads the StopFlag cells the advance honours",
+   "evidence": "src/sim.jl:2041-2043"
+  },
+  {
+   "id": "S10b-185",
+   "file": "design/spec.md",
+   "line": 7128,
+   "kind": "law",
+   "claim": "A crash localized at t* ends the run from that snapshot",
+   "evidence": "src/frame.jl:322; src/sim.jl:2041-2043"
+  },
+  {
+   "id": "S10b-186",
+   "file": "design/spec.md",
+   "line": 7130,
+   "kind": "law",
+   "claim": "Ticks are never due at t*",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "S10b-187",
+   "file": "design/spec.md",
+   "line": 7131,
+   "kind": "law",
+   "claim": "No due instant falls at t* since every due instant ends a step",
+   "evidence": "src/frame.jl:160-164"
+  },
+  {
+   "id": "S10b-188",
+   "file": "design/spec.md",
+   "line": 7133,
+   "kind": "law",
+   "claim": "Discrete cells ZOH-hold through the t* sweep",
+   "evidence": "src/frame.jl:316; src/model.jl:652-660"
+  },
+  {
+   "id": "S10b-189",
+   "file": "design/spec.md",
+   "line": 7135,
+   "kind": "law",
+   "claim": "Staged inputs are not drained at t*",
+   "evidence": "src/frame.jl:316; src/sim.jl:2020-2023"
+  },
+  {
+   "id": "S10b-190",
+   "file": "design/spec.md",
+   "line": 7140,
+   "kind": "law",
+   "claim": "The t* publication is not separately paced",
+   "evidence": "src/sim.jl:2041-2043,2789-2809"
+  },
+  {
+   "id": "S10b-191",
+   "file": "design/spec.md",
+   "line": 7141,
+   "kind": "mech",
+   "claim": "The pacer paces frame deadlines",
+   "evidence": "src/sim.jl:2108-2109"
+  },
+  {
+   "id": "S10b-192",
+   "file": "design/spec.md",
+   "line": 7142,
+   "kind": "law",
+   "claim": "A t* snapshot publishes when computed, mid-frame",
+   "evidence": "src/sim.jl:2041"
+  },
+  {
+   "id": "S10b-193",
+   "file": "design/spec.md",
+   "line": 7146,
+   "kind": "mech",
+   "claim": "Error messages index boundaries by the frame-entry index with recorded t",
+   "evidence": "src/diagnostics.jl:245-250"
+  },
+  {
+   "id": "S10b-194",
+   "file": "design/spec.md",
+   "line": 7146,
+   "kind": "mech",
+   "claim": "Replay pointers index by the frame-entry index",
+   "evidence": "src/sim.jl:1322"
+  },
+  {
+   "id": "S10b-195",
+   "file": "design/spec.md",
+   "line": 7148,
+   "kind": "mech",
+   "claim": "Snapshots carry the published-boundary ordinal",
+   "evidence": "src/sim.jl:2793"
+  },
+  {
+   "id": "S10b-196",
+   "file": "design/spec.md",
+   "line": 7149,
+   "kind": "law",
+   "claim": "The trace stays frame-indexed",
+   "evidence": "src/trace.jl:22-30"
+  },
+  {
+   "id": "S10b-197",
+   "file": "design/spec.md",
+   "line": 7150,
+   "kind": "law",
+   "claim": "t* boundaries consume no inputs",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "S10b-198",
+   "file": "design/spec.md",
+   "line": 7152,
+   "kind": "decl",
+   "claim": "Projection is the optional hook x_projection",
+   "evidence": "src/declare.jl:580"
+  },
+  {
+   "id": "S10b-199",
+   "file": "design/spec.md",
+   "line": 7153,
+   "kind": "law",
+   "claim": "Projection reaches the boundary, not the trial",
+   "evidence": "src/model.jl:652-654; src/frame.jl:336"
+  },
+  {
+   "id": "S10b-200",
+   "file": "design/spec.md",
+   "line": 7154,
+   "kind": "law",
+   "claim": "Trials run against the raw interpolated state",
+   "evidence": "src/frame.jl:332-345"
+  },
+  {
+   "id": "S10b-201",
+   "file": "design/spec.md",
+   "line": 7155,
+   "kind": "law",
+   "claim": "Projection runs at t*; edge checks read the projected state",
+   "evidence": "src/model.jl:653-655"
+  },
+  {
+   "id": "S10b-202",
+   "file": "design/spec.md",
+   "line": 7157,
+   "kind": "mech",
+   "claim": "RK-stage RHS evaluations run on the raw state too",
+   "evidence": "src/model.jl:652-654"
+  },
+  {
+   "id": "S10b-203",
+   "file": "design/spec.md",
+   "line": 7161,
+   "kind": "law",
+   "claim": "If projection moves the state back across a guard the event does not fire",
+   "evidence": "probe:clamp count=0"
+  },
+  {
+   "id": "S10b-204",
+   "file": "design/spec.md",
+   "line": 7162,
+   "kind": "law",
+   "claim": "One extra boundary is published then",
+   "evidence": "probe:clamp snaps"
+  },
+  {
+   "id": "S10b-205",
+   "file": "design/spec.md",
+   "line": 7168,
+   "kind": "decl",
+   "claim": "localization_budget is the integer per-frame count",
+   "evidence": "src/deployment.jl:532,567"
+  },
+  {
+   "id": "S10b-206",
+   "file": "design/spec.md",
+   "line": 7169,
+   "kind": "law",
+   "claim": "The count runs across all the frame's steps",
+   "evidence": "src/frame.jl:122,232,323"
+  },
+  {
+   "id": "S10b-207",
+   "file": "design/spec.md",
+   "line": 7171,
+   "kind": "law",
+   "claim": "localization_budget defaults to 8",
+   "evidence": "src/deployment.jl:468; probe:defaults"
+  },
+  {
+   "id": "S10b-208",
+   "file": "design/spec.md",
+   "line": 7171,
+   "kind": "decl",
+   "claim": "localization_budget is a Deployment constructor keyword",
+   "evidence": "src/deployment.jl:556-557"
+  },
+  {
+   "id": "S10b-209",
+   "file": "design/spec.md",
+   "line": 7176,
+   "kind": "law",
+   "claim": "A budget of 8 does not bind on a multi-event frame",
+   "evidence": "test/test_localization.jl:146-162"
+  },
+  {
+   "id": "S10b-210",
+   "file": "design/spec.md",
+   "line": 7179,
+   "kind": "law",
+   "claim": "Budget exhaustion degrades and does not throw",
+   "evidence": "src/frame.jl:232-243"
+  },
+  {
+   "id": "S10b-211",
+   "file": "design/spec.md",
+   "line": 7180,
+   "kind": "law",
+   "claim": "Localization stops for the rest of that frame",
+   "evidence": "src/frame.jl:232"
+  },
+  {
+   "id": "S10b-212",
+   "file": "design/spec.md",
+   "line": 7181,
+   "kind": "law",
+   "claim": "Further crossings fire in the ordinary iteration of the step-ending boundary",
+   "evidence": "src/frame.jl:243"
+  },
+  {
+   "id": "S10b-213",
+   "file": "design/spec.md",
+   "line": 7183,
+   "kind": "law",
+   "claim": "A ChatteringBudget warning is raised",
+   "evidence": "src/frame.jl:238-241; src/diagnostics.jl:1625"
+  },
+  {
+   "id": "S10b-214",
+   "file": "design/spec.md",
+   "line": 7183,
+   "kind": "law",
+   "claim": "It names the event and the localization count",
+   "evidence": "src/diagnostics.jl:1625-1631"
+  },
+  {
+   "id": "S10b-215",
+   "file": "design/spec.md",
+   "line": 7186,
+   "kind": "law",
+   "claim": "Degradation depends on the trajectory alone",
+   "evidence": "src/frame.jl:232-243"
+  },
+  {
+   "id": "S10b-216",
+   "file": "design/spec.md",
+   "line": 7188,
+   "kind": "law",
+   "claim": "The degradation is not a StepError",
+   "evidence": "src/frame.jl:238-243"
+  },
+  {
+   "id": "S10b-217",
+   "file": "design/spec.md",
+   "line": 7195,
+   "kind": "decl",
+   "claim": "Both are Deployment constructor keywords",
+   "evidence": "src/deployment.jl:556-557"
+  },
+  {
+   "id": "S10b-218",
+   "file": "design/spec.md",
+   "line": 7197,
+   "kind": "law",
+   "claim": "The constructor validates them with firing_budget",
+   "evidence": "src/deployment.jl:563-568"
+  },
+  {
+   "id": "S10b-219",
+   "file": "design/spec.md",
+   "line": 7199,
+   "kind": "law",
+   "claim": "Failures collect into DeploymentInvalid",
+   "evidence": "src/deployment.jl:563-568; probe:invalid"
+  },
+  {
+   "id": "S10b-220",
+   "file": "design/spec.md",
+   "line": 7200,
+   "kind": "law",
+   "claim": "The three are grid-independent, outside the harmonic-grid check",
+   "evidence": "src/deployment.jl:556-600"
+  },
+  {
+   "id": "S10b-221",
+   "file": "design/spec.md",
+   "line": 7203,
+   "kind": "law",
+   "claim": "All three are recorded",
+   "evidence": "src/descriptor.jl:71-73; src/checkpoint.jl:197"
+  },
+  {
+   "id": "S10b-222",
+   "file": "design/spec.md",
+   "line": 7204,
+   "kind": "mech",
+   "claim": "They ride the Deployment in the trace header",
+   "evidence": "src/trace.jl:79; src/checkpoint.jl:106-107"
+  },
+  {
+   "id": "S10b-223",
+   "file": "design/spec.md",
+   "line": 7206,
+   "kind": "law",
+   "claim": "They join the set replay compares up front",
+   "evidence": "src/checkpoint.jl:197-198; src/model.jl:1249-1250; src/sim.jl:1198"
+  }
+ ],
+ "counts": {
+  "law": 143,
+  "mech": 66,
+  "decl": 11,
+  "ex": 1,
+  "ptr": 14,
+  "why": 26
+ }
+}

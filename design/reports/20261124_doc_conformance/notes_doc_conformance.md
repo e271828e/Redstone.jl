@@ -55,7 +55,16 @@ the tools.
   under D-052's bold and does not cite D-111, which brings `x_projection`
   in. The snapshot `port` docstring (src/dataplane.jl, near 550) never
   names the no-name `ArgumentError`.
-- **Next.** G4, §10, as G4a and G4b at one pin.
+- **G4a, §10.** It ran at `2ea85438` as `wf_8bed24b4-c04`: 10 agents,
+  1.57M tokens, 18 min. The verifiers overturned 4 of 24 flags and found 5
+  misses in 107 sampled rows. Its 4 clear rows wait in
+  `ledgers/G4a/fix_list.md` for one fixer with G4b.
+- **Paused here on 2026-11-24, at the user's request.** Resume with G4b at
+  the same pin, `2ea85438`: its args are in `ledgers/G4b/args.json` and its
+  leads are cut. They add S9d2, a high-tier re-inventory of §9.7 and §9.8.
+  If master has moved, either re-pin the worktree at `2ea85438` or
+  regenerate G4b's args and leads at the new tip; G4a's fix list is at
+  `2ea85438` either way. Then one fixer takes G4a's and G4b's clear rows.
 
 ## Rulings since the trial
 

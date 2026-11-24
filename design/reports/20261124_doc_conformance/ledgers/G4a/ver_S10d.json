@@ -1,0 +1,62 @@
+{
+ "judgments": [
+  {
+   "id": "S10d-001",
+   "conforms": true,
+   "evidence": "src/sim.jl:2108-2109 calls wait_deadline! at the frame top, before Base.sigatomic_begin and run_frame! (2110-2114). The wait reads only pace and margin and never touches the boundary sequence (src/control.jl:162-194). test/test_devices.jl:529-541 checks that paced and unpaced runs are bit-identical (same_trajectory, equal trace frames and batches)."
+  },
+  {
+   "id": "S10d-010",
+   "conforms": true,
+   "evidence": "src/sim.jl:2100-2102 has `parked = wait_resume!(control)`, then `pacer === nothing || !parked || isinf(pacer.pace) || reanchor!(...)`. src/control.jl:147-150 shows that reanchor! counts the re-anchor, adds the debt to forgiven and clears the debt. test/test_devices.jl:670-686 checks that reanchors rises by one and debt is 0 after the un-pause.",
+   "note": "The pause path skips the re-anchor while the pace is Inf, which is fine because no map exists then. If the pace changed during the pause from Inf to a finite value, wait_deadline! (src/control.jl:165) re-anchors instead."
+  },
+  {
+   "id": "S10d-019",
+   "conforms": true,
+   "evidence": "src/model.jl:864-870 (_shaped) clamps each proposal into [h_min, h_max] and caps the count at floor(r/h_min). That leaves no step under h_min unless the distance itself is shorter, and the remainder r(N-1)/N >= (N-1)h_min can never fall below the floor. src/model.jl:843-845 shapes the attempt after attempt_budget at h_min, and :832-833 accepts a floor attempt whatever its verdict, so a step makes at most attempt_budget+1 attempts. frame.jl:142 shapes every step of a proposing method. The doors require h_min <= h_max/2 <= Δt_frame/2 (src/deployment.jl:235-237). Nothing in run! refuses or warns on h_min against the frame budget."
+  },
+  {
+   "id": "S10d-064",
+   "conforms": true,
+   "evidence": "src/executor.jl:518 runs a discrete entry only where `(tick - entry.Φ) % entry.D == 0`. Stacks at the same D with distinct Φ never share a tick, so a boundary runs only one stack's entries.",
+   "note": "This holds for same-rate stacks, the case §6.3 introduces (spec.md:2138-2141). Stacks at different rates may share a tick: D=2,Φ=0 and D=3,Φ=1 coincide at n=4. 'Stagger at least a frame' must also hold for the cyclic distance D−Φ. With D=10, Φ=8 and a 4-tick frame, the frame (16,20] holds both stacks. Wording could be tightened, but nothing here contradicts the code."
+  },
+  {
+   "id": "S10d-028",
+   "conforms": true,
+   "evidence": "src/control.jl:177-180: `if pacer.debt > 5 * h / p` re-anchors and reports DebtReanchor, so the debt is cleared rather than repaid. Probe P3 (probe.jl:53) printed reanchors=1, debt=0.0 and ring=[DebtReanchor] after 100 ms against a 10 ms budget. test/test_devices.jl:586-598 shows the next frame waiting normally."
+  },
+  {
+   "id": "S10d-040",
+   "conforms": true,
+   "evidence": "The code does not fix this. It is a dated measurement (2026-07) and cannot be refuted from W. The re-measurement in probe.jl:15 (Julia 1.13.3, load average about 1.7, 300 samples of 2 ms) gave a sleep median overshoot of 1.796 ms and a Libc.systemsleep median of 1.016 ms.",
+   "note": "Today's figures are higher than the dated ones, 1.8 vs 1.4 ms and 1.0 vs 0.5 ms. The doc is a dated record, so I judged it conforming. The difference matters to S10d-054, and the user may want the figures re-measured or re-dated."
+  },
+  {
+   "id": "S10d-038",
+   "conforms": true,
+   "evidence": "src/control.jl:185-190 computes `remaining = deadline - margin - now` and sleeps it. With margin 0 the spin runs only if the sleep woke early. Probe P2 (probe.jl:43) at margin=0.0 showed CPU/wall 0.2% and a median landing 3.3 ms late, so no spin ran and all 51 waits completed."
+  },
+  {
+   "id": "S10d-054",
+   "conforms": false,
+   "evidence": "Probe P2 (probe.jl:43) ran wait_deadline! by hand at margin=0.002 with a 20 ms budget and 50 frames, twice. The median landing was 1116-1282 µs after the deadline, with a max of about 2 ms, and CPU/wall was 0.4-0.5%. Probe P1b (probe.jl:20) shows the coarse phase's sleep(18 ms) overshooting by a median of 3.06 ms. That is more than the 2 ms margin, so the spin phase never runs and the wait lands ms late, not within µs. The default is src/control.jl:73 and src/sim.jl:1562 (margin = 0.002). margin=Inf landed at a median of 0.0 µs (max 0.5 µs) at 100% CPU.",
+   "class": "defect",
+   "fix": "Recalibrate the default margin so it covers the coarse phase's measured overshoot on the dev machine under the current Julia, about 3 ms for an 18 ms sleep, for example 4 ms. Alternatively, re-measure and restate the landing claim.",
+   "clear": false,
+   "note": "The 90% figure is only the design's arithmetic, (20-2)/20. The landing and CPU claims are empirical, and both fail on W today. Any fix changes D-133's default and rationale (log.md:4698-4701), the 1.4 ms figure in spec.md:7755-7774, and the margin defaults in run!, replay! and Control."
+  },
+  {
+   "id": "S10d-048",
+   "conforms": true,
+   "evidence": "Probe P4 (probe.jl:75) sent a real SIGINT from a child process at about 1.5 s into a run! at pace 0.01 (1 s budgets, next deadline at about 2 s). run! returned at 1.574 s with lifecycle=stopped and source=ControlRequestedStop(:interrupt), frame=2, waits=1. The interrupt raised out of the coarse phase's sleep (src/control.jl:186) rather than waiting for the spin or the next frame top, and src/sim.jl:2117-2125 caught it."
+  },
+  {
+   "id": "S10d-058",
+   "conforms": true,
+   "evidence": "src/control.jl:177-180: the forgiveness calls reanchor!, which does `pacer.reanchors += 1` (src/control.jl:149), then `report_cell!(loop_diag, DebtReanchor(forgiven, t, pacer.τ_anchor))`. Probe P3 (probe.jl:53) printed reanchors=1 and ring=[DebtReanchor]. test/test_devices.jl:586-598 and 600-611 pin both the count and the report in the loop's record."
+  }
+ ],
+ "notes": "I created one file, the probe script at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S10d_v/probe.jl. I ran it three times; the first two runs failed on missing imports. I changed no tracked file and ran no git command. Only S10d-054 fails, and empirically: the default 2 ms margin no longer covers the coarse sleep's overshoot under Julia 1.13.3 on this machine. Today the sleep overshoots by about 3 ms for an 18 ms request, and by 1.8 ms for a 2 ms request against the dated 1.4 ms. The paced wait at the default margin lands about 1.1-1.3 ms late at 0.4% CPU. In P3, the second 'next frame waits=0' line is an artifact of my probe: the println compile between the calls made that frame late. The suite's test at test/test_devices.jl:596-597 covers that point instead."
+}

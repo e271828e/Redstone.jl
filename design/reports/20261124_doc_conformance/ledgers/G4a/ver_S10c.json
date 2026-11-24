@@ -1,0 +1,144 @@
+{
+ "judgments": [
+  {
+   "id": "S10c-001",
+   "conforms": true,
+   "evidence": "src/executor.jl:594 compiles the interior walk from continuous entries only, and src/frame.jl:163 runs a boundary with no due set through the zero-arg interior bodies (src/model.jl:708-709). Probe P2 (Δt_base = 3//10, Δt_frame = 1//10): the accumulator's state moves only at t = 0.3 and 0.6 and holds in between."
+  },
+  {
+   "id": "S10c-010",
+   "conforms": true,
+   "evidence": "src/executor.jl:594: the interior chunks keep only entries with gate === nothing. The discrete entries are left out at construction, with no runtime test. Probe P1: sweep_1 interior n=1 and boundary n=2 with gated=1; ticks interior n=0."
+  },
+  {
+   "id": "S10c-019",
+   "conforms": true,
+   "evidence": "src/executor.jl:572-573: (body::PhaseBody)() walks the interior tuple and (body::PhaseBody)(tick) walks the boundary tuple. Boundary zero passes the ESTABLISH marker where the index goes (src/executor.jl:504-505, 524), which §14.5 and D-205 cover."
+  },
+  {
+   "id": "S10c-028",
+   "conforms": true,
+   "evidence": "src/frame.jl:305-316: the t* boundary runs run_boundary!(model, nothing), which is the empty due set by arity (src/model.jl:661, 708-709)."
+  },
+  {
+   "id": "S10c-029",
+   "conforms": true,
+   "evidence": "src/executor.jl:513-518 (\"'everything with Φ₀ = 0' is this same gate at index 0, implemented by nothing\") and src/model.jl:664-665: boundary zero's updates call the ordinary ticks(0). D-205 widens boundary zero's sweep so every discrete output stage runs (src/executor.jl:524). That widening does not touch the due set, and §6.3 (spec.md:1488-1491) and §14.5 state it."
+  },
+  {
+   "id": "S10c-038",
+   "conforms": true,
+   "evidence": "src/model.jl:864-883: cap = max(min(p, h_max), h_min) and N = max(1, min(ceil(r/cap), floor(r/h_min))). N is 1 when cap ≥ r, and h = r/N. Probe P8: p=0.03 r=0.1 gives h=0.025, p=1.0 gives 0.05 and p=0.004 gives 0.01, each matching r/N."
+  },
+  {
+   "id": "S10c-047",
+   "conforms": true,
+   "evidence": "src/model.jl:832-833 and 889-890: an attempt with h ≤ r/floor_steps is the floor's and is accepted. Probe P8: p=0.011, r=0.025 shapes h=0.0125 > p, and _at_floor is true."
+  },
+  {
+   "id": "S10c-056",
+   "conforms": true,
+   "evidence": "src/frame.jl:125-127: target = min(lattice.frame, due_at - origin), and is_top and is_due are Int equalities. src/model.jl:544-552: _next_due takes one mod per row and the minimum."
+  },
+  {
+   "id": "S10c-065",
+   "conforms": true,
+   "evidence": "src/frame.jl:139-140: with no proposal, h_step = t_next - t (end clock minus start clock). src/frame.jl:142-144: under a proposal the shaped length is integrated, and t_next = t + h_step, or t_to when the step ends the span. src/model.jl:867 makes a one-step h equal to t_to - t."
+  },
+  {
+   "id": "S10c-074",
+   "conforms": true,
+   "evidence": "src/model.jl:532: _grid_time(model, k) = _instant(clock, k * lattice.frame), the float nearest t₀ + k·Δt_frame. Probe P6: tops from t0=3//10 at Δ=3//10 read [0.3, 0.6, 0.9, 1.2], equal to the BigFloat-nearest values."
+  },
+  {
+   "id": "S10c-083",
+   "conforms": true,
+   "evidence": "src/store.jl:212-214 do one float division below 2^53 and src/store.jl:221-232 do the exact long division above it. src/store.jl:183-187: boundary zero's clock is _instant at position 0. Probe P6: 0 mismatches with the BigFloat nearest over 2e5 large-magnitude draws, and clock0 from t0=-3//10 is -0.3."
+  },
+  {
+   "id": "S10c-093",
+   "conforms": true,
+   "evidence": "src/model.jl:590-594: _last_frame = min(lattice.max_frame, clock room). Probe P7 (1 µs frame): max_frame = typemax(Int) but the last frame is 562949953421311, set by the clock bound."
+  },
+  {
+   "id": "S10c-102",
+   "conforms": true,
+   "evidence": "src/deployment.jl:170: gap = h_min !== nothing ? min(unit, h_min) : .... Probe P7: BS3 with h_min = 1 ns gives reach = 2^50·1e-9, and with h_min = 1 ms (unit 10 ms) gives reach = 2^50·1e-3."
+  },
+  {
+   "id": "S10c-109",
+   "conforms": false,
+   "evidence": "Probe P7: Δt_frame = 1//1000000 (unit 1 µs, no bound) from t₀ = 0 gives last frame 562949953421311, t_last = 5.6295e8 s = 17.84 years. The same holds with a 10 ms frame over a 1 µs base (src/model.jl:592-593, reach = 2^50·δ from src/deployment.jl:173). The doc's \"about 17 years\" truncates 17.8.",
+   "class": "deviation",
+   "fix": "With a `Δt_unit` of 1 µs and no finer bound, a run from `t₀ = 0` resolves about 18 years.",
+   "clear": true,
+   "note": "This is an arithmetic slip in the worked figure. The rule and the code agree: 2^49 µs ≈ 5.63e8 s ≈ 17.8 years. No log entry carries a figure."
+  },
+  {
+   "id": "S10c-113",
+   "conforms": true,
+   "evidence": "src/model.jl:590-594: min(lattice.max_frame, ceil(Int, room) - 1). src/frame.jl:81-84 refuses k past it. Probe P7: frame!(model, last+1) throws ArgumentInvalid."
+  },
+  {
+   "id": "S10c-134",
+   "conforms": true,
+   "evidence": "src/model.jl:746: each round calls _guards!, which walks every event entry and writes now[i] (src/executor.jl:363-380). A sweep precedes each guard walk (src/model.jl:737, 775)."
+  },
+  {
+   "id": "S10c-143",
+   "conforms": true,
+   "evidence": "src/declare.jl:602-603: _holding(σ::Bool) = σ; _holding(σ) = σ ≥ 0, applied at src/executor.jl:374."
+  },
+  {
+   "id": "S10c-153",
+   "conforms": true,
+   "evidence": "src/model.jl:769: (eligible && !firing) || (events.last[i] = events.now[i]). Probe P4: TwoShot ends with (a = true, b = true) after one boundary."
+  },
+  {
+   "id": "S10c-162",
+   "conforms": true,
+   "evidence": "src/model.jl:777: copyto!(events.prior, events.last) runs after the loop with no condition."
+  },
+  {
+   "id": "S10c-171",
+   "conforms": true,
+   "evidence": "src/model.jl:332: fill!(exec.events.prior, false) runs before boundary_zero!. Probe P3: Trigger(0.5) fed 1.0 reads (state = :fired, count = 1) right after init!."
+  },
+  {
+   "id": "S10c-180",
+   "conforms": true,
+   "evidence": "src/executor.jl:390-407 and 456-463: a firing latches the handler's x into xbuf and its m into the mode store, then runs x_projection on xbuf. No cell-store write happens in the fire walk. The table moves only through _round! sweeps (src/model.jl:706-713, 775)."
+  },
+  {
+   "id": "S10c-189",
+   "conforms": true,
+   "evidence": "src/model.jl:760-769: the second eligible event of a component gets fire=false and keeps last, so it is decided again next round. Probe P4: TwoShot fires both, and Preempted ends (a = true, b = false) because its premise was falsified."
+  },
+  {
+   "id": "S10c-198",
+   "conforms": true,
+   "evidence": "src/build.jl:1573-1603: entries get global indices while iterating structure.components (walk order, src/structure.jl:244), then keys(policies) in declaration order (src/build.jl:654). The fire walk runs in that index order (src/executor.jl:382-397)."
+  },
+  {
+   "id": "S10c-207",
+   "conforms": true,
+   "evidence": "src/model.jl:751: eligible needs count[i] < budget, and count is reset per boundary (line 742). Probe P5: Chatterer (E=2) flips 2, 6 and 8 times under budgets 1, 3 and 4."
+  },
+  {
+   "id": "S10c-216",
+   "conforms": true,
+   "evidence": "src/model.jl:743 and 752-758: the warned[i] latch is reset per boundary and set on the first lost edge. Probe P5: one FiringBudget per exhausted event (chat/up), none for down, which fired its budget out and then quiesced."
+  },
+  {
+   "id": "S10c-225",
+   "conforms": true,
+   "evidence": "src/model.jl:750-752: an edge over budget is not eligible and does not fire. Other events go on iterating, and the boundary does not throw."
+  },
+  {
+   "id": "S10c-234",
+   "conforms": true,
+   "evidence": "src/frame.jl:154-168: integrate_step!, then run_boundary!, then settled!(hooks), which handles logging and I/O staging. src/model.jl:652-659: run_boundary! projects, runs event_phase! to quiescence, then run_ticks! (the due s_update calls)."
+  }
+ ],
+ "notes": "I checked all 27 claims; 26 match the code and 1 does not. S10c-109 (spec.md:7369) says a 1 µs unit run from t₀=0 \"resolves about 17 years\". The probe gives a last frame at 5.63e8 s, which is 17.84 years, so the fix reads \"about 18 years\". On S10c-029: the due set at boundary zero does come from the ordinary gate at index 0 (ticks(0)). The sweep there is widened through ESTABLISH (D-205), but §6.3 and §14.5 state that, and it is not about the due set. I edited no tracked file. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S10c_v/probe.jl, run against W, and it has sections P1 to P8."
+}
