@@ -202,7 +202,7 @@ q̇     = gate(K_int (z_ref - z)) + (ref - u_raw) / Tt            continuous
 q⁺    = q + Δt gate(K_int (z_ref - z)) + β (ref - u_raw)         discrete
 ```
 
-with `β = 1 - exp(-Δt / Tt)`, `Δt` the component's own period ([§10.5][s10-5]). The
+with `β = 1 - exp(-Δt / Tt)`, `Δt` the component's own period ([§6.3][s6-3]). The
 integrator input `K_int (z_ref - z)` is `n_u` wide, so the PID's gate and
 reference rule apply to it channel by channel, over the same two axes
 (`pid_anti_windup.md`, sections 4 and 11):
@@ -417,12 +417,12 @@ and the vector PID's `Ki` is componentwise.
 [d-383]: ../log.md#d-383--admit-the-lqr-tracker-with-a-standby-axis-and-a-discrete-saturation-code-on-the-controller-blocks
 [d-384]: ../log.md#d-384--publish-the-discrete-controllers-saturation-code-as-saturated
 [d-385]: ../log.md#d-385--two-controller-axes-the-hold-with-two-inputs-and-the-tracking-reference
-[s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s14-10]: ../spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
 [s14-8]: ../spec.md#148-the-trim-service-solver-seam-scratch-stores-commit-and-report
 [s2-3]: ../spec.md#23-events-two-detection-policies
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
 [s5-4]: ../spec.md#54-artificial-loops-and-the-escape-hatch
+[s6-3]: ../spec.md#63-rates-down-the-hierarchy
 [s7-3]: ../spec.md#73-discrete-state-modes-and-workspace
 [s8-6]: ../spec.md#86-paths-wiring-and-faces

@@ -743,7 +743,7 @@ included), and additionally receive state views ([D-035][d-035]); single computa
 site for derivatives and outputs is the *rewarded* idiom, not an impossibility
 claim.
 
-**Spec.** [§5.3][s5-3], [§7.4][s7-4], [§10.5][s10-5]
+**Spec.** [§5.3][s5-3], [§7.4][s7-4], [§8.7][s8-7]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -868,7 +868,7 @@ scopes for declaration (integer multipliers $K \ge 1$ composing down the tree,
 compiled to absolute divisors); `Δt` arrives as a discrete-bundle field
 ([D-074][d-074]), single source of truth, no stored `Δt`-derived parameters.
 
-**Spec.** [§2][s2], [§3.2][s3-2], [§3.3][s3-3], [§5.2][s5-2], [§10.5][s10-5], [§13.5][s13-5]
+**Spec.** [§2][s2], [§3.2][s3-2], [§3.3][s3-3], [§5.2][s5-2], [§6.3][s6-3], [§8.7][s8-7], [§13.5][s13-5]
 
 **Rationale.** Recorded only through the rejections below.
 
@@ -4665,7 +4665,7 @@ root-finder (localization converges when the bracket is narrower than
 `localization_tol · h`), default `1e-6`; `event_budget`, the per-frame
 localization allowance, default 8 — validated with their siblings into
 `DeploymentInvalid` (positive tolerance, integer budget ≥ 1) but
-grid-independent, hence outside [§10.5][s10-5]'s harmonic-grid check, and **recorded** in
+grid-independent, hence outside [§9.2][s9-2]'s harmonic-grid check, and **recorded** in
 the trace header's deployment block, which takes replay's compared set from
 four to six ([§12.7][s12-7]). The four **operational** ones get spec-fixed defaults in
 their owning sections and no user knobs: shutdown join timeout 5 s ([§12.4][s12-4](5));
@@ -5764,7 +5764,7 @@ or a step end where nothing is due, and `t*`.
   evaluation, so an `h_zu` re-runs against interpolated `u` at each interior RK
   stage and at every localization probe, and the `f` reading its cell
   integrates a continuously re-sampled controller — precisely the un-sampling
-  [§10.5][s10-5]'s own rejected alternative names, and undiagnosable: such a run is as
+  [§6.3][s6-3]'s own rejected alternative names, and undiagnosable: such a run is as
   type-stable, allocation-free and bit-reproducible against itself as the
   correct one, so a C172X at `h = 0.02, n = 1` under a 50 Hz FCS simply flies a
   different trajectory with nothing anywhere to flag it.
@@ -7376,7 +7376,7 @@ construction; float arguments throw a teaching error naming the exact spelling)
 defaulting to `Relative(1)`, validation Stratum A's with path attribution and
 the constructors plain data carriers.
 
-**Spec.** [§10.5][s10-5], [§8.7][s8-7], [§9.1][s9-1], [§9.7][s9-7], [§13.1][s13-1], [§14.5][s14-5], [§14.8][s14-8]
+**Spec.** [§6.3][s6-3], [§8.7][s8-7], [§9.1][s9-1], [§9.7][s9-7], [§10.5][s10-5], [§13.1][s13-1], [§14.5][s14-5], [§14.8][s14-8]
 
 **Rationale.** Composition: multipliers multiplicative, phases affine (`D =
 K·Dₛ`, `Φ = Φₛ + φ·Dₛ`), preserving the canonical residue `0 ≤ Φ < D` with no
@@ -7408,7 +7408,7 @@ checked `Int`, and a composed divisor or phase past `Int` is a
 
 Annotation (2026-11-20): the proposal is no longer a companion. It moved to
 `reports/20260812_sample_time_proposal/report.md` as a dated record, and it is
-not swept at later renames. [§10.5][s10-5] states the residue induction itself and
+not swept at later renames. [§6.3][s6-3] states the residue induction itself and
 cites the report for its worked examples.
 
 Annotation (2026-11-20): [D-464][d-464] names `Absolute`'s first argument `Δt` and
@@ -7456,7 +7456,7 @@ outpace its scope), the fastest-member convention counts relative members only,
 and anchored-vs-relative phase relationships are deployment-emergent, the
 printable bound schedule the way to audit them.
 
-**Spec.** [§10.5][s10-5], [§9.1][s9-1], [§9.2][s9-2], [Appendix B][sB]
+**Spec.** [§6.3][s6-3], [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [Appendix B][sB]
 
 **Rationale.** The doctrinal line sharpened rather than dropped: an absolute
 declaration inside a library type is legitimate when the rate is **a fact about
@@ -7495,7 +7495,7 @@ Annotation (2026-11-24): an anchor `a`'s pair is written `(Δt(a), τ(a))`, and
 the pair a relative child holds under it `(Dₐ, Φₐ)` ([D-478][d-478]).
 
 **Rejected.**
-- *Root-only absolute declaration (the superseded [§10.5][s10-5] clause):* right about
+- *Root-only absolute declaration (the superseded [§6.3][s6-3] clause):* right about
   deployment preferences, wrong for device-intrinsic rates; kept only as the
   default-form rationale.
 - *Silent `Δt_base` derivation with unanchored components present:* the
@@ -7518,7 +7518,7 @@ the gate is pure modulo arithmetic (the pattern repeats with `lcm(Dᵢ)` base
 ticks — one hyperperiod is the complete truth, not a sample), guarded against
 absurd hyperperiods.
 
-**Spec.** [§9.2][s9-2], [§10.5][s10-5], Appendices B/C
+**Spec.** [§8.7][s8-7], [§9.2][s9-2], Appendices B/C
 
 **Rationale.** The refusal path's suggestion message and the derivation path's
 info line share one substrate: coarsest admissible `Δt_base`, the admissible
@@ -8218,7 +8218,7 @@ probe's synthesized values (the `t₀` snapshot is the authored world, fully
 evaluated); the ruling amends the boundary-zero consequence recorded in
 [D-185][d-185], whose gate composition and residue invariant stand.
 
-**Spec.** [§10.5][s10-5], [§14.5][s14-5], [§14.8][s14-8]
+**Spec.** [§6.3][s6-3], [§14.5][s14-5], [§14.8][s14-8]
 
 **Rationale.** The probe-seed residue was mechanism economy, not a modeling
 claim: [D-185][d-185]'s gate at index 0, "implemented by nothing", left non-due output
@@ -8226,7 +8226,7 @@ cells holding [§9.3][s9-3]'s synthesized values, and the spec carried the conse
 as a caveat at both sites ([§14.5][s14-5]'s sweep bullet, [§14.8][s14-8]'s committed-residual
 read-back). The residue leaked exactly the values [§14.6][s14-6]'s barrier keeps out
 of the running world — a fabricated probe input is a fine shape exercise and
-a terrible flight condition — and [§10.5][s10-5]'s content defense ("what a tick at
+a terrible flight condition — and [§6.3][s6-3]'s content defense ("what a tick at
 `t₀⁻` would have produced") held only in the build's own world, the probe
 running before any condition exists. Publishing every output stage restores
 tier symmetry (the interior sweep already evaluates every continuous output
@@ -10587,7 +10587,7 @@ materializes it.
 - `Simulation(build; kw...)` and `Simulation(root; kw...)` stay as sugar
   composing the deployment constructor.
 
-**Spec.** [§8.7][s8-7], [§9.2][s9-2], [§10.5][s10-5], [§11.5][s11-5], [§12.7][s12-7], [§13.2][s13-2], [Appendix C][sC]
+**Spec.** [§8.7][s8-7], [§9.2][s9-2], [§11.5][s11-5], [§12.7][s12-7], [§13.2][s13-2], [Appendix C][sC]
 
 **Rationale.** Deployment consumes the grid parameters and fixes everything
 they determine, the bound schedule and the grid diagnostics among them, and
@@ -10866,7 +10866,7 @@ activity. "Bound schedule" is retired. [§5.1][s5-1] is "The ordering problem",
 Stratum B's heading is "execution order", and the glossary's "sweep" is one
 pass through the execution order.
 
-**Spec.** [§5.1][s5-1], [§5.3][s5-3], [§9.1][s9-1], [§9.2][s9-2], [§10.5][s10-5], [Appendix D][sD]
+**Spec.** [§5.1][s5-1], [§5.3][s5-3], [§6.3][s6-3], [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [§10.5][s10-5], [Appendix D][sD]
 
 **Rationale.** One word carried two senses: the topological order Stratum B
 computes and the `(D, Φ, Δt)` table deployment binds. With both becoming
@@ -12893,7 +12893,7 @@ arithmetic.
   declaring scope and key. Per component, one multiply-add gives the bound
   `(D, Φ, Δt)`.
 
-**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§10.5][s10-5], [Appendix B][sB]
+**Spec.** [§6.3][s6-3], [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [Appendix B][sB]
 
 **Rationale.** All but the explicit request are recorded in [D-186][d-186]'s
 Rationale. The fold and the tables: final divisors for anchored entries do
@@ -13133,7 +13133,7 @@ options it opens stay uncommitted.
 - Publication is not a phase body. Invoking phase bodies in isolation leaves
   the buffers valid but off-trajectory, and continuing takes `init!`.
 
-**Spec.** [§5.3][s5-3], [§9.7][s9-7], [§9.8][s9-8], [§10.5][s10-5]
+**Spec.** [§5.3][s5-3], [§6.3][s6-3], [§9.7][s9-7], [§9.8][s9-8]
 
 **Rationale.** The phase bodies are the semantically forced outer
 decomposition, and their seams cost nothing; views rebuild per call, hoisting
@@ -13346,7 +13346,7 @@ and why the `σ ≥ 0` convention stands.
 
 **Status.** ratified
 
-**Position.** Five rate rulings that [§10.5][s10-5] states are fixed here.
+**Position.** Five rate rulings that [§6.3][s6-3] and [§8.7][s8-7] state are fixed here.
 
 - All scoping compiles to one `(D, Φ)` pair per discrete component.
   Multipliers compose multiplicatively and phases affinely, `D = K·Dₛ` and
@@ -13369,7 +13369,7 @@ and why the `σ ≥ 0` convention stands.
 - `Δt` cannot arrive through an `h` argument alone, because the discretized
   laws live in the feedthrough stage.
 
-**Spec.** [§10.5][s10-5]
+**Spec.** [§6.3][s6-3], [§8.7][s8-7]
 
 **Rationale.** Each bullet restates what an existing entry recorded outside
 its Position. Composition, the gate, boundary zero's due set, `K = 1`,
@@ -14413,7 +14413,7 @@ where it holds, unless the advance ignores it.
   a stateless continuous leaf in the mould of `Constant`: a `Bool` input
   `request`, a `StopFlag` output `flag`, and its reason as its
   `stop_reason`. Continuous, it refreshes at every boundary, `t*` included,
-  and one leaf sits anywhere in the tree ([§10.5][s10-5], [D-019][d-019]). Fed by a discrete
+  and one leaf sits anywhere in the tree ([§6.3][s6-3], [D-019][d-019]). Fed by a discrete
   detector, it sees the tick at the tick's own boundary ([§10.5][s10-5], [D-147][d-147]).
 - `StopPolicy` is `t_end` plus `ignored`, the requester paths the advance
   does not honour. `run!`, `replay!` and `step!` take
@@ -18699,7 +18699,7 @@ the bound to `Δt_base`, and a `Model` at a `Dual` takes the steps the
   ratified:* at `RK4()` it is the `:not_frame_multiple` refusal under another
   name, so the default backend gains nothing from independent lattices. It makes "a base tick at which
   nothing is due is no boundary" vacuous for a fixed step. And it turns
-  [§10.5][s10-5]'s cost of an offset, a finer base grid, into a finer integration
+  [§6.3][s6-3]'s cost of an offset, a finer base grid, into a finer integration
   step. A 60 Hz frame over a 400 Hz controller needs 20 steps per frame,
   where the split needs 7 or 8.
 - *`h` divides every component's period and offset:* a more complex check,
@@ -18736,7 +18736,7 @@ boundary. The bundled rulings:
 - `Δt_base` is refused unless positive and finite, on a premise of its own
   ([D-229][d-229]).
 
-**Spec.** [§2.1][s2-1], [§2.2][s2-2], [§3.2][s3-2], [§9.2][s9-2], [§10.1][s10-1], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§12.6][s12-6], [Appendix C][sC]
+**Spec.** [§2.1][s2-1], [§2.2][s2-2], [§3.2][s3-2], [§6.3][s6-3], [§9.2][s9-2], [§10.1][s10-1], [§10.4][s10-4], [§10.5][s10-5], [§10.6][s10-6], [§12.6][s12-6], [Appendix C][sC]
 
 **Rationale.** The frame is the run's exposure to the outside, the base
 ticks are the discrete tier's schedule, and the step is the method's. Tying
@@ -18764,7 +18764,7 @@ its own index, never accumulated, and its clock is the `Float64` nearest the
 exact instant rather than `t₀ + k·Δt_frame` in floats.
 
 **Rejected.**
-- *Every base tick a boundary:* a finer base grid, the price [§10.5][s10-5] names for
+- *Every base tick a boundary:* a finer base grid, the price [§6.3][s6-3] names for
   an offset, would add boundaries and snapshots where nothing runs, and the
   boundaries would depend on bookkeeping no component sees.
 - *A step end inside a frame that publishes nothing:* the frame would set
@@ -19591,7 +19591,7 @@ at the structure step ([D-185][d-185], [D-454][d-454], [D-457][d-457]). The bund
 - The prime attribution's trial division stops at the divisor `2^20`. A
   cofactor left at or above `2^40` prints as unfactored.
 
-**Spec.** [§9.2][s9-2], [§10.5][s10-5], [Appendix B][sB], [Appendix C][sC]
+**Spec.** [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [Appendix B][sB], [Appendix C][sC]
 
 **Rationale.** Exact time was weighed against floats everywhere and kept.
 The overflow sites predate [D-454][d-454] and [D-457][d-457]. `Period` has held a
@@ -20071,7 +20071,7 @@ framework prints it.
   `Absolute.T` become `Δt`. `show(::Structure)` heads the anchor table's
   columns `Δtₖ` and `τₖ`. `Period.T` keeps its name.
 
-**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§10.5][s10-5], [Appendix B][sB], [Appendix D][sD]
+**Spec.** [§6.3][s6-3], [§9.1][s9-1], [§9.2][s9-2], [Appendix B][sB], [Appendix D][sD]
 
 **Rationale.** The spec wrote an anchor's period `T` and a component's `Δt`,
 two letters for one kind of quantity, and had no letter for a component's
@@ -20084,7 +20084,7 @@ the `Δt` and `τ` its child has. The inspector's page had printed `c` as
 spec, in `show` and on the page ends that. A parameter named `τ`, as
 `FirstOrderLag`'s, now shows beside a timing `τ`, and `c`, `m`, `K` and `D`
 meet the same clash. The section a letter stands in tells them apart. The
-scope phase was already `φ` in [§10.5][s10-5], and two sites that still wrote it `Φ`
+scope phase was already `φ` in [§6.3][s6-3], and two sites that still wrote it `Φ`
 are corrected with this entry. `Period.T` waits for the ruling on whether
 `Period` and `Hz` retire. The session that settled the notation is recorded
 in `RedstoneInspector.jl/design/deployment_overlay.md`, answer 3.
@@ -20119,7 +20119,7 @@ deployment, by one trial binding.
 Supersedes [D-459][d-459]'s fourth bullet. [D-459][d-459]'s third bullet stands for a base
 tick the caller chose finer than the coarsest one.
 
-**Spec.** [§9.1][s9-1], [§9.2][s9-2], [§10.5][s10-5], [Appendix C][sC]
+**Spec.** [§9.1][s9-1], [§9.2][s9-2], [Appendix C][sC]
 
 **Rationale.** Three checks of the `Deployment` constructor read the
 structure, and each is least demanding at one point of the caller's choices.
@@ -20552,7 +20552,7 @@ Supersedes [D-185][d-185]'s ruling that `Absolute`'s first argument is a
 `Period`/`Hz` quantity, and the acceptance of a `Period` or an `Hz` value by
 the deployment's keywords ([D-283][d-283], [D-459][d-459]) and by `t0` ([D-457][d-457]).
 
-**Spec.** [§8.7][s8-7], [§9.2][s9-2], [§10.5][s10-5], [Appendix B][sB], [Appendix C][sC]
+**Spec.** [§8.7][s8-7], [§9.2][s9-2], [Appendix B][sB], [Appendix C][sC]
 
 **Rationale.** `Absolute` is the wrapper that names the unit system ([D-185][d-185]),
 so a `Period` inside it named seconds a second time. The period was also the
@@ -21134,7 +21134,7 @@ names the node they belong to.
 - A generic anchor is the node `a`. Particular anchors keep their numbers,
   `A₀` and `A₁`. The fold's triple is `(a, Dₐ, Φₐ)`.
 
-**Spec.** [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [§9.7][s9-7], [§10.5][s10-5], [Appendix B][sB], [Appendix D][sD]
+**Spec.** [§6.3][s6-3], [§8.7][s8-7], [§9.1][s9-1], [§9.2][s9-2], [§9.7][s9-7], [Appendix B][sB], [Appendix D][sD]
 
 **Rationale.** [D-464][d-464] wrote one kind of quantity with four letter pairs,
 `(K, φ)` in scope ticks, `(m, c)` in anchor ticks, `(D, Φ)` in base ticks
@@ -21214,7 +21214,7 @@ index lowercase.
 - An `Absolute` entry's tick instants are written in words, `t₀ + τ` and
   then every `Δt`, with no index.
 
-**Spec.** [§2.2][s2-2], [§9.2][s9-2], [§9.7][s9-7], [§10.2][s10-2], [§10.5][s10-5], [Appendix D][sD]
+**Spec.** [§2.2][s2-2], [§6.3][s6-3], [§9.2][s9-2], [§9.7][s9-7], [§10.2][s10-2], [§10.5][s10-5], [Appendix D][sD]
 
 **Rationale.** In [§10.5][s10-5] `n` was the base tick index and, a paragraph later,
 the step count of a span. `k` was the frame index, the anchor index, the
@@ -21714,7 +21714,7 @@ the node `i` of [D-478][d-478] in `t₀ + τ(i) + j·Δt(i)`.
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
 [s10-4]: spec.md#104-localization-mechanics
-[s10-5]: spec.md#105-multi-rate-tick-scheduling
+[s10-5]: spec.md#105-multi-rate-execution-sweeps-spans-and-the-clock
 [s10-6]: spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s10-7]: spec.md#107-real-time-pacing
 [s11-1]: spec.md#111-no-shared-mutable-model-staged-writes-snapshot-reads
@@ -21777,6 +21777,7 @@ the node `i` of [D-478][d-478] in `t₀ + τ(i) + j·Δt(i)`.
 [s6]: spec.md#6-composition-connections-aggregation-and-hierarchy
 [s6-1]: spec.md#61-connections-and-hierarchy
 [s6-2]: spec.md#62-aggregation-explicit-summing-junctions
+[s6-3]: spec.md#63-rates-down-the-hierarchy
 [s7]: spec.md#7-state-and-data-representation
 [s7-1]: spec.md#71-continuous-state-structured-immutable-flat-backing
 [s7-2]: spec.md#72-numeric-genericity-eltype

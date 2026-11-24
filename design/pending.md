@@ -12,6 +12,14 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **Part I states no law that the step split follows the schedule** (§2.2,
+  §10.5, D-444): §10.5's "The split follows the schedule, not the state",
+  and its consequence that a `Model` at a `Dual` takes the steps the
+  `Float64` model takes though its discrete tier is frozen, decide which
+  runs are equivalent, so Part I owes them under its depth rule. They are
+  stated only in §10.5. Found by the review of the rates restructure,
+  `design/reports/20261124_rates_restructure/review.md`, finding 14. Not
+  started.
 - **The timing notation in the code** (D-478, D-479): the spec, its
   companions and the log are swept; `src/`, `test/`, `docs/` and
   `code_map.md` still use the letters of D-464. The increment renames
@@ -187,7 +195,7 @@ first release, but each is low priority, additive, and lands without
 breaking user code, and each may benefit from user feedback first.
 
 - **A schedule row's `Δt` is not the float nearest its exact period**
-  (§9.2, §10.5). `bind_schedule` writes `D * Float64(Δt_base)`, so three
+  (§6.3, §9.2, §10.5). `bind_schedule` writes `D * Float64(Δt_base)`, so three
   base ticks of `1//10` read `0.30000000000000004`, which `show(::Schedule)`
   prints and every discrete bundle receives. The exact value is `D·Δt_base`
   as a rational, which `show(::Deployment)` prints (D-471). Found by the

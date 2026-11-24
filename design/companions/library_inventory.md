@@ -31,7 +31,7 @@ A second group disappears for structural reasons:
 - Goto/From are forbidden by the hierarchy rules ([§6.1][s6-1]).
 - Bus Creator and Bus Selector are a struct or a named tuple port.
 - Zero-Order Hold and Rate Transition are what the tiers and
-  `sample_times` already do ([§10.5][s10-5], [§8.7][s8-7]).
+  `sample_times` already do ([§6.3][s6-3], [§8.7][s8-7]).
 - Enabled, triggered and resettable subsystems, If, Switch Case and Merge
   are assemblies and modes (`reports/20260809_extensions_charter/report.md` items 5 and 7).
 - Lookup tables are generic mathematics for a utility package, called from
@@ -327,7 +327,7 @@ and slip modes is a mechanics package's.
 | `DiscreteStateSpace` and `DiscreteTransferFunction`, the pair in `z` | shipped | the continuous pair mirrored over `AbstractDiscreteLinearSystem{FT}`, `s_update` for `x_deriv`; the period is the scope's and the component cannot check it; `linear_systems.md`, section 9 |
 | `DiscretizedStateSpace` and `DiscretizedTransferFunction`, from a continuous system | shipped | the zero-order hold taken per tick at the bundle's `Δt`, so the class and the initial condition are the continuous ones; `linear_systems.md`, section 9 |
 | `DiscreteLimitedIntegrator{V, R}` | shipped | tier semantics by contrast: the continuous component's mode and four events are one `clamp` in `s_update`, with no mode store and no localization |
-| `Delay(; K, v0)` | shipped | the tier's `z⁻ᴷ` in a ring store, `K` ticks of the component's own period ([§10.5][s10-5]), one output, `K = 1` the `UnitDelay` in keyword spelling |
+| `Delay(; K, v0)` | shipped | the tier's `z⁻ᴷ` in a ring store, `K` ticks of the component's own period ([§6.3][s6-3]), one output, `K = 1` the `UnitDelay` in keyword spelling |
 | a trapezoidal or backward-Euler integrator, and Tustin on the discretized pair | not admitted | all three feedthrough, which costs the loop break `DiscreteIntegrator` exists for; a Tustin design arrives discretized, through the pair in `z`; `linear_systems.md`, section 9.2 |
 
 **`DiscreteIntegrator`.** `reset = true` adds the `Bool` input `reset`, a level
@@ -486,7 +486,6 @@ qualifies the two they share, `StateSpace` and `TransferFunction`.
 [d-362]: ../log.md#d-362--reset-maps-the-continuous-only-mode-store-and-the-rejected-all-in-one-component
 [d-384]: ../log.md#d-384--publish-the-discrete-controllers-saturation-code-as-saturated
 [d-437]: ../log.md#d-437--address-a-bare-contracts-port-by-the-default-face-u-or-y
-[s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s10-6]: ../spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
@@ -498,6 +497,7 @@ qualifies the two they share, `StateSpace` and `TransferFunction`.
 [s5-5]: ../spec.md#55-algebraic-loop-policy-reject-at-build-time
 [s6-1]: ../spec.md#61-connections-and-hierarchy
 [s6-2]: ../spec.md#62-aggregation-explicit-summing-junctions
+[s6-3]: ../spec.md#63-rates-down-the-hierarchy
 [s7-1]: ../spec.md#71-continuous-state-structured-immutable-flat-backing
 [s8-2]: ../spec.md#82-the-declaration-inventory
 [s8-7]: ../spec.md#87-rate-scopes

@@ -318,7 +318,7 @@ The difference from the `t*` boundary lies in the argument. `_round!` with an
 `Int` tick calls `sweep_1(tick)` and `sweep_2(tick)`, the one-argument
 variant of the phase body, which walks the full chunk tuple. Continuous
 entries run through the fallback `run_at!` unchanged. Each discrete entry
-wears a `Gated` wrapper whose `run_at!` is the [§10.5][s10-5] gate:
+wears a `Gated` wrapper whose `run_at!` is the [§6.3][s6-3] gate:
 
 ```julia
 (tick - entry.Φ) % entry.D == 0 && run_entry!(entry.entry, store, xbuf, ẋbuf)
@@ -375,7 +375,7 @@ The sequence is the ordinary one with one difference:
 due or not ([§14.5][s14-5], [D-205][d-205]), so the `t₀` snapshot carries the authored world
 fully evaluated. The update block runs as `bodies.ticks(0)`, the ordinary
 gate at index `0`, which under the canonical residue admits exactly the
-`Φ₀ = 0` components ([§10.5][s10-5]). The model's `init!` then calls `settled!(hooks)`,
+`Φ₀ = 0` components ([§6.3][s6-3]). The model's `init!` then calls `settled!(hooks)`,
 which publishes the `t₀` snapshot. Nothing in the frame loop above is entered:
 boundary zero has no integrate and no drain.
 
@@ -594,7 +594,7 @@ takes, since the error reads values alone.
 [d-461]: ../log.md#d-461--ship-bogackishampine-32-under-proportional-integral-control-as-the-first-adaptive-backend
 [s10-2]: ../spec.md#102-the-stepper-seam
 [s10-4]: ../spec.md#104-localization-mechanics
-[s10-5]: ../spec.md#105-multi-rate-tick-scheduling
+[s10-5]: ../spec.md#105-multi-rate-execution-sweeps-spans-and-the-clock
 [s10-6]: ../spec.md#106-event-iteration-at-boundaries-to-quiescence-budgeted
 [s10-7]: ../spec.md#107-real-time-pacing
 [s11-2]: ../spec.md#112-outbound-snapshot-publication
@@ -607,3 +607,4 @@ takes, since the error reads values alone.
 [s13-5]: ../spec.md#135-termination-is-a-state-not-an-exception
 [s14-5]: ../spec.md#145-boundary-zero-an-ordinary-boundary-with-authored-incoming-transitions
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
+[s6-3]: ../spec.md#63-rates-down-the-hierarchy

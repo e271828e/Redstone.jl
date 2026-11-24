@@ -337,7 +337,7 @@ The declaration layer:
   under its own reason, and `_declared_quantity`, the constructors' exact
   value or their `ArgumentInvalid` `:range`, `Relative`'s two counts
   included. `Relative`'s second method refuses a float or a rational as
-  `:not_a_count` (§10.5, D-459).
+  `:not_a_count` (§8.7, D-459).
 - The event surface `StateEvent`, `state_events` and `x_projection`.
 - The declaration family `DECLARATION_FAMILY` and `foreign_declarations`.
 - The user-code frame `invoke_declaration`, `invoke_probed` and
@@ -551,8 +551,8 @@ D-256, D-261, D-268, D-270, D-315.
   square as unfactored (D-187, D-459).
 - The time doors' `:range` arms: `RatesViolation`'s on a `Relative`, a
   composed divisor, and on an `Absolute`, an anchor no base tick counts in an
-  `Int`, and `ArgumentInvalid`'s on `Absolute` (§9.2,
-  §10.5, D-459, D-465). `DeploymentInvalid` has no `:derive` `:range`.
+  `Int`, and `ArgumentInvalid`'s on `Absolute` (§8.7,
+  §9.1, §9.2, D-459, D-465). `DeploymentInvalid` has no `:derive` `:range`.
 - `ArgumentInvalid`'s arms off the deployment surface (D-256, D-261).
 - The `Trim*` kinds `TrimProblemInvalid`, `TrimCommitEvents`,
   `TrimCommitResiduals` and `TrimCommitChecks` (D-262).
@@ -1383,7 +1383,7 @@ D-456, D-457, D-458.
 - The sample-time fold, `_child_scope`, in checked `Int`: a composed divisor
   or phase past `Int` is recorded as `RatesViolation` `:range`, once per
   entry, so a bare container key's elements share one refusal, and a rate
-  its own check refused composes nothing (§10.5, D-459).
+  its own check refused composes nothing (§9.1, D-459).
 - The grid arithmetic the trial binding and deployment.jl's `bind_schedule`
   and `_lattice` share (§9.2, D-465): `_as_int`; `_anchor_counts`, one
   anchor's division pair at a base tick in `Int128`; `_timing_counts`, one
@@ -1429,7 +1429,7 @@ D-456, D-457, D-458.
   again (§9.7, D-289). A function that takes a connection or its endpoint
   tuple, as `_fanout` does, still compiles once per connection type.
 
-Spec: §6.1, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §10.5, §13.1, §13.3,
+Spec: §6.1, §6.3, §8.1, §8.2, §8.5–§8.7, §9.1, §9.2, §9.7, §13.1, §13.3,
 §13.7, Appendix C, D-130, D-187, D-208, D-210, D-211, D-229, D-236, D-246,
 D-248, D-253, D-261, D-289, D-315, D-414, D-437, D-445, D-459, D-464, D-465,
 D-466.

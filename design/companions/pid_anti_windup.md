@@ -506,7 +506,7 @@ q̇     = Ki · gate(e) + (ref - u_raw) / Tt
 ẏf    = (w - yf) / τd
 ```
 
-Discrete, with `Δt` the component's own period ([§10.5][s10-5]):
+Discrete, with `Δt` the component's own period ([§6.3][s6-3]):
 
 ```
 deriv = (w - yf) / (τd + Δt)
@@ -614,11 +614,11 @@ flight-stack precedents for a signed limit status reported up a cascade.
 [d-384]: ../log.md#d-384--publish-the-discrete-controllers-saturation-code-as-saturated
 [d-385]: ../log.md#d-385--two-controller-axes-the-hold-with-two-inputs-and-the-tracking-reference
 [s10-4]: ../spec.md#104-localization-mechanics
-[s10-5]: ../spec.md#105-multi-rate-tick-scheduling
 [s13-7]: ../spec.md#137-tooling-consequences-face-routes-and-the-component-library
 [s13-8]: ../spec.md#138-cycle-diagnosis-feedthrough-tracing
 [s2-3]: ../spec.md#23-events-two-detection-policies
 [s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
 [s5-4]: ../spec.md#54-artificial-loops-and-the-escape-hatch
+[s6-3]: ../spec.md#63-rates-down-the-hierarchy
 [s7-3]: ../spec.md#73-discrete-state-modes-and-workspace
 [s8-6]: ../spec.md#86-paths-wiring-and-faces
