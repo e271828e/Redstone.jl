@@ -163,7 +163,7 @@ function _lattice(Δt_frame::Rational{Int}, Δt_base::Rational{Int}, h_max::Rati
     fits(frame_steps * denominator(unit)) || return :h_max
     # The least gap between two boundaries (D-450): a unit between two mandatory
     # instants, and more than half the bound between two equal steps, since
-    # `n = ⌈g / h_max⌉ ≥ 2` steps of a span `g` are each longer than `h_max / 2`.
+    # `N = ⌈l / h_max⌉ ≥ 2` steps of a span `l` are each longer than `h_max / 2`.
     # A bound at the frame splits no span. Under a proposing method, `h_min`
     # passed in, the shaping rule cuts no step below the floor, and a span
     # shorter than it is one step at least a unit long (D-460).

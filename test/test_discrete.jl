@@ -157,15 +157,16 @@ function discrete_rate_fold()
     end
 
     @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, §10.5, D-459)" begin
-        # `Relative(D2)` inside `Relative(D1)` composes the multiplier `D2·D1`.
-        # Past `Int` it wrapped to a wrong divisor, to 0 or below; now the inner
-        # key is refused as `:range`, alone.
-        nested(D1, D2) = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(D2))));
-                               sample_times = (; g = Relative(D1)))
-        for (D1, D2) in ((2^32 + 1, 2^32 + 1), (2^32, 2^32), (2^62, 3))
-            d = only(diagnostics(failure(() -> build(nested(D1, D2)))))
+        # `Relative(D_inner)` inside `Relative(D_outer)` composes the multiplier
+        # `D_inner·D_outer`. Past `Int` it wrapped to a wrong divisor, to 0 or
+        # below; now the inner key is refused as `:range`, alone.
+        nested(D_outer, D_inner) =
+            Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(D_inner))));
+                  sample_times = (; g = Relative(D_outer)))
+        for (D_outer, D_inner) in ((2^32 + 1, 2^32 + 1), (2^32, 2^32), (2^62, 3))
+            d = only(diagnostics(failure(() -> build(nested(D_outer, D_inner)))))
             @test d isa RatesViolation && d.reason === :range && d.path == "g" &&
-                  d.key === :a && d.value === Relative(D2)
+                  d.key === :a && d.value === Relative(D_inner)
         end
         # A bare container key composes once per element, and its one entry is
         # refused once.
@@ -189,11 +190,13 @@ function discrete_rate_fold()
               (0, 2^62, (2^31 - 1) + (2^31 - 1) * 2^31)
         # A rate its own check refuses composes nothing, so a multiplier or a
         # phase that would also overflow is refused once, by its own reason.
-        for (D2, Φ2, reason) in ((-2^62, 0, :multiplier), (2, 2^62, :phase))
-            bad = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(D2, Φ2))));
+        for (D_inner, Φ_inner, reason) in ((-2^62, 0, :multiplier), (2, 2^62, :phase))
+            bad = Group((; g = Group((; a = TickCounter());
+                                     sample_times = (; a = Relative(D_inner, Φ_inner))));
                         sample_times = (; g = Relative(4)))
             d = only(diagnostics(failure(() -> build(bad))))
-            @test d isa RatesViolation && d.reason === reason && d.value == (reason === :phase ? Φ2 : D2)
+            @test d isa RatesViolation && d.reason === reason &&
+                  d.value == (reason === :phase ? Φ_inner : D_inner)
         end
     end
 
@@ -274,6 +277,13 @@ function discrete_rate_fold()
         sim = Simulation(Group((; gps = gps);
                                sample_times = (; gps = Absolute(1//50))); Δt_frame = 1//500)
         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(30, 0)]
+
+        # Under a scope at Relative(5, 2), D₀(s) = 5 differs from Φ₀(s) + 1 = 3, so
+        # the phase law scales Φₛ(i) by D₀(s): Φ₀ = 2 + 1·5 = 7.
+        phased_group = Group((; c = TickCounter()); sample_times = (; c = Relative(3, 1)))
+        sim = Simulation(Group((; f = phased_group);
+                               sample_times = (; f = Relative(5, 2))); Δt_frame = 1//100)
+        @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(15, 7)]
     end
 end
 

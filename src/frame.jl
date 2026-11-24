@@ -100,10 +100,10 @@ end
 # over the mandatory instants: `origin` is the frame top `tₖ₋₁`'s position and
 # `position` the span's start as an offset from it, both in units, and the next
 # due instant is recomputed only after one is reached. The inner one takes the
-# span's steps. A backend that proposes nothing takes `n = ⌈g / h_max⌉` equal
-# steps, `n` one `cld` over the bound's exact ratio to the unit. An interior
-# step end has no position: its clock is the float nearest the span's exact
-# start plus `i·(units·unit)/n`, from its count `i`, never accumulated, and the
+# span's steps. A backend proposing nothing takes `N = ⌈l / h_max⌉` equal steps
+# of a span `l`, `N` one `cld` over the bound's exact ratio to the unit. An
+# interior step end has no position: its clock is the float nearest the span's
+# exact start plus `i·l/N`, from its count `i`, never accumulated, and the
 # step integrates by the distance from its start's clock to its end's (D-449,
 # D-455, D-456). A backend that proposes a length has it shaped by model.jl's
 # `_shaped`, clamped into `[h_min, h_max]` and the distance to the span's end

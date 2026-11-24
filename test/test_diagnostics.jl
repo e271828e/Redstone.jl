@@ -831,7 +831,8 @@ function diagnostics_kind_set()
         @test startswith(message(ArgumentInvalid(call = :frame!, reason = :range, argument = :k,
                                                  value = 922, related = 921)),
                          "frame 922 is past frame 921, the last a run of this deployment " *
-                         "from this origin may take")
+                         "from this origin may take: past it the frame's positions, counted " *
+                         "in Δt_unit")
         # A value a time door cannot hold names the door and the value (§10.5).
         @test message(ArgumentInvalid(call = :Absolute, reason = :inexact, argument = :Δt,
                                       value = 50.0)) ==

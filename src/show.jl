@@ -330,7 +330,7 @@ end
 # fits `Int128`, and a `Rational` prints alike at every width.
 _seconds_label(ticks::Int, Δt_base::Rational{Int}) = repr(ticks * Rational{Int128}(Δt_base))
 
-# The chart against the frame tops (§9.2, D-471): one column per exact unit
+# The chart against the frame tops (§9.2, D-471): one column per `Δt_unit`
 # over the joint period, the least common multiple of the hyperperiod and the
 # frame in units, where the frame tops and the ticks repeat together. The first
 # row marks the frame tops, in every deployment. A row's column is `●` at a
@@ -396,9 +396,9 @@ function _schedule_lines(deployment::Deployment)
     end
     push!(lines, "  anchors:")
     append!(lines, _table("    ", ["anchor", "Δt", "τ", "D₀", "Φ₀"], anchor_rows))
-    timing_cells(timing::Timing, D::Int, Φ::Int) =
-        [_anchor_name(timing.anchor), string(timing.D), string(timing.Φ), string(D), string(Φ),
-         _seconds_label(D, Δt_base), _seconds_label(Φ, Δt_base)]
+    timing_cells(timing::Timing, D_0::Int, Φ_0::Int) =
+        [_anchor_name(timing.anchor), string(timing.D), string(timing.Φ), string(D_0), string(Φ_0),
+         _seconds_label(D_0, Δt_base), _seconds_label(Φ_0, Δt_base)]
     if !isempty(schedule.rows)
         discrete = [entry for entry in structure.components if entry.tier === DISCRETE]
         push!(lines, "  components:")

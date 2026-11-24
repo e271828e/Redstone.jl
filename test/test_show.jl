@@ -454,7 +454,7 @@ function test_show()
         @test !occursin("coarsest admissible", plain(thirds))
     end
 
-    @testset "Deployment: the chart against the frame tops, one column per exact unit over the joint period (§9.2, §10.5, D-471)" begin
+    @testset "Deployment: the chart against the frame tops, one column per Δt_unit over the joint period (§9.2, §10.5, D-471)" begin
         chart(deployment) = (block = schedule_block(deployment);
                              block[findfirst(startswith("  chart"), block):end])
         # A frame of five base ticks: a column is a base tick, and the frame
@@ -496,7 +496,7 @@ function test_show()
                "    gnss        ●    ·    ●    ·    ●    ·    ●    ·    ●    ·"]
         # The guard is binary, at 100 columns: the chart prints whole at 100
         # and its place holds one line at 101.
-        ticking(K) = build(Group((; a = TickCounter()); sample_times = (; a = Relative(K))))
+        ticking(D) = build(Group((; a = TickCounter()); sample_times = (; a = Relative(D))))
         @test chart(Deployment(ticking(100); Δt_frame = 1)) ==
               ["  chart, 100 columns of 1//1 s over 100 base ticks and 100 frames:",
                "                " * join(rpad(string(k), 10) for k in 0:10:80) * "90",

@@ -849,7 +849,7 @@ end
 
 # A proposal shaped into the length of a step from `t` (§10.2, §10.5, D-460):
 # clamped into `[h_min, h_max]`, then the distance `r` to `t_limit`, the instant
-# no step may pass, taken in `n = ⌈r / cap⌉` equal steps, `n` capped at
+# no step may pass, taken in `N = ⌈r / cap⌉` equal steps, `N` capped at
 # `⌊r / h_min⌋` and at least 1. Division never cuts a step below the floor, and
 # a distance shorter than the floor is one step. A single step is the remainder
 # itself, so it ends on the instant. Both roundings carry a slack of a few ulps

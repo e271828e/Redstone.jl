@@ -9,7 +9,8 @@ each open to the user's morning review. Nothing is pushed.
 
 ## 1. State
 
-- Stage reached: the record, committed with the prototype's patch
+- Stage reached: the review's fixes landed; the reviewer's delta check
+  next. Earlier: the record, committed with the prototype's patch
   `timing_notation.patch`. The docs commit `d1b447f` carries the one spec
   sentence the key rename changes (§13.9's rate chain).
 - Prototype worktree: `/Users/miguel/.julia/dev/Redstone.jl-worktrees/timing_notation`
@@ -166,3 +167,41 @@ scripts outside the tree, "empty is acceptable". It checks:
 - the tests: each changed pin and the mutants above, reverting each fix
   alone to show a test goes red, a survivor named;
 - the gate on the Julia floor `Project.toml` declares (1.13).
+
+## 9. The cold review and its rulings
+
+One high-tier reviewer over `7c24c48`, in a detached worktree at that
+commit. Gate on Julia 1.13.3: 10895/10895. Forty mutants, 36 killed. Its
+notes and probes:
+`/Users/miguel/.julia/dev/Redstone.jl-worktrees/timing_notation_review_probes/`.
+The coordinator's rulings, each with its reason:
+
+- **F1, accepted.** Three comments keep D-479's retired span letters,
+  `n = ⌈g / h_max⌉` in `frame.jl` and `deployment.jl` and `n = ⌈r / cap⌉`
+  in `model.jl`, where `n` now also indexes base ticks. They take `N` and
+  `l` as §10.5 writes them.
+- **F2, accepted.** `frame!`'s refusal changed to "counted in Δt_unit", and
+  its pin stops before that clause. The pin extends to it.
+- **F3, accepted.** The fold's phase law was tested only at scopes where
+  `Dₐ(s) = Φₐ(s) + 1`, so `scope.Φ + 1` for `scope.D` survived. A scope at
+  `Relative(3, 1)` over `Relative(5, 2)`, `(D₀, Φ₀) = (15, 7)`, separates
+  them.
+- **F4, accepted.** `test_show.jl`'s `ticking(K)` becomes `ticking(D)`.
+- **F5, accepted.** `test_discrete.jl`'s `D1`, `D2`, `Φ2` read as counts in
+  ticks of `A₁` and `A₂` under D-478, so they become `D_outer`, `D_inner`,
+  `Φ_inner`.
+- **F6, accepted at `show.jl` alone.** `timing_cells(timing, D, Φ)` sets
+  the field `D`, `Dₐ`, beside the local `D`, `D₀`. The locals become
+  `D_0`, `Φ_0`. The sites in `deployment.jl` and `structure.jl` stay: each
+  local there feeds a field of its own lattice at once, as a constructor
+  parameter mirrors its field.
+- **F7, accepted.** `show.jl`'s comment and `test_show.jl`'s testset name
+  say `Δt_unit` for "exact unit".
+- **S03, S04, acceptable survivors.** A schema's `required` list losing a
+  key survives because the suite validates the writer's output alone and
+  holds no negative schema test, a pattern older than this increment.
+
+The fixer landed all seven in the real tree. The gate passes 10896/10896,
+the one assertion added being F3's, and F3's mutant turns that assertion
+red (`[(15, 5)] == [(15, 7)]`). In `frame.jl` the step end's offset is
+written `i·l/N`, `l` being the code's `units·unit`.
