@@ -12512,7 +12512,8 @@ structure with no anchors has an empty `pool`, an empty `primes` and no
 **A primitive node carries its rate chain as `rates`** ([D-467][d-467]). It
 is the chain of `sample_times` links the `Structure` holds for the component,
 from the root down. Each link holds the declaring `scope` and its `key`, with
-`K` and `phi` for a `Relative` entry or `dt` and `tau` for an `Absolute` one.
+`D` and `phi` for a `Relative` entry, its child's `Dₛ` and `Φₛ`, or `dt` and
+`tau` for an `Absolute` one.
 A client cannot derive the chain from the timings. An explicit `Relative(1)`
 changes no timing, and a primitive's own key stands nowhere else in the file.
 
