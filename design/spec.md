@@ -11326,11 +11326,17 @@ collected, since there is no collection to join. Nothing in the argument of
 The committed runtime warnings, in one place, are these.
 
 - `ChatteringBudget`, for [chattering](#g-chattering) or localization-budget exhaustion ([§10.4][s10-4]). A
-  [localized](#g-localized) event's crossing instant is bracketed by root-finding. The event's
-  bracketing budget runs out at a [boundary](#g-boundary) (a published consistency point).
+  [localized](#g-localized) event's crossing instant is bracketed by root-finding. The frame's
+  localization budget, counted across all its steps, runs out. The event's
+  further crossings that frame fire at the [boundary](#g-boundary) (a published consistency
+  point) that ends their step.
 - `FiringBudget`, firing-budget exhaustion ([§10.6][s10-6]). An event has
   spent its `firing_budget` at a boundary, and its further edges there are
   dropped.
+- `StepFloor`, a step taken at the [floor](#g-floor) (the shortest step a
+  proposing method takes) ([§10.2][s10-2], [D-460][d-460]). A proposing
+  method's step is accepted at the floor `h_min` although its error test
+  failed, or taken there once it has spent its `attempt_budget`.
 - `DebtReanchor`, a forgiven-debt re-anchor ([§10.7][s10-7]). The pacer
   abandons its accumulated debt and re-anchors its schedule.
 - The write-surface and batch-entry violations ([§11.3][s11-3], [§11.4][s11-4]), all raised at
@@ -11457,7 +11463,8 @@ the service walk.
 ### 13.4 Runtime failures: one catch site, an execution cursor
 
 A runtime failure of model code is a throw inside a [frame](#g-frame) (one iteration of the
-loop) or inside [boundary zero](#g-boundary-zero). Boundary zero is the initialization [boundary](#g-boundary) (a
+loop), inside [boundary zero](#g-boundary-zero), or inside the settling `overlay!` runs.
+Boundary zero is the initialization [boundary](#g-boundary) (a
 published consistency point), and it runs the ordinary [boundary macro-sequence](#g-boundary-sequence)
 with an empty integrate. The framework catches the failure at one site, records
 where execution stood, and names how to reproduce it. This section covers, in
@@ -11554,8 +11561,9 @@ of its `cause`, bounded to a diagnostic or an exception. A species is therefore
 `@test_throws StepError{ConformanceFailure}`, the runtime spelling of the build
 carrier's idiom ([§13.2][s13-2]). A collected carrier riding as `cause` is an exception and
 falls under that arm. A bare value thrown deliberately by model code is neither,
-and the constructor refuses it, so it propagates from the catch unwrapped. The
-framework does not handle that throw ([D-225][d-225]). The cursor frame and the pointer
+and the constructor refuses it with a `MethodError` inside the catch. That
+`MethodError` propagates in the value's place, unframed. The framework does
+not handle that throw ([D-225][d-225]). The cursor frame and the pointer
 are then lost. The status is written before the carrier is built, so the
 lifecycle moves as for any throw ([D-441][d-441]).
 
@@ -12320,7 +12328,7 @@ struct StrutRig <: AbstractComponent    # the rig: component under test + stub
     stub::Constant{SampleTerrainField}  # the test handle, held as instance data
 end
 
-local_wires(::StrutRig) = ("stub/out" => "strut/terrain",)
+local_wires(::StrutRig) = ("stub/y" => "strut/terrain",)
 input_wires(rig::StrutRig) =
     (input_passthrough(rig, "strut"; except = ("terrain",))...,)
 ```
@@ -12387,8 +12395,8 @@ indices, its tracer tags.
   sampled states is the fallback whenever the global tracer hits an undecidable
   branch, such as piecewise friction, stall blending or any gridded lookup at an
   input-tainted coordinate. It reports the dependence pattern of the taken
-  paths, sampled across randomized states. Its only misses are untaken branches
-  ([D-012][d-012], [D-349][d-349]).
+  paths, sampled across randomized states. Its misses are untaken branches and
+  the value-severing blind spot below ([D-012][d-012], [D-349][d-349]).
 
 #### What tracing touches
 
@@ -12583,10 +12591,11 @@ Nothing resolved is carried. The client resolves every face to its terminal
 producer once on load, the derivation `face_routes` performs
 ([§13.7][s13-7]), and derives the feedthrough edges from the stage lists.
 Initial states, cell layouts and compiled forms stay out, so an
-implementation change is never a format change. Faces come from the
-declaration reader at `Float64`, which takes an instance and its tier, both
-in the `Structure`, so a failure after the structure step can still carry
-them. Port classes come from probing and live in `outputs` for that reason.
+implementation change is never a format change. Faces come from each
+instance's own declarations, read as written, with a `Pinned` entry
+unwrapped and flagged. The instances are in the `Structure`, so a failure
+after the structure step can still carry them. Port classes come from
+probing and live in `outputs` for that reason.
 
 **`structure` carries the grid report as data, under `grid`**
 ([D-467][d-467]). The writer derives it from the
