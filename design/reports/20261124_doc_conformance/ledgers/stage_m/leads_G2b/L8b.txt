@@ -1,0 +1,35 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-226: 9207-9270
+D-236: 9652-9712
+D-239: 9816-9848
+D-242: 9908-9973
+D-246: 10084-10144
+D-251: 10400-10446
+D-254: 10569-10632
+D-265: 11499-11554
+D-266: 11555-11623
+D-286: 13031-13074
+D-298: 13572-13599
+D-299: 13600-13636
+D-300: 13637-13664
+D-301: 13665-13702
+D-311: 14016-14071
+D-350: 15377-15398
+D-384: 16115-16142
+D-459: 19561-19726
+D-469: 20532-20601
+D-472: 20749-20813
+D-473: 20814-20878
+D-477: 21065-21110
+
+# Stage M leads
+names missing: `Mixed` at log.md:11505 (D-265)
+names missing: `N_base` at log.md:10576 (D-254)
+names missing: `Not` at log.md:14027 (D-311)
+names missing: `add!` at log.md:13581 (D-298)
+names missing: `exports` at log.md:13676 (D-301)
+names missing: `inN` at log.md:14023 (D-311)
+names missing: `output_types` at log.md:9820 (D-239)
+names missing: `u_connections` at log.md:13676 (D-301)
+names missing: `y_connections` at log.md:13676 (D-301)
+names test-only: `Assembly` at log.md:13581 (D-298)

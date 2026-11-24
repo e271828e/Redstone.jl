@@ -1,0 +1,1237 @@
+{
+ "rows": [
+  {
+   "id": "L8b-017",
+   "file": "design/log.md",
+   "line": 9820,
+   "kind": "decl",
+   "claim": "D-239 names the contract declaration a stage's return is checked against as `output_types`.",
+   "evidence": "src/declare.jl:743 (DECLARATION_FAMILY holds `y_types`, no `output_types`); log.md:11633 (D-267: `output_types` → `y_types`)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation (date): `output_types` is `y_types` since D-267. The ruling stands.",
+   "note": "Stage M lead `output_types` (log.md:9820). The rename is recorded by D-267 (log.md:11633). D-239 carries no annotation. Log rule 2 keeps a term of its day, so the fix is an annotation, never a rewrite."
+  },
+  {
+   "id": "L8b-023",
+   "file": "design/log.md",
+   "line": 9922,
+   "kind": "mech",
+   "claim": "D-242: inspection paths (device read bindings, GUI panels, snapshot and log inspection) are resolved by the instance walk.",
+   "evidence": "src/bindings.jl:143 (bindings resolve through the one read resolver, D-406); src/readers.jl:743 (resolve_authored over Structure.levels); src/build.jl refuse_path (a snapshot read checks the layout's component_paths)",
+   "verdict": "unverifiable",
+   "note": "No code function is called the instance walk. Device reads now resolve through the same resolver as service reads (resolve_authored, from the mount level, D-406). Snapshot and log reads check a path against the layout's component_paths. Whether either one is 'the instance walk' is a reading of D-130's old term, and the code does not settle it."
+  },
+  {
+   "id": "L8b-035",
+   "file": "design/log.md",
+   "line": 10410,
+   "kind": "law",
+   "claim": "A selection that names a selector and keeps nothing is the warning `EmptyFaceSelection`.",
+   "evidence": "probe:76 (`input_passthrough(host, \"c\"; only = ())` returns both faces, no warning); src/assembly.jl:546 (`only::Tuple = ()` default), src/assembly.jl:617 (`isempty(only_faces) ||` treats an explicit empty `only` as not given), src/assembly.jl:627",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Default `except` and `only` to `nothing` in input_passthrough and output_passthrough, so an explicit `only = ()` counts as a given selector, keeps no face and warns `EmptyFaceSelection`.",
+   "note": "Edge case: with `except` or `select` the warning fires (probe:68). An explicit `only = ()`, such as a computed list that came out empty, cannot be told from the default, so every face passes through silently. The code comment at src/assembly.jl:633-635 assumes `only` never keeps nothing."
+  },
+  {
+   "id": "L8b-040",
+   "file": "design/log.md",
+   "line": 10573,
+   "kind": "law",
+   "claim": "The `Simulation` materializes a deployment at `T`.",
+   "evidence": "src/sim.jl:358 (Simulation takes a Model{Float64}); src/sim.jl:393 (Simulation(deployment) composes Model(deployment)); log.md:10608 (annotation: amended by D-317)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No rewrite. The existing 2026-10-09 annotation records the move: a `Model` materializes a deployment at `T`, and a `Simulation` runs a `Model{Float64}`.",
+   "note": "D-317 moved it, and D-254 carries the annotation at log.md:10608. Covers both the headline (10573) and the bullet sentence (10579)."
+  },
+  {
+   "id": "L8b-041",
+   "file": "design/log.md",
+   "line": 10576,
+   "kind": "decl",
+   "claim": "`Deployment` carries `h` and `N_base` beside `Δt_base`.",
+   "evidence": "probe:79 (fields: build, Δt_frame, Δt_base, h_max, h_min, algorithm, firing_budget, localization_tol, localization_budget, attempt_budget, schedule, lattice, warnings); src/deployment.jl:539",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No rewrite. The existing 2026-11-10 annotation (log.md:10612) records it: the `Deployment` carries `Δt_frame`, `Δt_base` and the algorithm instance with its step, and `h` and `N_base` are no longer its fields.",
+   "note": "Stage M lead `N_base` (log.md:10576). D-443 (log.md:18614) retires `N_base`, and D-442 moves `h` into the algorithm value. Both are annotated on D-254."
+  },
+  {
+   "id": "L8b-045",
+   "file": "design/log.md",
+   "line": 10578,
+   "kind": "decl",
+   "claim": "The deployment carries D-187's grid diagnostics: leave-one-out factors, prime attribution and nearest non-refining offsets.",
+   "evidence": "src/deployment.jl:539 (no grid field); src/structure.jl:830-846 (`_grid_report`: no artifact holds it, D-466); log.md:10616 (annotation: amended by D-466)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No rewrite. The existing 2026-11-20 annotation records it: the `Deployment` carries no grid report, which is derived where it is used. The derivation line and `GridUtilization` stay the deployment's.",
+   "note": "D-466 moved it, and D-254 is annotated. Covers line 10578 and the first half of the bullet at 10584. The derivation line and GridUtilization stay on the deployment and are listed as ok (L8b-051, L8b-052)."
+  },
+  {
+   "id": "L8b-050",
+   "file": "design/log.md",
+   "line": 10583,
+   "kind": "decl",
+   "claim": "`Schedule` holds the `D`, `Φ`, `Δt` vectors beside its rows.",
+   "evidence": "probe:80 (Schedule fields: rows, scopes); src/deployment.jl:64-69 (per-component (D₀, Φ₀, Δt) derived at compile, never stored, D-261); src/deployment.jl:94",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation (date): amended by D-261. The `Schedule` holds its component and scope rows alone, and `compile` derives the per-component `D`, `Φ`, `Δt` from them.",
+   "note": "D-261 (log.md:11048-11055) retires the parallel vectors. D-254's annotations name D-317, D-442, D-443 and D-466, but not D-261."
+  },
+  {
+   "id": "L8b-070",
+   "file": "design/log.md",
+   "line": 13041,
+   "kind": "ex",
+   "claim": "The misplaced-pin error carries the hint \"if `F` participates in differentiation, remove its `Pinned`\".",
+   "evidence": "probe:105 (message ends \"— if this leaf participates in differentiation, remove its `Pinned`\"); src/leaves.jl:364-366",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Code: the hint names the component in place of `F`; or docs: quote it as \"if this leaf participates in differentiation, remove its `Pinned`\" (spec §9.5 at spec.md:3313 and 5905 quote the same).",
+   "note": "Minor wording. A verifier may rule `F` a placeholder for the component. If so, the code's \"this leaf\" is a paraphrase and the row is ok. The spec quotes the same wording, but that is outside this slice."
+  },
+  {
+   "id": "L8b-083",
+   "file": "design/log.md",
+   "line": 13641,
+   "kind": "decl",
+   "claim": "`Group`'s fifth field is `rates`, set by the `rates = (;)` keyword, and `sample_times(g::Group) = g.rates`.",
+   "evidence": "probe:131 (fields: children, local_wires, input_wires, output_wires, sample_times); src/assembly.jl:877, src/assembly.jl:981; log.md:13656 (annotation: D-303 renames to `sample_times`)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No rewrite. The existing 2026-10-02 annotation records it: the field and its keyword are `sample_times`, and `sample_times(g::Group) = g.sample_times`.",
+   "note": "Renamed by D-303, and D-300 is annotated at log.md:13656."
+  },
+  {
+   "id": "L8b-088",
+   "file": "design/log.md",
+   "line": 13676,
+   "kind": "decl",
+   "claim": "The boundary declarations are `u_connections` and `y_connections`, each naming the pairs it returns.",
+   "evidence": "probe:139 (`u_connections` undefined); src/declare.jl:743-746 (family has input_wires, output_wires); log.md:13690 (annotation: D-303, D-314)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No rewrite. The existing 2026-10-02 annotation records it: the declarations are `local_wires`, `input_wires` and `output_wires`, each still naming the pairs it returns.",
+   "note": "Stage M leads `u_connections` and `y_connections` (log.md:13676). Renamed by D-303 (log.md:13739), and D-301 is annotated at log.md:13690. The axis ruling stands."
+  },
+  {
+   "id": "L8b-091",
+   "file": "design/log.md",
+   "line": 14023,
+   "kind": "decl",
+   "claim": "`Junction`'s `y_types` is `(out = Out,)`.",
+   "evidence": "probe:145 (`y_types(SumJunction{Float64,3}())` == Float64); probe:150 (output_faces == [\"y\"]); src/library.jl:118",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation (date): amended by D-436 and D-437. The library's single-port blocks declare bare: `y_types` is `Out`, and the output face is `y`.",
+   "note": "D-436 (log.md:18050, superseded → D-437) made the junction's output bare. D-437 (log.md:18189) keeps the library's bare contracts with the default face `y`. D-311's annotations (2026-10-06, 2026-11-12) do not record this."
+  },
+  {
+   "id": "L8b-098",
+   "file": "design/log.md",
+   "line": 14031,
+   "kind": "law",
+   "claim": "Every library block's output port is `out`.",
+   "evidence": "probe:150 (Junction and UnitDelay output face `y`); src/library.jl:118, src/library.jl:408 (Freeze y_types Pinned{V}, bare); src/library.jl:2694 (DiscretePID outputs u, u_raw, saturated)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation (date): amended by D-436 and D-437. A single-port library block declares its output bare, the face `y`; the junction's `Σ` stays retired.",
+   "note": "Moved by D-436/D-437 like L8b-091, with no annotation on D-311. Multi-port blocks such as LimitedIntegrator still name one output `out` (src/library.jl:1843)."
+  },
+  {
+   "id": "L8b-107",
+   "file": "design/log.md",
+   "line": 19569,
+   "kind": "decl",
+   "claim": "`Period` and `Hz` take an integer or a `Rational` at its value and refuse an unholdable value as `ArgumentInvalid` `:range`, `Hz(0)` included.",
+   "evidence": "probe:158 (`Period` and `Hz` undefined); log.md:19673 (annotation: amended by D-469)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No rewrite. The existing 2026-11-20 annotation records it: `Period` and `Hz` retire, the first bullet's constructors are `Absolute` and `Relative`, and `Absolute`'s period is refused as its offset is.",
+   "note": "D-469 retires both constructors (log.md:20536), and D-459 is annotated. The rest of the first bullet is ok (L8b-108 to L8b-112)."
+  },
+  {
+   "id": "L8b-118",
+   "file": "design/log.md",
+   "line": 19582,
+   "kind": "law",
+   "claim": "A grid report whose arithmetic leaves `Int` is no report. `:derive` is then refused as `DeploymentInvalid` `:range`, and other anchor refusals carry no grid block.",
+   "evidence": "src/deployment.jl:253-261 (`:derive` refuses only `:unanchored` or `:no_constraint`); src/structure.jl:842-845 (a built structure always has a report, D-465); log.md:19665 (annotation: D-465 supersedes the fourth bullet)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No rewrite. The existing 2026-11-20 annotation records it: the build refuses a structure that binds at no base tick, so a built structure always has a grid report and `:derive` has no `:range` refusal.",
+   "note": "D-465 (log.md:20116-20119) supersedes this bullet explicitly, and D-459 is annotated."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L8b-001",
+   "file": "design/log.md",
+   "line": 9211,
+   "kind": "decl",
+   "claim": "A public name is reached by qualified name or per-name `import`",
+   "evidence": "test/imports.jl:5"
+  },
+  {
+   "id": "L8b-002",
+   "file": "design/log.md",
+   "line": 9213,
+   "kind": "law",
+   "claim": "Until the audit the module exports nothing",
+   "evidence": "probe:18"
+  },
+  {
+   "id": "L8b-003",
+   "file": "design/log.md",
+   "line": 9219,
+   "kind": "mech",
+   "claim": "Suite reaches names through `using Redstone` plus a per-name import list",
+   "evidence": "test/RedstoneTests.jl:4"
+  },
+  {
+   "id": "L8b-004",
+   "file": "design/log.md",
+   "line": 9221,
+   "kind": "mech",
+   "claim": "A REPL session loads the same list through test/repl.jl",
+   "evidence": "test/repl.jl:9"
+  },
+  {
+   "id": "L8b-005",
+   "file": "design/log.md",
+   "line": 9222,
+   "kind": "law",
+   "claim": "Authoring family stays unexported",
+   "evidence": "probe:18"
+  },
+  {
+   "id": "L8b-006",
+   "file": "design/log.md",
+   "line": 9656,
+   "kind": "law",
+   "claim": "Accepted when a leafwise embedding lifting Float64 leaves is <: the entry",
+   "evidence": "src/leaves.jl:347"
+  },
+  {
+   "id": "L8b-007",
+   "file": "design/log.md",
+   "line": 9658,
+   "kind": "mech",
+   "claim": "Both §6.1 clauses are this one relation",
+   "evidence": "src/build.jl:890"
+  },
+  {
+   "id": "L8b-008",
+   "file": "design/log.md",
+   "line": 9659,
+   "kind": "law",
+   "claim": "Decided in Stratum A",
+   "evidence": "src/build.jl:788"
+  },
+  {
+   "id": "L8b-009",
+   "file": "design/log.md",
+   "line": 9659,
+   "kind": "mech",
+   "claim": "Contracts evaluated at a marker scalar",
+   "evidence": "src/build.jl:883"
+  },
+  {
+   "id": "L8b-010",
+   "file": "design/log.md",
+   "line": 9660,
+   "kind": "law",
+   "claim": "Collected under the stratum's barrier",
+   "evidence": "src/build.jl:793"
+  },
+  {
+   "id": "L8b-011",
+   "file": "design/log.md",
+   "line": 9661,
+   "kind": "mech",
+   "claim": "A concrete entry is checked leaf by leaf",
+   "evidence": "src/leaves.jl:381"
+  },
+  {
+   "id": "L8b-012",
+   "file": "design/log.md",
+   "line": 9662,
+   "kind": "law",
+   "claim": "Abstract entry: declaration or its pin-lifted form must be <: entry",
+   "evidence": "src/leaves.jl:381"
+  },
+  {
+   "id": "L8b-013",
+   "file": "design/log.md",
+   "line": 9664,
+   "kind": "law",
+   "claim": "Root input cells take the walked type when all consumers admit it, else the root type",
+   "evidence": "src/build.jl:530"
+  },
+  {
+   "id": "L8b-014",
+   "file": "design/log.md",
+   "line": 9667,
+   "kind": "law",
+   "claim": "All-abstract root input is `AbstractAtRoot`",
+   "evidence": "probe:43"
+  },
+  {
+   "id": "L8b-015",
+   "file": "design/log.md",
+   "line": 9667,
+   "kind": "law",
+   "claim": "Concrete entries disagreeing at Float64 is `RootInputTypeConflict`",
+   "evidence": "probe:44"
+  },
+  {
+   "id": "L8b-016",
+   "file": "design/log.md",
+   "line": 9668,
+   "kind": "law",
+   "claim": "Abstract co-consumers are checked by the bound clause",
+   "evidence": "src/build.jl:928"
+  },
+  {
+   "id": "L8b-018",
+   "file": "design/log.md",
+   "line": 9820,
+   "kind": "law",
+   "claim": "A typo'd return field is reported by `UndeclaredReturnField` alone",
+   "evidence": "probe:25"
+  },
+  {
+   "id": "L8b-019",
+   "file": "design/log.md",
+   "line": 9822,
+   "kind": "law",
+   "claim": "`DeclaredNotProduced` belongs to the completeness pass over complete products",
+   "evidence": "src/build.jl:1106"
+  },
+  {
+   "id": "L8b-020",
+   "file": "design/log.md",
+   "line": 9823,
+   "kind": "law",
+   "claim": "Completeness runs only once every port check passed",
+   "evidence": "src/build.jl:141"
+  },
+  {
+   "id": "L8b-021",
+   "file": "design/log.md",
+   "line": 9917,
+   "kind": "mech",
+   "claim": "Wiring: connection declarations resolved in Stratum A under the one-level rule",
+   "evidence": "src/structure.jl:616"
+  },
+  {
+   "id": "L8b-022",
+   "file": "design/log.md",
+   "line": 9919,
+   "kind": "mech",
+   "claim": "Service paths are checked at the authoring or mount level",
+   "evidence": "src/readers.jl:739"
+  },
+  {
+   "id": "L8b-024",
+   "file": "design/log.md",
+   "line": 9932,
+   "kind": "mech",
+   "claim": "§14.4's two ways are the specialized `apply!` and the dynamic walk",
+   "evidence": "src/conditions.jl:940"
+  },
+  {
+   "id": "L8b-025",
+   "file": "design/log.md",
+   "line": 10088,
+   "kind": "mech",
+   "claim": "Shadowing check is one pass of Stratum A's structural walk",
+   "evidence": "src/structure.jl:534"
+  },
+  {
+   "id": "L8b-026",
+   "file": "design/log.md",
+   "line": 10089,
+   "kind": "law",
+   "claim": "Run on every component before its class is read",
+   "evidence": "src/structure.jl:537"
+  },
+  {
+   "id": "L8b-027",
+   "file": "design/log.md",
+   "line": 10090,
+   "kind": "law",
+   "claim": "Any family name bound to a function other than the framework's counts",
+   "evidence": "src/declare.jl:757"
+  },
+  {
+   "id": "L8b-028",
+   "file": "design/log.md",
+   "line": 10091,
+   "kind": "law",
+   "claim": "Throws `DeclarationShadowed` alone",
+   "evidence": "src/structure.jl:535"
+  },
+  {
+   "id": "L8b-029",
+   "file": "design/log.md",
+   "line": 10091,
+   "kind": "law",
+   "claim": "Names the module, the foreign names and the import line",
+   "evidence": "src/diagnostics.jl:574"
+  },
+  {
+   "id": "L8b-030",
+   "file": "design/log.md",
+   "line": 10092,
+   "kind": "law",
+   "claim": "No other kind carries a shadowing note",
+   "evidence": "src/diagnostics.jl:578"
+  },
+  {
+   "id": "L8b-031",
+   "file": "design/log.md",
+   "line": 10404,
+   "kind": "decl",
+   "claim": "Passthrough takes one of `except`, `only`, `select` (predicate over face names)",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "L8b-032",
+   "file": "design/log.md",
+   "line": 10407,
+   "kind": "law",
+   "claim": "More than one selector is `UnknownFaceSelection` `:multiple_selectors`",
+   "evidence": "probe:62"
+  },
+  {
+   "id": "L8b-033",
+   "file": "design/log.md",
+   "line": 10409,
+   "kind": "law",
+   "claim": "Payload names the selectors given",
+   "evidence": "probe:64"
+  },
+  {
+   "id": "L8b-034",
+   "file": "design/log.md",
+   "line": 10410,
+   "kind": "law",
+   "claim": "`except`/`select` keeping nothing warns `EmptyFaceSelection`",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "L8b-036",
+   "file": "design/log.md",
+   "line": 10411,
+   "kind": "law",
+   "claim": "The warning goes through D-250's build channel",
+   "evidence": "src/diagnostics.jl:197"
+  },
+  {
+   "id": "L8b-037",
+   "file": "design/log.md",
+   "line": 10411,
+   "kind": "law",
+   "claim": "A bare call over a faceless child is silent",
+   "evidence": "probe:72"
+  },
+  {
+   "id": "L8b-038",
+   "file": "design/log.md",
+   "line": 10414,
+   "kind": "mech",
+   "claim": "Feed-list idiom has a test against the real helpers",
+   "evidence": "test/test_assembly.jl:1424"
+  },
+  {
+   "id": "L8b-039",
+   "file": "design/log.md",
+   "line": 10573,
+   "kind": "mech",
+   "claim": "Deployment binding produces an artifact",
+   "evidence": "src/deployment.jl:539"
+  },
+  {
+   "id": "L8b-042",
+   "file": "design/log.md",
+   "line": 10576,
+   "kind": "decl",
+   "claim": "Deployment holds the build, Δt_base, the algorithm and three event parameters",
+   "evidence": "src/deployment.jl:540"
+  },
+  {
+   "id": "L8b-043",
+   "file": "design/log.md",
+   "line": 10577,
+   "kind": "law",
+   "claim": "Deployment is scalar-free",
+   "evidence": "src/deployment.jl:539"
+  },
+  {
+   "id": "L8b-044",
+   "file": "design/log.md",
+   "line": 10577,
+   "kind": "decl",
+   "claim": "Deployment carries the Schedule",
+   "evidence": "src/deployment.jl:551"
+  },
+  {
+   "id": "L8b-046",
+   "file": "design/log.md",
+   "line": 10578,
+   "kind": "decl",
+   "claim": "Deployment carries its warnings",
+   "evidence": "src/deployment.jl:553"
+  },
+  {
+   "id": "L8b-047",
+   "file": "design/log.md",
+   "line": 10579,
+   "kind": "law",
+   "claim": "Replay compares two deployments as values",
+   "evidence": "src/model.jl:1247"
+  },
+  {
+   "id": "L8b-048",
+   "file": "design/log.md",
+   "line": 10581,
+   "kind": "decl",
+   "claim": "Schedule row per discrete component: D, Φ, Δt, anchor and rate chain",
+   "evidence": "src/deployment.jl:36"
+  },
+  {
+   "id": "L8b-049",
+   "file": "design/log.md",
+   "line": 10583,
+   "kind": "decl",
+   "claim": "Schedule holds the rate-scope rows",
+   "evidence": "src/deployment.jl:86"
+  },
+  {
+   "id": "L8b-051",
+   "file": "design/log.md",
+   "line": 10585,
+   "kind": "mech",
+   "claim": "The derivation line is the deployment's",
+   "evidence": "src/deployment.jl:575"
+  },
+  {
+   "id": "L8b-052",
+   "file": "design/log.md",
+   "line": 10586,
+   "kind": "law",
+   "claim": "`GridUtilization` is a deployment warning",
+   "evidence": "src/deployment.jl:584"
+  },
+  {
+   "id": "L8b-053",
+   "file": "design/log.md",
+   "line": 10587,
+   "kind": "decl",
+   "claim": "`Simulation(build; kw...)` and `Simulation(root; kw...)` compose the deployment constructor",
+   "evidence": "src/sim.jl:395"
+  },
+  {
+   "id": "L8b-054",
+   "file": "design/log.md",
+   "line": 11503,
+   "kind": "law",
+   "claim": "`Pinned{P}` is read at the top of an entry alone",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "L8b-055",
+   "file": "design/log.md",
+   "line": 11504,
+   "kind": "law",
+   "claim": "A marker below the top is `IllegalPortType` `:nested_marker`",
+   "evidence": "src/assembly.jl:786"
+  },
+  {
+   "id": "L8b-056",
+   "file": "design/log.md",
+   "line": 11506,
+   "kind": "law",
+   "claim": "Nested-marker refusal holds on both tiers",
+   "evidence": "test/test_build.jl:1570"
+  },
+  {
+   "id": "L8b-057",
+   "file": "design/log.md",
+   "line": 11505,
+   "kind": "ex",
+   "claim": "`Mixed{Float64, Pinned{Float64}}` is a placeholder type (Stage M lead)",
+   "evidence": "src/leaves.jl:248"
+  },
+  {
+   "id": "L8b-058",
+   "file": "design/log.md",
+   "line": 11506,
+   "kind": "law",
+   "claim": "A concretely typed struct field stays Float64 under retype",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "L8b-059",
+   "file": "design/log.md",
+   "line": 11508,
+   "kind": "decl",
+   "claim": "A whole leaf is pinned with the marker",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "L8b-060",
+   "file": "design/log.md",
+   "line": 11559,
+   "kind": "law",
+   "claim": "`Pinned` records that a leaf carries no partials",
+   "evidence": "src/leaves.jl:347"
+  },
+  {
+   "id": "L8b-061",
+   "file": "design/log.md",
+   "line": 11563,
+   "kind": "decl",
+   "claim": "A local Dual-dispatching derivative at a tolerant entry passes the build",
+   "evidence": "probe:92"
+  },
+  {
+   "id": "L8b-062",
+   "file": "design/log.md",
+   "line": 11567,
+   "kind": "decl",
+   "claim": "`Freeze{V}` is a library block",
+   "evidence": "src/library.jl:405"
+  },
+  {
+   "id": "L8b-063",
+   "file": "design/log.md",
+   "line": 11568,
+   "kind": "law",
+   "claim": "Freeze is a stateless continuous leaf",
+   "evidence": "src/library.jl:406"
+  },
+  {
+   "id": "L8b-064",
+   "file": "design/log.md",
+   "line": 11568,
+   "kind": "law",
+   "claim": "Freeze has a tolerant input and a `Pinned` output",
+   "evidence": "src/library.jl:407"
+  },
+  {
+   "id": "L8b-065",
+   "file": "design/log.md",
+   "line": 11569,
+   "kind": "mech",
+   "claim": "Freeze strips with `ForwardDiff.value`",
+   "evidence": "src/library.jl:409"
+  },
+  {
+   "id": "L8b-066",
+   "file": "design/log.md",
+   "line": 11569,
+   "kind": "law",
+   "claim": "A frozen wire is a zero coupling in the Jacobian",
+   "evidence": "test/test_library.jl:1549"
+  },
+  {
+   "id": "L8b-067",
+   "file": "design/log.md",
+   "line": 11571,
+   "kind": "law",
+   "claim": "Linearization is the seeded Dual pass alone, no perturbation fallback",
+   "evidence": "src/linearize.jl:130"
+  },
+  {
+   "id": "L8b-068",
+   "file": "design/log.md",
+   "line": 13038,
+   "kind": "law",
+   "claim": "A pinned leaf (Pinned, Int, Bool, enum) takes the exact check",
+   "evidence": "src/leaves.jl:347"
+  },
+  {
+   "id": "L8b-069",
+   "file": "design/log.md",
+   "line": 13040,
+   "kind": "law",
+   "claim": "A Dual at a pinned leaf is refused",
+   "evidence": "probe:104"
+  },
+  {
+   "id": "L8b-071",
+   "file": "design/log.md",
+   "line": 13043,
+   "kind": "decl",
+   "claim": "Strip by declaring `Pinned{Float64}` and stripping in the stage",
+   "evidence": "src/library.jl:408"
+  },
+  {
+   "id": "L8b-072",
+   "file": "design/log.md",
+   "line": 13045,
+   "kind": "law",
+   "claim": "Mid-expression stripping at an unpinned leaf stays legal",
+   "evidence": "probe:112"
+  },
+  {
+   "id": "L8b-073",
+   "file": "design/log.md",
+   "line": 13578,
+   "kind": "law",
+   "claim": "A mixed container is a build error",
+   "evidence": "probe:126"
+  },
+  {
+   "id": "L8b-074",
+   "file": "design/log.md",
+   "line": 13579,
+   "kind": "law",
+   "claim": "A container with no component elements is inert data",
+   "evidence": "probe:127"
+  },
+  {
+   "id": "L8b-075",
+   "file": "design/log.md",
+   "line": 13580,
+   "kind": "law",
+   "claim": "Containers do not nest",
+   "evidence": "src/assembly.jl:161"
+  },
+  {
+   "id": "L8b-076",
+   "file": "design/log.md",
+   "line": 13580,
+   "kind": "law",
+   "claim": "An empty container is legal",
+   "evidence": "probe:127"
+  },
+  {
+   "id": "L8b-077",
+   "file": "design/log.md",
+   "line": 13581,
+   "kind": "law",
+   "claim": "No mutable builder: `Assembly`, `add!`, `connect!` undefined (leads; test Assembly is a fixture)",
+   "evidence": "probe:128"
+  },
+  {
+   "id": "L8b-078",
+   "file": "design/log.md",
+   "line": 13582,
+   "kind": "law",
+   "claim": "`Group` gives up dispatchable identity",
+   "evidence": "src/assembly.jl:846"
+  },
+  {
+   "id": "L8b-079",
+   "file": "design/log.md",
+   "line": 13606,
+   "kind": "decl",
+   "claim": "`sample_times` is declared on the assembly, not the child",
+   "evidence": "src/declare.jl:513"
+  },
+  {
+   "id": "L8b-080",
+   "file": "design/log.md",
+   "line": 13609,
+   "kind": "ex",
+   "claim": "One feed-list pair makes the wire and removes the face",
+   "evidence": "test/test_assembly.jl:1424"
+  },
+  {
+   "id": "L8b-081",
+   "file": "design/log.md",
+   "line": 13614,
+   "kind": "decl",
+   "claim": "Helpers come in a pair, the name carrying the direction",
+   "evidence": "src/assembly.jl:594"
+  },
+  {
+   "id": "L8b-082",
+   "file": "design/log.md",
+   "line": 13618,
+   "kind": "law",
+   "claim": "output_passthrough feeds one-level routing; each level re-exports",
+   "evidence": "src/assembly.jl:598"
+  },
+  {
+   "id": "L8b-084",
+   "file": "design/log.md",
+   "line": 13641,
+   "kind": "decl",
+   "claim": "Group's fifth field is a NamedTuple keyed by bare element name",
+   "evidence": "src/assembly.jl:877"
+  },
+  {
+   "id": "L8b-085",
+   "file": "design/log.md",
+   "line": 13643,
+   "kind": "law",
+   "claim": "`(children = Relative(2),)` declares one rate for every element",
+   "evidence": "test/test_discrete.jl:151"
+  },
+  {
+   "id": "L8b-086",
+   "file": "design/log.md",
+   "line": 13674,
+   "kind": "decl",
+   "claim": "`claims(b)` and `reads(b)` keep their names",
+   "evidence": "src/roster.jl:158"
+  },
+  {
+   "id": "L8b-087",
+   "file": "design/log.md",
+   "line": 13676,
+   "kind": "decl",
+   "claim": "`exports` stays retired (Stage M lead)",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "L8b-089",
+   "file": "design/log.md",
+   "line": 14020,
+   "kind": "decl",
+   "claim": "One leaf `Junction{In, Out, N, F}` whose instance holds the fold",
+   "evidence": "src/library.jl:42"
+  },
+  {
+   "id": "L8b-090",
+   "file": "design/log.md",
+   "line": 14023,
+   "kind": "decl",
+   "claim": "u_types is (in1 = In, …, inN = In); `inN` is notation (lead)",
+   "evidence": "probe:144"
+  },
+  {
+   "id": "L8b-092",
+   "file": "design/log.md",
+   "line": 14024,
+   "kind": "law",
+   "claim": "y_direct applies f to the inputs in positional order",
+   "evidence": "src/library.jl:119"
+  },
+  {
+   "id": "L8b-093",
+   "file": "design/log.md",
+   "line": 14025,
+   "kind": "decl",
+   "claim": "`Junction{In, Out, N}(f)` infers F",
+   "evidence": "probe:148"
+  },
+  {
+   "id": "L8b-094",
+   "file": "design/log.md",
+   "line": 14026,
+   "kind": "decl",
+   "claim": "SumJunction, Or, And are aliases at +, |, &",
+   "evidence": "src/library.jl:60"
+  },
+  {
+   "id": "L8b-095",
+   "file": "design/log.md",
+   "line": 14027,
+   "kind": "decl",
+   "claim": "Each alias has a zero-argument constructor",
+   "evidence": "src/library.jl:110"
+  },
+  {
+   "id": "L8b-096",
+   "file": "design/log.md",
+   "line": 14027,
+   "kind": "law",
+   "claim": "`Not` is not admitted (lead)",
+   "evidence": "probe:149"
+  },
+  {
+   "id": "L8b-097",
+   "file": "design/log.md",
+   "line": 14028,
+   "kind": "decl",
+   "claim": "The type parameter is the nominal type",
+   "evidence": "src/library.jl:60"
+  },
+  {
+   "id": "L8b-099",
+   "file": "design/log.md",
+   "line": 15381,
+   "kind": "law",
+   "claim": "An output stage exists when the leaf defines its method",
+   "evidence": "src/declare.jl:765"
+  },
+  {
+   "id": "L8b-100",
+   "file": "design/log.md",
+   "line": 15382,
+   "kind": "law",
+   "claim": "Stage existence is read without evaluating",
+   "evidence": "probe:155"
+  },
+  {
+   "id": "L8b-101",
+   "file": "design/log.md",
+   "line": 16119,
+   "kind": "decl",
+   "claim": "DiscretePID and DiscreteLQRTracker publish the Int8 code as `saturated`",
+   "evidence": "src/library.jl:2694"
+  },
+  {
+   "id": "L8b-102",
+   "file": "design/log.md",
+   "line": 16120,
+   "kind": "decl",
+   "claim": "`saturated` is read off a store field of the same name",
+   "evidence": "src/library.jl:2693"
+  },
+  {
+   "id": "L8b-103",
+   "file": "design/log.md",
+   "line": 16121,
+   "kind": "decl",
+   "claim": "The hold's input stays `saturation`",
+   "evidence": "src/library.jl:2335"
+  },
+  {
+   "id": "L8b-104",
+   "file": "design/log.md",
+   "line": 16122,
+   "kind": "decl",
+   "claim": "DiscreteLimitedIntegrator publishes `saturation`",
+   "evidence": "src/library.jl:668"
+  },
+  {
+   "id": "L8b-105",
+   "file": "design/log.md",
+   "line": 16123,
+   "kind": "decl",
+   "claim": "DiscreteLimitedIntegrator declares no `saturation` input",
+   "evidence": "src/library.jl:667"
+  },
+  {
+   "id": "L8b-106",
+   "file": "design/log.md",
+   "line": 19565,
+   "kind": "law",
+   "claim": "Time stays exact",
+   "evidence": "src/deployment.jl:540"
+  },
+  {
+   "id": "L8b-108",
+   "file": "design/log.md",
+   "line": 19569,
+   "kind": "decl",
+   "claim": "Absolute's offset and Δt_frame, Δt_base, h_max take an integer or Rational at value",
+   "evidence": "src/deployment.jl:15"
+  },
+  {
+   "id": "L8b-109",
+   "file": "design/log.md",
+   "line": 19571,
+   "kind": "law",
+   "claim": "Absolute refuses an unholdable value as ArgumentInvalid :range",
+   "evidence": "test/test_declare.jl:34"
+  },
+  {
+   "id": "L8b-110",
+   "file": "design/log.md",
+   "line": 19573,
+   "kind": "law",
+   "claim": "An infinite offset is refused as :range",
+   "evidence": "test/test_declare.jl:39"
+  },
+  {
+   "id": "L8b-111",
+   "file": "design/log.md",
+   "line": 19574,
+   "kind": "law",
+   "claim": "Keywords refuse an unholdable value as DeploymentInvalid :range",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "L8b-112",
+   "file": "design/log.md",
+   "line": 19574,
+   "kind": "law",
+   "claim": "Bool stays accepted",
+   "evidence": "probe:167"
+  },
+  {
+   "id": "L8b-113",
+   "file": "design/log.md",
+   "line": 19576,
+   "kind": "law",
+   "claim": "Structure step composes rates in checked Int",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "L8b-114",
+   "file": "design/log.md",
+   "line": 19577,
+   "kind": "law",
+   "claim": "Overflow is RatesViolation :range on the composing entry",
+   "evidence": "test/test_discrete.jl:165"
+  },
+  {
+   "id": "L8b-115",
+   "file": "design/log.md",
+   "line": 19578,
+   "kind": "law",
+   "claim": "A rate its own check refused composes nothing",
+   "evidence": "src/structure.jl:394"
+  },
+  {
+   "id": "L8b-116",
+   "file": "design/log.md",
+   "line": 19579,
+   "kind": "law",
+   "claim": "The schedule's multiply-add runs in checked Int",
+   "evidence": "src/structure.jl:915"
+  },
+  {
+   "id": "L8b-117",
+   "file": "design/log.md",
+   "line": 19580,
+   "kind": "law",
+   "claim": "A divisor past Int is DeploymentInvalid :range on Δt_base",
+   "evidence": "src/deployment.jl:313"
+  },
+  {
+   "id": "L8b-119",
+   "file": "design/log.md",
+   "line": 19586,
+   "kind": "law",
+   "claim": "An offset neighbour leaving Int is not offered",
+   "evidence": "src/structure.jl:879"
+  },
+  {
+   "id": "L8b-120",
+   "file": "design/log.md",
+   "line": 19588,
+   "kind": "law",
+   "claim": "Deployment catches Overflow, Inexact, DivideError at each premise",
+   "evidence": "src/declare.jl:387"
+  },
+  {
+   "id": "L8b-121",
+   "file": "design/log.md",
+   "line": 19589,
+   "kind": "law",
+   "claim": "The call still collects every fault",
+   "evidence": "test/test_lattices.jl:541"
+  },
+  {
+   "id": "L8b-122",
+   "file": "design/log.md",
+   "line": 19591,
+   "kind": "law",
+   "claim": "Trial division stops at the divisor 2^20",
+   "evidence": "src/structure.jl:808"
+  },
+  {
+   "id": "L8b-123",
+   "file": "design/log.md",
+   "line": 19592,
+   "kind": "law",
+   "claim": "A cofactor at or above 2^40 is unfactored",
+   "evidence": "src/diagnostics.jl:1351"
+  },
+  {
+   "id": "L8b-124",
+   "file": "design/log.md",
+   "line": 20536,
+   "kind": "law",
+   "claim": "`Period` and `Hz` retire",
+   "evidence": "probe:158"
+  },
+  {
+   "id": "L8b-125",
+   "file": "design/log.md",
+   "line": 20536,
+   "kind": "decl",
+   "claim": "`Absolute(Δt, τ = 0)`",
+   "evidence": "src/declare.jl:475"
+  },
+  {
+   "id": "L8b-126",
+   "file": "design/log.md",
+   "line": 20540,
+   "kind": "law",
+   "claim": "Δt and τ: integer or Rational of any integer type, held as Rational{Int}",
+   "evidence": "probe:163"
+  },
+  {
+   "id": "L8b-127",
+   "file": "design/log.md",
+   "line": 20541,
+   "kind": "ex",
+   "claim": "Absolute(1//50) is 50 Hz, Absolute(50) is 50 s",
+   "evidence": "probe:163"
+  },
+  {
+   "id": "L8b-128",
+   "file": "design/log.md",
+   "line": 20543,
+   "kind": "law",
+   "claim": "Float or irrational is ArgumentInvalid :inexact naming the argument",
+   "evidence": "probe:161"
+  },
+  {
+   "id": "L8b-129",
+   "file": "design/log.md",
+   "line": 20545,
+   "kind": "law",
+   "claim": "`:not_a_quantity` leaves ArgumentInvalid",
+   "evidence": "src/deployment.jl:26"
+  },
+  {
+   "id": "L8b-130",
+   "file": "design/log.md",
+   "line": 20547,
+   "kind": "decl",
+   "claim": "Δt_frame, Δt_base, h_max, h_min take an integer or a Rational",
+   "evidence": "probe:168"
+  },
+  {
+   "id": "L8b-131",
+   "file": "design/log.md",
+   "line": 20548,
+   "kind": "decl",
+   "claim": "t0 also takes a float at its exact value",
+   "evidence": "src/model.jl:363"
+  },
+  {
+   "id": "L8b-132",
+   "file": "design/log.md",
+   "line": 20549,
+   "kind": "law",
+   "claim": "No keyword takes a Period",
+   "evidence": "probe:158"
+  },
+  {
+   "id": "L8b-133",
+   "file": "design/log.md",
+   "line": 20758,
+   "kind": "decl",
+   "claim": "Core defines Group through the assembly declarations alone",
+   "evidence": "src/assembly.jl:872"
+  },
+  {
+   "id": "L8b-134",
+   "file": "design/log.md",
+   "line": 20759,
+   "kind": "law",
+   "claim": "No build step names Group",
+   "evidence": "src/precompile.jl:18"
+  },
+  {
+   "id": "L8b-135",
+   "file": "design/log.md",
+   "line": 20759,
+   "kind": "law",
+   "claim": "Group leaves Redstone.Library",
+   "evidence": "probe:171"
+  },
+  {
+   "id": "L8b-136",
+   "file": "design/log.md",
+   "line": 20821,
+   "kind": "decl",
+   "claim": "Group(g; …) copies g with given keywords replaced, children included",
+   "evidence": "src/assembly.jl:953"
+  },
+  {
+   "id": "L8b-137",
+   "file": "design/log.md",
+   "line": 20822,
+   "kind": "law",
+   "claim": "A function field travels with the copy",
+   "evidence": "probe:135"
+  },
+  {
+   "id": "L8b-138",
+   "file": "design/log.md",
+   "line": 20823,
+   "kind": "decl",
+   "claim": "Three wire keywords take entries or a function of the Group",
+   "evidence": "src/assembly.jl:949"
+  },
+  {
+   "id": "L8b-139",
+   "file": "design/log.md",
+   "line": 20824,
+   "kind": "mech",
+   "claim": "Group stores the function; the declaration calls it at each read",
+   "evidence": "src/assembly.jl:966"
+  },
+  {
+   "id": "L8b-140",
+   "file": "design/log.md",
+   "line": 20826,
+   "kind": "law",
+   "claim": "`sample_times` takes no function",
+   "evidence": "probe:136"
+  },
+  {
+   "id": "L8b-141",
+   "file": "design/log.md",
+   "line": 21069,
+   "kind": "law",
+   "claim": "A wire declaration that is no collection of pairs is IllegalWireEntry",
+   "evidence": "probe:181"
+  },
+  {
+   "id": "L8b-142",
+   "file": "design/log.md",
+   "line": 21072,
+   "kind": "law",
+   "claim": "A bare Pair has its own reason",
+   "evidence": "probe:181"
+  },
+  {
+   "id": "L8b-143",
+   "file": "design/log.md",
+   "line": 21072,
+   "kind": "law",
+   "claim": "Message spells the one-entry tuple",
+   "evidence": "probe:182"
+  },
+  {
+   "id": "L8b-144",
+   "file": "design/log.md",
+   "line": 21074,
+   "kind": "law",
+   "claim": "The check covers an assembly's three wire declarations",
+   "evidence": "src/structure.jl:616"
+  },
+  {
+   "id": "L8b-145",
+   "file": "design/log.md",
+   "line": 21075,
+   "kind": "law",
+   "claim": "It throws at once, a structural failure",
+   "evidence": "src/structure.jl:619"
+  },
+  {
+   "id": "L8b-146",
+   "file": "design/log.md",
+   "line": 21076,
+   "kind": "law",
+   "claim": "A named assembly's body takes no bare Pair shorthand",
+   "evidence": "probe:181"
+  }
+ ],
+ "counts": {
+  "law": 84,
+  "mech": 15,
+  "decl": 43,
+  "ex": 4,
+  "ptr": 15,
+  "why": 8
+ },
+ "notes": "Read-only slice. I edited no tracked file. The probe is design/reports/20261124_doc_conformance/probes/L8b/probe.jl in the main checkout, and I ran it against W at 72b12836. On W, check_refs.jl passes: every D-nnn and § citation in the 22 Positions resolves. All 22 entries have Status ratified, and none carries a superseded → chain. The cross-references that do supersede (D-469 → D-185/D-283/D-459/D-457, D-472 amending D-184/D-313) resolve to ratified entries. D-436, which I cite in rows 091 and 098, is superseded → D-437, and D-437 is ratified.\n\nFindings. Of 14 rows, 11 are drift and 9 of those are already annotated in the log: 040, 041, 045 (D-254), 083, 088, 107, 118. Two drifts are unannotated: 050 (Schedule vectors, D-261) and 091/098 (Junction's `out` port, D-436/D-437). Row 017 (`output_types`, D-267) is a rename with no annotation; log rule 2 keeps it, so a verifier may rule it ok. There is one possible defect: 035, where an explicit `only = ()` in input_/output_passthrough passes every face through silently. There is one wording deviation: 070, the misplaced-pin hint quotes `F` but the code says \"this leaf\". One row is unverifiable: 023, because \"instance walk\" names no code path.\n\nLeads. `Mixed` and `inN` are placeholders (ok 057, 090). `Not` and `exports` are rejected or retired names (ok 096, 087). `add!` and `Assembly` belong to the rejected builder (ok 077; the test `Assembly` is a fixture type at test/fixtures.jl:1835). `output_types` is row 017, `N_base` is row 041, and `u_connections`/`y_connections` are row 088.\n\nA side observation outside the claims: `input_wires(::Named) = 5` is refused as `:not_a_pair` rather than `:not_a_collection`, because an Int iterates in Julia. D-477 names only the kind, so I did not list it."
+}

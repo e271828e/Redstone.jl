@@ -50,3 +50,25 @@ the verifier's probe.
   per-member tracing as an unmarked sentence: no entry rules it, and none was
   rejected. Like the trial's two sentences, it stays unmarked unless you want
   an entry.
+
+## G2, §8
+
+- **K8-027 and K8-046, wording.** The migration outline's counts: "roughly
+  half of Flight.jl's type inventory" needs genericity (the verifier counts
+  about a quarter of FlightPhysics' structs), and "about 7" scheduler
+  components (the verifier counts about 10).
+- **S8b-182, wording.** §8.2's `Pinned` hint names `F`; the message names the
+  leaf. D-286 backs the doc's text, and L8b-070 repeats it in the log.
+- **S8c-047, wording.** §8.2 lists `x_projection` among the continuous-only
+  declarations checked in the structure step; the verifier's text names
+  `m_init` and `state_events` instead.
+- **S8c-106, wording.** §8.4's typo'd-wire message differs from the code's.
+- **S8c-174, defect.** Two transparent containers on one type are said to be
+  a declaration error; `_check_transparent` accepts a return naming several
+  fields. Proposed: refuse it with a collected diagnostic. The doc-side option is CV8-048:
+  a type names at most one, since the declaration returns one name.
+- **S8d-042, defect.** "A face name contains no `/`" is said to be checked;
+  `check_contract_names` lets a contract key with `/` through. Proposed:
+  refuse it as `FaceNameIllegal` with invariant `:contains_slash`.
+- **S8d-003, gap.** The shared path form across the HDF5 log tree is owed by
+  `pending.md`; no action.

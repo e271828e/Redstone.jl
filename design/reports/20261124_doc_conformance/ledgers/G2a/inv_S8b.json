@@ -1,0 +1,1719 @@
+{
+ "rows": [
+  {
+   "id": "S8b-071",
+   "file": "design/spec.md",
+   "line": 3086,
+   "kind": "law",
+   "claim": "A `::SomeType{Float64}` return annotation forces converts and hence `InexactError`.",
+   "evidence": "probe:350 `convert(Float64, Dual)` throws MethodError `no method matching Float64(::Dual)`, not InexactError (ForwardDiff 1.4.6); probe:352 same for a constructor",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "...because they force converts, which fail on a `Dual` with a `MethodError`.",
+   "note": "The same stale error name sits at 3272 (S8b-167). Spec lines 11689, 13903 and 14127 also name InexactError and sit outside this slice."
+  },
+  {
+   "id": "S8b-167",
+   "file": "design/spec.md",
+   "line": 3272,
+   "kind": "law",
+   "claim": "A Dual-carrying construction of a struct with a hardcoded Float64 field fails with an `InexactError` naming the constructor.",
+   "evidence": "probe:289 and probe:353: the build throws `UserCodeFraming` naming `y_direct`, cause `MethodError: no method matching Float64(::Dual)`; probe:352 the bare constructor call also gives MethodError",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Any `Dual`-carrying construction then fails inside the stage with a `MethodError` (`no method matching Float64(::Dual)`), which the build frames at the stage.",
+   "note": "No InexactError arises in this ForwardDiff version."
+  },
+  {
+   "id": "S8b-182",
+   "file": "design/spec.md",
+   "line": 3313,
+   "kind": "law",
+   "claim": "The message carries the hint \"if `F` participates in differentiation, remove its `Pinned`\".",
+   "evidence": "src/leaves.jl:366 and probe:257: the hint reads \"if this leaf participates in differentiation, remove its `Pinned`\"",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The message carries the didactic hint (\"if this leaf participates in differentiation, remove its `Pinned`\"), because ...",
+   "note": "Log D-286 quotes the same `F` wording. The hint also prints on the omitted-pin opaque-leaf failure (probe:268), where no `Pinned` exists. That is a code question for the user, not a spec claim."
+  },
+  {
+   "id": "S8b-197",
+   "file": "design/spec.md",
+   "line": 3346,
+   "kind": "ex",
+   "claim": "Message for `q_nb::RQuat`: \"declare the `SVector{4}` backing and cast where rotation semantics are wanted\".",
+   "evidence": "src/diagnostics.jl:964 and probe:342: \"declare the `SVector` backing and cast where the domain semantics are wanted (§7.1)\"",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "\"`x_init` field `q_nb::RQuat` is not a state leaf — declare the `SVector` backing and cast where the domain semantics are wanted ([§7.1][s7-1])\"",
+   "note": "The code message is generic across wrapper types and names no `SVector{4}`."
+  },
+  {
+   "id": "S8b-200",
+   "file": "design/spec.md",
+   "line": 3351,
+   "kind": "ex",
+   "claim": "Message for `s_init` `label::String`: \"store fields are isbits or `Symbol`s\".",
+   "evidence": "src/diagnostics.jl:978 and probe:342: \"store values are isbits or `Symbol`s; text and bulk data belong on the component instance (§7.3)\"",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "\"`s_init` field `label::String` is not a store value — store values are isbits or `Symbol`s; text and bulk data belong on the component instance ([§7.3][s7-3])\"",
+   "note": "Only the noun differs."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S8b-001",
+   "file": "design/spec.md",
+   "line": 2935,
+   "kind": "decl",
+   "claim": "A u_types declaration is a plain NamedTuple of types",
+   "evidence": "probe:35"
+  },
+  {
+   "id": "S8b-002",
+   "file": "design/spec.md",
+   "line": 2935,
+   "kind": "law",
+   "claim": "u_types is written at nominal Float64",
+   "evidence": "probe:131"
+  },
+  {
+   "id": "S8b-003",
+   "file": "design/spec.md",
+   "line": 2936,
+   "kind": "law",
+   "claim": "u_types takes the component alone on both tiers",
+   "evidence": "src/declare.jl:185; src/declare.jl:794"
+  },
+  {
+   "id": "S8b-004",
+   "file": "design/spec.md",
+   "line": 2937,
+   "kind": "decl",
+   "claim": "u_types may instead be one type, a bare contract",
+   "evidence": "probe:36"
+  },
+  {
+   "id": "S8b-005",
+   "file": "design/spec.md",
+   "line": 2937,
+   "kind": "law",
+   "claim": "A bare u_types is one input port whose face is u",
+   "evidence": "probe:36; src/declare.jl:814"
+  },
+  {
+   "id": "S8b-006",
+   "file": "design/spec.md",
+   "line": 2938,
+   "kind": "law",
+   "claim": "Default face wiring and readers address the bare input by u",
+   "evidence": "test/test_assembly.jl:1657; probe:373"
+  },
+  {
+   "id": "S8b-007",
+   "file": "design/spec.md",
+   "line": 2942,
+   "kind": "ex",
+   "claim": "Named integrator form (in = V,) gives the face in",
+   "evidence": "probe:35"
+  },
+  {
+   "id": "S8b-008",
+   "file": "design/spec.md",
+   "line": 2943,
+   "kind": "ex",
+   "claim": "Bare integrator form gives one port, the default face u",
+   "evidence": "probe:36"
+  },
+  {
+   "id": "S8b-009",
+   "file": "design/spec.md",
+   "line": 2946,
+   "kind": "law",
+   "claim": "Shape is decided per declaration; bare u_types beside named y_types",
+   "evidence": "probe:41"
+  },
+  {
+   "id": "S8b-010",
+   "file": "design/spec.md",
+   "line": 2948,
+   "kind": "law",
+   "claim": "Pinned wraps the whole entry, a bare declaration whole",
+   "evidence": "probe:72 (bare_pinned_u ok); src/declare.jl:796"
+  },
+  {
+   "id": "S8b-011",
+   "file": "design/spec.md",
+   "line": 2950,
+   "kind": "law",
+   "claim": "A Pinned marker below the top of an entry is IllegalPortType",
+   "evidence": "probe:72 (nested_u, nested_y); src/assembly.jl:786"
+  },
+  {
+   "id": "S8b-012",
+   "file": "design/spec.md",
+   "line": 2951,
+   "kind": "law",
+   "claim": "A StopFlag entry places nothing and is left alone",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "S8b-013",
+   "file": "design/spec.md",
+   "line": 2951,
+   "kind": "law",
+   "claim": "A mutable type in an entry of either contract is IllegalPortType",
+   "evidence": "probe:72 (mut_u, mut_y); src/build.jl:416"
+  },
+  {
+   "id": "S8b-014",
+   "file": "design/spec.md",
+   "line": 2953,
+   "kind": "law",
+   "claim": "A non-type entry (tuple, number), named or bare, is IllegalPortType",
+   "evidence": "probe:72 (tuple_u, num_u, bare_tuple_u, bare_num_u, tuple_y, num_y, bare_num_y)"
+  },
+  {
+   "id": "S8b-015",
+   "file": "design/spec.md",
+   "line": 2954,
+   "kind": "law",
+   "claim": "u_types or y_types declared nothing is refused the same way",
+   "evidence": "probe:72 (nothing_u, nothing_y); probe:79"
+  },
+  {
+   "id": "S8b-016",
+   "file": "design/spec.md",
+   "line": 2956,
+   "kind": "law",
+   "claim": "A contract with no entries is left undeclared or written (;)",
+   "evidence": "probe:72 (empty_u ok); src/declare.jl:185"
+  },
+  {
+   "id": "S8b-017",
+   "file": "design/spec.md",
+   "line": 2959,
+   "kind": "law",
+   "claim": "Continuous consumer: every Float64 position follows the scalar",
+   "evidence": "probe:131"
+  },
+  {
+   "id": "S8b-018",
+   "file": "design/spec.md",
+   "line": 2960,
+   "kind": "law",
+   "claim": "A Pinned leaf stays Float64 on a continuous consumer",
+   "evidence": "probe:131"
+  },
+  {
+   "id": "S8b-019",
+   "file": "design/spec.md",
+   "line": 2961,
+   "kind": "law",
+   "claim": "On a discrete consumer the declaration pins wholesale",
+   "evidence": "probe:133; src/build.jl:43"
+  },
+  {
+   "id": "S8b-020",
+   "file": "design/spec.md",
+   "line": 2961,
+   "kind": "law",
+   "claim": "A Pinned entry on a discrete consumer is DeclarationOnWrongTier",
+   "evidence": "probe:104; src/assembly.jl:789"
+  },
+  {
+   "id": "S8b-021",
+   "file": "design/spec.md",
+   "line": 2964,
+   "kind": "law",
+   "claim": "Entries are permissive face bounds, not cell types",
+   "evidence": "probe:150; probe:153; probe:208"
+  },
+  {
+   "id": "S8b-022",
+   "file": "design/spec.md",
+   "line": 2971,
+   "kind": "ex",
+   "claim": "Lead RQuat (table row): FlightPhysics domain wrapper, prior art not in this repo",
+   "evidence": "placeholder; SVector{3,Float64} row stands as written, probe:120"
+  },
+  {
+   "id": "S8b-023",
+   "file": "design/spec.md",
+   "line": 2971,
+   "kind": "law",
+   "claim": "Float64 alone or as type parameter is tolerant: scalar or frozen Float64",
+   "evidence": "probe:150; probe:214; src/leaves.jl:354"
+  },
+  {
+   "id": "S8b-024",
+   "file": "design/spec.md",
+   "line": 2972,
+   "kind": "law",
+   "claim": "Pinned entry is demanding frozen, never partials",
+   "evidence": "probe:148"
+  },
+  {
+   "id": "S8b-025",
+   "file": "design/spec.md",
+   "line": 2973,
+   "kind": "law",
+   "claim": "Int/Bool/enum and abstract entries admit what their bound admits",
+   "evidence": "probe:120; probe:189"
+  },
+  {
+   "id": "S8b-026",
+   "file": "design/spec.md",
+   "line": 2975,
+   "kind": "ex",
+   "claim": "Lead RQuat: FlightPhysics rotation quaternion, prior art",
+   "evidence": "prior art, not a Redstone name"
+  },
+  {
+   "id": "S8b-027",
+   "file": "design/spec.md",
+   "line": 2976,
+   "kind": "ex",
+   "claim": "Lead RQuat{Float64} as the spec's form of it",
+   "evidence": "prior art placeholder; illustration only"
+  },
+  {
+   "id": "S8b-028",
+   "file": "design/spec.md",
+   "line": 2980,
+   "kind": "law",
+   "claim": "A walking producer is admissible behind an unpinned entry",
+   "evidence": "probe:165; probe:223"
+  },
+  {
+   "id": "S8b-029",
+   "file": "design/spec.md",
+   "line": 2980,
+   "kind": "law",
+   "claim": "A frozen discrete producer is admissible behind an unpinned entry",
+   "evidence": "probe:152"
+  },
+  {
+   "id": "S8b-030",
+   "file": "design/spec.md",
+   "line": 2981,
+   "kind": "law",
+   "claim": "A root input is admissible behind an unpinned entry",
+   "evidence": "probe:206; probe:223"
+  },
+  {
+   "id": "S8b-031",
+   "file": "design/spec.md",
+   "line": 2988,
+   "kind": "law",
+   "claim": "Pinned failure is a named wiring error at build, not a probe MethodError",
+   "evidence": "probe:148; probe:149"
+  },
+  {
+   "id": "S8b-032",
+   "file": "design/spec.md",
+   "line": 2994,
+   "kind": "mech",
+   "claim": "A walking producer feeds a pinned entry through the Freeze component",
+   "evidence": "probe:270; src/library.jl:405-409"
+  },
+  {
+   "id": "S8b-033",
+   "file": "design/spec.md",
+   "line": 2998,
+   "kind": "law",
+   "claim": "Abstract entry admits several concrete producer types behind one face",
+   "evidence": "probe:189; probe:190; probe:173"
+  },
+  {
+   "id": "S8b-034",
+   "file": "design/spec.md",
+   "line": 3001,
+   "kind": "ex",
+   "claim": "Lead AbstractTerrainField: placeholder for an abstract handle type",
+   "evidence": "placeholder; fixtures use AbstractTerrain, test/fixtures.jl:1406"
+  },
+  {
+   "id": "S8b-035",
+   "file": "design/spec.md",
+   "line": 3001,
+   "kind": "ex",
+   "claim": "Lead terrain: local field name in the example entry",
+   "evidence": "local name; TerrainGain uses it, test/fixtures.jl"
+  },
+  {
+   "id": "S8b-036",
+   "file": "design/spec.md",
+   "line": 3001,
+   "kind": "law",
+   "claim": "Abstract field-handle entries carry no scalar position",
+   "evidence": "src/leaves.jl:282-285; probe:191"
+  },
+  {
+   "id": "S8b-037",
+   "file": "design/spec.md",
+   "line": 3012,
+   "kind": "law",
+   "claim": "Two clauses check a wire: bound check and walk clause",
+   "evidence": "src/build.jl:890; src/build.jl:898"
+  },
+  {
+   "id": "S8b-038",
+   "file": "design/spec.md",
+   "line": 3013,
+   "kind": "law",
+   "claim": "The bound check is stated at nominal Float64",
+   "evidence": "src/build.jl:882; src/build.jl:890"
+  },
+  {
+   "id": "S8b-039",
+   "file": "design/spec.md",
+   "line": 3015,
+   "kind": "law",
+   "claim": "Producer decl at Float64, markers stripped, must be <: entry at Float64",
+   "evidence": "src/build.jl:882-890; src/leaves.jl:380"
+  },
+  {
+   "id": "S8b-040",
+   "file": "design/spec.md",
+   "line": 3016,
+   "kind": "law",
+   "claim": "The bound check is exact equality for a concrete entry",
+   "evidence": "src/leaves.jl:352-361; probe:158; probe:159"
+  },
+  {
+   "id": "S8b-041",
+   "file": "design/spec.md",
+   "line": 3018,
+   "kind": "law",
+   "claim": "A bound-check violation is WireTypeMismatch",
+   "evidence": "probe:158; probe:159; probe:176"
+  },
+  {
+   "id": "S8b-042",
+   "file": "design/spec.md",
+   "line": 3020,
+   "kind": "law",
+   "claim": "The walk clause is tier-scoped to continuous consumers",
+   "evidence": "src/build.jl:896; probe:151"
+  },
+  {
+   "id": "S8b-043",
+   "file": "design/spec.md",
+   "line": 3021,
+   "kind": "law",
+   "claim": "A walking producer primitive requires an unpinned entry",
+   "evidence": "probe:148"
+  },
+  {
+   "id": "S8b-044",
+   "file": "design/spec.md",
+   "line": 3022,
+   "kind": "law",
+   "claim": "A pinned producer primitive satisfies either entry",
+   "evidence": "probe:150; probe:169"
+  },
+  {
+   "id": "S8b-045",
+   "file": "design/spec.md",
+   "line": 3023,
+   "mech_note": "",
+   "kind": "mech",
+   "claim": "Both sides are declarations retyped at a marker scalar in the structure step",
+   "evidence": "src/build.jl:871-898 (Marker, contracts_at)"
+  },
+  {
+   "id": "S8b-046",
+   "file": "design/spec.md",
+   "line": 3025,
+   "kind": "law",
+   "claim": "No user stage code runs in the walk clause",
+   "evidence": "probe:382 (stage counter stays 0)"
+  },
+  {
+   "id": "S8b-047",
+   "file": "design/spec.md",
+   "line": 3028,
+   "kind": "law",
+   "claim": "The walk clause decides an abstract entry on the whole declaration",
+   "evidence": "src/leaves.jl:380-381; src/build.jl:898"
+  },
+  {
+   "id": "S8b-048",
+   "file": "design/spec.md",
+   "line": 3030,
+   "kind": "law",
+   "claim": "Producer at the marker, or with pinned leaves lifted, must be <: entry at marker",
+   "evidence": "src/leaves.jl:380-381; probe:191; probe:189; probe:190"
+  },
+  {
+   "id": "S8b-049",
+   "file": "design/spec.md",
+   "line": 3033,
+   "kind": "law",
+   "claim": "The walk clause admits an opaque leaf on the terms of a pinned or walking leaf",
+   "evidence": "probe:165; probe:166; probe:169; probe:168"
+  },
+  {
+   "id": "S8b-050",
+   "file": "design/spec.md",
+   "line": 3036,
+   "kind": "law",
+   "claim": "A frozen handle at an unpinned entry is the producer's cell, as stored",
+   "evidence": "probe:171; probe:166"
+  },
+  {
+   "id": "S8b-051",
+   "file": "design/spec.md",
+   "line": 3037,
+   "kind": "law",
+   "claim": "The consumer's own arithmetic promotes what it reads from the handle",
+   "evidence": "probe:312"
+  },
+  {
+   "id": "S8b-052",
+   "file": "design/spec.md",
+   "line": 3038,
+   "kind": "law",
+   "claim": "A discrete producer of a handle is admitted the same way",
+   "evidence": "probe:167"
+  },
+  {
+   "id": "S8b-053",
+   "file": "design/spec.md",
+   "line": 3039,
+   "kind": "law",
+   "claim": "The identity rule for an opaque leaf governs a store, never a wire",
+   "evidence": "src/leaves.jl:355 (`!at_wire`); src/build.jl:890 passes true via _accepts_wire"
+  },
+  {
+   "id": "S8b-054",
+   "file": "design/spec.md",
+   "line": 3040,
+   "kind": "law",
+   "claim": "The identity rule accepts an opaque leaf into a store by identity alone",
+   "evidence": "src/leaves.jl:355; probe:268"
+  },
+  {
+   "id": "S8b-055",
+   "file": "design/spec.md",
+   "line": 3044,
+   "kind": "law",
+   "claim": "A walk-clause violation is WalkingFaceAtFrozenEntry",
+   "evidence": "probe:148; probe:168"
+  },
+  {
+   "id": "S8b-056",
+   "file": "design/spec.md",
+   "line": 3044,
+   "kind": "law",
+   "claim": "It names both endpoints, the leaf and both declared leaf types",
+   "evidence": "probe:148; src/diagnostics.jl:451-459"
+  },
+  {
+   "id": "S8b-057",
+   "file": "design/spec.md",
+   "line": 3046,
+   "kind": "law",
+   "claim": "The message carries both remedies as quoted",
+   "evidence": "probe:149; src/diagnostics.jl:461-467"
+  },
+  {
+   "id": "S8b-058",
+   "file": "design/spec.md",
+   "line": 3048,
+   "kind": "law",
+   "claim": "Freeze is the one-line spelling of the second remedy",
+   "evidence": "probe:270; src/library.jl:405-409"
+  },
+  {
+   "id": "S8b-059",
+   "file": "design/spec.md",
+   "line": 3052,
+   "kind": "law",
+   "claim": "A pin at a promoting consumer fails at the first nominal build, at the wire",
+   "evidence": "probe:148 (plain build, no activations)"
+  },
+  {
+   "id": "S8b-060",
+   "file": "design/spec.md",
+   "line": 3053,
+   "kind": "law",
+   "claim": "That failure names both endpoints",
+   "evidence": "probe:149"
+  },
+  {
+   "id": "S8b-061",
+   "file": "design/spec.md",
+   "line": 3055,
+   "kind": "law",
+   "claim": "An output pin on a participating leaf lurks until the first Dual activation",
+   "evidence": "probe:256; probe:257"
+  },
+  {
+   "id": "S8b-062",
+   "file": "design/spec.md",
+   "line": 3056,
+   "kind": "law",
+   "claim": "The lurking pin fails loudly, never silently",
+   "evidence": "probe:257"
+  },
+  {
+   "id": "S8b-063",
+   "file": "design/spec.md",
+   "line": 3059,
+   "kind": "law",
+   "claim": "Discrete consumers take the bound check only",
+   "evidence": "src/build.jl:896; probe:151; probe:163"
+  },
+  {
+   "id": "S8b-064",
+   "file": "design/spec.md",
+   "line": 3062,
+   "kind": "mech",
+   "claim": "Discrete stages never run in non-nominal activations",
+   "evidence": "src/build.jl:1062-1066"
+  },
+  {
+   "id": "S8b-065",
+   "file": "design/spec.md",
+   "line": 3063,
+   "kind": "law",
+   "claim": "Continuous to discrete wires are unconditionally legal",
+   "evidence": "probe:151"
+  },
+  {
+   "id": "S8b-066",
+   "file": "design/spec.md",
+   "line": 3067,
+   "kind": "law",
+   "claim": "Cell types are single-sourced from the producer side per activation",
+   "evidence": "src/build.jl:406-410; src/build.jl:523-531"
+  },
+  {
+   "id": "S8b-067",
+   "file": "design/spec.md",
+   "line": 3072,
+   "kind": "law",
+   "claim": "The genericity obligation is checked by the Dual probe, never declared",
+   "evidence": "probe:257; test/test_build.jl:2236"
+  },
+  {
+   "id": "S8b-068",
+   "file": "design/spec.md",
+   "line": 3074,
+   "kind": "law",
+   "claim": "The obligation is scoped to unpinned entries; Pinned imposes none",
+   "evidence": "probe:150 (PinnedGain builds at ProbeDual)"
+  },
+  {
+   "id": "S8b-069",
+   "file": "design/spec.md",
+   "line": 3085,
+   "kind": "ex",
+   "claim": "Lead SomeType: placeholder in a rule's illustration",
+   "evidence": "placeholder"
+  },
+  {
+   "id": "S8b-070",
+   "file": "design/spec.md",
+   "line": 3085,
+   "kind": "mech",
+   "claim": "A ::T{Float64} return annotation forces a convert",
+   "evidence": "probe:350 (convert is attempted and fails on a Dual)"
+  },
+  {
+   "id": "S8b-072",
+   "file": "design/spec.md",
+   "line": 3097,
+   "kind": "law",
+   "claim": "Root inputs are the one place an entry types a cell",
+   "evidence": "src/build.jl:523-531; probe:214"
+  },
+  {
+   "id": "S8b-073",
+   "file": "design/spec.md",
+   "line": 3099,
+   "kind": "law",
+   "claim": "Root-input type is the entry at Float64, markers stripped",
+   "evidence": "probe:216; probe:369; src/build.jl:882"
+  },
+  {
+   "id": "S8b-074",
+   "file": "design/spec.md",
+   "line": 3100,
+   "kind": "law",
+   "claim": "Only a tight (concrete) bound determines a root-input type",
+   "evidence": "src/build.jl:915-917; probe:196"
+  },
+  {
+   "id": "S8b-075",
+   "file": "design/spec.md",
+   "line": 3101,
+   "kind": "law",
+   "claim": "A root-input face must resolve to a concrete declaration",
+   "evidence": "probe:174; probe:196"
+  },
+  {
+   "id": "S8b-076",
+   "file": "design/spec.md",
+   "line": 3101,
+   "kind": "mech",
+   "claim": "Staging cells, trace header and probe_value need the concrete type",
+   "evidence": "src/build.jl:472; src/devices.jl:302; src/trace.jl:58"
+  },
+  {
+   "id": "S8b-077",
+   "file": "design/spec.md",
+   "line": 3103,
+   "kind": "mech",
+   "claim": "Staging cells hold each device's pending writes",
+   "evidence": "src/devices.jl:302; src/devices.jl:325"
+  },
+  {
+   "id": "S8b-078",
+   "file": "design/spec.md",
+   "line": 3104,
+   "kind": "mech",
+   "claim": "The trace header is the trace's fixed preamble",
+   "evidence": "src/trace.jl:58"
+  },
+  {
+   "id": "S8b-079",
+   "file": "design/spec.md",
+   "line": 3106,
+   "kind": "law",
+   "claim": "Abstract-at-root is a build error",
+   "evidence": "probe:174; probe:196"
+  },
+  {
+   "id": "S8b-080",
+   "file": "design/spec.md",
+   "line": 3106,
+   "kind": "law",
+   "claim": "The uniform root doctrine does not relax it",
+   "evidence": "probe:196 (any component as root)"
+  },
+  {
+   "id": "S8b-081",
+   "file": "design/spec.md",
+   "line": 3108,
+   "kind": "ex",
+   "claim": "Lead AbstractTerrainField: placeholder",
+   "evidence": "placeholder; see S8b-034"
+  },
+  {
+   "id": "S8b-082",
+   "file": "design/spec.md",
+   "line": 3108,
+   "kind": "ex",
+   "claim": "Lead terrain: local field name",
+   "evidence": "local name"
+  },
+  {
+   "id": "S8b-083",
+   "file": "design/spec.md",
+   "line": 3108,
+   "kind": "law",
+   "claim": "A primitive with an abstract entry cannot be built bare",
+   "evidence": "probe:174"
+  },
+  {
+   "id": "S8b-084",
+   "file": "design/spec.md",
+   "line": 3109,
+   "kind": "law",
+   "claim": "AbstractAtRoot names the face and the remedy",
+   "evidence": "probe:175; src/diagnostics.jl:479-484"
+  },
+  {
+   "id": "S8b-085",
+   "file": "design/spec.md",
+   "line": 3112,
+   "kind": "mech",
+   "claim": "A test rig satisfies the entry with a stub child inside the rig",
+   "evidence": "probe:173; test/fixtures.jl TerrainRig"
+  },
+  {
+   "id": "S8b-086",
+   "file": "design/spec.md",
+   "line": 3114,
+   "kind": "law",
+   "claim": "An opaque leaf as a root input is IllegalPortType",
+   "evidence": "probe:199; probe:203; src/build.jl:463"
+  },
+  {
+   "id": "S8b-087",
+   "file": "design/spec.md",
+   "line": 3115,
+   "kind": "law",
+   "claim": "An opaque root input has no synthesis through probe_value",
+   "evidence": "probe:200; src/build.jl:457-463"
+  },
+  {
+   "id": "S8b-088",
+   "file": "design/spec.md",
+   "line": 3121,
+   "kind": "law",
+   "claim": "Under fan-out the root type is the unique concrete declaration",
+   "evidence": "probe:206; probe:208; src/build.jl:921-925"
+  },
+  {
+   "id": "S8b-089",
+   "file": "design/spec.md",
+   "line": 3122,
+   "kind": "law",
+   "claim": "Abstract co-consumers are checked against the concrete type",
+   "evidence": "probe:211; src/build.jl:926-932"
+  },
+  {
+   "id": "S8b-090",
+   "file": "design/spec.md",
+   "line": 3123,
+   "kind": "law",
+   "claim": "Two different concrete declarations are RootInputTypeConflict",
+   "evidence": "probe:207"
+  },
+  {
+   "id": "S8b-091",
+   "file": "design/spec.md",
+   "line": 3126,
+   "kind": "law",
+   "claim": "Root cells follow the root type, retyping that entry at T",
+   "evidence": "probe:223; src/build.jl:526"
+  },
+  {
+   "id": "S8b-092",
+   "file": "design/spec.md",
+   "line": 3128,
+   "kind": "law",
+   "claim": "An unpinned root input is a lawful linearization tap",
+   "evidence": "probe:231"
+  },
+  {
+   "id": "S8b-093",
+   "file": "design/spec.md",
+   "line": 3129,
+   "kind": "law",
+   "claim": "A Pinned root input is declaredly unseedable",
+   "evidence": "probe:226"
+  },
+  {
+   "id": "S8b-094",
+   "file": "design/spec.md",
+   "line": 3133,
+   "kind": "law",
+   "claim": "Root input pins at every activation if any consumer's entry pins",
+   "evidence": "probe:214; src/build.jl:530"
+  },
+  {
+   "id": "S8b-095",
+   "file": "design/spec.md",
+   "line": 3134,
+   "kind": "law",
+   "claim": "It follows the scalar only when every consumer tolerates",
+   "evidence": "probe:215; probe:223"
+  },
+  {
+   "id": "S8b-096",
+   "file": "design/spec.md",
+   "line": 3135,
+   "kind": "law",
+   "claim": "Cells: leaves follow scalar if every entry admits it, else the root type",
+   "evidence": "src/build.jl:526-531"
+  },
+  {
+   "id": "S8b-097",
+   "file": "design/spec.md",
+   "line": 3137,
+   "kind": "law",
+   "claim": "A mixture of pins across leaves pins the whole root input",
+   "evidence": "src/build.jl:530 (one all() over whole types)"
+  },
+  {
+   "id": "S8b-098",
+   "file": "design/spec.md",
+   "line": 3140,
+   "kind": "law",
+   "claim": "SVector{3} and Pinned{SVector{3}} are one type at nominal",
+   "evidence": "probe:222"
+  },
+  {
+   "id": "S8b-099",
+   "file": "design/spec.md",
+   "line": 3142,
+   "kind": "law",
+   "claim": "The root type is unambiguous while entries disagree on partials",
+   "evidence": "probe:222; probe:216"
+  },
+  {
+   "id": "S8b-100",
+   "file": "design/spec.md",
+   "line": 3143,
+   "kind": "law",
+   "claim": "That mixture is a legitimate model, not an error",
+   "evidence": "probe:213; probe:222"
+  },
+  {
+   "id": "S8b-101",
+   "file": "design/spec.md",
+   "line": 3147,
+   "kind": "law",
+   "claim": "A pinned root cell feeds an unpinned entry lawfully",
+   "evidence": "probe:214 (g beside p); src/leaves.jl:354"
+  },
+  {
+   "id": "S8b-102",
+   "file": "design/spec.md",
+   "line": 3149,
+   "kind": "law",
+   "claim": "A Dual cell at a Pinned entry is what the entry forbids",
+   "evidence": "probe:148; src/build.jl:530"
+  },
+  {
+   "id": "S8b-103",
+   "file": "design/spec.md",
+   "line": 3154,
+   "kind": "law",
+   "claim": "A mixed pinned root input is unseedable",
+   "evidence": "probe:229"
+  },
+  {
+   "id": "S8b-104",
+   "file": "design/spec.md",
+   "line": 3155,
+   "kind": "law",
+   "claim": "A tap is rejected naming the pinning consumer, not the face alone",
+   "evidence": "probe:226; probe:229"
+  },
+  {
+   "id": "S8b-105",
+   "file": "design/spec.md",
+   "line": 3158,
+   "kind": "law",
+   "claim": "Any component may be the root; root inputs are its own input faces",
+   "evidence": "probe:238; probe:240"
+  },
+  {
+   "id": "S8b-106",
+   "file": "design/spec.md",
+   "line": 3160,
+   "kind": "law",
+   "claim": "An assembly's root inputs are the faces declared via input_wires",
+   "evidence": "probe:240"
+  },
+  {
+   "id": "S8b-107",
+   "file": "design/spec.md",
+   "line": 3161,
+   "kind": "mech",
+   "claim": "Each face traces through the face chain to the consuming primitive entries",
+   "evidence": "probe:214 (fan-out to nested entries); src/build.jl:884-888"
+  },
+  {
+   "id": "S8b-108",
+   "file": "design/spec.md",
+   "line": 3163,
+   "kind": "law",
+   "claim": "A primitive root's inputs are its u_types keys directly",
+   "evidence": "probe:238"
+  },
+  {
+   "id": "S8b-109",
+   "file": "design/spec.md",
+   "line": 3164,
+   "kind": "mech",
+   "claim": "Each primitive root face is its own consuming entry",
+   "evidence": "probe:238; src/build.jl:884-888"
+  },
+  {
+   "id": "S8b-110",
+   "file": "design/spec.md",
+   "line": 3165,
+   "kind": "law",
+   "claim": "At a primitive root a bare u_types is the root input u",
+   "evidence": "probe:239; test/test_assembly.jl:1657"
+  },
+  {
+   "id": "S8b-111",
+   "file": "design/spec.md",
+   "line": 3166,
+   "kind": "mech",
+   "claim": "The periphery claims, stages and traces the bare input by the name u",
+   "evidence": "test/test_assembly.jl:1657-1672; probe:373"
+  },
+  {
+   "id": "S8b-112",
+   "file": "design/spec.md",
+   "line": 3167,
+   "kind": "law",
+   "claim": "Type derivation is one rule: tight bound at the ultimate consuming entry",
+   "evidence": "src/build.jl:905-932; probe:240"
+  },
+  {
+   "id": "S8b-113",
+   "file": "design/spec.md",
+   "line": 3169,
+   "kind": "law",
+   "claim": "At the root the two contracts share one face namespace",
+   "evidence": "probe:236; src/structure.jl:785"
+  },
+  {
+   "id": "S8b-114",
+   "file": "design/spec.md",
+   "line": 3170,
+   "kind": "law",
+   "claim": "A key declared in both contracts is a build error",
+   "evidence": "probe:236; probe:237 (FaceNameCollision :root)"
+  },
+  {
+   "id": "S8b-115",
+   "file": "design/spec.md",
+   "line": 3175,
+   "kind": "decl",
+   "claim": "y_types declares the port contract by type",
+   "evidence": "probe:250"
+  },
+  {
+   "id": "S8b-116",
+   "file": "design/spec.md",
+   "line": 3176,
+   "kind": "law",
+   "claim": "y_types is written at nominal Float64",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "S8b-117",
+   "file": "design/spec.md",
+   "line": 3176,
+   "kind": "law",
+   "claim": "y_types takes the component alone on both tiers",
+   "evidence": "src/declare.jl:223; src/declare.jl:794"
+  },
+  {
+   "id": "S8b-118",
+   "file": "design/spec.md",
+   "line": 3177,
+   "kind": "law",
+   "claim": "y_types is walked on the continuous tier",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "S8b-119",
+   "file": "design/spec.md",
+   "line": 3178,
+   "kind": "law",
+   "claim": "The output side is read literally: an entry is what the cell carries",
+   "evidence": "probe:120; probe:257"
+  },
+  {
+   "id": "S8b-120",
+   "file": "design/spec.md",
+   "line": 3184,
+   "kind": "ex",
+   "claim": "Engine y_types example builds with three Float64 ports",
+   "evidence": "probe:250"
+  },
+  {
+   "id": "S8b-121",
+   "file": "design/spec.md",
+   "line": 3187,
+   "kind": "law",
+   "claim": "A bare y_types is one output port with default face y",
+   "evidence": "probe:251; probe:36"
+  },
+  {
+   "id": "S8b-122",
+   "file": "design/spec.md",
+   "line": 3188,
+   "kind": "law",
+   "claim": "A bare port's stage returns the value itself",
+   "evidence": "src/library.jl:962; probe:251"
+  },
+  {
+   "id": "S8b-123",
+   "file": "design/spec.md",
+   "line": 3191,
+   "kind": "ex",
+   "claim": "Integrator y_types = V and y_state returns x",
+   "evidence": "src/library.jl:961-962"
+  },
+  {
+   "id": "S8b-124",
+   "file": "design/spec.md",
+   "line": 3195,
+   "kind": "law",
+   "claim": "Cell types are the declaration retyped at T by the leaf walk",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "S8b-125",
+   "file": "design/spec.md",
+   "line": 3197,
+   "kind": "law",
+   "claim": "On a discrete producer the same spelling pins wholesale",
+   "evidence": "probe:133; src/build.jl:43-45"
+  },
+  {
+   "id": "S8b-126",
+   "file": "design/spec.md",
+   "line": 3198,
+   "kind": "law",
+   "claim": "The tier decides the reading, never the contract's shape",
+   "evidence": "probe:251 (bare walks); probe:133 (bare-style discrete pins)"
+  },
+  {
+   "id": "S8b-127",
+   "file": "design/spec.md",
+   "line": 3199,
+   "kind": "law",
+   "claim": "The tier is declared by the primitive's state declaration",
+   "evidence": "src/assembly.jl:724-748"
+  },
+  {
+   "id": "S8b-128",
+   "file": "design/spec.md",
+   "line": 3202,
+   "kind": "law",
+   "claim": "The cell type is the retyped declaration, nothing inferred",
+   "evidence": "probe:120; src/build.jl:406-410"
+  },
+  {
+   "id": "S8b-129",
+   "file": "design/spec.md",
+   "line": 3206,
+   "kind": "law",
+   "claim": "Float64 alone or as type parameter means the leaf participates",
+   "evidence": "probe:120 (v, m walk)"
+  },
+  {
+   "id": "S8b-130",
+   "file": "design/spec.md",
+   "line": 3207,
+   "kind": "ex",
+   "claim": "Lead RQuat{Float64}: prior art wrapper",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S8b-131",
+   "file": "design/spec.md",
+   "line": 3207,
+   "kind": "ex",
+   "claim": "Lead MyStruct{Float64}: placeholder struct name",
+   "evidence": "placeholder; probe:120 uses a local MyStruct"
+  },
+  {
+   "id": "S8b-132",
+   "file": "design/spec.md",
+   "line": 3208,
+   "kind": "law",
+   "claim": "A participating leaf's cell carries the activation scalar",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "S8b-133",
+   "file": "design/spec.md",
+   "line": 3208,
+   "kind": "law",
+   "claim": "Value parameters never take the scalar",
+   "evidence": "probe:121 (Rg{Dual,-1,1})"
+  },
+  {
+   "id": "S8b-134",
+   "file": "design/spec.md",
+   "line": 3210,
+   "kind": "ex",
+   "claim": "Lead Ranged{Float64,-1,1}: prior art domain wrapper",
+   "evidence": "prior art; value-parameter rule shown by probe:121"
+  },
+  {
+   "id": "S8b-135",
+   "file": "design/spec.md",
+   "line": 3212,
+   "kind": "law",
+   "claim": "Pinned{P} deliberately pins the leaf, schema-visibly",
+   "evidence": "src/declare.jl:227-249; src/leaves.jl:302"
+  },
+  {
+   "id": "S8b-136",
+   "file": "design/spec.md",
+   "line": 3213,
+   "kind": "law",
+   "claim": "The wrapper is stripped at nominal; the cell is P at every activation",
+   "evidence": "probe:120 (p, w); src/leaves.jl:302"
+  },
+  {
+   "id": "S8b-137",
+   "file": "design/spec.md",
+   "line": 3214,
+   "kind": "law",
+   "claim": "Pinned is whole-leaf freezing, declared and conformance-checked",
+   "evidence": "probe:257"
+  },
+  {
+   "id": "S8b-138",
+   "file": "design/spec.md",
+   "line": 3216,
+   "kind": "decl",
+   "claim": "Declare Pinned{Float64} and strip with ForwardDiff.value in the stage",
+   "evidence": "src/library.jl:408-409"
+  },
+  {
+   "id": "S8b-139",
+   "file": "design/spec.md",
+   "line": 3219,
+   "kind": "law",
+   "claim": "The marker sits at the top of the entry and nowhere below",
+   "evidence": "probe:76; probe:77"
+  },
+  {
+   "id": "S8b-140",
+   "file": "design/spec.md",
+   "line": 3220,
+   "kind": "law",
+   "claim": "Int/Bool/enum leaves and reference-typed fields pin",
+   "evidence": "probe:120 (n, b, g); src/leaves.jl:284"
+  },
+  {
+   "id": "S8b-141",
+   "file": "design/spec.md",
+   "line": 3221,
+   "kind": "law",
+   "claim": "A handle's grid is frozen, never activation-dependent",
+   "evidence": "probe:304; probe:305"
+  },
+  {
+   "id": "S8b-142",
+   "file": "design/spec.md",
+   "line": 3222,
+   "kind": "mech",
+   "claim": "The walk substitutes type parameters alone; fields are never reached",
+   "evidence": "src/leaves.jl:282-286"
+  },
+  {
+   "id": "S8b-143",
+   "file": "design/spec.md",
+   "line": 3224,
+   "kind": "law",
+   "claim": "A handle with a scalar parameter walks like any type",
+   "evidence": "probe:304; probe:170"
+  },
+  {
+   "id": "S8b-144",
+   "file": "design/spec.md",
+   "line": 3225,
+   "kind": "decl",
+   "claim": "A handle built from build-time data is declared Pinned",
+   "evidence": "probe:317; probe:166"
+  },
+  {
+   "id": "S8b-145",
+   "file": "design/spec.md",
+   "line": 3226,
+   "kind": "law",
+   "claim": "A mutable type's parameters pin by rule",
+   "evidence": "probe:121; src/leaves.jl:284"
+  },
+  {
+   "id": "S8b-146",
+   "file": "design/spec.md",
+   "line": 3231,
+   "kind": "law",
+   "claim": "Matrix{Float64} grid stays frozen; pose typed T follows the scalar",
+   "evidence": "probe:304; probe:312"
+  },
+  {
+   "id": "S8b-147",
+   "file": "design/spec.md",
+   "line": 3233,
+   "kind": "ex",
+   "claim": "Lead DeckField: the sketch's own struct, defined in the probe",
+   "evidence": "probe:300-304"
+  },
+  {
+   "id": "S8b-148",
+   "file": "design/spec.md",
+   "line": 3236,
+   "kind": "ex",
+   "claim": "The DeckField struct block compiles and walks as the comments say",
+   "evidence": "probe:300-305; probe:312"
+  },
+  {
+   "id": "S8b-149",
+   "file": "design/spec.md",
+   "line": 3243,
+   "kind": "mech",
+   "claim": "Inside a query nothing converts the grid",
+   "evidence": "probe:312"
+  },
+  {
+   "id": "S8b-150",
+   "file": "design/spec.md",
+   "line": 3244,
+   "kind": "law",
+   "claim": "The query result carries the pose's partials",
+   "evidence": "probe:312 (h is a Dual)"
+  },
+  {
+   "id": "S8b-151",
+   "file": "design/spec.md",
+   "line": 3249,
+   "kind": "law",
+   "claim": "A producer built from build-time data alone pins the handle",
+   "evidence": "probe:317"
+  },
+  {
+   "id": "S8b-152",
+   "file": "design/spec.md",
+   "line": 3250,
+   "kind": "law",
+   "claim": "A handle whose parameters come from state is left walking",
+   "evidence": "probe:312"
+  },
+  {
+   "id": "S8b-153",
+   "file": "design/spec.md",
+   "line": 3252,
+   "kind": "law",
+   "claim": "A concretely typed field b::Float64 is frozen for every user of the type",
+   "evidence": "probe:288; src/leaves.jl:282-286"
+  },
+  {
+   "id": "S8b-154",
+   "file": "design/spec.md",
+   "line": 3254,
+   "kind": "law",
+   "claim": "A pin on one parameter of one declaration is not offered",
+   "evidence": "probe:76; probe:77"
+  },
+  {
+   "id": "S8b-155",
+   "file": "design/spec.md",
+   "line": 3255,
+   "kind": "law",
+   "claim": "A concretely typed field is frozen without appearing in the contract",
+   "evidence": "probe:288; probe:293"
+  },
+  {
+   "id": "S8b-156",
+   "file": "design/spec.md",
+   "line": 3261,
+   "kind": "law",
+   "claim": "A custom struct is a first-class port type",
+   "evidence": "probe:284"
+  },
+  {
+   "id": "S8b-157",
+   "file": "design/spec.md",
+   "line": 3262,
+   "kind": "ex",
+   "claim": "Lead GearContact: the spec's illustrative struct",
+   "evidence": "placeholder; probe:276-284 defines one"
+  },
+  {
+   "id": "S8b-158",
+   "file": "design/spec.md",
+   "line": 3263,
+   "kind": "ex",
+   "claim": "Lead GearContact: landing-gear contact illustration",
+   "evidence": "placeholder"
+  },
+  {
+   "id": "S8b-159",
+   "file": "design/spec.md",
+   "line": 3263,
+   "kind": "law",
+   "claim": "The scoping needs a struct parametric in its real leaves",
+   "evidence": "probe:280; probe:284"
+  },
+  {
+   "id": "S8b-160",
+   "file": "design/spec.md",
+   "line": 3265,
+   "kind": "law",
+   "claim": "@kwdef defaults pin the no-argument case to Float64",
+   "evidence": "probe:280 (GearContact() is GearContact{Float64})"
+  },
+  {
+   "id": "S8b-161",
+   "file": "design/spec.md",
+   "line": 3267,
+   "kind": "law",
+   "claim": "A participating struct leaf is declared with Float64 in its parameter",
+   "evidence": "probe:284"
+  },
+  {
+   "id": "S8b-162",
+   "file": "design/spec.md",
+   "line": 3268,
+   "kind": "ex",
+   "claim": "Lead GearContact{Float64}: illustrative struct",
+   "evidence": "placeholder"
+  },
+  {
+   "id": "S8b-163",
+   "file": "design/spec.md",
+   "line": 3268,
+   "kind": "law",
+   "claim": "The walk retypes recursively for nested parameters",
+   "evidence": "probe:295; probe:124"
+  },
+  {
+   "id": "S8b-164",
+   "file": "design/spec.md",
+   "line": 3269,
+   "kind": "law",
+   "claim": "A hardcoded Float64 field offers no position; the walk leaves it",
+   "evidence": "probe:288"
+  },
+  {
+   "id": "S8b-165",
+   "file": "design/spec.md",
+   "line": 3271,
+   "kind": "ex",
+   "claim": "Lead GearContact in Pinned{GearContact}: illustrative",
+   "evidence": "placeholder"
+  },
+  {
+   "id": "S8b-166",
+   "file": "design/spec.md",
+   "line": 3271,
+   "kind": "decl",
+   "claim": "Pinned{GearContact} declares the frozen struct on the page",
+   "evidence": "probe:293"
+  },
+  {
+   "id": "S8b-168",
+   "file": "design/spec.md",
+   "line": 3276,
+   "kind": "law",
+   "claim": "A declared type must be buildable at the activation scalar",
+   "evidence": "probe:358"
+  },
+  {
+   "id": "S8b-169",
+   "file": "design/spec.md",
+   "line": 3277,
+   "kind": "mech",
+   "claim": "The Dual probe enforces buildability by constructing real values",
+   "evidence": "probe:358; src/build.jl:472"
+  },
+  {
+   "id": "S8b-170",
+   "file": "design/spec.md",
+   "line": 3278,
+   "kind": "law",
+   "claim": "A type whose constructor rejects the scalar fails at the probe with its name",
+   "evidence": "probe:358 (message names Q)"
+  },
+  {
+   "id": "S8b-171",
+   "file": "design/spec.md",
+   "line": 3282,
+   "kind": "law",
+   "claim": "Gated-off discrete producers hold their Float64 values in a sweep",
+   "evidence": "probe:133; probe:363; src/build.jl:1062-1066"
+  },
+  {
+   "id": "S8b-172",
+   "file": "design/spec.md",
+   "line": 3283,
+   "kind": "mech",
+   "claim": "Consumers gather mixed tuples and promotion does the rest",
+   "evidence": "probe:363; probe:133"
+  },
+  {
+   "id": "S8b-173",
+   "file": "design/spec.md",
+   "line": 3290,
+   "kind": "law",
+   "claim": "The embedding guarantee is keyed on walking leaves",
+   "evidence": "src/leaves.jl:352-361 (V===Float64 && P===T)"
+  },
+  {
+   "id": "S8b-174",
+   "file": "design/spec.md",
+   "line": 3291,
+   "kind": "law",
+   "claim": "A Float64 at a walking leaf under a non-nominal activation embeds as zero-partial",
+   "evidence": "probe:144; probe:140; src/leaves.jl:354"
+  },
+  {
+   "id": "S8b-175",
+   "file": "design/spec.md",
+   "line": 3293,
+   "kind": "law",
+   "claim": "No lossy Dual to Float64 cast exists",
+   "evidence": "probe:263; probe:350"
+  },
+  {
+   "id": "S8b-176",
+   "file": "design/spec.md",
+   "line": 3297,
+   "kind": "ex",
+   "claim": "Lead flow: local variable name in the piecewise example",
+   "evidence": "local name; probe:141 uses `flow`"
+  },
+  {
+   "id": "S8b-177",
+   "file": "design/spec.md",
+   "line": 3297,
+   "kind": "law",
+   "claim": "Piecewise branches returning literal constants are legal as written",
+   "evidence": "probe:144; probe:145"
+  },
+  {
+   "id": "S8b-178",
+   "file": "design/spec.md",
+   "line": 3305,
+   "kind": "law",
+   "claim": "The habitual spelling, a bare Float64, walks",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "S8b-179",
+   "file": "design/spec.md",
+   "line": 3307,
+   "kind": "mech",
+   "claim": "Two bugs: a pin on a participating leaf, an omitted pin on a frozen one",
+   "evidence": "probe:257; probe:262"
+  },
+  {
+   "id": "S8b-180",
+   "file": "design/spec.md",
+   "line": 3310,
+   "kind": "law",
+   "claim": "The first bug's first Dual activation fails, never silently",
+   "evidence": "probe:257; probe:258"
+  },
+  {
+   "id": "S8b-181",
+   "file": "design/spec.md",
+   "line": 3312,
+   "kind": "law",
+   "claim": "It fails at that activation's own lazy compile, not at build(world)",
+   "evidence": "probe:256 (build ok); probe:257 (activation throws)"
+  },
+  {
+   "id": "S8b-183",
+   "file": "design/spec.md",
+   "line": 3316,
+   "kind": "law",
+   "claim": "The second bug fails inside the stage where frozen internals meet a Dual",
+   "evidence": "probe:262"
+  },
+  {
+   "id": "S8b-184",
+   "file": "design/spec.md",
+   "line": 3317,
+   "kind": "law",
+   "claim": "Or at the identity comparison on an opaque leaf built from literals",
+   "evidence": "probe:268"
+  },
+  {
+   "id": "S8b-185",
+   "file": "design/spec.md",
+   "line": 3320,
+   "kind": "mech",
+   "claim": "The test suite builds a Dual activation of every component",
+   "evidence": "test/test_build.jl:2236-2275"
+  },
+  {
+   "id": "S8b-186",
+   "file": "design/spec.md",
+   "line": 3328,
+   "kind": "law",
+   "claim": "Declared initial values are walked by the same rule, no marker",
+   "evidence": "probe:135; probe:139; src/build.jl:42"
+  },
+  {
+   "id": "S8b-187",
+   "file": "design/spec.md",
+   "line": 3329,
+   "kind": "law",
+   "claim": "x_init real leaves and Real type parameters follow the scalar",
+   "evidence": "probe:139 (q and SVector); src/leaves.jl:325-330"
+  },
+  {
+   "id": "S8b-188",
+   "file": "design/spec.md",
+   "line": 3330,
+   "kind": "law",
+   "claim": "m_init and s_init pin wholesale",
+   "evidence": "src/build.jl:43-45; src/build.jl:1395; probe:360"
+  },
+  {
+   "id": "S8b-189",
+   "file": "design/spec.md",
+   "line": 3333,
+   "kind": "law",
+   "claim": "Declared Float64 initial values embed as zero-partial constants",
+   "evidence": "probe:140; src/leaves.jl:354"
+  },
+  {
+   "id": "S8b-190",
+   "file": "design/spec.md",
+   "line": 3337,
+   "kind": "law",
+   "claim": "x_init is held to scalars and SArrays at the common eltype",
+   "evidence": "src/assembly.jl:673-684; probe:342"
+  },
+  {
+   "id": "S8b-191",
+   "file": "design/spec.md",
+   "line": 3339,
+   "kind": "law",
+   "claim": "Discrete stores answer to the isbits rule, checked field by field",
+   "evidence": "src/assembly.jl:710-718; probe:342"
+  },
+  {
+   "id": "S8b-192",
+   "file": "design/spec.md",
+   "line": 3340,
+   "kind": "mech",
+   "claim": "The structure step checks both vocabularies",
+   "evidence": "src/structure.jl:553-554"
+  },
+  {
+   "id": "S8b-193",
+   "file": "design/spec.md",
+   "line": 3341,
+   "kind": "law",
+   "claim": "Failures are reported in the didactic style",
+   "evidence": "probe:342; src/diagnostics.jl:953-966"
+  },
+  {
+   "id": "S8b-194",
+   "file": "design/spec.md",
+   "line": 3344,
+   "kind": "ex",
+   "claim": "Lead gear_count: local field name in a message example",
+   "evidence": "local name"
+  },
+  {
+   "id": "S8b-195",
+   "file": "design/spec.md",
+   "line": 3344,
+   "kind": "ex",
+   "claim": "Message for integer field gear_count points to m_init",
+   "evidence": "probe:342 (code prints Int64 and a trailing section tag the spec elides)"
+  },
+  {
+   "id": "S8b-196",
+   "file": "design/spec.md",
+   "line": 3346,
+   "kind": "ex",
+   "claim": "Lead q_nb: local field name in a message example",
+   "evidence": "local name; the message text is S8b-197"
+  },
+  {
+   "id": "S8b-198",
+   "file": "design/spec.md",
+   "line": 3348,
+   "kind": "ex",
+   "claim": "Lead pose: local field name in a message example",
+   "evidence": "local name"
+  },
+  {
+   "id": "S8b-199",
+   "file": "design/spec.md",
+   "line": 3348,
+   "kind": "ex",
+   "claim": "Message for nested NamedTuple field pose",
+   "evidence": "probe:342; src/diagnostics.jl:961-963"
+  },
+  {
+   "id": "S8b-201",
+   "file": "design/spec.md",
+   "line": 3355,
+   "kind": "law",
+   "claim": "A bare store is held to the same vocabulary; the message names x, s or m",
+   "evidence": "probe:342 (x::Int64, x::RQ, s::String, m::String)"
+  },
+  {
+   "id": "S8b-202",
+   "file": "design/spec.md",
+   "line": 3358,
+   "kind": "law",
+   "claim": "A StopFlag output entry is a stop request",
+   "evidence": "probe:87; src/build.jl:498-505"
+  },
+  {
+   "id": "S8b-203",
+   "file": "design/spec.md",
+   "line": 3359,
+   "kind": "decl",
+   "claim": "The stop_reason companion declaration is optional",
+   "evidence": "src/declare.jl:369; probe:90"
+  },
+  {
+   "id": "S8b-204",
+   "file": "design/spec.md",
+   "line": 3360,
+   "kind": "law",
+   "claim": "stop_reason(c) returns the String the component's requests report",
+   "evidence": "probe:91; probe:346"
+  },
+  {
+   "id": "S8b-205",
+   "file": "design/spec.md",
+   "line": 3361,
+   "kind": "law",
+   "claim": "stop_reason defaults to the empty string",
+   "evidence": "probe:90; src/declare.jl:369"
+  },
+  {
+   "id": "S8b-206",
+   "file": "design/spec.md",
+   "line": 3362,
+   "kind": "mech",
+   "claim": "The build reads it for every component that publishes a StopFlag port",
+   "evidence": "src/build.jl:500-502; probe:87"
+  },
+  {
+   "id": "S8b-207",
+   "file": "design/spec.md",
+   "line": 3363,
+   "kind": "law",
+   "claim": "All of a component's requests share one reason",
+   "evidence": "src/build.jl:503-505; probe:87"
+  },
+  {
+   "id": "S8b-208",
+   "file": "design/spec.md",
+   "line": 3363,
+   "kind": "law",
+   "claim": "The reason is instance data, never a port value",
+   "evidence": "src/build.jl:502; src/declare.jl:358-368"
+  },
+  {
+   "id": "S8b-209",
+   "file": "design/spec.md",
+   "line": 3364,
+   "kind": "law",
+   "claim": "stop_reason is a family name in the §8.1 import list",
+   "evidence": "spec.md:2592; src/declare.jl:746-750; probe:92"
+  },
+  {
+   "id": "S8b-210",
+   "file": "design/spec.md",
+   "line": 3365,
+   "kind": "law",
+   "claim": "The shadowing check covers stop_reason",
+   "evidence": "src/declare.jl:746-760 (DECLARATION_FAMILY, foreign_declarations); probe:92"
+  }
+ ],
+ "counts": {
+  "law": 155,
+  "mech": 19,
+  "decl": 7,
+  "ex": 29,
+  "ptr": 8,
+  "why": 30,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

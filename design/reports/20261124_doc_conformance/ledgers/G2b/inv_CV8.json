@@ -1,0 +1,1284 @@
+{
+ "rows": [
+  {
+   "id": "CV8-047",
+   "file": "src/declare.jl",
+   "line": 353,
+   "kind": "docstring",
+   "claim": "transparent_container docstring names ChildNameCollision only for a bare key that collides with a sibling child's name. The build also raises it for a bare key equal to its own field's name and for a key equal to a sibling container field's name.",
+   "evidence": "probe:202 (:sample_times_sugar), probe:204 (:sibling_field), probe:201 (:two_children); src/assembly.jl:181-191; spec.md:3786-3797 states all three arms",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Replace the sentence with: 'and a bare key that equals a sibling child's name, its own field's name or the name of a sibling container field that has elements, each as `ChildNameCollision`.'"
+  },
+  {
+   "id": "CV8-048",
+   "file": "src/declare.jl",
+   "line": 354,
+   "kind": "surface",
+   "claim": "spec.md:3802-3803 says declaring two transparent containers on one type is a declaration error (D-211, D-215). The code has no such diagnostic. transparent_container returns one Symbol or nothing, so a second container cannot be declared.",
+   "evidence": "src/declare.jl:330-333 comment ('At most one is unrepresentable'), declare.jl:354; no raise site for it in src/; Appendix C lists no kind for it",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "In spec 8.5 replace the sentence with: 'A type names at most one container, because `transparent_container` returns one `Symbol` or `nothing`.'"
+  },
+  {
+   "id": "CV8-058",
+   "file": "src/declare.jl",
+   "line": 434,
+   "kind": "surface",
+   "claim": "The public fields Relative.D and .Φ, Absolute.Δt and .τ, and StateEvent.guard and .handler are stated nowhere. Spec 8.7, Appendix B and the docstrings give only the constructors. docstring_rules 6 says a struct with public fields lists them.",
+   "evidence": "src/declare.jl:434-442, 472-485, 544-547; rg of spec.md for rate.D, .guard and .handler finds nothing; RatesViolation payload carries the entry itself (structure.jl:406)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "State the fields in each docstring under a lead sentence, or state that they are internal.",
+   "note": "Whether users read these fields is a ruling for the user. If they are internal, the row closes with one sentence in the code map."
+  },
+  {
+   "id": "CV8-078",
+   "file": "src/declare.jl",
+   "line": 598,
+   "kind": "docstring",
+   "claim": "x_projection docstring says it runs after each integration step, after each event handler fires, and at init! and overlay!.",
+   "evidence": "Steps and handlers confirmed at src/executor.jl:261-264 and 458-461, and model.jl:651-652. I did not trace the init! and overlay! paths.",
+   "verdict": "unverifiable",
+   "note": "init! and overlay! reach boundary zero's macro-sequence, which should run the project phase. I did not confirm the call on those two paths and found no probe cheap enough."
+  },
+  {
+   "id": "CV8-090",
+   "file": "src/declare.jl",
+   "line": 794,
+   "kind": "map",
+   "claim": "code_map.md (declare.jl entry) calls contract_at 'the one-arity contract_at'. The function takes (fn, comp, tier) and an optional scalar S, so it is not one-arity.",
+   "evidence": "src/declare.jl:794; probe:335 lists the two methods (fn, comp, tier) and (fn, comp, tier, S)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write 'the tier-reading `contract_at`, which walks a continuous contract at its scalar and reads a discrete one as written'."
+  },
+  {
+   "id": "CV8-091",
+   "file": "src/declare.jl",
+   "line": 783,
+   "kind": "map",
+   "claim": "The declare.jl map entry omits the Tier enum, tier_word and update_of (783-835), the _holding guard predicate (601), COMPONENT_PATH (1008), _tier_names (910) and _declares_workspace (878).",
+   "evidence": "rg of design/code_map.md for each name returns nothing",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet: 'The tier enum `Tier` with `tier_word` and `update_of`, `_holding`, the guard predicate, and `COMPONENT_PATH`, the scoped path the passthrough diagnostics read.'"
+  },
+  {
+   "id": "CV8-098",
+   "file": "src/declare.jl",
+   "line": 988,
+   "kind": "surface",
+   "claim": "BundleFieldError's reason values :undeclared, :illegal_for_family and :wrong_tier appear in neither spec nor Appendix C. Appendix C describes the classification in prose only. Other kinds name their reason symbols.",
+   "evidence": "probe:314, probe:327-329; src/declare.jl:919-924; spec.md:15693-15697",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "In the Appendix C entry write: 'classification as a `reason`: `:undeclared`, `:wrong_tier` or `:illegal_for_family`'."
+  },
+  {
+   "id": "CV8-104",
+   "file": "src/assembly.jl",
+   "line": 13,
+   "kind": "map",
+   "claim": "The assembly.jl map entry omits leaf_declarations, declarations_found, ASSEMBLY_FAMILY, LEAF_FAMILY and _OTHER_FAMILY (13-55), which supply ClassUnreadable's found and family lists, and _holds_components (80), which supplies its did-you-mean.",
+   "evidence": "rg of design/code_map.md finds none of these names; probe:124-128",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Extend the first bullet: '`classify` with `leaf_declarations`, `declarations_found` and the family lists `ClassUnreadable` carries.'"
+  },
+  {
+   "id": "CV8-107",
+   "file": "src/assembly.jl",
+   "line": 182,
+   "kind": "surface",
+   "claim": "ChildNameCollision's reason values :sample_times_sugar, :sibling_field and :two_children are named in neither spec nor Appendix C. The entry describes the arms in prose and a test matches on the symbol.",
+   "evidence": "probe:201, 202, 204; src/assembly.jl:182-190, 265; spec.md:15611-15616; test/test_diagnostics.jl:342-346",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "In the Appendix C entry give the symbols: 'reason `:sample_times_sugar`, `:sibling_field` or `:two_children`'."
+  },
+  {
+   "id": "CV8-109",
+   "file": "src/assembly.jl",
+   "line": 246,
+   "kind": "surface",
+   "claim": "The comment says the transparency check runs after the walk 'so a mixed container reports as one rather than as a bad transparency declaration'. A mixed container named by transparent_container reports both ContainerMixed and TransparentContainerUnknown.",
+   "evidence": "probe:368 returns [ContainerMixed, TransparentContainerUnknown]; src/assembly.jl:247-255 tests _is_container, which is false for a mixed container; spec.md:3801-3803",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "In _check_transparent, skip the TransparentContainerUnknown push when the named field holds a tuple or NamedTuple that already drew a ContainerMixed in this pass. Alternatively correct the comment and add the second diagnostic to Appendix C."
+  },
+  {
+   "id": "CV8-116",
+   "file": "src/assembly.jl",
+   "line": 435,
+   "kind": "docstring",
+   "claim": "The input_faces and output_faces docstrings, and spec 13.3, say nothing of refusals. A component with no class is refused as ClassUnreadable or ClassMixed, and a bad wire declaration as IllegalWireEntry outside a build.",
+   "evidence": "probe:254 (ClassUnreadable), probe:255 (IllegalWireEntry :bare_pair); src/assembly.jl:435-437, 460-462, 472-480. Appendix C notes only the IllegalWireEntry case.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to each docstring: 'A component with no readable class is refused as `ClassUnreadable` or `ClassMixed`, and a boundary declaration that is no collection of pairs as `IllegalWireEntry`.'"
+  },
+  {
+   "id": "CV8-125",
+   "file": "src/assembly.jl",
+   "line": 626,
+   "kind": "surface",
+   "claim": "UnknownFaceSelection's reason :unknown_names is named nowhere. Spec 8.8 and Appendix B name only :multiple_selectors, and Appendix C says 'unknown names' in prose.",
+   "evidence": "probe:274, probe:275; src/assembly.jl:624-628; spec.md:4619, 15042",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "In the Appendix C entry write 'reason `:unknown_names` or `:multiple_selectors`'."
+  },
+  {
+   "id": "CV8-131",
+   "file": "src/assembly.jl",
+   "line": 704,
+   "kind": "surface",
+   "claim": "FaceNameIllegal's invariant values :empty and :contains_slash are not named. Appendix C says '(contains /, or empty)' in prose.",
+   "evidence": "src/assembly.jl:704, src/structure.jl:761-762; probe:162, 172, 180; spec.md:15576-15578",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Write 'the violated invariant, `:contains_slash` or `:empty`'."
+  },
+  {
+   "id": "CV8-132",
+   "file": "src/assembly.jl",
+   "line": 771,
+   "kind": "cite",
+   "claim": "The comment 'a top marker says nothing where every leaf pins (§8.5, D-263)' cites 8.5. The topic, a Pinned entry on a discrete consumer, sits in 8.2. 8.5's 'One arity on both tiers' mentions only DeclarationOnWrongTier in general.",
+   "evidence": "src/assembly.jl:769-771; spec.md:2961 ('On a discrete consumer it pins wholesale. A Pinned entry there ...'); spec.md:3720-3728",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Cite (§8.2, D-263)."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV8-001",
+   "file": "src/declare.jl",
+   "line": 12,
+   "kind": "cite",
+   "claim": "AbstractComponent cites §8.1, §8.5, D-039, D-117, D-246, each treating one-root, import-per-name and shadowing",
+   "evidence": "log.md D-039, D-117, D-246 titles; spec.md:2487, 3642"
+  },
+  {
+   "id": "CV8-002",
+   "file": "src/declare.jl",
+   "line": 38,
+   "kind": "docstring",
+   "claim": "No declaration family is ClassUnreadable; both families is ClassMixed",
+   "evidence": "probe:120,122; src/assembly.jl:58-71"
+  },
+  {
+   "id": "CV8-003",
+   "file": "src/declare.jl",
+   "line": 38,
+   "kind": "docstring",
+   "claim": "A module binding a declaration name to its own function is DeclarationShadowed",
+   "evidence": "probe:123; src/structure.jl:534-536"
+  },
+  {
+   "id": "CV8-004",
+   "file": "src/declare.jl",
+   "line": 38,
+   "kind": "docstring",
+   "claim": "local_wires makes an assembly; any primitive declaration makes a primitive",
+   "evidence": "src/assembly.jl:58-65; probe:127,128"
+  },
+  {
+   "id": "CV8-005",
+   "file": "src/declare.jl",
+   "line": 42,
+   "kind": "cite",
+   "claim": "x_init cites §7.1, §8.2, §8.5, D-263 (mandatory store as tier marker)",
+   "evidence": "spec.md:2184, 2713; log.md D-263"
+  },
+  {
+   "id": "CV8-006",
+   "file": "src/declare.jl",
+   "line": 75,
+   "kind": "docstring",
+   "claim": "x_init returning (;) is refused as EmptyStore",
+   "evidence": "probe:135; src/assembly.jl:690-694"
+  },
+  {
+   "id": "CV8-007",
+   "file": "src/declare.jl",
+   "line": 75,
+   "kind": "docstring",
+   "claim": "x_init field or bare value not Float64 or SArray is IllegalStateLeaf; Int, Bool, enum are :mode_value",
+   "evidence": "probe:139 (L1-L8 all reasons); src/assembly.jl:673-683"
+  },
+  {
+   "id": "CV8-008",
+   "file": "src/declare.jl",
+   "line": 75,
+   "kind": "docstring",
+   "claim": "Non-empty state with no x_deriv or s_update is StoreWithoutUpdate, reported first",
+   "evidence": "probe:146,148; src/assembly.jl:743-746"
+  },
+  {
+   "id": "CV8-009",
+   "file": "src/declare.jl",
+   "line": 75,
+   "kind": "docstring",
+   "claim": "No x_init and no s_init is TierUnreadable; both, or the other tier's update law, is DeclarationOnWrongTier",
+   "evidence": "probe:149,150,154; src/assembly.jl:734-767"
+  },
+  {
+   "id": "CV8-010",
+   "file": "src/declare.jl",
+   "line": 75,
+   "kind": "docstring",
+   "claim": "A bare x_init state has one field named x",
+   "evidence": "src/declare.jl:811; probe:139 (L7 name :x)"
+  },
+  {
+   "id": "CV8-011",
+   "file": "src/declare.jl",
+   "line": 77,
+   "kind": "cite",
+   "claim": "s_init cites §8.2, D-195, D-231, D-263 (letter s, isbits store, mandatory store)",
+   "evidence": "log.md D-195, D-231, D-263"
+  },
+  {
+   "id": "CV8-012",
+   "file": "src/declare.jl",
+   "line": 103,
+   "kind": "docstring",
+   "claim": "s_init (;) is EmptyStore; a non-isbits non-Symbol field is IllegalStoreField",
+   "evidence": "probe:136,143; src/assembly.jl:710-718"
+  },
+  {
+   "id": "CV8-013",
+   "file": "src/declare.jl",
+   "line": 103,
+   "kind": "docstring",
+   "claim": "s_init with no update law is StoreWithoutUpdate; also defining x_init or x_deriv is DeclarationOnWrongTier",
+   "evidence": "probe:147,155,156; src/assembly.jl:726-767"
+  },
+  {
+   "id": "CV8-014",
+   "file": "src/declare.jl",
+   "line": 103,
+   "kind": "docstring",
+   "claim": "A bare s_init state has one field named s",
+   "evidence": "src/declare.jl:812"
+  },
+  {
+   "id": "CV8-015",
+   "file": "src/declare.jl",
+   "line": 105,
+   "kind": "cite",
+   "claim": "m_init cites §8.2, D-231",
+   "evidence": "log.md D-231; spec.md:2788"
+  },
+  {
+   "id": "CV8-016",
+   "file": "src/declare.jl",
+   "line": 127,
+   "kind": "docstring",
+   "claim": "Modes on a discrete primitive are DeclarationOnWrongTier",
+   "evidence": "probe:151; src/assembly.jl:730"
+  },
+  {
+   "id": "CV8-017",
+   "file": "src/declare.jl",
+   "line": 127,
+   "kind": "docstring",
+   "claim": "m_init (;) is EmptyStore; non-isbits field is IllegalStoreField",
+   "evidence": "probe:137,144; src/assembly.jl:690,711"
+  },
+  {
+   "id": "CV8-018",
+   "file": "src/declare.jl",
+   "line": 127,
+   "kind": "docstring",
+   "claim": "A bare m_init mode has one field named m",
+   "evidence": "src/declare.jl:813"
+  },
+  {
+   "id": "CV8-019",
+   "file": "src/declare.jl",
+   "line": 129,
+   "kind": "cite",
+   "claim": "ws_init cites §8.2, D-077, D-263 (allocate workspace per activation)",
+   "evidence": "log.md D-077"
+  },
+  {
+   "id": "CV8-020",
+   "file": "src/declare.jl",
+   "line": 150,
+   "kind": "docstring",
+   "claim": "ws_init takes the scalar: continuous at the activation scalar, discrete always Float64",
+   "evidence": "src/build.jl:1059; src/conditions.jl:665"
+  },
+  {
+   "id": "CV8-021",
+   "file": "src/declare.jl",
+   "line": 150,
+   "kind": "docstring",
+   "claim": "A component with no scratch defines no ws_init method",
+   "evidence": "src/declare.jl:878; src/assembly.jl:35"
+  },
+  {
+   "id": "CV8-022",
+   "file": "src/declare.jl",
+   "line": 152,
+   "kind": "cite",
+   "claim": "u_types cites D-263, D-437",
+   "evidence": "log.md D-263, D-437"
+  },
+  {
+   "id": "CV8-023",
+   "file": "src/declare.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "u_types defaults to no inputs; a bare u_types has face u",
+   "evidence": "src/declare.jl:185; probe:251"
+  },
+  {
+   "id": "CV8-024",
+   "file": "src/declare.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "u_types entry that is no type, tuple, number or nothing is IllegalPortType",
+   "evidence": "probe:158,163; src/assembly.jl:781-785"
+  },
+  {
+   "id": "CV8-025",
+   "file": "src/declare.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "A Pinned marker below the top of an entry is IllegalPortType on both tiers",
+   "evidence": "probe:160,161; src/leaves.jl:248-249; src/assembly.jl:786"
+  },
+  {
+   "id": "CV8-026",
+   "file": "src/declare.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "A Pinned entry on a discrete primitive is DeclarationOnWrongTier",
+   "evidence": "probe:153; src/assembly.jl:789-792"
+  },
+  {
+   "id": "CV8-027",
+   "file": "src/declare.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "An empty entry name in u_types or y_types is FaceNameIllegal",
+   "evidence": "probe:162; src/assembly.jl:700-706"
+  },
+  {
+   "id": "CV8-028",
+   "file": "src/declare.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "Producer type mismatch is WireTypeMismatch; a walking producer at a Pinned entry is WalkingFaceAtFrozenEntry",
+   "evidence": "src/build.jl:891,900"
+  },
+  {
+   "id": "CV8-029",
+   "file": "src/declare.jl",
+   "line": 187,
+   "kind": "cite",
+   "claim": "y_types cites §8.2, §9.3, D-263, D-437",
+   "evidence": "spec.md:2713, 5499; log.md D-437"
+  },
+  {
+   "id": "CV8-030",
+   "file": "src/declare.jl",
+   "line": 223,
+   "kind": "docstring",
+   "claim": "An empty-state primitive with no y_types is StatelessWithoutOutputs",
+   "evidence": "probe:165; src/assembly.jl:754-756"
+  },
+  {
+   "id": "CV8-031",
+   "file": "src/declare.jl",
+   "line": 223,
+   "kind": "docstring",
+   "claim": "DeclaredNotProduced, UndeclaredReturnField, ProducedByTwoStages are raised as stated",
+   "evidence": "src/build.jl:1113,131,1208"
+  },
+  {
+   "id": "CV8-032",
+   "file": "src/declare.jl",
+   "line": 225,
+   "kind": "cite",
+   "claim": "Pinned cites §8.2, D-263, D-265 (top marker read alone)",
+   "evidence": "log.md D-265 title"
+  },
+  {
+   "id": "CV8-033",
+   "file": "src/declare.jl",
+   "line": 250,
+   "kind": "docstring",
+   "claim": "Pinned{P} is a type-level marker keeping an entry at P; stripped at Float64",
+   "evidence": "src/leaves.jl:241-249; src/declare.jl:798"
+  },
+  {
+   "id": "CV8-034",
+   "file": "src/declare.jl",
+   "line": 257,
+   "kind": "cite",
+   "claim": "local_wires cites §8.5, §8.6, D-170, D-477",
+   "evidence": "log.md D-170, D-477 titles"
+  },
+  {
+   "id": "CV8-035",
+   "file": "src/declare.jl",
+   "line": 286,
+   "kind": "docstring",
+   "claim": "Wrong-direction endpoint is FaceDirectionConflict; input fed twice is TwoProducers; local_wires plus a leaf is ClassMixed",
+   "evidence": "probe:177,178,122; src/structure.jl:119,663"
+  },
+  {
+   "id": "CV8-036",
+   "file": "src/declare.jl",
+   "line": 286,
+   "kind": "docstring",
+   "claim": "A value that is no collection of pairs, a bare Pair included, is IllegalWireEntry",
+   "evidence": "probe:168,169,170,255; src/structure.jl:727-731"
+  },
+  {
+   "id": "CV8-037",
+   "file": "src/declare.jl",
+   "line": 286,
+   "kind": "docstring",
+   "claim": "A container element's face is named in one level, as 'units/1/face'",
+   "evidence": "probe:190; src/assembly.jl:307-309"
+  },
+  {
+   "id": "CV8-038",
+   "file": "src/declare.jl",
+   "line": 288,
+   "kind": "cite",
+   "claim": "input_wires cites D-170, D-210, D-477",
+   "evidence": "log.md D-210 (face uniqueness, no empty routing)"
+  },
+  {
+   "id": "CV8-039",
+   "file": "src/declare.jl",
+   "line": 308,
+   "kind": "docstring",
+   "claim": "An input face may route to a tuple of child paths, fanning out",
+   "evidence": "probe:179"
+  },
+  {
+   "id": "CV8-040",
+   "file": "src/declare.jl",
+   "line": 308,
+   "kind": "docstring",
+   "claim": "input_wires refuses '/' in a face, a repeated face, an output endpoint and an empty path tuple as stated",
+   "evidence": "probe:172,173,174,175"
+  },
+  {
+   "id": "CV8-041",
+   "file": "src/declare.jl",
+   "line": 328,
+   "kind": "docstring",
+   "claim": "output_wires refuses a source that resolves to an input as FaceDirectionConflict",
+   "evidence": "probe:176"
+  },
+  {
+   "id": "CV8-042",
+   "file": "src/declare.jl",
+   "line": 328,
+   "kind": "docstring",
+   "claim": "input_wires and output_wires default to no faces",
+   "evidence": "probe:132"
+  },
+  {
+   "id": "CV8-043",
+   "file": "src/declare.jl",
+   "line": 330,
+   "kind": "cite",
+   "claim": "transparent_container cites §8.5, D-211",
+   "evidence": "spec.md:3730-3803; log.md D-211"
+  },
+  {
+   "id": "CV8-044",
+   "file": "src/declare.jl",
+   "line": 354,
+   "kind": "docstring",
+   "claim": "transparent_container names bare keys everywhere; default nothing keeps field/key",
+   "evidence": "probe:130,192; src/assembly.jl:194"
+  },
+  {
+   "id": "CV8-045",
+   "file": "src/declare.jl",
+   "line": 354,
+   "kind": "docstring",
+   "claim": "A name matching no container field is TransparentContainerUnknown",
+   "evidence": "probe:193,194,241; src/assembly.jl:247-255"
+  },
+  {
+   "id": "CV8-046",
+   "file": "src/declare.jl",
+   "line": 354,
+   "kind": "docstring",
+   "claim": "A primitive's transparent_container is never read",
+   "evidence": "probe:195; src/structure.jl:599 (children read only for assemblies)"
+  },
+  {
+   "id": "CV8-049",
+   "file": "src/declare.jl",
+   "line": 369,
+   "kind": "docstring",
+   "claim": "stop_reason defaults to the empty string",
+   "evidence": "probe:129; src/declare.jl:369"
+  },
+  {
+   "id": "CV8-050",
+   "file": "src/declare.jl",
+   "line": 356,
+   "kind": "cite",
+   "claim": "stop_reason cites §8.2, §13.5, D-316",
+   "evidence": "spec.md:11716; log.md D-316 title"
+  },
+  {
+   "id": "CV8-051",
+   "file": "src/declare.jl",
+   "line": 404,
+   "kind": "cite",
+   "claim": "Relative cites §6.3, §8.7, §9.1, D-459, D-478",
+   "evidence": "log.md D-459, D-478 titles"
+  },
+  {
+   "id": "CV8-052",
+   "file": "src/declare.jl",
+   "line": 434,
+   "kind": "docstring",
+   "claim": "Relative(D, Φ = 0) signature and default; D and Φ are integers of any type",
+   "evidence": "src/declare.jl:437; probe:234"
+  },
+  {
+   "id": "CV8-053",
+   "file": "src/declare.jl",
+   "line": 434,
+   "kind": "docstring",
+   "claim": "A relative entry composes affinely: child ticks every D·D0 at phase Φ0 + Φ·D0",
+   "evidence": "src/structure.jl:398-400; probe:219 (D=6, Φ=3)"
+  },
+  {
+   "id": "CV8-054",
+   "file": "src/declare.jl",
+   "line": 434,
+   "kind": "docstring",
+   "claim": "A count Int cannot hold is ArgumentInvalid :range; a float or rational is :not_a_count",
+   "evidence": "probe:230-235; src/declare.jl:437-441"
+  },
+  {
+   "id": "CV8-055",
+   "file": "src/declare.jl",
+   "line": 434,
+   "kind": "docstring",
+   "claim": "The constructor checks no range; the build refuses D<1 or Φ outside 0≤Φ<D as RatesViolation",
+   "evidence": "probe:236,220,221; src/structure.jl:319-323"
+  },
+  {
+   "id": "CV8-056",
+   "file": "src/declare.jl",
+   "line": 434,
+   "kind": "docstring",
+   "claim": "D = 1 admits no stagger; Relative(2,0) and Relative(2,1) stagger two siblings",
+   "evidence": "probe:222,374"
+  },
+  {
+   "id": "CV8-057",
+   "file": "src/declare.jl",
+   "line": 434,
+   "kind": "docstring",
+   "claim": "A composed count past Int, or with no room for a frame, is RatesViolation",
+   "evidence": "src/structure.jl:406,964"
+  },
+  {
+   "id": "CV8-059",
+   "file": "src/declare.jl",
+   "line": 444,
+   "kind": "cite",
+   "claim": "Absolute cites §6.3, §8.7, §9.1, §9.2, D-186, D-469, D-478, D-479",
+   "evidence": "log.md D-186, D-469, D-479 titles"
+  },
+  {
+   "id": "CV8-060",
+   "file": "src/declare.jl",
+   "line": 472,
+   "kind": "docstring",
+   "claim": "Absolute(Δt, τ = 0) signature; integer or Rational of any integer type; 1//50 and 50 examples",
+   "evidence": "src/declare.jl:475-478; probe:241"
+  },
+  {
+   "id": "CV8-061",
+   "file": "src/declare.jl",
+   "line": 472,
+   "kind": "docstring",
+   "claim": "A float or other inexact real is ArgumentInvalid :inexact naming the argument",
+   "evidence": "probe:237,238,242,246"
+  },
+  {
+   "id": "CV8-062",
+   "file": "src/declare.jl",
+   "line": 472,
+   "kind": "docstring",
+   "claim": "A value Rational{Int} cannot hold, or that is not finite, is ArgumentInvalid :range",
+   "evidence": "probe:239,240; src/declare.jl:398-402"
+  },
+  {
+   "id": "CV8-063",
+   "file": "src/declare.jl",
+   "line": 472,
+   "kind": "docstring",
+   "claim": "A non-positive period or an offset outside 0≤τ<Δt is RatesViolation",
+   "evidence": "probe:223,224"
+  },
+  {
+   "id": "CV8-064",
+   "file": "src/declare.jl",
+   "line": 472,
+   "kind": "docstring",
+   "claim": "An Absolute entry is an anchor, so its child may tick faster than its scope",
+   "evidence": "probe:225,227; src/structure.jl:410-418"
+  },
+  {
+   "id": "CV8-065",
+   "file": "src/declare.jl",
+   "line": 487,
+   "kind": "cite",
+   "claim": "sample_times cites §8.7",
+   "evidence": "spec.md:4326"
+  },
+  {
+   "id": "CV8-066",
+   "file": "src/declare.jl",
+   "line": 513,
+   "kind": "docstring",
+   "claim": "A non-NamedTuple, bare number, unknown key and key on a continuous child are each RatesViolation",
+   "evidence": "probe:231,213,214,215,216"
+  },
+  {
+   "id": "CV8-067",
+   "file": "src/declare.jl",
+   "line": 513,
+   "kind": "docstring",
+   "claim": "sample_times defaults to (;); unlisted child is Relative(1); a container field's bare name keys all elements",
+   "evidence": "probe:131,218,358"
+  },
+  {
+   "id": "CV8-068",
+   "file": "src/declare.jl",
+   "line": 517,
+   "kind": "cite",
+   "claim": "StateEvent cites §5.2, §10.4, D-090, D-179",
+   "evidence": "spec.md:6786; log.md D-179 title"
+  },
+  {
+   "id": "CV8-069",
+   "file": "src/declare.jl",
+   "line": 544,
+   "kind": "docstring",
+   "claim": "Guard returning Bool is non-localized, Float64 is localized, anything else is GuardForm",
+   "evidence": "src/build.jl:1285-1289"
+  },
+  {
+   "id": "CV8-070",
+   "file": "src/declare.jl",
+   "line": 544,
+   "kind": "docstring",
+   "claim": "Missing guard or handler is EventHalfMissing; a bad handler key is HandlerReturnKey",
+   "evidence": "src/build.jl:835,844,1325"
+  },
+  {
+   "id": "CV8-071",
+   "file": "src/declare.jl",
+   "line": 544,
+   "kind": "docstring",
+   "claim": "The guard and handler bundle may carry x, m, y, u, t, ws",
+   "evidence": "src/declare.jl:906-907; probe:312"
+  },
+  {
+   "id": "CV8-072",
+   "file": "src/declare.jl",
+   "line": 549,
+   "kind": "cite",
+   "claim": "state_events cites §5.2, §8.2, §10.6",
+   "evidence": "spec.md:7378 (event iteration to quiescence)"
+  },
+  {
+   "id": "CV8-073",
+   "file": "src/declare.jl",
+   "line": 570,
+   "kind": "docstring",
+   "claim": "Non-empty state_events on a discrete primitive is DeclarationOnWrongTier; non-StateEvent entry is EventHalfMissing",
+   "evidence": "probe:152; src/build.jl:835"
+  },
+  {
+   "id": "CV8-074",
+   "file": "src/declare.jl",
+   "line": 570,
+   "kind": "docstring",
+   "claim": "A component fires at most one event per round, the first eligible in declaration order",
+   "evidence": "src/model.jl:721-722"
+  },
+  {
+   "id": "CV8-075",
+   "file": "src/declare.jl",
+   "line": 572,
+   "kind": "cite",
+   "claim": "x_projection cites §5.3, §8.2, §9.3",
+   "evidence": "spec.md:1290 (step boundaries, x_projection), 5499"
+  },
+  {
+   "id": "CV8-076",
+   "file": "src/declare.jl",
+   "line": 598,
+   "kind": "docstring",
+   "claim": "x_projection on a discrete or empty-state primitive is DeclarationOnWrongTier; a mismatched return is ConformanceFailure",
+   "evidence": "src/build.jl:1153-1165"
+  },
+  {
+   "id": "CV8-077",
+   "file": "src/declare.jl",
+   "line": 598,
+   "kind": "docstring",
+   "claim": "x_projection takes (c, x) positionally, no bundle, and replaces the whole state",
+   "evidence": "src/executor.jl:263; src/build.jl:1164"
+  },
+  {
+   "id": "CV8-079",
+   "file": "src/declare.jl",
+   "line": 620,
+   "kind": "cite",
+   "claim": "y_state cites §5.2, §5.3, §6.3, §8.2, D-220, D-252",
+   "evidence": "log.md D-220, D-252 titles"
+  },
+  {
+   "id": "CV8-080",
+   "file": "src/declare.jl",
+   "line": 652,
+   "kind": "docstring",
+   "claim": "y_state bundle carries x, m, t, ws (continuous) or s, t, Δt, ws (discrete), no inputs",
+   "evidence": "src/declare.jl:900,903; probe:308-312,327"
+  },
+  {
+   "id": "CV8-081",
+   "file": "src/declare.jl",
+   "line": 652,
+   "kind": "docstring",
+   "claim": "y_state refuses an outside read as BundleFieldError, bare (;) as DeadStage, an extra name as UndeclaredReturnField",
+   "evidence": "probe:327-329; src/build.jl:87,131"
+  },
+  {
+   "id": "CV8-082",
+   "file": "src/declare.jl",
+   "line": 654,
+   "kind": "cite",
+   "claim": "y_direct cites D-006 (two-stage feedthrough), D-220, D-252",
+   "evidence": "log.md D-006 title"
+  },
+  {
+   "id": "CV8-083",
+   "file": "src/declare.jl",
+   "line": 684,
+   "kind": "docstring",
+   "claim": "y_direct bundle carries x, m, u, y_x, t, ws (continuous) or s, u, y_s, t, Δt, ws (discrete)",
+   "evidence": "src/declare.jl:901,904; probe:308"
+  },
+  {
+   "id": "CV8-084",
+   "file": "src/declare.jl",
+   "line": 684,
+   "kind": "docstring",
+   "claim": "y_direct refuses an outside read, a port both stages return and an extra name as stated",
+   "evidence": "probe:327; src/build.jl:1208,131"
+  },
+  {
+   "id": "CV8-085",
+   "file": "src/declare.jl",
+   "line": 686,
+   "kind": "cite",
+   "claim": "x_deriv cites D-015, D-220; s_update cites D-195, D-220",
+   "evidence": "log.md D-015, D-195 titles"
+  },
+  {
+   "id": "CV8-086",
+   "file": "src/declare.jl",
+   "line": 714,
+   "kind": "docstring",
+   "claim": "x_deriv bundle x, m, y, u, t, ws; no x_deriv is StoreWithoutUpdate; s_update or s_init is DeclarationOnWrongTier",
+   "evidence": "src/declare.jl:902; probe:146,154; src/build.jl:1676"
+  },
+  {
+   "id": "CV8-087",
+   "file": "src/declare.jl",
+   "line": 739,
+   "kind": "docstring",
+   "claim": "s_update bundle s, y, u, t, Δt, ws; no s_update is StoreWithoutUpdate; x_deriv or x_init is DeclarationOnWrongTier",
+   "evidence": "src/declare.jl:905; probe:147,155,156; src/build.jl:1711"
+  },
+  {
+   "id": "CV8-088",
+   "file": "src/declare.jl",
+   "line": 746,
+   "kind": "surface",
+   "claim": "DECLARATION_FAMILY lists the 18 names in the §8.1 import-list order",
+   "evidence": "probe:336; spec.md:2589-2592"
+  },
+  {
+   "id": "CV8-089",
+   "file": "src/declare.jl",
+   "line": 757,
+   "kind": "surface",
+   "claim": "DeclarationShadowed is thrown alone, before class is read, with path, names and parent module",
+   "evidence": "probe:123,209; src/structure.jl:534-536; spec.md:2615-2622"
+  },
+  {
+   "id": "CV8-092",
+   "file": "src/declare.jl",
+   "line": 811,
+   "kind": "map",
+   "claim": "default_name, _keyed and is_bare read a bare declaration's letter and shape off the declared value",
+   "evidence": "src/declare.jl:811-829"
+  },
+  {
+   "id": "CV8-093",
+   "file": "src/declare.jl",
+   "line": 899,
+   "kind": "map",
+   "claim": "The bundle law is LEGAL_BUNDLE with classify_bundle_field and the two bundle-name functions",
+   "evidence": "src/declare.jl:855-924; probe:308-314"
+  },
+  {
+   "id": "CV8-094",
+   "file": "src/declare.jl",
+   "line": 899,
+   "kind": "surface",
+   "claim": "LEGAL_BUNDLE equals Appendix B's bundle table row for row",
+   "evidence": "spec.md:14988-14998 against src/declare.jl:899-907"
+  },
+  {
+   "id": "CV8-095",
+   "file": "src/declare.jl",
+   "line": 931,
+   "kind": "map",
+   "claim": "probe_value has the enum arm and the StaticArray arm in the stated chain",
+   "evidence": "src/declare.jl:931-935; probe:337"
+  },
+  {
+   "id": "CV8-096",
+   "file": "src/declare.jl",
+   "line": 963,
+   "kind": "map",
+   "claim": "invoke_declaration, invoke_probed and at_component are the file's last section",
+   "evidence": "src/declare.jl:943-1028"
+  },
+  {
+   "id": "CV8-097",
+   "file": "src/declare.jl",
+   "line": 978,
+   "kind": "surface",
+   "claim": "UserCodeFraming carries path, fn, bundle names, inputs spelling and cause; at_component fills the path",
+   "evidence": "probe:328,330; src/declare.jl:963-1027; spec.md:15704-15707"
+  },
+  {
+   "id": "CV8-099",
+   "file": "src/declare.jl",
+   "line": 387,
+   "kind": "map",
+   "claim": "_exact_or_nothing catches the three exact-arithmetic errors; _declared_quantity refuses :range; Relative's Real arm is :not_a_count",
+   "evidence": "src/declare.jl:387-402,439-441"
+  },
+  {
+   "id": "CV8-100",
+   "file": "src/declare.jl",
+   "line": 757,
+   "kind": "map",
+   "claim": "has_stage, _declares, declared_at, both bundle-name functions and foreign_declarations take the component unspecialized",
+   "evidence": "src/declare.jl:757,767,775,806,855,886"
+  },
+  {
+   "id": "CV8-101",
+   "file": "src/declare.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "File comments cite §8.1, §8.2, §2.3, §5.2, §7.2, §9.3, §13.2, D-185, D-246, D-248, D-350, D-437, D-459 and each treats its topic",
+   "evidence": "spec.md headings 443, 1137, 2268, 2487, 11166; log.md D-185, D-246, D-248, D-350, D-459 titles"
+  },
+  {
+   "id": "CV8-102",
+   "file": "src/assembly.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header and section comments cite §8.5, §8.6, §6.1, §13.3, §8.8, §8.2, §13.1, §8.7, D-207, D-211, D-212 and each treats its topic",
+   "evidence": "spec.md:3642, 3907, 1644, 11373, 4526, 11086; log.md D-207, D-211, D-212 titles"
+  },
+  {
+   "id": "CV8-103",
+   "file": "src/assembly.jl",
+   "line": 58,
+   "kind": "surface",
+   "claim": "ClassUnreadable carries path, type, found, assembly and leaf family lists and holds_components; ClassMixed the leaf declarations",
+   "evidence": "probe:124-126; spec.md:15546-15553"
+  },
+  {
+   "id": "CV8-105",
+   "file": "src/assembly.jl",
+   "line": 120,
+   "kind": "surface",
+   "claim": "Container fields contribute field/key children; a mixed container is ContainerMixed, a nested one ContainerNested",
+   "evidence": "probe:196,197; spec.md:3776-3780"
+  },
+  {
+   "id": "CV8-106",
+   "file": "src/assembly.jl",
+   "line": 181,
+   "kind": "surface",
+   "claim": "A bare key that equals a sibling child, its own field name or a sibling container field is ChildNameCollision, empty sibling exempt",
+   "evidence": "probe:201,202,204,205; spec.md:3786-3797"
+  },
+  {
+   "id": "CV8-108",
+   "file": "src/assembly.jl",
+   "line": 202,
+   "kind": "surface",
+   "claim": "The child-naming pass collects all container violations and throws once",
+   "evidence": "src/assembly.jl:128,200-202; spec.md:15557-15563"
+  },
+  {
+   "id": "CV8-110",
+   "file": "src/assembly.jl",
+   "line": 251,
+   "kind": "surface",
+   "claim": "TransparentContainerUnknown carries path, field, type name and the container-field candidates",
+   "evidence": "probe:194; spec.md:15616-15619"
+  },
+  {
+   "id": "CV8-111",
+   "file": "src/assembly.jl",
+   "line": 297,
+   "kind": "surface",
+   "claim": "PathResolution reasons :not_a_terminal, :unknown_child, :reaches_past, :empty_path are each raised as Appendix C lists",
+   "evidence": "probe:259,260,262,264,261; spec.md:15518-15521"
+  },
+  {
+   "id": "CV8-112",
+   "file": "src/assembly.jl",
+   "line": 374,
+   "kind": "docstring",
+   "claim": "resolve returns an immediate child, a container element by key, a transparent element by bare key",
+   "evidence": "probe:144,145,146; src/assembly.jl:374-386"
+  },
+  {
+   "id": "CV8-113",
+   "file": "src/assembly.jl",
+   "line": 396,
+   "kind": "docstring",
+   "claim": "resolve_terminal splits the last segment; a child path alone gives the empty name; an empty last segment is refused",
+   "evidence": "probe:263,264,265; src/assembly.jl:396-404"
+  },
+  {
+   "id": "CV8-114",
+   "file": "src/assembly.jl",
+   "line": 396,
+   "kind": "surface",
+   "claim": "resolve_terminal, absent from Appendix B and api.md, is stated in §13.3 with the same form",
+   "evidence": "spec.md:11391-11394; src/assembly.jl:396"
+  },
+  {
+   "id": "CV8-115",
+   "file": "src/assembly.jl",
+   "line": 435,
+   "kind": "docstring",
+   "claim": "input_faces lists primitive u_types keys (bare as u) or an assembly's input_wires faces, in order, as a fresh vector",
+   "evidence": "probe:251,252,253; src/assembly.jl:472-480"
+  },
+  {
+   "id": "CV8-117",
+   "file": "src/assembly.jl",
+   "line": 460,
+   "kind": "docstring",
+   "claim": "output_faces mirrors input_faces on y_types and output_wires; bare is face y",
+   "evidence": "probe:251,252"
+  },
+  {
+   "id": "CV8-118",
+   "file": "src/assembly.jl",
+   "line": 543,
+   "kind": "docstring",
+   "claim": "input_passthrough signature, keyword defaults and Tuple return match the code",
+   "evidence": "src/assembly.jl:543-550; probe:266"
+  },
+  {
+   "id": "CV8-119",
+   "file": "src/assembly.jl",
+   "line": 543,
+   "kind": "docstring",
+   "claim": "Pairs are prefix*sep*face => child/face; default prefix folds '/' to sep; explicit prefix verbatim; prefix='' drops it; bare is integrator.u",
+   "evidence": "probe:266,267,268,269,272"
+  },
+  {
+   "id": "CV8-120",
+   "file": "src/assembly.jl",
+   "line": 543,
+   "kind": "docstring",
+   "claim": "More than one selector is UnknownFaceSelection :multiple_selectors; an unknown except or only name lists the child's faces",
+   "evidence": "probe:273,274,275; src/assembly.jl:620-628"
+  },
+  {
+   "id": "CV8-121",
+   "file": "src/assembly.jl",
+   "line": 543,
+   "kind": "docstring",
+   "claim": "A deeper child_path is refused as PathResolution",
+   "evidence": "probe:276"
+  },
+  {
+   "id": "CV8-122",
+   "file": "src/assembly.jl",
+   "line": 543,
+   "kind": "docstring",
+   "claim": "A selector that keeps nothing warns EmptyFaceSelection on the build; no selector over a faceless child is silent",
+   "evidence": "probe:286,288,290; src/assembly.jl:636-642"
+  },
+  {
+   "id": "CV8-123",
+   "file": "src/assembly.jl",
+   "line": 594,
+   "kind": "docstring",
+   "claim": "output_passthrough pairs read child/face => prefix*sep*face with the same keywords and refusals",
+   "evidence": "probe:267,268,269; src/assembly.jl:594-601"
+  },
+  {
+   "id": "CV8-124",
+   "file": "src/assembly.jl",
+   "line": 638,
+   "kind": "surface",
+   "claim": "EmptyFaceSelection carries helper, child path, selector, names and candidates; outside a build it logs",
+   "evidence": "probe:286,288; src/diagnostics.jl:193-198; spec.md:15605-15609"
+  },
+  {
+   "id": "CV8-126",
+   "file": "src/assembly.jl",
+   "line": 680,
+   "kind": "surface",
+   "claim": "IllegalStateLeaf reasons :nested, :mode_value, :eltype, :wrapper are named in Appendix C and raised",
+   "evidence": "probe:139; spec.md:15531-15535"
+  },
+  {
+   "id": "CV8-127",
+   "file": "src/assembly.jl",
+   "line": 692,
+   "kind": "surface",
+   "claim": "EmptyStore and IllegalStoreField carry the store and field name as Appendix C states",
+   "evidence": "probe:135-137,143,144; spec.md:15528-15530, 15641-15645"
+  },
+  {
+   "id": "CV8-128",
+   "file": "src/assembly.jl",
+   "line": 735,
+   "kind": "surface",
+   "claim": "TierUnreadable, StoreWithoutUpdate and StatelessWithoutOutputs are raised as Appendix C states",
+   "evidence": "probe:149,146,165; spec.md:15536-15540, 15620-15626"
+  },
+  {
+   "id": "CV8-129",
+   "file": "src/assembly.jl",
+   "line": 763,
+   "kind": "surface",
+   "claim": "DeclarationOnWrongTier :tier_form and :pinned_entry are raised with found, announced and entry",
+   "evidence": "probe:150-156,153; spec.md:15565-15572"
+  },
+  {
+   "id": "CV8-130",
+   "file": "src/assembly.jl",
+   "line": 782,
+   "kind": "surface",
+   "claim": "IllegalPortType :not_a_type and :nested_marker carry site :face or :port and the entry name",
+   "evidence": "probe:158-161; spec.md:15627-15640"
+  },
+  {
+   "id": "CV8-133",
+   "file": "src/assembly.jl",
+   "line": 688,
+   "kind": "map",
+   "claim": "check_store_form runs ahead of classify_tier in the walk and reads an EmptyStore primitive no further",
+   "evidence": "src/structure.jl:551-558"
+  },
+  {
+   "id": "CV8-134",
+   "file": "src/assembly.jl",
+   "line": 668,
+   "kind": "map",
+   "claim": "store_fields is reused by build.jl; check_stores and check_state_leaves iterate it",
+   "evidence": "src/build.jl:181; src/assembly.jl:674,712"
+  },
+  {
+   "id": "CV8-135",
+   "file": "src/assembly.jl",
+   "line": 409,
+   "kind": "map",
+   "claim": "_contract reads a contract keyed at nominal; check_contract_names refuses an empty key as FaceNameIllegal :empty",
+   "evidence": "src/assembly.jl:409,700-706; probe:162"
+  },
+  {
+   "id": "CV8-136",
+   "file": "src/assembly.jl",
+   "line": 396,
+   "kind": "map",
+   "claim": "resolve_terminal reads a child alone with name nothing, which resolve_source and resolve_dest refuse as UnknownPort",
+   "evidence": "probe:183; src/structure.jl:20-50,112"
+  },
+  {
+   "id": "CV8-137",
+   "file": "src/assembly.jl",
+   "line": 810,
+   "kind": "map",
+   "claim": "flatten_tree! binds WALK_FACES and WALK_CHILDREN around the walk; StructureDraft.faces holds the lists",
+   "evidence": "src/structure.jl:274,440-441"
+  },
+  {
+   "id": "CV8-138",
+   "file": "src/assembly.jl",
+   "line": 610,
+   "kind": "map",
+   "claim": "The passthrough selectors are exclusive and EmptyFaceSelection goes through the channel",
+   "evidence": "src/assembly.jl:610-644; src/diagnostics.jl:193-198"
+  },
+  {
+   "id": "CV8-139",
+   "file": "src/assembly.jl",
+   "line": 952,
+   "kind": "map",
+   "claim": "Group with _entries, the copy constructor and _declared; precompile.jl's workload is its one caller in src/",
+   "evidence": "src/assembly.jl:952-981; src/precompile.jl:18"
+  },
+  {
+   "id": "CV8-140",
+   "file": "src/assembly.jl",
+   "line": 841,
+   "kind": "cite",
+   "claim": "Group cites D-184, D-211, D-472, §8.5, D-303, D-473, §13.7 and each treats its topic",
+   "evidence": "log.md D-184, D-303, D-472, D-473 titles; spec.md:12047"
+  },
+  {
+   "id": "CV8-141",
+   "file": "src/assembly.jl",
+   "line": 411,
+   "kind": "cite",
+   "claim": "input_faces and output_faces cite §13.3, Appendix C",
+   "evidence": "spec.md:11373; Appendix C EmptyFaceSelection once-per-site text"
+  },
+  {
+   "id": "CV8-142",
+   "file": "src/assembly.jl",
+   "line": 493,
+   "kind": "cite",
+   "claim": "The passthrough helpers cite §8.8, §9.1, D-251, D-209, §6.1",
+   "evidence": "spec.md:4526, 4787 (declaration code), log.md D-209, D-251 titles"
+  },
+  {
+   "id": "CV8-143",
+   "file": "src/assembly.jl",
+   "line": 354,
+   "kind": "cite",
+   "claim": "resolve cites §6.1, D-207, D-211",
+   "evidence": "spec.md:1644; log.md D-207, D-211 titles"
+  },
+  {
+   "id": "CV8-144",
+   "file": "src/assembly.jl",
+   "line": 90,
+   "kind": "cite",
+   "claim": "Children section comments cite §8.5, D-211, D-212, §13.1, §8.7",
+   "evidence": "spec.md:3786-3797, 4375-4380"
+  },
+  {
+   "id": "CV8-145",
+   "file": "src/assembly.jl",
+   "line": 952,
+   "kind": "docstring",
+   "claim": "Group(children; local_wires, input_wires, output_wires, sample_times) and Group(g; ...) signatures; bare Pair becomes a one-entry tuple",
+   "evidence": "src/assembly.jl:952-964; probe:291,294"
+  },
+  {
+   "id": "CV8-146",
+   "file": "src/assembly.jl",
+   "line": 952,
+   "kind": "docstring",
+   "claim": "A function in sample_times is a MethodError at construction; a function wire is called at each read",
+   "evidence": "probe:292,298,297"
+  },
+  {
+   "id": "CV8-147",
+   "file": "src/assembly.jl",
+   "line": 848,
+   "kind": "docstring",
+   "claim": "A Group's children go by bare key; the field-name sugar (children = Relative(2),) works",
+   "evidence": "probe:296,299,300"
+  },
+  {
+   "id": "CV8-148",
+   "file": "src/assembly.jl",
+   "line": 952,
+   "kind": "docstring",
+   "claim": "The Group docstring's jldoctest prints (\"u\" => \"inner/u\",)",
+   "evidence": "probe:305"
+  },
+  {
+   "id": "CV8-149",
+   "file": "src/assembly.jl",
+   "line": 952,
+   "kind": "docstring",
+   "claim": "A function wire travels with the Group copy; an EmptyFaceSelection raised in it joins the build's warnings",
+   "evidence": "probe:294,286"
+  },
+  {
+   "id": "CV8-150",
+   "file": "src/assembly.jl",
+   "line": 872,
+   "kind": "surface",
+   "claim": "Group's five fields and type parameters match the struct in spec 8.5",
+   "evidence": "probe:295; spec.md:3815-3821"
+  },
+  {
+   "id": "CV8-151",
+   "file": "src/assembly.jl",
+   "line": 543,
+   "kind": "surface",
+   "claim": "Appendix B's input_passthrough and output_passthrough signature matches the code",
+   "evidence": "spec.md:15034-15037; src/assembly.jl:543-546,594-597"
+  },
+  {
+   "id": "CV8-152",
+   "file": "src/assembly.jl",
+   "line": 374,
+   "kind": "surface",
+   "claim": "Appendix B lists resolve, input_faces and output_faces with the behaviour the code has",
+   "evidence": "spec.md:15030-15033; probe:251,257"
+  },
+  {
+   "id": "CV8-153",
+   "file": "src/assembly.jl",
+   "line": 111,
+   "kind": "map",
+   "claim": "The class and child readers, path resolvers and build primitives take components unspecialized; _children reads containers through _elements and _element_keys",
+   "evidence": "src/assembly.jl:30,58,111,120,156,213,222,297,321,374"
+  }
+ ],
+ "counts": {
+  "cite": 29,
+  "decl": 0,
+  "docstring": 80,
+  "ex": 0,
+  "law": 0,
+  "map": 17,
+  "mech": 0,
+  "ptr": 0,
+  "surface": 27,
+  "why": 0
+ }
+}

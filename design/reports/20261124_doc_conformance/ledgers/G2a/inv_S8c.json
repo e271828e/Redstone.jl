@@ -1,0 +1,1664 @@
+{
+ "rows": [
+  {
+   "id": "S8c-011",
+   "file": "design/spec.md",
+   "line": 3397,
+   "kind": "law",
+   "claim": "Every field-emitting component must expose (component, input values) -> handle as a plain, pure, public function",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "No field-emitting component ships in src/ and nothing enforces the obligation; the example components are in Flight.jl, outside this repo."
+  },
+  {
+   "id": "S8c-013",
+   "file": "design/spec.md",
+   "line": 3402,
+   "kind": "law",
+   "claim": "The field-emitting component's swept output stage must be a one-line call to the value-level constructor, never the other way round",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Authoring obligation on a shipped component; no such component in src/ to inspect."
+  },
+  {
+   "id": "S8c-014",
+   "file": "design/spec.md",
+   "line": 3406,
+   "kind": "law",
+   "claim": "The condition math of §14.1 can construct, outside any sweep, bit-for-bit the same handle the sweep produces from the same root-input values",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Depends on a field-emitting component that this repo does not ship."
+  },
+  {
+   "id": "S8c-015",
+   "file": "design/spec.md",
+   "line": 3411,
+   "kind": "law",
+   "claim": "The value-level constructor is a shipped component's obligation, not something a consumer can retrofit",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Same as above; a design rule on shipped components, not checkable in src/."
+  },
+  {
+   "id": "S8c-016",
+   "file": "design/spec.md",
+   "line": 3415,
+   "kind": "law",
+   "claim": "For bulk-data components the obligation is only that the query math be reachable as a plain function",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "No bulk-data field-emitting component in src/."
+  },
+  {
+   "id": "S8c-036",
+   "file": "design/spec.md",
+   "line": 3474,
+   "kind": "law",
+   "claim": "`x_init` holding a store and no `x_deriv` method, or `s_init` holding a store and no `s_update` method, is `StoreWithoutUpdate`",
+   "evidence": "src/assembly.jl:743; probe:70-71",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "`x_init` holding a store with neither `x_deriv` nor `s_update`, or `s_init` holding a store with neither, is `StoreWithoutUpdate`. An `x_init` store beside only `s_update`, or an `s_init` store beside only `x_deriv`, is `DeclarationOnWrongTier`.",
+   "note": "The code raises StoreWithoutUpdate only when neither update law exists (assembly.jl:743, declare.jl:70). The spec's later mixed-case sentence (line 3511-3513) already says DeclarationOnWrongTier for these."
+  },
+  {
+   "id": "S8c-047",
+   "file": "design/spec.md",
+   "line": 3500,
+   "kind": "law",
+   "claim": "`x_projection` is continuous-only and its disagreement is checked with the other tier-implying declarations in the structure step",
+   "evidence": "src/build.jl:1154; probe:148,154",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "`m_init` and `state_events` vote in the structure step. `x_projection` on a discrete primitive is `DeclarationOnWrongTier` (`:continuous_only`) raised later, in the stage-2 probe of the nominal evaluation, and carries no announced tier.",
+   "note": "`classify_tier` casts no `x_projection` vote (assembly.jl:728-735); build.jl:1154-1161 raises it, and the carrier already holds the Structure (probe:154)."
+  },
+  {
+   "id": "S8c-072",
+   "file": "design/spec.md",
+   "line": 3546,
+   "kind": "mech",
+   "claim": "Contract ports are log-exported",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Log and trace export path not traced."
+  },
+  {
+   "id": "S8c-106",
+   "file": "design/spec.md",
+   "line": 3619,
+   "kind": "mech",
+   "claim": "The typo'd wire's message reads \"no input `throtle`; did you mean `throttle`?\"",
+   "evidence": "src/diagnostics.jl:553-555; probe:255",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A typo'd wire (`:throtle`) is a build error at the connection, `UnknownPort`: \"names no `throtle` on `c` — its faces are throttle, out\". The unfed `throttle` input is also reported, as `UnconnectedInput`.",
+   "note": "The message lists the endpoint's faces and offers no nearest-name suggestion; the build also reports the left-unfed input (no cascade suppression, build.jl:787)."
+  },
+  {
+   "id": "S8c-119",
+   "file": "design/spec.md",
+   "line": 3656,
+   "kind": "ex",
+   "claim": "`Group((; plant = Plant(), ctrl = PID(kp = 2.0)); local_wires = (…))` builds a `PID` with keyword `kp`",
+   "evidence": "src/library.jl:2545",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`ctrl = PID(Kp = 2.0)`",
+   "note": "The library `PID` keyword is `Kp` (capital K); `kp` is a MethodError. `Plant` is a placeholder."
+  },
+  {
+   "id": "S8c-168",
+   "file": "design/spec.md",
+   "line": 3782,
+   "kind": "law",
+   "claim": "Abstract container element types follow the same concreteness discipline as plain fields",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Guidance on authoring; no code check of element concreteness exists."
+  },
+  {
+   "id": "S8c-174",
+   "file": "design/spec.md",
+   "line": 3801,
+   "kind": "law",
+   "claim": "Declaring two transparent containers on one type is a declaration error",
+   "evidence": "src/declare.jl:344-345; src/assembly.jl:251; probe:288-289",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "A component names at most one transparent container, since `transparent_container` returns one `Symbol`. A tuple return is a `MethodError` (no `convert` to `Symbol`) when the build makes `TransparentContainerUnknown`.",
+   "note": "No diagnostic exists for two names; declare.jl:344 records the case as unrepresentable. A defect fix would have `_check_transparent` refuse a non-Symbol return as a diagnostic."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S8c-001",
+   "file": "design/spec.md",
+   "line": 3370,
+   "kind": "law",
+   "claim": "Every stage function takes exactly two arguments, the component and one NamedTuple bundle",
+   "evidence": "src/declare.jl:767"
+  },
+  {
+   "id": "S8c-002",
+   "file": "design/spec.md",
+   "line": 3371,
+   "kind": "mech",
+   "claim": "The bundle holds zero-copy views; the gather returns on the stack and allocates nothing",
+   "evidence": "src/store.jl:100"
+  },
+  {
+   "id": "S8c-003",
+   "file": "design/spec.md",
+   "line": 3372,
+   "kind": "decl",
+   "claim": "An author destructures the bundle by name in the signature",
+   "evidence": "test/fixtures.jl:264"
+  },
+  {
+   "id": "S8c-004",
+   "file": "design/spec.md",
+   "line": 3373,
+   "kind": "ex",
+   "claim": "`x_deriv(c::LowPassFilter, (; x, u))` and `y_direct(c::PID, (; s, u, Δt))` are illustrative signatures; LowPassFilter is a placeholder, PID a generic controller",
+   "evidence": "src/declare.jl:899"
+  },
+  {
+   "id": "S8c-005",
+   "file": "design/spec.md",
+   "line": 3376,
+   "kind": "law",
+   "claim": "Under a bare contract the bundle's `u` or `y` is the value itself",
+   "evidence": "src/build.jl:117"
+  },
+  {
+   "id": "S8c-006",
+   "file": "design/spec.md",
+   "line": 3377,
+   "kind": "ex",
+   "claim": "`x_deriv(::Integrator, (; u)) = u` under a bare `u_types` (library spells it `signal(u)` for the reset form)",
+   "evidence": "src/library.jl:963"
+  },
+  {
+   "id": "S8c-007",
+   "file": "design/spec.md",
+   "line": 3379,
+   "kind": "mech",
+   "claim": "The executor issues one fixed call shape `fn(comp, args)`",
+   "evidence": "src/executor.jl:175"
+  },
+  {
+   "id": "S8c-008",
+   "file": "design/spec.md",
+   "line": 3390,
+   "kind": "decl",
+   "claim": "`x_projection` alone stays positional, `x_projection(c, x)`",
+   "evidence": "src/declare.jl:577"
+  },
+  {
+   "id": "S8c-009",
+   "file": "design/spec.md",
+   "line": 3391,
+   "kind": "mech",
+   "claim": "`x_projection` takes one store in and returns the same store out",
+   "evidence": "src/declare.jl:576"
+  },
+  {
+   "id": "S8c-010",
+   "file": "design/spec.md",
+   "line": 3397,
+   "kind": "mech",
+   "claim": "A field handle is an immutable query object a consumer evaluates at its own arguments (§4.4)",
+   "evidence": "src/leaves.jl:6"
+  },
+  {
+   "id": "S8c-012",
+   "file": "design/spec.md",
+   "line": 3399,
+   "kind": "ex",
+   "claim": "`SimpleAtmosphere` and `atmospheric_field(atm; T_sl, p_sl, wind)` are Flight.jl prior art, not names of this package (leads SimpleAtmosphere, atmospheric_field, T_sl, p_sl)",
+   "evidence": "probe:none (prior art, absent from src by design)"
+  },
+  {
+   "id": "S8c-017",
+   "file": "design/spec.md",
+   "line": 3423,
+   "kind": "ex",
+   "claim": "Sketch of the map as a plain function and a one-line swept stage; `ISAField(…)` and the `…` are placeholders, not runnable",
+   "evidence": "probe:none (ellipsis sketch)"
+  },
+  {
+   "id": "S8c-018",
+   "file": "design/spec.md",
+   "line": 3433,
+   "kind": "decl",
+   "claim": "`state_events` returns an ordered named collection (a NamedTuple) of guard/handler pairs",
+   "evidence": "src/declare.jl:570"
+  },
+  {
+   "id": "S8c-019",
+   "file": "design/spec.md",
+   "line": 3434,
+   "kind": "decl",
+   "claim": "A pair is spelled `StateEvent(guard, handler)` with no detection keyword",
+   "evidence": "src/declare.jl:544"
+  },
+  {
+   "id": "S8c-020",
+   "file": "design/spec.md",
+   "line": 3436,
+   "kind": "law",
+   "claim": "Detection policy is declared by the guard's return type",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "S8c-021",
+   "file": "design/spec.md",
+   "line": 3437,
+   "kind": "law",
+   "claim": "A `Bool` guard makes the event non-localized",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "S8c-022",
+   "file": "design/spec.md",
+   "line": 3437,
+   "kind": "mech",
+   "claim": "A non-localized event is checked for edges at step boundaries only, with no root-finding",
+   "evidence": "src/frame.jl:222"
+  },
+  {
+   "id": "S8c-023",
+   "file": "design/spec.md",
+   "line": 3438,
+   "kind": "law",
+   "claim": "A guard returning the nominal scalar (`Float64`) makes the event localized",
+   "evidence": "probe:108"
+  },
+  {
+   "id": "S8c-024",
+   "file": "design/spec.md",
+   "line": 3439,
+   "kind": "mech",
+   "claim": "A localized event brackets the crossing instant by root-finding over trial sweeps",
+   "evidence": "src/frame.jl:195"
+  },
+  {
+   "id": "S8c-025",
+   "file": "design/spec.md",
+   "line": 3441,
+   "kind": "law",
+   "claim": "Declaration order of events is the priority order",
+   "evidence": "src/declare.jl:560"
+  },
+  {
+   "id": "S8c-026",
+   "file": "design/spec.md",
+   "line": 3447,
+   "kind": "law",
+   "claim": "No port carries a stage tag; stage membership is derived",
+   "evidence": "src/build.jl:202"
+  },
+  {
+   "id": "S8c-027",
+   "file": "design/spec.md",
+   "line": 3452,
+   "kind": "law",
+   "claim": "Stages are discovered by method existence",
+   "evidence": "src/declare.jl:767"
+  },
+  {
+   "id": "S8c-028",
+   "file": "design/spec.md",
+   "line": 3453,
+   "kind": "mech",
+   "claim": "An output stage exists when the primitive defines its method, and the build reads which exist without evaluating anything",
+   "evidence": "src/build.jl:72"
+  },
+  {
+   "id": "S8c-029",
+   "file": "design/spec.md",
+   "line": 3456,
+   "kind": "mech",
+   "claim": "Stage-1 functions (`y_state`) receive no inputs by construction of the bundle",
+   "evidence": "src/declare.jl:865"
+  },
+  {
+   "id": "S8c-030",
+   "file": "design/spec.md",
+   "line": 3457,
+   "kind": "mech",
+   "claim": "The build probes stage-1 functions first and observes their contract ports",
+   "evidence": "src/build.jl:1010"
+  },
+  {
+   "id": "S8c-031",
+   "file": "design/spec.md",
+   "line": 3459,
+   "kind": "mech",
+   "claim": "The build assigns the remaining declared ports to stage 2",
+   "evidence": "src/build.jl:202"
+  },
+  {
+   "id": "S8c-032",
+   "file": "design/spec.md",
+   "line": 3459,
+   "kind": "mech",
+   "claim": "The build builds the graph and probes the stage-2 chain in topological order with real upstream values",
+   "evidence": "src/build.jl:1077"
+  },
+  {
+   "id": "S8c-033",
+   "file": "design/spec.md",
+   "line": 3463,
+   "kind": "law",
+   "claim": "A primitive's declarations carry its tier",
+   "evidence": "src/assembly.jl:724"
+  },
+  {
+   "id": "S8c-034",
+   "file": "design/spec.md",
+   "line": 3469,
+   "kind": "law",
+   "claim": "The build checks store-needs-update, event-needs-both-halves and tier agreement in the structure step",
+   "evidence": "src/build.jl:784"
+  },
+  {
+   "id": "S8c-035",
+   "file": "design/spec.md",
+   "line": 3473,
+   "kind": "law",
+   "claim": "A state declaration holding a store needs an update law, else `StoreWithoutUpdate`",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "S8c-037",
+   "file": "design/spec.md",
+   "line": 3476,
+   "kind": "mech",
+   "claim": "The first case is continuous state with no flow, the second a discrete store nothing updates",
+   "evidence": "src/assembly.jl:743"
+  },
+  {
+   "id": "S8c-038",
+   "file": "design/spec.md",
+   "line": 3477,
+   "kind": "law",
+   "claim": "The framework supplies no default `x_deriv` (`ẋ = 0`)",
+   "evidence": "src/declare.jl:714"
+  },
+  {
+   "id": "S8c-039",
+   "file": "design/spec.md",
+   "line": 3482,
+   "kind": "law",
+   "claim": "A state declaration of `nothing` owes no update law",
+   "evidence": "probe:174"
+  },
+  {
+   "id": "S8c-040",
+   "file": "design/spec.md",
+   "line": 3482,
+   "kind": "law",
+   "claim": "`m_init` carries no update obligation, and modes no own event transitions are legal",
+   "evidence": "src/assembly.jl:741"
+  },
+  {
+   "id": "S8c-041",
+   "file": "design/spec.md",
+   "line": 3487,
+   "kind": "law",
+   "claim": "A `state_events` entry whose guard or handler has no method for the component type is `EventHalfMissing`",
+   "evidence": "src/build.jl:843"
+  },
+  {
+   "id": "S8c-042",
+   "file": "design/spec.md",
+   "line": 3489,
+   "kind": "mech",
+   "claim": "Method lookup catches the missing half at declaration-reading time, not as a MethodError at first firing",
+   "evidence": "src/build.jl:843"
+  },
+  {
+   "id": "S8c-043",
+   "file": "design/spec.md",
+   "line": 3491,
+   "kind": "law",
+   "claim": "An entry that is not a `StateEvent` is `EventHalfMissing`",
+   "evidence": "probe:104"
+  },
+  {
+   "id": "S8c-044",
+   "file": "design/spec.md",
+   "line": 3496,
+   "kind": "law",
+   "claim": "A stateful primitive announces its tier in the update law, `x_deriv` beside `x_init`, `s_update` beside `s_init`",
+   "evidence": "src/assembly.jl:728"
+  },
+  {
+   "id": "S8c-045",
+   "file": "design/spec.md",
+   "line": 3497,
+   "kind": "law",
+   "claim": "The two output stages are shared by both tiers and cast no tier vote",
+   "evidence": "src/assembly.jl:728"
+  },
+  {
+   "id": "S8c-046",
+   "file": "design/spec.md",
+   "line": 3500,
+   "kind": "law",
+   "claim": "`m_init` and a non-empty `state_events` are continuous-only; on a discrete primitive they are `DeclarationOnWrongTier`",
+   "evidence": "probe:149-150"
+  },
+  {
+   "id": "S8c-048",
+   "file": "design/spec.md",
+   "line": 3503,
+   "kind": "law",
+   "claim": "A `Pinned` entry in a contract is continuous-only; on a discrete primitive it is `DeclarationOnWrongTier`",
+   "evidence": "src/assembly.jl:789"
+  },
+  {
+   "id": "S8c-049",
+   "file": "design/spec.md",
+   "line": 3507,
+   "kind": "law",
+   "claim": "Tier disagreement is `DeclarationOnWrongTier`",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "S8c-050",
+   "file": "design/spec.md",
+   "line": 3507,
+   "kind": "mech",
+   "claim": "It is reported as the offending declaration with the tier the other declarations announce",
+   "evidence": "src/assembly.jl:763"
+  },
+  {
+   "id": "S8c-051",
+   "file": "design/spec.md",
+   "line": 3509,
+   "kind": "law",
+   "claim": "Declaring both `x_deriv` and `s_update` is `DeclarationOnWrongTier`",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "S8c-052",
+   "file": "design/spec.md",
+   "line": 3509,
+   "kind": "law",
+   "claim": "A `Pinned` entry on a discrete primitive is `DeclarationOnWrongTier`",
+   "evidence": "probe:146"
+  },
+  {
+   "id": "S8c-053",
+   "file": "design/spec.md",
+   "line": 3511,
+   "kind": "law",
+   "claim": "Both state declarations on one primitive are `DeclarationOnWrongTier`",
+   "evidence": "probe:147"
+  },
+  {
+   "id": "S8c-054",
+   "file": "design/spec.md",
+   "line": 3512,
+   "kind": "law",
+   "claim": "An `x_init` on a primitive whose update law is `s_update` is `DeclarationOnWrongTier`",
+   "evidence": "probe:70"
+  },
+  {
+   "id": "S8c-055",
+   "file": "design/spec.md",
+   "line": 3513,
+   "kind": "law",
+   "claim": "An `s_init` on a primitive whose update law is `x_deriv` is `DeclarationOnWrongTier`",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "S8c-056",
+   "file": "design/spec.md",
+   "line": 3515,
+   "kind": "law",
+   "claim": "`x_init(::C) = nothing` makes a stateless primitive continuous",
+   "evidence": "probe:178"
+  },
+  {
+   "id": "S8c-057",
+   "file": "design/spec.md",
+   "line": 3517,
+   "kind": "law",
+   "claim": "`s_init(::C) = nothing` makes a stateless primitive discrete",
+   "evidence": "probe:179"
+  },
+  {
+   "id": "S8c-058",
+   "file": "design/spec.md",
+   "line": 3518,
+   "kind": "mech",
+   "claim": "A stateless discrete primitive runs at its ticks and holds its outputs between them",
+   "evidence": "src/declare.jl:95"
+  },
+  {
+   "id": "S8c-059",
+   "file": "design/spec.md",
+   "line": 3520,
+   "kind": "law",
+   "claim": "`y_types` stays mandatory on a stateless primitive",
+   "evidence": "src/assembly.jl:754"
+  },
+  {
+   "id": "S8c-060",
+   "file": "design/spec.md",
+   "line": 3521,
+   "kind": "law",
+   "claim": "A stateless declaration with no `y_types` is refused as `StatelessWithoutOutputs`",
+   "evidence": "probe:176"
+  },
+  {
+   "id": "S8c-061",
+   "file": "design/spec.md",
+   "line": 3523,
+   "kind": "law",
+   "claim": "Stage bundles of a stateless primitive carry no `x` or `s` field",
+   "evidence": "probe:180-181"
+  },
+  {
+   "id": "S8c-062",
+   "file": "design/spec.md",
+   "line": 3524,
+   "kind": "mech",
+   "claim": "The bundle law puts a state letter in the bundle only when the declaration holds a store",
+   "evidence": "src/declare.jl:857"
+  },
+  {
+   "id": "S8c-063",
+   "file": "design/spec.md",
+   "line": 3527,
+   "kind": "law",
+   "claim": "A type declaring both families, or neither, meets the class errors of §8.5",
+   "evidence": "probe:274,277"
+  },
+  {
+   "id": "S8c-064",
+   "file": "design/spec.md",
+   "line": 3536,
+   "kind": "law",
+   "claim": "Visibility is decided by where the value goes",
+   "evidence": "src/build.jl:200"
+  },
+  {
+   "id": "S8c-065",
+   "file": "design/spec.md",
+   "line": 3538,
+   "kind": "law",
+   "claim": "A field declared in `y_types` is public",
+   "evidence": "src/build.jl:200"
+  },
+  {
+   "id": "S8c-066",
+   "file": "design/spec.md",
+   "line": 3539,
+   "kind": "law",
+   "claim": "A returned field declared nowhere is a build error",
+   "evidence": "probe:217"
+  },
+  {
+   "id": "S8c-067",
+   "file": "design/spec.md",
+   "line": 3541,
+   "kind": "law",
+   "claim": "A component with no `y_types` method has no outputs",
+   "evidence": "probe:223"
+  },
+  {
+   "id": "S8c-068",
+   "file": "design/spec.md",
+   "line": 3542,
+   "kind": "law",
+   "claim": "A stateless primitive without `y_types` is `StatelessWithoutOutputs`",
+   "evidence": "probe:176"
+  },
+  {
+   "id": "S8c-069",
+   "file": "design/spec.md",
+   "line": 3545,
+   "kind": "mech",
+   "claim": "Ports in the contract are connectable (wire pass checks them)",
+   "evidence": "probe:257"
+  },
+  {
+   "id": "S8c-070",
+   "file": "design/spec.md",
+   "line": 3546,
+   "kind": "mech",
+   "claim": "Contract ports are GUI-listed",
+   "evidence": "src/descriptor.jl:258"
+  },
+  {
+   "id": "S8c-071",
+   "file": "design/spec.md",
+   "line": 3546,
+   "kind": "mech",
+   "claim": "Contract ports are snapshot-carried; a snapshot is the immutable per-boundary publication",
+   "evidence": "src/dataplane.jl:539"
+  },
+  {
+   "id": "S8c-073",
+   "file": "design/spec.md",
+   "line": 3548,
+   "kind": "law",
+   "claim": "Every cell of the table is a declared port",
+   "evidence": "src/build.jl:200"
+  },
+  {
+   "id": "S8c-074",
+   "file": "design/spec.md",
+   "line": 3549,
+   "kind": "law",
+   "claim": "Visibility is binary, with no third class",
+   "evidence": "src/declare.jl:899"
+  },
+  {
+   "id": "S8c-075",
+   "file": "design/spec.md",
+   "line": 3550,
+   "kind": "law",
+   "claim": "A value a later function reads travels as a declared port",
+   "evidence": "src/declare.jl:865"
+  },
+  {
+   "id": "S8c-076",
+   "file": "design/spec.md",
+   "line": 3554,
+   "kind": "mech",
+   "claim": "One line in `y_types` makes an intermediate public, checked and visible everywhere",
+   "evidence": "src/build.jl:200"
+  },
+  {
+   "id": "S8c-077",
+   "file": "design/spec.md",
+   "line": 3557,
+   "kind": "law",
+   "claim": "Publicity is never implicit; only declared ports are public",
+   "evidence": "src/build.jl:1113"
+  },
+  {
+   "id": "S8c-078",
+   "file": "design/spec.md",
+   "line": 3558,
+   "kind": "ex",
+   "claim": "`y_types(::LowPassFilter) = (x = Float64,)` is a one-line declaration; LowPassFilter is a placeholder",
+   "evidence": "src/declare.jl:223"
+  },
+  {
+   "id": "S8c-079",
+   "file": "design/spec.md",
+   "line": 3561,
+   "kind": "law",
+   "claim": "A declared port must be produced by exactly one stage",
+   "evidence": "probe:219,221"
+  },
+  {
+   "id": "S8c-080",
+   "file": "design/spec.md",
+   "line": 3561,
+   "kind": "law",
+   "claim": "Stage 1 and stage 2 are the whole classification",
+   "evidence": "src/build.jl:201-202"
+  },
+  {
+   "id": "S8c-081",
+   "file": "design/spec.md",
+   "line": 3562,
+   "kind": "law",
+   "claim": "The framework produces no port of its own",
+   "evidence": "src/build.jl:200"
+  },
+  {
+   "id": "S8c-082",
+   "file": "design/spec.md",
+   "line": 3564,
+   "kind": "law",
+   "claim": "Stage membership is derived over `y_types` alone",
+   "evidence": "src/build.jl:200-202"
+  },
+  {
+   "id": "S8c-083",
+   "file": "design/spec.md",
+   "line": 3564,
+   "kind": "law",
+   "claim": "Declared-but-unproduced is a build error",
+   "evidence": "probe:219"
+  },
+  {
+   "id": "S8c-084",
+   "file": "design/spec.md",
+   "line": 3565,
+   "kind": "law",
+   "claim": "Produced-by-two-stages is a build error",
+   "evidence": "probe:221"
+  },
+  {
+   "id": "S8c-085",
+   "file": "design/spec.md",
+   "line": 3565,
+   "kind": "law",
+   "claim": "A port two stages both return is `ProducedByTwoStages`",
+   "evidence": "src/build.jl:1208"
+  },
+  {
+   "id": "S8c-086",
+   "file": "design/spec.md",
+   "line": 3566,
+   "kind": "law",
+   "claim": "A declared port no stage produces is `DeclaredNotProduced`",
+   "evidence": "src/build.jl:1113"
+  },
+  {
+   "id": "S8c-087",
+   "file": "design/spec.md",
+   "line": 3567,
+   "kind": "mech",
+   "claim": "`DeclaredNotProduced` names the port, the stage products and the state fields",
+   "evidence": "src/diagnostics.jl:1067"
+  },
+  {
+   "id": "S8c-088",
+   "file": "design/spec.md",
+   "line": 3568,
+   "kind": "law",
+   "claim": "The remedy is returning the name from `y_state`",
+   "evidence": "src/diagnostics.jl:1076"
+  },
+  {
+   "id": "S8c-089",
+   "file": "design/spec.md",
+   "line": 3570,
+   "kind": "law",
+   "claim": "A returned port field declared nowhere is a build error at probe",
+   "evidence": "probe:217"
+  },
+  {
+   "id": "S8c-090",
+   "file": "design/spec.md",
+   "line": 3572,
+   "kind": "law",
+   "claim": "The error is `UndeclaredReturnField`",
+   "evidence": "src/diagnostics.jl:1080"
+  },
+  {
+   "id": "S8c-091",
+   "file": "design/spec.md",
+   "line": 3572,
+   "kind": "mech",
+   "claim": "`UndeclaredReturnField` carries the offending name and the `y_types` list-in-hand",
+   "evidence": "src/diagnostics.jl:1084"
+  },
+  {
+   "id": "S8c-092",
+   "file": "design/spec.md",
+   "line": 3575,
+   "kind": "law",
+   "claim": "A declared `P` missing from the taken branch's return fails at probe",
+   "evidence": "probe:222"
+  },
+  {
+   "id": "S8c-093",
+   "file": "design/spec.md",
+   "line": 3576,
+   "kind": "law",
+   "claim": "`P` missing from an untaken branch fails at that branch's first execution via the always-on check",
+   "evidence": "probe:224"
+  },
+  {
+   "id": "S8c-094",
+   "file": "design/spec.md",
+   "line": 3579,
+   "kind": "law",
+   "claim": "Stage returns must have the same field set on every branch; the always-on check refuses a different set",
+   "evidence": "src/store.jl:109"
+  },
+  {
+   "id": "S8c-095",
+   "file": "design/spec.md",
+   "line": 3584,
+   "kind": "law",
+   "claim": "Schema authority is total over the table: declarations define structure, evaluation only checks conformance",
+   "evidence": "src/build.jl:127"
+  },
+  {
+   "id": "S8c-096",
+   "file": "design/spec.md",
+   "line": 3586,
+   "kind": "law",
+   "claim": "Every cell traces to an authored declaration",
+   "evidence": "src/build.jl:200"
+  },
+  {
+   "id": "S8c-097",
+   "file": "design/spec.md",
+   "line": 3587,
+   "kind": "law",
+   "claim": "The always-on check's expected type for `y` is fully declaration-derived",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "S8c-098",
+   "file": "design/spec.md",
+   "line": 3588,
+   "kind": "law",
+   "claim": "Return typos cannot silently define new cells",
+   "evidence": "probe:217"
+  },
+  {
+   "id": "S8c-099",
+   "file": "design/spec.md",
+   "line": 3588,
+   "kind": "mech",
+   "claim": "Dropped partials are protected by the embedding guarantee (`_embed`)",
+   "evidence": "src/build.jl:154"
+  },
+  {
+   "id": "S8c-100",
+   "file": "design/spec.md",
+   "line": 3589,
+   "kind": "law",
+   "claim": "Promotion is airtight, so an observed `Float64` is a true constant",
+   "evidence": "src/build.jl:154"
+  },
+  {
+   "id": "S8c-101",
+   "file": "design/spec.md",
+   "line": 3593,
+   "kind": "law",
+   "claim": "A component split across an artificial loop declares every shared intermediate in `y_types`, so it is public and connectable",
+   "evidence": "src/build.jl:200"
+  },
+  {
+   "id": "S8c-102",
+   "file": "design/spec.md",
+   "line": 3599,
+   "kind": "ex",
+   "claim": "A landing-gear strut bundle port of `StrutGeometry`-shaped value is Flight.jl prior art (lead StrutGeometry)",
+   "evidence": "probe:none (prior art)"
+  },
+  {
+   "id": "S8c-103",
+   "file": "design/spec.md",
+   "line": 3601,
+   "kind": "law",
+   "claim": "No visibility level is added; no `Private(T)` wrapper exists",
+   "evidence": "src/declare.jl:899 (rg: no Private in src)"
+  },
+  {
+   "id": "S8c-104",
+   "file": "design/spec.md",
+   "line": 3603,
+   "kind": "law",
+   "claim": "No `unlisted` flag exists",
+   "evidence": "rg: no unlisted port flag in src"
+  },
+  {
+   "id": "S8c-105",
+   "file": "design/spec.md",
+   "line": 3619,
+   "kind": "law",
+   "claim": "A typo'd wire is a build error at the connection",
+   "evidence": "probe:254"
+  },
+  {
+   "id": "S8c-107",
+   "file": "design/spec.md",
+   "line": 3621,
+   "kind": "ex",
+   "claim": "`fuel_available` read only by a guard is a placeholder for a forgotten wire",
+   "evidence": "probe:256"
+  },
+  {
+   "id": "S8c-108",
+   "file": "design/spec.md",
+   "line": 3622,
+   "kind": "law",
+   "claim": "A forgotten wire fails as the §6.1 unconnected-input error at build",
+   "evidence": "probe:256"
+  },
+  {
+   "id": "S8c-109",
+   "file": "design/spec.md",
+   "line": 3624,
+   "kind": "law",
+   "claim": "A forgotten branch field fails as a probe or first-execution error naming the declared port",
+   "evidence": "probe:222,224"
+  },
+  {
+   "id": "S8c-110",
+   "file": "design/spec.md",
+   "line": 3627,
+   "kind": "law",
+   "claim": "A `Float64` fraction wired into a `Bool` input fails at wiring time naming both endpoints and both faces",
+   "evidence": "probe:258"
+  },
+  {
+   "id": "S8c-111",
+   "file": "design/spec.md",
+   "line": 3630,
+   "kind": "law",
+   "claim": "A typo'd return field fails as a probe error with did-you-mean against `y_types`",
+   "evidence": "probe:217-218"
+  },
+  {
+   "id": "S8c-112",
+   "file": "design/spec.md",
+   "line": 3633,
+   "kind": "law",
+   "claim": "That one error is the whole report",
+   "evidence": "probe:217"
+  },
+  {
+   "id": "S8c-113",
+   "file": "design/spec.md",
+   "line": 3633,
+   "kind": "mech",
+   "claim": "The probe chain stops at the port check",
+   "evidence": "src/build.jl:127"
+  },
+  {
+   "id": "S8c-114",
+   "file": "design/spec.md",
+   "line": 3635,
+   "kind": "law",
+   "claim": "A declared port no stage returns, on a component whose returns are all declared, is `DeclaredNotProduced` with product and state-field lists",
+   "evidence": "probe:219-220"
+  },
+  {
+   "id": "S8c-115",
+   "file": "design/spec.md",
+   "line": 3637,
+   "kind": "law",
+   "claim": "Every returned field is a declared port, so this one error form is the whole case",
+   "evidence": "src/build.jl:131"
+  },
+  {
+   "id": "S8c-116",
+   "file": "design/spec.md",
+   "line": 3638,
+   "kind": "law",
+   "claim": "An intermediate a later function reads is declared and typo'd like any other output",
+   "evidence": "src/build.jl:131"
+  },
+  {
+   "id": "S8c-117",
+   "file": "design/spec.md",
+   "line": 3650,
+   "kind": "law",
+   "claim": "An assembly is written as a `Group` value",
+   "evidence": "probe:323"
+  },
+  {
+   "id": "S8c-118",
+   "file": "design/spec.md",
+   "line": 3651,
+   "kind": "mech",
+   "claim": "A `Group` holds children and wires as data and one call builds it",
+   "evidence": "src/assembly.jl:872"
+  },
+  {
+   "id": "S8c-120",
+   "file": "design/spec.md",
+   "line": 3661,
+   "kind": "decl",
+   "claim": "The other form is a named struct with the assembly declarations as its methods",
+   "evidence": "test/test_assembly.jl:226"
+  },
+  {
+   "id": "S8c-121",
+   "file": "design/spec.md",
+   "line": 3664,
+   "kind": "law",
+   "claim": "Dispatch on the assembly is what a `Group` gives up",
+   "evidence": "src/assembly.jl:872"
+  },
+  {
+   "id": "S8c-122",
+   "file": "design/spec.md",
+   "line": 3666,
+   "kind": "mech",
+   "claim": "`Group` is itself written in the struct-plus-declarations form, under this section's rules",
+   "evidence": "test/test_assembly.jl:367"
+  },
+  {
+   "id": "S8c-123",
+   "file": "design/spec.md",
+   "line": 3671,
+   "kind": "law",
+   "claim": "An assembly is a plain struct",
+   "evidence": "src/assembly.jl:120"
+  },
+  {
+   "id": "S8c-124",
+   "file": "design/spec.md",
+   "line": 3671,
+   "kind": "law",
+   "claim": "Fields whose type is `<: AbstractComponent` are children",
+   "evidence": "src/assembly.jl:149"
+  },
+  {
+   "id": "S8c-125",
+   "file": "design/spec.md",
+   "line": 3672,
+   "kind": "law",
+   "claim": "All other fields are inert parameters",
+   "evidence": "src/assembly.jl:158"
+  },
+  {
+   "id": "S8c-126",
+   "file": "design/spec.md",
+   "line": 3675,
+   "kind": "law",
+   "claim": "Field names are path segments",
+   "evidence": "src/assembly.jl:150"
+  },
+  {
+   "id": "S8c-127",
+   "file": "design/spec.md",
+   "line": 3675,
+   "kind": "ex",
+   "claim": "Substitutability and variants use parametric fields as `Cessna172X{K, A}` does; Cessna172X is a Flight.jl placeholder",
+   "evidence": "probe:none (prior art)"
+  },
+  {
+   "id": "S8c-128",
+   "file": "design/spec.md",
+   "line": 3678,
+   "kind": "decl",
+   "claim": "`local_wires(::A)` is mandatory even when empty",
+   "evidence": "src/assembly.jl:60"
+  },
+  {
+   "id": "S8c-129",
+   "file": "design/spec.md",
+   "line": 3679,
+   "kind": "decl",
+   "claim": "`input_wires(::A)`, `output_wires(::A)` and `sample_times(::A)` are the other assembly declarations, defaulting to empty",
+   "evidence": "src/declare.jl:308,328,513"
+  },
+  {
+   "id": "S8c-130",
+   "file": "design/spec.md",
+   "line": 3680,
+   "kind": "decl",
+   "claim": "`transparent_container(::A)` is optional, default `nothing`",
+   "evidence": "src/declare.jl:354"
+  },
+  {
+   "id": "S8c-131",
+   "file": "design/spec.md",
+   "line": 3681,
+   "kind": "mech",
+   "claim": "Naming a container field there drops its segment from its children's names",
+   "evidence": "test/test_assembly.jl:277"
+  },
+  {
+   "id": "S8c-132",
+   "file": "design/spec.md",
+   "line": 3686,
+   "kind": "law",
+   "claim": "There is no `AbstractAssembly`, only the root `AbstractComponent`",
+   "evidence": "probe:279"
+  },
+  {
+   "id": "S8c-133",
+   "file": "design/spec.md",
+   "line": 3689,
+   "kind": "ex",
+   "claim": "`AbstractAircraft`, `AbstractEngine`, `PistonEngine` are illustrative domain names; a field `E <: AbstractEngine` takes primitive and assembly alike because both share one root",
+   "evidence": "src/assembly.jl:58"
+  },
+  {
+   "id": "S8c-134",
+   "file": "design/spec.md",
+   "line": 3695,
+   "kind": "law",
+   "claim": "Class is declared by which well-known declarations a type defines",
+   "evidence": "src/assembly.jl:58"
+  },
+  {
+   "id": "S8c-135",
+   "file": "design/spec.md",
+   "line": 3696,
+   "kind": "law",
+   "claim": "`local_wires` is the assembly marker, mandatory even when empty",
+   "evidence": "probe:277"
+  },
+  {
+   "id": "S8c-136",
+   "file": "design/spec.md",
+   "line": 3697,
+   "kind": "law",
+   "claim": "Any primitive declaration makes a primitive",
+   "evidence": "src/assembly.jl:63"
+  },
+  {
+   "id": "S8c-137",
+   "file": "design/spec.md",
+   "line": 3698,
+   "kind": "decl",
+   "claim": "The primitive declarations are `x_init`/`s_init`/`m_init`, `ws_init`, `u_types`/`y_types`, `state_events` and any `y_state`, `y_direct`, `x_deriv`, `s_update` or `x_projection` method",
+   "evidence": "src/assembly.jl:30-47"
+  },
+  {
+   "id": "S8c-138",
+   "file": "design/spec.md",
+   "line": 3703,
+   "kind": "law",
+   "claim": "A type declaring neither family is `ClassUnreadable` naming both families",
+   "evidence": "probe:274-276"
+  },
+  {
+   "id": "S8c-139",
+   "file": "design/spec.md",
+   "line": 3705,
+   "kind": "law",
+   "claim": "With component-typed fields the error sharpens, reading \"holds components but declares no `local_wires`\"",
+   "evidence": "probe:275"
+  },
+  {
+   "id": "S8c-140",
+   "file": "design/spec.md",
+   "line": 3708,
+   "kind": "law",
+   "claim": "`local_wires` plus any primitive declaration is `ClassMixed`",
+   "evidence": "probe:277"
+  },
+  {
+   "id": "S8c-141",
+   "file": "design/spec.md",
+   "line": 3711,
+   "kind": "law",
+   "claim": "Assemblies have no state of their own at declaration time",
+   "evidence": "src/assembly.jl:60"
+  },
+  {
+   "id": "S8c-142",
+   "file": "design/spec.md",
+   "line": 3712,
+   "kind": "law",
+   "claim": "Assemblies have no contract of their own",
+   "evidence": "src/assembly.jl:60"
+  },
+  {
+   "id": "S8c-143",
+   "file": "design/spec.md",
+   "line": 3716,
+   "kind": "mech",
+   "claim": "Reading which declarations exist is method existence, not evaluation",
+   "evidence": "src/declare.jl:767"
+  },
+  {
+   "id": "S8c-144",
+   "file": "design/spec.md",
+   "line": 3723,
+   "kind": "law",
+   "claim": "Every structural declaration takes the component alone, on either tier and on an assembly",
+   "evidence": "src/declare.jl:308"
+  },
+  {
+   "id": "S8c-145",
+   "file": "design/spec.md",
+   "line": 3725,
+   "kind": "law",
+   "claim": "The one exception, the allocator's scalar, is the same on both tiers",
+   "evidence": "src/declare.jl:878"
+  },
+  {
+   "id": "S8c-146",
+   "file": "design/spec.md",
+   "line": 3726,
+   "kind": "mech",
+   "claim": "The tier is read from the state declaration every primitive makes",
+   "evidence": "probe:177"
+  },
+  {
+   "id": "S8c-147",
+   "file": "design/spec.md",
+   "line": 3727,
+   "kind": "law",
+   "claim": "A declaration on the wrong tier is `DeclarationOnWrongTier`",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "S8c-148",
+   "file": "design/spec.md",
+   "line": 3732,
+   "kind": "law",
+   "claim": "A Tuple/NamedTuple field with every element a component contributes its elements as container children",
+   "evidence": "src/assembly.jl:208"
+  },
+  {
+   "id": "S8c-149",
+   "file": "design/spec.md",
+   "line": 3733,
+   "kind": "law",
+   "claim": "Container children are path-named `field/1`…`field/N` for a tuple and `field/key` for a NamedTuple",
+   "evidence": "probe:345"
+  },
+  {
+   "id": "S8c-150",
+   "file": "design/spec.md",
+   "line": 3734,
+   "kind": "law",
+   "claim": "Declaration order governs layout",
+   "evidence": "src/assembly.jl:146"
+  },
+  {
+   "id": "S8c-151",
+   "file": "design/spec.md",
+   "line": 3737,
+   "kind": "law",
+   "claim": "Containers are transparent grouping, not assemblies",
+   "evidence": "src/assembly.jl:208"
+  },
+  {
+   "id": "S8c-152",
+   "file": "design/spec.md",
+   "line": 3738,
+   "kind": "law",
+   "claim": "Containers have no contract, no `local_wires`, no rate scope and no existence beyond the path segment",
+   "evidence": "test/test_assembly.jl:163"
+  },
+  {
+   "id": "S8c-153",
+   "file": "design/spec.md",
+   "line": 3740,
+   "kind": "law",
+   "claim": "The container's elements are children of the parent, addressed by the parent's declarations by element name",
+   "evidence": "test/test_assembly.jl:163"
+  },
+  {
+   "id": "S8c-154",
+   "file": "design/spec.md",
+   "line": 3745,
+   "kind": "ex",
+   "claim": "`Formation{NT <: NamedTuple}` is an illustrative parametric roster holding any size, names and mixed types",
+   "evidence": "test/test_assembly.jl:163"
+  },
+  {
+   "id": "S8c-155",
+   "file": "design/spec.md",
+   "line": 3748,
+   "kind": "mech",
+   "claim": "Declaration bodies generate wires by comprehension over the keys",
+   "evidence": "probe:none (ordinary Julia)"
+  },
+  {
+   "id": "S8c-156",
+   "file": "design/spec.md",
+   "line": 3749,
+   "kind": "mech",
+   "claim": "§13.7's `Junction` uses the arity-via-computed-contracts pattern",
+   "evidence": "src/library.jl:42"
+  },
+  {
+   "id": "S8c-157",
+   "file": "design/spec.md",
+   "line": 3750,
+   "kind": "mech",
+   "claim": "`at(\"aircraft/red\", problem)` mounts a whole problem or tap set",
+   "evidence": "src/trim.jl:122"
+  },
+  {
+   "id": "S8c-158",
+   "file": "design/spec.md",
+   "line": 3753,
+   "kind": "law",
+   "claim": "A component declares at most one name-transparent container; the declaration returns one `Symbol`",
+   "evidence": "src/declare.jl:354"
+  },
+  {
+   "id": "S8c-159",
+   "file": "design/spec.md",
+   "line": 3756,
+   "kind": "decl",
+   "claim": "The declaration is `transparent_container(::MyType) = :field`",
+   "evidence": "test/test_assembly.jl:226"
+  },
+  {
+   "id": "S8c-160",
+   "file": "design/spec.md",
+   "line": 3760,
+   "kind": "law",
+   "claim": "A transparent container's elements go under bare keys, `\"key\"` and `\"1\"`",
+   "evidence": "test/test_assembly.jl:277"
+  },
+  {
+   "id": "S8c-161",
+   "file": "design/spec.md",
+   "line": 3761,
+   "kind": "law",
+   "claim": "Bare keys apply in wiring endpoints, `sample_times` keys, read paths, `at` prefixes and diagnostics",
+   "evidence": "test/test_conditions.jl:39"
+  },
+  {
+   "id": "S8c-162",
+   "file": "design/spec.md",
+   "line": 3765,
+   "kind": "law",
+   "claim": "Naming is the only thing the declaration changes; the elements stay the parent's children in declaration order",
+   "evidence": "src/assembly.jl:146"
+  },
+  {
+   "id": "S8c-163",
+   "file": "design/spec.md",
+   "line": 3767,
+   "kind": "law",
+   "claim": "A transparent container keeps no `local_wires`, faces or rate scope",
+   "evidence": "src/assembly.jl:208"
+  },
+  {
+   "id": "S8c-164",
+   "file": "design/spec.md",
+   "line": 3772,
+   "kind": "law",
+   "claim": "A container mixing component and non-component elements is `ContainerMixed`",
+   "evidence": "test/test_assembly.jl:180"
+  },
+  {
+   "id": "S8c-165",
+   "file": "design/spec.md",
+   "line": 3774,
+   "kind": "law",
+   "claim": "All-component elements are children and zero-component elements are inert data",
+   "evidence": "src/assembly.jl:158"
+  },
+  {
+   "id": "S8c-166",
+   "file": "design/spec.md",
+   "line": 3776,
+   "kind": "law",
+   "claim": "A container of containers is `ContainerNested`, naming the element and its type",
+   "evidence": "test/test_assembly.jl:204"
+  },
+  {
+   "id": "S8c-167",
+   "file": "design/spec.md",
+   "line": 3780,
+   "kind": "law",
+   "claim": "Empty containers are legal and contribute zero children",
+   "evidence": "probe:339"
+  },
+  {
+   "id": "S8c-169",
+   "file": "design/spec.md",
+   "line": 3786,
+   "kind": "law",
+   "claim": "A bare key colliding with a sibling child name is `ChildNameCollision` naming both",
+   "evidence": "test/test_assembly.jl:294"
+  },
+  {
+   "id": "S8c-170",
+   "file": "design/spec.md",
+   "line": 3788,
+   "kind": "law",
+   "claim": "A bare key equal to its own field's name joins the collision error (`sample_times` sugar)",
+   "evidence": "test/test_assembly.jl:310"
+  },
+  {
+   "id": "S8c-171",
+   "file": "design/spec.md",
+   "line": 3792,
+   "kind": "law",
+   "claim": "A bare key equal to a sibling container field that contributes children is `ChildNameCollision`",
+   "evidence": "test/test_assembly.jl:321"
+  },
+  {
+   "id": "S8c-172",
+   "file": "design/spec.md",
+   "line": 3796,
+   "kind": "law",
+   "claim": "An empty sibling container field reserves nothing; the judgment is per instantiation",
+   "evidence": "src/assembly.jl:144"
+  },
+  {
+   "id": "S8c-173",
+   "file": "design/spec.md",
+   "line": 3800,
+   "kind": "law",
+   "claim": "`transparent_container` must name a container field; a name matching none is `TransparentContainerUnknown`",
+   "evidence": "test/test_assembly.jl:344"
+  },
+  {
+   "id": "S8c-175",
+   "file": "design/spec.md",
+   "line": 3809,
+   "kind": "law",
+   "claim": "`Group` expresses immutable grouping as a single type",
+   "evidence": "src/assembly.jl:872"
+  },
+  {
+   "id": "S8c-176",
+   "file": "design/spec.md",
+   "line": 3809,
+   "kind": "law",
+   "claim": "The core defines `Group` through the assembly declarations alone and no build step names it",
+   "evidence": "test/test_assembly.jl:367"
+  },
+  {
+   "id": "S8c-177",
+   "file": "design/spec.md",
+   "line": 3810,
+   "kind": "law",
+   "claim": "`Group` is an ordinary component with no privilege a user's assembly lacks",
+   "evidence": "test/test_assembly.jl:367"
+  },
+  {
+   "id": "S8c-178",
+   "file": "design/spec.md",
+   "line": 3811,
+   "kind": "law",
+   "claim": "A `Group`'s NamedTuple field elements are its children by the container rule, name-transparent",
+   "evidence": "src/assembly.jl:982"
+  },
+  {
+   "id": "S8c-179",
+   "file": "design/spec.md",
+   "line": 3813,
+   "kind": "mech",
+   "claim": "Its declarations are ordinary functions of the instance that read its fields",
+   "evidence": "src/assembly.jl:978"
+  },
+  {
+   "id": "S8c-180",
+   "file": "design/spec.md",
+   "line": 3814,
+   "kind": "law",
+   "claim": "The fields and keywords bear the names of the declarations that return them",
+   "evidence": "src/assembly.jl:952"
+  },
+  {
+   "id": "S8c-181",
+   "file": "design/spec.md",
+   "line": 3816,
+   "kind": "law",
+   "claim": "A `Group` carries its own rate scope, a `sample_times` field keyed by bare element name",
+   "evidence": "src/assembly.jl:981"
+  },
+  {
+   "id": "S8c-182",
+   "file": "design/spec.md",
+   "line": 3819,
+   "kind": "ex",
+   "claim": "The `Group` struct, declarations, `_declared`, `_entries`, keyword constructor and copy constructor match the definition",
+   "evidence": "src/assembly.jl:872-967"
+  },
+  {
+   "id": "S8c-183",
+   "file": "design/spec.md",
+   "line": 3851,
+   "kind": "law",
+   "claim": "`Group` is one type defined once; every topology is a value of it",
+   "evidence": "probe:330"
+  },
+  {
+   "id": "S8c-184",
+   "file": "design/spec.md",
+   "line": 3852,
+   "kind": "mech",
+   "claim": "The type parameters carry the children's concrete types, so activation and the executor are unchanged",
+   "evidence": "probe:330"
+  },
+  {
+   "id": "S8c-185",
+   "file": "design/spec.md",
+   "line": 3854,
+   "kind": "mech",
+   "claim": "Wiring validation, did-you-mean errors and the two-producers error run at build against the instance as for a named assembly",
+   "evidence": "probe:323"
+  },
+  {
+   "id": "S8c-186",
+   "file": "design/spec.md",
+   "line": 3857,
+   "kind": "law",
+   "claim": "A wire keyword takes its entries written out or as a function of the `Group` returning them",
+   "evidence": "probe:306"
+  },
+  {
+   "id": "S8c-187",
+   "file": "design/spec.md",
+   "line": 3858,
+   "kind": "mech",
+   "claim": "The `Group` stores the function without calling it, and the declaration calls it with the `Group` at each read",
+   "evidence": "src/assembly.jl:975"
+  },
+  {
+   "id": "S8c-188",
+   "file": "design/spec.md",
+   "line": 3860,
+   "kind": "mech",
+   "claim": "The function runs in the build where a named assembly's declaration body runs",
+   "evidence": "probe:306"
+  },
+  {
+   "id": "S8c-189",
+   "file": "design/spec.md",
+   "line": 3861,
+   "kind": "mech",
+   "claim": "`input_passthrough` receives the assembly it takes",
+   "evidence": "probe:306"
+  },
+  {
+   "id": "S8c-190",
+   "file": "design/spec.md",
+   "line": 3865,
+   "kind": "ex",
+   "claim": "The `approach` Group with `input_wires = g -> input_passthrough(g, \"vehicle\"; prefix = \"\")` runs (Vehicle, Gear are placeholders)",
+   "evidence": "probe:312"
+  },
+  {
+   "id": "S8c-191",
+   "file": "design/spec.md",
+   "line": 3873,
+   "kind": "law",
+   "claim": "A bare `Pair` given or returned for a wire keyword is the one-entry tuple",
+   "evidence": "probe:295"
+  },
+  {
+   "id": "S8c-192",
+   "file": "design/spec.md",
+   "line": 3874,
+   "kind": "law",
+   "claim": "A named assembly's body gets no such shorthand; the build refuses a bare `Pair` as `IllegalWireEntry`",
+   "evidence": "probe:302"
+  },
+  {
+   "id": "S8c-193",
+   "file": "design/spec.md",
+   "line": 3877,
+   "kind": "mech",
+   "claim": "A function-holding field does not hold the entries; the reader uses the declaration `input_wires(approach)`",
+   "evidence": "probe:307"
+  },
+  {
+   "id": "S8c-194",
+   "file": "design/spec.md",
+   "line": 3878,
+   "kind": "law",
+   "claim": "`sample_times` takes no function",
+   "evidence": "probe:292"
+  },
+  {
+   "id": "S8c-195",
+   "file": "design/spec.md",
+   "line": 3882,
+   "kind": "law",
+   "claim": "`Group(g; …)` returns a copy of `g` with the given keywords replaced",
+   "evidence": "probe:315"
+  },
+  {
+   "id": "S8c-196",
+   "file": "design/spec.md",
+   "line": 3883,
+   "kind": "mech",
+   "claim": "A `Group` derives variants as in `Group(world; local_wires = rewired)`",
+   "evidence": "probe:347"
+  },
+  {
+   "id": "S8c-197",
+   "file": "design/spec.md",
+   "line": 3885,
+   "kind": "mech",
+   "claim": "A function among the fields travels with the copy and computes entries from the copy's children",
+   "evidence": "src/assembly.jl:975"
+  },
+  {
+   "id": "S8c-198",
+   "file": "design/spec.md",
+   "line": 3889,
+   "kind": "ex",
+   "claim": "`::Cessna172X` dispatch is a Flight.jl placeholder for domain dispatch (lead Cessna172X)",
+   "evidence": "probe:none (prior art)"
+  },
+  {
+   "id": "S8c-199",
+   "file": "design/spec.md",
+   "line": 3893,
+   "kind": "law",
+   "claim": "The builder `Assembly()` with `add!`/`connect!` does not exist in src",
+   "evidence": "rg: no add!/connect!/Assembly builder in src"
+  },
+  {
+   "id": "S8c-200",
+   "file": "design/spec.md",
+   "line": 3894,
+   "kind": "mech",
+   "claim": "Programmatic generation survives: a declaration body is an ordinary function and loops build the returned tuple",
+   "evidence": "src/assembly.jl:975"
+  },
+  {
+   "id": "S8c-201",
+   "file": "design/spec.md",
+   "line": 3903,
+   "kind": "law",
+   "claim": "`Group` rests on one opt-in declaration, `transparent_container`",
+   "evidence": "src/assembly.jl:982"
+  },
+  {
+   "id": "S8c-202",
+   "file": "design/spec.md",
+   "line": 3903,
+   "kind": "law",
+   "claim": "With it a `Group`'s wiring and rate declarations read as a named assembly's, with no `children/` prefix",
+   "evidence": "test/test_assembly.jl:277"
+  }
+ ],
+ "counts": {
+  "law": 134,
+  "mech": 44,
+  "decl": 10,
+  "ex": 14,
+  "why": 55,
+  "ptr": 12
+ }
+}

@@ -1,0 +1,190 @@
+{
+ "judgments": [
+  {
+   "id": "L8b-001",
+   "conforms": true,
+   "evidence": "src/Redstone.jl:1-37 has no export statement; probe.jl line '001 names' prints [:Redstone] and isexported(Redstone, :Group) is false. test/imports.jl:5 reaches names by per-name import."
+  },
+  {
+   "id": "L8b-010",
+   "conforms": true,
+   "evidence": "src/build.jl:866-867 (the wire pass collects, and the barrier throws once) and src/build.jl:788-793 (the structure step's barrier after _check_wires, which evaluates the contracts at Marker, build.jl:887)."
+  },
+  {
+   "id": "L8b-017",
+   "conforms": false,
+   "evidence": "No `output_types` in src/ or test/. The port check compares against `keyed_outs(decl)`, the y_types contract (src/build.jl:90, 127-131; src/declare.jl:682 'a returned name `y_types` lacks as `UndeclaredReturnField`'). The rename is recorded in design/log.md:2636 and 5505 (D-267).",
+   "class": "drift",
+   "fix": "A stage returning a field `y_types` does not declare is reported by the port check's `UndeclaredReturnField` alone.",
+   "clear": true
+  },
+  {
+   "id": "L8b-020",
+   "conforms": true,
+   "evidence": "src/build.jl:140 `_check_ports` throws on its first failing stage, and it is called during probing (build.jl:90, 1203) before the completeness loop at src/build.jl:1105-1118 that raises DeclaredNotProduced."
+  },
+  {
+   "id": "L8b-023",
+   "conforms": false,
+   "evidence": "Device read bindings resolve through the one collecting read resolver that trim and linearization use (src/bindings.jl:142-147, 159-165; src/readers.jl:684-704). That resolver walks the Structure's rows (src/structure.jl:1103-1115, the 'service walk'; src/readers.jl:925-930). D-414 (design/log.md, '### D-414') records that every service client resolves under this one walk, device read bindings and log extraction included, and D-406 put binding reads on it.",
+   "class": "drift",
+   "fix": "*Inspection* replaces *diagnostic*: GUI panels and snapshot inspection. Since D-406 and D-414, device read bindings and log extraction resolve under the service walk with every other reader.",
+   "clear": false
+  },
+  {
+   "id": "L8b-030",
+   "conforms": true,
+   "evidence": "src/structure.jl:529-537 throws DeclarationShadowed alone, first in the walk; src/diagnostics.jl:574-578 is the only message with the `import Redstone: …` fix line. The other 'shadows' text (src/diagnostics.jl:845) is ChildNameCollision's key-versus-container-field case, a different sense."
+  },
+  {
+   "id": "L8b-035",
+   "conforms": true,
+   "evidence": "src/assembly.jl:636-641 raises EmptyFaceSelection through _warn! when one selector is given and it keeps nothing; src/diagnostics.jl:755 severity :warning. probe.jl '035 empty selection warning' -> [EmptyFaceSelection] on the build's warnings; '035 bare silent' -> []."
+  },
+  {
+   "id": "L8b-040",
+   "conforms": false,
+   "evidence": "src/sim.jl:358 `Simulation(model::Model{Float64,E})`. Model materializes the deployment at a scalar, and Simulation runs only a Float64 model; sim.jl:393-397 compose through `Model(deployment; chunk_size)`. probe '040 Simulation fields' -> (:model, :plane, :control, :run). Recorded by D-317 (design/log.md:14517).",
+   "class": "drift",
+   "fix": "`Model` materializes a deployment at `T`, and `Simulation` runs a `Model{Float64}`.",
+   "clear": true
+  },
+  {
+   "id": "L8b-041",
+   "conforms": false,
+   "evidence": "src/deployment.jl:539-553 has Δt_frame, Δt_base, h_max and h_min, with no `h` or `N_base`. probe '040-050 Deployment fields' confirms. N_base retired by D-443 (design/log.md:18614); the step bound became h_max under D-449.",
+   "class": "drift",
+   "fix": "`Deployment` is the build plus `Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm, the three event parameters and `attempt_budget`.",
+   "clear": true
+  },
+  {
+   "id": "L8b-042",
+   "conforms": true,
+   "evidence": "src/deployment.jl:540-546: build, Δt_base, algorithm, and the three event parameters firing_budget, localization_tol and localization_budget are all fields. The same sentence's `h` and `N_base` are wrong (see L8b-041). The struct also holds Δt_frame, h_max, h_min and attempt_budget, which the doc's list omits; L8b-041's fix lists them."
+  },
+  {
+   "id": "L8b-045",
+   "conforms": false,
+   "evidence": "src/deployment.jl:539-553 has no grid field (probe '045 hasfield grid' -> false). The report is derived on use by `_grid_report(anchors)` (src/structure.jl:832-847; src/show.jl:126). D-466 (design/log.md:20197-20215) supersedes this clause of D-254.",
+   "class": "drift",
+   "fix": "It carries the `Schedule` and its warnings. The grid report is derived from the structure's anchors where it is used (D-466).",
+   "clear": true
+  },
+  {
+   "id": "L8b-050",
+   "conforms": false,
+   "evidence": "src/deployment.jl:84-87: `Schedule` holds only `rows` and `scopes` (probe '050 Schedule fields' -> (:rows, :scopes)). The per-component D, Φ, Δt vectors are derived at compile by `_gates` (deployment.jl:95-107), per D-261 (design/log.md:11071-11073).",
+   "class": "drift",
+   "fix": "`Schedule` is the typed schedule inside the deployment: per discrete component `(D, Φ, Δt)` with anchor and rate-chain columns, and the rate-scope rows. The executor derives the `D`, `Φ`, `Δt` vectors from the rows at `compile`.",
+   "clear": true
+  },
+  {
+   "id": "L8b-053",
+   "conforms": true,
+   "evidence": "src/sim.jl:395-397: `Simulation(build; kw...) = Simulation(Deployment(build; kw...); …)` and `Simulation(root; kw...) = Simulation(build(root); kw...)`. probe '053 Simulation(root; kw)' returns a Simulation."
+  },
+  {
+   "id": "L8b-063",
+   "conforms": true,
+   "evidence": "src/library.jl:405-409: `x_init(::Freeze) = nothing`, no s_init method, a Pinned output stripped by ForwardDiff.value. probe '063 Freeze tier' -> ('f', CONTINUOUS)."
+  },
+  {
+   "id": "L8b-070",
+   "conforms": false,
+   "evidence": "src/leaves.jl:364-366 renders \" — if this leaf participates in differentiation, remove its `Pinned`\". probe '070 pin hint dual' prints that text. The code says 'this leaf' where the doc has `F`; ConformanceFailure names the leaf earlier in its message (src/diagnostics.jl:1142-1148). The difference is only the wording around the placeholder, and no log entry records it.",
+   "class": "deviation",
+   "fix": "An observed `Dual` at a pinned leaf is the misplaced-pin error, with the didactic hint \"if this leaf participates in differentiation, remove its `Pinned`\".",
+   "clear": true,
+   "backing_entry": "D-286"
+  },
+  {
+   "id": "L8b-073",
+   "conforms": true,
+   "evidence": "src/assembly.jl:169-171 pushes ContainerMixed; probe '073 mixed container' -> DiagnosticError ContainerMixed for a container holding a Constant and a Float64."
+  },
+  {
+   "id": "L8b-083",
+   "conforms": false,
+   "evidence": "src/assembly.jl:872-878: the fifth field is `sample_times`, with keyword `sample_times = (;)` (assembly.jl:952-955) and `sample_times(g::Group) = g.sample_times` (assembly.jl:981). probe '083 rates kw' -> MethodError for `rates`. The rename `rates` → `sample_times` is D-303 (commit 8032ff2e).",
+   "class": "drift",
+   "fix": "`Group` carries a fifth field, `sample_times`, a `NamedTuple` keyed by bare element name, set by the `sample_times = (;)` keyword and returned by `sample_times(g::Group) = g.sample_times`.",
+   "clear": true
+  },
+  {
+   "id": "L8b-084",
+   "conforms": true,
+   "evidence": "src/assembly.jl:872 `R <: NamedTuple` and :877 `sample_times::R   # the ad-hoc rate scope, keyed by bare element name`, the fifth field (probe '083 Group fields')."
+  },
+  {
+   "id": "L8b-088",
+   "conforms": false,
+   "evidence": "No `u_connections` or `y_connections` in src (probe '088 isdefined' -> (false, true, true)). The boundary declarations are `input_wires` and `output_wires` (src/assembly.jl:978-980; src/structure.jl:609-610). The rename is D-303.",
+   "class": "drift",
+   "fix": "`exports` stays retired; `input_wires` and `output_wires` name the pairs each returns.",
+   "clear": true
+  },
+  {
+   "id": "L8b-091",
+   "conforms": false,
+   "evidence": "src/library.jl:118 `y_types(::Junction{In, Out}) where {In, Out} = Out`, a bare contract. probe '091 output_faces SumJunction' -> [\"y\"]. Commit 4d79875c declared the single-port blocks bare under D-436, and D-437 (design/log.md:18189-18191) keeps them bare.",
+   "class": "drift",
+   "fix": "`u_types` is `(in1 = In, …, inN = In)`, `y_types` is the bare `Out`, whose face is `y`, and `y_direct` applies the instance's `f` to the inputs in positional order.",
+   "clear": true
+  },
+  {
+   "id": "L8b-095",
+   "conforms": true,
+   "evidence": "src/library.jl:110-112 define zero-argument constructors for SumJunction, Or and And. probe '095 zero-arg' builds all three."
+  },
+  {
+   "id": "L8b-098",
+   "conforms": false,
+   "evidence": "Single-output blocks are bare with face `y` (src/library.jl:118, 382, 607, 961). Multi-output blocks name theirs `out` (library.jl:668, 1843, 2013) or `u` (library.jl:2385, 2694). probe '098 output faces sample' -> Integrator [\"y\"], UnitDelay [\"y\"], LimitedIntegrator [\"out\", \"saturation\"]. D-436 and D-437 record the move (design/log.md:18050, 18189).",
+   "class": "drift",
+   "fix": "A single-output library block declares its output bare, the face `y`. The junction's `Σ` falls.",
+   "clear": false
+  },
+  {
+   "id": "L8b-105",
+   "conforms": true,
+   "evidence": "src/library.jl:667 `u_types = reset_ports(V, Val(R))` -> `V` or `(u = V, reset = Bool)` (library.jl:450-451). probe '105 DLI inputs' -> ([\"u\"], [\"u\", \"reset\"]). Its output is `saturation` (library.jl:668)."
+  },
+  {
+   "id": "L8b-107",
+   "conforms": false,
+   "evidence": "`Period` and `Hz` do not exist (probe '107 Period/Hz defined' -> (false, false, false)). `Absolute(Δt, τ = 0)` takes the period as a bare exact number (src/declare.jl:472-485) and refuses an unholdable value as ArgumentInvalid :range (declare.jl:398-402; probe '107 Absolute huge'). A zero period passes the constructor (probe '107 Absolute(0)'), and the build refuses it as RatesViolation :period (src/structure.jl:337-340). D-469 (design/log.md:20532) retired Period and Hz.",
+   "class": "drift",
+   "fix": "`Absolute`'s period and offset and the `Deployment` keywords `Δt_frame`, `Δt_base` and `h_max` take an integer or a `Rational` of any integer type at its value. A value that `Rational{Int}` cannot hold finitely is refused as `ArgumentInvalid` `:range` at `Absolute`, an infinite value included, and as `DeploymentInvalid` `:range` at the keywords.",
+   "clear": true
+  },
+  {
+   "id": "L8b-115",
+   "conforms": true,
+   "evidence": "src/structure.jl:393-394: `# A rate its own check refused composes nothing.` followed by `1 ≤ rate.D && 0 ≤ rate.Φ < rate.D || return scope, link`. structure.jl:386-387 returns early for a value outside the wrapper vocabulary."
+  },
+  {
+   "id": "L8b-118",
+   "conforms": false,
+   "evidence": "src/structure.jl:842-845: 'A built structure always has one: the trial binding fits the gcd and every anchor's count at it (D-465)'. In src/deployment.jl:252-261 `:derive` has only the :unanchored and :no_constraint refusals and no :range refusal, and every anchor refusal carries `grid = grid` (deployment.jl:277-284). D-465 (design/log.md:20115-20119) supersedes D-459's fourth bullet.",
+   "class": "drift",
+   "fix": "A built structure always has a grid report (D-465). `Δt_base = :derive` has no `:range` refusal, and the anchor refusals always carry the grid block.",
+   "clear": true
+  },
+  {
+   "id": "L8b-125",
+   "conforms": true,
+   "evidence": "src/declare.jl:472-478 `Absolute(Δt, τ = 0)` holds both as Rational{Int}. probe '125 Absolute default τ' -> Absolute(1//50, 0//1)."
+  },
+  {
+   "id": "L8b-135",
+   "conforms": true,
+   "evidence": "Group is defined in the core at src/assembly.jl:872, outside `module Library` (src/library.jl:1-3063). probe '135 Library has Group' -> false. Commit 336a79eb made the move (D-472)."
+  },
+  {
+   "id": "L8b-144",
+   "conforms": true,
+   "evidence": "src/structure.jl:612-619 checks local_wires, input_wires and output_wires of one assembly as one unit and throws once. probe '144' -> IllegalWireEntry thrown at build."
+  }
+ ],
+ "notes": "Verified at W = 72b12836. Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L8b_v/probe.jl (run 3 times; the first two runs stopped on probe-script errors). No tracked file edited, nothing committed. The non-conforming log claims (017, 023, 040, 041, 045, 050, 083, 088, 091, 098, 107, 118) are all older entries that a later ratified entry or rename superseded: D-267, D-406/D-414, D-317, D-443/D-449, D-466, D-261, D-303, D-436/D-437, D-469 and D-465. log_rules.md may prefer annotations over rewriting old positions; the fixes give the replacement text either way. L8b-070 is a borderline call: the doc's `F` may be a placeholder for the leaf name, and the code prints 'this leaf'. L8b-042 is judged on the items it names. The same sentence's h/N_base error and its missing fields (Δt_frame, h_max, h_min, attempt_budget) go under L8b-041."
+}

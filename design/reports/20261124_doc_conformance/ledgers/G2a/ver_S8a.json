@@ -1,0 +1,78 @@
+{
+ "judgments": [
+  {
+   "id": "S8a-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:652 `function y_state end` and :684 `function y_direct end` are plain generic functions. Probe P001 shows typeof(Redstone.y_state) <: Function, with 79 y_state and 50 y_direct methods added by ordinary method definitions."
+  },
+  {
+   "id": "S8a-011",
+   "conforms": true,
+   "evidence": "src/store.jl:102-129: scatter_group! is @generated. It compares the return's NamedTuple key set and field types against the declared cells at generation, so a conformant return compiles to plain stores and a non-conformant one to a throw. src/executor.jl:170 runs it on every stage evaluation, and src/leaves.jl:400-431 does the same for x_deriv and s_update writes through flatten_state!.",
+   "note": "For a bare contract or bare store (D-437, D-438) the check generated at store.jl:133-145 and leaves.jl:441-455 compares the bare return type, not a NamedTuple type. The substance holds: the check runs on every evaluation, is decided at generation and costs nothing when conformant. The 'NamedTuple-type' wording covers only the named form."
+  },
+  {
+   "id": "S8a-017",
+   "conforms": true,
+   "evidence": "src/declare.jl:855-874 bundle_names derives the bundle's fields from the declarations alone. x/s/m appear when the store declarations return a value, u when u_types is non-empty and y when y_types is non-empty. ws, t and Δt are added by fixed rules. src/executor.jl:117-143 builds NamedTuple{BN} from the BN type parameter. The nested u/y key sets are the u_types/y_types keys (gather over entry.inputs/entry.y).",
+   "note": "Read as 'the bundle's key sets are fixed by the contract declarations', not as literal equality: the top-level keys are store letters plus u/y/ws/t/Δt. Under a bare contract (D-436) u or y is the value itself and has no key set."
+  },
+  {
+   "id": "S8a-022",
+   "conforms": true,
+   "evidence": "src/build.jl:1059 calls invoke_declaration(ws_init, comp, T or Float64) to allocate the workspace that the entry holds as `ws` (src/executor.jl:136). Nothing derives an entry type from its declared keys. src/declare.jl:142-148: 'The framework calls the allocator'.",
+   "note": "src/conditions.jl:664-665 also calls ws_init, only to tell a workspace field apart in an undeclared-field diagnostic. That use reads its keys for a message and derives no schema."
+  },
+  {
+   "id": "S8a-034",
+   "conforms": true,
+   "evidence": "src/structure.jl:534-537 runs foreign_declarations and throws DeclarationShadowed at the start of _walk!, before classify(path, comp) at :538. _walk! recurses into every child (:582). Probe P034 shows a shadowed child under a passthrough parent caught at its own path `kid`, and P039 shows the check firing at the root."
+  },
+  {
+   "id": "S8a-039",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:574-578. Probe P039 prints: \"`c`: its module `Main.ForgottenImport.Update` defines its own `x_deriv`, distinct from `Redstone.x_deriv`; add `import Redstone: x_deriv` (§8.1)\". The message opens with the component path and then names the module. It never takes the spec's \"`MyEngine`'s module …\" form.",
+   "class": "deviation",
+   "fix": "Its message reads \"`engine`: its module `MyEngine` defines its own `x_deriv`, distinct from `Redstone.x_deriv`; add `import Redstone: x_deriv`\".",
+   "clear": true,
+   "backing_entry": "",
+   "note": "The code has used the 'path: its module `M`' template since it first landed (b6793373, then spelled with Cadence). The spec quote came in with the ruling 351e6440 and was reworded in ef7f5dd8. D-246 (design/log.md:10084) gives no exact wording, so no entry backs the spec's text. The path `engine` in the fix is an illustrative value."
+  },
+  {
+   "id": "S8a-045",
+   "conforms": true,
+   "evidence": "src/declare.jl:757-761 foreign_declarations reads only module-level bindings (isdefined/getfield on parentmodule). Probe P045: declarations written inside a `let` give foreign=Symbol[], the local y_state still answers calls inside the block ((y = 1.0,)), and the build throws ClassUnreadable, not DeclarationShadowed."
+  },
+  {
+   "id": "S8a-056",
+   "conforms": true,
+   "evidence": "src/roster.jl:141-159 defines `claims(b::AbstractBinding)` as part of the binding contract, with an error-throwing fallback. attach! calls it once. src/bindings.jl:94 shows a shipped binding's method."
+  },
+  {
+   "id": "S8a-072",
+   "conforms": true,
+   "evidence": "src/declare.jl docstring signatures: x_init(c):47, s_init(c):82, m_init(c):107, u_types(c):154, y_types(c):189, local_wires(c):261, input_wires(c):290, output_wires(c):312, transparent_container(c):334, stop_reason(c):358, sample_times(c):489, state_events(c):551. Only ws_init(c, ::Type{T}):131 takes a second argument. The stages take a bundle and are not structural declarations."
+  },
+  {
+   "id": "S8a-082",
+   "conforms": true,
+   "evidence": "src/declare.jl:47-52 'as a NamedTuple of named values or as one bare value'. Probe P082: a module-level `x_init(c::BareInt) = c.x0` builds and runs, and state(sim, \"c\") returns the bare value 0.9048…."
+  },
+  {
+   "id": "S8a-092",
+   "conforms": true,
+   "evidence": "src/library.jl:115,167,191,… declare `x_init(::Junction) = nothing` and similar, and test/fixtures.jl:334 has `s_init(::DiscreteMap) = nothing`. Probe P092: a continuous `x_init(::Stateless) = nothing` primitive runs (y=2.0), and DiscreteMap with s_init = nothing builds."
+  },
+  {
+   "id": "S8a-102",
+   "conforms": true,
+   "evidence": "src/declare.jl:131-150: ws_init(c, ::Type{T}) allocates the workspace, and the framework never reads or writes its contents. src/build.jl:1059 allocates by calling it. ws_init is the one declaration with no by-value form."
+  },
+  {
+   "id": "S8a-112",
+   "conforms": true,
+   "evidence": "Probe P112 uses test/fixtures.jl:345-364 Smoother, with in-place math on ws.tmp and an SVector snapshot returned into s. state(sim, \"sm\") is @NamedTuple{v::SVector{2,Float64}}, isbits=true. @ballocated of phase_bodies(sim).ticks is 0 bytes both for body() and for body(1). test/test_store.jl:199-209 asserts the same."
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S8a_v/probe.jl, run twice against W at 72b12836. The first run stopped on a wiring error in my own probe (DiscreteMap's input was unfed); the second ran clean. No tracked file was edited and nothing was committed. One non-conformance: S8a-039, where the spec's quoted DeclarationShadowed message does not match the code's template. S8a-011 and S8a-017 conform in substance. Their wording ('NamedTuple-type check', 'key set is its contract's') does not cover the bare forms of D-436/D-437/D-438; the notes flag this for the coordinator in case the audit wants that tightened."
+}

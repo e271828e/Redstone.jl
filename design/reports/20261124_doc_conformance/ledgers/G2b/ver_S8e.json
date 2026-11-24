@@ -1,0 +1,112 @@
+{
+ "judgments": [
+  {
+   "id": "S8e-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:513 `sample_times(::Any) = (;)` is the one rate declaration, read per assembly at src/structure.jl:584 and applied per child at src/structure.jl:590-592; probe S8e-066 section: nested Group sample_times produce rows fcs/inner (2,0), fcs/outer (10,1)."
+  },
+  {
+   "id": "S8e-011",
+   "conforms": true,
+   "evidence": "src/structure.jl:328-330 records RatesViolation :value_vocabulary for any non-wrapper value; probe: `sample_times = (; c = 1//2)` and `(; c = 2)` both raise RatesViolation reason=value_vocabulary, message 'a bare integer or a bare rational is a declaration error (§8.7)'."
+  },
+  {
+   "id": "S8e-021",
+   "conforms": true,
+   "evidence": "src/structure.jl:596-600 pushes RatesViolation :continuous_child when a keyed child classifies CONTINUOUS; probe: Group((; c = Gain(1.0)); sample_times = (; c = Relative(2))) raises RatesViolation reason=continuous_child."
+  },
+  {
+   "id": "S8e-032",
+   "conforms": true,
+   "evidence": "src/declare.jl:479-484, the `Absolute(::Real, ::Real)` fallback throws ArgumentInvalid :inexact for any real that is neither an Integer nor a Rational{<:Integer}; probe: Absolute(0.02), Absolute(π), Absolute(big\"0.5\") give :inexact naming `Absolute(1//50)` for 50 Hz; a float or π offset gives :inexact naming `Absolute(1//50, 1//500)`; Absolute(Int8(1)//Int8(50)) is taken at its value."
+  },
+  {
+   "id": "S8e-041",
+   "conforms": true,
+   "evidence": "src/declare.jl:439-441 throws :not_a_count for any non-Integer real; src/diagnostics.jl:2374-2377 renders one message for all of them, naming `Absolute(1//100)`; probe: Relative(0.5), Relative(1//2), Relative(2.0), Relative(2//1), Relative(2, 1//2) and Relative(π) all give :not_a_count with 'Absolute' in the message."
+  },
+  {
+   "id": "S8e-050",
+   "conforms": true,
+   "evidence": "src/declare.jl:489-513, sample_times is a method on the assembly, and its docstring says the rates belong to the assembly type. A child carries no rate: no Subsampled-style wrapper exists in src, and src/structure.jl:584 reads the declaration off the enclosing assembly. The one per-instance holder is Group's ad-hoc field (src/assembly.jl:877, 981). It is still the assembly's declaration, never the child's."
+  },
+  {
+   "id": "S8e-066",
+   "conforms": true,
+   "evidence": "src/deployment.jl:586-597 raises GridUtilization, severity :warning (src/diagnostics.jl:1499-1508), on the derivation path. Probe: anchored scope fcs = Absolute(1//250) with inner Relative(1) derives Δt_base 1//250 and warns nothing. fcs = Absolute(1//500) with inner Relative(2) derives 1//500 and warns GridUtilization ('grid is 2× finer than the fastest declared work'), a warning and no error.",
+   "note": "The report fires only when the scope is anchored and Δt_base is derived, as D-187 makes the advisory derivation-path only. In the section's own example, which is relative-only at a given Δt_base = 2 ms, the probe shows no warning and the grid report holds no anchor. The §9.2 cross-reference carries that condition, but a qualifier such as 'when Δt_base is derived' would make §8.7 self-contained."
+  },
+  {
+   "id": "S8e-075",
+   "conforms": true,
+   "evidence": "src/declare.jl:874 adds :Δt to every discrete-tier bundle and to no continuous one; src/executor.jl:139 fills it from the entry. Probe: a discrete leaf under Relative(3) at Δt_frame = 1//100 reads Δt = 0.03 in y_state, y_direct and s_update. bundle_names(y_state, Plant(), CONTINUOUS, ()) == (:x, :t)."
+  },
+  {
+   "id": "S8e-084",
+   "conforms": true,
+   "evidence": "src/assembly.jl:543-550 defines input_passthrough in the framework, and docs/src/api.md:51 lists it; probe: input_passthrough(g, \"integrator\") == (\"integrator.u\" => \"integrator/u\",)."
+  },
+  {
+   "id": "S8e-087",
+   "conforms": true,
+   "evidence": "No function named declaration_error exists in src. Its two sketched shapes map onto the two throws in src/assembly.jl:620-631: UnknownFaceSelection reason :multiple_selectors, and reason :unknown_names with names and candidates (the did-you-mean against the face list).",
+   "note": "Read as a sketch stand-in, as spec_rules.md:79-80 allows ('sketches may be simplified'). The (path, why) shape omits the selectors-given payload that the real :multiple_selectors diagnostic carries. If the audit reads the line as naming a real function, the fix is to replace the two declaration_error lines with `throw(DiagnosticError(UnknownFaceSelection(...)))` comments."
+  },
+  {
+   "id": "S8e-096",
+   "conforms": true,
+   "evidence": "src/assembly.jl:636-641 calls _warn!(EmptyFaceSelection(...)) when one selector is given and nothing is kept; severity :warning at src/diagnostics.jl:755. Probe: select = _ -> false and except = (\"a\",\"b\") each leave one EmptyFaceSelection, severity :warning, on warnings(build). A bare call keeps nothing silently."
+  },
+  {
+   "id": "S8e-110",
+   "conforms": true,
+   "evidence": "src/assembly.jl:603 `_labelled(prefix, sep, n) = isempty(prefix) ? String(n) : ...`; probe: input_passthrough(g, \"integrator\"; prefix = \"\") == (\"u\" => \"integrator/u\",) and output_passthrough(...; prefix = \"\") == (\"integrator/y\" => \"y\",)."
+  },
+  {
+   "id": "S8e-119",
+   "conforms": true,
+   "evidence": "src/assembly.jl:616-623 counts the given selectors and throws when more than one is given; probe: every pair (except+only, except+select, only+select) raises UnknownFaceSelection :multiple_selectors, and output_passthrough does too."
+  },
+  {
+   "id": "S8e-122",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:738-740: the :multiple_selectors message reads \"`input_passthrough` at `s`: `except`, `only` were given together — the three selectors are exclusive, one per call, and a second rule takes a second call (§8.8)\" (probe). The quoted text 'more than one selector given' never appears in src, and git log -S on src finds no commit that ever held it.",
+   "class": "deviation",
+   "fix": "More than one selector given is `UnknownFaceSelection` with reason `:multiple_selectors`, its message naming the selectors given together and stating that the three are exclusive, one per call, its payload naming the selectors given.",
+   "clear": true,
+   "backing_entry": "",
+   "note": "spec_rules.md:89-90 says quoted diagnostic messages stay verbatim, so the quotation reads as message text. Appendix C (spec.md:15595) uses the same phrase only as a gloss of the reason, which is accurate."
+  },
+  {
+   "id": "S8e-129",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:746-753, EmptyFaceSelection carries who, path, selector, names and candidates, filled at src/assembly.jl:638-640. Probe: (input_passthrough, \"s\", :except, [\"a\",\"b\"], [\"a\",\"b\"]) and (input_passthrough, \"s\", :select, [], [\"a\",\"b\"]). A select carries no names."
+  },
+  {
+   "id": "S8e-131",
+   "conforms": false,
+   "evidence": "src/assembly.jl:633-636: '`only` cannot reach here — a non-empty `only` of known names keeps them all' (also src/diagnostics.jl:749-750). Probe: only = (\"a\",\"b\") and only = (\"a\",) raise no EmptyFaceSelection. An empty only counts as no selector. The code has held this since 97c63804, the commit that implemented D-251.",
+   "class": "deviation",
+   "fix": "An `except` may list every face, or a `select` may match none. An `only` passes the unknown-names check only by naming faces that exist, and it then keeps them all, so it never raises the warning.",
+   "clear": true,
+   "backing_entry": "D-251",
+   "note": "D-251's rationale (log.md:10421-10423) carries the same garbled clause, '`only` naming faces that exist but a `select` that matches none', which the spec copies. The entry's Position never rules that `only` can warn."
+  },
+  {
+   "id": "S8e-139",
+   "conforms": true,
+   "evidence": "src/assembly.jl:594-596, output_passthrough takes the same sep and prefix keywords with the same folded default; probe: output_passthrough(g, \"integrator\"; prefix = \"env\", sep = \"_\") == (\"integrator/y\" => \"env_y\",)."
+  },
+  {
+   "id": "S8e-153",
+   "conforms": true,
+   "evidence": "input_wires, output_wires and local_wires are generic methods evaluated at build against the instance (src/declare.jl:749 lists them as declarations; src/structure.jl:602-605 reads the boundary declarations after the children walk). test/test_assembly.jl:1182-1183 computes except from a feed list inside input_wires."
+  },
+  {
+   "id": "S8e-167",
+   "conforms": true,
+   "evidence": "Probe: GWorld with field `aircraft::AbstractComponent` holding a TickCounter and `local_wires = (\"aircraft/pose\" => \"sink/e\",)` raises UnknownPort with entry 'local_wires at the root component, entry `\"aircraft/pose\" => \"sink/e\"`', message '... names no `pose` on `aircraft` — its faces are n, even' (src/diagnostics.jl:375-395)."
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S8e_v/probe.jl. It was run against W (/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance, 72b12836), and every section ran cleanly. Only the last line, a control build of a generic World with a concrete child that has the face, failed: that child's own input was left unconnected, and nothing in the judgments rests on that line. Two claims do not conform. S8e-122: the spec quotes a message the code never had. S8e-131: an `only` can never raise EmptyFaceSelection, and the spec copies D-251's garbled rationale clause. Two claims conform with a caveat. S8e-066 holds only on the derivation path with an anchored scope, and the section's own relative-only example triggers nothing. S8e-087 holds read as a sketch: no `declaration_error` function exists. No tracked file was edited."
+}

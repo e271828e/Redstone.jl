@@ -1,0 +1,929 @@
+{
+ "rows": [
+  {
+   "id": "S8a-017",
+   "file": "design/spec.md",
+   "line": 2557,
+   "kind": "law",
+   "claim": "A component's bundle key set is its contract's key set",
+   "evidence": "src/declare.jl:855-880 bundle_names yields x/m/s/u/y_x/y_s/y/ws/t/Δt, not the port names; contract keys appear only as the key sets of the u and y fields (probe:61-64)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A component's bundle is the NamedTuple of views a component function receives, and the key sets of its `u` and `y` fields are its contract's.",
+   "note": "Loose wording; low severity."
+  },
+  {
+   "id": "S8a-039",
+   "file": "design/spec.md",
+   "line": 2621,
+   "kind": "law",
+   "claim": "DeclarationShadowed message reads \"`MyEngine`'s module defines its own `x_deriv`, distinct from `Redstone.x_deriv`; add `import Redstone: x_deriv`\"",
+   "evidence": "src/diagnostics.jl:574-579; probe:217 prints: the root component: its module `Main.MyEngineMod` defines its own `x_deriv`, distinct from `Redstone.x_deriv`; add `import Redstone: x_deriv` (§8.1)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Its message reads \"the root component: its module `MyEngineMod` defines its own `x_deriv`, distinct from `Redstone.x_deriv`; add `import Redstone: x_deriv` (§8.1)\", where the subject is the component's path (or `the root component`) and the module is named by its full path; with several foreign names it reads \"distinct from `Redstone`'s\" and lists the names in the import."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S8a-001",
+   "file": "design/spec.md",
+   "line": 2489,
+   "kind": "law",
+   "claim": "Stage functions are ordinary multiple-dispatch methods",
+   "evidence": "probe:33-48"
+  },
+  {
+   "id": "S8a-002",
+   "file": "design/spec.md",
+   "line": 2491,
+   "kind": "decl",
+   "claim": "y_state and y_direct are the two output stages on either tier",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "S8a-003",
+   "file": "design/spec.md",
+   "line": 2493,
+   "kind": "ptr",
+   "claim": "lead GUI.draw! is prior art (FlightCore style), not a Redstone name",
+   "evidence": "prior art; no code claim (rg finds no GUI.draw! in src)"
+  },
+  {
+   "id": "S8a-004",
+   "file": "design/spec.md",
+   "line": 2495,
+   "kind": "decl",
+   "claim": "Structural facts are declared by well-known functions returning plain values",
+   "evidence": "probe:33-37"
+  },
+  {
+   "id": "S8a-005",
+   "file": "design/spec.md",
+   "line": 2508,
+   "kind": "law",
+   "claim": "No macro DSL: authoring needs no macro",
+   "evidence": "src/declare.jl:746; probe:33-57 (no macro defined in src)"
+  },
+  {
+   "id": "S8a-006",
+   "file": "design/spec.md",
+   "line": 2512,
+   "kind": "law",
+   "claim": "Declaration/body inconsistency fails at build, or at first execution",
+   "evidence": "src/build.jl:1136"
+  },
+  {
+   "id": "S8a-007",
+   "file": "design/spec.md",
+   "line": 2528,
+   "kind": "law",
+   "claim": "Evaluation is checked against declarations, never the reverse",
+   "evidence": "src/build.jl:1136-1139"
+  },
+  {
+   "id": "S8a-008",
+   "file": "design/spec.md",
+   "line": 2531,
+   "kind": "mech",
+   "claim": "Build probes user functions with real values, one evaluation each, result not published",
+   "evidence": "src/build.jl:1100-1160"
+  },
+  {
+   "id": "S8a-009",
+   "file": "design/spec.md",
+   "line": 2532,
+   "kind": "mech",
+   "claim": "Probing does not rely on compiler inference",
+   "evidence": "src/structure.jl:524 (@nospecializeinfer); src/build.jl:1136"
+  },
+  {
+   "id": "S8a-010",
+   "file": "design/spec.md",
+   "line": 2533,
+   "kind": "mech",
+   "claim": "The probe compares observed against declared",
+   "evidence": "src/build.jl:84"
+  },
+  {
+   "id": "S8a-011",
+   "file": "design/spec.md",
+   "line": 2534,
+   "kind": "mech",
+   "claim": "The comparison reruns on every evaluation as a NamedTuple-type check decided at generation",
+   "evidence": "src/store.jl:106-125"
+  },
+  {
+   "id": "S8a-012",
+   "file": "design/spec.md",
+   "line": 2544,
+   "kind": "law",
+   "claim": "Contract declarations are determined by the type, read once at nominal Float64",
+   "evidence": "src/declare.jl:849-853"
+  },
+  {
+   "id": "S8a-013",
+   "file": "design/spec.md",
+   "line": 2546,
+   "kind": "decl",
+   "claim": "Contract declarations are u_types, y_types, state_events and the x/s/m_init shapes",
+   "evidence": "src/declare.jl:746"
+  },
+  {
+   "id": "S8a-014",
+   "file": "design/spec.md",
+   "line": 2549,
+   "kind": "law",
+   "claim": "u_types takes the component alone",
+   "evidence": "probe:34; src/assembly.jl:28-45"
+  },
+  {
+   "id": "S8a-015",
+   "file": "design/spec.md",
+   "line": 2551,
+   "kind": "ex",
+   "claim": "SumJunction{V,N} and Or{N} spell arity in the type",
+   "evidence": "src/library.jl:60 and src/library.jl:75"
+  },
+  {
+   "id": "S8a-016",
+   "file": "design/spec.md",
+   "line": 2556,
+   "kind": "mech",
+   "claim": "Bundle is a NamedTuple a component function receives",
+   "evidence": "src/build.jl:96 (NamedTuple{bundle_fields}(field_values))"
+  },
+  {
+   "id": "S8a-018",
+   "file": "design/spec.md",
+   "line": 2558,
+   "kind": "mech",
+   "claim": "Executor entry holds code-selecting info in type parameters, plain data in fields",
+   "evidence": "src/executor.jl:65; src/store.jl:14-15 (CellAddr{P,K} with offsets field)"
+  },
+  {
+   "id": "S8a-019",
+   "file": "design/spec.md",
+   "line": 2567,
+   "kind": "mech",
+   "claim": "Build reads each declaration once against the concrete instance",
+   "evidence": "src/build.jl:1043-1046; src/assembly.jl:668"
+  },
+  {
+   "id": "S8a-020",
+   "file": "design/spec.md",
+   "line": 2568,
+   "kind": "law",
+   "claim": "A value-dependent contract is not detectable; it is an author rule, not a build check",
+   "evidence": "src/declare.jl:849-853 (no check of this kind in src)"
+  },
+  {
+   "id": "S8a-021",
+   "file": "design/spec.md",
+   "line": 2571,
+   "kind": "law",
+   "claim": "ws_init is the one declaration taking the scalar T",
+   "evidence": "src/declare.jl:131-150; src/build.jl:1059"
+  },
+  {
+   "id": "S8a-022",
+   "file": "design/spec.md",
+   "line": 2572,
+   "kind": "mech",
+   "claim": "ws_init is an allocator the framework calls",
+   "evidence": "src/build.jl:1052-1060"
+  },
+  {
+   "id": "S8a-023",
+   "file": "design/spec.md",
+   "line": 2574,
+   "kind": "ex",
+   "claim": "ws_init(c::KF, ::Type{T}) reads c.n",
+   "evidence": "probe:158-162,166"
+  },
+  {
+   "id": "S8a-024",
+   "file": "design/spec.md",
+   "line": 2579,
+   "kind": "law",
+   "claim": "Authoring adds methods to framework-owned generic functions",
+   "evidence": "probe:33; src/declare.jl:746"
+  },
+  {
+   "id": "S8a-025",
+   "file": "design/spec.md",
+   "line": 2583,
+   "kind": "law",
+   "claim": "Extension works by per-name import or qualified Redstone.f definition",
+   "evidence": "probe:255-259 builds; probe:217 shows the bare using definition does not extend"
+  },
+  {
+   "id": "S8a-026",
+   "file": "design/spec.md",
+   "line": 2584,
+   "kind": "ex",
+   "claim": "Qualified Redstone.x_deriv(...) = ... defines a Redstone method",
+   "evidence": "probe:257-259"
+  },
+  {
+   "id": "S8a-027",
+   "file": "design/spec.md",
+   "line": 2586,
+   "kind": "decl",
+   "claim": "The import list names the 18 family names in that order",
+   "evidence": "src/declare.jl:746-750"
+  },
+  {
+   "id": "S8a-028",
+   "file": "design/spec.md",
+   "line": 2596,
+   "kind": "law",
+   "claim": "After a bare using, x_deriv(::C,...) = ... defines a new unrelated module function, silently",
+   "evidence": "probe:210,215,217"
+  },
+  {
+   "id": "S8a-029",
+   "file": "design/spec.md",
+   "line": 2597,
+   "kind": "law",
+   "claim": "The declarations are unexported",
+   "evidence": "src/Redstone.jl:1-30 (no export); probe:215 (names(Redstone) empty)"
+  },
+  {
+   "id": "S8a-030",
+   "file": "design/spec.md",
+   "line": 2598,
+   "kind": "law",
+   "claim": "A bare using brings no declaration name into scope",
+   "evidence": "probe:215"
+  },
+  {
+   "id": "S8a-031",
+   "file": "design/spec.md",
+   "line": 2602,
+   "kind": "mech",
+   "claim": "Without the check, a shadowed x_deriv reports StoreWithoutUpdate",
+   "evidence": "probe:245-247"
+  },
+  {
+   "id": "S8a-032",
+   "file": "design/spec.md",
+   "line": 2605,
+   "kind": "mech",
+   "claim": "Without the check, a wholly shadowed inventory reports ClassUnreadable",
+   "evidence": "probe:230-231"
+  },
+  {
+   "id": "S8a-034",
+   "file": "design/spec.md",
+   "line": 2614,
+   "kind": "law",
+   "claim": "The structure walk runs the shadowing check on every component before reading its class",
+   "evidence": "src/structure.jl:534-538"
+  },
+  {
+   "id": "S8a-035",
+   "file": "design/spec.md",
+   "line": 2617,
+   "kind": "mech",
+   "claim": "Check looks for a family-name binding in the component's parent module",
+   "evidence": "src/declare.jl:757-762"
+  },
+  {
+   "id": "S8a-036",
+   "file": "design/spec.md",
+   "line": 2618,
+   "kind": "law",
+   "claim": "A module binding distinct from the framework's function throws DeclarationShadowed",
+   "evidence": "src/structure.jl:535; probe:217"
+  },
+  {
+   "id": "S8a-037",
+   "file": "design/spec.md",
+   "line": 2619,
+   "kind": "law",
+   "claim": "The throw is DeclarationShadowed alone",
+   "evidence": "src/structure.jl:535-537; probe:217 (n=1)"
+  },
+  {
+   "id": "S8a-038",
+   "file": "design/spec.md",
+   "line": 2620,
+   "kind": "law",
+   "claim": "Diagnostic names the module, the foreign names and the missing import",
+   "evidence": "src/diagnostics.jl:574-579"
+  },
+  {
+   "id": "S8a-040",
+   "file": "design/spec.md",
+   "line": 2624,
+   "kind": "mech",
+   "claim": "The check is an isdefined/!== test on the names",
+   "evidence": "src/declare.jl:759-762"
+  },
+  {
+   "id": "S8a-041",
+   "file": "design/spec.md",
+   "line": 2629,
+   "kind": "law",
+   "claim": "The check runs on every component, optional declarations included",
+   "evidence": "src/structure.jl:534; src/declare.jl:746-750; probe:272 (state_events shadow refused)"
+  },
+  {
+   "id": "S8a-043",
+   "file": "design/spec.md",
+   "line": 2638,
+   "kind": "law",
+   "claim": "A definition in local scope binds a new local function, not a global method",
+   "evidence": "probe:279-283"
+  },
+  {
+   "id": "S8a-044",
+   "file": "design/spec.md",
+   "line": 2641,
+   "kind": "law",
+   "claim": "Calls inside the block resolve to the local function and look correct",
+   "evidence": "probe:281-283"
+  },
+  {
+   "id": "S8a-045",
+   "file": "design/spec.md",
+   "line": 2653,
+   "kind": "law",
+   "claim": "The shadowing check cannot reach the local-scope case",
+   "evidence": "probe:284 (build passes the check, fails on TierUnreadable)"
+  },
+  {
+   "id": "S8a-046",
+   "file": "design/spec.md",
+   "line": 2656,
+   "kind": "law",
+   "claim": "A component declaring nothing and defining no stage is rejected at build",
+   "evidence": "probe:285-286"
+  },
+  {
+   "id": "S8a-047",
+   "file": "design/spec.md",
+   "line": 2658,
+   "kind": "law",
+   "claim": "The refusal is ClassUnreadable",
+   "evidence": "src/assembly.jl:66; probe:286"
+  },
+  {
+   "id": "S8a-049",
+   "file": "design/spec.md",
+   "line": 2662,
+   "kind": "law",
+   "claim": "Declarations live at module top level",
+   "evidence": "probe:279-284 (local definitions are not seen by the build)"
+  },
+  {
+   "id": "S8a-050",
+   "file": "design/spec.md",
+   "line": 2665,
+   "kind": "law",
+   "claim": "With a stage shadowed locally, y_types still counts as a declaration",
+   "evidence": "src/assembly.jl:28-31; probe:284 (TierUnreadable, not ClassUnreadable)"
+  },
+  {
+   "id": "S8a-051",
+   "file": "design/spec.md",
+   "line": 2666,
+   "kind": "law",
+   "claim": "Declared ports with a locally shadowed stage read as declared but not produced",
+   "evidence": "probe:287-290 (DeclaredNotProduced)"
+  },
+  {
+   "id": "S8a-052",
+   "file": "design/spec.md",
+   "line": 2668,
+   "kind": "mech",
+   "claim": "An optional declaration shadowed locally drops its feature silently",
+   "evidence": "src/declare.jl:757-762 (module-scope check only); src/assembly.jl:28-45"
+  },
+  {
+   "id": "S8a-054",
+   "file": "design/spec.md",
+   "line": 2676,
+   "kind": "decl",
+   "claim": "Declarations are noun phrases prefixed by the bundle field they define",
+   "evidence": "probe:33-37 (x_init, u_types, y_types, state_events)"
+  },
+  {
+   "id": "S8a-055",
+   "file": "design/spec.md",
+   "line": 2678,
+   "kind": "decl",
+   "claim": "An assembly's three connection declarations are local_wires, input_wires, output_wires",
+   "evidence": "src/assembly.jl:22-24"
+  },
+  {
+   "id": "S8a-056",
+   "file": "design/spec.md",
+   "line": 2681,
+   "kind": "decl",
+   "claim": "claims(b) is part of the binding interface",
+   "evidence": "src/bindings.jl:94"
+  },
+  {
+   "id": "S8a-058",
+   "file": "design/spec.md",
+   "line": 2686,
+   "kind": "decl",
+   "claim": "Value selectors carry get_ (get_state, get_input...)",
+   "evidence": "src/readers.jl:188; lead `get_` is the prefix"
+  },
+  {
+   "id": "S8a-059",
+   "file": "design/spec.md",
+   "line": 2696,
+   "kind": "law",
+   "claim": "A stage name states its feedthrough split, not its arguments",
+   "evidence": "src/declare.jl:855-880"
+  },
+  {
+   "id": "S8a-060",
+   "file": "design/spec.md",
+   "line": 2697,
+   "kind": "law",
+   "claim": "y_state reads m as well as x",
+   "evidence": "probe:61 (bundle (:x,:m,:t))"
+  },
+  {
+   "id": "S8a-061",
+   "file": "design/spec.md",
+   "line": 2698,
+   "kind": "law",
+   "claim": "t, Δt and ws are in the bundle without being named in the stage",
+   "evidence": "src/declare.jl:872-878"
+  },
+  {
+   "id": "S8a-063",
+   "file": "design/spec.md",
+   "line": 2703,
+   "kind": "decl",
+   "claim": "claims and reads are binding methods naming the claim set and read set",
+   "evidence": "src/bindings.jl:94; src/roster.jl:167"
+  },
+  {
+   "id": "S8a-064",
+   "file": "design/spec.md",
+   "line": 2705,
+   "kind": "law",
+   "claim": "exports is retired: no such function exists",
+   "evidence": "rg `exports` in src finds only prose (lead ok: retired name)"
+  },
+  {
+   "id": "S8a-065",
+   "file": "design/spec.md",
+   "line": 2706,
+   "kind": "decl",
+   "claim": "input_wires and output_wires exist as declarations",
+   "evidence": "src/assembly.jl:22-24"
+  },
+  {
+   "id": "S8a-066",
+   "file": "design/spec.md",
+   "line": 2706,
+   "kind": "decl",
+   "claim": "input_passthrough is a helper the author calls",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "S8a-070",
+   "file": "design/spec.md",
+   "line": 2719,
+   "kind": "ex",
+   "claim": "Engine example builds, runs and has three events with Bool and sign-form guards",
+   "evidence": "probe:57-66,68-80; src/build.jl:1287-1288"
+  },
+  {
+   "id": "S8a-071",
+   "file": "design/spec.md",
+   "line": 2736,
+   "kind": "ex",
+   "claim": "Engine bundles: y_direct sees x,m,u; x_deriv sees x,y,u; handler without x key does not reset",
+   "evidence": "probe:61-64"
+  },
+  {
+   "id": "S8a-072",
+   "file": "design/spec.md",
+   "line": 2763,
+   "kind": "law",
+   "claim": "Every structural declaration but ws_init takes the component alone",
+   "evidence": "src/declare.jl:131-150; probe:33-37"
+  },
+  {
+   "id": "S8a-073",
+   "file": "design/spec.md",
+   "line": 2766,
+   "kind": "law",
+   "claim": "State leaves follow the activation scalar (x_init leaves are Float64)",
+   "evidence": "src/assembly.jl:674-686"
+  },
+  {
+   "id": "S8a-074",
+   "file": "design/spec.md",
+   "line": 2770,
+   "kind": "law",
+   "claim": "Partials enter through per-invocation seeding, not initialization",
+   "evidence": "src/linearize.jl:1-26; src/model.jl:136-158"
+  },
+  {
+   "id": "S8a-075",
+   "file": "design/spec.md",
+   "line": 2774,
+   "kind": "decl",
+   "claim": "Pinned{P} at a leaf yields P at every activation",
+   "evidence": "src/leaves.jl:298; probe:151-155"
+  },
+  {
+   "id": "S8a-076",
+   "file": "design/spec.md",
+   "line": 2776,
+   "kind": "law",
+   "claim": "u_types and y_types take the component alone",
+   "evidence": "probe:34-35"
+  },
+  {
+   "id": "S8a-077",
+   "file": "design/spec.md",
+   "line": 2780,
+   "kind": "law",
+   "claim": "ws_init(c,T) takes T on both tiers",
+   "evidence": "src/build.jl:1059; src/declare.jl:131"
+  },
+  {
+   "id": "S8a-078",
+   "file": "design/spec.md",
+   "line": 2782,
+   "kind": "mech",
+   "claim": "ws_init result arrives as the ws bundle field",
+   "evidence": "src/declare.jl:872-878; probe:164-173 (ws used in s_update)"
+  },
+  {
+   "id": "S8a-080",
+   "file": "design/spec.md",
+   "line": 2791,
+   "kind": "decl",
+   "claim": "x_init continuous, s_init discrete, m_init modes declare by initial value",
+   "evidence": "src/declare.jl:42,78,104"
+  },
+  {
+   "id": "S8a-081",
+   "file": "design/spec.md",
+   "line": 2792,
+   "kind": "law",
+   "claim": "The store type is derived from the value",
+   "evidence": "src/build.jl:1043; probe:57"
+  },
+  {
+   "id": "S8a-082",
+   "file": "design/spec.md",
+   "line": 2793,
+   "kind": "decl",
+   "claim": "Value is a NamedTuple with one field per leaf or one bare leaf",
+   "evidence": "src/assembly.jl:668"
+  },
+  {
+   "id": "S8a-083",
+   "file": "design/spec.md",
+   "line": 2795,
+   "kind": "law",
+   "claim": "A bare store's field is the declaration's letter x, s or m",
+   "evidence": "src/declare.jl:45-60,89,115; probe:86-94"
+  },
+  {
+   "id": "S8a-084",
+   "file": "design/spec.md",
+   "line": 2797,
+   "kind": "law",
+   "claim": "A non-NamedTuple return is read as one leaf",
+   "evidence": "src/assembly.jl:668 (store_fields/_keyed)"
+  },
+  {
+   "id": "S8a-085",
+   "file": "design/spec.md",
+   "line": 2799,
+   "kind": "ex",
+   "claim": "Integrator named (q = c.x0,) and bare c.x0 forms both build",
+   "evidence": "probe:75-94"
+  },
+  {
+   "id": "S8a-086",
+   "file": "design/spec.md",
+   "line": 2804,
+   "kind": "law",
+   "claim": "Named form: services reach a leaf by field name (condition, get_state)",
+   "evidence": "probe:90-94 (IntN)"
+  },
+  {
+   "id": "S8a-087",
+   "file": "design/spec.md",
+   "line": 2807,
+   "kind": "law",
+   "claim": "Bare form: leaf is field x, reached by name or headless spelling",
+   "evidence": "probe:90-94 (IntB: at(...,set(x=1.0)), get_state(\"integrator\"))"
+  },
+  {
+   "id": "S8a-088",
+   "file": "design/spec.md",
+   "line": 2810,
+   "kind": "mech",
+   "claim": "Structure step reads each store's shape before its value",
+   "evidence": "src/structure.jl:538-546"
+  },
+  {
+   "id": "S8a-089",
+   "file": "design/spec.md",
+   "line": 2811,
+   "kind": "law",
+   "claim": "Every return is held to its declared shape",
+   "evidence": "src/build.jl:1672,1708,1222"
+  },
+  {
+   "id": "S8a-090",
+   "file": "design/spec.md",
+   "line": 2813,
+   "kind": "law",
+   "claim": "A bare x may sit beside a named m",
+   "evidence": "probe:97-104"
+  },
+  {
+   "id": "S8a-091",
+   "file": "design/spec.md",
+   "line": 2815,
+   "kind": "law",
+   "claim": "Every primitive declares exactly one of x_init and s_init; both is refused",
+   "evidence": "src/assembly.jl:725-745; probe:141-146 (DeclarationOnWrongTier)"
+  },
+  {
+   "id": "S8a-092",
+   "file": "design/spec.md",
+   "line": 2816,
+   "kind": "law",
+   "claim": "A stateless primitive declares the store as nothing",
+   "evidence": "probe:107-118"
+  },
+  {
+   "id": "S8a-093",
+   "file": "design/spec.md",
+   "line": 2819,
+   "kind": "ex",
+   "claim": "x_init(::Gain)=nothing and s_init(::Sampler)=nothing build",
+   "evidence": "probe:108-118"
+  },
+  {
+   "id": "S8a-094",
+   "file": "design/spec.md",
+   "line": 2823,
+   "kind": "law",
+   "claim": "The state declaration is the tier marker, mandatory even when empty",
+   "evidence": "src/assembly.jl:725-745; probe:119-123"
+  },
+  {
+   "id": "S8a-095",
+   "file": "design/spec.md",
+   "line": 2826,
+   "kind": "law",
+   "claim": "A primitive declaring neither store is TierUnreadable",
+   "evidence": "src/assembly.jl:735; probe:123"
+  },
+  {
+   "id": "S8a-096",
+   "file": "design/spec.md",
+   "line": 2827,
+   "kind": "law",
+   "claim": "TierUnreadable message spells the stateless form",
+   "evidence": "src/diagnostics.jl:874-878"
+  },
+  {
+   "id": "S8a-097",
+   "file": "design/spec.md",
+   "line": 2828,
+   "kind": "law",
+   "claim": "(;) is refused as EmptyStore with a message naming nothing",
+   "evidence": "src/assembly.jl:692; src/diagnostics.jl:941-945; probe:124-128"
+  },
+  {
+   "id": "S8a-098",
+   "file": "design/spec.md",
+   "line": 2830,
+   "kind": "law",
+   "claim": "m_init falls back to nothing when undeclared",
+   "evidence": "src/declare.jl:127; probe:135"
+  },
+  {
+   "id": "S8a-099",
+   "file": "design/spec.md",
+   "line": 2831,
+   "kind": "law",
+   "claim": "A stateless declaration owes no update law",
+   "evidence": "probe:112,118"
+  },
+  {
+   "id": "S8a-100",
+   "file": "design/spec.md",
+   "line": 2833,
+   "kind": "law",
+   "claim": "A stateless declaration puts no letter in the bundle",
+   "evidence": "probe:113"
+  },
+  {
+   "id": "S8a-101",
+   "file": "design/spec.md",
+   "line": 2838,
+   "kind": "law",
+   "claim": "A state declaration lost to local scope/forgotten import fails loud as no declaration",
+   "evidence": "probe:123 (TierUnreadable)"
+  },
+  {
+   "id": "S8a-102",
+   "file": "design/spec.md",
+   "line": 2843,
+   "kind": "law",
+   "claim": "A workspace is declared by allocation, not initial value",
+   "evidence": "src/build.jl:1052-1060"
+  },
+  {
+   "id": "S8a-103",
+   "file": "design/spec.md",
+   "line": 2847,
+   "kind": "ex",
+   "claim": "KF ws_init example allocates P and x̂ with undef",
+   "evidence": "probe:158-162,166"
+  },
+  {
+   "id": "S8a-104",
+   "file": "design/spec.md",
+   "line": 2852,
+   "kind": "law",
+   "claim": "ws_init(::C,::Type{T}) takes the scalar on both tiers",
+   "evidence": "src/build.jl:1059; probe:166-180"
+  },
+  {
+   "id": "S8a-105",
+   "file": "design/spec.md",
+   "line": 2854,
+   "kind": "law",
+   "claim": "A discrete allocator receives Float64 at every activation",
+   "evidence": "src/build.jl:1059; src/conditions.jl:665; probe:176-180"
+  },
+  {
+   "id": "S8a-106",
+   "file": "design/spec.md",
+   "line": 2866,
+   "kind": "law",
+   "claim": "Nothing downstream derives from the type of ws_init's return",
+   "evidence": "src/build.jl:1052-1060; src/declare.jl:878"
+  },
+  {
+   "id": "S8a-107",
+   "file": "design/spec.md",
+   "line": 2865,
+   "kind": "law",
+   "claim": "Framework never poisons or mutates workspace contents",
+   "evidence": "src/build.jl:1052-1060 (allocate once, no fill); rg poison finds none in src"
+  },
+  {
+   "id": "S8a-108",
+   "file": "design/spec.md",
+   "line": 2869,
+   "kind": "decl",
+   "claim": "Device contract has init! (establish)",
+   "evidence": "src/devices.jl:113"
+  },
+  {
+   "id": "S8a-109",
+   "file": "design/spec.md",
+   "line": 2876,
+   "kind": "law",
+   "claim": "Overlays fall back to declared values leaf by leaf",
+   "evidence": "src/conditions.jl:572-585"
+  },
+  {
+   "id": "S8a-110",
+   "file": "design/spec.md",
+   "line": 2877,
+   "kind": "mech",
+   "claim": "Compiled store writers bake merge(defaults, overlay)",
+   "evidence": "src/conditions.jl:411,584,782-794"
+  },
+  {
+   "id": "S8a-111",
+   "file": "design/spec.md",
+   "line": 2886,
+   "kind": "mech",
+   "claim": "x_init, s_init, m_init seed the stores",
+   "evidence": "src/build.jl:1043-1046; src/conditions.jl:475"
+  },
+  {
+   "id": "S8a-112",
+   "file": "design/spec.md",
+   "line": 2896,
+   "kind": "law",
+   "claim": "Workspace-plus-snapshot idiom ticks with zero allocation and an immutable s",
+   "evidence": "probe:305-311 (0 bytes)"
+  },
+  {
+   "id": "S8a-113",
+   "file": "design/spec.md",
+   "line": 2900,
+   "kind": "ex",
+   "claim": "KFState(SVector{20}(ws.x̂), SMatrix{20,20}(ws.P)) is an isbits snapshot",
+   "evidence": "probe:199-203"
+  },
+  {
+   "id": "S8a-114",
+   "file": "design/spec.md",
+   "line": 2902,
+   "kind": "law",
+   "claim": "PRNG generator lives in ws, its determining values in s",
+   "evidence": "probe:182-196"
+  },
+  {
+   "id": "S8a-115",
+   "file": "design/spec.md",
+   "line": 2906,
+   "kind": "law",
+   "claim": "The generator (Xoshiro) is mutable",
+   "evidence": "probe:197"
+  },
+  {
+   "id": "S8a-116",
+   "file": "design/spec.md",
+   "line": 2909,
+   "kind": "ex",
+   "claim": "Noise example (load words, randn, snapshot back) builds and runs",
+   "evidence": "probe:182-196"
+  },
+  {
+   "id": "S8a-117",
+   "file": "design/spec.md",
+   "line": 2922,
+   "kind": "law",
+   "claim": "Rematerializing the generator each tick allocates",
+   "evidence": "probe:301,311 (48 bytes)"
+  },
+  {
+   "id": "S8a-118",
+   "file": "design/spec.md",
+   "line": 2923,
+   "kind": "law",
+   "claim": "An out-of-line tail lets the generator escape (allocates)",
+   "evidence": "probe:302-303,311"
+  },
+  {
+   "id": "S8a-119",
+   "file": "design/spec.md",
+   "line": 2550,
+   "kind": "ex",
+   "claim": "lead Engine is the §8.2 example component (defined there)",
+   "evidence": "probe:27-55"
+  },
+  {
+   "id": "S8a-120",
+   "file": "design/spec.md",
+   "line": 2639,
+   "kind": "ex",
+   "claim": "lead MyComp is a placeholder component name",
+   "evidence": "placeholder; probe:277-284 stands in"
+  },
+  {
+   "id": "S8a-121",
+   "file": "design/spec.md",
+   "line": 2621,
+   "kind": "ex",
+   "claim": "lead MyEngine is a placeholder component name",
+   "evidence": "placeholder; probe:208"
+  },
+  {
+   "id": "S8a-122",
+   "file": "design/spec.md",
+   "line": 2639,
+   "kind": "ex",
+   "claim": "lead testset (macro @testset) is test-only, named as the scope where the trap occurs",
+   "evidence": "test-only name; local scope behaves like a function body (probe:279-283)"
+  },
+  {
+   "id": "S8a-123",
+   "file": "design/spec.md",
+   "line": 2662,
+   "kind": "ex",
+   "claim": "lead testset (second mention) test-only, same",
+   "evidence": "test-only name; probe:279-283"
+  }
+ ],
+ "counts": {
+  "law": 78,
+  "mech": 22,
+  "decl": 16,
+  "ptr": 18,
+  "why": 38,
+  "ex": 14,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

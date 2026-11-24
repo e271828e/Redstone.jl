@@ -1,0 +1,149 @@
+{
+ "judgments": [
+  {
+   "id": "S8b-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:185 `u_types(::Any) = NamedTuple()`, read with the component alone on both tiers through contract_at (src/declare.jl:794), walked at Float64 on the continuous tier only; a bare type is the doc's next sentence."
+  },
+  {
+   "id": "S8b-012",
+   "conforms": true,
+   "evidence": "probe.jl:118-119: a FlagPub->FlagIn wire on a StopFlag input below the root builds at (Float64, ProbeDual), and the layout places only output cells [(\"a\", :halt), (\"r\", :stopped)], none for the input. src/leaves.jl:268 says an input port of this type is an ordinary input. The root-input refusal at probe.jl:120 (:stop_flag_at_root) is §13.5's caveat, which the line cross-references."
+  },
+  {
+   "id": "S8b-021",
+   "conforms": true,
+   "evidence": "src/leaves.jl:354/381: an unpinned entry admits the activation scalar or an embedded frozen Float64. probe.jl:123-124: a discrete Float64 producer and a walking producer both feed Gain's unpinned `e`, and both build at (Float64, ProbeDual)."
+  },
+  {
+   "id": "S8b-033",
+   "conforms": true,
+   "evidence": "src/leaves.jl:381 decides an abstract entry by `V <: P || retype(T, V) <: P`. probe.jl:128: producers of F1 and of F2 both build behind one `f = AbsF` entry."
+  },
+  {
+   "id": "S8b-044",
+   "conforms": true,
+   "evidence": "src/leaves.jl:354 `V === Float64 && P === T` embeds a pinned leaf at an unpinned one. probe.jl:132-134: Pinned{Float64} producer -> unpinned entry builds, -> Pinned entry builds, and a walking producer -> Pinned entry gives WalkingFaceAtFrozenEntry."
+  },
+  {
+   "id": "S8b-053",
+   "conforms": true,
+   "evidence": "src/leaves.jl:355 `_opaque(P) && !at_wire && return false`: identity alone only off the wire. probe.jl:138-141: a Pinned{OffsetField} producer and a discrete one feed the unpinned OffsetField entry at D8, with the consumer reading the Float64 handle. A literal handle at a walking port is refused at the store as ConformanceFailure."
+  },
+  {
+   "id": "S8b-062",
+   "conforms": true,
+   "evidence": "probe.jl:145-148: build(single(PinnedState())) succeeds at nominal, and activation(pb, D8) throws ConformanceFailure \"y_state returns `q`::Dual, declared Float64 — if this leaf participates in differentiation, remove its `Pinned`\" (src/diagnostics.jl:1148, src/leaves.jl:364)."
+  },
+  {
+   "id": "S8b-071",
+   "conforms": false,
+   "evidence": "probe.jl:153 (ForwardDiff 1.4.6, probe.jl:158): `retann(x)::SVector{3,Float64}` at a Dual throws `MethodError: no method matching Float64(::ForwardDiff.Dual{...})`, not InexactError. The suite's own Dual sweep expects TypeError/MethodError (test/test_build.jl:2251). D-307 says only that the annotation \"forces a convert\".",
+   "class": "deviation",
+   "fix": "3. No `::SomeType{Float64}` return-type annotations on the continuous path, because they force converts, and `Float64` has no conversion from a `Dual` (a `MethodError`).",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "S8b-073",
+   "conforms": true,
+   "evidence": "src/build.jl:883 reads the entries with declared_at(u_types, …, Float64), and retype_entry strips a top `Pinned` (src/leaves.jl). Only a concrete entry types the root input (src/build.jl:913-918). probe.jl:167/169: root types Float64 for a Pinned{Float64} entry and SVector{2,Float64} for Pinned{SVector{2,Float64}}."
+  },
+  {
+   "id": "S8b-084",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:479-484. probe.jl:173 renders \"root input `terrain` … nothing determines its type; wire `terrain` to a concrete producer — in a test rig, a stub child (§8.2, §13.7)\"."
+  },
+  {
+   "id": "S8b-093",
+   "conforms": true,
+   "evidence": "probe.jl:178: linearize with a tap on root input τ consumed by PinnedGain's Pinned{Float64} entry raises TapResolution :unseedable, naming pinning (\"g\", :continuous, Pinned{Float64}). The same holds at test/test_linearize.jl:414-418."
+  },
+  {
+   "id": "S8b-102",
+   "conforms": true,
+   "evidence": "src/build.jl:530: the root input walks only if every consumer entry accepts the walked type. probe.jl:182/184: at ProbeDual a root input fanned to Gain and PinnedGain is the Float64 0.0, and fanned to two Gains it is the Dual."
+  },
+  {
+   "id": "S8b-111",
+   "conforms": true,
+   "evidence": "probe.jl:188-198: build(BareScale()).structure.root_inputs == [:u]. stage!(sim, \"u\" => 2.0) sets port \"\"/:u to 2.0, the trace schemas are [\"harness\" => [:u]], and attach!(…, Enumerated(\"u\")) records claimedby = Dict(:u => \"device 1 (Pad)\")."
+  },
+  {
+   "id": "S8b-121",
+   "conforms": true,
+   "evidence": "src/build.jl:123 keys a bare return under default_name(y_types) = :y. probe.jl:193/199: BareScale returns the value -2u, the layout holds (\"\", :y), and port(sim, \"\", :y) == -4.0."
+  },
+  {
+   "id": "S8b-133",
+   "conforms": true,
+   "evidence": "src/leaves.jl:293 passes a non-Type parameter through. probe.jl:202: retype(D8, Ranged{Float64,-1,1}) = Ranged{Dual,-1,1}, and with -1.0, 1.0 the value bounds stay too."
+  },
+  {
+   "id": "S8b-143",
+   "conforms": true,
+   "evidence": "src/leaves.jl retype walks the parameters of a non-mutable DataType. probe.jl:203: retype(D8, Deck{Float64}) = Deck{Dual} and OffsetField{Float64} -> OffsetField{Dual}, with the Matrix{Float64} field untouched."
+  },
+  {
+   "id": "S8b-154",
+   "conforms": true,
+   "evidence": "src/assembly.jl:786 `_holds_marker(P)` refusal. probe.jl:207: y_types (a = SVector{2,Pinned{Float64}},) gives IllegalPortType reason :nested_marker."
+  },
+  {
+   "id": "S8b-167",
+   "conforms": false,
+   "evidence": "probe.jl:154: constructing `GCH(::Dual)` for `struct GCH; a::Float64; end` throws `MethodError: no method matching Float64(::Dual)`. probe.jl:155-157: inside a stage at ProbeDual it surfaces as UserCodeFraming \"`c`: `y_state` threw during the build's probe\" with that MethodError as its cause. The error is no InexactError, and it names `Float64`, not the GCH constructor.",
+   "class": "deviation",
+   "fix": "Any `Dual`-carrying construction then fails inside the stage with a `MethodError` (`Float64` has no conversion from a `Dual`), which the probe reports as a `UserCodeFraming` naming the stage.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "S8b-168",
+   "conforms": true,
+   "evidence": "probe.jl:161-163: HardSrc declares Hard{Float64}, whose only constructor takes Float64. At ProbeDual the build's probe raises UserCodeFraming with cause \"MethodError: no method matching Hard(::ForwardDiff.Dual{ProbeTag,…})\", so the message carries the type's own name."
+  },
+  {
+   "id": "S8b-178",
+   "conforms": true,
+   "evidence": "src/leaves.jl:281 `retype(::Type{T}, ::Type{Float64}) where {T} = T`. probe.jl:204 prints true for retype(D8, Float64) === D8."
+  },
+  {
+   "id": "S8b-182",
+   "conforms": false,
+   "evidence": "src/leaves.jl:364-366 renders \" — if this leaf participates in differentiation, remove its `Pinned`\". probe.jl:148 shows it on PinnedState's message. The hint says \"this leaf\" rather than naming the leaf as `F`, and has done so since the first commit holding it (e16ae72d). The leaf's name appears only earlier in the message.",
+   "class": "deviation",
+   "fix": "The message carries the didactic hint (\"if this leaf participates in differentiation, remove its `Pinned`\"), after the message has named the leaf, because an observed `Dual` at a pinned leaf has exactly one honest cause.",
+   "clear": false,
+   "backing_entry": "D-286"
+  },
+  {
+   "id": "S8b-188",
+   "conforms": true,
+   "evidence": "src/build.jl:42-44 retypes only x_init and reads s_init as written. m_init is read raw (src/build.jl:1046). probe.jl:210: a continuous component publishing its Float64 mode field through a Pinned port builds at ProbeDual, so m did not walk. probe.jl:212: a discrete s at ProbeDual is @NamedTuple{a::Float64}."
+  },
+  {
+   "id": "S8b-197",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:965 renders \"is not a state leaf — declare the `SVector` backing and cast where the domain semantics are wanted (§7.1)\". probe.jl:216 shows it for `q_nb::QWrap`, a 4-vector wrapper. The code is generic. It never says `SVector{4}` or \"rotation\", and has kept this wording since 30895256. No log entry records the difference.",
+   "class": "deviation",
+   "fix": "- \"`x_init` field `q_nb::RQuat` is not a state leaf — declare the `SVector` backing and cast where the domain semantics are wanted ([§7.1][s7-1])\";",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "S8b-200",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:978 renders \"is not a store value — store values are isbits or `Symbol`s; text and bulk data belong on the component instance (§7.3)\". probe.jl:218 shows it for `label::String`. Commit ef569eab (bare stores) changed the code's \"store fields are\" to \"store values are\".",
+   "class": "drift",
+   "fix": "- \"`s_init` field `label::String` is not a store value — store values are isbits or `Symbol`s; text and bulk data belong on the component instance ([§7.3][s7-3])\".",
+   "clear": true
+  },
+  {
+   "id": "S8b-204",
+   "conforms": true,
+   "evidence": "src/declare.jl:369 `stop_reason(::Any) = \"\"`, read per StopFlag publisher at src/build.jl:502. probe.jl:222: the requesters are [Requester(\"a\", :halt, \"\"), Requester(\"b\", :halt, \"fuel out\")]."
+  }
+ ],
+ "notes": "All 25 claims checked against W at 72b12836 with one probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S8b_v/probe.jl (the only file created; it is untracked, and no tracked file was edited). Five do not conform. S8b-071 and S8b-167 claim an InexactError, but ForwardDiff 1.4.6 throws a MethodError (`Float64(::Dual)`). The same pair of words, \\\"MethodError or InexactError\\\", appears at spec.md:14127 and log.md:13903, where it is not wrong, so those lines were not flagged. S8b-182's quoted hint text matches D-286 but not the code, so the fix touches D-286 too, hence clear=false. S8b-197's sample message is domain-specific, while the code's message is generic. S8b-200 is drift from commit ef569eab. One minor observation, not a claim: the AbstractAtRoot message for a primitive root renders \\\"declared the root component::AbstractTerrain\\\" (src/diagnostics.jl:481), which reads awkwardly."
+}

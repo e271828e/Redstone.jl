@@ -1,0 +1,97 @@
+{
+ "judgments": [
+  {
+   "id": "S8d-001",
+   "conforms": true,
+   "evidence": "src/assembly.jl:299 splits on '/' and _one_level refuses a leading empty segment; probe P1a: wire \"/a/out\" refused as PathResolution :unknown_child; P1d: port(snap, \"/g/a\", :n) refused as PathResolution (src/build.jl:390 refuse_path), while P1c \"g/a\" reads 3."
+  },
+  {
+   "id": "S8d-003",
+   "conforms": false,
+   "evidence": "Declarations, errors and snapshot/log reads share the form (probe P1a message prints `/a/out` verbatim; P2b reads logged(sim)[2] through port(snapshot,...), src/dataplane.jl:576). No HDF5 log tree exists in src/ (rg -i 'hdf5|h5' src finds nothing). design/pending.md:247 'Log and trace persistence' records the HDF5 export as undecided and deferred.",
+   "class": "gap",
+   "fix": "Declarations, error messages and inspection reads (deep-path reads that promise nothing across builds) of the snapshot and the log (§11.2) share it verbatim.",
+   "clear": false
+  },
+  {
+   "id": "S8d-012",
+   "conforms": true,
+   "evidence": "Probe P2a: port(latest(sim), \"systems/ldg/left\", :n) returns 3; P2b: the same deep path on logged(sim)[2] returns 1. The read looks up the full path in the layout's address table, src/dataplane.jl:576 and src/build.jl:370."
+  },
+  {
+   "id": "S8d-013",
+   "conforms": false,
+   "evidence": "Snapshot and log reads look up the layout's address table, not instances: src/dataplane.jl:576 port(snapshot, ...) -> src/build.jl:370 port_addr over layout.addr, refusals from layout.component_paths (src/build.jl:390). §13.3's table (spec.md inspection row) says 'the address table: a cell the structure has'. Commit b89e09e3 (conforming to D-414) moved that row from 'the instance walk' to 'the address table'. D-414 says 'inspection never walked declared types'. §8.6 was not swept.",
+   "class": "drift",
+   "fix": "Snapshot and log inspection read the address table (§13.3).",
+   "clear": true
+  },
+  {
+   "id": "S8d-023",
+   "conforms": true,
+   "evidence": "src/structure.jl:676-679 pushes UnknownPort(endpoint = :connection) when the declared tuple is empty; probe P3: \"in\" => () refused as UnknownPort :connection."
+  },
+  {
+   "id": "S8d-033",
+   "conforms": true,
+   "evidence": "src/structure.jl:709 _claim! raises TwoProducers on a second feed and src/structure.jl:456 raises UnconnectedInput for none; probes P4a (TwoProducers) and P4c (UnconnectedInput). An output face's right side is unique by FaceNameCollision (src/structure.jl:764, probe P4b)."
+  },
+  {
+   "id": "S8d-037",
+   "conforms": false,
+   "evidence": "Probe P4b: output_wires (\"a/out\" => \"o\", \"b/out\" => \"o\") is refused as FaceNameCollision(site = :assembly), not TwoProducers. src/structure.jl:764 checks allunique over input and output face names. The output loop (src/structure.jl ~690) never claims, so TwoProducers cannot arise for an output face. Nothing in the log records the change of error kind.",
+   "class": "deviation",
+   "fix": "Two entries producing the same output face break face-name uniqueness and are refused as `FaceNameCollision`.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "S8d-042",
+   "conforms": false,
+   "evidence": "Only assembly boundary faces are checked for '/' (src/structure.jl:756-761 _check_face_names). Contract keys are checked only for emptiness (src/assembly.jl:700 check_contract_names). Probe P5b: a primitive root with u_types key `p/q` and y_types key `r/s` builds OK, so a root input face holds '/'. Probe P5c: below the root, the key is refused only as UnconnectedInput `k/p/q`, never as FaceNameIllegal. D-046's annotation and §8.6 treat contract keys as face names (the empty-key rule covers them).",
+   "class": "defect",
+   "fix": "check_contract_names also refuses a u_types or y_types key that contains '/' as FaceNameIllegal with invariant :contains_slash.",
+   "clear": false
+  },
+  {
+   "id": "S8d-045",
+   "conforms": true,
+   "evidence": "src/assembly.jl:700-705 check_contract_names (called at src/structure.jl:555); probe P6a: an empty u_types key is refused as FaceNameIllegal(:empty), the same kind as an empty assembly face (P6b)."
+  },
+  {
+   "id": "S8d-055",
+   "conforms": true,
+   "evidence": "src/structure.jl:781 _check_root_faces compares the keyed contracts, where a bare contract is `u` or `y`. Probe P7a: a primitive root with both contracts bare builds. P7b: a named `y_types` key `u` beside a bare u_types is refused as FaceNameCollision(:root)."
+  },
+  {
+   "id": "S8d-066",
+   "conforms": true,
+   "evidence": "Probe P8a: in a mixed-tier Group, the output faces `count` and `pos` share the producers' addresses (L.addr[(\"\", :count)] == L.addr[(\"tick\", :n)], likewise plant/y). P8b: the read types are Int64 and Float64. P8c: the root input `force` takes the consumer's type. P8d: a sample_times key on the continuous child is RatesViolation :continuous_child."
+  },
+  {
+   "id": "S8d-078",
+   "conforms": false,
+   "evidence": "The spec's own sampler listing, spec.md:4229, reads `υ_c_sc = q_s'(u.V - s.V)`, with q_s = RQuat(s.q, normalization = false). No IMU code exists in src/, test/ or examples/ (rg 'IMU|RQuat' finds nothing). `s.q'` on the SVector{4} store is a row adjoint that cannot be called (a standalone check gives MethodError), so the prose quote names a line the listing does not hold.",
+   "class": "deviation",
+   "fix": "In code, the sculling result is the sampler line `υ_c_sc = q_s'(u.V - s.V)`, with `q_s` the latched `s.q` cast to `RQuat`.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "S8d-076",
+   "conforms": true,
+   "evidence": "Probe P9: one RK4 frame calls x_deriv four times, at x.q = 1.0, 1.05, 1.0525, 1.10525. Each call reads that stage's state."
+  },
+  {
+   "id": "S8d-089",
+   "conforms": true,
+   "evidence": "Probe P10: with imu's own sample_times (sampler = Relative(1)) and the parent's (imu = Relative(4)), imu/sampler's timing is (0, 4, 0), with rate chain [(\"\", :imu, Relative(4)), (\"imu\", :sampler, Relative(1))]. Under the parent's Absolute(1//50) it is (1, 1, 0) with that anchor. Fold at src/structure.jl:306-313."
+  },
+  {
+   "id": "S8d-099",
+   "conforms": true,
+   "evidence": "src/executor.jl:486/513: Gated entries in the boundary sweep run only when due. Probe P11: a discrete y_state at Relative(3) ran twice over 6 frames ([1, 2]), schedule (D, Φ) = (3, 0)."
+  }
+ ],
+ "notes": "I edited no tracked file and committed nothing. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S8d_v/probe.jl, an untracked new folder in the main checkout as the task directed. I ran it from the pinned worktree W at 72b12836. Side observation outside the claims: a snapshot read with a leading slash, port(snap, \"/g/a\", :n), is refused correctly but with a misleading message, \"names no child `g` of the root component — its children are g\". The cause is src/build.jl:393-396 refuse_path, which treats the leading empty segment as the root path \"\". On S8d-042: whether contract keys fall under the no-'/' invariant is a reading of §8.6 and D-046. D-046's original position spoke of per-assembly faces, and only its annotation extends the 'never empty' invariant to contract keys. So the user may instead prefer to narrow the doc, which is why clear is false."
+}

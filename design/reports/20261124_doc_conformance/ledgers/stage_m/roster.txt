@@ -1,4 +1,4 @@
-198 entries, 216 docstrings, 39119 words
+198 entries, 216 docstrings, 39186 words
 entries with no docstring found: Symbol[]
 forbidden token           Any[]
 em dash                   Any[]

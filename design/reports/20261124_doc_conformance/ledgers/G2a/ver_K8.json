@@ -1,0 +1,124 @@
+{
+ "judgments": [
+  {
+   "id": "K8-004",
+   "conforms": true,
+   "evidence": "src/leaves.jl:281-293: retype replaces each Float64 type parameter and leaves value parameters as written (_retype_parameter(::Type{T}, p) = p). Probe K8-004a/b: retype(Dual, Ranged{Float64,-1,1}) gives Ranged{Dual,-1,1}, and with -1.0/1.0 bounds the bounds stay Float64 values. src/declare.jl:931-935: a probe_value method or a zero-argument constructor is what a Ranged root input needs, as the doc's line 33 says.",
+   "note": "The doc's 'parameters' is loose. §7.2 pins component parameters, so the walk never reaches a Ranged component field. The walk reaches Ranged only as a port leaf or as a type parameter of a walked type. Nothing in the code contradicts the claim."
+  },
+  {
+   "id": "K8-018",
+   "conforms": false,
+   "evidence": "src/trim.jl:703-714: _saturated lists only decisions sitting at their own lower or upper bound. src/trim.jl:312-318: LM floors a zero Jacobian column, so it tolerates the deficiency. Probe K8-018: a decision feeding an in-model clamp converges at u = 4.70 with the clamp saturated, and report.saturated == [].",
+   "class": "drift",
+   "fix": "Interpolations tables (prefer cubic knots), saturation rank-deficiency (LM-tolerated, shown in zero Jacobian columns rather than in the report), the gear identically zero airborne (Flight.jl's model alone, below)",
+   "clear": true,
+   "backing_entry": "D-070 annotation (2026-10-20): \"the audit bullet's 'reported' overstates the report ... An in-model saturation is LM-tolerated and shows in zero Jacobian columns, not in the report\"; spec §14.8 (design/spec.md:14143-14148) says the same."
+  },
+  {
+   "id": "K8-025",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightPhysics/src (HEAD 67109d6f, outside W). The families the doc names count about 30 structs: Quaternion, RQuat, RMatrix, RAxAng, RVec, REuler (attitude.jl, quaternions.jl), Wrench, FrameTransform, MassProperties, KinData, AirData, eight geodesy value types (NVector, LatLon, Ellipsoidal, Orthometric, Geopotential, Altitude, Geographic, Geocentric), TerrainData, and about ten continuous *Y output structs.",
+   "note": "The figure is an estimate, and about 30 is close enough to 'about 25'. The struct count at the design date (2026-07-12, Flight.jl 3945596b) was the same within one."
+  },
+  {
+   "id": "K8-027",
+   "conforms": false,
+   "evidence": "Flight.jl structs (grep of struct definitions): FlightPhysics 114, FlightCore 36, FlightApps 73, so 223 in all (113/36/73 at the design date). The walked class is about 25-30, a quarter of FlightPhysics' structs and about an eighth of Flight.jl's. The doc's own '~25 structs' cannot be roughly half of either.",
+   "class": "deviation",
+   "fix": "What actually needs genericity is about a quarter of FlightPhysics' struct inventory.",
+   "clear": false,
+   "note": "The sentence dates from the first design checkpoint (b4d8f5f7, 'roughly half the type inventory'). The Flight.jl inventory was the same size then, so the figure never matched. Deleting the sentence is the other option."
+  },
+  {
+   "id": "K8-029",
+   "conforms": true,
+   "evidence": "Probe K8-029a: Q{:unit,Float64} <: AbstractVector{Float64} is true, and a method on AbstractVector{Float64} accepts it (:hit). Probe K8-029b: at a Dual eltype the subtype test and hasmethod are false, which is the invariance the doc invokes. Flight.jl quaternions.jl:17 today declares Quaternion{N} <: AbstractVector{Float64}."
+  },
+  {
+   "id": "K8-031",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightPhysics/src: no function in the math takes a ::Float64 argument annotation. About 67 signature lines carry <:Real or ::Real, e.g. attitude.jl:61, 94, 114 and atmosphere.jl:322-329. The only Float64 annotations in signatures are return types (atmosphere.jl:103, 105, attitude.jl:94) and the throwing AbstractVector{Float64} fallbacks at aircraftbase.jl:286-287.",
+   "note": "'Mostly' undersells it. On argument annotations the code follows rule 1 almost fully."
+  },
+  {
+   "id": "K8-033",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightPhysics/src/attitude.jl:94: `function Base.:*(r_ab::RQuat, v_b_in::AbstractVector{<:Real})::SVector{3,Float64}` carries exactly the ::SomeType{Float64} return-type annotation that rule 3 (design/spec.md:3085) forbids.",
+   "note": "The method is a live instance of the pattern the rule forbids, as the original wording had it (b4d8f5f7: 'see attitude.jl * for the live example pattern'). The current sentence can read as if the method obeys the rule. Clearer: 'is the live example of what the third rule forbids, a ::SomeType{Float64} return-type annotation on the continuous path.'"
+  },
+  {
+   "id": "K8-045",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightApps/src/c172/c172x/control/c172x_ctl.jl:336, 353, 368, 400, 414, 428, 906, 922, 943, 964: each tick, Control.assign! writes compensator gains from EAS/altitude lookups. This is the mutation idiom that D-089 and flight_case_studies.md:187-196 turn into gain input ports fed by schedulers."
+  },
+  {
+   "id": "K8-046",
+   "conforms": false,
+   "evidence": "Flight.jl c172x_ctl.jl:203-209 (ControlLawsLon: te2te, tv2te, vh2te, q2e, c2θ, v2t lookups) and :814-818 (ControlLawsLat: ar2ar, φβ2ar, p2φ, χ2φ). That is ten gain-scheduled compensators with ten tables (control/data/*.h5) in two control-law blocks, and the same ten at the design date. No natural grouping gives seven.",
+   "class": "deviation",
+   "fix": "Compensator gains become input ports fed by scheduler components (about 10 for the C172X, one per gain-scheduled compensator).",
+   "clear": false,
+   "note": "How many scheduler components there are is the migrator's choice. The figure 7 dates from f9e2cacb (2026-07-30) and has no derivation on record."
+  },
+  {
+   "id": "K8-050",
+   "conforms": true,
+   "evidence": "PIVector is not in W. It belongs to the migrated aircraft library, and D-141 backs the plan (design/log.md:5303). The same shape ships in W's library: src/library.jl:956-965, Integrator(; x0, reset::Bool = false), with reset_ports at :450-451. Probe K8-050a: the plain form has u_types Float64 and no state events. Probe K8-050b: with reset = true it adds (reset = Bool) and the one StateEvent :reset.",
+   "note": "No pending.md bullet owes a PIVector, and Redstone's PID (src/library.jl:2441) has no reset face. The claim concerns the future aircraft-library component, and nothing in W contradicts it."
+  },
+  {
+   "id": "K8-052",
+   "conforms": true,
+   "evidence": "src/library.jl:964: the analogue's handler writes the declared init (x_init(c) = c.x0 at :958). The guard is the Bool itself under edge semantics (:454, comment :904-909). Probe K8-052a: a held reset fires once and then integrates (0.5 → 0.8 over 0.3 s). x_init is the declaration's real name (src/declare.jl:47).",
+   "note": "D-141 spells it `init_x`. The companion's `x_init` matches the code."
+  },
+  {
+   "id": "K8-053",
+   "conforms": true,
+   "evidence": "src/library.jl:965: state_events(::Integrator{V, true}) = (reset = StateEvent(reset_guard, reset_handler),), an ordinary guard/handler event declared inside the component."
+  },
+  {
+   "id": "K8-064",
+   "conforms": true,
+   "evidence": "Probe K8-064a: with a Constant(true) reset and init! setting x = 2.0, state(held, \"i\") is 0.5, so the holding reset fired at boundary zero. Probe K8-064b: with reset low, x stays 2.0. Same in test/test_library.jl:1641-1646 and the src/library.jl:907-909 comment."
+  },
+  {
+   "id": "K8-066",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightPhysics/src/control.jl:45 (Modeling.X(::PIVector{N}) = zeros(N)) and :86 (f_init! sets x .= 0), so a reset to the declared inits at boundary zero changes nothing. Probe K8-064b: a reset that is not holding does not fire at boundary zero."
+  },
+  {
+   "id": "K8-069",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightPhysics/src/piston.jl:310-327: f_ode! runs frc and idle in every engine state. :424-447: f_step! makes mode transitions and calls f_step!(idle/frc), which is a no-op (control.jl:50 @no_step PIVector). Nothing writes their x outside f_init! (:295-307). Windup handling: control.jl:71-77 (clamp bounds, int_halted)."
+  },
+  {
+   "id": "K8-082",
+   "conforms": true,
+   "evidence": "src/assembly.jl:670-683, check_state_leaves. Probe K8-082a: an x_init field holding a quaternion wrapper (<: AbstractVector{Float64}) is refused as IllegalStateLeaf reason :wrapper. Probe K8-082b: the same field as SVector{4,Float64} builds."
+  },
+  {
+   "id": "K8-083",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightPhysics/src/attitude.jl:70-72: RQuat(v::AbstractVector{<:Real}; normalization::Bool = true). The keyword exists and defaults to true, so a cast free of invariants must pass normalization = false explicitly."
+  },
+  {
+   "id": "K8-084",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightPhysics/src/attitude.jl:114: dt(r_ab::RQuat, ω) = 0.5 * (r_ab._u * FreeQuat(imag = ω)) returns a Quaternion, 4 wide (quaternions.jl:51 size (4,)). It is used as the q rate at kinematics.jl:219-220 and :310."
+  },
+  {
+   "id": "K8-088",
+   "conforms": true,
+   "evidence": "Flight.jl lib/FlightPhysics/src/landinggear.jl:250-252: with no contact the Strut returns StrutY defaults. :403-409: Contact runs frc on a zero input and returns default ContactY (zero wrench). :467: f_step! resets frc while !wow, so the gear's output is identically zero in the air."
+  },
+  {
+   "id": "K8-089",
+   "conforms": true,
+   "evidence": "Flight.jl guards: atmosphere.jl:330 (airflow angles below TAS_min_αβ), kinematics.jl:18-20 (χ, γ below v_min_χγ), attitude.jl:302-304, :339-345, :353-356 (norm_im > 0, μ > 0), landinggear.jl:420 (norm_v < 1e-3), propellers.jl:418-420 (ω floor).",
+   "note": "Two sites are not guarded at zero: lib/FlightApps/src/c172/c172.jl:861 (Flight.jl's own trim cost divides by norm(v_eb_b)), and landinggear.jl:412 computes norm(v_ec_xy) before its guard and passes it on to get_μ. The first goes away with Flight.jl's trim. The claim holds as the audit's finding."
+  }
+ ],
+ "notes": "Read-only verification of slice K8 at W = 72b12836. I changed no tracked file. I created one probe, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K8_v/probe.jl, and ran it from W with --project=test. Its output lines are cited as 'Probe K8-...'. The probe's K8-004c line calls retype on a Pinned wrapper, which is retype_entry's job, so it proves nothing. No judgment uses it. Most claims in design/companions/migration_outline.md concern Flight.jl, which is not in W. I checked them against /Users/miguel/.julia/dev/Flight.jl at HEAD 67109d6f, and the counts against 3945596b, the Flight.jl commit current at the outline's first draft (2026-07-12); those evidence paths are Flight.jl's. The PIVector claims (K8-050/052/053/064/066) describe a future aircraft-library component that exists nowhere. I judged them against D-141 and against W's Integrator, which ships the same flag-gated reset face, and I probed that. Three claims fail. K8-018 is drift: D-070's 2026-10-20 annotation and spec §14.8 record that an in-model saturation is not in the report. K8-027 ('roughly half' the type inventory) and K8-046 ('about 7' schedulers, while the code has 10 gain-scheduled compensators) are deviations that nothing records. Open points: K8-033's wording can read as the method obeying rule 3 when it breaks it. K8-089 has two sites without a guard at zero, listed in its note."
+}

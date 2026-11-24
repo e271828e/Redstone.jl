@@ -1,0 +1,37 @@
+{
+ "group": "G2b",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "72b12836",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "S8e",
+   "kind": "spec",
+   "range": [
+    4326,
+    4767
+   ],
+   "desc": "§8.7 rate scopes, §8.8 computed connections and generic holding",
+   "map": "316-352 (src/declare.jl), 38-93 (src/assembly.jl), 1365-1437 (src/structure.jl), 105-186 (src/build.jl), 655-711 (src/frame.jl)"
+  },
+  {
+   "key": "L8a",
+   "kind": "log",
+   "n": 22,
+   "map": "316-352 (src/declare.jl), 38-93 (src/assembly.jl), 1365-1437 (src/structure.jl), 105-186 (src/build.jl), 712-737 (src/leaves.jl), 1326-1364 (src/store.jl)"
+  },
+  {
+   "key": "L8b",
+   "kind": "log",
+   "n": 22,
+   "map": "316-352 (src/declare.jl), 38-93 (src/assembly.jl), 1365-1437 (src/structure.jl), 105-186 (src/build.jl), 712-737 (src/leaves.jl), 1326-1364 (src/store.jl)"
+  },
+  {
+   "key": "CV8",
+   "kind": "coverage",
+   "files": "src/declare.jl and src/assembly.jl whole",
+   "docs": "design/spec.md §8 (lines 2471-4767)",
+   "map": "316-352 (src/declare.jl), 38-93 (src/assembly.jl)"
+  }
+ ]
+}

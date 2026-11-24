@@ -1,0 +1,446 @@
+{
+ "rows": [
+  {
+   "id": "K8-018",
+   "file": "design/companions/migration_outline.md",
+   "line": 28,
+   "kind": "law",
+   "claim": "The C172 AD audit's saturation rank-deficiency is 'LM-tolerated, reported'.",
+   "evidence": "spec.md:14143-14148 says the report's `saturated` list names a decision only at its own bound, so an in-model saturation shows in the Jacobian's zero columns, not in the report. src/trim.jl:313-317 and :706-714 agree (zero column takes the damping floor; `saturated` reads decision bounds only).",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "saturation rank-deficiency (LM-tolerated, visible as zero Jacobian columns and not in the report)",
+   "note": "The companion disagrees with the spec, which agrees with the code (spec.md:14143-14148, §14.8)."
+  },
+  {
+   "id": "K8-025",
+   "file": "design/companions/migration_outline.md",
+   "line": 38,
+   "kind": "mech",
+   "claim": "The parametrization pass covers about 25 FlightPhysics structs.",
+   "evidence": "Flight.jl is outside the pinned worktree",
+   "verdict": "unverifiable",
+   "note": "A count of external Flight.jl types. design/log.md D-011 does not record it."
+  },
+  {
+   "id": "K8-027",
+   "file": "design/companions/migration_outline.md",
+   "line": 41,
+   "kind": "mech",
+   "claim": "What actually needs genericity covers roughly half of Flight.jl's type inventory.",
+   "evidence": "Flight.jl is outside the pinned worktree",
+   "verdict": "unverifiable",
+   "note": "External inventory share."
+  },
+  {
+   "id": "K8-031",
+   "file": "design/companions/migration_outline.md",
+   "line": 46,
+   "kind": "mech",
+   "claim": "Flight.jl's math already mostly writes `<:Real` or nothing in place of `::Float64` argument annotations.",
+   "evidence": "Flight.jl is outside the pinned worktree",
+   "verdict": "unverifiable",
+   "note": "Claim about external code. The rule itself is checked in K8-032."
+  },
+  {
+   "id": "K8-033",
+   "file": "design/companions/migration_outline.md",
+   "line": 47,
+   "kind": "mech",
+   "claim": "The `*` method in Flight.jl's attitude.jl is the live example of the third rule.",
+   "evidence": "Flight.jl is outside the pinned worktree",
+   "verdict": "unverifiable",
+   "note": "External file."
+  },
+  {
+   "id": "K8-046",
+   "file": "design/companions/migration_outline.md",
+   "line": 66,
+   "kind": "mech",
+   "claim": "The scheduler components number about 7 for the C172X.",
+   "evidence": "Flight.jl is outside the pinned worktree",
+   "verdict": "unverifiable",
+   "note": "The count is not in flight_case_studies.md section 2 or in the log."
+  },
+  {
+   "id": "K8-050",
+   "file": "design/companions/migration_outline.md",
+   "line": 71,
+   "kind": "decl",
+   "claim": "The reimplemented `PIVector` gains a flag-gated reset face: `PIVector(; reset = true)` adds a `Bool` input face plus the event, and the default omits both.",
+   "evidence": "src/ has no `PIVector`. `PID` has no `reset` keyword (src/library.jl:2541-2550). The face ships on `Integrator` (probe:6-7: default u_types is Float64 with no events, reset=true gives (u, reset=Bool) and one :reset event).",
+   "verdict": "unverifiable",
+   "note": "A migration plan for a component that is not yet in the library. The wording agrees with D-141 (design/log.md:5292-5305) and library_inventory.md:403. The shipped analogue is `Integrator`, not `PIVector`."
+  },
+  {
+   "id": "K8-052",
+   "file": "design/companions/migration_outline.md",
+   "line": 75,
+   "kind": "law",
+   "claim": "One fixed policy governs the face: a rising edge resets to the declared `x_init` values.",
+   "evidence": "The shipped `Integrator` resets on a rising edge only, writing `x0` (src/library.jl:928-933, test/test_library.jl:1641-1646). `PIVector` is not in src/.",
+   "verdict": "unverifiable",
+   "note": "No PIVector to check. D-141 spells the keyword `init_x` (design/log.md:5304) and the companion spells it `x_init`, as spec.md:2190 does, so the companion is current."
+  },
+  {
+   "id": "K8-053",
+   "file": "design/companions/migration_outline.md",
+   "line": 76,
+   "kind": "mech",
+   "claim": "The reset implementation is internal, an ordinary guard/handler event.",
+   "evidence": "The `Integrator` analogue does this (src/library.jl:965, `StateEvent(reset_guard, reset_handler)`). `PIVector` is not in src/.",
+   "verdict": "unverifiable",
+   "note": "Plan for an unbuilt component."
+  },
+  {
+   "id": "K8-066",
+   "file": "design/companions/migration_outline.md",
+   "line": 94,
+   "kind": "mech",
+   "claim": "The boundary-zero reset fires harmlessly because the regulator's declared inits are zero.",
+   "evidence": "Flight.jl's PIVector inits are outside the worktree. probe:14 shows the shipped `Integrator` landing on x0 at t0 under a held reset.",
+   "verdict": "unverifiable",
+   "note": "Depends on Flight.jl's declared values."
+  },
+  {
+   "id": "K8-069",
+   "file": "design/companions/migration_outline.md",
+   "line": 99,
+   "kind": "mech",
+   "claim": "The engine's two PIVector instances are verified reset-free in today's code, where the saturation bounds and `int_halted` handle windup across unused phases.",
+   "evidence": "Flight.jl's piston.jl is outside the worktree",
+   "verdict": "unverifiable",
+   "note": "The log cites piston.jl:295-449 (design/log.md:5331-5336) but the file is not in W."
+  },
+  {
+   "id": "K8-083",
+   "file": "design/companions/migration_outline.md",
+   "line": 125,
+   "kind": "decl",
+   "claim": "The `RQuat` cast at use sites takes the explicit `normalization = false` keyword.",
+   "evidence": "spec.md:2200 names a `normalization` keyword on `RQuat`. `RQuat` is Flight.jl's type and is not in src/.",
+   "verdict": "unverifiable",
+   "note": "Flight.jl API. The spec only says the cast happens where rotation semantics are wanted."
+  },
+  {
+   "id": "K8-084",
+   "file": "design/companions/migration_outline.md",
+   "line": 126,
+   "kind": "mech",
+   "claim": "The 4-wide rate is already what today's `Attitude.dt` delivers.",
+   "evidence": "Flight.jl is outside the pinned worktree",
+   "verdict": "unverifiable",
+   "note": "External code."
+  },
+  {
+   "id": "K8-088",
+   "file": "design/companions/migration_outline.md",
+   "line": 132,
+   "kind": "mech",
+   "claim": "Flight.jl's landing gear is never evaluated off-zero airborne (identically zero in the air).",
+   "evidence": "Flight.jl's c172.jl is outside the worktree. spec.md:14131-14133 agrees as a Flight.jl-only finding.",
+   "verdict": "unverifiable",
+   "note": "Spec-consistent, external code."
+  },
+  {
+   "id": "K8-089",
+   "file": "design/companions/migration_outline.md",
+   "line": 133,
+   "kind": "mech",
+   "claim": "The `norm`-at-zero guards are already in place in Flight.jl's C172 model.",
+   "evidence": "Flight.jl is outside the pinned worktree. spec.md:14132 agrees.",
+   "verdict": "unverifiable",
+   "note": "Spec-consistent, external code."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K8-004",
+   "file": "design/companions/migration_outline.md",
+   "line": 16,
+   "kind": "law",
+   "claim": "The `Ranged` rewrite targets the walk rule at ports and parameters (§8.2)",
+   "evidence": "src/leaves.jl:279-290 (`retype` walks type parameters, leaves value parameters)"
+  },
+  {
+   "id": "K8-013",
+   "file": "design/companions/migration_outline.md",
+   "line": 25,
+   "kind": "law",
+   "claim": "State declarations: RQuat field becomes SVector{4}, Ranged field a plain scalar (§7.1)",
+   "evidence": "src/assembly.jl:673-684 (`check_state_leaves`, `IllegalStateLeaf` reason :wrapper)"
+  },
+  {
+   "id": "K8-017",
+   "file": "design/companions/migration_outline.md",
+   "line": 28,
+   "kind": "mech",
+   "claim": "LM tolerates the saturation rank deficiency",
+   "evidence": "src/trim.jl:313-317 (zero Jacobian column takes the damping floor)"
+  },
+  {
+   "id": "K8-020",
+   "file": "design/companions/migration_outline.md",
+   "line": 30,
+   "kind": "law",
+   "claim": "`Ranged` survives at ports and parameters and is walked there, with a `probe_value`",
+   "evidence": "src/diagnostics.jl:813-820 (`MissingProbeValue` names `probe_value(::Type{Ranged{...}})`)"
+  },
+  {
+   "id": "K8-021",
+   "file": "design/companions/migration_outline.md",
+   "line": 32,
+   "kind": "law",
+   "claim": "The rewrite admits the walked scalar and leaves the value parameters alone",
+   "evidence": "src/leaves.jl:283-293 (`_retype_parameter(T, p) = p` for a non-type)"
+  },
+  {
+   "id": "K8-022",
+   "file": "design/companions/migration_outline.md",
+   "line": 33,
+   "kind": "decl",
+   "claim": "The rewrite adds a `probe_value` method for the type",
+   "evidence": "src/diagnostics.jl:819-820; src/build.jl:472"
+  },
+  {
+   "id": "K8-023",
+   "file": "design/companions/migration_outline.md",
+   "line": 33,
+   "kind": "law",
+   "claim": "State fields are not survival sites for `Ranged`",
+   "evidence": "src/assembly.jl:678-681 (a wrapper `x_init` leaf is `IllegalStateLeaf`)"
+  },
+  {
+   "id": "K8-024",
+   "file": "design/companions/migration_outline.md",
+   "line": 37,
+   "kind": "mech",
+   "claim": "Payload and value types are the walked class of §7.2",
+   "evidence": "src/leaves.jl:313-317 (`retype_value` walks a value's Float64 leaves)"
+  },
+  {
+   "id": "K8-029",
+   "file": "design/companions/migration_outline.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "A `Quaternion{N,T} <: AbstractVector{T}` at Float64 still matches `AbstractVector{Float64}` methods",
+   "evidence": "probe:22 (true, and the method returns 10.0)"
+  },
+  {
+   "id": "K8-030",
+   "file": "design/companions/migration_outline.md",
+   "line": 44,
+   "kind": "law",
+   "claim": "Parameters and definitions are the pinned class and stay Float64",
+   "evidence": "src/leaves.jl:279-284 (the walk substitutes type parameters; instance fields are never retyped)"
+  },
+  {
+   "id": "K8-032",
+   "file": "design/companions/migration_outline.md",
+   "line": 46,
+   "kind": "law",
+   "claim": "First author rule of §8.2: `<:Real` or nothing in place of `::Float64` argument annotations",
+   "evidence": "design/spec.md:3083 (author rule, not code-enforced)"
+  },
+  {
+   "id": "K8-034",
+   "file": "design/companions/migration_outline.md",
+   "line": 48,
+   "kind": "law",
+   "claim": "Third author rule: no `::SomeType{Float64}` return annotations on the continuous path",
+   "evidence": "design/spec.md:3085"
+  },
+  {
+   "id": "K8-036",
+   "file": "design/companions/migration_outline.md",
+   "line": 53,
+   "kind": "mech",
+   "claim": "Zero-alloc stepping is measured through the `phase_bodies` seam (§9.7)",
+   "evidence": "src/model.jl:519; test/test_discrete.jl:955-963"
+  },
+  {
+   "id": "K8-038",
+   "file": "design/companions/migration_outline.md",
+   "line": 55,
+   "kind": "mech",
+   "claim": "A per-body CI assertion runs over the `phase_bodies` roster",
+   "evidence": "test/test_discrete.jl:958-963 (`@ballocated` over :sweep_1, :sweep_2, :rhs, :ticks)"
+  },
+  {
+   "id": "K8-040",
+   "file": "design/companions/migration_outline.md",
+   "line": 59,
+   "kind": "law",
+   "claim": "Generic periphery consumers read the integration side (exported output faces, §11.2)",
+   "evidence": "design/spec.md:8190-8203"
+  },
+  {
+   "id": "K8-041",
+   "file": "design/companions/migration_outline.md",
+   "line": 60,
+   "kind": "decl",
+   "claim": "The surface exports pose and velocity faces with wrapper types",
+   "evidence": "design/spec.md:8199-8205"
+  },
+  {
+   "id": "K8-045",
+   "file": "design/companions/migration_outline.md",
+   "line": 65,
+   "kind": "mech",
+   "claim": "Compensator gains become input ports fed by scheduler components",
+   "evidence": "design/spec.md:1500-1510 (D-089)"
+  },
+  {
+   "id": "K8-047",
+   "file": "design/companions/migration_outline.md",
+   "line": 67,
+   "kind": "mech",
+   "claim": "Every mode-transition latch is respelled as a same-tick reset",
+   "evidence": "design/spec.md:1518-1530; src/library.jl:2340 shows the same-tick gating idiom"
+  },
+  {
+   "id": "K8-048",
+   "file": "design/companions/migration_outline.md",
+   "line": 68,
+   "kind": "mech",
+   "claim": "The gear's level-triggered reset becomes an edge event",
+   "evidence": "design/spec.md:1544-1548 (D-141)"
+  },
+  {
+   "id": "K8-051",
+   "file": "design/companions/migration_outline.md",
+   "line": 74,
+   "kind": "law",
+   "claim": "Declarations are ordinary functions of the instance (§8.5)",
+   "evidence": "src/library.jl:965 and probe:6-7 (u_types and state_events dispatch on the instance type)"
+  },
+  {
+   "id": "K8-055",
+   "file": "design/companions/migration_outline.md",
+   "line": 80,
+   "kind": "mech",
+   "claim": "Falling-edge consumers negate the `Bool` in their own stage",
+   "evidence": "design/log.md:5351-5353 (D-311 annotation: negation is one character at the consumer)"
+  },
+  {
+   "id": "K8-056",
+   "file": "design/companions/migration_outline.md",
+   "line": 81,
+   "kind": "law",
+   "claim": "The library admits no `Not` (D-311)",
+   "evidence": "probe:25 (Redstone.Library has no `Not`; Or, And and SumJunction exist)"
+  },
+  {
+   "id": "K8-059",
+   "file": "design/companions/migration_outline.md",
+   "line": 85,
+   "kind": "law",
+   "claim": "The touchdown edge has not-holding to holding semantics (§2.3)",
+   "evidence": "design/spec.md:458-474; src/library.jl:928-933 (fires once per rising edge, never while held)"
+  },
+  {
+   "id": "K8-061",
+   "file": "design/companions/migration_outline.md",
+   "line": 89,
+   "kind": "law",
+   "claim": "The non-localized policy checks edges at boundaries only, with no root-finding",
+   "evidence": "design/spec.md:473-477; src/library.jl:965; test/test_library.jl:1664 (reset policy :non_localized)"
+  },
+  {
+   "id": "K8-064",
+   "file": "design/companions/migration_outline.md",
+   "line": 91,
+   "kind": "law",
+   "claim": "A sim initialized with the reset holding fires it at boundary zero",
+   "evidence": "test/test_library.jl:1639-1646; probe:14 (y = x0 = 0.5 at t0); probe:16 (no refire, 1.0 after 0.5 s)"
+  },
+  {
+   "id": "K8-065",
+   "file": "design/companions/migration_outline.md",
+   "line": 92,
+   "kind": "mech",
+   "claim": "Boundary zero is the ordinary macro-sequence with an empty integrate",
+   "evidence": "src/trim.jl:474-504; src/model.jl:75-77"
+  },
+  {
+   "id": "K8-067",
+   "file": "design/companions/migration_outline.md",
+   "line": 95,
+   "kind": "law",
+   "claim": "Boundary-zero priors are not-holding (§14.5)",
+   "evidence": "test/test_library.jl:1639-1642; probe:14 (a held reset fires at t0)"
+  },
+  {
+   "id": "K8-073",
+   "file": "design/companions/migration_outline.md",
+   "line": 108,
+   "kind": "law",
+   "claim": "Contract re-factoring is the middle rung of the §5.4 ladder",
+   "evidence": "design/spec.md:1550-1585 (three rungs: two-stage split, contract re-factoring, component split)"
+  },
+  {
+   "id": "K8-076",
+   "file": "design/companions/migration_outline.md",
+   "line": 112,
+   "kind": "law",
+   "claim": "The move deletes the strut-steering-strut artificial loop that stage-2 conservatism would manufacture",
+   "evidence": "design/spec.md:1576-1584; design/log.md:5250-5255 (D-140)"
+  },
+  {
+   "id": "K8-077",
+   "file": "design/companions/migration_outline.md",
+   "line": 113,
+   "kind": "law",
+   "claim": "The VehicleDynamics loop dissolves under the two-stage split alone",
+   "evidence": "design/spec.md:1553-1556; design/companions/flight_case_studies.md:26"
+  },
+  {
+   "id": "K8-078",
+   "file": "design/companions/migration_outline.md",
+   "line": 117,
+   "kind": "decl",
+   "claim": "Splitting Strut crosses shared geometry as one `StrutGeometry` bundle port",
+   "evidence": "design/log.md:5262-5265; design/spec.md:3599"
+  },
+  {
+   "id": "K8-081",
+   "file": "design/companions/migration_outline.md",
+   "line": 123,
+   "kind": "law",
+   "claim": "State declarations use the closed vocabulary (§7.1)",
+   "evidence": "src/assembly.jl:673-684; src/diagnostics.jl:946-965"
+  },
+  {
+   "id": "K8-082",
+   "file": "design/companions/migration_outline.md",
+   "line": 124,
+   "kind": "law",
+   "claim": "An RQuat state field becomes its SVector{4} backing",
+   "evidence": "src/diagnostics.jl:962-964 (the :wrapper message says to declare the `SVector` backing)"
+  },
+  {
+   "id": "K8-085",
+   "file": "design/companions/migration_outline.md",
+   "line": 127,
+   "kind": "law",
+   "claim": "A Ranged state field becomes a plain scalar, its clamp respelled as dynamics or projection",
+   "evidence": "src/declare.jl:579-586 (`x_projection` hook)"
+  },
+  {
+   "id": "K8-lead",
+   "file": "design/companions/migration_outline.md",
+   "line": 1,
+   "kind": "ptr",
+   "claim": "Lead names are Flight.jl prior art or local names, not Redstone API",
+   "evidence": "Missing-name leads (AbstractSteering, AirData, Contact, FlightApps, FlightPhysics, FrameTransform, KinData, MassProperties, PIVector, PistonEngine, Quaternion, RQuat, Ranged, SomeType, Strut, StrutGeometry, TerrainData, VehicleDynamics, VelocityData, Wrench, f_init!, f_ode!, f_periodic!, f_step!, frc, idle, int_halted, normalization, q_sf, sat_ext, strut.wow, ψ_cmd, ψ_sw, ψ_v) are Flight.jl types, fields or placeholders, spec.md:2199-2201 and :3599 and :8203. `Not` is a deliberate absence (probe:25). `ballocated` is the BenchmarkTools macro used at test/test_discrete.jl:962."
+  }
+ ],
+ "counts": {
+  "law": 24,
+  "mech": 20,
+  "decl": 5,
+  "ptr": 29,
+  "why": 9,
+  "ex": 2
+ }
+}

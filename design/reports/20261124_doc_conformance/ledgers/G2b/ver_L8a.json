@@ -1,0 +1,224 @@
+{
+ "judgments": [
+  {
+   "id": "L8a-001",
+   "conforms": true,
+   "evidence": "src/assembly.jl:91-95,149 (component-valued fields are children, the field name their segment; every other field is inert parameter data); src/declare.jl:286 (local_wires marks the assembly). Probe line 'L8a-001': a plain struct with local_wires yields children [\"c\" => PGain(1.0)].",
+   "note": "Edge case only. The walk tests the field's value (`value isa AbstractComponent`), not its declared type. The probe shows a field declared `::Any` that holds a component still becomes a child. For the parametric or concrete fields §8.5 prescribes, the two readings agree."
+  },
+  {
+   "id": "L8a-010",
+   "conforms": false,
+   "evidence": "src/declare.jl:286,308,328: there is no `exports`. The boundary is split into `input_wires(c)` (face => internal path(s)) and `output_wires(c)` (internal source => face). Probe: isdefined(Redstone, :exports) is false and :input_wires/:output_wires are true.",
+   "class": "drift",
+   "fix": "Annotation: amended by D-170, D-279, D-303 and D-314. The single `exports` method splits by direction into `input_wires(::A)`, which lists face => internal path(s), and `output_wires(::A)`, which lists internal source => face. `local_wires` holds the child-to-child wires.",
+   "clear": true
+  },
+  {
+   "id": "L8a-011",
+   "conforms": false,
+   "evidence": "src/structure.jl:100 ('Direction is declared by the method; the resolved endpoint only cross-checks it'), src/structure.jl:119 FaceDirectionConflict. Probe: an input_wires entry naming g/out raises FaceDirectionConflict(:output, :consumer). The D-041 annotation at log.md:1508-1511 records the move (D-170, D-279).",
+   "class": "drift",
+   "fix": "An assembly face's direction is declared by the method that lists it, `input_wires` or `output_wires`. The resolved endpoint only cross-checks it, and a mismatch is `FaceDirectionConflict`.",
+   "clear": true
+  },
+  {
+   "id": "L8a-012",
+   "conforms": true,
+   "evidence": "src/structure.jl:10-12 (a face's type and tier are its ultimate internal endpoint's, never declared). Probe: an assembly that declares y_types is refused as ClassMixed(\"\", [:y_types])."
+  },
+  {
+   "id": "L8a-018",
+   "conforms": false,
+   "evidence": "src/deployment.jl:539-550,555: `Δt_base` and `h_max` are fields and keywords of `Deployment`. Probe: fieldnames(Simulation) = (:model, :plane, :control, :run) and fieldnames(Deployment) include :Δt_base and :h_max. The D-042 annotation at log.md:1530-1533 records the move (D-254, D-256).",
+   "class": "drift",
+   "fix": "`Δt_base`/`h_max` are fixed at deployment, as `Deployment` constructor parameters.",
+   "clear": true
+  },
+  {
+   "id": "L8a-020",
+   "conforms": false,
+   "evidence": "src/structure.jl:756-769 adds a third invariant to no-slash and per-assembly uniqueness: an empty name is FaceNameIllegal(:empty). Probe: input_wires (\"\" => \"g/e\") raises FaceNameIllegal(\"\", \"\", :empty). The D-046 annotation at log.md:1676-1678 records this (D-436).",
+   "class": "drift",
+   "fix": "Build invariants: no `/`, no empty name, and per-assembly uniqueness.",
+   "clear": true
+  },
+  {
+   "id": "L8a-023",
+   "conforms": true,
+   "evidence": "src/sim.jl:2620 and src/devices.jl:340: `stage!` takes `\"face\" => value` pairs naming root inputs. src/roster.jl:158: claims are face names. Probe: stage!(sim, \"e\" => 1.0) returns nothing."
+  },
+  {
+   "id": "L8a-030",
+   "conforms": false,
+   "evidence": "No `local_types` exists in src/ (rg). Probe: isdefined(Redstone, :local_types) is false. The D-055 annotation at log.md:1876-1877 and D-165 (log.md:6438) and D-194 (log.md:7734) record the deletion.",
+   "class": "drift",
+   "fix": "Annotation: `local_types` is deleted (D-165, D-194). A cross-stage intermediate is an ordinary port declared in `y_types`.",
+   "clear": true
+  },
+  {
+   "id": "L8a-031",
+   "conforms": false,
+   "evidence": "src/build.jl:127-133: every returned field must be a key of `y_types`, or it is UndeclaredReturnField. No local_types category exists. Probe: y_direct returning `scratch` beyond y_types raises UndeclaredReturnField(\"g\", \"y_direct\", :scratch, [:out]).",
+   "class": "drift",
+   "fix": "Every return field of a stage must be declared in `y_types`, and an undeclared one is `UndeclaredReturnField` (D-165, D-194).",
+   "clear": true
+  },
+  {
+   "id": "L8a-032",
+   "conforms": false,
+   "evidence": "`local_types` has no definition, default or otherwise, in src/. The defaults that exist are u_types/y_types at src/declare.jl:185,223. Probe: isdefined(Redstone, :local_types) is false.",
+   "class": "drift",
+   "fix": "Annotation: `local_types` and its empty default are deleted (D-165). Only `u_types`/`y_types` keep framework defaults.",
+   "clear": true
+  },
+  {
+   "id": "L8a-034",
+   "conforms": false,
+   "evidence": "There are no component-scoped local cells. Stage returns are checked against y_types only (src/build.jl:127-133), and D-165 (log.md:6438-6447) records that 'local cells leave the §9.7 store'. Intermediates are declared ports (D-194, log.md:7736-7745).",
+   "class": "drift",
+   "fix": "Annotation: local cells leave the store (D-165). A cross-stage intermediate is a declared port in the table, and workspace stays distinct.",
+   "clear": true
+  },
+  {
+   "id": "L8a-036",
+   "conforms": false,
+   "evidence": "`local_types` does not exist (probe: isdefined false). Port types are declared via y_types (src/declare.jl:223). D-165 and the D-055 annotation (log.md:1876) record the deletion.",
+   "class": "drift",
+   "fix": "Annotation: deleted with `local_types` (D-165). Intermediates take their declared `y_types` port types.",
+   "clear": true
+  },
+  {
+   "id": "L8a-037",
+   "conforms": false,
+   "evidence": "`local_types` does not exist, so nothing resolves it. D-165 (log.md:6438-6439) states that 'stage membership derives over `output_types` alone' (now `y_types`).",
+   "class": "drift",
+   "fix": "Annotation: deleted with `local_types` (D-165). Stage membership derives over `y_types` alone.",
+   "clear": true
+  },
+  {
+   "id": "L8a-038",
+   "conforms": true,
+   "evidence": "src/conditions.jl:1-9,48-58: a condition is an inert tree of `set` fragments under `at` path prefixes, resolved against the build by path. `Scoped` holds a prefix and a node."
+  },
+  {
+   "id": "L8a-044",
+   "conforms": false,
+   "evidence": "No `capture` exists in src/. Probe: isdefined(Redstone, :capture) is false, while checkpoint and overlay! exist (src/sim.jl:892,964,1063). The D-063 annotation at log.md:2154-2156 records the retirement (D-273).",
+   "class": "drift",
+   "fix": "Annotation: the warm-restart clause is retired (D-273). A resume is `checkpoint` then `restore!`, and a stopped run takes a condition through `overlay!` (D-429).",
+   "clear": true
+  },
+  {
+   "id": "L8a-045",
+   "conforms": false,
+   "evidence": "The tree has no sketch_io.jl (fd). Only design/prototypes/sketch_decoder.jl survives. Commit 69451bc7 ('... and retire sketch_io.jl') removed it.",
+   "class": "drift",
+   "fix": "Annotation: `sketch_io.jl` was retired in commit 69451bc7, and `sketch_decoder.jl` alone remains, under design/prototypes/.",
+   "clear": true
+  },
+  {
+   "id": "L8a-046",
+   "conforms": false,
+   "evidence": "The tree has no condition_demo.jl (fd). Commit 1d295a07 ('Remove the condition demo script') deleted it.",
+   "class": "drift",
+   "fix": "Annotation: `condition_demo.jl` was removed in commit 1d295a07. The test suite's condition tests (test/test_conditions.jl) now exercise the §14 algebra.",
+   "clear": true
+  },
+  {
+   "id": "L8a-048",
+   "conforms": false,
+   "evidence": "src/library.jl:60,110: `const SumJunction{V, N} = Junction{V, V, N, typeof(+)}`, constructed only as `SumJunction{V, N}()`. Probe: SumJunction() raises MethodError, and SumJunction{Float64,2}() builds Junction{Float64,Float64,2,typeof(+)}. The D-073 annotation at log.md:2524-2526 records the move (D-311).",
+   "class": "drift",
+   "fix": "§13.7's `SumJunction` takes its nominal type as parameter, as in `SumJunction{Wrench{Float64}, 3}`, an alias of the generic `Junction` (D-311).",
+   "clear": true
+  },
+  {
+   "id": "L8a-051",
+   "conforms": true,
+   "evidence": "src/structure.jl:111-117: `_wrong_direction` records UnknownPort with endpoint = :source for a producer. Probe: local_wires (\"a/outt\" => \"b/e\") raises UnknownPort(..., :source, \"a\", \"a/outt\", :outt, [:e, :out])."
+  },
+  {
+   "id": "L8a-062",
+   "conforms": false,
+   "evidence": "src/assembly.jl:610-622: exclusivity is enforced in `input_passthrough`/`output_passthrough` (there is no `faces` helper and no `declaration_error`). It covers three selectors (except/only/select) and throws UnknownFaceSelection with reason :multiple_selectors, or :unknown_names for unknown names. Probe: isdefined faces/declaration_error are both false, and except+only raises UnknownFaceSelection(\"input_passthrough\", \"inner\", :multiple_selectors, [\"except\",\"only\"]). D-171, D-209 and D-251 (log.md:10400,10408) record the move.",
+   "class": "drift",
+   "fix": "`input_passthrough`/`output_passthrough` enforce the mutual exclusivity of `except`/`only`/`select` with `UnknownFaceSelection`, whose reason field reads `:unknown_names` or `:multiple_selectors` (D-251).",
+   "clear": true
+  },
+  {
+   "id": "L8a-073",
+   "conforms": false,
+   "evidence": "src/roster.jl:201-215: sides are declared by the traits is_input/is_output/is_greedy. Method presence is only cross-checked against the fallback via `which`. Probe: a binding that defines `claims` without is_input is refused as BindingContractMismatch(:neither_side). D-177 (log.md:7050-7062) records the change.",
+   "class": "drift",
+   "fix": "Signatures and semantics unchanged. Sides are declared by the `is_input`/`is_output` traits, and `which` cross-checks method presence at attach (D-177).",
+   "clear": true
+  },
+  {
+   "id": "L8a-074",
+   "conforms": true,
+   "evidence": "src/roster.jl:140-159: attach! calls `claims` once and stakes what it names as the device's claim. Probe: after attach!(sim, Idle(), InBinding()) with claims = (\"e\",), plane.claimedby = Dict(:e => \"device 1 (Idle)\")."
+  },
+  {
+   "id": "L8a-083",
+   "conforms": true,
+   "evidence": "src/model.jl:827-831 calls `_check_finite!` on the accepted trial right after `attempt!` and before the commit. src/model.jl:917-931 documents it as the boundary's first act, with ẋ not participating. Probe: a NaN derivative raises StepError{NonfiniteState} naming `b`, leaf `q`."
+  },
+  {
+   "id": "L8a-090",
+   "conforms": false,
+   "evidence": "src/assembly.jl:833-836,872: `Group` is defined in the core. Probe: parentmodule(Group) = Redstone, and isdefined(Redstone.Library, :Group) is false. D-472 (log.md:20749-20763) records the move: 'It leaves `Redstone.Library`'.",
+   "class": "drift",
+   "fix": "`Group` is an ordinary component defined in the core, outside `Redstone.Library` (D-472).",
+   "clear": true
+  },
+  {
+   "id": "L8a-091",
+   "conforms": false,
+   "evidence": "src/assembly.jl:872: `struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple}` has a fifth field `sample_times`. Probe: the type params are svec(C<:NamedTuple, W, I, O, R<:NamedTuple). The D-184 annotation at log.md:7335-7336 records it (D-300).",
+   "class": "drift",
+   "fix": "a single type `Group{C <: NamedTuple, W, I, O, R <: NamedTuple}`",
+   "clear": true
+  },
+  {
+   "id": "L8a-094",
+   "conforms": false,
+   "evidence": "src/assembly.jl:969-979: `local_wires`/`input_wires`/`output_wires` of a Group return `_declared(field, g)`. That is the field when it holds entries, and the field called on the Group when it holds a function (D-473). Probe: a Group whose input_wires field is a closure returns (\"e\" => \"g/e\",) from input_wires(fg). The names changed under D-279, D-303 and D-314.",
+   "class": "drift",
+   "fix": "whose `local_wires`/`input_wires`/`output_wires` return the entries their instance fields hold, or the result of calling a field that holds a function of the `Group` (D-473)",
+   "clear": true
+  },
+  {
+   "id": "L8a-095",
+   "conforms": false,
+   "evidence": "src/deployment.jl:539,550,573: `bind_schedule` runs inside the `Deployment` constructor, and the `Schedule` lives on the `Deployment`. Probe: fieldnames(Simulation) = (:model, :plane, :control, :run), and dep.schedule isa Redstone.Schedule. The D-187 annotation at log.md:7545-7546 records the move (D-254).",
+   "class": "drift",
+   "fix": "deployment binding produces the bound schedule, the `Schedule`, on the `Deployment`",
+   "clear": true
+  },
+  {
+   "id": "L8a-098",
+   "conforms": false,
+   "evidence": "src/deployment.jl:247: the grid report is `_grid_report(anchors)`, read from the structure's anchors before the schedule is built. Only GridUtilization (src/deployment.jl:590-593) reads `schedule.rows`. The D-187 annotation at log.md:7560-7562 and log.md:20244 record the move (D-466).",
+   "class": "drift",
+   "fix": "the single source of truth for `Δt`. The grid report reads the structure's anchors, and of the grid diagnostics only `GridUtilization` reads the `Schedule`'s rows (D-466).",
+   "clear": true
+  },
+  {
+   "id": "L8a-105",
+   "conforms": true,
+   "evidence": "src/assembly.jl:594-597: `output_passthrough` takes sep, prefix, except and only (plus select), as input_passthrough does at src/assembly.jl:543-546, and reads output_faces(child). Probe: output_passthrough(outer, \"inner\"; prefix = \"X\", sep = \"_\", except = (\"o\",)) returns (\"inner/p\" => \"X_p\",)."
+  },
+  {
+   "id": "L8a-114",
+   "conforms": true,
+   "evidence": "src/assembly.jl:142-146: only non-empty container siblings (`nfields(value) > 0`) are shadowable. Probe: bare key `aux` beside an empty sibling `aux = ()` builds children [\"aux\"], and beside a non-empty sibling it raises ChildNameCollision(:sibling_field)."
+  },
+  {
+   "id": "L8a-123",
+   "conforms": true,
+   "evidence": "src/sim.jl:2577-2579: detach! of a device not on the roster throws NotAttached. src/diagnostics.jl:2548-2549 calls it AlreadyAttached's mirror. Probe: detach!(sim, Idle()) raises NotAttached(\"Idle\", String[])."
+  }
+ ],
+ "notes": "I created one probe script, run once, at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L8a_v/probe.jl. Every judgment and line number is from the worktree pinned at 72b12836. I edited no tracked file and committed nothing.\n\nResults: 10 claims conform and 20 are drift. There is no deviation, defect or gap, so no judgment carries a backing_entry. Every drift is recorded by a later log entry, an annotation already on the cited entry, or a commit:\n- L8a-045: commit 69451bc7 retired sketch_io.jl.\n- L8a-046: commit 1d295a07 removed condition_demo.jl.\n\nTwo gaps in the existing annotations:\n- D-146 has no annotation pointing to D-177. D-177 moved binding-side detection from method presence to the is_input/is_output traits.\n- D-187's annotations already cover L8a-095 and L8a-098.\n\nUnder log_rules.md rules 1-2, each drift fix would land as an annotation, never as a rewrite of the Position.\n\nOne edge case on L8a-001, judged conforming: children are read from each field's value (`value isa AbstractComponent`), not its declared type. A field declared `::Any` that holds a component still becomes a child. Spec §8.5 says \"fields whose type is <: AbstractComponent\", which could be read as the declared type. This is worth a look if a strict reading is wanted."
+}

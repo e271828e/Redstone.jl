@@ -1,0 +1,174 @@
+{
+ "judgments": [
+  {
+   "id": "CV8-104",
+   "conforms": true,
+   "evidence": "src/assembly.jl:13-55 and :80-89 define ASSEMBLY_FAMILY, LEAF_FAMILY, _OTHER_FAMILY, leaf_declarations, declarations_found and _holds_components, all unexported helpers feeding classify (:58-70). code_map.md:8-12 makes an entry a selective list of constructs, not an inventory, and names `classify`, which these serve. The G1b verifiers overturned CV1-005, CV1-008, CV1-027, CV1-090, CV1-124 and CV2-040 on the same ground, following trial row C14-011.",
+   "note": "The map is not required to list private helpers."
+  },
+  {
+   "id": "CV8-103",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:581-588 ClassUnreadable has path, type, found, assembly_family, leaf_family and holds_components. :599-602 ClassMixed has path and declarations, the offending leaf declarations. Probe '103 Unreadable fields' => (\"Nothing1\", [], [:local_wires], [12 leaf names], true). '002 Both' => (:ClassMixed, [:x_init, :u_types]). spec.md:15550-15555 matches."
+  },
+  {
+   "id": "CV8-107",
+   "conforms": false,
+   "evidence": "src/assembly.jl:180, :186 and :265 raise ChildNameCollision with reason :sample_times_sugar, :sibling_field and :two_children (src/diagnostics.jl:826). test/test_assembly.jl:294, :310 and :321 match on the symbols. spec.md:15611-15616 describes the three arms in prose only, and rg finds none of the three symbols in spec.md or log.md. Other entries name their reasons, such as IllegalStateLeaf at spec.md:15537 and RatesViolation at :15603-15608.",
+   "class": "deviation",
+   "fix": "Appendix C, ChildNameCollision: \"Assembly path, the colliding child name, a `reason`, `:sample_times_sugar` (a bare container key against the `sample_times` sugar, [D-211][d-211]), `:sibling_field` (a bare key against a sibling field, [D-212][d-212]) or `:two_children` (two children with one name), and the declarations.\"",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV8-109",
+   "conforms": false,
+   "evidence": "src/assembly.jl:246-256: _check_transparent pushes TransparentContainerUnknown into the same diags list after the walk pushed ContainerMixed (:168-170), and :204 throws both together. Probe '109 mixed+transparent' => [(:ContainerMixed), (:TransparentContainerUnknown)]. The comment dates from 2e974eab, when ContainerMixed threw fail-fast so the transparency check never ran. 3b5b204b moved to collecting over the child-naming pass, and D-431 (log.md:17528) records that move.",
+   "class": "drift",
+   "fix": "# The declaration is checked after the walk, so a mixed container it names reports `ContainerMixed` first, then `TransparentContainerUnknown`.",
+   "clear": true
+  },
+  {
+   "id": "CV8-116",
+   "conforms": true,
+   "evidence": "Probe '116 no class' => ClassUnreadable, '116 both' => ClassMixed, '116 bad wires' => IllegalWireEntry :bare_pair, from input_faces outside a build (src/assembly.jl:435-437 classify, :476-478 _check_wire_shape). Appendix C covers both. spec.md:15588-15589 says 'A face primitive called outside a build refuses the same way, at the empty path', and §8.5 (spec.md:3702-3709) makes the class refusals total over any component. docstring_rules.md rule 21 does not require a refusal paragraph.",
+   "note": "The behaviour is covered by Appendix C and §8.5, so the docstrings' silence is no mismatch. Adding a refusal sentence to the two docstrings would be optional polish."
+  },
+  {
+   "id": "CV8-115",
+   "conforms": true,
+   "evidence": "src/assembly.jl:435-437 and :459-461: a primitive lists keys(_contract(u_types)), a bare contract keyed under u. An assembly lists _walked_faces, which returns copy(memo) or a new vector (:472-480). Probe '115 bare primitive' => ([\"u\"], [\"y\"]), '115 assembly' => ([\"in\"], [\"y\"]), '115 fresh' => [\"e\"] after pushing into a returned vector."
+  },
+  {
+   "id": "CV8-151",
+   "conforms": true,
+   "evidence": "spec.md:15038-15041 gives `input_passthrough(assembly, child_path; sep = \".\", prefix = replace(child_path, \"/\" => sep), except = (), only = (), select = nothing)` and output_passthrough with the same arguments. src/assembly.jl:543-546 and :594-597 define exactly these keywords and defaults. Probe '151 methods' shows one method with (assembly, child_path; sep, prefix, except, only, select)."
+  },
+  {
+   "id": "CV8-125",
+   "conforms": false,
+   "evidence": "src/assembly.jl:625-628 raises UnknownFaceSelection with reason = :unknown_names. Probe '125 unknown' => (:UnknownFaceSelection, :unknown_names). spec.md:4612-4613 (§8.8) says only 'errors with the child's face list in hand'. spec.md:15042 (Appendix B) and 4618-4619 name only :multiple_selectors, and spec.md:15595-15596 (Appendix C) says 'reason (unknown names / more than one selector given)'. rg finds no :unknown_names in spec.md or log.md.",
+   "class": "deviation",
+   "fix": "Appendix C, UnknownFaceSelection: \"The helper, the child's full path, a `reason`, `:unknown_names` (an `except` or `only` name the child lacks) or `:multiple_selectors` (more than one selector given), the offending names or the selectors given, the child's face list.\" §8.8's bullet: \"`except` or `only` naming a nonexistent face is `UnknownFaceSelection` with reason `:unknown_names`, the child's face list in hand.\"",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV8-126",
+   "conforms": true,
+   "evidence": "src/assembly.jl:676-688 maps a NamedTuple value to :nested, an Integer or Enum eltype to :mode_value, another Real to :eltype and anything else to :wrapper. Probe '126 leaves' => [(:a, :nested), (:m, :mode_value), (:e, :eltype), (:w, :wrapper)]. spec.md:15533-15537 names the four."
+  },
+  {
+   "id": "CV8-131",
+   "conforms": false,
+   "evidence": "src/assembly.jl:704 and src/structure.jl:761-762 raise FaceNameIllegal with invariant :empty or :contains_slash (src/diagnostics.jl:662). Probe '131 empty key' => (:FaceNameIllegal, :empty) and '131 slash face' => (:FaceNameIllegal, :contains_slash). spec.md:15572-15574 says '(contains `/`, or empty, ...)' in prose, and rg finds neither symbol in spec.md.",
+   "class": "deviation",
+   "fix": "Appendix C, FaceNameIllegal: \"Component path, face name, and the violated `invariant`, `:contains_slash` (the name contains `/`) or `:empty` (the name is empty, a primitive's contract key included, [D-437][d-437]).\"",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV8-132",
+   "conforms": false,
+   "evidence": "src/assembly.jl:768-771 cites §8.5 for 'a top marker says nothing where every leaf pins'. That rule is in §8.2, at spec.md:2958-2962 ('On a discrete consumer it pins wholesale. A `Pinned` entry there says nothing') and :3503-3504. §8.5's 'One arity on both tiers' (spec.md:3720-3728) names DeclarationOnWrongTier only in general. Until ef7f5dd8 (chapter 8's readability rewrite), §8.5 said '`Pinned` on a discrete leaf, is the same kind', which git log -S traces. Probe '132 disc top' => (:DeclarationOnWrongTier, :pinned_entry).",
+   "class": "drift",
+   "fix": "# and a top marker says nothing where every leaf pins (§8.2, D-263).",
+   "clear": true
+  },
+  {
+   "id": "CV8-137",
+   "conforms": true,
+   "evidence": "src/structure.jl:440-443: flatten_tree! runs _walk! inside with(WALK_FACES => draft.faces, WALK_CHILDREN => IdDict()). src/structure.jl:274 StructureDraft.faces is an IdDict of (inputs, outputs) per assembly instance, filled at :623. src/assembly.jl:799-830 holds both memos and _walked_children in the section before Group's."
+  },
+  {
+   "id": "CV8-002",
+   "conforms": true,
+   "evidence": "src/assembly.jl:58-70: local_wires with leaf declarations throws ClassMixed. Neither local_wires nor a leaf declaration throws ClassUnreadable. Probe '002 InputOnly' (input_wires alone) => ClassUnreadable with found [:input_wires]. '002 Both' => ClassMixed. '103' => ClassUnreadable for a type declaring nothing."
+  },
+  {
+   "id": "CV8-013",
+   "conforms": true,
+   "evidence": "src/assembly.jl:739-746: a non-empty store with no update law records StoreWithoutUpdate and returns before the vote loop (:760-767), which records DeclarationOnWrongTier. Probe '013 no update' => StoreWithoutUpdate. '013 with x_init' (s_init, s_update, x_init) => DeclarationOnWrongTier :tier_form. '013 with x_deriv' => DeclarationOnWrongTier twice. '013 no upd + x_init' => StoreWithoutUpdate first."
+  },
+  {
+   "id": "CV8-025",
+   "conforms": true,
+   "evidence": "src/assembly.jl:787-789 pushes IllegalPortType :nested_marker whenever _holds_marker(P), with no tier test. Probe '025 disc nested' (s_init primitive, u_types (a = SVector{2,Pinned{Float64}},)) => (:IllegalPortType, :nested_marker). '025 cont nested' => the same."
+  },
+  {
+   "id": "CV8-037",
+   "conforms": true,
+   "evidence": "src/assembly.jl:306-311 and :321-341: a container element's key segment is spent on the child, so a three-segment path is child plus face. Probe '037 roster paths' => [\"units/1\", \"units/2\"]: a model whose local_wires is (\"units/1/out\" => \"units/2/e\",) builds."
+  },
+  {
+   "id": "CV8-047",
+   "conforms": false,
+   "evidence": "src/declare.jl:349-352 names ChildNameCollision only for 'a bare key that collides with a sibling child's name'. src/assembly.jl:178-183 also raises it as :sample_times_sugar for a bare key equal to its own field's name, and :184-189 as :sibling_field for a key equal to a sibling container field that holds children. test/test_assembly.jl:310 and :321 assert both. D-212 (sibling container field) and D-215 (the sample_times arm) record the two arms after D-211, whose wording the docstring follows.",
+   "class": "drift",
+   "fix": "On an [assembly](@ref g-assembly), the build refuses a name that matches no container field as `TransparentContainerUnknown`. It refuses a bare key as `ChildNameCollision` when the key collides with a sibling child's name, equals its own field's name, or equals the name of a sibling container field that holds children.",
+   "clear": true
+  },
+  {
+   "id": "CV8-048",
+   "conforms": false,
+   "evidence": "spec.md:3802-3803 says declaring two transparent containers on one type is a declaration error (D-211, D-215). No diagnostic exists. transparent_container returns one Symbol or nothing (src/declare.jl:344, comment :337-338: '\"At most one\" is unrepresentable otherwise here'). A second method on the same type replaces the first. Probe '048 tuple return': a method returning (:a, :b) throws a raw MethodError (convert Tuple to Symbol while TransparentContainerUnknown is built at src/assembly.jl:251), not a diagnostic. D-211 says 'at most one' but rules no error, and D-215 adds kinds without such a rule.",
+   "class": "deviation",
+   "fix": "Spec §8.5: \"A type names at most one transparent container, since `transparent_container` returns one field name or `nothing` ([D-211][d-211]).\"",
+   "clear": false,
+   "backing_entry": "",
+   "note": "The fix is not clear. A return that is no Symbol, such as a tuple of two names, reaches a raw MethodError. The user may instead want the code to refuse it as TransparentContainerUnknown, which would be a code change."
+  },
+  {
+   "id": "CV8-058",
+   "conforms": true,
+   "evidence": "The fields are read only inside src/: Relative.D/.Φ and Absolute.Δt/.τ at src/structure.jl:337-342 and :396-399, StateEvent.guard/.handler at src/build.jl:839, :1285, :1292 and :1596. No doc, example or test reads them as API. test/test_executor.jl:159 reads an executor body, not a StateEvent. docstring_rules.md rule 6 applies to a struct 'whose fields are public', and nothing makes these fields public. Spec 8.7, Appendix B (spec.md:14976-14979) and the docstrings make the constructors the surface.",
+   "note": "The claim assumes the fields are public, but nothing establishes that."
+  },
+  {
+   "id": "CV8-052",
+   "conforms": true,
+   "evidence": "src/declare.jl:434-441: Relative(D::Integer, Φ::Integer = 0), each normalized to Int. A non-Integer Real throws :not_a_count. Probe '052' => Relative(Int8(2)) = Relative(2, 0), Relative(big(3), UInt8(1)) = Relative(3, 1), and Relative(2.0) => ArgumentInvalid :not_a_count."
+  },
+  {
+   "id": "CV8-063",
+   "conforms": true,
+   "evidence": "src/structure.jl:341-343: Δt > 0 ? (0 ≤ τ < Δt || :offset) : :period. Probe '063': Absolute(0) and Absolute(-1//2) => RatesViolation :period. Absolute(1//2, 1//2) and Absolute(1//2, -1//4) => RatesViolation :offset."
+  },
+  {
+   "id": "CV8-078",
+   "conforms": true,
+   "evidence": "src/model.jl:650-652: run_boundary! projects first. frame.jl:160-164 runs it after every step and :316 at each t* boundary. src/executor.jl:393-394 _fire_project! runs after each handler. init! (model.jl:333, boundary_zero!) and overlay! (model.jl:474) run a boundary. Probe '078': init! => 1, overlay! => 1, one frame under BS3 with h_max = 1/4 => 4 projections for 4 steps."
+  },
+  {
+   "id": "CV8-076",
+   "conforms": true,
+   "evidence": "src/build.jl:1150-1166: a non-continuous tier is DeclarationOnWrongTier :continuous_only, decl.x === nothing is :no_manifold, and the return goes through _check_state_write to ConformanceFailure. Probe '076 disc' => :continuous_only, '076 empty' => :no_manifold, '076 bad return' => (:ConformanceFailure, :field_set)."
+  },
+  {
+   "id": "CV8-089",
+   "conforms": true,
+   "evidence": "src/structure.jl:534-537 throws DiagnosticError(DeclarationShadowed(path, names, parent_module)) before classify at :538. src/diagnostics.jl:568-572 holds those fields. Probe '089 shadowed' => [(:DeclarationShadowed, \"\", [:x_deriv], \"Main.ShadowMod\")], one diagnostic, on a type whose class was readable."
+  },
+  {
+   "id": "CV8-091",
+   "conforms": true,
+   "evidence": "src/declare.jl:783-835 (Tier, tier_word, update_of), :601-602 (_holding), :878 (_declares_workspace), :910 (_tier_names) and :1008 (COMPONENT_PATH) are unexported internals. :781 says the enum is 'the build's internal answer, not an authoring surface'. code_map.md:8-12 makes entries selective, and the G1b verifiers overturned the helper-omission rows CV1-005, CV1-027, CV1-090 and CV2-040 on that ground."
+  },
+  {
+   "id": "CV8-090",
+   "conforms": true,
+   "evidence": "code_map.md:321 'the one-arity `contract_at`' names the declaration form it reads, not its own signature. The phrase dates from c5c6986f (D-263), which replaced the two-argument contract forms (u_types(c, T)) with one-arity declarations, the 'One arity on both tiers' of spec.md:3720. contract_at (src/declare.jl:794-799) reads the declaration as invoke_declaration(fn, comp), with one argument, on both tiers.",
+   "note": "A reader could take the phrase as contract_at's own arity. A rewording such as 'contract_at, the reader of the one-arity contract declarations' would remove the doubt, but that is optional."
+  },
+  {
+   "id": "CV8-098",
+   "conforms": false,
+   "evidence": "src/declare.jl:916-921 classify_bundle_field returns :undeclared, :illegal_for_family or :wrong_tier, carried as BundleFieldError.reason (src/declare.jl:976-979, src/diagnostics.jl:1201). Probe '098 bundle classes' => [:undeclared, :wrong_tier, :illegal_for_family]. spec.md:15693-15697 says 'classification (undeclared store / wrong-tier fact / illegal for this function family)', and rg finds none of the three symbols in spec.md or log.md.",
+   "class": "deviation",
+   "fix": "Appendix C, BundleFieldError: \"Component path, function family, the primitive's tier, requested field, the legal field set, and a `reason`, `:undeclared` (an undeclared store), `:wrong_tier` (a wrong-tier fact) or `:illegal_for_family` (illegal for this function family).\"",
+   "clear": true,
+   "backing_entry": ""
+  }
+ ],
+ "notes": "I verified all 28 claims from scratch against W at 72b12836, with one probe script run several times: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV8_v/probe.jl. I edited no tracked file. Eight claims do not conform. The two drifts with one clear fix are CV8-109 (the stale comment after D-431's collecting) and CV8-132 (§8.5 cited for a §8.2 rule). CV8-047 is also a clear drift: the docstring lacks the arms D-212 and D-215 added. Four deviations name no reason symbols in Appendix C: CV8-107, CV8-125, CV8-131 and CV8-098. They follow the precedent of G1b's CV1-139 and CV2-050. CV8-048 is a deviation and not clear, because a tuple return reaches a raw MethodError, which the user may prefer to see refused by the code instead. For the map and coverage rows CV8-104, CV8-091, CV8-058 and CV8-116, I followed the G1b precedent that the map lists constructs selectively. Behaviour covered by Appendix C or §8.5 counts as covered. Side finding outside this slice: spec.md:2962 cites §8.5 for the same Pinned-on-discrete rule as CV8-132, and it should be §8.2."
+}

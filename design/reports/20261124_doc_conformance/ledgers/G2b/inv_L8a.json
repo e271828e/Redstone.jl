@@ -1,0 +1,1099 @@
+{
+ "rows": [
+  {
+   "id": "L8a-010",
+   "file": "design/log.md",
+   "line": 1501,
+   "kind": "decl",
+   "claim": "A single dedicated `exports(::A)` declaration lists an assembly's faces of both directions as face => internal path(s).",
+   "evidence": "src/assembly.jl:22-24 (separate `input_wires` and `output_wires`); src/diagnostics.jl:677-690 (uniqueness across the two methods)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-170 split `exports` by direction (input_connections/output_connections, now input_wires/output_wires via D-279/D-303). D-041's own 2026-10-02 annotation already records the split.",
+   "fix": "None in the Position (log rule 1); the existing annotation suffices: \"The single `exports` method splits by direction into `input_wires` (face => internal path(s)) and `output_wires` (internal path => face).\""
+  },
+  {
+   "id": "L8a-011",
+   "file": "design/log.md",
+   "line": 1501,
+   "kind": "mech",
+   "claim": "An assembly face's direction is derived from its endpoints.",
+   "evidence": "probe:67 (an input_wires entry onto an output port is FaceDirectionConflict); src/diagnostics.jl:727 message \"direction is declared by the method\"",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-170: direction is declared by the method, endpoint derivation becomes a cross-check. Recorded in D-041's 2026-10-02 annotation.",
+   "fix": "Annotation already states it: \"endpoint derivation becomes a cross-check on the direction each method declares.\""
+  },
+  {
+   "id": "L8a-018",
+   "file": "design/log.md",
+   "line": 1528,
+   "kind": "law",
+   "claim": "`Δt_base` and `h` are fixed only at `Simulation` construction.",
+   "evidence": "src/deployment.jl:539-555 (`Deployment(build; Δt_frame, Δt_base, h_max, h_min, …)`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-254/D-256 moved them to the `Deployment` constructor; `h` is now `h_max` (and `h_min`). D-042's 2026-10-02 annotation records it.",
+   "fix": "Annotation already reads: \"`Δt_base` and `h` are fixed at deployment, as `Deployment` constructor parameters, not at `Simulation` construction.\""
+  },
+  {
+   "id": "L8a-020",
+   "file": "design/log.md",
+   "line": 1655,
+   "kind": "law",
+   "claim": "The build's only face-name invariants are no `/` and per-assembly uniqueness.",
+   "evidence": "probe:63 (an empty face name is FaceNameIllegal :empty); src/diagnostics.jl:659-671",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-436 adds a third invariant, a face name is never empty. D-046's 2026-10-29 annotation records it.",
+   "fix": "Annotation already reads: \"a third invariant, a face name is never empty, an assembly face or a contract key alike ([D-436]).\""
+  },
+  {
+   "id": "L8a-030",
+   "file": "design/log.md",
+   "line": 1866,
+   "kind": "decl",
+   "claim": "A component declares `local_types(::C)` strictly for its cross-stage cells.",
+   "evidence": "src/declare.jl:746-750 (DECLARATION_FAMILY has no local_types or successor)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-165 deletes `local_types`: an intermediate is an ordinary declared port or a private `w` return. D-055's 2026-10-02 annotation records it.",
+   "fix": "Annotation already reads: \"amended by D-165 and D-194. `local_types` is deleted, and an intermediate is an ordinary declared port.\""
+  },
+  {
+   "id": "L8a-031",
+   "file": "design/log.md",
+   "line": 1866,
+   "kind": "law",
+   "claim": "Every non-`output_types` return field of a stage must be declared in `local_types`.",
+   "evidence": "src/build.jl:131 (UndeclaredReturnField candidates are the y_types ports only)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-165: candidates = output_types alone; non-public returns go to private `w`.",
+   "fix": "Covered by the existing D-165 annotation; no Position edit."
+  },
+  {
+   "id": "L8a-032",
+   "file": "design/log.md",
+   "line": 1867,
+   "kind": "law",
+   "claim": "`local_types` has an empty framework default.",
+   "evidence": "src/declare.jl:746-750 (no such declaration exists)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Declaration deleted by D-165.",
+   "fix": "Covered by the existing D-165 annotation; no Position edit."
+  },
+  {
+   "id": "L8a-034",
+   "file": "design/log.md",
+   "line": 1868,
+   "kind": "law",
+   "claim": "Component-scoped cross-stage cells exist in the store, distinct from workspace.",
+   "evidence": "src/declare.jl:746-750; src/store.jl (no local-cell store)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-165: local cells leave the §9.7 store.",
+   "fix": "Covered by the existing D-165 annotation; no Position edit."
+  },
+  {
+   "id": "L8a-036",
+   "file": "design/log.md",
+   "line": 1869,
+   "kind": "law",
+   "claim": "`local_types` is declared concrete at nominal on both tiers.",
+   "evidence": "src/declare.jl:746-750",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Declaration deleted by D-165.",
+   "fix": "Covered by the existing D-165 annotation; no Position edit."
+  },
+  {
+   "id": "L8a-037",
+   "file": "design/log.md",
+   "line": 1870,
+   "kind": "mech",
+   "claim": "`local_types` is resolved by the same activation leaf walk as `output_types`.",
+   "evidence": "src/build.jl:23-42 (only u/y contracts and stores are retyped)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Declaration deleted by D-165.",
+   "fix": "Covered by the existing D-165 annotation; no Position edit."
+  },
+  {
+   "id": "L8a-044",
+   "file": "design/log.md",
+   "line": 2147,
+   "kind": "mech",
+   "claim": "Warm restart is `capture`, which reads current stores back as a condition value (capture → tweak → apply).",
+   "evidence": "rg finds no `capture` function in src/ (only `capture_stores`, src/store.jl, an internal copy)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-273 retires capture's condition form; a resume is checkpoint + restore. D-063's 2026-10-20 annotation records it. Lead `capture` (log.md:2148).",
+   "fix": "Annotation already reads: \"the warm-restart clause is retired … a resume is a checkpoint and a restore ([D-273]).\""
+  },
+  {
+   "id": "L8a-045",
+   "file": "design/log.md",
+   "line": 2514,
+   "kind": "ptr",
+   "claim": "Companion sketch `sketch_io.jl` carries the settled design.",
+   "evidence": "fd finds only design/prototypes/sketch_decoder.jl; commit 69451bc7 retired sketch_io.jl",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Recorded by commit 69451bc7, not by a log entry or annotation. Points at a design file, not src/.",
+   "fix": "Add an annotation: \"`sketch_io.jl` is retired (commit 69451bc7); `sketch_decoder.jl` lives in `design/prototypes/`.\""
+  },
+  {
+   "id": "L8a-046",
+   "file": "design/log.md",
+   "line": 2515,
+   "kind": "ptr",
+   "claim": "A runnable dependency-free `condition_demo.jl` exercises the §14 algebra and §14.9 mounting.",
+   "evidence": "fd finds no condition_demo.jl; commit 1d295a07 \"Remove the condition demo script\"",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Recorded by commit 1d295a07 only.",
+   "fix": "Add an annotation: \"`condition_demo.jl` is removed (commit 1d295a07); the test suite's test_conditions.jl exercises the algebra.\""
+  },
+  {
+   "id": "L8a-048",
+   "file": "design/log.md",
+   "line": 2518,
+   "kind": "mech",
+   "claim": "§13.7's `SumJunction` dispatches on its unparametrized type constructor.",
+   "evidence": "src/library.jl:52-60 (`const SumJunction{V, N} = Junction{V, V, N, typeof(+)}`, constructed as `SumJunction{V, N}()`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-311 makes the junction's type parameter the nominal type. D-073's 2026-10-12 annotation records it.",
+   "fix": "Annotation already reads: \"[D-311] makes the junction's type parameter the nominal type, as in `SumJunction{Wrench{Float64}, 3}`, never an unparametrized constructor.\""
+  },
+  {
+   "id": "L8a-073",
+   "file": "design/log.md",
+   "line": 5655,
+   "kind": "mech",
+   "claim": "Binding sides are still detected by method presence after the claims/reads rename.",
+   "evidence": "src/roster.jl:130-160 (sides declared by `is_input`/`is_output`/`is_greedy` traits; `claims`/`reads` fallbacks throw BindingContractMismatch); src/roster.jl:204-205 (`which` against the fallback only cross-checks)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-177 re-founds the periphery on declared Bool traits with error fallbacks and a bidirectional conformance check. D-146 carries no annotation naming D-177.",
+   "fix": "Add an annotation: \"[D-177] declares binding sides by the traits `is_input`/`is_output`; `claims`/`reads` are error-throwing fallbacks, and method presence is a conformance cross-check at attach.\""
+  },
+  {
+   "id": "L8a-090",
+   "file": "design/log.md",
+   "line": 7313,
+   "kind": "decl",
+   "claim": "`Group` is an ordinary library component.",
+   "evidence": "src/assembly.jl:872 (Group defined in the core's assembly.jl); code_map.md:85-90 (precompile.jl the one src caller, D-472)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-472: `Group` is a type of the core, not a library component. D-184's 2026-11-21 annotation records it.",
+   "fix": "Annotation already reads: \"`Group` is a type of the core, not a library component.\""
+  },
+  {
+   "id": "L8a-091",
+   "file": "design/log.md",
+   "line": 7315,
+   "kind": "decl",
+   "claim": "`Group` is the single type `Group{C <: NamedTuple, W, I, O}`.",
+   "evidence": "src/assembly.jl:872 (`struct Group{C <: NamedTuple, W, I, O, R <: NamedTuple}`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-300 adds the fifth field `sample_times` (parameter `R`). D-184's annotation records the fifth field but not the parameter list.",
+   "fix": "Covered by the D-300 annotation (\"`Group` carries a fifth field\"); optionally add \"its type is `Group{C <: NamedTuple, W, I, O, R <: NamedTuple}`\"."
+  },
+  {
+   "id": "L8a-095",
+   "file": "design/log.md",
+   "line": 7513,
+   "kind": "mech",
+   "claim": "Deployment binding produces the bound schedule on the `Simulation`.",
+   "evidence": "src/deployment.jl:539-551 (`Deployment.schedule::Schedule`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-254: the bound schedule is the `Schedule`, carried by the `Deployment`. Recorded in D-187's 2026-10-02 annotation.",
+   "fix": "Annotation already reads: \"The bound schedule is the `Schedule`, and it lives on the `Deployment`, not on the `Simulation`.\""
+  },
+  {
+   "id": "L8a-098",
+   "file": "design/log.md",
+   "line": 7515,
+   "kind": "mech",
+   "claim": "The bound schedule is the substrate every grid diagnostic reads.",
+   "evidence": "code_map.md:1395-1398 (`_grid_report` is derived from the structure's anchors by bind_schedule and show.jl); src/structure.jl trial binding (D-465) refuses grid failures at build, before any Schedule",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-466: the grid report reads the structure's anchors; GridUtilization alone reads the Schedule's rows. D-465 moves grid refusals to build. Both annotated on D-187.",
+   "fix": "Annotation already reads: \"The grid report reads the structure's anchors and is derived where it is used. Of the grid diagnostics, `GridUtilization` alone reads the `Schedule`'s rows.\""
+  }
+ ],
+ "ok": [
+  {
+   "id": "L8a-001",
+   "file": "design/log.md",
+   "line": 1447,
+   "kind": "decl",
+   "claim": "An assembly is a plain struct read by field type",
+   "evidence": "src/assembly.jl:147"
+  },
+  {
+   "id": "L8a-002",
+   "file": "design/log.md",
+   "line": 1447,
+   "kind": "law",
+   "claim": "Children are the component-typed fields",
+   "evidence": "src/assembly.jl:149"
+  },
+  {
+   "id": "L8a-003",
+   "file": "design/log.md",
+   "line": 1448,
+   "kind": "law",
+   "claim": "Every other field is inert parameter data",
+   "evidence": "src/assembly.jl:157"
+  },
+  {
+   "id": "L8a-004",
+   "file": "design/log.md",
+   "line": 1448,
+   "kind": "law",
+   "claim": "`connections` (now local_wires, D-170/D-303/D-314) is the marker, mandatory even empty",
+   "evidence": "probe:20; src/assembly.jl:58"
+  },
+  {
+   "id": "L8a-005",
+   "file": "design/log.md",
+   "line": 1449,
+   "kind": "decl",
+   "claim": "One root type AbstractComponent",
+   "evidence": "src/declare.jl:38"
+  },
+  {
+   "id": "L8a-006",
+   "file": "design/log.md",
+   "line": 1449,
+   "kind": "law",
+   "claim": "Class is read from declaration shape",
+   "evidence": "src/assembly.jl:56"
+  },
+  {
+   "id": "L8a-007",
+   "file": "design/log.md",
+   "line": 1450,
+   "kind": "law",
+   "claim": "The connection marker makes an assembly (lead `connections` 1448/1450: renamed)",
+   "evidence": "src/assembly.jl:58"
+  },
+  {
+   "id": "L8a-008",
+   "file": "design/log.md",
+   "line": 1451,
+   "kind": "law",
+   "claim": "Any leaf declaration marks a primitive (leads init_*, *_types: renamed D-267/D-279/D-165)",
+   "evidence": "src/assembly.jl:15; src/assembly.jl:64"
+  },
+  {
+   "id": "L8a-009",
+   "file": "design/log.md",
+   "line": 1453,
+   "kind": "law",
+   "claim": "Declaring neither family is a build error naming both families",
+   "evidence": "probe:24; src/assembly.jl:65"
+  },
+  {
+   "id": "L8a-012",
+   "file": "design/log.md",
+   "line": 1502,
+   "kind": "mech",
+   "claim": "Assembly face types derive from endpoints, none declared",
+   "evidence": "src/assembly.jl:436"
+  },
+  {
+   "id": "L8a-013",
+   "file": "design/log.md",
+   "line": 1502,
+   "kind": "law",
+   "claim": "Assemblies are tier-neutral",
+   "evidence": "src/assembly.jl:660"
+  },
+  {
+   "id": "L8a-014",
+   "file": "design/log.md",
+   "line": 1503,
+   "kind": "law",
+   "claim": "Local wires are strictly child-to-child (lead `connections` 1503: renamed)",
+   "evidence": "probe:29 (face spelling refused as PathResolution)"
+  },
+  {
+   "id": "L8a-015",
+   "file": "design/log.md",
+   "line": 1527,
+   "kind": "decl",
+   "claim": "`rates` (now sample_times, D-185) is optional",
+   "evidence": "src/declare.jl:513"
+  },
+  {
+   "id": "L8a-016",
+   "file": "design/log.md",
+   "line": 1527,
+   "kind": "law",
+   "claim": "Rate keys name immediate children only",
+   "evidence": "test/test_assembly.jl:1207"
+  },
+  {
+   "id": "L8a-017",
+   "file": "design/log.md",
+   "line": 1527,
+   "kind": "law",
+   "claim": "A rate key on a continuous child is an error",
+   "evidence": "test/test_discrete.jl:149"
+  },
+  {
+   "id": "L8a-019",
+   "file": "design/log.md",
+   "line": 1655,
+   "kind": "decl",
+   "claim": "Face names are opaque string tokens",
+   "evidence": "src/diagnostics.jl:659"
+  },
+  {
+   "id": "L8a-021",
+   "file": "design/log.md",
+   "line": 1656,
+   "kind": "law",
+   "claim": "A face name may not hold `/`, reserved for structure",
+   "evidence": "test/test_assembly.jl:570"
+  },
+  {
+   "id": "L8a-022",
+   "file": "design/log.md",
+   "line": 1656,
+   "kind": "law",
+   "claim": "Face names are unique per assembly",
+   "evidence": "test/test_assembly.jl:580"
+  },
+  {
+   "id": "L8a-023",
+   "file": "design/log.md",
+   "line": 1657,
+   "kind": "mech",
+   "claim": "The periphery writes by face name",
+   "evidence": "src/roster.jl:142"
+  },
+  {
+   "id": "L8a-024",
+   "file": "design/log.md",
+   "line": 1657,
+   "kind": "decl",
+   "claim": "`exports` returns pairs like `connections` (leads exports/connections: renamed)",
+   "evidence": "src/diagnostics.jl:693"
+  },
+  {
+   "id": "L8a-025",
+   "file": "design/log.md",
+   "line": 1658,
+   "kind": "decl",
+   "claim": "faces(asm, path; prefix, sep, except, only), now input/output_passthrough (D-144/D-171/D-209)",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "L8a-026",
+   "file": "design/log.md",
+   "line": 1659,
+   "kind": "law",
+   "claim": "The prefix defaults to the dotted child path",
+   "evidence": "probe:51"
+  },
+  {
+   "id": "L8a-027",
+   "file": "design/log.md",
+   "line": 1845,
+   "kind": "law",
+   "claim": "Producers determine activation types",
+   "evidence": "src/build.jl:36"
+  },
+  {
+   "id": "L8a-028",
+   "file": "design/log.md",
+   "line": 1846,
+   "kind": "law",
+   "claim": "A consumer's obligation is genericity",
+   "evidence": "src/build.jl:723"
+  },
+  {
+   "id": "L8a-029",
+   "file": "design/log.md",
+   "line": 1846,
+   "kind": "mech",
+   "claim": "Genericity is checked by the Dual probe (ProbeDual)",
+   "evidence": "src/build.jl:723"
+  },
+  {
+   "id": "L8a-033",
+   "file": "design/log.md",
+   "line": 1867,
+   "kind": "law",
+   "claim": "No auto-publication of undeclared return fields",
+   "evidence": "src/build.jl:131"
+  },
+  {
+   "id": "L8a-035",
+   "file": "design/log.md",
+   "line": 1868,
+   "kind": "law",
+   "claim": "Schema authority is total",
+   "evidence": "src/build.jl:131"
+  },
+  {
+   "id": "L8a-038",
+   "file": "design/log.md",
+   "line": 2145,
+   "kind": "law",
+   "claim": "Conditions are path-addressed values",
+   "evidence": "src/conditions.jl:205"
+  },
+  {
+   "id": "L8a-039",
+   "file": "design/log.md",
+   "line": 2146,
+   "kind": "law",
+   "claim": "Sparse overlays of state and mode fields (z now s, D-173/D-195)",
+   "evidence": "src/conditions.jl:169"
+  },
+  {
+   "id": "L8a-040",
+   "file": "design/log.md",
+   "line": 2146,
+   "kind": "law",
+   "claim": "Root slots (now root inputs, D-206) set by face",
+   "evidence": "src/conditions.jl:164"
+  },
+  {
+   "id": "L8a-041",
+   "file": "design/log.md",
+   "line": 2147,
+   "kind": "mech",
+   "claim": "Overlays apply over declared init defaults (lead init_: renamed x_init etc.)",
+   "evidence": "src/conditions.jl:448"
+  },
+  {
+   "id": "L8a-042",
+   "file": "design/log.md",
+   "line": 2147,
+   "kind": "law",
+   "claim": "Conditions never set outputs",
+   "evidence": "src/conditions.jl:151"
+  },
+  {
+   "id": "L8a-043",
+   "file": "design/log.md",
+   "line": 2147,
+   "kind": "law",
+   "claim": "Conditions never set workspace",
+   "evidence": "src/conditions.jl:654"
+  },
+  {
+   "id": "L8a-047",
+   "file": "design/log.md",
+   "line": 2517,
+   "kind": "law",
+   "claim": "Declaration by initial value stands",
+   "evidence": "test/fixtures.jl:24"
+  },
+  {
+   "id": "L8a-049",
+   "file": "design/log.md",
+   "line": 3888,
+   "kind": "law",
+   "claim": "UnknownPort carries a source/destination wire-end discriminator",
+   "evidence": "src/diagnostics.jl:377"
+  },
+  {
+   "id": "L8a-050",
+   "file": "design/log.md",
+   "line": 3889,
+   "kind": "law",
+   "claim": "UnknownPort carries that end's path and port list",
+   "evidence": "src/diagnostics.jl:378; probe:35"
+  },
+  {
+   "id": "L8a-051",
+   "file": "design/log.md",
+   "line": 3889,
+   "kind": "law",
+   "claim": "A typo'd source port is UnknownPort at the source end",
+   "evidence": "probe:35"
+  },
+  {
+   "id": "L8a-052",
+   "file": "design/log.md",
+   "line": 3891,
+   "kind": "law",
+   "claim": "DeploymentInvalid carries parameter, value and constraint",
+   "evidence": "src/diagnostics.jl:1370"
+  },
+  {
+   "id": "L8a-053",
+   "file": "design/log.md",
+   "line": 3892,
+   "kind": "law",
+   "claim": "DeploymentInvalid is collected at the service",
+   "evidence": "src/deployment.jl:562"
+  },
+  {
+   "id": "L8a-054",
+   "file": "design/log.md",
+   "line": 3892,
+   "kind": "ptr",
+   "claim": "Lead StopFaceInvalid: a real kind then, retired by D-316 (log.md:14440)",
+   "evidence": "src/diagnostics.jl:1317 (StopRequestInvalid succeeds it)"
+  },
+  {
+   "id": "L8a-055",
+   "file": "design/log.md",
+   "line": 3894,
+   "kind": "law",
+   "claim": "TrimProblemInvalid carries the offending field and names in hand",
+   "evidence": "src/diagnostics.jl:2225"
+  },
+  {
+   "id": "L8a-056",
+   "file": "design/log.md",
+   "line": 3895,
+   "kind": "law",
+   "claim": "TrimProblemInvalid is collected",
+   "evidence": "src/trim.jl:355"
+  },
+  {
+   "id": "L8a-057",
+   "file": "design/log.md",
+   "line": 3895,
+   "kind": "ptr",
+   "claim": "Lead SurfaceResolution: renamed TapResolution (row 122, commit 4728a93f)",
+   "evidence": "src/diagnostics.jl:2091"
+  },
+  {
+   "id": "L8a-058",
+   "file": "design/log.md",
+   "line": 3898,
+   "kind": "law",
+   "claim": "Mixing a node with a NamedTuple in merge (now combine, D-204) is ConditionNodeMisuse",
+   "evidence": "src/conditions.jl:245; probe:47"
+  },
+  {
+   "id": "L8a-059",
+   "file": "design/log.md",
+   "line": 3899,
+   "kind": "law",
+   "claim": "It carries the argument type and node kinds in hand",
+   "evidence": "src/diagnostics.jl:2061; probe:47"
+  },
+  {
+   "id": "L8a-060",
+   "file": "design/log.md",
+   "line": 3899,
+   "kind": "law",
+   "claim": "Raised at composition time, before resolution",
+   "evidence": "src/conditions.jl:241"
+  },
+  {
+   "id": "L8a-061",
+   "file": "design/log.md",
+   "line": 3900,
+   "kind": "law",
+   "claim": "Its own kind, not a ConditionResolution sub-kind",
+   "evidence": "src/diagnostics.jl:2060"
+  },
+  {
+   "id": "L8a-062",
+   "file": "design/log.md",
+   "line": 3902,
+   "kind": "law",
+   "claim": "except/only exclusivity enforced (lead declaration_error: spec sketch helper, spec.md:4543)",
+   "evidence": "src/assembly.jl:625; probe:55"
+  },
+  {
+   "id": "L8a-063",
+   "file": "design/log.md",
+   "line": 3903,
+   "kind": "law",
+   "claim": "UnknownFaceSelection has a reason: unknown names or several selectors",
+   "evidence": "src/diagnostics.jl:732"
+  },
+  {
+   "id": "L8a-064",
+   "file": "design/log.md",
+   "line": 4036,
+   "kind": "law",
+   "claim": "The declaration family is extended, not called",
+   "evidence": "src/declare.jl:757"
+  },
+  {
+   "id": "L8a-065",
+   "file": "design/log.md",
+   "line": 4037,
+   "kind": "decl",
+   "claim": "Family enters by per-name import Redstone (lead init_x: renamed x_init, D-267)",
+   "evidence": "src/declare.jl:746; src/declare.jl:757"
+  },
+  {
+   "id": "L8a-066",
+   "file": "design/log.md",
+   "line": 4039,
+   "kind": "decl",
+   "claim": "Qualified definition Redstone.f(…) works (lead Redstone.f: f renamed, D-220)",
+   "evidence": "probe:43"
+  },
+  {
+   "id": "L8a-067",
+   "file": "design/log.md",
+   "line": 5597,
+   "kind": "ex",
+   "claim": "Leads Systems/Vehicle/Aircraft/SimpleWorld/World/exports: example names, test-only or placeholder",
+   "evidence": "test/test_assembly.jl:1182"
+  },
+  {
+   "id": "L8a-068",
+   "file": "design/log.md",
+   "line": 5597,
+   "kind": "law",
+   "claim": "passthrough (now input_passthrough, D-171) is inputs-only",
+   "evidence": "src/assembly.jl:547"
+  },
+  {
+   "id": "L8a-069",
+   "file": "design/log.md",
+   "line": 5598,
+   "kind": "law",
+   "claim": "Re-exporting a fed face is a two-producers error",
+   "evidence": "test/test_assembly.jl:924"
+  },
+  {
+   "id": "L8a-070",
+   "file": "design/log.md",
+   "line": 5604,
+   "kind": "ex",
+   "claim": "Feed list drives wires and except via fed_faces (leads connections, passthrough, fed_faces)",
+   "evidence": "test/test_assembly.jl:1161"
+  },
+  {
+   "id": "L8a-071",
+   "file": "design/log.md",
+   "line": 5653,
+   "kind": "decl",
+   "claim": "Binding method `claims(b)`",
+   "evidence": "src/roster.jl:158"
+  },
+  {
+   "id": "L8a-072",
+   "file": "design/log.md",
+   "line": 5654,
+   "kind": "decl",
+   "claim": "Binding method `reads(b)`",
+   "evidence": "src/roster.jl:188"
+  },
+  {
+   "id": "L8a-074",
+   "file": "design/log.md",
+   "line": 5656,
+   "kind": "mech",
+   "claim": "claims(b) stakes the device's claimed write surface",
+   "evidence": "src/roster.jl:146"
+  },
+  {
+   "id": "L8a-075",
+   "file": "design/log.md",
+   "line": 5662,
+   "kind": "decl",
+   "claim": "reads(b) returns labeled §14.4 selectors",
+   "evidence": "src/roster.jl:166"
+  },
+  {
+   "id": "L8a-076",
+   "file": "design/log.md",
+   "line": 5663,
+   "kind": "law",
+   "claim": "The read set is validated at attach",
+   "evidence": "src/roster.jl:174"
+  },
+  {
+   "id": "L8a-077",
+   "file": "design/log.md",
+   "line": 5663,
+   "kind": "mech",
+   "claim": "Compiled to one per-boundary gather",
+   "evidence": "src/roster.jl:162"
+  },
+  {
+   "id": "L8a-078",
+   "file": "design/log.md",
+   "line": 5664,
+   "kind": "mech",
+   "claim": "map_output receives the labeled NamedTuple",
+   "evidence": "src/roster.jl:170"
+  },
+  {
+   "id": "L8a-079",
+   "file": "design/log.md",
+   "line": 5664,
+   "kind": "decl",
+   "claim": "TrimProblem carries a `reads` field",
+   "evidence": "src/trim.jl:91"
+  },
+  {
+   "id": "L8a-080",
+   "file": "design/log.md",
+   "line": 5667,
+   "kind": "decl",
+   "claim": "residuals(reads, d)",
+   "evidence": "src/trim.jl:77"
+  },
+  {
+   "id": "L8a-081",
+   "file": "design/log.md",
+   "line": 5670,
+   "kind": "decl",
+   "claim": "map_input/map_output pair",
+   "evidence": "src/bindings.jl:125; src/bindings.jl:183"
+  },
+  {
+   "id": "L8a-082",
+   "file": "design/log.md",
+   "line": 5671,
+   "kind": "decl",
+   "claim": "Selectors are the get_* values (lead get_: family placeholder)",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "L8a-083",
+   "file": "design/log.md",
+   "line": 6159,
+   "kind": "law",
+   "claim": "Nonfinite-x check runs immediately after integrate",
+   "evidence": "src/model.jl:834"
+  },
+  {
+   "id": "L8a-084",
+   "file": "design/log.md",
+   "line": 6160,
+   "kind": "law",
+   "claim": "It runs before project and the boundary sweep",
+   "evidence": "src/model.jl:918"
+  },
+  {
+   "id": "L8a-085",
+   "file": "design/log.md",
+   "line": 6161,
+   "kind": "law",
+   "claim": "The diverged component is named by NonfiniteState",
+   "evidence": "src/model.jl:944"
+  },
+  {
+   "id": "L8a-086",
+   "file": "design/log.md",
+   "line": 6163,
+   "kind": "law",
+   "claim": "ẋ does not participate in the check",
+   "evidence": "src/model.jl:926"
+  },
+  {
+   "id": "L8a-087",
+   "file": "design/log.md",
+   "line": 6353,
+   "kind": "law",
+   "claim": "Declaring nothing and no stage is a build error (ClassUnreadable)",
+   "evidence": "probe:24"
+  },
+  {
+   "id": "L8a-088",
+   "file": "design/log.md",
+   "line": 6354,
+   "kind": "law",
+   "claim": "Declarations live at module top level",
+   "evidence": "test/fixtures.jl:6"
+  },
+  {
+   "id": "L8a-089",
+   "file": "design/log.md",
+   "line": 6801,
+   "kind": "decl",
+   "claim": "passthrough renamed input_passthrough (lead passthrough 6801)",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "L8a-092",
+   "file": "design/log.md",
+   "line": 7315,
+   "kind": "decl",
+   "claim": "Group has a NamedTuple `children` field",
+   "evidence": "src/assembly.jl:873"
+  },
+  {
+   "id": "L8a-093",
+   "file": "design/log.md",
+   "line": 7316,
+   "kind": "mech",
+   "claim": "children contribute path-named children by the container rule",
+   "evidence": "src/assembly.jl:873; src/assembly.jl:982"
+  },
+  {
+   "id": "L8a-094",
+   "file": "design/log.md",
+   "line": 7317,
+   "kind": "mech",
+   "claim": "Wire declarations return instance fields (leads *_connections: renamed D-303/D-314)",
+   "evidence": "src/assembly.jl:978"
+  },
+  {
+   "id": "L8a-096",
+   "file": "design/log.md",
+   "line": 7514,
+   "kind": "decl",
+   "claim": "Rows hold (D, Φ, Δt) per discrete component with anchor and rate chain",
+   "evidence": "src/deployment.jl:36"
+  },
+  {
+   "id": "L8a-097",
+   "file": "design/log.md",
+   "line": 7515,
+   "kind": "mech",
+   "claim": "The schedule is the single source of Δt",
+   "evidence": "src/deployment.jl:79; src/deployment.jl:95"
+  },
+  {
+   "id": "L8a-099",
+   "file": "design/log.md",
+   "line": 7516,
+   "kind": "mech",
+   "claim": "The schedule's show form is the hyperperiod chart",
+   "evidence": "src/show.jl:226"
+  },
+  {
+   "id": "L8a-100",
+   "file": "design/log.md",
+   "line": 7517,
+   "kind": "law",
+   "claim": "Gate is modulo arithmetic repeating every lcm(Dᵢ) base ticks",
+   "evidence": "src/show.jl:177; src/show.jl:231"
+  },
+  {
+   "id": "L8a-101",
+   "file": "design/log.md",
+   "line": 7519,
+   "kind": "law",
+   "claim": "The chart is guarded against absurd hyperperiods",
+   "evidence": "src/show.jl:223"
+  },
+  {
+   "id": "L8a-102",
+   "file": "design/log.md",
+   "line": 8383,
+   "kind": "decl",
+   "claim": "output_passthrough is built",
+   "evidence": "src/assembly.jl:594"
+  },
+  {
+   "id": "L8a-103",
+   "file": "design/log.md",
+   "line": 8385,
+   "kind": "decl",
+   "claim": "Splatted into output_connections (lead: now output_wires)",
+   "evidence": "src/assembly.jl:567"
+  },
+  {
+   "id": "L8a-104",
+   "file": "design/log.md",
+   "line": 8385,
+   "kind": "mech",
+   "claim": "It reads output_faces(child)",
+   "evidence": "src/assembly.jl:598"
+  },
+  {
+   "id": "L8a-105",
+   "file": "design/log.md",
+   "line": 8386,
+   "kind": "decl",
+   "claim": "Same prefix/sep/except/only surface",
+   "evidence": "src/assembly.jl:594"
+  },
+  {
+   "id": "L8a-106",
+   "file": "design/log.md",
+   "line": 8405,
+   "kind": "law",
+   "claim": "Root face uniqueness applies whatever the root's class",
+   "evidence": "test/test_assembly.jl:590"
+  },
+  {
+   "id": "L8a-107",
+   "file": "design/log.md",
+   "line": 8406,
+   "kind": "law",
+   "claim": "A primitive root's faces are u_types and y_types keys together (lead *_types: renamed)",
+   "evidence": "src/diagnostics.jl:683"
+  },
+  {
+   "id": "L8a-108",
+   "file": "design/log.md",
+   "line": 8407,
+   "kind": "law",
+   "claim": "A key in both is FaceNameCollision, as a duplicate face",
+   "evidence": "test/test_assembly.jl:590"
+  },
+  {
+   "id": "L8a-109",
+   "file": "design/log.md",
+   "line": 8409,
+   "kind": "law",
+   "claim": "Non-root primitives are untouched",
+   "evidence": "test/test_assembly.jl:594"
+  },
+  {
+   "id": "L8a-110",
+   "file": "design/log.md",
+   "line": 8410,
+   "kind": "law",
+   "claim": "An empty input_connections routing is a declaration error (lead: now input_wires)",
+   "evidence": "probe:59; test/test_assembly.jl:617"
+  },
+  {
+   "id": "L8a-111",
+   "file": "design/log.md",
+   "line": 8504,
+   "kind": "law",
+   "claim": "A bare key equal to a contributing sibling container field is a build error",
+   "evidence": "test/test_assembly.jl:321"
+  },
+  {
+   "id": "L8a-112",
+   "file": "design/log.md",
+   "line": 8505,
+   "kind": "law",
+   "claim": "The error names both parties",
+   "evidence": "src/diagnostics.jl:839"
+  },
+  {
+   "id": "L8a-113",
+   "file": "design/log.md",
+   "line": 8506,
+   "kind": "law",
+   "claim": "Refused although no child bears that name",
+   "evidence": "src/assembly.jl:194"
+  },
+  {
+   "id": "L8a-114",
+   "file": "design/log.md",
+   "line": 8508,
+   "kind": "law",
+   "claim": "An empty field reserves nothing",
+   "evidence": "src/assembly.jl:144; test/test_assembly.jl:329"
+  },
+  {
+   "id": "L8a-115",
+   "file": "design/log.md",
+   "line": 8510,
+   "kind": "law",
+   "claim": "The judgment is per instantiation",
+   "evidence": "test/test_assembly.jl:329"
+  },
+  {
+   "id": "L8a-116",
+   "file": "design/log.md",
+   "line": 8632,
+   "kind": "law",
+   "claim": "ChildNameCollision is a collected build kind",
+   "evidence": "src/assembly.jl:197"
+  },
+  {
+   "id": "L8a-117",
+   "file": "design/log.md",
+   "line": 8632,
+   "kind": "law",
+   "claim": "ChildNameCollision arms: sugar, sibling field, two children",
+   "evidence": "src/diagnostics.jl:826"
+  },
+  {
+   "id": "L8a-118",
+   "file": "design/log.md",
+   "line": 8634,
+   "kind": "law",
+   "claim": "TransparentContainerUnknown is a collected build kind",
+   "evidence": "src/assembly.jl:248"
+  },
+  {
+   "id": "L8a-119",
+   "file": "design/log.md",
+   "line": 8634,
+   "kind": "law",
+   "claim": "TierUnreadable is a collected build kind",
+   "evidence": "src/assembly.jl:735"
+  },
+  {
+   "id": "L8a-120",
+   "file": "design/log.md",
+   "line": 8635,
+   "kind": "law",
+   "claim": "IllegalPortType is a collected build kind",
+   "evidence": "src/assembly.jl:782"
+  },
+  {
+   "id": "L8a-121",
+   "file": "design/log.md",
+   "line": 8636,
+   "kind": "law",
+   "claim": "ArgumentInvalid is fail-fast, for step!, trim!, TableBinding, period constructors",
+   "evidence": "src/diagnostics.jl:2356; src/declare.jl:481"
+  },
+  {
+   "id": "L8a-122",
+   "file": "design/log.md",
+   "line": 8638,
+   "kind": "law",
+   "claim": "ReadSetMisuse is a fail-fast service kind",
+   "evidence": "src/readers.jl:555"
+  },
+  {
+   "id": "L8a-123",
+   "file": "design/log.md",
+   "line": 8639,
+   "kind": "law",
+   "claim": "NotAttached is detach!'s refusal",
+   "evidence": "src/sim.jl:2578"
+  },
+  {
+   "id": "L8a-124",
+   "file": "design/log.md",
+   "line": 8641,
+   "kind": "law",
+   "claim": "UnknownPort's wire end admits `connection`",
+   "evidence": "src/diagnostics.jl:377"
+  },
+  {
+   "id": "L8a-125",
+   "file": "design/log.md",
+   "line": 8642,
+   "kind": "law",
+   "claim": "EventHalfMissing's reason admits a non-Event entry",
+   "evidence": "src/diagnostics.jl:556"
+  },
+  {
+   "id": "L8a-126",
+   "file": "design/log.md",
+   "line": 8644,
+   "kind": "law",
+   "claim": "Internal invariants raise InternalInvariant, outside the kind set",
+   "evidence": "src/diagnostics.jl:363"
+  }
+ ],
+ "counts": {
+  "law": 76,
+  "mech": 19,
+  "decl": 25,
+  "ex": 2,
+  "ptr": 17,
+  "why": 7
+ },
+ "notes": "Slice L8a covers 22 log entries. All 22 are ratified, and none carries a superseded → chain. Every D-nnn and § link in the Positions resolves: the link definitions exist and the spec headings exist. D-055 says it supersedes part of D-034, and D-170 says it supersedes D-041's shape. D-034 and D-041 both stay ratified, because those supersessions are partial.\n\nResults: 126 claims are listed, 19 findings and 107 ok. Another 13 ptr claims and 7 why claims hold up and are counted but not listed.\n\nAll 19 findings are class drift.\n- 16 are already recorded by an annotation on their own entry: D-041 (2), D-042, D-046, D-055 (6), D-063, D-073 SumJunction, D-184 (2), D-187 (2). For these the 'fix' only notes that no edit is needed.\n- 3 have no annotation naming the move:\n  - D-073's sketch_io.jl was retired by commit 69451bc7, and condition_demo.jl was removed by commit 1d295a07. Neither file is in src/.\n  - D-146's \"detection-by-method-presence unchanged\" was moved by D-177's declared traits.\n\nLeads:\n- Old names renamed by recorded entries or commits are ok, per log rule 1: connections, exports, init_*, *_types, passthrough, *_connections, capture's name, Redstone.f and init_x. The `capture` rule itself is a drift finding.\n- StopFaceInvalid was retired by D-316, at log.md:14440.\n- SurfaceResolution was renamed TapResolution by row 122, commit 4728a93f.\n- declaration_error is the spec §8.8 sketch helper, at spec.md:4543.\n- get_ is the get_* family.\n- fed_faces, Systems and Vehicle are test-only example names, and Aircraft, SimpleWorld and World are placeholders.\n\nMinor observation, not a finding: UnknownPort's candidate list for a source end holds both the input and output faces (probe P4 gives [:e, :out]), not only that end's output ports.\n\nProbe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L8a/probe.jl. Its probe:N lines are the println lines in that file. No tracked file was edited and nothing was committed."
+}

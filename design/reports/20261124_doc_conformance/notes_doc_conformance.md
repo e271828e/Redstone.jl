@@ -30,7 +30,22 @@ the tools.
   verifiers overturned 14 of 42 flags, 13 of them from the two coverage
   slices, and found 1 miss in 77 sampled rows. 18 rows landed as `adff8b24`.
 - **The rows for the user** now live in `ledgers/user_rows.md`, by group.
-- **Next.** G2, §8, split in two runs: G2a and G2b.
+- **G2, §8.** It ran at `72b12836` as G2a (`wf_55d6ef8f-1d6`, 10 agents,
+  1.58M tokens, 17 min) and G2b (`wf_4c8557c1-4ee`, 9 agents, 1.58M
+  tokens, 23 min). The verifiers overturned 28 of 96 flags, 12 of them the
+  companion's prior-art leads, and found 2 misses in 122 sampled rows, both
+  in a log slice. One fixer took both runs' 20 clear rows, which landed as
+  `d78961ce`.
+- **Seen by G2's fixer, not yet fixed.** Appendix C's `StoreWithoutUpdate`
+  entry and its docstring (src/diagnostics.jl, near 542) keep S8c-036's
+  imprecision. §8.2, near line 2962, cites §8.5 for the rule that a
+  `Pinned` entry says nothing, which CV8-132 moved to §8.2 in the code.
+  Appendix C cites D-211 for `:sample_times_sugar` where §8.5 cites D-215.
+- **A tracked file was deleted in W during G2's runs:**
+  `design/reports/20261001_chapter9_rewrite/chapter_old.md`. It was
+  restored before the fixer's commit. Check `git -C W status` after each
+  run, before the fixer starts.
+- **Next.** G3, §9, as G3a and G3b at one pin.
 
 ## Rulings since the trial
 

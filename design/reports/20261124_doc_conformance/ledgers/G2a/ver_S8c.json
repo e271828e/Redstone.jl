@@ -1,0 +1,191 @@
+{
+ "judgments": [
+  {
+   "id": "S8c-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:981 invoke_probed calls fn(comp, bundle); src/executor.jl:373 and :393 call guard and handler as entry.guard(entry.comp, bundle). x_projection is the positional exception the doc names at spec:3390."
+  },
+  {
+   "id": "S8c-011",
+   "conforms": true,
+   "evidence": "Redstone ships no field-emitting component: rg for field handles in src/ finds only a comment at src/leaves.jl:6, and src/library.jl defines none. The obligation falls on domain libraries, and nothing in W breaks it.",
+   "note": "Vacuous at W: an author obligation with no shipped subject."
+  },
+  {
+   "id": "S8c-013",
+   "conforms": true,
+   "evidence": "No field-emitting component in src/library.jl (struct list :42-1999), so W has no swept output stage that could put the query math the wrong way round.",
+   "note": "Vacuous at W."
+  },
+  {
+   "id": "S8c-014",
+   "conforms": true,
+   "evidence": "This is the rationale for the value-level constructor. W ships no field handle (src/leaves.jl:6 is the only mention), so no code contradicts it.",
+   "note": "Vacuous at W."
+  },
+  {
+   "id": "S8c-015",
+   "conforms": true,
+   "evidence": "An obligation on shipped field-emitting components. src/library.jl ships none, so nothing in W contradicts it.",
+   "note": "Vacuous at W."
+  },
+  {
+   "id": "S8c-016",
+   "conforms": true,
+   "evidence": "W has no bulk-data component (src/library.jl struct list), so nothing contradicts it.",
+   "note": "Vacuous at W."
+  },
+  {
+   "id": "S8c-019",
+   "conforms": true,
+   "evidence": "src/declare.jl:544 struct StateEvent{G,H} has only the fields guard and handler. Probe P14 shows StateEvent(identity, identity; localized = true) throws a MethodError for the unsupported keyword."
+  },
+  {
+   "id": "S8c-028",
+   "conforms": true,
+   "evidence": "src/declare.jl:767 has_stage(fn, comp) = !isempty(methods(fn, Tuple{typeof(comp),Any})). Probe P15: has_stage(y_state, NE()) is true for a y_state that errors when called, so the check evaluates nothing."
+  },
+  {
+   "id": "S8c-036",
+   "conforms": false,
+   "evidence": "src/assembly.jl:739-745 raises StoreWithoutUpdate only when neither x_deriv nor s_update exists, and the message at src/diagnostics.jl:548 says 'defines neither `x_deriv` nor `s_update`'. Probe P1: x_init holding a store with s_update and no x_deriv gives DeclarationOnWrongTier on x_init, not StoreWithoutUpdate. P1b: a store with no update law gives StoreWithoutUpdate.",
+   "class": "deviation",
+   "fix": "A state declaration holding a store needs its update. `x_init` or `s_init` holding a store, on a primitive that defines neither `x_deriv` nor `s_update`, is a build error, `StoreWithoutUpdate`. A store beside the other tier's update law is `DeclarationOnWrongTier` (below).",
+   "clear": true,
+   "note": "spec:3512 already rules the mixed case (an x_init on a primitive whose update law is s_update) as DeclarationOnWrongTier, which agrees with the code. The two sentences overlap, and only 3474 read literally disagrees."
+  },
+  {
+   "id": "S8c-038",
+   "conforms": true,
+   "evidence": "src/declare.jl:714 `function x_deriv end` has no fallback method. Probe P2 lists no x_deriv method owned by Redstone, and P1b shows a store with no update law is refused."
+  },
+  {
+   "id": "S8c-047",
+   "conforms": false,
+   "evidence": "x_projection casts no tier vote in classify_tier (src/assembly.jl:724-731). Its tier check runs at probe, in probe_stage2 (src/build.jl:1145-1160, reason :continuous_only or :no_manifold), after the structure step. Probe P3: a discrete primitive with x_projection fails with the carrier's structure set, so it passed the structure step. P3b: with m_init also declared, only m_init is reported and x_projection is not reported with it.",
+   "class": "deviation",
+   "fix": "`m_init` and `state_events` are continuous-only, because the event system is continuous-side only, and their disagreement is checked in the structure step. `x_projection` is continuous-only too, because projection's one manifold is the continuous state's. It casts no tier vote, and the probe refuses it on a discrete primitive, or on one with no continuous state, as `DeclarationOnWrongTier` ([§9.3][s9-3]).",
+   "clear": false,
+   "note": "spec:3469 ('three rules in the structure step') needs the same change. Nothing in the log or pending.md records moving the x_projection check to probe, so the user may instead want the check moved into classify_tier."
+  },
+  {
+   "id": "S8c-048",
+   "conforms": true,
+   "evidence": "src/assembly.jl:789-792 pushes DeclarationOnWrongTier reason :pinned_entry when tier === DISCRETE and the entry is a marker. Probe P4: a u_types Pinned{Float64} entry on an s_init = nothing primitive gives DeclarationOnWrongTier ('declared `Pinned` in `u_types`, but this leaf is discrete')."
+  },
+  {
+   "id": "S8c-057",
+   "conforms": true,
+   "evidence": "src/assembly.jl:729 votes s_init DISCRETE, and :750 makes the store the decider when there is no update law. Probe P5: a primitive with s_init(::SD) = nothing builds with tier DISCRETE."
+  },
+  {
+   "id": "S8c-066",
+   "conforms": true,
+   "evidence": "src/build.jl:131 pushes UndeclaredReturnField. Probe P6: y_state returning P_shft against y_types P_shaft gives UndeclaredReturnField with the declared list."
+  },
+  {
+   "id": "S8c-072",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:539-545: a Snapshot carries the whole store and layout, and the log keeps snapshots (src/dataplane.jl:657 log!). Probe P16 reads the declared port eng/P off every logged snapshot."
+  },
+  {
+   "id": "S8c-076",
+   "conforms": true,
+   "evidence": "A y_types entry becomes a cell checked against the return (src/build.jl:131, :1113) and readable live and logged. Probe P16: port(sim, \"eng\", :P) and port(snapshot, \"eng\", :P) both read it."
+  },
+  {
+   "id": "S8c-086",
+   "conforms": true,
+   "evidence": "src/build.jl:1110-1118 pushes DeclaredNotProduced with the ports, products and state fields. Probe P7: y_types (a, b) with only a returned gives DeclaredNotProduced naming b, the stage returns and the state fields."
+  },
+  {
+   "id": "S8c-095",
+   "conforms": true,
+   "evidence": "Cells come from y_types. A return outside it is refused at src/build.jl:131 (probe P6), and a declared port no stage fills is refused at :1113 (probe P7). Evaluation checks returns against the declaration and never adds a cell."
+  },
+  {
+   "id": "S8c-106",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:397-398, UnknownPort's message, lists the end's faces and offers no closest match. Probe P8 renders: 'local_wires at the root component, entry `\"s/y\" => \"eng/throtle\"`: `eng/throtle` names no `throtle` on `eng` — its faces are throttle, mixture, P'. 'did you mean' appears nowhere in src/ history (git log -S'did you mean' -- src is empty).",
+   "class": "deviation",
+   "fix": "1. A typo'd wire (`:throtle`) is a build error at the connection, \"`eng/throtle` names no `throtle` on `eng` — its faces are throttle, …\"",
+   "clear": false,
+   "note": "spec:11242 quotes the same message and needs the same fix. Appendix C's UnknownPort row (spec:15489) already describes the payload as the port list, which matches the code. The user may instead want the message changed to offer a closest match."
+  },
+  {
+   "id": "S8c-105",
+   "conforms": true,
+   "evidence": "Probe P8: the typo'd wire is refused at build as UnknownPort, naming the declaring entry `\"s/y\" => \"eng/throtle\"` (src/diagnostics.jl:375), together with the UnconnectedInput spec:11159 predicts."
+  },
+  {
+   "id": "S8c-116",
+   "conforms": true,
+   "evidence": "A later function reads only declared ports, since LEGAL_BUNDLE gives x_deriv the y field (src/declare.jl:902). A typo'd return of any port is UndeclaredReturnField (src/build.jl:131, probe P6)."
+  },
+  {
+   "id": "S8c-119",
+   "conforms": false,
+   "evidence": "src/library.jl:2545 `function PID(; Kp, Ki = 0.0, ...)`. Probe P9: PID(kp = 2.0) throws UndefKeywordError for keyword argument `Kp`. PID(Kp = 2.0) builds.",
+   "class": "deviation",
+   "fix": "    (; plant = Plant(), ctrl = PID(Kp = 2.0));",
+   "clear": true,
+   "note": "Redstone.Library.PID has had Kp since it was added (06af43f0), and no record covers the spec's kp. The example also leaves the library PID's input r unwired (src/library.jl:2379-2384), so built as written it would add an UnconnectedInput."
+  },
+  {
+   "id": "S8c-126",
+   "conforms": true,
+   "evidence": "src/assembly.jl:150 names a component field's child string(name), and :194 names a container element \"field/key\". Probe P11 gives the paths kids/1, kids/2 and one."
+  },
+  {
+   "id": "S8c-137",
+   "conforms": true,
+   "evidence": "src/assembly.jl:16-18 LEAF_FAMILY = (:x_init, :s_init, :m_init, :ws_init, :u_types, :y_types, :state_events, :y_state, :y_direct, :x_deriv, :s_update, :x_projection), which matches the doc's list exactly."
+  },
+  {
+   "id": "S8c-146",
+   "conforms": true,
+   "evidence": "src/assembly.jl:728-752: the stores vote and are mandatory (TierUnreadable otherwise). For every accepted primitive the store's tier is the tier (probe P5).",
+   "note": "The code's decider is the update law when one exists (src/assembly.jl:748-751), so in the mixed case it names the store as offending (probe P1). spec:3512 says the same, so this changes only which declaration is blamed and no accepted tier."
+  },
+  {
+   "id": "S8c-156",
+   "conforms": true,
+   "evidence": "src/library.jl:116-117: u_types(::Junction{In, Out, N}) computes NamedTuple{ntuple(i -> Symbol(:in, i), N)}(ntuple(_ -> In, N)), so the arity comes from a computed contract."
+  },
+  {
+   "id": "S8c-165",
+   "conforms": true,
+   "evidence": "src/assembly.jl:157-173: with zero components the container is inert data (continue), with a mix it is ContainerMixed, and with all components the elements become children. Probe P12 gives ContainerMixed, and P12b shows a (1.0, 2.0) field contributes no child."
+  },
+  {
+   "id": "S8c-168",
+   "conforms": true,
+   "evidence": "Children are found by value for plain fields and container elements alike (src/assembly.jl:149, :153-157), with no concreteness check on either. Probe P11: a Tuple{AbstractComponent, AbstractComponent} container and an ::AbstractComponent field both build, giving kids/1, kids/2 and one."
+  },
+  {
+   "id": "S8c-174",
+   "conforms": false,
+   "evidence": "src/assembly.jl:247-253 _check_transparent builds TransparentContainerUnknown(field = transparent_field), whose field is typed Symbol (src/diagnostics.jl:855). Probe P10: transparent_container returning (:a, :b) throws a raw MethodError ('Cannot `convert` an object of type Tuple{Symbol, Symbol} to an object of type Symbol'), and P10b gives the same for [:a, :b]. No declaration error is raised.",
+   "class": "defect",
+   "fix": "Make _check_transparent refuse a transparent_container return that is not a single Symbol (a tuple or vector naming several fields) with a collected diagnostic, by widening TransparentContainerUnknown's field or adding a reason, instead of crashing in the payload constructor.",
+   "clear": false,
+   "note": "pending.md has no bullet for this. Choosing the kind or reason is a ruling."
+  },
+  {
+   "id": "S8c-176",
+   "conforms": true,
+   "evidence": "src/assembly.jl:872-878 and :961-980 define Group through its struct, constructors and the five declarations. Outside assembly.jl, `Group` appears in src/ only in precompile.jl:18 (the workload) and in comments (diagnostics.jl:131, structure.jl:357). No build step names it."
+  },
+  {
+   "id": "S8c-186",
+   "conforms": true,
+   "evidence": "src/assembly.jl:974-980: _declared(fn::Function, g) = _entries(fn(g)) and _declared(wires, g) = wires. Probe P13: local_wires = g -> (...) returns the computed entries."
+  },
+  {
+   "id": "S8c-196",
+   "conforms": true,
+   "evidence": "src/assembly.jl:961-964, Group(g::Group; children = g.children, local_wires = g.local_wires, ...). Probe P13b/P13c: Group(w; local_wires = ..., input_wires = ...) keeps the children and builds."
+  }
+ ],
+ "notes": "All 31 ids are judged. Six do not conform: S8c-036, S8c-047, S8c-106 and S8c-119 are deviations, S8c-174 is a defect, and none of the six is a drift or a gap. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S8c_v/probe.jl. It ran once against W at 72b12836, and the results above are from that run. I edited no tracked file and committed nothing. The value-level-constructor laws (S8c-011, 013, 014, 015, 016) are vacuous at W, because Redstone ships no field-emitting component. The same stale typo'd-wire message is quoted again at spec:11242. spec:3469 ('three rules in the structure step') needs to change if S8c-047's fix lands."
+}

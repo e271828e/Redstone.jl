@@ -1,0 +1,65 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-039: 1443-1471
+D-041: 1497-1522
+D-042: 1523-1544
+D-046: 1651-1676
+D-054: 1841-1861
+D-055: 1862-1890
+D-063: 2141-2171
+D-073: 2510-2549
+D-113: 3881-3920
+D-117: 4032-4065
+D-145: 5590-5648
+D-146: 5649-5710
+D-157: 6155-6183
+D-164: 6349-6384
+D-171: 6797-6824
+D-178: 7105-7148
+D-184: 7309-7362
+D-187: 7508-7572
+D-209: 8379-8397
+D-210: 8398-8442
+D-212: 8499-8540
+D-215: 8626-8672
+
+# Stage M leads
+names missing: `Aircraft` at log.md:5597 (D-145)
+names missing: `SimpleWorld` at log.md:5597 (D-145)
+names missing: `StopFaceInvalid` at log.md:3892 (D-113)
+names missing: `SurfaceResolution` at log.md:3895 (D-113)
+names missing: `World` at log.md:5601 (D-145)
+names missing: `capture` at log.md:2148 (D-063)
+names missing: `child_connections` at log.md:7317 (D-184)
+names missing: `connections` at log.md:1448 (D-039)
+names missing: `connections` at log.md:1450 (D-039)
+names missing: `connections` at log.md:1503 (D-041)
+names missing: `connections` at log.md:1658 (D-046)
+names missing: `connections` at log.md:5600 (D-145)
+names missing: `connections` at log.md:5604 (D-145)
+names missing: `declaration_error` at log.md:3903 (D-113)
+names missing: `exports` at log.md:1501 (D-041)
+names missing: `exports` at log.md:1657 (D-046)
+names missing: `exports` at log.md:5596 (D-145)
+names missing: `get_` at log.md:5671 (D-146)
+names missing: `init_` at log.md:1451 (D-039)
+names missing: `init_` at log.md:2147 (D-063)
+names missing: `init_x` at log.md:4037 (D-117)
+names missing: `input_connections` at log.md:7317 (D-184)
+names missing: `input_connections` at log.md:8410 (D-210)
+names missing: `input_types` at log.md:1452 (D-039)
+names missing: `input_types` at log.md:8407 (D-210)
+names missing: `local_types` at log.md:1452 (D-039)
+names missing: `local_types` at log.md:1866 (D-055)
+names missing: `output_connections` at log.md:7317 (D-184)
+names missing: `output_connections` at log.md:8385 (D-209)
+names missing: `output_types` at log.md:1452 (D-039)
+names missing: `output_types` at log.md:1866 (D-055)
+names missing: `output_types` at log.md:1870 (D-055)
+names missing: `output_types` at log.md:8407 (D-210)
+names missing: `passthrough` at log.md:5597 (D-145)
+names missing: `passthrough` at log.md:5604 (D-145)
+names missing: `passthrough` at log.md:6801 (D-171)
+names no_binding: `Redstone.f` at log.md:4039 (D-117)
+names test-only: `Systems` at log.md:5597 (D-145)
+names test-only: `Vehicle` at log.md:5597 (D-145)
+names test-only: `fed_faces` at log.md:5605 (D-145)

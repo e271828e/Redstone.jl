@@ -1,0 +1,1418 @@
+{
+ "rows": [
+  {
+   "id": "S8e-087",
+   "file": "design/spec.md",
+   "line": 4543,
+   "kind": "mech",
+   "claim": "declaration_error(path, why) and declaration_error(path, unknown, legal) exist as two shapes",
+   "evidence": "src/diagnostics.jl:729; src/assembly.jl:619 (no declaration_error anywhere in src/)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Say the sketch's `declaration_error` stands for `throw(DiagnosticError(UnknownFaceSelection(...)))` with reason `:multiple_selectors` or `:unknown_names`, or rename the stand-in in the sketch.",
+   "note": "probe:336 isdefined(Redstone, :declaration_error) is false; rg finds none in src/"
+  },
+  {
+   "id": "S8e-122",
+   "file": "design/spec.md",
+   "line": 4619,
+   "kind": "law",
+   "claim": "the :multiple_selectors diagnostic reads \"more than one selector given\"",
+   "evidence": "src/diagnostics.jl:738",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Drop the quotation marks, or quote the message as written: \"were given together — the three selectors are exclusive, one per call\".",
+   "note": "The phrase appears only in the diagnostic type's docstring (diagnostics.jl:728). The message text differs (probe:230)."
+  },
+  {
+   "id": "S8e-131",
+   "file": "design/spec.md",
+   "line": 4629,
+   "kind": "law",
+   "claim": "an `only` may name faces that exist while keeping nothing, and so raise EmptyFaceSelection",
+   "evidence": "src/assembly.jl:633",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Write: \"A `select` may match none, or an `except` may list every face.\" A non-empty `only` of known names keeps them all, and an empty `only` counts as not given.",
+   "note": "src/assembly.jl:633-641 says `only` cannot reach the warning; src/diagnostics.jl:749 records `:only` as never constructed. probe:265 shows only = () is not a selector."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S8e-001",
+   "file": "design/spec.md",
+   "line": 4329,
+   "kind": "mech",
+   "claim": "an assembly schedules its children through one declaration, sample_times",
+   "evidence": "src/structure.jl:321"
+  },
+  {
+   "id": "S8e-002",
+   "file": "design/spec.md",
+   "line": 4338,
+   "kind": "decl",
+   "claim": "the declaration maps each child name to a Relative or Absolute entry",
+   "evidence": "src/structure.jl:327"
+  },
+  {
+   "id": "S8e-003",
+   "file": "design/spec.md",
+   "line": 4342,
+   "kind": "ex",
+   "claim": "sample_times(::A) = (nav = Relative(5), gnss = Absolute(1//10)) builds and schedules",
+   "evidence": "probe:73"
+  },
+  {
+   "id": "S8e-004",
+   "file": "design/spec.md",
+   "line": 4345,
+   "kind": "law",
+   "claim": "a discrete child or sub-assembly is scheduled by the entry its enclosing assembly gives it",
+   "evidence": "src/structure.jl:382"
+  },
+  {
+   "id": "S8e-005",
+   "file": "design/spec.md",
+   "line": 4347,
+   "kind": "law",
+   "claim": "Relative entries compose affinely down the tree",
+   "evidence": "src/structure.jl:308"
+  },
+  {
+   "id": "S8e-006",
+   "file": "design/spec.md",
+   "line": 4348,
+   "kind": "law",
+   "claim": "Absolute entries anchor",
+   "evidence": "probe:73"
+  },
+  {
+   "id": "S8e-007",
+   "file": "design/spec.md",
+   "line": 4348,
+   "kind": "mech",
+   "claim": "the build compiles Absolute entries to one anchor each",
+   "evidence": "src/structure.jl:411"
+  },
+  {
+   "id": "S8e-008",
+   "file": "design/spec.md",
+   "line": 4350,
+   "kind": "mech",
+   "claim": "the build compiles one (Dₐ, Φₐ) pair per discrete component",
+   "evidence": "src/structure.jl:308"
+  },
+  {
+   "id": "S8e-009",
+   "file": "design/spec.md",
+   "line": 4351,
+   "kind": "mech",
+   "claim": "the deployment binds each pair to one (D₀, Φ₀) in base ticks",
+   "evidence": "src/deployment.jl:36"
+  },
+  {
+   "id": "S8e-010",
+   "file": "design/spec.md",
+   "line": 4355,
+   "kind": "law",
+   "claim": "a bare integer in sample_times is a declaration error",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "S8e-011",
+   "file": "design/spec.md",
+   "line": 4355,
+   "kind": "law",
+   "claim": "a bare rational in sample_times is a declaration error",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "S8e-012",
+   "file": "design/spec.md",
+   "line": 4356,
+   "kind": "law",
+   "claim": "the sample_times declaration is optional",
+   "evidence": "src/declare.jl:513"
+  },
+  {
+   "id": "S8e-013",
+   "file": "design/spec.md",
+   "line": 4356,
+   "kind": "law",
+   "claim": "any given key is optional",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "S8e-014",
+   "file": "design/spec.md",
+   "line": 4357,
+   "kind": "law",
+   "claim": "an unlisted discrete child defaults to Relative(1)",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "S8e-015",
+   "file": "design/spec.md",
+   "line": 4358,
+   "kind": "mech",
+   "claim": "only multiplied, phased or anchored children need appear",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "S8e-016",
+   "file": "design/spec.md",
+   "line": 4361,
+   "kind": "law",
+   "claim": "keys are immediate child names only; a deep key is refused as :unknown_child",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "S8e-017",
+   "file": "design/spec.md",
+   "line": 4365,
+   "kind": "law",
+   "claim": "a container element path such as units/red is a legal key",
+   "evidence": "probe:138"
+  },
+  {
+   "id": "S8e-018",
+   "file": "design/spec.md",
+   "line": 4367,
+   "kind": "law",
+   "claim": "the bare field name applies one uniform declaration across all elements",
+   "evidence": "probe:131"
+  },
+  {
+   "id": "S8e-019",
+   "file": "design/spec.md",
+   "line": 4368,
+   "kind": "law",
+   "claim": "the sugar keys on the field, so a name-transparent container keeps it",
+   "evidence": "probe:141"
+  },
+  {
+   "id": "S8e-020",
+   "file": "design/spec.md",
+   "line": 4369,
+   "kind": "ex",
+   "claim": "(children = Relative(2),) is the uniform spelling for a Group",
+   "evidence": "probe:141"
+  },
+  {
+   "id": "S8e-021",
+   "file": "design/spec.md",
+   "line": 4372,
+   "kind": "law",
+   "claim": "a sample_times key on a continuous child is a build error",
+   "evidence": "probe:96"
+  },
+  {
+   "id": "S8e-022",
+   "file": "design/spec.md",
+   "line": 4374,
+   "kind": "law",
+   "claim": "a continuous bundle carries no Δt",
+   "evidence": "src/declare.jl:900"
+  },
+  {
+   "id": "S8e-023",
+   "file": "design/spec.md",
+   "line": 4379,
+   "kind": "decl",
+   "claim": "each wrapper takes a period and an offset, the offset defaulting to zero",
+   "evidence": "src/declare.jl:437"
+  },
+  {
+   "id": "S8e-024",
+   "file": "design/spec.md",
+   "line": 4382,
+   "kind": "decl",
+   "claim": "Relative(D, Φ = 0) counts ticks of the enclosing scope",
+   "evidence": "src/declare.jl:437"
+  },
+  {
+   "id": "S8e-025",
+   "file": "design/spec.md",
+   "line": 4383,
+   "kind": "decl",
+   "claim": "Absolute(Δt, τ = 0) takes exact seconds",
+   "evidence": "src/declare.jl:475"
+  },
+  {
+   "id": "S8e-026",
+   "file": "design/spec.md",
+   "line": 4388,
+   "kind": "law",
+   "claim": "Absolute takes period and offset as integers or Rationals",
+   "evidence": "probe:31"
+  },
+  {
+   "id": "S8e-027",
+   "file": "design/spec.md",
+   "line": 4389,
+   "kind": "ex",
+   "claim": "Absolute(1//50) is a 50 Hz loop",
+   "evidence": "probe:31"
+  },
+  {
+   "id": "S8e-028",
+   "file": "design/spec.md",
+   "line": 4390,
+   "kind": "ex",
+   "claim": "Absolute(50) is a period of 50 s",
+   "evidence": "probe:32"
+  },
+  {
+   "id": "S8e-029",
+   "file": "design/spec.md",
+   "line": 4391,
+   "kind": "mech",
+   "claim": "the deployment's time keywords take bare exact numbers likewise",
+   "evidence": "src/deployment.jl:541"
+  },
+  {
+   "id": "S8e-030",
+   "file": "design/spec.md",
+   "line": 4392,
+   "kind": "law",
+   "claim": "every period and offset is an exact Rational{Int}",
+   "evidence": "probe:46"
+  },
+  {
+   "id": "S8e-031",
+   "file": "design/spec.md",
+   "line": 4394,
+   "kind": "law",
+   "claim": "a float argument throws the teaching error naming Absolute(1//50) for 50 Hz",
+   "evidence": "src/diagnostics.jl:2366"
+  },
+  {
+   "id": "S8e-032",
+   "file": "design/spec.md",
+   "line": 4395,
+   "kind": "law",
+   "claim": "any other inexact real is refused the same way",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "S8e-033",
+   "file": "design/spec.md",
+   "line": 4396,
+   "kind": "law",
+   "claim": "an integer or Rational of any integer type is taken at its value",
+   "evidence": "probe:35"
+  },
+  {
+   "id": "S8e-034",
+   "file": "design/spec.md",
+   "line": 4397,
+   "kind": "law",
+   "claim": "a value Rational{Int} cannot hold is refused at the constructor as ArgumentInvalid :range",
+   "evidence": "src/declare.jl:396"
+  },
+  {
+   "id": "S8e-035",
+   "file": "design/spec.md",
+   "line": 4399,
+   "kind": "law",
+   "claim": "an infinite period or offset is refused as :range",
+   "evidence": "probe:38"
+  },
+  {
+   "id": "S8e-036",
+   "file": "design/spec.md",
+   "line": 4399,
+   "kind": "mech",
+   "claim": "the :range refusal comes from the same normalization as the float refusal",
+   "evidence": "src/declare.jl:397"
+  },
+  {
+   "id": "S8e-037",
+   "file": "design/spec.md",
+   "line": 4402,
+   "kind": "decl",
+   "claim": "Relative(D, Φ) takes the child's Dₛ and Φₛ",
+   "evidence": "src/declare.jl:435"
+  },
+  {
+   "id": "S8e-038",
+   "file": "design/spec.md",
+   "line": 4403,
+   "kind": "law",
+   "claim": "each of D and Φ is an integer of any type",
+   "evidence": "probe:49"
+  },
+  {
+   "id": "S8e-039",
+   "file": "design/spec.md",
+   "line": 4404,
+   "kind": "law",
+   "claim": "Relative refuses a count Int cannot hold as ArgumentInvalid :range",
+   "evidence": "probe:51"
+  },
+  {
+   "id": "S8e-040",
+   "file": "design/spec.md",
+   "line": 4404,
+   "kind": "law",
+   "claim": "Relative refuses a float or a rational as :not_a_count",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "S8e-041",
+   "file": "design/spec.md",
+   "line": 4407,
+   "kind": "law",
+   "claim": "the :not_a_count message names Absolute, for float and rational alike",
+   "evidence": "src/diagnostics.jl:2374"
+  },
+  {
+   "id": "S8e-042",
+   "file": "design/spec.md",
+   "line": 4409,
+   "kind": "law",
+   "claim": "the constructors are plain carriers with no range checks",
+   "evidence": "probe:107"
+  },
+  {
+   "id": "S8e-043",
+   "file": "design/spec.md",
+   "line": 4410,
+   "kind": "mech",
+   "claim": "validation belongs to the structure step",
+   "evidence": "src/structure.jl:321"
+  },
+  {
+   "id": "S8e-044",
+   "file": "design/spec.md",
+   "line": 4411,
+   "kind": "mech",
+   "claim": "the structure step collects the violations with path attribution",
+   "evidence": "src/structure.jl:323"
+  },
+  {
+   "id": "S8e-045",
+   "file": "design/spec.md",
+   "line": 4412,
+   "kind": "law",
+   "claim": "validation covers the §6.3 constraints (D≥1, 0≤Φ<D, Δt>0, 0≤τ<Δt)",
+   "evidence": "probe:111"
+  },
+  {
+   "id": "S8e-046",
+   "file": "design/spec.md",
+   "line": 4413,
+   "kind": "law",
+   "claim": "validation covers the keys",
+   "evidence": "src/structure.jl:347"
+  },
+  {
+   "id": "S8e-047",
+   "file": "design/spec.md",
+   "line": 4413,
+   "kind": "law",
+   "claim": "validation covers a composition past Int",
+   "evidence": "probe:123"
+  },
+  {
+   "id": "S8e-048",
+   "file": "design/spec.md",
+   "line": 4417,
+   "kind": "law",
+   "claim": "Δt_frame, Δt_base and h_max appear in no declaration",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S8e-049",
+   "file": "design/spec.md",
+   "line": 4418,
+   "kind": "law",
+   "claim": "they are deployment decisions fixed at deployment",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S8e-050",
+   "file": "design/spec.md",
+   "line": 4421,
+   "kind": "law",
+   "claim": "the declaration belongs to the assembly type, not to the child instance",
+   "evidence": "src/declare.jl:513"
+  },
+  {
+   "id": "S8e-051",
+   "file": "design/spec.md",
+   "line": 4424,
+   "kind": "ex",
+   "claim": "lead: Subsampled is FlightCore prior art, not a Redstone name",
+   "evidence": "src/declare.jl:513"
+  },
+  {
+   "id": "S8e-052",
+   "file": "design/spec.md",
+   "line": 4429,
+   "kind": "ex",
+   "claim": "inner at Relative(1) and outer at Relative(5) hold whatever the deployment",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-053",
+   "file": "design/spec.md",
+   "line": 4432,
+   "kind": "law",
+   "claim": "a scope's own rate comes from its parent's entry, never from its children",
+   "evidence": "src/structure.jl:382"
+  },
+  {
+   "id": "S8e-054",
+   "file": "design/spec.md",
+   "line": 4433,
+   "kind": "law",
+   "claim": "relative members count the scope's ticks, so none ticks faster than the scope",
+   "evidence": "src/structure.jl:337"
+  },
+  {
+   "id": "S8e-055",
+   "file": "design/spec.md",
+   "line": 4434,
+   "kind": "law",
+   "claim": "the scope at its fastest member and the scope finer give the same schedule",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-056",
+   "file": "design/spec.md",
+   "line": 4435,
+   "kind": "law",
+   "claim": "a scope at its fastest member takes Dₛ = 1 and reads the others as whole multiples",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-057",
+   "file": "design/spec.md",
+   "line": 4436,
+   "kind": "law",
+   "claim": "a finer scope leaves slots between ticks that a phase can fill",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-058",
+   "file": "design/spec.md",
+   "line": 4439,
+   "kind": "law",
+   "claim": "an anchored child may tick faster than its scope, so only relative members count",
+   "evidence": "src/structure.jl:309"
+  },
+  {
+   "id": "S8e-059",
+   "file": "design/spec.md",
+   "line": 4443,
+   "kind": "ex",
+   "claim": "at Δt_base = 2 ms both declarations run inner every 4 ms",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-060",
+   "file": "design/spec.md",
+   "line": 4443,
+   "kind": "ex",
+   "claim": "at Δt_base = 2 ms both declarations run outer every 20 ms",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-061",
+   "file": "design/spec.md",
+   "line": 4448,
+   "kind": "ex",
+   "claim": "the first Vehicle declaration puts the scope at 4 ms",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-062",
+   "file": "design/spec.md",
+   "line": 4452,
+   "kind": "ex",
+   "claim": "the second Vehicle declaration puts the scope at 2 ms",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-063",
+   "file": "design/spec.md",
+   "line": 4456,
+   "kind": "law",
+   "claim": "only the finer scope can move outer by 2 ms",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-064",
+   "file": "design/spec.md",
+   "line": 4456,
+   "kind": "ex",
+   "claim": "outer = Relative(10, 1) puts outer one slot (2 ms) after inner",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-065",
+   "file": "design/spec.md",
+   "line": 4457,
+   "kind": "law",
+   "claim": "under the first declaration a phase moves outer in steps of 4 ms",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S8e-066",
+   "file": "design/spec.md",
+   "line": 4458,
+   "kind": "law",
+   "claim": "the finer scope makes the grid report the finer grid",
+   "evidence": "probe:360"
+  },
+  {
+   "id": "S8e-067",
+   "file": "design/spec.md",
+   "line": 4459,
+   "kind": "law",
+   "claim": "the grid report reads as information (an advisory warning), never a fault",
+   "evidence": "src/deployment.jl:586"
+  },
+  {
+   "id": "S8e-068",
+   "file": "design/spec.md",
+   "line": 4465,
+   "kind": "law",
+   "claim": "an Absolute entry is legal in any scope, nested anchors included",
+   "evidence": "src/structure.jl:309"
+  },
+  {
+   "id": "S8e-069",
+   "file": "design/spec.md",
+   "line": 4477,
+   "kind": "mech",
+   "claim": "sample_times reads the instance, so a multiplier can be a constructor parameter",
+   "evidence": "src/declare.jl:513"
+  },
+  {
+   "id": "S8e-070",
+   "file": "design/spec.md",
+   "line": 4478,
+   "kind": "law",
+   "claim": "pinning a subtree from outside its contract is refused (deep keys are not keys)",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "S8e-071",
+   "file": "design/spec.md",
+   "line": 4482,
+   "kind": "law",
+   "claim": "the framework does not police library anchors versus preferences",
+   "evidence": "src/structure.jl:321"
+  },
+  {
+   "id": "S8e-072",
+   "file": "design/spec.md",
+   "line": 4485,
+   "kind": "law",
+   "claim": "pinning happens in the enclosing assembly's sample_times; the component stays rate-agnostic",
+   "evidence": "src/structure.jl:382"
+  },
+  {
+   "id": "S8e-073",
+   "file": "design/spec.md",
+   "line": 4488,
+   "kind": "law",
+   "claim": "the anchored component still consumes the Δt of its bundle",
+   "evidence": "probe:189"
+  },
+  {
+   "id": "S8e-074",
+   "file": "design/spec.md",
+   "line": 4493,
+   "kind": "mech",
+   "claim": "Δt has one source, the deployment's Schedule",
+   "evidence": "src/deployment.jl:95"
+  },
+  {
+   "id": "S8e-075",
+   "file": "design/spec.md",
+   "line": 4495,
+   "kind": "law",
+   "claim": "a discrete component's effective period arrives as the Δt field of its bundle",
+   "evidence": "probe:189"
+  },
+  {
+   "id": "S8e-076",
+   "file": "design/spec.md",
+   "line": 4496,
+   "kind": "law",
+   "claim": "the Δt field is read-only (an immutable NamedTuple bundle)",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "S8e-077",
+   "file": "design/spec.md",
+   "line": 4497,
+   "kind": "law",
+   "claim": "Δt arrives in y_state",
+   "evidence": "probe:189"
+  },
+  {
+   "id": "S8e-078",
+   "file": "design/spec.md",
+   "line": 4497,
+   "kind": "law",
+   "claim": "Δt arrives in y_direct",
+   "evidence": "probe:189"
+  },
+  {
+   "id": "S8e-079",
+   "file": "design/spec.md",
+   "line": 4497,
+   "kind": "law",
+   "claim": "Δt arrives in s_update",
+   "evidence": "probe:194"
+  },
+  {
+   "id": "S8e-080",
+   "file": "design/spec.md",
+   "line": 4498,
+   "kind": "law",
+   "claim": "Δt is absent from continuous bundles",
+   "evidence": "src/declare.jl:900"
+  },
+  {
+   "id": "S8e-081",
+   "file": "design/spec.md",
+   "line": 4499,
+   "kind": "law",
+   "claim": "touching Δt on a continuous tier is a missing-field error (BundleFieldError)",
+   "evidence": "probe:201"
+  },
+  {
+   "id": "S8e-082",
+   "file": "design/spec.md",
+   "line": 4528,
+   "kind": "mech",
+   "claim": "input_wires and output_wires are ordinary functions evaluated at build on the instance",
+   "evidence": "src/structure.jl:607"
+  },
+  {
+   "id": "S8e-083",
+   "file": "design/spec.md",
+   "line": 4529,
+   "kind": "law",
+   "claim": "they may compute entries from child contracts",
+   "evidence": "probe:215"
+  },
+  {
+   "id": "S8e-084",
+   "file": "design/spec.md",
+   "line": 4537,
+   "kind": "mech",
+   "claim": "input_passthrough is a framework helper",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "S8e-085",
+   "file": "design/spec.md",
+   "line": 4538,
+   "kind": "ex",
+   "claim": "lead: World is a placeholder assembly, run as a local fixture",
+   "evidence": "probe:418"
+  },
+  {
+   "id": "S8e-086",
+   "file": "design/spec.md",
+   "line": 4540,
+   "kind": "ex",
+   "claim": "lead: atmosphere is a placeholder child name, run as a local fixture",
+   "evidence": "probe:418"
+  },
+  {
+   "id": "S8e-088",
+   "file": "design/spec.md",
+   "line": 4547,
+   "kind": "decl",
+   "claim": "input_passthrough(assembly, child_path; sep, prefix, except, only, select) with these defaults",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "S8e-089",
+   "file": "design/spec.md",
+   "line": 4549,
+   "kind": "law",
+   "claim": "prefix = \"\" means no prefixing",
+   "evidence": "probe:274"
+  },
+  {
+   "id": "S8e-090",
+   "file": "design/spec.md",
+   "line": 4554,
+   "kind": "mech",
+   "claim": "resolve(assembly, child_path) names the child by path",
+   "evidence": "src/assembly.jl:374"
+  },
+  {
+   "id": "S8e-091",
+   "file": "design/spec.md",
+   "line": 4555,
+   "kind": "mech",
+   "claim": "names = input_faces(child): u_types keys of a primitive, input_wires entries of an assembly",
+   "evidence": "src/assembly.jl:435"
+  },
+  {
+   "id": "S8e-092",
+   "file": "design/spec.md",
+   "line": 4557,
+   "kind": "mech",
+   "claim": "the helper counts the selectors given",
+   "evidence": "src/assembly.jl:614"
+  },
+  {
+   "id": "S8e-093",
+   "file": "design/spec.md",
+   "line": 4558,
+   "kind": "law",
+   "claim": "more than one selector is refused",
+   "evidence": "probe:227"
+  },
+  {
+   "id": "S8e-094",
+   "file": "design/spec.md",
+   "line": 4560,
+   "kind": "law",
+   "claim": "except or only names the child lacks are refused with the face list",
+   "evidence": "probe:236"
+  },
+  {
+   "id": "S8e-095",
+   "file": "design/spec.md",
+   "line": 4562,
+   "kind": "mech",
+   "claim": "wanted is only, else the select filter, else names minus except",
+   "evidence": "probe:270"
+  },
+  {
+   "id": "S8e-096",
+   "file": "design/spec.md",
+   "line": 4565,
+   "kind": "law",
+   "claim": "a selector given with empty wanted raises EmptyFaceSelection, a build warning",
+   "evidence": "probe:249"
+  },
+  {
+   "id": "S8e-097",
+   "file": "design/spec.md",
+   "line": 4566,
+   "kind": "law",
+   "claim": "a bare call over a faceless child is silent",
+   "evidence": "probe:261"
+  },
+  {
+   "id": "S8e-098",
+   "file": "design/spec.md",
+   "line": 4567,
+   "kind": "mech",
+   "claim": "label(n) is n under an empty prefix, else prefix + sep + n",
+   "evidence": "src/assembly.jl:603"
+  },
+  {
+   "id": "S8e-099",
+   "file": "design/spec.md",
+   "line": 4568,
+   "kind": "mech",
+   "claim": "the helper returns a Tuple of label => child_path/face pairs",
+   "evidence": "probe:272"
+  },
+  {
+   "id": "S8e-100",
+   "file": "design/spec.md",
+   "line": 4572,
+   "kind": "ex",
+   "claim": "aircraft passthrough labels face pilot.throttle_axis as aircraft.pilot.throttle_axis",
+   "evidence": "probe:429"
+  },
+  {
+   "id": "S8e-101",
+   "file": "design/spec.md",
+   "line": 4573,
+   "kind": "ex",
+   "claim": "prefix env, sep _ labels wind_N as env_wind_N",
+   "evidence": "probe:429"
+  },
+  {
+   "id": "S8e-102",
+   "file": "design/spec.md",
+   "line": 4576,
+   "kind": "ex",
+   "claim": "World output_wires with one hand-written pair builds as written",
+   "evidence": "probe:429"
+  },
+  {
+   "id": "S8e-103",
+   "file": "design/spec.md",
+   "line": 4582,
+   "kind": "law",
+   "claim": "a face name containing dots is a legal final path segment",
+   "evidence": "probe:326"
+  },
+  {
+   "id": "S8e-104",
+   "file": "design/spec.md",
+   "line": 4584,
+   "kind": "mech",
+   "claim": "slash is the only structural separator",
+   "evidence": "src/assembly.jl:392"
+  },
+  {
+   "id": "S8e-105",
+   "file": "design/spec.md",
+   "line": 4587,
+   "kind": "law",
+   "claim": "a bare contract's default face is listed by input_faces as u (output y)",
+   "evidence": "probe:293"
+  },
+  {
+   "id": "S8e-106",
+   "file": "design/spec.md",
+   "line": 4590,
+   "kind": "law",
+   "claim": "the helper treats the default face as any other",
+   "evidence": "probe:293"
+  },
+  {
+   "id": "S8e-107",
+   "file": "design/spec.md",
+   "line": 4591,
+   "kind": "ex",
+   "claim": "an integrator child's input is labelled integrator.u and its output integrator.y",
+   "evidence": "probe:293"
+  },
+  {
+   "id": "S8e-108",
+   "file": "design/spec.md",
+   "line": 4591,
+   "kind": "ex",
+   "claim": "lead: integrator is a placeholder child name, run with a bare local fixture",
+   "evidence": "probe:293"
+  },
+  {
+   "id": "S8e-109",
+   "file": "design/spec.md",
+   "line": 4592,
+   "kind": "law",
+   "claim": "the two helpers over a child bare on both sides collide on nothing",
+   "evidence": "probe:297"
+  },
+  {
+   "id": "S8e-110",
+   "file": "design/spec.md",
+   "line": 4593,
+   "kind": "law",
+   "claim": "an explicit prefix = \"\" labels the face u or y",
+   "evidence": "probe:299"
+  },
+  {
+   "id": "S8e-111",
+   "file": "design/spec.md",
+   "line": 4596,
+   "kind": "law",
+   "claim": "computed entries mix freely with hand-written ones in either declaration",
+   "evidence": "probe:323"
+  },
+  {
+   "id": "S8e-112",
+   "file": "design/spec.md",
+   "line": 4598,
+   "kind": "mech",
+   "claim": "input_passthrough is a thin composition of resolve and input_faces",
+   "evidence": "src/assembly.jl:547"
+  },
+  {
+   "id": "S8e-113",
+   "file": "design/spec.md",
+   "line": 4600,
+   "kind": "law",
+   "claim": "there is no rename hook",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "S8e-114",
+   "file": "design/spec.md",
+   "line": 4601,
+   "kind": "mech",
+   "claim": "an author renames by mapping over the returned pairs",
+   "evidence": "probe:272"
+  },
+  {
+   "id": "S8e-115",
+   "file": "design/spec.md",
+   "line": 4606,
+   "kind": "law",
+   "claim": "an except face the assembly fails to wire is an ordinary unconnected input",
+   "evidence": "probe:322"
+  },
+  {
+   "id": "S8e-116",
+   "file": "design/spec.md",
+   "line": 4608,
+   "kind": "law",
+   "claim": "a face both fed by a local wire and passed through is a two-producers error",
+   "evidence": "probe:324"
+  },
+  {
+   "id": "S8e-117",
+   "file": "design/spec.md",
+   "line": 4610,
+   "kind": "law",
+   "claim": "except or only naming a nonexistent face errors with the face list",
+   "evidence": "probe:236"
+  },
+  {
+   "id": "S8e-118",
+   "file": "design/spec.md",
+   "line": 4612,
+   "kind": "law",
+   "claim": "a prefix = \"\" collision is caught by the uniqueness check (FaceNameCollision)",
+   "evidence": "probe:325"
+  },
+  {
+   "id": "S8e-119",
+   "file": "design/spec.md",
+   "line": 4615,
+   "kind": "law",
+   "claim": "the three selectors are exclusive, one per call",
+   "evidence": "src/assembly.jl:619"
+  },
+  {
+   "id": "S8e-120",
+   "file": "design/spec.md",
+   "line": 4616,
+   "kind": "law",
+   "claim": "select is a predicate over face names and the helper keeps those it accepts",
+   "evidence": "probe:241"
+  },
+  {
+   "id": "S8e-121",
+   "file": "design/spec.md",
+   "line": 4618,
+   "kind": "law",
+   "claim": "more than one selector is UnknownFaceSelection with reason :multiple_selectors",
+   "evidence": "probe:227"
+  },
+  {
+   "id": "S8e-123",
+   "file": "design/spec.md",
+   "line": 4619,
+   "kind": "law",
+   "claim": "the :multiple_selectors payload names the selectors given",
+   "evidence": "probe:227"
+  },
+  {
+   "id": "S8e-124",
+   "file": "design/spec.md",
+   "line": 4622,
+   "kind": "law",
+   "claim": "a call that gives a selector and keeps nothing raises EmptyFaceSelection",
+   "evidence": "probe:249"
+  },
+  {
+   "id": "S8e-125",
+   "file": "design/spec.md",
+   "line": 4623,
+   "kind": "law",
+   "claim": "EmptyFaceSelection is a warning on the Build's list",
+   "evidence": "probe:249"
+  },
+  {
+   "id": "S8e-126",
+   "file": "design/spec.md",
+   "line": 4624,
+   "kind": "law",
+   "claim": "a bare call over a faceless child is silent",
+   "evidence": "probe:261"
+  },
+  {
+   "id": "S8e-127",
+   "file": "design/spec.md",
+   "line": 4625,
+   "kind": "law",
+   "claim": "the EmptyFaceSelection payload names the helper",
+   "evidence": "src/diagnostics.jl:747"
+  },
+  {
+   "id": "S8e-128",
+   "file": "design/spec.md",
+   "line": 4625,
+   "kind": "law",
+   "claim": "the payload names the child's full path",
+   "evidence": "probe:250"
+  },
+  {
+   "id": "S8e-129",
+   "file": "design/spec.md",
+   "line": 4626,
+   "kind": "law",
+   "claim": "the payload names the selector given with its names",
+   "evidence": "probe:250"
+  },
+  {
+   "id": "S8e-130",
+   "file": "design/spec.md",
+   "line": 4626,
+   "kind": "law",
+   "claim": "the payload names the child's face list",
+   "evidence": "probe:250"
+  },
+  {
+   "id": "S8e-132",
+   "file": "design/spec.md",
+   "line": 4630,
+   "kind": "law",
+   "claim": "the empty selection warns rather than errors; the build completes",
+   "evidence": "probe:249"
+  },
+  {
+   "id": "S8e-133",
+   "file": "design/spec.md",
+   "line": 4638,
+   "kind": "mech",
+   "claim": "the effective face list is plain printable data",
+   "evidence": "probe:272"
+  },
+  {
+   "id": "S8e-134",
+   "file": "design/spec.md",
+   "line": 4639,
+   "kind": "law",
+   "claim": "computation does not auto-bubble an unconnected input to a root input",
+   "evidence": "probe:322"
+  },
+  {
+   "id": "S8e-135",
+   "file": "design/spec.md",
+   "line": 4645,
+   "kind": "mech",
+   "claim": "input_passthrough reads input_faces(child) and the selector filters names within it",
+   "evidence": "src/assembly.jl:547"
+  },
+  {
+   "id": "S8e-136",
+   "file": "design/spec.md",
+   "line": 4648,
+   "kind": "decl",
+   "claim": "output_passthrough is input_passthrough's sibling",
+   "evidence": "src/assembly.jl:594"
+  },
+  {
+   "id": "S8e-137",
+   "file": "design/spec.md",
+   "line": 4649,
+   "kind": "mech",
+   "claim": "output_passthrough is splatted into output_wires",
+   "evidence": "probe:267"
+  },
+  {
+   "id": "S8e-138",
+   "file": "design/spec.md",
+   "line": 4649,
+   "kind": "mech",
+   "claim": "output_passthrough reads output_faces(child)",
+   "evidence": "src/assembly.jl:598"
+  },
+  {
+   "id": "S8e-139",
+   "file": "design/spec.md",
+   "line": 4650,
+   "kind": "decl",
+   "claim": "it has the same prefix/sep surface",
+   "evidence": "src/assembly.jl:594"
+  },
+  {
+   "id": "S8e-140",
+   "file": "design/spec.md",
+   "line": 4650,
+   "kind": "law",
+   "claim": "it has the same three exclusive selectors",
+   "evidence": "src/assembly.jl:599"
+  },
+  {
+   "id": "S8e-141",
+   "file": "design/spec.md",
+   "line": 4651,
+   "kind": "law",
+   "claim": "it has the same declaration-time error set",
+   "evidence": "src/assembly.jl:610"
+  },
+  {
+   "id": "S8e-142",
+   "file": "design/spec.md",
+   "line": 4651,
+   "kind": "ex",
+   "claim": "lead: Systems is an assembly with children aero and ldg (test-only name), run as a local fixture",
+   "evidence": "probe:405"
+  },
+  {
+   "id": "S8e-143",
+   "file": "design/spec.md",
+   "line": 4652,
+   "kind": "ex",
+   "claim": "lead: aero and ldg are children of that Systems, run as local fixtures",
+   "evidence": "probe:405"
+  },
+  {
+   "id": "S8e-144",
+   "file": "design/spec.md",
+   "line": 4656,
+   "kind": "ex",
+   "claim": "output_passthrough(sys, \"ldg\"; only = (\"damaged\",)) yields \"ldg/damaged\" => \"ldg.damaged\"",
+   "evidence": "probe:405"
+  },
+  {
+   "id": "S8e-145",
+   "file": "design/spec.md",
+   "line": 4665,
+   "kind": "law",
+   "claim": "both helpers take child_path naming an immediate child, container keys included",
+   "evidence": "probe:310"
+  },
+  {
+   "id": "S8e-146",
+   "file": "design/spec.md",
+   "line": 4666,
+   "kind": "law",
+   "claim": "the default prefix folds the path's slash into sep",
+   "evidence": "probe:310"
+  },
+  {
+   "id": "S8e-147",
+   "file": "design/spec.md",
+   "line": 4667,
+   "kind": "ex",
+   "claim": "\"gear/1\" labels its faces \"gear.1.…\"",
+   "evidence": "probe:310"
+  },
+  {
+   "id": "S8e-148",
+   "file": "design/spec.md",
+   "line": 4667,
+   "kind": "law",
+   "claim": "the default stays a legal face name for every blessed child_path",
+   "evidence": "probe:311"
+  },
+  {
+   "id": "S8e-149",
+   "file": "design/spec.md",
+   "line": 4668,
+   "kind": "law",
+   "claim": "an explicit prefix is used verbatim",
+   "evidence": "probe:276"
+  },
+  {
+   "id": "S8e-150",
+   "file": "design/spec.md",
+   "line": 4669,
+   "kind": "law",
+   "claim": "a deeper path meets resolve's one-level rejection",
+   "evidence": "probe:282"
+  },
+  {
+   "id": "S8e-151",
+   "file": "design/spec.md",
+   "line": 4679,
+   "kind": "ex",
+   "claim": "lead: World as a placeholder name in the feed-list prose",
+   "evidence": "probe:418"
+  },
+  {
+   "id": "S8e-152",
+   "file": "design/spec.md",
+   "line": 4688,
+   "kind": "law",
+   "claim": "the duplication is removed with no new vocabulary",
+   "evidence": "probe:326"
+  },
+  {
+   "id": "S8e-153",
+   "file": "design/spec.md",
+   "line": 4689,
+   "kind": "mech",
+   "claim": "declaration bodies are ordinary code",
+   "evidence": "probe:326"
+  },
+  {
+   "id": "S8e-154",
+   "file": "design/spec.md",
+   "line": 4691,
+   "kind": "ex",
+   "claim": "lead: Systems and aero named at 4691 are test-only names, run as local fixtures",
+   "evidence": "probe:326"
+  },
+  {
+   "id": "S8e-155",
+   "file": "design/spec.md",
+   "line": 4692,
+   "kind": "ex",
+   "claim": "lead: ldg as destination of the actuator feeds is a test-only name, run as a local fixture",
+   "evidence": "probe:326"
+  },
+  {
+   "id": "S8e-156",
+   "file": "design/spec.md",
+   "line": 4696,
+   "kind": "ex",
+   "claim": "the ACT_FEEDS tuple of actuator face => destination pairs is valid",
+   "evidence": "probe:329"
+  },
+  {
+   "id": "S8e-157",
+   "file": "design/spec.md",
+   "line": 4705,
+   "kind": "mech",
+   "claim": "fed_faces returns the face names of child the feed list targets",
+   "evidence": "probe:329"
+  },
+  {
+   "id": "S8e-158",
+   "file": "design/spec.md",
+   "line": 4709,
+   "kind": "ex",
+   "claim": "local_wires with the splatted act/-prefixed generator is a valid declaration",
+   "evidence": "probe:387"
+  },
+  {
+   "id": "S8e-159",
+   "file": "design/spec.md",
+   "line": 4715,
+   "kind": "ex",
+   "claim": "input_wires with two input_passthrough calls over fed_faces builds",
+   "evidence": "probe:326"
+  },
+  {
+   "id": "S8e-160",
+   "file": "design/spec.md",
+   "line": 4722,
+   "kind": "law",
+   "claim": "adding one pair creates the local wire and removes the face from the input surface",
+   "evidence": "probe:327"
+  },
+  {
+   "id": "S8e-161",
+   "file": "design/spec.md",
+   "line": 4724,
+   "kind": "law",
+   "claim": "both declarations are projections of the one list, so they cannot drift",
+   "evidence": "probe:326"
+  },
+  {
+   "id": "S8e-162",
+   "file": "design/spec.md",
+   "line": 4728,
+   "kind": "law",
+   "claim": "a mistyped destination is an unknown-face error with the child's face list",
+   "evidence": "probe:328"
+  },
+  {
+   "id": "S8e-163",
+   "file": "design/spec.md",
+   "line": 4729,
+   "kind": "law",
+   "claim": "it errors whether the wire or the except entry meets it first",
+   "evidence": "probe:347"
+  },
+  {
+   "id": "S8e-164",
+   "file": "design/spec.md",
+   "line": 4732,
+   "kind": "law",
+   "claim": "an omitted pair is no error; the face joins the input surface as a root input",
+   "evidence": "probe:327"
+  },
+  {
+   "id": "S8e-165",
+   "file": "design/spec.md",
+   "line": 4740,
+   "kind": "law",
+   "claim": "there is no helper deriving except from local_wires (no `fed(sys, ...)`)",
+   "evidence": "probe:336"
+  },
+  {
+   "id": "S8e-166",
+   "file": "design/spec.md",
+   "line": 4753,
+   "kind": "mech",
+   "claim": "generic holding constrains the child through the faces the wires reference",
+   "evidence": "probe:347"
+  },
+  {
+   "id": "S8e-167",
+   "file": "design/spec.md",
+   "line": 4755,
+   "kind": "law",
+   "claim": "a concrete child lacking a referenced face errors naming the parent's entry",
+   "evidence": "probe:347"
+  },
+  {
+   "id": "S8e-168",
+   "file": "design/spec.md",
+   "line": 4755,
+   "kind": "ex",
+   "claim": "lead: World in the generic-holding prose is a placeholder name",
+   "evidence": "probe:418"
+  },
+  {
+   "id": "S8e-169",
+   "file": "design/spec.md",
+   "line": 4756,
+   "kind": "mech",
+   "claim": "this is build-time structural typing with no new vocabulary",
+   "evidence": "probe:347"
+  },
+  {
+   "id": "S8e-170",
+   "file": "design/spec.md",
+   "line": 4756,
+   "kind": "ex",
+   "claim": "lead: World as the named entry owner in the error is a placeholder",
+   "evidence": "probe:418"
+  },
+  {
+   "id": "S8e-171",
+   "file": "design/spec.md",
+   "line": 4760,
+   "kind": "ex",
+   "claim": "scalar faces such as mode_req allow partial scripting",
+   "evidence": "probe:381"
+  },
+  {
+   "id": "S8e-172",
+   "file": "design/spec.md",
+   "line": 4761,
+   "kind": "ex",
+   "claim": "lead: mode_req is a placeholder face name, run as a fixture face",
+   "evidence": "probe:381"
+  },
+  {
+   "id": "S8e-173",
+   "file": "design/spec.md",
+   "line": 4761,
+   "kind": "ex",
+   "claim": "lead: EAS_ref is a placeholder face name",
+   "evidence": "probe:381"
+  },
+  {
+   "id": "S8e-174",
+   "file": "design/spec.md",
+   "line": 4763,
+   "kind": "law",
+   "claim": "a partial script is impossible with a bundled face (partial write refused)",
+   "evidence": "probe:381"
+  }
+ ],
+ "counts": {
+  "law": 102,
+  "mech": 31,
+  "decl": 8,
+  "ex": 33,
+  "ptr": 6,
+  "why": 55
+ }
+}

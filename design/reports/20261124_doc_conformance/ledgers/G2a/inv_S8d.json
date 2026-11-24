@@ -1,0 +1,924 @@
+{
+ "rows": [
+  {
+   "id": "S8d-003",
+   "file": "design/spec.md",
+   "line": 3921,
+   "kind": "mech",
+   "claim": "The path form is shared verbatim by declarations, errors, snapshot and log reads, and the HDF5 log tree",
+   "evidence": "No HDF5 code in src/ (rg HDF5 src finds nothing); design/pending.md says the HDF5 export is undecided. The snapshot half holds (probe:372).",
+   "verdict": "unverifiable",
+   "note": "The HDF5 log tree does not exist in the code, so the clause cannot be checked."
+  },
+  {
+   "id": "S8d-013",
+   "file": "design/spec.md",
+   "line": 3939,
+   "kind": "mech",
+   "claim": "Snapshot and log inspection walk instances (§13.3)",
+   "evidence": "spec.md:11411-11413 (§13.3 table) says inspection reads the address table, a cell the structure has. Code holds strings: Layout.addr and component_paths (src/build.jl:357-365); probe:372 reads by path string. The sentence also contradicts the next one, that a path is unrecoverable from an instance.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Snapshot and log inspection read the address table by path ([§13.3][s13-3])."
+  },
+  {
+   "id": "S8d-037",
+   "file": "design/spec.md",
+   "line": 3977,
+   "kind": "law",
+   "claim": "Two entries producing the same output face remain the ordinary two-producers error (§6.1)",
+   "evidence": "probe:139 (output_wires \"b/y\"=>\"out\", \"a/y\"=>\"out\") gives only FaceNameCollision site=:assembly, no TwoProducers; src/structure.jl:756-770 fires on the repeated face name. TwoProducers arises only for an input fed twice (probe:149).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Two entries naming the same output face are `FaceNameCollision`, since face names are unique across the two boundary declarations. An input fed twice remains the ordinary two-producers error ([§6.1][s6-1])."
+  },
+  {
+   "id": "S8d-042",
+   "file": "design/spec.md",
+   "line": 3991,
+   "kind": "law",
+   "claim": "A face name contains no `/` is a build-checked invariant of every face name",
+   "evidence": "src/structure.jl:756-762 checks it only on assembly boundary faces; check_contract_names (src/assembly.jl:700-706) checks only emptiness of contract keys. probe:421: a primitive with u_types key Symbol(\"a/b\") builds with no diagnostic. declare.jl:183 and 221 also promise only the empty-name refusal.",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Make check_contract_names refuse a contract key holding `/` as FaceNameIllegal with invariant :contains_slash; or, if primitive ports are exempt, say the slash invariant covers assembly boundary faces."
+  },
+  {
+   "id": "S8d-078",
+   "file": "design/spec.md",
+   "line": 4151,
+   "kind": "decl",
+   "claim": "In code, the sculling result is the sampler line `υ_c_sc = s.q'(u.V - s.V)`",
+   "evidence": "The code block at spec.md:4226-4229 writes `q_s = RQuat(s.q, normalization = false)` and `υ_c_sc = q_s'(u.V - s.V)`. `s.q` is a bare SVector{4}, so `s.q'` is no rotation (§7.1's explicit cast, spec.md:4213). probe:292 runs the block form.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "In code, the sculling result is the sampler line `υ_c_sc = q_s'(u.V - s.V)`, with `q_s = RQuat(s.q, normalization = false)`."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S8d-001",
+   "file": "design/spec.md",
+   "line": 3917,
+   "kind": "law",
+   "claim": "Paths are relative, slash-separated, with no leading slash",
+   "evidence": "probe:410: \"/a/y\" refused PathResolution :unknown_child; src/assembly.jl:272"
+  },
+  {
+   "id": "S8d-002",
+   "file": "design/spec.md",
+   "line": 3919,
+   "kind": "mech",
+   "claim": "Snapshot reads use the same slash path form as declarations",
+   "evidence": "probe:372 port(sim,\"sampler\",:sample); probe:313 layout keys"
+  },
+  {
+   "id": "S8d-004",
+   "file": "design/spec.md",
+   "line": 3921,
+   "kind": "law",
+   "claim": "Container elements add index/key segments: \"aircraft/2\", \"aircraft/red\"",
+   "evidence": "probe:156 paths gs/1, gs/2; probe:161 gs/red, gs/blue"
+  },
+  {
+   "id": "S8d-005",
+   "file": "design/spec.md",
+   "line": 3923,
+   "kind": "mech",
+   "claim": "Container segments are ordinary segments resolved against the container field",
+   "evidence": "src/assembly.jl:321-342 (_one_level)"
+  },
+  {
+   "id": "S8d-006",
+   "file": "design/spec.md",
+   "line": 3924,
+   "kind": "law",
+   "claim": "A name-transparent container adds no segment; elements go by bare key",
+   "evidence": "probe:347 paths a, red, blue"
+  },
+  {
+   "id": "S8d-007",
+   "file": "design/spec.md",
+   "line": 3928,
+   "kind": "law",
+   "claim": "Wiring declarations use one child segment and one face name",
+   "evidence": "probe:167 reaches_past refusal; src/assembly.jl:336-340"
+  },
+  {
+   "id": "S8d-008",
+   "file": "design/spec.md",
+   "line": 3931,
+   "kind": "decl",
+   "claim": "A bare contract is one type, one port with default face u or y",
+   "evidence": "src/assembly.jl:406-409 (_contract keyed form); probe:188 root_inputs [:u]"
+  },
+  {
+   "id": "S8d-009",
+   "file": "design/spec.md",
+   "line": 3932,
+   "kind": "law",
+   "claim": "Endpoint on a bare-contract child names that face: \"gain/y\" => \"integrator/u\"",
+   "evidence": "probe:83 barechain builds with g/y => h/u"
+  },
+  {
+   "id": "S8d-010",
+   "file": "design/spec.md",
+   "line": 3933,
+   "kind": "law",
+   "claim": "A one-segment endpoint is UnknownPort with the child's face list",
+   "evidence": "probe:72, 76, 87 (port=nothing, candidates); src/structure.jl:112-117, diagnostics.jl:388-394"
+  },
+  {
+   "id": "S8d-011",
+   "file": "design/spec.md",
+   "line": 3935,
+   "kind": "law",
+   "claim": "A container child keeps its key segment: \"aircraft/2/face\" is one level",
+   "evidence": "probe:156 wires a/y => gs/2/u build; src/assembly.jl:307-309"
+  },
+  {
+   "id": "S8d-012",
+   "file": "design/spec.md",
+   "line": 3937,
+   "kind": "mech",
+   "claim": "The read side walks the full depth of paths",
+   "evidence": "probe:372 reads \"sampler\"; probe last line reads \"gs/2\"; src/structure.jl resolve_authored (code_map 1365-1437)"
+  },
+  {
+   "id": "S8d-014",
+   "file": "design/spec.md",
+   "line": 3940,
+   "kind": "law",
+   "claim": "Symmetric immutable siblings are ===-identical, so a path is unrecoverable from an instance",
+   "evidence": "Julia semantics for field-equal immutable structs; probe:19-26 (Gn(), Gn())"
+  },
+  {
+   "id": "S8d-015",
+   "file": "design/spec.md",
+   "line": 3941,
+   "kind": "mech",
+   "claim": "Helpers name the child by path",
+   "evidence": "src/assembly.jl:543-549 input_passthrough(assembly, child_path)"
+  },
+  {
+   "id": "S8d-016",
+   "file": "design/spec.md",
+   "line": 3944,
+   "kind": "decl",
+   "claim": "local_wires is an ordered collection of \"src/face\" => \"dst/face\" pairs",
+   "evidence": "src/declare.jl:261-286; probe:47"
+  },
+  {
+   "id": "S8d-017",
+   "file": "design/spec.md",
+   "line": 3945,
+   "kind": "law",
+   "claim": "Every local pair runs child face to child face",
+   "evidence": "probe:121, 124 FaceDirectionConflict; src/structure.jl:67-73"
+  },
+  {
+   "id": "S8d-018",
+   "file": "design/spec.md",
+   "line": 3946,
+   "kind": "law",
+   "claim": "There is one wire per input",
+   "evidence": "probe:149 TwoProducers"
+  },
+  {
+   "id": "S8d-019",
+   "file": "design/spec.md",
+   "line": 3947,
+   "kind": "law",
+   "claim": "Every endpoint is an immediate child and one of its faces, container key segments included",
+   "evidence": "probe:167, 156; src/assembly.jl:321-342"
+  },
+  {
+   "id": "S8d-020",
+   "file": "design/spec.md",
+   "line": 3950,
+   "kind": "decl",
+   "claim": "input_wires is an ordered collection of face => internal endpoint path",
+   "evidence": "src/declare.jl:290-308; probe:47"
+  },
+  {
+   "id": "S8d-021",
+   "file": "design/spec.md",
+   "line": 3952,
+   "kind": "decl",
+   "claim": "An input face routed to several children takes a tuple of paths",
+   "evidence": "probe:144 fan build ok, root_inputs [:cmd]; src/structure.jl:93-100"
+  },
+  {
+   "id": "S8d-022",
+   "file": "design/spec.md",
+   "line": 3954,
+   "kind": "law",
+   "claim": "Every input_wires entry routes to at least one internal endpoint",
+   "evidence": "src/structure.jl:672-679"
+  },
+  {
+   "id": "S8d-023",
+   "file": "design/spec.md",
+   "line": 3955,
+   "kind": "law",
+   "claim": "An empty tuple is a declaration error",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "S8d-024",
+   "file": "design/spec.md",
+   "line": 3956,
+   "kind": "law",
+   "claim": "The build refuses it as UnknownPort with endpoint = :connection",
+   "evidence": "probe:67; src/structure.jl:678"
+  },
+  {
+   "id": "S8d-025",
+   "file": "design/spec.md",
+   "line": 3957,
+   "kind": "decl",
+   "claim": "output_wires pairs are internal source path => face name",
+   "evidence": "src/declare.jl:312-328; probe:47"
+  },
+  {
+   "id": "S8d-026",
+   "file": "design/spec.md",
+   "line": 3962,
+   "kind": "law",
+   "claim": "A value that is no collection of pairs is refused as IllegalWireEntry",
+   "evidence": "probe:62 :not_a_pair; src/structure.jl:727-745"
+  },
+  {
+   "id": "S8d-027",
+   "file": "design/spec.md",
+   "line": 3963,
+   "kind": "mech",
+   "claim": "The build checks the three declarations when it reads them",
+   "evidence": "src/structure.jl:616-619 (one throw for all three)"
+  },
+  {
+   "id": "S8d-028",
+   "file": "design/spec.md",
+   "line": 3964,
+   "kind": "law",
+   "claim": "A bare Pair has its own reason",
+   "evidence": "probe:53, 58 reason :bare_pair; diagnostics.jl:693-697"
+  },
+  {
+   "id": "S8d-029",
+   "file": "design/spec.md",
+   "line": 3965,
+   "kind": "mech",
+   "claim": "The message writes the bare Pair back as the one-entry tuple",
+   "evidence": "probe:53 message output; diagnostics.jl:702-704"
+  },
+  {
+   "id": "S8d-030",
+   "file": "design/spec.md",
+   "line": 3966,
+   "kind": "law",
+   "claim": "A Group takes a bare Pair as the one-entry tuple",
+   "evidence": "probe:60; src/assembly.jl:971"
+  },
+  {
+   "id": "S8d-031",
+   "file": "design/spec.md",
+   "line": 3967,
+   "kind": "law",
+   "claim": "The bare-pair reason reaches only a named assembly",
+   "evidence": "src/assembly.jl:971-976 (function-valued Group wires pass _entries too); named assembly probe:53"
+  },
+  {
+   "id": "S8d-032",
+   "file": "design/spec.md",
+   "line": 3969,
+   "kind": "law",
+   "claim": "Direction is declared by the method, not inferred",
+   "evidence": "src/structure.jl:67-73, 136-140; probe:121-133"
+  },
+  {
+   "id": "S8d-033",
+   "file": "design/spec.md",
+   "line": 3971,
+   "kind": "law",
+   "claim": "Every right side is fed exactly once",
+   "evidence": "probe:149 TwoProducers; probe:72 UnconnectedInput"
+  },
+  {
+   "id": "S8d-034",
+   "file": "design/spec.md",
+   "line": 3973,
+   "kind": "law",
+   "claim": "An endpoint resolving to a wrong-direction port is a build error",
+   "evidence": "probe:121, 124, 129, 133 FaceDirectionConflict; diagnostics.jl:715-727"
+  },
+  {
+   "id": "S8d-035",
+   "file": "design/spec.md",
+   "line": 3974,
+   "kind": "law",
+   "claim": "The error names the method, the entry and the port's actual direction",
+   "evidence": "probe:129 message: output_wires ..., entry ..., resolves to an input"
+  },
+  {
+   "id": "S8d-036",
+   "file": "design/spec.md",
+   "line": 3975,
+   "kind": "law",
+   "claim": "A mixed entry is not expressible",
+   "evidence": "src/declare.jl:261-328: only the three one-direction declarations exist"
+  },
+  {
+   "id": "S8d-038",
+   "file": "design/spec.md",
+   "line": 3979,
+   "kind": "mech",
+   "claim": "Face types and tiers are derived from the internal endpoints",
+   "evidence": "src/structure.jl:7-12, 19-40 (route to the terminal producer)"
+  },
+  {
+   "id": "S8d-039",
+   "file": "design/spec.md",
+   "line": 3982,
+   "kind": "law",
+   "claim": "An assembly exports continuous-sourced and discrete-sourced faces side by side",
+   "evidence": "probe:359 builds with i/y (continuous), d/y (discrete), g/y"
+  },
+  {
+   "id": "S8d-040",
+   "file": "design/spec.md",
+   "line": 3984,
+   "kind": "mech",
+   "claim": "Cells are retyped at the activation scalar on the continuous tier and pinned on the discrete",
+   "evidence": "src/declare.jl:794-799 (contract_at)"
+  },
+  {
+   "id": "S8d-041",
+   "file": "design/spec.md",
+   "line": 3991,
+   "kind": "law",
+   "claim": "An assembly face name containing `/` is FaceNameIllegal",
+   "evidence": "probe:94; src/structure.jl:760-761"
+  },
+  {
+   "id": "S8d-043",
+   "file": "design/spec.md",
+   "line": 3992,
+   "kind": "law",
+   "claim": "Face names are unique across the union of the two boundary declarations",
+   "evidence": "probe:104 FaceNameCollision; src/structure.jl:763-767"
+  },
+  {
+   "id": "S8d-044",
+   "file": "design/spec.md",
+   "line": 3994,
+   "kind": "law",
+   "claim": "An empty assembly face name is refused as FaceNameIllegal",
+   "evidence": "probe:99; src/structure.jl:762"
+  },
+  {
+   "id": "S8d-045",
+   "file": "design/spec.md",
+   "line": 3994,
+   "kind": "law",
+   "claim": "An empty contract key is refused like an empty face, FaceNameIllegal",
+   "evidence": "probe:110; src/assembly.jl:700-706"
+  },
+  {
+   "id": "S8d-046",
+   "file": "design/spec.md",
+   "line": 3996,
+   "kind": "law",
+   "claim": "A bare port's face is u or y",
+   "evidence": "probe:83, 188; src/assembly.jl:406-409"
+  },
+  {
+   "id": "S8d-047",
+   "file": "design/spec.md",
+   "line": 3997,
+   "kind": "law",
+   "claim": "Separators and prefixes like \"pilot.throttle_axis\" are legal",
+   "evidence": "probe:115 builds"
+  },
+  {
+   "id": "S8d-048",
+   "file": "design/spec.md",
+   "line": 3999,
+   "kind": "mech",
+   "claim": "input_passthrough's defaults fold the path into a dotted prefix, house style only",
+   "evidence": "probe:217 \"a.cmd\"; src/assembly.jl:543-545"
+  },
+  {
+   "id": "S8d-049",
+   "file": "design/spec.md",
+   "line": 4012,
+   "kind": "decl",
+   "claim": "The three declarations return pairs of strings, not NamedTuples",
+   "evidence": "probe:47; src/structure.jl:727-745"
+  },
+  {
+   "id": "S8d-050",
+   "file": "design/spec.md",
+   "line": 4015,
+   "kind": "mech",
+   "claim": "At the root, input faces are the root inputs with no vocabulary of their own",
+   "evidence": "probe:48, 309 root_inputs; src/structure.jl:598-601"
+  },
+  {
+   "id": "S8d-051",
+   "file": "design/spec.md",
+   "line": 4019,
+   "kind": "law",
+   "claim": "An assembly root supplies its input_wires keys as root inputs",
+   "evidence": "probe:309"
+  },
+  {
+   "id": "S8d-052",
+   "file": "design/spec.md",
+   "line": 4021,
+   "kind": "law",
+   "claim": "A primitive root supplies its u_types keys as root inputs",
+   "evidence": "probe:189; src/structure.jl:564-571"
+  },
+  {
+   "id": "S8d-053",
+   "file": "design/spec.md",
+   "line": 4028,
+   "kind": "law",
+   "claim": "A primitive root's face set is the union of its u_types and y_types keys",
+   "evidence": "src/structure.jl:781-787"
+  },
+  {
+   "id": "S8d-054",
+   "file": "design/spec.md",
+   "line": 4029,
+   "kind": "law",
+   "claim": "A key declared in both at a primitive root is a build error (FaceNameCollision :root)",
+   "evidence": "probe:182"
+  },
+  {
+   "id": "S8d-055",
+   "file": "design/spec.md",
+   "line": 4031,
+   "kind": "law",
+   "claim": "A primitive root with both contracts bare collides on nothing",
+   "evidence": "probe:188"
+  },
+  {
+   "id": "S8d-056",
+   "file": "design/spec.md",
+   "line": 4033,
+   "kind": "law",
+   "claim": "A named key u beside a bare u_types collides at the root",
+   "evidence": "probe:195 FaceNameCollision :root"
+  },
+  {
+   "id": "S8d-057",
+   "file": "design/spec.md",
+   "line": 4036,
+   "kind": "mech",
+   "claim": "A root input places a cell the periphery writes",
+   "evidence": "probe:313 layout addrs (\"\", :integrals.q_eb)"
+  },
+  {
+   "id": "S8d-058",
+   "file": "design/spec.md",
+   "line": 4037,
+   "kind": "law",
+   "claim": "Below the root nothing collides; non-root primitives are left alone",
+   "evidence": "probe:211; src/structure.jl:772-780"
+  },
+  {
+   "id": "S8d-059",
+   "file": "design/spec.md",
+   "line": 4045,
+   "kind": "law",
+   "claim": "The IMU is a mixed-tier assembly",
+   "evidence": "probe:310 tiers CONTINUOUS, DISCRETE, DISCRETE"
+  },
+  {
+   "id": "S8d-060",
+   "file": "design/spec.md",
+   "line": 4048,
+   "kind": "ex",
+   "claim": "The first code block (IMU, wires, sample_times) builds as written",
+   "evidence": "probe:307 (types stubbed)"
+  },
+  {
+   "id": "S8d-061",
+   "file": "design/spec.md",
+   "line": 4062,
+   "kind": "mech",
+   "claim": "input_passthrough(imu, \"integrals\") yields the five kinematic-truth inputs",
+   "evidence": "probe:306 output"
+  },
+  {
+   "id": "S8d-062",
+   "file": "design/spec.md",
+   "line": 4074,
+   "kind": "law",
+   "claim": "input_passthrough enumerates the child's input faces only",
+   "evidence": "probe:306; src/assembly.jl:543-549"
+  },
+  {
+   "id": "S8d-063",
+   "file": "design/spec.md",
+   "line": 4078,
+   "kind": "mech",
+   "claim": "errors/sample_meas is the error model's output port, sourced for the measured face",
+   "evidence": "probe:307, 313"
+  },
+  {
+   "id": "S8d-064",
+   "file": "design/spec.md",
+   "line": 4080,
+   "kind": "law",
+   "claim": "errors/sample in output_wires fails the direction cross-check",
+   "evidence": "probe:322 FaceDirectionConflict"
+  },
+  {
+   "id": "S8d-065",
+   "file": "design/spec.md",
+   "line": 4081,
+   "kind": "law",
+   "claim": "errors/sample in input_wires beside a local wire is the two-producers error",
+   "evidence": "probe:328 TwoProducers"
+  },
+  {
+   "id": "S8d-066",
+   "file": "design/spec.md",
+   "line": 4085,
+   "kind": "mech",
+   "claim": "Every IMU face's type and tier derive from its internal endpoint",
+   "evidence": "probe:313; src/declare.jl:794"
+  },
+  {
+   "id": "S8d-067",
+   "file": "design/spec.md",
+   "line": 4086,
+   "kind": "law",
+   "claim": "A sample_times key on integrals, the continuous child, is a build error",
+   "evidence": "probe:334 RatesViolation :continuous_child"
+  },
+  {
+   "id": "S8d-068",
+   "file": "design/spec.md",
+   "line": 4087,
+   "kind": "law",
+   "claim": "The two discrete children default to Relative(1)",
+   "evidence": "probe:340-341 timings D=1, Φ=0 with no sample_times"
+  },
+  {
+   "id": "S8d-069",
+   "file": "design/spec.md",
+   "line": 4088,
+   "kind": "mech",
+   "claim": "The IMU's sample_times declaration changes nothing (declaratory)",
+   "evidence": "probe:311 equals probe:341"
+  },
+  {
+   "id": "S8d-070",
+   "file": "design/spec.md",
+   "line": 4089,
+   "kind": "mech",
+   "claim": "Absolute rate arrives from the enclosing scope at deployment",
+   "evidence": "probe:372 Δt_frame = 1//50 drives the sampler"
+  },
+  {
+   "id": "S8d-071",
+   "file": "design/spec.md",
+   "line": 4091,
+   "kind": "mech",
+   "claim": "The latch-back wire is one more ordinary local_wires pair",
+   "evidence": "probe:391"
+  },
+  {
+   "id": "S8d-072",
+   "file": "design/spec.md",
+   "line": 4110,
+   "kind": "law",
+   "claim": "Only handlers write x; a discrete step cannot write continuous state",
+   "evidence": "src/declare.jl:899-906 (s_update and y_direct bundles hold no x write; handler is continuous)"
+  },
+  {
+   "id": "S8d-073",
+   "file": "design/spec.md",
+   "line": 4120,
+   "kind": "mech",
+   "claim": "The sampler differences against the previous sample held in its s",
+   "evidence": "probe:372 υ_c=0.02 from s.V, x.V; spec block y_direct"
+  },
+  {
+   "id": "S8d-074",
+   "file": "design/spec.md",
+   "line": 4122,
+   "kind": "mech",
+   "claim": "The sampler's s is the only new store",
+   "evidence": "probe:307 (s_init only on IMUSampler)"
+  },
+  {
+   "id": "S8d-075",
+   "file": "design/spec.md",
+   "line": 4129,
+   "kind": "mech",
+   "claim": "Increments are differences of cumulative integrals",
+   "evidence": "probe:372 υ_c = [0,0,0.02] over one interval"
+  },
+  {
+   "id": "S8d-076",
+   "file": "design/spec.md",
+   "line": 4155,
+   "kind": "mech",
+   "claim": "Every x_deriv evaluation reads the current cumulative attitude, RK stages included",
+   "evidence": "x_deriv takes (; x, y) and reads x.q (src/declare.jl:902); probe:279"
+  },
+  {
+   "id": "S8d-077",
+   "file": "design/spec.md",
+   "line": 4177,
+   "kind": "mech",
+   "claim": "x_projection holds q unit after integration",
+   "evidence": "src/model.jl:666-670 (integrate then project); src/declare.jl:579-598"
+  },
+  {
+   "id": "S8d-079",
+   "file": "design/spec.md",
+   "line": 4179,
+   "kind": "law",
+   "claim": "Θ, Υ and V grow linearly under constant input",
+   "evidence": "probe:372 x.V = [0,0,0.06]"
+  },
+  {
+   "id": "S8d-080",
+   "file": "design/spec.md",
+   "line": 4191,
+   "kind": "ptr",
+   "claim": "FrameTransform is a payload type §7.2 lists as walked",
+   "evidence": "spec.md:2299-2300"
+  },
+  {
+   "id": "S8d-081",
+   "file": "design/spec.md",
+   "line": 4194,
+   "kind": "ex",
+   "claim": "The second code block builds and runs as written (FlightPhysics names stubbed)",
+   "evidence": "probe:307, 372"
+  },
+  {
+   "id": "S8d-082",
+   "file": "design/spec.md",
+   "line": 4198,
+   "kind": "mech",
+   "claim": "The integrals carry thirteen scalars (Θ 3, q 4, Υ 3, V 3)",
+   "evidence": "probe:263 x_init"
+  },
+  {
+   "id": "S8d-083",
+   "file": "design/spec.md",
+   "line": 4209,
+   "kind": "decl",
+   "claim": "y_state(::IMUIntegrals, (; x)) returns the four integrals from stage 1",
+   "evidence": "src/declare.jl:900 (y_state continuous bundle x); probe:307"
+  },
+  {
+   "id": "S8d-084",
+   "file": "design/spec.md",
+   "line": 4212,
+   "kind": "decl",
+   "claim": "x_deriv bundle (; x, y) is legal on a continuous component",
+   "evidence": "src/declare.jl:902"
+  },
+  {
+   "id": "S8d-085",
+   "file": "design/spec.md",
+   "line": 4216,
+   "kind": "decl",
+   "claim": "x_projection(c, x) takes the state alone and returns the corrected state",
+   "evidence": "src/declare.jl:579-598"
+  },
+  {
+   "id": "S8d-086",
+   "file": "design/spec.md",
+   "line": 4223,
+   "kind": "law",
+   "claim": "Discrete y_types cells pin (frozen-exact)",
+   "evidence": "src/declare.jl:797 (discrete contract read as written)"
+  },
+  {
+   "id": "S8d-087",
+   "file": "design/spec.md",
+   "line": 4225,
+   "kind": "decl",
+   "claim": "y_direct on the discrete tier takes (; s, u, Δt)",
+   "evidence": "src/declare.jl:904"
+  },
+  {
+   "id": "S8d-088",
+   "file": "design/spec.md",
+   "line": 4233,
+   "kind": "decl",
+   "claim": "s_update(smp, (; u)) is a legal discrete update",
+   "evidence": "src/declare.jl:905"
+  },
+  {
+   "id": "S8d-089",
+   "file": "design/spec.md",
+   "line": 4238,
+   "kind": "mech",
+   "claim": "The sampler stays at Dₛ = 1 in the IMU's own scope; the parent sets the rate",
+   "evidence": "probe:341 D=1; probe:372"
+  },
+  {
+   "id": "S8d-090",
+   "file": "design/spec.md",
+   "line": 4241,
+   "kind": "mech",
+   "claim": "Δt in the stage bundle comes from the deployment's Schedule",
+   "evidence": "src/deployment.jl:79-81; src/executor.jl:66"
+  },
+  {
+   "id": "S8d-091",
+   "file": "design/spec.md",
+   "line": 4246,
+   "kind": "law",
+   "claim": "By default (zeros/identity) the sampler's s equals the initial integrals",
+   "evidence": "spec block x_init and s_init equal (probe:263-268)"
+  },
+  {
+   "id": "S8d-092",
+   "file": "design/spec.md",
+   "line": 4249,
+   "kind": "mech",
+   "claim": "Boundary zero latches s from integrals(t0) at init",
+   "evidence": "probe:405 s after init! = [1,2,3] with authored 0; src/model.jl:682-692"
+  },
+  {
+   "id": "S8d-093",
+   "file": "design/spec.md",
+   "line": 4252,
+   "kind": "mech",
+   "claim": "Only the t0 sample depends on the authored s",
+   "evidence": "src/model.jl:682-690 (boundary zero's sweep runs from authored s)"
+  },
+  {
+   "id": "S8d-094",
+   "file": "design/spec.md",
+   "line": 4260,
+   "kind": "mech",
+   "claim": "The sampling interface is four visible wires from integrals into the sampler",
+   "evidence": "probe:307 local_wires"
+  },
+  {
+   "id": "S8d-095",
+   "file": "design/spec.md",
+   "line": 4262,
+   "kind": "mech",
+   "claim": "sample and sample_meas are separate output faces",
+   "evidence": "probe:313 addrs"
+  },
+  {
+   "id": "S8d-096",
+   "file": "design/spec.md",
+   "line": 4264,
+   "kind": "law",
+   "claim": "Under a Dual activation the discrete tier is held",
+   "evidence": "src/linearize.jl:8-10 (nominal half holds frozen discrete cells)"
+  },
+  {
+   "id": "S8d-097",
+   "file": "design/spec.md",
+   "line": 4271,
+   "kind": "law",
+   "claim": "A due tick samples the completed boundary, so sculling does not vanish",
+   "evidence": "probe:372 υ_c_sc = [0,0,0.02], not zero"
+  },
+  {
+   "id": "S8d-098",
+   "file": "design/spec.md",
+   "line": 4277,
+   "kind": "mech",
+   "claim": "Boundary sequence is integrate, project, sweep",
+   "evidence": "src/model.jl:666-670"
+  },
+  {
+   "id": "S8d-099",
+   "file": "design/spec.md",
+   "line": 4280,
+   "kind": "mech",
+   "claim": "The due sampler's stages are gated into the sweep",
+   "evidence": "src/model.jl:666-690"
+  },
+  {
+   "id": "S8d-100",
+   "file": "design/spec.md",
+   "line": 4281,
+   "kind": "mech",
+   "claim": "y_state integrals arrive at stage-1 position, before any stage-2 function",
+   "evidence": "src/build.jl:5; probe:372 fresh υ"
+  },
+  {
+   "id": "S8d-101",
+   "file": "design/spec.md",
+   "line": 4284,
+   "kind": "law",
+   "claim": "y_direct decodes the t_{k-1} latch in s before s_update runs",
+   "evidence": "probe:372 sample υ=0.02 beside s.V=0.06; test/test_discrete.jl:38-41"
+  },
+  {
+   "id": "S8d-102",
+   "file": "design/spec.md",
+   "line": 4287,
+   "kind": "mech",
+   "claim": "s_update runs after event quiescence",
+   "evidence": "src/model.jl:669-670"
+  },
+  {
+   "id": "S8d-103",
+   "file": "design/spec.md",
+   "line": 4289,
+   "kind": "mech",
+   "claim": "Same-boundary events re-run gated stages in re-sweeps",
+   "evidence": "src/model.jl:669 (sweep, guards, handlers iterated to quiescence)"
+  },
+  {
+   "id": "S8d-104",
+   "file": "design/spec.md",
+   "line": 4308,
+   "kind": "mech",
+   "claim": "The sampler publishes the latch from its feedthrough stage; x_deriv reads x - u.latch",
+   "evidence": "probe:380-390 builds"
+  },
+  {
+   "id": "S8d-105",
+   "file": "design/spec.md",
+   "line": 4312,
+   "kind": "law",
+   "claim": "The feedthrough stage is y_direct because it reads u",
+   "evidence": "src/declare.jl:902-904 (discrete y_state bundle holds no u)"
+  },
+  {
+   "id": "S8d-106",
+   "file": "design/spec.md",
+   "line": 4314,
+   "kind": "law",
+   "claim": "A y_state-published latch would be one period stale",
+   "evidence": "src/declare.jl:903 (discrete y_state sees s only, the previous latch)"
+  },
+  {
+   "id": "S8d-107",
+   "file": "design/spec.md",
+   "line": 4315,
+   "kind": "law",
+   "claim": "With the latch-back wire the feedthrough graph stays acyclic",
+   "evidence": "probe:391 builds, no AlgebraicCycle"
+  },
+  {
+   "id": "S8d-108",
+   "file": "design/spec.md",
+   "line": 4316,
+   "kind": "mech",
+   "claim": "Integrals' stage 1 feeds the sampler's y_direct, which feeds the integrals' x_deriv edge",
+   "evidence": "probe:391 wires integrals/V -> sampler/V, sampler/latch -> integrals/latch"
+  },
+  {
+   "id": "S8d-109",
+   "file": "design/spec.md",
+   "line": 4187,
+   "kind": "ptr",
+   "claim": "Lead: IMU, IMUSample, FrameTransform, RQuat, RVec, Attitude.dt, normalization are placeholders/prior art",
+   "evidence": "FlightPhysics names (spec.md:2975-2976, 2200, 2299-2300); not in src; stubbed at probe:222-250"
+  },
+  {
+   "id": "S8d-110",
+   "file": "design/spec.md",
+   "line": 4077,
+   "kind": "ptr",
+   "claim": "Lead: q_eb, r_eb_e, ω_eb_b, a_ib_b, α_ib_b, f_c_c, q_c_cc, υ_c, ϑ_c and sample_meas are port or math names in the example",
+   "evidence": "probe:263-266 u_types; probe:313 sample_meas"
+  },
+  {
+   "id": "S8d-111",
+   "file": "design/spec.md",
+   "line": 4098,
+   "kind": "ptr",
+   "claim": "Lead: ẋ.ϑ_c, ẋ.υ_c, ẋ.υ_c_sc, ω_ic_c, integrals, t_, t_k are prose names of the direct formulation or math",
+   "evidence": "no code names them; ω_ic_c and f_c_c are y_types of IMUIntegrals (probe:268)"
+  },
+  {
+   "id": "S8d-112",
+   "file": "design/spec.md",
+   "line": 4191,
+   "kind": "ptr",
+   "claim": "Lead: test-only name `sample` is the IMU's example output face",
+   "evidence": "probe:290 y_types sample; probe:313"
+  }
+ ],
+ "counts": {
+  "law": 46,
+  "mech": 58,
+  "decl": 13,
+  "ptr": 18,
+  "why": 40,
+  "ex": 10
+ }
+}
