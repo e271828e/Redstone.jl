@@ -105,16 +105,19 @@ end
 
 The termination source of a run aborted by a failure inside the loop.
 
-`LoopError` is the abnormal source. A run ends with it when a
-[frame](@ref g-frame) throws, whatever it throws. The throw leaves the
-simulation `errored`, and the previous [snapshot](@ref g-snapshot) is the run's
-final one. A single Ctrl-C never lands inside a frame, so it ends the run as a
+`LoopError` is the abnormal source. A run ends with it when the loop fails. A
+throw inside a [frame](@ref g-frame), whatever it throws, leaves the simulation
+`errored`, and the previous [snapshot](@ref g-snapshot) is the run's final one.
+A fault outside the frame, such as [`frame!`](@ref)'s refusal of a frame past
+the last the run may take, leaves it `stopped` at its last settled
+[boundary](@ref g-boundary). A single Ctrl-C never lands inside a frame, so it ends the run as a
 stop. The throw Julia forces after repeated Ctrl-C can cut a frame, and that
 frame ends the run with a `LoopError` that wraps the `InterruptException`.
 
-`exception` holds the failure as the loop caught it. The value is a wrapper
-whose `cause` is the raw error or the failed check's diagnostic, beside the time
-and the place in the frame where it was thrown.
+`exception` holds the failure as the loop caught it. From inside a frame it is a
+wrapper whose `cause` is the raw error or the failed check's diagnostic, beside
+the time and the place in the frame where it was thrown. From outside the frame
+it is the raw exception.
 
 By the time a caller can read the source, the [tail](@ref g-tail) has already
 run. [`run!`](@ref) says how a failed run ends, and [`termination`](@ref) how
@@ -1511,8 +1514,9 @@ run. A run that reaches the recording's last frame halts there `initialized`,
 with no [termination record](@ref g-termination-record), and the mode turns
 `:live`.
 
-A failure inside the loop leaves the simulation `errored` instead, the cause
-kept on the record. With no device rostered, `run!` then rethrows the failure.
+A failure inside a frame leaves the simulation `errored` instead, the cause
+kept on the record. A fault in the loop outside a frame leaves it `stopped`,
+the cause kept on the record alike. With no device rostered, `run!` then rethrows the failure.
 With one or more, it logs the failure and returns. Ctrl-C is a stop. The loop
 holds it until the frame in flight has published, or catches it at a frame top
 or during a pause, and it ends the run `stopped` with
@@ -2206,7 +2210,7 @@ ignored path that names no requester as `StopRequestInvalid`.
 # Keywords
 
 - `frames`: the number of frames to advance, an integer of at least 1 that keeps
-  the frame index within `Int`.
+  the frame index within the last frame the run may take.
 - `t_plus`: the duration to advance, a positive finite real within the frame
   range, in whole frames until the boundary time first covers it.
 - `t_end`, `ignore_stop_requests`: this advance's

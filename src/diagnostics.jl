@@ -1316,7 +1316,7 @@ message(d::ServiceLifecycle) =
 "§13.5: an `ignore_stop_requests` path that names no stop requester."
 Base.@kwdef struct StopRequestInvalid <: Diagnostic
     path::String                             # the path as given
-    site::Symbol                             # :run! | :replay! | :step!, the advance (D-249)
+    site::Symbol                             # :run! | :replay! | :step!, the advance (D-316)
     candidates::Vector{String}               # the roster's requester paths, in roster order
 end
 
@@ -2353,7 +2353,7 @@ message(d::ConditionShapeDrift) =
 
 "§8.7, §10.5, §11.6, §12.4, §12.6, §14.7, D-215: an argument outside its constraint — `DeploymentInvalid`'s twin off the deployment surface."
 Base.@kwdef struct ArgumentInvalid <: Diagnostic
-    call::Symbol                             # :Model|:Simulation|:init!|:restore!|:Absolute|:Relative|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding
+    call::Symbol                             # :Model|:Simulation|:init!|:overlay!|:frame!|:apply!|:restore!|:run!|:step!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding|:Absolute|:Relative|:BS3
     reason::Symbol
     argument::Union{Nothing,Symbol} = nothing
     value::Any = nothing

@@ -471,8 +471,8 @@ D-459, D-460, D-461, D-463, D-465, D-466.
 - Nothing here encodes text. `test_descriptor.jl` holds the round trip, with
   JSON and JSONSchema as the suite's dependencies alone.
 
-Spec: §8.5, §9.1, §9.2, §13.2, §13.8, §13.9, D-211, D-237, D-418, D-432, D-433,
-D-434, D-437, D-466, D-467, D-468.
+Spec: §8.5, §9.1, §9.2, §13.2, §13.8, §13.9, D-168, D-211, D-237, D-261, D-432,
+D-433, D-434, D-437, D-439, D-466, D-467, D-468, D-478.
 
 ### `src/devices.jl`
 
@@ -517,7 +517,8 @@ D-256, D-261, D-268, D-270, D-315.
 
 - The diagnostic kinds, under `Diagnostic`.
 - The runtime channel's kinds, the members of dataplane.jl's `KINDS` (§11.8,
-  Appendix C), in their own section beside `EmptyGreedyClaim`: the three
+  Appendix C), in their own section beside `EmptyGreedyClaim`:
+  `MalformedDatum`, the author's bad-datum report (§11.6), the three
   staging kinds (§11.4), the two budget degradations (§10.4, §10.6),
   `DebtReanchor`, the pacer's forgiveness on the loop's own cell (§10.7),
   `UnboundedRun`, the loop's own advisory (§13.5, D-255, D-316),

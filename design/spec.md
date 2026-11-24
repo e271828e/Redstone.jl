@@ -12465,7 +12465,10 @@ because structural tracing is sound as a may-depend answer but never sharp.
 **The hops through a continuous face or port declared with no
 [walking](#g-walked) primitive trace structurally too** ([D-245][d-245],
 [D-343][d-343]), because such a face or port admits no tracer scalar either.
-A walking leaf is one whose type follows the activation scalar.
+A walking leaf is one whose type follows the activation scalar. A continuous
+member with more than 64 faces entered from inside the cluster traces
+structurally too, because the tracer carries the faces a value depends on as
+a 64-bit set.
 
 **The diagnostic records the source of each member's map** ([D-245][d-245]).
 The source is the global tracer, sampled states or structure. A reader can
@@ -15499,8 +15502,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   / interface connection entry), each a terminal or the face an entry hands
   the input up through.
 - **`WireTypeMismatch`** ([§6.1][s6-1], [§8.2][s8-2], [§8.4][s8-4] w4). Error
-  · build · collected. Both endpoint paths, both face names (empty where a
-  side is bare), declared entry
+  · build · collected. Both endpoint paths, both face names (`u` or `y` on a
+  bare contract side, [D-437][d-437]), declared entry
   type, producer face type.
 - **`WalkingFaceAtFrozenEntry`** ([§6.1][s6-1], [§8.2][s8-2]). Error · build ·
   collected. Consumer path and entry name, producer path and face name, the
@@ -15547,8 +15550,9 @@ collection ([§9.2][s9-2], [D-250][d-250]).
 - **`ClassUnreadable`** ([§8.5][s8-5]). Error · build · fail-fast. Component
   path, type, declarations found, both family lists; did-you-mean when the
   type holds component-typed fields.
-- **`ClassMixed`** ([§8.5][s8-5]). Error · build · fail-fast. Component path,
-  the `local_wires` declaration and the offending primitive declarations.
+- **`ClassMixed`** ([§8.5][s8-5]). Error · build · fail-fast. Component path
+  and the offending primitive declarations; the message names the
+  `local_wires` declaration.
 - **`ContainerMixed`** ([§8.5][s8-5]). Error · build · collected over the
   component's child-naming pass, thrown at once ([D-431][d-431]). Container
   field path, offending element keys/indices, their types.
@@ -15651,13 +15655,13 @@ activation):
   (member, input face, output port), and per member the tracing mode (global,
   sampled or structural).
 - **`ProducedByTwoStages`** ([§8.3][s8-3]). Error · build ·
-  fail-fast, with the probe chain ([D-229][d-229]). Component path, port
-  name (`y` on a bare contract, [D-437][d-437]). The two stages are the kind's own, so it carries no producer column
+  fail-fast, with the probe chain ([D-229][d-229]). Component path, the port
+  names both stages return (`y` on a bare contract, [D-437][d-437]). The two stages are the kind's own, so it carries no producer column
   ([D-252][d-252]).
 - **`DeclaredNotProduced`** ([§8.3][s8-3]). Error · build · collected, by the
   completeness pass over the complete products, which runs only once every
-  port check has passed ([D-239][d-239]). Component path, declared name
-  (`y` on a bare contract, [D-437][d-437]), the
+  port check has passed ([D-239][d-239]). Component path, the declared names
+  no stage produces (`y` on a bare contract, [D-437][d-437]), the
   stage-product list and the state-field list, the latter as context. The
   remedy is returning the name from `y_state` ([§5.3][s5-3],
   [D-252][d-252]).
@@ -15684,7 +15688,8 @@ activation):
   `:ports`, `:namedtuple`, `:state`, `:x_init`, `:s_init`, `:stores` or
   `:mode`. The activation scalar rides for the pin hint. Simulation time rides the runtime carrier ([D-249][d-249]).
 - **`GuardForm`** ([§9.5][s9-5]). Error · build · fail-fast. Component path,
-  event name, observed probe return type, both admissible forms.
+  event name, observed probe return type; the message names both admissible
+  forms.
 - **`BundleFieldError`** ([§5.2][s5-2], [§13.2][s13-2]). Error · build, at
   probe; runtime thereafter · fail-fast, a `StepError` species at runtime.
   Component path, function family, the primitive's tier, requested field, the
@@ -15741,7 +15746,7 @@ activation):
   validate under `ArgumentInvalid`.
 - **`AttachUnknownFace`** ([§11.3][s11-3]). Error · service · fail-fast. The
   device (by type, since its roster id is assigned only at admission),
-  binding entry, face name, the root input-face list.
+  the binding by type, face name, the root input-face list.
 - **`AlreadyAttached`** ([§11.3][s11-3]). Error · service · fail-fast. The
   offered device by type, the device id of the existing roster entry, its
   binding.
@@ -15931,10 +15936,16 @@ activation):
   the last the lattices index in an `Int` and the last the origin's clock
   resolves ([§10.5][s10-5], [D-445][d-445], [D-450][d-450]). A `TableBinding`
   refusal also carries the entry key, and one with reason `:vocabulary` the
-  offending key and the legal entry vocabulary. A model
+  offending key and the legal entry vocabulary. A `TableBinding` entry that
+  is no NamedTuple is `:entry_shape`, one with no `face` is `:no_face`, and a face
+  that is neither a string nor a symbol is `:face_name`. A `deadzone` outside
+  $[0, 1)$ is `:deadzone`, and an `expo` outside $[0, 1]$ is `:expo`. A model
   a simulation has claimed is reason `:claimed`, and a `Simulation` over a
   model not at `:built` is reason `:not_built` ([D-318][d-318]). `trace(sim)`
-  under `trace = false` is reason `:disabled`. `trim!` and `linearize` on a `Model` at another scalar raise it
+  under `trace = false` is reason `:disabled`. `step!` given both `frames`
+  and `t_plus`, and `replay!` given both `to_boundary` and `to_time`, are
+  reason `:both_given`. `live!` on a simulation already `:live` is reason
+  `:not_replaying`. `trim!` and `linearize` on a `Model` at another scalar raise it
   with reason `:non_nominal` ([D-319][d-319]). `linearize` refuses a `width` below 1 as
   `:nonpositive_width`, a `t0` without `about` as `:t0_without_about`
   ([D-420][d-420]), and a second argument that is no tap set as `:not_a_tap_set`.
@@ -16012,11 +16023,11 @@ activation):
   rate-limited, a repeating source ([§11.8][s11-8]). The discarded batch's
   face names, frame ordinal.
 - **`MalformedDatum`** ([§11.6][s11-6], [§13.4][s13-4]). Warning · runtime ·
-  rate-limited, a repeating source ([§11.8][s11-8]). The cause exception.
+  rate-limited, a repeating source ([§11.8][s11-8]). The cause, any value the
+  device records, typically the caught exception.
   Emitted by the author's loop body via `report!(handle, …)`.
 - **`EntryTypeMismatch`** ([§11.4][s11-4]). Warning · runtime · rate-limited.
-  Face name, the offending value's type, the root input's declared type, the
-  discarded value.
+  Face name, the root input's declared type, the discarded value.
 - **`UnboundedRun`** ([§11.8][s11-8], [§13.5][s13-5]). Warning · runtime,
   raised at `run!` in `:live` when `t_end` is `Inf` and no stop request is
   honoured, the model having no requester or the advance ignoring them all
