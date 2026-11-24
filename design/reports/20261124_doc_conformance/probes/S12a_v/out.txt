@@ -1,0 +1,32 @@
+P0 nthreads = 1
+P1 margin!(0) -> 0.0
+P1 margin!(0.5) -> 0.5
+P1 margin!(1//2) -> 0.5
+P1 margin!(Inf) -> Inf
+P1 margin!(-1) -> refused
+P1 margin!(-0.001) -> refused
+P1 margin!(NaN) -> refused
+P1 margin!("x") -> refused
+P1 margin!(nothing) -> refused
+P1 run!(margin=-1) -> refused
+P1 run!(margin=NaN) -> refused
+P2 margin 0 vs Inf same snapshots/frames: true frames=10
+P3a
+P3b
+P3c
+P3 run! enter
+obs start
+obs parked=true
+obs att=ServiceLifecycle
+obs stopped
+P3 run! exit
+P3 parked, (paused, lifecycle), attach while paused: (true, (true, :running), "ServiceLifecycle") after: stopped paused=false
+P4 counter: (1, 4, 5, 7) ordinal: (0, 3, 0, 2)
+P5 ticks margin=0 no device: (60, 0.4)
+P5 ticks margin=Inf no device: (1, 0.4)
+P5 ticks margin=Inf device: (6, 0.41)
+P6 stop->return delay (budget 0.5 s): 0.208 source=ControlRequestedStop(:code)
+P7 ThreadBudget in residue: false warnings=0 source=ControlRequestedStop("device 1 (TailProbe)")
+P8 at 2.6 s: (who, task_state, stale, roster size): ("device 1 (Sleeper)", :running, true, 1) source=ControlRequestedStop(:code)
+┌ Warning: ThreadBudget from loop, past the final snapshot's account: the run occupies 2 tasks, the loop and one per rostered device, on 1 thread, so co-resident tasks share a thread and inputs lag — start Julia with `julia -t 2` or more (§12.2)
+└ @ Redstone ~/.julia/dev/Redstone.jl-worktrees/doc_conformance/src/sim.jl:1978

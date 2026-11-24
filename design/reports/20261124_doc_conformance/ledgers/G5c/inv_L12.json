@@ -1,0 +1,1473 @@
+{
+ "rows": [
+  {
+   "id": "L12-013",
+   "file": "design/log.md",
+   "line": 1164,
+   "kind": "law",
+   "claim": "D-030: a device crash takes the `should_close` path.",
+   "evidence": "rg finds no `should_close` in src/ or test/. A crash is caught by the wrapper and shares the voluntary-return exit path, `shutdown!` then the `should_abort` consult (src/devices.jl:650-672). D-373 (log.md:15779) dissolved `should_close`. The entry's own annotation at log.md:1170 records the move.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "device crash = the wrapper's catch, the same exit path as a voluntary return, with a sim stop only under `should_abort`",
+   "note": "Stage M lead (names missing: should_close). Moved by D-373. The annotation after Spec already says so, so the Position text needs no edit."
+  },
+  {
+   "id": "L12-015",
+   "file": "design/log.md",
+   "line": 1990,
+   "kind": "law",
+   "claim": "D-059: runtime failures are caught at one site, around the boundary macro-sequence.",
+   "evidence": "The model has four catch sites, each calling the one constructor `_wrap_step`. They are `frame!` around the whole frame, drain included, as host :loop (src/frame.jl:87-97), boundary zero under `init!` (src/model.jl:335-339), `overlay!`'s settling (src/model.jl:475-479) and the restore door (src/model.jl:1336-1341). See src/model.jl:1069-1076.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Runtime failures are caught at the model's catch sites (`frame!` around the frame, and each door around its settling), all wrapped by the one `StepError` constructor against an execution cursor.",
+   "note": "D-223 put a catch in boundary zero. D-441 (log.md:18439) rules that every catch site wraps what reaches it and names the restore door's catch. There is one constructor but no longer one catch site."
+  },
+  {
+   "id": "L12-027",
+   "file": "design/log.md",
+   "line": 3013,
+   "kind": "law",
+   "claim": "D-088: `init!`'s absence is a diagnostic distinct from `UninitializedSlots`.",
+   "evidence": "No `UninitializedSlots` exists. The kind is `UninitializedInputs` (src/diagnostics.jl:2080). The absence of `init!` is `MissingInit` (src/diagnostics.jl:1266, src/sim.jl:604-605).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "(its absence a distinct diagnostic, `MissingInit`, from `UninitializedInputs`)",
+   "note": "Stage M lead (names missing: UninitializedSlots). Renamed by D-206 (log.md:8257, 8269). The annotation at log.md:3028 records it."
+  },
+  {
+   "id": "L12-030",
+   "file": "design/log.md",
+   "line": 3302,
+   "kind": "decl",
+   "claim": "D-097: the `DeviceCrash` payload carries the device id.",
+   "evidence": "`struct DeviceCrash` has only the fields `cause` and `abort` (src/diagnostics.jl:1688-1691; probe:87 prints (:cause, :abort)). Writer attribution is never a payload field. The cell supplies it (src/diagnostics.jl:1563-1564).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`DeviceCrash` (exception as `cause`, the `should_abort` disposition as `abort`; the device is attributed by its diagnostic cell)",
+   "note": "Moved by D-228 (log.md:9316): runtime diagnostics are attributed by cell, never by payload. `DeviceJoinTimeout`'s `who` stays, because it names the subject (Appendix C)."
+  },
+  {
+   "id": "L12-040",
+   "file": "design/log.md",
+   "line": 3807,
+   "kind": "decl",
+   "claim": "D-110: resume-at-time is spelled by passing `capture`'s returned `t` as `trim!`'s `t0`.",
+   "evidence": "`capture` is not defined in Redstone (probe:95 prints false). A state past t0 is a `Checkpoint` (src/checkpoint.jl:106-110), resumed by `restore!` (src/sim.jl:1063), which inherits the clock.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "resume-at-time spelled explicitly by passing the time as `t0`; `capture` is retired (D-273), and a resume proper is `checkpoint` then `restore!`",
+   "note": "Stage M lead (names missing: capture at 3807). D-273 (log.md:12241) retired `capture`'s condition form, and D-274 made the checkpoint the resume value."
+  },
+  {
+   "id": "L12-048",
+   "file": "design/log.md",
+   "line": 3934,
+   "kind": "law",
+   "claim": "D-198: D-133's other three fixed operational constants stand, `margin` = 2 ms with no user knob among them.",
+   "evidence": "`margin` is a user knob. `run!` and `replay!` take `margin = 0.002` (src/sim.jl:1562, 1335), `margin!(sim, m)` writes it (src/sim.jl:2412), and the wait reads it off the control plane (src/control.jl:185). The other two stay fixed: debt forgiveness `5*h/p` (src/control.jl:177) and staleness 2 s (src/dataplane.jl:309).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "This amends D-133: its semantic/operational split stands, and so do its debt bound `5·h/p` and its 2 s staleness; `margin`, 2 ms by default, became a knob under D-269.",
+   "note": "Moved by D-269 (log.md:11891), which made `margin` a knob with `margin!` and the `run!`/`replay!` keyword."
+  },
+  {
+   "id": "L12-058",
+   "file": "design/log.md",
+   "line": 9098,
+   "kind": "law",
+   "claim": "D-223: a throw inside boundary zero can occur under `replay!`, wrapped with host boundary zero's rule.",
+   "evidence": "`replay!` runs no boundary zero. It restores the header through `_enter_checkpoint!` (src/sim.jl:995-1003, 1396-1398), and `init!` is the one door that runs boundary zero (src/model.jl:699-700). A throw in `replay!`'s restore arrives with host :restore and the state's frame as pointer (src/model.jl:1331-1341).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A throw inside boundary zero, under `init!`, is wrapped by the one `StepError` constructor ...; a throw inside `replay!`'s restore takes the restore door's catch, host `:restore`.",
+   "note": "Moved by D-274 (log.md:12360-12365: replay restores the header, and `init!` is the only door that runs boundary zero) and D-441 (the restore door's own catch)."
+  },
+  {
+   "id": "L12-065",
+   "file": "design/log.md",
+   "line": 9104,
+   "kind": "law",
+   "claim": "D-223: `replay!` of the captured header reproduces either failure at pointer zero.",
+   "evidence": "A boundary-zero throw leaves no header and no trace. The header is written only after `init!`'s boundary zero returns (src/sim.jl:852-856), and `trace(sim)` is refused as `MissingInit` afterwards (probe:77). The reproduction is `init!` under the same condition (src/diagnostics.jl:320-321).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`init!` under the same condition reproduces a boundary-zero failure, and `replay!` of the header then `step!` reproduces frame one's.",
+   "note": "Moved by D-274's last bullet (log.md:12378-12387): a throw inside boundary zero leaves no trace and no checkpoint, and its reproduction is `init!` under the same condition."
+  },
+  {
+   "id": "L12-066",
+   "file": "design/log.md",
+   "line": 9105,
+   "kind": "law",
+   "claim": "D-223: the rendered recipe at pointer zero is the bare replay.",
+   "evidence": "`showerror` renders \"init!(sim2, condition) under the same condition reproduces it\" for host :boundary_zero (probe:78) and \"replay!(sim2, trc; to_boundary = 0) then step!(sim2) reproduces it\" for frame one (probe:84), per src/diagnostics.jl:296-327. Neither is a bare replay.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "the rendered recipe at zero follows the host: `init!` under the same condition for boundary zero, and the halt then `step!` for frame one",
+   "note": "Moved by D-274 (log.md:12378-12387, amended 2026-09-30). The general recipe holds from pointer 0 for a frame's failure."
+  },
+  {
+   "id": "L12-071",
+   "file": "design/log.md",
+   "line": 9110,
+   "kind": "law",
+   "claim": "D-223: an interrupt inside boundary zero propagates raw.",
+   "evidence": "The boundary-zero catch wraps every throw (src/model.jl:335-339). test/test_failures.jl:473-475 asserts `StepError{InterruptException}` with host :boundary_zero and lifecycle :built. The `init!` docstring at src/sim.jl:815-816 says the same.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "An interrupt inside boundary zero moves the lifecycle to `built` and arrives wrapped in a `StepError` with host `:boundary_zero`; a service has no stop path.",
+   "note": "Moved by D-441 (log.md:18439-18441): every catch site wraps what reaches it, an `InterruptException` included. The first half of the bullet (lifecycle to built) still holds."
+  },
+  {
+   "id": "L12-100",
+   "file": "design/log.md",
+   "line": 16278,
+   "kind": "law",
+   "claim": "D-389: the §12.2 liveness heartbeat is run-scoped.",
+   "evidence": "The heartbeat lives in the device's `DiagCell` and is never reset after `attach!` (src/dataplane.jl:124-130). `stale(record)` judges any record against the wall clock, with no run scoping (src/dataplane.jl:337-338). Stopped-time publications from `init!`/`restore!` carry it too (src/sim.jl:2835). `orphaned` is run-scoped through `task_state` :none outside a run (src/sim.jl:2831).",
+   "verdict": "unverifiable",
+   "note": "Whether \"run-scoped\" is a semantic statement (liveness means nothing while stopped, as D-089 at log.md:3142-3169 frames it) or a rule the code must enforce cannot be settled from the code. Nothing scopes `stale` or resets the heartbeat per run."
+  },
+  {
+   "id": "L12-148",
+   "file": "design/log.md",
+   "line": 16492,
+   "kind": "law",
+   "claim": "D-398: Julia's forced throw after repeated SIGINTs ends `stopped` with the frame abandoned, stores possibly mid-boundary until the next door.",
+   "evidence": "`frame!`'s catch wraps every throw inside the frame, the forced interrupt included, and writes :inconsistent (src/frame.jl:94-97). The loop arm rethrows the `StepError` (src/sim.jl:2123-2139), and the run records `LoopError` and reads `errored` (src/sim.jl:1751-1762, 515). `init!`, `replay!` and `restore!` all refuse `errored` (src/sim.jl:839, 1344).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Julia's forced throw after repeated SIGINTs lands inside the frame, is wrapped by `frame!`'s catch, and ends the run `errored` under `LoopError`.",
+   "note": "D-441 (log.md:18447-18449) supersedes this bullet explicitly, and D-441 is ratified, so the chain ends at a ratified entry. D-398's Status still reads plainly ratified with no partial-supersession mark."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L12-001",
+   "file": "design/log.md",
+   "line": 1122,
+   "kind": "law",
+   "claim": "D-028: next-snapshot wait uses a monotonic boundary counter",
+   "evidence": "src/control.jl:46"
+  },
+  {
+   "id": "L12-002",
+   "file": "design/log.md",
+   "line": 1123,
+   "kind": "mech",
+   "claim": "D-028: the wait rides a Threads.Condition",
+   "evidence": "src/control.jl:68"
+  },
+  {
+   "id": "L12-003",
+   "file": "design/log.md",
+   "line": 1123,
+   "kind": "law",
+   "claim": "D-028: per-waiter predicate counter > last_seen and still running",
+   "evidence": "src/devices.jl:439"
+  },
+  {
+   "id": "L12-004",
+   "file": "design/log.md",
+   "line": 1124,
+   "kind": "law",
+   "claim": "D-028: newest wins, no queues",
+   "evidence": "src/devices.jl:442"
+  },
+  {
+   "id": "L12-006",
+   "file": "design/log.md",
+   "line": 1125,
+   "kind": "law",
+   "claim": "D-028: a shutdown wakes the wait through the predicate",
+   "evidence": "src/sim.jl:1867"
+  },
+  {
+   "id": "L12-007",
+   "file": "design/log.md",
+   "line": 1161,
+   "kind": "law",
+   "claim": "D-030: shutdown starts at a completed boundary, the last publication final",
+   "evidence": "src/sim.jl:2104"
+  },
+  {
+   "id": "L12-008",
+   "file": "design/log.md",
+   "line": 1161,
+   "kind": "law",
+   "claim": "D-030: sticky stopped status set after the final snapshot",
+   "evidence": "src/sim.jl:1867"
+  },
+  {
+   "id": "L12-009",
+   "file": "design/log.md",
+   "line": 1162,
+   "kind": "law",
+   "claim": "D-030: framework waits woken",
+   "evidence": "src/sim.jl:1871"
+  },
+  {
+   "id": "L12-010",
+   "file": "design/log.md",
+   "line": 1162,
+   "kind": "mech",
+   "claim": "D-030: unblock! hook called per spawned device",
+   "evidence": "src/sim.jl:1900"
+  },
+  {
+   "id": "L12-012",
+   "file": "design/log.md",
+   "line": 1163,
+   "kind": "law",
+   "claim": "D-030: join under a timeout, abandoned device reported by name",
+   "evidence": "src/sim.jl:1913"
+  },
+  {
+   "id": "L12-014",
+   "file": "design/log.md",
+   "line": 1164,
+   "kind": "law",
+   "claim": "D-030: loop failure runs the same tail from the catch path",
+   "evidence": "src/sim.jl:1665"
+  },
+  {
+   "id": "L12-016",
+   "file": "design/log.md",
+   "line": 1991,
+   "kind": "mech",
+   "claim": "D-059: cursor holds component index, function kind, phase",
+   "evidence": "src/executor.jl:17"
+  },
+  {
+   "id": "L12-017",
+   "file": "design/log.md",
+   "line": 1992,
+   "kind": "mech",
+   "claim": "D-059: one plain store per dispatch",
+   "evidence": "src/executor.jl:10"
+  },
+  {
+   "id": "L12-018",
+   "file": "design/log.md",
+   "line": 1994,
+   "kind": "decl",
+   "claim": "D-059: StepError carries cursor frame, time, replay pointer, cause",
+   "evidence": "src/diagnostics.jl:245"
+  },
+  {
+   "id": "L12-019",
+   "file": "design/log.md",
+   "line": 1996,
+   "kind": "law",
+   "claim": "D-059: §9.5 conformance failure is a species of StepError",
+   "evidence": "src/model.jl:1088"
+  },
+  {
+   "id": "L12-020",
+   "file": "design/log.md",
+   "line": 1997,
+   "kind": "law",
+   "claim": "D-059: nonfinite-x check runs as the boundary's first act",
+   "evidence": "src/model.jl:921"
+  },
+  {
+   "id": "L12-021",
+   "file": "design/log.md",
+   "line": 1998,
+   "kind": "law",
+   "claim": "D-059: status goes terminal stopped/errored",
+   "evidence": "src/sim.jl:511"
+  },
+  {
+   "id": "L12-022",
+   "file": "design/log.md",
+   "line": 1998,
+   "kind": "law",
+   "claim": "D-059: deviceless runs rethrow after the tail",
+   "evidence": "src/sim.jl:1736"
+  },
+  {
+   "id": "L12-023",
+   "file": "design/log.md",
+   "line": 3011,
+   "kind": "law",
+   "claim": "D-088: lifecycle built, initialized, running, stopped, errored",
+   "evidence": "src/sim.jl:511"
+  },
+  {
+   "id": "L12-024",
+   "file": "design/log.md",
+   "line": 3011,
+   "kind": "law",
+   "claim": "D-088: initialized means init! completed boundary zero",
+   "evidence": "src/model.jl:342"
+  },
+  {
+   "id": "L12-025",
+   "file": "design/log.md",
+   "line": 3012,
+   "kind": "law",
+   "claim": "D-088: init! mandatory before run!/step!",
+   "evidence": "probe:11"
+  },
+  {
+   "id": "L12-026",
+   "file": "design/log.md",
+   "line": 3013,
+   "kind": "law",
+   "claim": "D-088: missing init! has its own diagnostic, MissingInit",
+   "evidence": "src/sim.jl:605"
+  },
+  {
+   "id": "L12-028",
+   "file": "design/log.md",
+   "line": 3300,
+   "kind": "law",
+   "claim": "D-097: two kinds, DeviceJoinTimeout and DeviceCrash",
+   "evidence": "src/diagnostics.jl:1688"
+  },
+  {
+   "id": "L12-029",
+   "file": "design/log.md",
+   "line": 3300,
+   "kind": "decl",
+   "claim": "D-097: DeviceJoinTimeout payload: device, timeout, boundary time and index",
+   "evidence": "src/diagnostics.jl:1699"
+  },
+  {
+   "id": "L12-031",
+   "file": "design/log.md",
+   "line": 3302,
+   "kind": "decl",
+   "claim": "D-097: DeviceCrash carries the exception as cause",
+   "evidence": "src/diagnostics.jl:1689"
+  },
+  {
+   "id": "L12-032",
+   "file": "design/log.md",
+   "line": 3302,
+   "kind": "decl",
+   "claim": "D-097: DeviceCrash carries the should_abort disposition (field abort)",
+   "evidence": "src/diagnostics.jl:1690"
+  },
+  {
+   "id": "L12-033",
+   "file": "design/log.md",
+   "line": 3303,
+   "kind": "law",
+   "claim": "D-097: both kinds are warnings",
+   "evidence": "src/diagnostics.jl:1736"
+  },
+  {
+   "id": "L12-034",
+   "file": "design/log.md",
+   "line": 3303,
+   "kind": "law",
+   "claim": "D-097: both are runtime-stream kinds",
+   "evidence": "src/diagnostics.jl:1557"
+  },
+  {
+   "id": "L12-035",
+   "file": "design/log.md",
+   "line": 3803,
+   "kind": "decl",
+   "claim": "D-110: trim!(sim, problem; baseline, t0, backend)",
+   "evidence": "probe:92"
+  },
+  {
+   "id": "L12-037",
+   "file": "design/log.md",
+   "line": 3805,
+   "kind": "law",
+   "claim": "D-110: t0 is never a TrimProblem field",
+   "evidence": "src/trim.jl:86"
+  },
+  {
+   "id": "L12-039",
+   "file": "design/log.md",
+   "line": 3806,
+   "kind": "law",
+   "claim": "D-110: t0 default zero, matching init! (code spells 0, same value)",
+   "evidence": "src/sim.jl:1124"
+  },
+  {
+   "id": "L12-041",
+   "file": "design/log.md",
+   "line": 3929,
+   "kind": "decl",
+   "claim": "D-198: join_timeout is a Simulation keyword",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "L12-042",
+   "file": "design/log.md",
+   "line": 3930,
+   "kind": "law",
+   "claim": "D-198: join_timeout a positive real, else ArgumentInvalid",
+   "evidence": "probe:16"
+  },
+  {
+   "id": "L12-043",
+   "file": "design/log.md",
+   "line": 3931,
+   "kind": "law",
+   "claim": "D-198: join_timeout defaults to 5 s",
+   "evidence": "probe:15"
+  },
+  {
+   "id": "L12-044",
+   "file": "design/log.md",
+   "line": 3932,
+   "kind": "law",
+   "claim": "D-198: join_timeout outside the deployment, invisible to replay",
+   "evidence": "probe:17"
+  },
+  {
+   "id": "L12-046",
+   "file": "design/log.md",
+   "line": 3934,
+   "kind": "law",
+   "claim": "D-198: debt forgiveness at 5·h/p stays fixed",
+   "evidence": "src/control.jl:177"
+  },
+  {
+   "id": "L12-047",
+   "file": "design/log.md",
+   "line": 3934,
+   "kind": "law",
+   "claim": "D-198: heartbeat staleness 2 s stays fixed",
+   "evidence": "src/dataplane.jl:309"
+  },
+  {
+   "id": "L12-049",
+   "file": "design/log.md",
+   "line": 8865,
+   "kind": "decl",
+   "claim": "D-219: replay! takes a to_time keyword",
+   "evidence": "src/sim.jl:1335"
+  },
+  {
+   "id": "L12-050",
+   "file": "design/log.md",
+   "line": 8865,
+   "kind": "law",
+   "claim": "D-219: to_time halts at the last frame top at or before it, header's t0",
+   "evidence": "probe:50"
+  },
+  {
+   "id": "L12-051",
+   "file": "design/log.md",
+   "line": 8867,
+   "kind": "law",
+   "claim": "D-219: to_time and to_boundary mutually exclusive",
+   "evidence": "probe:46"
+  },
+  {
+   "id": "L12-052",
+   "file": "design/log.md",
+   "line": 8868,
+   "kind": "law",
+   "claim": "D-219: to_time must be real, finite, at least t0, within the recording",
+   "evidence": "src/sim.jl:1377"
+  },
+  {
+   "id": "L12-053",
+   "file": "design/log.md",
+   "line": 8869,
+   "kind": "law",
+   "claim": "D-219: to_time refusal precedes every write",
+   "evidence": "probe:49"
+  },
+  {
+   "id": "L12-054",
+   "file": "design/log.md",
+   "line": 8870,
+   "kind": "law",
+   "claim": "D-219: live! sets :live and detaches the remainder only",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "L12-055",
+   "file": "design/log.md",
+   "line": 8871,
+   "kind": "law",
+   "claim": "D-219: live! legal only on initialized; MissingInit at built",
+   "evidence": "probe:55"
+  },
+  {
+   "id": "L12-056",
+   "file": "design/log.md",
+   "line": 8872,
+   "kind": "law",
+   "claim": "D-219: live! on an already live sim refuses",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "L12-057",
+   "file": "design/log.md",
+   "line": 9098,
+   "kind": "law",
+   "claim": "D-223: boundary-zero throw under init! wrapped by the one StepError constructor",
+   "evidence": "src/model.jl:339"
+  },
+  {
+   "id": "L12-059",
+   "file": "design/log.md",
+   "line": 9099,
+   "kind": "law",
+   "claim": "D-223: wrap carries cursor frame, t0 and pointer 0",
+   "evidence": "probe:75"
+  },
+  {
+   "id": "L12-060",
+   "file": "design/log.md",
+   "line": 9099,
+   "kind": "law",
+   "claim": "D-223: wrap applies the species rule",
+   "evidence": "src/model.jl:1085"
+  },
+  {
+   "id": "L12-061",
+   "file": "design/log.md",
+   "line": 9100,
+   "kind": "law",
+   "claim": "D-223: simulation returns to built",
+   "evidence": "probe:76"
+  },
+  {
+   "id": "L12-062",
+   "file": "design/log.md",
+   "line": 9101,
+   "kind": "law",
+   "claim": "D-223: no termination record, nothing published",
+   "evidence": "probe:76"
+  },
+  {
+   "id": "L12-063",
+   "file": "design/log.md",
+   "line": 9101,
+   "kind": "law",
+   "claim": "D-223: init! and replay! legal again at built",
+   "evidence": "src/sim.jl:836"
+  },
+  {
+   "id": "L12-064",
+   "file": "design/log.md",
+   "line": 9103,
+   "kind": "law",
+   "claim": "D-223: pointer 0 shared with frame one's failure",
+   "evidence": "probe:83"
+  },
+  {
+   "id": "L12-067",
+   "file": "design/log.md",
+   "line": 9106,
+   "kind": "law",
+   "claim": "D-223: built reads boundary zero not completed, cold or after a failure",
+   "evidence": "src/model.jl:338"
+  },
+  {
+   "id": "L12-068",
+   "file": "design/log.md",
+   "line": 9107,
+   "kind": "law",
+   "claim": "D-223: stores retained until the next init! resets them",
+   "evidence": "src/model.jl:326"
+  },
+  {
+   "id": "L12-069",
+   "file": "design/log.md",
+   "line": 9108,
+   "kind": "law",
+   "claim": "D-223: trim!'s commit is an init! and inherits the rule",
+   "evidence": "src/sim.jl:1133"
+  },
+  {
+   "id": "L12-070",
+   "file": "design/log.md",
+   "line": 9109,
+   "kind": "law",
+   "claim": "D-223: interrupt inside boundary zero leaves the lifecycle built",
+   "evidence": "test/test_failures.jl:475"
+  },
+  {
+   "id": "L12-075",
+   "file": "design/log.md",
+   "line": 12246,
+   "kind": "law",
+   "claim": "D-273: capture no longer produces a condition (capture is gone)",
+   "evidence": "probe:95"
+  },
+  {
+   "id": "L12-076",
+   "file": "design/log.md",
+   "line": 12248,
+   "kind": "law",
+   "claim": "D-273: the state past t0 is carried by a checkpoint",
+   "evidence": "src/checkpoint.jl:106"
+  },
+  {
+   "id": "L12-077",
+   "file": "design/log.md",
+   "line": 12249,
+   "kind": "law",
+   "claim": "D-273: a checkpoint is a distinct value with no algebra",
+   "evidence": "src/checkpoint.jl:74"
+  },
+  {
+   "id": "L12-078",
+   "file": "design/log.md",
+   "line": 12251,
+   "kind": "law",
+   "claim": "D-273: due s_update calls run at their boundary's end, after quiescence",
+   "evidence": "src/model.jl:656"
+  },
+  {
+   "id": "L12-079",
+   "file": "design/log.md",
+   "line": 12252,
+   "kind": "mech",
+   "claim": "D-273: at rest the store holds s[k+1], the cells y[k] from s[k]",
+   "evidence": "src/model.jl:645"
+  },
+  {
+   "id": "L12-080",
+   "file": "design/log.md",
+   "line": 12255,
+   "kind": "law",
+   "claim": "D-273: boundary zero publishes every discrete output stage from authored s",
+   "evidence": "src/model.jl:702"
+  },
+  {
+   "id": "L12-081",
+   "file": "design/log.md",
+   "line": 12256,
+   "kind": "law",
+   "claim": "D-273: boundary zero establishes every guard prior as not-holding",
+   "evidence": "src/model.jl:332"
+  },
+  {
+   "id": "L12-082",
+   "file": "design/log.md",
+   "line": 12259,
+   "kind": "law",
+   "claim": "D-273: init! sets t0 before boundary zero",
+   "evidence": "src/model.jl:331"
+  },
+  {
+   "id": "L12-083",
+   "file": "design/log.md",
+   "line": 12260,
+   "kind": "law",
+   "claim": "D-273: nothing sets the sim's origin after boundary zero",
+   "evidence": "src/store.jl:184"
+  },
+  {
+   "id": "L12-084",
+   "file": "design/log.md",
+   "line": 12260,
+   "kind": "law",
+   "claim": "D-273: a restore inherits the clock and takes no origin",
+   "evidence": "src/checkpoint.jl:127"
+  },
+  {
+   "id": "L12-085",
+   "file": "design/log.md",
+   "line": 12261,
+   "kind": "law",
+   "claim": "D-273: capture-tweak-apply retires with capture",
+   "evidence": "probe:95"
+  },
+  {
+   "id": "L12-086",
+   "file": "design/log.md",
+   "line": 12262,
+   "kind": "law",
+   "claim": "D-273: a resume is checkpoint then restore!",
+   "evidence": "src/sim.jl:1063"
+  },
+  {
+   "id": "L12-087",
+   "file": "design/log.md",
+   "line": 12263,
+   "kind": "law",
+   "claim": "D-273: input what-if is restore! followed by stage!",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "L12-088",
+   "file": "design/log.md",
+   "line": 12264,
+   "kind": "mech",
+   "claim": "D-273: a checkpoint's fields are readable for an author to copy from",
+   "evidence": "src/checkpoint.jl:74"
+  },
+  {
+   "id": "L12-089",
+   "file": "design/log.md",
+   "line": 16215,
+   "kind": "law",
+   "claim": "D-386: no framework task monopolizes a thread; loop yields each frame",
+   "evidence": "src/sim.jl:2107"
+  },
+  {
+   "id": "L12-090",
+   "file": "design/log.md",
+   "line": 16230,
+   "kind": "law",
+   "claim": "D-387: an errored sim is never resumed; init!/replay! refuse it",
+   "evidence": "src/sim.jl:839"
+  },
+  {
+   "id": "L12-091",
+   "file": "design/log.md",
+   "line": 16249,
+   "kind": "law",
+   "claim": "D-388: step! is a synchronous partial advance through ordinary frames",
+   "evidence": "src/sim.jl:2265"
+  },
+  {
+   "id": "L12-092",
+   "file": "design/log.md",
+   "line": 16250,
+   "kind": "law",
+   "claim": "D-388: stepped frames bit-identical to run! (shared _advance!)",
+   "evidence": "src/sim.jl:2045"
+  },
+  {
+   "id": "L12-093",
+   "file": "design/log.md",
+   "line": 16250,
+   "kind": "law",
+   "claim": "D-388: step! returns frames actually advanced",
+   "evidence": "probe:22"
+  },
+  {
+   "id": "L12-094",
+   "file": "design/log.md",
+   "line": 16252,
+   "kind": "law",
+   "claim": "D-388: between step! calls the status is initialized",
+   "evidence": "probe:22"
+  },
+  {
+   "id": "L12-095",
+   "file": "design/log.md",
+   "line": 16253,
+   "kind": "law",
+   "claim": "D-388: run! may follow step! from the current boundary",
+   "evidence": "probe:24"
+  },
+  {
+   "id": "L12-096",
+   "file": "design/log.md",
+   "line": 16254,
+   "kind": "law",
+   "claim": "D-388: t_end and honoured stop requests end step! through the tail",
+   "evidence": "src/sim.jl:2294"
+  },
+  {
+   "id": "L12-097",
+   "file": "design/log.md",
+   "line": 16256,
+   "kind": "law",
+   "claim": "D-388: stopped then init! then run! supported",
+   "evidence": "probe:26"
+  },
+  {
+   "id": "L12-098",
+   "file": "design/log.md",
+   "line": 16257,
+   "kind": "law",
+   "claim": "D-388: attachments persist across init! as roster entries",
+   "evidence": "src/sim.jl:654"
+  },
+  {
+   "id": "L12-099",
+   "file": "design/log.md",
+   "line": 16278,
+   "kind": "law",
+   "claim": "D-389: voluntary exit exists only in a run's spawned wrapper",
+   "evidence": "src/sim.jl:1654"
+  },
+  {
+   "id": "L12-101",
+   "file": "design/log.md",
+   "line": 16279,
+   "kind": "law",
+   "claim": "D-389: a device gone while stopped surfaces as next run's init! DeviceCrash",
+   "evidence": "src/sim.jl:1849"
+  },
+  {
+   "id": "L12-102",
+   "file": "design/log.md",
+   "line": 16280,
+   "kind": "law",
+   "claim": "D-389: a stepping session is deviceless",
+   "evidence": "src/sim.jl:2265"
+  },
+  {
+   "id": "L12-103",
+   "file": "design/log.md",
+   "line": 16281,
+   "kind": "law",
+   "claim": "D-389: attach! only registers a roster entry",
+   "evidence": "src/sim.jl:2536"
+  },
+  {
+   "id": "L12-104",
+   "file": "design/log.md",
+   "line": 16281,
+   "kind": "law",
+   "claim": "D-389: device tasks appear at the next run!",
+   "evidence": "src/sim.jl:1654"
+  },
+  {
+   "id": "L12-105",
+   "file": "design/log.md",
+   "line": 16297,
+   "kind": "decl",
+   "claim": "D-390: latest(sim) returns the current published snapshot",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "L12-106",
+   "file": "design/log.md",
+   "line": 16298,
+   "kind": "law",
+   "claim": "D-390: same immutable value device handles read",
+   "evidence": "src/devices.jl:285"
+  },
+  {
+   "id": "L12-107",
+   "file": "design/log.md",
+   "line": 16299,
+   "kind": "decl",
+   "claim": "D-390: step! takes t_plus",
+   "evidence": "src/sim.jl:2220"
+  },
+  {
+   "id": "L12-108",
+   "file": "design/log.md",
+   "line": 16299,
+   "kind": "law",
+   "claim": "D-390: t_plus runs whole frames until boundary time covers it",
+   "evidence": "probe:29"
+  },
+  {
+   "id": "L12-109",
+   "file": "design/log.md",
+   "line": 16300,
+   "kind": "law",
+   "claim": "D-390: t_plus and frames mutually exclusive",
+   "evidence": "probe:28"
+  },
+  {
+   "id": "L12-111",
+   "file": "design/log.md",
+   "line": 16318,
+   "kind": "law",
+   "claim": "D-391: replay re-records its own trace",
+   "evidence": "src/sim.jl:1397"
+  },
+  {
+   "id": "L12-112",
+   "file": "design/log.md",
+   "line": 16318,
+   "kind": "law",
+   "claim": "D-391: the new trace inherits the header",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "L12-113",
+   "file": "design/log.md",
+   "line": 16319,
+   "kind": "law",
+   "claim": "D-391: re-recorded prefix bit-identical",
+   "evidence": "src/sim.jl:2731"
+  },
+  {
+   "id": "L12-114",
+   "file": "design/log.md",
+   "line": 16320,
+   "kind": "law",
+   "claim": "D-391: pacing unchanged under replay",
+   "evidence": "src/sim.jl:1404"
+  },
+  {
+   "id": "L12-115",
+   "file": "design/log.md",
+   "line": 16320,
+   "kind": "law",
+   "claim": "D-391: control plane unchanged under replay (shared run body)",
+   "evidence": "src/sim.jl:1406"
+  },
+  {
+   "id": "L12-117",
+   "file": "design/log.md",
+   "line": 16322,
+   "kind": "law",
+   "claim": "D-391: replay validation up front, before any write",
+   "evidence": "src/sim.jl:1356"
+  },
+  {
+   "id": "L12-118",
+   "file": "design/log.md",
+   "line": 16323,
+   "kind": "mech",
+   "claim": "D-391: entry pass normalizes sparse records to positional batches once",
+   "evidence": "src/trace.jl:197"
+  },
+  {
+   "id": "L12-119",
+   "file": "design/log.md",
+   "line": 16324,
+   "kind": "mech",
+   "claim": "D-391: replay drain applies compiled scatters",
+   "evidence": "src/sim.jl:2726"
+  },
+  {
+   "id": "L12-120",
+   "file": "design/log.md",
+   "line": 16325,
+   "kind": "law",
+   "claim": "D-391: a structural mismatch is an error",
+   "evidence": "src/model.jl:1212"
+  },
+  {
+   "id": "L12-121",
+   "file": "design/log.md",
+   "line": 16326,
+   "kind": "law",
+   "claim": "D-391: a parametric (build) difference passes as what-if replay",
+   "evidence": "src/deployment.jl:619"
+  },
+  {
+   "id": "L12-123",
+   "file": "design/log.md",
+   "line": 16345,
+   "kind": "law",
+   "claim": "D-392: no thread-budget re-check per attach",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "L12-124",
+   "file": "design/log.md",
+   "line": 16364,
+   "kind": "law",
+   "claim": "D-393: a recorded stop-request termination reproduces under replay",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "L12-125",
+   "file": "design/log.md",
+   "line": 16381,
+   "kind": "law",
+   "claim": "D-394: loop masks interrupts across the boundary sequence",
+   "evidence": "src/sim.jl:2110"
+  },
+  {
+   "id": "L12-126",
+   "file": "design/log.md",
+   "line": 16383,
+   "kind": "law",
+   "claim": "D-394: deferred raise taken at boundary-consistent unmask points",
+   "evidence": "src/sim.jl:2134"
+  },
+  {
+   "id": "L12-128",
+   "file": "design/log.md",
+   "line": 16385,
+   "kind": "law",
+   "claim": "D-394: an interrupt in the tail collapses remaining joins at once",
+   "evidence": "src/sim.jl:1916"
+  },
+  {
+   "id": "L12-129",
+   "file": "design/log.md",
+   "line": 16386,
+   "kind": "law",
+   "claim": "D-394: collapsed joins still name each device",
+   "evidence": "src/sim.jl:1923"
+  },
+  {
+   "id": "L12-130",
+   "file": "design/log.md",
+   "line": 16387,
+   "kind": "law",
+   "claim": "D-394: escalation never reclassifies; the run still ends stopped",
+   "evidence": "src/sim.jl:1917"
+  },
+  {
+   "id": "L12-132",
+   "file": "design/log.md",
+   "line": 16391,
+   "kind": "law",
+   "claim": "D-394: framework flips nothing process-global",
+   "evidence": "rg exit_on_sigint src/ finds nothing"
+  },
+  {
+   "id": "L12-134",
+   "file": "design/log.md",
+   "line": 16415,
+   "kind": "law",
+   "claim": "D-395: staleness deliberately loose, 2 s threshold",
+   "evidence": "src/dataplane.jl:309"
+  },
+  {
+   "id": "L12-135",
+   "file": "design/log.md",
+   "line": 16415,
+   "kind": "law",
+   "claim": "D-395: heartbeat advisory, never a kill trigger",
+   "evidence": "src/dataplane.jl:337"
+  },
+  {
+   "id": "L12-136",
+   "file": "design/log.md",
+   "line": 16416,
+   "kind": "law",
+   "claim": "D-395: a device parked in a blocking read is tolerated, only reads stale",
+   "evidence": "src/dataplane.jl:337"
+  },
+  {
+   "id": "L12-137",
+   "file": "design/log.md",
+   "line": 16437,
+   "kind": "law",
+   "claim": "D-396: init! failure has no kind of its own; it is DeviceCrash",
+   "evidence": "src/sim.jl:1849"
+  },
+  {
+   "id": "L12-138",
+   "file": "design/log.md",
+   "line": 16439,
+   "kind": "law",
+   "claim": "D-396: dead from the first frame top, no dead-marking machinery",
+   "evidence": "src/sim.jl:1844"
+  },
+  {
+   "id": "L12-139",
+   "file": "design/log.md",
+   "line": 16440,
+   "kind": "law",
+   "claim": "D-396: its claims persist to run end",
+   "evidence": "test/test_devices.jl:817"
+  },
+  {
+   "id": "L12-140",
+   "file": "design/log.md",
+   "line": 16442,
+   "kind": "law",
+   "claim": "D-396: orphaned root inputs keep the values the run started with",
+   "evidence": "test/test_devices.jl:818"
+  },
+  {
+   "id": "L12-141",
+   "file": "design/log.md",
+   "line": 16443,
+   "kind": "law",
+   "claim": "D-396: disposition splits on should_abort",
+   "evidence": "src/sim.jl:1850"
+  },
+  {
+   "id": "L12-142",
+   "file": "design/log.md",
+   "line": 16444,
+   "kind": "law",
+   "claim": "D-396: flag clear: run proceeds without the device",
+   "evidence": "test/test_devices.jl:804"
+  },
+  {
+   "id": "L12-143",
+   "file": "design/log.md",
+   "line": 16446,
+   "kind": "law",
+   "claim": "D-396: flag set: stop already pending at the first frame top",
+   "evidence": "test/test_devices.jl:828"
+  },
+  {
+   "id": "L12-144",
+   "file": "design/log.md",
+   "line": 16447,
+   "kind": "law",
+   "claim": "D-396: remaining entries still initialize, each an init!/shutdown! pair",
+   "evidence": "src/sim.jl:1838"
+  },
+  {
+   "id": "L12-145",
+   "file": "design/log.md",
+   "line": 16449,
+   "kind": "law",
+   "claim": "D-396: ends stopped through the tail, record naming the source",
+   "evidence": "test/test_devices.jl:834"
+  },
+  {
+   "id": "L12-146",
+   "file": "design/log.md",
+   "line": 16471,
+   "kind": "law",
+   "claim": "D-397: the run field is never nothing",
+   "evidence": "src/sim.jl:289"
+  },
+  {
+   "id": "L12-147",
+   "file": "design/log.md",
+   "line": 16489,
+   "kind": "law",
+   "claim": "D-398: throw with interrupt pending ends errored, interrupt consumed",
+   "evidence": "src/sim.jl:2139"
+  },
+  {
+   "id": "L12-149",
+   "file": "design/log.md",
+   "line": 16496,
+   "kind": "law",
+   "claim": "D-398: the stop word is cleared at a run's start",
+   "evidence": "src/sim.jl:1644"
+  },
+  {
+   "id": "L12-150",
+   "file": "design/log.md",
+   "line": 16518,
+   "kind": "law",
+   "claim": "D-399: header is the post-boundary-zero checkpoint, nothing suppressed",
+   "evidence": "src/sim.jl:856"
+  },
+  {
+   "id": "L12-151",
+   "file": "design/log.md",
+   "line": 16520,
+   "kind": "law",
+   "claim": "D-399: seek: checkpoint at k plus batches from frame k+1",
+   "evidence": "src/sim.jl:1401"
+  },
+  {
+   "id": "L12-152",
+   "file": "design/log.md",
+   "line": 16536,
+   "kind": "law",
+   "claim": "D-400: Libc.systemsleep coarse phase unbuilt (test-only use)",
+   "evidence": "test/fixtures.jl:981"
+  },
+  {
+   "id": "L12-153",
+   "file": "design/log.md",
+   "line": 16538,
+   "kind": "law",
+   "claim": "D-400: every session uses task-yielding sleep",
+   "evidence": "src/control.jl:186"
+  },
+  {
+   "id": "L12-154",
+   "file": "design/log.md",
+   "line": 16558,
+   "kind": "law",
+   "claim": "D-401: budget tight when nthreads() < roster + 1",
+   "evidence": "src/sim.jl:1803"
+  },
+  {
+   "id": "L12-155",
+   "file": "design/log.md",
+   "line": 16601,
+   "kind": "law",
+   "claim": "D-403: last_seen read off the counter at spawn",
+   "evidence": "src/devices.jl:680"
+  },
+  {
+   "id": "L12-156",
+   "file": "design/log.md",
+   "line": 16602,
+   "kind": "law",
+   "claim": "D-403: read on the calling task before the task starts",
+   "evidence": "src/devices.jl:682"
+  },
+  {
+   "id": "L12-157",
+   "file": "design/log.md",
+   "line": 16617,
+   "kind": "law",
+   "claim": "D-404: restore = false feeds the sim as it stands from its own checkpoint",
+   "evidence": "src/sim.jl:1396"
+  },
+  {
+   "id": "L12-158",
+   "file": "design/log.md",
+   "line": 16620,
+   "kind": "law",
+   "claim": "D-404: needs initialized; MissingInit at built",
+   "evidence": "probe:58"
+  },
+  {
+   "id": "L12-159",
+   "file": "design/log.md",
+   "line": 16621,
+   "kind": "law",
+   "claim": "D-404: ServiceLifecycle in other states, before any write",
+   "evidence": "src/sim.jl:1347"
+  },
+  {
+   "id": "L12-160",
+   "file": "design/log.md",
+   "line": 16623,
+   "kind": "law",
+   "claim": "D-404: sim origin must equal the recording's t0",
+   "evidence": "probe:65"
+  },
+  {
+   "id": "L12-161",
+   "file": "design/log.md",
+   "line": 16624,
+   "kind": "law",
+   "claim": "D-404: sim frame from header's to one short of the last",
+   "evidence": "src/sim.jl:1203"
+  },
+  {
+   "id": "L12-162",
+   "file": "design/log.md",
+   "line": 16625,
+   "kind": "law",
+   "claim": "D-404: mismatch is CheckpointMismatch, what = :clock",
+   "evidence": "probe:62"
+  },
+  {
+   "id": "L12-163",
+   "file": "design/log.md",
+   "line": 16627,
+   "kind": "law",
+   "claim": "D-404: non-Bool restore refused as ArgumentInvalid",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "L12-164",
+   "file": "design/log.md",
+   "line": 16628,
+   "kind": "law",
+   "claim": "D-404: drain applies records from the frame after the sim's own",
+   "evidence": "src/sim.jl:1401"
+  },
+  {
+   "id": "L12-165",
+   "file": "design/log.md",
+   "line": 16629,
+   "kind": "law",
+   "claim": "D-404: builds a fresh run under the four recording keywords",
+   "evidence": "src/sim.jl:1397"
+  },
+  {
+   "id": "L12-166",
+   "file": "design/log.md",
+   "line": 16630,
+   "kind": "law",
+   "claim": "D-404: the new trace's header is the sim's own checkpoint",
+   "evidence": "probe:70"
+  },
+  {
+   "id": "L12-167",
+   "file": "design/log.md",
+   "line": 16631,
+   "kind": "law",
+   "claim": "D-404: the door publishes one snapshot",
+   "evidence": "src/model.jl:1338"
+  },
+  {
+   "id": "L12-168",
+   "file": "design/log.md",
+   "line": 16632,
+   "kind": "law",
+   "claim": "D-404: entry-pass validation runs under both replay! forms",
+   "evidence": "src/sim.jl:1356"
+  },
+  {
+   "id": "L12-169",
+   "file": "design/log.md",
+   "line": 18439,
+   "kind": "law",
+   "claim": "D-441: the catch's host writes the Model's status, whatever threw",
+   "evidence": "src/frame.jl:96"
+  },
+  {
+   "id": "L12-170",
+   "file": "design/log.md",
+   "line": 18440,
+   "kind": "law",
+   "claim": "D-441: every catch site wraps, InterruptException included",
+   "evidence": "test/test_failures.jl:456"
+  },
+  {
+   "id": "L12-171",
+   "file": "design/log.md",
+   "line": 18443,
+   "kind": "law",
+   "claim": "D-441: a throw inside a frame writes :inconsistent",
+   "evidence": "probe:83"
+  },
+  {
+   "id": "L12-172",
+   "file": "design/log.md",
+   "line": 18443,
+   "kind": "law",
+   "claim": "D-441: frame!'s catch wraps a StepError with host :loop",
+   "evidence": "probe:83"
+  },
+  {
+   "id": "L12-173",
+   "file": "design/log.md",
+   "line": 18445,
+   "kind": "law",
+   "claim": "D-441: a bare interrupt at a loop arm is a stop",
+   "evidence": "src/sim.jl:2142"
+  },
+  {
+   "id": "L12-174",
+   "file": "design/log.md",
+   "line": 18447,
+   "kind": "law",
+   "claim": "D-441: a StepError at the arm is a cut frame, a failure",
+   "evidence": "src/sim.jl:2139"
+  },
+  {
+   "id": "L12-175",
+   "file": "design/log.md",
+   "line": 18448,
+   "kind": "law",
+   "claim": "D-441: forced Ctrl-C throw inside a frame ends errored under LoopError",
+   "evidence": "src/sim.jl:1761"
+  },
+  {
+   "id": "L12-178",
+   "file": "design/log.md",
+   "line": 18450,
+   "kind": "law",
+   "claim": "D-441: a throw inside a door writes :built",
+   "evidence": "src/model.jl:338"
+  },
+  {
+   "id": "L12-179",
+   "file": "design/log.md",
+   "line": 18451,
+   "kind": "law",
+   "claim": "D-441: init!'s boundary zero and overlay!'s settling write :built",
+   "evidence": "src/model.jl:478"
+  },
+  {
+   "id": "L12-180",
+   "file": "design/log.md",
+   "line": 18451,
+   "kind": "law",
+   "claim": "D-441: the restore door's own catch spans the copy and the settling",
+   "evidence": "src/model.jl:1336"
+  },
+  {
+   "id": "L12-181",
+   "file": "design/log.md",
+   "line": 18452,
+   "kind": "law",
+   "claim": "D-441: restore catch host is :restore",
+   "evidence": "src/model.jl:1341"
+  },
+  {
+   "id": "L12-182",
+   "file": "design/log.md",
+   "line": 18453,
+   "kind": "law",
+   "claim": "D-441: restore pointer is the state's frame",
+   "evidence": "src/model.jl:1332"
+  },
+  {
+   "id": "L12-183",
+   "file": "design/log.md",
+   "line": 18454,
+   "kind": "law",
+   "claim": "D-441: sim's rest is lifecycle initialized or stopped",
+   "evidence": "src/sim.jl:905"
+  },
+  {
+   "id": "L12-184",
+   "file": "design/log.md",
+   "line": 18455,
+   "kind": "law",
+   "claim": "D-441: Model's rest is status :consistent with the clock on a frame top",
+   "evidence": "src/model.jl:1197"
+  },
+  {
+   "id": "L12-185",
+   "file": "design/log.md",
+   "line": 18456,
+   "kind": "law",
+   "claim": "D-441: no snapshot witness in the rest gate",
+   "evidence": "src/sim.jl:903"
+  },
+  {
+   "id": "L12-186",
+   "file": "design/log.md",
+   "line": 18457,
+   "kind": "law",
+   "claim": "D-441: frame index advances in the top hook inside the try, before the drain",
+   "evidence": "src/sim.jl:2022"
+  },
+  {
+   "id": "L12-187",
+   "file": "design/log.md",
+   "line": 18460,
+   "kind": "law",
+   "claim": "D-441: a bare thrown value moves the status like any throw",
+   "evidence": "src/frame.jl:94"
+  },
+  {
+   "id": "L12-188",
+   "file": "design/log.md",
+   "line": 18461,
+   "kind": "law",
+   "claim": "D-441: only the carrier is lost (StepError cause must be an Exception)",
+   "evidence": "src/diagnostics.jl:245"
+  },
+  {
+   "id": "L12-189",
+   "file": "design/log.md",
+   "line": 19999,
+   "kind": "law",
+   "claim": "D-462: the deployment compares the algorithm as one value",
+   "evidence": "src/deployment.jl:621"
+  },
+  {
+   "id": "L12-190",
+   "file": "design/log.md",
+   "line": 20000,
+   "kind": "law",
+   "claim": "D-462: walk names each differing field of same-type tokens, algorithm.reltol",
+   "evidence": "test/test_adaptive.jl:525"
+  },
+  {
+   "id": "L12-191",
+   "file": "design/log.md",
+   "line": 20001,
+   "kind": "law",
+   "claim": "D-462: tokens of two types named whole as :algorithm",
+   "evidence": "test/test_adaptive.jl:529"
+  },
+  {
+   "id": "L12-192",
+   "file": "design/log.md",
+   "line": 20002,
+   "kind": "law",
+   "claim": "D-462: walk names h_min and attempt_budget with the other parameters",
+   "evidence": "test/test_adaptive.jl:533"
+  }
+ ],
+ "counts": {
+  "law": 158,
+  "mech": 8,
+  "decl": 11,
+  "ptr": 4,
+  "why": 11,
+  "ex": 0,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ },
+ "notes": "I changed no tracked file. My one new file is the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L12/probe.jl, and I ran it twice in W (f14dbc1d). The first run failed on a helper bug, and I fixed the helper and ran it again. In the second run every probe passed.\n\nClaim IDs: there are 192 claims, IDs L12-001 to L12-192. These were never listed as rows because they are ptr or why claims: 005, 011, 036, 038, 045, 072, 073, 074, 110, 116, 122, 127, 131, 133, 176 and 177. Among them, 176 is the claim that D-441 supersedes D-398's second bullet, and 177 is its why claim. That chain ends at a ratified entry. All 30 entries in the slice have Status ratified, and none carries a superseded chain of its own. D-398's second bullet is superseded in part by D-441 (row L12-148). Every D-nnn and § link in the Positions resolves: D-027, D-067, D-081, D-133, D-205, D-274 and D-398 all have link definitions and headings, and every §/Appendix anchor matches a spec heading.\n\nLeads:\n- `should_close` at log.md:1164 is a finding (L12-013, drift, D-373).\n- `UninitializedSlots` at log.md:3013 is a finding (L12-027, drift, D-206).\n- `capture` at log.md:3807 is a finding (L12-040, drift, D-273).\n- `capture` at log.md:12246 and 12261 is ok (L12-075 and L12-085). D-273 names the function it retires.\n- `Libc.systemsleep` at log.md:16536 is ok (L12-152). It is the Base function D-400 names as the unbuilt addition, and only the tests use it.\n\nFor three of the findings (L12-013, L12-027 and L12-040), the entry's own Annotation, placed after the Spec line, already records the rename. A verifier may judge that those need no Position edit.\n\nJudgment calls:\n- L12-039: D-110 gives the `t0` default as `0.0`. The code uses `0`, an exact origin since D-457. The value is the same, so I marked it ok.\n- L12-015: under D-223 and D-441 the code has one `StepError` constructor but four catch sites. I flagged D-059's \"one site\" as drift.\n- L12-100: I left the heartbeat's \"run-scoped\" as unverifiable. Nothing in the code scopes `stale` or resets the heartbeat per run, but the sentence may only be semantic."
+}

@@ -1,0 +1,65 @@
+{
+ "judgments": [
+  {
+   "id": "S12d-002",
+   "conforms": true,
+   "evidence": "src/sim.jl:1396-1405: the default form takes cp = trc.header, enters it, then _run_body! runs up to trc.frames. Probe P002 shows a full replay landing at frame 8 of 8, with a bit-identical trajectory, equal re-recorded batches, the state initialized and the mode :live."
+  },
+  {
+   "id": "S12d-001",
+   "conforms": false,
+   "evidence": "src/sim.jl:2709-2714 and 2757: at each replay frame top, _replay_drain! calls _discard_staged! on every roster entry and on the harness, and that does `@atomicswap writer.cell.pending = nothing` and reports ReplayDiscardedStaging. Probe P001 shows a harness batch pending before a replayed frame top and empty after it, with the discard reported at frame 3 and ref left at 2.0, not 99.0.",
+   "class": "drift",
+   "fix": "It takes the [staging cells](#g-staging-cell) of the [roster](#g-roster) (the list of attached device entries) and discards what they hold, applying none of it.",
+   "clear": true,
+   "note": "D-218's position records 'live staging taken and discarded (ReplayDiscardedStaging)', and the same section later says a staged batch is discarded. The sentence keeps D-101's older 'never drained' reading. Read literally, 'does not swap' is false, because the replay drain does swap each cell to empty."
+  },
+  {
+   "id": "S12d-011",
+   "conforms": true,
+   "evidence": "src/sim.jl:2722-2733: the drain applies every record whose frame == sim.run.frame, with the cursor started past the feed's first frame (sim.jl:1400-1401). Probe P011a/b shows the recording's batches at frames 1 and 4: rate is 0.0 at frame 3 and 1.0 once frame 4's top applies its batch."
+  },
+  {
+   "id": "S12d-020",
+   "conforms": true,
+   "evidence": "src/sim.jl:1361: first_frame = restore ? trc.header.frame : sim.run.frame, which bounds to_boundary and to_time. Probes P020b-f: a trace with header frame 3 refuses to_boundary = 2 under the default form and accepts 3. Under restore = false, a simulation at frame 3 refuses to_boundary = 2, accepts 3, and a full feed from frame 3 reproduces the recorded frames 4-8."
+  },
+  {
+   "id": "S12d-029",
+   "conforms": true,
+   "evidence": "src/sim.jl:1377-1384: to_time isa Real && isfinite && ≥ t₀ && _frames_fit, then first_frame ≤ k ≤ trc.frames, else ArgumentInvalid. All of this runs before _enter_checkpoint! (sim.jl:1397). Probe P029 refuses \"1\", Inf, NaN, -0.1, 100.0 and 1+0im as ArgumentInvalid(:to_time, :range), leaving the run object, the frame and the mode untouched.",
+   "note": "Edge case: 'a time the recording covers' is enforced as floor((to_time − t₀)/Δt_frame) ≤ trc.frames. So to_time = 0.85 on an 8-frame recording at Δt_frame = 0.1 is accepted and halts at frame 8 (P029 0.85), although the recording's clock ended at 0.8. This fits the spec's floor rule ('names a frame ... through the recording's last'), but a strict reader of 'covers' might expect a refusal."
+  },
+  {
+   "id": "S12d-038",
+   "conforms": true,
+   "evidence": "src/sim.jl:1444-1446: after _assert_advanceable, run.feed === nothing throws ArgumentInvalid(call = :live!, reason = :not_replaying). Probe P038: an initialized :live simulation gets ArgumentInvalid :not_replaying, a built one MissingInit, a stopped one ServiceLifecycle."
+  },
+  {
+   "id": "S12d-049",
+   "conforms": true,
+   "evidence": "src/sim.jl:1745 (_run_body!'s finally, which serves run! and replay!) and src/sim.jl:2287 (step!'s finally) call _discard_late_staging! (sim.jl:2760-2768). Each exit, errored included, takes every roster cell plus the harness cell and discards the contents, ahead of _settle_mode!. Probe P049: an ExitNudge that stages on its exit path during a replaying run! leaves its cell empty, with one discard report and the mode :live."
+  },
+  {
+   "id": "S12d-058",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:2630-2665: the CheckpointMismatch messages report the recorded value beside the target's (deployment parameters, store layout, clock, frame), not an offending name plus a list-in-hand. src/diagnostics.jl:2697-2701: ReplayUnknownFace's positional arm reports a bare position and no list. Only ReplaySchemaMismatch (2683-2688) and ReplayUnknownFace's named arm print the target's root-input list as the list-in-hand.",
+   "class": "deviation",
+   "fix": "The checks are attach-style. A face-name failure reports [did-you-mean](#g-did-you-mean), the offending name plus the list-in-hand it should have matched, and a checkpoint mismatch reports the recorded value beside the target's.",
+   "clear": false,
+   "backing_entry": "",
+   "note": "D-217 ratifies ReplayUnknownFace carrying a bare position where the schema has no name, which covers part of the gap. No log entry backs did-you-mean for CheckpointMismatch. The fix could be worded several ways, and Appendix C's kind rows may need to agree."
+  },
+  {
+   "id": "S12d-067",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:199-208: for :algorithm with two tokens of one type, each differing field is pushed as Symbol(\"algorithm.\", field). The whole value is pushed when the types differ or no field differs. Probe P067: BS3 with reltol 1e-3/abstol 1e-6 against BS3(1e-4, 1e-7) gives CheckpointMismatch algorithm.reltol and algorithm.abstol, and RK4 against Heun gives CheckpointMismatch :algorithm."
+  },
+  {
+   "id": "S12d-076",
+   "conforms": true,
+   "evidence": "src/sim.jl:1200-1206: under restore = false, _compile_feed pushes CheckpointMismatch(what = :clock, name = :t₀) or (what = :clock, name = :frame) and throws before _enter_checkpoint! (sim.jl:1397). The lifecycle gate _assert_advanceable (sim.jl:1346) comes first. Probe P076: a t0 = 0.5 simulation gets CheckpointMismatch(:clock, :t₀), one at frame 8 of an 8-frame recording gets (:clock, :frame), and in both the run object is unchanged. A built simulation gets MissingInit."
+  }
+ ],
+ "notes": "I changed no tracked file. The only file I created is the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S12d_v/probe.jl. I ran it four times in all from W. The first two runs failed to load; the last two ran clean. It includes test/imports.jl, fixtures.jl, utils.jl and test_trace.jl to reuse recorded_run and replay_twin. Spec line numbers in the claims are slightly off from W: the replay! example is at design/spec.md:10760, the feed-start sentence at 10825, the to_time rule at 10857, the live! refusal at 10879, the D-451 take at 10939, did-you-mean at 10969, the algorithm comparison at 11000 and the clock arm at 11044. Two claims do not conform. S12d-001 is drift: the code takes and discards the staging cells at each replay frame top, as D-218 records. S12d-058 is a deviation: CheckpointMismatch and ReplayUnknownFace's positional arm report no list-in-hand. One edge case on S12d-029 is noted: a to_time between the last frame top and one frame later is accepted."
+}

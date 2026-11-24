@@ -1,0 +1,74 @@
+{
+ "judgments": [
+  {
+   "id": "K11-005",
+   "conforms": true,
+   "evidence": "src/build.jl:277 builds one AlgebraicCycle per cluster with its members; probe.jl K11-005: build(feedback_model(feedback_port = \"power\")) throws AlgebraicCycle with members [\"plant\",\"sum\",\"ctl\"], and its message names the loop and its wires (plant/power → sum/b, sum/e → ctl/e, ctl/out → plant/u)."
+  },
+  {
+   "id": "K11-001",
+   "conforms": false,
+   "evidence": "Project.toml and test/Project.toml list neither OrdinaryDiffEq nor HDF5. The time stepping is the in-house stepper seam (src/stepper.jl:36 abstract type AbstractStepper), and no on-disk log exists. design/pending.md:264-268, under the 'Log and trace persistence' bullet, records this exact bullet as owed a rewording: §10.2 dropped OrdinaryDiffEq and the HDF5 export is undecided.",
+   "class": "gap",
+   "fix": "The flat vector still exists. The steppers, built-in or custom, trim solvers and linearization all get their arrays.",
+   "clear": false,
+   "note": "pending.md rewords this bullet only when the persistence deferral lifts, so the wording for logging is not fixed yet."
+  },
+  {
+   "id": "K11-013",
+   "conforms": true,
+   "evidence": "src/linearize.jl:47 taps(; x, u, y) is the selector surface linearize takes (src/linearize.jl:266). No get_x_ss, assign_x_ss! or get_u_ss shuttle exists in src/. The doc line (flight_case_studies.md:80-82) says only that the per-aircraft mapping is replaced by the canonical layout per D-072, and that holds."
+  },
+  {
+   "id": "K11-002",
+   "conforms": false,
+   "evidence": "probe.jl K11-045: fieldnames(Trace) = (:header, :schemas, :batches, :frames). The only batch recorded is the harness write to root input `in` (schemas [\"harness\" => [:in]]). src/trace.jl:1-4 and 15-19: the trace holds the checkpoint header and the drained input batches, and the log is recomputed from it by replay. A scheduler's gain output is a component output. The snapshot log holds it (src/dataplane.jl:556, every port in the signal table), and replay recomputes it, but the trace records no output.",
+   "class": "deviation",
+   "fix": "Gain trajectories become observable in the log and under replay, which recomputes them from the trace, where the `Ref` writes were invisible.",
+   "clear": false,
+   "backing_entry": "",
+   "note": "The doc overstates the trace's contents. The trace makes gains reproducible but does not hold them. The fix could also keep 'all three' by saying 'reproducible from the trace', so the wording is not fixed."
+  },
+  {
+   "id": "K11-021",
+   "conforms": true,
+   "evidence": "src/library.jl:964-965: Integrator's reset is a StateEvent whose handler writes x. src/declare.jl:580-597: x_projection takes the state alone, with no inputs, so it opens no input path to x. design/spec.md §3.4 (line ~860) says the same: 'guard-driven handlers are the sole writers of continuous state'.",
+   "note": "Integration itself and x_projection also change x, and init!/trim! write it while the sim is stopped. None of these is an input-driven write during a run, which is the doc's point."
+  },
+  {
+   "id": "K11-003",
+   "conforms": true,
+   "evidence": "src/library.jl:953-965: the library Integrator(; reset = true) adds a Bool `reset` face, and reset_handler/state_events implement it as one non-localized StateEvent, which is the pattern the doc and migration_outline.md:71-78 give PIVector.",
+   "note": "PIVector is a Flight.jl component that the migration will reimplement. It is not a Redstone code site, so no src line can confirm the claim, but nothing in the code contradicts it."
+  },
+  {
+   "id": "K11-029",
+   "conforms": true,
+   "evidence": "probe.jl K11-029: trim! with a condition that sets root input `in` from decision u converges, and port(sim, \"\", :in) == report.solution.u == 4.7032 after the commit. test/test_trim.jl:141 asserts the same. src/sim.jl:1135-1136 commits through init!(sim, condition)."
+  },
+  {
+   "id": "K11-037",
+   "conforms": true,
+   "evidence": "src/sim.jl:1562 run!(sim; pace = Inf, margin, t_end = Inf, ignore_stop_requests). src/sim.jl:417 accepts any positive Real as pace. probe.jl K11-037: run!(sim; pace = 1, t_end = 0.3) ends :stopped at t = 0.3, and run!(sim2; t_end = 1000) ends :stopped at t = 1000.0."
+  },
+  {
+   "id": "K11-004",
+   "conforms": false,
+   "evidence": "No TimeSeries exists in src/. src/sim.jl:2936-2956: series(sim, read_set) -> Series gathers the log's retained snapshots into columns. design/log.md:16818 (D-407) rejects FlightCore's TimeSeries in favour of this reader, landed in commit 06ed3bf8.",
+   "class": "drift",
+   "fix": "After the run, `series` reads the retained snapshots, and the trace can re-drive a fresh `Simulation(world)` bit-identically.",
+   "clear": true
+  },
+  {
+   "id": "K11-045",
+   "conforms": true,
+   "evidence": "src/sim.jl:2629-2643 and 2656-2681: drain! runs once at each frame top, applies each staged batch and records it sparse in the trace. probe.jl K11-045: stage!(sim3, \"in\" => 2.0); step!(sim3) leaves the root input at 2.0 and trace(sim3).batches == [TraceBatch(1, 1, [1 => 2.0])], recorded at frame 1."
+  },
+  {
+   "id": "K11-053",
+   "conforms": true,
+   "evidence": "src/trim.jl:9-15: every evaluation runs on scratch executors, so a solve that does not converge leaves the simulation untouched. src/sim.jl:1135-1136 commits only through _verdict!. probe.jl K11-053: an infeasible trim on an initialized sim returns converged = false, and every store, root input and the clock are unchanged (world(sim) == before), with the lifecycle still :initialized. test/test_trim.jl:208-216 asserts the same."
+  }
+ ],
+ "notes": "I edited no tracked file and ran no git command that changes the worktree. I added one probe script, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K11_v/probe.jl, and ran it twice against W at f14dbc1d. The first run failed because the `world` helper was missing. I copied it in from test/test_readers.jl:114, and the second run completed. Three claims do not conform. K11-004 is drift: TimeSeries was replaced by `series` (D-407). K11-001 is a gap that pending.md:264-268 already records. K11-002 is a deviation: the doc says gains are observable in the trace, but the trace holds only input batches, and gains appear in the log and under replay. Two claims conform with caveats. K11-003 (PIVector) is a Flight.jl migration item that the library Integrator mirrors, not a Redstone site. For K11-021, the projection and the stopped-sim services also write x, but neither is an input path during a run."
+}

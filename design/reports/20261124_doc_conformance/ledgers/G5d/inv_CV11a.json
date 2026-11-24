@@ -1,0 +1,674 @@
+{
+ "rows": [
+  {
+   "id": "CV11a-004",
+   "file": "src/dataplane.jl",
+   "line": 50,
+   "kind": "surface",
+   "claim": "Spec 9618-9626 and the WriterStatus docstring name KindCounts only as 'the per-kind counter record'; none lists its 14 field names, which a user reads as totals.crash, suppressed.malformed and so on.",
+   "evidence": "src/dataplane.jl:50-65; probe:R lists the 14 fields; rg of out_of_claim, claimed_face, type_mismatch, thread_budget, replay_discarded, empty_greedy over spec.md, docs/src and src finds no doc outside design/increments.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Name the 14 fields in the WriterStatus `totals` bullet or in spec 11.8: malformed, out_of_claim, claimed_face, type_mismatch, chattering, firing, step_floor, reanchor, unbounded, thread_budget, crash, join_timeout, replay_discarded, empty_greedy, in KINDS order."
+  },
+  {
+   "id": "CV11a-014",
+   "file": "src/dataplane.jl",
+   "line": 231,
+   "kind": "surface",
+   "claim": "The WriterStatus `who` bullet says 'as a port view's incumbent holds it'; no spec section, appendix or docstring gives the literal names of the loop's record (\"loop\") or the device format (\"device 1 (Pad)\"). \"harness\" is only in the PortView docstring.",
+   "evidence": "src/sim.jl:2838-2839 and src/sim.jl:1966 use \"harness\" and \"loop\"; probe:G prints who = \"device 1 (Pad)\"; rg of '\"loop\"' and 'device N' over spec.md, docs/src, log.md and rules finds only the ControlRequestedStop docstring (src/sim.jl:93).",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Extend the `who` bullet: the writer's name, \"device N (Type)\" for a rostered device, \"harness\" for the harness writer and \"loop\" for the loop, as a port view's `incumbent` holds it."
+  },
+  {
+   "id": "CV11a-021",
+   "file": "src/dataplane.jl",
+   "line": 324,
+   "kind": "docstring",
+   "claim": "The stale docstring says a device that has not beaten since attach 'reads stale whatever `now` is'.",
+   "evidence": "src/dataplane.jl:337-338 compares now - 0.0 > STALE_S; probe:G stale(rec; now = 1.0) is false for the never-beaten record, true for now = 3.0.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Write: 'A device that has not beaten since attach reads stale at any `now` more than two seconds past the epoch, which every wall-clock `time()` is.'"
+  },
+  {
+   "id": "CV11a-039",
+   "file": "src/dataplane.jl",
+   "line": 339,
+   "kind": "map",
+   "claim": "code_map.md 288-315 (src/dataplane.jl) never mentions the public `stale` or its constant `STALE_S`; neither name occurs anywhere in code_map.md.",
+   "evidence": "src/dataplane.jl:309,337; rg of stale and STALE_S over design/code_map.md finds nothing.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet to the dataplane.jl entry: `stale(record; now)` and `STALE_S`, the 2 s advisory heartbeat verdict over a `WriterStatus` (§12.2)."
+  },
+  {
+   "id": "CV11a-040",
+   "file": "src/dataplane.jl",
+   "line": 576,
+   "kind": "map",
+   "claim": "code_map.md's dataplane.jl entry omits the `port(snapshot, path, name)` method that reads a published snapshot by address, a method Appendix B names.",
+   "evidence": "src/dataplane.jl:576-577; rg of 'port(' over design/code_map.md 288-315 finds nothing for a Snapshot method.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the snapshot bullet: the `port(snapshot, path, name)` read over the frozen table, through `port_addr` (D-440)."
+  },
+  {
+   "id": "CV11a-041",
+   "file": "src/dataplane.jl",
+   "line": 416,
+   "kind": "map",
+   "claim": "code_map.md omits the staging shim `_normalize`, the CAS merge `stage_batch!`, the positional `_merge` and the scatter `_apply!`; the map says only 'Writer and Batch, and the staging cells'. `_normalize` holds the discard-and-report logic for OutOfClaimEntry, ClaimedFaceEntry and EntryTypeMismatch.",
+   "evidence": "src/dataplane.jl:416-481; rg of _normalize, stage_batch! and _apply! over design/code_map.md finds nothing; _merge appears once, elsewhere.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet: `_normalize` is the staging shim that names the three staging diagnostics and returns a `Batch` or nothing; `stage_batch!` is the CAS merge, `_merge` and `_apply!` the generated merge and scatter (D-202)."
+  },
+  {
+   "id": "CV11a-042",
+   "file": "src/dataplane.jl",
+   "line": 177,
+   "kind": "map",
+   "claim": "code_map.md names no entry for `WriterAccount`, the loop's private per-writer account, nor for `_fold!` and `_reset!`, which move a cell's batch into it.",
+   "evidence": "src/dataplane.jl:177-207; rg of WriterAccount, _fold!, _take! and report_cell over design/code_map.md finds nothing.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet after the diagnostic cells: `WriterAccount`, the loop-owned pending delta and totals per writer, with `_fold!` taking a cell at frame top and `_reset!` zeroing it per door and run."
+  },
+  {
+   "id": "CV11a-043",
+   "file": "src/dataplane.jl",
+   "line": 594,
+   "kind": "map",
+   "claim": "code_map.md names no entry for `Published`, the mutable holder of the one `@atomic latest` reference.",
+   "evidence": "src/dataplane.jl:594-596; rg of Published over design/code_map.md finds nothing.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the snapshot bullet: `Published`, the `@atomic latest` reference kept in a mutable struct of its own (§11.2)."
+  },
+  {
+   "id": "CV11a-044",
+   "file": "src/dataplane.jl",
+   "line": 50,
+   "kind": "map",
+   "claim": "code_map.md says 'The union DiagValue and KindCounts' field order are built from KINDS'. DiagValue is built from KINDS, but KindCounts and `_kind` are written by hand, one field and one method per kind, and the KINDS docstring says only that KindCounts 'keeps one field per member in its order'.",
+   "evidence": "src/dataplane.jl:36-41 builds the union with Union{KINDS...}; src/dataplane.jl:50-65 and 70-83 list fields and `_kind` methods by hand.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write: 'The union `DiagValue` is built from it, and `KindCounts`' fields and the `_kind` methods follow its order by hand, `StepFloor`'s field `step_floor` after `firing` (D-460).'"
+  },
+  {
+   "id": "CV11a-074",
+   "file": "src/devices.jl",
+   "line": 667,
+   "kind": "surface",
+   "claim": "Spec 11.6's wrapper sketch (spec.md:8978) writes `report!(entry, DeviceCrash(e))`. The code builds `DeviceCrash(err, entry.should_abort)`, and DeviceCrash has no one-argument constructor.",
+   "evidence": "src/devices.jl:667; src/diagnostics.jl:1688-1691 declares cause and abort; spec.md:10138 shows the two-argument form.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write `report!(entry, DeviceCrash(e, should_abort))` in the sketch at spec.md:8978."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV11a-001",
+   "file": "src/dataplane.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header cites 11, 11.1, 11.2, 11.8, 13.2 and 10.7 for planes 1-3, status and pacer record",
+   "evidence": "spec.md:7884-7901 five planes; 9502 (11.8); 11191 (13.2); 7686 (10.7)"
+  },
+  {
+   "id": "CV11a-002",
+   "file": "src/dataplane.jl",
+   "line": 16,
+   "kind": "docstring",
+   "claim": "StagingCell: boxed batch, CAS merge, atomicswap drain, identity compare",
+   "evidence": "src/dataplane.jl:25-27,460-468,492"
+  },
+  {
+   "id": "CV11a-003",
+   "file": "src/dataplane.jl",
+   "line": 36,
+   "kind": "surface",
+   "claim": "KINDS lists the 14 channel kinds, each named in Appendix C",
+   "evidence": "src/dataplane.jl:36-38; spec.md Appendix C kind entries (DeviceCrash 620, Replay 624, EmptyGreedy 355)"
+  },
+  {
+   "id": "CV11a-005",
+   "file": "src/dataplane.jl",
+   "line": 43,
+   "kind": "docstring",
+   "claim": "KindCounts: isbits, one field per kind in KINDS order, `+` folds",
+   "evidence": "src/dataplane.jl:50-66,88-89; probe:R"
+  },
+  {
+   "id": "CV11a-006",
+   "file": "src/dataplane.jl",
+   "line": 92,
+   "kind": "surface",
+   "claim": "DIAG_RING = 16 matches the ring capacity of 16 in spec 11.8",
+   "evidence": "src/dataplane.jl:93; spec.md:9557"
+  },
+  {
+   "id": "CV11a-007",
+   "file": "src/dataplane.jl",
+   "line": 95,
+   "kind": "docstring",
+   "claim": "DiagBatch: earliest retained, excess counted, immutable",
+   "evidence": "src/dataplane.jl:141-150"
+  },
+  {
+   "id": "CV11a-008",
+   "file": "src/dataplane.jl",
+   "line": 118,
+   "kind": "cite",
+   "claim": "D-317 treats the Model's own diagnostic cell folded at the drain",
+   "evidence": "log.md:14517-14530"
+  },
+  {
+   "id": "CV11a-009",
+   "file": "src/dataplane.jl",
+   "line": 113,
+   "kind": "docstring",
+   "claim": "DiagCell: one per writer, CAS retry, heartbeat field 0.0 at start, never a kind",
+   "evidence": "src/dataplane.jl:132-136,141-150; spec.md:9587-9597"
+  },
+  {
+   "id": "CV11a-010",
+   "file": "src/dataplane.jl",
+   "line": 166,
+   "kind": "docstring",
+   "claim": "WriterAccount: recent and suppressed are the pending delta, totals cumulative and copied",
+   "evidence": "src/dataplane.jl:177-207; src/sim.jl:2815-2821"
+  },
+  {
+   "id": "CV11a-011",
+   "file": "src/dataplane.jl",
+   "line": 209,
+   "kind": "cite",
+   "claim": "Design line cites 11.8, 12.2, Appendix B, D-193 for WriterStatus and task_state",
+   "evidence": "spec.md:9879-9887; log.md:7707 D-193 title"
+  },
+  {
+   "id": "CV11a-012",
+   "file": "src/dataplane.jl",
+   "line": 216,
+   "kind": "cite",
+   "claim": "Comment says kinds render in full up to STATUS_MAXLOG, count-only past it, per 11.8",
+   "evidence": "src/show.jl:443 = 25; spec.md:9634-9640 says 25"
+  },
+  {
+   "id": "CV11a-013",
+   "file": "src/dataplane.jl",
+   "line": 217,
+   "kind": "docstring",
+   "claim": "WriterStatus: record order, recent/suppressed/totals/heartbeat/task_state semantics",
+   "evidence": "src/sim.jl:2815-2839; src/dataplane.jl:251-258; probe:G,I,O"
+  },
+  {
+   "id": "CV11a-015",
+   "file": "src/dataplane.jl",
+   "line": 251,
+   "kind": "surface",
+   "claim": "WriterStatus field names and types equal the struct in spec 11.8",
+   "evidence": "src/dataplane.jl:251-258; spec.md:9615-9622"
+  },
+  {
+   "id": "CV11a-016",
+   "file": "src/dataplane.jl",
+   "line": 260,
+   "kind": "docstring",
+   "claim": "ResidueRecord: final ring and refused counts, quiet writer gives no record",
+   "evidence": "src/dataplane.jl:266-270; src/sim.jl:1973-1975"
+  },
+  {
+   "id": "CV11a-017",
+   "file": "src/dataplane.jl",
+   "line": 272,
+   "kind": "docstring",
+   "claim": "PacerStatus: eight fields, Inf and zeros where no pacer",
+   "evidence": "src/dataplane.jl:282-292; probe:P; spec.md:7817-7825"
+  },
+  {
+   "id": "CV11a-018",
+   "file": "src/dataplane.jl",
+   "line": 294,
+   "kind": "docstring",
+   "claim": "FrameworkStatus: writers in drain order, then harness, then loop, beside pacer",
+   "evidence": "src/dataplane.jl:303-306; src/sim.jl:2828-2840"
+  },
+  {
+   "id": "CV11a-019",
+   "file": "src/dataplane.jl",
+   "line": 308,
+   "kind": "surface",
+   "claim": "STALE_S = 2.0 matches the 2 s staleness threshold in 12.2",
+   "evidence": "src/dataplane.jl:309; spec.md:9889"
+  },
+  {
+   "id": "CV11a-020",
+   "file": "src/dataplane.jl",
+   "line": 316,
+   "kind": "docstring",
+   "claim": "stale signature, now keyword default time(), Bool return, harness and loop false",
+   "evidence": "src/dataplane.jl:337-338; probe:G,H,I; spec.md:15248"
+  },
+  {
+   "id": "CV11a-022",
+   "file": "src/dataplane.jl",
+   "line": 343,
+   "kind": "docstring",
+   "claim": "Batch: values tuple plus Bool mask, set mask means staged",
+   "evidence": "src/dataplane.jl:354-357,444"
+  },
+  {
+   "id": "CV11a-023",
+   "file": "src/dataplane.jl",
+   "line": 359,
+   "kind": "docstring",
+   "claim": "Writer: schema, types, addrs, blank batch, staging cell",
+   "evidence": "src/dataplane.jl:372-390"
+  },
+  {
+   "id": "CV11a-024",
+   "file": "src/dataplane.jl",
+   "line": 392,
+   "kind": "docstring",
+   "claim": "_normalize: positions, convert, mask, nothing when no entry survives, keywords device and site",
+   "evidence": "src/dataplane.jl:416-445; probe:O"
+  },
+  {
+   "id": "CV11a-025",
+   "file": "src/dataplane.jl",
+   "line": 427,
+   "kind": "surface",
+   "claim": "A device's out-of-surface face is OutOfClaimEntry with incumbent, as Appendix C and 11.3 say",
+   "evidence": "src/dataplane.jl:426-427; spec.md Appendix C OutOfClaimEntry (609-611); probe:O"
+  },
+  {
+   "id": "CV11a-026",
+   "file": "src/dataplane.jl",
+   "line": 429,
+   "kind": "surface",
+   "claim": "Harness write to a claimed face is ClaimedFaceEntry with site; unclaimed absent face is OutOfClaimEntry",
+   "evidence": "src/dataplane.jl:428-432; spec.md Appendix C ClaimedFaceEntry (604-608)"
+  },
+  {
+   "id": "CV11a-027",
+   "file": "src/dataplane.jl",
+   "line": 438,
+   "kind": "surface",
+   "claim": "Unconvertible value is EntryTypeMismatch(face, value, declared) and the rest of the batch stands",
+   "evidence": "src/dataplane.jl:435-441; src/diagnostics.jl:1618-1622; spec.md Appendix C 631-632"
+  },
+  {
+   "id": "CV11a-028",
+   "file": "src/dataplane.jl",
+   "line": 490,
+   "kind": "cite",
+   "claim": "D-260 treats the drain thunks closing over the run's trace, nothing under the switch",
+   "evidence": "log.md:10947-10975 (Run holds trace, nothing under the switch; TraceRegister retires)"
+  },
+  {
+   "id": "CV11a-029",
+   "file": "src/dataplane.jl",
+   "line": 497,
+   "kind": "cite",
+   "claim": "D-447 treats the drain's report of a write and 10.3 freshness",
+   "evidence": "log.md:18816-18832; spec.md:6767 (10.3)"
+  },
+  {
+   "id": "CV11a-030",
+   "file": "src/dataplane.jl",
+   "line": 510,
+   "kind": "docstring",
+   "claim": "Snapshot: table with root inputs, no state, t, frame, boundary, status",
+   "evidence": "src/dataplane.jl:539-546; src/sim.jl:2793-2795; probe:A"
+  },
+  {
+   "id": "CV11a-031",
+   "file": "src/dataplane.jl",
+   "line": 539,
+   "kind": "surface",
+   "claim": "Snapshot carries table, t, frame, boundary and status, as 11.2 states",
+   "evidence": "src/dataplane.jl:539-546; spec.md:7967-7980"
+  },
+  {
+   "id": "CV11a-032",
+   "file": "src/dataplane.jl",
+   "line": 549,
+   "kind": "docstring",
+   "claim": "port(snapshot,...): PathResolution for bad path, ArgumentError listing ports, no address below root",
+   "evidence": "src/dataplane.jl:576-577; probe:B,C,D,E,F"
+  },
+  {
+   "id": "CV11a-033",
+   "file": "src/dataplane.jl",
+   "line": 548,
+   "kind": "cite",
+   "claim": "D-440 treats refusing an unknown path as PathResolution",
+   "evidence": "log.md:18390"
+  },
+  {
+   "id": "CV11a-034",
+   "file": "src/dataplane.jl",
+   "line": 585,
+   "kind": "docstring",
+   "claim": "Published: @atomic latest apart from loop-owned fields, release store, acquire load",
+   "evidence": "src/dataplane.jl:594-596; src/sim.jl:2797; src/devices.jl:285"
+  },
+  {
+   "id": "CV11a-035",
+   "file": "src/dataplane.jl",
+   "line": 579,
+   "kind": "cite",
+   "claim": "14.4 treats the compiled gather of read selectors",
+   "evidence": "spec.md:13257-13262 (selectors, compiled gather)"
+  },
+  {
+   "id": "CV11a-036",
+   "file": "src/dataplane.jl",
+   "line": 600,
+   "kind": "docstring",
+   "claim": "SnapshotLog: same objects, switch/log_every/log_max, stride doubling, unconditional endpoints",
+   "evidence": "src/dataplane.jl:626-644,657-699; spec.md:8045-8143"
+  },
+  {
+   "id": "CV11a-037",
+   "file": "src/dataplane.jl",
+   "line": 613,
+   "kind": "cite",
+   "claim": "14.5 and D-274 treat boundary zero and the restored first snapshot",
+   "evidence": "spec.md:13399; log.md:12334"
+  },
+  {
+   "id": "CV11a-038",
+   "file": "src/dataplane.jl",
+   "line": 646,
+   "kind": "docstring",
+   "claim": "log! retains first, stride multiples and re-points last; off retains nothing",
+   "evidence": "src/dataplane.jl:657-672"
+  },
+  {
+   "id": "CV11a-045",
+   "file": "src/dataplane.jl",
+   "line": 491,
+   "kind": "map",
+   "claim": "Map: _drain! returns whether a batch reached the table, reached through roster thunks",
+   "evidence": "src/dataplane.jl:491-498"
+  },
+  {
+   "id": "CV11a-046",
+   "file": "src/dataplane.jl",
+   "line": 657,
+   "kind": "map",
+   "claim": "Map: log! takes @nospecialize beside its concrete type; gather_reads lives here for include order",
+   "evidence": "src/dataplane.jl:582-583,657-658"
+  },
+  {
+   "id": "CV11a-047",
+   "file": "src/dataplane.jl",
+   "line": 260,
+   "kind": "map",
+   "claim": "Map: ResidueRecord built by sim.jl's sweep; PacerStatus Inf and zeros, copy off Pacer in control.jl",
+   "evidence": "src/sim.jl:1973-1975; src/dataplane.jl:292; src/control.jl:196"
+  },
+  {
+   "id": "CV11a-048",
+   "file": "src/dataplane.jl",
+   "line": 36,
+   "kind": "map",
+   "claim": "Map: StepFloor's field step_floor follows firing in KINDS and KindCounts",
+   "evidence": "src/dataplane.jl:37,56-57"
+  },
+  {
+   "id": "CV11a-049",
+   "file": "src/devices.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header cites 11.6, 11.1, 12.3, 11.8, 12.4, 11.7, D-270",
+   "evidence": "spec.md:8904 (11.6); 9308 (11.7); 9893 (12.3); 9969 (12.4)"
+  },
+  {
+   "id": "CV11a-050",
+   "file": "src/devices.jl",
+   "line": 33,
+   "kind": "docstring",
+   "claim": "DeviceHandle: capabilities read/stage/control, binding, detached writes refused",
+   "evidence": "src/devices.jl:63-76,79-81"
+  },
+  {
+   "id": "CV11a-051",
+   "file": "src/devices.jl",
+   "line": 79,
+   "kind": "surface",
+   "claim": "Detached stage! and report! raise DeviceContractMismatch reason :detached, as Appendix C and D-244 say",
+   "evidence": "src/devices.jl:79-81; spec.md:15803-15808; test/test_devices.jl:1080"
+  },
+  {
+   "id": "CV11a-052",
+   "file": "src/devices.jl",
+   "line": 93,
+   "kind": "docstring",
+   "claim": "init!: default no-op, once per device in order, throw is DeviceCrash plus shutdown!, should_abort stops",
+   "evidence": "src/devices.jl:113; src/sim.jl:1836-1853"
+  },
+  {
+   "id": "CV11a-053",
+   "file": "src/devices.jl",
+   "line": 119,
+   "kind": "docstring",
+   "claim": "shutdown!: default no-op, runs after loop or failed init!, throw logged as warning",
+   "evidence": "src/devices.jl:136,619-632; src/sim.jl:1842-1843"
+  },
+  {
+   "id": "CV11a-054",
+   "file": "src/devices.jl",
+   "line": 141,
+   "kind": "docstring",
+   "claim": "unblock!: default no-op, called in tail, throw logged, join_timeout then DeviceJoinTimeout",
+   "evidence": "src/devices.jl:162,666; src/sim.jl:1897-1913,1936-1940"
+  },
+  {
+   "id": "CV11a-055",
+   "file": "src/devices.jl",
+   "line": 172,
+   "kind": "docstring",
+   "claim": "loop: one task per run, shutdown! after, should_abort stop, crash reported, interrupt is a stop",
+   "evidence": "src/devices.jl:650-674; src/sim.jl:1654"
+  },
+  {
+   "id": "CV11a-056",
+   "file": "src/devices.jl",
+   "line": 202,
+   "kind": "surface",
+   "claim": "No-loop device refused as DeviceContractMismatch :no_loop at attach!; the fallback InternalInvariant is unreachable",
+   "evidence": "src/roster.jl:227-236; src/devices.jl:202-203; spec.md:8966"
+  },
+  {
+   "id": "CV11a-057",
+   "file": "src/devices.jl",
+   "line": 178,
+   "kind": "docstring",
+   "claim": "Lead: `MyDevice` is a placeholder type name, as Appendix B says it is illustrative",
+   "evidence": "spec.md Appendix B 'MyDevice <: AbstractDevice (an illustrative name)'; src/roster.jl:26"
+  },
+  {
+   "id": "CV11a-058",
+   "file": "src/devices.jl",
+   "line": 213,
+   "kind": "docstring",
+   "claim": "running: false until run starts and after final snapshot, beats heartbeat",
+   "evidence": "src/devices.jl:229-230; src/control.jl:74 (stopped starts true); probe:N"
+  },
+  {
+   "id": "CV11a-059",
+   "file": "src/devices.jl",
+   "line": 235,
+   "kind": "docstring",
+   "claim": "stop!(handle): first issuer wins, issuer is the device label",
+   "evidence": "src/devices.jl:253; src/control.jl:81-90"
+  },
+  {
+   "id": "CV11a-060",
+   "file": "src/devices.jl",
+   "line": 258,
+   "kind": "docstring",
+   "claim": "binding(handle) returns the attachment's binding",
+   "evidence": "src/devices.jl:270"
+  },
+  {
+   "id": "CV11a-061",
+   "file": "src/devices.jl",
+   "line": 275,
+   "kind": "docstring",
+   "claim": "latest(handle): acquire load, nothing before publication",
+   "evidence": "src/devices.jl:285; probe:N"
+  },
+  {
+   "id": "CV11a-062",
+   "file": "src/devices.jl",
+   "line": 291,
+   "kind": "docstring",
+   "claim": "pending(handle, slot): Some or nothing, no take, legal after detach",
+   "evidence": "src/devices.jl:307-312; probe:J,K"
+  },
+  {
+   "id": "CV11a-063",
+   "file": "src/devices.jl",
+   "line": 317,
+   "kind": "docstring",
+   "claim": "stage!: pairs, newest wins per face, OutOfClaim/EntryTypeMismatch to own cell, refused when detached",
+   "evidence": "src/devices.jl:340-346; probe:K,O"
+  },
+  {
+   "id": "CV11a-064",
+   "file": "src/devices.jl",
+   "line": 351,
+   "kind": "docstring",
+   "claim": "gather(handle, snapshot) returns the labeled NamedTuple, refused without output side",
+   "evidence": "src/devices.jl:367-372; test/test_devices.jl:1064-1069"
+  },
+  {
+   "id": "CV11a-065",
+   "file": "src/devices.jl",
+   "line": 369,
+   "kind": "surface",
+   "claim": "gather without output side raises DeviceContractMismatch :no_output_side, as Appendix C says",
+   "evidence": "src/devices.jl:369-370; spec.md:15803-15808"
+  },
+  {
+   "id": "CV11a-066",
+   "file": "src/devices.jl",
+   "line": 380,
+   "kind": "docstring",
+   "claim": "report!: MalformedDatum only, own cell, refused when detached",
+   "evidence": "src/devices.jl:401-403; probe:M (non-MalformedDatum is a MethodError)"
+  },
+  {
+   "id": "CV11a-067",
+   "file": "src/devices.jl",
+   "line": 421,
+   "kind": "docstring",
+   "claim": "wait_next_snapshot blocks until unseen boundary or stop, returns latest",
+   "evidence": "src/devices.jl:434-447"
+  },
+  {
+   "id": "CV11a-068",
+   "file": "src/devices.jl",
+   "line": 455,
+   "kind": "docstring",
+   "claim": "PortView fields path, port, source, live, slot, incumbent plus addr",
+   "evidence": "src/devices.jl:478-486; probe:V"
+  },
+  {
+   "id": "CV11a-069",
+   "file": "src/devices.jl",
+   "line": 495,
+   "kind": "docstring",
+   "claim": "port_views: Dict keyed by (path, port), inputs at every level plus produced outputs",
+   "evidence": "src/devices.jl:518-551; probe:V"
+  },
+  {
+   "id": "CV11a-070",
+   "file": "src/devices.jl",
+   "line": 556,
+   "kind": "docstring",
+   "claim": "peek: own pending write if live, else snapshot value",
+   "evidence": "src/devices.jl:569-575; probe:K"
+  },
+  {
+   "id": "CV11a-071",
+   "file": "src/devices.jl",
+   "line": 578,
+   "kind": "docstring",
+   "claim": "incumbent_status: record by incumbent name or nothing",
+   "evidence": "src/devices.jl:590-594; probe:Q"
+  },
+  {
+   "id": "CV11a-072",
+   "file": "src/devices.jl",
+   "line": 599,
+   "kind": "docstring",
+   "claim": "orphaned: task_state === :done",
+   "evidence": "src/devices.jl:611; test/test_devices.jl:1244-1250"
+  },
+  {
+   "id": "CV11a-073",
+   "file": "src/devices.jl",
+   "line": 639,
+   "kind": "docstring",
+   "claim": "_wrap: shutdown! on every exit, crash into own cell, claims held, task_state shows end",
+   "evidence": "src/devices.jl:650-674; src/sim.jl:2831-2836"
+  },
+  {
+   "id": "CV11a-075",
+   "file": "src/devices.jl",
+   "line": 17,
+   "kind": "cite",
+   "claim": "D-244, D-261, D-270, D-315, D-366, D-372, D-402, D-102, D-132, D-268, D-451, D-203 each treat their topic",
+   "evidence": "log.md:10010,11038,11985,14274,15577,15760,16571,3474,4572,11738,19045,8078"
+  },
+  {
+   "id": "CV11a-076",
+   "file": "src/devices.jl",
+   "line": 63,
+   "kind": "map",
+   "claim": "Map: handle holds binding, writer, diag cell, gatherer; types carry binding and reads; Structure and Layout by reference",
+   "evidence": "src/devices.jl:63-76"
+  },
+  {
+   "id": "CV11a-077",
+   "file": "src/devices.jl",
+   "line": 456,
+   "kind": "map",
+   "claim": "Map: panel kit PortView with abstract addr, port_views off terminal_producer, peek, incumbent_status, orphaned",
+   "evidence": "src/devices.jl:478-486,536-549,569,590,611"
+  },
+  {
+   "id": "CV11a-078",
+   "file": "src/devices.jl",
+   "line": 413,
+   "kind": "map",
+   "claim": "Map: wrapper with _shutdown!, _spawn!, and report!(entry, DeviceCrash) with no attachment check or heartbeat",
+   "evidence": "src/devices.jl:413-414,619-683; src/sim.jl:1849"
+  },
+  {
+   "id": "CV11a-079",
+   "file": "src/devices.jl",
+   "line": 85,
+   "kind": "cite",
+   "claim": "12.4(3) is the unblock! step and 12.4(6) the device-initiated path incl. crash",
+   "evidence": "spec.md:9983-10050 steps (3) and (6)"
+  }
+ ],
+ "counts": {
+  "surface": 14,
+  "docstring": 40,
+  "map": 13,
+  "cite": 12
+ }
+}

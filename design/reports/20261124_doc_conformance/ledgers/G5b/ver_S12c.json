@@ -1,0 +1,155 @@
+{
+ "judgments": [
+  {
+   "id": "S12c-001",
+   "conforms": true,
+   "evidence": "src/sim.jl:511-517 lifecycle returns :running, :built, :errored, :initialized or :stopped, and nothing else"
+  },
+  {
+   "id": "S12c-010",
+   "conforms": true,
+   "evidence": "src/sim.jl:697-705 _open_run! builds the log and trace from the door's own keywords. Probe P36/P39: init!(trace=false) gives no trace, then restore!(trace=true) gives one"
+  },
+  {
+   "id": "S12c-019",
+   "conforms": true,
+   "evidence": "src/sim.jl:972-974 opens the run with sim.run.frame and sim.run.boundary, then steps the ordinal back for the re-publication. Probe P56: (frame, next ordinal, last published) is (3,4,3) before overlay! and (3,4,3) after"
+  },
+  {
+   "id": "S12c-028",
+   "conforms": true,
+   "evidence": "src/model.jl:1187 checkpoint(model) stores clock.t and clock.t₀. Probe P70: ModelState.t₀ == 1//2 after init!(m; t0 = 1//2)"
+  },
+  {
+   "id": "S12c-037",
+   "conforms": true,
+   "evidence": "src/sim.jl:383 Run(SnapshotLog(true, 1, typemax(Int)), nothing, nothing, nothing, 0, 0). Probe P30: trace, feed and termination are nothing, and the log is empty"
+  },
+  {
+   "id": "S12c-046",
+   "conforms": true,
+   "evidence": "src/model.jl:97-105 Model has deployment, exec, status and frame_diag. Probe P29",
+   "note": "The Model also has three more fields the sentence does not name: claimed, fresh and floor_reported (model.jl:101,103-104). The listed four are all present. The sentence is true but not a complete list, if it is meant as one."
+  },
+  {
+   "id": "S12c-055",
+   "conforms": true,
+   "evidence": "src/sim.jl:228-235 Run holds log, trace, frame and boundary, next to feed and termination. Probe P28"
+  },
+  {
+   "id": "S12c-064",
+   "conforms": true,
+   "evidence": "src/model.jl:1344 and src/model.jl:479 write :consistent after the restore and the overlay settling. Probes P40 and P57 read initialized after restore! and after overlay!"
+  },
+  {
+   "id": "S12c-073",
+   "conforms": true,
+   "evidence": "src/sim.jl:512-516 running flag clear, status :consistent and run not closed gives :initialized"
+  },
+  {
+   "id": "S12c-082",
+   "conforms": true,
+   "evidence": "src/show.jl:562-564 puts '  input mode: $(mode(sim))' on its own line after the state heading and before the deployment. Probe P79"
+  },
+  {
+   "id": "S12c-091",
+   "conforms": true,
+   "evidence": "src/sim.jl:966 _assert_at_rest refuses anything other than initialized or stopped. Probe P31: overlay! on a built simulation throws ServiceLifecycle with status :built"
+  },
+  {
+   "id": "S12c-100",
+   "conforms": true,
+   "evidence": "src/sim.jl:2265 step! calls _advance! with pacer = nothing, so no wait_deadline! runs. Probe P74: 5 frames at pace 1e-3 took 1.6e-5 s"
+  },
+  {
+   "id": "S12c-109",
+   "conforms": true,
+   "evidence": "src/sim.jl:2508 attach! goes through assert_configurable, which admits initialized. It pushes a roster entry, and tasks are spawned only in _run_body! (sim.jl:1654). Probe P78: lifecycle is initialized between steps"
+  },
+  {
+   "id": "S12c-118",
+   "conforms": true,
+   "evidence": "src/sim.jl:2620 stage!(sim, writes...), sim.jl:2220 step!, sim.jl:2857 latest(sim). The step! docstring (sim.jl:2170-2172) describes the same sequence"
+  },
+  {
+   "id": "S12c-129",
+   "conforms": false,
+   "evidence": "src/sim.jl:2107-2108 checks t_end before the frame budget, so a stop in the last requested frame returns the full count. Probe P44: step!(frames=3, t_end=0.3) returns 3 with the simulation stopped. Probe P46: t_end=0.2 returns 2",
+   "class": "drift",
+   "fix": "That is the requested count in the ordinary case, and fewer when the run terminated before the call's last frame, the stopping frame counted. A stop inside the last frame requested returns the full count, so a harness reads `lifecycle` to detect the stop.",
+   "clear": false,
+   "note": "Commit 401b858e records the change, following the 2026-11-05 docstring audit (ledger A8, sim.jl:2115 row). It corrected the step! docstring to 'A stop inside the last frame requested returns the full count, so read lifecycle to detect a stop' and left the spec alone. The fix also has to replace the next spec sentence, 'That return is how a harness detects the truncation without inspecting the clock'. A replay end also returns fewer frames without any termination (sim.jl:2264). So the wording goes beyond this one claim."
+  },
+  {
+   "id": "S12c-127",
+   "conforms": true,
+   "evidence": "src/sim.jl:2302 step! returns advanced, which _advance! increments once per published frame (sim.jl:2122). Probes P44/P46/P48"
+  },
+  {
+   "id": "S12c-137",
+   "conforms": true,
+   "evidence": "src/sim.jl:700-702 every door builds a new Run with a new SnapshotLog and Trace and does not clear the old ones"
+  },
+  {
+   "id": "S12c-143",
+   "conforms": false,
+   "evidence": "src/sim.jl:966-974 overlay! is legal from stopped and opens a fresh run. Probe P57/P58: after overlay! on a stopped simulation, lifecycle is initialized and step!(frames=2) advances 2",
+   "class": "drift",
+   "fix": "From `stopped`, nothing advances until `init!`, `overlay!`, `restore!` or `replay!` opens a new run, and `errored` is terminal ([D-218][d-218], [D-219][d-219]).",
+   "clear": true,
+   "note": "D-429 (commit 4f922f7f) added overlay! as a fourth door after this sentence was written. The sentence just before it in the spec was updated to name overlay!, and this one was not."
+  },
+  {
+   "id": "S12c-147",
+   "conforms": true,
+   "evidence": "src/model.jl:1180-1190 checkpoint(model) returns ModelState{T}(x, s, m, table, prior, stepper, t, t₀, deployment, layout). Probe P69"
+  },
+  {
+   "id": "S12c-156",
+   "conforms": true,
+   "evidence": "src/frame.jl:94-97 the frame's catch writes model.status = :inconsistent before rethrowing"
+  },
+  {
+   "id": "S12c-165",
+   "conforms": true,
+   "evidence": "src/model.jl:1195-1206 _assert_at_rest refuses a clock off the frame top as CheckpointMidFrame, and checkpoint(sim) goes through it (sim.jl:892-895)"
+  },
+  {
+   "id": "S12c-174",
+   "conforms": true,
+   "evidence": "src/model.jl:1331-1341 _restore_state! computes k from the state's own clock, and its catch writes :built and rethrows _wrap_step(model, k, :restore, err)"
+  },
+  {
+   "id": "S12c-183",
+   "conforms": true,
+   "evidence": "src/sim.jl:1001 steps the run's ordinal back to the checkpointed boundary's, and publish! (sim.jl:2791-2794) stamps that ordinal and then increments it. Probe P65: the last published ordinal at the checkpoint was 2, and the snapshot after restore! has ordinal 2"
+  },
+  {
+   "id": "S12c-192",
+   "conforms": true,
+   "evidence": "src/sim.jl:964-981 overlay! resolves against the current stores, opens a new Run and settles through the model's overlay!. Probe P56-P58"
+  },
+  {
+   "id": "S12c-201",
+   "conforms": true,
+   "evidence": "src/model.jl:474 discontinuity!(model.exec.stepper) runs before the settling boundary"
+  },
+  {
+   "id": "S12c-210",
+   "conforms": true,
+   "evidence": "src/sim.jl:966-967 _assert_at_rest(sim) admits initialized or stopped, and _assert_at_rest(sim.model) checks the frame top (model.jl:1195-1206). Test test/test_lifecycle.jl:896-897"
+  },
+  {
+   "id": "S12c-219",
+   "conforms": true,
+   "evidence": "src/sim.jl:1654 tasks = _spawn!(live) runs inside each _run_body! call. The roster lives on the plane and persists across runs"
+  },
+  {
+   "id": "S12c-228",
+   "conforms": true,
+   "evidence": "src/sim.jl:1577 and sim.jl:1406 run! and replay! pass the StopPolicy to _run_body! as an argument",
+   "note": "step! keeps the policy itself (sim.jl:2252) and passes only its compiled parts, ignore_mask and t_end_frame, to the frame loop _advance! (sim.jl:2265). Read as 'the policy reaches the loop as an argument, never through a field', the claim holds for all three calls."
+  }
+ ],
+ "notes": "Read-only verification at W (f14dbc1d). My only file is the probe /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S12c_v/probe.jl. I ran it twice; the second run is the one cited. Probe line labels (P<n>) are line numbers of that script. 2 of the 27 claims fail. S12c-143 is drift: overlay! was added by D-429 and the 'From stopped' sentence was never updated. S12c-129 is drift: the step! docstring was corrected in 401b858e and the spec was not. Two notes on claims that conform: Model has three more fields than S12c-046 names, and step! passes only the policy's compiled parts to _advance! (S12c-228)."
+}

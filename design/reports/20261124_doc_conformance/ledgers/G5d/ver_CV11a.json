@@ -1,0 +1,134 @@
+{
+ "judgments": [
+  {
+   "id": "CV11a-002",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:25-27 holds `@atomic pending::Union{Nothing,Base.RefValue{B}}`; src/dataplane.jl:460-468 stage_batch! loads, merges and `@atomicreplace`s a fresh RefValue; src/dataplane.jl:492 the drain `@atomicswap`s nothing in. Probe P1a: a replace against an equal but distinct box fails (success=false). P1b: a replace against the loaded box succeeds. P1c: the swap returns the batch and leaves nothing. The CAS compares identity, as the docstring says."
+  },
+  {
+   "id": "CV11a-004",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:50-65 KindCounts has 14 Int fields (malformed ... empty_greedy, probe P2a). WriterStatus (src/dataplane.jl:251-258, public in docs/src/api.md:106) types `suppressed` and `totals` as KindCounts. Tests read them by name (test/test_dataplane.jl:84 `status.totals.out_of_claim`, test/test_roster.jl:162 `.totals.empty_greedy`). rg finds no field name in design/spec.md or docs/src. Spec 9625-9626 says only 'the per-kind counter record', and the WriterStatus docstring (src/dataplane.jl:236-241) says only 'the counts by kind'.",
+   "class": "deviation",
+   "fix": "WriterStatus docstring, after the `totals` bullet: '`suppressed` and `totals` are `KindCounts` records, one `Int` field per kind in Appendix C's channel order: `malformed`, `out_of_claim`, `claimed_face`, `type_mismatch`, `chattering`, `firing`, `step_floor`, `reanchor`, `unbounded`, `thread_budget`, `crash`, `join_timeout`, `replay_discarded` and `empty_greedy`.' Spec 9625-9626 gets the same list after 'the per-kind counter record'.",
+   "clear": false,
+   "note": "Not clear: naming the fields makes them public, and pending.md's exported-name audit (line 93-97) settles which fields are public. Which doc carries the list is the user's choice."
+  },
+  {
+   "id": "CV11a-044",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:41 `const DiagValue = Union{KINDS...}` is built from KINDS (probe P2c). src/dataplane.jl:50-64 KindCounts and src/dataplane.jl:70-83 `_kind` are written by hand, one field and one method per kind. Probe P2b: map(_kind, KINDS) == fieldnames(KindCounts), so the order matches but nothing builds it. git show 9b47941f shows KindCounts was hand-written from the start. design/code_map.md:296-298 says both are 'built from it'.",
+   "class": "deviation",
+   "fix": "code_map.md 296-298: '`KINDS`, the closed set's one home. The union `DiagValue` is built from it, and `KindCounts` and `_kind` are written by hand in its order, one field and one method per kind, `StepFloor`'s field `step_floor` after `firing` (D-460).'",
+   "clear": true,
+   "note": "The KINDS docstring (src/dataplane.jl:30-34) says KindCounts 'keeps one field per member in its order', which matches the code."
+  },
+  {
+   "id": "CV11a-042",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:177-181 WriterAccount, src/dataplane.jl:184-189 _reset!, src/dataplane.jl:195-207 _fold!. rg over design/code_map.md finds none of the three names. The map mentions an 'account' only as something held (code_map.md:1087 roster entry, 1103-1104 plane, 1246 and 1260 sim.jl's folds), never the type or where it lives. _fold! is called at src/sim.jl:1959-1965, 2673-2678 and 2712-2717, and _reset! at src/sim.jl:1787-1790.",
+   "class": "deviation",
+   "fix": "Add to code_map.md's dataplane.jl entry, after the diagnostic cells bullet: '- `WriterAccount`, the loop's private account for one writer, with `_fold!`, the frame-top take of a cell into it, and `_reset!`, which clears it when a run opens (§11.8, D-317).'",
+   "clear": true,
+   "note": "The claim's summary says _reset! moves a batch in. It does not. It clears recent, suppressed and totals."
+  },
+  {
+   "id": "CV11a-014",
+   "conforms": false,
+   "evidence": "src/sim.jl:2532 names a device writer \"device $id ($(typename))\". src/sim.jl:2838-2839 name the other two \"harness\" and \"loop\". Probe P3a shows who = [\"device 1 (Pad)\", \"harness\", \"loop\"]. The WriterStatus `who` bullet (src/dataplane.jl:233) says only 'as a port view's `incumbent` holds it'. rg finds no \"loop\" literal in design/spec.md, docs/src or any src docstring. Only the test helper comment test/utils.jl:67-69 gives it. \"harness\" is in the PortView docstring (src/devices.jl:475) and the Trace docstring (src/trace.jl:70).",
+   "class": "deviation",
+   "fix": "WriterStatus `who` bullet: '- `who`: the writer's name, as a port view's `incumbent` holds it. A rostered device is named by its roster label, such as `\"device 1 (Pad)\"`, the harness writer is `\"harness\"`, and the loop is `\"loop\"`.'",
+   "clear": true,
+   "note": "The claim is partly wrong. The device format is in one docstring: ControlRequestedStop (src/sim.jl:91-93) gives `\"device 1 (Pad)\"` as the roster label. The loop's name is documented nowhere."
+  },
+  {
+   "id": "CV11a-016",
+   "conforms": false,
+   "evidence": "src/sim.jl:1964-1966: _sweep_tail! folds two cells, the loop's and the model's frame cell, into the loop's one account before _residue! builds its record. src/sim.jl:1973-1975 skips a quiet account. Probe P5a: two cells of 17 reports each fold into a 'loop' ResidueRecord with 32 recent entries (DIAG_RING = 16) and 2 suppressed. P5b: a quiet account gives no record. The docstring (src/dataplane.jl:260-264) bounds the record at 'the final ring, at most DIAG_RING entries'. The docstring arrived with 1cce1119 (D-203). The frame-cell fold came later with 697ff66d and is recorded by D-317, which spec 9603-9604 states for WriterStatus.",
+   "class": "drift",
+   "fix": "'One writer's share of the tail residue (§11.8, D-203): what the run's-end sweep took past the final frame top. That is the final ring, at most `DIAG_RING` entries per diagnostic cell the sweep takes, of which the loop's record folds two (D-317), and the per-kind counts the ring refused. A quiet writer contributes no record.'",
+   "clear": true,
+   "note": "The 'quiet writer contributes no record' half and the refused counts agree with the code."
+  },
+  {
+   "id": "CV11a-021",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:337-338 `stale(record; now) = record.heartbeat !== nothing && now - record.heartbeat > STALE_S`, and a never-beaten cell holds 0.0 (src/dataplane.jl:136). Probe P4 on a heartbeat-0.0 device record: now=1.0 gives false, now=2.0 false, now=3.0 true, the default time() true. The docstring (src/dataplane.jl:326-327) says such a device 'reads stale whatever `now` is'. Spec 10175-10177 says it reads stale 'from the start', meaning at wall-clock times.",
+   "class": "deviation",
+   "fix": "'A device that has not beaten since attach reads stale at any wall-clock `now`, since its heartbeat holds `0.0`.'",
+   "clear": true,
+   "note": "The docstring is false only for a `now` of 2 s or less, which no wall clock gives. The fix narrows the wording and changes no code."
+  },
+  {
+   "id": "CV11a-039",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:309 `const STALE_S = 2.0` and src/dataplane.jl:337 the public `stale` (docs/src/api.md:104). rg finds neither name in design/code_map.md. code_map.md:501-502 lists its sibling `orphaned` under devices.jl, and the dataplane.jl entry (code_map.md:288-315) names neither.",
+   "class": "deviation",
+   "fix": "Add to code_map.md's dataplane.jl entry, after the FrameworkStatus bullet: '- `stale`, §12.2's heartbeat read on a `WriterStatus`, with its threshold `STALE_S` (D-133).'",
+   "clear": true
+  },
+  {
+   "id": "CV11a-041",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:416-446 _normalize, the shim that discards out-of-schema and unconvertible entries. src/dataplane.jl:452-457 _merge, src/dataplane.jl:460-468 stage_batch!, src/dataplane.jl:474-481 _apply!. rg finds none of the four names in design/code_map.md. Its dataplane.jl entry says only 'The compiled writer `Writer` and `Batch`, and the staging cells' (code_map.md:290). They are called from src/sim.jl:2623-2624, src/devices.jl:343 and src/roster.jl:404.",
+   "class": "deviation",
+   "fix": "code_map.md 290: '- The compiled writer `Writer` and `Batch`, and the staging cells `StagingCell`, with the staging shim `_normalize`, where every staging diagnostic is raised (§11.4, D-044), the CAS merge `stage_batch!` over the positional `_merge`, and the drain's compiled scatter `_apply!` (D-202).'",
+   "clear": true
+  },
+  {
+   "id": "CV11a-026",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:422-433: a harness entry whose face a rostered claim covers is ClaimedFaceEntry(face, incumbent, value, site), and one naming no root input is OutOfClaimEntry with incumbent nothing. Probe P3b: a harness `stage!` of 'a' (claimed by device 1) gives ClaimedFaceEntry site :staging, a stopped batch renormalized by attach! gives site :renormalization, and 'flaps' gives OutOfClaimEntry with incumbent nothing. P3c: 'b' still lands. This matches the stage! docstring (src/sim.jl:2607-2610), spec 8660-8662 and 11370-11373, and Appendix C 16035-16042.",
+   "note": "The D.6 glossary line (spec 17061) still reads 'ClaimedFaceEntry for the harness' without the harness's OutOfClaimEntry case. That is loose but outside this claim."
+  },
+  {
+   "id": "CV11a-040",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:576-577 defines `port(snapshot::Snapshot, path, name)`. Probe P10a: one method matches, and it reads the published table. code_map.md names `port` only under model.jl (992) and sim.jl (1301). The dataplane.jl entry (288-315) omits the snapshot method, which the Snapshot docstring (src/dataplane.jl:521-523) and Appendix B name.",
+   "class": "deviation",
+   "fix": "Add to code_map.md's dataplane.jl entry, beside the snapshots bullet: '- `port(snapshot, path, name)`, a published snapshot's read by address, as on the live table (§11.2, D-440).'",
+   "clear": true
+  },
+  {
+   "id": "CV11a-043",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:594-596 `mutable struct Published; @atomic latest::Union{Nothing,Snapshot}; end`. The handle holds one (src/devices.jl:65 `const published::Published`, probe P11b). rg finds no `Published` in design/code_map.md. The roster.jl entry (code_map.md:1103-1104) says only that the plane holds '§11.2's published holder', and nothing says where the type lives.",
+   "class": "deviation",
+   "fix": "Add to code_map.md's dataplane.jl entry: '- `Published`, the holder of §11.2's one `@atomic latest` reference, which the plane and every handle share (D-256).'",
+   "clear": true
+  },
+  {
+   "id": "CV11a-046",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:657-658 `log!(snapshot_log, @nospecialize(snapshot::Snapshot), snapshot_type::Type{<:Snapshot})`, and lines 666-667 typeassert both boundary reads to snapshot_type. Probe P12 shows the one method's signature. src/dataplane.jl:579-583: gather_reads sits here 'rather than in readers.jl for include order alone'. This matches code_map.md:299-304."
+  },
+  {
+   "id": "CV11a-076",
+   "conforms": true,
+   "evidence": "src/devices.jl:63-76: DeviceHandle{B,G} holds `b`, `writer`, `diag_cell`, `gatherer::G`, `claimedby` (the plane's index, by reference) and `structure` and `layout`, the last two for the panel kit's bake. Probe P11a gives the fields and the parameters svec(Enumerated, Nothing). The no-allocation gather is asserted at test/test_readers.jl:465. This matches code_map.md:480-490.",
+   "note": "For a binding with no output side the gatherer is `nothing`, not a `Reader` (P11a). The map's 'the compiled gather, a `Reader`' does not mention that case."
+  },
+  {
+   "id": "CV11a-056",
+   "conforms": true,
+   "evidence": "src/roster.jl:225-238 check_device refuses a device whose `loop` resolves to the AbstractDevice fallback as DeviceContractMismatch reason :no_loop. Probe P7a: attach!(sim, Loopless(), Enumerated()) raises (DeviceContractMismatch, :no_loop, \"Loopless\") and the roster stays empty. The fallback at src/devices.jl:202-203 is reached only by calling `loop` directly (P7b gives InternalInvariant). This matches the loop docstring (src/devices.jl:199-200) and spec 8966-8967.",
+   "note": "Appendix C (spec 15803-15807) describes the reasons in prose and does not name the `reason` symbols :no_loop, :no_output_side or :detached."
+  },
+  {
+   "id": "CV11a-065",
+   "conforms": true,
+   "evidence": "src/devices.jl:367-371: gather on a handle with no gatherer throws DeviceContractMismatch(device = handle.who, reason = :no_output_side). Probe P8 gives (DeviceContractMismatch, :no_output_side, \"device 1 (Pad)\"). This matches the gather docstring (src/devices.jl:362-363), spec 9213-9215 and Appendix C 15803-15806 ('the output side `gather` needs from a binding that declares none').",
+   "note": "Appendix C states the condition but not the reason symbol `:no_output_side`."
+  },
+  {
+   "id": "CV11a-074",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1688-1691: DeviceCrash has fields `cause` and `abort` and no one-argument constructor (probe P9: DeviceCrash(e) is a MethodError). src/devices.jl:667 and src/sim.jl:1849 build DeviceCrash(err, entry.should_abort). Spec 8978 (§11.6's sketch) writes `report!(entry, DeviceCrash(e))`, while §12.4's sketch at spec 10138 already writes `DeviceCrash(e, entry.should_abort)`. The ratified D-097 (log.md:3302) and D-138 (log.md:5056) record the payload with should_abort, and so does Appendix C 16051-16053. Commit f8dafc76 moved this sketch's address to the roster entry but left the one-argument call.",
+   "class": "drift",
+   "fix": "spec.md 8978: '    report!(entry, DeviceCrash(e, entry.should_abort))   # §12.4(6): sim continues, device absent'",
+   "clear": true,
+   "note": "spec_rules.md:79-80 lets a sketch be simplified, but this one calls a constructor that does not exist and disagrees with §12.4's sketch."
+  }
+ ],
+ "notes": "I verified all 17 claims in slice CV11a against W at f14dbc1d. 6 conform: 002, 026, 046, 076, 056 and 065. 11 do not: 004, 044, 042, 014, 016, 021, 039, 041, 040, 043 and 074. One probe script ran three times: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV11a_v/probe.jl. The first two runs failed on errors in my own probe code, and the third ran clean. I edited no tracked file.\n\nTwo claim summaries are partly off, though the finding still holds in both. In 014, the device-name format does appear in one docstring (ControlRequestedStop, src/sim.jl:91-93); only the name \"loop\" is documented nowhere. In 042, `_reset!` clears the account rather than moving a batch into it.\n\nHow I classed the code_map omissions (042, 039, 041, 040, 043): as deviations with clear fixes. That follows the precedent of the earlier map rows CV10-262, CV10-146 and CV9b-025, and the brief's rule that internals are owed to code_map.md.\n\n004 is marked not clear: listing the KindCounts field names makes them public, and the exported-name audit in pending.md settles which fields are public.\n\nSide observations, not part of any claim:\n- Appendix C never names DeviceContractMismatch's reason symbols :no_loop, :no_output_side and :detached.\n- The D.6 glossary line (spec 17061) omits the harness's OutOfClaimEntry for a face no root input names.\n- code_map.md's \"the compiled gather, a `Reader`\" does not mention that the gatherer is `nothing` when the binding has no output side."
+}

@@ -1,0 +1,870 @@
+{
+ "rows": [
+  {
+   "id": "S12a-020",
+   "file": "design/spec.md",
+   "line": 9830,
+   "kind": "mech",
+   "claim": "The yield is implicit in the coarse-phase sleep whenever that runs; an explicit yield() covers only the frames where it does not run (unpaced runs, pure-spin frames with budget <= margin)",
+   "evidence": "src/sim.jl:2107 `isempty(roster) || yield()` runs on every frame with a roster, before the pacer wait, whether or not the coarse sleep follows. src/control.jl:186 skips the sleep also for the frame after an anchor, a late (overrun) frame and a pace change re-anchor, which the doc's list omits.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The loop yields explicitly at every frame top while any device is rostered, ahead of the pacer's wait; the coarse-phase `sleep` is a further yield where it runs. A frame that skips the sleep (unpaced, budget <= margin, overrun or the frame after an anchor) yields through the explicit call alone.",
+   "note": "The log (design/log.md:1093) states the same narrower form as the spec, so the code and both records differ in how they describe it. The per-frame guarantee itself holds."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S12a-001",
+   "file": "design/spec.md",
+   "line": 9710,
+   "kind": "decl",
+   "claim": "Control holds pause, pace, margin and stop as atomic fields apart from staging",
+   "evidence": "src/control.jl:62"
+  },
+  {
+   "id": "S12a-002",
+   "file": "design/spec.md",
+   "line": 9711,
+   "kind": "law",
+   "claim": "Control plane is not staging; pause/pace/margin/stop writes bypass the drain and the trace",
+   "evidence": "src/sim.jl:2345"
+  },
+  {
+   "id": "S12a-003",
+   "file": "design/spec.md",
+   "line": 9712,
+   "kind": "mech",
+   "claim": "Staged writes apply at the frame-top drain",
+   "evidence": "src/sim.jl:2119"
+  },
+  {
+   "id": "S12a-004",
+   "file": "design/spec.md",
+   "line": 9713,
+   "kind": "law",
+   "claim": "A paused loop drains nothing (pause block precedes the frame)",
+   "evidence": "src/sim.jl:2100"
+  },
+  {
+   "id": "S12a-005",
+   "file": "design/spec.md",
+   "line": 9717,
+   "kind": "law",
+   "claim": "Control changes when frames execute, never what they compute",
+   "evidence": "src/control.jl:162; probe:68"
+  },
+  {
+   "id": "S12a-006",
+   "file": "design/spec.md",
+   "line": 9718,
+   "kind": "mech",
+   "claim": "Stop only truncates the trajectory (ends at a frame top)",
+   "evidence": "src/sim.jl:2103"
+  },
+  {
+   "id": "S12a-007",
+   "file": "design/spec.md",
+   "line": 9721,
+   "kind": "decl",
+   "claim": "Control is the periphery's own type holding the control plane",
+   "evidence": "src/control.jl:62"
+  },
+  {
+   "id": "S12a-008",
+   "file": "design/spec.md",
+   "line": 9723,
+   "kind": "mech",
+   "claim": "The loop consults the control plane at frame top",
+   "evidence": "src/sim.jl:2100"
+  },
+  {
+   "id": "S12a-009",
+   "file": "design/spec.md",
+   "line": 9724,
+   "kind": "law",
+   "claim": "A change during a frame or wait is seen at the next frame top",
+   "evidence": "src/control.jl:162; src/sim.jl:2109"
+  },
+  {
+   "id": "S12a-010",
+   "file": "design/spec.md",
+   "line": 9725,
+   "kind": "law",
+   "claim": "Delay is at most one frame budget, dt_frame/p",
+   "evidence": "src/control.jl:183-188"
+  },
+  {
+   "id": "S12a-011",
+   "file": "design/spec.md",
+   "line": 9726,
+   "kind": "law",
+   "claim": "The pause block is the one wait that wakes at once",
+   "evidence": "src/control.jl:97"
+  },
+  {
+   "id": "S12a-012",
+   "file": "design/spec.md",
+   "line": 9728,
+   "kind": "law",
+   "claim": "Stop issuers are device handle, calling code and Ctrl-C",
+   "evidence": "src/devices.jl:253; src/sim.jl:2328; src/sim.jl:2152"
+  },
+  {
+   "id": "S12a-013",
+   "file": "design/spec.md",
+   "line": 9731,
+   "kind": "law",
+   "claim": "Operator interrupt sets exactly the control-plane stop, no separate entry",
+   "evidence": "src/sim.jl:2152"
+  },
+  {
+   "id": "S12a-014",
+   "file": "design/spec.md",
+   "line": 9733,
+   "kind": "mech",
+   "claim": "The loop catches the interrupt at its unmask points",
+   "evidence": "src/sim.jl:2100-2109"
+  },
+  {
+   "id": "S12a-015",
+   "file": "design/spec.md",
+   "line": 9737,
+   "kind": "decl",
+   "claim": "Stop word is one atomic field holding the issuer",
+   "evidence": "src/control.jl:63"
+  },
+  {
+   "id": "S12a-016",
+   "file": "design/spec.md",
+   "line": 9738,
+   "kind": "law",
+   "claim": "Issuer identity is the device name, :code or :interrupt",
+   "evidence": "src/devices.jl:253; src/sim.jl:2328; src/sim.jl:2154"
+  },
+  {
+   "id": "S12a-017",
+   "file": "design/spec.md",
+   "line": 9739,
+   "kind": "mech",
+   "claim": "Issuers write by compare-and-swap from empty; first writer wins",
+   "evidence": "src/control.jl:82"
+  },
+  {
+   "id": "S12a-018",
+   "file": "design/spec.md",
+   "line": 9740,
+   "kind": "mech",
+   "claim": "Frame-top read tests the word for non-empty",
+   "evidence": "src/sim.jl:2103-2104"
+  },
+  {
+   "id": "S12a-019",
+   "file": "design/spec.md",
+   "line": 9742,
+   "kind": "mech",
+   "claim": "Issuer lands as ControlRequestedStop's payload in the termination record",
+   "evidence": "src/sim.jl:2104"
+  },
+  {
+   "id": "S12a-021",
+   "file": "design/spec.md",
+   "line": 9745,
+   "kind": "law",
+   "claim": "ControlRequestedStop is outside the stop policy (no ignore mask applies)",
+   "evidence": "src/sim.jl:2103-2104"
+  },
+  {
+   "id": "S12a-022",
+   "file": "design/spec.md",
+   "line": 9749,
+   "kind": "decl",
+   "claim": "pause!(sim) sets the flag, resume!(sim) clears it, paused(sim) reads it",
+   "evidence": "src/sim.jl:2345,2357,2378"
+  },
+  {
+   "id": "S12a-023",
+   "file": "design/spec.md",
+   "line": 9750,
+   "kind": "law",
+   "claim": "pause!/resume! work from any task in any lifecycle state",
+   "evidence": "src/sim.jl:2345-2366; probe:30"
+  },
+  {
+   "id": "S12a-024",
+   "file": "design/spec.md",
+   "line": 9751,
+   "kind": "law",
+   "claim": "pause! before run! starts the run paused at its first frame top",
+   "evidence": "probe:30 (frame 0, paused true, lifecycle running)"
+  },
+  {
+   "id": "S12a-025",
+   "file": "design/spec.md",
+   "line": 9753,
+   "kind": "mech",
+   "claim": "A paused loop blocks on a condition variable, not a spin",
+   "evidence": "src/control.jl:101-106"
+  },
+  {
+   "id": "S12a-026",
+   "file": "design/spec.md",
+   "line": 9753,
+   "kind": "mech",
+   "claim": "The condition is notified on un-pause and on stop",
+   "evidence": "src/sim.jl:2357-2366; src/control.jl:83-87"
+  },
+  {
+   "id": "S12a-027",
+   "file": "design/spec.md",
+   "line": 9754,
+   "kind": "law",
+   "claim": "A stop while paused wakes the loop, which enters the tail with no further frame",
+   "evidence": "src/sim.jl:2100-2104; probe:30"
+  },
+  {
+   "id": "S12a-028",
+   "file": "design/spec.md",
+   "line": 9756,
+   "kind": "mech",
+   "claim": "step! shares the frame top and blocks the same way",
+   "evidence": "src/sim.jl:2278 via _advance!:2100"
+  },
+  {
+   "id": "S12a-029",
+   "file": "design/spec.md",
+   "line": 9759,
+   "kind": "law",
+   "claim": "A paused run reads lifecycle running",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "S12a-030",
+   "file": "design/spec.md",
+   "line": 9760,
+   "kind": "law",
+   "claim": "The roster stays frozen while paused",
+   "evidence": "src/sim.jl:1643 (running flag set for the whole call)"
+  },
+  {
+   "id": "S12a-031",
+   "file": "design/spec.md",
+   "line": 9763,
+   "kind": "mech",
+   "claim": "The tail (_finish!) clears the pause flag beside the sticky stopped status",
+   "evidence": "src/sim.jl:1867-1868"
+  },
+  {
+   "id": "S12a-032",
+   "file": "design/spec.md",
+   "line": 9764,
+   "kind": "law",
+   "claim": "The pause flag is never cleared at a run's start",
+   "evidence": "src/sim.jl:1643-1649; probe:30"
+  },
+  {
+   "id": "S12a-033",
+   "file": "design/spec.md",
+   "line": 9765,
+   "kind": "law",
+   "claim": "The stop word is cleared at the top of each run",
+   "evidence": "src/sim.jl:1644; probe:41"
+  },
+  {
+   "id": "S12a-034",
+   "file": "design/spec.md",
+   "line": 9771,
+   "kind": "law",
+   "claim": "The device handle carries no pause verb",
+   "evidence": "src/devices.jl:236-253 (only stop! on the handle)"
+  },
+  {
+   "id": "S12a-035",
+   "file": "design/spec.md",
+   "line": 9774,
+   "kind": "decl",
+   "claim": "pace!(sim, p) and margin!(sim, m) set; pace(sim) and margin(sim) read",
+   "evidence": "src/sim.jl:2396,2412,2424,2436"
+  },
+  {
+   "id": "S12a-036",
+   "file": "design/spec.md",
+   "line": 9775,
+   "kind": "law",
+   "claim": "The setters work from any task in any lifecycle state",
+   "evidence": "src/sim.jl:2396,2412 (no gate); probe:22"
+  },
+  {
+   "id": "S12a-037",
+   "file": "design/spec.md",
+   "line": 9776,
+   "kind": "decl",
+   "claim": "margin rides on the control plane as an atomic field",
+   "evidence": "src/control.jl:67"
+  },
+  {
+   "id": "S12a-038",
+   "file": "design/spec.md",
+   "line": 9777,
+   "kind": "law",
+   "claim": "margin tunes the wait only, never the arithmetic",
+   "evidence": "src/control.jl:185"
+  },
+  {
+   "id": "S12a-039",
+   "file": "design/spec.md",
+   "line": 9779,
+   "kind": "decl",
+   "claim": "run! and replay! take pace and margin as keywords",
+   "evidence": "src/sim.jl:1555; src/sim.jl:1334"
+  },
+  {
+   "id": "S12a-040",
+   "file": "design/spec.md",
+   "line": 9779,
+   "kind": "mech",
+   "claim": "run! and replay! write both knobs when called",
+   "evidence": "src/sim.jl:1573-1574; 1404-1405"
+  },
+  {
+   "id": "S12a-041",
+   "file": "design/spec.md",
+   "line": 9780,
+   "kind": "law",
+   "claim": "pace defaults to Inf",
+   "evidence": "src/sim.jl:1555; probe:20"
+  },
+  {
+   "id": "S12a-042",
+   "file": "design/spec.md",
+   "line": 9781,
+   "kind": "law",
+   "claim": "margin defaults to 2 ms",
+   "evidence": "src/sim.jl:1555; probe:20"
+  },
+  {
+   "id": "S12a-043",
+   "file": "design/spec.md",
+   "line": 9782,
+   "kind": "decl",
+   "claim": "step! takes neither pace nor margin",
+   "evidence": "probe:28 (MethodError); src/sim.jl:2233"
+  },
+  {
+   "id": "S12a-044",
+   "file": "design/spec.md",
+   "line": 9782,
+   "kind": "mech",
+   "claim": "step! never waits on the pacer",
+   "evidence": "src/sim.jl:2282 passes pacer = nothing; probe:62"
+  },
+  {
+   "id": "S12a-045",
+   "file": "design/spec.md",
+   "line": 9784,
+   "kind": "law",
+   "claim": "Stepped frames are bit-identical to run!'s",
+   "evidence": "src/sim.jl:2282 and 1646 share _advance!"
+  },
+  {
+   "id": "S12a-046",
+   "file": "design/spec.md",
+   "line": 9784,
+   "kind": "law",
+   "claim": "pace is a positive real, Inf admitted",
+   "evidence": "src/sim.jl:416; probe:22"
+  },
+  {
+   "id": "S12a-047",
+   "file": "design/spec.md",
+   "line": 9785,
+   "kind": "law",
+   "claim": "margin is a non-negative real, Inf admitted",
+   "evidence": "src/sim.jl:420; probe:23"
+  },
+  {
+   "id": "S12a-048",
+   "file": "design/spec.md",
+   "line": 9785,
+   "kind": "law",
+   "claim": "Setters and keywords refuse bad values as ArgumentInvalid",
+   "evidence": "probe:22-25 (ArgumentInvalid, :range)"
+  },
+  {
+   "id": "S12a-049",
+   "file": "design/spec.md",
+   "line": 9788,
+   "kind": "decl",
+   "claim": "Control keeps stop word, sticky stopped status, running flag and the wait",
+   "evidence": "src/control.jl:62-71"
+  },
+  {
+   "id": "S12a-050",
+   "file": "design/spec.md",
+   "line": 9790,
+   "kind": "decl",
+   "claim": "Control keeps join_timeout",
+   "evidence": "src/control.jl:70"
+  },
+  {
+   "id": "S12a-051",
+   "file": "design/spec.md",
+   "line": 9791,
+   "kind": "law",
+   "claim": "Lifecycle state is not stored; lifecycle(sim) derives it",
+   "evidence": "src/sim.jl:511; src/control.jl:46-48"
+  },
+  {
+   "id": "S12a-052",
+   "file": "design/spec.md",
+   "line": 9793,
+   "kind": "decl",
+   "claim": "termination belongs to the Run, not Control",
+   "evidence": "src/sim.jl:567"
+  },
+  {
+   "id": "S12a-053",
+   "file": "design/spec.md",
+   "line": 9799,
+   "kind": "mech",
+   "claim": "The pacer wait is hybrid sleep-then-spin",
+   "evidence": "src/control.jl:183-189"
+  },
+  {
+   "id": "S12a-054",
+   "file": "design/spec.md",
+   "line": 9810,
+   "kind": "law",
+   "claim": "The coarse phase uses task-yielding sleep",
+   "evidence": "src/control.jl:186"
+  },
+  {
+   "id": "S12a-055",
+   "file": "design/spec.md",
+   "line": 9810,
+   "kind": "law",
+   "claim": "There is no systemsleep variant",
+   "evidence": "src/control.jl:162-196 (lead: test-only name, absent from src)"
+  },
+  {
+   "id": "S12a-056",
+   "file": "design/spec.md",
+   "line": 9811,
+   "kind": "ex",
+   "claim": "Lead `systemsleep` (spec.md:9811) names a variant the design does not build",
+   "evidence": "src/control.jl:186; a placeholder naming a rejected alternative"
+  },
+  {
+   "id": "S12a-057",
+   "file": "design/spec.md",
+   "line": 9812,
+   "kind": "mech",
+   "claim": "sleep releases the loop's thread",
+   "evidence": "src/control.jl:186 (Base.sleep is a task yield)"
+  },
+  {
+   "id": "S12a-058",
+   "file": "design/spec.md",
+   "line": 9819,
+   "kind": "law",
+   "claim": "A systemsleep variant is a guarded addition, not built",
+   "evidence": "src/control.jl:186 (only sleep exists)"
+  },
+  {
+   "id": "S12a-059",
+   "file": "design/spec.md",
+   "line": 9819,
+   "kind": "ex",
+   "claim": "Lead `systemsleep` (spec.md:9819) names the unbuilt variant",
+   "evidence": "not in src/; a rejected-alternative name"
+  },
+  {
+   "id": "S12a-060",
+   "file": "design/spec.md",
+   "line": 9825,
+   "kind": "law",
+   "claim": "With devices attached every frame yields at least once",
+   "evidence": "src/sim.jl:2107"
+  },
+  {
+   "id": "S12a-061",
+   "file": "design/spec.md",
+   "line": 9826,
+   "kind": "law",
+   "claim": "Pacing and yielding are outside the semantics (bit-identical)",
+   "evidence": "probe:65; src/sim.jl:2107-2109"
+  },
+  {
+   "id": "S12a-062",
+   "file": "design/spec.md",
+   "line": 9830,
+   "kind": "law",
+   "claim": "The coarse-phase sleep is a yield whenever that phase runs",
+   "evidence": "src/control.jl:186"
+  },
+  {
+   "id": "S12a-063",
+   "file": "design/spec.md",
+   "line": 9833,
+   "kind": "law",
+   "claim": "The spin phase never yields",
+   "evidence": "src/control.jl:187-189"
+  },
+  {
+   "id": "S12a-064",
+   "file": "design/spec.md",
+   "line": 9836,
+   "kind": "law",
+   "claim": "The loop holds a thread for at most one frame before the scheduler can run another task",
+   "evidence": "src/sim.jl:2107"
+  },
+  {
+   "id": "S12a-065",
+   "file": "design/spec.md",
+   "line": 9838,
+   "kind": "law",
+   "claim": "No framework task is a thread monopolist",
+   "evidence": "src/devices.jl:628-660 (wrapper), src/control.jl:97-109"
+  },
+  {
+   "id": "S12a-066",
+   "file": "design/spec.md",
+   "line": 9844,
+   "kind": "law",
+   "claim": "The thread budget is a startup warning, not a hard error",
+   "evidence": "src/sim.jl:1800-1806"
+  },
+  {
+   "id": "S12a-067",
+   "file": "design/spec.md",
+   "line": 9854,
+   "kind": "mech",
+   "claim": "The warning is reported under the ThreadBudget diagnostic",
+   "evidence": "src/sim.jl:1804"
+  },
+  {
+   "id": "S12a-068",
+   "file": "design/spec.md",
+   "line": 9854,
+   "kind": "law",
+   "claim": "The check fires at run! and replay! (shared body), not step!",
+   "evidence": "src/sim.jl:1650 in _run_body!; step! at 2233 has no call"
+  },
+  {
+   "id": "S12a-069",
+   "file": "design/spec.md",
+   "line": 9855,
+   "kind": "mech",
+   "claim": "The message names the julia -t remedy",
+   "evidence": "src/diagnostics.jl:1784-1786; probe:57"
+  },
+  {
+   "id": "S12a-070",
+   "file": "design/spec.md",
+   "line": 9855,
+   "kind": "ex",
+   "claim": "Lead `julia` (spec.md:9855) is the shell command in `julia -t`",
+   "evidence": "src/diagnostics.jl:1786"
+  },
+  {
+   "id": "S12a-071",
+   "file": "design/spec.md",
+   "line": 9856,
+   "kind": "law",
+   "claim": "One check per run, against the frozen roster",
+   "evidence": "src/sim.jl:1650-1651"
+  },
+  {
+   "id": "S12a-072",
+   "file": "design/spec.md",
+   "line": 9857,
+   "kind": "law",
+   "claim": "Tight means fewer threads than roster plus one",
+   "evidence": "src/sim.jl:1803"
+  },
+  {
+   "id": "S12a-073",
+   "file": "design/spec.md",
+   "line": 9858,
+   "kind": "mech",
+   "claim": "Every rostered device is a task; the calling task hosts the loop",
+   "evidence": "src/sim.jl:1655-1658,1648"
+  },
+  {
+   "id": "S12a-074",
+   "file": "design/spec.md",
+   "line": 9863,
+   "kind": "law",
+   "claim": "No pinning and no sticky tasks",
+   "evidence": "src/devices.jl (spawn uses plain @spawn)"
+  },
+  {
+   "id": "S12a-075",
+   "file": "design/spec.md",
+   "line": 9868,
+   "kind": "decl",
+   "claim": "Framework status is a frozen value in each snapshot beside the table",
+   "evidence": "src/sim.jl:2796,2829-2840"
+  },
+  {
+   "id": "S12a-076",
+   "file": "design/spec.md",
+   "line": 9869,
+   "kind": "decl",
+   "claim": "Status holds per-device liveness (timestamp, task_state) and pacer diagnostics",
+   "evidence": "src/sim.jl:2815-2840"
+  },
+  {
+   "id": "S12a-077",
+   "file": "design/spec.md",
+   "line": 9871,
+   "kind": "mech",
+   "claim": "Liveness is a per-writer diagnostic cell plus the run's device Task handles",
+   "evidence": "src/sim.jl:2833-2836"
+  },
+  {
+   "id": "S12a-078",
+   "file": "design/spec.md",
+   "line": 9874,
+   "kind": "mech",
+   "claim": "A cell carries a single liveness timestamp",
+   "evidence": "src/devices.jl:208-232 (_beat!); sim.jl:2835"
+  },
+  {
+   "id": "S12a-079",
+   "file": "design/spec.md",
+   "line": 9874,
+   "kind": "mech",
+   "claim": "The loop reads task_state off the handles where it publishes",
+   "evidence": "src/sim.jl:2834-2836"
+  },
+  {
+   "id": "S12a-080",
+   "file": "design/spec.md",
+   "line": 9879,
+   "kind": "law",
+   "claim": "task_state has three values :none, :running, :done",
+   "evidence": "src/dataplane.jl:341; src/sim.jl:2831"
+  },
+  {
+   "id": "S12a-081",
+   "file": "design/spec.md",
+   "line": 9879,
+   "kind": "law",
+   "claim": "Outside a run every device reads :none",
+   "evidence": "src/sim.jl:2831; probe:53"
+  },
+  {
+   "id": "S12a-082",
+   "file": "design/spec.md",
+   "line": 9880,
+   "kind": "law",
+   "claim": ":running while the task lives, :done once it ended",
+   "evidence": "src/dataplane.jl:341"
+  },
+  {
+   "id": "S12a-083",
+   "file": "design/spec.md",
+   "line": 9882,
+   "kind": "law",
+   "claim": "A device whose init! threw (no task) reads :done in the run",
+   "evidence": "src/sim.jl:1649,2831,2836"
+  },
+  {
+   "id": "S12a-084",
+   "file": "design/spec.md",
+   "line": 9884,
+   "kind": "law",
+   "claim": "orphaned on a record is exactly task_state === :done",
+   "evidence": "src/devices.jl:611"
+  },
+  {
+   "id": "S12a-085",
+   "file": "design/spec.md",
+   "line": 9887,
+   "kind": "law",
+   "claim": "Stale means a heartbeat more than 2 s behind wall clock",
+   "evidence": "src/dataplane.jl:309,337"
+  },
+  {
+   "id": "S12a-086",
+   "file": "design/spec.md",
+   "line": 9889,
+   "kind": "law",
+   "claim": "Stale is advisory: no kill, no detach",
+   "evidence": "src/dataplane.jl:337-338"
+  },
+  {
+   "id": "S12a-087",
+   "file": "design/spec.md",
+   "line": 9904,
+   "kind": "decl",
+   "claim": "The wait is a monotonic counter plus one Threads.Condition",
+   "evidence": "src/control.jl:66-68"
+  },
+  {
+   "id": "S12a-088",
+   "file": "design/spec.md",
+   "line": 9905,
+   "kind": "law",
+   "claim": "The counter counts published boundaries, including boundary zero",
+   "evidence": "src/sim.jl:2042,2803; probe:45"
+  },
+  {
+   "id": "S12a-089",
+   "file": "design/spec.md",
+   "line": 9906,
+   "kind": "law",
+   "claim": "It counts frame tops, step ends, t* and boundary zero, not frames",
+   "evidence": "src/sim.jl:2042 (settled! at each); probe:45-49 (+1 init, +5 for 5 frames)"
+  },
+  {
+   "id": "S12a-090",
+   "file": "design/spec.md",
+   "line": 9911,
+   "kind": "mech",
+   "claim": "Publication is lock; counter += 1; notify; unlock",
+   "evidence": "src/sim.jl:2801-2807"
+  },
+  {
+   "id": "S12a-091",
+   "file": "design/spec.md",
+   "line": 9912,
+   "kind": "law",
+   "claim": "A parked waiter has released the lock, so waiters never block the loop",
+   "evidence": "src/devices.jl:438-441"
+  },
+  {
+   "id": "S12a-092",
+   "file": "design/spec.md",
+   "line": 9915,
+   "kind": "law",
+   "claim": "Release-store of latest precedes the counter increment",
+   "evidence": "src/sim.jl:2796-2803"
+  },
+  {
+   "id": "S12a-093",
+   "file": "design/spec.md",
+   "line": 9915,
+   "kind": "mech",
+   "claim": "latest is an atomic reference that readers acquire-load",
+   "evidence": "src/sim.jl:2796; latest at 2860"
+  },
+  {
+   "id": "S12a-094",
+   "file": "design/spec.md",
+   "line": 9919,
+   "kind": "ex",
+   "claim": "The pseudo-code sketch of the loop's publication",
+   "evidence": "src/sim.jl:2796-2807 (a sketch with placeholder names, not a runnable block)"
+  },
+  {
+   "id": "S12a-095",
+   "file": "design/spec.md",
+   "line": 9928,
+   "kind": "law",
+   "claim": "counter > last_seen implies latest holds at least that boundary",
+   "evidence": "src/sim.jl:2796-2803"
+  },
+  {
+   "id": "S12a-096",
+   "file": "design/spec.md",
+   "line": 9931,
+   "kind": "law",
+   "claim": "A waiter may observe a newer snapshot than the one that woke it",
+   "evidence": "src/devices.jl:443"
+  },
+  {
+   "id": "S12a-097",
+   "file": "design/spec.md",
+   "line": 9934,
+   "kind": "decl",
+   "claim": "Device side is wait_next_snapshot(handle)",
+   "evidence": "src/devices.jl:434"
+  },
+  {
+   "id": "S12a-098",
+   "file": "design/spec.md",
+   "line": 9934,
+   "kind": "mech",
+   "claim": "It blocks until counter > last_seen and running (predicate loop)",
+   "evidence": "src/devices.jl:439-441"
+  },
+  {
+   "id": "S12a-099",
+   "file": "design/spec.md",
+   "line": 9937,
+   "kind": "mech",
+   "claim": "Shutdown wakes all waiters; the predicate routes each out",
+   "evidence": "src/sim.jl:1867-1873"
+  },
+  {
+   "id": "S12a-100",
+   "file": "design/spec.md",
+   "line": 9940,
+   "kind": "law",
+   "claim": "Newest wins; a slow consumer skips boundaries, no queues",
+   "evidence": "src/devices.jl:442-443"
+  },
+  {
+   "id": "S12a-101",
+   "file": "design/spec.md",
+   "line": 9944,
+   "kind": "law",
+   "claim": "The loop never waits on anyone (no backpressure)",
+   "evidence": "src/sim.jl:2801-2807"
+  },
+  {
+   "id": "S12a-102",
+   "file": "design/spec.md",
+   "line": 9953,
+   "kind": "law",
+   "claim": "The snapshot carries the published-boundary ordinal with t",
+   "evidence": "src/sim.jl:2791-2792"
+  },
+  {
+   "id": "S12a-103",
+   "file": "design/spec.md",
+   "line": 9954,
+   "kind": "law",
+   "claim": "Boundary zero is ordinal 0 and each later publication counts one",
+   "evidence": "probe:47-49 (ordinal 0 at init, 5 after 5 frames)"
+  },
+  {
+   "id": "S12a-104",
+   "file": "design/spec.md",
+   "line": 9957,
+   "kind": "law",
+   "claim": "A new trajectory restarts the ordinal at zero",
+   "evidence": "probe:51 (ordinal 0 after re-init)"
+  },
+  {
+   "id": "S12a-105",
+   "file": "design/spec.md",
+   "line": 9959,
+   "kind": "law",
+   "claim": "The boundary counter counts every publication and is never reset across trajectories",
+   "evidence": "probe:51 (counter 7 after re-init, up from 6); no reset in src/"
+  },
+  {
+   "id": "S12a-106",
+   "file": "design/spec.md",
+   "line": 9961,
+   "kind": "mech",
+   "claim": "The counter serves the wait predicate alone",
+   "evidence": "src/devices.jl:439-442; src/sim.jl:2786"
+  }
+ ],
+ "counts": {
+  "law": 58,
+  "mech": 26,
+  "decl": 15,
+  "ex": 5,
+  "ptr": 8,
+  "why": 16,
+  "cite": 0,
+  "map": 0,
+  "docstring": 0,
+  "surface": 0
+ }
+}

@@ -1,0 +1,1207 @@
+{
+ "rows": [
+  {
+   "id": "L11c-101",
+   "file": "design/log.md",
+   "line": 16710,
+   "kind": "law",
+   "claim": "D-406: under a table source a store selector is refused as `:store_selector`, with the remedy named.",
+   "evidence": "probe:46 and probe:49 give ReadResolution `:store_shape` for a headless `get_state(\"s\")` (stateless Sum) and `get_state(\"p\")` (named store on Plant) attached under a Readout binding; probe:48 gives `:store_selector` only once the leaf parses (`get_state(\"p\", :q)`). The cause is the order in src/readers.jl:690-697: `_rebase` parses the leaf and raises `:store_shape` before the source rule at readers.jl:694-697 runs. spec.md:13341-13343 states the source rule with no exception, and the readers.jl:694 comment says the refusal comes 'before any state resolution'.",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "In `_resolve_reads` (src/readers.jl:690), apply the table-source rule to the authored selector before `_rebase` parses its leaf, so every store selector under a table source is refused as `:store_selector`, a headless one included.",
+   "note": "The headless store address came in with D-438, which is later than D-406. No entry orders the two refusals. The message for `:store_shape` names no remedy, so the user is not told to publish the field as a port."
+  },
+  {
+   "id": "L11c-118",
+   "file": "design/log.md",
+   "line": 16784,
+   "kind": "law",
+   "claim": "D-407: in `series`, a store selector is refused under the source rule.",
+   "evidence": "probe:85 `series(sim3, reads(; q = get_state(\"s\")))` returns ReadResolution `:store_shape`, not `:store_selector`. Same root cause as L11c-101: src/sim.jl:2964 reaches `_resolve_reads`, whose `_rebase` (src/readers.jl:690) refuses a headless store address before the source rule at readers.jl:694-697.",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "The same code change as L11c-101: run the table-source check before the leaf is parsed, so `series` refuses every store selector as `:store_selector`.",
+   "note": "One defect underlies both rows. A store selector whose leaf parses is refused correctly as `:store_selector` (probe:48)."
+  },
+  {
+   "id": "L11c-131",
+   "file": "design/log.md",
+   "line": 17430,
+   "kind": "mech",
+   "claim": "D-429: the five choices that separate the door from `init!` come as one flag, fresh or continuing.",
+   "evidence": "src/model.jl:469-480: the model's `overlay!` settles through `run_boundary!(model, nothing)`. That is the off-tick boundary routine (model.jl:652-659, 681), which takes the empty due set by arity. `init!` (model.jl:320-343) makes its choices as separate statements: `establish_defaults!`, `fill!(exec.events.prior, false)`, `reset_stepper!` and `boundary_zero!`. No fresh-or-continuing flag exists. The model.jl:403-405 comment cites D-445 for the empty-due-set settling.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The overlaid state settles through the boundary routine over the empty due set, as an off-tick boundary does, and each choice that separates the door from `init!` is made in the door itself: `init!` resets the defaults, the priors and the stepper, and `overlay!` keeps them.",
+   "note": "The move is recorded by D-445 (log.md:18727-18729, a boundary with nothing due takes the empty due set by arity selection), with model.jl:404 citing it for the overlay. The log is never rewritten, so a correction belongs in a later entry or an annotation."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L11c-001",
+   "file": "design/log.md",
+   "line": 13942,
+   "kind": "law",
+   "claim": "D-309: event firings are not recorded",
+   "evidence": "src/dataplane.jl:539 (Snapshot holds t, frame, boundary, store, layout, status); src/trace.jl:22 (records batches only)"
+  },
+  {
+   "id": "L11c-004",
+   "file": "design/log.md",
+   "line": 13963,
+   "kind": "law",
+   "claim": "D-310: the loop runs on the calling task in every run",
+   "evidence": "src/sim.jl:1651-1657"
+  },
+  {
+   "id": "L11c-005",
+   "file": "design/log.md",
+   "line": 13963,
+   "kind": "law",
+   "claim": "D-310: every rostered device runs on a spawned task",
+   "evidence": "src/sim.jl:1654; src/devices.jl:678-683"
+  },
+  {
+   "id": "L11c-006",
+   "file": "design/log.md",
+   "line": 13964,
+   "kind": "law",
+   "claim": "D-310: `needs_calling_task` is withdrawn (lead)",
+   "evidence": "rg finds no needs_calling_task in src/ or test/"
+  },
+  {
+   "id": "L11c-007",
+   "file": "design/log.md",
+   "line": 13965,
+   "kind": "law",
+   "claim": "D-310: the admission check `CallerTaskConflict` is withdrawn (lead)",
+   "evidence": "rg finds no CallerTaskConflict in src/ or test/; src/dataplane.jl:36 KINDS"
+  },
+  {
+   "id": "L11c-008",
+   "file": "design/log.md",
+   "line": 13965,
+   "kind": "law",
+   "claim": "D-310: run!'s inline-body branch is withdrawn",
+   "evidence": "src/sim.jl:1651-1657 (spawn always, then _advance! on caller)"
+  },
+  {
+   "id": "L11c-009",
+   "file": "design/log.md",
+   "line": 13966,
+   "kind": "decl",
+   "claim": "D-310: `gui = true` is withdrawn (lead `gui`)",
+   "evidence": "src/sim.jl:1562-1563 run! keywords: pace, margin, t_end, ignore_stop_requests"
+  },
+  {
+   "id": "L11c-010",
+   "file": "design/log.md",
+   "line": 13966,
+   "kind": "mech",
+   "claim": "D-310: a front end is attached by hand and the roster keeps it across runs",
+   "evidence": "src/sim.jl:2505; src/sim.jl:1645 (run copies plane.roster, never clears it)"
+  },
+  {
+   "id": "L11c-011",
+   "file": "design/log.md",
+   "line": 13968,
+   "kind": "law",
+   "claim": "D-310: §11.7's liveness, peek, staging and orphan label stand",
+   "evidence": "src/devices.jl:526; src/devices.jl:569; src/devices.jl:611; src/devices.jl:340"
+  },
+  {
+   "id": "L11c-013",
+   "file": "design/log.md",
+   "line": 13974,
+   "kind": "law",
+   "claim": "D-310: the handle carries no pause",
+   "evidence": "src/devices.jl:63-76 (no pause field or verb); pause! is the Simulation's, src/sim.jl:279"
+  },
+  {
+   "id": "L11c-015",
+   "file": "design/log.md",
+   "line": 15581,
+   "kind": "decl",
+   "claim": "D-366: a device must define `loop(dev, handle)`",
+   "evidence": "src/devices.jl:202; src/roster.jl:221-235"
+  },
+  {
+   "id": "L11c-016",
+   "file": "design/log.md",
+   "line": 15581,
+   "kind": "law",
+   "claim": "D-366: attach! refuses a device with no loop as DeviceContractMismatch",
+   "evidence": "src/roster.jl:228-233; probe:20 (:no_loop)"
+  },
+  {
+   "id": "L11c-017",
+   "file": "design/log.md",
+   "line": 15582,
+   "kind": "law",
+   "claim": "D-366: init!, shutdown!, unblock! optional with no-op defaults",
+   "evidence": "src/devices.jl:113; src/devices.jl:136; src/devices.jl:162; probe:21"
+  },
+  {
+   "id": "L11c-018",
+   "file": "design/log.md",
+   "line": 15603,
+   "kind": "mech",
+   "claim": "D-367: device tasks are spawned inside run!",
+   "evidence": "src/sim.jl:1654"
+  },
+  {
+   "id": "L11c-019",
+   "file": "design/log.md",
+   "line": 15604,
+   "kind": "mech",
+   "claim": "D-367: first-boundary sync is the counter-plus-condition wait",
+   "evidence": "src/devices.jl:434-446; src/devices.jl:680"
+  },
+  {
+   "id": "L11c-020",
+   "file": "design/log.md",
+   "line": 15622,
+   "kind": "law",
+   "claim": "D-368: the log bound is a count, not a memory budget",
+   "evidence": "src/dataplane.jl:626-635 (live counts retained middles)"
+  },
+  {
+   "id": "L11c-021",
+   "file": "design/log.md",
+   "line": 15625,
+   "kind": "law",
+   "claim": "D-368: log_max defaults to 65536",
+   "evidence": "src/sim.jl:835; probe:77"
+  },
+  {
+   "id": "L11c-022",
+   "file": "design/log.md",
+   "line": 15625,
+   "kind": "law",
+   "claim": "D-368: finite unconditionally, with Inf the explicit opt-out",
+   "evidence": "src/sim.jl:676-677; src/sim.jl:700-701"
+  },
+  {
+   "id": "L11c-023",
+   "file": "design/log.md",
+   "line": 15626,
+   "kind": "law",
+   "claim": "D-368: no modal rule keys the default on t_end",
+   "evidence": "src/sim.jl:835 (fixed default); src/dataplane.jl:637-639"
+  },
+  {
+   "id": "L11c-024",
+   "file": "design/log.md",
+   "line": 15627,
+   "kind": "mech",
+   "claim": "D-368: on fill the stride doubles to log_every*2^k",
+   "evidence": "src/dataplane.jl:683-687; src/dataplane.jl:643"
+  },
+  {
+   "id": "L11c-025",
+   "file": "design/log.md",
+   "line": 15631,
+   "kind": "law",
+   "claim": "D-368: retained count never exceeds log_max",
+   "evidence": "probe:70-71 (log_max=4, 37 frames: middle 4)"
+  },
+  {
+   "id": "L11c-026",
+   "file": "design/log.md",
+   "line": 15632,
+   "kind": "law",
+   "claim": "D-368: coverage is global at the effective stride",
+   "evidence": "probe:70 ([0, 8, 16, 24, 32, 37])"
+  },
+  {
+   "id": "L11c-027",
+   "file": "design/log.md",
+   "line": 15632,
+   "kind": "law",
+   "claim": "D-368: the endpoints are kept",
+   "evidence": "probe:70; src/dataplane.jl:660-670"
+  },
+  {
+   "id": "L11c-028",
+   "file": "design/log.md",
+   "line": 15633,
+   "kind": "law",
+   "claim": "D-368: boundary-zero and terminal snapshots kept under any log_every/log_max",
+   "evidence": "src/dataplane.jl:660-670; probe:75 (log_every=3 keeps 0 and 10)"
+  },
+  {
+   "id": "L11c-029",
+   "file": "design/log.md",
+   "line": 15634,
+   "kind": "law",
+   "claim": "D-368: endpoints do not count against the bound",
+   "evidence": "src/dataplane.jl:629-633; probe:71"
+  },
+  {
+   "id": "L11c-030",
+   "file": "design/log.md",
+   "line": 15635,
+   "kind": "law",
+   "claim": "D-368: log_max stays outside the trace header's deployment block",
+   "evidence": "src/checkpoint.jl:197-198; probe:76"
+  },
+  {
+   "id": "L11c-031",
+   "file": "design/log.md",
+   "line": 15636,
+   "kind": "law",
+   "claim": "D-368: replay neither records nor compares log_max",
+   "evidence": "src/sim.jl:1337 (replay! takes its own log_max); src/checkpoint.jl:197-198"
+  },
+  {
+   "id": "L11c-032",
+   "file": "design/log.md",
+   "line": 15655,
+   "kind": "law",
+   "claim": "D-369: an emission past ring capacity is not stored",
+   "evidence": "src/dataplane.jl:141-150; probe:57 (16 kept of 20)"
+  },
+  {
+   "id": "L11c-033",
+   "file": "design/log.md",
+   "line": 15656,
+   "kind": "law",
+   "claim": "D-369: a refused emission increments its kind's count",
+   "evidence": "src/dataplane.jl:146; probe:57 (suppressed malformed 4)"
+  },
+  {
+   "id": "L11c-034",
+   "file": "design/log.md",
+   "line": 15656,
+   "kind": "law",
+   "claim": "D-369: the earliest in the frame are retained",
+   "evidence": "probe:57 (ring holds d1..d16)"
+  },
+  {
+   "id": "L11c-035",
+   "file": "design/log.md",
+   "line": 15658,
+   "kind": "mech",
+   "claim": "D-369: the loop takes each cell with atomicswap at the frame-top drain",
+   "evidence": "src/dataplane.jl:156; src/sim.jl:2671-2678"
+  },
+  {
+   "id": "L11c-036",
+   "file": "design/log.md",
+   "line": 15659,
+   "kind": "mech",
+   "claim": "D-369: the take swaps in a shared empty sentinel",
+   "evidence": "src/dataplane.jl:111; src/dataplane.jl:156"
+  },
+  {
+   "id": "L11c-037",
+   "file": "design/log.md",
+   "line": 15660,
+   "kind": "law",
+   "claim": "D-369: the take on a quiet frame allocates nothing",
+   "evidence": "probe:59 (0 bytes); probe:61 (fold 0 bytes)"
+  },
+  {
+   "id": "L11c-038",
+   "file": "design/log.md",
+   "line": 15661,
+   "kind": "law",
+   "claim": "D-369: the published status is a concrete frozen value",
+   "evidence": "src/dataplane.jl:303-306"
+  },
+  {
+   "id": "L11c-039",
+   "file": "design/log.md",
+   "line": 15662,
+   "kind": "decl",
+   "claim": "D-369: per writer the status has recent, suppressed, totals, heartbeat",
+   "evidence": "src/dataplane.jl:251-258 (plus who and task_state)"
+  },
+  {
+   "id": "L11c-040",
+   "file": "design/log.md",
+   "line": 15663,
+   "kind": "mech",
+   "claim": "D-369: totals are loop-owned cumulative counters copied into each status",
+   "evidence": "src/dataplane.jl:177-181; src/dataplane.jl:205"
+  },
+  {
+   "id": "L11c-041",
+   "file": "design/log.md",
+   "line": 15667,
+   "kind": "law",
+   "claim": "D-369: renderer prints up to 25 occurrences then count-only",
+   "evidence": "src/show.jl:443; src/show.jl:470"
+  },
+  {
+   "id": "L11c-042",
+   "file": "design/log.md",
+   "line": 15669,
+   "kind": "law",
+   "claim": "D-369: counts accumulate regardless of presentation",
+   "evidence": "src/dataplane.jl:195-206"
+  },
+  {
+   "id": "L11c-043",
+   "file": "design/log.md",
+   "line": 15670,
+   "kind": "law",
+   "claim": "D-369: terminal snapshot carries the cumulative counters",
+   "evidence": "src/sim.jl:1944-1953 (complete to its frame top, per D-201, which D-369's Rationale cites)"
+  },
+  {
+   "id": "L11c-044",
+   "file": "design/log.md",
+   "line": 15672,
+   "kind": "law",
+   "claim": "D-369: per-kind counters are a fixed-shape isbits record, never a Dict",
+   "evidence": "src/dataplane.jl:50-66; probe:62"
+  },
+  {
+   "id": "L11c-045",
+   "file": "design/log.md",
+   "line": 15674,
+   "kind": "law",
+   "claim": "D-369: nothing on a quiet frame scales with diagnostic activity",
+   "evidence": "src/dataplane.jl:195-197; probe:61"
+  },
+  {
+   "id": "L11c-046",
+   "file": "design/log.md",
+   "line": 15697,
+   "kind": "law",
+   "claim": "D-370: a second greedy attach stakes an empty claim",
+   "evidence": "probe:34 (Symbol[])"
+  },
+  {
+   "id": "L11c-047",
+   "file": "design/log.md",
+   "line": 15698,
+   "kind": "law",
+   "claim": "D-370: the empty greedy claim is legal",
+   "evidence": "probe:33-34 (attach returns a handle)"
+  },
+  {
+   "id": "L11c-048",
+   "file": "design/log.md",
+   "line": 15699,
+   "kind": "law",
+   "claim": "D-370: the attach records EmptyGreedyClaim",
+   "evidence": "src/sim.jl:2541-2549; probe:35"
+  },
+  {
+   "id": "L11c-049",
+   "file": "design/log.md",
+   "line": 15700,
+   "kind": "law",
+   "claim": "D-370: partial-claim GUI bindings and disjoint front ends are legal",
+   "evidence": "src/sim.jl:2516-2520; probe:32"
+  },
+  {
+   "id": "L11c-050",
+   "file": "design/log.md",
+   "line": 15703,
+   "kind": "mech",
+   "claim": "D-370: harness writer has stage!(sim, ...) and an always-present cell",
+   "evidence": "src/sim.jl:2620; src/roster.jl:334-339"
+  },
+  {
+   "id": "L11c-051",
+   "file": "design/log.md",
+   "line": 15705,
+   "kind": "mech",
+   "claim": "D-370: harness covers the complement, recomputed at attach!/detach!",
+   "evidence": "src/roster.jl:404-410; src/sim.jl:2536; src/sim.jl:2585; probe:36"
+  },
+  {
+   "id": "L11c-052",
+   "file": "design/log.md",
+   "line": 15706,
+   "kind": "mech",
+   "claim": "D-370: the renormalization seam applies to the harness alone",
+   "evidence": "src/roster.jl:407-418"
+  },
+  {
+   "id": "L11c-053",
+   "file": "design/log.md",
+   "line": 15707,
+   "kind": "law",
+   "claim": "D-370: ClaimedFaceEntry is narrowed to the harness writer",
+   "evidence": "src/dataplane.jl:425-432; probe:39"
+  },
+  {
+   "id": "L11c-054",
+   "file": "design/log.md",
+   "line": 15708,
+   "kind": "law",
+   "claim": "D-370: an enumerated writer's out-of-surface entry is OutOfClaimEntry",
+   "evidence": "src/dataplane.jl:427-428; probe:41"
+  },
+  {
+   "id": "L11c-055",
+   "file": "design/log.md",
+   "line": 15710,
+   "kind": "law",
+   "claim": "D-370: a widget is live iff its feed chain ends in a root input it claims",
+   "evidence": "src/devices.jl:526; src/devices.jl:545-546"
+  },
+  {
+   "id": "L11c-056",
+   "file": "design/log.md",
+   "line": 15732,
+   "kind": "mech",
+   "claim": "D-371: sides checked both ways by error fallbacks and a bidirectional check",
+   "evidence": "src/roster.jl:158; src/roster.jl:188; src/roster.jl:194-210"
+  },
+  {
+   "id": "L11c-057",
+   "file": "design/log.md",
+   "line": 15735,
+   "kind": "mech",
+   "claim": "D-371: is_input && !is_greedy calls claims(b) once",
+   "evidence": "src/roster.jl:383"
+  },
+  {
+   "id": "L11c-058",
+   "file": "design/log.md",
+   "line": 15736,
+   "kind": "law",
+   "claim": "D-371: greedy computes the claim; a defined claims method is an error",
+   "evidence": "src/roster.jl:381; src/roster.jl:203-204"
+  },
+  {
+   "id": "L11c-059",
+   "file": "design/log.md",
+   "line": 15737,
+   "kind": "mech",
+   "claim": "D-371: is_output calls reads(b)",
+   "evidence": "src/sim.jl:2524-2526"
+  },
+  {
+   "id": "L11c-060",
+   "file": "design/log.md",
+   "line": 15737,
+   "kind": "law",
+   "claim": "D-371: declaring neither side is an error",
+   "evidence": "src/roster.jl:201-202 (:neither_side)"
+  },
+  {
+   "id": "L11c-061",
+   "file": "design/log.md",
+   "line": 15737,
+   "kind": "law",
+   "claim": "D-371: is_greedy without is_input is an error",
+   "evidence": "src/roster.jl:199-200 (:greedy_without_input)"
+  },
+  {
+   "id": "L11c-062",
+   "file": "design/log.md",
+   "line": 15738,
+   "kind": "law",
+   "claim": "D-371: a claims/reads method under a false trait is an error",
+   "evidence": "src/roster.jl:205-208"
+  },
+  {
+   "id": "L11c-063",
+   "file": "design/log.md",
+   "line": 15739,
+   "kind": "mech",
+   "claim": "D-371: the false-trait direction is detected by which against the fallback",
+   "evidence": "src/roster.jl:196-197"
+  },
+  {
+   "id": "L11c-064",
+   "file": "design/log.md",
+   "line": 15741,
+   "kind": "law",
+   "claim": "D-371: both directions report BindingContractMismatch naming trait and method",
+   "evidence": "src/diagnostics.jl:1810-1832"
+  },
+  {
+   "id": "L11c-065",
+   "file": "design/log.md",
+   "line": 15743,
+   "kind": "law",
+   "claim": "D-371: is_input with claims(b) = () is a legal degenerate",
+   "evidence": "src/roster.jl:383-389; test/fixtures.jl:1735-1737"
+  },
+  {
+   "id": "L11c-066",
+   "file": "design/log.md",
+   "line": 15744,
+   "kind": "law",
+   "claim": "D-371: the maximal surface needs an explicit is_greedy",
+   "evidence": "src/roster.jl:381"
+  },
+  {
+   "id": "L11c-067",
+   "file": "design/log.md",
+   "line": 15764,
+   "kind": "law",
+   "claim": "D-372: shutdown! must tolerate a partly initialized device (runs after failed init!)",
+   "evidence": "src/sim.jl:1840-1843; src/devices.jl:121-127"
+  },
+  {
+   "id": "L11c-069",
+   "file": "design/log.md",
+   "line": 15785,
+   "kind": "law",
+   "claim": "D-373: should_close dissolves into the loop body returning (lead)",
+   "evidence": "rg finds no should_close in src/; src/devices.jl:650-669"
+  },
+  {
+   "id": "L11c-070",
+   "file": "design/log.md",
+   "line": 15786,
+   "kind": "decl",
+   "claim": "D-373: the exit predicate is running(handle)",
+   "evidence": "src/devices.jl:229-230"
+  },
+  {
+   "id": "L11c-071",
+   "file": "design/log.md",
+   "line": 15788,
+   "kind": "law",
+   "claim": "D-373: obligations diagnosed by DeviceJoinTimeout and stale heartbeat, never forced",
+   "evidence": "src/sim.jl:1936-1941; src/dataplane.jl:337-338"
+  },
+  {
+   "id": "L11c-072",
+   "file": "design/log.md",
+   "line": 15804,
+   "kind": "law",
+   "claim": "D-374: device death is not detach; claims and entry persist to run end",
+   "evidence": "src/devices.jl:640-669 (wrapper never touches the roster)"
+  },
+  {
+   "id": "L11c-073",
+   "file": "design/log.md",
+   "line": 15805,
+   "kind": "law",
+   "claim": "D-374: the heartbeat reports a dead device",
+   "evidence": "src/dataplane.jl:337-338; src/devices.jl:611"
+  },
+  {
+   "id": "L11c-074",
+   "file": "design/log.md",
+   "line": 15806,
+   "kind": "mech",
+   "claim": "D-374: orphans are recovered between runs",
+   "evidence": "src/sim.jl:1654 (every live entry respawned each run); src/sim.jl:2574-2577"
+  },
+  {
+   "id": "L11c-075",
+   "file": "design/log.md",
+   "line": 15808,
+   "kind": "law",
+   "claim": "D-374: mid-run attach stays a guarded addition (refused while running)",
+   "evidence": "src/sim.jl:628-631; src/sim.jl:2508"
+  },
+  {
+   "id": "L11c-076",
+   "file": "design/log.md",
+   "line": 15809,
+   "kind": "law",
+   "claim": "D-374: a pure reader has no input half and claims nothing",
+   "evidence": "src/sim.jl:2514-2515"
+  },
+  {
+   "id": "L11c-079",
+   "file": "design/log.md",
+   "line": 15832,
+   "kind": "law",
+   "claim": "D-375: device identity is the instance (===)",
+   "evidence": "src/sim.jl:2511-2512"
+  },
+  {
+   "id": "L11c-080",
+   "file": "design/log.md",
+   "line": 15832,
+   "kind": "law",
+   "claim": "D-375: an instance holds at most one entry; two instances are two devices",
+   "evidence": "probe:25 (AlreadyAttached); probe:26 (twin is a distinct device)"
+  },
+  {
+   "id": "L11c-081",
+   "file": "design/log.md",
+   "line": 15834,
+   "kind": "law",
+   "claim": "D-375: the stable device id is assigned at attach!",
+   "evidence": "src/sim.jl:2528-2529"
+  },
+  {
+   "id": "L11c-082",
+   "file": "design/log.md",
+   "line": 15835,
+   "kind": "law",
+   "claim": "D-375: the id is monotonic per Simulation and never reused",
+   "evidence": "probe:29 (device 2 after detaching device 1)"
+  },
+  {
+   "id": "L11c-083",
+   "file": "design/log.md",
+   "line": 15835,
+   "kind": "law",
+   "claim": "D-375: the id lives with its roster entry across runs",
+   "evidence": "src/roster.jl:255; src/roster.jl:451-454"
+  },
+  {
+   "id": "L11c-084",
+   "file": "design/log.md",
+   "line": 15836,
+   "kind": "law",
+   "claim": "D-375: identity is checked first, as AlreadyAttached",
+   "evidence": "src/sim.jl:2511-2515; probe:25"
+  },
+  {
+   "id": "L11c-085",
+   "file": "design/log.md",
+   "line": 15837,
+   "kind": "law",
+   "claim": "D-375: claims are checked next, ClaimConflict always between distinct devices",
+   "evidence": "src/sim.jl:2516-2521; probe:26"
+  },
+  {
+   "id": "L11c-086",
+   "file": "design/log.md",
+   "line": 15860,
+   "kind": "law",
+   "claim": "D-376: the services own root-input initial values",
+   "evidence": "src/conditions.jl:701-706; src/sim.jl:844; src/diagnostics.jl:2086"
+  },
+  {
+   "id": "L11c-087",
+   "file": "design/log.md",
+   "line": 15860,
+   "kind": "law",
+   "claim": "D-376: neither export entries nor face declarations carry root-input defaults",
+   "evidence": "src/declare.jl:161 (u_types declares types only)"
+  },
+  {
+   "id": "L11c-088",
+   "file": "design/log.md",
+   "line": 15883,
+   "kind": "law",
+   "claim": "D-377: stride counts boundaries from the run's first snapshot",
+   "evidence": "src/dataplane.jl:665-669; probe:75"
+  },
+  {
+   "id": "L11c-089",
+   "file": "design/log.md",
+   "line": 15884,
+   "kind": "law",
+   "claim": "D-377: first snapshot is boundary zero under init!, restored one otherwise",
+   "evidence": "src/dataplane.jl:606-608; src/dataplane.jl:660-661"
+  },
+  {
+   "id": "L11c-090",
+   "file": "design/log.md",
+   "line": 15903,
+   "kind": "law",
+   "claim": "D-378: a claim is what a device may write, not what it will",
+   "evidence": "src/roster.jl:144-146; src/dataplane.jl:440-445 (mask per touched face)"
+  },
+  {
+   "id": "L11c-091",
+   "file": "design/log.md",
+   "line": 15924,
+   "kind": "law",
+   "claim": "D-379: a frame's outcome is a pure function of the drained batches",
+   "evidence": "src/sim.jl:2670-2676 (fixed attachment order, then harness)"
+  },
+  {
+   "id": "L11c-093",
+   "file": "design/log.md",
+   "line": 15943,
+   "kind": "law",
+   "claim": "D-380: raw stick levels are not in the trace",
+   "evidence": "src/trace.jl:22-26 (records staged face entries only)"
+  },
+  {
+   "id": "L11c-094",
+   "file": "design/log.md",
+   "line": 15961,
+   "kind": "decl",
+   "claim": "D-381: should_abort is per attachment, never a device property",
+   "evidence": "src/sim.jl:2505-2506; src/roster.jl:258"
+  },
+  {
+   "id": "L11c-095",
+   "file": "design/log.md",
+   "line": 15983,
+   "kind": "law",
+   "claim": "D-382: side traits return a literal or a field fixed at construction",
+   "evidence": "src/bindings.jl:93; src/roster.jl:93"
+  },
+  {
+   "id": "L11c-096",
+   "file": "design/log.md",
+   "line": 15986,
+   "kind": "law",
+   "claim": "D-382: framework never calls or checks map_input/map_output",
+   "evidence": "rg finds no call to either in src/ outside docstrings; src/bindings.jl:7"
+  },
+  {
+   "id": "L11c-098",
+   "file": "design/log.md",
+   "line": 16575,
+   "kind": "law",
+   "claim": "D-402: a raise provoked by an unblock! override is shutdown, no DeviceCrash",
+   "evidence": "src/devices.jl:657-664; src/devices.jl:636-637"
+  },
+  {
+   "id": "L11c-099",
+   "file": "design/log.md",
+   "line": 16705,
+   "kind": "mech",
+   "claim": "D-406: attach resolves reads through the resolver trim and linearize use",
+   "evidence": "src/bindings.jl:176; src/readers.jl:684; src/trim.jl:444; src/linearize.jl:440-450"
+  },
+  {
+   "id": "L11c-100",
+   "file": "design/log.md",
+   "line": 16709,
+   "kind": "mech",
+   "claim": "D-406: the resolver takes its source, live stores or a signal table",
+   "evidence": "src/readers.jl:684-685 (source = :executor | :table)"
+  },
+  {
+   "id": "L11c-102",
+   "file": "design/log.md",
+   "line": 16711,
+   "kind": "law",
+   "claim": "D-406: the :store_selector refusal names the remedy",
+   "evidence": "src/diagnostics.jl:1890-1894"
+  },
+  {
+   "id": "L11c-103",
+   "file": "design/log.md",
+   "line": 16711,
+   "kind": "law",
+   "claim": "D-406: the source rule is the resolver's, not a client's",
+   "evidence": "src/readers.jl:694-697"
+  },
+  {
+   "id": "L11c-104",
+   "file": "design/log.md",
+   "line": 16713,
+   "kind": "law",
+   "claim": "D-406: resolver refusals are ReadResolution, collected at every site",
+   "evidence": "src/readers.jl:684-704; src/readers.jl:670-674"
+  },
+  {
+   "id": "L11c-105",
+   "file": "design/log.md",
+   "line": 16714,
+   "kind": "law",
+   "claim": "D-406: TapResolution keeps the five tap-set reasons alone",
+   "evidence": "src/diagnostics.jl:2091-2098"
+  },
+  {
+   "id": "L11c-106",
+   "file": "design/log.md",
+   "line": 16715,
+   "kind": "law",
+   "claim": "D-406: ReadBindingUnresolved retires (lead)",
+   "evidence": "rg finds no ReadBindingUnresolved in src/ or test/"
+  },
+  {
+   "id": "L11c-107",
+   "file": "design/log.md",
+   "line": 16716,
+   "kind": "law",
+   "claim": "D-406: a path selector names a primitive's port; exported faces via get_face",
+   "evidence": "probe:45 (:assembly_path); probe:50; src/diagnostics.jl:1895-1898"
+  },
+  {
+   "id": "L11c-108",
+   "file": "design/log.md",
+   "line": 16718,
+   "kind": "law",
+   "claim": "D-406: get_output on an assembly face or root input no longer admitted",
+   "evidence": "probe:45 (get_output(\"\", :a) refused :assembly_path)"
+  },
+  {
+   "id": "L11c-109",
+   "file": "design/log.md",
+   "line": 16720,
+   "kind": "law",
+   "claim": "D-406: a binding's read set resolves at the root with no mount",
+   "evidence": "src/bindings.jl:176 (Reads((), selectors))"
+  },
+  {
+   "id": "L11c-111",
+   "file": "design/log.md",
+   "line": 16723,
+   "kind": "law",
+   "claim": "D-406: a read refusal at attach carries the label, not the device",
+   "evidence": "probe:51 (ReadResolution fields: label, no device); src/diagnostics.jl:1857-1861"
+  },
+  {
+   "id": "L11c-113",
+   "file": "design/log.md",
+   "line": 16775,
+   "kind": "decl",
+   "claim": "D-407: post-run extraction is series(sim, read_set)",
+   "evidence": "src/sim.jl:2956"
+  },
+  {
+   "id": "L11c-114",
+   "file": "design/log.md",
+   "line": 16776,
+   "kind": "mech",
+   "claim": "D-407: series resolves for a table source through the one resolver",
+   "evidence": "src/sim.jl:2964"
+  },
+  {
+   "id": "L11c-115",
+   "file": "design/log.md",
+   "line": 16778,
+   "kind": "mech",
+   "claim": "D-407: each entry gathered over retained snapshots into one typed column",
+   "evidence": "src/sim.jl:2965-2966; src/sim.jl:2979-2985"
+  },
+  {
+   "id": "L11c-116",
+   "file": "design/log.md",
+   "line": 16779,
+   "kind": "mech",
+   "claim": "D-407: columns labeled as the set labels them, beside t, frame, boundary",
+   "evidence": "src/sim.jl:2967-2968; probe:82"
+  },
+  {
+   "id": "L11c-117",
+   "file": "design/log.md",
+   "line": 16782,
+   "kind": "law",
+   "claim": "D-407: the read set is a Reads value, which at mounts",
+   "evidence": "src/sim.jl:2956; probe:86 (at(\"s\", reads(...)) accepted)"
+  },
+  {
+   "id": "L11c-119",
+   "file": "design/log.md",
+   "line": 16785,
+   "kind": "law",
+   "claim": "D-407: a column is a plain vector of the entry's leaf type",
+   "evidence": "src/sim.jl:2980-2981; probe:82 (eltype Float64)"
+  },
+  {
+   "id": "L11c-120",
+   "file": "design/log.md",
+   "line": 16787,
+   "kind": "mech",
+   "claim": "D-407: resolution runs once per call",
+   "evidence": "src/sim.jl:2964"
+  },
+  {
+   "id": "L11c-121",
+   "file": "design/log.md",
+   "line": 16787,
+   "kind": "mech",
+   "claim": "D-407: compilation specializes on leaf type and chain, not labels",
+   "evidence": "src/sim.jl:2979 (_column on CellRead{A,C}); src/readers.jl:684 @nospecialize"
+  },
+  {
+   "id": "L11c-123",
+   "file": "design/log.md",
+   "line": 17418,
+   "kind": "decl",
+   "claim": "D-429: overlay!(sim, condition) writes onto a stopped run and opens a fresh run",
+   "evidence": "src/sim.jl:964-979"
+  },
+  {
+   "id": "L11c-124",
+   "file": "design/log.md",
+   "line": 17419,
+   "kind": "law",
+   "claim": "D-429: the named stores are overwritten on the run's own",
+   "evidence": "src/sim.jl:969-970 (bases = current stores)"
+  },
+  {
+   "id": "L11c-125",
+   "file": "design/log.md",
+   "line": 17420,
+   "kind": "law",
+   "claim": "D-429: other stores, clock, lattice and guard priors are kept",
+   "evidence": "src/model.jl:469-480 (no prior reset, no clock write)"
+  },
+  {
+   "id": "L11c-126",
+   "file": "design/log.md",
+   "line": 17421,
+   "kind": "law",
+   "claim": "D-429: a root-input entry writes its cell with no totality asked",
+   "evidence": "src/sim.jl:964-979 (no assert_total; it is called at src/sim.jl:844 for init! only)"
+  },
+  {
+   "id": "L11c-127",
+   "file": "design/log.md",
+   "line": 17422,
+   "kind": "decl",
+   "claim": "D-429: overlay!(model, condition; hooks) legal at :consistent on a frame top",
+   "evidence": "src/model.jl:461-480; src/model.jl:1195-1204"
+  },
+  {
+   "id": "L11c-128",
+   "file": "design/log.md",
+   "line": 17425,
+   "kind": "mech",
+   "claim": "D-429: settling runs projection and events to quiescence, no output stage or s_update",
+   "evidence": "src/model.jl:473; src/model.jl:652-661"
+  },
+  {
+   "id": "L11c-129",
+   "file": "design/log.md",
+   "line": 17428,
+   "kind": "law",
+   "claim": "D-429: an overlaid discrete store is the next tick's state; its held cell stays",
+   "evidence": "src/model.jl:661 (run_ticks! on nothing is a no-op)"
+  },
+  {
+   "id": "L11c-130",
+   "file": "design/log.md",
+   "line": 17429,
+   "kind": "law",
+   "claim": "D-429: only a guard the overlay moved into holding fires",
+   "evidence": "src/model.jl:469-480 (priors kept)"
+  },
+  {
+   "id": "L11c-132",
+   "file": "design/log.md",
+   "line": 17432,
+   "kind": "law",
+   "claim": "D-429: the trace header is the checkpoint taken after the settling",
+   "evidence": "src/sim.jl:975-977"
+  },
+  {
+   "id": "L11c-133",
+   "file": "design/log.md",
+   "line": 17433,
+   "kind": "law",
+   "claim": "D-429: replay needs no knowledge of overlays",
+   "evidence": "src/sim.jl:975-977 (header is a plain Checkpoint)"
+  },
+  {
+   "id": "L11c-134",
+   "file": "design/log.md",
+   "line": 17433,
+   "kind": "law",
+   "claim": "D-429: a throw inside the settling drops the status to :built",
+   "evidence": "src/model.jl:472-477"
+  },
+  {
+   "id": "L11c-135",
+   "file": "design/log.md",
+   "line": 17435,
+   "kind": "law",
+   "claim": "D-429: a partial store entry merges onto the current store",
+   "evidence": "src/sim.jl:969-970; src/model.jl:484-486"
+  },
+  {
+   "id": "L11c-136",
+   "file": "design/log.md",
+   "line": 17436,
+   "kind": "law",
+   "claim": "D-429: under init! a partial entry merges onto the declared default",
+   "evidence": "src/model.jl:326-329 (establish_defaults! then apply)"
+  },
+  {
+   "id": "L11c-137",
+   "file": "design/log.md",
+   "line": 17449,
+   "kind": "law",
+   "claim": "D-451: a replaying advance takes every staging cell at its halt, after the joins",
+   "evidence": "src/sim.jl:1745; src/sim.jl:2760-2769"
+  },
+  {
+   "id": "L11c-138",
+   "file": "design/log.md",
+   "line": 17451,
+   "kind": "law",
+   "claim": "D-451: discards as ReplayDiscardedStaging naming the frame after the halt",
+   "evidence": "src/sim.jl:2762; src/sim.jl:2749-2751"
+  },
+  {
+   "id": "L11c-139",
+   "file": "design/log.md",
+   "line": 19054,
+   "kind": "law",
+   "claim": "D-451: the take covers each device's cell and the harness writer's",
+   "evidence": "src/sim.jl:2763-2767"
+  },
+  {
+   "id": "L11c-140",
+   "file": "design/log.md",
+   "line": 19055,
+   "kind": "law",
+   "claim": "D-451: on every exit of run!, replay!, step!, ahead of the mode's flip",
+   "evidence": "src/sim.jl:1745 before 1764; src/sim.jl:2287 before 2293"
+  },
+  {
+   "id": "L11c-141",
+   "file": "design/log.md",
+   "line": 19056,
+   "kind": "law",
+   "claim": "D-451: where the run's-end sweep runs, it presents the reports",
+   "evidence": "src/sim.jl:1745-1746; src/sim.jl:1971-1977"
+  },
+  {
+   "id": "L11c-142",
+   "file": "design/log.md",
+   "line": 19057,
+   "kind": "law",
+   "claim": "D-451: a step! halting initialized sweeps none; reports wait, through a door",
+   "evidence": "src/sim.jl:2292-2297; src/sim.jl:654-661 (doors leave diag cells)"
+  },
+  {
+   "id": "L11c-143",
+   "file": "design/log.md",
+   "line": 19060,
+   "kind": "mech",
+   "claim": "D-451: a batch staged after the take waits for the next advance",
+   "evidence": "src/sim.jl:2742-2745 (the cell keeps what lands later)"
+  },
+  {
+   "id": "L11c-144",
+   "file": "design/log.md",
+   "line": 20883,
+   "kind": "law",
+   "claim": "D-474: a Series forwards its columns as properties",
+   "evidence": "src/sim.jl:2925-2929; probe:82"
+  },
+  {
+   "id": "L11c-145",
+   "file": "design/log.md",
+   "line": 20886,
+   "kind": "decl",
+   "claim": "D-474: the fields t, frame, boundary, columns keep their names",
+   "evidence": "src/sim.jl:2915-2920"
+  },
+  {
+   "id": "L11c-146",
+   "file": "design/log.md",
+   "line": 20887,
+   "kind": "law",
+   "claim": "D-474: series refuses a reserved label as ReadSetMisuse :reserved_label",
+   "evidence": "src/sim.jl:2957-2962; probe:83"
+  },
+  {
+   "id": "L11c-147",
+   "file": "design/log.md",
+   "line": 20889,
+   "kind": "law",
+   "claim": "D-474: the refusal sits in series, not in reads",
+   "evidence": "probe:84 (reads(; t = ...) builds a Reads)"
+  },
+  {
+   "id": "L11c-148",
+   "file": "design/log.md",
+   "line": 21003,
+   "kind": "law",
+   "claim": "D-476: the four types print a one-line form and a REPL form",
+   "evidence": "src/show.jl:531; src/show.jl:578; src/show.jl:592; src/show.jl:635; src/show.jl:674-678"
+  },
+  {
+   "id": "L11c-149",
+   "file": "design/log.md",
+   "line": 21007,
+   "kind": "law",
+   "claim": "D-476: a Simulation's heading states lifecycle state and clock",
+   "evidence": "src/show.jl:524-527; probe:90"
+  },
+  {
+   "id": "L11c-150",
+   "file": "design/log.md",
+   "line": 21008,
+   "kind": "law",
+   "claim": "D-476: a Simulation's input mode stands on its own line",
+   "evidence": "src/show.jl:558; probe:90"
+  },
+  {
+   "id": "L11c-151",
+   "file": "design/log.md",
+   "line": 21009,
+   "kind": "law",
+   "claim": "D-476: a Simulation's deployment prints in its one-line form",
+   "evidence": "src/show.jl:559; probe:90"
+  },
+  {
+   "id": "L11c-152",
+   "file": "design/log.md",
+   "line": 21010,
+   "kind": "law",
+   "claim": "D-476: a Series prints each column's label and eltype, no values",
+   "evidence": "src/show.jl:582-587; probe:91"
+  },
+  {
+   "id": "L11c-153",
+   "file": "design/log.md",
+   "line": 21012,
+   "kind": "law",
+   "claim": "D-476: a TrimReport's heading states the verdict alone",
+   "evidence": "src/show.jl:588-590; src/show.jl:617"
+  },
+  {
+   "id": "L11c-154",
+   "file": "design/log.md",
+   "line": 21013,
+   "kind": "law",
+   "claim": "D-476: the backend's status and counts stand on the next line",
+   "evidence": "src/show.jl:618-619"
+  },
+  {
+   "id": "L11c-155",
+   "file": "design/log.md",
+   "line": 21014,
+   "kind": "law",
+   "claim": "D-476: a Linearization prints its operating point per tap list",
+   "evidence": "src/show.jl:662-666; probe:94"
+  },
+  {
+   "id": "L11c-156",
+   "file": "design/log.md",
+   "line": 21015,
+   "kind": "law",
+   "claim": "D-476: each matrix prints under row/column labels, by integer index",
+   "evidence": "src/show.jl:639-649"
+  },
+  {
+   "id": "L11c-157",
+   "file": "design/log.md",
+   "line": 21017,
+   "kind": "law",
+   "claim": "D-476: table numbers print with six significant digits",
+   "evidence": "src/show.jl:507; probe:94 (1.23456789 prints 1.23457)"
+  },
+  {
+   "id": "L11c-158",
+   "file": "design/log.md",
+   "line": 21018,
+   "kind": "law",
+   "claim": "D-476: a column of numbers aligns on its decimal point",
+   "evidence": "src/show.jl:511-517"
+  },
+  {
+   "id": "L11c-159",
+   "file": "design/log.md",
+   "line": 21018,
+   "kind": "law",
+   "claim": "D-476: header ends at the point if it fits, else starts at column edge",
+   "evidence": "src/show.jl:516; probe:94 (longlabel_x over -1.0)"
+  }
+ ],
+ "counts": {
+  "law": 113,
+  "mech": 25,
+  "decl": 9,
+  "ptr": 8,
+  "why": 4,
+  "ex": 0,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ },
+ "notes": "I checked 159 claims across the 26 entries and found three problems. All 26 entries are ratified. None has a superseded chain. D-375 cites D-109, which is superseded by D-310, and D-310 is ratified. Every D-nnn and § link in the Position sections resolves: the link definitions are at log.md:21322-21810, and the headings exist in spec.md.\n\n**The five leads.** `CallerTaskConflict`, `needs_calling_task`, `gui`, `should_close` and `ReadBindingUnresolved` are names the entries withdraw. None appears in src/, so each lead is an ok row (L11c-006, 007, 009, 069, 106). The `gui` hits in test/test_roster.jl are device labels, not the keyword.\n\n**Findings.**\n- L11c-101 and L11c-118 share one defect. A headless `get_state` under a table source is refused as `:store_shape`, not `:store_selector` (probe:46, 49, 85). The cause is that `_rebase` (src/readers.jl:690) parses the leaf before the source rule at readers.jl:694-697 runs.\n- L11c-131: D-429's \"one flag, fresh or continuing\" does not exist in the code. The overlay settles through `run_boundary!(model, nothing)`, which D-445 records. This is drift.\n\n**Outside the slice, not filed as rows.**\n- Stale comments still describe the inline body that D-310 withdrew: src/dataplane.jl:210 (\"a returned inline body\") and src/roster.jl:321-323 (\"the inline body's entry leaves when that body returns\").\n- The comment at src/readers.jl:694 says the store-selector refusal comes \"before any state resolution\". The `:store_shape` check runs earlier.\n- src/roster.jl:4 says \"three-part admission\". D-375 and attach! describe two parts after the conformance check.\n\nThe probe is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L11c/probe.jl. It took three runs, and its line numbers are cited as probe:N. No tracked file was changed."
+}

@@ -1,0 +1,1298 @@
+{
+ "rows": [
+  {
+   "line": 309,
+   "kind": "docstring",
+   "claim": "Simulation docstring lists only `join_timeout` under # Keywords; `chunk_size` (Model's) and the nine forwarded grid, algorithm and event keywords of the signature get prose, no bullet (lead)",
+   "evidence": "src/sim.jl:309-313 signature; docstring_rules.md rule 5 and 11; Appendix B 15181-15194 lists join_timeout alone",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet for `chunk_size` and one sentence per forwarded keyword group under # Keywords, or state in the lead sentence that rule 11 covers them.",
+   "note": "Low weight: rule 11 lets a forwarded kw... show only in the signature, and the prose names both owners.",
+   "id": "CV12-002",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 417,
+   "kind": "map",
+   "claim": "code_map names no entry for the shared knob validators _pace_value and _margin_value (run!, replay!, pace!, margin!) or the bound _t_end_frame",
+   "evidence": "design/code_map.md:1192-1311; src/sim.jl:417-424",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the pacing bullet: '_pace_value and _margin_value, the one validation of the two knobs at run!, replay!, pace! and margin! (D-269)'.",
+   "id": "CV12-008",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 654,
+   "kind": "surface",
+   "claim": "Every door (init!, overlay!, restore!, replay!) clears the stop word through _reset_periphery!; spec §12.1 and D-398 say it is cleared at a run's start only, the restore! docstring and the replay! docstring are silent, and only init! and overlay! docstrings say it",
+   "evidence": "src/sim.jl:654-661; probe:181,226,227; design/spec.md:9764-9766; log D-398; no door clearing in §12.6 (spec 10605-10650)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to §12.6 'Re-running and checkpoints' that each door also clears the stop word, and one sentence to the restore! and replay! docstrings.",
+   "id": "CV12-017",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! signature carries trace, log, log_every, log_max; the docstring has no # Keywords list and says only 'the four recording keywords are init!'s' (lead)",
+   "evidence": "src/sim.jl:964; docstring_rules.md rule 5; replay! gives the same four a bullet",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add under # Keywords: `trace`, `log`, `log_every`, `log_max`: as for `init!`, with the same defaults.",
+   "id": "CV12-023",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore! signature carries trace, log, log_every, log_max in both forms; the docstring has no # Keywords list and says only 'the four recording keywords are init!'s' (lead)",
+   "evidence": "src/sim.jl:1063,1080; docstring_rules.md rule 5",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add under # Keywords: `trace`, `log`, `log_every`, `log_max`: as for `init!`, with the same defaults.",
+   "id": "CV12-037",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 1123,
+   "kind": "docstring",
+   "claim": "trim! signature carries baseline, t0, backend; the docstring has no # Keywords list and says only that they mean what they mean on the model's method (lead)",
+   "evidence": "src/sim.jl:1123-1124; docstring_rules.md rule 5",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add bullets for `baseline`, `t0` and `backend` under # Keywords, one sentence each.",
+   "note": "Function cites §14.8, audited earlier; row exists for the lead.",
+   "id": "CV12-048",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 1159,
+   "kind": "docstring",
+   "claim": "linearize signature carries about, t0, width; the docstring has no # Keywords list, `width` appears only as a refusal (lead)",
+   "evidence": "src/sim.jl:1159-1160; docstring_rules.md rule 5",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add bullets for `about`, `t0` and `width` under # Keywords, `width` stating default 8.",
+   "note": "Function cites §14, audited earlier; row exists for the lead.",
+   "id": "CV12-049",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 1334,
+   "kind": "map",
+   "claim": "code_map 1274 lists '`to_time`' beside mode and live! as an item of sim.jl; to_time is a keyword of replay!, no definition in sim.jl",
+   "evidence": "design/code_map.md:1274; src/sim.jl:1334-1339",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write 'mode(sim) and live!, and the replay! keyword to_time'.",
+   "id": "CV12-067",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 1585,
+   "kind": "map",
+   "claim": "code_map names neither _replay_bound (the recording's cap on an advance) nor _settle_mode! (the flip to :live at the recording's last frame)",
+   "evidence": "design/code_map.md:1274; src/sim.jl:1585-1604",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Extend the input-mode bullet: '_replay_bound caps each advance at the recording and _settle_mode! detaches it at its last frame (D-218)'.",
+   "id": "CV12-073",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 1785,
+   "kind": "map",
+   "claim": "code_map names no entry for the run-body helpers _reset_accounts!, _register_tasks!, _residue!, _report_join_timeout!, _interrupt_source and _record",
+   "evidence": "design/code_map.md:1236-1252; src/sim.jl:1785,1808,1936,1973,2152,567",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add one line under §12.4's run bracket naming them with their roles.",
+   "id": "CV12-076",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 1955,
+   "kind": "docstring",
+   "claim": "_sweep_tail! docstring calls the ResidueRecords 'the termination record's third field'; TerminationRecord holds t, policy, source, residue, so residue is the fourth",
+   "evidence": "src/sim.jl:180-185 (fields), 1943-1952 (docstring)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace 'the termination record's third field' with 'the termination record's fourth field'.",
+   "note": "StopPolicy was inserted as the second field by D-255.",
+   "id": "CV12-089",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 2913,
+   "kind": "docstring",
+   "claim": "Series docstring says 'A series holds these fields, each vector with one entry per snapshot', but `columns` is a NamedTuple, not a vector",
+   "evidence": "src/sim.jl:2913-2918; probe:70",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Write 'A series holds these fields, each with one entry per snapshot', or exempt `columns` in the sentence.",
+   "note": "Wording only.",
+   "id": "CV12-144",
+   "file": "src/sim.jl"
+  },
+  {
+   "line": 3039,
+   "kind": "cite",
+   "claim": "port/state/modes on the simulation cite §7.3, 'Discrete state, modes, and workspace'; that section treats stores and modes but not the path-addressed read of a port, which the spec treats only in Appendix B",
+   "evidence": "src/sim.jl:3027 comment; spec 2341-2430; Appendix B 15137-15147 repeats the cite",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Cite §11.2 (the read of a port off the table) or add the read to §7.3, and mirror it in Appendix B and model.jl.",
+   "note": "Low weight: state and modes do belong to §7.3.",
+   "id": "CV12-154",
+   "file": "src/sim.jl"
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV12-001",
+   "file": "src/sim.jl",
+   "line": 285,
+   "kind": "docstring",
+   "claim": "Simulation: four fields model, plane, control, run (probe fieldnames)",
+   "evidence": "probe:156"
+  },
+  {
+   "id": "CV12-003",
+   "file": "src/sim.jl",
+   "line": 358,
+   "kind": "docstring",
+   "claim": "Simulation(model): join_timeout non-positive or non-Real is ArgumentInvalid :range",
+   "evidence": "probe:145-146"
+  },
+  {
+   "id": "CV12-004",
+   "file": "src/sim.jl",
+   "line": 358,
+   "kind": "docstring",
+   "claim": "A model already claimed is ArgumentInvalid :claimed before anything is allocated",
+   "evidence": "probe:148"
+  },
+  {
+   "id": "CV12-005",
+   "file": "src/sim.jl",
+   "line": 358,
+   "kind": "docstring",
+   "claim": "A model not at :built is ArgumentInvalid :not_built",
+   "evidence": "probe:173"
+  },
+  {
+   "id": "CV12-006",
+   "file": "src/sim.jl",
+   "line": 399,
+   "kind": "map",
+   "claim": "code_map: warnings on the simulation forwards to the model's",
+   "evidence": "src/sim.jl:399; src/model.jl:973"
+  },
+  {
+   "id": "CV12-007",
+   "file": "src/sim.jl",
+   "line": 417,
+   "kind": "docstring",
+   "claim": "pace!/run!: pace a positive real, Inf admitted, else ArgumentInvalid :range argument :pace",
+   "evidence": "probe:39-44; src/sim.jl:417"
+  },
+  {
+   "id": "CV12-009",
+   "file": "src/sim.jl",
+   "line": 420,
+   "kind": "docstring",
+   "claim": "margin!/run!: margin a non-negative real, Inf admitted, else ArgumentInvalid :range",
+   "evidence": "probe:45-48; src/sim.jl:420"
+  },
+  {
+   "id": "CV12-010",
+   "file": "src/sim.jl",
+   "line": 548,
+   "kind": "docstring",
+   "claim": "mode returns :live or :replay, read off the run's feed, never stored",
+   "evidence": "src/sim.jl:548"
+  },
+  {
+   "id": "CV12-011",
+   "file": "src/sim.jl",
+   "line": 548,
+   "kind": "docstring",
+   "claim": "mode: while :replay the recording bounds every advance and the mode returns to :live at its last frame",
+   "evidence": "probe:188; src/sim.jl:1585,1597"
+  },
+  {
+   "id": "CV12-012",
+   "file": "src/sim.jl",
+   "line": 548,
+   "kind": "docstring",
+   "claim": "mode: init!, overlay!, restore! set :live; replay! sets :replay, under restore = false too",
+   "evidence": "probe:111,209-211"
+  },
+  {
+   "id": "CV12-013",
+   "file": "src/sim.jl",
+   "line": 548,
+   "kind": "docstring",
+   "claim": "mode: live! changes it alone, only while the simulation may advance",
+   "evidence": "src/sim.jl:1444; probe:52"
+  },
+  {
+   "id": "CV12-014",
+   "file": "src/sim.jl",
+   "line": 548,
+   "kind": "docstring",
+   "claim": "mode: under :live the inputs come from the staging cells that stage! and devices write",
+   "evidence": "src/sim.jl:2656-2690"
+  },
+  {
+   "id": "CV12-015",
+   "file": "src/sim.jl",
+   "line": 548,
+   "kind": "docstring",
+   "claim": "mode(sim) -> Symbol mirrors the method",
+   "evidence": "src/sim.jl:548"
+  },
+  {
+   "id": "CV12-016",
+   "file": "src/sim.jl",
+   "line": 601,
+   "kind": "docstring",
+   "claim": "advance gate: built is MissingInit; running, stopped, errored are ServiceLifecycle with legal [:initialized]",
+   "evidence": "probe:52-54,122-123; src/sim.jl:601-613"
+  },
+  {
+   "id": "CV12-018",
+   "file": "src/sim.jl",
+   "line": 654,
+   "kind": "docstring",
+   "claim": "_reset_periphery!: drops staged batches of every roster cell and the harness cell, resets accounts, keeps cells and pause flag",
+   "evidence": "probe:178,179,183; src/sim.jl:654-661"
+  },
+  {
+   "id": "CV12-019",
+   "file": "src/sim.jl",
+   "line": 668,
+   "kind": "docstring",
+   "claim": "recording keywords: trace and log Bool, log_every integer >= 1, log_max integer >= 1 or Inf; one collected throw",
+   "evidence": "probe:57; src/sim.jl:668-683"
+  },
+  {
+   "id": "CV12-020",
+   "file": "src/sim.jl",
+   "line": 668,
+   "kind": "cite",
+   "claim": "_check_recording cites §9.1, D-229, D-261 for the collected refusal of the recording keywords",
+   "evidence": "design/log.md D-229, D-261"
+  },
+  {
+   "id": "CV12-021",
+   "file": "src/sim.jl",
+   "line": 697,
+   "kind": "docstring",
+   "claim": "_open_run!: fresh log and trace per run; trace nothing under the switch; trace length starts at the frame index",
+   "evidence": "probe:189-191,201; src/sim.jl:697-703"
+  },
+  {
+   "id": "CV12-022",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! signature mirrors the method, return Nothing",
+   "evidence": "src/sim.jl:964-965"
+  },
+  {
+   "id": "CV12-024",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! overwrites the named stores and keeps every other store, the clock and the event priors",
+   "evidence": "src/model.jl:405-409,474-483; probe:175"
+  },
+  {
+   "id": "CV12-025",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! merges a partial store entry onto the current store",
+   "evidence": "src/sim.jl:968-969; src/model.jl:487-490"
+  },
+  {
+   "id": "CV12-026",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! admits root-input entries without covering every root input",
+   "evidence": "probe:174,82"
+  },
+  {
+   "id": "CV12-027",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! settles projection and events, no discrete output stage or s_update; held output stays until next tick",
+   "evidence": "probe:230; src/model.jl:474-483"
+  },
+  {
+   "id": "CV12-028",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! publishes one snapshot at the stopped run's t under its last ordinal",
+   "evidence": "probe:81,174; src/sim.jl:970-972"
+  },
+  {
+   "id": "CV12-029",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! takes the trace header after the settling, so replay! reproduces the overlaid trajectory",
+   "evidence": "probe:208; src/sim.jl:975-978"
+  },
+  {
+   "id": "CV12-030",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! drops staged batches and clears the stop word",
+   "evidence": "probe:178,181"
+  },
+  {
+   "id": "CV12-031",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! legal where checkpoint is; else ServiceLifecycle or CheckpointMidFrame",
+   "evidence": "probe:50; src/sim.jl:903-908,965-966"
+  },
+  {
+   "id": "CV12-032",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! recording keyword out of range is ArgumentInvalid, before any write",
+   "evidence": "probe:77,84; src/sim.jl:967"
+  },
+  {
+   "id": "CV12-033",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! refuses an unresolvable condition with the four condition kinds the docstring names",
+   "evidence": "src/conditions.jl:178,396,608; src/sim.jl:968"
+  },
+  {
+   "id": "CV12-034",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "docstring",
+   "claim": "overlay! throw in the settling is StepError host :overlay and leaves the simulation built, no trace header",
+   "evidence": "src/model.jl:476-481; src/sim.jl:970-975"
+  },
+  {
+   "id": "CV12-035",
+   "file": "src/sim.jl",
+   "line": 964,
+   "kind": "cite",
+   "claim": "overlay! comment cites D-273 for 'no discrete output stage and no s_update'; D-273 rules the at-rest reading of discrete stores",
+   "evidence": "design/log.md D-273; spec 10705-10712"
+  },
+  {
+   "id": "CV12-036",
+   "file": "src/sim.jl",
+   "line": 995,
+   "kind": "map",
+   "claim": "code_map: _enter_checkpoint! opens the run before the model's inner restore",
+   "evidence": "src/sim.jl:995-1003"
+  },
+  {
+   "id": "CV12-038",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore! drops batches, fresh run with checkpoint as header, one snapshot at the checkpoint's t, mode :live",
+   "evidence": "probe:87-88,209; src/sim.jl:1063-1078"
+  },
+  {
+   "id": "CV12-039",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore! runs no boundary zero; the clock and boundary ordinal continue the original's",
+   "evidence": "probe:88; src/sim.jl:1011-1016"
+  },
+  {
+   "id": "CV12-040",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore!(sim, model_state) opens a fresh trajectory at the state's frame, publishing under ordinal 0",
+   "evidence": "probe:91; src/sim.jl:1087-1090"
+  },
+  {
+   "id": "CV12-041",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore! legal where init! is: ServiceLifecycle while running and once errored",
+   "evidence": "src/sim.jl:1065-1070"
+  },
+  {
+   "id": "CV12-042",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore! recording keyword out of range is ArgumentInvalid",
+   "evidence": "probe:89; src/sim.jl:1071"
+  },
+  {
+   "id": "CV12-043",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore! mismatches and off-grid clock collected into one throw before any write",
+   "evidence": "src/sim.jl:1072-1075; src/model.jl:1212-1262"
+  },
+  {
+   "id": "CV12-044",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore! of a ModelState at another scalar is CheckpointMismatch",
+   "evidence": "src/sim.jl:1099-1101"
+  },
+  {
+   "id": "CV12-045",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "docstring",
+   "claim": "restore! throw in the copy or publication is StepError host :restore and leaves the simulation built",
+   "evidence": "src/model.jl:1302,1328"
+  },
+  {
+   "id": "CV12-046",
+   "file": "src/sim.jl",
+   "line": 1063,
+   "kind": "cite",
+   "claim": "restore! cites §9.2, §12.3, §12.6, D-230, D-261, D-274, D-318, D-319; each treats the restore, ordinal, door or claim",
+   "evidence": "design/log.md D-274, D-318, D-319"
+  },
+  {
+   "id": "CV12-047",
+   "file": "src/sim.jl",
+   "line": 1073,
+   "kind": "docstring",
+   "claim": "restore! signature (Checkpoint and ModelState forms) mirrors the two methods",
+   "evidence": "src/sim.jl:1063,1080"
+  },
+  {
+   "id": "CV12-050",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: §13.5 block lists four sources, StopPolicy, TerminationRecord; ModelRequestedStop has path, port, reason",
+   "evidence": "probe:159-161; src/sim.jl:76-80"
+  },
+  {
+   "id": "CV12-051",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: Simulation has four fields, model a Model{Float64} by type; Run holds frame and boundary counters",
+   "evidence": "probe:156-157; src/sim.jl:228-235,285-290"
+  },
+  {
+   "id": "CV12-052",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: Simulation(model) claims by compare-and-swap, refuses claimed or not-:built as ArgumentInvalid",
+   "evidence": "src/sim.jl:358-381"
+  },
+  {
+   "id": "CV12-053",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: three sugar forms compose through a Float64 model",
+   "evidence": "src/sim.jl:389-396"
+  },
+  {
+   "id": "CV12-054",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: lifecycle gates assert_stopped, assert_configurable, _assert_advanceable",
+   "evidence": "src/sim.jl:601,623,628"
+  },
+  {
+   "id": "CV12-055",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: checkpoint over _assert_at_rest; restore! two forms via _check_checkpoint!/_check_grid!, scalar fallback",
+   "evidence": "src/sim.jl:892-908,1063-1101"
+  },
+  {
+   "id": "CV12-056",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: trim! and linearize gated on lifecycle, trim! commits through init!, misuse forms forward",
+   "evidence": "src/sim.jl:1123-1136,1159-1174"
+  },
+  {
+   "id": "CV12-057",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: run bracket _init_devices!, _finish!, _tail!, _sweep_tail!, _discard_late_staging! as described",
+   "evidence": "src/sim.jl:1837,1865,1895,1955,2760"
+  },
+  {
+   "id": "CV12-058",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: pause and pacing verbs, thread-budget check, staging/drain/publish entries as described",
+   "evidence": "src/sim.jl:2328-2436,1801,2620-2812"
+  },
+  {
+   "id": "CV12-059",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: series and Series, _column, _SERIES_FIELDS, ReadSetMisuse fallback as described",
+   "evidence": "src/sim.jl:2913-2986"
+  },
+  {
+   "id": "CV12-060",
+   "file": "src/sim.jl",
+   "line": 1192,
+   "kind": "map",
+   "claim": "code_map: publication's task_state read off run_tasks by _status",
+   "evidence": "src/sim.jl:2829-2843"
+  },
+  {
+   "id": "CV12-061",
+   "file": "src/sim.jl",
+   "line": 1195,
+   "kind": "docstring",
+   "claim": "_compile_feed: header disagreements thrown before any record is read; records then collected in turn",
+   "evidence": "src/sim.jl:1195-1220"
+  },
+  {
+   "id": "CV12-062",
+   "file": "src/sim.jl",
+   "line": 1195,
+   "kind": "docstring",
+   "claim": "_compile_feed under restore = false checks origin and a frame from the header's up to one short of the last",
+   "evidence": "src/sim.jl:1203-1212"
+  },
+  {
+   "id": "CV12-063",
+   "file": "src/sim.jl",
+   "line": 1195,
+   "kind": "map",
+   "claim": "code_map: replay's entry pass is _compile_feed (listed under the trace.jl entry)",
+   "evidence": "design/code_map.md:1464; src/sim.jl:1195"
+  },
+  {
+   "id": "CV12-064",
+   "file": "src/sim.jl",
+   "line": 1195,
+   "kind": "cite",
+   "claim": "_compile_feed cites D-217 for collecting replay's entry pass; D-217 records the mismatch diagnostics are collected",
+   "evidence": "design/log.md D-217"
+  },
+  {
+   "id": "CV12-065",
+   "file": "src/sim.jl",
+   "line": 1195,
+   "kind": "cite",
+   "claim": "_compile_feed cites D-101, D-317, D-319 for replay as the ordinary loop and the nominal scalar",
+   "evidence": "design/log.md D-101, D-317, D-319"
+  },
+  {
+   "id": "CV12-066",
+   "file": "src/sim.jl",
+   "line": 1334,
+   "kind": "docstring",
+   "claim": "replay! lead: margin, ignore_stop_requests, log, log_every, log_max are covered by combined # Keywords bullets",
+   "evidence": "src/sim.jl:1334-1339; bullets 'pace, margin', 't_end, ignore_stop_requests', 'trace, log, log_every, log_max'"
+  },
+  {
+   "id": "CV12-068",
+   "file": "src/sim.jl",
+   "line": 1443,
+   "kind": "docstring",
+   "claim": "live! detaches the recording and sets :live, changing nothing else",
+   "evidence": "probe:105-106; src/sim.jl:1443-1456"
+  },
+  {
+   "id": "CV12-069",
+   "file": "src/sim.jl",
+   "line": 1443,
+   "kind": "docstring",
+   "claim": "live! legal only on an initialized :replay simulation; MissingInit, ServiceLifecycle, ArgumentInvalid :not_replaying as stated",
+   "evidence": "probe:52,61,107,122; src/sim.jl:1444-1448"
+  },
+  {
+   "id": "CV12-070",
+   "file": "src/sim.jl",
+   "line": 1443,
+   "kind": "cite",
+   "claim": "live! cites §12.6, §12.7, D-218, D-219 for the manual door to :live",
+   "evidence": "design/log.md D-218, D-219"
+  },
+  {
+   "id": "CV12-071",
+   "file": "src/sim.jl",
+   "line": 1443,
+   "kind": "docstring",
+   "claim": "live!(sim) -> Nothing mirrors the method",
+   "evidence": "src/sim.jl:1443"
+  },
+  {
+   "id": "CV12-072",
+   "file": "src/sim.jl",
+   "line": 1585,
+   "kind": "docstring",
+   "claim": "_replay_bound caps an advance's frame budget at the recording's last frame",
+   "evidence": "src/sim.jl:1585-1589; probe:188"
+  },
+  {
+   "id": "CV12-074",
+   "file": "src/sim.jl",
+   "line": 1597,
+   "kind": "docstring",
+   "claim": "_settle_mode! detaches the feed exactly when the halt consumed the recording's last frame",
+   "evidence": "src/sim.jl:1597-1604; probe:188"
+  },
+  {
+   "id": "CV12-075",
+   "file": "src/sim.jl",
+   "line": 1785,
+   "kind": "docstring",
+   "claim": "_reset_accounts! resets every roster writer's account plus harness and loop, not the cells",
+   "evidence": "src/sim.jl:1785-1792"
+  },
+  {
+   "id": "CV12-077",
+   "file": "src/sim.jl",
+   "line": 1801,
+   "kind": "docstring",
+   "claim": "report_thread_budget!: ThreadBudget into the loop's cell when threads < device tasks + 1; deviceless never warns",
+   "evidence": "src/sim.jl:1801-1806"
+  },
+  {
+   "id": "CV12-078",
+   "file": "src/sim.jl",
+   "line": 1801,
+   "kind": "docstring",
+   "claim": "step! spawns no task and never checks the thread budget",
+   "evidence": "src/sim.jl:2220-2300 (no call)"
+  },
+  {
+   "id": "CV12-079",
+   "file": "src/sim.jl",
+   "line": 1801,
+   "kind": "cite",
+   "claim": "report_thread_budget! cites §12.2, whose 'The thread budget' subsection treats the check",
+   "evidence": "spec 9842"
+  },
+  {
+   "id": "CV12-080",
+   "file": "src/sim.jl",
+   "line": 1837,
+   "kind": "docstring",
+   "claim": "_init_devices!: init! once per roster entry in attachment order on the calling task, each in its own bracket",
+   "evidence": "src/sim.jl:1837-1845"
+  },
+  {
+   "id": "CV12-081",
+   "file": "src/sim.jl",
+   "line": 1837,
+   "kind": "docstring",
+   "claim": "_init_devices!: a throw releases the device, reports DeviceCrash, spawns no task; should_abort requests a stop",
+   "evidence": "src/sim.jl:1840-1851"
+  },
+  {
+   "id": "CV12-082",
+   "file": "src/sim.jl",
+   "line": 1837,
+   "kind": "docstring",
+   "claim": "_init_devices!: an InterruptException sets the :interrupt stop in place of the report",
+   "evidence": "src/sim.jl:1845-1847"
+  },
+  {
+   "id": "CV12-083",
+   "file": "src/sim.jl",
+   "line": 1837,
+   "kind": "docstring",
+   "claim": "_init_devices! lists each entry in live before its init! and removes it on a throw",
+   "evidence": "src/sim.jl:1839,1844"
+  },
+  {
+   "id": "CV12-084",
+   "file": "src/sim.jl",
+   "line": 1837,
+   "kind": "cite",
+   "claim": "_init_devices! cites §12.4, §11.1, §11.6 and D-268 for the pre-spawn bracket and the operator interrupt",
+   "evidence": "spec 10119, 10218"
+  },
+  {
+   "id": "CV12-085",
+   "file": "src/sim.jl",
+   "line": 1895,
+   "kind": "docstring",
+   "claim": "_tail!: unblock! per entry, a throw is warned and the tail proceeds",
+   "evidence": "src/sim.jl:1899-1905"
+  },
+  {
+   "id": "CV12-086",
+   "file": "src/sim.jl",
+   "line": 1895,
+   "kind": "docstring",
+   "claim": "_tail!: one shared join_timeout deadline; a task past it is reported as DeviceJoinTimeout into the loop cell",
+   "evidence": "src/sim.jl:1907-1914,1936-1941"
+  },
+  {
+   "id": "CV12-087",
+   "file": "src/sim.jl",
+   "line": 1895,
+   "kind": "docstring",
+   "claim": "_tail!: an interrupt collapses the remaining joins, reports each unfinished task, propagates nothing",
+   "evidence": "src/sim.jl:1916-1930"
+  },
+  {
+   "id": "CV12-088",
+   "file": "src/sim.jl",
+   "line": 1895,
+   "kind": "cite",
+   "claim": "_tail! cites §12.4 and D-198 for the join cap",
+   "evidence": "spec 9983; design/log.md D-198"
+  },
+  {
+   "id": "CV12-090",
+   "file": "src/sim.jl",
+   "line": 1955,
+   "kind": "docstring",
+   "claim": "_sweep_tail! folds every writer's cell, harness and loop (with the model's frame cell) and returns ResidueRecords",
+   "evidence": "src/sim.jl:1955-1971"
+  },
+  {
+   "id": "CV12-091",
+   "file": "src/sim.jl",
+   "line": 1955,
+   "kind": "cite",
+   "claim": "_sweep_tail! cites §11.8, D-201 and D-203 for the run's-end sweep and the residue record",
+   "evidence": "spec 9644; design/log.md D-201, D-203"
+  },
+  {
+   "id": "CV12-092",
+   "file": "src/sim.jl",
+   "line": 1973,
+   "kind": "docstring",
+   "claim": "_residue!: a quiet account yields no record; a noisy one hands over its pending vector and is logged entry by entry",
+   "evidence": "src/sim.jl:1973-1990"
+  },
+  {
+   "id": "CV12-093",
+   "file": "src/sim.jl",
+   "line": 2152,
+   "kind": "docstring",
+   "claim": "_interrupt_source: a request found holding wins, otherwise the :interrupt stop through the stop word",
+   "evidence": "src/sim.jl:2152-2156"
+  },
+  {
+   "id": "CV12-094",
+   "file": "src/sim.jl",
+   "line": 2328,
+   "kind": "docstring",
+   "claim": "stop!(sim) sets the stop word with issuer :code, recorded as ControlRequestedStop(:code)",
+   "evidence": "probe:116; src/sim.jl:2328"
+  },
+  {
+   "id": "CV12-095",
+   "file": "src/sim.jl",
+   "line": 2328,
+   "kind": "docstring",
+   "claim": "stop!: the frame in flight completes and publishes; the loop sees the word at the next frame top",
+   "evidence": "src/sim.jl:2100-2106"
+  },
+  {
+   "id": "CV12-096",
+   "file": "src/sim.jl",
+   "line": 2328,
+   "kind": "docstring",
+   "claim": "stop!: a loop waiting in a pause is woken",
+   "evidence": "src/control.jl:81-88"
+  },
+  {
+   "id": "CV12-097",
+   "file": "src/sim.jl",
+   "line": 2328,
+   "kind": "docstring",
+   "claim": "stop!: the first issuer wins",
+   "evidence": "src/control.jl:82"
+  },
+  {
+   "id": "CV12-098",
+   "file": "src/sim.jl",
+   "line": 2328,
+   "kind": "docstring",
+   "claim": "stop!: no effect on a stopped simulation; a stop before run! is dropped since run! clears the word",
+   "evidence": "probe:117,121; src/sim.jl:654-661,1644"
+  },
+  {
+   "id": "CV12-099",
+   "file": "src/sim.jl",
+   "line": 2328,
+   "kind": "docstring",
+   "claim": "stop! before step! ends that call with 0 frames and the simulation stopped",
+   "evidence": "probe:115-116"
+  },
+  {
+   "id": "CV12-100",
+   "file": "src/sim.jl",
+   "line": 2328,
+   "kind": "docstring",
+   "claim": "a device issues the same stop through stop!(handle)",
+   "evidence": "src/devices.jl:253"
+  },
+  {
+   "id": "CV12-101",
+   "file": "src/sim.jl",
+   "line": 2345,
+   "kind": "docstring",
+   "claim": "pause!(sim) sets the flag in any lifecycle state",
+   "evidence": "probe:34-35; src/sim.jl:2345"
+  },
+  {
+   "id": "CV12-102",
+   "file": "src/sim.jl",
+   "line": 2345,
+   "kind": "docstring",
+   "claim": "pause!: a pause before run! starts the run paused and step! waits the same way",
+   "evidence": "src/sim.jl:2100-2101"
+  },
+  {
+   "id": "CV12-103",
+   "file": "src/sim.jl",
+   "line": 2345,
+   "kind": "docstring",
+   "claim": "pause!: run!, replay! and a stopping step! clear the flag; a call that opens a run keeps it",
+   "evidence": "src/sim.jl:1865-1871; probe:179,182"
+  },
+  {
+   "id": "CV12-104",
+   "file": "src/sim.jl",
+   "line": 2345,
+   "kind": "cite",
+   "claim": "pause!, resume!, paused cite §12.1 and D-268 (pause verbs on the simulation)",
+   "evidence": "design/log.md D-268; spec 9755-9770"
+  },
+  {
+   "id": "CV12-105",
+   "file": "src/sim.jl",
+   "line": 2357,
+   "kind": "docstring",
+   "claim": "resume! clears the flag, wakes a waiting loop, legal in any state",
+   "evidence": "src/sim.jl:2357-2368"
+  },
+  {
+   "id": "CV12-106",
+   "file": "src/sim.jl",
+   "line": 2378,
+   "kind": "docstring",
+   "claim": "paused returns the flag, legal in every state",
+   "evidence": "probe:33,35"
+  },
+  {
+   "id": "CV12-107",
+   "file": "src/sim.jl",
+   "line": 2396,
+   "kind": "docstring",
+   "claim": "pace!: positive real, Inf turns pacing off, anything else ArgumentInvalid; legal in any state",
+   "evidence": "probe:39-44"
+  },
+  {
+   "id": "CV12-108",
+   "file": "src/sim.jl",
+   "line": 2396,
+   "kind": "docstring",
+   "claim": "pace!: change takes effect at the next frame top; run! and replay! write their own pace; step! never waits",
+   "evidence": "src/control.jl:162-164; src/sim.jl:1573,1404"
+  },
+  {
+   "id": "CV12-109",
+   "file": "src/sim.jl",
+   "line": 2396,
+   "kind": "cite",
+   "claim": "pace!, margin!, pace, margin cite §10.7, §12.1 and D-269 on pacing's spellings",
+   "evidence": "design/log.md D-269; spec 7686, 9708"
+  },
+  {
+   "id": "CV12-110",
+   "file": "src/sim.jl",
+   "line": 2396,
+   "kind": "docstring",
+   "claim": "pace!, margin!, pace, margin signatures mirror the methods",
+   "evidence": "src/sim.jl:2396,2412,2424,2436"
+  },
+  {
+   "id": "CV12-111",
+   "file": "src/sim.jl",
+   "line": 2412,
+   "kind": "docstring",
+   "claim": "margin!: non-negative real, 0 pure sleep, Inf pure spin, else ArgumentInvalid; legal in any state",
+   "evidence": "probe:45-48; src/control.jl:195-199"
+  },
+  {
+   "id": "CV12-112",
+   "file": "src/sim.jl",
+   "line": 2412,
+   "kind": "docstring",
+   "claim": "margin!: a change leaves the pacing schedule as it was",
+   "evidence": "src/control.jl:162-199 (margin read only in the sleep split)"
+  },
+  {
+   "id": "CV12-113",
+   "file": "src/sim.jl",
+   "line": 2424,
+   "kind": "docstring",
+   "claim": "pace(sim) returns a Float64, legal in every state",
+   "evidence": "probe:31,43"
+  },
+  {
+   "id": "CV12-114",
+   "file": "src/sim.jl",
+   "line": 2436,
+   "kind": "docstring",
+   "claim": "margin(sim) returns the margin, legal in every state",
+   "evidence": "probe:32"
+  },
+  {
+   "id": "CV12-115",
+   "file": "src/sim.jl",
+   "line": 2574,
+   "kind": "docstring",
+   "claim": "detach! removes the entry and releases its claim; the id is never reused",
+   "evidence": "probe:134,139-140"
+  },
+  {
+   "id": "CV12-116",
+   "file": "src/sim.jl",
+   "line": 2574,
+   "kind": "docstring",
+   "claim": "detach! refused as ServiceLifecycle while running and once errored; unknown device is NotAttached",
+   "evidence": "probe:133; src/sim.jl:2576-2579"
+  },
+  {
+   "id": "CV12-117",
+   "file": "src/sim.jl",
+   "line": 2574,
+   "kind": "docstring",
+   "claim": "detach!: the old handle stays valid for reads; stage! and report! are DeviceContractMismatch",
+   "evidence": "probe:135-137"
+  },
+  {
+   "id": "CV12-118",
+   "file": "src/sim.jl",
+   "line": 2574,
+   "kind": "docstring",
+   "claim": "detach! discards the device's undrained batch with its entry",
+   "evidence": "src/sim.jl:2580-2585"
+  },
+  {
+   "id": "CV12-119",
+   "file": "src/sim.jl",
+   "line": 2574,
+   "kind": "cite",
+   "claim": "detach! comment cites D-244, which refuses a detached handle's write primitives by name",
+   "evidence": "design/log.md D-244; src/devices.jl:78-81"
+  },
+  {
+   "id": "CV12-120",
+   "file": "src/sim.jl",
+   "line": 2574,
+   "kind": "docstring",
+   "claim": "detach!(sim, dev::AbstractDevice) -> Nothing mirrors the method",
+   "evidence": "src/sim.jl:2574"
+  },
+  {
+   "id": "CV12-121",
+   "file": "src/sim.jl",
+   "line": 2620,
+   "kind": "docstring",
+   "claim": "stage! stages a face => value batch through the harness writer; it applies at the next frame top",
+   "evidence": "src/sim.jl:2620-2626; probe:196"
+  },
+  {
+   "id": "CV12-122",
+   "file": "src/sim.jl",
+   "line": 2620,
+   "kind": "docstring",
+   "claim": "stage!: a call that opens a run drops the batch silently",
+   "evidence": "probe:178,197"
+  },
+  {
+   "id": "CV12-123",
+   "file": "src/sim.jl",
+   "line": 2620,
+   "kind": "docstring",
+   "claim": "stage!: under :replay the frame top discards it; a late batch is discarded as the advance ends",
+   "evidence": "src/sim.jl:2706-2770"
+  },
+  {
+   "id": "CV12-124",
+   "file": "src/sim.jl",
+   "line": 2620,
+   "kind": "docstring",
+   "claim": "stage!: batches merge, newest value wins per face",
+   "evidence": "src/dataplane.jl:450-456"
+  },
+  {
+   "id": "CV12-125",
+   "file": "src/sim.jl",
+   "line": 2620,
+   "kind": "docstring",
+   "claim": "stage!: face outside the surface is ClaimedFaceEntry when claimed, OutOfClaimEntry when nothing claims it",
+   "evidence": "src/dataplane.jl:416-440; probe:207"
+  },
+  {
+   "id": "CV12-126",
+   "file": "src/sim.jl",
+   "line": 2620,
+   "kind": "docstring",
+   "claim": "stage!: unconvertible value is EntryTypeMismatch, rest stands, findings go to the harness cell",
+   "evidence": "probe:132,207"
+  },
+  {
+   "id": "CV12-127",
+   "file": "src/sim.jl",
+   "line": 2620,
+   "kind": "docstring",
+   "claim": "stage!(sim, writes::Pair...) -> Nothing mirrors the method",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "CV12-128",
+   "file": "src/sim.jl",
+   "line": 2656,
+   "kind": "docstring",
+   "claim": "drain!: once per frame at its top, attachment order with harness last, trace drain count advanced once first",
+   "evidence": "src/sim.jl:2656-2690"
+  },
+  {
+   "id": "CV12-129",
+   "file": "src/sim.jl",
+   "line": 2656,
+   "kind": "docstring",
+   "claim": "drain!: under a feed it reads the trace in place of the cells; returns whether a batch reached the table",
+   "evidence": "src/sim.jl:2670-2690"
+  },
+  {
+   "id": "CV12-130",
+   "file": "src/sim.jl",
+   "line": 2656,
+   "kind": "cite",
+   "claim": "drain! docstring cites D-274 for 'replay's one substitution'; D-274 states D-101's two substitutions become one",
+   "evidence": "design/log.md D-274"
+  },
+  {
+   "id": "CV12-131",
+   "file": "src/sim.jl",
+   "line": 2656,
+   "kind": "cite",
+   "claim": "drain! docstring cites D-176 for the trace's sparse conversion site and D-447 for the drain's report",
+   "evidence": "design/log.md D-176, D-447"
+  },
+  {
+   "id": "CV12-132",
+   "file": "src/sim.jl",
+   "line": 2706,
+   "kind": "docstring",
+   "claim": "_replay_drain!: every cell taken and dropped with ReplayDiscardedStaging; arrived feed records apply and are re-recorded",
+   "evidence": "src/sim.jl:2706-2742"
+  },
+  {
+   "id": "CV12-133",
+   "file": "src/sim.jl",
+   "line": 2745,
+   "kind": "docstring",
+   "claim": "_discard_staged! swaps the cell to nothing and reports ReplayDiscardedStaging with the masked faces",
+   "evidence": "src/sim.jl:2745-2756"
+  },
+  {
+   "id": "CV12-134",
+   "file": "src/sim.jl",
+   "line": 2760,
+   "kind": "docstring",
+   "claim": "_discard_late_staging! takes the cells at a replaying advance's halt, naming the next frame",
+   "evidence": "src/sim.jl:2760-2770"
+  },
+  {
+   "id": "CV12-135",
+   "file": "src/sim.jl",
+   "line": 2760,
+   "kind": "cite",
+   "claim": "_discard_late_staging! cites D-451, which discards a replaying advance's late staging at its halt",
+   "evidence": "design/log.md D-451"
+  },
+  {
+   "id": "CV12-136",
+   "file": "src/sim.jl",
+   "line": 2789,
+   "kind": "docstring",
+   "claim": "publish!: builds the snapshot privately, release-stores to latest, logs it, then increments the counter under the lock",
+   "evidence": "src/sim.jl:2789-2812"
+  },
+  {
+   "id": "CV12-137",
+   "file": "src/sim.jl",
+   "line": 2789,
+   "kind": "docstring",
+   "claim": "publish!: the snapshot's ordinal is the run's boundary counter",
+   "evidence": "src/sim.jl:2793-2797; probe:62,66"
+  },
+  {
+   "id": "CV12-138",
+   "file": "src/sim.jl",
+   "line": 2789,
+   "kind": "cite",
+   "claim": "publish! cites §11.2, §10.3, §9.8, §12.3, D-193 and D-230; each treats publication, consistency, scope, counter, liveness, ordinal",
+   "evidence": "spec headings; design/log.md D-193, D-230"
+  },
+  {
+   "id": "CV12-139",
+   "file": "src/sim.jl",
+   "line": 2829,
+   "kind": "docstring",
+   "claim": "_status: writers in drain order with the pacer's record; :done inside a run and :none outside for a device with no task",
+   "evidence": "src/sim.jl:2829-2843"
+  },
+  {
+   "id": "CV12-140",
+   "file": "src/sim.jl",
+   "line": 2857,
+   "kind": "docstring",
+   "claim": "latest returns the newest snapshot, nothing before any publication",
+   "evidence": "probe:28; src/sim.jl:2857"
+  },
+  {
+   "id": "CV12-141",
+   "file": "src/sim.jl",
+   "line": 2879,
+   "kind": "docstring",
+   "claim": "logged returns first, thinned middle and latest each once, oldest first",
+   "evidence": "probe:63,67,222-223; src/sim.jl:2879-2891"
+  },
+  {
+   "id": "CV12-142",
+   "file": "src/sim.jl",
+   "line": 2879,
+   "kind": "docstring",
+   "claim": "logged: element type is the run's concrete snapshot type even when empty; empty under log = false",
+   "evidence": "probe:29,64,69,171"
+  },
+  {
+   "id": "CV12-143",
+   "file": "src/sim.jl",
+   "line": 2879,
+   "kind": "docstring",
+   "claim": "logged refused as ServiceLifecycle while running",
+   "evidence": "src/sim.jl:2880"
+  },
+  {
+   "id": "CV12-145",
+   "file": "src/sim.jl",
+   "line": 2913,
+   "kind": "docstring",
+   "claim": "Series: four fields t, frame, boundary, columns; columns read as properties; propertynames lists fields then labels",
+   "evidence": "probe:70,162"
+  },
+  {
+   "id": "CV12-146",
+   "file": "src/sim.jl",
+   "line": 2913,
+   "kind": "cite",
+   "claim": "Series and getproperty cite D-474 and D-407, which treat columns as properties and the log read as columns",
+   "evidence": "design/log.md D-407, D-474"
+  },
+  {
+   "id": "CV12-147",
+   "file": "src/sim.jl",
+   "line": 2956,
+   "kind": "docstring",
+   "claim": "series gathers the log into one typed column per read-set entry; empty and typed before publication",
+   "evidence": "probe:70,172"
+  },
+  {
+   "id": "CV12-148",
+   "file": "src/sim.jl",
+   "line": 2956,
+   "kind": "docstring",
+   "claim": "series: bare NamedTuple is ReadSetMisuse; labels t, frame, boundary, columns are ReadSetMisuse :reserved_label",
+   "evidence": "probe:71-72,169"
+  },
+  {
+   "id": "CV12-149",
+   "file": "src/sim.jl",
+   "line": 2956,
+   "kind": "docstring",
+   "claim": "series: unknown path is PathResolution; other unresolved selector is ReadResolution",
+   "evidence": "probe:73,168"
+  },
+  {
+   "id": "CV12-150",
+   "file": "src/sim.jl",
+   "line": 2956,
+   "kind": "docstring",
+   "claim": "series refused as ServiceLifecycle while running",
+   "evidence": "src/sim.jl:2963"
+  },
+  {
+   "id": "CV12-151",
+   "file": "src/sim.jl",
+   "line": 2956,
+   "kind": "docstring",
+   "claim": "series(sim, bare NamedTuple) method gives ReadSetMisuse :not_a_read_set",
+   "evidence": "probe:72; src/sim.jl:2974"
+  },
+  {
+   "id": "CV12-152",
+   "file": "src/sim.jl",
+   "line": 2956,
+   "kind": "docstring",
+   "claim": "series(sim, read_set::Reads) -> Series mirrors the method",
+   "evidence": "src/sim.jl:2956"
+  },
+  {
+   "id": "CV12-153",
+   "file": "src/sim.jl",
+   "line": 2980,
+   "kind": "docstring",
+   "claim": "_column returns a typed empty vector for an empty log",
+   "evidence": "probe:172; src/sim.jl:2980-2986"
+  },
+  {
+   "id": "CV12-155",
+   "file": "src/sim.jl",
+   "line": 3039,
+   "kind": "map",
+   "claim": "code_map: one-line forwarders for port, state, modes, phase_bodies, apply!, evaluate!, integrate!, boundary! family",
+   "evidence": "src/sim.jl:638-645,3039-3042"
+  }
+ ],
+ "counts": {
+  "docstring": 116,
+  "map": 19,
+  "surface": 1,
+  "cite": 19
+ },
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV12/probe.jl, run 4 times. IDs run CV12-001 to CV12-155 across rows and ok.\n\nScope. I took out functions whose comments cite §13 or §14 (init!, checkpoint, run!, step!, replay!, lifecycle, termination, the §13.5 sources, _advance!, _run_body!, attach!, trace, and the like). Rows on those exist only for the lead list (Simulation, trim!, linearize) and the map.\n\nLeads. Five became findings: Simulation, overlay!, restore!, trim!, linearize each have keywords on the signature that no `# Keywords` bullet lists. The replay! lead and the step! lead are ok, because their combined bullets name every keyword. The Simulation row is low weight, since docstring_rules.md rule 11 lets forwarded keywords sit in the signature alone.\n\nCounts. The counts are by question (docstring, surface, map, cite), not by law/mech/decl. The slice is code-to-docs, so no claim came from spec prose.\n\nNot covered by the findings. Rows under kind map and cite cover helpers and citations I checked; the 19 cite claims group citations by function. D-273 on overlay! and §7.3 on port/state/modes are borderline cites. The ModelState origin check (ArgumentInvalid :range on t0, src/model.jl:1264) appears in Appendix C but not in the restore! docstring. I did not report it, because only a hand-built state reaches it."
+}

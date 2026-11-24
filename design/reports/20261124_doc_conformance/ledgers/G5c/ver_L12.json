@@ -1,0 +1,188 @@
+{
+ "judgments": [
+  {
+   "id": "L12-001",
+   "conforms": true,
+   "evidence": "src/control.jl:68-69 (`wake::Threads.Condition`, `counter::Int`, never reset); src/devices.jl:439 waits on `control.counter <= handle.last_seen && !stopped`; src/sim.jl:2803 increments it. Probe probe.jl:49 printed (1, 4, 5): the counter kept rising across a re-`init!`.",
+   "note": "The predicate's `running` reads as `!stopped` in the code. That is the same shutdown-interruptible predicate."
+  },
+  {
+   "id": "L12-012",
+   "conforms": true,
+   "evidence": "src/sim.jl:1907-1915: one shared `join_timeout` deadline. A task not done by then is abandoned through `_report_join_timeout!` (src/sim.jl:1936-1941), whose `DeviceJoinTimeout(_who(entry), …)` names the device (src/diagnostics.jl:1699-1704, message at :1792)."
+  },
+  {
+   "id": "L12-013",
+   "conforms": true,
+   "evidence": "src/devices.jl:651-672: `_wrap` catches a crash, reports `DeviceCrash`, and then runs the same `finally` as a voluntary return (`_shutdown!`, then `should_abort && stop!`). `should_close` exists nowhere in src/.",
+   "note": "The line's `should_close` is stale, but the entry's own annotation (log.md:1171-1174) records that since D-373 it is the loop body returning, and that a crash follows the same path. Read with its annotation, the entry matches the code."
+  },
+  {
+   "id": "L12-015",
+   "conforms": false,
+   "evidence": "src/model.jl:1069-1076 and the callers at src/frame.jl:97 (`:loop`), src/model.jl:339 (`:boundary_zero`), src/model.jl:479 (`:overlay`) and src/model.jl:1341 (`:restore`). There is one constructor, `_wrap_step`, but four catch sites (StepError.host, src/diagnostics.jl:250-252).",
+   "class": "drift",
+   "fix": "Add an annotation to D-059: \"Annotation: amended by D-223, D-429 and D-441. The one `StepError` constructor serves four catch sites: `frame!`'s around the frame (host `:loop`), `init!`'s around boundary zero (`:boundary_zero`), `overlay!`'s settling (`:overlay`) and the restore door (`:restore`).\"",
+   "clear": true,
+   "note": "D-059 has no annotation. The later entries D-223, D-429 and D-441 record the added sites, and D-223's Position already says 'the one StepError constructor'."
+  },
+  {
+   "id": "L12-023",
+   "conforms": true,
+   "evidence": "src/sim.jl:511-517: `lifecycle` returns `:running`, `:built`, `:errored`, `:stopped` or `:initialized`. src/sim.jl:601-611: `run!` and `step!` are gated on `:initialized`."
+  },
+  {
+   "id": "L12-027",
+   "conforms": true,
+   "evidence": "src/sim.jl:604-605 throws `MissingInit(op, status)` when the simulation is `built` (src/diagnostics.jl:1266-1272). `UninitializedInputs` is a separate kind, raised by `assert_total`.",
+   "note": "The line's `UninitializedSlots` is renamed. The entry's own annotation at log.md:3028 records the D-206 rename to `UninitializedInputs`."
+  },
+  {
+   "id": "L12-030",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1688-1691: `struct DeviceCrash; cause; abort::Bool; end` has no device id. Attribution is the cell's (src/diagnostics.jl:1563-1564).",
+   "note": "The Position's 'device id' for `DeviceCrash` is stale. The entry's annotation (log.md:3312-3316, D-228) records that the payload is `cause` and `should_abort` only, with no device id, and that matches the code."
+  },
+  {
+   "id": "L12-034",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:35-37: both kinds are members of the closed runtime set `KINDS`. src/diagnostics.jl:1736-1737: both have severity `:warning`."
+  },
+  {
+   "id": "L12-040",
+   "conforms": true,
+   "evidence": "src/sim.jl:1123: `trim!(sim, problem; baseline, t0 = 0, backend)`. No `capture` function exists in src/.",
+   "note": "The resume-at-time clause is stale. The entry's own annotation (log.md:3820-3822, D-273) records that it no longer holds. With the annotation the entry matches the code."
+  },
+  {
+   "id": "L12-048",
+   "conforms": false,
+   "evidence": "src/control.jl:66 (`@atomic margin::Float64`, a knob, 2 ms by default at :74). `margin!` and the `margin` keyword on `run!` and `replay!` (src/sim.jl:1562, 1334). Probe probe.jl:67-68: `margin!(sim, 0.005)` took effect, and `run!`'s keywords include `:margin`.",
+   "class": "drift",
+   "fix": "Add an annotation to D-198: \"Annotation: amended by D-269. `margin` is a knob, set by `margin!(sim, m)` and by `run!`'s and `replay!`'s `margin` keyword, default 2 ms. Debt forgiveness at `5·h/p` and heartbeat staleness 2 s stay fixed constants with no user knob.\"",
+   "clear": false,
+   "note": "D-269 (log.md:11898-11902) records the move. Neither D-198 nor D-133 is annotated for it. D-133's 'no user knobs' clause and its rejected 'User knobs for the operational four' are stale in the same way, so the fix reaches beyond this one line."
+  },
+  {
+   "id": "L12-047",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:309: `const STALE_S = 2.0`, read by `stale` at :337-338 with no knob. Probe probe.jl:69 printed 2.0."
+  },
+  {
+   "id": "L12-058",
+   "conforms": true,
+   "evidence": "src/sim.jl:1388-1390: `replay!` enters through `_enter_checkpoint!` (a restore, host `:restore`) and runs no boundary zero. Only `init!` calls `boundary_zero!` (src/model.jl:336-340).",
+   "note": "The 'under replay!' clause is stale. D-223's own annotation (log.md:9124-9125, D-274) records that a throw inside boundary zero now happens under `init!` alone."
+  },
+  {
+   "id": "L12-057",
+   "conforms": true,
+   "evidence": "src/model.jl:336-340: `_wrap_step(model, 0, :boundary_zero, err)`, the one constructor (src/model.jl:1077), with the status written `:built`. Probe probe.jl:54-55 gave `StepError{Detonated}`, host `:boundary_zero`, boundary 0, t 0.0, and lifecycle `built`."
+  },
+  {
+   "id": "L12-065",
+   "conforms": false,
+   "evidence": "src/sim.jl:851-855: the header is taken only after boundary zero, so a throw leaves no trace. Probe probe.jl:56: `trace(sim)` is refused as `MissingInit`. src/diagnostics.jl:320-321: the recipe for a boundary-zero failure is `init!` under the same condition.",
+   "class": "drift",
+   "fix": "Add an annotation to D-223: \"Annotation: amended by D-274. A throw inside boundary zero leaves no trace and no header, so its reproduction is `init!` under the same condition. A frame-one failure at pointer 0 reproduces as the halt at 0 followed by `step!`.\"",
+   "clear": true,
+   "note": "D-274's last bullet (log.md:12376-12384) records the change. D-223's existing annotation does not."
+  },
+  {
+   "id": "L12-066",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:320-327: at host `:boundary_zero` the rendered recipe is `init!(sim2, condition) under the same condition reproduces it`. A frame failure at pointer 0 renders `replay!(sim2, trc; to_boundary = 0) then step!(sim2)`. Neither is a bare replay. Probe probe.jl:57 printed the `init!` recipe.",
+   "class": "drift",
+   "fix": "In the same D-223 annotation: \"The rendered recipe at pointer 0 is `init!` under the same condition for host `:boundary_zero`, and the halt then `step!` for a frame's failure (D-274).\"",
+   "clear": true,
+   "note": "D-274's amendment of 2026-09-30 (log.md:12380-12384) records the change."
+  },
+  {
+   "id": "L12-069",
+   "conforms": true,
+   "evidence": "src/sim.jl:1131-1132: a converged `trim!` commits through `init!(sim, condition; t0 = origin)`. src/trim.jl:566 does the same through the model's `init!`, so the boundary-zero catch at src/model.jl:336-340 applies."
+  },
+  {
+   "id": "L12-071",
+   "conforms": false,
+   "evidence": "src/model.jl:336-340 wraps every throw, `InterruptException` included (comment at src/model.jl:270-271 cites D-441). test/test_failures.jl:474 asserts `StepError{InterruptException}` with host `:boundary_zero`. Probe probe.jl:62-63 gave `StepError{InterruptException}`, host `:boundary_zero`, lifecycle `built`.",
+   "class": "drift",
+   "fix": "Add an annotation to D-223: \"Annotation: superseded in part by D-441. An interrupt inside boundary zero is wrapped like any throw, a `StepError{InterruptException}` with host `:boundary_zero`, and the lifecycle moves to `built`; a service has no stop path.\"",
+   "clear": true,
+   "note": "D-441 (log.md:18437-18440) says every catch site wraps what reaches it, an `InterruptException` included. D-223 carries no annotation for this."
+  },
+  {
+   "id": "L12-082",
+   "conforms": true,
+   "evidence": "src/model.jl:331: `_set_origin!` runs before `boundary_zero!` at :337. The only other writer on the live clock is the restore (src/checkpoint.jl:127), which copies the checkpoint's own `t₀`. trim.jl and linearize.jl write scratch executors."
+  },
+  {
+   "id": "L12-091",
+   "conforms": true,
+   "evidence": "src/sim.jl:2220-2290: `step!` runs the loop's `_advance!` synchronously and returns `advanced`. Probe probe.jl:76-77: `step!(a; frames = 8)` returned 8, and its x, s and the signal table equal `run!(b; t_end = 0.8)` bit for bit."
+  },
+  {
+   "id": "L12-100",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:160: the heartbeat is beaten only from the handle primitives (src/devices.jl:230, 285, 435). Device tasks are spawned only inside a run (src/devices.jl:676-680, src/sim.jl:1861-1863), so a stopped simulation has no task to beat or exit. This matches spec §12.4 (spec.md:10114-10116).",
+   "note": "The cell's heartbeat is never reset after `attach!` (src/dataplane.jl:127). 'Run-scoped' therefore means it is observed only while a run's task lives. It does not mean a per-run reset."
+  },
+  {
+   "id": "L12-101",
+   "conforms": true,
+   "evidence": "src/sim.jl:1840-1854: `_init_devices!` runs each device's `init!` at the top of `run!` and reports a throw as `DeviceCrash`. Probe probe.jl:87-89: a failing `init!` showed up as a `DeviceCrash` in that run's residue."
+  },
+  {
+   "id": "L12-111",
+   "conforms": true,
+   "evidence": "src/sim.jl:1388-1390: `_enter_checkpoint!` takes `trc.header` as the new trace's header. Probe probe.jl:96-98: the replay's trace has the same header state and frame and equal batches, and the final state is bit-identical to the recording's."
+  },
+  {
+   "id": "L12-121",
+   "conforms": true,
+   "evidence": "src/deployment.jl:610-624: Deployment `==` deliberately leaves the build out. src/model.jl:1212-1250 compares only the structural fingerprint and the deployment. Probe probe.jl:102-104: replaying a k=4 trace onto a k=9 build passed under both `restore = true` and `restore = false`."
+  },
+  {
+   "id": "L12-134",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:308-309: `STALE_S = 2.0`, described as 'advisory, a display rule, never a kill trigger'. `stale` (src/dataplane.jl:337) only reads it."
+  },
+  {
+   "id": "L12-143",
+   "conforms": true,
+   "evidence": "src/sim.jl:1848-1850: `should_abort && stop!` at the init bracket, before the spawn. Probe probe.jl:87-88: frame 0, `:stopped`, source `ControlRequestedStop(\"device 1 (BadInitP)\")`. The later good device still got its init!, loop and shutdown!."
+  },
+  {
+   "id": "L12-148",
+   "conforms": true,
+   "evidence": "src/frame.jl:94-97: any throw in a frame, an interrupt included, writes `:inconsistent` and becomes a `StepError` (`:loop`). test/test_failures.jl:480-486 shows the run ending `errored`.",
+   "note": "The 'ends stopped' bullet is stale. D-398's own annotation (log.md:16508-16510) records that D-441 supersedes it: a forced throw that cuts a frame ends the run `errored`."
+  },
+  {
+   "id": "L12-153",
+   "conforms": true,
+   "evidence": "src/control.jl:186: the coarse phase is `sleep(remaining)`, and the spin at :187-189 never yields. `systemsleep` appears nowhere in src/."
+  },
+  {
+   "id": "L12-162",
+   "conforms": true,
+   "evidence": "src/sim.jl:1199-1205: an origin or frame mismatch under `restore = false` pushes `CheckpointMismatch(what = :clock, …)`. Probe probe.jl:108-109 gave `[(:clock, :t₀)]` for a simulation at t0 = 1/2."
+  },
+  {
+   "id": "L12-171",
+   "conforms": true,
+   "evidence": "src/frame.jl:94-97: the catch writes `model.status = :inconsistent` and wraps with host `:loop`. Probe probe.jl:119-120: `StepError{Detonated}`, `:loop`, status `:inconsistent`, lifecycle `:errored`."
+  },
+  {
+   "id": "L12-182",
+   "conforms": true,
+   "evidence": "src/model.jl:1331-1341: `k = _frames_to(model_state.deployment, model_state.t, model_state.t₀)`, the state's frame, is passed as the pointer to `_wrap_step(model, k, :restore, err)`. test/test_failures.jl:441-442 asserts host `:restore` and boundary 2 for a state at t = 0.2."
+  },
+  {
+   "id": "L12-191",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:205-215: the walk goes field by field only when both tokens are of one type, and otherwise pushes the whole value under `:algorithm`. Probe probe.jl:113-114 gave `[(:deployment, :algorithm, RK4(), Heun())]`."
+  }
+ ],
+ "notes": "Read-only verification at W (f14dbc1d). I wrote one probe script, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L12_v/probe.jl, and ran it three times. The final run passed every probe from P1 to P11. I changed no tracked file.\n\nSix claims (L12-013, 027, 030, 040, 058, 148) quote stale text. In each case the entry carries its own annotation recording the move, so I judged them conforming. If the audit wants stale-but-annotated text flagged, they would be class drift, and the annotation already in the log is the fix.\n\nOf the five non-conforming claims, four are drift in D-059 and D-223. Neither entry is annotated for D-274's or D-441's changes: the four catch sites, the init! reproduction recipe and the wrapped interrupt. One annotation on D-223 would close L12-065, 066 and 071 together.\n\nL12-048 is drift recorded by D-269, which made `margin` a knob. D-133's 'no user knobs for the operational four' is stale for the same reason and has no annotation either.\n\nLine numbers for L12-047 and L12-048 (log.md:3934) fall inside D-114, not D-198. D-198 sits at log.md:7925-7935 in W, and I judged its text there."
+}

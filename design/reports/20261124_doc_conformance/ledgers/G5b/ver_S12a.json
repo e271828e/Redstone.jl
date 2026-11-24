@@ -1,0 +1,78 @@
+{
+ "judgments": [
+  {
+   "id": "S12a-001",
+   "conforms": true,
+   "evidence": "src/control.jl:62-72: Control holds @atomic stop_issuer, paused, pace and margin beside stopped, running, wake, counter and join_timeout. It has no staging field, and staging lives on the plane's writers. Probe P3 (probe.jl:31-44) shows pause!/stop! reach a parked loop from another task."
+  },
+  {
+   "id": "S12a-010",
+   "conforms": false,
+   "evidence": "src/sim.jl:2100-2109: the stop word and the pause flag are read only at frame top, before the explicit yield and the pacer's wait, and run_frame! is never interrupted. A change issued while a frame computes is therefore seen only when that frame ends. With pace Inf, the default (src/control.jl:74), the budget Δt_frame/p is 0 but the delay is the frame's compute time, and a late (overrunning) frame delays it past the budget. Probe P6 (probe.jl:70-77): in a paced run with a 0.5 s budget, the time from stop! to run!'s return was 0.208 s, so the bound holds while the run keeps pace.",
+   "class": "deviation",
+   "fix": "A change issued while a frame runs or waits is observed at the next frame top. While the run keeps pace, that is at most about one frame budget (`Δt_frame/p`, the frame period over the pace) later. Otherwise it is once the running frame ends ([D-269][d-269]).",
+   "clear": false,
+   "backing_entry": "D-269 (Position, third bullet: 'A change issued during a frame's wait lands at the next frame top, at most one budget h/p later'). That entry covers only a change issued during the wait, not one issued while a frame runs."
+  },
+  {
+   "id": "S12a-019",
+   "conforms": true,
+   "evidence": "src/sim.jl:96-98: struct ControlRequestedStop carries issuer::Union{Symbol,String}. src/sim.jl:2104 returns ControlRequestedStop(issuer) off the stop word. Probe P3/P6/P7 show termination sources ControlRequestedStop(:code) and ControlRequestedStop(\"device 1 (TailProbe)\")."
+  },
+  {
+   "id": "S12a-029",
+   "conforms": true,
+   "evidence": "src/sim.jl:1644 sets control.running before the loop, and src/sim.jl:511-512 makes lifecycle return :running off that flag. Probe P3 (probe.jl:31-44) printed (parked=true, (paused=true, :running)), and attach! while paused was refused as ServiceLifecycle. Test test/test_devices.jl:369 asserts the same."
+  },
+  {
+   "id": "S12a-038",
+   "conforms": true,
+   "evidence": "src/control.jl:184-186: margin enters only remaining = deadline - margin - now, which sets the sleep length. The deadline and the spin end (control.jl:187) do not depend on it. Probe P2 (probe.jl:22-29): with margin 0 and margin Inf, the logged (t, boundary) sequences and frame counts were identical (true, 10 frames)."
+  },
+  {
+   "id": "S12a-047",
+   "conforms": true,
+   "evidence": "src/sim.jl:420-422: _margin_value accepts value isa Real && value ≥ 0 and refuses anything else as ArgumentInvalid. Probe P1 (probe.jl:11-20): 0, 0.5, 1//2 and Inf were accepted; -1, -0.001, NaN, \"x\" and nothing were refused by margin!, and run!'s keyword refused -1 and NaN."
+  },
+  {
+   "id": "S12a-057",
+   "conforms": true,
+   "evidence": "src/control.jl:186: remaining > 0 && sleep(remaining), the task-yielding Base.sleep. Probe P5 (probe.jl:54-68), on one thread with no devices: a co-resident ticker task ran 60 times during a 0.4 s paced run with margin 0, and 1 time with margin Inf (pure spin)."
+  },
+  {
+   "id": "S12a-020",
+   "conforms": false,
+   "evidence": "src/sim.jl:2107: `isempty(roster) || yield()` runs at every frame top with devices rostered, whether or not the coarse-phase sleep then runs (src/sim.jl:2108-2109, src/control.jl:186). Late frames and the frame after an anchor yield there too. Probe P5 (probe.jl:68): with margin Inf (pure spin) and one device, the ticker advanced once per frame (6 ticks), and with no device only 1 tick. No explicit yield is made when no device is attached.",
+   "class": "deviation",
+   "fix": "With devices attached, the loop yields explicitly at every frame top, before the pacer's wait, and the coarse-phase `sleep` yields again whenever that phase runs. The spin phase itself never yields ([D-027][d-027]).",
+   "clear": false,
+   "backing_entry": "D-027 (Position: 'explicit yield() in unpaced/pure-spin frames'), which backs the doc's narrower placement"
+  },
+  {
+   "id": "S12a-067",
+   "conforms": true,
+   "evidence": "src/sim.jl:1800-1804: report_thread_budget! reports ThreadBudget(threads, device_tasks) into the loop's cell when threads < roster + 1. It is called once per run at src/sim.jl:1647. src/diagnostics.jl:1735 gives severity :warning. The probe's output ended with 'Warning: ThreadBudget from loop ... start Julia with `julia -t 2`' for a one-device run on one thread."
+  },
+  {
+   "id": "S12a-077",
+   "conforms": true,
+   "evidence": "src/sim.jl:2829-2836: each writer record takes _heartbeat(_handle(entry).diag_cell) (the per-writer DiagCell's atomic heartbeat, src/dataplane.jl:134,160-161) and _task_state off the run's Task in plane.run_tasks (src/dataplane.jl:341, src/sim.jl:1809). Probe P8 (probe.jl:89-103) read who and task_state :running off latest(sim).status.writers[1]."
+  },
+  {
+   "id": "S12a-086",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:337-338: stale is a pure predicate over heartbeat and STALE_S = 2.0 (dataplane.jl:309). No src/ caller acts on it, and its only other mention is a comment at src/show.jl:479. Probe P8: a device sleeping 3 s read stale=true at 2.6 s with task_state :running, the roster still held it, and the run ended only by stop!(sim)."
+  },
+  {
+   "id": "S12a-096",
+   "conforms": true,
+   "evidence": "src/devices.jl:434-446: wait_next_snapshot loops while counter <= last_seen, then returns latest(handle), the newest published snapshot at return time, not the one whose increment woke it. src/sim.jl:2797-2806: the release-store of latest comes before counter += 1 under the lock."
+  },
+  {
+   "id": "S12a-105",
+   "conforms": true,
+   "evidence": "src/sim.jl:2803: control.counter += 1 inside publish!, the only publication (src/sim.jl:2797 is the only latest store). Control is built once per Simulation (src/sim.jl:385, control.jl:74), and nothing resets counter. Probe P4 (probe.jl:46-52): across init!, step!(3), init!, step!(2), the counter went 1, 4, 5, 7 while the ordinal went 0, 3, 0, 2."
+  }
+ ],
+ "notes": "I verified slice S12a against W at f14dbc1d. 11 of the 13 claims conform. Two do not.\n\n- S12a-020 (deviation): sim.jl:2107 yields explicitly on every frame with devices rostered. The spec and D-027 say the explicit yield covers only unpaced and pure-spin frames.\n- S12a-010 (deviation): the 'at most one frame budget' bound fails for frames that overrun and for unpaced runs, where the budget is 0. The loop reads the plane only at frame top and never cuts into a frame's compute. D-269 backs the narrower case, a change issued during the wait.\n\nA side observation outside these claims: spec.md:9739 says each stop site writes 'the device's name'. The code writes the roster label, such as \"device 1 (TailProbe)\" (sim.jl:91-93, devices.jl).\n\nThe probe is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S12a_v/probe.jl and its output is out.txt in the same folder. I ran it with JULIA_NUM_THREADS=1. Two early runs hung inside my own probe: an observer task threw on a wrong field name, so the run stayed paused. I killed those runs, fixed the probe, and the final run completed. I edited no tracked file and ran no git command that changes the tree."
+}

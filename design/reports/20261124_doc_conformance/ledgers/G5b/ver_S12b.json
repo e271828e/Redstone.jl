@@ -1,0 +1,180 @@
+{
+ "judgments": [
+  {
+   "id": "S12b-002",
+   "conforms": true,
+   "evidence": "src/sim.jl:2103-2105 and 2144: the loop returns a source only at a frame top or right after a publication (settled!, sim.jl:2041-2043), so it always stops on a published boundary."
+  },
+  {
+   "id": "S12b-012",
+   "conforms": true,
+   "evidence": "src/sim.jl:2103-2104 reads the stop word at each frame top and returns ControlRequestedStop(issuer); stop!(sim) and stop!(handle) set it (sim.jl:2328, devices.jl:253)."
+  },
+  {
+   "id": "S12b-022",
+   "conforms": true,
+   "evidence": "src/sim.jl:1658-1665: _advance! returns after the last publication, then _finish! sets control.stopped (sim.jl:1867) in the finally, so the sticky status follows the final snapshot."
+  },
+  {
+   "id": "S12b-033",
+   "conforms": true,
+   "evidence": "src/devices.jl:229 defines running(handle); the wrapper calls the author's loop(entry.dev, entry.handle) (devices.jl:652) and test/test_devices.jl:81 shows the `while running(handle)` body."
+  },
+  {
+   "id": "S12b-043",
+   "conforms": true,
+   "evidence": "src/sim.jl:1907-1913 joins under one deadline and reports DeviceJoinTimeout without waiting further; probe.jl:63-65 (join_timeout=0.3, a body that ignores running) returned in 0.66 s, lifecycle stopped, residue [(\"loop\", [DeviceJoinTimeout])]."
+  },
+  {
+   "id": "S12b-052",
+   "conforms": true,
+   "evidence": "src/devices.jl:669-671: the wrapper's finally runs `entry.should_abort && stop!(entry.handle)`; probe.jl:72 printed ControlRequestedStop(\"device 1 (Quitter)\") for a voluntary exit."
+  },
+  {
+   "id": "S12b-061",
+   "conforms": true,
+   "evidence": "src/sim.jl:1660-1667: on a loop throw the inner finally still runs _finish! (steps 1-2) and _tail! (steps 3-5); probe.jl:122-123 showed a frame failure ending errored with the attached TailProbe's [:init, :shutdown]."
+  },
+  {
+   "id": "S12b-072",
+   "conforms": true,
+   "evidence": "src/model.jl:572-575 _frames_to takes ceil of the frame count, and sim.jl:2105 ends at the first frame top with run.frame ≥ t_end_frame; probe.jl:77 with t_end=0.35, Δt=0.1 gave frame 4, t 0.4."
+  },
+  {
+   "id": "S12b-081",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:251-258 WriterStatus carries totals::KindCounts, reset per run (sim.jl:1785-1792); probe.jl:85 printed totals.crash == 1 on the terminal snapshot after an init! failure."
+  },
+  {
+   "id": "S12b-091",
+   "conforms": true,
+   "evidence": "join_timeout lives only on Control (src/control.jl:71, sim.jl:385); src/trace.jl and src/tracer.jl hold no join_timeout or Control reference (rg empty), so replay neither records nor compares it."
+  },
+  {
+   "id": "S12b-100",
+   "conforms": true,
+   "evidence": "src/sim.jl:2574-2583: detach! passes assert_configurable (refuses only running and errored, sim.jl:628-634), deletes the entry and runs reclaim!; probe.jl:88 detached a device from a stopped sim, roster length 0."
+  },
+  {
+   "id": "S12b-109",
+   "conforms": true,
+   "evidence": "src/sim.jl:1648: _init_devices! runs inside _run_body! before the spawn at 1653-1656, on the calling task, in roster order (sim.jl:1838)."
+  },
+  {
+   "id": "S12b-115",
+   "conforms": false,
+   "evidence": "src/roster.jl:255 the field is `dev::AbstractDevice`; src/sim.jl:1841 calls `init!(entry.dev)`. git log -S'entry.device' -- src is empty, so no rename is recorded.",
+   "class": "deviation",
+   "fix": "`        init!(entry.dev)` in the init-bracket block (and `entry.dev` wherever else the block names the device).",
+   "clear": true
+  },
+  {
+   "id": "S12b-117",
+   "conforms": false,
+   "evidence": "src/sim.jl:1843 calls `_shutdown!(entry)`; src/devices.jl:619-631 wraps `shutdown!(entry.dev)` in a try that warns on a throw and forwards an InterruptException through `_request_stop!(…, :interrupt)`. probe.jl:112-113: a device whose init! and shutdown! both throw gave log [:init, :shutdown], 3 frames, lifecycle stopped, and the warning \"shutdown! of device 1 (BadBoth) threw; its resources may leak (§11.6)\". In the spec's block a throwing shutdown! would escape the catch and skip pop! and the report; the spec states the warn-and-continue rule nowhere.",
+   "class": "deviation",
+   "fix": "`        _shutdown!(entry)                 # release, unconditionally (§11.6): a throw is warned, an interrupt sets the :interrupt stop`, with a sentence after the block saying that a throw out of `shutdown!` is warned and the bracket continues, and an interrupt cutting it is forwarded to the stop word.",
+   "clear": false
+  },
+  {
+   "id": "S12b-120",
+   "conforms": false,
+   "evidence": "probe.jl:138: methods(stop!) are only stop!(::DeviceHandle) and stop!(::Simulation) (src/devices.jl:253, src/sim.jl:2328); the bracket calls `_request_stop!(entry.handle.control, :interrupt)` (src/sim.jl:1846). git log -S'stop!(control, :interrupt)' finds only design records, no src change.",
+   "class": "deviation",
+   "fix": "`            _request_stop!(control, :interrupt)   # the stop word, issuer :interrupt; an earlier issuer keeps it`",
+   "clear": true
+  },
+  {
+   "id": "S12b-127",
+   "conforms": true,
+   "evidence": "src/sim.jl:1839 `push!(live, entry)` before `init!(entry.dev)` at 1841; pop! only after _shutdown! at 1843-1844."
+  },
+  {
+   "id": "S12b-136",
+   "conforms": true,
+   "evidence": "src/sim.jl:1849 `report!(entry, DeviceCrash(...))`, dispatched on src/devices.jl:413 `report!(entry::RosterEntry, occurrence::DeviceCrash)`."
+  },
+  {
+   "id": "S12b-145",
+   "conforms": true,
+   "evidence": "src/sim.jl:1837-1855 releases no claim; probe.jl:84-87: after a failed init! the run took 3 frames and stage!(sim, \"a\" => 9.0) was still refused as ClaimedFaceEntry, the device's claim held."
+  },
+  {
+   "id": "S12b-155",
+   "conforms": true,
+   "evidence": "src/sim.jl:1644 clears the stop word before _init_devices! (1648), so the bracket's stop!(entry.handle) (1850) is read at the first frame top (2103-2104); probe.jl:94 gave 0 frames, ControlRequestedStop(\"device 1 (BadInit2)\"), stopped."
+  },
+  {
+   "id": "S12b-164",
+   "conforms": true,
+   "evidence": "src/sim.jl:1746 residue = _sweep_tail!(…) folded into the record at 1769; probe.jl:95 residue [(\"device 1 (BadInit2)\", [DeviceCrash])]."
+  },
+  {
+   "id": "S12b-173",
+   "conforms": true,
+   "evidence": "src/sim.jl:1845-1846: the interrupt branch sets the :interrupt stop and never reads should_abort; probe.jl:103-104 with should_abort=true gave log [:init, :shutdown], 0 frames, ControlRequestedStop(:interrupt), and an empty residue (no DeviceCrash)."
+  },
+  {
+   "id": "S12b-182",
+   "conforms": true,
+   "evidence": "src/sim.jl:2142 and 1768-1769 record a ControlRequestedStop and land stopped; probe.jl:105 after an interrupt-ended run: lifecycle stopped and checkpoint(sim) returned a Checkpoint."
+  },
+  {
+   "id": "S12b-199",
+   "conforms": false,
+   "evidence": "src/sim.jl:1653-1656, 2110, 2131, 2134, 1743, 1773 call Base.sigatomic_begin()/sigatomic_end() directly; probe.jl:137 found no disable_sigint in src/sim.jl, and git log -S'disable_sigint' -- src test is empty. The split ends matter: sim.jl:2131 unmasks inside the catch so a pending raise lands in the outer arm, which a disable_sigint do-block cannot express.",
+   "class": "deviation",
+   "fix": "The loop masks delivery across the boundary macro-sequence with Julia's sigatomic counter, `Base.sigatomic_begin` and `Base.sigatomic_end` (the primitive under `disable_sigint`), an increment that is negligible per frame.",
+   "clear": true
+  },
+  {
+   "id": "S12b-198",
+   "conforms": true,
+   "evidence": "src/sim.jl:2110 and 2134: one Base.sigatomic_begin/sigatomic_end pair per frame, the counter increment the doc names."
+  },
+  {
+   "id": "S12b-208",
+   "conforms": true,
+   "evidence": "src/sim.jl:2119 reads the requester after the frame's publications, and _interrupt_source (sim.jl:2152-2153) returns ModelRequestedStop(requester) when one held, setting the :interrupt stop only otherwise (2154-2155)."
+  },
+  {
+   "id": "S12b-217",
+   "conforms": true,
+   "evidence": "src/sim.jl:1662 `err isa InterruptException || (cause = err)` before the finally, and 1731 `cause = err` before catch_backtrace; replay! shares _run_body! (sim.jl:1406); step! stores at sim.jl:2282 before rethrow."
+  },
+  {
+   "id": "S12b-226",
+   "conforms": true,
+   "evidence": "src/frame.jl:94-97: the frame's catch writes :inconsistent and wraps any throw, an InterruptException included, in a StepError; probe.jl:122 (InterruptException raised in x_deriv) gave lifecycle errored, source exception StepError{InterruptException}."
+  },
+  {
+   "id": "S12b-236",
+   "conforms": false,
+   "evidence": "The first window conforms: a raw InterruptException landing between sim.jl:2110 and frame.jl:87 leaves _advance! raw (sim.jl:2123-2139) and _run_body!'s arm records ControlRequestedStop (sim.jl:1693-1697). The second does not: the tail's bookkeeping in src/sim.jl:1743-1773 (and step!'s at 2286-2300) is a bare masked finally with no try, so a forced throw, which Julia raises inside the mask, cuts it short. Landing before 1772 it leaves control.running true, and lifecycle (sim.jl:512) reads :running with no record written, not a stop. A deferred raise waits for 1773 and leaves the simulation terminal. Nothing in D-268, D-398 or D-441 covers a forced throw in the bookkeeping, and D-268's Rejected list names a lifecycle stuck at running as the outcome to prevent.",
+   "class": "defect",
+   "fix": "Make the masked bookkeeping in `_run_body!` and `step!` resumable: on an InterruptException, a retrying `try` reruns the remaining steps (stopped flag, sweep, record, running = false) before the raise propagates, so a forced throw there still leaves the simulation terminal. Failing that, the doc reads: \"Landing between the mask's start and the frame's `try`, the forced throw is a stop like a deferred one. Landing in the tail's bookkeeping, it propagates out of the call raw and can cut the bookkeeping short.\"",
+   "clear": false
+  },
+  {
+   "id": "S12b-256",
+   "conforms": true,
+   "evidence": "src/roster.jl:40 AbstractDevice and attach! (src/sim.jl:2506) are the only periphery participants; rg 'callback' over src finds no callback hook."
+  },
+  {
+   "id": "S12b-268",
+   "conforms": true,
+   "evidence": "test/fixtures.jl:310-314 TickCounter publishes s.n through y_state; probe.jl:134 read port(latest(sim), \"c\", :n) == 3 after three frames."
+  },
+  {
+   "id": "S12b-284",
+   "conforms": true,
+   "evidence": "src/declare.jl:527-533: a Bool guard is non-localized and its bundle may carry u; probe.jl:125-129 (Button with u.press and a Bool guard) read on = false before and true after stage!(sim, \"in\" => true) and one step!."
+  },
+  {
+   "id": "S12b-298",
+   "conforms": true,
+   "evidence": "src/build.jl:348-362: stop requests are StopFlag output ports declared by components, sampled after each publication by _stop_hit (src/sim.jl:585, 2041-2043), and honoured unless ignore_stop_requests masks them (sim.jl:1566)."
+  }
+ ],
+ "notes": "I changed no tracked file. The one probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S12b_v/probe.jl. Its full run printed every line up to 226/061, and a second run after a port-path fix printed 284, 268, 199 and 120. The script is now restored to its full form and was not rerun. S12b-236 rests on reading the code, not a probe, because a forced SIGINT cannot be placed inside the bookkeeping deterministically. Classing it defect rather than deviation is a judgment call, and it needs a ruling. S12b-117's fix adds rules the spec does not yet state anywhere: a throw out of shutdown! is warned, and an interrupt is forwarded to the stop word. The §11.6 wrapper sketch (spec.md about line 8960) also uses a bare shutdown!(dev) and may need the same note. S12b-115 and S12b-120 sit in the same code block as S12b-117, so the three fixes would land together."
+}

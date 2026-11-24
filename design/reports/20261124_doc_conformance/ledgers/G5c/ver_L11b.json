@@ -1,0 +1,354 @@
+{
+ "judgments": [
+  {
+   "id": "L11b-001",
+   "conforms": false,
+   "evidence": "src/assembly.jl:543 and :594 define input_passthrough and output_passthrough; probe out.txt [defined] (:passthrough, false)",
+   "class": "drift",
+   "fix": "The computed-exports helper is renamed `faces` → `passthrough`, since spelled `input_passthrough` (D-171) with its sibling `output_passthrough`.",
+   "clear": false,
+   "note": "D-171 renames passthrough to input_passthrough; D-279/D-303 list input_passthrough/output_passthrough. log_rules.md rule 2 keeps an entry's vocabulary, so the remedy may be an annotation or nothing."
+  },
+  {
+   "id": "L11b-002",
+   "conforms": false,
+   "evidence": "src/assembly.jl:544-546 keywords sep, prefix, except, only, select; probe [kw input_passthrough] [:sep, :prefix, :except, :only, :select]",
+   "class": "drift",
+   "fix": "keyword arguments (`prefix`, `sep`, `except`, `only`, joined by `select` since D-251, one selector per call) and semantics are unchanged",
+   "clear": false,
+   "note": "D-251 adds the select predicate and makes the selectors exclusive. The doc's list was right at D-144's date; rule 2 applies."
+  },
+  {
+   "id": "L11b-003",
+   "conforms": false,
+   "evidence": "src/roster.jl:158 and src/bindings.jl:94 define claims(b); probe [defined] (:faces, false), (:claims, true)",
+   "class": "drift",
+   "fix": "§11.6's `claims(b)` claim-set declaration (spelled `faces(b)` until D-146) is deliberately untouched",
+   "clear": false,
+   "note": "D-146 renames faces(b) to claims(b). Rule 2 vocabulary."
+  },
+  {
+   "id": "L11b-004",
+   "conforms": false,
+   "evidence": "src/declare.jl:286, :308, :328, :571 declare local_wires, input_wires, output_wires, state_events; probe [defined] connections/exports/events false",
+   "class": "drift",
+   "fix": "`local_wires`, `input_wires`, `output_wires`, `state_events`",
+   "clear": false,
+   "note": "Chain: D-170 (child/input/output_connections), D-220 (events→state_events), D-279 (u_/y_/inner_connections), D-303 (*_wires), D-314 (local_wires). The 5573 annotation restates the class rule from D-267 but not the names. Rule 2 vocabulary."
+  },
+  {
+   "id": "L11b-006",
+   "conforms": false,
+   "evidence": "src/declare.jl:75, :103, :127, :150, :185, :223 declare x_init, s_init, m_init, ws_init, u_types, y_types; probe: input_types/output_types/local_types/init_x/init_z/init_m/workspace all undefined",
+   "class": "drift",
+   "fix": "`u_types`, `y_types`, `x_init`/`s_init`/`m_init`, `ws_init`",
+   "clear": false,
+   "note": "local_types deleted by D-165; init_z fused into init_x by D-173 and split out as init_s by D-195; workspace→init_workspace by D-220; D-267 renames all to the bundle-letter forms. Rule 2 vocabulary."
+  },
+  {
+   "id": "L11b-008",
+   "conforms": false,
+   "evidence": "src/declare.jl:599, :653, :685, :715, :740 declare x_projection, y_state, y_direct, x_deriv, s_update; probe: h_x/h_xu/h_z/h_zu/f/g/project undefined",
+   "class": "drift",
+   "fix": "the stages `y_state`/`y_direct`, `x_deriv`, `s_update`, `x_projection`",
+   "clear": false,
+   "note": "D-220 (output_state/output_direct, state_derivative, state_update, state_projection), D-267 (y_state, y_direct, x_derivative, s_update, x_projection), D-279 (x_deriv). Rule 2 vocabulary."
+  },
+  {
+   "id": "L11b-010",
+   "conforms": false,
+   "evidence": "src/readers.jl:188, :213, :243, :269, :293 define get_state, get_deriv, get_output, get_input, get_face; probe get_local and get_slot undefined",
+   "class": "drift",
+   "fix": "`get_state`, `get_deriv`, `get_output`, `get_input`, `get_face`",
+   "clear": false,
+   "note": "get_local retired with local_types (D-165); get_slot became get_input (D-206). D-095's annotation at log.md:3242 records both, but D-144 carries no annotation."
+  },
+  {
+   "id": "L11b-016",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:2080 UninitializedInputs; src/conditions.jl:705; probe [uninit] UninitializedInputs(:init!, [:a, :b])",
+   "class": "drift",
+   "fix": "one `UninitializedInputs` kind",
+   "clear": false,
+   "note": "D-206 renames UninitializedSlots to UninitializedInputs. The D-149 annotation at 5872 is about the application list, not the name. Rule 2 vocabulary."
+  },
+  {
+   "id": "L11b-017",
+   "conforms": true,
+   "evidence": "src/conditions.jl:700-705 collects every uncovered face over structure.root_inputs in declaration order into one throw; probe [uninit] faces [:a, :b]"
+  },
+  {
+   "id": "L11b-021",
+   "conforms": true,
+   "evidence": "probe [defined] (:mark_dead!, false); log.md:6255 annotation states no mark_dead! exists",
+   "note": "The line at 6248 is stale by itself; the in-entry annotation at 6255 corrects it, so the entry as written matches the code."
+  },
+  {
+   "id": "L11b-027",
+   "conforms": true,
+   "evidence": "src/devices.jl:401 report!(handle::DeviceHandle, occurrence::MalformedDatum) and :413 report!(entry::RosterEntry, occurrence::DeviceCrash): address first, constructed value second"
+  },
+  {
+   "id": "L11b-036",
+   "conforms": true,
+   "evidence": "src/sim.jl:2623 stage! normalizes into plane.harness_diag; probe [recent] (\"harness\", [OutOfClaimEntry, EntryTypeMismatch])"
+  },
+  {
+   "id": "L11b-044",
+   "conforms": true,
+   "evidence": "src/sim.jl:180-185 TerminationRecord(t, policy, source, residue); probe [TerminationRecord] four fields",
+   "note": "The record has a fourth field, policy (D-255). The in-entry annotation at log.md:8143 records that the record carries the terminating advance's policy."
+  },
+  {
+   "id": "L11b-045",
+   "conforms": true,
+   "evidence": "src/sim.jl:181 t::Float64, never nothing; log.md:8148 annotation (D-233) records the absent-time arm's retirement",
+   "note": "Conforms only through the in-entry annotation; the line itself is superseded."
+  },
+  {
+   "id": "L11b-047",
+   "conforms": true,
+   "evidence": "src/sim.jl:44 abstract type TerminationSource end; probe [sources <: Diagnostic] all false"
+  },
+  {
+   "id": "L11b-049",
+   "conforms": true,
+   "evidence": "src/sim.jl:76-80 ModelRequestedStop(path, port, reason); log.md:8138 annotation (D-316) records the requester's path, port and reason",
+   "note": "The line's 'holding face' is superseded; the in-entry annotation carries the current payload."
+  },
+  {
+   "id": "L11b-057",
+   "conforms": true,
+   "evidence": "src/sim.jl:1938-1939 report_cell!(sim.plane.loop_diag, DeviceJoinTimeout(...)); probe [residue] [(\"loop\", [DeviceJoinTimeout])]"
+  },
+  {
+   "id": "L11b-060",
+   "conforms": false,
+   "evidence": "src/sim.jl:440-445 collects StopRequestInvalid over the given paths; probe [defined] (:StopFaceInvalid, false) and [ignore unknown x2] two StopRequestInvalid in one throw",
+   "class": "drift",
+   "fix": "`StopRequestInvalid` and `ClaimConflict` are collected — over the given requester paths, over the device's claim set",
+   "clear": true,
+   "note": "D-316 (log.md:14424, 14440) retires stop_on and StopFaceInvalid. D-216's annotations at 8714 and 8721 do not cover it, so an annotation is owed."
+  },
+  {
+   "id": "L11b-065",
+   "conforms": true,
+   "evidence": "probe [defined] (:ReadBindingUnresolved, false); log.md:8721 annotation (D-406) records ReadResolution carrying the read's label",
+   "note": "Conforms through the in-entry annotation; the line alone is stale."
+  },
+  {
+   "id": "L11b-067",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1381-1384 the parameter set is deployment parameters alone; probe join_timeout, log_every and t_end refused as ArgumentInvalid, Δt_frame as DeploymentInvalid",
+   "note": "Conforms through the in-entry annotation at log.md:8714, which says the run-shaping keywords left DeploymentInvalid (D-255, D-261)."
+  },
+  {
+   "id": "L11b-069",
+   "conforms": true,
+   "evidence": "src/roster.jl:235; src/diagnostics.jl:1843 reason :no_loop; probe [no loop] DeviceContractMismatch(\"NoLoopDev\", :no_loop)"
+  },
+  {
+   "id": "L11b-076",
+   "conforms": true,
+   "evidence": "src/trace.jl:203-213 checks each batch's frame against (header.frame+1):frames as CheckpointMismatch(what = :frame); probe [bad frames] two CheckpointMismatch(:frame, …, 1:4, 99/-5)",
+   "note": "Conforms through annotations at log.md:8783 (length = last drain's ordinal, restore! start) and 8787 (ReplayHeaderMismatch is CheckpointMismatch)."
+  },
+  {
+   "id": "L11b-078",
+   "conforms": true,
+   "evidence": "src/sim.jl:1198-1211 and src/trace.jl:195 collect into diags before one throw; probe [bad frames] two diagnostics in one DiagnosticError",
+   "note": "The kind is CheckpointMismatch per the annotation at log.md:8787."
+  },
+  {
+   "id": "L11b-080",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:74-85, 106-110: the header is a Checkpoint with no t_end or stop field; src/sim.jl:141-144 StopPolicy lives on the termination record",
+   "class": "drift",
+   "fix": "The header records no stop policy. A run's effective bound is reported by its termination record when it fires.",
+   "clear": true,
+   "note": "D-255 supersedes D-217's header-records-the-constructor-pair bullet; D-217 carries no annotation saying so."
+  },
+  {
+   "id": "L11b-081",
+   "conforms": true,
+   "evidence": "src/sim.jl:180-185 TerminationRecord.policy; probe [termination] policy StopPolicy(0.3, String[]) with EndTimeReached"
+  },
+  {
+   "id": "L11b-090",
+   "conforms": true,
+   "evidence": "src/sim.jl:1764-1770 a budget halt writes no record; probe [replay partial] (:initialized, :replay, 2, nothing) and [replay full] (:initialized, :live, 4, nothing)"
+  },
+  {
+   "id": "L11b-093",
+   "conforms": false,
+   "evidence": "src/sim.jl:2546-2548 EmptyGreedyClaim(device = \"device $id (…)\") written into the device's own diag_cell; src/dataplane.jl:36-38 lists it among the rate-limited KINDS; probe [greedy recent] (\"device 2 (Pad)\", [EmptyGreedyClaim(\"device 2 (Pad)\", \"Greedy\")])",
+   "class": "deviation",
+   "fix": "Annotate D-228: `EmptyGreedyClaim`, which D-250 moved into the roster entry's own cell, still names its device, the cell's writer. The other option is a code change that drops the `device` field from EmptyGreedyClaim.",
+   "clear": false,
+   "backing_entry": "D-228",
+   "note": "Every other kind in KINDS names subjects only, and DeviceJoinTimeout's who is the abandoned device in the loop's cell, as D-228 allows. The spec's Appendix C row (spec.md:15786) and §11.6 (spec.md:9245) state the device id for EmptyGreedyClaim, so spec and code agree with each other against D-228."
+  },
+  {
+   "id": "L11b-100",
+   "conforms": true,
+   "evidence": "src/sim.jl:2830-2840 builds a fresh Vector{WriterStatus} at each publication; probe [status type] FrameworkStatus with writers::Vector{WriterStatus}",
+   "note": "Since D-269 the vector sits in FrameworkStatus beside the pacer's isbits record. The vector-of-records ruling holds."
+  },
+  {
+   "id": "L11b-101",
+   "conforms": true,
+   "evidence": "probe [status allocs (1 device)] (2, 848, v\"1.13.3\"): the Vector's Array and Memory pair, FrameworkStatus not boxed, WriterStatus allocated inline",
+   "note": "On Julia ≥1.11 one Vector counts as two allocations. Nothing else allocates in _status."
+  },
+  {
+   "id": "L11b-105",
+   "conforms": true,
+   "evidence": "src/sim.jl:228-235 Run(const log, const trace, feed, termination, frame, boundary), no parameter; probe [Run]",
+   "note": "Conforms through the annotation at log.md:10723, which hands the Run to D-260 and from there (annotation 11010) to D-317. The line alone is stale."
+  },
+  {
+   "id": "L11b-109",
+   "conforms": true,
+   "evidence": "src/sim.jl:383 Run(SnapshotLog(true, 1, typemax(Int)), nothing, nothing, nothing, 0, 0); probe [placeholder] (0, nothing, nothing, nothing, 0, 0, :built, :live)",
+   "note": "Conforms through the annotation at log.md:10723: t₀ and mode are not run fields, and the placeholder is an empty log and no trace."
+  },
+  {
+   "id": "L11b-110",
+   "conforms": true,
+   "evidence": "src/control.jl:62-72 has no lifecycle field; src/sim.jl:511-517 lifecycle(sim) derives it from running, the model status and closed(run); probe [Control]",
+   "note": "Conforms through the annotation at log.md:10723 (D-317)."
+  },
+  {
+   "id": "L11b-113",
+   "conforms": false,
+   "evidence": "src/trace.jl:78-83 mutable struct Trace with no type parameter; probe [Trace] (…, false, …)",
+   "class": "drift",
+   "fix": "`Trace` is a fixed header plus two append-only lists, `schemas` and `batches`, and its length",
+   "clear": true,
+   "note": "D-317 drops the scalar parameter from Trace. The header is a Checkpoint since D-274. None of D-255's annotations covers this."
+  },
+  {
+   "id": "L11b-114",
+   "conforms": true,
+   "evidence": "src/trace.jl:78-81 const schemas on Trace, header a Checkpoint; src/roster.jl:390-417 reclaim! appends; probe [schemas attach] same vector, 1→3 entries; [schemas detach] 3→4"
+  },
+  {
+   "id": "L11b-117",
+   "conforms": false,
+   "evidence": "probe [defined] (:TraceRegister, false); src/sim.jl:231 the feed is Run.feed; src/trace.jl:104-108 the cursor is ReplayFeed.next",
+   "class": "drift",
+   "fix": "The register retires: the replay feed is the run's `feed`, its cursor the feed's own, and the frame ordinal the trace's `frames`.",
+   "clear": true,
+   "note": "D-260 supersedes this clause explicitly (log.md:10977-10978); D-255 carries no annotation for it."
+  },
+  {
+   "id": "L11b-119",
+   "conforms": true,
+   "evidence": "src/sim.jl:141-144 StopPolicy(t_end::Float64, ignored::Vector{String}); probe [StopPolicy]",
+   "note": "Conforms through the annotation at log.md:10714 (D-316): t_end plus the ignored requester paths."
+  },
+  {
+   "id": "L11b-121",
+   "conforms": false,
+   "evidence": "src/sim.jl:228-235 Run has no policy field; src/sim.jl:1562-1580 run! builds the policy and passes it to _run_body! as an argument",
+   "class": "drift",
+   "fix": "built and validated by each advance and passed to the loop as that advance's argument, its one lasting home the termination record",
+   "clear": true,
+   "note": "D-260 supersedes the 'rebound on Run.policy' clause (log.md:10977-10978); the D-255 annotation at 10723 names t₀ and mode but not the policy."
+  },
+  {
+   "id": "L11b-124",
+   "conforms": true,
+   "evidence": "src/sim.jl:1562 and :1334-1336; probe [kw run!]/[kw replay!]/[kw step!] carry t_end and ignore_stop_requests, no stop_on",
+   "note": "Conforms through the annotation at log.md:10714: stop_on is ignore_stop_requests, default ()."
+  },
+  {
+   "id": "L11b-127",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:82-83 ModelState holds t₀ and deployment, :106-110 Checkpoint(state, frame, boundary), no policy; probe [header] (Checkpoint, false)",
+   "note": "Since D-274 the header is a Checkpoint and holds more than the deployment and t₀, but the claim still holds."
+  },
+  {
+   "id": "L11b-129",
+   "conforms": true,
+   "evidence": "src/sim.jl:228-235 six fields, with frame and boundary added; probe [Run]",
+   "note": "Conforms through the annotation at log.md:11010 (D-317 supersedes the four-field Run; the counters). The dropped scalar parameter is D-317's too."
+  },
+  {
+   "id": "L11b-131",
+   "conforms": false,
+   "evidence": "src/sim.jl:697-705 _open_run! rebinds sim.run for every door; probe [rebind] (true, false, false): step! keeps the run, overlay! and restore! rebind it",
+   "class": "drift",
+   "fix": "`init!`, `overlay!`, `restore!` and `replay!` construct one and rebind `sim.run`; nothing else rebinds it.",
+   "clear": true,
+   "note": "restore! is a door since D-274 and overlay! since D-429. D-260's annotations at 11010 and 11013 do not cover it. The Run docstring at src/sim.jl:206-208 already uses the four-door wording."
+  },
+  {
+   "id": "L11b-138",
+   "conforms": true,
+   "evidence": "src/store.jl:167 t₀::Rational{Int}; probe [clock] t₀ 1//4 Rational{Int64}",
+   "note": "Conforms through the annotation at log.md:11013 (D-457 holds the origin exact)."
+  },
+  {
+   "id": "L11b-139",
+   "conforms": true,
+   "evidence": "src/store.jl:165-166 Clock{T} with t::T; probe [dual clock] Clock{Dual} with Dual t"
+  },
+  {
+   "id": "L11b-147",
+   "conforms": true,
+   "evidence": "src/control.jl:153-157 the pacer's wait reads the two knobs and nothing else; src/sim.jl:2100 wait_resume! at frame top",
+   "note": "The line's 'inside its wait' is superseded by D-269. The in-entry annotation at log.md:11845 records it: frame top alone, the pause block woken at once."
+  },
+  {
+   "id": "L11b-150",
+   "conforms": true,
+   "evidence": "probe [pause! methods]/[resume! methods]/[paused methods]: only Simulation methods (src/sim.jl:2345, 2357, 2378); src/devices.jl has no pause"
+  },
+  {
+   "id": "L11b-156",
+   "conforms": true,
+   "evidence": "src/sim.jl:1736 isempty(roster) && rethrow(cause), else logged; probe [errored run] (:errored, LoopError, @error logged) and [errored run deviceless] rethrown StepError",
+   "note": "Since D-317 a fault outside the frame (e.g. frame!'s refusal) ends stopped, not errored (src/sim.jl:1757-1760). The line describes the frame throw."
+  },
+  {
+   "id": "L11b-158",
+   "conforms": true,
+   "evidence": "src/sim.jl:1712-1717 the interrupt arm releases each never-spawned entry and advances direct_releases after each _shutdown!",
+   "note": "The 'calling-task entry' is gone since D-310. The in-entry annotation at log.md:11849 records the current repeat mechanism, which matches the code."
+  },
+  {
+   "id": "L11b-161",
+   "conforms": true,
+   "evidence": "src/sim.jl:1662 the cause is stored in the catch before the finally; src/sim.jl:1761 LoopError(cause) built inside the masked finally (sigatomic_begin at 1742)"
+  },
+  {
+   "id": "L11b-168",
+   "conforms": true,
+   "evidence": "src/devices.jl:569 peek(view::PortView, handle::DeviceHandle, snapshot::Snapshot); probe [defined] (:peek_port, false)",
+   "note": "Conforms through the in-entry annotation at log.md:12098 (renamed peek; the entry keeps its own spelling)."
+  },
+  {
+   "id": "L11b-170",
+   "conforms": false,
+   "evidence": "src/devices.jl:526-528 an unclaimed root input's view has incumbent \"harness\"; src/devices.jl:590-594 incumbent_status returns that record; probe [view] ((\"\", :b), false, \"harness\", \"harness\") and ((\"\", :e), …, nothing)",
+   "class": "deviation",
+   "fix": "`incumbent_status(view, snapshot)` returns the incumbent's `WriterStatus` from the snapshot's status, the harness writer's for a root input no device claims, or `nothing` for a port no root input drives.",
+   "clear": true,
+   "backing_entry": "D-270",
+   "note": "The code has behaved this way since the panel kit landed (401d7ce3). Its docstring says 'nothing when no writer does'. spec.md:9484 repeats the stale phrase and would move with the fix."
+  },
+  {
+   "id": "L11b-171",
+   "conforms": true,
+   "evidence": "src/devices.jl:611 orphaned(record) = record.task_state === :done",
+   "note": "The line's ':failed' is unreachable. The in-entry annotation at log.md:12085 rules orphaned is exactly :done."
+  },
+  {
+   "id": "L11b-173",
+   "conforms": true,
+   "evidence": "src/devices.jl:484 addr::CellAddr (UnionAll); probe [PortView addr] (CellAddr, false) and [views type] Dict{Tuple{String,Symbol},PortView}"
+  }
+ ],
+ "notes": "Read-only run against W at f14dbc1d. I created only the probe folder /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L11b_v/ with probe.jl and out.txt (the probe's output; the bracketed tags cited above are its lines). The probe ran three times: the first run failed on a Logging import, the second on an unqualified StopPolicy, the third ran clean. One rule applied throughout: when an annotation in the same log entry states the current code fact, I judged the claim conforming and named the annotation line. When the claim is stale and only a later entry or a commit records the change, I judged it drift. Many drift items are pure renames (001-016). log_rules.md rule 2 says entries keep the vocabulary of their day, so for those the right remedy may be an annotation or nothing. I marked them clear=false for that reason. Two real deviations: 093 (EmptyGreedyClaim names its own writer, against D-228, while spec Appendix C agrees with the code) and 170 (incumbent_status returns the harness record for an unclaimed root input; the log and spec.md:9484 say nothing). Open: 101 counts allocations on Julia 1.13.3, where one Vector is two allocations. 156 holds for frame throws, but since D-317 a fault outside the frame ends stopped."
+}

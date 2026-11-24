@@ -1,0 +1,655 @@
+{
+ "rows": [
+  {
+   "id": "S12d-001",
+   "file": "design/spec.md",
+   "line": 10794,
+   "kind": "mech",
+   "claim": "The replay drain 'does not swap the staging cells of the roster'.",
+   "evidence": "src/sim.jl:2705-2709 (_replay_drain! loops over roster and calls _discard_staged!), src/sim.jl:2742 (@atomicswap writer.cell.pending = nothing); docstring src/sim.jl:2646-2655 says 'Every cell is still taken -- the same indivisible swap'. probe:10 (staged 'a'=>77.0 under :replay is gone after step!, never applied).",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The replay drain swaps every staging cell once per frame, in roster order and the harness writer last, and discards what it takes. Only the application of the batch is substituted. The sentence at 10932 ('no live staging cell is drained') carries the same sense of 'drained' as 'applied'.",
+   "fix": "It takes each staging cell of the [roster](#g-roster) (the list of attached device entries) as the live drain does, but discards the batch instead of applying it."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S12d-002",
+   "file": "design/spec.md",
+   "line": 10755,
+   "kind": "decl",
+   "claim": "replay!(sim2, trc) restores the header then re-drives every recorded frame",
+   "evidence": "src/sim.jl:1334-1415; probe:1"
+  },
+  {
+   "id": "S12d-003",
+   "file": "design/spec.md",
+   "line": 10758,
+   "kind": "decl",
+   "claim": "replay! accepts to_boundary = k as a partial replay",
+   "evidence": "src/sim.jl:1334, 1362; probe:2"
+  },
+  {
+   "id": "S12d-004",
+   "file": "design/spec.md",
+   "line": 10759,
+   "kind": "decl",
+   "claim": "replay! accepts to_time as the same halt addressed by time",
+   "evidence": "src/sim.jl:1366-1385; probe:3"
+  },
+  {
+   "id": "S12d-005",
+   "file": "design/spec.md",
+   "line": 10760,
+   "kind": "decl",
+   "claim": "restore!(sim2, cp) restores state alone, no feed, warm restart",
+   "evidence": "src/sim.jl:1032-1056; probe:1 (mode :live)"
+  },
+  {
+   "id": "S12d-006",
+   "file": "design/spec.md",
+   "line": 10764,
+   "kind": "decl",
+   "claim": "replay! takes a restore = false form that attaches the feed as the simulation stands",
+   "evidence": "src/sim.jl:1334-1336, 1342-1348; probe:7"
+  },
+  {
+   "id": "S12d-007",
+   "file": "design/spec.md",
+   "line": 10778,
+   "kind": "mech",
+   "claim": "replay! is the ordinary loop (_run_body!) with one substitution, the drain",
+   "evidence": "src/sim.jl:1415 calls _run_body!; src/sim.jl:2646-2655, 2665"
+  },
+  {
+   "id": "S12d-008",
+   "file": "design/spec.md",
+   "line": 10786,
+   "kind": "mech",
+   "claim": "Default form restores the trace's checkpoint (state, frame index, boundary ordinal)",
+   "evidence": "src/sim.jl:1397-1399, src/checkpoint.jl Checkpoint; probe:7 default origin"
+  },
+  {
+   "id": "S12d-009",
+   "file": "design/spec.md",
+   "line": 10786,
+   "kind": "law",
+   "claim": "The default form runs no boundary zero and no condition resolution",
+   "evidence": "src/sim.jl:984-996 (_enter_checkpoint!: no boundary zero)"
+  },
+  {
+   "id": "S12d-010",
+   "file": "design/spec.md",
+   "line": 10790,
+   "kind": "mech",
+   "claim": "replay! stands in init!'s lifecycle position and does what restore! does",
+   "evidence": "src/sim.jl:1218-1221, 1337-1346; probe:7 (replay! on a built sim works)"
+  },
+  {
+   "id": "S12d-011",
+   "file": "design/spec.md",
+   "line": 10795,
+   "kind": "mech",
+   "claim": "Each frame top applies the recording's batches keyed by frame ordinal",
+   "evidence": "src/sim.jl:2719-2736"
+  },
+  {
+   "id": "S12d-012",
+   "file": "design/spec.md",
+   "line": 10799,
+   "kind": "law",
+   "claim": "Recorded batches apply verbatim with no surface re-check",
+   "evidence": "src/trace.jl:204-216 (_apply_thunk), src/sim.jl:2725"
+  },
+  {
+   "id": "S12d-013",
+   "file": "design/spec.md",
+   "line": 10806,
+   "kind": "law",
+   "claim": "A simulation is in :live or :replay mode, read off the attached feed",
+   "evidence": "src/sim.jl:548"
+  },
+  {
+   "id": "S12d-014",
+   "file": "design/spec.md",
+   "line": 10806,
+   "kind": "mech",
+   "claim": "Under :live the drain reads the staging cells, under :replay the recording",
+   "evidence": "src/sim.jl:2665-2667"
+  },
+  {
+   "id": "S12d-015",
+   "file": "design/spec.md",
+   "line": 10808,
+   "kind": "law",
+   "claim": "replay! attaches the recording and enters :replay",
+   "evidence": "src/sim.jl:1397-1399; probe:2 (mode :replay)"
+  },
+  {
+   "id": "S12d-016",
+   "file": "design/spec.md",
+   "line": 10810,
+   "kind": "mech",
+   "claim": "step! and run! consume the attached recording frame by frame",
+   "evidence": "src/sim.jl:2260-2265, 1581-1587; probe:4"
+  },
+  {
+   "id": "S12d-017",
+   "file": "design/spec.md",
+   "line": 10823,
+   "kind": "law",
+   "claim": "In :replay every advance's frame budget is capped at the recording's last frame",
+   "evidence": "src/sim.jl:1581-1585, 1621; probe:4 (step! past end advances 3, run! past end halts at 5)"
+  },
+  {
+   "id": "S12d-018",
+   "file": "design/spec.md",
+   "line": 10824,
+   "kind": "law",
+   "claim": "to_boundary = k caps the budget earlier",
+   "evidence": "src/sim.jl:1403, probe:2"
+  },
+  {
+   "id": "S12d-019",
+   "file": "design/spec.md",
+   "line": 10826,
+   "kind": "law",
+   "claim": "to_boundary and to_time must name a frame from the feed's start to the recording's last, else ArgumentInvalid",
+   "evidence": "src/sim.jl:1360-1385; probe:3 (-1, 6, 99, 1.5, 0.6 refused; 0 and 5 accepted)"
+  },
+  {
+   "id": "S12d-020",
+   "file": "design/spec.md",
+   "line": 10829,
+   "kind": "law",
+   "claim": "The feed starts from the header's frame by default and the simulation's own under restore = false",
+   "evidence": "src/sim.jl:1360; probe:7"
+  },
+  {
+   "id": "S12d-021",
+   "file": "design/spec.md",
+   "line": 10832,
+   "kind": "law",
+   "claim": "to_boundary takes the frame-entry boundary index and halts exactly at run.frame == k",
+   "evidence": "src/sim.jl:1403; probe:2 (to_boundary=2 gives frame 2)"
+  },
+  {
+   "id": "S12d-022",
+   "file": "design/spec.md",
+   "line": 10836,
+   "kind": "law",
+   "claim": "Replay always halts at a frame top",
+   "evidence": "src/sim.jl:1403-1415; probe:3"
+  },
+  {
+   "id": "S12d-023",
+   "file": "design/spec.md",
+   "line": 10842,
+   "kind": "decl",
+   "claim": "t_end and ignore_stop_requests are keywords of replay! as of run!",
+   "evidence": "src/sim.jl:1334-1337"
+  },
+  {
+   "id": "S12d-024",
+   "file": "design/spec.md",
+   "line": 10845,
+   "kind": "law",
+   "claim": "A recorded stop request reproduces itself; replay honours requests by default; header records no policy",
+   "evidence": "src/sim.jl:1386, 586-592; src/checkpoint.jl (no policy field)"
+  },
+  {
+   "id": "S12d-025",
+   "file": "design/spec.md",
+   "line": 10850,
+   "kind": "law",
+   "claim": "to_time halts at the last frame top at or before the time given",
+   "evidence": "src/sim.jl:1381; probe:3 (0.35 gives frame 3, 0.2999999 gives 2)"
+  },
+  {
+   "id": "S12d-026",
+   "file": "design/spec.md",
+   "line": 10850,
+   "kind": "law",
+   "claim": "to_time and to_boundary are mutually exclusive",
+   "evidence": "src/sim.jl:1351-1352; probe:3 both (ArgumentInvalid)"
+  },
+  {
+   "id": "S12d-027",
+   "file": "design/spec.md",
+   "line": 10852,
+   "kind": "mech",
+   "claim": "k = floor((to_time - t0)/dt_frame) against the header's t0 under either form",
+   "evidence": "src/sim.jl:1376-1381, src/model.jl:577-578"
+  },
+  {
+   "id": "S12d-028",
+   "file": "design/spec.md",
+   "line": 10856,
+   "kind": "law",
+   "claim": "t_end ends a run at the first frame top reaching or exceeding it",
+   "evidence": "src/model.jl:571-575 (_frames_to uses ceil)"
+  },
+  {
+   "id": "S12d-029",
+   "file": "design/spec.md",
+   "line": 10863,
+   "kind": "law",
+   "claim": "to_time must be real, finite and at least t0, and name a time the recording covers",
+   "evidence": "src/sim.jl:1377-1385; probe:3 (NaN, Inf, -0.1, 'x', 0.6 refused)"
+  },
+  {
+   "id": "S12d-030",
+   "file": "design/spec.md",
+   "line": 10865,
+   "kind": "law",
+   "claim": "The range checks run before the replay writes anything, the default restore included",
+   "evidence": "src/sim.jl:1352-1385 precede 1397; probe:3 (sim still :built after refusal)"
+  },
+  {
+   "id": "S12d-031",
+   "file": "design/spec.md",
+   "line": 10868,
+   "kind": "law",
+   "claim": "A halt by exhausted budget leaves the simulation initialized",
+   "evidence": "src/sim.jl:1631-1650 (_run_body! source === nothing), probe:2"
+  },
+  {
+   "id": "S12d-032",
+   "file": "design/spec.md",
+   "line": 10870,
+   "kind": "law",
+   "claim": "The mode becomes :live exactly when the halt lands at the recording's last frame",
+   "evidence": "src/sim.jl:1591-1599 (_settle_mode!); probe:3 (to_time=0.5 gives :live, 0.35 :replay)"
+  },
+  {
+   "id": "S12d-033",
+   "file": "design/spec.md",
+   "line": 10872,
+   "kind": "law",
+   "claim": "The mode stays :replay otherwise and the next step!/run! consumes the recording",
+   "evidence": "probe:4 'step one' (:replay, frame 3)"
+  },
+  {
+   "id": "S12d-034",
+   "file": "design/spec.md",
+   "line": 10874,
+   "kind": "law",
+   "claim": "A run! whose t_end lies past the recording halts at the last recorded frame, now :live",
+   "evidence": "probe:4 'run past end' (:live, :initialized, 5)"
+  },
+  {
+   "id": "S12d-035",
+   "file": "design/spec.md",
+   "line": 10878,
+   "kind": "law",
+   "claim": "live! sets the mode to :live and detaches the remainder, touching nothing else",
+   "evidence": "src/sim.jl:1443-1454; probe:5"
+  },
+  {
+   "id": "S12d-036",
+   "file": "design/spec.md",
+   "line": 10881,
+   "kind": "law",
+   "claim": "The trace keeps its header, and a live continuation's drains append to the re-recorded prefix",
+   "evidence": "probe:5 (trace frames 2 -> 8, header frame 0, 2 batches kept)"
+  },
+  {
+   "id": "S12d-037",
+   "file": "design/spec.md",
+   "line": 10884,
+   "kind": "law",
+   "claim": "live! is legal only on initialized in :replay; MissingInit at built, ServiceLifecycle otherwise",
+   "evidence": "src/sim.jl:599-608, 1444; probe:5 (MissingInit built, ServiceLifecycle stopped)"
+  },
+  {
+   "id": "S12d-038",
+   "file": "design/spec.md",
+   "line": 10887,
+   "kind": "law",
+   "claim": "live! on a simulation already :live is ArgumentInvalid",
+   "evidence": "src/sim.jl:1446-1447; probe:5 'init live'"
+  },
+  {
+   "id": "S12d-039",
+   "file": "design/spec.md",
+   "line": 10893,
+   "kind": "ex",
+   "claim": "The rewrite workflow: replay to_time, latest, live!, run!(t_end) re-records the prefix and the live tail",
+   "evidence": "probe:5 (latest t=0.2 for to_time 0.25; trace 8 frames)"
+  },
+  {
+   "id": "S12d-040",
+   "file": "design/spec.md",
+   "line": 10895,
+   "kind": "ex",
+   "claim": "sim2 in the example is a placeholder name",
+   "evidence": "lead: test-only name, sim2 is an illustration variable (src/sim.jl:1435 uses the same)"
+  },
+  {
+   "id": "S12d-041",
+   "file": "design/spec.md",
+   "line": 10905,
+   "kind": "law",
+   "claim": "A replay's halt leaves the simulation initialized, never stopped, the state step! leaves",
+   "evidence": "src/sim.jl:1631-1650, 2283-2295; probe:2"
+  },
+  {
+   "id": "S12d-042",
+   "file": "design/spec.md",
+   "line": 10910,
+   "kind": "mech",
+   "claim": "State inspection by replaying to a time and reading the live stores",
+   "evidence": "probe:5 (latest, state readable at halt)"
+  },
+  {
+   "id": "S12d-043",
+   "file": "design/spec.md",
+   "line": 10918,
+   "kind": "law",
+   "claim": "Continuation after a partial replay consumes the remainder first, then goes live at the recording's end",
+   "evidence": "probe:4 'live cont' (:live after run past end)"
+  },
+  {
+   "id": "S12d-044",
+   "file": "design/spec.md",
+   "line": 10924,
+   "kind": "law",
+   "claim": "Replay re-records: the new trace inherits the old header and accumulates the re-drained batches",
+   "evidence": "src/sim.jl:2727-2733; probe:6 (frames, batches, header.frame equal)"
+  },
+  {
+   "id": "S12d-045",
+   "file": "design/spec.md",
+   "line": 10927,
+   "kind": "law",
+   "claim": "Under restore = false the new trace's header is the simulation's own checkpoint",
+   "evidence": "src/sim.jl:1397; probe:12 hdr (frame 1)"
+  },
+  {
+   "id": "S12d-046",
+   "file": "design/spec.md",
+   "line": 10934,
+   "kind": "mech",
+   "claim": "replay! takes pace and margin as run! does",
+   "evidence": "src/sim.jl:1334-1335, 1350, 1410-1411; probe:11"
+  },
+  {
+   "id": "S12d-047",
+   "file": "design/spec.md",
+   "line": 10940,
+   "kind": "mech",
+   "claim": "Rostered devices init and spawn normally under replay",
+   "evidence": "src/sim.jl:1668-1672 (_run_body! shared bracket)"
+  },
+  {
+   "id": "S12d-048",
+   "file": "design/spec.md",
+   "line": 10944,
+   "kind": "law",
+   "claim": "A batch found staged under :replay is discarded with a ReplayDiscardedStaging warning",
+   "evidence": "src/sim.jl:2738-2752, src/diagnostics.jl:1717, 1738; probe:10"
+  },
+  {
+   "id": "S12d-049",
+   "file": "design/spec.md",
+   "line": 10946,
+   "kind": "law",
+   "claim": "An advance in :replay takes every staging cell once more as it ends, on every exit, and discards the contents",
+   "evidence": "src/sim.jl:1745, 2287, 2760-2769"
+  },
+  {
+   "id": "S12d-050",
+   "file": "design/spec.md",
+   "line": 10951,
+   "kind": "mech",
+   "claim": "The late take reports the frame after the halt",
+   "evidence": "src/sim.jl:2762 (frame = run.frame + 1)"
+  },
+  {
+   "id": "S12d-051",
+   "file": "design/spec.md",
+   "line": 10952,
+   "kind": "mech",
+   "claim": "The take runs after the tail joins the device tasks",
+   "evidence": "src/sim.jl:1677-1681 (tail in inner finally) before 1745 (outer finally)"
+  },
+  {
+   "id": "S12d-052",
+   "file": "design/spec.md",
+   "line": 10958,
+   "kind": "mech",
+   "claim": "The take's reports reach the run's-end sweep; a step! that halts initialized runs none",
+   "evidence": "src/sim.jl:1745-1746, 2287-2296"
+  },
+  {
+   "id": "S12d-053",
+   "file": "design/spec.md",
+   "line": 10962,
+   "kind": "mech",
+   "claim": "Reports wait in the diagnostic cells for the next advance's first frame top; a door leaves them",
+   "evidence": "src/sim.jl:648-651 (_reset_periphery! leaves cells), 2706 (fold at drain)"
+  },
+  {
+   "id": "S12d-054",
+   "file": "design/spec.md",
+   "line": 10967,
+   "kind": "mech",
+   "claim": "Before the first frame the checkpoint's deployment and fingerprint are compared against the target",
+   "evidence": "src/sim.jl:1187-1189, src/model.jl:1212-1250"
+  },
+  {
+   "id": "S12d-055",
+   "file": "design/spec.md",
+   "line": 10970,
+   "kind": "mech",
+   "claim": "The fingerprint covers store layout, root-input faces and what a copy by position relies on",
+   "evidence": "src/model.jl:1215-1247, design/code_map.md:194-198"
+  },
+  {
+   "id": "S12d-056",
+   "file": "design/spec.md",
+   "line": 10973,
+   "kind": "law",
+   "claim": "Each batch's frame ordinal is validated against the recording's frames from header+1 to the last",
+   "evidence": "src/trace.jl:226-243; probe:9 (frames 0 and 99 refused)"
+  },
+  {
+   "id": "S12d-057",
+   "file": "design/spec.md",
+   "line": 10975,
+   "kind": "law",
+   "claim": "Each recorded schema that disagrees with the target's root-input faces is a replay error",
+   "evidence": "src/trace.jl:153-163; probe:9 schema (ReplaySchemaMismatch)"
+  },
+  {
+   "id": "S12d-058",
+   "file": "design/spec.md",
+   "line": 10978,
+   "kind": "law",
+   "claim": "Failures report the offending name plus the list-in-hand",
+   "evidence": "src/trace.jl:158-160, 179-180 (faces field)"
+  },
+  {
+   "id": "S12d-059",
+   "file": "design/spec.md",
+   "line": 10980,
+   "kind": "law",
+   "claim": "The kinds are CheckpointMismatch, ReplaySchemaMismatch and ReplayUnknownFace",
+   "evidence": "probe:8, 9"
+  },
+  {
+   "id": "S12d-060",
+   "file": "design/spec.md",
+   "line": 10982,
+   "kind": "law",
+   "claim": "The validation pass runs under both forms of replay!",
+   "evidence": "src/sim.jl:1187-1189 (_compile_feed called unconditionally), probe:7"
+  },
+  {
+   "id": "S12d-061",
+   "file": "design/spec.md",
+   "line": 10985,
+   "kind": "mech",
+   "claim": "Sparse records are normalized to positional batches against the schemas once, off the loop",
+   "evidence": "src/trace.jl:194-282 (_compile_records!)"
+  },
+  {
+   "id": "S12d-062",
+   "file": "design/spec.md",
+   "line": 10990,
+   "kind": "mech",
+   "claim": "The replay drain applies compiled scatters, no face name resolved per frame",
+   "evidence": "src/trace.jl:204-206, src/sim.jl:2725"
+  },
+  {
+   "id": "S12d-063",
+   "file": "design/spec.md",
+   "line": 10998,
+   "kind": "law",
+   "claim": "The check compares two Deployments as values, structural mismatch",
+   "evidence": "src/model.jl:1249-1250, src/deployment.jl:619-624"
+  },
+  {
+   "id": "S12d-064",
+   "file": "design/spec.md",
+   "line": 11002,
+   "kind": "law",
+   "claim": "The value covers dt_frame, dt_base, h_max (exact), h_min, algorithm, attempt budget, localization_tol, localization_budget, firing_budget",
+   "evidence": "src/deployment.jl:619-624; src/checkpoint.jl:196-209; probe:8b (each refused)"
+  },
+  {
+   "id": "S12d-065",
+   "file": "design/spec.md",
+   "line": 11006,
+   "kind": "law",
+   "claim": "The value covers the schedule with every column, anchor and rates included",
+   "evidence": "src/deployment.jl:89, src/checkpoint.jl:213-218"
+  },
+  {
+   "id": "S12d-066",
+   "file": "design/spec.md",
+   "line": 11010,
+   "kind": "law",
+   "claim": "Mismatch is CheckpointMismatch with a deployment discriminator, never a what-if",
+   "evidence": "src/checkpoint.jl:181-183 (what = :deployment); probe:8"
+  },
+  {
+   "id": "S12d-067",
+   "file": "design/spec.md",
+   "line": 11012,
+   "kind": "law",
+   "claim": "The algorithm is compared as one value and named field by field, whole value when types differ",
+   "evidence": "src/checkpoint.jl:199-208; probe:8b (BS3 vs RK4 differs whole)"
+  },
+  {
+   "id": "S12d-068",
+   "file": "design/spec.md",
+   "line": 11030,
+   "kind": "law",
+   "claim": "Default form restores the clock, so replay! takes no t0 argument",
+   "evidence": "src/sim.jl:1334-1337 (no t0 kw); probe:7 (MethodError for t0, origin 1.0 sim accepted)"
+  },
+  {
+   "id": "S12d-069",
+   "file": "design/spec.md",
+   "line": 11032,
+   "kind": "law",
+   "antml": "",
+   "claim": "Under restore = false the simulation's own clock runs and its origin must equal the recording's",
+   "evidence": "src/trace.jl 'clock' check in _compile_feed (src/sim.jl:1193-1200); probe:7 origin"
+  },
+  {
+   "id": "S12d-070",
+   "file": "design/spec.md",
+   "line": 11034,
+   "kind": "law",
+   "claim": "The checkpoint holds no policy; t_end and ignore_stop_requests are validated per call",
+   "evidence": "src/sim.jl:1386, src/checkpoint.jl"
+  },
+  {
+   "id": "S12d-071",
+   "file": "design/spec.md",
+   "line": 11050,
+   "kind": "mech",
+   "claim": "Table rows: fingerprint vs Build, Deployment as value, schemas validated, state restored, clock restored, policy absent",
+   "evidence": "src/sim.jl:1187-1204, 1397-1399"
+  },
+  {
+   "id": "S12d-072",
+   "file": "design/spec.md",
+   "line": 11064,
+   "kind": "law",
+   "claim": "What-if form is init! of the modified model then replay!(sim, trc; restore = false)",
+   "evidence": "src/sim.jl:1342-1348, 1397; probe:7"
+  },
+  {
+   "id": "S12d-073",
+   "file": "design/spec.md",
+   "line": 11072,
+   "kind": "law",
+   "claim": "restore = false attaches the feed to the simulation as it stands and restores nothing",
+   "evidence": "src/sim.jl:1397 (checkpoint of the sim's own model as header); probe:7 rf state"
+  },
+  {
+   "id": "S12d-074",
+   "file": "design/spec.md",
+   "line": 11074,
+   "kind": "law",
+   "claim": "Needs initialized, t0 equal, frame from header's to one short of last",
+   "evidence": "src/sim.jl:1194-1200; probe:7 (frame 5 of 5 refused, frame 1 accepted)"
+  },
+  {
+   "id": "S12d-075",
+   "file": "design/spec.md",
+   "line": 11076,
+   "kind": "law",
+   "claim": "Not initialized: MissingInit at built, ServiceLifecycle otherwise, before any write",
+   "evidence": "src/sim.jl:1347, 599-608; probe:7 (built MissingInit, stopped ServiceLifecycle)"
+  },
+  {
+   "id": "S12d-076",
+   "file": "design/spec.md",
+   "line": 11079,
+   "kind": "law",
+   "claim": "Off-origin or off-frame is CheckpointMismatch, its clock arm, before any write",
+   "evidence": "src/sim.jl:1194-1200 (what = :clock); probe:7 'last frame' and 'origin'"
+  },
+  {
+   "id": "S12d-077",
+   "file": "design/spec.md",
+   "line": 11082,
+   "kind": "mech",
+   "claim": "The drain applies records from the frame after the simulation's own",
+   "evidence": "src/sim.jl:1400-1402; probe:12 seek"
+  },
+  {
+   "id": "S12d-078",
+   "file": "design/spec.md",
+   "line": 11085,
+   "kind": "mech",
+   "claim": "The restore = false form builds a fresh run under the recording keywords and publishes one snapshot",
+   "evidence": "src/sim.jl:1397-1399, 984-996; probe:12 (log len 2 = restore snapshot + one frame)"
+  },
+  {
+   "id": "S12d-079",
+   "file": "design/spec.md",
+   "line": 11090,
+   "kind": "mech",
+   "claim": "The form also serves a seek: restore! of a passed-through checkpoint then feed from the next frame",
+   "evidence": "probe:12 seek (ok, frame 5)"
+  }
+ ],
+ "counts": {
+  "law": 88,
+  "mech": 42,
+  "decl": 6,
+  "ptr": 24,
+  "why": 30,
+  "ex": 3,
+  "map": 0,
+  "cite": 0,
+  "docstring": 0,
+  "surface": 0
+ }
+}

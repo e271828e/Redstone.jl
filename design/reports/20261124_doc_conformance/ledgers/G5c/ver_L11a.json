@@ -1,0 +1,419 @@
+{
+ "judgments": [
+  {
+   "id": "L11a-002",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:459-467: stage_batch! is one CAS merge loop for every writer, newest wins per face. Probe probes/L11a_v/probe.jl:35 stages a complete batch (a=1, b=2) and then a sparse one (a=5): the cell holds (5.0, 2.0), so the complete writer merged and did not overwrite.",
+   "class": "drift",
+   "fix": "complete and sparse writers alike CAS-merge into their own cell, newest wins per face",
+   "clear": true,
+   "note": "The D-024 annotation of 2026-10-13 (log.md:1018-1021) records D-104's one policy: no writer overwrites."
+  },
+  {
+   "id": "L11a-001",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:25-27 (StagingCell, one atomic reference) and src/dataplane.jl:372-378: each compiled Writer owns one cell. src/devices.jl:66: each device handle holds its own writer. Probe probe.jl:35 shows one StagingCell per attachment."
+  },
+  {
+   "id": "L11a-004",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:459-467: the retry is an unbounded `while true` CAS loop. src/dataplane.jl:16-23: a failed replace means the batch was drained or merged past by another stager. stage!(handle) and stage!(sim) both run 'from any task' (src/devices.jl:320, src/sim.jl:2595).",
+   "class": "drift",
+   "fix": "the CAS retry is bounded by drain interception only for a cell with one stager; the harness writer's cell, which several tasks may stage into at once, is also intercepted by the other stagers (D-200)",
+   "clear": false,
+   "note": "The D-024 annotation (log.md:1020-1021) records the D-200 exception for the harness writer. The handle's stage! docstring also allows any task, so a device cell can have several stagers too."
+  },
+  {
+   "id": "L11a-009",
+   "conforms": true,
+   "evidence": "src/bindings.jl:7-13: map_input/map_output are loop conventions the framework never calls. src/bindings.jl:117-120: purity is taught, with cross-datum state carried in the datum. TableBinding's map_input (src/bindings.jl:124-139, _condition at :209-220) is pure. Both run on the device's task (src/bindings.jl:113, :195)."
+  },
+  {
+   "id": "L11a-013",
+   "conforms": true,
+   "evidence": "src/roster.jl:40: AbstractDevice is the one device root. src/devices.jl:33-77: one DeviceHandle type carries the read (latest, wait_next_snapshot, gather), stage (stage!, report!) and control (running, stop!) capabilities for every device."
+  },
+  {
+   "id": "L11a-020",
+   "conforms": false,
+   "evidence": "src/devices.jl:678-683: _spawn! starts a task for every live roster entry. src/sim.jl:1651-1656: the loop runs on the calling task and every device is spawned (D-310). Nothing in src binds a device to the main thread.",
+   "class": "drift",
+   "fix": "GUI an ordinary device (read-modify-write widgets its one peculiarity); every rostered device, the GUI included, runs on a spawned task",
+   "clear": true,
+   "note": "The D-025 annotation (log.md:1047-1049) records D-310."
+  },
+  {
+   "id": "L11a-023",
+   "conforms": false,
+   "evidence": "src/devices.jl:489-495 and :518-554: port_views resolves each input face to its terminal producer when the device's loop calls it at its top, after the roster freeze. Nothing resolves ports at build.",
+   "class": "drift",
+   "fix": "resolution to root input slots baked at run start, when the device's loop builds its port views after the roster freeze (D-270)",
+   "clear": true,
+   "note": "The D-026 annotation (log.md:1072-1073) records D-270."
+  },
+  {
+   "id": "L11a-024",
+   "conforms": true,
+   "evidence": "src/devices.jl:478-486 and :523-528: PortView carries `live` (the source is a root input inside the device's claim) and `source`, the wiring source. A non-live view reads the snapshot alone (src/devices.jl:569-575)."
+  },
+  {
+   "id": "L11a-027",
+   "conforms": false,
+   "evidence": "No widget code exists in src at W. D-310 parked the built-in GUI. The framework ships only its half of the panel kit: port_views, pending and peek (src/devices.jl:518, :307, :569).",
+   "class": "gap",
+   "fix": "No doc change. The widgets that stage on interaction belong to the cockpit's panels, which design/pending.md:177-184 (the inspector, stages 2 to 4) records as owed.",
+   "clear": false,
+   "note": "D-310 (log.md:13967-13971) keeps §11.7's staging-on-interaction semantics and hands the GUI package's half to the browser client."
+  },
+  {
+   "id": "L11a-034",
+   "conforms": true,
+   "evidence": "Probe probe.jl:27: isdefined(Redstone, :user_callback!) is false. rg finds no `user_callback` in src, test or examples."
+  },
+  {
+   "id": "L11a-038",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:516-547: the Snapshot holds the whole signal table, root inputs included, plus t, the counters and the status, with no state stores. No private or local cells exist to include or filter (probe probe.jl:27: local_types and get_local are undefined).",
+   "class": "drift",
+   "fix": "Snapshot = boundary table (root inputs included) + `t` + status — no state stores",
+   "clear": true,
+   "note": "The D-038 annotation (log.md:1430-1432) records D-165/D-194: no private cells remain."
+  },
+  {
+   "id": "L11a-042",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:626-635: SnapshotLog has only the switch, log_every and log_max, with no checkpoint policy. design/spec.md:8030-8032 keeps periodic full-state checkpoints a guarded addition shaped as an opt-in log policy, which the design admits and does not build."
+  },
+  {
+   "id": "L11a-045",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:640-644 and :657-670: log_every is the retention stride. Probe probe.jl:45: init! with log_every = 2 over 10 frames retains the boundaries [0, 2, 4, 6, 8, 10]."
+  },
+  {
+   "id": "L11a-054",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:472-480 and :491-498: the drain takes the batch by atomicswap and applies the compiled scatter with no checks. Every diagnostic is raised at staging in _normalize (src/dataplane.jl:416-452)."
+  },
+  {
+   "id": "L11a-056",
+   "conforms": false,
+   "evidence": "src/sim.jl:2618-2624: stage!(sim) stages through the harness writer, whose surface is the unclaimed complement. src/roster.jl:115-132: a GUI-like front end is an ordinary enumerated writer, or a greedy binding that computes its claim at attach. Probe probe.jl:86: after a greedy attach the harness writer's faces are empty.",
+   "class": "drift",
+   "fix": "the derived surface is the harness writer's alone (`stage!`: the unclaimed set, re-derived only at stopped-sim roster changes); the GUI is an ordinary enumerated writer, by returned or greedy claim",
+   "clear": true,
+   "note": "The D-044 annotation (log.md:1584-1586) records D-174."
+  },
+  {
+   "id": "L11a-061",
+   "conforms": false,
+   "evidence": "No widget code exists in src at W. D-310 parked the built-in GUI, and src/devices.jl:569-575 (peek) and :307 (pending) are the framework's half only.",
+   "class": "gap",
+   "fix": "No doc change. Widget staging belongs to the cockpit's panels, which design/pending.md:177-184 records as owed.",
+   "clear": false,
+   "note": "D-310 keeps the staging-on-interaction semantics for the browser client."
+  },
+  {
+   "id": "L11a-062",
+   "conforms": false,
+   "evidence": "No value or edge widgets exist in src at W. The own-pending-else-snapshot peek that counter levels would read is present (src/devices.jl:569-575).",
+   "class": "gap",
+   "fix": "No doc change. Value and edge widgets belong to the cockpit's panels, which design/pending.md:177-184 records as owed.",
+   "clear": false
+  },
+  {
+   "id": "L11a-067",
+   "conforms": true,
+   "evidence": "src/devices.jl:556-575: peek is a pure read, the device's own pending value or else the snapshot's. It stages nothing, so it serves display only. Staging is the separate stage! call (src/devices.jl:340-346)."
+  },
+  {
+   "id": "L11a-066",
+   "conforms": true,
+   "evidence": "Probe probe.jl:27: isdefined(Redstone, :ControlLaws) is false. rg finds no `ControlLaws` in src, test or examples."
+  },
+  {
+   "id": "L11a-071",
+   "conforms": false,
+   "evidence": "No local cells remain. Probe probe.jl:27 shows local_types and get_local undefined. src/dataplane.jl:524-527: the snapshot is the whole signal table, ports only.",
+   "class": "drift",
+   "fix": "reads see the whole table (inspection observation, the log/GUI/replay clients)",
+   "clear": true,
+   "note": "The D-083 annotation (log.md:2876-2877) records D-165/D-194: the clause on local cells is historical."
+  },
+  {
+   "id": "L11a-077",
+   "conforms": true,
+   "evidence": "src/sim.jl:1649-1655: each run calls _init_devices! and then _spawn! spawns one task per live entry. src/sim.jl:1857-1858 and :2462-2464: attach! spawns nothing. Probe probe.jl:64: a loop-only device runs under run!."
+  },
+  {
+   "id": "L11a-083",
+   "conforms": false,
+   "evidence": "Probe probe.jl:27: isdefined(Redstone, :get_local) is false. src/readers.jl:243, :269, :293: the table selectors are get_output, get_input and get_face.",
+   "class": "drift",
+   "fix": "`get_state`/`get_deriv`/`get_output`/`get_input`/`get_face`",
+   "clear": true,
+   "note": "The D-095 annotation (log.md:3242-3245) records that get_local retired with local_types (D-165)."
+  },
+  {
+   "id": "L11a-084",
+   "conforms": false,
+   "evidence": "Probe probe.jl:27: get_slot is undefined and get_input is defined. src/readers.jl:269 defines get_input.",
+   "class": "drift",
+   "fix": "`get_input` (spelled `get_slot` before D-206)",
+   "clear": true,
+   "note": "The D-095 annotation records the D-206 rename."
+  },
+  {
+   "id": "L11a-085",
+   "conforms": false,
+   "evidence": "Probe probe.jl:27: neither local_types nor get_local is defined, so no such pairing exists.",
+   "class": "drift",
+   "fix": "keeps five short common nouns out of the namespace user declarations share with domain code; the `local_types` ↔ `get_local` pairing it restored retired with both names (D-165)",
+   "clear": false,
+   "note": "Recorded by the D-095 annotation (log.md:3242-3245)."
+  },
+  {
+   "id": "L11a-089",
+   "conforms": true,
+   "evidence": "src/sim.jl:2618-2624 and :2675-2676: the harness cell drains through its thunk, which records the batch (src/dataplane.jl:491-498). Probe probe.jl:53: after stage!(sim, \"b\" => 3.0), the trace holds schema \"harness\" => [:a, :b] and TraceBatch(1, 1, [2 => 3.0])."
+  },
+  {
+   "id": "L11a-093",
+   "conforms": false,
+   "evidence": "src/devices.jl:113, :136, :162: init!, shutdown! and unblock! all have no-op defaults. src/roster.jl:227-238 refuses only a missing `loop`. Probe probe.jl:64: a loop-only device attaches and runs, and a device with no loop is refused as DeviceContractMismatch.",
+   "class": "drift",
+   "fix": "a device implements `loop(dev, handle)`, the one mandatory function, and optionally `init!(dev)`, `shutdown!(dev)` and `unblock!(dev)`, hooks with no-op defaults",
+   "clear": true,
+   "note": "The D-102 annotation (log.md:3496-3497) records D-366."
+  },
+  {
+   "id": "L11a-099",
+   "conforms": false,
+   "evidence": "src/roster.jl:158 and :188: the enumeration methods are claims(b) and reads(b), under the Bool traits is_input/is_output (src/roster.jl:93, :112). Probe probe.jl:27: faces and selectors are undefined.",
+   "class": "drift",
+   "fix": "a binding implements `claims(b)` and/or `reads(b)` under its declared side traits `is_input`/`is_output`",
+   "clear": true,
+   "note": "The D-103 annotation (log.md:3534-3536) records D-146 and D-177."
+  },
+  {
+   "id": "L11a-100",
+   "conforms": false,
+   "evidence": "src/bindings.jl:7-9 and :193-199: map_input/map_output are conventions of the loop that the framework never calls, and Redstone ships no map_output method. src/devices.jl:262-268 says the same.",
+   "class": "drift",
+   "fix": "a binding implements `claims` and `reads` under its side traits; `map_input(datum, b)` and `map_output(nt, b)` are conventions of the device's own loop, which the framework never calls",
+   "clear": true,
+   "note": "The D-103 annotation of 2026-10-14 (log.md:3538-3541) records D-177/D-382."
+  },
+  {
+   "id": "L11a-101",
+   "conforms": true,
+   "evidence": "src/roster.jl:139-158: attach! calls claims(b) once and stakes what it names as the device's claim. src/roster.jl:356: _claim. The mapping is never inspected (src/bindings.jl:7-9). Probe probe.jl:35: the handle's writer is compiled over the claim (a, b)."
+  },
+  {
+   "id": "L11a-104",
+   "conforms": false,
+   "evidence": "src/roster.jl:66-112 and :201-217: sides are declared by the Bool traits is_input/is_output and never inferred. Probe probe.jl:74: a binding that defines `claims` but declares no trait is refused (:neither_side). Probe probe.jl:110: `claims` defined beside is_output alone is refused as :claims_without_input.",
+   "class": "drift",
+   "fix": "sides declared by the Bool traits `is_input`/`is_output` and checked at attach against the `claims`/`reads` methods; neither side = attach error",
+   "clear": true,
+   "note": "The D-103 annotation (log.md:3534-3536) records D-177."
+  },
+  {
+   "id": "L11a-105",
+   "conforms": false,
+   "evidence": "src/roster.jl:201-217: check_binding uses `which(claims, Tuple{binding_type}) !== which(claims, Tuple{AbstractBinding})`, and the same for reads, not hasmethod, to cross-check the traits against the methods. Probe probe.jl:110.",
+   "class": "drift",
+   "fix": "the attach check compares each side trait with its method by one `which` against the root's fallback, at a stopped-sim service point",
+   "clear": true,
+   "note": "D-177 (log.md:7056-7058) specifies `which` against the fallback."
+  },
+  {
+   "id": "L11a-111",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:343-357: Batch is a concretely typed values tuple plus a parallel Bool mask, and the docstring rejects the Union{Nothing,T} carrier (D-202). src/dataplane.jl:416-452: _normalize sets mask positions. Probe probe.jl:35: Batch{Tuple{Float64,Float64},Tuple{Bool,Bool}}.",
+   "class": "drift",
+   "fix": "positional tuple over the claim set, concretely typed per face with a parallel `Bool` touched-mask, a clear position = not touched (never reset), schema in the roster entry — … `stage!`-side normalization (name → position, convert, set the mask)",
+   "clear": true,
+   "note": "The D-104 annotation (log.md:3576-3578) records the values-plus-mask carrier since D-202."
+  },
+  {
+   "id": "L11a-113",
+   "conforms": true,
+   "evidence": "src/roster.jl:240-266: the binding, the compiled writer over the claim set and the diagnostic cell are the handle's, read through the entry's handle (D-261). The writer's `faces` is the schema (src/dataplane.jl:373). src/devices.jl:66."
+  },
+  {
+   "id": "L11a-121",
+   "conforms": false,
+   "evidence": "src/devices.jl:401-403: the call is report!(handle::DeviceHandle, occurrence::MalformedDatum). src/diagnostics.jl:1597-1599: MalformedDatum(cause). Probe probe.jl:27: `report` is undefined and `report!` is defined.",
+   "class": "drift",
+   "fix": "`report!(handle, MalformedDatum(cause))`",
+   "clear": true,
+   "note": "D-160 (log.md:6241) renames report to report!."
+  },
+  {
+   "id": "L11a-123",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:93 and :141-149: each device's own diagnostic cell retains DIAG_RING = 16 values per frame and counts the excess by kind. src/show.jl:438-443: STATUS_MAXLOG = 25 is the presentation cap per writer × kind, called the maxlog successor. The D-105 annotation (log.md:3614-3615) says the same."
+  },
+  {
+   "id": "L11a-124",
+   "conforms": false,
+   "evidence": "src/devices.jl:650-675: _wrap reports DeviceCrash for any throw except an InterruptException, which is forwarded as a stop, and a throw after the sticky stop from a device that overrides unblock!, which counts as shutdown. Probe probe.jl:115: a plain error is logged as DeviceCrash.",
+   "class": "drift",
+   "fix": "any other exception propagates to the wrapper as `DeviceCrash`, apart from the operator interrupt (D-132) and the raise a device's `unblock!` provokes (D-402)",
+   "clear": true,
+   "note": "The D-102 annotation of 2026-10-15 (log.md:3503-3504) records both exceptions."
+  },
+  {
+   "id": "L11a-131",
+   "conforms": false,
+   "evidence": "src/sim.jl:903-907: _assert_at_rest gates `checkpoint` to [:initialized, :stopped]. Probe probe.jl:131: checkpoint on a built sim raises ServiceLifecycle(status = :built, legal = [:initialized, :stopped]). Probe probe.jl:27: `capture` is undefined.",
+   "class": "drift",
+   "fix": "`checkpoint` requires `initialized`/`stopped` (reads committed stores)",
+   "clear": true,
+   "note": "The D-108 annotation of 2026-10-20 (log.md:3733-3736) records D-273/D-274."
+  },
+  {
+   "id": "L11a-134",
+   "conforms": true,
+   "evidence": "src/sim.jl:1124-1129: trim! refuses only :running and :errored. Probe probe.jl:136: trim! on a :built sim converges, and the sim ends :initialized."
+  },
+  {
+   "id": "L11a-136",
+   "conforms": false,
+   "evidence": "src/sim.jl:1163-1170: the default form's legal set is [:initialized, :stopped], and the point is checkpoint(sim).state. Probe probe.jl:146: linearize on a built sim raises ServiceLifecycle(op = :linearize, status = :built, legal = [:initialized, :stopped]).",
+   "class": "drift",
+   "fix": "`linearize` inherits `checkpoint`'s precondition with the defaulted operating point",
+   "clear": true,
+   "note": "The behaviour holds and only the name is stale. The D-108 annotation (log.md:3733-3736) records the move."
+  },
+  {
+   "id": "L11a-138",
+   "conforms": false,
+   "evidence": "src/library.jl:1598-1644: the detection policy is the `localized` keyword, localized or non-localized. No `boundary-detected` appears in src.",
+   "class": "drift",
+   "fix": "Event detection **Tier 1/2 → non-localized/localized**",
+   "clear": true,
+   "note": "The D-122 annotation of 2026-11-11 (log.md:4232-4233) records D-448's rename of boundary-detected to non-localized."
+  },
+  {
+   "id": "L11a-145",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:98: the error-report policy is named \"fail-fast\" or \"collected\". src/trace.jl:192-193: the `collected` policy. src/readers.jl:645: the collecting form. No 'batch' policy name appears."
+  },
+  {
+   "id": "L11a-148",
+   "conforms": true,
+   "evidence": "rg finds no 'recording register' in src. The trace and the log are named as such (src/trace.jl:76, src/dataplane.jl:600-626), and the spec's term is recorders (design/spec.md:10614)."
+  },
+  {
+   "id": "L11a-150",
+   "conforms": false,
+   "evidence": "src/trace.jl:75-80 and src/checkpoint.jl:106-110: the header is a Checkpoint whose state carries t₀ and the Deployment. src/deployment.jl:539-553: Deployment fields are Δt_frame, Δt_base, h_max, h_min, algorithm, firing_budget, localization_tol, localization_budget, attempt_budget, schedule. There is no h and no n. Probe probe.jl:153.",
+   "class": "drift",
+   "fix": "The trace header is the checkpoint taken at boundary zero, whose state carries `t₀` and the `Deployment` — `Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm identifier, the event and step budgets and the schedule — captured with the stores.",
+   "clear": false,
+   "note": "Recorded by the D-127 annotations (log.md:4392-4401), D-443 (N_base retires, Δt_frame enters, log.md:18614), D-449 (h_max) and D-274."
+  },
+  {
+   "id": "L11a-151",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:106-110 and probe probe.jl:153: the header's fields are state, frame and boundary, and the state carries no t_end or stop_on.",
+   "class": "drift",
+   "fix": "the header records no termination pair; the terminating advance's policy is in the termination record (D-255)",
+   "clear": true,
+   "note": "The D-127 annotation of 2026-10-13 (log.md:4392-4394) records D-255."
+  },
+  {
+   "id": "L11a-153",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:178-230: _walk_deployment! compares nine parameters (Δt_base, Δt_frame, h_max, h_min, algorithm, localization_tol, localization_budget, firing_budget, attempt_budget) and then the schedule's rows and scopes. Probe probe.jl:157: a Δt_base mismatch is refused at replay!.",
+   "class": "drift",
+   "fix": "replay compares the recorded deployment against the target's: the nine trajectory-determining parameters `Δt_base`, `Δt_frame`, `h_max`, `h_min`, the algorithm, `localization_tol`, `localization_budget`, `firing_budget` and `attempt_budget`, and the schedule",
+   "clear": false,
+   "note": "Recorded by the D-127 annotation (n is N_base, D-234), D-443 (N_base retires) and D-449 (h_max)."
+  },
+  {
+   "id": "L11a-154",
+   "conforms": false,
+   "evidence": "src/deployment.jl:548 and src/checkpoint.jl:194-195: the parameter is localization_budget, beside firing_budget and attempt_budget. There is no event_budget.",
+   "class": "drift",
+   "fix": "`localization_tol` and `localization_budget` join both the block and the comparison",
+   "clear": true,
+   "note": "The D-127 annotation of 2026-10-15 (log.md:4399-4400) records D-181's rename of event_budget to localization_budget."
+  },
+  {
+   "id": "L11a-155",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:180-183 and src/diagnostics.jl:2567-2578: a deployment mismatch is CheckpointMismatch(what = :deployment, name = <parameter>). Probe probe.jl:157 gives (CheckpointMismatch, :deployment, :Δt_base, 1//10, 1//20). Probe probe.jl:27: ReplayHeaderMismatch is undefined.",
+   "class": "drift",
+   "fix": "mismatch = `CheckpointMismatch` with `what = :deployment`, naming the deployment parameter",
+   "clear": true,
+   "note": "The D-127 annotation (log.md:4400-4401) records 'ReplayHeaderMismatch is CheckpointMismatch'."
+  },
+  {
+   "id": "L11a-160",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:416-452: the write side stages face names only. src/readers.jl:243: get_output takes a slash path, structure. src/readers.jl:293: get_face names a root face, contract (src/bindings.jl:145-152)."
+  },
+  {
+   "id": "L11a-164",
+   "conforms": false,
+   "evidence": "src/assembly.jl:321-342: the wiring client enforces the one-level rule. src/structure.jl:1105-1116: the service walk resolves a deep path 'whatever the declared field types along it'. No generic-boundary refusal exists.",
+   "class": "drift",
+   "fix": "`resolve`/`resolve_terminal` enforce wiring's one-level rule; the service walk follows the structure's children and refuses only an unknown segment, and inspection takes the instance walk, so no client-scoped generic-boundary duty remains (D-414)",
+   "clear": false,
+   "note": "The D-130 annotation of 2026-10-19 (log.md:4505-4507) records D-414."
+  },
+  {
+   "id": "L11a-166",
+   "conforms": false,
+   "evidence": "src/structure.jl:1105-1116: resolve_authored, the service walk, has no generic-boundary refusal and resolves a deep path wherever the structure has it.",
+   "class": "drift",
+   "fix": "service resolution (condition entries, trim reads, taps) follows the structure's children at the authoring or mount level and refuses only an unknown segment (D-414)",
+   "clear": false,
+   "note": "The D-130 annotation (log.md:4505-4507) records D-414."
+  },
+  {
+   "id": "L11a-168",
+   "conforms": false,
+   "evidence": "src/bindings.jl:154-180: a binding's reads resolve through the family's one collecting service resolver (_compile_reads with source = :table), the one trim and linearize use (D-406).",
+   "class": "drift",
+   "fix": "device read bindings resolve on the service side, through the read family's one collecting resolver (D-406); the inspection case is snapshot and log inspection",
+   "clear": true,
+   "note": "The D-130 annotation of 2026-10-19 (log.md:4500-4503) records D-406/D-407."
+  },
+  {
+   "id": "L11a-170",
+   "conforms": false,
+   "evidence": "src/roster.jl:180-186: a read naming no component is PathResolution, and any other unresolved selector is ReadResolution. Probe probe.jl:100 gives [PathResolution] and [ReadResolution]. Probe probe.jl:27: ReadBindingUnresolved is undefined.",
+   "class": "drift",
+   "fix": "drift still loud at attach (`PathResolution` for a path naming no component, `ReadResolution` for any other unresolved read)",
+   "clear": true,
+   "note": "The D-130 annotation (log.md:4500-4502) records that ReadBindingUnresolved retires (D-406)."
+  },
+  {
+   "id": "L11a-172",
+   "conforms": false,
+   "evidence": "src/roster.jl:115-132: is_greedy(b) is an optional Bool trait on the binding, false by default, which selects the computed claim source. Probe probe.jl:27: `interactive` is undefined. Probe probe.jl:86: a greedy binding claims the unclaimed complement [:b].",
+   "class": "drift",
+   "fix": "`is_greedy(b)` is an optional Bool trait on the binding selecting the computed claim source, the unclaimed complement",
+   "clear": true,
+   "note": "The D-134 annotation (log.md:4797-4799) records that D-174 replaced the marker with is_greedy."
+  },
+  {
+   "id": "L11a-174",
+   "conforms": false,
+   "evidence": "src/roster.jl:201-217: check_binding calls is_greedy(b) and reads it as a declared trait, with no method-presence probe. A greedy binding that also defines claims is refused as :greedy_with_claims.",
+   "class": "drift",
+   "fix": "the trait is read at attach like the other declared side traits (D-177), and a greedy binding defining `claims` is refused",
+   "clear": true,
+   "note": "The D-134 annotation (log.md:4797-4799) records D-177 and D-174."
+  },
+  {
+   "id": "L11a-175",
+   "conforms": true,
+   "evidence": "src/sim.jl:1837-1855: _init_devices! calls init! per roster entry in attachment order on the calling task, before _spawn! (src/sim.jl:1649-1655). On a throw it runs shutdown!, reports DeviceCrash and spawns no task. Probe probe.jl:125: log [:init, :shutdown], no :loop, one DeviceCrash counted, task_state :done."
+  }
+ ],
+ "notes": "I judged all 56 ids of slice L11a. 21 conform, 32 are drift and 3 are gap; there are no deviations and no defects.\n\n- **Drift.** Each drift case is recorded by an annotation on its own log entry, or by a later entry that the annotation cites (D-146, D-160, D-165, D-174, D-177, D-181, D-202, D-255, D-270, D-310, D-366, D-406, D-414, D-443, D-448, D-449).\n- **Gap (L11a-027, -061, -062).** No widget code exists at W. D-310 parked the built-in GUI and keeps the staging-on-interaction semantics for the browser client. The inspector bullet in pending.md (lines 177-184, stages 2 to 4) records the cockpit's panels as owed.\n- **L11a-004.** The stage! docstrings for both the handle and the harness say a batch may be staged \"from any task\". So a device's own cell can also have several stagers, not only the harness cell that the D-024 annotation names.\n- **Probe.** The script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L11a_v/probe.jl. I ran it three times at W. The probe line numbers cited in evidence are that file's attempt lines.\n\nI edited no tracked file and ran no git command that changes the worktree."
+}

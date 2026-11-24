@@ -1,0 +1,102 @@
+{
+ "judgments": [
+  {
+   "id": "L11c-001",
+   "conforms": true,
+   "evidence": "src/sim.jl:228-235: Run holds log, trace, feed, termination, frame, boundary. src/dataplane.jl:539-546: Snapshot holds t, frame, boundary, store, layout, status. Nothing records a per-event firing. Probe P001."
+  },
+  {
+   "id": "L11c-013",
+   "conforms": true,
+   "evidence": "src/devices.jl:63-76: DeviceHandle has no pause field. Its control verbs are running and stop! (devices.jl:229, 253). pause! exists only as pause!(sim::Simulation), src/sim.jl:2345. Probe P013: hasmethod(pause!, Tuple{DeviceHandle}) is false."
+  },
+  {
+   "id": "L11c-023",
+   "conforms": true,
+   "evidence": "src/sim.jl:835, 965, 1064, 1081: every door's log_max default is the constant 65536, and none takes or reads t_end. The SnapshotLog constructor (src/dataplane.jl:640-643) takes no duration. Probe P023: log_max is 65536 after init!."
+  },
+  {
+   "id": "L11c-032",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:144-146: at DIAG_RING capacity report_cell! keeps the ring and bumps the kind's suppressed count, so the earliest entries are kept. Probe P032: 19 emissions give ring 16 and suppressed 3."
+  },
+  {
+   "id": "L11c-041",
+   "conforms": true,
+   "evidence": "src/show.jl:443 sets STATUS_MAXLOG = 25. src/show.jl:466-470 always prints the count line and prints an occurrence only while its cumulative index is 25 or less. Probe P041: of 36 cumulative occurrences only the 25th is printed in the third frame, beside the count line '36 occurrences'."
+  },
+  {
+   "id": "L11c-050",
+   "conforms": true,
+   "evidence": "src/sim.jl:2620: stage!(sim, writes...) stages through plane.harness. src/roster.jl:330 holds harness_diag, the cell that is always present. src/roster.jl:390-407 (reclaim!, called from attach! at sim.jl:2539 and from detach!) recomputes the complement and renormalizes the pending batch. src/dataplane.jl:424-431: ClaimedFaceEntry only on the harness writer, OutOfClaimEntry for a device. Probe P050."
+  },
+  {
+   "id": "L11c-059",
+   "conforms": true,
+   "evidence": "src/sim.jl:2525-2527: is_output(new_binding) ? _compile_binding_reads(reads(new_binding), ...) : nothing. Probe P059: reads is called once at attach."
+  },
+  {
+   "id": "L11c-069",
+   "conforms": true,
+   "evidence": "should_close appears nowhere in src or test (rg). src/devices.jl:650-669: _wrap treats a returning loop(entry.dev, entry.handle) as a normal exit, then runs shutdown! and consults should_abort."
+  },
+  {
+   "id": "L11c-080",
+   "conforms": true,
+   "evidence": "src/sim.jl:2511-2514: admission refuses an instance already rostered under === as AlreadyAttached. Probe P080: two Pad(\"x\") instances both roster (2 entries), and re-attaching one throws AlreadyAttached."
+  },
+  {
+   "id": "L11c-089",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:660-668: the first publication becomes `first`, and each later ordinal counts from first.boundary. Probe P089: after init! the first boundary is 0, and after restore! it is the restored boundary 3 (cp.boundary 4, re-published one back).",
+   "note": "D-377 names init!, restore! and replay!. overlay! (D-429, later) also opens a run whose first snapshot is its settling publication (probe P089: [3,4,5]), and the code counts from it the same way. The sentence is true for the doors it names but does not name the fourth."
+  },
+  {
+   "id": "L11c-100",
+   "conforms": true,
+   "evidence": "src/readers.jl:684-697: _resolve_reads takes source (:executor, live stores, or :table) and applies the source rule inside the resolver. Attach (bindings.jl:177) and series (sim.jl:2964) pass source = :table."
+  },
+  {
+   "id": "L11c-101",
+   "conforms": true,
+   "evidence": "src/readers.jl:696-697 pushes ReadResolution with reason :store_selector under a table source. src/diagnostics.jl:1890-1894: the message gives the remedy, 'declare the field public and read the port published from it'. Probe P101."
+  },
+  {
+   "id": "L11c-111",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1857-1879: ReadResolution carries label, selector, mount and so on, and has no device field. src/bindings.jl:165-177 throws the resolver's list as it is. Probe P101: the refusal holds label :q and no device."
+  },
+  {
+   "id": "L11c-118",
+   "conforms": true,
+   "evidence": "src/sim.jl:2964: series compiles with source = :table. Probe P118: series(sim, reads(q = get_state(\"c\", :q))) is refused as ReadResolution :store_selector."
+  },
+  {
+   "id": "L11c-123",
+   "conforms": true,
+   "evidence": "src/sim.jl:964-979: overlay!(sim, condition) is legal at rest (initialized or stopped, sim.jl:900-905). It resolves onto the current stores (bases = _store_values), opens a fresh run with _open_run! and settles. Probe P123: from a stopped sim, overlay! leaves sim.run !== old run and lifecycle :initialized."
+  },
+  {
+   "id": "L11c-131",
+   "conforms": true,
+   "evidence": "src/model.jl:476 vs src/model.jl:336: the overlay settling calls run_boundary!(model, nothing) and init! calls boundary_zero!, which is run_boundary!(model, ESTABLISH) (model.jl:702). The one routine at model.jl:652 selects the output stages and updates by that argument. The first three choices live in the door bodies (model.jl:326-333 vs 472-474), as D-429's Rationale says.",
+   "note": "The original flag was _settle!(model; fresh::Bool) (bc460431). c3e7faeb replaced it with the due-set argument, ESTABLISH or nothing, which still plays the role of one two-valued switch. The doc's 'one flag' holds in substance but not by name."
+  },
+  {
+   "id": "L11c-133",
+   "conforms": true,
+   "evidence": "src/sim.jl:976-978: the trace header is Checkpoint(checkpoint(sim.model), ...) taken after the settling. Probe P133: replay! of the overlaid run's trace reproduces every logged t and port value."
+  },
+  {
+   "id": "L11c-142",
+   "conforms": true,
+   "evidence": "src/sim.jl:2283-2294: step! runs _sweep_tail! only when a source fired or a loop error was caught, so a halt at initialized sweeps nothing. src/sim.jl:654-662 and 1781-1791: doors reset accounts and drop batches but leave the diagnostic cells alone. Probe P142: a report made after step! survives overlay! in the harness cell (1 entry) and appears in recent after the next step!'s frame top."
+  },
+  {
+   "id": "L11c-151",
+   "conforms": true,
+   "evidence": "src/show.jl:564: the Simulation REPL form prints '  deployment: ' * sprint(show, sim.model.deployment), the 2-arg one-line form. Probe P151: the line matches the deployment's one-line show exactly."
+  }
+ ],
+ "notes": "Every claim in slice L11c was checked against W at f14dbc1d. All 19 conform. One probe script, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L11c_v/probe.jl, was run three times: twice to fix the helpers, then once for the final output. No tracked file was touched. Two notes, neither a mismatch: (1) D-377 lists init!, restore! and replay! as the doors whose first snapshot starts the stride count. overlay! is a fourth door, its first snapshot is the settling publication, and the code treats it the same way. (2) D-429's 'one flag, fresh or continuing' was a literal _settle!(model; fresh::Bool) in bc460431. Since c3e7faeb it is the due-set argument of run_boundary! (ESTABLISH vs nothing), which plays the same two-valued role."
+}

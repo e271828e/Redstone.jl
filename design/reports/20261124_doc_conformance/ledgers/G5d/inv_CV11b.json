@@ -1,0 +1,648 @@
+{
+ "rows": [
+  {
+   "id": "CV11b-001",
+   "file": "src/roster.jl",
+   "line": 3,
+   "kind": "cite",
+   "claim": "The file header says the roster carries 'the three-part admission'. Spec §11.3 'Device identity and admission' says 'Admission is a two-part check at the attach point, in order (D-375)': identity, then claims.",
+   "evidence": "design/spec.md:8441-8452 (two-part, AlreadyAttached then ClaimConflict); design/log.md:15836 (D-375 'Admission is a two-part check'); log.md:3758 and 6938 are the older three-part forms. Code: src/sim.jl:2512-2523 does identity, then claims.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace 'the three-part admission' with 'the two-part admission'.",
+   "note": "D-375 narrowed the check from identity, affinity, claims to identity, claims."
+  },
+  {
+   "id": "CV11b-026",
+   "file": "src/roster.jl",
+   "line": 235,
+   "kind": "surface",
+   "claim": "The raise site throws DeviceContractMismatch with reason :no_loop. The spec's Appendix C entry says 'what the contract lacks: the loop method, the output side ..., or the roster entry a detached handle ... no longer has'. It names no `reason` symbols, while BindingContractMismatch lists all nine of its reasons. The kind has three reasons, :no_loop, :no_output_side and :detached.",
+   "evidence": "src/diagnostics.jl:1841-1844 (reason::Symbol, :no_loop | :no_output_side | :detached); src/roster.jl:235-236; design/spec.md:15803-15807 (no reasons named); spec.md:15799-15801 lists the Binding reasons; rg for no_loop in design/spec.md finds nothing.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Append to the DeviceContractMismatch entry of Appendix C: 'A `reason` tells the cases apart: `:no_loop`, `:no_output_side` and `:detached`.'"
+  },
+  {
+   "id": "CV11b-033",
+   "file": "src/roster.jl",
+   "line": 296,
+   "kind": "docstring",
+   "claim": "The DataPlane docstring says 'the §11.3 freeze itself is the lifecycle's :running state (devices.jl)'. The freeze is Control's `running` flag (control.jl:70), read by `lifecycle` in sim.jl, and devices.jl holds neither.",
+   "evidence": "src/control.jl:33-40 and 70; src/sim.jl:511-513 (lifecycle reads control.running); rg 'lifecycle(' src/devices.jl finds nothing; design/code_map.md:270-271 puts the gates in sim.jl.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write '(control.jl's `running` flag, read by `lifecycle` in sim.jl)' in place of '(devices.jl)'."
+  },
+  {
+   "id": "CV11b-036",
+   "file": "src/roster.jl",
+   "line": 309,
+   "kind": "docstring",
+   "claim": "The DataPlane docstring says 'the inline body's entry leaves when that body returns, under wake's lock, since the loop reads the registry as it publishes'. No code removes a single entry from run_tasks. The only writes are the fill at spawn and `empty!` at run end. Every device runs in a spawned task and the loop runs on the calling task, so no inline device body exists.",
+   "evidence": "rg run_tasks src/: sim.jl:1750 (empty! under lock), sim.jl:1809 (fill), sim.jl:2834 (read), roster.jl only; src/sim.jl:1468-1469, 1508, 1652 (loop on the calling task, one task per live entry, D-310); design/log.md:12092 (the old calling-task inline body, superseded).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Delete the clause 'the inline body's entry leaves when that body returns, under `wake`'s lock, since the loop reads the registry as it publishes'. The registry is read under `wake`'s lock and emptied once at run end."
+  },
+  {
+   "id": "CV11b-062",
+   "file": "src/checkpoint.jl",
+   "line": 62,
+   "kind": "docstring",
+   "claim": "The ModelState docstring says 't is the float nearest t₀ + k·Δt_frame, as the clock writes it, so a typed decimal on the frame grid matches it from an exact origin'.",
+   "evidence": "src/frame.jl:157-161 and src/model.jl:820-841 write clock.t from step ends, and I did not trace the arithmetic. No probe covers it.",
+   "verdict": "unverifiable",
+   "note": "This needs the clock's t computation traced through _step_end and the exact origin. It was not settled within the effort allowed."
+  },
+  {
+   "id": "CV11b-070",
+   "file": "src/checkpoint.jl",
+   "line": 18,
+   "kind": "map",
+   "claim": "The code_map.md ModelState bullet ends 'and the fingerprint, the `Deployment` and the structural layout `Fingerprint`'. This names the fingerprint twice and lists three items. ModelState has two such fields, `deployment` and `layout::Fingerprint`.",
+   "evidence": "design/code_map.md:187-196; src/checkpoint.jl:83-84 (deployment, layout::Fingerprint).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write 'and the `Deployment` and the structural layout `Fingerprint`'."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV11b-002",
+   "file": "src/roster.jl",
+   "line": 26,
+   "kind": "docstring",
+   "claim": "AbstractDevice: loop is mandatory; init!, shutdown! and unblock! are the optional hooks",
+   "evidence": "src/devices.jl:113,136,162,202; src/roster.jl:233"
+  },
+  {
+   "id": "CV11b-003",
+   "file": "src/roster.jl",
+   "line": 31,
+   "kind": "docstring",
+   "claim": "A device's identity is its instance; one object holds at most one roster entry",
+   "evidence": "src/sim.jl:2512-2515"
+  },
+  {
+   "id": "CV11b-004",
+   "file": "src/roster.jl",
+   "line": 36,
+   "kind": "docstring",
+   "claim": "The binding is an attach! argument, never a device field",
+   "evidence": "src/sim.jl:2505-2506; src/devices.jl:70-81"
+  },
+  {
+   "id": "CV11b-005",
+   "file": "src/roster.jl",
+   "line": 50,
+   "kind": "docstring",
+   "claim": "is_input and is_output are Bool traits, false by default",
+   "evidence": "src/roster.jl:93,112"
+  },
+  {
+   "id": "CV11b-006",
+   "file": "src/roster.jl",
+   "line": 63,
+   "kind": "docstring",
+   "claim": "TableBinding is the shipped data-driven binding",
+   "evidence": "src/bindings.jl:55"
+  },
+  {
+   "id": "CV11b-007",
+   "file": "src/roster.jl",
+   "line": 66,
+   "kind": "docstring",
+   "claim": "No side, a declared side without its method, or a method under a false trait is BindingContractMismatch",
+   "evidence": "src/roster.jl:158,188,208-215; test/test_roster.jl:50-62"
+  },
+  {
+   "id": "CV11b-008",
+   "file": "src/roster.jl",
+   "line": 80,
+   "kind": "docstring",
+   "claim": "is_input returns Bool, false unless the type defines a method",
+   "evidence": "src/roster.jl:93"
+  },
+  {
+   "id": "CV11b-009",
+   "file": "src/roster.jl",
+   "line": 89,
+   "kind": "docstring",
+   "claim": "claims without the input side is refused as BindingContractMismatch",
+   "evidence": "src/roster.jl:212-213 (:claims_without_input)"
+  },
+  {
+   "id": "CV11b-010",
+   "file": "src/roster.jl",
+   "line": 108,
+   "kind": "docstring",
+   "claim": "reads without the output side is refused as BindingContractMismatch",
+   "evidence": "src/roster.jl:214-215 (:reads_without_output)"
+  },
+  {
+   "id": "CV11b-011",
+   "file": "src/roster.jl",
+   "line": 118,
+   "kind": "docstring",
+   "claim": "is_greedy is false by default; a greedy claim is every root input not yet claimed",
+   "evidence": "src/roster.jl:132,358; probe:30"
+  },
+  {
+   "id": "CV11b-012",
+   "file": "src/roster.jl",
+   "line": 122,
+   "kind": "docstring",
+   "claim": "The greedy claim is computed once at attach, never recomputed, so attachment order decides it",
+   "evidence": "src/roster.jl:358; sim.jl:2517"
+  },
+  {
+   "id": "CV11b-013",
+   "file": "src/roster.jl",
+   "line": 125,
+   "kind": "docstring",
+   "claim": "An empty greedy remainder is legal and warns EmptyGreedyClaim",
+   "evidence": "src/sim.jl:2544-2552; probe:31"
+  },
+  {
+   "id": "CV11b-014",
+   "file": "src/roster.jl",
+   "line": 128,
+   "kind": "docstring",
+   "claim": "Greedy without the input side, or with claims defined, is BindingContractMismatch",
+   "evidence": "src/roster.jl:206,210; test/test_roster.jl:55-56"
+  },
+  {
+   "id": "CV11b-015",
+   "file": "src/roster.jl",
+   "line": 141,
+   "kind": "docstring",
+   "claim": "claims returns face names as strings or symbols, called once at attach",
+   "evidence": "src/roster.jl:360-361; src/sim.jl:2517"
+  },
+  {
+   "id": "CV11b-016",
+   "file": "src/roster.jl",
+   "line": 149,
+   "kind": "docstring",
+   "claim": "Duplicates in a claim collapse",
+   "evidence": "src/roster.jl:365; probe:28"
+  },
+  {
+   "id": "CV11b-017",
+   "file": "src/roster.jl",
+   "line": 149,
+   "kind": "docstring",
+   "claim": "An empty claims collection is a legal claim to write nothing",
+   "evidence": "src/roster.jl:359,367; test/test_devices.jl:296"
+  },
+  {
+   "id": "CV11b-018",
+   "file": "src/roster.jl",
+   "line": 153,
+   "kind": "docstring",
+   "claim": "A non-greedy input binding with no claims method is BindingContractMismatch at attach",
+   "evidence": "src/roster.jl:158-159 (:claims_missing); test_roster.jl:53"
+  },
+  {
+   "id": "CV11b-019",
+   "file": "src/roster.jl",
+   "line": 155,
+   "kind": "docstring",
+   "claim": "An unknown face is AttachUnknownFace; a face another device claims is ClaimConflict",
+   "evidence": "src/roster.jl:362-364; src/sim.jl:2518-2521; probe:33"
+  },
+  {
+   "id": "CV11b-020",
+   "file": "src/roster.jl",
+   "line": 167,
+   "kind": "docstring",
+   "claim": "reads returns a NamedTuple of selectors; a non-NamedTuple or non-selector value is BindingContractMismatch",
+   "evidence": "src/bindings.jl:165-175; probe:34"
+  },
+  {
+   "id": "CV11b-021",
+   "file": "src/roster.jl",
+   "line": 175,
+   "kind": "docstring",
+   "claim": "attach! calls reads once and resolves it against the build",
+   "evidence": "src/sim.jl:2523-2525"
+  },
+  {
+   "id": "CV11b-022",
+   "file": "src/roster.jl",
+   "line": 181,
+   "kind": "docstring",
+   "claim": "A selector with an unknown component path is PathResolution; any other unresolved selector is ReadResolution",
+   "evidence": "src/bindings.jl:162-163"
+  },
+  {
+   "id": "CV11b-023",
+   "file": "src/roster.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "The keyword method reads(; selectors...) builds a read set that series takes",
+   "evidence": "src/readers.jl:551; design/spec.md:8154"
+  },
+  {
+   "id": "CV11b-024",
+   "file": "src/roster.jl",
+   "line": 191,
+   "kind": "docstring",
+   "claim": "check_binding detects defined-but-undeclared with one which against the fallback, and a greedy front end with a gather is legal",
+   "evidence": "src/roster.jl:204-205,210"
+  },
+  {
+   "id": "CV11b-025",
+   "file": "src/roster.jl",
+   "line": 219,
+   "kind": "docstring",
+   "claim": "check_device refuses a device with no loop before it is rostered or spawned, as a fail-fast DeviceContractMismatch",
+   "evidence": "src/roster.jl:233-236; src/sim.jl:2510-2515; spec.md:15803"
+  },
+  {
+   "id": "CV11b-027",
+   "file": "src/roster.jl",
+   "line": 240,
+   "kind": "docstring",
+   "claim": "RosterEntry holds device, id, drain thunk, should_abort, account and handle",
+   "evidence": "src/roster.jl:254-261"
+  },
+  {
+   "id": "CV11b-028",
+   "file": "src/roster.jl",
+   "line": 241,
+   "kind": "docstring",
+   "claim": "The id is monotonic per Simulation, never reused, and assigned on admission only",
+   "evidence": "src/sim.jl:2529-2530; probe:35"
+  },
+  {
+   "id": "CV11b-029",
+   "file": "src/roster.jl",
+   "line": 246,
+   "kind": "docstring",
+   "claim": "The binding, the writer over the claim and the diagnostic cell are the handle's",
+   "evidence": "src/sim.jl:2532-2536"
+  },
+  {
+   "id": "CV11b-030",
+   "file": "src/roster.jl",
+   "line": 267,
+   "kind": "docstring",
+   "claim": "_handle reads the entry's handle with a typeassert to the DeviceHandle family",
+   "evidence": "src/roster.jl:267"
+  },
+  {
+   "id": "CV11b-031",
+   "file": "src/roster.jl",
+   "line": 273,
+   "kind": "docstring",
+   "claim": "The drain thunk is zero-argument, captures store and writer concretely, and the drain is allocation-free",
+   "evidence": "src/roster.jl:284-285; test/test_dataplane.jl:189,200"
+  },
+  {
+   "id": "CV11b-032",
+   "file": "src/roster.jl",
+   "line": 287,
+   "kind": "docstring",
+   "claim": "_no_drain throws InternalInvariant and is the sentinel until a door or roster change compiles a thunk",
+   "evidence": "src/roster.jl:290,342; src/sim.jl:2538-2540"
+  },
+  {
+   "id": "CV11b-034",
+   "file": "src/roster.jl",
+   "line": 302,
+   "kind": "docstring",
+   "claim": "The harness cell and account survive roster changes while the writer is recompiled",
+   "evidence": "src/roster.jl:395-407"
+  },
+  {
+   "id": "CV11b-035",
+   "file": "src/roster.jl",
+   "line": 307,
+   "kind": "docstring",
+   "claim": "run_tasks is the run's device-id to Task registry, filled at spawn and emptied at run end",
+   "evidence": "src/sim.jl:1809,1750"
+  },
+  {
+   "id": "CV11b-037",
+   "file": "src/roster.jl",
+   "line": 311,
+   "kind": "docstring",
+   "claim": "A device absent from run_tasks reads :done inside a run and :none outside one",
+   "evidence": "src/sim.jl:2831-2836"
+  },
+  {
+   "id": "CV11b-038",
+   "file": "src/roster.jl",
+   "line": 317,
+   "kind": "docstring",
+   "claim": "DataPlane compiles no thunk at construction; harness_drain holds _no_drain until a door or roster change",
+   "evidence": "src/roster.jl:340-345"
+  },
+  {
+   "id": "CV11b-039",
+   "file": "src/roster.jl",
+   "line": 347,
+   "kind": "docstring",
+   "claim": "_claim: greedy is the unclaimed complement; returned claims are validated with AttachUnknownFace, deduplicated, empty allowed",
+   "evidence": "src/roster.jl:356-368"
+  },
+  {
+   "id": "CV11b-040",
+   "file": "src/roster.jl",
+   "line": 370,
+   "kind": "docstring",
+   "claim": "reclaim! rebuilds the exclusivity index and harness writer, reshapes the pending harness batch and discards newly claimed faces as ClaimedFaceEntry",
+   "evidence": "src/roster.jl:391-407; src/dataplane.jl:413-429"
+  },
+  {
+   "id": "CV11b-041",
+   "file": "src/roster.jl",
+   "line": 411,
+   "kind": "docstring",
+   "claim": "_writer_schemas lists rostered devices in attachment order, then harness",
+   "evidence": "src/roster.jl:414-419"
+  },
+  {
+   "id": "CV11b-042",
+   "file": "src/roster.jl",
+   "line": 428,
+   "kind": "docstring",
+   "claim": "_install_writers! is reached from init!, restore!, replay! (via _open_run!) and from reclaim!'s callers attach! and detach!",
+   "evidence": "src/sim.jl:697-703,846,972,999,2540,2582"
+  },
+  {
+   "id": "CV11b-043",
+   "file": "src/roster.jl",
+   "line": 441,
+   "kind": "docstring",
+   "claim": "_install_writers! appends the writer set to trc.schemas, with a local range, and recompiles every thunk; with no trace the indices are provisional",
+   "evidence": "src/roster.jl:441-460"
+  },
+  {
+   "id": "CV11b-044",
+   "file": "src/control.jl",
+   "line": 62,
+   "kind": "docstring",
+   "claim": "Control fields and defaults: pace Inf, margin 0.002, stopped true, paused false, running false",
+   "evidence": "src/control.jl:62-74; probe:39"
+  },
+  {
+   "id": "CV11b-045",
+   "file": "src/control.jl",
+   "line": 13,
+   "kind": "docstring",
+   "claim": "stop_issuer is set by a first-wins CAS from nothing",
+   "evidence": "src/control.jl:81-82"
+  },
+  {
+   "id": "CV11b-046",
+   "file": "src/control.jl",
+   "line": 17,
+   "kind": "docstring",
+   "claim": "The stop word is cleared at run start and at init!",
+   "evidence": "src/sim.jl:660,1644"
+  },
+  {
+   "id": "CV11b-047",
+   "file": "src/control.jl",
+   "line": 25,
+   "kind": "docstring",
+   "claim": "paused: set and cleared by pause!/resume!; resume! notifies wake; the tail clears it; a run's start never does",
+   "evidence": "src/sim.jl:1867-1868,2345,2357-2365; control.jl:97-110"
+  },
+  {
+   "id": "CV11b-048",
+   "file": "src/control.jl",
+   "line": 33,
+   "kind": "docstring",
+   "claim": "running spans run!/step! including the tail and lifecycle derives from it",
+   "evidence": "src/sim.jl:1643,1772,2259,2299,511-517"
+  },
+  {
+   "id": "CV11b-049",
+   "file": "src/control.jl",
+   "line": 42,
+   "kind": "docstring",
+   "claim": "counter counts published boundaries, mirrored under the lock after the release-store of latest, never re-armed",
+   "evidence": "src/sim.jl:2796-2803; src/devices.jl:439"
+  },
+  {
+   "id": "CV11b-050",
+   "file": "src/control.jl",
+   "line": 50,
+   "kind": "docstring",
+   "claim": "pace and margin are written by pace!/margin! and by run!/replay! at entry; the loop reads them at frame top",
+   "evidence": "src/sim.jl:1404-1405,1573-1574,2396,2413; control.jl:164,185"
+  },
+  {
+   "id": "CV11b-051",
+   "file": "src/control.jl",
+   "line": 58,
+   "kind": "docstring",
+   "claim": "join_timeout is validated at materialization and fixed for the simulation's life",
+   "evidence": "src/sim.jl:367-369,385; control.jl:71"
+  },
+  {
+   "id": "CV11b-052",
+   "file": "src/control.jl",
+   "line": 76,
+   "kind": "docstring",
+   "claim": "_request_stop!: first CAS wins, then notify under the lock",
+   "evidence": "src/control.jl:81-90"
+  },
+  {
+   "id": "CV11b-053",
+   "file": "src/control.jl",
+   "line": 92,
+   "kind": "docstring",
+   "claim": "wait_resume! parks while paused and no stop is pending, returns whether it parked",
+   "evidence": "src/control.jl:97-110"
+  },
+  {
+   "id": "CV11b-054",
+   "file": "src/control.jl",
+   "line": 113,
+   "kind": "docstring",
+   "claim": "Pacer is created by the run body and passed to the loop, never a field",
+   "evidence": "src/control.jl:118-130; src/sim.jl:1638"
+  },
+  {
+   "id": "CV11b-055",
+   "file": "src/control.jl",
+   "line": 135,
+   "kind": "docstring",
+   "claim": "anchor! sets the pair (t, τ()) under pace p and clears the debt",
+   "evidence": "src/control.jl:137-143"
+  },
+  {
+   "id": "CV11b-056",
+   "file": "src/control.jl",
+   "line": 145,
+   "kind": "docstring",
+   "claim": "reanchor! counts the cleared debt as forgiven and bumps reanchors",
+   "evidence": "src/control.jl:147-151"
+  },
+  {
+   "id": "CV11b-057",
+   "file": "src/control.jl",
+   "line": 153,
+   "kind": "docstring",
+   "claim": "wait_deadline!: forgives debt past 5·h/p with DebtReanchor on the loop cell, else hybrid sleep-then-spin; reads each knob once; no wait after an anchor",
+   "evidence": "src/control.jl:162-193; src/sim.jl:2109; design/spec.md:7782"
+  },
+  {
+   "id": "CV11b-058",
+   "file": "src/control.jl",
+   "line": 195,
+   "kind": "docstring",
+   "claim": "PacerStatus(pacer) copies the eight fields in order",
+   "evidence": "src/control.jl:196-198; src/dataplane.jl:282-291"
+  },
+  {
+   "id": "CV11b-059",
+   "file": "src/checkpoint.jl",
+   "line": 9,
+   "kind": "docstring",
+   "claim": "Fingerprint holds sizes, root faces, paths, x/s/m types, sorted addrs and events as described",
+   "evidence": "src/checkpoint.jl:18-27; src/model.jl:1136-1150"
+  },
+  {
+   "id": "CV11b-060",
+   "file": "src/checkpoint.jl",
+   "line": 36,
+   "kind": "docstring",
+   "claim": "ModelState fields x, s, m, table, prior, stepper, t, t₀, deployment, layout",
+   "evidence": "src/checkpoint.jl:74-85; src/model.jl:1186-1188"
+  },
+  {
+   "id": "CV11b-061",
+   "file": "src/checkpoint.jl",
+   "line": 50,
+   "kind": "docstring",
+   "claim": "stepper is nothing for RK4/Heun, and under BS3 the proposal and memory as two Float64s",
+   "evidence": "src/stepper.jl:145,185,282-283"
+  },
+  {
+   "id": "CV11b-063",
+   "file": "src/checkpoint.jl",
+   "line": 70,
+   "kind": "docstring",
+   "claim": "== on a ModelState is identity, so compare fields by value",
+   "evidence": "rg '==\\(' for Fingerprint or ModelState finds no method in src/"
+  },
+  {
+   "id": "CV11b-064",
+   "file": "src/checkpoint.jl",
+   "line": 91,
+   "kind": "docstring",
+   "claim": "Checkpoint is a Float64 ModelState with frame and boundary; checkpoint(sim) returns it",
+   "evidence": "src/checkpoint.jl:106-110; src/sim.jl:892; probe:38"
+  },
+  {
+   "id": "CV11b-065",
+   "file": "src/checkpoint.jl",
+   "line": 112,
+   "kind": "docstring",
+   "claim": "_restore_state! copies every field back, writes t and t₀ and hands the stepper its state, with no discontinuity notice",
+   "evidence": "src/checkpoint.jl:118-131"
+  },
+  {
+   "id": "CV11b-066",
+   "file": "src/checkpoint.jl",
+   "line": 133,
+   "kind": "docstring",
+   "claim": "_restore_stores! writes the s and m stores, shared with linearize",
+   "evidence": "src/checkpoint.jl:136-144; src/linearize.jl:326"
+  },
+  {
+   "id": "CV11b-067",
+   "file": "src/checkpoint.jl",
+   "line": 146,
+   "kind": "docstring",
+   "claim": "_detach copies mutable fields; deployment, fingerprint and stepper state ride as is",
+   "evidence": "src/checkpoint.jl:150-155"
+  },
+  {
+   "id": "CV11b-068",
+   "file": "src/checkpoint.jl",
+   "line": 157,
+   "kind": "docstring",
+   "claim": "_check_addresses! reports cells and types first, then offsets only if those agree, named port.<name>",
+   "evidence": "src/checkpoint.jl:161-176"
+  },
+  {
+   "id": "CV11b-069",
+   "file": "src/checkpoint.jl",
+   "line": 186,
+   "kind": "docstring",
+   "claim": "_walk_deployment! names the nine parameters, the algorithm field by field, then schedule rows and scopes by path and column",
+   "evidence": "src/checkpoint.jl:195-238; spec.md:15934-15955"
+  },
+  {
+   "id": "CV11b-071",
+   "file": "design/code_map.md",
+   "line": 1082,
+   "kind": "map",
+   "claim": "The roster.jl map entry matches: traits, check_binding/check_device, RosterEntry fields, DataPlane without thunks, reclaim!, _install_writers!",
+   "evidence": "src/roster.jl:93-461; src/sim.jl:697-703"
+  },
+  {
+   "id": "CV11b-072",
+   "file": "design/code_map.md",
+   "line": 251,
+   "kind": "map",
+   "claim": "The control.jl map entry matches: Control fields, _request_stop!, wait_resume!, Pacer, anchors, wait_deadline!, PacerStatus copy",
+   "evidence": "src/control.jl:62-198; src/sim.jl:1865-1868; src/devices.jl:439"
+  },
+  {
+   "id": "CV11b-073",
+   "file": "design/code_map.md",
+   "line": 187,
+   "kind": "map",
+   "claim": "The checkpoint.jl map entry matches apart from the ModelState bullet: Checkpoint, Fingerprint, what stays out, _restore_state!, _detach, mismatch namers, model.jl's functions",
+   "evidence": "src/checkpoint.jl:18-238; src/model.jl:1136,1180,1212"
+  },
+  {
+   "id": "CV11b-074",
+   "file": "src/roster.jl",
+   "line": 14,
+   "kind": "cite",
+   "claim": "The §11.3/§11.4/§11.5/§11.6/§11.8/§14.4/§12.2/§12.4 and D-193, D-200, D-202, D-255, D-256, D-260, D-261 comments point at sections and entries that treat the topic",
+   "evidence": "design/spec.md:8232,8485,8754,8904,9502,13197,9797,9969; log.md:7707,7999,8029,10633,10730,10947,11038"
+  },
+  {
+   "id": "CV11b-075",
+   "file": "src/control.jl",
+   "line": 12,
+   "kind": "cite",
+   "claim": "The §10.7/§12.1-§12.4/§12.6 and D-021, D-027, D-203, D-255, D-256, D-268, D-269, D-317 cites match; §12.4(1) and (2) are tail steps 1 and 2",
+   "evidence": "design/spec.md:7686,9708,9893,9969-10005; log.md:934,1087,8078,10633,10730,11738,11891,14517"
+  },
+  {
+   "id": "CV11b-076",
+   "file": "src/checkpoint.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "The §10.2/§11.5/§12.6/§12.7 and D-038, D-273, D-274, D-319, D-429, D-449, D-452, D-457, D-462 cites match their topics",
+   "evidence": "design/spec.md:6499,8754,10403,10745; log.md:1413,12241,12334,14778,17414,18891,19091,19440,19995"
+  },
+  {
+   "id": "CV11b-077",
+   "file": "src/roster.jl",
+   "line": 201,
+   "kind": "surface",
+   "claim": "The seven BindingContractMismatch reasons raised in roster.jl, and the two raised in bindings.jl, are all named in Appendix C",
+   "evidence": "design/spec.md:15799-15801; src/roster.jl:158,188,206-215; src/diagnostics.jl:1805-1807"
+  }
+ ],
+ "counts": {
+  "surface": 2,
+  "docstring": 67,
+  "map": 4,
+  "cite": 4,
+  "ptr": 0,
+  "why": 0
+ }
+}

@@ -1,0 +1,2426 @@
+{
+ "rows": [
+  {
+   "id": "S12b-115",
+   "file": "design/spec.md",
+   "line": 10130,
+   "kind": "decl",
+   "claim": "Init-bracket code block reads `init!(entry.device)`; the roster entry's field is `dev`.",
+   "evidence": "src/roster.jl:255 (`dev::AbstractDevice`); src/sim.jl:1841 (`init!(entry.dev)`)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write `init!(entry.dev)` in the block, or mark the block as pseudocode."
+  },
+  {
+   "id": "S12b-117",
+   "file": "design/spec.md",
+   "line": 10132,
+   "kind": "ex",
+   "claim": "Block releases with bare `shutdown!(entry.device)`; the bracket calls the guarded `_shutdown!(entry)`, which warns on a throw and forwards an interrupt to the stop word.",
+   "evidence": "src/sim.jl:1842; src/devices.jl:619-632",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write `_shutdown!(entry)           # release, guarded (§11.6)` or note that a throw out of `shutdown!` is warned, not raised."
+  },
+  {
+   "id": "S12b-120",
+   "file": "design/spec.md",
+   "line": 10135,
+   "kind": "decl",
+   "claim": "Block sets the interrupt stop with `stop!(control, :interrupt)`; no such method exists. `stop!` takes a `Simulation` or a `DeviceHandle`.",
+   "evidence": "src/sim.jl:2328; src/devices.jl:253; src/sim.jl:1846 uses `_request_stop!(entry.handle.control, :interrupt)`",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write `_request_stop!(entry.handle.control, :interrupt)` or say in a comment that this is the stop word's write path."
+  },
+  {
+   "id": "S12b-199",
+   "file": "design/spec.md",
+   "line": 10254,
+   "kind": "mech",
+   "claim": "The loop masks delivery using Julia's `disable_sigint`; the code calls `Base.sigatomic_begin()` and `Base.sigatomic_end()` directly and never `disable_sigint`.",
+   "evidence": "src/sim.jl:2110, 2134 (rg disable_sigint src finds nothing; probe:113)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "using Julia's sigatomic counter (`Base.sigatomic_begin` and `sigatomic_end`), an increment that is negligible per frame."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S12b-001",
+   "file": "design/spec.md",
+   "line": 9971,
+   "kind": "why",
+   "claim": "a run ends on time, a stop, or a model request",
+   "evidence": "src/sim.jl:2104"
+  },
+  {
+   "id": "S12b-002",
+   "file": "design/spec.md",
+   "line": 9973,
+   "kind": "law",
+   "claim": "the loop stops on a boundary",
+   "evidence": "src/sim.jl:2094-2134"
+  },
+  {
+   "id": "S12b-003",
+   "file": "design/spec.md",
+   "line": 9974,
+   "kind": "law",
+   "claim": "the device task is woken out of its blocking call",
+   "evidence": "src/sim.jl:1865"
+  },
+  {
+   "id": "S12b-004",
+   "file": "design/spec.md",
+   "line": 9976,
+   "kind": "law",
+   "claim": "every run resource is released before run! returns",
+   "evidence": "src/sim.jl:1744-1773"
+  },
+  {
+   "id": "S12b-005",
+   "file": "design/spec.md",
+   "line": 9977,
+   "kind": "ptr",
+   "claim": "section names the sequence the tail",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-006",
+   "file": "design/spec.md",
+   "line": 9978,
+   "kind": "mech",
+   "claim": "section also specifies init bracket and interrupt",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-007",
+   "file": "design/spec.md",
+   "line": 9980,
+   "kind": "law",
+   "claim": "operator interrupt enters the tail, not bypasses it",
+   "evidence": "src/sim.jl:1675-1720"
+  },
+  {
+   "id": "S12b-008",
+   "file": "design/spec.md",
+   "line": 9985,
+   "kind": "law",
+   "claim": "steps (1)-(5) run in order on every stop",
+   "evidence": "src/sim.jl:1664-1667"
+  },
+  {
+   "id": "S12b-009",
+   "file": "design/spec.md",
+   "line": 9986,
+   "kind": "law",
+   "claim": "steps (6),(7) cover device or loop ending first",
+   "evidence": "src/devices.jl:654-672"
+  },
+  {
+   "id": "S12b-010",
+   "file": "design/spec.md",
+   "line": 9989,
+   "kind": "law",
+   "claim": "three events start a shutdown",
+   "evidence": "src/sim.jl:2104-2105"
+  },
+  {
+   "id": "S12b-011",
+   "file": "design/spec.md",
+   "line": 9990,
+   "kind": "law",
+   "claim": "t_end reached starts a shutdown",
+   "evidence": "src/sim.jl:2105"
+  },
+  {
+   "id": "S12b-012",
+   "file": "design/spec.md",
+   "line": 9990,
+   "kind": "law",
+   "claim": "a control-plane stop starts a shutdown",
+   "evidence": "src/sim.jl:2104"
+  },
+  {
+   "id": "S12b-013",
+   "file": "design/spec.md",
+   "line": 9991,
+   "kind": "law",
+   "claim": "honoured STOP_REQUESTED in the published snapshot starts a shutdown",
+   "evidence": "src/sim.jl:585-593"
+  },
+  {
+   "id": "S12b-014",
+   "file": "design/spec.md",
+   "line": 9993,
+   "kind": "decl",
+   "claim": "a stop request is an output port of the enum StopFlag",
+   "evidence": "src/library.jl:421"
+  },
+  {
+   "id": "S12b-015",
+   "file": "design/spec.md",
+   "line": 9994,
+   "kind": "mech",
+   "claim": "control-plane stop issuers include code and a device handle",
+   "evidence": "src/sim.jl:2328; src/devices.jl:253"
+  },
+  {
+   "id": "S12b-016",
+   "file": "design/spec.md",
+   "line": 9995,
+   "kind": "mech",
+   "claim": "an operator interrupt is a stop issuer",
+   "evidence": "src/sim.jl:2154"
+  },
+  {
+   "id": "S12b-017",
+   "file": "design/spec.md",
+   "line": 9996,
+   "kind": "ptr",
+   "claim": "third event is model-detected termination",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-018",
+   "file": "design/spec.md",
+   "line": 9997,
+   "kind": "law",
+   "claim": "the loop never stops mid-boundary",
+   "evidence": "src/sim.jl:2110-2134"
+  },
+  {
+   "id": "S12b-019",
+   "file": "design/spec.md",
+   "line": 9997,
+   "kind": "law",
+   "claim": "the loop completes the boundary sequence in progress",
+   "evidence": "src/sim.jl:2110-2134"
+  },
+  {
+   "id": "S12b-020",
+   "file": "design/spec.md",
+   "line": 9998,
+   "kind": "law",
+   "claim": "a stop at t* sits inside a frame",
+   "evidence": "src/sim.jl:2119"
+  },
+  {
+   "id": "S12b-021",
+   "file": "design/spec.md",
+   "line": 9999,
+   "kind": "law",
+   "claim": "the loop publishes the final snapshot before the sticky status",
+   "evidence": "src/sim.jl:1865-1867"
+  },
+  {
+   "id": "S12b-022",
+   "file": "design/spec.md",
+   "line": 10000,
+   "kind": "law",
+   "claim": "the sticky stopped status is set after the final snapshot",
+   "evidence": "src/sim.jl:1744"
+  },
+  {
+   "id": "S12b-023",
+   "file": "design/spec.md",
+   "line": 10001,
+   "kind": "mech",
+   "claim": "next-snapshot wait is woken in step (2)",
+   "evidence": "src/sim.jl:1870-1875"
+  },
+  {
+   "id": "S12b-024",
+   "file": "design/spec.md",
+   "line": 10002,
+   "kind": "decl",
+   "claim": "the wait is wait_next_snapshot(handle)",
+   "evidence": "src/devices.jl:434"
+  },
+  {
+   "id": "S12b-025",
+   "file": "design/spec.md",
+   "line": 10002,
+   "kind": "mech",
+   "claim": "the pause is woken in step (2)",
+   "evidence": "src/control.jl:91-103"
+  },
+  {
+   "id": "S12b-026",
+   "file": "design/spec.md",
+   "line": 10003,
+   "kind": "law",
+   "claim": "each waiter observes the stopped status and unwinds",
+   "evidence": "src/devices.jl:439"
+  },
+  {
+   "id": "S12b-027",
+   "file": "design/spec.md",
+   "line": 10004,
+   "kind": "law",
+   "claim": "a stop issued while paused works",
+   "evidence": "probe:158"
+  },
+  {
+   "id": "S12b-028",
+   "file": "design/spec.md",
+   "line": 10005,
+   "kind": "decl",
+   "claim": "the hook is unblock!(device)",
+   "evidence": "src/devices.jl:162"
+  },
+  {
+   "id": "S12b-029",
+   "file": "design/spec.md",
+   "line": 10005,
+   "kind": "law",
+   "claim": "unblock! defaults to a no-op",
+   "evidence": "src/devices.jl:162"
+  },
+  {
+   "id": "S12b-030",
+   "file": "design/spec.md",
+   "line": 10006,
+   "kind": "ex",
+   "claim": "a network override closing its socket raises in the blocked task",
+   "evidence": "src/devices.jl:660-667"
+  },
+  {
+   "id": "S12b-031",
+   "file": "design/spec.md",
+   "line": 10007,
+   "kind": "mech",
+   "claim": "the wrapper catches the raise and treats it as shutdown",
+   "evidence": "probe:117-120"
+  },
+  {
+   "id": "S12b-032",
+   "file": "design/spec.md",
+   "line": 10008,
+   "kind": "ptr",
+   "claim": "demotes the EOT convention",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-033",
+   "file": "design/spec.md",
+   "line": 10011,
+   "kind": "mech",
+   "claim": "loop body exit is the author own while running(handle) loop",
+   "evidence": "src/devices.jl:229"
+  },
+  {
+   "id": "S12b-034",
+   "file": "design/spec.md",
+   "line": 10013,
+   "kind": "ptr",
+   "claim": "contract teaches two obligations",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-035",
+   "file": "design/spec.md",
+   "line": 10014,
+   "kind": "mech",
+   "claim": "steps (2),(3) wake framework waits and call unblock!",
+   "evidence": "src/sim.jl:1865,1900"
+  },
+  {
+   "id": "S12b-036",
+   "file": "design/spec.md",
+   "line": 10015,
+   "kind": "law",
+   "claim": "the wrapper finally runs shutdown!(device) on every exit path",
+   "evidence": "src/devices.jl:669-671"
+  },
+  {
+   "id": "S12b-037",
+   "file": "design/spec.md",
+   "line": 10017,
+   "kind": "decl",
+   "claim": "join_timeout is a Simulation constructor keyword",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S12b-038",
+   "file": "design/spec.md",
+   "line": 10018,
+   "kind": "mech",
+   "claim": "join_timeout is held on Control",
+   "evidence": "src/control.jl:68"
+  },
+  {
+   "id": "S12b-039",
+   "file": "design/spec.md",
+   "line": 10019,
+   "kind": "law",
+   "claim": "join_timeout is a positive real in seconds",
+   "evidence": "src/sim.jl:367"
+  },
+  {
+   "id": "S12b-040",
+   "file": "design/spec.md",
+   "line": 10019,
+   "kind": "law",
+   "claim": "join_timeout defaults to 5",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "S12b-041",
+   "file": "design/spec.md",
+   "line": 10020,
+   "kind": "law",
+   "claim": "any other value is refused as ArgumentInvalid",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "S12b-042",
+   "file": "design/spec.md",
+   "line": 10021,
+   "kind": "law",
+   "claim": "a task exceeding the cap is reported by name in DeviceJoinTimeout",
+   "evidence": "probe:101"
+  },
+  {
+   "id": "S12b-043",
+   "file": "design/spec.md",
+   "line": 10022,
+   "kind": "law",
+   "claim": "an exceeding task is abandoned, not left to hang run!",
+   "evidence": "probe:98"
+  },
+  {
+   "id": "S12b-044",
+   "file": "design/spec.md",
+   "line": 10023,
+   "kind": "mech",
+   "claim": "DeviceJoinTimeout goes to the loop own diagnostic cell",
+   "evidence": "src/sim.jl:1936-1941"
+  },
+  {
+   "id": "S12b-045",
+   "file": "design/spec.md",
+   "line": 10025,
+   "kind": "mech",
+   "claim": "the run-end sweep collects it into the termination record",
+   "evidence": "src/sim.jl:1955-1967"
+  },
+  {
+   "id": "S12b-046",
+   "file": "design/spec.md",
+   "line": 10027,
+   "kind": "mech",
+   "claim": "the logging backend presents the diagnostic",
+   "evidence": "src/sim.jl:1978"
+  },
+  {
+   "id": "S12b-047",
+   "file": "design/spec.md",
+   "line": 10028,
+   "kind": "law",
+   "claim": "the terminal snapshot precedes the join",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "S12b-048",
+   "file": "design/spec.md",
+   "line": 10029,
+   "kind": "law",
+   "claim": "a device exits voluntarily when its loop body returns",
+   "evidence": "src/devices.jl:669"
+  },
+  {
+   "id": "S12b-049",
+   "file": "design/spec.md",
+   "line": 10030,
+   "kind": "law",
+   "claim": "no should_close hook exists",
+   "evidence": "src/devices.jl:162"
+  },
+  {
+   "id": "S12b-050",
+   "file": "design/spec.md",
+   "line": 10030,
+   "kind": "law",
+   "claim": "should_close: named only to say no such hook exists; none in src",
+   "evidence": "src/devices.jl:162"
+  },
+  {
+   "id": "S12b-051",
+   "file": "design/spec.md",
+   "line": 10031,
+   "kind": "decl",
+   "claim": "should_abort is an attach! keyword",
+   "evidence": "src/sim.jl:2506"
+  },
+  {
+   "id": "S12b-052",
+   "file": "design/spec.md",
+   "line": 10032,
+   "kind": "law",
+   "claim": "with should_abort the wrapper exit path requests a sim stop",
+   "evidence": "src/devices.jl:671"
+  },
+  {
+   "id": "S12b-053",
+   "file": "design/spec.md",
+   "line": 10033,
+   "kind": "law",
+   "claim": "without should_abort the sim continues with the task absent",
+   "evidence": "probe:214"
+  },
+  {
+   "id": "S12b-054",
+   "file": "design/spec.md",
+   "line": 10034,
+   "kind": "mech",
+   "claim": "the staging cell stops filling",
+   "evidence": "probe:276"
+  },
+  {
+   "id": "S12b-055",
+   "file": "design/spec.md",
+   "line": 10035,
+   "kind": "law",
+   "claim": "the roster entry persists to run end",
+   "evidence": "probe:277"
+  },
+  {
+   "id": "S12b-056",
+   "file": "design/spec.md",
+   "line": 10035,
+   "kind": "law",
+   "claim": "its claims persist to run end",
+   "evidence": "probe:224"
+  },
+  {
+   "id": "S12b-057",
+   "file": "design/spec.md",
+   "line": 10036,
+   "kind": "law",
+   "claim": "death is not detach",
+   "evidence": "probe:224-227"
+  },
+  {
+   "id": "S12b-058",
+   "file": "design/spec.md",
+   "line": 10038,
+   "kind": "law",
+   "claim": "orphaned root inputs hold their last-drained values",
+   "evidence": "src/devices.jl:608"
+  },
+  {
+   "id": "S12b-059",
+   "file": "design/spec.md",
+   "line": 10040,
+   "kind": "law",
+   "claim": "a crashing device task is caught by the wrapper",
+   "evidence": "src/devices.jl:667"
+  },
+  {
+   "id": "S12b-060",
+   "file": "design/spec.md",
+   "line": 10041,
+   "kind": "law",
+   "claim": "the crash is logged as DeviceCrash with the device name",
+   "evidence": "test/test_devices.jl:781"
+  },
+  {
+   "id": "S12b-061",
+   "file": "design/spec.md",
+   "line": 10042,
+   "kind": "law",
+   "claim": "a loop-side failure runs steps (1)-(5) from the catch path",
+   "evidence": "src/sim.jl:1664-1667"
+  },
+  {
+   "id": "S12b-062",
+   "file": "design/spec.md",
+   "line": 10043,
+   "kind": "law",
+   "claim": "the failed boundary is discarded, the previous snapshot is final",
+   "evidence": "src/sim.jl:1752-1762"
+  },
+  {
+   "id": "S12b-063",
+   "file": "design/spec.md",
+   "line": 10045,
+   "kind": "why",
+   "claim": "FlightCore SimulationTermination catch path was the precedent",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-064",
+   "file": "design/spec.md",
+   "line": 10045,
+   "kind": "why",
+   "claim": "SimulationTermination: FlightCore prior art, not a Redstone name",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-065",
+   "file": "design/spec.md",
+   "line": 10046,
+   "kind": "law",
+   "claim": "exception-based termination has no place in the design",
+   "evidence": "src/sim.jl:1755"
+  },
+  {
+   "id": "S12b-066",
+   "file": "design/spec.md",
+   "line": 10047,
+   "kind": "law",
+   "claim": "devices unwind cleanly whoever died",
+   "evidence": "src/sim.jl:1664-1667"
+  },
+  {
+   "id": "S12b-067",
+   "file": "design/spec.md",
+   "line": 10052,
+   "kind": "law",
+   "claim": "one-line order: stop, boundary, final snapshot, stopped",
+   "evidence": "src/sim.jl:1744"
+  },
+  {
+   "id": "S12b-068",
+   "file": "design/spec.md",
+   "line": 10054,
+   "kind": "law",
+   "claim": "loop bodies return through wrapper finally shutdown!",
+   "evidence": "src/devices.jl:669"
+  },
+  {
+   "id": "S12b-069",
+   "file": "design/spec.md",
+   "line": 10055,
+   "kind": "law",
+   "claim": "join under the cap, then run! returns",
+   "evidence": "src/sim.jl:1907-1913"
+  },
+  {
+   "id": "S12b-070",
+   "file": "design/spec.md",
+   "line": 10058,
+   "kind": "law",
+   "claim": "run ends at the first frame top at or past t_end",
+   "evidence": "probe:139-149"
+  },
+  {
+   "id": "S12b-071",
+   "file": "design/spec.md",
+   "line": 10059,
+   "kind": "law",
+   "claim": "the run takes whole frames only",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "S12b-072",
+   "file": "design/spec.md",
+   "line": 10060,
+   "kind": "law",
+   "claim": "grid integrity forbids a shortened final frame",
+   "evidence": "src/sim.jl:2105"
+  },
+  {
+   "id": "S12b-073",
+   "file": "design/spec.md",
+   "line": 10061,
+   "kind": "law",
+   "claim": "frame tops are indexed, never accumulated",
+   "evidence": "src/model.jl:572"
+  },
+  {
+   "id": "S12b-074",
+   "file": "design/spec.md",
+   "line": 10062,
+   "kind": "law",
+   "claim": "the final boundary may overshoot t_end by up to one frame",
+   "evidence": "probe:139-140"
+  },
+  {
+   "id": "S12b-075",
+   "file": "design/spec.md",
+   "line": 10063,
+   "kind": "law",
+   "claim": "the termination record carries the actual final t",
+   "evidence": "probe:140"
+  },
+  {
+   "id": "S12b-076",
+   "file": "design/spec.md",
+   "line": 10066,
+   "kind": "law",
+   "claim": "t_end is checked against frame-top times",
+   "evidence": "src/sim.jl:2105"
+  },
+  {
+   "id": "S12b-077",
+   "file": "design/spec.md",
+   "line": 10067,
+   "kind": "law",
+   "claim": "stop requests are checked at every published boundary",
+   "evidence": "src/sim.jl:2042"
+  },
+  {
+   "id": "S12b-078",
+   "file": "design/spec.md",
+   "line": 10068,
+   "kind": "law",
+   "claim": "a step end inside a frame and a t* are checked boundaries",
+   "evidence": "src/sim.jl:2042"
+  },
+  {
+   "id": "S12b-079",
+   "file": "design/spec.md",
+   "line": 10071,
+   "kind": "law",
+   "claim": "the final snapshot is published before the status is set",
+   "evidence": "probe:128-129"
+  },
+  {
+   "id": "S12b-080",
+   "file": "design/spec.md",
+   "line": 10072,
+   "kind": "mech",
+   "claim": "publishing first lets output devices flush the final state",
+   "evidence": "probe:128"
+  },
+  {
+   "id": "S12b-081",
+   "file": "design/spec.md",
+   "line": 10073,
+   "kind": "law",
+   "claim": "the terminal status carries the cumulative diagnostic counters",
+   "evidence": "probe:132"
+  },
+  {
+   "id": "S12b-082",
+   "file": "design/spec.md",
+   "line": 10074,
+   "kind": "law",
+   "claim": "the counters are complete to the snapshot own frame top",
+   "evidence": "probe:216"
+  },
+  {
+   "id": "S12b-083",
+   "file": "design/spec.md",
+   "line": 10075,
+   "kind": "law",
+   "claim": "the tail products fold into the termination record",
+   "evidence": "src/sim.jl:1746-1769"
+  },
+  {
+   "id": "S12b-084",
+   "file": "design/spec.md",
+   "line": 10076,
+   "kind": "law",
+   "claim": "tail products are presented through logging, never published",
+   "evidence": "src/sim.jl:1978"
+  },
+  {
+   "id": "S12b-085",
+   "file": "design/spec.md",
+   "line": 10079,
+   "kind": "law",
+   "claim": "the terminal snapshot is retained in the log",
+   "evidence": "probe:127"
+  },
+  {
+   "id": "S12b-086",
+   "file": "design/spec.md",
+   "line": 10080,
+   "kind": "law",
+   "claim": "retention holds under any log_every and log_max",
+   "evidence": "probe:127,130"
+  },
+  {
+   "id": "S12b-087",
+   "file": "design/spec.md",
+   "line": 10083,
+   "kind": "ptr",
+   "claim": "default is generous for teardown",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-088",
+   "file": "design/spec.md",
+   "line": 10087,
+   "kind": "law",
+   "claim": "the cap is a per-simulation setting",
+   "evidence": "src/sim.jl:385"
+  },
+  {
+   "id": "S12b-089",
+   "file": "design/spec.md",
+   "line": 10092,
+   "kind": "law",
+   "claim": "the cap is not trajectory-determining",
+   "evidence": "src/sim.jl:1744"
+  },
+  {
+   "id": "S12b-090",
+   "file": "design/spec.md",
+   "line": 10093,
+   "kind": "law",
+   "claim": "replay does not record the cap",
+   "evidence": "probe:87"
+  },
+  {
+   "id": "S12b-091",
+   "file": "design/spec.md",
+   "line": 10095,
+   "kind": "law",
+   "claim": "replay does not compare the cap",
+   "evidence": "probe:87"
+  },
+  {
+   "id": "S12b-092",
+   "file": "design/spec.md",
+   "line": 10096,
+   "kind": "law",
+   "claim": "the cap lives on Control, not the Deployment",
+   "evidence": "probe:86-87"
+  },
+  {
+   "id": "S12b-093",
+   "file": "design/spec.md",
+   "line": 10100,
+   "kind": "law",
+   "claim": "after (5) the task set is empty",
+   "evidence": "probe:255"
+  },
+  {
+   "id": "S12b-094",
+   "file": "design/spec.md",
+   "line": 10101,
+   "kind": "law",
+   "claim": "shutdown! has released each device OS resources",
+   "evidence": "src/devices.jl:669"
+  },
+  {
+   "id": "S12b-095",
+   "file": "design/spec.md",
+   "line": 10102,
+   "kind": "law",
+   "claim": "the roster entry survives a stop",
+   "evidence": "probe:256"
+  },
+  {
+   "id": "S12b-096",
+   "file": "design/spec.md",
+   "line": 10103,
+   "kind": "law",
+   "claim": "binding, claims and stable id survive a stop",
+   "evidence": "src/roster.jl:254-261"
+  },
+  {
+   "id": "S12b-097",
+   "file": "design/spec.md",
+   "line": 10103,
+   "kind": "law",
+   "claim": "no task survives a stop",
+   "evidence": "probe:255"
+  },
+  {
+   "id": "S12b-098",
+   "file": "design/spec.md",
+   "line": 10104,
+   "kind": "law",
+   "claim": "no live resource survives a stop",
+   "evidence": "src/devices.jl:669"
+  },
+  {
+   "id": "S12b-099",
+   "file": "design/spec.md",
+   "line": 10105,
+   "kind": "law",
+   "claim": "a device whose task died mid-run is indistinguishable at stop",
+   "evidence": "probe:277"
+  },
+  {
+   "id": "S12b-100",
+   "file": "design/spec.md",
+   "line": 10106,
+   "kind": "law",
+   "claim": "detach! can remove a roster entry once stopped",
+   "evidence": "probe:263"
+  },
+  {
+   "id": "S12b-101",
+   "file": "design/spec.md",
+   "line": 10106,
+   "kind": "law",
+   "claim": "detach! releases its claims",
+   "evidence": "probe:227"
+  },
+  {
+   "id": "S12b-102",
+   "file": "design/spec.md",
+   "line": 10109,
+   "kind": "law",
+   "claim": "the next run re-runs init! on every device",
+   "evidence": "probe:259"
+  },
+  {
+   "id": "S12b-103",
+   "file": "design/spec.md",
+   "line": 10112,
+   "kind": "law",
+   "claim": "the next run spawns fresh tasks",
+   "evidence": "src/devices.jl:678-683"
+  },
+  {
+   "id": "S12b-104",
+   "file": "design/spec.md",
+   "line": 10113,
+   "kind": "law",
+   "claim": "the counter is never re-armed",
+   "evidence": "probe:260"
+  },
+  {
+   "id": "S12b-105",
+   "file": "design/spec.md",
+   "line": 10114,
+   "kind": "mech",
+   "claim": "last_seen is set from the counter at spawn",
+   "evidence": "src/devices.jl:679"
+  },
+  {
+   "id": "S12b-106",
+   "file": "design/spec.md",
+   "line": 10115,
+   "kind": "law",
+   "claim": "while stopped there are no device tasks",
+   "evidence": "src/sim.jl:1750"
+  },
+  {
+   "id": "S12b-107",
+   "file": "design/spec.md",
+   "line": 10115,
+   "kind": "law",
+   "claim": "voluntary exit and heartbeat are run-scoped observables",
+   "evidence": "src/sim.jl:2831"
+  },
+  {
+   "id": "S12b-108",
+   "file": "design/spec.md",
+   "line": 10116,
+   "kind": "law",
+   "claim": "an unplugged device surfaces as the next run init! failure",
+   "evidence": "src/sim.jl:1837-1851"
+  },
+  {
+   "id": "S12b-109",
+   "file": "design/spec.md",
+   "line": 10121,
+   "kind": "law",
+   "claim": "initialization is a step of the protocol at the top of a run",
+   "evidence": "src/sim.jl:1648"
+  },
+  {
+   "id": "S12b-110",
+   "file": "design/spec.md",
+   "line": 10122,
+   "kind": "law",
+   "claim": "init! runs before any task is spawned",
+   "evidence": "src/sim.jl:1648-1654"
+  },
+  {
+   "id": "S12b-111",
+   "file": "design/spec.md",
+   "line": 10122,
+   "kind": "law",
+   "claim": "init! runs once per roster entry in attachment order",
+   "evidence": "src/sim.jl:1838"
+  },
+  {
+   "id": "S12b-112",
+   "file": "design/spec.md",
+   "line": 10123,
+   "kind": "law",
+   "claim": "init! runs on the calling task",
+   "evidence": "src/sim.jl:1648"
+  },
+  {
+   "id": "S12b-113",
+   "file": "design/spec.md",
+   "line": 10124,
+   "kind": "law",
+   "claim": "each init! call sits in its own bracket",
+   "evidence": "src/sim.jl:1838-1852"
+  },
+  {
+   "id": "S12b-114",
+   "file": "design/spec.md",
+   "line": 10127,
+   "kind": "ex",
+   "claim": "loop over roster pushing live before init!",
+   "evidence": "src/sim.jl:1838-1840"
+  },
+  {
+   "id": "S12b-116",
+   "file": "design/spec.md",
+   "line": 10131,
+   "kind": "ex",
+   "claim": "shutdown! on throw, unconditional",
+   "evidence": "src/sim.jl:1842"
+  },
+  {
+   "id": "S12b-118",
+   "file": "design/spec.md",
+   "line": 10133,
+   "kind": "ex",
+   "claim": "pop! of live after release",
+   "evidence": "src/sim.jl:1843"
+  },
+  {
+   "id": "S12b-119",
+   "file": "design/spec.md",
+   "line": 10134,
+   "kind": "ex",
+   "claim": "an InterruptException takes the interrupt arm",
+   "evidence": "src/sim.jl:1844"
+  },
+  {
+   "id": "S12b-121",
+   "file": "design/spec.md",
+   "line": 10138,
+   "kind": "ex",
+   "claim": "report!(entry, DeviceCrash(e, should_abort))",
+   "evidence": "src/sim.jl:1849"
+  },
+  {
+   "id": "S12b-122",
+   "file": "design/spec.md",
+   "line": 10139,
+   "kind": "ex",
+   "claim": "should_abort set requests stop!(entry.handle)",
+   "evidence": "src/sim.jl:1850"
+  },
+  {
+   "id": "S12b-123",
+   "file": "design/spec.md",
+   "line": 10141,
+   "kind": "law",
+   "claim": "no dead-marking is done",
+   "evidence": "src/devices.jl:411"
+  },
+  {
+   "id": "S12b-124",
+   "file": "design/spec.md",
+   "line": 10146,
+   "kind": "law",
+   "claim": "the bracket makes the guaranteed-shutdown rule true outside the wrapper",
+   "evidence": "src/sim.jl:1842"
+  },
+  {
+   "id": "S12b-125",
+   "file": "design/spec.md",
+   "line": 10148,
+   "kind": "law",
+   "claim": "a half-initialized device is handed back to shutdown!",
+   "evidence": "probe:183"
+  },
+  {
+   "id": "S12b-126",
+   "file": "design/spec.md",
+   "line": 10150,
+   "kind": "law",
+   "claim": "shutdown! owes tolerance of a partially initialized device",
+   "evidence": "src/devices.jl:129"
+  },
+  {
+   "id": "S12b-127",
+   "file": "design/spec.md",
+   "line": 10153,
+   "kind": "law",
+   "claim": "the entry is listed before its init! begins",
+   "evidence": "src/sim.jl:1839"
+  },
+  {
+   "id": "S12b-128",
+   "file": "design/spec.md",
+   "line": 10154,
+   "kind": "law",
+   "claim": "the bracket unlists it once shutdown! has returned",
+   "evidence": "src/sim.jl:1843"
+  },
+  {
+   "id": "S12b-129",
+   "file": "design/spec.md",
+   "line": 10155,
+   "kind": "law",
+   "claim": "an escaping interrupt finds listed every begun, unreleased device",
+   "evidence": "src/sim.jl:1708-1716"
+  },
+  {
+   "id": "S12b-130",
+   "file": "design/spec.md",
+   "line": 10157,
+   "kind": "law",
+   "claim": "the run releases each listed device before it ends",
+   "evidence": "src/sim.jl:1712-1716"
+  },
+  {
+   "id": "S12b-131",
+   "file": "design/spec.md",
+   "line": 10158,
+   "kind": "law",
+   "claim": "a listed, uninitialized device can be released having opened nothing",
+   "evidence": "src/devices.jl:129"
+  },
+  {
+   "id": "S12b-132",
+   "file": "design/spec.md",
+   "line": 10161,
+   "kind": "law",
+   "claim": "the report is the ordinary DeviceCrash",
+   "evidence": "src/sim.jl:1849"
+  },
+  {
+   "id": "S12b-133",
+   "file": "design/spec.md",
+   "line": 10162,
+   "kind": "decl",
+   "claim": "payload carries the cause exception and the should_abort flag",
+   "evidence": "src/diagnostics.jl:1688-1691"
+  },
+  {
+   "id": "S12b-134",
+   "file": "design/spec.md",
+   "line": 10164,
+   "kind": "law",
+   "claim": "the diagnostic cell written names the device",
+   "evidence": "probe:216"
+  },
+  {
+   "id": "S12b-135",
+   "file": "design/spec.md",
+   "line": 10169,
+   "kind": "law",
+   "claim": "the report goes through report!(address, diagnostic)",
+   "evidence": "src/devices.jl:413"
+  },
+  {
+   "id": "S12b-136",
+   "file": "design/spec.md",
+   "line": 10170,
+   "kind": "law",
+   "claim": "the address is the roster entry, not a handle",
+   "evidence": "src/devices.jl:413"
+  },
+  {
+   "id": "S12b-137",
+   "file": "design/spec.md",
+   "line": 10171,
+   "kind": "law",
+   "claim": "no device task holds a handle before spawn",
+   "evidence": "src/sim.jl:1648-1654"
+  },
+  {
+   "id": "S12b-138",
+   "file": "design/spec.md",
+   "line": 10172,
+   "kind": "law",
+   "claim": "no call passes a device id",
+   "evidence": "src/devices.jl:413"
+  },
+  {
+   "id": "S12b-139",
+   "file": "design/spec.md",
+   "line": 10174,
+   "kind": "law",
+   "claim": "no task is spawned for a failed device",
+   "evidence": "probe:183"
+  },
+  {
+   "id": "S12b-140",
+   "file": "design/spec.md",
+   "line": 10175,
+   "kind": "law",
+   "claim": "a failed device is dead from the first frame top",
+   "evidence": "probe:216"
+  },
+  {
+   "id": "S12b-141",
+   "file": "design/spec.md",
+   "line": 10176,
+   "kind": "law",
+   "claim": "its task_state reads :done from the first publication",
+   "evidence": "probe:218"
+  },
+  {
+   "id": "S12b-142",
+   "file": "design/spec.md",
+   "line": 10176,
+   "kind": "law",
+   "claim": "its cell keeps its last beat",
+   "evidence": "src/devices.jl:413-414"
+  },
+  {
+   "id": "S12b-143",
+   "file": "design/spec.md",
+   "line": 10177,
+   "kind": "law",
+   "claim": "it reads stale from the start if never beaten since attach",
+   "evidence": "probe:219"
+  },
+  {
+   "id": "S12b-144",
+   "file": "design/spec.md",
+   "line": 10178,
+   "kind": "law",
+   "claim": "otherwise it reads stale once the beat is over 2 s old",
+   "evidence": "src/dataplane.jl:309,336"
+  },
+  {
+   "id": "S12b-145",
+   "file": "design/spec.md",
+   "line": 10180,
+   "kind": "law",
+   "claim": "the claims of a failed device persist to run end",
+   "evidence": "probe:224"
+  },
+  {
+   "id": "S12b-146",
+   "file": "design/spec.md",
+   "line": 10182,
+   "kind": "law",
+   "claim": "the roster is frozen for the run",
+   "evidence": "src/sim.jl:1643-1645"
+  },
+  {
+   "id": "S12b-147",
+   "file": "design/spec.md",
+   "line": 10182,
+   "kind": "law",
+   "claim": "orphaned root inputs hold the values the run started with",
+   "evidence": "probe:224"
+  },
+  {
+   "id": "S12b-148",
+   "file": "design/spec.md",
+   "line": 10183,
+   "kind": "ptr",
+   "claim": "values are well-defined by root-input totality",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-149",
+   "file": "design/spec.md",
+   "line": 10185,
+   "kind": "law",
+   "claim": "an orphan of (6) holds a last drained batch",
+   "evidence": "src/devices.jl:608"
+  },
+  {
+   "id": "S12b-150",
+   "file": "design/spec.md",
+   "line": 10187,
+   "kind": "law",
+   "claim": "the disposition splits on should_abort",
+   "evidence": "probe:182,214"
+  },
+  {
+   "id": "S12b-151",
+   "file": "design/spec.md",
+   "line": 10188,
+   "kind": "law",
+   "claim": "should_abort defaults to clear",
+   "evidence": "src/sim.jl:2506"
+  },
+  {
+   "id": "S12b-152",
+   "file": "design/spec.md",
+   "line": 10189,
+   "kind": "law",
+   "claim": "with the flag clear the remaining entries initialize",
+   "evidence": "probe:222"
+  },
+  {
+   "id": "S12b-153",
+   "file": "design/spec.md",
+   "line": 10190,
+   "kind": "law",
+   "claim": "with the flag clear the run starts with the device absent",
+   "evidence": "probe:214"
+  },
+  {
+   "id": "S12b-154",
+   "file": "design/spec.md",
+   "line": 10194,
+   "kind": "law",
+   "claim": "with the flag set a control-plane stop is requested",
+   "evidence": "probe:187"
+  },
+  {
+   "id": "S12b-155",
+   "file": "design/spec.md",
+   "line": 10195,
+   "kind": "law",
+   "claim": "the stop is already pending at the first frame top",
+   "evidence": "src/sim.jl:1644-1650"
+  },
+  {
+   "id": "S12b-156",
+   "file": "design/spec.md",
+   "line": 10196,
+   "kind": "law",
+   "claim": "the run advances no frame",
+   "evidence": "probe:182"
+  },
+  {
+   "id": "S12b-157",
+   "file": "design/spec.md",
+   "line": 10197,
+   "kind": "mech",
+   "claim": "the existing exit path is reused, no new protocol",
+   "evidence": "src/sim.jl:2104"
+  },
+  {
+   "id": "S12b-158",
+   "file": "design/spec.md",
+   "line": 10197,
+   "kind": "law",
+   "claim": "remaining roster entries still initialize",
+   "evidence": "probe:184"
+  },
+  {
+   "id": "S12b-159",
+   "file": "design/spec.md",
+   "line": 10198,
+   "kind": "law",
+   "claim": "every rostered device gets its init!/shutdown! pair",
+   "evidence": "probe:183-184"
+  },
+  {
+   "id": "S12b-160",
+   "file": "design/spec.md",
+   "line": 10199,
+   "kind": "law",
+   "claim": "the run ends stopped through the same tail",
+   "evidence": "probe:190"
+  },
+  {
+   "id": "S12b-161",
+   "file": "design/spec.md",
+   "line": 10200,
+   "kind": "law",
+   "claim": "the termination record names the device",
+   "evidence": "probe:187"
+  },
+  {
+   "id": "S12b-162",
+   "file": "design/spec.md",
+   "line": 10201,
+   "kind": "law",
+   "claim": "the terminal snapshot is the one the run started from",
+   "evidence": "probe:185"
+  },
+  {
+   "id": "S12b-163",
+   "file": "design/spec.md",
+   "line": 10202,
+   "kind": "law",
+   "claim": "the tail residue holds the DeviceCrash",
+   "evidence": "probe:189"
+  },
+  {
+   "id": "S12b-164",
+   "file": "design/spec.md",
+   "line": 10203,
+   "kind": "mech",
+   "claim": "the residue is what the run-end sweep folds in",
+   "evidence": "src/sim.jl:1955-1967"
+  },
+  {
+   "id": "S12b-165",
+   "file": "design/spec.md",
+   "line": 10204,
+   "kind": "law",
+   "claim": "run! refuses a stopped simulation",
+   "evidence": "probe:192"
+  },
+  {
+   "id": "S12b-166",
+   "file": "design/spec.md",
+   "line": 10205,
+   "kind": "law",
+   "claim": "init! re-runs the stopped simulation",
+   "evidence": "probe:197"
+  },
+  {
+   "id": "S12b-167",
+   "file": "design/spec.md",
+   "line": 10205,
+   "kind": "law",
+   "claim": "checkpoint then restore! continues it",
+   "evidence": "probe:194,204-206"
+  },
+  {
+   "id": "S12b-168",
+   "file": "design/spec.md",
+   "line": 10208,
+   "kind": "law",
+   "claim": "an InterruptException in init! is the operator stop, not a crash",
+   "evidence": "probe:243-245"
+  },
+  {
+   "id": "S12b-169",
+   "file": "design/spec.md",
+   "line": 10209,
+   "kind": "law",
+   "claim": "the bracket releases the device through shutdown!",
+   "evidence": "probe:244"
+  },
+  {
+   "id": "S12b-170",
+   "file": "design/spec.md",
+   "line": 10210,
+   "kind": "law",
+   "claim": "no task is spawned for it",
+   "evidence": "probe:244"
+  },
+  {
+   "id": "S12b-171",
+   "file": "design/spec.md",
+   "line": 10211,
+   "kind": "law",
+   "claim": "the :interrupt stop is set in place of the report",
+   "evidence": "probe:243"
+  },
+  {
+   "id": "S12b-172",
+   "file": "design/spec.md",
+   "line": 10212,
+   "kind": "decl",
+   "claim": "the stop word is one atomic word holding its issuer",
+   "evidence": "src/control.jl:68"
+  },
+  {
+   "id": "S12b-173",
+   "file": "design/spec.md",
+   "line": 10213,
+   "kind": "law",
+   "claim": "the should_abort split does not arise",
+   "evidence": "probe:243"
+  },
+  {
+   "id": "S12b-174",
+   "file": "design/spec.md",
+   "line": 10214,
+   "kind": "law",
+   "claim": "remaining entries still initialize",
+   "evidence": "probe:244"
+  },
+  {
+   "id": "S12b-175",
+   "file": "design/spec.md",
+   "line": 10214,
+   "kind": "law",
+   "claim": "the run ends at its first frame top with zero frames",
+   "evidence": "probe:242"
+  },
+  {
+   "id": "S12b-176",
+   "file": "design/spec.md",
+   "line": 10216,
+   "kind": "law",
+   "claim": "the wrapper makes the same discrimination in a loop body",
+   "evidence": "src/devices.jl:654-659"
+  },
+  {
+   "id": "S12b-177",
+   "file": "design/spec.md",
+   "line": 10220,
+   "kind": "law",
+   "claim": "the operator interrupt is a stop, not a failure",
+   "evidence": "probe:289"
+  },
+  {
+   "id": "S12b-178",
+   "file": "design/spec.md",
+   "line": 10221,
+   "kind": "law",
+   "claim": "Ctrl-C is a control-plane stop",
+   "evidence": "src/sim.jl:2150-2155"
+  },
+  {
+   "id": "S12b-179",
+   "file": "design/spec.md",
+   "line": 10222,
+   "kind": "law",
+   "claim": "the run completes the current boundary and publishes the final snapshot",
+   "evidence": "src/sim.jl:2110-2134"
+  },
+  {
+   "id": "S12b-180",
+   "file": "design/spec.md",
+   "line": 10223,
+   "kind": "law",
+   "claim": "it takes the tail and ends stopped",
+   "evidence": "probe:288"
+  },
+  {
+   "id": "S12b-181",
+   "file": "design/spec.md",
+   "line": 10224,
+   "kind": "law",
+   "claim": "the result is boundary-consistent",
+   "evidence": "src/sim.jl:2086"
+  },
+  {
+   "id": "S12b-182",
+   "file": "design/spec.md",
+   "line": 10224,
+   "kind": "law",
+   "claim": "it is serviceable by the stopped-sim services",
+   "evidence": "probe:288"
+  },
+  {
+   "id": "S12b-183",
+   "file": "design/spec.md",
+   "line": 10225,
+   "kind": "law",
+   "claim": "init! re-runs it, checkpoint then restore! continues",
+   "evidence": "probe:194,204"
+  },
+  {
+   "id": "S12b-184",
+   "file": "design/spec.md",
+   "line": 10226,
+   "kind": "law",
+   "claim": "the throw Julia forces after repeated Ctrl-C is the exception",
+   "evidence": "probe:297-301"
+  },
+  {
+   "id": "S12b-185",
+   "file": "design/spec.md",
+   "line": 10229,
+   "kind": "why",
+   "claim": "the interrupt escapes a run nothing else ends",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-186",
+   "file": "design/spec.md",
+   "line": 10230,
+   "kind": "law",
+   "claim": "a run with no finite t_end and no honoured request is UnboundedRun",
+   "evidence": "probe:352"
+  },
+  {
+   "id": "S12b-187",
+   "file": "design/spec.md",
+   "line": 10232,
+   "kind": "law",
+   "claim": "the interrupt needs no entry point of its own",
+   "evidence": "src/sim.jl:2150-2155"
+  },
+  {
+   "id": "S12b-188",
+   "file": "design/spec.md",
+   "line": 10232,
+   "kind": "law",
+   "claim": "the stop rides on the control plane",
+   "evidence": "src/control.jl:81"
+  },
+  {
+   "id": "S12b-189",
+   "file": "design/spec.md",
+   "line": 10233,
+   "kind": "why",
+   "claim": "exceptions-are-abnormal doctrine is untouched",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-190",
+   "file": "design/spec.md",
+   "line": 10237,
+   "kind": "why",
+   "claim": "scope is the interactive session; default exit_on_sigint kills the process",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-191",
+   "file": "design/spec.md",
+   "line": 10239,
+   "kind": "law",
+   "claim": "the framework flips nothing process-global",
+   "evidence": "src/control.jl:81"
+  },
+  {
+   "id": "S12b-192",
+   "file": "design/spec.md",
+   "line": 10240,
+   "kind": "why",
+   "claim": "unattended runs rely on t_end and stop requests",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-193",
+   "file": "design/spec.md",
+   "line": 10244,
+   "kind": "why",
+   "claim": "masking is normative",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-194",
+   "file": "design/spec.md",
+   "line": 10245,
+   "kind": "why",
+   "claim": "an InterruptException is delivered asynchronously",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-195",
+   "file": "design/spec.md",
+   "line": 10246,
+   "kind": "why",
+   "claim": "an interrupt mid-sweep would destroy the boundary",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-196",
+   "file": "design/spec.md",
+   "line": 10250,
+   "kind": "law",
+   "claim": "the mask buys stopped with consistent stores",
+   "evidence": "probe:297-301"
+  },
+  {
+   "id": "S12b-197",
+   "file": "design/spec.md",
+   "line": 10253,
+   "kind": "mech",
+   "claim": "the loop masks delivery across the boundary macro-sequence",
+   "evidence": "src/sim.jl:2110-2134"
+  },
+  {
+   "id": "S12b-198",
+   "file": "design/spec.md",
+   "line": 10254,
+   "kind": "mech",
+   "claim": "the mask is a sigatomic counter increment, negligible per frame",
+   "evidence": "src/sim.jl:2110"
+  },
+  {
+   "id": "S12b-200",
+   "file": "design/spec.md",
+   "line": 10255,
+   "kind": "mech",
+   "claim": "the loop takes the deferred raise at the unmask points",
+   "evidence": "src/sim.jl:2134"
+  },
+  {
+   "id": "S12b-201",
+   "file": "design/spec.md",
+   "line": 10256,
+   "kind": "mech",
+   "claim": "the frame top consults the control plane at an unmask point",
+   "evidence": "src/sim.jl:2099-2104"
+  },
+  {
+   "id": "S12b-202",
+   "file": "design/spec.md",
+   "line": 10257,
+   "kind": "mech",
+   "claim": "the wait and pause blocks are unmask points",
+   "evidence": "src/control.jl:91,176"
+  },
+  {
+   "id": "S12b-203",
+   "file": "design/spec.md",
+   "line": 10258,
+   "kind": "law",
+   "claim": "a caught interrupt sets the stop and enters the tail",
+   "evidence": "probe:288-289"
+  },
+  {
+   "id": "S12b-204",
+   "file": "design/spec.md",
+   "line": 10259,
+   "kind": "law",
+   "claim": "the catch site never sees a single interrupt",
+   "evidence": "src/sim.jl:2136-2142"
+  },
+  {
+   "id": "S12b-205",
+   "file": "design/spec.md",
+   "line": 10262,
+   "kind": "law",
+   "claim": "a deferred interrupt yields to the frame own stop request",
+   "evidence": "src/sim.jl:2147-2150"
+  },
+  {
+   "id": "S12b-206",
+   "file": "design/spec.md",
+   "line": 10263,
+   "kind": "law",
+   "claim": "stop requests are consulted at each publication",
+   "evidence": "src/sim.jl:2042"
+  },
+  {
+   "id": "S12b-207",
+   "file": "design/spec.md",
+   "line": 10264,
+   "kind": "law",
+   "claim": "the stop word is consulted at the next frame top",
+   "evidence": "src/sim.jl:2103"
+  },
+  {
+   "id": "S12b-208",
+   "file": "design/spec.md",
+   "line": 10265,
+   "kind": "law",
+   "claim": "a holding request is the recorded source",
+   "evidence": "src/sim.jl:2149"
+  },
+  {
+   "id": "S12b-209",
+   "file": "design/spec.md",
+   "line": 10267,
+   "kind": "law",
+   "claim": "otherwise the interrupt sets the stop word",
+   "evidence": "src/sim.jl:2154"
+  },
+  {
+   "id": "S12b-210",
+   "file": "design/spec.md",
+   "line": 10268,
+   "kind": "law",
+   "claim": "the source is ControlRequestedStop(:interrupt)",
+   "evidence": "probe:289"
+  },
+  {
+   "id": "S12b-211",
+   "file": "design/spec.md",
+   "line": 10270,
+   "kind": "law",
+   "claim": "a frame that throws with an interrupt pending ends errored",
+   "evidence": "probe:298"
+  },
+  {
+   "id": "S12b-212",
+   "file": "design/spec.md",
+   "line": 10271,
+   "kind": "law",
+   "claim": "the frame own throw is the disposition",
+   "evidence": "src/sim.jl:2138-2140"
+  },
+  {
+   "id": "S12b-213",
+   "file": "design/spec.md",
+   "line": 10272,
+   "kind": "law",
+   "claim": "the catch wraps the cause under the mask",
+   "evidence": "src/sim.jl:2124-2132"
+  },
+  {
+   "id": "S12b-214",
+   "file": "design/spec.md",
+   "line": 10273,
+   "kind": "law",
+   "claim": "the pending interrupt is consumed on the way out",
+   "evidence": "src/sim.jl:2138-2140"
+  },
+  {
+   "id": "S12b-215",
+   "file": "design/spec.md",
+   "line": 10273,
+   "kind": "law",
+   "claim": "the run takes the abnormal entry under the StepError",
+   "evidence": "probe:297,300"
+  },
+  {
+   "id": "S12b-216",
+   "file": "design/spec.md",
+   "line": 10278,
+   "kind": "law",
+   "claim": "a later interrupt does not displace the stored throw",
+   "evidence": "src/sim.jl:1636-1640,1730-1735"
+  },
+  {
+   "id": "S12b-217",
+   "file": "design/spec.md",
+   "line": 10279,
+   "kind": "mech",
+   "claim": "run!, replay! and step! store the throw first",
+   "evidence": "src/sim.jl:1639,2264"
+  },
+  {
+   "id": "S12b-218",
+   "file": "design/spec.md",
+   "line": 10281,
+   "kind": "law",
+   "claim": "the run ends errored under its StepError wherever the interrupt lands",
+   "evidence": "src/sim.jl:1730-1735"
+  },
+  {
+   "id": "S12b-219",
+   "file": "design/spec.md",
+   "line": 10282,
+   "kind": "law",
+   "claim": "an interrupt cutting the throw handling propagates raw",
+   "evidence": "src/sim.jl:1730"
+  },
+  {
+   "id": "S12b-220",
+   "file": "design/spec.md",
+   "line": 10283,
+   "kind": "law",
+   "claim": "the disposition of the failure is then skipped",
+   "evidence": "src/sim.jl:1730"
+  },
+  {
+   "id": "S12b-221",
+   "file": "design/spec.md",
+   "line": 10284,
+   "kind": "law",
+   "claim": "the record is still written and the lifecycle errored",
+   "evidence": "src/sim.jl:1743-1773"
+  },
+  {
+   "id": "S12b-222",
+   "file": "design/spec.md",
+   "line": 10287,
+   "kind": "law",
+   "claim": "the joins, sweep, record and lifecycle store are masked",
+   "evidence": "src/sim.jl:1743-1773"
+  },
+  {
+   "id": "S12b-223",
+   "file": "design/spec.md",
+   "line": 10289,
+   "kind": "law",
+   "claim": "an unmasked interrupt would leave the lifecycle running",
+   "evidence": "src/sim.jl:1773"
+  },
+  {
+   "id": "S12b-224",
+   "file": "design/spec.md",
+   "line": 10291,
+   "kind": "law",
+   "claim": "a raise deferred to bookkeeping end propagates raw from run!",
+   "evidence": "src/sim.jl:1773"
+  },
+  {
+   "id": "S12b-225",
+   "file": "design/spec.md",
+   "line": 10291,
+   "kind": "law",
+   "claim": "the simulation is already terminal then",
+   "evidence": "src/sim.jl:1773"
+  },
+  {
+   "id": "S12b-226",
+   "file": "design/spec.md",
+   "line": 10294,
+   "kind": "law",
+   "claim": "a forced throw inside a frame is that frame failure",
+   "evidence": "probe:297-301"
+  },
+  {
+   "id": "S12b-227",
+   "file": "design/spec.md",
+   "line": 10296,
+   "kind": "why",
+   "claim": "Julia stops deferring after repeated SIGINTs and warns",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-228",
+   "file": "design/spec.md",
+   "line": 10297,
+   "kind": "law",
+   "claim": "inside a frame the forced throw reaches the catch site",
+   "evidence": "probe:297"
+  },
+  {
+   "id": "S12b-229",
+   "file": "design/spec.md",
+   "line": 10298,
+   "kind": "law",
+   "claim": "the catch writes the model status :inconsistent",
+   "evidence": "probe:299"
+  },
+  {
+   "id": "S12b-230",
+   "file": "design/spec.md",
+   "line": 10298,
+   "kind": "law",
+   "claim": "it wraps the throw in a StepError",
+   "evidence": "probe:297"
+  },
+  {
+   "id": "S12b-231",
+   "file": "design/spec.md",
+   "line": 10299,
+   "kind": "law",
+   "claim": "the run ends errored under that carrier",
+   "evidence": "probe:298"
+  },
+  {
+   "id": "S12b-232",
+   "file": "design/spec.md",
+   "line": 10299,
+   "kind": "law",
+   "claim": "what the run published is consistent",
+   "evidence": "probe:301"
+  },
+  {
+   "id": "S12b-233",
+   "file": "design/spec.md",
+   "line": 10300,
+   "kind": "law",
+   "claim": "the simulation is terminal like any errored one",
+   "evidence": "src/sim.jl:515"
+  },
+  {
+   "id": "S12b-234",
+   "file": "design/spec.md",
+   "line": 10301,
+   "kind": "law",
+   "claim": "the trace replays into a fresh simulation",
+   "evidence": "probe:362"
+  },
+  {
+   "id": "S12b-235",
+   "file": "design/spec.md",
+   "line": 10302,
+   "kind": "law",
+   "claim": "replay reaches the boundary the cut frame started from",
+   "evidence": "probe:363"
+  },
+  {
+   "id": "S12b-236",
+   "file": "design/spec.md",
+   "line": 10303,
+   "kind": "law",
+   "claim": "outside a frame the forced throw is a stop like a deferred one",
+   "evidence": "src/sim.jl:1676-1720"
+  },
+  {
+   "id": "S12b-237",
+   "file": "design/spec.md",
+   "line": 10305,
+   "kind": "law",
+   "claim": "the frame index advances inside the frame try",
+   "evidence": "src/sim.jl:2116"
+  },
+  {
+   "id": "S12b-238",
+   "file": "design/spec.md",
+   "line": 10306,
+   "kind": "law",
+   "claim": "a throw before it leaves counter and clock agreeing",
+   "evidence": "src/sim.jl:2116"
+  },
+  {
+   "id": "S12b-239",
+   "file": "design/spec.md",
+   "line": 10308,
+   "kind": "law",
+   "claim": "a second interrupt collapses the remaining joins at once",
+   "evidence": "src/sim.jl:1920-1930"
+  },
+  {
+   "id": "S12b-240",
+   "file": "design/spec.md",
+   "line": 10309,
+   "kind": "law",
+   "claim": "that is (5) abandonment taken at once",
+   "evidence": "src/sim.jl:1920-1930"
+  },
+  {
+   "id": "S12b-241",
+   "file": "design/spec.md",
+   "line": 10310,
+   "kind": "law",
+   "claim": "devices are still reported by name as DeviceJoinTimeout",
+   "evidence": "src/sim.jl:1923"
+  },
+  {
+   "id": "S12b-242",
+   "file": "design/spec.md",
+   "line": 10311,
+   "kind": "law",
+   "claim": "the run still ends stopped",
+   "evidence": "src/sim.jl:1930"
+  },
+  {
+   "id": "S12b-243",
+   "file": "design/spec.md",
+   "line": 10311,
+   "kind": "law",
+   "claim": "escalation never reclassifies the run",
+   "evidence": "src/sim.jl:1930"
+  },
+  {
+   "id": "S12b-244",
+   "file": "design/spec.md",
+   "line": 10316,
+   "kind": "ptr",
+   "claim": "section settles what the periphery may do mid-run",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-245",
+   "file": "design/spec.md",
+   "line": 10320,
+   "kind": "why",
+   "claim": "section eliminates user_callback!",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-246",
+   "file": "design/spec.md",
+   "line": 10320,
+   "kind": "why",
+   "claim": "user_callback!: FlightCore hook, eliminated; prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-247",
+   "file": "design/spec.md",
+   "line": 10323,
+   "kind": "why",
+   "claim": "survey of consumer mid-run mutations",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-248",
+   "file": "design/spec.md",
+   "line": 10325,
+   "kind": "why",
+   "claim": "user_callback! has two archetypes (c172_demos.jl)",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-249",
+   "file": "design/spec.md",
+   "line": 10325,
+   "kind": "why",
+   "claim": "user_callback!: FlightCore hook, prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-250",
+   "file": "design/spec.md",
+   "line": 10326,
+   "kind": "why",
+   "claim": "elevator_offset timetable at c172_demos.jl:290",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-251",
+   "file": "design/spec.md",
+   "line": 10326,
+   "kind": "why",
+   "claim": "elevator_offset: FlightCore demo variable, prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-252",
+   "file": "design/spec.md",
+   "line": 10327,
+   "kind": "why",
+   "claim": "synthetic pilot phase FSM reads y, writes requests",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-253",
+   "file": "design/spec.md",
+   "line": 10329,
+   "kind": "why",
+   "claim": "both write only u fields",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-254",
+   "file": "design/spec.md",
+   "line": 10330,
+   "kind": "why",
+   "claim": "no demo pokes x/s mid-run; init!/trim only before run!",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-255",
+   "file": "design/spec.md",
+   "line": 10333,
+   "kind": "law",
+   "claim": "a sim-time script becomes a scenario component",
+   "evidence": "probe:338"
+  },
+  {
+   "id": "S12b-256",
+   "file": "design/spec.md",
+   "line": 10333,
+   "kind": "law",
+   "claim": "a wall-clock interaction becomes a device",
+   "evidence": "src/devices.jl:6"
+  },
+  {
+   "id": "S12b-257",
+   "file": "design/spec.md",
+   "line": 10334,
+   "kind": "mech",
+   "claim": "a scenario component is an ordinary periodic discrete component",
+   "evidence": "probe:338"
+  },
+  {
+   "id": "S12b-258",
+   "file": "design/spec.md",
+   "line": 10337,
+   "kind": "why",
+   "claim": "both archetypes are clocked by sim time",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-259",
+   "file": "design/spec.md",
+   "line": 10337,
+   "kind": "why",
+   "claim": "mapping them to devices is rejected",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-260",
+   "file": "design/spec.md",
+   "line": 10340,
+   "kind": "law",
+   "claim": "a script component is periodic discrete",
+   "evidence": "probe:338"
+  },
+  {
+   "id": "S12b-261",
+   "file": "design/spec.md",
+   "line": 10340,
+   "kind": "decl",
+   "claim": "Ds = 1 for the dt = 0.02 callbacks",
+   "evidence": "src/declare.jl:412-416"
+  },
+  {
+   "id": "S12b-262",
+   "file": "design/spec.md",
+   "line": 10341,
+   "kind": "decl",
+   "claim": "Ds is the multiplier in Relative(D)",
+   "evidence": "src/declare.jl:412-416"
+  },
+  {
+   "id": "S12b-263",
+   "file": "design/spec.md",
+   "line": 10342,
+   "kind": "law",
+   "claim": "a script component executes synchronously in the loop",
+   "evidence": "probe:338"
+  },
+  {
+   "id": "S12b-264",
+   "file": "design/spec.md",
+   "line": 10343,
+   "kind": "law",
+   "claim": "it is deterministic paced or unpaced",
+   "evidence": "src/sim.jl:2088"
+  },
+  {
+   "id": "S12b-265",
+   "file": "design/spec.md",
+   "line": 10343,
+   "kind": "law",
+   "claim": "it is replayed by recomputation with no trace",
+   "evidence": "probe:341"
+  },
+  {
+   "id": "S12b-266",
+   "file": "design/spec.md",
+   "line": 10345,
+   "kind": "law",
+   "claim": "a device is traced and replayed from the trace",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "S12b-267",
+   "file": "design/spec.md",
+   "line": 10347,
+   "kind": "why",
+   "claim": "component mapping is richer than the callback",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-268",
+   "file": "design/spec.md",
+   "line": 10349,
+   "kind": "law",
+   "claim": "callback phase closure becomes honest s published to snapshots",
+   "evidence": "probe:339"
+  },
+  {
+   "id": "S12b-269",
+   "file": "design/spec.md",
+   "line": 10353,
+   "kind": "law",
+   "claim": "inputs arrive fresh from the same boundary in topological order",
+   "evidence": "probe:340"
+  },
+  {
+   "id": "S12b-270",
+   "file": "design/spec.md",
+   "line": 10354,
+   "kind": "why",
+   "claim": "the callback ran post-step, one boundary staler",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-271",
+   "file": "design/spec.md",
+   "line": 10355,
+   "kind": "mech",
+   "claim": "the timetable script is a one-liner reading the clock from the bundle",
+   "evidence": "probe:333"
+  },
+  {
+   "id": "S12b-272",
+   "file": "design/spec.md",
+   "line": 10357,
+   "kind": "ex",
+   "claim": "y_direct(c, (; t)) = (; offset = profile(t)) is a valid stage",
+   "evidence": "probe:333"
+  },
+  {
+   "id": "S12b-273",
+   "file": "design/spec.md",
+   "line": 10358,
+   "kind": "law",
+   "claim": "the one-liner is exact at its own ticks",
+   "evidence": "probe:340"
+  },
+  {
+   "id": "S12b-274",
+   "file": "design/spec.md",
+   "line": 10358,
+   "kind": "law",
+   "claim": "it needs no latch state",
+   "evidence": "probe:333"
+  },
+  {
+   "id": "S12b-275",
+   "file": "design/spec.md",
+   "line": 10360,
+   "kind": "law",
+   "claim": "in a scenario the script drives the avionics input ports",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-276",
+   "file": "design/spec.md",
+   "line": 10361,
+   "kind": "law",
+   "claim": "a front end renders those widgets read-only, showing the source",
+   "evidence": "src/devices.jl:458-481"
+  },
+  {
+   "id": "S12b-277",
+   "file": "design/spec.md",
+   "line": 10363,
+   "kind": "why",
+   "claim": "port-resolution rule resolves the demo-vs-GUI dead-slider fight",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-278",
+   "file": "design/spec.md",
+   "line": 10365,
+   "kind": "law",
+   "claim": "user_callback! is eliminated",
+   "evidence": "src/devices.jl:6"
+  },
+  {
+   "id": "S12b-279",
+   "file": "design/spec.md",
+   "line": 10365,
+   "kind": "why",
+   "claim": "user_callback!: FlightCore hook, prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-280",
+   "file": "design/spec.md",
+   "line": 10366,
+   "kind": "why",
+   "claim": "user_callback! is the periphery f_step! hook",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-281",
+   "file": "design/spec.md",
+   "line": 10366,
+   "kind": "why",
+   "claim": "f_step!: FlightCore per-step hook, prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-282",
+   "file": "design/spec.md",
+   "line": 10367,
+   "kind": "ptr",
+   "claim": "call sites migrate to scenario components",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-283",
+   "file": "design/spec.md",
+   "line": 10370,
+   "kind": "law",
+   "claim": "manual event triggering needs no mechanism",
+   "evidence": "src/declare.jl:531"
+  },
+  {
+   "id": "S12b-284",
+   "file": "design/spec.md",
+   "line": 10371,
+   "kind": "law",
+   "claim": "it takes a root input plus a guard reading it",
+   "evidence": "src/declare.jl:531"
+  },
+  {
+   "id": "S12b-285",
+   "file": "design/spec.md",
+   "line": 10372,
+   "kind": "decl",
+   "claim": "the guard is non-localized, an edge check with no root-finding",
+   "evidence": "src/declare.jl:531-532"
+  },
+  {
+   "id": "S12b-286",
+   "file": "design/spec.md",
+   "line": 10374,
+   "kind": "law",
+   "claim": "the levels doctrine applies to staged values",
+   "evidence": "src/devices.jl:260-285"
+  },
+  {
+   "id": "S12b-287",
+   "file": "design/spec.md",
+   "line": 10376,
+   "kind": "why",
+   "claim": "FlightCore engine buttons were u-writes",
+   "evidence": "prior art"
+  },
+  {
+   "id": "S12b-288",
+   "file": "design/spec.md",
+   "line": 10378,
+   "kind": "law",
+   "claim": "mid-run re-initialization is not built",
+   "evidence": "src/sim.jl:2221"
+  },
+  {
+   "id": "S12b-289",
+   "file": "design/spec.md",
+   "line": 10379,
+   "kind": "law",
+   "claim": "init and trim are stopped-sim workflows",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "S12b-290",
+   "file": "design/spec.md",
+   "line": 10380,
+   "kind": "law",
+   "claim": "no concurrency perimeter exists while stopped",
+   "evidence": "src/sim.jl:2221"
+  },
+  {
+   "id": "S12b-291",
+   "file": "design/spec.md",
+   "line": 10382,
+   "kind": "ptr",
+   "claim": "guarded addition is on record",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-292",
+   "file": "design/spec.md",
+   "line": 10388,
+   "kind": "law",
+   "claim": "while running the periphery stages root-input writes",
+   "evidence": "src/devices.jl:260-285"
+  },
+  {
+   "id": "S12b-293",
+   "file": "design/spec.md",
+   "line": 10389,
+   "kind": "law",
+   "claim": "while running the periphery issues control commands",
+   "evidence": "src/sim.jl:2328"
+  },
+  {
+   "id": "S12b-294",
+   "file": "design/spec.md",
+   "line": 10390,
+   "kind": "law",
+   "claim": "structurally the periphery does nothing else",
+   "evidence": "src/devices.jl:200-260"
+  },
+  {
+   "id": "S12b-295",
+   "file": "design/spec.md",
+   "line": 10393,
+   "kind": "ptr",
+   "claim": "an input in disguise wires a root input and a guard",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-296",
+   "file": "design/spec.md",
+   "line": 10394,
+   "kind": "ptr",
+   "claim": "model behavior in disguise adds a scenario component",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-297",
+   "file": "design/spec.md",
+   "line": 10395,
+   "kind": "ptr",
+   "claim": "a wall-clock interaction attaches a device",
+   "evidence": "ptr"
+  },
+  {
+   "id": "S12b-298",
+   "file": "design/spec.md",
+   "line": 10397,
+   "kind": "law",
+   "claim": "graceful termination is a stop request port declared in the model",
+   "evidence": "src/library.jl:421"
+  },
+  {
+   "id": "S12b-299",
+   "file": "design/spec.md",
+   "line": 10399,
+   "kind": "law",
+   "claim": "a stop request is honoured unless the advance ignores it",
+   "evidence": "src/sim.jl:585-593"
+  },
+  {
+   "id": "S12b-300",
+   "file": "design/spec.md",
+   "line": 10400,
+   "kind": "law",
+   "claim": "termination is never a callback or a thrown exception",
+   "evidence": "src/sim.jl:585"
+  }
+ ],
+ "counts": {
+  "why": 30,
+  "law": 211,
+  "ptr": 12,
+  "mech": 26,
+  "decl": 12,
+  "ex": 9
+ }
+}

@@ -1,0 +1,159 @@
+{
+ "judgments": [
+  {
+   "id": "CV12-001",
+   "conforms": true,
+   "evidence": "src/sim.jl:286-291 declares model, plane, control, run; probe.jl:20 prints fieldnames(Simulation) = (:model, :plane, :control, :run)"
+  },
+  {
+   "id": "CV12-002",
+   "conforms": true,
+   "evidence": "src/sim.jl:360-362 sends the grid, algorithm and event keywords to Deployment and chunk_size to Model. Each has its own bullet there: src/deployment.jl:514-534 and src/model.jl:91. Rule 11's signature lines at sim.jl:310-319 name every forwarded keyword, and the Keywords list covers join_timeout, the one keyword this docstring owns.",
+   "note": "The docstring documents the forwarded keywords by pointing to their owners, and the owners carry the bullets. No keyword is left uncovered."
+  },
+  {
+   "id": "CV12-008",
+   "conforms": true,
+   "evidence": "src/sim.jl:417-425 holds the helpers _pace_value, _margin_value and _t_end_frame. code_map.md:5-12 says an entry names constructs and does not promise to be exhaustive. Its sim.jl entry also leaves out other small helpers, such as _t_bound at sim.jl:404.",
+   "note": "These are private validators that nobody could mistake for a design construct (code_rules.md:10-14). Leaving them out of the map contradicts nothing."
+  },
+  {
+   "id": "CV12-012",
+   "conforms": true,
+   "evidence": "src/sim.jl:548 reads the mode off run.feed. init!, overlay! and restore! pass feed nothing (sim.jl:874, 972, 1076); replay! passes the feed under both forms (sim.jl:1397). probe.jl:24-33 gives :live after init!, overlay! and restore!, and :replay after replay! with restore = true and with restore = false."
+  },
+  {
+   "id": "CV12-017",
+   "conforms": false,
+   "evidence": "src/sim.jl:654-662 _reset_periphery! clears stop_issuer, and init!, overlay! and _enter_checkpoint! (restore!, replay!) all call it. probe.jl:43 runs stop!, then restore!, then step!: 1 frame advances and the state is :initialized. Without a door (probe.jl:46) the same step! advances 0 frames and ends :stopped. The restore! docstring (sim.jl:1029) lists dropping the batches but not clearing the stop word. Spec §12.1 (spec.md:9765) says the word is cleared 'at the top of each run', with no 'only', and §12.6 defines a run as what a door builds. So the spec agrees with the code. The gap is the restore! docstring, which overlay!'s 'Like restore! ... It also clears the stop word' (sim.jl:945-947) makes read as if restore! did not clear it.",
+   "class": "deviation",
+   "fix": "In restore!'s docstring (sim.jl:1029): \"`restore!` drops every [batch](@ref g-batch) still waiting and clears the [stop word](@ref g-stop-word). It opens a fresh run ...\". replay! clears the word twice, at its door and again at _run_body!'s start (sim.jl:1644), so leaving its docstring silent changes nothing a caller can observe.",
+   "clear": true,
+   "note": "The claim's premise is wrong: neither §12.1 nor D-398 says 'only'. What survives is the restore! docstring's omission."
+  },
+  {
+   "id": "CV12-023",
+   "conforms": true,
+   "evidence": "src/sim.jl:949 points to init!'s keywords, and init!'s Keywords list (sim.jl:839-846) gives trace, log, log_every and log_max one bullet each. overlay! validates them identically through _check_recording (sim.jl:968).",
+   "note": "The pointer reaches documented bullets, and the range refusal is stated at sim.jl:954-955."
+  },
+  {
+   "id": "CV12-024",
+   "conforms": true,
+   "evidence": "src/sim.jl:969-970 resolves the plan against the current stores (bases = _store_values). probe.jl:54 overlays plant's x and finds acc's and b's stores, the clock t and events.prior all unchanged, with plant's q overwritten."
+  },
+  {
+   "id": "CV12-033",
+   "conforms": true,
+   "evidence": "src/sim.jl:969 calls resolve_condition, which raises ConditionResolution (conditions.jl:608), PathResolution (structure.jl:1128-1139), DuplicateConditionLeaf (conditions.jl:396) and ConditionNodeMisuse (conditions.jl:580). overlay! does not call assert_total, so it never raises UninitializedInputs. probe.jl:59-62 produces each of the four kinds."
+  },
+  {
+   "id": "CV12-037",
+   "conforms": true,
+   "evidence": "src/sim.jl:1046 points to init!'s Keywords list (sim.jl:839-846). Both forms validate through _check_recording (sim.jl:1071, 1088) and accept the same four keywords with the same defaults."
+  },
+  {
+   "id": "CV12-044",
+   "conforms": true,
+   "evidence": "src/sim.jl:1099-1100 restore!(::Simulation, ::ModelState{T}) throws CheckpointMismatch(what = :scalar). probe.jl:67 restores a D8 model's ModelState and gets [(CheckpointMismatch, :scalar)]."
+  },
+  {
+   "id": "CV12-048",
+   "conforms": true,
+   "evidence": "src/sim.jl:1117 'The keywords mean what they mean on the model's method'. trim!(model)'s Keywords list (trim.jl:548-557) gives baseline, t0 and backend one bullet each. The simulation's method passes them through to _solve_problem with the same defaults (sim.jl:1125-1134)."
+  },
+  {
+   "id": "CV12-049",
+   "conforms": true,
+   "evidence": "src/sim.jl:1149-1150 'The keywords mean what they mean on the model's method'. linearize(model)'s Keywords list (linearize.jl:256-263) carries about, t0 and width, width included. Both methods call the same _check_linearize_call (linearize.jl:291; sim.jl:1162).",
+   "note": "width does not appear only as a refusal. It is covered through the pointer to the model's method."
+  },
+  {
+   "id": "CV12-056",
+   "conforms": true,
+   "evidence": "src/sim.jl:1125-1134 trim! gates on the lifecycle, then calls _solve_problem and commits through init!(sim, ...) inside _verdict!. sim.jl:1160-1172 linearize gates, then calls _linearize. The misuse forms forward to the model (sim.jl:1136 and 1174), which refuses with ArgumentInvalid (trim.jl:569, linearize.jl:282)."
+  },
+  {
+   "id": "CV12-067",
+   "conforms": true,
+   "evidence": "code_map.md:1274 groups D-219's two additions, to_time and live!, with mode. to_time is handled in sim.jl, in replay! (sim.jl:1371-1387). The map names keywords elsewhere too, for example 'The doors' recording keywords' and 't_end and ignore_stop_requests, the advances' keywords', so naming a keyword follows its own practice. The line does not claim to_time is a function.",
+   "note": "At most the line's citation could add D-219. The item itself is not wrong."
+  },
+  {
+   "id": "CV12-068",
+   "conforms": true,
+   "evidence": "src/sim.jl:1444-1452 live! gates, refuses when no feed is attached, and sets run.feed = nothing and nothing else. probe.jl:36 shows the mode :live, the same Run object, the same frame, the same latest t and :initialized."
+  },
+  {
+   "id": "CV12-073",
+   "conforms": true,
+   "evidence": "src/sim.jl:1585-1603 defines _replay_bound and _settle_mode!. code_map.md:5-12 does not promise to list every helper, and the entry for §12.7's input mode (code_map.md:1274) covers what they serve. Both are internal mechanics of spec rules (D-218), not deviations needing a map entry under code_rules.md:10-14."
+  },
+  {
+   "id": "CV12-076",
+   "conforms": true,
+   "evidence": "src/sim.jl:1785-1814, 1917, 1974 and 563 define the run-body helpers. They are private steps of constructs the map already names: _run_body!, the tail, the sweep, the termination record and the interrupt arms (code_map.md:1239-1300). The map is not exhaustive (code_map.md:5-12)."
+  },
+  {
+   "id": "CV12-081",
+   "conforms": true,
+   "evidence": "src/sim.jl:1837-1855: on a throw it calls _shutdown!(entry) and pop!(live), so the task is never spawned. A non-interrupt throw reports DeviceCrash and, with should_abort, calls stop!(entry.handle). An InterruptException sets the :interrupt stop instead, as the docstring says."
+  },
+  {
+   "id": "CV12-089",
+   "conforms": false,
+   "evidence": "src/sim.jl:180-185 TerminationRecord holds t, policy, source, residue, so residue is the fourth field. The comment at sim.jl:1950 says 'third field'. At 1cce1119 the record was {t, source, residue}, and residue was then the third. Commits 46f261e1 and 63980506 (D-260) added policy::StopPolicy as the second field.",
+   "class": "drift",
+   "fix": "\"... it is collected into the returned `ResidueRecord`s — the termination record's `residue` field — and presented through the logging backend ...\"",
+   "clear": true
+  },
+  {
+   "id": "CV12-094",
+   "conforms": true,
+   "evidence": "src/sim.jl:2328 stop!(sim) = _request_stop!(sim.control, :code). probe.jl:74 runs run!, then stop!, and gets ControlRequestedStop(:code). probe.jl:46 runs stop! then step! and gets ControlRequestedStop(:code) after 0 frames."
+  },
+  {
+   "id": "CV12-103",
+   "conforms": true,
+   "evidence": "src/sim.jl:1868 _finish! clears paused, and _run_body! (sim.jl:1665) and a stopping step! call it. No door touches the flag (sim.jl:654-662). probe.jl:78-79 shows the flag still set after init! and restore!. probe.jl:80, 85 and 90 show it cleared after a stopping step!, after run!'s shutdown and after replay!'s shutdown. probe.jl:84 shows a run started paused at frame 0."
+  },
+  {
+   "id": "CV12-114",
+   "conforms": true,
+   "evidence": "src/sim.jl:2436 margin(sim) is an ungated atomic read of control.margin. probe.jl:94-100 reads it while built, initialized, running and stopped."
+  },
+  {
+   "id": "CV12-124",
+   "conforms": true,
+   "evidence": "dataplane.jl:460-467 stage_batch! merges the held batch with the new one. probe.jl:106 stages ref=5, rate=7, then ref=6, and after step! reads (ref, rate) = (6.0, 7.0)."
+  },
+  {
+   "id": "CV12-136",
+   "conforms": true,
+   "evidence": "src/sim.jl:2789-2808 builds the Snapshot, release-stores it to published.latest, calls log!, then runs control.counter += 1 under lock(control.wake), in that order."
+  },
+  {
+   "id": "CV12-144",
+   "conforms": false,
+   "evidence": "src/sim.jl:2913-2918 declares columns::NT<:NamedTuple and the three stamps as vectors. probe.jl:111 gives columns @NamedTuple{q::Vector{Float64}}, not a vector. The lead sentence (sim.jl:2900-2901) says each field is a vector with one entry per snapshot, which is false of columns. Each column inside it does have one entry per snapshot (probe.jl:112). The sentence has read this way since it was written (c3bfde03), and Series has always held a NamedTuple there, so nothing records a move.",
+   "class": "deviation",
+   "fix": "\"A series holds these fields. Each vector in it, every column included, has one entry per snapshot.\"",
+   "clear": true
+  },
+  {
+   "id": "CV12-148",
+   "conforms": true,
+   "evidence": "src/sim.jl:2958-2962 refuses a reserved label as ReadSetMisuse :reserved_label, and sim.jl:2974-2975 refuses a bare NamedTuple as ReadSetMisuse :not_a_read_set. probe.jl:115-117 produces both, for each of t, frame, boundary and columns."
+  },
+  {
+   "id": "CV12-154",
+   "conforms": false,
+   "evidence": "src/sim.jl:3027 cites '§7.3, D-317, D-440' above port, state and modes on the simulation. §7.3 (spec.md:2341) treats stores and modes, which fits state and modes. It does not treat reading a port by path, which the comment mostly describes. The spec treats that read only in Appendix B (spec.md:15137-15150); no other spec text matches 'port('. Appendix B's own line also cites §7.3, and model.jl:981, 1009 and 1039 repeat the same set.",
+   "class": "deviation",
+   "fix": "# Design: §7.3, Appendix B, D-317, D-440.",
+   "clear": true,
+   "note": "The same citation set sits on the model's port at model.jl:981, so a fixer may want to add Appendix B there too."
+  }
+ ],
+ "notes": "I checked 27 claims in CV12. 23 conform and 4 do not.\n\nThe 4 that do not:\n- **CV12-089 (drift):** the comment says residue is the termination record's third field. D-260 added `policy` and made it the fourth; commits 46f261e1 and 63980506 record the move.\n- **CV12-144 (deviation):** the Series lead sentence says every field is a vector, but `columns` is a NamedTuple of vectors.\n- **CV12-017 (deviation):** the claim's premise is wrong. Spec §12.1 says the stop word is cleared \"at the top of each run\", with no \"only\". §12.6 defines a run as what a door builds, so clearing it at the doors agrees with the spec. What remains is that the restore! docstring leaves out the clearing, which the probe shows can be observed through a later step!.\n- **CV12-154 (deviation):** the comment cites only §7.3, which does not cover reading a port by path. That read is treated only in Appendix B.\n\nOn the code_map rows (008, 067, 073, 076): the map does not promise to list every helper (code_map.md:5-12), so leaving out private helpers contradicts nothing. On the \"(lead)\" keyword-list rows (002, 023, 037, 048, 049): each docstring sends its keywords to another docstring, and that docstring has one bullet per keyword. So no keyword goes undocumented.\n\nI ran the probe script three times. The first two runs stopped on setup errors (a missing `Test` import, then a single-diagnostic case my helper did not handle); the third ran to the end. Every behaviour I probed matched the code.\n\nI edited no tracked file and made no commits. The only file I created is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV12_v/probe.jl."
+}

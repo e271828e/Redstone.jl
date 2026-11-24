@@ -1,0 +1,97 @@
+{
+ "judgments": [
+  {
+   "id": "CV11b-059",
+   "conforms": true,
+   "evidence": "src/model.jl:1136-1148 builds Fingerprint(copy(layout.sizes), root-input faces, component paths, x/s/m store types, sort!(addrs; by = first), copy(exec.events.names)). Probe lines 059: sizes [Bool=>1, Float64=>7, Int64=>1], root_faces [:u, :p], paths in walk order, per-component x/s/m types with nothing where absent, addrs issorted=true with (type, offsets) values, events [(\"latch\", :latch)] matching the prior length 1."
+  },
+  {
+   "id": "CV11b-070",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:83-84 hold just two such fields, `deployment::Deployment` and `layout::Fingerprint`. Probe line 070 prints fieldnames(ModelState) = (:x, :s, :m, :table, :prior, :stepper, :t, :t₀, :deployment, :layout). design/code_map.md:194-196 says 'the fingerprint, the `Deployment` and the structural layout `Fingerprint`', which names the fingerprint twice. The wording comes from b1de9d49's comment 'fingerprint, the `Deployment` and the structural layout'. No separate fingerprint field ever existed.",
+   "class": "deviation",
+   "fix": "... the clock's `t` and its exact `t₀` (D-457), and the `Deployment` and the structural layout `Fingerprint`.",
+   "clear": true,
+   "backing_entry": "",
+   "note": "This is a wording slip in the map, not a moved field. No log entry or rename records it."
+  },
+  {
+   "id": "CV11b-062",
+   "conforms": true,
+   "evidence": "src/model.jl:532 `_grid_time(model, k) = _instant(model.exec.clock, k * lattice.frame)` computes each frame top from its index and never accumulates. Probe line 062: after three step! calls at Δt_frame = 1//10 from origin 0//1, checkpoint(sim).state.t === 0.3 is true, while 0.1+0.1+0.1 = 0.30000000000000004. test/test_lattices.jl:662-693 checks the same thing from wall-clock origins."
+  },
+  {
+   "id": "CV11b-069",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:195-245 walks the nine names (Δt_base, Δt_frame, h_max, h_min, algorithm, localization_tol, localization_budget, firing_budget, attempt_budget). It names the algorithm field by field when both tokens share a type and whole otherwise. It compares rows by path over (:anchor, :D, :Φ, :Δt, :rates), which are all of ScheduleEntry's columns (src/deployment.jl:36-42), and scopes by (path, key) over (:anchor, :D, :Φ). This is exactly what Deployment's == (src/deployment.jl:619-624) and Schedule's == (deployment.jl:89) compare. h_max is stored resolved (deployment.jl:543). BS3's fields are reltol and abstol (deployment.jl:413-415)."
+  },
+  {
+   "id": "CV11b-050",
+   "conforms": true,
+   "evidence": "pace! and margin! write the knobs with no lifecycle gate (src/sim.jl:2396, 2412-2413). run! writes them at entry (sim.jl:1573-1574), and so does replay! (sim.jl:1404-1405, inside replay! at 1334). The loop reads pace at the run's anchor and the un-pause re-anchor (sim.jl:2096, 2101-2102) and in wait_deadline! at frame top (control.jl:164, 185), which reads margin there too. Probe lines 050: pace!/margin! at :built give 2.0/0.01, and after run! with default keywords they read Inf/0.002."
+  },
+  {
+   "id": "CV11b-001",
+   "conforms": false,
+   "evidence": "src/sim.jl:2511-2522: attach! runs the identity check (AlreadyAttached) and then the claims check (ClaimConflict). Nothing else follows them. rg finds no CallerTaskConflict in src/. Spec §11.3 (design/spec.md:8441) and D-375 (design/log.md:15825) say admission is a two-part check. Commit d17d9c03 deleted the calling-task admission check (D-310).",
+   "class": "drift",
+   "fix": "... the enumeration contract with its bidirectional conformance check, the two-part admission, both claim sources, and the harness writer as the derived remainder.",
+   "clear": true,
+   "backing_entry": "D-375"
+  },
+  {
+   "id": "CV11b-002",
+   "conforms": true,
+   "evidence": "src/devices.jl:113, 136 and 162 default init!, shutdown! and unblock! to no-ops. devices.jl:202 is loop's fallback, which check_device (src/roster.jl:227-238) refuses as DeviceContractMismatch :no_loop. Probe line 002 shows all three hooks return nothing on a Pad. Probe line 026 shows the :no_loop refusal."
+  },
+  {
+   "id": "CV11b-011",
+   "conforms": true,
+   "evidence": "src/roster.jl:117 is `is_greedy(::AbstractBinding) = false`. src/roster.jl:363 builds the greedy claim as the root faces with no entry in plane.claimedby. src/sim.jl:2539-2548 warns EmptyGreedyClaim on an empty remainder. Probe line 011: after Enumerated(\"u\"), a Greedy device's faces are [:p], and is_greedy(Enumerated) is false."
+  },
+  {
+   "id": "CV11b-020",
+   "conforms": true,
+   "evidence": "src/bindings.jl:165-176 throws BindingContractMismatch with :reads_not_namedtuple for a non-NamedTuple and with :reads_not_selectors for a non-ReadSelector entry. Probe lines 020: reads = [1] gives :reads_not_namedtuple, and reads = (a = 1,) gives :reads_not_selectors."
+  },
+  {
+   "id": "CV11b-026",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1841-1844 gives DeviceContractMismatch a `reason::Symbol` field with three values, :no_loop | :no_output_side | :detached. They are raised at src/roster.jl:235, src/devices.jl:370 and src/devices.jl:81. Probe line 026 shows reason :no_loop. Appendix C (design/spec.md:15803-15807) describes the three cases but never names the `reason` field or its symbols. Its twin BindingContractMismatch (spec.md:15799-15802) lists all nine. D-244 (log.md:10015) names the `:detached` reason.",
+   "class": "deviation",
+   "fix": "Append to the Appendix C entry: 'A `reason` tells the cases apart: `:no_loop`, `:no_output_side` and `:detached`.'",
+   "clear": true,
+   "backing_entry": "",
+   "note": "The entry leaves the field out but contradicts nothing: the three cases it describes match the three reasons."
+  },
+  {
+   "id": "CV11b-030",
+   "conforms": true,
+   "evidence": "src/roster.jl:267 is `_handle(entry::RosterEntry) = entry.handle::DeviceHandle`. DeviceHandle is the UnionAll family `DeviceHandle{B,G}` (src/devices.jl:63). Probe line 030 shows 0 bytes allocated, and the result isa DeviceHandle."
+  },
+  {
+   "id": "CV11b-033",
+   "conforms": false,
+   "evidence": "The freeze is `@atomic running::Bool` on Control (src/control.jl:70; control.jl:30 calls it 'the §11.3 freeze (D-317)'). `lifecycle` (src/sim.jl:511-512) reads it as :running. devices.jl holds neither the flag nor `lifecycle`. Commit 0cea6765 'Move the control plane and the pacer into control.jl' took that state out of devices.jl, so the docstring's file pointer went stale.",
+   "class": "drift",
+   "fix": "... and the id counter; the §11.3 freeze itself is `Control`'s `running` flag (control.jl), which `lifecycle` reads as `:running`.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV11b-036",
+   "conforms": false,
+   "evidence": "run_tasks is filled at spawn (src/sim.jl:1654-1655 via _register_tasks!, sim.jl:1808-1809) and emptied under wake's lock at run end (sim.jl:1750). _status reads it under the same lock (sim.jl:2834). No code deletes a single entry. Commit d17d9c03 'Delete the attended run mode: ... the inline branch of run!' (D-310) removed the inline body, and sim.jl:1652 notes that the loop runs on the calling task (D-310).",
+   "class": "drift",
+   "fix": "`run_tasks` is the run's device-id → `Task` registry, filled at spawn and emptied at run end under `wake`'s lock, since the loop reads the registry as it publishes, which is what lets `publish!` read `task_state` off the handles the loop owns (D-193). A device absent from it reads `:done` inside a run and `:none` outside one ...",
+   "clear": true,
+   "backing_entry": "D-310"
+  },
+  {
+   "id": "CV11b-041",
+   "conforms": true,
+   "evidence": "src/roster.jl:411-416 lists each roster entry in order and then pushes \"harness\". Probe line 041 gives [\"device 1 (Pad)\" => [:u], \"device 2 (Pad)\" => [:p], \"harness\" => Symbol[]]."
+  }
+ ],
+ "notes": "I judged all 14 claims for slice CV11b. Nine conform and five do not: CV11b-070, -001, -026, -033 and -036.\n\nNot conforming:\n- CV11b-001, -033 and -036 are drift. Commit d17d9c03 (D-310) and commit 0cea6765 record the moves.\n- CV11b-070 is a deviation. It is a wording slip in design/code_map.md that names the fingerprint twice. No field was ever moved.\n- CV11b-026 is a deviation but a judgment call. Appendix C leaves out DeviceContractMismatch's `reason` symbols, while its twin entry lists all nine. Nothing in the entry contradicts the code.\n\nWhat I checked: I read every doc text and code site in W at f14dbc1d. I ran the probe three times. The first two runs stopped at the CV11b-020 section on my own error-field bugs. The third run completed. Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV11b_v/probe.jl.\n\nI edited no tracked file, ran no git command that changes the worktree and committed nothing."
+}

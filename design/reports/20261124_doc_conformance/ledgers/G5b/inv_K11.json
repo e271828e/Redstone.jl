@@ -1,0 +1,474 @@
+{
+ "rows": [
+  {
+   "id": "K11-001",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 78,
+   "kind": "mech",
+   "claim": "The flat vector exists so integrator compatibility (OrdinaryDiffEq or custom), trim solvers, HDF5 logging and linearization all get their arrays",
+   "evidence": "src/stepper.jl:239 only mentions OrdinaryDiffEqCore as a source of constants; no HDF5 in src/. design/spec.md:6496 drops OrdinaryDiffEq as a dependency, and design/pending.md:264-268 says HDF5 export is undecided.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Integrator backends behind the stepper seam (§10.2), trim solvers and linearization all get their arrays.",
+   "note": "pending.md:264-268 records this very bullet as awaiting a reword when its deferral lifts. Spec 6730 allows an OrdinaryDiffEq extension later. The flat buffer itself is real (src/checkpoint.jl, src/store.jl)."
+  },
+  {
+   "id": "K11-002",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 190,
+   "kind": "law",
+   "claim": "Gain trajectories (scheduler outputs) become observable in log, trace and replay",
+   "evidence": "src/trace.jl:1-6 and spec §11.5 (design/spec.md:8754-8763): the trace is the input trace, one record per drained root-input batch. A scheduler's gain bundle is an internal port, written by no device, so no trace record holds it. The log (snapshots) holds it, and replay reproduces it bit-identically (src/sim.jl:1262-1266).",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Gain trajectories become observable in the log and reproduced by replay, where the `Ref` writes were invisible to both.",
+   "note": "The spec does not claim the trace holds internal ports. Medium confidence; the text may use 'trace' loosely for the recorded session."
+  },
+  {
+   "id": "K11-003",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 232,
+   "kind": "decl",
+   "claim": "The reimplemented `PIVector` has an optional reset face that is sugar over the continuous-reset event",
+   "evidence": "No `PIVector` in src/. The shipped library has `PID` and `DiscretePID` (src/library.jl:2541, 2677) and no `reset` face on `PID`; the reset form exists only on DiscreteIntegrator and similar (src/library.jl:444-454, 559).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Name the library's vector PID, or say that a library PI component with a flag-gated reset face is the planned owner of the event.",
+   "note": "companions/migration_outline.md:71-72 and log D-141 (log.md:5292-5303) use the same name, so this is a planned item. The spec does not name `PIVector`. Verifier to rule whether a planned item may stay."
+  },
+  {
+   "id": "K11-004",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 368,
+   "kind": "mech",
+   "claim": "After the run, `TimeSeries` reads the retained snapshots",
+   "evidence": "No `TimeSeries` in src/. Post-run extraction is `series(sim, read_set)` returning a `Series` (src/sim.jl:2937, code_map.md src/sim.jl `series` entry). D-407 rejected FlightCore's `TimeSeries` (design/log.md:16818, 16841).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "After the run, `series` gathers the logged snapshots into columns,",
+   "note": "The log retains snapshots at `log_every` and `log_max`, so 'retained' also means 'logged'."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K11-005",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 27,
+   "kind": "law",
+   "claim": "Wrong wiring is a build error naming the cycle (AlgebraicCycle)",
+   "evidence": "probe:P7b yields AlgebraicCycle on a stage-2 loop; test/test_build.jl:153"
+  },
+  {
+   "id": "K11-006",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 27,
+   "kind": "law",
+   "claim": "A dangling port is a build error (UnconnectedInput)",
+   "evidence": "probe:P5 yields UnconnectedInput; src/diagnostics.jl:402"
+  },
+  {
+   "id": "K11-007",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 30,
+   "kind": "decl",
+   "claim": "`x_projection` is a declared hook",
+   "evidence": "src/declare.jl:599; src/assembly.jl:18"
+  },
+  {
+   "id": "K11-008",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 30,
+   "kind": "law",
+   "claim": "A Bool guard makes a non-localized event with defined semantics",
+   "evidence": "src/declare.jl:531-533"
+  },
+  {
+   "id": "K11-009",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 31,
+   "kind": "mech",
+   "claim": "A stage-1 (state-derived) port lets a consumer read it in the same sweep without delay",
+   "evidence": "probe:P7 builds a loop closed through a stage-1 port; test/fixtures.jl:27"
+  },
+  {
+   "id": "K11-010",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 60,
+   "kind": "decl",
+   "claim": "A library `Constant` source exists to wire zero-contributor inputs",
+   "evidence": "src/library.jl:346"
+  },
+  {
+   "id": "K11-011",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 70,
+   "kind": "law",
+   "claim": "x_deriv's return must carry every state field; a forgotten field is refused",
+   "evidence": "probe:P3 gives ConformanceFailure for an x_deriv missing field b; src/diagnostics.jl:1175"
+  },
+  {
+   "id": "K11-012",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 73,
+   "kind": "mech",
+   "claim": "State fields arrive as the declared scalars and SArrays",
+   "evidence": "test/fixtures.jl:15-27 (x.q is an SVector read in y_state)"
+  },
+  {
+   "id": "K11-013",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 81,
+   "kind": "mech",
+   "claim": "The framework's canonical layout and selector-list linearization replace per-aircraft state-space mapping",
+   "evidence": "src/linearize.jl:26-33 (taps x,u,y by selector)"
+  },
+  {
+   "id": "K11-014",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 126,
+   "kind": "decl",
+   "claim": "The decoder stages y_state, y_direct, x_deriv, s_update exist",
+   "evidence": "src/assembly.jl:17-18"
+  },
+  {
+   "id": "K11-015",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 126,
+   "kind": "mech",
+   "claim": "Mixed Bool/continuous predicates fit non-localized events; gate form localizes",
+   "evidence": "design/spec.md:466-475, 6880; src/declare.jl:530-533"
+  },
+  {
+   "id": "K11-016",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 163,
+   "kind": "mech",
+   "claim": "An s field returned from y_state is a stage-1 port that closes a tick-domain loop legally",
+   "evidence": "probe:P7 (build succeeds); probe:P7b (naive loop gives AlgebraicCycle)"
+  },
+  {
+   "id": "K11-017",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 204,
+   "kind": "decl",
+   "claim": "y_direct(c, (; s, u)) and s_update(c, (; s, u, Δt)) are legal discrete-tier signatures",
+   "evidence": "probe:P2 defines and runs the PI example verbatim; test/fixtures.jl:293-305"
+  },
+  {
+   "id": "K11-018",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 209,
+   "kind": "law",
+   "claim": "A reset honored only in s_update leaves the engagement-tick output stale (one tick late)",
+   "evidence": "probe:P2 update-only gives u_cmd 1.02 at engage tick against 5.0 for same-tick; spec 14707"
+  },
+  {
+   "id": "K11-019",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 217,
+   "kind": "law",
+   "claim": "The output stage is the only same-tick reset path; s_update cannot republish",
+   "evidence": "probe:P2; design/spec.md:1538"
+  },
+  {
+   "id": "K11-020",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 193,
+   "kind": "mech",
+   "claim": "Linearization holds unseeded inputs at their operating values",
+   "evidence": "src/linearize.jl:4-12 (seeds only the tapped leaves, nominal half carries the rest)"
+  },
+  {
+   "id": "K11-021",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 230,
+   "kind": "law",
+   "claim": "Only event handlers write continuous x",
+   "evidence": "src/declare.jl:535-537"
+  },
+  {
+   "id": "K11-022",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 238,
+   "kind": "decl",
+   "claim": "`Simulation(world; Δt_frame = 1//50, algorithm = RK4())` is a valid call",
+   "evidence": "probe:P1; src/sim.jl:395-397; src/deployment.jl:555-556"
+  },
+  {
+   "id": "K11-023",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 325,
+   "kind": "law",
+   "claim": "Δt_base defaults to Δt_frame",
+   "evidence": "probe:P1 (Δt_base == 1//50); src/deployment.jl:188-192"
+  },
+  {
+   "id": "K11-024",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 327,
+   "kind": "mech",
+   "claim": "The build pipeline runs at Simulation construction: probes, wiring checks, sort, rate compilation, layout",
+   "evidence": "src/build.jl:10-12, 767; src/sim.jl:395-397; src/deployment.jl:149"
+  },
+  {
+   "id": "K11-025",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 331,
+   "kind": "decl",
+   "claim": "`init!(sim, condition; t0 = ...)` runs the stopped-sim services",
+   "evidence": "probe:P2 (t0 = 0.0 accepted); src/sim.jl:834"
+  },
+  {
+   "id": "K11-026",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 332,
+   "kind": "decl",
+   "claim": "`trim!(sim, problem; baseline, …)` is the trim service",
+   "evidence": "src/sim.jl:1123-1124"
+  },
+  {
+   "id": "K11-027",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 333,
+   "kind": "mech",
+   "claim": "The trim commit runs through the simulation's init!, the same boundary",
+   "evidence": "src/trim.jl:565-566; src/trim.jl:730"
+  },
+  {
+   "id": "K11-028",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 335,
+   "kind": "law",
+   "claim": "init! establishes every root input's value (UninitializedInputs) and captures the trace header",
+   "evidence": "src/sim.jl:774-777, 802-803"
+  },
+  {
+   "id": "K11-029",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 337,
+   "kind": "mech",
+   "claim": "The trim service writes root-input values it solved for via the condition",
+   "evidence": "src/trim.jl:74, 730"
+  },
+  {
+   "id": "K11-030",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 339,
+   "kind": "decl",
+   "claim": "`attach!(sim, device, binding)` attaches a device",
+   "evidence": "src/sim.jl:2505-2506"
+  },
+  {
+   "id": "K11-031",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 340,
+   "kind": "law",
+   "claim": "An output-only binding claims nothing",
+   "evidence": "src/sim.jl:2480-2481, 2523"
+  },
+  {
+   "id": "K11-032",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 341,
+   "kind": "mech",
+   "claim": "The output device runs a pure map_output on its own task",
+   "evidence": "src/bindings.jl:188-196"
+  },
+  {
+   "id": "K11-033",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 342,
+   "kind": "law",
+   "claim": "Binding reads are validated against the build at attach, so a stale binding fails there",
+   "evidence": "src/sim.jl:2457-2460, 2530-2532"
+  },
+  {
+   "id": "K11-034",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 351,
+   "kind": "law",
+   "claim": "A claimed face that names no root input is refused at attach, with the face list in hand",
+   "evidence": "src/sim.jl:2495; src/diagnostics.jl:1511-1519"
+  },
+  {
+   "id": "K11-035",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 351,
+   "kind": "law",
+   "claim": "A second joystick on the same faces is refused at attach (ClaimConflict)",
+   "evidence": "src/sim.jl:2525-2529; src/diagnostics.jl:1532"
+  },
+  {
+   "id": "K11-036",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 355,
+   "kind": "mech",
+   "claim": "A greedy binding claims every unclaimed face at the attach moment, never recomputed",
+   "evidence": "src/sim.jl:2442-2443, 2476-2478"
+  },
+  {
+   "id": "K11-037",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 357,
+   "kind": "decl",
+   "claim": "`run!(sim; pace = 1, t_end = 1000)` is a valid call",
+   "evidence": "src/sim.jl:1562-1563"
+  },
+  {
+   "id": "K11-038",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 357,
+   "kind": "mech",
+   "claim": "The roster is frozen per run",
+   "evidence": "src/sim.jl:2442; src/sim.jl:2465-2466"
+  },
+  {
+   "id": "K11-039",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 362,
+   "kind": "mech",
+   "claim": "A claim persists after the device's task exits, and the root input holds its last applied value",
+   "evidence": "src/sim.jl:2493-2494 (claim holds until detach!), 2566-2567; src/devices.jl:611"
+  },
+  {
+   "id": "K11-040",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 365,
+   "kind": "mech",
+   "claim": "Recovery is stop, detach!, then init!, or replay! to the end then run! to continue",
+   "evidence": "src/sim.jl:2574-2582; src/sim.jl:1262-1281"
+  },
+  {
+   "id": "K11-041",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 368,
+   "kind": "mech",
+   "claim": "The trace can re-drive a fresh Simulation(world) bit-identically",
+   "evidence": "src/sim.jl:1262-1266 (replay! restores the header and is bit-identical)"
+  },
+  {
+   "id": "K11-042",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 306,
+   "kind": "decl",
+   "claim": "`input_passthrough` and a namespace prefix route a face group through an assembly",
+   "evidence": "src/assembly.jl:495-514, 543; src/assembly.jl:946"
+  },
+  {
+   "id": "K11-043",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 319,
+   "kind": "decl",
+   "claim": "An aircraft's `input_wires` block carries a face group down one level",
+   "evidence": "src/assembly.jl:23, 913-916"
+  },
+  {
+   "id": "K11-044",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 379,
+   "kind": "mech",
+   "claim": "A complete batch overwrites the staging cell, so inter-frame polls coalesce",
+   "evidence": "src/dataplane.jl:452-466; design/spec.md:8519-8522"
+  },
+  {
+   "id": "K11-045",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 381,
+   "kind": "mech",
+   "claim": "The drain applies the batch at frame top and traces it",
+   "evidence": "src/dataplane.jl:483-490; src/sim.jl:2640-2650"
+  },
+  {
+   "id": "K11-046",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 384,
+   "kind": "decl",
+   "claim": "`peek` shows the device's own pending value else the snapshot value",
+   "evidence": "src/devices.jl:557-575"
+  },
+  {
+   "id": "K11-047",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 388,
+   "kind": "law",
+   "claim": "Repeated staging of one level is idempotent; newest value wins per face",
+   "evidence": "src/sim.jl:2610-2612; src/dataplane.jl:452"
+  },
+  {
+   "id": "K11-048",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 401,
+   "kind": "mech",
+   "claim": "The harness writer merges sparse batches by CAS",
+   "evidence": "src/dataplane.jl:459-468; src/sim.jl:2587-2590"
+  },
+  {
+   "id": "K11-049",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 407,
+   "kind": "mech",
+   "claim": "The pacer re-anchors at un-pause",
+   "evidence": "src/sim.jl:2101-2102"
+  },
+  {
+   "id": "K11-050",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 408,
+   "kind": "mech",
+   "claim": "Shutdown order: complete boundary, final snapshot, sticky stopped, wake waits, unblock, named-timeout joins",
+   "evidence": "src/sim.jl:1860-1890; src/sim.jl:1865-1875; src/sim.jl:1936-1940"
+  },
+  {
+   "id": "K11-051",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 426,
+   "kind": "mech",
+   "claim": "The trim condition is a pure function of the decisions returning a condition the service commits",
+   "evidence": "src/trim.jl:49-56, 74; src/trim.jl:730"
+  },
+  {
+   "id": "K11-052",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 437,
+   "kind": "mech",
+   "claim": "A generic service loop with a built-in Levenberg-Marquardt backend replaces per-aircraft solver plumbing",
+   "evidence": "src/sim.jl:1123-1124 (backend = LevenbergMarquardt()); src/trim.jl:2-4"
+  },
+  {
+   "id": "K11-053",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 439,
+   "kind": "law",
+   "claim": "A failed (non-converged) trim leaves the simulation's stores untouched",
+   "evidence": "src/trim.jl:10-15; src/trim.jl:726-728 (returns before the commit)"
+  },
+  {
+   "id": "K11-054",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 453,
+   "kind": "law",
+   "claim": "RK4 is stable for an actuator pole of 31 rad/s at h = 0.02 (and the 500 Hz case)",
+   "evidence": "probe numbers by hand: |R(-31·0.02)| = 0.539 < 1; RK4 real-axis limit 2.785/h = 139 rad/s"
+  },
+  {
+   "id": "K11-055",
+   "file": "design/companions/flight_case_studies.md",
+   "line": 4,
+   "kind": "mech",
+   "claim": "Names FlightCore, FlightPhysics, FlightApps, Vehicle.f_ode!, Aircraft.f_ode!, VehicleDynamics, KinData, PistonEngine, PIVector-adjacent Flight names, f_init!, f_step!, f_periodic!, assign!, get_*_b, get_x_ss family, mode_req, q_sf, q_eb, NoVehicleSystems, T16000M, PilotInterface, generic_simulation, h_LOWS15, HorizontalTerrain, SimpleWorld, SimpleAtmosphere, TrimState, TrimParameters, θ_constraint, Kinematics.Initializer, ControlLaws, and the local names (Vehicle, pose, kin_vel, idle, frc, pilot, stick_y, q_ref, terrain, s_i, y_i, sat_out, sat_ext, sat_out_0 and axis, button names)",
+   "evidence": "Lead rows: each is Flight.jl prior art, a placeholder in an illustration, or a local name of the case study; none claims a Redstone export. src/ has none of them and the text calls them Flight's. The one name that wrongly stands for a Redstone feature (TimeSeries) is K11-004, and PIVector is K11-003."
+  }
+ ],
+ "counts": {
+  "law": 13,
+  "mech": 38,
+  "decl": 14,
+  "ptr": 28,
+  "why": 44,
+  "ex": 5,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

@@ -1,0 +1,1865 @@
+{
+ "rows": [
+  {
+   "id": "S12c-129",
+   "file": "design/spec.md",
+   "line": 10601,
+   "kind": "law",
+   "claim": "step! returns the requested count in the ordinary case, and fewer when the run terminated inside the call",
+   "evidence": "src/sim.jl:2105-2106,2122 and probe:65. `step!(m2; frames = 3, t_end = 0.3)` ends the run (lifecycle `:stopped`, EndTimeReached) yet returns 3, the full requested count. The stopping frame counts as advanced (src/sim.jl:2120-2122), and the `step!` docstring says 'A stop inside the last frame requested returns the full count, so read lifecycle to detect a stop'. A replay-mode `step!` past the recording's end also returns fewer with no termination.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Replace 'and fewer when the run terminated inside the call' with 'and fewer when the run terminated before the last requested frame, or when a recording ends the advance first. A stop inside the last frame requested returns the full count, so read `lifecycle` to detect it.' Adjust the next sentence so the return detects truncation, not termination.",
+   "note": "The count signals truncation only. It cannot signal a termination that lands on the last requested frame."
+  },
+  {
+   "id": "S12c-143",
+   "file": "design/spec.md",
+   "line": 10622,
+   "kind": "law",
+   "claim": "From stopped, nothing advances until init!, restore! or replay! opens a new run",
+   "evidence": "src/sim.jl:966 and probe:145. `overlay!` on a `:stopped` simulation is legal, opens a fresh run through `_open_run!` (src/sim.jl:972) and leaves the simulation `:initialized`, so it advances. `overlay!` is the fourth door, as this section says at line 10410 and 10541.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write: 'From `stopped`, nothing advances until `init!`, `overlay!`, `restore!` or `replay!` opens a new run, and `errored` is terminal.' The overlay door (D-429) came after D-218 and D-219, which the sentence cites."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S12c-001",
+   "file": "design/spec.md",
+   "line": 10408,
+   "kind": "decl",
+   "claim": "Five lifecycle states: built, initialized, running, stopped, errored",
+   "evidence": "src/sim.jl:511-517"
+  },
+  {
+   "id": "S12c-002",
+   "file": "design/spec.md",
+   "line": 10409,
+   "kind": "decl",
+   "claim": "Four doors build a run: init!, overlay!, restore!, replay!",
+   "evidence": "src/sim.jl:700 (_open_run!) called from 846, 972, 999, 1397"
+  },
+  {
+   "id": "S12c-003",
+   "file": "design/spec.md",
+   "line": 10411,
+   "kind": "decl",
+   "claim": "A run's feed is the recording replay! attached, or nothing",
+   "evidence": "src/sim.jl:231,1397"
+  },
+  {
+   "id": "S12c-004",
+   "file": "design/spec.md",
+   "line": 10412,
+   "kind": "law",
+   "claim": "Input mode says where the next frame takes its inputs from",
+   "evidence": "src/sim.jl:548,2663-2666"
+  },
+  {
+   "id": "S12c-005",
+   "file": "design/spec.md",
+   "line": 10418,
+   "kind": "decl",
+   "claim": "Run is a mutable struct of six fields",
+   "evidence": "src/sim.jl:228-235; probe:22"
+  },
+  {
+   "id": "S12c-006",
+   "file": "design/spec.md",
+   "line": 10419,
+   "kind": "decl",
+   "claim": "Two Run fields are const",
+   "evidence": "probe:23"
+  },
+  {
+   "id": "S12c-007",
+   "file": "design/spec.md",
+   "line": 10420,
+   "kind": "decl",
+   "claim": "The const fields are the log and the trace",
+   "evidence": "src/sim.jl:229-230; probe:23"
+  },
+  {
+   "id": "S12c-008",
+   "file": "design/spec.md",
+   "line": 10421,
+   "kind": "law",
+   "claim": "The trace is nothing under trace = false",
+   "evidence": "src/sim.jl:699; probe:127"
+  },
+  {
+   "id": "S12c-009",
+   "file": "design/spec.md",
+   "line": 10422,
+   "kind": "decl",
+   "claim": "The door takes the keywords trace, log, log_every, log_max",
+   "evidence": "src/sim.jl:834,964,1063,1080,1334"
+  },
+  {
+   "id": "S12c-010",
+   "file": "design/spec.md",
+   "line": 10424,
+   "kind": "law",
+   "claim": "Recording is the door's declaration; the next door may declare otherwise",
+   "evidence": "src/sim.jl:697-703 builds a fresh Run from the door's keywords"
+  },
+  {
+   "id": "S12c-011",
+   "file": "design/spec.md",
+   "line": 10426,
+   "kind": "decl",
+   "claim": "feed, termination, frame, boundary are the four non-const fields",
+   "evidence": "src/sim.jl:231-234; probe:23"
+  },
+  {
+   "id": "S12c-012",
+   "file": "design/spec.md",
+   "line": 10427,
+   "kind": "mech",
+   "claim": "termination is the record the loop's tail writes",
+   "evidence": "src/sim.jl:1762,1769,2291,2296"
+  },
+  {
+   "id": "S12c-013",
+   "file": "design/spec.md",
+   "line": 10428,
+   "kind": "decl",
+   "claim": "frame is the frame index, boundary the boundary ordinal",
+   "evidence": "src/sim.jl:233-234"
+  },
+  {
+   "id": "S12c-014",
+   "file": "design/spec.md",
+   "line": 10429,
+   "kind": "law",
+   "claim": "The four doors construct a run and nothing else rebinds it",
+   "evidence": "src/sim.jl:700 is the only `sim.run =` (rg over src/)"
+  },
+  {
+   "id": "S12c-015",
+   "file": "design/spec.md",
+   "line": 10430,
+   "kind": "mech",
+   "claim": "live! and the halt at a recording's end write feed",
+   "evidence": "src/sim.jl:1450,1602"
+  },
+  {
+   "id": "S12c-016",
+   "file": "design/spec.md",
+   "line": 10431,
+   "kind": "law",
+   "claim": "The loop's tail writes termination once",
+   "evidence": "src/sim.jl:1762,1769 (one write per advance entry)"
+  },
+  {
+   "id": "S12c-017",
+   "file": "design/spec.md",
+   "line": 10431,
+   "kind": "decl",
+   "claim": "closed(run) is termination !== nothing",
+   "evidence": "src/sim.jl:250"
+  },
+  {
+   "id": "S12c-018",
+   "file": "design/spec.md",
+   "line": 10432,
+   "kind": "law",
+   "claim": "init! sets the counters to zero",
+   "evidence": "src/sim.jl:846; probe:123"
+  },
+  {
+   "id": "S12c-019",
+   "file": "design/spec.md",
+   "line": 10433,
+   "kind": "law",
+   "claim": "overlay! sets the counters to the stopped run's",
+   "evidence": "src/sim.jl:972-974; probe:139,140"
+  },
+  {
+   "id": "S12c-020",
+   "file": "design/spec.md",
+   "line": 10433,
+   "kind": "law",
+   "claim": "restore! and replay! set the counters to the checkpoint's",
+   "evidence": "src/sim.jl:999-1001; probe:112"
+  },
+  {
+   "id": "S12c-021",
+   "file": "design/spec.md",
+   "line": 10434,
+   "kind": "mech",
+   "claim": "The loop advances both counters",
+   "evidence": "src/sim.jl:2022 (frame), 2796 (boundary)"
+  },
+  {
+   "id": "S12c-022",
+   "file": "design/spec.md",
+   "line": 10435,
+   "kind": "mech",
+   "claim": "Frame index advances in the top hook inside the frame's guarded sequence",
+   "evidence": "src/sim.jl:2021-2024; src/frame.jl:69-77"
+  },
+  {
+   "id": "S12c-023",
+   "file": "design/spec.md",
+   "line": 10436,
+   "kind": "law",
+   "claim": "restore! of a bare state sets the frame index to the state's frame",
+   "evidence": "src/sim.jl:1090-1093; probe:121"
+  },
+  {
+   "id": "S12c-024",
+   "file": "design/spec.md",
+   "line": 10437,
+   "kind": "law",
+   "claim": "restore! of a bare state starts the ordinal at zero, as init! does",
+   "evidence": "src/sim.jl:1093,1001; probe:121,123 (both publish under ordinal 0)"
+  },
+  {
+   "id": "S12c-025",
+   "file": "design/spec.md",
+   "line": 10439,
+   "kind": "law",
+   "claim": "The origin t₀ is not a run field",
+   "evidence": "src/sim.jl:228-235"
+  },
+  {
+   "id": "S12c-026",
+   "file": "design/spec.md",
+   "line": 10440,
+   "kind": "mech",
+   "claim": "The executor's clock holds t₀ beside t",
+   "evidence": "src/model.jl:331,1199-1200"
+  },
+  {
+   "id": "S12c-027",
+   "file": "design/spec.md",
+   "line": 10441,
+   "kind": "mech",
+   "claim": "init! sets the origin on the clock before boundary zero",
+   "evidence": "src/model.jl:331,336"
+  },
+  {
+   "id": "S12c-028",
+   "file": "design/spec.md",
+   "line": 10443,
+   "kind": "mech",
+   "claim": "A checkpoint carries t₀ with the clock",
+   "evidence": "src/model.jl:1187; src/checkpoint.jl:129"
+  },
+  {
+   "id": "S12c-029",
+   "file": "design/spec.md",
+   "line": 10443,
+   "kind": "law",
+   "claim": "The origin is exact",
+   "evidence": "src/model.jl:364-370; probe:origin lines"
+  },
+  {
+   "id": "S12c-030",
+   "file": "design/spec.md",
+   "line": 10444,
+   "kind": "law",
+   "claim": "t0 takes the exact forms a period takes, plus a float at its exact value",
+   "evidence": "src/model.jl:364-370; src/deployment.jl:15-26 (periods: Integer, Rational)"
+  },
+  {
+   "id": "S12c-031",
+   "file": "design/spec.md",
+   "line": 10445,
+   "kind": "law",
+   "claim": "-3//10 is the decimal and -0.3 the float nearest it",
+   "evidence": "probe:origin t0=-3//10 and t0=-0.3 (-5404319552844595//18014398509481984)"
+  },
+  {
+   "id": "S12c-032",
+   "file": "design/spec.md",
+   "line": 10446,
+   "kind": "law",
+   "claim": "A float Rational{Int} cannot hold exactly, such as 1e-4, is refused",
+   "evidence": "src/model.jl:365-369; probe:171 (ArgumentInvalid :range)"
+  },
+  {
+   "id": "S12c-033",
+   "file": "design/spec.md",
+   "line": 10447,
+   "kind": "law",
+   "claim": "An origin whose run the clock's integers cannot carry is refused",
+   "evidence": "src/model.jl:372-379,392-401; probe:172"
+  },
+  {
+   "id": "S12c-034",
+   "file": "design/spec.md",
+   "line": 10448,
+   "kind": "law",
+   "claim": "A checkpoint and a trace header hold the origin exact",
+   "evidence": "src/checkpoint.jl ModelState.t₀::Rational{Int}; probe:origin (trace hdr t0)"
+  },
+  {
+   "id": "S12c-035",
+   "file": "design/spec.md",
+   "line": 10448,
+   "kind": "law",
+   "claim": "A trace header's origin is compared exact",
+   "evidence": "src/sim.jl:1200-1202 (Rational ==)"
+  },
+  {
+   "id": "S12c-036",
+   "file": "design/spec.md",
+   "line": 10450,
+   "kind": "law",
+   "claim": "A Simulation is constructed with a placeholder run",
+   "evidence": "src/sim.jl:383"
+  },
+  {
+   "id": "S12c-037",
+   "file": "design/spec.md",
+   "line": 10451,
+   "kind": "decl",
+   "claim": "Placeholder: empty log, no trace, no feed, no termination",
+   "evidence": "src/sim.jl:383; probe:26"
+  },
+  {
+   "id": "S12c-038",
+   "file": "design/spec.md",
+   "line": 10452,
+   "kind": "law",
+   "claim": "Every door replaces the placeholder",
+   "evidence": "src/sim.jl:700"
+  },
+  {
+   "id": "S12c-039",
+   "file": "design/spec.md",
+   "line": 10453,
+   "kind": "law",
+   "claim": "The run field is always a Run, never nothing",
+   "evidence": "src/sim.jl:289"
+  },
+  {
+   "id": "S12c-040",
+   "file": "design/spec.md",
+   "line": 10454,
+   "kind": "mech",
+   "claim": "The lifecycle state says whether the run ever started",
+   "evidence": "src/sim.jl:511-517; probe:26"
+  },
+  {
+   "id": "S12c-041",
+   "file": "design/spec.md",
+   "line": 10455,
+   "kind": "law",
+   "claim": "The placeholder carries no configuration and no compiled state",
+   "evidence": "src/sim.jl:380-383 (default log, no trace, no writers installed)"
+  },
+  {
+   "id": "S12c-042",
+   "file": "design/spec.md",
+   "line": 10456,
+   "kind": "mech",
+   "claim": "init! allocates fresh objects rather than clearing them",
+   "evidence": "src/sim.jl:697-703; probe:179"
+  },
+  {
+   "id": "S12c-043",
+   "file": "design/spec.md",
+   "line": 10458,
+   "kind": "decl",
+   "claim": "Simulation is a mutable struct of four fields",
+   "evidence": "src/sim.jl:285-290; probe:24"
+  },
+  {
+   "id": "S12c-044",
+   "file": "design/spec.md",
+   "line": 10458,
+   "kind": "decl",
+   "claim": "The fields are the Model, the run, the data plane, the control plane",
+   "evidence": "src/sim.jl:286-289"
+  },
+  {
+   "id": "S12c-045",
+   "file": "design/spec.md",
+   "line": 10460,
+   "kind": "decl",
+   "claim": "The control plane is the atomic surface carrying pause, pace, stop",
+   "evidence": "src/control.jl:62-71"
+  },
+  {
+   "id": "S12c-046",
+   "file": "design/spec.md",
+   "line": 10461,
+   "kind": "decl",
+   "claim": "The Model holds deployment, executor, status and diagnostic cell",
+   "evidence": "src/model.jl:97-105; probe:188"
+  },
+  {
+   "id": "S12c-047",
+   "file": "design/spec.md",
+   "line": 10462,
+   "kind": "decl",
+   "claim": "The deployment is the scalar-free artifact carrying the build",
+   "evidence": "src/deployment.jl:539-553"
+  },
+  {
+   "id": "S12c-048",
+   "file": "design/spec.md",
+   "line": 10464,
+   "kind": "law",
+   "claim": "A simulation claims its Model at construction and never shares it",
+   "evidence": "src/sim.jl:374-379"
+  },
+  {
+   "id": "S12c-049",
+   "file": "design/spec.md",
+   "line": 10467,
+   "kind": "law",
+   "claim": "The build is reached through the deployment, never held twice",
+   "evidence": "src/sim.jl:285-290; src/deployment.jl:540"
+  },
+  {
+   "id": "S12c-050",
+   "file": "design/spec.md",
+   "line": 10468,
+   "kind": "decl",
+   "claim": "Grid parameters, schedule and event parameters are the deployment's",
+   "evidence": "src/deployment.jl:541-551"
+  },
+  {
+   "id": "S12c-051",
+   "file": "design/spec.md",
+   "line": 10470,
+   "kind": "decl",
+   "claim": "chunk_size, the stepper and the arrival buffers are the executor's",
+   "evidence": "probe:189 (chunk_size on exec); src/model.jl:334 (exec.stepper)"
+  },
+  {
+   "id": "S12c-052",
+   "file": "design/spec.md",
+   "line": 10471,
+   "kind": "decl",
+   "claim": "join_timeout is Control's",
+   "evidence": "src/control.jl:71-74"
+  },
+  {
+   "id": "S12c-053",
+   "file": "design/spec.md",
+   "line": 10471,
+   "kind": "decl",
+   "claim": "Loop diagnostic cell, its account, published-snapshot holder are the data plane's",
+   "evidence": "src/roster.jl:332-334"
+  },
+  {
+   "id": "S12c-054",
+   "file": "design/spec.md",
+   "line": 10473,
+   "kind": "decl",
+   "claim": "The frame's own diagnostic cell is the Model's",
+   "evidence": "src/model.jl:100 (frame_diag)"
+  },
+  {
+   "id": "S12c-055",
+   "file": "design/spec.md",
+   "line": 10474,
+   "kind": "decl",
+   "claim": "The log, the trace and the two counters are the run's",
+   "evidence": "src/sim.jl:229-234"
+  },
+  {
+   "id": "S12c-056",
+   "file": "design/spec.md",
+   "line": 10475,
+   "kind": "law",
+   "claim": "The stop policy is the advance's argument",
+   "evidence": "src/sim.jl:1566,1577,2252"
+  },
+  {
+   "id": "S12c-057",
+   "file": "design/spec.md",
+   "line": 10476,
+   "kind": "law",
+   "claim": "The termination record keeps the terminating policy",
+   "evidence": "src/sim.jl:576-578,180-185"
+  },
+  {
+   "id": "S12c-058",
+   "file": "design/spec.md",
+   "line": 10477,
+   "kind": "mech",
+   "claim": "The pacer is run!'s own, created per call",
+   "evidence": "src/sim.jl:1638"
+  },
+  {
+   "id": "S12c-059",
+   "file": "design/spec.md",
+   "line": 10478,
+   "kind": "mech",
+   "claim": "The pacer is passed to the loop and its publications",
+   "evidence": "src/sim.jl:1658,2092,2109"
+  },
+  {
+   "id": "S12c-060",
+   "file": "design/spec.md",
+   "line": 10478,
+   "kind": "law",
+   "claim": "Each snapshot's status carries the pacer's frozen record",
+   "evidence": "src/sim.jl:2840"
+  },
+  {
+   "id": "S12c-061",
+   "file": "design/spec.md",
+   "line": 10490,
+   "kind": "law",
+   "claim": "A Simulation moves through built, initialized, running, then stopped or errored",
+   "evidence": "src/sim.jl:511-517"
+  },
+  {
+   "id": "S12c-062",
+   "file": "design/spec.md",
+   "line": 10491,
+   "kind": "decl",
+   "claim": "Built means stores allocated and boundary zero not completed",
+   "evidence": "src/sim.jl:514; src/model.jl:325,338"
+  },
+  {
+   "id": "S12c-063",
+   "file": "design/spec.md",
+   "line": 10493,
+   "kind": "law",
+   "claim": "A throw inside a door returns the simulation to built",
+   "evidence": "src/model.jl:338,478,1340"
+  },
+  {
+   "id": "S12c-064",
+   "file": "design/spec.md",
+   "line": 10495,
+   "kind": "law",
+   "claim": "Initialized after init!, restore!/replay!, or overlay! settling",
+   "evidence": "src/sim.jl:516; probe:36,112,139"
+  },
+  {
+   "id": "S12c-065",
+   "file": "design/spec.md",
+   "line": 10499,
+   "kind": "mech",
+   "claim": "lifecycle(sim) derives the state rather than storing it",
+   "evidence": "src/sim.jl:511-517"
+  },
+  {
+   "id": "S12c-066",
+   "file": "design/spec.md",
+   "line": 10500,
+   "kind": "mech",
+   "claim": "It reads the running flag, the Model status and whether the run is closed",
+   "evidence": "src/sim.jl:512-516"
+  },
+  {
+   "id": "S12c-067",
+   "file": "design/spec.md",
+   "line": 10502,
+   "kind": "decl",
+   "claim": "Status is :built, :consistent or :inconsistent",
+   "evidence": "src/model.jl:325,342,src/frame.jl:96"
+  },
+  {
+   "id": "S12c-068",
+   "file": "design/spec.md",
+   "line": 10502,
+   "kind": "law",
+   "claim": "Only the Model's entry points and catch sites write status",
+   "evidence": "rg `status =`: src/model.jl:325,338,342,472,478,482,1335,1340,1343; src/frame.jl:96"
+  },
+  {
+   "id": "S12c-069",
+   "file": "design/spec.md",
+   "line": 10503,
+   "kind": "law",
+   "claim": "A claimed model's entry points refuse a direct call",
+   "evidence": "src/model.jl:260; src/model.jl:314,322,462,470,1312"
+  },
+  {
+   "id": "S12c-070",
+   "file": "design/spec.md",
+   "line": 10507,
+   "kind": "law",
+   "claim": "Running flag set gives running whatever the status and run",
+   "evidence": "src/sim.jl:512; probe:69"
+  },
+  {
+   "id": "S12c-071",
+   "file": "design/spec.md",
+   "line": 10510,
+   "kind": "law",
+   "claim": "Flag clear and status :built gives built",
+   "evidence": "src/sim.jl:514"
+  },
+  {
+   "id": "S12c-072",
+   "file": "design/spec.md",
+   "line": 10511,
+   "kind": "law",
+   "claim": "Flag clear and :inconsistent gives errored",
+   "evidence": "src/sim.jl:515; probe:70"
+  },
+  {
+   "id": "S12c-073",
+   "file": "design/spec.md",
+   "line": 10512,
+   "kind": "law",
+   "claim": "Flag clear, :consistent, run open gives initialized",
+   "evidence": "src/sim.jl:516; probe:36,37"
+  },
+  {
+   "id": "S12c-074",
+   "file": "design/spec.md",
+   "line": 10513,
+   "kind": "law",
+   "claim": "Flag clear, :consistent, run closed gives stopped",
+   "evidence": "src/sim.jl:516; probe:43"
+  },
+  {
+   "id": "S12c-075",
+   "file": "design/spec.md",
+   "line": 10515,
+   "kind": "law",
+   "claim": "errored is terminal",
+   "evidence": "probe:71-75 (checkpoint, init!, restore!, overlay!, attach! refused)"
+  },
+  {
+   "id": "S12c-076",
+   "file": "design/spec.md",
+   "line": 10517,
+   "kind": "mech",
+   "claim": "Replay is the ordinary loop re-driven from the trace",
+   "evidence": "src/sim.jl:1403-1405 (replay! calls _run_body!)"
+  },
+  {
+   "id": "S12c-077",
+   "file": "design/spec.md",
+   "line": 10519,
+   "kind": "decl",
+   "claim": "Input mode is :live or :replay, read as mode(sim)",
+   "evidence": "src/sim.jl:548"
+  },
+  {
+   "id": "S12c-078",
+   "file": "design/spec.md",
+   "line": 10521,
+   "kind": "law",
+   "claim": "The mode is read off the run's feed: :replay while a recording is attached",
+   "evidence": "src/sim.jl:548; probe:152"
+  },
+  {
+   "id": "S12c-079",
+   "file": "design/spec.md",
+   "line": 10522,
+   "kind": "mech",
+   "claim": "The mode names the source of the next drain: staging cells or the recording",
+   "evidence": "src/sim.jl:2665-2666"
+  },
+  {
+   "id": "S12c-080",
+   "file": "design/spec.md",
+   "line": 10524,
+   "kind": "decl",
+   "claim": "The drain is the frame-top swap of staged writes into root inputs",
+   "evidence": "src/sim.jl:2628-2655,2656-2679"
+  },
+  {
+   "id": "S12c-081",
+   "file": "design/spec.md",
+   "line": 10525,
+   "kind": "law",
+   "claim": "State and mode are orthogonal",
+   "evidence": "probe:152 (:replay with :initialized)"
+  },
+  {
+   "id": "S12c-082",
+   "file": "design/spec.md",
+   "line": 10529,
+   "kind": "law",
+   "claim": "A Simulation prints its input mode on a line of its own",
+   "evidence": "src/show.jl:559-562; probe output 'input mode: live'"
+  },
+  {
+   "id": "S12c-083",
+   "file": "design/spec.md",
+   "line": 10530,
+   "kind": "law",
+   "claim": "The heading carries state and clock",
+   "evidence": "src/show.jl:526-529"
+  },
+  {
+   "id": "S12c-084",
+   "file": "design/spec.md",
+   "line": 10531,
+   "kind": "law",
+   "claim": "The deployment follows in its one-line form",
+   "evidence": "src/show.jl:562; probe output 'deployment: Deployment(...)'"
+  },
+  {
+   "id": "S12c-085",
+   "file": "design/spec.md",
+   "line": 10532,
+   "kind": "law",
+   "claim": "Then termination record, log count, devices, warnings",
+   "evidence": "src/show.jl:559-567"
+  },
+  {
+   "id": "S12c-086",
+   "file": "design/spec.md",
+   "line": 10535,
+   "kind": "law",
+   "claim": "run! or step! on a built simulation is MissingInit",
+   "evidence": "src/sim.jl:604-605; probe:28,29"
+  },
+  {
+   "id": "S12c-087",
+   "file": "design/spec.md",
+   "line": 10537,
+   "kind": "law",
+   "claim": "MissingInit is a diagnostic kind naming init!",
+   "evidence": "src/diagnostics.jl:1266-1272; probe:33"
+  },
+  {
+   "id": "S12c-088",
+   "file": "design/spec.md",
+   "line": 10538,
+   "kind": "law",
+   "claim": "UninitializedInputs fires inside init!",
+   "evidence": "src/sim.jl:844; src/conditions.jl:701"
+  },
+  {
+   "id": "S12c-089",
+   "file": "design/spec.md",
+   "line": 10539,
+   "kind": "decl",
+   "claim": "restore! and replay! are alternative doors from built",
+   "evidence": "src/sim.jl:1063-1069,1341-1345 (gate admits built)"
+  },
+  {
+   "id": "S12c-090",
+   "file": "design/spec.md",
+   "line": 10540,
+   "kind": "law",
+   "claim": "Each restores a checkpoint and runs no boundary zero",
+   "evidence": "src/sim.jl:995-1003; src/model.jl:1331-1345"
+  },
+  {
+   "id": "S12c-091",
+   "file": "design/spec.md",
+   "line": 10541,
+   "kind": "law",
+   "claim": "overlay! needs a run to overlay",
+   "evidence": "src/sim.jl:966,903-908; probe:30"
+  },
+  {
+   "id": "S12c-092",
+   "file": "design/spec.md",
+   "line": 10542,
+   "kind": "law",
+   "claim": "A throw inside boundary zero leaves the simulation built",
+   "evidence": "src/model.jl:336-339"
+  },
+  {
+   "id": "S12c-093",
+   "file": "design/spec.md",
+   "line": 10542,
+   "kind": "law",
+   "claim": "Only init! runs boundary zero",
+   "evidence": "src/model.jl:336 (boundary_zero! only in init!)"
+  },
+  {
+   "id": "S12c-094",
+   "file": "design/spec.md",
+   "line": 10543,
+   "kind": "law",
+   "claim": "A throw inside the copy restore!/replay! run leaves it built",
+   "evidence": "src/model.jl:1336-1341"
+  },
+  {
+   "id": "S12c-095",
+   "file": "design/spec.md",
+   "line": 10544,
+   "kind": "law",
+   "claim": "The next run! or step! meets the same refusal",
+   "evidence": "src/sim.jl:604-605"
+  },
+  {
+   "id": "S12c-096",
+   "file": "design/spec.md",
+   "line": 10549,
+   "kind": "mech",
+   "claim": "Deviceless, run! is fully synchronous",
+   "evidence": "src/sim.jl:1654,1658 (no tasks without roster, loop on calling task)"
+  },
+  {
+   "id": "S12c-097",
+   "file": "design/spec.md",
+   "line": 10553,
+   "kind": "decl",
+   "claim": "step!(sim; frames = 1) is the frame-count spelling",
+   "evidence": "src/sim.jl:2220,2231; probe:37"
+  },
+  {
+   "id": "S12c-098",
+   "file": "design/spec.md",
+   "line": 10553,
+   "kind": "mech",
+   "claim": "step! runs whole frames synchronously through the ordinary frame sequence",
+   "evidence": "src/sim.jl:2265,2116"
+  },
+  {
+   "id": "S12c-099",
+   "file": "design/spec.md",
+   "line": 10555,
+   "kind": "law",
+   "claim": "A stepped simulation is bit-identical to run! over the same frames",
+   "evidence": "probe:51"
+  },
+  {
+   "id": "S12c-100",
+   "file": "design/spec.md",
+   "line": 10556,
+   "kind": "law",
+   "claim": "step! never waits on the pacer, whatever pace is held",
+   "evidence": "src/sim.jl:2265 (pacer nothing); probe:54"
+  },
+  {
+   "id": "S12c-101",
+   "file": "design/spec.md",
+   "line": 10557,
+   "kind": "decl",
+   "claim": "step!(sim; t_plus = 10.0) is the duration spelling",
+   "evidence": "src/sim.jl:2220,2242-2247"
+  },
+  {
+   "id": "S12c-102",
+   "file": "design/spec.md",
+   "line": 10558,
+   "kind": "law",
+   "claim": "t_plus is exclusive with frames; both is ArgumentInvalid",
+   "evidence": "src/sim.jl:2225-2226; probe:38"
+  },
+  {
+   "id": "S12c-103",
+   "file": "design/spec.md",
+   "line": 10559,
+   "kind": "law",
+   "claim": "t_plus advances whole frames until boundary time first covers the duration",
+   "evidence": "src/sim.jl:2247; probe:39-41"
+  },
+  {
+   "id": "S12c-104",
+   "file": "design/spec.md",
+   "line": 10567,
+   "kind": "law",
+   "claim": "A stepping session is deviceless by construction",
+   "evidence": "src/sim.jl:2259-2265 (no init bracket, no spawn)"
+  },
+  {
+   "id": "S12c-105",
+   "file": "design/spec.md",
+   "line": 10568,
+   "kind": "mech",
+   "claim": "Device tasks are per-run! artifacts",
+   "evidence": "src/sim.jl:1654-1655"
+  },
+  {
+   "id": "S12c-106",
+   "file": "design/spec.md",
+   "line": 10569,
+   "kind": "law",
+   "claim": "running(handle) is false outside a run",
+   "evidence": "src/devices.jl:229; src/control.jl:74 (stopped starts true)"
+  },
+  {
+   "id": "S12c-107",
+   "file": "design/spec.md",
+   "line": 10570,
+   "kind": "law",
+   "claim": "Between step! calls the simulation is initialized",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "S12c-108",
+   "file": "design/spec.md",
+   "line": 10570,
+   "kind": "law",
+   "claim": "attach! is legal between step! calls",
+   "evidence": "src/sim.jl:628-634; probe:42"
+  },
+  {
+   "id": "S12c-109",
+   "file": "design/spec.md",
+   "line": 10571,
+   "kind": "mech",
+   "claim": "attach! registers, and the task appears at the next run!",
+   "evidence": "src/sim.jl:2536-2540,1654"
+  },
+  {
+   "id": "S12c-110",
+   "file": "design/spec.md",
+   "line": 10574,
+   "kind": "law",
+   "claim": "The frame-top drain still runs under step!",
+   "evidence": "src/sim.jl:2021-2024,2116"
+  },
+  {
+   "id": "S12c-111",
+   "file": "design/spec.md",
+   "line": 10575,
+   "kind": "mech",
+   "claim": "In a stepping session the staging cell written is the harness cell",
+   "evidence": "src/sim.jl:2620-2625"
+  },
+  {
+   "id": "S12c-112",
+   "file": "design/spec.md",
+   "line": 10577,
+   "kind": "decl",
+   "claim": "The harness write path is stage!(sim, \"face\" => value, …)",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "S12c-113",
+   "file": "design/spec.md",
+   "line": 10578,
+   "kind": "law",
+   "claim": "Staged batches are traced",
+   "evidence": "probe:183; src/sim.jl:2663-2664"
+  },
+  {
+   "id": "S12c-114",
+   "file": "design/spec.md",
+   "line": 10579,
+   "kind": "law",
+   "claim": "Staged batches are applied at the next frame top",
+   "evidence": "src/sim.jl:2021-2024; probe:183"
+  },
+  {
+   "id": "S12c-115",
+   "file": "design/spec.md",
+   "line": 10581,
+   "kind": "decl",
+   "claim": "latest(sim) is the read half",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "S12c-116",
+   "file": "design/spec.md",
+   "line": 10582,
+   "kind": "law",
+   "claim": "latest(sim) is the same immutable snapshot a device handle acquires",
+   "evidence": "src/sim.jl:2532-2533 (handle shares plane.published), 2857"
+  },
+  {
+   "id": "S12c-117",
+   "file": "design/spec.md",
+   "line": 10583,
+   "kind": "mech",
+   "claim": "The snapshot is navigated directly for assertions",
+   "evidence": "probe:183 (port(latest(z2), \"\", :ref))"
+  },
+  {
+   "id": "S12c-118",
+   "file": "design/spec.md",
+   "line": 10583,
+   "kind": "law",
+   "claim": "Advance-assert-advance is stage! then step! then latest",
+   "evidence": "probe:183"
+  },
+  {
+   "id": "S12c-119",
+   "file": "design/spec.md",
+   "line": 10585,
+   "kind": "law",
+   "claim": "stage! and latest work under run! too",
+   "evidence": "src/sim.jl:2620-2626,2857 (no lifecycle gate)"
+  },
+  {
+   "id": "S12c-120",
+   "file": "design/spec.md",
+   "line": 10585,
+   "kind": "law",
+   "claim": "The harness cell is not step-scoped",
+   "evidence": "src/sim.jl:2622 (plane.harness persists across calls)"
+  },
+  {
+   "id": "S12c-121",
+   "file": "design/spec.md",
+   "line": 10590,
+   "kind": "law",
+   "claim": "Between step! calls a simulation reports initialized",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "S12c-122",
+   "file": "design/spec.md",
+   "line": 10593,
+   "kind": "law",
+   "claim": "run! or another step! may follow step!, continuing from the boundary",
+   "evidence": "probe:39,43; src/sim.jl:2116 (continued flag)"
+  },
+  {
+   "id": "S12c-123",
+   "file": "design/spec.md",
+   "line": 10596,
+   "kind": "law",
+   "claim": "The stop policy is honoured throughout a step!",
+   "evidence": "src/sim.jl:2252-2253,2105"
+  },
+  {
+   "id": "S12c-124",
+   "file": "design/spec.md",
+   "line": 10597,
+   "kind": "law",
+   "claim": "t_end reached inside step! ends the run and leaves it stopped",
+   "evidence": "probe:65"
+  },
+  {
+   "id": "S12c-125",
+   "file": "design/spec.md",
+   "line": 10598,
+   "kind": "law",
+   "claim": "A stop request holding at frame 3 of step!(frames = 10) ends the run there",
+   "evidence": "probe:60 (returns 3, stopped, ModelRequestedStop)"
+  },
+  {
+   "id": "S12c-126",
+   "file": "design/spec.md",
+   "line": 10599,
+   "kind": "mech",
+   "claim": "The run ends through the ordinary tail",
+   "evidence": "src/sim.jl:2294-2296 (_finish!, _sweep_tail!, _record)"
+  },
+  {
+   "id": "S12c-127",
+   "file": "design/spec.md",
+   "line": 10601,
+   "kind": "law",
+   "claim": "step! returns the number of frames actually advanced",
+   "evidence": "src/sim.jl:2302; probe:60"
+  },
+  {
+   "id": "S12c-128",
+   "file": "design/spec.md",
+   "line": 10601,
+   "kind": "law",
+   "claim": "The return is the requested count in the ordinary case",
+   "evidence": "probe:37,39"
+  },
+  {
+   "id": "S12c-130",
+   "file": "design/spec.md",
+   "line": 10603,
+   "kind": "law",
+   "claim": "A short return lets a harness detect truncation without the clock",
+   "evidence": "probe:60 (3 of 10)"
+  },
+  {
+   "id": "S12c-131",
+   "file": "design/spec.md",
+   "line": 10607,
+   "kind": "law",
+   "claim": "stopped, then init!, then run! is the authored re-run",
+   "evidence": "probe:46"
+  },
+  {
+   "id": "S12c-132",
+   "file": "design/spec.md",
+   "line": 10608,
+   "kind": "mech",
+   "claim": "init! re-runs boundary zero from its condition",
+   "evidence": "src/sim.jl:843-851"
+  },
+  {
+   "id": "S12c-133",
+   "file": "design/spec.md",
+   "line": 10610,
+   "kind": "law",
+   "claim": "The warm restart is checkpoint, restore!, run!",
+   "evidence": "probe:107-115"
+  },
+  {
+   "id": "S12c-134",
+   "file": "design/spec.md",
+   "line": 10611,
+   "kind": "law",
+   "claim": "restore! is a door like init! and runs no boundary zero",
+   "evidence": "src/sim.jl:995-1003"
+  },
+  {
+   "id": "S12c-135",
+   "file": "design/spec.md",
+   "line": 10612,
+   "kind": "law",
+   "claim": "Each door builds a fresh run: trace, log and termination are new objects",
+   "evidence": "src/sim.jl:697-703; probe:112,179"
+  },
+  {
+   "id": "S12c-136",
+   "file": "design/spec.md",
+   "line": 10613,
+   "kind": "law",
+   "claim": "Each door clears batches still in staging cells",
+   "evidence": "src/sim.jl:654-659; probe:112,179"
+  },
+  {
+   "id": "S12c-137",
+   "file": "design/spec.md",
+   "line": 10614,
+   "kind": "law",
+   "claim": "Recorders restart with the run they record",
+   "evidence": "src/sim.jl:697-703"
+  },
+  {
+   "id": "S12c-138",
+   "file": "design/spec.md",
+   "line": 10615,
+   "kind": "law",
+   "claim": "No stale batch survives a door",
+   "evidence": "src/sim.jl:656-659"
+  },
+  {
+   "id": "S12c-139",
+   "file": "design/spec.md",
+   "line": 10618,
+   "kind": "law",
+   "claim": "init!, overlay! and restore! return the mode to :live",
+   "evidence": "src/sim.jl:700 (feed nothing); probe:145,157,160"
+  },
+  {
+   "id": "S12c-140",
+   "file": "design/spec.md",
+   "line": 10618,
+   "kind": "law",
+   "claim": "A fresh replay! sets the mode as it sets the trajectory",
+   "evidence": "src/sim.jl:1397-1398; probe:152"
+  },
+  {
+   "id": "S12c-141",
+   "file": "design/spec.md",
+   "line": 10619,
+   "kind": "law",
+   "claim": "live! is the one call that moves the mode alone",
+   "evidence": "src/sim.jl:1443-1451 (other writers: _settle_mode! at the halt, doors)"
+  },
+  {
+   "id": "S12c-142",
+   "file": "design/spec.md",
+   "line": 10620,
+   "kind": "law",
+   "claim": "live! takes a replaying simulation live where it stands",
+   "evidence": "probe:154; src/sim.jl:1450"
+  },
+  {
+   "id": "S12c-144",
+   "file": "design/spec.md",
+   "line": 10622,
+   "kind": "law",
+   "claim": "errored is terminal",
+   "evidence": "probe:72-75"
+  },
+  {
+   "id": "S12c-145",
+   "file": "design/spec.md",
+   "line": 10625,
+   "kind": "decl",
+   "claim": "checkpoint and restore! exist on Model and Simulation",
+   "evidence": "src/model.jl:1180,1310; src/sim.jl:892,1063,1080"
+  },
+  {
+   "id": "S12c-146",
+   "file": "design/spec.md",
+   "line": 10626,
+   "kind": "decl",
+   "claim": "A Checkpoint is the Model's state beside the run's cursor",
+   "evidence": "src/checkpoint.jl Checkpoint (state, frame, boundary); probe:91"
+  },
+  {
+   "id": "S12c-147",
+   "file": "design/spec.md",
+   "line": 10627,
+   "kind": "law",
+   "claim": "checkpoint(model) returns the state alone, a ModelState",
+   "evidence": "src/model.jl:1180-1188"
+  },
+  {
+   "id": "S12c-148",
+   "file": "design/spec.md",
+   "line": 10628,
+   "kind": "decl",
+   "claim": "It holds the flat buffer, the s and m stores, the whole signal table",
+   "evidence": "probe:85 (x, s, m, table); src/model.jl:1184-1186"
+  },
+  {
+   "id": "S12c-149",
+   "file": "design/spec.md",
+   "line": 10629,
+   "kind": "decl",
+   "claim": "It holds the guard priors and the stepper's carried state",
+   "evidence": "probe:85 (prior, stepper)"
+  },
+  {
+   "id": "S12c-150",
+   "file": "design/spec.md",
+   "line": 10630,
+   "kind": "decl",
+   "claim": "It holds t, t₀, the fingerprint and the deployment",
+   "evidence": "probe:85 (t, t₀, deployment, layout)"
+  },
+  {
+   "id": "S12c-151",
+   "file": "design/spec.md",
+   "line": 10631,
+   "kind": "law",
+   "claim": "The carried state is what the backend's checkpoint pair reads",
+   "evidence": "src/model.jl:1187; src/checkpoint.jl:129; src/stepper.jl:115-116"
+  },
+  {
+   "id": "S12c-152",
+   "file": "design/spec.md",
+   "line": 10632,
+   "kind": "law",
+   "claim": "It is nothing for a fixed-step method",
+   "evidence": "src/stepper.jl:145,185; probe:87"
+  },
+  {
+   "id": "S12c-153",
+   "file": "design/spec.md",
+   "line": 10633,
+   "kind": "law",
+   "claim": "Under BS3 it is the proposal and the controller's memory, two Float64s",
+   "evidence": "src/stepper.jl:282-283; probe:90"
+  },
+  {
+   "id": "S12c-154",
+   "file": "design/spec.md",
+   "line": 10635,
+   "kind": "law",
+   "claim": "The derivative buffer stays out of the state",
+   "evidence": "src/checkpoint.jl ModelState fields; probe:85"
+  },
+  {
+   "id": "S12c-155",
+   "file": "design/spec.md",
+   "line": 10636,
+   "kind": "law",
+   "claim": "Legal at :consistent with the clock on a frame top",
+   "evidence": "src/model.jl:1195-1205"
+  },
+  {
+   "id": "S12c-156",
+   "file": "design/spec.md",
+   "line": 10637,
+   "kind": "law",
+   "claim": "A frame cut by a throw leaves the status :inconsistent",
+   "evidence": "src/frame.jl:94-97"
+  },
+  {
+   "id": "S12c-157",
+   "file": "design/spec.md",
+   "line": 10638,
+   "kind": "law",
+   "claim": "No state is read off an :inconsistent model",
+   "evidence": "src/model.jl:1197-1198; probe:71"
+  },
+  {
+   "id": "S12c-158",
+   "file": "design/spec.md",
+   "line": 10640,
+   "kind": "law",
+   "claim": "checkpoint(sim) wraps the state with the run's frame index and ordinal",
+   "evidence": "src/sim.jl:892-895; probe:107"
+  },
+  {
+   "id": "S12c-159",
+   "file": "design/spec.md",
+   "line": 10641,
+   "kind": "law",
+   "claim": "checkpoint(sim) is legal in initialized and stopped",
+   "evidence": "src/sim.jl:903-908; probe:61"
+  },
+  {
+   "id": "S12c-160",
+   "file": "design/spec.md",
+   "line": 10641,
+   "kind": "law",
+   "claim": "Any other state is refused as ServiceLifecycle",
+   "evidence": "src/sim.jl:905-906; probe:30,71"
+  },
+  {
+   "id": "S12c-161",
+   "file": "design/spec.md",
+   "line": 10642,
+   "kind": "law",
+   "claim": "The sim's rest is its lifecycle and the Model's own rest",
+   "evidence": "src/sim.jl:893,903-908; src/model.jl:1195"
+  },
+  {
+   "id": "S12c-162",
+   "file": "design/spec.md",
+   "line": 10644,
+   "kind": "law",
+   "claim": "A cut frame reads errored and is refused as ServiceLifecycle",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "S12c-163",
+   "file": "design/spec.md",
+   "line": 10645,
+   "kind": "law",
+   "claim": "A stop at a t* boundary or a step end inside a frame leaves the clock mid-frame",
+   "evidence": "test/test_lifecycle.jl:911-915; test/test_lattices.jl:360-367"
+  },
+  {
+   "id": "S12c-164",
+   "file": "design/spec.md",
+   "line": 10646,
+   "kind": "law",
+   "claim": "The model's test refuses mid-frame as CheckpointMidFrame",
+   "evidence": "src/model.jl:1202-1204; test/test_lattices.jl:367"
+  },
+  {
+   "id": "S12c-165",
+   "file": "design/spec.md",
+   "line": 10647,
+   "kind": "law",
+   "claim": "A checkpoint never names a boundary inside a frame",
+   "evidence": "src/model.jl:1199-1205"
+  },
+  {
+   "id": "S12c-166",
+   "file": "design/spec.md",
+   "line": 10649,
+   "kind": "law",
+   "claim": "restore!(model, state) checks fingerprint and deployment: CheckpointMismatch",
+   "evidence": "src/model.jl:1212-1250,1314; probe:98"
+  },
+  {
+   "id": "S12c-167",
+   "file": "design/spec.md",
+   "line": 10651,
+   "kind": "law",
+   "claim": "An off-grid state t is CheckpointMidFrame",
+   "evidence": "src/model.jl:1258-1273; probe:96"
+  },
+  {
+   "id": "S12c-168",
+   "file": "design/spec.md",
+   "line": 10652,
+   "kind": "law",
+   "claim": "Both kinds are collected into one throw before any write",
+   "evidence": "src/model.jl:1313-1316; probe:98"
+  },
+  {
+   "id": "S12c-169",
+   "file": "design/spec.md",
+   "line": 10654,
+   "kind": "mech",
+   "claim": "Copies state back, settles through the hooks, writes :consistent last",
+   "evidence": "src/model.jl:1331-1344"
+  },
+  {
+   "id": "S12c-170",
+   "file": "design/spec.md",
+   "line": 10657,
+   "kind": "law",
+   "claim": "The copy hands the backend its carried state back",
+   "evidence": "src/checkpoint.jl:129"
+  },
+  {
+   "id": "S12c-171",
+   "file": "design/spec.md",
+   "line": 10658,
+   "kind": "law",
+   "claim": "The copy raises no discontinuity notice",
+   "evidence": "src/checkpoint.jl:117-131 (no discontinuity! call); src/model.jl:1331-1344"
+  },
+  {
+   "id": "S12c-172",
+   "file": "design/spec.md",
+   "line": 10659,
+   "kind": "law",
+   "claim": "The next frame proposes what the original's did",
+   "evidence": "src/checkpoint.jl:129; src/stepper.jl:283; probe:115 (RK4 round trip identical)"
+  },
+  {
+   "id": "S12c-173",
+   "file": "design/spec.md",
+   "line": 10660,
+   "kind": "law",
+   "claim": "A throw inside the copy or settling returns the status to :built",
+   "evidence": "src/model.jl:1339-1341"
+  },
+  {
+   "id": "S12c-174",
+   "file": "design/spec.md",
+   "line": 10661,
+   "kind": "law",
+   "claim": "It arrives as StepError host :restore, pointer the state's frame",
+   "evidence": "src/model.jl:1332,1341"
+  },
+  {
+   "id": "S12c-175",
+   "file": "design/spec.md",
+   "line": 10663,
+   "kind": "decl",
+   "claim": "restore!(sim, cp) takes the four recording keywords",
+   "evidence": "src/sim.jl:1063-1064"
+  },
+  {
+   "id": "S12c-176",
+   "file": "design/spec.md",
+   "line": 10664,
+   "kind": "law",
+   "claim": "It checks fingerprint and deployment: CheckpointMismatch",
+   "evidence": "src/sim.jl:1072; probe:126"
+  },
+  {
+   "id": "S12c-177",
+   "file": "design/spec.md",
+   "line": 10665,
+   "kind": "law",
+   "claim": "It checks as replay checks the trace header",
+   "evidence": "src/model.jl:1208-1211 (check shared with replay's entry pass)"
+  },
+  {
+   "id": "S12c-178",
+   "file": "design/spec.md",
+   "line": 10667,
+   "kind": "law",
+   "claim": "Grid check collects both kinds into one throw",
+   "evidence": "src/sim.jl:1071-1074; probe:126"
+  },
+  {
+   "id": "S12c-179",
+   "file": "design/spec.md",
+   "line": 10668,
+   "kind": "mech",
+   "claim": "Copies state back, opens a fresh run with the checkpoint as header, publishes one snapshot at its t",
+   "evidence": "src/sim.jl:998-1003; probe:112"
+  },
+  {
+   "id": "S12c-180",
+   "file": "design/spec.md",
+   "line": 10671,
+   "kind": "law",
+   "claim": "Runs no sweep, no guard, no update, no prior reset",
+   "evidence": "src/sim.jl:1002; src/model.jl:1337-1338; src/checkpoint.jl:122-131"
+  },
+  {
+   "id": "S12c-181",
+   "file": "design/spec.md",
+   "line": 10672,
+   "kind": "law",
+   "claim": "The next frame is the original lattice's next frame",
+   "evidence": "probe:115"
+  },
+  {
+   "id": "S12c-182",
+   "file": "design/spec.md",
+   "line": 10673,
+   "kind": "law",
+   "claim": "The boundary ordinal continues",
+   "evidence": "probe:112,114"
+  },
+  {
+   "id": "S12c-183",
+   "file": "design/spec.md",
+   "line": 10674,
+   "kind": "law",
+   "claim": "The re-published snapshot carries the checkpointed boundary's ordinal",
+   "evidence": "src/sim.jl:1001; probe:107,112 (3)"
+  },
+  {
+   "id": "S12c-184",
+   "file": "design/spec.md",
+   "line": 10676,
+   "kind": "law",
+   "claim": "The next frame publishes under the next ordinal",
+   "evidence": "probe:114 (4)"
+  },
+  {
+   "id": "S12c-185",
+   "file": "design/spec.md",
+   "line": 10679,
+   "kind": "decl",
+   "claim": "restore!(sim, model_state) takes the same keywords",
+   "evidence": "src/sim.jl:1080-1081"
+  },
+  {
+   "id": "S12c-186",
+   "file": "design/spec.md",
+   "line": 10681,
+   "kind": "law",
+   "claim": "It checks fingerprint and deployment the same way",
+   "evidence": "src/sim.jl:1089"
+  },
+  {
+   "id": "S12c-187",
+   "file": "design/spec.md",
+   "line": 10682,
+   "kind": "law",
+   "claim": "A state off the grid is CheckpointMidFrame",
+   "evidence": "src/sim.jl:1090-1091; probe:125"
+  },
+  {
+   "id": "S12c-188",
+   "file": "design/spec.md",
+   "line": 10683,
+   "kind": "law",
+   "claim": "It opens a fresh trajectory at the state's frame",
+   "evidence": "src/sim.jl:1093; probe:121"
+  },
+  {
+   "id": "S12c-189",
+   "file": "design/spec.md",
+   "line": 10684,
+   "kind": "law",
+   "claim": "The restored boundary publishes under ordinal 0",
+   "evidence": "src/sim.jl:1093,1001; probe:121"
+  },
+  {
+   "id": "S12c-190",
+   "file": "design/spec.md",
+   "line": 10686,
+   "kind": "law",
+   "claim": "A Checkpoint holds a ModelState{Float64}",
+   "evidence": "src/checkpoint.jl Checkpoint.state"
+  },
+  {
+   "id": "S12c-191",
+   "file": "design/spec.md",
+   "line": 10687,
+   "kind": "law",
+   "claim": "Another scalar is refused by dispatch as CheckpointMismatch on either bare-state restore!",
+   "evidence": "src/sim.jl:1099-1100; src/model.jl:1321-1322; probe:101,102"
+  },
+  {
+   "id": "S12c-192",
+   "file": "design/spec.md",
+   "line": 10690,
+   "kind": "decl",
+   "claim": "overlay!(sim, condition) writes a condition onto a stopped run, fresh trajectory",
+   "evidence": "src/sim.jl:964-982; probe:139,145"
+  },
+  {
+   "id": "S12c-193",
+   "file": "design/spec.md",
+   "line": 10693,
+   "kind": "law",
+   "claim": "The stores the condition names are overwritten on the run's own",
+   "evidence": "src/model.jl:473"
+  },
+  {
+   "id": "S12c-194",
+   "file": "design/spec.md",
+   "line": 10694,
+   "kind": "law",
+   "claim": "Every other store, the clock, the lattice and the priors are kept",
+   "evidence": "src/model.jl:469-483; probe:139 (clock equal)"
+  },
+  {
+   "id": "S12c-195",
+   "file": "design/spec.md",
+   "line": 10696,
+   "kind": "law",
+   "claim": "A partial store entry merges onto the current store",
+   "evidence": "src/sim.jl:969-970; src/model.jl:488-490"
+  },
+  {
+   "id": "S12c-196",
+   "file": "design/spec.md",
+   "line": 10697,
+   "kind": "law",
+   "claim": "A root-input entry writes the root input's cell",
+   "evidence": "src/model.jl:473,494-496"
+  },
+  {
+   "id": "S12c-197",
+   "file": "design/spec.md",
+   "line": 10698,
+   "kind": "law",
+   "claim": "No root-input totality is asked",
+   "evidence": "src/sim.jl:969-970 (no assert_total); probe:143"
+  },
+  {
+   "id": "S12c-198",
+   "file": "design/spec.md",
+   "line": 10699,
+   "kind": "law",
+   "claim": "Settles through boundary zero's tail minus discrete output stages and s_update",
+   "evidence": "src/model.jl:403-413,476 (run_boundary! over the empty due set)"
+  },
+  {
+   "id": "S12c-199",
+   "file": "design/spec.md",
+   "line": 10700,
+   "kind": "law",
+   "claim": "Projection runs in the settling",
+   "evidence": "src/model.jl:403-409,428-431,476"
+  },
+  {
+   "id": "S12c-200",
+   "file": "design/spec.md",
+   "line": 10701,
+   "kind": "law",
+   "claim": "The sweep and events iterate to quiescence with priors kept",
+   "evidence": "src/model.jl:408-409,476"
+  },
+  {
+   "id": "S12c-201",
+   "file": "design/spec.md",
+   "line": 10702,
+   "kind": "law",
+   "claim": "The settling raises the stepper's discontinuity notice",
+   "evidence": "src/model.jl:474"
+  },
+  {
+   "id": "S12c-202",
+   "file": "design/spec.md",
+   "line": 10703,
+   "kind": "law",
+   "claim": "An overlaid discrete store is the next tick's state; its held cell stays until then",
+   "evidence": "src/model.jl:403-407,476"
+  },
+  {
+   "id": "S12c-203",
+   "file": "design/spec.md",
+   "line": 10705,
+   "kind": "law",
+   "claim": "A guard moved into holding fires at the overlay boundary, before the next integrate",
+   "evidence": "src/model.jl:476,408-409"
+  },
+  {
+   "id": "S12c-204",
+   "file": "design/spec.md",
+   "line": 10706,
+   "kind": "law",
+   "claim": "A guard already holding does not fire again",
+   "evidence": "src/model.jl:408-409 (priors kept, not reset)"
+  },
+  {
+   "id": "S12c-205",
+   "file": "design/spec.md",
+   "line": 10706,
+   "kind": "decl",
+   "claim": "The door takes the four recording keywords",
+   "evidence": "src/sim.jl:964-965"
+  },
+  {
+   "id": "S12c-206",
+   "file": "design/spec.md",
+   "line": 10707,
+   "kind": "law",
+   "claim": "It handles the periphery as restore! does",
+   "evidence": "src/sim.jl:971,998"
+  },
+  {
+   "id": "S12c-207",
+   "file": "design/spec.md",
+   "line": 10708,
+   "kind": "law",
+   "claim": "Publishes one snapshot at the stopped run's t under its last ordinal",
+   "evidence": "src/sim.jl:974,975; probe:139,140"
+  },
+  {
+   "id": "S12c-208",
+   "file": "design/spec.md",
+   "line": 10709,
+   "kind": "law",
+   "claim": "The trace header is the checkpoint taken after the settling",
+   "evidence": "src/sim.jl:977-980; probe:141"
+  },
+  {
+   "id": "S12c-209",
+   "file": "design/spec.md",
+   "line": 10710,
+   "kind": "law",
+   "claim": "Replay reproduces the overlaid trajectory with no record of the overlay",
+   "evidence": "src/sim.jl:977-980 (header holds the settled state, no overlay entry)"
+  },
+  {
+   "id": "S12c-210",
+   "file": "design/spec.md",
+   "line": 10711,
+   "kind": "law",
+   "claim": "overlay! is legal where checkpoint is: initialized or stopped, clock on a frame top",
+   "evidence": "src/sim.jl:966-967; probe:145"
+  },
+  {
+   "id": "S12c-211",
+   "file": "design/spec.md",
+   "line": 10712,
+   "kind": "law",
+   "claim": "Otherwise refused as ServiceLifecycle or CheckpointMidFrame",
+   "evidence": "probe:30,74; test/test_lifecycle.jl:914"
+  },
+  {
+   "id": "S12c-212",
+   "file": "design/spec.md",
+   "line": 10713,
+   "kind": "law",
+   "claim": "A throw inside the settling leaves the simulation built",
+   "evidence": "src/model.jl:477-479"
+  },
+  {
+   "id": "S12c-213",
+   "file": "design/spec.md",
+   "line": 10714,
+   "kind": "law",
+   "claim": "Its stores are left partly written",
+   "evidence": "src/model.jl:472-479 (no rollback)"
+  },
+  {
+   "id": "S12c-214",
+   "file": "design/spec.md",
+   "line": 10715,
+   "kind": "decl",
+   "claim": "overlay!(model, condition; hooks) is the model's form",
+   "evidence": "src/model.jl:461-467"
+  },
+  {
+   "id": "S12c-215",
+   "file": "design/spec.md",
+   "line": 10716,
+   "kind": "law",
+   "claim": "Legal at :consistent with the clock on a frame top",
+   "evidence": "src/model.jl:463,471,1195-1205"
+  },
+  {
+   "id": "S12c-216",
+   "file": "design/spec.md",
+   "line": 10720,
+   "kind": "law",
+   "claim": "Device attachments persist across re-initialization",
+   "evidence": "src/sim.jl:654-662 (roster untouched by doors)"
+  },
+  {
+   "id": "S12c-217",
+   "file": "design/spec.md",
+   "line": 10722,
+   "kind": "law",
+   "claim": "Persistence means roster persistence",
+   "evidence": "src/sim.jl:654-662; src/roster.jl:327"
+  },
+  {
+   "id": "S12c-218",
+   "file": "design/spec.md",
+   "line": 10723,
+   "kind": "law",
+   "claim": "Binding, claims and device id survive",
+   "evidence": "src/roster.jl:336-337; src/sim.jl:654-662"
+  },
+  {
+   "id": "S12c-219",
+   "file": "design/spec.md",
+   "line": 10724,
+   "kind": "law",
+   "claim": "Tasks do not survive; they are per-run",
+   "evidence": "src/sim.jl:1654-1655,1750"
+  },
+  {
+   "id": "S12c-220",
+   "file": "design/spec.md",
+   "line": 10726,
+   "kind": "law",
+   "claim": "Each run! re-initializes every rostered device",
+   "evidence": "src/sim.jl:1645,1648,1837-1841"
+  },
+  {
+   "id": "S12c-221",
+   "file": "design/spec.md",
+   "line": 10726,
+   "kind": "law",
+   "claim": "A task is spawned for each device whose init! succeeds",
+   "evidence": "src/sim.jl:1838-1852,1654; src/devices.jl:678-683"
+  },
+  {
+   "id": "S12c-222",
+   "file": "design/spec.md",
+   "line": 10727,
+   "kind": "law",
+   "claim": "attach! while stopped only registers",
+   "evidence": "src/sim.jl:2505-2551 (no spawn)"
+  },
+  {
+   "id": "S12c-223",
+   "file": "design/spec.md",
+   "line": 10730,
+   "kind": "law",
+   "claim": "A front end attached by hand is rostered, so the next run! spawns its task",
+   "evidence": "src/sim.jl:1645,1654 (every roster entry spawned)"
+  },
+  {
+   "id": "S12c-224",
+   "file": "design/spec.md",
+   "line": 10735,
+   "kind": "law",
+   "claim": "The stop policy is declared per advance",
+   "evidence": "src/sim.jl:1566,2252,1386"
+  },
+  {
+   "id": "S12c-225",
+   "file": "design/spec.md",
+   "line": 10736,
+   "kind": "decl",
+   "claim": "t_end and ignore_stop_requests are keywords of run!, replay!, step!",
+   "evidence": "src/sim.jl:1562-1563,1334-1336,2220-2221"
+  },
+  {
+   "id": "S12c-226",
+   "file": "design/spec.md",
+   "line": 10737,
+   "kind": "mech",
+   "claim": "Each call builds and validates the StopPolicy",
+   "evidence": "src/sim.jl:474-478"
+  },
+  {
+   "id": "S12c-227",
+   "file": "design/spec.md",
+   "line": 10737,
+   "kind": "decl",
+   "claim": "StopPolicy is an immutable value of t_end plus ignored requester paths",
+   "evidence": "src/sim.jl:141-144; probe:186"
+  },
+  {
+   "id": "S12c-228",
+   "file": "design/spec.md",
+   "line": 10738,
+   "kind": "mech",
+   "claim": "The call passes the policy to the loop",
+   "evidence": "src/sim.jl:1577,2265"
+  },
+  {
+   "id": "S12c-229",
+   "file": "design/spec.md",
+   "line": 10739,
+   "kind": "law",
+   "claim": "The value lives for the call, then only on the ending advance's record",
+   "evidence": "src/sim.jl:576-578; probe:43"
+  },
+  {
+   "id": "S12c-230",
+   "file": "design/spec.md",
+   "line": 10740,
+   "kind": "law",
+   "claim": "A later run or step! sequence can use a different clock or ignore set",
+   "evidence": "src/sim.jl:1566,2252; probe:43,65"
+  }
+ ],
+ "counts": {
+  "decl": 42,
+  "law": 161,
+  "mech": 27,
+  "ptr": 8,
+  "why": 14,
+  "ex": 0,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

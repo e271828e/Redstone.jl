@@ -39,8 +39,8 @@ item changes what the spec says, the spec edit is part of the item.
   G1a to G3b (§13, Appendix C, §8 and §9) have run, and their clear
   fixes have landed. The rows that wait on the user are in
   `ledgers/user_rows.md` beside the brief. G4 (§10) has run and its
-  clear fixes have landed. G5a (§11) has run, and the audit is paused
-  inside G5; the notes give the resume point.
+  clear fixes have landed, and so has G5 (§11 and §12). G6 (§1 to §7)
+  is next, on the schedule the notes give.
   The brief is `design/reports/20261124_doc_conformance/00_brief.md`; the
   state, the rulings, the group plan and the tools are in
   `notes_doc_conformance.md` beside it.

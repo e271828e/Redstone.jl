@@ -75,13 +75,24 @@ the tools.
   walkthrough) ran as `wf_8c6a2747-902`: 10 agents, 1.43M tokens, 15 min,
   8 of 29 flags overturned, 2 misses in 73 sampled rows. Its 12 clear rows
   wait in `ledgers/G5a/fix_list.md`.
-- **Paused here on 2026-11-24, at the user's request, inside G5.** G5b
-  (§12's spec slices and the flight case studies) was launched and stopped
-  within minutes, so it has no results; launch it afresh. Resume with G5b,
-  G5c (the log, 4 slices) and G5d (coverage, 3 slices) at `f14dbc1d`: pin
-  the worktree there with `git -C W switch --detach f14dbc1d`. Then one
-  fixer takes the clear rows of all four runs. Check `git -C W status`
-  after each run.
+- **G5b to G5d.** G5b (§12 and the flight case studies) ran as
+  `wf_e7f7f280-2aa`: 10 agents, 1.41M tokens, 22 min. G5c (the 106 log
+  entries) ran as `wf_e22acc52-fcd`: 8 agents, 1.55M tokens, 39 min, 36 of
+  90 flags overturned, 21 of them in L11b. G5d (coverage) ran as
+  `wf_1391f201-19c`: 6 agents, 1.05M tokens, 21 min. One fixer took the
+  37 clear rows of G5a, G5b and G5d, which landed as `153f12ef`.
+- **Seen by G5's fixer, not yet fixed.** The `# Design:` comment above
+  `WriterStatus` (src/dataplane.jl, near 213) still names a returned inline
+  body, gone since D-310. inbound_periphery_walkthrough.md, near line 174,
+  still says "device-tagged drained batches". src/model.jl's `port`,
+  `state` and `modes` cite §7.3 where Appendix B treats them. §11.5's frame
+  gloss and §11.1's drain gloss are looser than S11a-005 and S11c-001.
+- **The schedule the user set on 2026-11-24.** Pause after G5 until the
+  usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
+  runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five
+  hours after G6's launch, near 06:53. Pause whenever the user asks. The
+  session that coordinates owns the timers; a session taking over sets its
+  own and the old one cancels its own, keep-warm loop included.
 - **The coordinator's helpers** are in `probes/coord/`. `coordlib.py`
   holds the paths and the code_map and heading lookups. `g5.py` writes a
   group's args, slices and leads. `tri2.py` merges a run and prints one

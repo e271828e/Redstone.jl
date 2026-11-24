@@ -156,3 +156,27 @@ the verifier's probe.
   and `:reads_missing` messages.
 - **S11b-032 and S11c-107, gap.** The greedy standard GUI binding is owed by
   `pending.md`; no action.
+- **K11-002, wording.** The flight case studies say gain trajectories show
+  in the log, the trace and replay; the trace holds only the drained writes,
+  and replay recomputes the gains from it.
+- **S12a-010, wording.** §12.1 bounds a control change's delay by one frame
+  budget; that holds only while the run keeps pace. D-269 backs it.
+- **S12a-020, wording.** §12.2 says the explicit `yield()` covers only frames
+  without a coarse-phase sleep; the loop yields at every frame top with
+  devices attached. D-027 backs it.
+- **S12b-117, wording.** §12.4's init-bracket block calls a bare
+  `shutdown!`; the bracket calls the guarded `_shutdown!`, which warns on a
+  throw and forwards an interrupt.
+- **S12c-129, wording.** §12.6: `step!` returns the full count when the stop
+  falls in the last requested frame, not fewer.
+- **S12d-058, wording.** §12.7's replay checks: a checkpoint mismatch
+  reports the recorded value beside the target's, not a did-you-mean.
+- **S12b-236, defect.** §12.4 says a forced interrupt outside a frame is a
+  stop like a deferred one. A raw interrupt in `_run_body!`'s or `step!`'s
+  masked bookkeeping can cut it short. Proposed: make that bookkeeping
+  resumable, rerunning its remaining steps before the raise propagates.
+- **K11-001, gap.** The flat state vector's uses are owed by `pending.md`;
+  no action.
+- **CV11a-004, wording.** `KindCounts` is named only as "the per-kind
+  counter record" in §11.8 and the `WriterStatus` docstring; its fields and
+  their order go undescribed.
