@@ -45,6 +45,13 @@ item changes what the spec says, the spec edit is part of the item.
   `design/increments/20261120_descriptor_content/notes_descriptor_content.md`
   and `design/increments/20261121_show_deployment/notes_show_deployment.md`.
   After the release this repo owes it the later stages.
+- **The docs conformance audit.** The spec, the log, the docstrings, the
+  companions and the rest of the docs are checked against the code, which
+  is the source of truth, in both directions, and what drifted is fixed.
+  It runs as a trial on §14, then one workflow per chapter group. Stage
+  reached: the brief is written, and the audit waits on the timing
+  notation increment before it pins its tip. The brief is
+  `design/reports/20261124_doc_conformance/00_brief.md`.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, each ending at a named function
   of the examples package: the plant, trim, linearization, a first loop,
