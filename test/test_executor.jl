@@ -225,7 +225,7 @@ function test_executor()
         end
     end
 
-    @testset "a bare side is one cell, gathered and written as its value (§5.2, §9.5, §9.8, D-436)" begin
+    @testset "a bare side is one cell, gathered and written as its value (§5.2, §9.5, §9.8, D-437)" begin
         store = StoreBundle(NamedTuple{(_cell_key(Float64),)}((Redstone.CellStore(zeros(2)),)))
         addr = Redstone.CellAddr{Float64,1}((1,))
         Redstone.scatter_group!(store, addr, 2.5, Float64, "p", :y_state)

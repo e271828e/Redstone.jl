@@ -865,7 +865,7 @@ function diagnostics_kind_set()
               "`sample_times` at `g`, key `a`: Dₛ = 0, and Dₛ ≥ 1 (§6.3)"
         @test message(RatesViolation(path = "g", reason = :phase, key = :a, value = 5)) ==
               "`sample_times` at `g`, key `a`: Φₛ = 5, and 0 ≤ Φₛ < Dₛ (§6.3)"
-        # An `Absolute` entry's constraints read in its own letters (§6.3, D-464).
+        # An `Absolute` entry's constraints read in its own letters (§6.3, D-478).
         @test message(RatesViolation(path = "g", reason = :period, key = :a, value = 0//1)) ==
               "`sample_times` at `g`, key `a`: period 0//1, and Δt > 0 (§6.3)"
         @test message(RatesViolation(path = "g", reason = :offset, key = :a, value = 3//1)) ==

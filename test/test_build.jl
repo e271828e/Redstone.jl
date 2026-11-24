@@ -779,7 +779,7 @@ function build_wire_clauses()
         @test walked_build isa Build
         @test port(Model(walked_build, D8; Δt_frame = 1//100), "c", :y) isa D8
 
-        # D-167's tier scope: a discrete consumer takes the bound clause alone, so
+        # D-263's tier scope: a discrete consumer takes the bound clause alone, so
         # a continuous producer feeding a pinned discrete entry stays legal.
         @test build(Group((; src = NomSource(), rd = FrozenReader());
                           local_wires = ("src/val" => "rd/in",))) isa Build
@@ -1784,7 +1784,7 @@ struct ShapedState <: AbstractComponent end
 x_init(::ShapedState) = (pose = (x = 0.0, v = 0.0), u = UnitVec(SVector(3.0, 4.0)), ω = 0.0)
 x_deriv(::ShapedState, (; x)) = (pose = (x = 0.0, v = 0.0), u = x.u, ω = 0.0)
 
-# --- bare contracts (§8.2, §9.3, §9.5, D-436) ----------------------------------
+# --- bare contracts (§8.2, §9.3, §9.5, D-437) ----------------------------------
 # The return laws and the bookkeeping against a contract declared as one type:
 # the declared shape picks the law, so a `NamedTuple` against a bare port is one
 # wrong type with no field, and a bare port two stages return, or none, is named

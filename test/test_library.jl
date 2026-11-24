@@ -3779,7 +3779,7 @@ function test_library()
             @test parentmodule(typeof(comp)) === Redstone.Library
             @test isempty(foreign_declarations(comp))
             # A bare input is no root input, so the component builds under the
-            # rig (D-436).
+            # rig (D-437).
             @test build(u_types(comp) isa NamedTuple ? comp : fed(comp)) isa Build
         end
     end

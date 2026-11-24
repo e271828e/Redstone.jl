@@ -350,7 +350,7 @@ function test_show()
                              "  warnings: none")
     end
 
-    @testset "Deployment: each row under the four frames' symbols, the seconds exact (§9.2, D-464, D-471, D-478)" begin
+    @testset "Deployment: each row under the four frames' symbols, the seconds exact (§9.2, D-471, D-478)" begin
         # An anchor off the origin, with a member off its own: every pair of the
         # two tables differs from its neighbours, so no column stands for another.
         nested = build(Group((; g = Group((; a = TickCounter(), b = TickCounter());

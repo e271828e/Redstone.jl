@@ -2187,7 +2187,7 @@ _vector_tap_remedy(d::TapResolution) =
         "does not take, so that leaf has no tap"
 
 # `:unseedable`'s clause and citation. A pinning consumer on the continuous tier
-# pins by its declared entry, which the author can promote (D-167, D-168); one on
+# pins by its declared entry, which the author can promote (D-168, D-263); one on
 # the discrete tier pins by tier, with nothing to promote (§8.2, D-272).
 function _unseedable_clause(d::TapResolution)
     isempty(d.pinning) && !isempty(d.step) &&
@@ -2207,7 +2207,7 @@ function _unseedable_clause(d::TapResolution)
                        join(("consumer `$consumer` declares `$entry`" for
                              (consumer, entry) in by_entry), ", ") *
                        " — promote that entry to a tolerant one, or route the tap around it")
-        append!(citation, ["D-167", "D-168"])
+        append!(citation, ["D-168", "D-263"])
     end
     if !isempty(by_tier)
         push!(clauses, "root input `$(d.field)` is unseedable by tier: " *

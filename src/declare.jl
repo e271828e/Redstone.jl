@@ -441,7 +441,7 @@ struct Relative
                                               value = D isa Integer ? Φ : D)))
 end
 
-# Design: §6.3, §8.7, §9.1, §9.2, D-186, D-464, D-469, D-479.
+# Design: §6.3, §8.7, §9.1, §9.2, D-186, D-469, D-478, D-479.
 """
     Absolute(Δt::Union{Integer,Rational{<:Integer}},
              τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute

@@ -893,7 +893,7 @@ function _check_wires(draft::StructureDraft, diags::Vector{Diagnostic})
                                           producer_port = producer_port, observed = V_F))
             continue        # the walk clause reads a shape the bound clause has vouched for
         end
-        draft.tiers[ci] === CONTINUOUS || continue    # D-167's tier scope
+        draft.tiers[ci] === CONTINUOUS || continue    # D-263's tier scope
         P_M, V_M = ins_M[ci][face], outs_M[producer_ci][producer_port]
         _accepts_wire(P_M, V_M, Marker) && continue
         leaf, declared, observed = _walking_leaf(P_M, V_M)
@@ -1641,7 +1641,7 @@ end
 # root input the obligation chain ends at. Stage-2 probing runs in topological
 # order, so upstream products exist by construction.
 #
-# The entry is a *bound*, read permissively (D-167): an unpinned entry is tolerant
+# The entry is a *bound*, read permissively (D-263): an unpinned entry is tolerant
 # of both lawful arrivals, a `Pinned` entry demands a frozen one. The value
 # passed on is the producer's, unembedded — the consumer gathers the producer's
 # cell at runtime, so the cell's type is what its bundle carries.

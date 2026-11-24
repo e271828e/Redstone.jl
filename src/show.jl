@@ -373,7 +373,7 @@ function _admissible_line(structure::Structure, Δt_base::Rational{Int})
         (Q == 1 ? "" : " $(repr(admissible)) divided by $Q")
 end
 
-# The schedule under the four frames' symbols (§9.2, D-464, D-471, D-478), the
+# The schedule under the four frames' symbols (§9.2, D-471, D-478), the
 # deployment's own block: the base tick against the coarsest admissible one,
 # where the structure has anchors; the anchor table with each anchor's seconds
 # pair and its counts, `A₀` at `Δt_base` by its value; one row per discrete component

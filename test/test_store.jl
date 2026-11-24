@@ -15,7 +15,7 @@ y_types(::PinnedLeaf) = (a = Float64, frozen = Pinned{Float64})
 y_state(::PinnedLeaf, (; t)) = (a = t, frozen = 2.0)
 
 function store_pinned_leaf()
-    @testset "a pinned leaf lives in its own store (D-166, D-162)" begin
+    @testset "a pinned leaf lives in its own store (D-162, D-263)" begin
         # Nominally the pin and the activation scalar coincide: one buffer.
         sim = Simulation(single(PinnedLeaf()); Δt_frame = 1//100)
         @test keys(sim.model.exec.store.stores) === (_cell_key(Float64),)
