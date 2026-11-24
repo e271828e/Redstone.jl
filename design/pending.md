@@ -19,8 +19,9 @@ item changes what the spec says, the spec edit is part of the item.
   grid report under the new symbols, renames `r_p` to `Qₚ` in the
   diagnostics' docstrings, and rules on the descriptor's keys (`m`, `c` and
   `K` in the `Timing` and `RateLink` schemas, §13.9). The inspector follows
-  with a pin bump and its own adaptation, before its increment 10b. Not
-  started.
+  with a pin bump and its own adaptation, before its increment 10b. In
+  flight: the prototype, recorded in
+  `design/increments/20261124_timing_notation/notes_timing_notation.md`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose

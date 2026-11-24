@@ -1,0 +1,1634 @@
+diff --git a/design/code_map.md b/design/code_map.md
+index 4400006..94986f1 100644
+--- a/design/code_map.md
++++ b/design/code_map.md
+@@ -361,7 +361,7 @@ D-459, D-464.
+   `_timing_counts` and `_max_frame`, which the build's trial binding runs
+   too (D-465).
+ - The typed `Schedule`, over `ScheduleEntry` and `ScopeEntry` (D-261):
+-  - the anchor and rates columns beside `(D, Φ, Δt)`, in `ScheduleEntry`;
++  - the anchor and rates columns beside `(D₀, Φ₀, Δt)`, in `ScheduleEntry`;
+   - the rate-scope rows, in `ScopeEntry`;
+   - `_gates`, which derives the per-component triple the executor compiles
+     over from the rows at `compile`.
+@@ -381,7 +381,7 @@ D-459, D-464.
+   It is scalar-free. The `Deployment` constructor has one throw per call
+   (§9.2, D-229). It also holds the `Lattice`, the frame loop's index-to-time
+   map, derived from the exact periods once (§10.5, D-445).
+-- The `Lattice`: the exact unit `gcd(Δt_frame, Δt_base)` (`Δt_frame` alone
++- The `Lattice`: the exact unit `Δt_unit = gcd(Δt_frame, Δt_base)` (`Δt_frame` alone
+   when no discrete component exists), the frame and base tick as whole
+   units, the bound `h_max` as an exact ratio to the unit, `max_frame`, the
+   last frame index whose positions fit `Int`, and `reach`, the clock bound's
+@@ -424,7 +424,7 @@ D-459, D-464.
+   `Deployment` holds none (D-466). `:derive` has no `:range` refusal.
+ - The derivation path's info line shows the derived value over the same block,
+   with both attribution forms. The derivation path also raises the
+-  `GridUtilization` advisory at `min_i Dᵢ > 1`.
++  `GridUtilization` advisory at `min D₀(i) > 1`.
+ 
+ Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
+ D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454,
+@@ -455,7 +455,8 @@ D-459, D-460, D-461, D-463, D-465, D-466.
+   `pinned_by` off build.jl's `pinning_consumers` (D-468), and `_grid_section`,
+   structure.jl's `_grid_report` as data, each pool entry's anchor found by
+   its scope and key, positions from 1 (D-466, D-467). A primitive node's
+-  `rates`, its chain by `_rate_link`.
++  `rates`, its chain by `_rate_link`, and its `timing` and a scope's by
++  `_timing`, the fold's `Φ` under the key `phi` (D-478).
+ - The primitive faces `_primitive_faces`, read off the declarations as written with a
+   `Pinned` entry unwrapped and flagged, a bare contract's face `u` or `y`, and the kind marker `_kind_marker`,
+   §13.9's table in test order, its `struct` row the leaf walk's isbits cut
+@@ -625,7 +626,7 @@ D-463, D-465.
+   conditions.jl.
+ - The interior/boundary split `PhaseBody`. A body with no gated entry has two
+   tuples of one type and walks its interior at a boundary.
+-- The `(tick − Φ) % D` gate `Gated`, with boundary zero's `ESTABLISH` beside
++- The `(n − Φ₀) % D₀` gate `Gated`, with boundary zero's `ESTABLISH` beside
+   it.
+ - `_merge_modes!`, one generated method, which replaces a bare `m` whole and
+   merges a named one, a bare one's failure on the field `m` (§9.5, D-438).
+@@ -1120,13 +1121,13 @@ D-261.
+   A side with no root face prints no block. `_pin_marks` marks an input route
+   ending at a pinning consumer, `pinned by tier` or `pinned by declaration`, in
+   one column after the block's widest route (D-468).
+-- The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
++- The `Schedule`'s hyperperiod chart, over `H = lcm D₀(i)` base ticks, with its
+   binary guard at 100.
+ - The `Deployment`'s `schedule:` block, its own and not the `Schedule`'s
+   lines (D-471):
+-  - `_schedule_lines` prints the anchor table with each anchor's `Δtₖ`,
+-    `τₖ`, `Dₖ` and `Φₖ`, then one row per discrete component and per rate
+-    scope with `m`, `c`, `D`, `Φ`, `Δt` and `τ`. It reads `(m, c)` from the
++  - `_schedule_lines` prints the anchor table with each anchor's `Δt`,
++    `τ`, `D₀` and `Φ₀`, then one row per discrete component and per rate
++    scope with `Dₐ`, `Φₐ`, `D₀`, `Φ₀`, `Δt` and `τ`. It reads `(Dₐ, Φₐ)` from the
+     structure, whose discrete components and scopes stand in the schedule's
+     order, and derives the anchors' counts through structure.jl's
+     `_anchor_counts`, as `bind_schedule` and the descriptor's writer do;
+@@ -1340,7 +1341,7 @@ Spec: §10.2, §10.4, §12.6, §14.10, D-017, D-274, D-442, D-452, D-461.
+   run's (D-260, D-317):
+   - its `t` is in the model's scalar;
+   - its origin `t₀` is a `Rational{Int}`, exact, beside `origin`, `unit` and
+-    `scale`, the origin and the lattices' unit over one denominator in
++    `scale`, the origin and `Δt_unit` over one denominator in
+     `Int128`, which `_set_origin!` writes where the origin is set and
+     `_grid_integers` computes (D-457);
+   - `_instant`, the float nearest an exact instant from its position, one
+diff --git a/src/build.jl b/src/build.jl
+index 5e97108..fb851e4 100644
+--- a/src/build.jl
++++ b/src/build.jl
+@@ -1365,7 +1365,7 @@ function _check_handler(path, name, returned, decl::Decls, @nospecialize(comp))
+ end
+ 
+ # --- 7. entry compilation, per deployment ---------------------------------------
+-# What moves behind deployment binding: `Δt`, `D` and `Φ` are entry data (§9.7),
++# What moves behind deployment binding: `Δt`, `D₀` and `Φ₀` are entry data (§9.7),
+ # so the executor cannot exist until `Δt_base` does. Each call materializes its
+ # own stores and buffers — the `Build` stays immutable and backs many
+ # `Model`s (§9.2). No user stage runs here: every check already ran at the
+diff --git a/src/declare.jl b/src/declare.jl
+index 20e5fca..7e304cd 100644
+--- a/src/declare.jl
++++ b/src/declare.jl
+@@ -401,29 +401,30 @@ function _declared_quantity(to_exact, call::Symbol, value)
+     throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, value = value)))
+ end
+ 
+-# Design: §10.5, D-459.
++# Design: §10.5, D-459, D-478.
+ """
+-    Relative(K::Integer, φ::Integer = 0) -> Relative
++    Relative(D::Integer, Φ::Integer = 0) -> Relative
+ 
+ A sample time in [ticks](@ref g-tick) of the enclosing
+-[scope](@ref g-rate-scope), every `K`-th tick starting from the `φ`-th.
++[scope](@ref g-rate-scope), every `D`-th tick starting from the `Φ`-th.
+ 
+-A [`sample_times`](@ref) [entry](@ref g-entry) `Relative(K, φ)` runs its child
+-at every `K`-th tick of the enclosing rate scope, starting from its `φ`-th. `φ`
+-defaults to `0`. Relative entries count scope ticks, so they compose affinely
+-down the tree. Under a scope that ticks every `D_s` [base ticks](@ref g-tick)
+-at [phase](@ref g-phase) `Φ_s`, the child ticks every `K·D_s` base ticks at
+-phase `Φ_s + φ·D_s`.
++A [`sample_times`](@ref) [entry](@ref g-entry) `Relative(D, Φ)` runs its child
++at every `D`-th tick of the enclosing rate scope, starting from its `Φ`-th. `Φ`
++defaults to `0`. They are the child's [divisor](@ref g-divisor) `Dₛ` and
++[phase](@ref g-phase) `Φₛ`. Relative entries count scope ticks, so they compose
++affinely down the tree. Under a scope `s` that ticks every `D₀(s)`
++[base ticks](@ref g-tick) at phase `Φ₀(s)`, the child ticks every `D·D₀(s)`
++base ticks at phase `Φ₀(s) + Φ·D₀(s)`.
+ 
+-`K = 1` admits no stagger. Stagger two same-rate siblings one level down
++`D = 1` admits no stagger. Stagger two same-rate siblings one level down
+ instead. Declare their scope at twice their rate, and give them `Relative(2, 0)`
+ and `Relative(2, 1)`.
+ 
+-`K` and `φ` are integers of any type. A count that `Int` cannot hold is refused
++`D` and `Φ` are integers of any type. A count that `Int` cannot hold is refused
+ as `ArgumentInvalid`, and so is a float or a rational. A child that ticks faster
+ than its scope, or at a period in seconds, takes [`Absolute`](@ref). The
+-constructor checks no range. The build refuses `K < 1`, or a `φ` outside
+-`0 ≤ φ < K`, as `RatesViolation`.
++constructor checks no range. The build refuses `D < 1`, or a `Φ` outside
++`0 ≤ Φ < D`, as `RatesViolation`.
+ 
+ The build also refuses the entry as `RatesViolation` when the multipliers
+ composed down the tree leave no [`Δt_base`](@ref g-dt_base) to deploy at. Their
+@@ -431,22 +432,22 @@ count of base ticks then leaves `Int`, or leaves no room in it for one
+ [frame](@ref g-frame).
+ """
+ struct Relative
+-    K::Int
+-    φ::Int
+-    Relative(K::Integer, φ::Integer = 0) =
+-        new(_declared_quantity(Int, :Relative, K), _declared_quantity(Int, :Relative, φ))
+-    Relative(K::Real, φ::Real = 0) =
++    D::Int
++    Φ::Int
++    Relative(D::Integer, Φ::Integer = 0) =
++        new(_declared_quantity(Int, :Relative, D), _declared_quantity(Int, :Relative, Φ))
++    Relative(D::Real, Φ::Real = 0) =
+         throw(DiagnosticError(ArgumentInvalid(call = :Relative, reason = :not_a_count,
+-                                              value = K isa Integer ? φ : K)))
++                                              value = D isa Integer ? Φ : D)))
+ end
+ 
+-# Design: §9.1, §9.2, §10.5, D-186, D-464, D-469.
++# Design: §9.1, §9.2, §10.5, D-186, D-464, D-469, D-479.
+ """
+     Absolute(Δt::Union{Integer,Rational{<:Integer}},
+              τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
+ 
+-A sample time in exact rational seconds, with [ticks](@ref g-tick) at
+-`t = t₀ + τ + k·Δt`.
++A sample time in exact rational seconds, with [ticks](@ref g-tick) at `t₀ + τ`,
++then every `Δt`.
+ 
+ `Δt` is the period and `τ` the offset, each in seconds. Each is an integer or a
+ `Rational` of any integer type. `Absolute(1//50)` is a 50 Hz entry, and
+diff --git a/src/deployment.jl b/src/deployment.jl
+index aaa4c81..8a826f6 100644
+--- a/src/deployment.jl
++++ b/src/deployment.jl
+@@ -29,7 +29,7 @@ _exact(name::Symbol, value, diags::Vector{Diagnostic}) =
+ # --- the typed schedule (§9.2, §10.5, D-254) ------------------------------------
+ 
+ """
+-One discrete component's row of the schedule (§9.2): its `(D, Φ, Δt)` with the
++One discrete component's row of the schedule (§9.2): its `(D₀, Φ₀, Δt)` with the
+ anchor it resolved against (0 is the base grid `A₀`) and its `rates`, the
+ `sample_times` links met on the way down.
+ """
+@@ -54,7 +54,7 @@ Base.hash(entry::ScheduleEntry, seed::UInt) =
+ 
+ """
+ One rate scope's row (§9.2, §10.5): the assembly an explicit `sample_times` key
+-opened, resolved to its own `(Dₛ, Φₛ)` by the same multiply-add its members use.
++opened, resolved to its own `(D₀, Φ₀)` by the same multiply-add its members use.
+ """
+ struct ScopeEntry
+     path::String
+@@ -64,7 +64,7 @@ struct ScopeEntry
+     Φ::Int
+ end
+ 
+-# Design: §9.2, §10.5, D-254, D-261. The per-component `(D, Φ, Δt)` the
++# Design: §9.2, §10.5, D-254, D-261, D-478. The per-component `(D₀, Φ₀, Δt)` the
+ # executor compiles over are derived from the rows at `compile`, never stored
+ # beside them (D-261). The component rows sit in walk order.
+ """
+@@ -75,8 +75,9 @@ The deployment's [tick](@ref g-tick) table, one row per discrete
+ [rate scope](@ref g-rate-scope).
+ 
+ A component row holds the component's path, the [anchor](@ref g-anchor) it
+-resolved against, its tick divisor `D` and [phase](@ref g-phase) `Φ` in
+-[base ticks](@ref g-tick), and its period `Δt` in seconds.
++resolved against, its tick [divisor](@ref g-divisor) `D₀` and [phase](@ref g-phase)
++`Φ₀` in [base ticks](@ref g-tick) under the fields `D` and `Φ`, and its period `Δt`
++in seconds.
+ [`Deployment`](@ref) builds the schedule and carries it. A run reads every `Δt`
+ it uses from it.
+ """
+@@ -88,7 +89,7 @@ end
+ Base.:(==)(a::Schedule, b::Schedule) = a.rows == b.rows && a.scopes == b.scopes
+ Base.hash(schedule::Schedule, seed::UInt) = hash(schedule.scopes, hash(schedule.rows, seed))
+ 
+-# The per-component `(D, Φ, Δt)` the executor compiles over, derived from the
++# The per-component `(D₀, Φ₀, Δt)` the executor compiles over, derived from the
+ # rows by path at `compile` (§9.2, D-261); a component with no row is the
+ # continuous tier's `(1, 0, 0.0)`.
+ function _gates(schedule::Schedule, structure::Structure)
+@@ -105,14 +106,14 @@ end
+ 
+ # --- the lattices (§2.1, §10.5, D-445, D-449) -----------------------------------
+ 
+-# Design: §10.5, D-445, D-449. The frame tops and the base ticks stand in no
+-# required ratio, so the loop reads them as integer multiples of one exact unit,
+-# `gcd(Δt_frame, Δt_base)`: the nearest mandatory instant and every coincidence
+-# are integer comparisons, never float ones. A tree with no discrete component
+-# has no due instant, so `Δt_base` then constrains nothing and the unit is the
+-# frame. The bound `h_max` is no lattice: it stays a ratio to the unit, and a
+-# span's step count is one `cld`. The instants themselves are written by
+-# model.jl's grid, each from its own index and stride.
++# Design: §10.5, D-445, D-449, D-479. The frame tops and the base ticks stand in
++# no required ratio, so the loop reads them as integer multiples of one exact
++# unit, `Δt_unit = gcd(Δt_frame, Δt_base)`: the nearest mandatory instant and
++# every coincidence are integer comparisons, never float ones. A tree with no
++# discrete component has no due instant, so `Δt_base` then constrains nothing
++# and the unit is the frame. The bound `h_max` is no lattice: it stays a ratio
++# to the unit, and a span's step count is one `cld`. The instants themselves are
++# written by model.jl's grid, each from its own index and stride.
+ """
+ The index-to-time map of a deployment's lattices (§2.1, §10.5, D-445, D-449):
+ the exact `unit`, the frame period and the base tick as whole units (`base`
+@@ -274,7 +275,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
+     # (`_anchor_counts`, structure.jl's, the trial binding's too).
+     Δt_r === nothing && return nothing
+     anchors_on_entry = length(diags)
+-    Dk, Φk = [1], [0]
++    D_anchors, Φ_anchors = [1], [0]
+     for anchor in anchors
+         D, Φ = _anchor_counts(anchor, Δt_r)
+         D === nothing &&
+@@ -285,15 +286,15 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
+             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :anchor_offset,
+                                           value = anchor.τ, related = Δt_r,
+                                           scope = anchor.scope, key = anchor.key, grid = grid))
+-        push!(Dk, something(D, 1)); push!(Φk, something(Φ, 0))
++        push!(D_anchors, something(D, 1)); push!(Φ_anchors, something(Φ, 0))
+     end
+     length(diags) == anchors_on_entry || return nothing
+ 
+-    # Per component, one multiply-add; the canonical residue 0 ≤ Φ < D survives
++    # Per component, one multiply-add; the canonical residue 0 ≤ Φ₀ < D₀ survives
+     # composition (§10.5), which is what the gate's truncated rem relies on. The
+     # rate scopes resolve by the same law, off the timing the fold left them.
+     # The law runs in checked `Int`, and a schedule it cannot hold is `nothing`:
+-    # `Φ < D`, so a divisor past `Int` counts a period in base ticks, and so in
++    # `Φ₀ < D₀`, so a divisor past `Int` counts a period in base ticks, and so in
+     # units, past it, the lattices' refusal below. `_timing_counts` is the
+     # trial binding's law too (structure.jl).
+     Δtb = Float64(Δt_r)
+@@ -301,12 +302,12 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
+         rows = ScheduleEntry[]
+         for entry in structure.components
+             entry.tier === DISCRETE || continue
+-            D, Φ = _timing_counts(entry.timing, Dk, Φk)
++            D, Φ = _timing_counts(entry.timing, D_anchors, Φ_anchors)
+             # the rates vector itself: the structure is immutable, so no copy
+             push!(rows, ScheduleEntry(entry.path, entry.timing.anchor, D, Φ, D * Δtb, entry.rates))
+         end
+         scopes = [ScopeEntry(scope.path, scope.key, scope.timing.anchor,
+-                             _timing_counts(scope.timing, Dk, Φk)...)
++                             _timing_counts(scope.timing, D_anchors, Φ_anchors)...)
+                   for scope in structure.scopes]
+         Schedule(rows, scopes)
+     end
+diff --git a/src/descriptor.jl b/src/descriptor.jl
+index bc11947..a6f6b2c 100644
+--- a/src/descriptor.jl
++++ b/src/descriptor.jl
+@@ -76,7 +76,7 @@ function _deployment_body(deployment::Deployment)
+            warnings = [_diagnostic(d) for d in deployment.warnings]))
+ end
+ 
+-# The `Schedule`'s rows and scopes, beside each anchor's `(Dₖ, Φₖ)` in the order
++# The `Schedule`'s rows and scopes, beside each anchor's `(D₀(a), Φ₀(a))` in the order
+ # of the structure's anchors, which the writer computes as `bind_schedule` does,
+ # the `Schedule` holding none (D-261). A bound schedule fits every count.
+ function _schedule_section(deployment::Deployment)
+@@ -163,7 +163,7 @@ function _structure_section(structure::Structure)
+      anchors = [(dt = _rational(anchor.Δt), tau = _rational(anchor.τ),
+                  scope = anchor.scope, key = String(anchor.key))
+                 for anchor in structure.anchors],
+-     scopes = [(path = scope.path, key = String(scope.key), timing = scope.timing)
++     scopes = [(path = scope.path, key = String(scope.key), timing = _timing(scope.timing))
+                for scope in structure.scopes],
+      grid = _grid_section(structure.anchors),
+      types = _type_rows(node_instances))
+@@ -171,6 +171,10 @@ end
+ 
+ _rational(x::Rational{Int}) = (num = numerator(x), den = denominator(x))
+ 
++# A fold's timing under the format's ASCII keys, `Φ` written `phi` as the
++# schedule's rows write it (D-478).
++_timing(timing::Timing) = (anchor = timing.anchor, D = timing.D, phi = timing.Φ)
++
+ # The root inputs as primitive faces, typed by the wire pass, each `pinned` by
+ # D-168's meet and `pinned_by` its pinning consumers as endpoints (D-468). The
+ # fixed type carries no marker, so the face's own flag would read false.
+@@ -248,7 +252,7 @@ end
+ function _primitive_node(identity::NamedTuple, entry::ComponentEntry)
+     instance = entry.instance
+     merge(identity,
+-          (class = "primitive", tier = tier_word(entry.tier), timing = entry.timing,
++          (class = "primitive", tier = tier_word(entry.tier), timing = _timing(entry.timing),
+            rates = [_rate_link(link) for link in entry.rates]),
+           _type_identity(typeof(instance)),
+           (inputs = _primitive_faces(u_types, instance), outputs = _primitive_faces(y_types, instance),
+@@ -261,7 +265,7 @@ end
+ # container's bare field key leaves unchanged.
+ _rate_link(link::RateLink) =
+     link.entry isa Relative ?
+-        (scope = link.scope, key = String(link.key), K = link.entry.K, phi = link.entry.φ) :
++        (scope = link.scope, key = String(link.key), D = link.entry.D, phi = link.entry.Φ) :
+         (scope = link.scope, key = String(link.key), dt = _rational(link.entry.Δt),
+          tau = _rational(link.entry.τ))
+ 
+diff --git a/src/descriptor.json b/src/descriptor.json
+index ab7a65f..a336eb7 100644
+--- a/src/descriptor.json
++++ b/src/descriptor.json
+@@ -376,28 +376,28 @@
+       "additionalProperties": false
+     },
+     "Timing": {
+-      "description": "The anchor a primitive or a scope hangs from (0 the base grid), its period multiple and its phase in that anchor's ticks.",
++      "description": "The anchor a primitive or a scope hangs from (0 the base grid), and its divisor `D` and its phase `phi` in that anchor's ticks.",
+       "type": "object",
+       "properties": {
+         "anchor": { "type": "integer", "minimum": 0 },
+-        "m": { "type": "integer", "minimum": 1 },
+-        "c": { "type": "integer", "minimum": 0 }
++        "D": { "type": "integer", "minimum": 1 },
++        "phi": { "type": "integer", "minimum": 0 }
+       },
+-      "required": ["anchor", "m", "c"],
++      "required": ["anchor", "D", "phi"],
+       "additionalProperties": false
+     },
+     "RateLink": {
+-      "description": "One `sample_times` link of a primitive's chain, outermost first, as the component row holds it: `scope`, the declaring assembly's path, \"\" for the root; `key`, the key as written, a container's bare field name included; and the entry, a Relative's `K` and `phi` or an Absolute's `dt` and `tau`. The timing alone does not determine the chain: an explicit Relative(1) changes no timing.",
++      "description": "One `sample_times` link of a primitive's chain, outermost first, as the component row holds it: `scope`, the declaring assembly's path, \"\" for the root; `key`, the key as written, a container's bare field name included; and the entry, a Relative's `D` and `phi` or an Absolute's `dt` and `tau`. The timing alone does not determine the chain: an explicit Relative(1) changes no timing.",
+       "oneOf": [
+         {
+           "type": "object",
+           "properties": {
+             "scope": { "type": "string" },
+             "key": { "type": "string" },
+-            "K": { "type": "integer", "minimum": 1 },
++            "D": { "type": "integer", "minimum": 1 },
+             "phi": { "type": "integer", "minimum": 0 }
+           },
+-          "required": ["scope", "key", "K", "phi"],
++          "required": ["scope", "key", "D", "phi"],
+           "additionalProperties": false
+         },
+         {
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index 28d9dad..fe1f9ba 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -787,9 +787,9 @@ function message(d::RatesViolation)
+     d.reason === :range && d.value isa Absolute &&
+         return "$(_rates_entry(d)): no base tick the model's anchors admit counts " *
+                "Absolute($(d.value.Δt), $(d.value.τ)) in an `Int` (§9.2)"
+-    d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.K), $(d.value.φ)) composes a divisor past `Int` (§10.5)"
+-    d.reason === :multiplier && return "$(_rates_entry(d)): K = $(d.value), and K ≥ 1 (§10.5)"
+-    d.reason === :phase && return "$(_rates_entry(d)): φ = $(d.value), and 0 ≤ φ < K (§10.5)"
++    d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.D), $(d.value.Φ)) composes a divisor past `Int` (§10.5)"
++    d.reason === :multiplier && return "$(_rates_entry(d)): Dₛ = $(d.value), and Dₛ ≥ 1 (§10.5)"
++    d.reason === :phase && return "$(_rates_entry(d)): Φₛ = $(d.value), and 0 ≤ Φₛ < Dₛ (§10.5)"
+     d.reason === :period && return "$(_rates_entry(d)): period $(d.value), and Δt > 0 (§10.5)"
+     d.reason === :offset && return "$(_rates_entry(d)): offset $(d.value), and 0 ≤ τ < Δt (§10.5)"
+     d.reason === :continuous_child &&
+@@ -1334,7 +1334,7 @@ message(d::StopRequestInvalid) =
+ """
+ One constraint-pool entry (§9.1, §9.2): an anchor's period or its nonzero offset,
+ with the scope path and key of the `sample_times` entry that declared the
+-anchor, its leave-one-out refinement factor `r_p = gcd(pool ∖ p) / gcd(pool)`
++anchor, its leave-one-out refinement factor `Qₚ = gcd(pool ∖ p) / gcd(pool)`
+ and, for an offset that drives, the nearest offsets on the grid the rest of
+ the pool supports.
+ """
+@@ -1343,7 +1343,7 @@ struct GridEntry
+     value::Rational{Int}
+     scope::String                         # the anchor's declaring scope path
+     key::Symbol                           # the anchor's declaring key
+-    factor::Int                           # r_p ≥ 1
++    factor::Int                           # Qₚ ≥ 1
+     alternatives::Vector{Rational{Int}}   # a driving offset's nearest non-refining neighbours that fit `Int`; else empty
+ end
+ 
+@@ -1422,7 +1422,7 @@ function _grid_block(grid::Union{Nothing,GridReport})
+     factors = ["×$(e.factor)" for e in grid.pool]
+     label_width, kind_value_width, factor_width =
+         maximum(textwidth, labels), maximum(textwidth, kind_values), maximum(textwidth, factors)
+-    rows = ["  admissible: gcd(pool)/k, coarsest $(grid.admissible)", "  pool:"]
++    rows = ["  admissible: gcd(pool)/Q, coarsest $(grid.admissible)", "  pool:"]
+     for (i, entry) in enumerate(grid.pool)
+         row = "    " * rpad(labels[i], label_width) * "  " * rpad(kind_values[i], kind_value_width) *
+               "  " * rpad(factors[i], factor_width)
+@@ -1459,7 +1459,7 @@ function message(d::DeploymentInvalid)
+         return "the step bound h_max = $(d.value) is too fine to count the steps of one " *
+                "frame of Δt_frame = $(d.related) in an `Int` — coarsen `h_max` (§9.2, §10.5)"
+     d.reason === :range && d.related !== nothing &&
+-        return "the lattices' exact unit, gcd(Δt_frame, Δt_base) for Δt_base = $(d.value) " *
++        return "Δt_unit = gcd(Δt_frame, Δt_base) for Δt_base = $(d.value) " *
+                "and Δt_frame = $(d.related), is too fine to index one frame, or to count " *
+                "a component's period, in an `Int` — " *
+                "coarsen `Δt_base` or `Δt_frame` (§9.2, §10.5)"
+@@ -1479,7 +1479,7 @@ function message(d::DeploymentInvalid)
+                "domain rate is not a framework default (§9.2)"
+     d.reason === :unanchored &&
+         return "Δt_base cannot be derived: `$(join(d.paths, "`, `"))` is/are unanchored, " *
+-               "with period `m·Δt_base` — an anchor edit anywhere in the tree would " *
++               "with period `Dₐ·Δt_base` — an anchor edit anywhere in the tree would " *
+                "silently rescale it. Declare the base tick period instead: `Δt_base = …` " *
+                "(§9.1)" * _grid_block(d.grid)
+     d.reason === :no_constraint &&
+@@ -1498,14 +1498,14 @@ end
+ "§9.1, §9.2: the derived grid is finer than the fastest declared work."
+ Base.@kwdef struct GridUtilization <: Diagnostic
+     Δt_base::Rational{Int}
+-    utilization::Int                     # min_i Dᵢ over the discrete rows
++    utilization::Int                     # min D₀(i) over the discrete rows
+     fastest::String                      # the path attaining it
+     grid::GridReport                     # the attribution the block renders
+ end
+ severity(::GridUtilization) = :warning  # COV_EXCL_LINE
+ message(d::GridUtilization) =
+     "Δt_base derived as $(d.Δt_base) s: the grid is $(d.utilization)× finer than the " *
+-    "fastest declared work (`$(d.fastest)` at D = $(d.utilization)) (§9.2)" * _grid_block(d.grid)
++    "fastest declared work (`$(d.fastest)` at D₀ = $(d.utilization)) (§9.2)" * _grid_block(d.grid)
+ 
+ "§11.3: a claim naming no root input face."
+ Base.@kwdef struct AttachUnknownFace <: Diagnostic
+@@ -2372,7 +2372,7 @@ function message(d::ArgumentInvalid)
+     # `Relative`'s two refusals: a fraction, which teaches `Absolute`, and a
+     # count past `Int` (D-459).
+     d.reason === :not_a_count &&
+-        return "`Relative` counts ticks of the enclosing scope, so `K` and `φ` are integers — " *
++        return "`Relative` counts ticks of the enclosing scope, so `Dₛ` and `Φₛ` are integers — " *
+                "got $(repr(d.value)). A child that ticks faster than its scope, or at a " *
+                "period in seconds, takes `Absolute`, as in `Absolute(1//100)` (§10.5)"
+     d.reason === :range && d.call === :Relative &&
+@@ -2461,7 +2461,7 @@ function message(d::ArgumentInvalid)
+     d.call === :frame! && d.argument === :k &&
+         return "frame $(d.value) is past frame $(d.related), the last a run of this " *
+                "deployment from this origin may take: past it the frame's positions, counted " *
+-               "in the lattices' exact unit, would leave `Int`, or two of its boundaries " *
++               "in Δt_unit, would leave `Int`, or two of its boundaries " *
+                "could take clocks out of order (§10.5)"
+     # The materialization's `join_timeout` (D-256) and the doors' four recording
+     # keywords (D-261): each carries the constraint text and section its
+diff --git a/src/executor.jl b/src/executor.jl
+index d70fc55..d4dc94f 100644
+--- a/src/executor.jl
++++ b/src/executor.jl
+@@ -478,7 +478,7 @@ _project_body(entry::ProjectEntry, xbuf) = () -> run_project!(entry, xbuf)
+ 
+ # --- the gate (§10.5, D-185, D-205) ---------------------------------------------
+ # The boundary sweep walks the full list with *discrete* entries gated by
+-# `(tick − Φ) % D == 0`. The gate is a wrapper only discrete entries wear, so a
++# `(n − Φ₀) % D₀ == 0`. The gate is a wrapper only discrete entries wear, so a
+ # continuous entry pays nothing at a boundary, and the interior walk — compiled
+ # from continuous entries alone — never meets an index at all: an empty due set
+ # is arity selection, never a sentinel index failing every gate (D-185).
+@@ -498,8 +498,8 @@ published cell holds the probe's synthesized values.
+ It is a *marker*, not an index, precisely so the measured path keeps its
+ shape: `run_at!` against an `Int` is the method the frame loop compiles and
+ nothing was added to it. The `s_update` updates are not walked this way —
+-they take the ordinary index 0 and stay gated by `Φ`, an offset component's
+-first consumed sample remaining its `Φ·Δt_base` tick's.
++they take the ordinary index 0 and stay gated by `Φ₀`, an offset component's
++first consumed sample remaining its `Φ₀·Δt_base` tick's.
+ """
+ struct Establish end
+ const ESTABLISH = Establish()
+@@ -511,9 +511,9 @@ const ESTABLISH = Establish()
+ @inline run_at!(entry, store, xbuf, ẋbuf, tick) = run_entry!(entry, store, xbuf, ẋbuf)
+ 
+ @inline function run_at!(entry::Gated, store, xbuf, ẋbuf, tick::Int)
+-    # Under the canonical residue 0 ≤ Φ < D, truncated rem is never 0 on the
++    # Under the canonical residue 0 ≤ Φ₀ < D₀, truncated rem is never 0 on the
+     # negative pre-first-tick differences, so one subtraction and one remainder
+-    # are the whole admission test — and "everything with Φ = 0" is this same
++    # are the whole admission test — and "everything with Φ₀ = 0" is this same
+     # gate at index 0, implemented by nothing (§10.5).
+     (tick - entry.Φ) % entry.D == 0 && run_entry!(entry.entry, store, xbuf, ẋbuf)
+     nothing
+@@ -554,7 +554,7 @@ construction**: discrete entries are not gated out at runtime, they are absent
+ from the compiled walk, and the hot path carries no gating test at all.
+ 
+ The one-arg call is the *boundary* variant, walking the full list with each
+-discrete entry gated by `(tick - Φ) % D` against the index it takes (§10.5,
++discrete entry gated by `(n − Φ₀) % D₀` against the index it takes (§10.5,
+ D-185) — or admitted outright, when the argument is `ESTABLISH` rather than an
+ index (§14.5, D-205). Both take the one compiled tuple; only `run_at!`'s
+ dispatch differs, so boundary zero's wide walk costs the measured path
+@@ -583,7 +583,7 @@ end
+ # Construction is type-opaque: entries are built into untyped buffers and
+ # splatted once per chunk; the compiled tuple's only consumer is the walk.
+ # `gates` runs parallel to `entries`: `nothing` for a continuous entry, the
+-# compiled `(D, Φ)` pair for a discrete one — which is also what selects the
++# compiled `(D₀, Φ₀)` pair for a discrete one — which is also what selects the
+ # interior subset, discreteness being a build-time fact (§10.5, D-147).
+ function chunked_body(entries::Vector, gates::Vector, store, xbuf, ẋbuf;
+                       chunk_size::Int = 16)
+diff --git a/src/model.jl b/src/model.jl
+index 0cf535a..f931287 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -687,9 +687,9 @@ published cell holds the probe's synthesized values (§14.6's barrier extended
+ from the root inputs to the whole table).
+ 
+ The `s_update` calls keep the ordinary gate at index 0, which under the
+-canonical residue admits exactly `Φ = 0` (§10.5): that evaluation is
++canonical residue admits exactly `Φ₀ = 0` (§10.5): that evaluation is
+ establishment, not a scheduled sample, and an offset component's first
+-*consumed* sample stays its `Φ·Δt_base` tick's. A component frozen at a
++*consumed* sample stays its `Φ₀·Δt_base` tick's. A component frozen at a
+ non-nominal activation has no entries here at all (§9.4's executable set), so
+ its pinned cells keep the carried nominal products — at boundary zero as
+ everywhere.
+diff --git a/src/show.jl b/src/show.jl
+index 96c48fe..728838f 100644
+--- a/src/show.jl
++++ b/src/show.jl
+@@ -27,7 +27,7 @@ _path_label(path::String) = isempty(path) ? "root" : path
+ 
+ # A rate entry as its fields spell it. Not the default `show`, whose
+ # qualification of the type name depends on the printing module.
+-_entry_label(entry::Relative) = "Relative($(entry.K), $(entry.φ))"
++_entry_label(entry::Relative) = "Relative($(entry.D), $(entry.Φ))"
+ _entry_label(entry::Absolute) = "Absolute($(entry.Δt), $(entry.τ))"
+ 
+ # A `RateLink` chain, `key = entry` joined by ` → `; empty is a dash.
+@@ -104,21 +104,21 @@ function _lines(structure::Structure)
+     lines = ["Structure: " * _structure_counts(structure) * "; root inputs: " *
+              (isempty(structure.root_inputs) ? "none" : join(structure.root_inputs, ", ")),
+              "  components:"]
+-    append!(lines, _table("    ", ["path", "tier", "anchor", "m", "c", "rates"],
++    append!(lines, _table("    ", ["path", "tier", "anchor", "Dₐ", "Φₐ", "rates"],
+                           [[_path_label(entry.path), tier_word(entry.tier),
+-                            _anchor_name(entry.timing.anchor), string(entry.timing.m),
+-                            string(entry.timing.c), _rates_label(entry.rates)]
++                            _anchor_name(entry.timing.anchor), string(entry.timing.D),
++                            string(entry.timing.Φ), _rates_label(entry.rates)]
+                            for entry in structure.components]))
+     if !isempty(structure.scopes)
+         push!(lines, "  rate scopes:")
+-        append!(lines, _table("    ", ["path", "key", "anchor", "m", "c"],
++        append!(lines, _table("    ", ["path", "key", "anchor", "Dₐ", "Φₐ"],
+                               [[_path_label(scope.path), string(scope.key),
+-                                _anchor_name(scope.timing.anchor), string(scope.timing.m),
+-                                string(scope.timing.c)]
++                                _anchor_name(scope.timing.anchor), string(scope.timing.D),
++                                string(scope.timing.Φ)]
+                                for scope in structure.scopes]))
+     end
+     push!(lines, "  anchors:")
+-    append!(lines, _table("    ", ["anchor", "Δtₖ", "τₖ", "scope", "key"],
++    append!(lines, _table("    ", ["anchor", "Δt", "τ", "scope", "key"],
+                           vcat([[_anchor_name(0), "Δt_base", string(zero(Rational{Int})), "—", "—"]],
+                                [[_anchor_name(k), string(anchor.Δt), string(anchor.τ),
+                                  _path_label(anchor.scope), string(anchor.key)]
+@@ -171,9 +171,9 @@ end
+ 
+ # --- Schedule ---------------------------------------------------------------------
+ 
+-# The hyperperiod: the pattern repeats with `lcm(Dᵢ)` base ticks, so one is the
+-# complete truth (§9.2). A `BigInt`, since coprime periods can take it past
+-# `Int` and it is printed, never indexed past the chart's guard.
++# The hyperperiod: the pattern repeats every `H = lcm D₀(i)` base ticks, so one
++# is the complete truth (§9.2). A `BigInt`, since coprime periods can take it
++# past `Int` and it is printed, never indexed past the chart's guard.
+ _hyperperiod(schedule::Schedule) = lcm(big.([row.D for row in schedule.rows]))
+ 
+ function Base.show(io::IO, schedule::Schedule)
+@@ -199,21 +199,21 @@ function _chart_ruler(columns::Int)
+ end
+ 
+ # The rows, the rate-scope rows when any exist, and the hyperperiod chart: one
+-# row per schedule row, one character per base tick `k = 0 … hyperperiod−1`, `●`
+-# where `(k − Φ) % D == 0`, under a ruler carrying the tick index at every
++# row per schedule row, one character per base tick `n = 0 … H − 1`, `●`
++# where `(n − Φ₀) % D₀ == 0`, under a ruler carrying the tick index at every
+ # column divisible by 10. The guard is binary (D-257): at `hyperperiod > 100`
+ # the chart's place holds one line naming the length instead.
+ function _lines(schedule::Schedule)
+     rows = schedule.rows
+     lines = ["Schedule: " * _schedule_counts(schedule)]
+     isempty(rows) ||
+-        append!(lines, _table("  ", ["path", "anchor", "D", "Φ", "Δt", "rates"],
++        append!(lines, _table("  ", ["path", "anchor", "D₀", "Φ₀", "Δt", "rates"],
+                               [[_path_label(row.path), _anchor_name(row.anchor), string(row.D),
+                                 string(row.Φ), repr(row.Δt), _rates_label(row.rates)]
+                                for row in rows]))
+     if !isempty(schedule.scopes)
+         push!(lines, "  rate scopes:")
+-        append!(lines, _table("    ", ["path", "key", "anchor", "D", "Φ"],
++        append!(lines, _table("    ", ["path", "key", "anchor", "D₀", "Φ₀"],
+                               [[_path_label(scope.path), string(scope.key), _anchor_name(scope.anchor),
+                                 string(scope.D), string(scope.Φ)]
+                                for scope in schedule.scopes]))
+@@ -228,7 +228,7 @@ function _lines(schedule::Schedule)
+     push!(lines, " "^(4 + width + 2) * _chart_ruler(hyperperiod))
+     for row in rows
+         push!(lines, "    " * rpad(_path_label(row.path), width) * "  " *
+-                     join(((k - row.Φ) % row.D == 0 ? '●' : '·') for k in 0:hyperperiod-1))
++                     join(((n - row.Φ) % row.D == 0 ? '●' : '·') for n in 0:hyperperiod-1))
+     end
+     lines
+ end
+@@ -304,11 +304,11 @@ Base.show(io::IO, deployment::Deployment) =
+ # fixed count, which a proposal at or above the bound takes, and at most
+ # `⌊Δt_frame / h_min⌋`, since no step of an unsplit frame is shorter than the
+ # floor; a localized event's `t*` adds a step beyond it (D-460). A row's ticks lie at
+-# `(Φ + j·D)·base` units, all of them frame tops exactly when the frame divides
+-# both `Φ·base` and `D·base`; every other row splits frames, and the line names
++# `(Φ₀ + j·D₀)·base` units, all of them frame tops exactly when the frame divides
++# both `Φ₀·base` and `D₀·base`; every other row splits frames, and the line names
+ # it, the count then labelled as the unsplit frame's. No frame is walked, so
+ # the line costs one check per row. The products fit
+-# `Int`, since `_lattice` fits `D·base` past a frame top and `Φ < D`.
++# `Int`, since `_lattice` fits `D₀·base` past a frame top and `Φ₀ < D₀`.
+ function _steps_line(deployment::Deployment)
+     lattice = deployment.lattice
+     steps = cld(lattice.frame * denominator(lattice.bound), numerator(lattice.bound))
+@@ -360,25 +360,25 @@ function _chart_lines(deployment::Deployment)
+ end
+ 
+ # The deployment's base tick against the coarsest admissible one (§9.2,
+-# D-471): `gcd(pool)` over the whole number `k` the base tick divides it by,
+-# the clause dropped at `k = 1`. A structure with no anchors admits every base
+-# tick and gets no line. A bound deployment's base tick divides every pool
+-# entry, so `k` is whole, and the division runs in `Int128` as the anchors'
++# D-471, D-479): `gcd(pool)` over the whole number `Q` the base tick divides it
++# by, the clause dropped at `Q = 1`. A structure with no anchors admits every
++# base tick and gets no line. A bound deployment's base tick divides every pool
++# entry, so `Q` is whole, and the division runs in `Int128` as the anchors'
+ # counts do.
+ function _admissible_line(structure::Structure, Δt_base::Rational{Int})
+     admissible = _grid_report(structure.anchors).admissible
+     admissible === nothing && return nothing
+-    k = something(_as_int(Rational{Int128}(admissible) / Δt_base))
++    Q = something(_as_int(Rational{Int128}(admissible) / Δt_base))
+     "Δt_base: $(repr(Δt_base)), the coarsest admissible" *
+-        (k == 1 ? "" : " $(repr(admissible)) divided by $k")
++        (Q == 1 ? "" : " $(repr(admissible)) divided by $Q")
+ end
+ 
+-# The schedule under the four frames' symbols (§9.2, D-464, D-471), the
++# The schedule under the four frames' symbols (§9.2, D-464, D-471, D-478), the
+ # deployment's own block: the base tick against the coarsest admissible one,
+ # where the structure has anchors; the anchor table with each anchor's seconds
+ # pair and its counts, `A₀` at `Δt_base` by its value; one row per discrete component
+-# with `(m, c)`, `(D, Φ)` and `(Δt, τ)`, the seconds exact; the rate-scope rows
+-# under the same columns; and the chart. `(m, c)` are the structure's, whose
++# with `(Dₐ, Φₐ)`, `(D₀, Φ₀)` and `(Δt, τ)`, the seconds exact; the rate-scope rows
++# under the same columns; and the chart. `(Dₐ, Φₐ)` are the structure's, whose
+ # discrete components and scopes stand in the schedule's order, and the
+ # anchors' counts are derived by the constructor's own division, since the
+ # `Schedule` holds neither (D-261). No rows and no scopes is the heading alone.
+@@ -390,25 +390,25 @@ function _schedule_lines(deployment::Deployment)
+     admissible_line === nothing || push!(lines, "  " * admissible_line)
+     anchor_rows =[[_anchor_name(0), repr(Δt_base), string(zero(Rational{Int})), "1", "0"]]
+     for (k, anchor) in enumerate(structure.anchors)
+-        Dk, Φk = _anchor_counts(anchor, Δt_base)   # whole on a bound deployment
++        D_anchor, Φ_anchor = _anchor_counts(anchor, Δt_base)   # whole on a bound deployment
+         push!(anchor_rows, [_anchor_name(k), string(anchor.Δt), string(anchor.τ),
+-                            string(something(Dk)), string(something(Φk))])
++                            string(something(D_anchor)), string(something(Φ_anchor))])
+     end
+     push!(lines, "  anchors:")
+-    append!(lines, _table("    ", ["anchor", "Δtₖ", "τₖ", "Dₖ", "Φₖ"], anchor_rows))
++    append!(lines, _table("    ", ["anchor", "Δt", "τ", "D₀", "Φ₀"], anchor_rows))
+     timing_cells(timing::Timing, D::Int, Φ::Int) =
+-        [_anchor_name(timing.anchor), string(timing.m), string(timing.c), string(D), string(Φ),
++        [_anchor_name(timing.anchor), string(timing.D), string(timing.Φ), string(D), string(Φ),
+          _seconds_label(D, Δt_base), _seconds_label(Φ, Δt_base)]
+     if !isempty(schedule.rows)
+         discrete = [entry for entry in structure.components if entry.tier === DISCRETE]
+         push!(lines, "  components:")
+-        append!(lines, _table("    ", ["path", "anchor", "m", "c", "D", "Φ", "Δt", "τ"],
++        append!(lines, _table("    ", ["path", "anchor", "Dₐ", "Φₐ", "D₀", "Φ₀", "Δt", "τ"],
+                               Vector{String}[[_path_label(row.path); timing_cells(entry.timing, row.D, row.Φ)]
+                                              for (row, entry) in zip(schedule.rows, discrete)]))
+     end
+     if !isempty(schedule.scopes)
+         push!(lines, "  rate scopes:")
+-        append!(lines, _table("    ", ["path", "key", "anchor", "m", "c", "D", "Φ", "Δt", "τ"],
++        append!(lines, _table("    ", ["path", "key", "anchor", "Dₐ", "Φₐ", "D₀", "Φ₀", "Δt", "τ"],
+                               Vector{String}[[_path_label(row.path); string(row.key);
+                                               timing_cells(scope.timing, row.D, row.Φ)]
+                                              for (row, scope) in zip(schedule.scopes, structure.scopes)]))
+diff --git a/src/sim.jl b/src/sim.jl
+index 6c292de..d22b114 100644
+--- a/src/sim.jl
++++ b/src/sim.jl
+@@ -292,7 +292,7 @@ end
+ # that runs in real time (§9.4); a model at any other scalar is a service's
+ # scratch, stepped frame by frame with no ticks and no events. The three other
+ # forms are defined as the compositions through a `Float64` model. Entry
+-# compilation lives behind the deployment because `Δt`, `D` and `Φ` are entry
++# compilation lives behind the deployment because `Δt`, `D₀` and `Φ₀` are entry
+ # data, and one `Build` backs many deployments. `join_timeout` defaults to 5,
+ # generous for GUI teardown and socket closes, short enough that an abandoned
+ # join reads as a diagnosed timeout rather than a hang (D-198). It is the one
+@@ -717,7 +717,7 @@ end
+ # Boundary zero is an ordinary boundary with an empty integrate (§10.5, §14.5),
+ # run with the sweep's one amendment: every discrete output stage publishes, due
+ # or not (D-205, `boundary_zero!`), while the `s_update` calls keep the gate at
+-# index 0, which admits exactly the components with `Φ = 0`, implemented by
++# index 0, which admits exactly the components with `Φ₀ = 0`, implemented by
+ # nothing. It establishes every event prior as not-holding (§10.6), so a firing
+ # at `t₀` is derived, not asserted, and a re-run resets all three registers from
+ # scratch. A re-run is a new trajectory and therefore a new `Run` (§12.6,
+diff --git a/src/structure.jl b/src/structure.jl
+index 123a189..a30b07d 100644
+--- a/src/structure.jl
++++ b/src/structure.jl
+@@ -131,14 +131,14 @@ One `sample_times` link (§9.1, D-253): the declaring assembly's path, the key a
+ """
+ const RateLink = @NamedTuple{scope::String, key::Symbol, entry::Union{Relative,Absolute}}
+ 
+-"The sample-time fold's value for one scope or component (§9.1): the anchor it hangs from (0 the base grid), and its period multiple and phase in that anchor's ticks."
+-const Timing = @NamedTuple{anchor::Int, m::Int, c::Int}
++"The sample-time fold's value for one scope or component (§9.1): the anchor it hangs from (0 the base grid), and its divisor and phase in that anchor's ticks, `(Dₐ, Φₐ)`."
++const Timing = @NamedTuple{anchor::Int, D::Int, Φ::Int}
+ 
+ """One keyed scope: the assembly an explicit `sample_times` key names, and its timing."""
+ const RateScope = @NamedTuple{path::String, key::Symbol, timing::Timing}
+ 
+ """
+-One anchor (§9.1, §9.2): the exact `(Δtₖ, τₖ)` an `Absolute` entry seeds, with
++One anchor (§9.1, §9.2): the exact `(Δt(a), τ(a))` an `Absolute` entry seeds, with
+ the `sample_times` entry that declared it, by scope path and key. Anchor 0,
+ the base grid, has no record here; it is symbolic until `Δt_base` binds.
+ """
+@@ -225,7 +225,7 @@ A `Structure` holds these fields.
+ 
+ - `components`: one entry per [primitive](@ref g-primitive), in the order the
+   build walks the tree.
+-- `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(Δtₖ, τₖ)`
++- `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(Δt, τ)`
+   pair (period and offset in rational seconds) with the declaring
+   [scope](@ref g-rate-scope) and key.
+ - `scopes`: one entry per [assembly](@ref g-assembly) a `sample_times` key
+@@ -303,18 +303,19 @@ function index_of(draft::StructureDraft, path::String)
+ end
+ 
+ # --- the sample-time fold (§8.7, §9.1, §10.5) -----------------------------------
+-# Nested rate declarations compile to one `(anchor, m, c)` timing per component,
++# Nested rate declarations compile to one `(a, Dₐ, Φₐ)` timing per component,
+ # folding down the tree beside the wiring walk: the root scope seeds
+-# `(A₀, 1, 0)`, `Relative(K, φ)` under a scope at `(a, mₛ, cₛ)` steps to
+-# `(a, K·mₛ, cₛ + φ·mₛ)`, and `Absolute` severs and re-seeds a fresh anchor at
+-# `(Aₖ, 1, 0)` — a nested anchor simply severs again. Anchor 0 is the base grid,
+-# symbolic until deployment binds `Δt_base`: final divisors for anchored entries
+-# do not exist until then (§9.1). The canonical residue `c < m` holds within each
+-# anchor's subtree by the affine law's one-line induction.
++# `(A₀, 1, 0)`, `Relative(D, Φ)` under a scope `s` at `(a, Dₐ(s), Φₐ(s))` steps to
++# `(a, D·Dₐ(s), Φₐ(s) + Φ·Dₐ(s))`, and `Absolute` severs and re-seeds a fresh
++# anchor `a` at `(a, 1, 0)` — a nested anchor simply severs again. Anchor 0 is the
++# base grid, symbolic until deployment binds `Δt_base`: final divisors for
++# anchored entries do not exist until then (§9.1). The canonical residue
++# `Φₐ < Dₐ` holds within each anchor's subtree by the affine law's one-line
++# induction (D-478).
+ 
+ """
+ Validate a scope's `sample_times` against §10.5's constraints, with path
+-attribution (§9.1, §13.1): wrapper-typed values only, `K ≥ 1`, `0 ≤ φ < K`,
++attribution (§9.1, §13.1): wrapper-typed values only, `Dₛ ≥ 1`, `0 ≤ Φₛ < Dₛ`,
+ `Δt > 0`, `0 ≤ τ < Δt`, and every key naming an immediate child.
+ """
+ function _check_sample_times(path::String, rate_decl, kids, fields, diags::Vector{Diagnostic})
+@@ -329,13 +330,13 @@ function _check_sample_times(path::String, rate_decl, kids, fields, diags::Vecto
+             record_violation(:value_vocabulary; key = key, value = rate)
+             continue                               # neither residue arm applies
+         end
+-        # The residue bound is stated against the multiplier, so an invalid `K`
+-        # (or `Δt`) leaves `φ` (or `τ`) with nothing to be measured against: the
++        # The residue bound is stated against the multiplier, so an invalid `Dₛ`
++        # (or `Δt`) leaves `Φₛ` (or `τ`) with nothing to be measured against: the
+         # dependent check is skipped, not doubled up.
+         if rate isa Relative
+-            rate.K ≥ 1 ? (0 ≤ rate.φ < rate.K ||
+-                          record_violation(:phase; key = key, value = rate.φ)) :
+-                         record_violation(:multiplier; key = key, value = rate.K)
++            rate.D ≥ 1 ? (0 ≤ rate.Φ < rate.D ||
++                          record_violation(:phase; key = key, value = rate.Φ)) :
++                         record_violation(:multiplier; key = key, value = rate.D)
+         else
+             rate.Δt > 0 ? (0 ≤ rate.τ < rate.Δt ||
+                            record_violation(:offset; key = key, value = rate.τ)) :
+@@ -374,7 +375,7 @@ The child's scope timing, and the link an explicit key declared — the declarin
+ assembly's path, the key as `_rate_entry` returned it, and the wrapper value —
+ or `nothing` for an unlisted child. The unlisted child continues at the
+ enclosing timing: the `Relative(1)` default is the affine law at
+-`(K, φ) = (1, 0)`, implemented by nothing. The law runs in checked `Int`
++`(Dₛ, Φₛ) = (1, 0)`, implemented by nothing. The law runs in checked `Int`
+ arithmetic, and a composed divisor or phase past `Int` is recorded as `:range`
+ on the entry; the child then continues at the enclosing timing too.
+ """
+@@ -391,12 +392,12 @@ function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::S
+     link = RateLink((scope = path, key = key, entry = rate))
+     if rate isa Relative
+         # A rate its own check refused composes nothing. A sound one keeps
+-        # `c < m`, so a phase past `Int` needs a multiplier past it first.
+-        1 ≤ rate.K && 0 ≤ rate.φ < rate.K || return scope, link
++        # `Φₐ < Dₐ`, so a phase past `Int` needs a multiplier past it first.
++        1 ≤ rate.D && 0 ≤ rate.Φ < rate.D || return scope, link
+         timing = _exact_or_nothing(
+-            () -> Timing((scope.anchor, Base.Checked.checked_mul(rate.K, scope.m),
+-                          Base.Checked.checked_add(scope.c,
+-                                                   Base.Checked.checked_mul(rate.φ, scope.m)))))
++            () -> Timing((scope.anchor, Base.Checked.checked_mul(rate.D, scope.D),
++                          Base.Checked.checked_add(scope.Φ,
++                                                   Base.Checked.checked_mul(rate.Φ, scope.D)))))
+         timing === nothing || return timing, link
+         # A bare container key composes once per element, all alike, so the
+         # elements share one refusal, as they share one anchor below (D-459).
+@@ -833,7 +834,7 @@ _supplies(pool_denominator::Int, prime::Int, power::Int) =
+ The grid attribution D-187 asks for (§9.2), a pure function of the structure's
+ anchors: the constraint pool — every anchor's period and every nonzero offset,
+ in anchor order, periods first — with each entry's leave-one-out refinement
+-factor `r_p = gcd(pool ∖ p)/gcd(pool)`, the prime attribution of `gcd(pool)`'s
++factor `Qₚ = gcd(pool ∖ p)/gcd(pool)`, the prime attribution of `gcd(pool)`'s
+ denominator, and, for a driving offset, the nearest offsets the rest of the pool
+ already supports, those whose arithmetic fits `Int`. No artifact holds it
+ (D-466). `bind_schedule` computes one per `Deployment` call, ahead of the
+@@ -876,14 +877,14 @@ function _grid_report(anchors::Vector{Anchor})
+             # `Absolute` refuses what `Rational{Int}` cannot hold (D-459). Each is a
+             # product, which Julia reduces before it multiplies, so it fails only
+             # for a value past `Int`; a sum could fail in an intermediate product.
+-            τ, Δt_k = entry_values[i], anchors[anchor_indices[i]].Δt
++            τ, Δt_anchor = entry_values[i], anchors[anchor_indices[i]].Δt
+             lower_index = _exact_or_nothing(() -> floor(Int, τ / partial))
+             if lower_index !== nothing
+                 lower = _exact_or_nothing(() -> lower_index * partial)
+                 upper = _exact_or_nothing(
+                     () -> Base.Checked.checked_add(lower_index, 1) * partial)
+                 lower === nothing || push!(alternatives, lower)
+-                upper !== nothing && upper < Δt_k && push!(alternatives, upper)
++                upper !== nothing && upper < Δt_anchor && push!(alternatives, upper)
+             end
+         end
+         anchor = anchors[anchor_indices[i]]
+@@ -897,7 +898,7 @@ function _grid_report(anchors::Vector{Anchor})
+     GridReport(pool, admissible, primes)
+ end
+ 
+-# One anchor's counts at a base tick, `(Dₖ, Φₖ)` (§9.2): one exact division
++# One anchor's counts at a base tick, `(D₀(a), Φ₀(a))` (§9.2): one exact division
+ # pair, each `nothing` where its quotient is not a whole `Int`. Each division
+ # runs in `Int128`, as `_lattice`'s do, so a count past `Int` is `nothing`,
+ # never a raw `OverflowError`.
+@@ -905,17 +906,18 @@ _anchor_counts(anchor::Anchor, Δt_base::Rational{Int}) =
+     (_as_int(Rational{Int128}(anchor.Δt) / Δt_base),
+      _as_int(Rational{Int128}(anchor.τ) / Δt_base))
+ 
+-# One timing's `(D, Φ)` in base ticks (§9.2): `D = m·Dₖ` and `Φ = Φₖ + c·Dₖ`,
+-# against the anchors' counts, whose first entry is anchor 0's `(1, 0)`. The law
+-# runs in checked `Int`, so a count past it throws, and the caller catches.
+-function _timing_counts(timing::Timing, Dk::Vector{Int}, Φk::Vector{Int})
+-    D_anchor, Φ_anchor = Dk[timing.anchor + 1], Φk[timing.anchor + 1]
+-    (Base.Checked.checked_mul(timing.m, D_anchor),
+-     Base.Checked.checked_add(Φ_anchor, Base.Checked.checked_mul(timing.c, D_anchor)))
++# One timing's `(D₀, Φ₀)` in base ticks (§9.2): `D₀(i) = Dₐ(i)·D₀(a)` and
++# `Φ₀(i) = Φ₀(a) + Φₐ(i)·D₀(a)`, against the anchors' counts, whose first entry is
++# anchor 0's `(1, 0)`. The law runs in checked `Int`, so a count past it throws,
++# and the caller catches.
++function _timing_counts(timing::Timing, D_anchors::Vector{Int}, Φ_anchors::Vector{Int})
++    D_anchor, Φ_anchor = D_anchors[timing.anchor + 1], Φ_anchors[timing.anchor + 1]
++    (Base.Checked.checked_mul(timing.D, D_anchor),
++     Base.Checked.checked_add(Φ_anchor, Base.Checked.checked_mul(timing.Φ, D_anchor)))
+ end
+ 
+ # The last frame index whose positions fit an `Int` (§10.5, D-445), from the
+-# frame and the base tick in the lattices' unit and the components' divisors.
++# frame and the base tick in `Δt_unit` and the components' divisors.
+ # Inside frame `k` the largest position the loop forms is a due index's, at most
+ # the largest divisor's period past the frame top, so `k·frame` plus that margin
+ # must fit. In `Int128`; below 1, no frame fits.
+@@ -932,7 +934,7 @@ function _composing_link(chain::Vector{RateLink}, D_anchor::Int, limit::Int)
+     running = Int128(D_anchor)
+     anchor_index > 0 && running > limit && return chain[anchor_index]
+     for link in chain[anchor_index+1:end]
+-        running *= link.entry.K
++        running *= link.entry.D
+         running > limit && return link
+     end
+     throw(InternalInvariant("no link of the chain composes a count past $limit"))
+@@ -975,19 +977,19 @@ function _check_trial_binding(draft::StructureDraft, diags::Vector{Diagnostic})
+         return nothing
+     end
+     # Anchor 0 is the base grid itself.
+-    Dk, Φk, counted = [1], [0], [true]
++    D_anchors, Φ_anchors, counted = [1], [0], [true]
+     for anchor in draft.anchors
+         D, Φ = _anchor_counts(anchor, Δt_base)
+         formed = D !== nothing && Φ !== nothing
+         formed || refuse(anchor_link(anchor))
+-        push!(Dk, something(D, 1)); push!(Φk, something(Φ, 0)); push!(counted, formed)
++        push!(D_anchors, something(D, 1)); push!(Φ_anchors, something(Φ, 0)); push!(counted, formed)
+     end
+     # A row's divisor, or `nothing` where it leaves `Int` or its anchor did. The
+-    # count of a sound composition keeps `Φ < D`, so only a divisor overflows.
++    # count of a sound composition keeps `Φ₀ < D₀`, so only a divisor overflows.
+     function tick_divisor(timing::Timing, chain::Vector{RateLink})
+         counted[timing.anchor + 1] || return nothing
+-        counts = _exact_or_nothing(() -> _timing_counts(timing, Dk, Φk))
+-        counts === nothing && refuse(_composing_link(chain, Dk[timing.anchor + 1], typemax(Int)))
++        counts = _exact_or_nothing(() -> _timing_counts(timing, D_anchors, Φ_anchors))
++        counts === nothing && refuse(_composing_link(chain, D_anchors[timing.anchor + 1], typemax(Int)))
+         counts === nothing ? nothing : first(counts)
+     end
+     discrete = [ci for ci in eachindex(draft.paths) if draft.tiers[ci] === DISCRETE]
+@@ -1002,7 +1004,7 @@ function _check_trial_binding(draft::StructureDraft, diags::Vector{Diagnostic})
+     largest = maximum(tick_divisors)
+     for (ci, D) in zip(discrete, tick_divisors)
+         D == largest || continue
+-        refuse(_composing_link(draft.rates[ci], Dk[draft.timings[ci].anchor + 1], largest - 1))
++        refuse(_composing_link(draft.rates[ci], D_anchors[draft.timings[ci].anchor + 1], largest - 1))
+     end
+     nothing
+ end
+diff --git a/test/fixtures.jl b/test/fixtures.jl
+index 87193ea..2718a57 100644
+--- a/test/fixtures.jl
++++ b/test/fixtures.jl
+@@ -1379,7 +1379,7 @@ sample_times(::FCS) = (inner = Relative(1), outer = Relative(5, 2))
+ The §9.2 worked example: three discrete components under two scopes, `fcs` on
+ the root grid and `gnss` anchored at `1//50`. Deployed at `Δt_base = 2 ms` the
+ compiled pairs are inner `(1, 0)`, outer `(5, 2)`, gnss `(10, 0)`, and one
+-hyperperiod is `lcm(Dᵢ) = 10` base ticks. The ramp source makes every sample
++hyperperiod is `H = lcm D₀(i) = 10` base ticks. The ramp source makes every sample
+ carry its own acquisition time, so the chart's dots — and the stagger's aging —
+ are readable off the cells.
+ """
+diff --git a/test/test_assembly.jl b/test/test_assembly.jl
+index a4044e5..9753f4c 100644
+--- a/test/test_assembly.jl
++++ b/test/test_assembly.jl
+@@ -838,7 +838,7 @@ function assembly_rate_chains()
+         @test entry("fcs/outer").rates == [(scope = "", key = :fcs, entry = Relative(1)),
+                                            (scope = "fcs", key = :outer, entry = Relative(5, 2))]
+         # An anchor severs and re-seeds, and its one link is the anchor's own; the
+-        # anchor's row carries its `(Δtₖ, τₖ)` with the declaring scope and key.
++        # anchor's row carries its `(Δt(a), τ(a))` with the declaring scope and key.
+         @test timing("gnss") == (1, 1, 0)
+         @test entry("gnss").rates == [(scope = "", key = :gnss, entry = Absolute(1//50))]
+         @test structure.anchors == [Anchor(1//50, 0, "", :gnss)]
+@@ -849,7 +849,7 @@ function assembly_rate_chains()
+ 
+         # One row per assembly a key names: `fcs`, at the timing everything under
+         # it folds from. `src` and `gnss` are not assemblies, so neither has a row.
+-        @test structure.scopes == [(path = "fcs", key = :fcs, timing = (anchor = 0, m = 1, c = 0))]
++        @test structure.scopes == [(path = "fcs", key = :fcs, timing = (anchor = 0, D = 1, Φ = 0))]
+     end
+ end
+ 
+diff --git a/test/test_build.jl b/test/test_build.jl
+index 9df4497..7f58020 100644
+--- a/test/test_build.jl
++++ b/test/test_build.jl
+@@ -1653,7 +1653,7 @@ function build_tier()
+ 
+         # The base tick period is deployment's, not the build's: the same `Build`
+         # deploys at any admissible grid, and the executor cannot exist before one
+-        # binds because `Δt`, `D` and `Φ` are entry-field data (§9.1, §9.7).
++        # binds because `Δt`, `D₀` and `Φ₀` are entry-field data (§9.1, §9.7).
+         counter_build = build(single(DiscreteCounter()))
+         @test counter_build isa Build
+         d = only(diagnostics(failure(() -> Simulation(counter_build))))
+diff --git a/test/test_conditions.jl b/test/test_conditions.jl
+index 173f9da..a151b75 100644
+--- a/test/test_conditions.jl
++++ b/test/test_conditions.jl
+@@ -322,7 +322,7 @@ function conditions_algebra()
+     end
+ 
+     @testset "boundary zero publishes every output stage, due or not (§14.5, D-205)" begin
+-        # Neither component is due at boundary zero — first tick at Φ·Δt_base — and
++        # Neither component is due at boundary zero — first tick at Φ₀·Δt_base — and
+         # both publish there all the same, evaluated from the authored world: the
+         # ZOH from the condition's root-input value, the integrator from its authored `s`.
+         # The probe's synthesized 0.0 reaches no published cell.
+@@ -335,11 +335,11 @@ function conditions_algebra()
+         @test port(latest(sim), "", :held) === 3.0     # and the t₀ snapshot carries both
+         @test port(latest(sim), "", :acc) === 7.0
+ 
+-        # `s_update` stays gated by Φ (§10.5): the evaluation above is establishment, not a
++        # `s_update` stays gated by Φ₀ (§10.5): the evaluation above is establishment, not a
+         # scheduled sample, so the authored `s` survives boundary zero untouched and
+-        # the first sample `off` *consumes* is its own tick's, at Φ·Δt_base.
++        # the first sample `off` *consumes* is its own tick's, at Φ₀·Δt_base.
+         @test state(sim, "off").acc === 7.0
+-        step!(sim)                                     # base tick 1 = Φ·Δt_base: the first tick
++        step!(sim)                                     # base tick 1 = Φ₀·Δt_base: the first tick
+         @test state(sim, "off").acc ≈ 7.0 + 0.02 * 3.0    # one period, one sample
+ 
+         # Cold and warm are the same world: the authored condition determines the
+diff --git a/test/test_declare.jl b/test/test_declare.jl
+index d49466b..8c20d5f 100644
+--- a/test/test_declare.jl
++++ b/test/test_declare.jl
+@@ -26,7 +26,7 @@ function test_declare()
+         # Plain data carriers: no range checks of their own — those are the structure step's,
+         # with path attribution, at the fold.
+         @test Relative(5) === Relative(5, 0)
+-        @test Relative(0).K == 0
++        @test Relative(0).D == 0
+         @test Absolute(0).Δt == 0
+     end
+ 
+diff --git a/test/test_descriptor.jl b/test/test_descriptor.jl
+index c87d38e..932b885 100644
+--- a/test/test_descriptor.jl
++++ b/test/test_descriptor.jl
+@@ -142,7 +142,7 @@ _digits(k, glyphs) = join(collect(glyphs)[d - '0' + 1] for d in string(k))
+ _anchor_text(k) = "A" * _digits(k, "₀₁₂₃₄₅₆₇₈₉")
+ _power_text(p) = p == 1 ? "" : _digits(p, "⁰¹²³⁴⁵⁶⁷⁸⁹")
+ _path_text(path) = isempty(path) ? "root" : path
+-_link_text(link) = haskey(link, "K") ? "$(link["key"]) = Relative($(link["K"]), $(link["phi"]))" :
++_link_text(link) = haskey(link, "D") ? "$(link["key"]) = Relative($(link["D"]), $(link["phi"]))" :
+                    "$(link["key"]) = Absolute($(_rational_text(link["dt"])), $(_rational_text(link["tau"])))"
+ _chain_text(links) = isempty(links) ? "—" : join(_link_text.(links), " → ")
+ 
+@@ -173,11 +173,11 @@ function client_structure(structure)
+     levels = Dict(node["path"] => node for node in structure["nodes"] if node["class"] == "assembly")
+     anchors = structure["anchors"]
+     components = [tokens(join([_path_text(node["path"]), node["tier"], _anchor_text(node["timing"]["anchor"]),
+-                               string(node["timing"]["m"]), string(node["timing"]["c"]),
++                               string(node["timing"]["D"]), string(node["timing"]["phi"]),
+                                _chain_text(node["rates"])], " "))
+                   for node in structure["nodes"] if node["class"] == "primitive"]
+     scopes = [[_path_text(scope["path"]), scope["key"], _anchor_text(scope["timing"]["anchor"]),
+-               string(scope["timing"]["m"]), string(scope["timing"]["c"])] for scope in structure["scopes"]]
++               string(scope["timing"]["D"]), string(scope["timing"]["phi"])] for scope in structure["scopes"]]
+     anchor_rows = vcat([["A₀", "Δt_base", "0//1", "—", "—"]],
+                        [[_anchor_text(k), _rational_text(anchor["dt"]), _rational_text(anchor["tau"]), _path_text(anchor["scope"]), anchor["key"]]
+                         for (k, anchor) in enumerate(anchors)])
+@@ -185,7 +185,7 @@ function client_structure(structure)
+     report, grid = Vector{String}[], structure["grid"]
+     if haskey(grid, "admissible")
+         admissible = _rational_of(grid["admissible"])
+-        push!(report, tokens("admissible: gcd(pool)/k, coarsest $admissible"), ["pool:"])
++        push!(report, tokens("admissible: gcd(pool)/Q, coarsest $admissible"), ["pool:"])
+         labels = String[]
+         for entry in grid["pool"]
+             anchor = anchors[entry["anchor"]]
+@@ -295,29 +295,29 @@ function client_schedule(body)
+     # the base tick against the grid report's coarsest, where the structure has anchors
+     if haskey(structure["grid"], "admissible")
+         admissible = _rational_of(structure["grid"]["admissible"])
+-        k = Int(admissible / dt_base)
++        Q = Int(admissible / dt_base)
+         push!(lines, tokens("Δt_base: $(repr(dt_base)), the coarsest admissible" *
+-                            (k == 1 ? "" : " $(repr(admissible)) divided by $k")))
++                            (Q == 1 ? "" : " $(repr(admissible)) divided by $Q")))
+     end
+-    push!(lines, ["anchors:"], ["anchor", "Δtₖ", "τₖ", "Dₖ", "Φₖ"],
++    push!(lines, ["anchors:"], ["anchor", "Δt", "τ", "D₀", "Φ₀"],
+           ["A₀", repr(dt_base), "0//1", "1", "0"])
+     for (k, (anchor, counts)) in enumerate(zip(structure["anchors"], schedule["anchors"]))
+         push!(lines, [_anchor_text(k), _rational_text(anchor["dt"]), _rational_text(anchor["tau"]),
+                       string(counts["D"]), string(counts["phi"])])
+     end
+     timing_cells(timing, row) =
+-        [_anchor_text(timing["anchor"]), string(timing["m"]), string(timing["c"]),
++        [_anchor_text(timing["anchor"]), string(timing["D"]), string(timing["phi"]),
+          string(row["D"]), string(row["phi"]), repr(row["D"] * dt_base), repr(row["phi"] * dt_base)]
+     if !isempty(rows)
+-        push!(lines, ["components:"], ["path", "anchor", "m", "c", "D", "Φ", "Δt", "τ"])
++        push!(lines, ["components:"], ["path", "anchor", "Dₐ", "Φₐ", "D₀", "Φ₀", "Δt", "τ"])
+         for row in rows
+             push!(lines, [_path_text(row["path"]); timing_cells(nodes[row["path"]]["timing"], row)])
+         end
+     end
+     if !isempty(scopes)
+-        # a scope's `(m, c)` by its path and key, which needs no order
++        # a scope's `(Dₐ, Φₐ)` by its path and key, which needs no order
+         scope_timing = Dict((scope["path"], scope["key"]) => scope["timing"] for scope in structure["scopes"])
+-        push!(lines, ["rate", "scopes:"], ["path", "key", "anchor", "m", "c", "D", "Φ", "Δt", "τ"])
++        push!(lines, ["rate", "scopes:"], ["path", "key", "anchor", "Dₐ", "Φₐ", "D₀", "Φ₀", "Δt", "τ"])
+         for row in scopes
+             push!(lines, [_path_text(row["path"]); row["key"];
+                           timing_cells(scope_timing[(row["path"], row["key"])], row)])
+@@ -626,12 +626,12 @@ function test_descriptor()
+     @testset "a primitive node carries its tier and timing, and the structure its anchors and scopes (§9.1, §13.9)" begin
+         body = descriptor(build(MultiRate())).build
+         @test node_at(body, "gnss").tier == "discrete"
+-        @test node_at(body, "gnss").timing == (anchor = 1, m = 1, c = 0)
+-        @test node_at(body, "fcs/outer").timing == (anchor = 0, m = 5, c = 2)
++        @test node_at(body, "gnss").timing == (anchor = 1, D = 1, phi = 0)
++        @test node_at(body, "fcs/outer").timing == (anchor = 0, D = 5, phi = 2)
+         @test node_at(body, "src").tier == "continuous"
+         @test !haskey(node_at(body, "fcs"), :tier) && !haskey(node_at(body, "fcs"), :timing)
+         @test body.structure.anchors == [(dt = (num = 1, den = 50), tau = (num = 0, den = 1), scope = "", key = "gnss")]
+-        @test body.structure.scopes == [(path = "fcs", key = "fcs", timing = (anchor = 0, m = 1, c = 0))]
++        @test body.structure.scopes == [(path = "fcs", key = "fcs", timing = (anchor = 0, D = 1, phi = 0))]
+     end
+ 
+     @testset "a node carries its alias when a const binds its type, and the envelope admits a name (§13.9)" begin
+@@ -878,10 +878,10 @@ function test_descriptor()
+         body = descriptor(build(chained_model())).build
+         # a container's bare field key is the key the chain prints
+         @test node_at(body, "g/a").rates ==
+-              [(scope = "", key = "g", K = 3, phi = 1), (scope = "g", key = "children", K = 2, phi = 0)]
++              [(scope = "", key = "g", D = 3, phi = 1), (scope = "g", key = "children", D = 2, phi = 0)]
+         # an explicit `Relative(1)` is a link, at the timing an unkeyed child has
+-        @test node_at(body, "one").rates == [(scope = "", key = "one", K = 1, phi = 0)]
+-        @test node_at(body, "one").timing == (anchor = 0, m = 1, c = 0)
++        @test node_at(body, "one").rates == [(scope = "", key = "one", D = 1, phi = 0)]
++        @test node_at(body, "one").timing == (anchor = 0, D = 1, phi = 0)
+         multirate = descriptor(build(MultiRate())).build
+         @test node_at(multirate, "gnss").rates ==
+               [(scope = "", key = "gnss", dt = (num = 1, den = 50), tau = (num = 0, den = 1))]
+diff --git a/test/test_diagnostics.jl b/test/test_diagnostics.jl
+index 430762d..0220307 100644
+--- a/test/test_diagnostics.jl
++++ b/test/test_diagnostics.jl
+@@ -736,7 +736,7 @@ function diagnostics_kind_set()
+         rendered = message(only(d for d in occurrences
+                                 if d isa DeploymentInvalid && d.reason === :anchor_offset))
+         @test startswith(rendered, "`sample_times` at `a`, key `b`: offset 1//7")
+-        @test occursin("\n  admissible: gcd(pool)/k, coarsest 1//300\n  pool:\n", rendered)
++        @test occursin("\n  admissible: gcd(pool)/Q, coarsest 1//300\n  pool:\n", rendered)
+         @test occursin("offset 1//7   ×3   declaring 7//50 or 3//20 keeps 1//100", rendered)
+         @test occursin("\n  primes: 300 = 2²·3·5²\n", rendered)
+         @test occursin("\n    2²  b period\n    3   b period\n    5²  b offset", rendered)
+@@ -744,7 +744,7 @@ function diagnostics_kind_set()
+         rendered = message(only(d for d in occurrences if d isa GridUtilization))
+         @test startswith(rendered,
+                           "Δt_base derived as 1//300 s: the grid is 3× finer than the " *
+-                          "fastest declared work (`a/b` at D = 3) (§9.2)\n  admissible:")
++                          "fastest declared work (`a/b` at D₀ = 3) (§9.2)\n  admissible:")
+         @test occursin("\n    5²  b offset", rendered)
+         # A label `series` reserves names itself and the four fields (D-474).
+         rendered = message(only(d for d in occurrences
+@@ -812,9 +812,15 @@ function diagnostics_kind_set()
+         # and the frame (§10.5, D-445, D-459).
+         @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
+                                                    value = 1//(10^10 + 1), related = 1//10^10)),
+-                         "the lattices' exact unit, gcd(Δt_frame, Δt_base) for Δt_base = " *
++                         "Δt_unit = gcd(Δt_frame, Δt_base) for Δt_base = " *
+                          "1//10000000001 and Δt_frame = 1//10000000000, is too fine to index " *
+                          "one frame, or to count a component's period, in an `Int`")
++        # An unanchored component's period is a multiple of the base tick it
++        # would derive, `Dₐ·Δt_base` (§9.1, D-478).
++        @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :unanchored,
++                                                   paths = ["a/b"])),
++                         "Δt_base cannot be derived: `a/b` is/are unanchored, with period " *
++                         "`Dₐ·Δt_base` — an anchor edit")
+         # A bound too fine to count one frame's steps names itself and the frame (D-449).
+         @test startswith(message(DeploymentInvalid(parameter = :h_max, reason = :range,
+                                                    value = 1//2^60, related = 1//1)),
+@@ -840,7 +846,7 @@ function diagnostics_kind_set()
+         @test message(ArgumentInvalid(call = :Relative, reason = :range, value = big(2)^70)) ==
+               "`Relative` holds its counts in `Int`, and 1180591620717411303424 is past it (§10.5)"
+         @test message(ArgumentInvalid(call = :Relative, reason = :not_a_count, value = 1//2)) ==
+-              "`Relative` counts ticks of the enclosing scope, so `K` and `φ` are integers — " *
++              "`Relative` counts ticks of the enclosing scope, so `Dₛ` and `Φₛ` are integers — " *
+               "got 1//2. A child that ticks faster than its scope, or at a period in seconds, " *
+               "takes `Absolute`, as in `Absolute(1//100)` (§10.5)"
+         @test message(DeploymentInvalid(parameter = :Δt_frame, reason = :range,
+@@ -852,6 +858,12 @@ function diagnostics_kind_set()
+                                      value = Relative(2^32 + 1))) ==
+               "`sample_times` at `g`, key `a`: Relative(4294967297, 0) composes a divisor " *
+               "past `Int` (§10.5)"
++        # A `Relative` entry's constraints read in scope ticks, its child's `Dₛ`
++        # and `Φₛ` (§10.5, D-478).
++        @test message(RatesViolation(path = "g", reason = :multiplier, key = :a, value = 0)) ==
++              "`sample_times` at `g`, key `a`: Dₛ = 0, and Dₛ ≥ 1 (§10.5)"
++        @test message(RatesViolation(path = "g", reason = :phase, key = :a, value = 5)) ==
++              "`sample_times` at `g`, key `a`: Φₛ = 5, and 0 ≤ Φₛ < Dₛ (§10.5)"
+         # An `Absolute` entry's constraints read in its own letters (§10.5, D-464).
+         @test message(RatesViolation(path = "g", reason = :period, key = :a, value = 0//1)) ==
+               "`sample_times` at `g`, key `a`: period 0//1, and Δt > 0 (§10.5)"
+diff --git a/test/test_discrete.jl b/test/test_discrete.jl
+index 459f22f..3f05d40 100644
+--- a/test/test_discrete.jl
++++ b/test/test_discrete.jl
+@@ -1,6 +1,6 @@
+ # --- the discrete tier: one rate, then several (§10.5) ------------------------
+-# §10.5 is "Multi-rate tick scheduling", and the single-rate case is its D = 1,
+-# Φ = 0 corner — which is why the ZOH proof runs twice in this file. Once at one
++# §10.5 is "Multi-rate tick scheduling", and the single-rate case is its D₀ = 1,
++# Φ₀ = 0 corner — which is why the ZOH proof runs twice in this file. Once at one
+ # rate, where the closed form is the plain sampled-data recursion and the only
+ # claim is that the hold is real; and once at several, where the same reference
+ # closes only if the gate admits a component at exactly its own ticks, the hold
+@@ -157,15 +157,15 @@ function discrete_rate_fold()
+     end
+ 
+     @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, §10.5, D-459)" begin
+-        # `Relative(K₂)` inside `Relative(K₁)` composes the multiplier `K₂·K₁`.
++        # `Relative(D2)` inside `Relative(D1)` composes the multiplier `D2·D1`.
+         # Past `Int` it wrapped to a wrong divisor, to 0 or below; now the inner
+         # key is refused as `:range`, alone.
+-        nested(K1, K2) = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(K2))));
+-                               sample_times = (; g = Relative(K1)))
+-        for (K1, K2) in ((2^32 + 1, 2^32 + 1), (2^32, 2^32), (2^62, 3))
+-            d = only(diagnostics(failure(() -> build(nested(K1, K2)))))
++        nested(D1, D2) = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(D2))));
++                               sample_times = (; g = Relative(D1)))
++        for (D1, D2) in ((2^32 + 1, 2^32 + 1), (2^32, 2^32), (2^62, 3))
++            d = only(diagnostics(failure(() -> build(nested(D1, D2)))))
+             @test d isa RatesViolation && d.reason === :range && d.path == "g" &&
+-                  d.key === :a && d.value === Relative(K2)
++                  d.key === :a && d.value === Relative(D2)
+         end
+         # A bare container key composes once per element, and its one entry is
+         # refused once.
+@@ -189,11 +189,11 @@ function discrete_rate_fold()
+               (0, 2^62, (2^31 - 1) + (2^31 - 1) * 2^31)
+         # A rate its own check refuses composes nothing, so a multiplier or a
+         # phase that would also overflow is refused once, by its own reason.
+-        for (K2, φ2, reason) in ((-2^62, 0, :multiplier), (2, 2^62, :phase))
+-            bad = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(K2, φ2))));
++        for (D2, Φ2, reason) in ((-2^62, 0, :multiplier), (2, 2^62, :phase))
++            bad = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(D2, Φ2))));
+                         sample_times = (; g = Relative(4)))
+             d = only(diagnostics(failure(() -> build(bad))))
+-            @test d isa RatesViolation && d.reason === reason && d.value == (reason === :phase ? φ2 : K2)
++            @test d isa RatesViolation && d.reason === reason && d.value == (reason === :phase ? Φ2 : D2)
+         end
+     end
+ 
+@@ -235,7 +235,7 @@ function discrete_rate_fold()
+         # cell says when its owner last ticked — the chart's dots, and the
+         # deterministic aging of the stagger, in the spec's own numbers.
+         sim = Simulation(MultiRate(); Δt_frame = 1//500)
+-        init!(sim)                                       # boundary zero: Φ = 0 is due
++        init!(sim)                                       # boundary zero: Φ₀ = 0 is due
+         @test port(sim, "fcs/inner", :out) == 1.0
+         @test port(sim, "gnss", :out) == 1.0
+ 
+@@ -252,14 +252,14 @@ function discrete_rate_fold()
+     end
+ 
+     @testset "relative scopes compose affinely; anchors sever (§10.5, §9.1)" begin
+-        # Under a scope at Relative(2, 1): D = K·Dₛ, Φ = Φₛ + φ·Dₛ.
++        # Under a scope at Relative(2, 1): D₀(i) = Dₛ(i)·D₀(s), Φ₀(i) = Φ₀(s) + Φₛ(i)·D₀(s).
+         inner_group = Group((; a = TickCounter(), b = TickCounter());
+                             sample_times = (; a = Relative(1), b = Relative(5, 2)))
+         sim = Simulation(Group((; f = inner_group);
+                                sample_times = (; f = Relative(2, 1))); Δt_frame = 1//100)
+         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(2, 1), (10, 5)]
+ 
+-        # Neither has Φ = 0, so boundary zero admits neither; over base ticks 1…10,
++        # Neither has Φ₀ = 0, so boundary zero admits neither; over base ticks 1…10,
+         # `a` ticks at the odd indices and `b` at 5 alone.
+         init!(sim)
+         @test state(sim, "f/a") === (n = 0,)
+@@ -268,7 +268,7 @@ function discrete_rate_fold()
+         @test state(sim, "f/b") === (n = 1,)
+ 
+         # An anchor severs: a relative child of an anchored subtree composes against
+-        # the anchor, not the enclosing grid — D = 3·D₁ with D₁ = (1//50)/(1//500).
++        # the anchor, not the enclosing grid — D₀ = 3·D₀(A₁) with D₀(A₁) = (1//50)/(1//500).
+         gps = Group((; rx = TickCounter());
+                     sample_times = (; rx = Relative(3)))
+         sim = Simulation(Group((; gps = gps);
+@@ -408,7 +408,7 @@ function discrete_deployment()
+ 
+         # `Δt_frame` (the default path) and the explicit keyword (an integer or a
+         # `Rational`): the anchored divisor is deployment's, not the build's — the
+-        # same Build lands gnss at D = 10 or D = 5.
++        # same Build lands gnss at D₀ = 10 or D₀ = 5.
+         default_sim = Simulation(multirate_build; Δt_frame = 1//500)
+         Δt_base_sim = Simulation(multirate_build; Δt_frame = 1//500, Δt_base = 1//250)
+         @test [e.D for e in default_sim.model.deployment.schedule.rows] == [1, 5, 10]
+@@ -742,20 +742,20 @@ function discrete_deployment()
+         refusals(root) = [(d isa RatesViolation && d.reason === :range, d.path, d.key, d.value)
+                           for d in diagnostics(failure(() -> build(root)))]
+         deploys(root, g) = Deployment(build(root); Δt_frame = g, Δt_base = g)
+-        # Two `Relative(2^30)` compose `m = 2^60`, which the fold holds, beneath an
++        # Two `Relative(2^30)` compose `Dₐ = 2^60`, which the fold holds, beneath an
+         # anchor that counts 1000 base ticks at its gcd: no base tick counts the
+         # product. The inner entry is the one the running count passes.
+         @test only(build(nest(TickCounter(), Relative(2^30), Relative(2^30))).structure.components).timing ==
+-              (anchor = 0, m = 2^60, c = 0)
++              (anchor = 0, D = 2^60, Φ = 0)
+         anchor = Absolute(1, 1//1000)
+         @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(2^30))) ==
+               [(true, "n/n", :n, Relative(2^30))]
+-        # The frontier itself: `K·1000·2^30` at the last `K` that fits, and one past.
+-        K = typemax(Int) ÷ (1000 * 2^30)
+-        @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(K + 1))) ==
+-              [(true, "n/n", :n, Relative(K + 1))]
+-        @test only(deploys(nest(TickCounter(), anchor, Relative(2^30), Relative(K)),
+-                           1//1000).schedule.rows).D == K * 1000 * 2^30
++        # The frontier itself: `D·1000·2^30` at the last `D` that fits, and one past.
++        D = typemax(Int) ÷ (1000 * 2^30)
++        @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(D + 1))) ==
++              [(true, "n/n", :n, Relative(D + 1))]
++        @test only(deploys(nest(TickCounter(), anchor, Relative(2^30), Relative(D)),
++                           1//1000).schedule.rows).D == D * 1000 * 2^30
+         # A count that reaches `typemax(Int)` exactly still fits: the entry refused
+         # is the next one, which passes it.
+         @test refusals(nest(TickCounter(), Absolute(1, 1//7), Relative(typemax(Int) ÷ 7),
+@@ -771,11 +771,11 @@ function discrete_deployment()
+                             Relative(2^60))) ==
+               [(true, "n", :n, Relative(2^60))]
+         # A rate scope with no discrete member is counted too.
+-        K = typemax(Int) ÷ 1000
+-        scope_only(K) = nest(Group((; s = Sawtooth(1.0))), anchor, Relative(K))
+-        @test refusals(scope_only(K + 1)) == [(true, "n", :n, Relative(K + 1))]
+-        @test [scope.D for scope in deploys(scope_only(K), 1//1000).schedule.scopes] ==
+-              [1000, K * 1000]
++        D = typemax(Int) ÷ 1000
++        scope_only(D) = nest(Group((; s = Sawtooth(1.0))), anchor, Relative(D))
++        @test refusals(scope_only(D + 1)) == [(true, "n", :n, Relative(D + 1))]
++        @test [scope.D for scope in deploys(scope_only(D), 1//1000).schedule.scopes] ==
++              [1000, D * 1000]
+     end
+ 
+     @testset "a largest divisor that leaves no frame in an `Int` at the gcd is refused at the build on the entry where its count reaches it (§9.2, §10.5, D-465)" begin
+@@ -869,9 +869,9 @@ function discrete_deployment()
+ 
+     # --- multi-rate: the gate at run time (§10.5) -----------------------------------
+ 
+-    @testset "boundary zero admits Φ = 0 for updates, and publishes every output stage" begin
++    @testset "boundary zero admits Φ₀ = 0 for updates, and publishes every output stage" begin
+         # `z` at Relative(2, 1) is not due at boundary zero: its first tick is at
+-        # Φ·Δt_base. Its output stage runs there all the same (D-205), publishing
++        # Φ₀·Δt_base. Its output stage runs there all the same (D-205), publishing
+         # from the t₀ table — the ramp *at t₀*, not the build probe's value; the
+         # dueness the gate reads at index 0 governs the `s_update` updates alone (§10.5).
+         late = Group((; src = Ramp(5.0), z = ZOH());
+diff --git a/test/test_show.jl b/test/test_show.jl
+index 02280a2..f01dae9 100644
+--- a/test/test_show.jl
++++ b/test/test_show.jl
+@@ -11,7 +11,7 @@ plain(x) = sprint(show, MIME("text/plain"), x)
+ compact(x) = sprint(show, x)
+ 
+ # The anchored group of `test_discrete.jl`'s attribution test, derived at
+-# `h = 1//1500`: `lcm(Dᵢ) = 150`, past the chart guard.
++# `h = 1//1500`: `H = lcm D₀(i) = 150`, past the chart guard.
+ function anchored_group()
+     comp = Group((; a = TickCounter(), b = TickCounter());
+                  sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150)))
+@@ -51,20 +51,20 @@ FrameworkStatus: 3 writers, no occurrences, unpaced
+ const MULTIRATE_STRUCTURE = """
+ Structure: 4 components, 1 anchor, 1 rate scope; root inputs: none
+   components:
+-    path       tier        anchor  m  c  rates
+-    src        continuous  A₀      1  0  —
+-    fcs/inner  discrete    A₀      1  0  fcs = Relative(1, 0) → inner = Relative(1, 0)
+-    fcs/outer  discrete    A₀      5  2  fcs = Relative(1, 0) → outer = Relative(5, 2)
+-    gnss       discrete    A₁      1  0  gnss = Absolute(1//50, 0//1)
++    path       tier        anchor  Dₐ  Φₐ  rates
++    src        continuous  A₀      1   0   —
++    fcs/inner  discrete    A₀      1   0   fcs = Relative(1, 0) → inner = Relative(1, 0)
++    fcs/outer  discrete    A₀      5   2   fcs = Relative(1, 0) → outer = Relative(5, 2)
++    gnss       discrete    A₁      1   0   gnss = Absolute(1//50, 0//1)
+   rate scopes:
+-    path  key  anchor  m  c
+-    fcs   fcs  A₀      1  0
++    path  key  anchor  Dₐ  Φₐ
++    fcs   fcs  A₀      1   0
+   anchors:
+-    anchor  Δtₖ      τₖ    scope  key
++    anchor  Δt       τ     scope  key
+     A₀      Δt_base  0//1  —      —
+     A₁      1//50    0//1  root   gnss
+   grid:
+-    admissible: gcd(pool)/k, coarsest 1//50
++    admissible: gcd(pool)/Q, coarsest 1//50
+     pool:
+       `sample_times` at the root component, key `gnss`  period 1//50  ×1
+     primes: 50 = 2·5²
+@@ -85,13 +85,13 @@ Outputs: execution order over 4 components
+ 
+ const MULTIRATE_SCHEDULE = """
+ Schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
+-  path       anchor  D   Φ  Δt     rates
+-  fcs/inner  A₀      1   0  0.002  fcs = Relative(1, 0) → inner = Relative(1, 0)
+-  fcs/outer  A₀      5   2  0.01   fcs = Relative(1, 0) → outer = Relative(5, 2)
+-  gnss       A₁      10  0  0.02   gnss = Absolute(1//50, 0//1)
++  path       anchor  D₀  Φ₀  Δt     rates
++  fcs/inner  A₀      1   0   0.002  fcs = Relative(1, 0) → inner = Relative(1, 0)
++  fcs/outer  A₀      5   2   0.01   fcs = Relative(1, 0) → outer = Relative(5, 2)
++  gnss       A₁      10  0   0.02   gnss = Absolute(1//50, 0//1)
+   rate scopes:
+-    path  key  anchor  D  Φ
+-    fcs   fcs  A₀      1  0
++    path  key  anchor  D₀  Φ₀
++    fcs   fcs  A₀      1   0
+   hyperperiod chart, 10 base ticks:
+                0
+     fcs/inner  ●●●●●●●●●●
+@@ -104,17 +104,17 @@ const MULTIRATE_DEPLOYED_SCHEDULE = """
+ schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
+   Δt_base: 1//500, the coarsest admissible 1//50 divided by 10
+   anchors:
+-    anchor  Δtₖ     τₖ    Dₖ  Φₖ
++    anchor  Δt      τ     D₀  Φ₀
+     A₀      1//500  0//1  1   0
+     A₁      1//50   0//1  10  0
+   components:
+-    path       anchor  m  c  D   Φ  Δt      τ
+-    fcs/inner  A₀      1  0  1   0  1//500  0//1
+-    fcs/outer  A₀      5  2  5   2  1//100  1//250
+-    gnss       A₁      1  0  10  0  1//50   0//1
++    path       anchor  Dₐ  Φₐ  D₀  Φ₀  Δt      τ
++    fcs/inner  A₀      1   0   1   0   1//500  0//1
++    fcs/outer  A₀      5   2   5   2   1//100  1//250
++    gnss       A₁      1   0   10  0   1//50   0//1
+   rate scopes:
+-    path  key  anchor  m  c  D  Φ  Δt      τ
+-    fcs   fcs  A₀      1  0  1  0  1//500  0//1
++    path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt      τ
++    fcs   fcs  A₀      1   0   1   0   1//500  0//1
+   chart, 10 columns of 1//500 s over 10 base ticks and 10 frames:
+                 0
+     frame tops  ││││││││││
+@@ -163,10 +163,10 @@ function test_show()
+ 
+     @testset "Structure: the component, rate-scope and anchor tables (§9.2, D-257)" begin
+         @test plain(multirate.structure) == MULTIRATE_STRUCTURE
+-        # The `m` and `c` columns are the fold's timing, row by row.
++        # The `Dₐ` and `Φₐ` columns are the fold's timing, row by row.
+         for (entry, line) in zip(multirate.structure.components, split(MULTIRATE_STRUCTURE, '\n')[4:7])
+             columns = split(line)
+-            @test columns[1] == entry.path && parse.(Int, columns[4:5]) == [entry.timing.m, entry.timing.c]
++            @test columns[1] == entry.path && parse.(Int, columns[4:5]) == [entry.timing.D, entry.timing.Φ]
+         end
+         # The `A₀` row is always present, `Δt_base` symbolic and no declaring scope.
+         @test occursin("\n    A₀      Δt_base  0//1  —      —", plain(multirate.structure))
+@@ -174,9 +174,9 @@ function test_show()
+         # rate-scope block and its root input on the heading.
+         text = plain(pendulum.structure)
+         @test startswith(text, "Structure: 1 component, no anchors, no rate scopes; root inputs: u\n")
+-        @test occursin("\n    root  continuous  A₀      1  0  —\n", text)
++        @test occursin("\n    root  continuous  A₀      1   0   —\n", text)
+         @test !occursin("rate scopes:", text)
+-        @test occursin("\n  anchors:\n    anchor  Δtₖ      τₖ    scope  key\n    A₀      Δt_base  0//1  —      —", text)
++        @test occursin("\n  anchors:\n    anchor  Δt       τ     scope  key\n    A₀      Δt_base  0//1  —      —", text)
+         @test count('\n', text) == 6
+     end
+ 
+@@ -184,11 +184,11 @@ function test_show()
+         # Derived from the anchors, the grid block's lines re-indented under
+         # `grid:`, between the anchor table and the routes.
+         @test occursin("    A₁      1//50    0//1  root   gnss\n  grid:\n" *
+-                       "    admissible: gcd(pool)/k, coarsest 1//50\n", plain(multirate.structure))
++                       "    admissible: gcd(pool)/Q, coarsest 1//50\n", plain(multirate.structure))
+         @test occursin("      5²  gnss period\n  output routes:\n", plain(multirate.structure))
+         # A driving offset's repair rides its pool row, as in the refusals.
+         text = plain(group.build.structure)
+-        @test occursin("\n  grid:\n    admissible: gcd(pool)/k, coarsest 1//1500\n    pool:\n" *
++        @test occursin("\n  grid:\n    admissible: gcd(pool)/Q, coarsest 1//1500\n    pool:\n" *
+                        "      `sample_times` at the root component, key `a`  period 1//500  ×10\n" *
+                        "      `sample_times` at the root component, key `b`  period 1//10   ×1\n" *
+                        "      `sample_times` at the root component, key `b`  offset 1//150  ×3   " *
+@@ -206,7 +206,7 @@ function test_show()
+         # routes print nowhere.
+         text = plain(build(routed_pair()).structure)
+         @test endswith(text, "\n  anchors:\n" *
+-                             "    anchor  Δtₖ      τₖ    scope  key\n" *
++                             "    anchor  Δt       τ     scope  key\n" *
+                              "    A₀      Δt_base  0//1  —      —\n" *
+                              "  input routes:\n" *
+                              "    u → pair/u → pair/a/e\n" *
+@@ -266,15 +266,15 @@ function test_show()
+         @test lines[end-2:end] == ["    fcs/inner  ●●●●●●●●●●",
+                                    "    fcs/outer  ··●····●··",
+                                    "    gnss       ●·········"]
+-        # The gate, computed here: `●` exactly where `(k − Φ) % D == 0`.
++        # The gate, computed here: `●` exactly where `(n − Φ₀) % D₀ == 0`.
+         rows = deployed.schedule.rows
+         hyperperiod = lcm([row.D for row in rows])
+         @test hyperperiod == 10
+         for (row, line) in zip(rows, lines[end-2:end])
+             chart = collect(last(split(line)))
+             @test length(chart) == hyperperiod
+-            @test [k for k in 0:hyperperiod-1 if chart[k+1] == '●'] ==
+-                  [k for k in 0:hyperperiod-1 if (k - row.Φ) % row.D == 0]
++            @test [n for n in 0:hyperperiod-1 if chart[n+1] == '●'] ==
++                  [n for n in 0:hyperperiod-1 if (n - row.Φ) % row.D == 0]
+         end
+         # The guard is binary: past 100 base ticks the chart's place holds one line.
+         text = plain(group.schedule)
+@@ -350,7 +350,7 @@ function test_show()
+                              "  warnings: none")
+     end
+ 
+-    @testset "Deployment: each row under the four frames' symbols, the seconds exact (§9.2, D-464, D-471)" begin
++    @testset "Deployment: each row under the four frames' symbols, the seconds exact (§9.2, D-464, D-471, D-478)" begin
+         # An anchor off the origin, with a member off its own: every pair of the
+         # two tables differs from its neighbours, so no column stands for another.
+         nested = build(Group((; g = Group((; a = TickCounter(), b = TickCounter());
+@@ -360,39 +360,40 @@ function test_show()
+         @test block[1:12] == ["schedule: 2 rows, 1 rate scope, hyperperiod 24 base ticks",
+                               "  Δt_base: 1//200, the coarsest admissible 1//100 divided by 2",
+                               "  anchors:",
+-                              "    anchor  Δtₖ     τₖ      Dₖ  Φₖ",
++                              "    anchor  Δt      τ       D₀  Φ₀",
+                               "    A₀      1//200  0//1    1   0",
+                               "    A₁      1//50   1//100  4   2",
+                               "  components:",
+-                              "    path  anchor  m  c  D   Φ  Δt     τ",
+-                              "    g/a   A₁      3  1  12  6  3//50  3//100",
+-                              "    g/b   A₁      2  0  8   2  1//25  1//100",
++                              "    path  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt     τ",
++                              "    g/a   A₁      3   1   12  6   3//50  3//100",
++                              "    g/b   A₁      2   0   8   2   1//25  1//100",
+                               "  rate scopes:",
+-                              "    path  key  anchor  m  c  D  Φ  Δt     τ"]
+-        @test block[13] == "    g     g    A₁      1  0  4  2  1//50  1//100"
+-        # The composition law, read off the printed cells (D-464): `D = m·Dₖ`,
+-        # `Φ = Φₖ + c·Dₖ`, `Δt = D·Δt_base` and `τ = Φ·Δt_base`.
+-        (Dk, Φk) = parse.(Int, split(block[6])[4:5])
++                              "    path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt     τ"]
++        @test block[13] == "    g     g    A₁      1   0   4   2   1//50  1//100"
++        # The composition law, read off the printed cells (D-478):
++        # `D₀(i) = Dₐ(i)·D₀(a)`, `Φ₀(i) = Φ₀(a) + Φₐ(i)·D₀(a)`, `Δt = D₀·Δt_base`
++        # and `τ = Φ₀·Δt_base`.
++        (D_anchor, Φ_anchor) = parse.(Int, split(block[6])[4:5])
+         for line in block[9:10]
+-            (m, c, D, Φ) = parse.(Int, split(line)[3:6])
+-            @test (D, Φ) == (m * Dk, Φk + c * Dk)
+-            @test split(line)[7:8] == [repr(D * 1//200), repr(Φ * 1//200)]
++            (D_a, Φ_a, D_0, Φ_0) = parse.(Int, split(line)[3:6])
++            @test (D_0, Φ_0) == (D_a * D_anchor, Φ_anchor + Φ_a * D_anchor)
++            @test split(line)[7:8] == [repr(D_0 * 1//200), repr(Φ_0 * 1//200)]
+         end
+         # Three base ticks of 1//10: the deployment prints the period exact,
+         # where the schedule's row holds a float that is not the nearest to it.
+         thirds = Deployment(build(Group((; a = TickCounter()); sample_times = (; a = Relative(3))));
+                             Δt_frame = 1//10)
+-        @test schedule_block(thirds)[7] == "    a     A₀      3  0  3  0  3//10  0//1"
++        @test schedule_block(thirds)[7] == "    a     A₀      3   0   3   0   3//10  0//1"
+         @test occursin("0.30000000000000004", plain(thirds.schedule))
+         @test !occursin("0.30000000000000004", plain(thirds))
+         # A base tick coarser than the frame: the anchors' counts are in base
+-        # ticks, never in the lattices' unit.
++        # ticks, never in `Δt_unit`.
+         coarse = schedule_block(Deployment(multirate; Δt_frame = 1//500, Δt_base = 1//100))
+         @test coarse[2] == "  Δt_base: 1//100, the coarsest admissible 1//50 divided by 2"
+         @test coarse[5:6] == ["    A₀      1//100  0//1  1   0", "    A₁      1//50   0//1  2   0"]
+-        @test coarse[9:11] == ["    fcs/inner  A₀      1  0  1  0  1//100  0//1",
+-                               "    fcs/outer  A₀      5  2  5  2  1//20   1//50",
+-                               "    gnss       A₁      1  0  2  0  1//50   0//1"]
++        @test coarse[9:11] == ["    fcs/inner  A₀      1   0   1   0   1//100  0//1",
++                               "    fcs/outer  A₀      5   2   5   2   1//20   1//50",
++                               "    gnss       A₁      1   0   2   0   1//50   0//1"]
+         # A rate scope with no discrete member: the anchors and the scope's
+         # row, no component table and no chart.
+         inner = Group((; c = Plant()); input_wires = ("in" => "c/u",))
+@@ -401,20 +402,20 @@ function test_show()
+         @test schedule_block(Deployment(scoped; Δt_frame = 1//100)) ==
+               ["schedule: no rows, 1 rate scope",
+                "  anchors:",
+-               "    anchor  Δtₖ     τₖ    Dₖ  Φₖ",
++               "    anchor  Δt      τ     D₀  Φ₀",
+                "    A₀      1//100  0//1  1   0",
+                "  rate scopes:",
+-               "    path  key  anchor  m  c  D  Φ  Δt     τ",
+-               "    g     g    A₀      2  0  2  0  1//50  0//1"]
++               "    path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt     τ",
++               "    g     g    A₀      2   0   2   0   1//50  0//1"]
+         # Two rate scopes on two anchors, each off `(1, 0)`: a scope's row
+-        # takes its own `(m, c)`, never its neighbour's.
++        # takes its own `(Dₐ, Φₐ)`, never its neighbour's.
+         two = build(Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2))),
+                              h = Group((; b = TickCounter()); sample_times = (; b = Relative(1))));
+                           sample_times = (; g = Relative(3, 1), h = Absolute(1//25, 1//50))))
+         @test schedule_block(Deployment(two; Δt_frame = 1//100))[12:14] ==
+-              ["    path  key  anchor  m  c  D  Φ  Δt      τ",
+-               "    g     g    A₀      3  1  3  1  3//100  1//100",
+-               "    h     h    A₁      1  0  4  2  1//25   1//50"]
++              ["    path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt      τ",
++               "    g     g    A₀      3   1   3   1   3//100  1//100",
++               "    h     h    A₁      1   0   4   2   1//25   1//50"]
+         # A period whose seconds leave `Int`: the product is taken wide.
+         wide = Deployment(build(Group((; a = TickCounter()); sample_times = (; a = Relative(2^40 + 15))));
+                           Δt_frame = (2^31 - 1)//2^31)
+@@ -424,8 +425,8 @@ function test_show()
+         # the chart, whose one column is a base tick and a frame top.
+         @test schedule_block(Deployment(build(TickCounter()); Δt_frame = 1//10))[5:end] ==
+               ["  components:",
+-               "    path  anchor  m  c  D  Φ  Δt     τ",
+-               "    root  A₀      1  0  1  0  1//10  0//1",
++               "    path  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt     τ",
++               "    root  A₀      1   0   1   0   1//10  0//1",
+                "  chart, 1 column of 1//10 s over 1 base tick and 1 frame:",
+                "                0",
+                "    frame tops  │",
+@@ -436,7 +437,7 @@ function test_show()
+         admissible(deployment) = schedule_block(deployment)[2]
+         # A tenth of the coarsest, which the structure's grid block names.
+         @test admissible(deployed) == "  Δt_base: 1//500, the coarsest admissible 1//50 divided by 10"
+-        @test occursin("admissible: gcd(pool)/k, coarsest 1//50", plain(multirate.structure))
++        @test occursin("admissible: gcd(pool)/Q, coarsest 1//50", plain(multirate.structure))
+         # The coarsest itself drops the clause, given or derived.
+         @test admissible(Deployment(multirate; Δt_frame = 1//50, Δt_base = 1//50)) ==
+               "  Δt_base: 1//50, the coarsest admissible"
+@@ -476,7 +477,7 @@ function test_show()
+         marks(line, label) = collect(rpad(chopprefix(line, "    " * rpad(label, 10) * "  "), 60))
+         @test [k for k in 0:59 if marks(lines[3], "frame tops")[k+1] == '│'] == collect(0:3:57)
+         @test all(mark in ('│', ' ') for mark in marks(lines[3], "frame tops"))
+-        # The gate, computed here: `●` at a base tick where `(n − Φ) % D == 0`,
++        # The gate, computed here: `●` at a base tick where `(n − Φ₀) % D₀ == 0`,
+         # `·` at every other base tick, blank off the base grid.
+         for (row, line) in zip(between.schedule.rows, lines[4:6])
+             cells = marks(line, row.path)
