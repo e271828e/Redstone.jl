@@ -29,6 +29,7 @@ jobs:
       - name: Instantiate the docs environment
         run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
       - name: Build and deploy the docs
-        run: julia --project=docs docs/make.jl
+        run: julia --startup-file=no --project=docs docs/make.jl
         env:
+          JULIA_LOAD_PATH: "@"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
