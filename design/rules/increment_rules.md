@@ -52,6 +52,14 @@ the pipeline stops only for a design decision. The brief's rules are
 7. **The reviewer verifies the delta**, resumed with its context intact,
    and runs the gate again unless the fixer did. The user diff-verifies the
    arc once; then the push.
+8. **The coordinator clears the scratch** once the push is done. The user
+   works on several machines, and `../Redstone.jl-worktrees/` exists on one.
+   What the record still rests on, such as a probe, a mutant script or a
+   figure, is first committed to the increment's folder, and the record
+   cites it there. Then the unit's worktrees go by `git worktree remove`,
+   never `--force` before reading what is uncommitted, and its branches,
+   probes, logs and agents' notes are deleted by explicit path. Another
+   unit's scratch stays. The unit is closed when none of its own is left.
 
 ## Docs and code
 
