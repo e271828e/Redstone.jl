@@ -14,8 +14,19 @@ the tools.
   superseded-citation batch and the finite-difference witness for
   `linearize` (K14b-006). Their commits are named in the section "Commits
   since the trial" below.
-- **Next.** Pin the tip, re-run Stage M there, cut G1a's slices and launch
-  it. Each step is given below.
+- **G1a, §13.** It ran at `89a10a14` as `wf_6a6c171f-c59`: 10 agents,
+  1.65M subagent tokens, 26 min. The spec slices counted 0.47 to 0.56
+  claims per line, so none re-ran. The verifiers overturned 3 of 39 flags
+  and found 5 misses in 104 sampled `ok` rows, all five in the spec
+  slices. The 7 clear rows landed as `14eab094`, all in §13. The ledgers
+  and `fix_list.md` are in `ledgers/G1a/`.
+- **G1a's rows for the user.** Three wording rows: S13b-205 (the order
+  of the stop sources), S13c-213 (once per member) and S13c-219 (no
+  layouts). Three defects: S13a-040 with L13-017 (tests that assert
+  message text), S13c-031 (`unblock!` outside the join timeout) and
+  S13d-133 (`BundleFieldError` writes no `function`).
+- **Next.** G1b, Appendix C and §13's code. `14eab094` moved the spec's
+  line numbers, so re-pin at master's tip and re-run Stage M first.
 
 ## Rulings since the trial
 
@@ -151,9 +162,9 @@ total 435 ratified entries.
 
 ## Open items
 
-- **The log findings ledger** is `ledgers/trial_14/log_findings.tsv`, 20
-  rows so far. Move it to `ledgers/log_findings.tsv` with the first group,
-  and append there.
+- **The log findings ledger** is `ledgers/log_findings.tsv`, 50 rows
+  after G1a. Most of G1a's 28 are drift that a later entry already
+  records, such as D-437's port renames and D-453's module rename.
 - **Stage M's names leads** are noisy. About 680 candidates cover the whole
   corpus. Many are prior art from Flight.jl, such as `FlightCore` and
   `Cessna172`, or placeholders such as `MyComp`. Verifiers settle them

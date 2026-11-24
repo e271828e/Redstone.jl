@@ -1,0 +1,1515 @@
+{
+ "rows": [
+  {
+   "id": "S13a-126",
+   "file": "design/spec.md",
+   "line": 11326,
+   "kind": "law",
+   "claim": "The committed runtime warnings, in one place, are these (the list names every runtime warning kind).",
+   "evidence": "src/dataplane.jl:36-38 KINDS holds StepFloor; src/diagnostics.jl:1649 StepFloor, severity :warning at 1732; src/model.jl:895 report_cell!(model.frame_diag, StepFloor(...)); spec.md:6579 and 15973 name it; log D-460",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-460 added StepFloor (a step taken at the floor h_min, rate-limited into the model's frame cell). The bullet list from 11328 to 11365 has no entry for it, though it claims to be complete. Its other 14 bullets match KINDS.",
+   "fix": "Add a bullet after FiringBudget: \"`StepFloor`, a step taken at the floor `h_min` ([§10.2][s10-2], [D-460][d-460]). An adaptive method's step is accepted at the floor although its error test failed, or once the step spent its `attempt_budget`. It is reported into the model's frame cell, at most once per frame.\""
+  }
+ ],
+ "ok": [
+  {
+   "id": "S13a-001",
+   "file": "design/spec.md",
+   "line": 11084,
+   "kind": "why",
+   "claim": "FlightCore's SimulationTermination machinery, replaced by §13.5 (lead: prior art name)",
+   "evidence": "prior-art name; no such symbol in src (rg SimulationTermination empty)"
+  },
+  {
+   "id": "S13a-002",
+   "file": "design/spec.md",
+   "line": 11094,
+   "kind": "law",
+   "claim": "Declarative checks over collected structure collect",
+   "evidence": "src/build.jl:782-793"
+  },
+  {
+   "id": "S13a-003",
+   "file": "design/spec.md",
+   "line": 11098,
+   "kind": "mech",
+   "claim": "The collecting checks cover unconnected inputs, two producers, typos, mismatches, face names, sample_times",
+   "evidence": "src/diagnostics.jl:375,402,420,435,659,677; probe:typo wire"
+  },
+  {
+   "id": "S13a-004",
+   "file": "design/spec.md",
+   "line": 11100,
+   "kind": "mech",
+   "claim": "Obligation check computes the set of inputs whose obligation chain never terminates",
+   "evidence": "src/structure.jl:445,465"
+  },
+  {
+   "id": "S13a-005",
+   "file": "design/spec.md",
+   "line": 11107,
+   "kind": "mech",
+   "claim": "The structure step reads the declaration bodies, interface-connection bodies among them",
+   "evidence": "src/structure.jl:597-605"
+  },
+  {
+   "id": "S13a-006",
+   "file": "design/spec.md",
+   "line": 11109,
+   "kind": "mech",
+   "claim": "Nominal evaluation runs every user function once through stage-1 probes and the probe chain",
+   "evidence": "src/build.jl:1001-1014"
+  },
+  {
+   "id": "S13a-007",
+   "file": "design/spec.md",
+   "line": 11111,
+   "kind": "mech",
+   "claim": "Activation at scalar T runs the continuous tier's functions",
+   "evidence": "src/build.jl:1030-1040, 1067 (_frozen: discrete frozen at T != Float64)"
+  },
+  {
+   "id": "S13a-008",
+   "file": "design/spec.md",
+   "line": 11116,
+   "kind": "law",
+   "claim": "The first user-code exception aborts the phase",
+   "evidence": "src/declare.jl:941-950; probe:framing"
+  },
+  {
+   "id": "S13a-009",
+   "file": "design/spec.md",
+   "line": 11119,
+   "kind": "law",
+   "claim": "A step with any error diagnostic throws before the next step begins",
+   "evidence": "src/build.jl:786,793"
+  },
+  {
+   "id": "S13a-010",
+   "file": "design/spec.md",
+   "line": 11124,
+   "kind": "law",
+   "claim": "A declarative pass runs when the results it reads are clean",
+   "evidence": "src/build.jl:784-786 (wire pass only on a clean walk)"
+  },
+  {
+   "id": "S13a-011",
+   "file": "design/spec.md",
+   "line": 11125,
+   "kind": "law",
+   "claim": "A pass records every violation; every pass that ran merges into the barrier's one throw",
+   "evidence": "src/build.jl:782-793; probe:typo wire (two kinds, one throw)"
+  },
+  {
+   "id": "S13a-012",
+   "file": "design/spec.md",
+   "line": 11129,
+   "kind": "mech",
+   "claim": "The structure walk yields two results, the component list and the wiring",
+   "evidence": "src/structure.jl:435, draft.paths and draft.wires"
+  },
+  {
+   "id": "S13a-013",
+   "file": "design/spec.md",
+   "line": 11130,
+   "kind": "law",
+   "claim": "An unresolved wire is recorded and claims nothing; the obligation check reports its input unfed",
+   "evidence": "src/structure.jl:17-19; probe:typo wire (UnknownPort + UnconnectedInput)"
+  },
+  {
+   "id": "S13a-014",
+   "file": "design/spec.md",
+   "line": 11131,
+   "kind": "law",
+   "claim": "Tier and event checking read only the component list, so they run and merge",
+   "evidence": "src/build.jl:783-784"
+  },
+  {
+   "id": "S13a-015",
+   "file": "design/spec.md",
+   "line": 11133,
+   "kind": "law",
+   "claim": "An unreadable or mixed class throws at once, no other pass merging",
+   "evidence": "src/assembly.jl:62-66; probe:mixed (ClassMixed alone beside a typo)"
+  },
+  {
+   "id": "S13a-016",
+   "file": "design/spec.md",
+   "line": 11134,
+   "kind": "law",
+   "claim": "A malformed container is a structural failure that throws at once",
+   "evidence": "src/assembly.jl:202; probe (ContainerNested thrown from _children)"
+  },
+  {
+   "id": "S13a-017",
+   "file": "design/spec.md",
+   "line": 11135,
+   "kind": "law",
+   "claim": "A wire declaration that is no collection of pairs throws at once (D-477)",
+   "evidence": "src/structure.jl:616-620, 727-743; probe:wire non-collection"
+  },
+  {
+   "id": "S13a-018",
+   "file": "design/spec.md",
+   "line": 11137,
+   "kind": "law",
+   "claim": "A check that reads a failed probe does not run",
+   "evidence": "src/build.jl:141,1143 (a probe throw leaves the step before later checks)"
+  },
+  {
+   "id": "S13a-019",
+   "file": "design/spec.md",
+   "line": 11140,
+   "kind": "law",
+   "claim": "A check that stops the step collects over its unit and throws the list at once",
+   "evidence": "src/build.jl:141,480,1119,1143,1168,1363"
+  },
+  {
+   "id": "S13a-020",
+   "file": "design/spec.md",
+   "line": 11142,
+   "kind": "law",
+   "claim": "That throw's carrier is the collection type",
+   "evidence": "src/diagnostics.jl:118-119; probe:typo wire DiagnosticError{Vector{Diagnostic}}"
+  },
+  {
+   "id": "S13a-021",
+   "file": "design/spec.md",
+   "line": 11143,
+   "kind": "mech",
+   "claim": "A unit is one component's child-naming pass",
+   "evidence": "src/assembly.jl:259-268"
+  },
+  {
+   "id": "S13a-022",
+   "file": "design/spec.md",
+   "line": 11143,
+   "kind": "mech",
+   "claim": "A unit is one assembly's three wire declarations",
+   "evidence": "src/structure.jl:616-620"
+  },
+  {
+   "id": "S13a-023",
+   "file": "design/spec.md",
+   "line": 11144,
+   "kind": "mech",
+   "claim": "A unit is one probe stage's port check",
+   "evidence": "src/build.jl:129-141"
+  },
+  {
+   "id": "S13a-024",
+   "file": "design/spec.md",
+   "line": 11144,
+   "kind": "mech",
+   "claim": "A unit is one handler's return",
+   "evidence": "src/build.jl:1363"
+  },
+  {
+   "id": "S13a-025",
+   "file": "design/spec.md",
+   "line": 11144,
+   "kind": "mech",
+   "claim": "A unit is one probe pass over the component list",
+   "evidence": "src/build.jl:1119,1143,1168"
+  },
+  {
+   "id": "S13a-026",
+   "file": "design/spec.md",
+   "line": 11146,
+   "kind": "law",
+   "claim": "A user-code exception still aborts the phase alone",
+   "evidence": "src/declare.jl:941-950; probe:framing"
+  },
+  {
+   "id": "S13a-027",
+   "file": "design/spec.md",
+   "line": 11147,
+   "kind": "law",
+   "claim": "A return that is not a NamedTuple aborts the phase alone",
+   "evidence": "src/build.jl:84,1197 (single-diagnostic throw)"
+  },
+  {
+   "id": "S13a-028",
+   "file": "design/spec.md",
+   "line": 11148,
+   "kind": "law",
+   "claim": "An unreadable or mixed class also throws alone",
+   "evidence": "probe:mixed"
+  },
+  {
+   "id": "S13a-029",
+   "file": "design/spec.md",
+   "line": 11151,
+   "kind": "law",
+   "claim": "Deployment validation runs every check whose premise holds and throws once",
+   "evidence": "src/deployment.jl:575"
+  },
+  {
+   "id": "S13a-030",
+   "file": "design/spec.md",
+   "line": 11152,
+   "kind": "mech",
+   "claim": "Partial results carried past a failure are violation lists and a claim table lacking the failed wires",
+   "evidence": "src/structure.jl:17-19; src/build.jl:782-796"
+  },
+  {
+   "id": "S13a-031",
+   "file": "design/spec.md",
+   "line": 11158,
+   "kind": "law",
+   "claim": "There is no cascade suppression within a step",
+   "evidence": "src/build.jl:788-790; probe:kinds"
+  },
+  {
+   "id": "S13a-032",
+   "file": "design/spec.md",
+   "line": 11159,
+   "kind": "ex",
+   "claim": "Lead: `:throtle` is a placeholder wire name",
+   "evidence": "placeholder in an illustration (leads row)"
+  },
+  {
+   "id": "S13a-033",
+   "file": "design/spec.md",
+   "line": 11159,
+   "kind": "law",
+   "claim": "A typo'd wire produces two errors in one throw",
+   "evidence": "probe:kinds [UnknownPort, UnconnectedInput]"
+  },
+  {
+   "id": "S13a-034",
+   "file": "design/spec.md",
+   "line": 11160,
+   "kind": "mech",
+   "claim": "One is a did-you-mean error carrying the name and the list-in-hand",
+   "evidence": "src/diagnostics.jl:375 UnknownPort; probe:typo wire message lists faces u, y"
+  },
+  {
+   "id": "S13a-035",
+   "file": "design/spec.md",
+   "line": 11161,
+   "kind": "mech",
+   "claim": "The other is an unconnected-input error for the intended input",
+   "evidence": "probe:typo wire UnconnectedInput"
+  },
+  {
+   "id": "S13a-036",
+   "file": "design/spec.md",
+   "line": 11162,
+   "kind": "ex",
+   "claim": "Lead: `throttle` is a placeholder input name",
+   "evidence": "placeholder in an illustration (leads row)"
+  },
+  {
+   "id": "S13a-037",
+   "file": "design/spec.md",
+   "line": 11163,
+   "kind": "law",
+   "claim": "The did-you-mean names the input the other error says is unfed",
+   "evidence": "src/diagnostics.jl:375 candidates; src/structure.jl:56-60"
+  },
+  {
+   "id": "S13a-038",
+   "file": "design/spec.md",
+   "line": 11174,
+   "kind": "law",
+   "claim": "A diagnostic is a plain value from a small closed set of kinds",
+   "evidence": "src/diagnostics.jl:33; src/dataplane.jl:36"
+  },
+  {
+   "id": "S13a-039",
+   "file": "design/spec.md",
+   "line": 11175,
+   "kind": "mech",
+   "claim": "Appendix C records kind, payload, section, severity, raised and policy",
+   "evidence": "spec.md:15395-15417"
+  },
+  {
+   "id": "S13a-040",
+   "file": "design/spec.md",
+   "line": 11180,
+   "kind": "law",
+   "claim": "Tests match on kind plus payload, never on message text",
+   "evidence": "src/diagnostics.jl:14-16"
+  },
+  {
+   "id": "S13a-041",
+   "file": "design/spec.md",
+   "line": 11183,
+   "kind": "mech",
+   "claim": "A payload holds paths, face names, types and the list-in-hand",
+   "evidence": "src/diagnostics.jl:510-519 PathResolution; 1195-1202 BundleFieldError"
+  },
+  {
+   "id": "S13a-042",
+   "file": "design/spec.md",
+   "line": 11186,
+   "kind": "law",
+   "claim": "A kind is a Julia type",
+   "evidence": "src/diagnostics.jl:33"
+  },
+  {
+   "id": "S13a-043",
+   "file": "design/spec.md",
+   "line": 11188,
+   "kind": "law",
+   "claim": "Severity is a property of the kind, not of the occurrence",
+   "evidence": "src/diagnostics.jl:59,755"
+  },
+  {
+   "id": "S13a-044",
+   "file": "design/spec.md",
+   "line": 11189,
+   "kind": "law",
+   "claim": "Severity is error or warning",
+   "evidence": "src/diagnostics.jl:59; probe:severity"
+  },
+  {
+   "id": "S13a-045",
+   "file": "design/spec.md",
+   "line": 11189,
+   "kind": "law",
+   "claim": "Severity says whether an occurrence ever throws",
+   "evidence": "src/diagnostics.jl:194-196"
+  },
+  {
+   "id": "S13a-046",
+   "file": "design/spec.md",
+   "line": 11190,
+   "kind": "decl",
+   "claim": "It is read as severity(d) and never stored per occurrence",
+   "evidence": "src/diagnostics.jl:7,59"
+  },
+  {
+   "id": "S13a-047",
+   "file": "design/spec.md",
+   "line": 11190,
+   "kind": "mech",
+   "claim": "Appendix C's severity field is derived from it",
+   "evidence": "spec.md:15410-15414"
+  },
+  {
+   "id": "S13a-048",
+   "file": "design/spec.md",
+   "line": 11192,
+   "kind": "law",
+   "claim": "Raised and policy describe the occurrence, not the kind",
+   "evidence": "src/diagnostics.jl:11-12"
+  },
+  {
+   "id": "S13a-049",
+   "file": "design/spec.md",
+   "line": 11194,
+   "kind": "law",
+   "claim": "BundleFieldError is raised at the probe",
+   "evidence": "src/declare.jl:984-989; probe:bfe"
+  },
+  {
+   "id": "S13a-050",
+   "file": "design/spec.md",
+   "line": 11194,
+   "kind": "law",
+   "claim": "At runtime BundleFieldError is a species of StepError",
+   "evidence": "src/model.jl:1080-1083,1099-1127"
+  },
+  {
+   "id": "S13a-051",
+   "file": "design/spec.md",
+   "line": 11195,
+   "kind": "law",
+   "claim": "A species is a StepError whose cause is a diagnostic",
+   "evidence": "src/diagnostics.jl:236-247"
+  },
+  {
+   "id": "S13a-052",
+   "file": "design/spec.md",
+   "line": 11198,
+   "kind": "mech",
+   "claim": "Checking passes return diagnostics",
+   "evidence": "src/build.jl:129-141; src/structure.jl:727"
+  },
+  {
+   "id": "S13a-053",
+   "file": "design/spec.md",
+   "line": 11199,
+   "kind": "law",
+   "claim": "A step barrier throws a single DiagnosticError wrapping the collection",
+   "evidence": "src/build.jl:786,793; probe:typo wire"
+  },
+  {
+   "id": "S13a-054",
+   "file": "design/spec.md",
+   "line": 11200,
+   "kind": "law",
+   "claim": "A fail-fast site throws the same carrier holding one diagnostic",
+   "evidence": "src/assembly.jl:381; probe:resolve deep"
+  },
+  {
+   "id": "S13a-055",
+   "file": "design/spec.md",
+   "line": 11202,
+   "kind": "law",
+   "claim": "The carrier's parameter is the kind (fail-fast) or Vector{Diagnostic} (collected)",
+   "evidence": "src/diagnostics.jl:109,116-119; probe"
+  },
+  {
+   "id": "S13a-056",
+   "file": "design/spec.md",
+   "line": 11204,
+   "kind": "law",
+   "claim": "@test_throws DiagnosticError{Kind} asserts policy and kind at once",
+   "evidence": "probe:bundle m DiagnosticError{BundleFieldError}"
+  },
+  {
+   "id": "S13a-057",
+   "file": "design/spec.md",
+   "line": 11205,
+   "kind": "decl",
+   "claim": "Lead: test_throws is the Test stdlib macro",
+   "evidence": "test-only name, stdlib macro (leads row)"
+  },
+  {
+   "id": "S13a-058",
+   "file": "design/spec.md",
+   "line": 11205,
+   "kind": "law",
+   "claim": "StepError{C} takes a parameter of its own, the cause's type",
+   "evidence": "src/diagnostics.jl:245"
+  },
+  {
+   "id": "S13a-059",
+   "file": "design/spec.md",
+   "line": 11206,
+   "kind": "mech",
+   "claim": "showerror renders a collection grouped by kind and sorted by path",
+   "evidence": "src/diagnostics.jl:96-104,138-146"
+  },
+  {
+   "id": "S13a-060",
+   "file": "design/spec.md",
+   "line": 11207,
+   "kind": "mech",
+   "claim": "showerror renders a single diagnostic as its own line",
+   "evidence": "src/diagnostics.jl:129-133"
+  },
+  {
+   "id": "S13a-061",
+   "file": "design/spec.md",
+   "line": 11212,
+   "kind": "decl",
+   "claim": "Block: abstract type Diagnostic",
+   "evidence": "src/diagnostics.jl:33"
+  },
+  {
+   "id": "S13a-062",
+   "file": "design/spec.md",
+   "line": 11220,
+   "kind": "decl",
+   "claim": "Block: DiagnosticError{P <: Union{Diagnostic, Vector{Diagnostic}}} <: Exception",
+   "evidence": "src/diagnostics.jl:109"
+  },
+  {
+   "id": "S13a-063",
+   "file": "design/spec.md",
+   "line": 11221,
+   "kind": "decl",
+   "claim": "Block: field carried::P",
+   "evidence": "src/diagnostics.jl:110"
+  },
+  {
+   "id": "S13a-064",
+   "file": "design/spec.md",
+   "line": 11222,
+   "kind": "decl",
+   "claim": "Block: field warnings::Vector{Diagnostic}",
+   "evidence": "src/diagnostics.jl:111"
+  },
+  {
+   "id": "S13a-065",
+   "file": "design/spec.md",
+   "line": 11223,
+   "kind": "decl",
+   "claim": "Block: field structure::Any",
+   "evidence": "src/diagnostics.jl:112"
+  },
+  {
+   "id": "S13a-066",
+   "file": "design/spec.md",
+   "line": 11227,
+   "kind": "law",
+   "claim": "structure is the complete Structure when a throw leaves past the structure step, else nothing",
+   "evidence": "src/build.jl:773-775,786-796,810"
+  },
+  {
+   "id": "S13a-067",
+   "file": "design/spec.md",
+   "line": 11229,
+   "kind": "mech",
+   "claim": "The door fills it where it rewraps the carrier with the build's warnings",
+   "evidence": "src/build.jl:805-811"
+  },
+  {
+   "id": "S13a-068",
+   "file": "design/spec.md",
+   "line": 11235,
+   "kind": "law",
+   "claim": "Diagnostics carry paths and names as strings, never component instances or types",
+   "evidence": "src/diagnostics.jl:9-10,36-45 (_typename)"
+  },
+  {
+   "id": "S13a-069",
+   "file": "design/spec.md",
+   "line": 11237,
+   "kind": "why",
+   "claim": "Lead: compact_backtrace is FlightCore prior art",
+   "evidence": "prior-art name; absent from src (leads row)"
+  },
+  {
+   "id": "S13a-070",
+   "file": "design/spec.md",
+   "line": 11237,
+   "kind": "law",
+   "claim": "Expected and observed port types are the one payload exception",
+   "evidence": "src/diagnostics.jl:9-10; 1192"
+  },
+  {
+   "id": "S13a-071",
+   "file": "design/spec.md",
+   "line": 11240,
+   "kind": "law",
+   "claim": "Every diagnostic states the fix or the lists-in-hand",
+   "evidence": "src/diagnostics.jl:15-16; probe:typo wire, resolve nope"
+  },
+  {
+   "id": "S13a-072",
+   "file": "design/spec.md",
+   "line": 11241,
+   "kind": "ex",
+   "claim": "Example messages 'return zero(x.ω), not 0' and 'no input throtle; did you mean...'",
+   "evidence": "illustrations of style, not verbatim; real wording differs (src/diagnostics.jl:1145, probe:typo wire)"
+  },
+  {
+   "id": "S13a-073",
+   "file": "design/spec.md",
+   "line": 11242,
+   "kind": "ex",
+   "claim": "Lead: throtle and throttle are placeholder names in the example",
+   "evidence": "placeholders (leads rows)"
+  },
+  {
+   "id": "S13a-074",
+   "file": "design/spec.md",
+   "line": 11243,
+   "kind": "ex",
+   "claim": "The child's face list is shown beside the unknown name given to except",
+   "evidence": "src/assembly.jl:623-626 UnknownFaceSelection candidates"
+  },
+  {
+   "id": "S13a-075",
+   "file": "design/spec.md",
+   "line": 11245,
+   "kind": "law",
+   "claim": "A user-code exception is wrapped in UserCodeFraming with the original as cause",
+   "evidence": "src/declare.jl:941-955; probe:user boom"
+  },
+  {
+   "id": "S13a-076",
+   "file": "design/spec.md",
+   "line": 11246,
+   "kind": "mech",
+   "claim": "The framing carries the component path, the function and the probe context",
+   "evidence": "src/diagnostics.jl:1242-1248"
+  },
+  {
+   "id": "S13a-077",
+   "file": "design/spec.md",
+   "line": 11247,
+   "kind": "mech",
+   "claim": "Probe context is the bundle's field names and the inputs as a spelling, never values",
+   "evidence": "src/declare.jl:1001-1003,1007-1011; probe:framing"
+  },
+  {
+   "id": "S13a-078",
+   "file": "design/spec.md",
+   "line": 11250,
+   "kind": "mech",
+   "claim": "The didactic framing renders first and the raw throw second",
+   "evidence": "src/diagnostics.jl:1255-1262; probe:user boom"
+  },
+  {
+   "id": "S13a-079",
+   "file": "design/spec.md",
+   "line": 11250,
+   "kind": "law",
+   "claim": "The framed set is every user-authored method the build invokes",
+   "evidence": "src/declare.jl:936-955 (docstring lists bare re-reads of declarations already framed)"
+  },
+  {
+   "id": "S13a-080",
+   "file": "design/spec.md",
+   "line": 11251,
+   "kind": "mech",
+   "claim": "Declarations and probed functions are each reached through one framing accessor",
+   "evidence": "src/declare.jl:941,975"
+  },
+  {
+   "id": "S13a-081",
+   "file": "design/spec.md",
+   "line": 11254,
+   "kind": "law",
+   "claim": "A declaration takes no bundle, so only the plain framing applies",
+   "evidence": "src/declare.jl:941-945"
+  },
+  {
+   "id": "S13a-082",
+   "file": "design/spec.md",
+   "line": 11255,
+   "kind": "law",
+   "claim": "A DiagnosticError thrown by a check inside the call passes the framing unwrapped",
+   "evidence": "src/declare.jl:933-935"
+  },
+  {
+   "id": "S13a-083",
+   "file": "design/spec.md",
+   "line": 11256,
+   "kind": "law",
+   "claim": "An InternalInvariant passes the framing unwrapped",
+   "evidence": "src/declare.jl:933-935"
+  },
+  {
+   "id": "S13a-084",
+   "file": "design/spec.md",
+   "line": 11258,
+   "kind": "law",
+   "claim": "An InterruptException passes the framing unwrapped",
+   "evidence": "src/declare.jl:933-935"
+  },
+  {
+   "id": "S13a-085",
+   "file": "design/spec.md",
+   "line": 11257,
+   "kind": "mech",
+   "claim": "InternalInvariant is the framework self-check exception, outside the kind set",
+   "evidence": "src/diagnostics.jl:363-368"
+  },
+  {
+   "id": "S13a-086",
+   "file": "design/spec.md",
+   "line": 11258,
+   "kind": "law",
+   "claim": "At runtime the same throw reaches the one catch site",
+   "evidence": "src/model.jl:1070-1083"
+  },
+  {
+   "id": "S13a-087",
+   "file": "design/spec.md",
+   "line": 11259,
+   "kind": "law",
+   "claim": "At runtime a matched FieldError becomes a BundleFieldError species",
+   "evidence": "src/model.jl:1099-1127"
+  },
+  {
+   "id": "S13a-088",
+   "file": "design/spec.md",
+   "line": 11260,
+   "kind": "law",
+   "claim": "Any other exception rides as the StepError's cause",
+   "evidence": "src/model.jl:1092-1093,1099-1103"
+  },
+  {
+   "id": "S13a-089",
+   "file": "design/spec.md",
+   "line": 11262,
+   "kind": "law",
+   "claim": "FieldError is recognized rather than merely framed",
+   "evidence": "src/declare.jl:984-989"
+  },
+  {
+   "id": "S13a-090",
+   "file": "design/spec.md",
+   "line": 11263,
+   "kind": "mech",
+   "claim": "A FieldError carries its type and field as data (Julia >= 1.12)",
+   "evidence": "src/declare.jl:984 err.type, err.field; Project.toml:25 julia 1.13"
+  },
+  {
+   "id": "S13a-091",
+   "file": "design/spec.md",
+   "line": 11265,
+   "kind": "mech",
+   "claim": "At the probe the match is against the bundle's own NamedTuple type",
+   "evidence": "src/declare.jl:984"
+  },
+  {
+   "id": "S13a-092",
+   "file": "design/spec.md",
+   "line": 11266,
+   "kind": "mech",
+   "claim": "At the runtime catch site the match is against the bundle's field names",
+   "evidence": "src/model.jl:1112-1114"
+  },
+  {
+   "id": "S13a-093",
+   "file": "design/spec.md",
+   "line": 11267,
+   "kind": "law",
+   "claim": "A tuple built with the bundle's own names is diagnosed as the bundle",
+   "evidence": "src/model.jl:1112-1114 (names, not exact type)"
+  },
+  {
+   "id": "S13a-094",
+   "file": "design/spec.md",
+   "line": 11270,
+   "kind": "mech",
+   "claim": "The result carries the legal field set",
+   "evidence": "src/diagnostics.jl:1200 legal; src/declare.jl:987"
+  },
+  {
+   "id": "S13a-095",
+   "file": "design/spec.md",
+   "line": 11271,
+   "kind": "law",
+   "claim": "It classifies the miss as undeclared store, wrong tier or field illegal for the function",
+   "evidence": "src/declare.jl:918-923; src/diagnostics.jl:1201; probe:bfe"
+  },
+  {
+   "id": "S13a-096",
+   "file": "design/spec.md",
+   "line": 11273,
+   "kind": "law",
+   "claim": "Nothing is recovered by reading message text",
+   "evidence": "src/declare.jl:984-989 (matches on type and field)"
+  },
+  {
+   "id": "S13a-097",
+   "file": "design/spec.md",
+   "line": 11275,
+   "kind": "law",
+   "claim": "The probe raises the result as BundleFieldError",
+   "evidence": "probe:bundle m"
+  },
+  {
+   "id": "S13a-098",
+   "file": "design/spec.md",
+   "line": 11276,
+   "kind": "ex",
+   "claim": "Message: 'x_deriv destructures m, but <path> declares no m_init'",
+   "evidence": "probe:bundle m prints this form (root path spelled 'the root component')"
+  },
+  {
+   "id": "S13a-099",
+   "file": "design/spec.md",
+   "line": 11278,
+   "kind": "mech",
+   "claim": "The message names the component by its path",
+   "evidence": "src/diagnostics.jl:1215"
+  },
+  {
+   "id": "S13a-100",
+   "file": "design/spec.md",
+   "line": 11278,
+   "kind": "law",
+   "claim": "One law covers tier facts, stage legality and declarations alike",
+   "evidence": "src/declare.jl:918-923"
+  },
+  {
+   "id": "S13a-101",
+   "file": "design/spec.md",
+   "line": 11279,
+   "kind": "law",
+   "claim": "The wrong-tier miss covers the state letters too (D-195)",
+   "evidence": "src/declare.jl:921-922; probe:bundle s on continuous (wrong_tier)"
+  },
+  {
+   "id": "S13a-102",
+   "file": "design/spec.md",
+   "line": 11280,
+   "kind": "law",
+   "claim": "x and m are continuous-only",
+   "evidence": "src/declare.jl:895-903 LEGAL_BUNDLE"
+  },
+  {
+   "id": "S13a-103",
+   "file": "design/spec.md",
+   "line": 11281,
+   "kind": "law",
+   "claim": "s and Δt are discrete-only",
+   "evidence": "src/declare.jl:895-903 LEGAL_BUNDLE"
+  },
+  {
+   "id": "S13a-104",
+   "file": "design/spec.md",
+   "line": 11282,
+   "kind": "law",
+   "claim": "The bundle stays a bare NamedTuple",
+   "evidence": "src/declare.jl:969-975 (@nospecialize bundle::NamedTuple)"
+  },
+  {
+   "id": "S13a-105",
+   "file": "design/spec.md",
+   "line": 11288,
+   "kind": "law",
+   "claim": "A warning raised producing an artifact lives on that artifact",
+   "evidence": "src/diagnostics.jl:177-186; src/build.jl:803; src/deployment.jl:588-598"
+  },
+  {
+   "id": "S13a-106",
+   "file": "design/spec.md",
+   "line": 11289,
+   "kind": "law",
+   "claim": "A warning raised mutating state lives in that state's status",
+   "evidence": "src/sim.jl:2540-2545; src/dataplane.jl:92-146"
+  },
+  {
+   "id": "S13a-107",
+   "file": "design/spec.md",
+   "line": 11290,
+   "kind": "law",
+   "claim": "Logging is presentation and never a home",
+   "evidence": "src/diagnostics.jl:183-187; src/build.jl:817-819"
+  },
+  {
+   "id": "S13a-108",
+   "file": "design/spec.md",
+   "line": 11297,
+   "kind": "law",
+   "claim": "The build's warning set holds EmptyFaceSelection",
+   "evidence": "src/assembly.jl:638"
+  },
+  {
+   "id": "S13a-109",
+   "file": "design/spec.md",
+   "line": 11298,
+   "kind": "law",
+   "claim": "The Deployment's warning set holds GridUtilization",
+   "evidence": "src/deployment.jl:593-598,602-604"
+  },
+  {
+   "id": "S13a-110",
+   "file": "design/spec.md",
+   "line": 11300,
+   "kind": "law",
+   "claim": "The unconnected-output warning stays rejected",
+   "evidence": "no such kind in src/diagnostics.jl (rg UnconnectedOutput empty)"
+  },
+  {
+   "id": "S13a-111",
+   "file": "design/spec.md",
+   "line": 11300,
+   "kind": "law",
+   "claim": "The collected-warning category stays open and empty",
+   "evidence": "src/diagnostics.jl:194-196 (warnings are never collected); spec.md:15466-15469"
+  },
+  {
+   "id": "S13a-112",
+   "file": "design/spec.md",
+   "line": 11301,
+   "kind": "law",
+   "claim": "A warnings-as-errors switch is rejected",
+   "evidence": "src/build.jl:757 (build has only `activations`); no such keyword in src"
+  },
+  {
+   "id": "S13a-113",
+   "file": "design/spec.md",
+   "line": 11305,
+   "kind": "law",
+   "claim": "trim! returns a TrimReport",
+   "evidence": "src/trim.jl:188,760-763"
+  },
+  {
+   "id": "S13a-114",
+   "file": "design/spec.md",
+   "line": 11306,
+   "kind": "mech",
+   "claim": "TrimReport holds the fired events and both residual sets",
+   "evidence": "src/trim.jl:188-200 (fired_events, committed_residuals, committed_checks)"
+  },
+  {
+   "id": "S13a-115",
+   "file": "design/spec.md",
+   "line": 11306,
+   "kind": "mech",
+   "claim": "trim! logs TrimCommitEvents, TrimCommitResiduals and TrimCommitChecks beside it",
+   "evidence": "src/trim.jl:738,751,762"
+  },
+  {
+   "id": "S13a-116",
+   "file": "design/spec.md",
+   "line": 11308,
+   "kind": "law",
+   "claim": "attach! mutates the roster",
+   "evidence": "src/sim.jl:2535-2538"
+  },
+  {
+   "id": "S13a-117",
+   "file": "design/spec.md",
+   "line": 11309,
+   "kind": "law",
+   "claim": "EmptyGreedyClaim lands in the roster entry's diagnostic cell",
+   "evidence": "src/sim.jl:2540-2546"
+  },
+  {
+   "id": "S13a-118",
+   "file": "design/spec.md",
+   "line": 11314,
+   "kind": "mech",
+   "claim": "The per-writer diagnostic cells carry the runtime stream",
+   "evidence": "src/dataplane.jl:106-134"
+  },
+  {
+   "id": "S13a-119",
+   "file": "design/spec.md",
+   "line": 11316,
+   "kind": "mech",
+   "claim": "The bound is a ring plus per-kind suppressed counts",
+   "evidence": "src/dataplane.jl:92-107,144-146"
+  },
+  {
+   "id": "S13a-120",
+   "file": "design/spec.md",
+   "line": 11317,
+   "kind": "mech",
+   "claim": "The ring and counts are drained at frame top",
+   "evidence": "src/sim.jl:2541-2543; src/dataplane.jl:186-193"
+  },
+  {
+   "id": "S13a-121",
+   "file": "design/spec.md",
+   "line": 11317,
+   "kind": "law",
+   "claim": "Every kind is rate-limited wherever its source can repeat, without the kind arranging it",
+   "evidence": "src/dataplane.jl:140-146 (report_cell! admits the closed union)"
+  },
+  {
+   "id": "S13a-122",
+   "file": "design/spec.md",
+   "line": 11319,
+   "kind": "mech",
+   "claim": "The stream surfaces through the published framework status",
+   "evidence": "src/dataplane.jl:303-305"
+  },
+  {
+   "id": "S13a-123",
+   "file": "design/spec.md",
+   "line": 11321,
+   "kind": "mech",
+   "claim": "The liveness heartbeat rides in the same diagnostic cells",
+   "evidence": "src/dataplane.jl:124-134,160"
+  },
+  {
+   "id": "S13a-124",
+   "file": "design/spec.md",
+   "line": 11322,
+   "kind": "mech",
+   "claim": "The pacer's record sits beside the writers' records in the status",
+   "evidence": "src/dataplane.jl:298-305"
+  },
+  {
+   "id": "S13a-125",
+   "file": "design/spec.md",
+   "line": 11322,
+   "kind": "law",
+   "claim": "The runtime stream is never collected",
+   "evidence": "src/diagnostics.jl:194-196; src/dataplane.jl:140"
+  },
+  {
+   "id": "S13a-127",
+   "file": "design/spec.md",
+   "line": 11328,
+   "kind": "law",
+   "claim": "ChatteringBudget reports chattering or localization-budget exhaustion",
+   "evidence": "src/frame.jl:239; src/diagnostics.jl:1625"
+  },
+  {
+   "id": "S13a-128",
+   "file": "design/spec.md",
+   "line": 11329,
+   "kind": "mech",
+   "claim": "The event's bracketing budget runs out at a boundary",
+   "evidence": "src/frame.jl:239; src/diagnostics.jl:1624"
+  },
+  {
+   "id": "S13a-129",
+   "file": "design/spec.md",
+   "line": 11331,
+   "kind": "law",
+   "claim": "FiringBudget reports firing-budget exhaustion",
+   "evidence": "src/model.jl:755; src/diagnostics.jl:1634"
+  },
+  {
+   "id": "S13a-130",
+   "file": "design/spec.md",
+   "line": 11332,
+   "kind": "mech",
+   "claim": "An event that spent its firing_budget at a boundary drops its further edges there",
+   "evidence": "src/diagnostics.jl:1633; src/deployment.jl:467,528"
+  },
+  {
+   "id": "S13a-131",
+   "file": "design/spec.md",
+   "line": 11334,
+   "kind": "law",
+   "claim": "DebtReanchor reports a forgiven-debt re-anchor",
+   "evidence": "src/control.jl:180"
+  },
+  {
+   "id": "S13a-132",
+   "file": "design/spec.md",
+   "line": 11335,
+   "kind": "mech",
+   "claim": "The pacer abandons its accumulated debt and re-anchors",
+   "evidence": "src/control.jl:180; src/diagnostics.jl:1657"
+  },
+  {
+   "id": "S13a-133",
+   "file": "design/spec.md",
+   "line": 11336,
+   "kind": "law",
+   "claim": "The write-surface and batch-entry violations are all raised at staging",
+   "evidence": "src/diagnostics.jl:1594-1596"
+  },
+  {
+   "id": "S13a-134",
+   "file": "design/spec.md",
+   "line": 11337,
+   "kind": "law",
+   "claim": "The drain checks nothing",
+   "evidence": "src/diagnostics.jl:1594-1596"
+  },
+  {
+   "id": "S13a-135",
+   "file": "design/spec.md",
+   "line": 11338,
+   "kind": "mech",
+   "claim": "OutOfClaimEntry is a name with no position in the attach-compiled schema",
+   "evidence": "src/diagnostics.jl:1601-1607"
+  },
+  {
+   "id": "S13a-136",
+   "file": "design/spec.md",
+   "line": 11339,
+   "kind": "mech",
+   "claim": "ClaimedFaceEntry is a harness write to a claimed face and names the incumbent",
+   "evidence": "src/diagnostics.jl:1609-1615"
+  },
+  {
+   "id": "S13a-137",
+   "file": "design/spec.md",
+   "line": 11341,
+   "kind": "mech",
+   "claim": "Stopped-sim attach also fires ClaimedFaceEntry when it renormalizes a pending batch",
+   "evidence": "src/diagnostics.jl:1609 (site :renormalization)"
+  },
+  {
+   "id": "S13a-138",
+   "file": "design/spec.md",
+   "line": 11342,
+   "kind": "mech",
+   "claim": "EntryTypeMismatch is an unconvertible value rejected at staging for every writer",
+   "evidence": "src/diagnostics.jl:1617-1622"
+  },
+  {
+   "id": "S13a-139",
+   "file": "design/spec.md",
+   "line": 11345,
+   "kind": "law",
+   "claim": "MalformedDatum is a tolerated datum failure reported from a device's side",
+   "evidence": "src/diagnostics.jl:1576-1599; src/devices.jl:401"
+  },
+  {
+   "id": "S13a-140",
+   "file": "design/spec.md",
+   "line": 11347,
+   "kind": "decl",
+   "claim": "It is emitted via report!(handle, ...) into the device's own diagnostic cell",
+   "evidence": "src/devices.jl:401-403"
+  },
+  {
+   "id": "S13a-141",
+   "file": "design/spec.md",
+   "line": 11348,
+   "kind": "why",
+   "claim": "Lead: MalformedDatum replaces FlightCore's InputMappingError",
+   "evidence": "prior-art name; absent from src (leads row)"
+  },
+  {
+   "id": "S13a-142",
+   "file": "design/spec.md",
+   "line": 11349,
+   "kind": "law",
+   "claim": "ReplayDiscardedStaging reports staging discarded during replay",
+   "evidence": "src/sim.jl:2745; src/diagnostics.jl:1717"
+  },
+  {
+   "id": "S13a-143",
+   "file": "design/spec.md",
+   "line": 11350,
+   "kind": "mech",
+   "claim": "It reports a live batch found staged while the trace feeds the drain",
+   "evidence": "src/diagnostics.jl:1709-1715"
+  },
+  {
+   "id": "S13a-144",
+   "file": "design/spec.md",
+   "line": 11352,
+   "kind": "law",
+   "claim": "ThreadBudget reports thread-budget tightness",
+   "evidence": "src/sim.jl:1797-1801; src/diagnostics.jl:1678"
+  },
+  {
+   "id": "S13a-145",
+   "file": "design/spec.md",
+   "line": 11353,
+   "kind": "law",
+   "claim": "ThreadBudget is raised once per run, at run! or replay!, against the frozen roster",
+   "evidence": "src/sim.jl:1643,1797-1801"
+  },
+  {
+   "id": "S13a-146",
+   "file": "design/spec.md",
+   "line": 11354,
+   "kind": "law",
+   "claim": "DeviceJoinTimeout reports a device task exceeding the shutdown join timeout",
+   "evidence": "src/sim.jl:1932-1937; src/diagnostics.jl:1699"
+  },
+  {
+   "id": "S13a-147",
+   "file": "design/spec.md",
+   "line": 11355,
+   "kind": "mech",
+   "claim": "The device is abandoned by name rather than hanging run!",
+   "evidence": "src/sim.jl:1912-1927,1932-1937"
+  },
+  {
+   "id": "S13a-148",
+   "file": "design/spec.md",
+   "line": 11356,
+   "kind": "law",
+   "claim": "It arises after the terminal snapshot",
+   "evidence": "src/sim.jl:1930-1931 and 1939-1945"
+  },
+  {
+   "id": "S13a-149",
+   "file": "design/spec.md",
+   "line": 11357,
+   "kind": "law",
+   "claim": "It is collected into the termination record",
+   "evidence": "src/sim.jl:1939-1946; 152-181"
+  },
+  {
+   "id": "S13a-150",
+   "file": "design/spec.md",
+   "line": 11358,
+   "kind": "law",
+   "claim": "It is never carried into a status",
+   "evidence": "src/sim.jl:1941-1944 (no snapshot can carry this residue)"
+  },
+  {
+   "id": "S13a-151",
+   "file": "design/spec.md",
+   "line": 11360,
+   "kind": "law",
+   "claim": "DeviceCrash reports a device crash",
+   "evidence": "src/sim.jl:1845; src/devices.jl:667"
+  },
+  {
+   "id": "S13a-152",
+   "file": "design/spec.md",
+   "line": 11360,
+   "kind": "mech",
+   "claim": "The framework wrapper catches a device task's failure",
+   "evidence": "src/sim.jl:1840-1846"
+  },
+  {
+   "id": "S13a-153",
+   "file": "design/spec.md",
+   "line": 11361,
+   "kind": "law",
+   "claim": "The run goes on without the device unless the attachment set should_abort",
+   "evidence": "src/sim.jl:1845-1846"
+  },
+  {
+   "id": "S13a-154",
+   "file": "design/spec.md",
+   "line": 11362,
+   "kind": "decl",
+   "claim": "should_abort is an attach! keyword",
+   "evidence": "src/sim.jl:2452,2502"
+  },
+  {
+   "id": "S13a-155",
+   "file": "design/spec.md",
+   "line": 11364,
+   "kind": "law",
+   "claim": "UnboundedRun lands in the loop's own diagnostic cell",
+   "evidence": "src/sim.jl:1568"
+  },
+  {
+   "id": "S13a-156",
+   "file": "design/spec.md",
+   "line": 11376,
+   "kind": "decl",
+   "claim": "resolve(assembly, path::String) -> AbstractComponent",
+   "evidence": "src/assembly.jl:374 (path::AbstractString)"
+  },
+  {
+   "id": "S13a-157",
+   "file": "design/spec.md",
+   "line": 11376,
+   "kind": "law",
+   "claim": "resolve gives an immediate child, a container element's key segment included",
+   "evidence": "probe:resolve child; probe:container"
+  },
+  {
+   "id": "S13a-158",
+   "file": "design/spec.md",
+   "line": 11378,
+   "kind": "decl",
+   "claim": "input_faces(c)/output_faces(c) -> Vector{String}",
+   "evidence": "src/assembly.jl:435,460; probe:assembly"
+  },
+  {
+   "id": "S13a-159",
+   "file": "design/spec.md",
+   "line": 11378,
+   "kind": "mech",
+   "claim": "For a primitive they return the stringified keys of u_types/y_types",
+   "evidence": "src/assembly.jl:435-437,460-462; probe:input_faces prim"
+  },
+  {
+   "id": "S13a-160",
+   "file": "design/spec.md",
+   "line": 11379,
+   "kind": "law",
+   "claim": "The key set is T-independent",
+   "evidence": "src/assembly.jl:421-423 (_contract at CONTINUOUS nominal)"
+  },
+  {
+   "id": "S13a-161",
+   "file": "design/spec.md",
+   "line": 11380,
+   "kind": "mech",
+   "claim": "For an assembly they return the face names of input_wires/output_wires",
+   "evidence": "src/assembly.jl:438,463; probe:assembly"
+  },
+  {
+   "id": "S13a-162",
+   "file": "design/spec.md",
+   "line": 11382,
+   "kind": "law",
+   "claim": "Declaration order is preserved",
+   "evidence": "src/assembly.jl:484; test/test_assembly.jl:1195-1199"
+  },
+  {
+   "id": "S13a-163",
+   "file": "design/spec.md",
+   "line": 11383,
+   "kind": "law",
+   "claim": "A bare contract lists as u or y",
+   "evidence": "probe:bare [u] [y]"
+  },
+  {
+   "id": "S13a-164",
+   "file": "design/spec.md",
+   "line": 11385,
+   "kind": "decl",
+   "claim": "resolve_terminal(assembly, path) -> (component, name)",
+   "evidence": "src/assembly.jl:396-403; probe:resolve_terminal"
+  },
+  {
+   "id": "S13a-165",
+   "file": "design/spec.md",
+   "line": 11385,
+   "kind": "mech",
+   "claim": "It splits off the final segment and resolves the prefix as resolve does",
+   "evidence": "src/assembly.jl:297-316 shares _one_level with resolve (src/assembly.jl:382)"
+  },
+  {
+   "id": "S13a-166",
+   "file": "design/spec.md",
+   "line": 11386,
+   "kind": "law",
+   "claim": "The split is unambiguous: face names may contain dots, never slashes",
+   "evidence": "src/structure.jl:661-666 (_check_face_names refuses '/')"
+  },
+  {
+   "id": "S13a-167",
+   "file": "design/spec.md",
+   "line": 11388,
+   "kind": "law",
+   "claim": "A one-segment path names a child and no port",
+   "evidence": "probe:resolve_terminal child alone returns \"\""
+  },
+  {
+   "id": "S13a-168",
+   "file": "design/spec.md",
+   "line": 11391,
+   "kind": "law",
+   "claim": "A connection endpoint resolves to an immediate child and one of its faces",
+   "evidence": "src/assembly.jl:288-316; probe:resolve_terminal"
+  },
+  {
+   "id": "S13a-169",
+   "file": "design/spec.md",
+   "line": 11392,
+   "kind": "law",
+   "claim": "A wiring path reaching further is PathResolution whatever the field types",
+   "evidence": "probe:resolve_terminal deep reason=reaches_past; src/assembly.jl:340-345"
+  },
+  {
+   "id": "S13a-170",
+   "file": "design/spec.md",
+   "line": 11394,
+   "kind": "law",
+   "claim": "The service walk governs the deep paths a service or reader is given",
+   "evidence": "src/structure.jl:1116-1150; src/conditions.jl:352; src/readers.jl:743,761"
+  },
+  {
+   "id": "S13a-171",
+   "file": "design/spec.md",
+   "line": 11395,
+   "kind": "law",
+   "claim": "The service walk follows the structure's children and refuses no traversal past a generic child",
+   "evidence": "src/structure.jl:1104-1150 (level rows, no field-type test)"
+  },
+  {
+   "id": "S13a-172",
+   "file": "design/spec.md",
+   "line": 11397,
+   "kind": "law",
+   "claim": "Every service and the read resolver run the walk over an authored path",
+   "evidence": "src/conditions.jl:352; src/readers.jl:743,761; trim.jl:444; linearize.jl:440; bindings.jl:155-165"
+  },
+  {
+   "id": "S13a-173",
+   "file": "design/spec.md",
+   "line": 11398,
+   "kind": "law",
+   "claim": "A deep path resolves wherever the structure has it; a generic child's port is as reachable",
+   "evidence": "src/structure.jl:1108-1110,1129-1141"
+  },
+  {
+   "id": "S13a-174",
+   "file": "design/spec.md",
+   "line": 11401,
+   "kind": "law",
+   "claim": "An unknown segment errors with the sibling list in hand",
+   "evidence": "src/structure.jl:1138-1144 candidates (none at a primitive, which has no siblings to list)"
+  },
+  {
+   "id": "S13a-175",
+   "file": "design/spec.md",
+   "line": 11406,
+   "kind": "law",
+   "claim": "Wiring gets the strict rule and every other client gets the walk",
+   "evidence": "src/structure.jl:22,49 vs 1116; src/readers.jl:743"
+  },
+  {
+   "id": "S13a-176",
+   "file": "design/spec.md",
+   "line": 11411,
+   "kind": "mech",
+   "claim": "Table: wiring is resolved by connection declarations in the structure step",
+   "evidence": "src/structure.jl:22,49 (resolve_source, resolve_dest)"
+  },
+  {
+   "id": "S13a-177",
+   "file": "design/spec.md",
+   "line": 11412,
+   "kind": "mech",
+   "claim": "Table: condition entries resolve by the service walk",
+   "evidence": "src/conditions.jl:352"
+  },
+  {
+   "id": "S13a-178",
+   "file": "design/spec.md",
+   "line": 11412,
+   "kind": "mech",
+   "claim": "Table: trim reads resolve by the service walk",
+   "evidence": "src/trim.jl:444; src/readers.jl:743"
+  },
+  {
+   "id": "S13a-179",
+   "file": "design/spec.md",
+   "line": 11412,
+   "kind": "mech",
+   "claim": "Table: taps resolve by the service walk",
+   "evidence": "src/linearize.jl:440,249-253"
+  },
+  {
+   "id": "S13a-180",
+   "file": "design/spec.md",
+   "line": 11412,
+   "kind": "mech",
+   "claim": "Table: device read bindings resolve by the service walk",
+   "evidence": "src/bindings.jl:155-165"
+  },
+  {
+   "id": "S13a-181",
+   "file": "design/spec.md",
+   "line": 11412,
+   "kind": "mech",
+   "claim": "Table: log extraction by series resolves by the service walk",
+   "evidence": "src/readers.jl:507,743"
+  },
+  {
+   "id": "S13a-182",
+   "file": "design/spec.md",
+   "line": 11413,
+   "kind": "mech",
+   "claim": "Table: snapshot and log inspection read the address table",
+   "evidence": "src/build.jl:364,391-402 (layout component_paths, refuse_path)"
+  },
+  {
+   "id": "S13a-183",
+   "file": "design/spec.md",
+   "line": 11424,
+   "kind": "law",
+   "claim": "A binding's unknown path or name is refused at attach as PathResolution or ReadResolution with candidates",
+   "evidence": "src/bindings.jl:155-165; src/diagnostics.jl:510"
+  },
+  {
+   "id": "S13a-184",
+   "file": "design/spec.md",
+   "line": 11447,
+   "kind": "law",
+   "claim": "Dispatch scoping and face binding are authoring guidance, not checked",
+   "evidence": "src/structure.jl:1104-1150 (no check in the walk)"
+  },
+  {
+   "id": "S13a-185",
+   "file": "design/spec.md",
+   "line": 11449,
+   "kind": "law",
+   "claim": "Which treatment a client resolves under is internal, never user-facing API",
+   "evidence": "src/structure.jl:1116 resolve_authored has no public docs entry; callers are internal"
+  },
+  {
+   "id": "S13a-186",
+   "file": "design/spec.md",
+   "line": 11453,
+   "kind": "law",
+   "claim": "Inside the framework only wiring resolution calls resolve_terminal",
+   "evidence": "rg: callers src/structure.jl:22,49 only"
+  },
+  {
+   "id": "S13a-187",
+   "file": "design/spec.md",
+   "line": 11454,
+   "kind": "law",
+   "claim": "Condition addressing and the readers split their own paths through the service walk",
+   "evidence": "src/conditions.jl:352; src/readers.jl:743,761"
+  }
+ ],
+ "counts": {
+  "law": 107,
+  "mech": 59,
+  "decl": 12,
+  "ex": 6,
+  "why": 25,
+  "ptr": 8
+ },
+ "notes": "One finding. The runtime-warnings list at spec.md:11326 claims completeness but omits StepFloor, which D-460 added (src/diagnostics.jl:1649, src/model.jl:895, KINDS at src/dataplane.jl:36); class drift. Probe script is design/reports/20261124_doc_conformance/probes/S13a/probe.jl, run once, all probe lines behave as the ok entries cite. Row id S13a-126 sits at its document position, so the ids run S13a-001 to S13a-187 with no gap. The three FlightCore leads (SimulationTermination, compact_backtrace, InputMappingError) are prior art and filed ok as why. The throtle, throttle and test_throws leads are placeholders or a stdlib macro, filed ok. Ex S13a-072: the quoted messages 'no input throtle; did you mean throttle?' and 'return zero(x.ω), not 0' illustrate the style and are not verbatim. The real UnknownPort message reads 'names no yy on acc, its faces are u, y', and the real zero hint is src/diagnostics.jl:1145. I did not file this because §13.2 calls them examples of style. The spec code block at 11210-11225 contains an ellipsis, so it is not a complete block. I checked its declarations by reading the code and probing the carrier's type. I did not run the block. In S13a-079 the framing accessor leaves a few reads bare by design, listed in the docstring at src/declare.jl:936-940, because each reads a declaration that already passed the accessor. Unlisted claims are ptr and why sentences, counted by estimate. The first run of the probe failed on my own fixture, a Group used as a container with a transparent_container, so I replaced it with a custom container assembly.\"}"
+}

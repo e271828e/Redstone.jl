@@ -1,0 +1,42 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-057: 1926-1949
+D-058: 1950-1985
+D-061: 2062-2102
+D-062: 2103-2140
+D-159: 6215-6240
+D-214: 8581-8625
+D-222: 9056-9093
+D-225: 9162-9206
+D-233: 9539-9562
+D-277: 12605-12657
+D-312: 14072-14147
+D-313: 14148-14213
+D-349: 15344-15376
+D-383: 16012-16114
+D-385: 16143-16210
+D-408: 16846-16865
+D-409: 16866-16887
+D-410: 16888-16906
+D-411: 16907-16926
+D-412: 16927-16944
+D-413: 16945-16971
+D-431: 17528-17568
+D-433: 17707-17806
+D-434: 17807-17869
+D-439: 18355-18389
+D-467: 20271-20469
+
+# Stage M leads
+names missing: `BuildError` at log.md:1956 (D-058)
+names missing: `LQRTrackerBlock` at log.md:16022 (D-383)
+names missing: `PIDBlock` at log.md:16023 (D-383)
+names missing: `Standby` at log.md:16165 (D-385)
+names missing: `collected` at log.md:8590 (D-214)
+names missing: `collected` at log.md:17816 (D-434)
+names missing: `exports` at log.md:1932 (D-057)
+names missing: `fail` at log.md:8590 (D-214)
+names missing: `fail` at log.md:17816 (D-434)
+names missing: `runtime` at log.md:8589 (D-214)
+names missing: `service` at log.md:8589 (D-214)
+names no_binding: `Redstone.Blocks` at log.md:14161 (D-313)
+names no_binding: `Redstone.Blocks.PID` at log.md:17722 (D-433)

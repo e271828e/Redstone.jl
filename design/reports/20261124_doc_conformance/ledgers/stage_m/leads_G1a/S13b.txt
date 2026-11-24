@@ -1,0 +1,9 @@
+names missing: `Ldg` at spec.md:11749
+names missing: `LostBalance` at spec.md:11931
+names missing: `SimulationTermination` at spec.md:11712
+names missing: `SimulationTermination` at spec.md:11932
+names missing: `fallen` at spec.md:11934
+names missing: `robot2d` at spec.md:11930
+names missing: `stop_when` at spec.md:11943
+names test-only: `m.crashed` at spec.md:11737
+names test-only: `test_throws` at spec.md:11554

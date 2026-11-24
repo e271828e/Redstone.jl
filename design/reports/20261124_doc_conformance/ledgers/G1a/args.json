@@ -1,0 +1,42 @@
+{
+ "group": "G1a",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "89a10a14",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "S13a",
+   "kind": "spec",
+   "agent": "mid-tier",
+   "lines": 388,
+   "task": "Your slice: design/spec.md lines 11069-11456 (§13 preamble, §13.1 reporting policy, §13.2 diagnostics and the carrier exception, §13.3 resolve and the face-list accessors). For context, take the heading outline with rg -n '^#' design/spec.md and read another section only when a claim depends on it. The glossary entries a claim links to (#g-...) sit in Appendix D. Read these code_map.md entries for the files involved: 516-612 (src/diagnostics.jl), 105-186 (src/build.jl), 38-93 (src/assembly.jl), 1364-1436 (src/structure.jl), 224-250 (src/conditions.jl). Then read the code each claim names. A complete Julia code block in your range is run in your probe script, adapted only as far as it needs fixtures."
+  },
+  {
+   "key": "S13b",
+   "kind": "spec",
+   "agent": "mid-tier",
+   "lines": 514,
+   "task": "Your slice: design/spec.md lines 11457-11970 (§13.4 runtime failures and the execution cursor, §13.5 termination as a state). For context, take the heading outline with rg -n '^#' design/spec.md and read another section only when a claim depends on it. The glossary entries a claim links to (#g-...) sit in Appendix D. Read these code_map.md entries for the files involved: 1183-1302 (src/sim.jl), 613-653 (src/executor.jl), 885-1003 (src/model.jl), 654-710 (src/frame.jl), 516-612 (src/diagnostics.jl), 737-827 (src/library.jl). Then read the code each claim names. A complete Julia code block in your range is run in your probe script, adapted only as far as it needs fixtures."
+  },
+  {
+   "key": "S13c",
+   "kind": "spec",
+   "agent": "mid-tier",
+   "lines": 512,
+   "task": "Your slice: design/spec.md lines 11971-12482 (§13.6 abnormal shutdown, §13.7 face routes and the component library, §13.8 cycle diagnosis). The component library code (UnitDelay, Constant, Freeze and the rest) is in src/library.jl. For context, take the heading outline with rg -n '^#' design/spec.md and read another section only when a claim depends on it. The glossary entries a claim links to (#g-...) sit in Appendix D. Read these code_map.md entries for the files involved: 1183-1302 (src/sim.jl), 737-827 (src/library.jl), 1460-1473 (src/tracer.jl), 105-186 (src/build.jl), 1100-1182 (src/show.jl), 516-612 (src/diagnostics.jl). Then read the code each claim names. A complete Julia code block in your range is run in your probe script, adapted only as far as it needs fixtures."
+  },
+  {
+   "key": "S13d",
+   "kind": "spec",
+   "agent": "mid-tier",
+   "lines": 293,
+   "task": "Your slice: design/spec.md lines 12483-12775 (§13.9 the descriptor). Check every schema key and its meaning against what src/descriptor.jl emits and against src/descriptor.json, the schema of record. Stage M's descriptor comparison is design/reports/20261124_doc_conformance/ledgers/stage_m/descriptor.tsv in the main checkout, /Users/miguel/.julia/dev/Redstone.jl; read that one file there, since it is not in W. Its rows are leads too: doc-only keys and unmentioned properties. For context, take the heading outline with rg -n '^#' design/spec.md and read another section only when a claim depends on it. The glossary entries a claim links to (#g-...) sit in Appendix D. Read these code_map.md entries for the files involved: 433-476 (src/descriptor.jl), 105-186 (src/build.jl), 516-612 (src/diagnostics.jl). Then read the code each claim names. A complete Julia code block in your range is run in your probe script, adapted only as far as it needs fixtures."
+  },
+  {
+   "key": "L13",
+   "kind": "log",
+   "agent": "high-tier",
+   "task": "Your slice: the 26 ratified design/log.md entries listed at the top of your leads file, each with its line range. For each entry read the Status line and the Position section only (from **Position.** to **Rationale.**). Each Position bullet or sentence that settles a rule is a claim; split as the granularity rule says. The log is never rewritten (design/rules/log_rules.md rule 1), so old vocabulary or notation is not a finding; a wrong code identifier, keyword, kind or default is, and so is a rule the code contradicts. A contradicted rule is class deviation, unless a later entry already moved it: then drift, naming that entry in note (find it with rg on the topic's names in design/log.md). Check every superseded → chain an entry carries ends at a ratified entry, and every D-nnn and § citation in the Position resolves. Flag a rejected alternative only if the code visibly does the rejected thing. The code_map.md entries for src/diagnostics.jl (lines 516-612), src/sim.jl (1183-1302), src/executor.jl (613-653), src/build.jl (105-186), src/tracer.jl (1460-1473), src/descriptor.jl (433-476) and src/library.jl (737-827) route you to the code."
+  }
+ ]
+}

@@ -1,0 +1,344 @@
+{
+ "judgments": [
+  {
+   "id": "L13-001",
+   "conforms": true,
+   "evidence": "src/build.jl:141 and src/readers.jl:668 throw the whole collected list once (`isempty(diags) || throw(DiagnosticError(diags))`). Probe probes/L13_v/probe.jl:24: two typo'd wires build to one DiagnosticError{Vector{Diagnostic}} that carries [UnknownPort, UnknownPort, UnconnectedInput, UnconnectedInput]."
+  },
+  {
+   "id": "L13-003",
+   "conforms": false,
+   "evidence": "No `exports` declaration exists. Probe probes/L13_v/probe.jl:38 gives isdefined(Redstone, :exports) == false. The face declarations are `input_wires` and `output_wires` (src/declare.jl:288-327). A throw out of an `output_wires` body aborts as a single DiagnosticError{UserCodeFraming} with fn \"output_wires\" (probe line 38, src/declare.jl:963-969). So the abort behaviour holds and only the name is stale.",
+   "class": "drift",
+   "fix": "the first user-code exception (`input_wires` and `output_wires` bodies, probes) aborts the phase",
+   "clear": true
+  },
+  {
+   "id": "L13-010",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:109-113: the one carrier is `DiagnosticError{P}`. Probe probes/L13_v/probe.jl:44 gives isdefined(Redstone, :BuildError) == false. D-222 (log.md:9056) records the replacement, and D-058's own 2026-10-19 annotation (log.md:1969-1970) already states it.",
+   "class": "drift",
+   "fix": "carried by a single `DiagnosticError{P}` thrown at the stratum barrier",
+   "clear": true
+  },
+  {
+   "id": "L13-012",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:133-142 (`_groups`: kind groups in first-appearance order, path-sorted) and :158-168, the collected `showerror`. Probe probes/L13_v/probe.jl:28 renders 'DiagnosticError: 4 diagnostics' with one kind-led line per diagnostic, grouped by kind."
+  },
+  {
+   "id": "L13-014",
+   "conforms": false,
+   "evidence": "Warnings share no stream with errors. src/diagnostics.jl:111 gives the carrier a separate `warnings` field. src/build.jl:709 has `Build.warnings`. src/diagnostics.jl:186-201: BUILD_WARNINGS and `_warn!` append to the artifact's list and refuse an error-severity kind. They still never throw. D-250 (log.md:10337) records the move, and D-058's 2026-10-19 annotation (log.md:1970-1973) says 'Warnings ride no shared stream'.",
+   "class": "drift",
+   "fix": "Warnings ride no shared stream and never throw: a warning raised while producing an artifact lives on that artifact, one raised while mutating state lives in that state's status (D-250).",
+   "clear": false
+  },
+  {
+   "id": "L13-017",
+   "conforms": false,
+   "evidence": "Most tests match kind plus payload, but some assert message text outside test_diagnostics.jl's rendering testset. test/test_failures.jl:906 has `@test occursin(\"zero(\", message(err.cause))`. test/test_trace.jl:949-954 (`discard_reports`) renders ReplayDiscardedStaging through `message(d)` and filters logged lines by their text. design/rules/code_rules.md:341-342 restates the rule these break.",
+   "class": "defect",
+   "fix": "Move the didactic-hint assertion at test_failures.jl:906 into test_diagnostics.jl's rendering testset, and have test_trace.jl's discard_reports match ReplayDiscardedStaging by kind and payload rather than by rendered text.",
+   "clear": false
+  },
+  {
+   "id": "L13-018",
+   "conforms": false,
+   "evidence": "src/assembly.jl:374-387: public `resolve` walks one level over the instance's walked children (`_one_level`, :321-342) and never reads declared field types. src/structure.jl:1107-1155: the service walk `resolve_authored` follows the structure's level rows 'whatever the declared field types along it'. D-414 (log.md:16972) and D-061's 2026-10-19 annotations (log.md:2085-2095) record this.",
+   "class": "drift",
+   "fix": "`resolve(asm, path)` resolves one level, an immediate child, over the instance's children; the service walk follows the structure's children (D-414).",
+   "clear": false
+  },
+  {
+   "id": "L13-019",
+   "conforms": false,
+   "evidence": "There is no past-generic diagnostic. src/structure.jl:1107-1110 says 'A deep path resolves wherever the structure has it, whatever the declared field types along it', and `resolve_authored` refuses only :unknown_child (:1128-1146). D-414 (log.md:16972) retires `:past_generic`, and D-061's annotation (log.md:2091-2095) records it.",
+   "class": "drift",
+   "fix": "a deep path resolves wherever the structure has it; the past-generic diagnostic is retired (D-414)",
+   "clear": true
+  },
+  {
+   "id": "L13-020",
+   "conforms": false,
+   "evidence": "The wiring client enforces the one-level rule (src/assembly.jl:336-340, PathResolution :reaches_past). The service walk (src/structure.jl:1116-1155) has no generic-boundary refusal, so no client enforces a generic-boundary rule. D-414 and D-061's annotations (log.md:2078-2095) record this.",
+   "class": "drift",
+   "fix": "wiring clients enforce the one-level rule; the service walk follows declared children and refuses only an unknown segment, and inspection takes the instance walk (D-414)",
+   "clear": false
+  },
+  {
+   "id": "L13-024",
+   "conforms": false,
+   "evidence": "There is no `faces` function. Predicate selection is the `select` keyword of `input_passthrough` and `output_passthrough` (src/assembly.jl:546-548, :597). D-251 (log.md:10400) and D-062's 2026-10-19 annotation (log.md:2124-2126) record this.",
+   "class": "drift",
+   "fix": "`input_passthrough` and `output_passthrough` gain predicate selection through `select`.",
+   "clear": true
+  },
+  {
+   "id": "L13-027",
+   "conforms": true,
+   "evidence": "src/library.jl:75: `const Or{N} = Junction{Bool, Bool, N, typeof(|)}`. The arity is the type parameter N of `Junction{In, Out, N, F}` (library.jl:42)."
+  },
+  {
+   "id": "L13-030",
+   "conforms": false,
+   "evidence": "Severity is only :error or :warning (src/diagnostics.jl:53-59), and the service warnings are :warning kinds (src/diagnostics.jl:2299, 2310, 2322). The call-site mechanism matches D-159: trim.jl:738, 751 and 762 `@warn logline(...)`, never thrown. D-214 (log.md:8580) records the move. Note that the claim's line 2219 falls inside D-065; D-159's text is at log.md:6219-6224.",
+   "class": "drift",
+   "fix": "`TrimCommitEvents`, `TrimCommitResiduals` and `TrimCommitChecks` are `warning`-severity kinds, raised by a stopped-sim service call (D-214)",
+   "clear": false
+  },
+  {
+   "id": "L13-037",
+   "conforms": false,
+   "evidence": "The two streams are gone. src/build.jl:709 has `Build.warnings`, src/diagnostics.jl:111 gives the carrier `warnings`, and runtime warnings go to diagnostic cells. The trim warnings are logged at the call site (src/trim.jl:738), and their payload rides `TrimReport`'s fields (src/trim.jl:188-200). D-250 (log.md:10337) records the move, and D-159's own 2026-10-19 annotation (log.md:6231-6232) says the partition is gone. The claim's line 2223 is in D-065; D-159's text is at log.md:6223.",
+   "class": "drift",
+   "fix": "§13.2's two streams are replaced by D-250's artifact criterion: a service warning lives on the artifact the call returns.",
+   "clear": false
+  },
+  {
+   "id": "L13-038",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:53-59: `severity(::Diagnostic) = :error`, overridden per warning kind (e.g. :755, :1505), with no per-occurrence field. src/descriptor.jl:110 reads `severity(d)`."
+  },
+  {
+   "id": "L13-049",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:152 and :158 define two `showerror` methods, on DiagnosticError{<:Diagnostic} and DiagnosticError{Vector{Diagnostic}}. `diagnostic`, `diagnostics` and `kinds` (:123-129) are each defined on one parameter. No branch reads a count."
+  },
+  {
+   "id": "L13-058",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:257: `diagnostic(carrier::StepError{<:Diagnostic}) = carrier.cause`, beside the fail-fast `diagnostic(carrier::DiagnosticError{<:Diagnostic})` at :123."
+  },
+  {
+   "id": "L13-067",
+   "conforms": true,
+   "evidence": "src/conditions.jl:210-215: `at(prefix, read_set::Reads)` returns `Reads((prefix, read_set.prefixes...), ...)`, and only a ConditionNode becomes `Scoped` (:207-209). Probe probes/L13_v/probe.jl:47 returns Reads with prefixes (\"a\",)."
+  },
+  {
+   "id": "L13-076",
+   "conforms": true,
+   "evidence": "src/readers.jl:839-872: `_rebase(::GetFace, ...)` matches the leaf against the mount level's output faces (`_exported_faces` for an assembly, the primitive's own ports), refuses an input face as :input_face_not_output, and rebases to `GetOutput` of the `terminal_producer` port."
+  },
+  {
+   "id": "L13-083",
+   "conforms": false,
+   "evidence": "src/library.jl:350: `y_types(::Constant{V}) where {V} = Pinned{V}`. This is a bare contract whose port is `y`, not `(out = Pinned{V},)`. Probe probes/L13_v/probe.jl:52 gives Pinned{Float64}. D-437 (log.md:18128) records the bare-contract face `y`.",
+   "class": "drift",
+   "fix": "`Constant{V}` declares the bare `Pinned{V}`, its one port `y`, and is constructed as `Constant(v)`.",
+   "clear": true
+  },
+  {
+   "id": "L13-085",
+   "conforms": false,
+   "evidence": "src/library.jl:377-380: `struct UnitDelay{V}; s0::V; end`, with `s_init(delay::UnitDelay) = delay.s0` and constructor `UnitDelay(s0)` (docstring :355). Probe probes/L13_v/probe.jl:53 gives fieldnames (:s0,). Commit f8218ebe ('Name UnitDelay's initial value s0') records the rename.",
+   "class": "drift",
+   "fix": "`UnitDelay{V}` carries `s0::V`, which `s_init` returns, and is constructed as `UnitDelay(s0)`.",
+   "clear": true
+  },
+  {
+   "id": "L13-088",
+   "conforms": false,
+   "evidence": "src/library.jl:381-382: bare `u_types` and `y_types`, so the faces are `u` and `y`. Probe probes/L13_v/probe.jl:54 shows 'r/out' => 'd/u' and 'd/y' => 'y' build. Probe line 59 shows 'd/in' refused as UnknownPort, 'its faces are u, y'. D-437 (log.md:18128) records the change.",
+   "class": "drift",
+   "fix": "Its ports are `u` and `y`.",
+   "clear": true
+  },
+  {
+   "id": "L13-087",
+   "conforms": true,
+   "evidence": "The struct does not constrain V (src/library.jl:377), but the store check refuses anything that is neither isbits nor a Symbol (src/assembly.jl:708-716, IllegalStoreField). Probe probes/L13_v/probe.jl:62: UnitDelay(1) builds, while UnitDelay(\"s\") and UnitDelay([1.0]) are refused as IllegalStoreField ('store values are isbits or Symbols'). UnitDelay(:a) at a bare root fails only on its Symbol root input (IllegalPortType), not on the store."
+  },
+  {
+   "id": "L13-089",
+   "conforms": false,
+   "evidence": "src/library.jl:409: `y_direct(::Freeze, (; u)) = ForwardDiff.value.(u)`. The input is the bare port `u`, so there is no `u.in`. The broadcast strip itself stands (probe probes/L13_v/probe.jl:64 strips Dual(1.0, 2.0) to 1.0). D-437 records the bare port.",
+   "class": "drift",
+   "fix": "`Freeze{V}` strips with `ForwardDiff.value.(u)`",
+   "clear": true
+  },
+  {
+   "id": "L13-090",
+   "conforms": false,
+   "evidence": "src/library.jl:405: `Freeze{V <: Union{Float64, SArray{<:Tuple, Float64}}}`. Probe probes/L13_v/probe.jl:67 accepts Float64 and SVector{2,Float64` but throws TypeError for Float32, Int, SVector{2,Float32} and MVector{2,Float64}. D-312's 2026-11-05 annotation (log.md:14128-14140) records the narrowing.",
+   "class": "drift",
+   "fix": "`V` is constrained to `Float64` and an `SArray` of `Float64` at the type, so any other `V` is refused as a `TypeError` at the spelling.",
+   "clear": true
+  },
+  {
+   "id": "L13-092",
+   "conforms": false,
+   "evidence": "src/library.jl:407-408: bare `u_types` V and `y_types` Pinned{V}, so the ports are `u` and `y`. Probe probes/L13_v/probe.jl:69 gives (Float64, Pinned{Float64}). D-437 records the change.",
+   "class": "drift",
+   "fix": "Its ports are `u` and `y`.",
+   "clear": true
+  },
+  {
+   "id": "L13-093",
+   "conforms": false,
+   "evidence": "src/library.jl:1 has `module Library`. Probe probes/L13_v/probe.jl:72: isdefined(Redstone, :Blocks) == false and parentmodule(PID) == Redstone.Library. D-453 (log.md:19247) and commit a12a8e86 record the rename.",
+   "class": "drift",
+   "fix": "The library is the submodule `Redstone.Library`",
+   "clear": true
+  },
+  {
+   "id": "L13-094",
+   "conforms": false,
+   "evidence": "src/assembly.jl:872: `struct Group` is defined in the core module Redstone. Probe probes/L13_v/probe.jl:74: parentmodule(Group) == Redstone and isdefined(Library, :Group) == false. D-472 (log.md:20749, 'with `Group` in the core') records the move.",
+   "class": "drift",
+   "fix": "The library is the submodule `Redstone.Library`, written against the extension-only surface as a user's component file is; `Group` lives in the core (D-472).",
+   "clear": true
+  },
+  {
+   "id": "L13-102",
+   "conforms": true,
+   "evidence": "src/tracer.jl:24-25 and :105: `Tracer{false}` decides on the primal and reports the taken path. :209-229 and :332-339: the sampled fallback runs only on the global tracer's `Undecidable` and 'misses only an untaken branch'. The local tracer's other miss, Float64 severing at tracer.jl:48, is the value-severing blind spot that D-349's next bullet states."
+  },
+  {
+   "id": "L13-111",
+   "conforms": true,
+   "evidence": "src/library.jl:2920: `x_init(::LQRTracker{NX, NU}) = zero(SVector{NU, Float64})`, an n_u-wide integrator. :2926-2929: x_deriv drives it with `gated_error(c, p.K_int * (u.z_ref - u.z), u)`. The discrete form is at :3059."
+  },
+  {
+   "id": "L13-112",
+   "conforms": false,
+   "evidence": "src/library.jl:2735 and :2902: `LQRTracker{NX, NU, NZ, Hold, Track, Fixed} <: AbstractLQRTracker{NX, NU, NZ, Hold, Track, Fixed}`, with no Standby parameter and no LQRTrackerBlock. Probe probes/L13_v/probe.jl:77 gives isdefined(Library, :LQRTrackerBlock) == false. D-385 (log.md:16143) drops Standby, and D-453 (log.md:19247) renames the parent.",
+   "class": "drift",
+   "fix": "over `AbstractLQRTracker{NX, NU, NZ, Hold, Track, Fixed}`",
+   "clear": true
+  },
+  {
+   "id": "L13-113",
+   "conforms": false,
+   "evidence": "src/library.jl:2374: `abstract type AbstractPID{V, Hold, Track, Fixed}`, and there is no PIDBlock (probe probes/L13_v/probe.jl:77 gives isdefined(Library, :PIDBlock) == false). D-453 (log.md:19247) records the rename.",
+   "class": "drift",
+   "fix": "as the PID is over `AbstractPID`",
+   "clear": true
+  },
+  {
+   "id": "L13-118",
+   "conforms": false,
+   "evidence": "There is no standby axis. Probe probes/L13_v/probe.jl:79: PID(Kp = 1.0, standby = true) throws MethodError, unsupported keyword 'standby'. src/library.jl:2334-2335: `axis_ports` adds `saturation` and `engaged` under Hold and `v` under Track. D-385 (log.md:16143, 'The keyword `standby` and the parameter `Standby` are retired') records the change.",
+   "class": "drift",
+   "fix": "`hold = true` adds the inputs `saturation` and `engaged`, and `tracking = true` the input `v`, on `PID`, `DiscretePID` and the two trackers (D-385).",
+   "clear": false
+  },
+  {
+   "id": "L13-119",
+   "conforms": false,
+   "evidence": "src/library.jl:2343-2344 gates the error to zero while not engaged. :2349-2352: the reference while not engaged is `v` only where the block tracks, else `u`. Probe probes/L13_v/probe.jl:89: with hold and tracking not engaged, error 0.0 and reference v (5.0); with hold alone not engaged, reference u (0.2). D-385 (log.md:16153-16159) records this.",
+   "class": "drift",
+   "fix": "While not engaged the error is gated off and the reference is `v` where the block tracks, else its own `u`, whatever the code.",
+   "clear": false
+  },
+  {
+   "id": "L13-120",
+   "conforms": false,
+   "evidence": "src/library.jl:2417-2420: `check_tracking` refuses a fixed infinite `Tt` under `tracking`, not under the hold. Probe probes/L13_v/probe.jl:82-83: PID(Kp = 1.0, hold = true) with the default Tt = Inf constructs, and PID(Kp = 1.0, tracking = true) throws ArgumentError. D-385 (log.md:16160-16162) moves the refusal.",
+   "class": "drift",
+   "fix": "A fixed infinite `Tt` is refused with `tracking = true`; a scheduled `Tt` passes, and the hold alone needs no `Tt`.",
+   "clear": true
+  },
+  {
+   "id": "L13-121",
+   "conforms": false,
+   "evidence": "src/library.jl:2694: `y_types(::DiscretePID{V}) = (u = V, u_raw = V, saturated = saturation_type(V))`. :3048-3049: DiscreteLQRTracker publishes `saturated`. Probe probes/L13_v/probe.jl:85 gives DiscretePID keys (:u, :u_raw, :saturated) and PID keys (:u, :u_raw). D-384 (log.md:16115) records the name.",
+   "class": "drift",
+   "fix": "`DiscretePID` and `DiscreteLQRTracker` publish `saturated`, the own clamp's `Int8` code",
+   "clear": true
+  },
+  {
+   "id": "L13-126",
+   "conforms": true,
+   "evidence": "src/library.jl:2334-2335 and :2379-2380: Hold adds `saturation = saturation_type(V)` and `engaged = channel_type(V, Bool)`. Probe probes/L13_v/probe.jl:80 gives (saturation = Int8, engaged = Bool) for a scalar PID and SVector{2,Int8} and SVector{2,Bool} for a vector one, as D-385 says."
+  },
+  {
+   "id": "L13-135",
+   "conforms": true,
+   "evidence": "src/library.jl:2417-2420: `tracking && Tt !== AsPort() && any(isinf, Tt)` exempts a scheduled `Tt`. Probe probes/L13_v/probe.jl:84 constructs PID(Kp = 1.0, tracking = true, Tt = AsPort())."
+  },
+  {
+   "id": "L13-143",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:576-577: `port(snapshot, path, name)` reads any component's port anywhere in the tree by its path, with no contract gate. src/sim.jl:3035 and src/model.jl:1004 give the live forms."
+  },
+  {
+   "id": "L13-145",
+   "conforms": true,
+   "evidence": "test/fixtures.jl:1561-1569: TerrainRig wires its abstract entry from `Constant(height_field(Terrain(h0 = 1.5)))`, a Constant holding the test handle."
+  },
+  {
+   "id": "L13-147",
+   "conforms": false,
+   "evidence": "src/library.jl:1641 (`y_types(::Step{V}) = Pinned{V}`) and :2142 (Relay): both are pinned, but as the bare `Pinned{V}` with port `y`, not `(out = Pinned{V},)`. Constant is the same at :350. D-437 (log.md:18128) records the bare form.",
+   "class": "drift",
+   "fix": "declares the bare `Pinned{V}`, its one port `y`, as `Constant` does",
+   "clear": true
+  },
+  {
+   "id": "L13-155",
+   "conforms": true,
+   "evidence": "Probe probes/L13_v/probe.jl:100: step!(frames = 5, ignore_stop_requests = :all) carries the run past the request to t = 0.5. A later run!(t_end = 1.0) ends at t = 0.5 with frame count still 5, :stopped, ModelRequestedStop. src/sim.jl:2037-2043 documents the entry check."
+  },
+  {
+   "id": "L13-164",
+   "conforms": true,
+   "evidence": "src/build.jl:1311-1360: `_check_handler` collects HandlerReturnKey and the per-key ConformanceFailures for one handler's return into one `diags` list, 'under one barrier per handler'."
+  },
+  {
+   "id": "L13-173",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:307-323: the kind marker tests rows in order and falls to 'opaque'. Probe probes/L13_v/probe.jl:112 gives Any, String and AbstractVector{Float64} → opaque, AbstractFloat → float, Real → number."
+  },
+  {
+   "id": "L13-175",
+   "conforms": false,
+   "evidence": "src/descriptor.jl:360-361: `_qualified_name` = parentmodule + name. The library is Redstone.Library (src/library.jl:1). Probe probes/L13_v/probe.jl:120 gives node type \"Redstone.Library.DiscretePID\". D-453 and D-433's 2026-11-12 annotation (log.md:17779-17780) record this.",
+   "class": "drift",
+   "fix": "The qualified base name keeps the full parent module, submodules included: `Redstone.Library.PID`.",
+   "clear": true
+  },
+  {
+   "id": "L13-178",
+   "conforms": false,
+   "evidence": "src/descriptor.jl:181-186: a root input's `pinned` is `!isempty(consumers)` over `pinning_consumers`, and `pinned_by` lists them. Probe probes/L13_v/probe.jl:124: root inputs feeding a DiscretePID and a UnitDelay read pinned = true. D-468 (log.md:20470) and D-433's 2026-11-20 annotation (log.md:17782) supersede the bullet.",
+   "class": "drift",
+   "fix": "A root input's `pinned` is D-168's meet, true when a pinning consumer refuses its type walked to a `Dual`, and `pinned_by` lists those consumers (D-468).",
+   "clear": false
+  },
+  {
+   "id": "L13-183",
+   "conforms": false,
+   "evidence": "The node `alias` is written: src/descriptor.jl:349-353 and `_alias` at :365. Probe probes/L13_v/probe.jl:127 gives alias \"Redstone.Library.SumJunction\". The envelope `name` is in the schema (src/descriptor.json:11), which the inspector writes and `descriptor` never does (probe: envelope keys have no name). D-433's 2026-10-27 annotation (log.md:17773-17777) records that both joined version one.",
+   "class": "drift",
+   "fix": "The node `alias` and the envelope `name` joined version one's shape; the type and kind on an assembly face are closed.",
+   "clear": true
+  },
+  {
+   "id": "L13-185",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:277-278: assembly inputs and outputs are `(name = ...)` only. Probe probes/L13_v/probe.jl:131 gives root inputs [(name = \"r\",), ...] and outputs [(name = \"u\",)]."
+  },
+  {
+   "id": "L13-194",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:109-111: the row is `(kind, severity, path, message)` before the optional fields. Probe probes/L13_v/probe.jl:141 gives keys (:kind, :severity, :path, :message)."
+  },
+  {
+   "id": "L13-203",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:405-419: `_summarize!` opens a non-empty NamedTuple into one dotted entry per field. Probe probes/L13_v/probe.jl:135: DiscretePID's parameters are fixed.Kp … fixed.c, nine entries."
+  },
+  {
+   "id": "L13-212",
+   "conforms": true,
+   "evidence": "src/descriptor.json:127 (BuildBody requires structure, outputs, events, warnings) and :211 (StructureSection requires nodes, root_inputs, anchors, scopes, grid, types). Every section the format gained (events, grid, schedule) is required, and only per-fact optional fields such as `admissible`, `h_min` and `alternatives` are not."
+  },
+  {
+   "id": "L13-221",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:197-198: the pool's anchor is `findfirst` over the anchors, counting from 1. src/structure.jl:134-135: Timing.anchor uses 0 for the base grid. test/test_descriptor.jl:629-630 and :393-394 check both. Probe probes/L13_v/probe.jl:146 gives pool anchor 1 and suppliers [1]."
+  }
+ ],
+ "notes": "All 49 L13 claims were verified read-only against W at 89a10a14. The probe is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L13_v/probe.jl, run twice. No tracked file was edited.\n\nResults: 22 conform, 26 drift and 1 defect.\n- **Defect (L13-017):** two tests assert diagnostic message text outside test_diagnostics.jl, against D-058 and code_rules.md: test_failures.jl:906 and test_trace.jl:949-954.\n- **Drift with the move already recorded in the same entry's annotation:** L13-010, 014, 018-020, 024, 037, 090, 175, 178 and 183. Rule 1 means these need no new entry.\n- **D-383's standby claims (L13-112, 113, 118-121):** superseded by D-385, D-384 and D-453. D-383's Status still reads ratified, with no annotation pointing to D-385.\n\nLine mismatch: L13-030 and L13-037 cite log.md:2219 and 2223, which fall inside D-065. D-159's text is at log.md:6215-6232, and I judged that text."
+}

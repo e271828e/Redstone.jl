@@ -1,0 +1,2046 @@
+{
+ "rows": [
+  {
+   "id": "S13b-051",
+   "file": "design/spec.md",
+   "line": 11556,
+   "kind": "law",
+   "claim": "A bare value thrown deliberately by model code is refused by the constructor, so it propagates from the catch unwrapped",
+   "evidence": "probe:101 (a component throwing 42 surfaces as MethodError, not 42); test/test_failures.jl:706-712 asserts MethodError; design/log.md D-225: 'fails the constructor with a MethodError inside the catch and leaves unframed'",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A bare value thrown deliberately by model code is neither, and the constructor refuses it with a `MethodError`, which leaves the catch in the value's place. The framework does not handle that throw.",
+   "note": "The value 42 is lost, not propagated. Status still moves to :inconsistent (probe:103)."
+  },
+  {
+   "id": "S13b-205",
+   "file": "design/spec.md",
+   "line": 11853,
+   "kind": "law",
+   "claim": "When two sources hold at one boundary, the termination record names the first in the order control stop, t_end, stop requests",
+   "evidence": "probe:250 (t_end equal to the request's boundary time 0.4 gives ModelRequestedStop, not EndTimeReached); src/sim.jl:2090-2091 and 2134 (a request is returned right after the publication, before the next frame top reads the stop word or t_end at 2095-2096); log D-268 line 11804 records face-before-interrupt",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The loop checks the stop requests at each publication, which comes before the next frame top. The frame top then checks a pending control stop and then `t_end`. When two sources hold at one boundary, the termination record names the request.",
+   "note": "Control stop versus request is partly recorded in D-268 (face before interrupt). t_end versus request is not recorded anywhere. The alternative fix is code, checking t_end's frame before the request scan; a verifier should rule which side is intended. D-203 calls the order normative."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S13b-001",
+   "file": "design/spec.md",
+   "line": 11459,
+   "kind": "law",
+   "claim": "A runtime failure is a throw inside a frame or inside boundary zero",
+   "evidence": "src/frame.jl:84-96; src/model.jl:332-338"
+  },
+  {
+   "id": "S13b-002",
+   "file": "design/spec.md",
+   "line": 11460,
+   "kind": "mech",
+   "claim": "Boundary zero runs the ordinary boundary macro-sequence with an empty integrate",
+   "evidence": "src/model.jl:700 (run_boundary! with ESTABLISH), 334"
+  },
+  {
+   "id": "S13b-003",
+   "file": "design/spec.md",
+   "line": 11462,
+   "kind": "mech",
+   "claim": "The framework catches the failure at one site",
+   "evidence": "src/model.jl:1075-1083; src/frame.jl:93-95"
+  },
+  {
+   "id": "S13b-004",
+   "file": "design/spec.md",
+   "line": 11470,
+   "kind": "mech",
+   "claim": "frame! wraps each whole frame, every boundary included, in a single try",
+   "evidence": "src/frame.jl:84-96"
+  },
+  {
+   "id": "S13b-005",
+   "file": "design/spec.md",
+   "line": 11471,
+   "kind": "mech",
+   "claim": "init! wraps boundary zero the same way",
+   "evidence": "src/model.jl:332-338"
+  },
+  {
+   "id": "S13b-006",
+   "file": "design/spec.md",
+   "line": 11472,
+   "kind": "mech",
+   "claim": "frame! calls frame_top! inside the try, before the frame touches state",
+   "evidence": "src/frame.jl:89-92"
+  },
+  {
+   "id": "S13b-007",
+   "file": "design/spec.md",
+   "line": 11473,
+   "kind": "mech",
+   "claim": "frame! calls settled! at every boundary it settles",
+   "evidence": "src/model.jl:186-190 (hooks doc); src/sim.jl:2038"
+  },
+  {
+   "id": "S13b-008",
+   "file": "design/spec.md",
+   "line": 11476,
+   "kind": "mech",
+   "claim": "A boundary runs integrate, project, event iteration, ticks, publication in that order",
+   "evidence": "src/model.jl:652-657 (run_boundary!), 672-676"
+  },
+  {
+   "id": "S13b-009",
+   "file": "design/spec.md",
+   "line": 11478,
+   "kind": "law",
+   "claim": "A boundary with no component due runs no ticks block",
+   "evidence": "src/model.jl:659 (run_ticks!(::Model, ::Nothing))"
+  },
+  {
+   "id": "S13b-010",
+   "file": "design/spec.md",
+   "line": 11478,
+   "kind": "law",
+   "claim": "frame! never wraps per stage or per component",
+   "evidence": "src/frame.jl:84-96 (one try)"
+  },
+  {
+   "id": "S13b-011",
+   "file": "design/spec.md",
+   "line": 11480,
+   "kind": "mech",
+   "claim": "The loop wraps each frame in a try of its own that decides the disposition",
+   "evidence": "src/sim.jl:2113-2134"
+  },
+  {
+   "id": "S13b-012",
+   "file": "design/spec.md",
+   "line": 11481,
+   "kind": "law",
+   "claim": "The loop's try builds no carrier",
+   "evidence": "src/sim.jl:2124-2128 (rethrow of the model's StepError)"
+  },
+  {
+   "id": "S13b-013",
+   "file": "design/spec.md",
+   "line": 11484,
+   "kind": "mech",
+   "claim": "The executor maintains the cursor as a plain mutable field",
+   "evidence": "src/executor.jl:17; src/build.jl:1424,1486"
+  },
+  {
+   "id": "S13b-014",
+   "file": "design/spec.md",
+   "line": 11486,
+   "kind": "law",
+   "claim": "The cursor records the component by its index in the component list",
+   "evidence": "src/executor.jl:18; src/model.jl:1080-1081"
+  },
+  {
+   "id": "S13b-015",
+   "file": "design/spec.md",
+   "line": 11490,
+   "kind": "law",
+   "claim": "The function is one of y_state, y_direct, x_deriv, s_update, guard, handler, x_projection",
+   "evidence": "src/executor.jl:19-20 (plus :none)"
+  },
+  {
+   "id": "S13b-016",
+   "file": "design/spec.md",
+   "line": 11492,
+   "kind": "law",
+   "claim": "The phase is drain, integrate, arrival, validation, trial, projection, round or ticks",
+   "evidence": "src/executor.jl:21; src/diagnostics.jl:268-276"
+  },
+  {
+   "id": "S13b-017",
+   "file": "design/spec.md",
+   "line": 11495,
+   "kind": "law",
+   "claim": "Inside integration the cursor records the attempt by ordinal in the step",
+   "evidence": "src/executor.jl:23; src/model.jl:812-813"
+  },
+  {
+   "id": "S13b-018",
+   "file": "design/spec.md",
+   "line": 11497,
+   "kind": "law",
+   "claim": "A rendered frame names the attempt only past the first",
+   "evidence": "src/diagnostics.jl:269-270; probe:70 (no attempt text at attempt 1)"
+  },
+  {
+   "id": "S13b-019",
+   "file": "design/spec.md",
+   "line": 11499,
+   "kind": "mech",
+   "claim": "Cursor upkeep is one store per dispatch with no allocation or exception handler",
+   "evidence": "src/executor.jl:8-11, 32-37"
+  },
+  {
+   "id": "S13b-020",
+   "file": "design/spec.md",
+   "line": 11501,
+   "kind": "law",
+   "claim": "The cursor covers every user-code surface uniformly",
+   "evidence": "probe:64; test/test_failures.jl coverage set (Tripwire, Mine, Landmine)"
+  },
+  {
+   "id": "S13b-021",
+   "file": "design/spec.md",
+   "line": 11502,
+   "kind": "law",
+   "claim": "RHS evaluations at interior RK stage points are covered",
+   "evidence": "probe:64 (stage 2 named); src/model.jl:678-682"
+  },
+  {
+   "id": "S13b-022",
+   "file": "design/spec.md",
+   "line": 11503,
+   "kind": "law",
+   "claim": "Guard evaluations at localization trial points are covered",
+   "evidence": "src/executor.jl:21 (:trial); test/fixtures.jl Landmine"
+  },
+  {
+   "id": "S13b-023",
+   "file": "design/spec.md",
+   "line": 11506,
+   "kind": "decl",
+   "claim": "ExecutionCursor is a mutable struct (block elides the body)",
+   "evidence": "src/executor.jl:17-24"
+  },
+  {
+   "id": "S13b-024",
+   "file": "design/spec.md",
+   "line": 11517,
+   "kind": "mech",
+   "claim": "The catch site wraps the original exception in StepError",
+   "evidence": "src/model.jl:1075-1083"
+  },
+  {
+   "id": "S13b-025",
+   "file": "design/spec.md",
+   "line": 11519,
+   "kind": "decl",
+   "claim": "StepError carries cursor frame, time, boundary index, host and cause",
+   "evidence": "probe:62"
+  },
+  {
+   "id": "S13b-026",
+   "file": "design/spec.md",
+   "line": 11521,
+   "kind": "law",
+   "claim": "The time is the clock at the failure",
+   "evidence": "probe:65; src/model.jl:1083"
+  },
+  {
+   "id": "S13b-027",
+   "file": "design/spec.md",
+   "line": 11522,
+   "kind": "law",
+   "claim": "The time is the boundary time in a boundary phase, the stage or trial time in integration",
+   "evidence": "src/diagnostics.jl:247-248; probe:65; test/test_stepper.jl:526"
+  },
+  {
+   "id": "S13b-028",
+   "file": "design/spec.md",
+   "line": 11523,
+   "kind": "law",
+   "claim": "The frame-entry boundary index is the replay pointer",
+   "evidence": "probe:116-121"
+  },
+  {
+   "id": "S13b-029",
+   "file": "design/spec.md",
+   "line": 11525,
+   "kind": "law",
+   "claim": "The pointer names the frame-top boundary at which the failing frame began",
+   "evidence": "probe:116; src/frame.jl:95 (k - 1)"
+  },
+  {
+   "id": "S13b-030",
+   "file": "design/spec.md",
+   "line": 11526,
+   "kind": "law",
+   "claim": "That frame top, a later one or boundary zero, is always a legal replay halt",
+   "evidence": "probe:120, 130"
+  },
+  {
+   "id": "S13b-031",
+   "file": "design/spec.md",
+   "line": 11528,
+   "kind": "law",
+   "claim": "host is :loop for a throw inside a frame",
+   "evidence": "probe:63; src/frame.jl:95"
+  },
+  {
+   "id": "S13b-032",
+   "file": "design/spec.md",
+   "line": 11529,
+   "kind": "law",
+   "claim": "host is :boundary_zero for a throw inside the boundary zero init! runs",
+   "evidence": "probe:78; src/model.jl:337"
+  },
+  {
+   "id": "S13b-033",
+   "file": "design/spec.md",
+   "line": 11530,
+   "kind": "law",
+   "claim": "host is :overlay for a throw inside the settling overlay! runs",
+   "evidence": "probe:137; src/model.jl:477"
+  },
+  {
+   "id": "S13b-034",
+   "file": "design/spec.md",
+   "line": 11531,
+   "kind": "law",
+   "claim": "host is :restore for a throw inside the copy or settling restore! runs",
+   "evidence": "src/model.jl:1338; src/diagnostics.jl:251"
+  },
+  {
+   "id": "S13b-035",
+   "file": "design/spec.md",
+   "line": 11533,
+   "kind": "mech",
+   "claim": "A StepError renders cursor frame and reproduction first, cause second",
+   "evidence": "src/diagnostics.jl:283-331; probe:69"
+  },
+  {
+   "id": "S13b-036",
+   "file": "design/spec.md",
+   "line": 11536,
+   "kind": "mech",
+   "claim": "A conformance failure throws a DiagnosticError at the table-write point",
+   "evidence": "src/store.jl:110-120"
+  },
+  {
+   "id": "S13b-037",
+   "file": "design/spec.md",
+   "line": 11539,
+   "kind": "law",
+   "claim": "The catch site unwraps a single-diagnostic DiagnosticError into the cause",
+   "evidence": "src/model.jl:1092; probe:108"
+  },
+  {
+   "id": "S13b-038",
+   "file": "design/spec.md",
+   "line": 11542,
+   "kind": "decl",
+   "claim": "A species is a StepError whose cause is a diagnostic",
+   "evidence": "src/diagnostics.jl:240-241"
+  },
+  {
+   "id": "S13b-039",
+   "file": "design/spec.md",
+   "line": 11543,
+   "kind": "law",
+   "claim": "The conformance failure species carries the field-diff payload",
+   "evidence": "src/store.jl:110-113 (observed_fields, declared_fields)"
+  },
+  {
+   "id": "S13b-040",
+   "file": "design/spec.md",
+   "line": 11545,
+   "kind": "law",
+   "claim": "The catch site is the only StepError constructor",
+   "evidence": "src/model.jl:1067-1083"
+  },
+  {
+   "id": "S13b-041",
+   "file": "design/spec.md",
+   "line": 11545,
+   "kind": "law",
+   "claim": "A StepError arriving at the catch site is an invariant failure",
+   "evidence": "src/model.jl:1076-1078 (InternalInvariant)"
+  },
+  {
+   "id": "S13b-042",
+   "file": "design/spec.md",
+   "line": 11547,
+   "kind": "law",
+   "claim": "A runtime check stays a plain thrower of its kind",
+   "evidence": "src/model.jl:935-946; src/store.jl:110"
+  },
+  {
+   "id": "S13b-043",
+   "file": "design/spec.md",
+   "line": 11547,
+   "kind": "law",
+   "claim": "A collected carrier has no single kind and rides as cause unchanged",
+   "evidence": "src/model.jl:1090-1092"
+  },
+  {
+   "id": "S13b-044",
+   "file": "design/spec.md",
+   "line": 11548,
+   "kind": "law",
+   "claim": "No runtime check throws a collected carrier",
+   "evidence": "rg over executor.jl, store.jl, frame.jl, stepper.jl, model.jl: vector carriers thrown only in doors' checks (model.jl:1262-1266), outside the guarded sequence"
+  },
+  {
+   "id": "S13b-045",
+   "file": "design/spec.md",
+   "line": 11550,
+   "kind": "decl",
+   "claim": "StepError{C} takes the type of its cause",
+   "evidence": "src/diagnostics.jl:245"
+  },
+  {
+   "id": "S13b-046",
+   "file": "design/spec.md",
+   "line": 11551,
+   "kind": "decl",
+   "claim": "C is bounded to a diagnostic or an exception",
+   "evidence": "src/diagnostics.jl:245"
+  },
+  {
+   "id": "S13b-047",
+   "file": "design/spec.md",
+   "line": 11552,
+   "kind": "law",
+   "claim": "A species is StepError{Kind}, a raw throw StepError{ArgumentError} and the like",
+   "evidence": "probe:77, 108"
+  },
+  {
+   "id": "S13b-048",
+   "file": "design/spec.md",
+   "line": 11553,
+   "kind": "law",
+   "claim": "isa StepError matches both",
+   "evidence": "probe:70, 77"
+  },
+  {
+   "id": "S13b-049",
+   "file": "design/spec.md",
+   "line": 11554,
+   "kind": "ex",
+   "claim": "@test_throws StepError{ConformanceFailure} (lead: test_throws is Test's macro)",
+   "evidence": "test/test_lifecycle.jl:814 uses the same idiom; ConformanceFailure src/store.jl:110"
+  },
+  {
+   "id": "S13b-050",
+   "file": "design/spec.md",
+   "line": 11555,
+   "kind": "law",
+   "claim": "A collected carrier riding as cause is an exception and falls under that arm",
+   "evidence": "src/diagnostics.jl:109,245"
+  },
+  {
+   "id": "S13b-052",
+   "file": "design/spec.md",
+   "line": 11558,
+   "kind": "law",
+   "claim": "The framework does not handle that throw",
+   "evidence": "test/test_failures.jl:706-712"
+  },
+  {
+   "id": "S13b-053",
+   "file": "design/spec.md",
+   "line": 11558,
+   "kind": "law",
+   "claim": "The cursor frame and the pointer are lost for it",
+   "evidence": "probe:101 (MethodError carries no frame)"
+  },
+  {
+   "id": "S13b-054",
+   "file": "design/spec.md",
+   "line": 11559,
+   "kind": "law",
+   "claim": "The status is written before the carrier is built, so the lifecycle moves",
+   "evidence": "src/frame.jl:93-95; probe:103"
+  },
+  {
+   "id": "S13b-055",
+   "file": "design/spec.md",
+   "line": 11562,
+   "kind": "decl",
+   "claim": "StepError struct fields cursor, t, boundary, host, cause::C with host values listed",
+   "evidence": "src/diagnostics.jl:245-254; probe:62"
+  },
+  {
+   "id": "S13b-056",
+   "file": "design/spec.md",
+   "line": 11577,
+   "kind": "law",
+   "claim": "The catch site wraps an InterruptException like any throw",
+   "evidence": "src/frame.jl:93-95 (catch err, no filter)"
+  },
+  {
+   "id": "S13b-057",
+   "file": "design/spec.md",
+   "line": 11578,
+   "kind": "law",
+   "claim": "Inside the guarded sequence an interrupt is a cut frame and the status says so",
+   "evidence": "src/frame.jl:94 (:inconsistent)"
+  },
+  {
+   "id": "S13b-058",
+   "file": "design/spec.md",
+   "line": 11580,
+   "kind": "mech",
+   "claim": "The operator's interrupt is a stop at unmask points the catch site never sees",
+   "evidence": "src/sim.jl:2135-2141, 2148-2151"
+  },
+  {
+   "id": "S13b-059",
+   "file": "design/spec.md",
+   "line": 11582,
+   "kind": "law",
+   "claim": "A bare InterruptException reaching a loop arm is a deferred raise, a stop",
+   "evidence": "src/sim.jl:2135-2141"
+  },
+  {
+   "id": "S13b-060",
+   "file": "design/spec.md",
+   "line": 11583,
+   "kind": "law",
+   "claim": "A StepError is a cut frame, a failure",
+   "evidence": "src/sim.jl:2131-2133"
+  },
+  {
+   "id": "S13b-061",
+   "file": "design/spec.md",
+   "line": 11584,
+   "kind": "law",
+   "claim": "With the mask in force a single interrupt never raises inside the guarded sequence",
+   "evidence": "src/sim.jl:2106 (sigatomic_begin) to 2125"
+  },
+  {
+   "id": "S13b-062",
+   "file": "design/spec.md",
+   "line": 11585,
+   "kind": "law",
+   "claim": "Only Julia's forced throw can cut a frame, and it ends the run errored",
+   "evidence": "src/sim.jl:113-117 (LoopError doc); test/test_failures.jl:594-607"
+  },
+  {
+   "id": "S13b-063",
+   "file": "design/spec.md",
+   "line": 11590,
+   "kind": "law",
+   "claim": "The Simulation ends stopped or errored with the exception retrievable",
+   "evidence": "src/sim.jl:508-513, 1762-1764; probe:68"
+  },
+  {
+   "id": "S13b-064",
+   "file": "design/spec.md",
+   "line": 11591,
+   "kind": "law",
+   "claim": "An unattended run rethrows after the tail completes",
+   "evidence": "src/sim.jl:1732; test/test_lifecycle.jl:814"
+  },
+  {
+   "id": "S13b-065",
+   "file": "design/spec.md",
+   "line": 11593,
+   "kind": "law",
+   "claim": "An interactive session logs the rendered error",
+   "evidence": "src/sim.jl:1772-1774; test/test_lifecycle.jl:806-808"
+  },
+  {
+   "id": "S13b-066",
+   "file": "design/spec.md",
+   "line": 11594,
+   "kind": "mech",
+   "claim": "run! and replay! discriminate by the roster",
+   "evidence": "src/sim.jl:1732 in shared _run_body!; test/test_lifecycle.jl:786-838"
+  },
+  {
+   "id": "S13b-067",
+   "file": "design/spec.md",
+   "line": 11596,
+   "kind": "law",
+   "claim": "With no device rostered the run is unattended and rethrows",
+   "evidence": "src/sim.jl:1732; test/test_lifecycle.jl:814"
+  },
+  {
+   "id": "S13b-068",
+   "file": "design/spec.md",
+   "line": 11597,
+   "kind": "law",
+   "claim": "With a device it logs the error, returns, and termination(sim) keeps the cause",
+   "evidence": "test/test_lifecycle.jl:803-810"
+  },
+  {
+   "id": "S13b-069",
+   "file": "design/spec.md",
+   "line": 11598,
+   "kind": "law",
+   "claim": "Lifecycle is errored after a throw in the frame, stopped after a fault outside it",
+   "evidence": "src/sim.jl:508-513, 1749-1755; probe:67"
+  },
+  {
+   "id": "S13b-070",
+   "file": "design/spec.md",
+   "line": 11599,
+   "kind": "law",
+   "claim": "step! is deviceless by construction and always rethrows",
+   "evidence": "src/sim.jl:2160; test/test_lifecycle.jl:817-822"
+  },
+  {
+   "id": "S13b-071",
+   "file": "design/spec.md",
+   "line": 11604,
+   "kind": "mech",
+   "claim": "Staged inputs are drained and recorded at the frame top, before the boundary executes",
+   "evidence": "src/sim.jl:2066-2070 (top hook drains first)"
+  },
+  {
+   "id": "S13b-072",
+   "file": "design/spec.md",
+   "line": 11606,
+   "kind": "law",
+   "claim": "The failing boundary's inputs are already in the trace",
+   "evidence": "test/test_lifecycle.jl:824-829; probe:116-121"
+  },
+  {
+   "id": "S13b-073",
+   "file": "design/spec.md",
+   "line": 11607,
+   "kind": "law",
+   "claim": "The error names the frame-entry boundary k to replay to",
+   "evidence": "src/diagnostics.jl:316-317; probe:69"
+  },
+  {
+   "id": "S13b-074",
+   "file": "design/spec.md",
+   "line": 11607,
+   "kind": "law",
+   "claim": "replay!(...; to_boundary = k) halts exactly at that frame top",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "S13b-075",
+   "file": "design/spec.md",
+   "line": 11608,
+   "kind": "law",
+   "claim": "The halt is in :replay",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "S13b-076",
+   "file": "design/spec.md",
+   "line": 11610,
+   "kind": "mech",
+   "claim": "The failing frame's record is still ahead of the simulation",
+   "evidence": "probe:121"
+  },
+  {
+   "id": "S13b-077",
+   "file": "design/spec.md",
+   "line": 11611,
+   "kind": "mech",
+   "claim": "step! applies the record and re-executes the failing frame, localized boundaries included",
+   "evidence": "probe:121; test/fixtures.jl Landmine (trial-phase throw)"
+  },
+  {
+   "id": "S13b-078",
+   "file": "design/spec.md",
+   "line": 11613,
+   "kind": "ex",
+   "claim": "The replay!/step! recipe block runs as written",
+   "evidence": "probe:117-121 (adapted with the Exploder fixture)"
+  },
+  {
+   "id": "S13b-079",
+   "file": "design/spec.md",
+   "line": 11620,
+   "kind": "law",
+   "claim": "Boundary zero is caught too, under the service's disposition",
+   "evidence": "src/model.jl:332-338; probe:77"
+  },
+  {
+   "id": "S13b-080",
+   "file": "design/spec.md",
+   "line": 11621,
+   "kind": "mech",
+   "claim": "Boundary zero runs inside init!, a stopped-sim service, not the loop",
+   "evidence": "src/sim.jl:831-849; src/diagnostics.jl:1282"
+  },
+  {
+   "id": "S13b-081",
+   "file": "design/spec.md",
+   "line": 11622,
+   "kind": "mech",
+   "claim": "The simulation's init! calls the Model's init!, which runs boundary zero",
+   "evidence": "src/sim.jl:848"
+  },
+  {
+   "id": "S13b-082",
+   "file": "design/spec.md",
+   "line": 11623,
+   "kind": "mech",
+   "claim": "Boundary zero's surfaces keep the cursor, so the Model's init! hosts the same catch",
+   "evidence": "src/model.jl:334-337; probe:79, 143"
+  },
+  {
+   "id": "S13b-083",
+   "file": "design/spec.md",
+   "line": 11625,
+   "kind": "law",
+   "claim": "A boundary-zero throw arrives as a StepError from the one constructor",
+   "evidence": "probe:77; src/model.jl:337"
+  },
+  {
+   "id": "S13b-084",
+   "file": "design/spec.md",
+   "line": 11626,
+   "kind": "law",
+   "claim": "Its cursor frame comes from the cursor",
+   "evidence": "probe:79"
+  },
+  {
+   "id": "S13b-085",
+   "file": "design/spec.md",
+   "line": 11626,
+   "kind": "law",
+   "claim": "Its time is t0",
+   "evidence": "probe:78 (t0 = 2 gives t = 2.0)"
+  },
+  {
+   "id": "S13b-086",
+   "file": "design/spec.md",
+   "line": 11626,
+   "kind": "law",
+   "claim": "Its pointer is 0",
+   "evidence": "probe:78; src/model.jl:337"
+  },
+  {
+   "id": "S13b-087",
+   "file": "design/spec.md",
+   "line": 11627,
+   "kind": "law",
+   "claim": "The species rule applies at boundary zero",
+   "evidence": "probe:143 (StepError{Detonated} with handler frame); src/model.jl:1092"
+  },
+  {
+   "id": "S13b-088",
+   "file": "design/spec.md",
+   "line": 11627,
+   "kind": "law",
+   "claim": "Any throw inside a door writes the Model's status :built",
+   "evidence": "src/model.jl:336, 476, 1337; probe:80, 138"
+  },
+  {
+   "id": "S13b-089",
+   "file": "design/spec.md",
+   "line": 11629,
+   "kind": "law",
+   "claim": "That returns the simulation's lifecycle to built",
+   "evidence": "probe:80, 138; src/sim.jl:511"
+  },
+  {
+   "id": "S13b-090",
+   "file": "design/spec.md",
+   "line": 11630,
+   "kind": "law",
+   "claim": "A throw inside a frame writes :inconsistent",
+   "evidence": "probe:67; src/frame.jl:94"
+  },
+  {
+   "id": "S13b-091",
+   "file": "design/spec.md",
+   "line": 11631,
+   "kind": "law",
+   "claim": "An InterruptException inside a door is wrapped like the frame's",
+   "evidence": "src/model.jl:335-337, 475-477, 1336-1338 (unfiltered catch); src/sim.jl:813-815"
+  },
+  {
+   "id": "S13b-092",
+   "file": "design/spec.md",
+   "line": 11633,
+   "kind": "law",
+   "claim": "The carrier names where the interrupt landed",
+   "evidence": "src/diagnostics.jl:301-317"
+  },
+  {
+   "id": "S13b-093",
+   "file": "design/spec.md",
+   "line": 11635,
+   "kind": "law",
+   "claim": "A boundary-zero throw leaves no trace",
+   "evidence": "probe:82, 85"
+  },
+  {
+   "id": "S13b-094",
+   "file": "design/spec.md",
+   "line": 11635,
+   "kind": "law",
+   "claim": "A boundary-zero throw leaves no checkpoint",
+   "evidence": "probe:86"
+  },
+  {
+   "id": "S13b-095",
+   "file": "design/spec.md",
+   "line": 11636,
+   "kind": "law",
+   "claim": "The run init! opened stays behind, empty, with no trace header",
+   "evidence": "probe:85"
+  },
+  {
+   "id": "S13b-096",
+   "file": "design/spec.md",
+   "line": 11637,
+   "kind": "law",
+   "claim": "The run before it is gone",
+   "evidence": "src/sim.jl:841-843 (_open_run! rebinds sim.run before the model's init!)"
+  },
+  {
+   "id": "S13b-097",
+   "file": "design/spec.md",
+   "line": 11638,
+   "kind": "law",
+   "claim": "trace(sim) and the advances refuse a built simulation",
+   "evidence": "probe:82-84"
+  },
+  {
+   "id": "S13b-098",
+   "file": "design/spec.md",
+   "line": 11639,
+   "kind": "law",
+   "claim": "init! takes the trace header only after boundary zero publishes",
+   "evidence": "src/sim.jl:850-855"
+  },
+  {
+   "id": "S13b-099",
+   "file": "design/spec.md",
+   "line": 11639,
+   "kind": "law",
+   "claim": "A boundary-zero failure is reproduced by init! under the same condition",
+   "evidence": "src/diagnostics.jl:320-321; probe:80 output"
+  },
+  {
+   "id": "S13b-100",
+   "file": "design/spec.md",
+   "line": 11641,
+   "kind": "law",
+   "claim": "A frame-one failure carries the same pointer 0",
+   "evidence": "probe:126"
+  },
+  {
+   "id": "S13b-101",
+   "file": "design/spec.md",
+   "line": 11643,
+   "kind": "law",
+   "claim": "The carrier's host tells the two apart",
+   "evidence": "probe:78 vs 126"
+  },
+  {
+   "id": "S13b-102",
+   "file": "design/spec.md",
+   "line": 11643,
+   "kind": "mech",
+   "claim": "The rendered recipe reads the host",
+   "evidence": "src/diagnostics.jl:318-327"
+  },
+  {
+   "id": "S13b-103",
+   "file": "design/spec.md",
+   "line": 11644,
+   "kind": "law",
+   "claim": "A frame-one failure has a trace and the halt-then-step! recipe holds at pointer 0",
+   "evidence": "probe:130-131"
+  },
+  {
+   "id": "S13b-104",
+   "file": "design/spec.md",
+   "line": 11645,
+   "kind": "mech",
+   "claim": "The halt restores the header and stops; step! re-executes frame one from the record",
+   "evidence": "probe:130-131"
+  },
+  {
+   "id": "S13b-105",
+   "file": "design/spec.md",
+   "line": 11646,
+   "kind": "law",
+   "claim": "A throw in overlay!'s settling takes boundary zero's disposition, returning to built",
+   "evidence": "probe:137-138"
+  },
+  {
+   "id": "S13b-106",
+   "file": "design/spec.md",
+   "line": 11648,
+   "kind": "law",
+   "claim": "The run the door opened stays behind with no header",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "S13b-107",
+   "file": "design/spec.md",
+   "line": 11649,
+   "kind": "law",
+   "claim": "The reproduction is overlay! under the same condition on the same stopped state",
+   "evidence": "src/diagnostics.jl:322-323; test/test_failures.jl:626-633"
+  },
+  {
+   "id": "S13b-108",
+   "file": "design/spec.md",
+   "line": 11652,
+   "kind": "mech",
+   "claim": "Boundary zero has no tail to take and no snapshot to promote",
+   "evidence": "src/sim.jl:831-855 (no run body or tail in init!)"
+  },
+  {
+   "id": "S13b-109",
+   "file": "design/spec.md",
+   "line": 11654,
+   "kind": "law",
+   "claim": "run! and step! refuse the built simulation and name init!",
+   "evidence": "probe:83-84 (MissingInit); src/sim.jl:1412-1414"
+  },
+  {
+   "id": "S13b-110",
+   "file": "design/spec.md",
+   "line": 11655,
+   "kind": "law",
+   "claim": "init!, restore! and replay! remain legal",
+   "evidence": "probe:87, 94, 96; src/diagnostics.jl:1282"
+  },
+  {
+   "id": "S13b-111",
+   "file": "design/spec.md",
+   "line": 11656,
+   "kind": "law",
+   "claim": "init! re-establishes every store before applying a condition",
+   "evidence": "src/model.jl:324-327 (establish_defaults! then _apply_plan!)"
+  },
+  {
+   "id": "S13b-112",
+   "file": "design/spec.md",
+   "line": 11658,
+   "kind": "law",
+   "claim": "No termination record is written",
+   "evidence": "probe:81"
+  },
+  {
+   "id": "S13b-113",
+   "file": "design/spec.md",
+   "line": 11660,
+   "kind": "mech",
+   "claim": "The stores may stay half-transitioned until the next init!, restore! or replay!",
+   "evidence": "src/model.jl:1332-1334 (restore rewrites state); no reset on the throw path 336-337"
+  },
+  {
+   "id": "S13b-114",
+   "file": "design/spec.md",
+   "line": 11661,
+   "kind": "law",
+   "claim": "The stores are retained for inspection as an errored simulation's are",
+   "evidence": "src/diagnostics.jl:1281 (READER_LEGAL includes :built, :errored)"
+  },
+  {
+   "id": "S13b-115",
+   "file": "design/spec.md",
+   "line": 11662,
+   "kind": "law",
+   "claim": "trim!'s commit is an init! and inherits the rule",
+   "evidence": "src/sim.jl:1110, 1130"
+  },
+  {
+   "id": "S13b-116",
+   "file": "design/spec.md",
+   "line": 11667,
+   "kind": "mech",
+   "claim": "NaN comparisons are false, so no declared guard catches NaN state",
+   "evidence": "Julia semantics; guards are Bool comparisons (test/fixtures.jl:Trigger)"
+  },
+  {
+   "id": "S13b-117",
+   "file": "design/spec.md",
+   "line": 11668,
+   "kind": "mech",
+   "claim": "An isfinite pass over the flat state buffer runs after every accepted attempt",
+   "evidence": "src/model.jl:831-835, 926-930"
+  },
+  {
+   "id": "S13b-118",
+   "file": "design/spec.md",
+   "line": 11669,
+   "kind": "law",
+   "claim": "The pass fails fast as NonfiniteState",
+   "evidence": "probe:149"
+  },
+  {
+   "id": "S13b-119",
+   "file": "design/spec.md",
+   "line": 11670,
+   "kind": "law",
+   "claim": "NonfiniteState is a StepError species",
+   "evidence": "probe:149"
+  },
+  {
+   "id": "S13b-120",
+   "file": "design/spec.md",
+   "line": 11671,
+   "kind": "law",
+   "claim": "It names the component, the state leaf and the frame-entry boundary",
+   "evidence": "probe:150; src/diagnostics.jl:343-349"
+  },
+  {
+   "id": "S13b-121",
+   "file": "design/spec.md",
+   "line": 11674,
+   "kind": "law",
+   "claim": "The pass is the boundary's first act",
+   "evidence": "src/model.jl:831-836"
+  },
+  {
+   "id": "S13b-122",
+   "file": "design/spec.md",
+   "line": 11675,
+   "kind": "law",
+   "claim": "It runs right after integrate returns, before x_projection and the boundary sweep",
+   "evidence": "probe:149 (Diverger's x_projection would throw DomainError, NonfiniteState wins); src/model.jl:831-836"
+  },
+  {
+   "id": "S13b-123",
+   "file": "design/spec.md",
+   "line": 11676,
+   "kind": "law",
+   "claim": "It reads the accepted attempt's trial before the Model commits it",
+   "evidence": "src/model.jl:833-836; test/test_stepper.jl:524-531"
+  },
+  {
+   "id": "S13b-124",
+   "file": "design/spec.md",
+   "line": 11678,
+   "kind": "law",
+   "claim": "A rejected trial is discarded unread",
+   "evidence": "src/model.jl:838-841"
+  },
+  {
+   "id": "S13b-125",
+   "file": "design/spec.md",
+   "line": 11678,
+   "kind": "law",
+   "claim": "NonfiniteState names the component whose own block diverged",
+   "evidence": "probe:150; src/model.jl:937-941"
+  },
+  {
+   "id": "S13b-126",
+   "file": "design/spec.md",
+   "line": 11687,
+   "kind": "law",
+   "claim": "x-dot does not participate in the check",
+   "evidence": "src/model.jl:926-930 (only xnext is swept)"
+  },
+  {
+   "id": "S13b-127",
+   "file": "design/spec.md",
+   "line": 11688,
+   "kind": "mech",
+   "claim": "A nonfinite derivative contaminates its own block's step result within that step",
+   "evidence": "src/model.jl:921-925 comment; probe:150 (blocks attributed to owner)"
+  },
+  {
+   "id": "S13b-128",
+   "file": "design/spec.md",
+   "line": 11690,
+   "kind": "mech",
+   "claim": "x-dot buffers are integrator scratch, written per stage",
+   "evidence": "src/model.jl:678-682 (evaluate! rhs body)"
+  },
+  {
+   "id": "S13b-129",
+   "file": "design/spec.md",
+   "line": 11696,
+   "kind": "mech",
+   "claim": "Device-side user code fails in the device's own domain, on the device task",
+   "evidence": "src/sim.jl:1840-1850 (init bracket); src/diagnostics.jl:1569-1597, 1688"
+  },
+  {
+   "id": "S13b-130",
+   "file": "design/spec.md",
+   "line": 11698,
+   "kind": "law",
+   "claim": "Device-side failure has two classes",
+   "evidence": "src/diagnostics.jl:1569 (MalformedDatum author's kind, rest framework's)"
+  },
+  {
+   "id": "S13b-131",
+   "file": "design/spec.md",
+   "line": 11699,
+   "kind": "law",
+   "claim": "A genuine bug takes the per-device crash path and the wrapper reports DeviceCrash",
+   "evidence": "src/diagnostics.jl:1687-1688; src/sim.jl:1845"
+  },
+  {
+   "id": "S13b-132",
+   "file": "design/spec.md",
+   "line": 11700,
+   "kind": "law",
+   "claim": "The run goes on without the device unless should_abort is set",
+   "evidence": "src/diagnostics.jl:1775-1777; src/sim.jl:1846"
+  },
+  {
+   "id": "S13b-133",
+   "file": "design/spec.md",
+   "line": 11701,
+   "kind": "decl",
+   "claim": "should_abort is an attach! keyword",
+   "evidence": "src/sim.jl:2446-2452"
+  },
+  {
+   "id": "S13b-134",
+   "file": "design/spec.md",
+   "line": 11702,
+   "kind": "mech",
+   "claim": "The liveness heartbeat shows a hang",
+   "evidence": "src/dataplane.jl:124-161"
+  },
+  {
+   "id": "S13b-135",
+   "file": "design/spec.md",
+   "line": 11703,
+   "kind": "law",
+   "claim": "An unmappable datum is no failure; the loop body tolerates it and reports MalformedDatum",
+   "evidence": "src/diagnostics.jl:1589-1597, 1726 (warning, never throws)"
+  },
+  {
+   "id": "S13b-136",
+   "file": "design/spec.md",
+   "line": 11712,
+   "kind": "law",
+   "claim": "FlightCore's SimulationTermination idiom has no counterpart (lead: prior-art name)",
+   "evidence": "rg: no SimulationTermination in src/ or test/; sim.jl:2121-2134 turns every throw into LoopError"
+  },
+  {
+   "id": "S13b-137",
+   "file": "design/spec.md",
+   "line": 11713,
+   "kind": "law",
+   "claim": "Graceful termination is model state, never an exception",
+   "evidence": "src/sim.jl:2038-2039, 2090-2091 (stop read from the snapshot)"
+  },
+  {
+   "id": "S13b-138",
+   "file": "design/spec.md",
+   "line": 11714,
+   "kind": "mech",
+   "claim": "Model-state termination reaches the loop through declared machinery",
+   "evidence": "src/sim.jl:582-593, 2038-2039"
+  },
+  {
+   "id": "S13b-139",
+   "file": "design/spec.md",
+   "line": 11715,
+   "kind": "law",
+   "claim": "Exceptions from model code are always abnormal",
+   "evidence": "src/frame.jl:93-95; src/sim.jl:1748-1755"
+  },
+  {
+   "id": "S13b-140",
+   "file": "design/spec.md",
+   "line": 11718,
+   "kind": "mech",
+   "claim": "The wall-clock stop (front end, device handle, code) is the control-plane path",
+   "evidence": "src/sim.jl:14-17, 2095-2096"
+  },
+  {
+   "id": "S13b-141",
+   "file": "design/spec.md",
+   "line": 11720,
+   "kind": "mech",
+   "claim": "The control plane carries pause, pace and stop",
+   "evidence": "src/sim.jl (Control; pause!/pace!/stop!)"
+  },
+  {
+   "id": "S13b-142",
+   "file": "design/spec.md",
+   "line": 11721,
+   "kind": "law",
+   "claim": "The sim-time channel meets the control channel at the §12.4 unmask arm",
+   "evidence": "src/sim.jl:2135-2151 (_interrupt_source yields to a holding request)"
+  },
+  {
+   "id": "S13b-143",
+   "file": "design/spec.md",
+   "line": 11731,
+   "kind": "mech",
+   "claim": "Detection is ordinary guard, handler and mode machinery",
+   "evidence": "src/model.jl:732-775 (event_phase!)"
+  },
+  {
+   "id": "S13b-144",
+   "file": "design/spec.md",
+   "line": 11733,
+   "kind": "law",
+   "claim": "A stop to be localized is declared as a sign-form event",
+   "evidence": "test/test_localization.jl; src/executor.jl:21 (:trial)"
+  },
+  {
+   "id": "S13b-145",
+   "file": "design/spec.md",
+   "line": 11734,
+   "kind": "mech",
+   "claim": "A localized event brackets the crossing instant by root-finding over trial sweeps",
+   "evidence": "src/executor.jl:21-22 (:trial phase); src/frame.jl:25-26"
+  },
+  {
+   "id": "S13b-146",
+   "file": "design/spec.md",
+   "line": 11737,
+   "kind": "ex",
+   "claim": "The handler sets m.crashed (lead: local example name)",
+   "evidence": "illustrative state name, no API"
+  },
+  {
+   "id": "S13b-147",
+   "file": "design/spec.md",
+   "line": 11738,
+   "kind": "law",
+   "claim": "The snapshot at the crossing instant carries the touchdown state",
+   "evidence": "src/model.jl:186-190 (settled! at each localized boundary); src/sim.jl:2038"
+  },
+  {
+   "id": "S13b-148",
+   "file": "design/spec.md",
+   "line": 11741,
+   "kind": "law",
+   "claim": "A stop request is an output port of the enum StopFlag",
+   "evidence": "src/build.jl:498-509"
+  },
+  {
+   "id": "S13b-149",
+   "file": "design/spec.md",
+   "line": 11743,
+   "kind": "law",
+   "claim": "A port of exactly StopFlag is a stop request, whoever publishes it",
+   "evidence": "src/build.jl:499-501; probe:166"
+  },
+  {
+   "id": "S13b-150",
+   "file": "design/spec.md",
+   "line": 11744,
+   "kind": "decl",
+   "claim": "@enum StopFlag NO_STOP STOP_REQUESTED",
+   "evidence": "src/leaves.jl:270; probe:163"
+  },
+  {
+   "id": "S13b-151",
+   "file": "design/spec.md",
+   "line": 11745,
+   "kind": "law",
+   "claim": "An enum is one leaf, pinned",
+   "evidence": "src/leaves.jl:3-6, 21"
+  },
+  {
+   "id": "S13b-152",
+   "file": "design/spec.md",
+   "line": 11746,
+   "kind": "mech",
+   "claim": "Cells are stored per element type, so all requests share one StopFlag block",
+   "evidence": "src/build.jl:498; src/store.jl:44"
+  },
+  {
+   "id": "S13b-153",
+   "file": "design/spec.md",
+   "line": 11749,
+   "kind": "ex",
+   "claim": "Landing gear Ldg ORs three legs and feeds a StopRequest child (lead: example name)",
+   "evidence": "illustrative; §6.1 example, not API"
+  },
+  {
+   "id": "S13b-154",
+   "file": "design/spec.md",
+   "line": 11751,
+   "kind": "law",
+   "claim": "No level re-exports the request; the loop reads it where it is",
+   "evidence": "src/sim.jl:588-594 (buffer scan); src/build.jl:505 (requester by owning path)"
+  },
+  {
+   "id": "S13b-155",
+   "file": "design/spec.md",
+   "line": 11754,
+   "kind": "decl",
+   "claim": "The library spelling is StopRequest",
+   "evidence": "src/library.jl:430"
+  },
+  {
+   "id": "S13b-156",
+   "file": "design/spec.md",
+   "line": 11755,
+   "kind": "mech",
+   "claim": "StopRequest is a stateless continuous primitive",
+   "evidence": "src/library.jl:430-445 (x_init nothing, y_direct)"
+  },
+  {
+   "id": "S13b-157",
+   "file": "design/spec.md",
+   "line": 11756,
+   "kind": "decl",
+   "claim": "Its one input is the Bool, its one output the flag",
+   "evidence": "src/library.jl:438-440"
+  },
+  {
+   "id": "S13b-158",
+   "file": "design/spec.md",
+   "line": 11756,
+   "kind": "decl",
+   "claim": "Its reason is instance data",
+   "evidence": "src/library.jl:430-432, 442"
+  },
+  {
+   "id": "S13b-159",
+   "file": "design/spec.md",
+   "line": 11758,
+   "kind": "decl",
+   "claim": "The StopRequest code block equals the library definition",
+   "evidence": "src/library.jl:430-442 line for line"
+  },
+  {
+   "id": "S13b-160",
+   "file": "design/spec.md",
+   "line": 11771,
+   "kind": "law",
+   "claim": "A stop request consumed by nobody builds silently",
+   "evidence": "probe:159 (model builds, sim created)"
+  },
+  {
+   "id": "S13b-161",
+   "file": "design/spec.md",
+   "line": 11772,
+   "kind": "law",
+   "claim": "StopRequest is continuous, so it refreshes at every boundary, t* included",
+   "evidence": "src/library.jl:441 (y_direct, continuous tier)"
+  },
+  {
+   "id": "S13b-162",
+   "file": "design/spec.md",
+   "line": 11773,
+   "kind": "law",
+   "claim": "One primitive sits anywhere in the tree",
+   "evidence": "src/library.jl:426-428; probe:200 (nested under Group)"
+  },
+  {
+   "id": "S13b-163",
+   "file": "design/spec.md",
+   "line": 11775,
+   "kind": "law",
+   "claim": "Fed by a discrete detector, it sees the tick at the tick's own boundary",
+   "evidence": "probe:283 (stop flag equals detector output in every snapshot)"
+  },
+  {
+   "id": "S13b-164",
+   "file": "design/spec.md",
+   "line": 11777,
+   "kind": "law",
+   "claim": "Any component may publish a StopFlag port directly",
+   "evidence": "probe:166 (BareFlag)"
+  },
+  {
+   "id": "S13b-165",
+   "file": "design/spec.md",
+   "line": 11783,
+   "kind": "law",
+   "claim": "Two placements are IllegalPortType, checked at build",
+   "evidence": "probe:168, 171; src/build.jl:428-431, 450-453"
+  },
+  {
+   "id": "S13b-166",
+   "file": "design/spec.md",
+   "line": 11784,
+   "kind": "law",
+   "claim": "A nested StopFlag leaf is refused with reason :stop_flag_nested",
+   "evidence": "probe:168"
+  },
+  {
+   "id": "S13b-167",
+   "file": "design/spec.md",
+   "line": 11785,
+   "kind": "law",
+   "claim": "A root input carrying StopFlag anywhere is :stop_flag_at_root",
+   "evidence": "probe:171; src/build.jl:450-453"
+  },
+  {
+   "id": "S13b-168",
+   "file": "design/spec.md",
+   "line": 11789,
+   "kind": "law",
+   "claim": "A StopFlag input port places nothing and is left alone",
+   "evidence": "src/build.jl:437-440 (place! runs over outputs only)"
+  },
+  {
+   "id": "S13b-169",
+   "file": "design/spec.md",
+   "line": 11792,
+   "kind": "law",
+   "claim": "The build records one Requester(path, port, reason) per StopFlag output port",
+   "evidence": "src/build.jl:498-507; probe:159"
+  },
+  {
+   "id": "S13b-170",
+   "file": "design/spec.md",
+   "line": 11793,
+   "kind": "decl",
+   "claim": "They are the requesters of the activation's layout",
+   "evidence": "src/build.jl:362; probe:159"
+  },
+  {
+   "id": "S13b-171",
+   "file": "design/spec.md",
+   "line": 11794,
+   "kind": "law",
+   "claim": "The roster is index-aligned with the StopFlag block, in build order",
+   "evidence": "src/build.jl:495-506; probe:261, 264"
+  },
+  {
+   "id": "S13b-172",
+   "file": "design/spec.md",
+   "line": 11796,
+   "kind": "law",
+   "claim": "The requester at index i owns the block's offset i - 1",
+   "evidence": "src/build.jl:362, 504"
+  },
+  {
+   "id": "S13b-173",
+   "file": "design/spec.md",
+   "line": 11797,
+   "kind": "law",
+   "claim": "The reason is the component's stop_reason, default empty",
+   "evidence": "src/declare.jl:373; probe:162"
+  },
+  {
+   "id": "S13b-174",
+   "file": "design/spec.md",
+   "line": 11799,
+   "kind": "law",
+   "claim": "One reason serves all of a component's requests",
+   "evidence": "src/build.jl:503-505"
+  },
+  {
+   "id": "S13b-175",
+   "file": "design/spec.md",
+   "line": 11801,
+   "kind": "law",
+   "claim": "A bare StopFlag port's requester carries the port name y",
+   "evidence": "probe:166"
+  },
+  {
+   "id": "S13b-176",
+   "file": "design/spec.md",
+   "line": 11805,
+   "kind": "decl",
+   "claim": "t_end and ignore_stop_requests are keywords of run!, replay! and step!",
+   "evidence": "src/sim.jl:1331-1334, 1558-1559, 2216-2217"
+  },
+  {
+   "id": "S13b-177",
+   "file": "design/spec.md",
+   "line": 11807,
+   "kind": "law",
+   "claim": "Each of the three takes Inf and () as defaults",
+   "evidence": "src/sim.jl:1331-1334, 1558-1559, 2216-2217"
+  },
+  {
+   "id": "S13b-178",
+   "file": "design/spec.md",
+   "line": 11809,
+   "kind": "mech",
+   "claim": "The constructor has no policy defaults, so the trace header records none",
+   "evidence": "probe:200 (Simulation(world; Δt_frame) takes none); src/sim.jl:136-141"
+  },
+  {
+   "id": "S13b-179",
+   "file": "design/spec.md",
+   "line": 11810,
+   "kind": "law",
+   "claim": "The termination record carries the policy that actually ended the run",
+   "evidence": "probe:192; src/sim.jl:1762-1768"
+  },
+  {
+   "id": "S13b-180",
+   "file": "design/spec.md",
+   "line": 11812,
+   "kind": "decl",
+   "claim": "ignore_stop_requests sits beside t_end at the same declaration site",
+   "evidence": "src/sim.jl:1558-1559"
+  },
+  {
+   "id": "S13b-181",
+   "file": "design/spec.md",
+   "line": 11814,
+   "kind": "law",
+   "claim": "Every request is honoured unless the advance ignores it",
+   "evidence": "probe:205, 207"
+  },
+  {
+   "id": "S13b-182",
+   "file": "design/spec.md",
+   "line": 11815,
+   "kind": "law",
+   "claim": ":all ignores every requester",
+   "evidence": "src/sim.jl:437-438; probe:229"
+  },
+  {
+   "id": "S13b-183",
+   "file": "design/spec.md",
+   "line": 11816,
+   "kind": "decl",
+   "claim": "An iterable of strings names requesters by component path",
+   "evidence": "src/sim.jl:439-447; probe:192"
+  },
+  {
+   "id": "S13b-184",
+   "file": "design/spec.md",
+   "line": 11817,
+   "kind": "law",
+   "claim": "Each path is validated against the roster on every call",
+   "evidence": "src/sim.jl:440-444; probe:184"
+  },
+  {
+   "id": "S13b-185",
+   "file": "design/spec.md",
+   "line": 11818,
+   "kind": "law",
+   "claim": "Duplicates collapse, in the order given",
+   "evidence": "src/sim.jl:446; probe:192"
+  },
+  {
+   "id": "S13b-186",
+   "file": "design/spec.md",
+   "line": 11818,
+   "kind": "law",
+   "claim": "A path naming no requester is StopRequestInvalid, collected over the given paths",
+   "evidence": "probe:184 (two diagnostics); src/sim.jl:460-462"
+  },
+  {
+   "id": "S13b-187",
+   "file": "design/spec.md",
+   "line": 11819,
+   "kind": "law",
+   "claim": "A t_end that is not a non-negative real is ArgumentInvalid",
+   "evidence": "probe:175-176; src/sim.jl:405-407"
+  },
+  {
+   "id": "S13b-188",
+   "file": "design/spec.md",
+   "line": 11820,
+   "kind": "law",
+   "claim": "A t_end whose frame top or base-tick index leaves Int is ArgumentInvalid",
+   "evidence": "probe:177; src/model.jl:566-567, 598-601"
+  },
+  {
+   "id": "S13b-189",
+   "file": "design/spec.md",
+   "line": 11822,
+   "kind": "law",
+   "claim": "The t_end refusal comes before the ignore list is read",
+   "evidence": "probe:180; src/sim.jl:471-472"
+  },
+  {
+   "id": "S13b-190",
+   "file": "design/spec.md",
+   "line": 11822,
+   "kind": "law",
+   "claim": "A bare-string list or a symbol other than :all is ArgumentInvalid",
+   "evidence": "probe:178-179; src/sim.jl:454-459"
+  },
+  {
+   "id": "S13b-191",
+   "file": "design/spec.md",
+   "line": 11825,
+   "kind": "decl",
+   "claim": "StopPolicy is the immutable value of t_end plus the ignored paths",
+   "evidence": "probe:193; src/sim.jl:136-141"
+  },
+  {
+   "id": "S13b-192",
+   "file": "design/spec.md",
+   "line": 11826,
+   "kind": "mech",
+   "claim": "The policy goes to the loop with a per-requester Bool mask as a second argument",
+   "evidence": "src/sim.jl:449-451, 1562-1573"
+  },
+  {
+   "id": "S13b-193",
+   "file": "design/spec.md",
+   "line": 11828,
+   "kind": "law",
+   "claim": "A t* hit reaches the loop as frame!'s Bool return",
+   "evidence": "src/frame.jl:50-52; src/sim.jl:2115"
+  },
+  {
+   "id": "S13b-194",
+   "file": "design/spec.md",
+   "line": 11829,
+   "kind": "law",
+   "claim": "It is never a field of the policy or the cursor",
+   "evidence": "src/executor.jl:12-14; src/sim.jl:135-141"
+  },
+  {
+   "id": "S13b-195",
+   "file": "design/spec.md",
+   "line": 11830,
+   "kind": "mech",
+   "claim": "The loop reads the requester off the snapshot just published",
+   "evidence": "src/sim.jl:2115"
+  },
+  {
+   "id": "S13b-196",
+   "file": "design/spec.md",
+   "line": 11835,
+   "kind": "mech",
+   "claim": "After every published boundary the loop scans the StopFlag block in roster order",
+   "evidence": "src/sim.jl:582-593, 2038-2039"
+  },
+  {
+   "id": "S13b-197",
+   "file": "design/spec.md",
+   "line": 11837,
+   "kind": "law",
+   "claim": "Grid boundaries, t* and boundary zero all count",
+   "evidence": "src/sim.jl:2038 (settled!), 2090-2091 (entry check); probe:257"
+  },
+  {
+   "id": "S13b-198",
+   "file": "design/spec.md",
+   "line": 11839,
+   "kind": "law",
+   "claim": "The first honoured request reading STOP_REQUESTED ends the run with this snapshot final",
+   "evidence": "probe:245; src/sim.jl:2090, 2134"
+  },
+  {
+   "id": "S13b-199",
+   "file": "design/spec.md",
+   "line": 11841,
+   "kind": "law",
+   "claim": "The terminal snapshot is the terminal state, with no roll-back",
+   "evidence": "src/sim.jl:1762-1768; probe:245 (termination t equals latest)"
+  },
+  {
+   "id": "S13b-200",
+   "file": "design/spec.md",
+   "line": 11842,
+   "kind": "law",
+   "claim": "The terminal snapshot's status carries the final cumulative counters",
+   "evidence": "test/test_lifecycle.jl:628; probe:266"
+  },
+  {
+   "id": "S13b-201",
+   "file": "design/spec.md",
+   "line": 11845,
+   "kind": "law",
+   "claim": "Every advance checks the latest snapshot for an honoured request before its first frame",
+   "evidence": "src/sim.jl:2090-2091"
+  },
+  {
+   "id": "S13b-202",
+   "file": "design/spec.md",
+   "line": 11846,
+   "kind": "law",
+   "claim": "An authored terminal condition ends the run at t0 with that snapshot final",
+   "evidence": "probe:257 (one logged snapshot, t = 0.0)"
+  },
+  {
+   "id": "S13b-203",
+   "file": "design/spec.md",
+   "line": 11849,
+   "kind": "law",
+   "claim": "A run that starts later ends where it started, advancing no frame",
+   "evidence": "src/sim.jl:2090-2091"
+  },
+  {
+   "id": "S13b-204",
+   "file": "design/spec.md",
+   "line": 11851,
+   "kind": "mech",
+   "claim": "The loop checks control stop at frame top, t_end, then requests at each publication",
+   "evidence": "src/sim.jl:2095-2096, 2115, 2134"
+  },
+  {
+   "id": "S13b-206",
+   "file": "design/spec.md",
+   "line": 11858,
+   "kind": "mech",
+   "claim": "A handler-set m flag is sticky by nature",
+   "evidence": "test/fixtures.jl Trigger (state :fired persists); probe:245"
+  },
+  {
+   "id": "S13b-207",
+   "file": "design/spec.md",
+   "line": 11859,
+   "kind": "law",
+   "claim": "A transient stage-2 Bool is caught since the loop reacts to the first request it reads holding",
+   "evidence": "src/sim.jl:2038-2039, 2090 (scan at every published boundary)"
+  },
+  {
+   "id": "S13b-208",
+   "file": "design/spec.md",
+   "line": 11866,
+   "kind": "law",
+   "claim": "An unbounded run is allowed",
+   "evidence": "probe:229-231; test/test_lifecycle.jl:621-630"
+  },
+  {
+   "id": "S13b-209",
+   "file": "design/spec.md",
+   "line": 11868,
+   "kind": "law",
+   "claim": "The operator interrupt is the escape from an unbounded run",
+   "evidence": "src/sim.jl:2148-2151"
+  },
+  {
+   "id": "S13b-210",
+   "file": "design/spec.md",
+   "line": 11869,
+   "kind": "law",
+   "claim": "The model may have no requester or the advance may ignore all",
+   "evidence": "probe:229; test/test_lifecycle.jl:621-630"
+  },
+  {
+   "id": "S13b-211",
+   "file": "design/spec.md",
+   "line": 11870,
+   "kind": "law",
+   "claim": "run! reports UnboundedRun before the loop starts into the loop's own cell",
+   "evidence": "src/sim.jl:1566-1569; probe:229"
+  },
+  {
+   "id": "S13b-212",
+   "file": "design/spec.md",
+   "line": 11871,
+   "kind": "law",
+   "claim": "The status record carries it",
+   "evidence": "probe:229 (found in writer_status recent)"
+  },
+  {
+   "id": "S13b-213",
+   "file": "design/spec.md",
+   "line": 11872,
+   "kind": "law",
+   "claim": "Its message says which of the two cases holds",
+   "evidence": "src/diagnostics.jl:1773-1783; probe:230 output"
+  },
+  {
+   "id": "S13b-214",
+   "file": "design/spec.md",
+   "line": 11873,
+   "kind": "law",
+   "claim": "The advisory fires in :live only",
+   "evidence": "src/sim.jl:1566; probe:238"
+  },
+  {
+   "id": "S13b-215",
+   "file": "design/spec.md",
+   "line": 11874,
+   "kind": "law",
+   "claim": "A run! in :replay is bounded by the recording",
+   "evidence": "src/sim.jl:1571-1573, 1500-1510 (_replay_bound); probe:238"
+  },
+  {
+   "id": "S13b-216",
+   "file": "design/spec.md",
+   "line": 11876,
+   "kind": "ex",
+   "claim": "The four-line policy example block runs as written",
+   "evidence": "probe:200-209, 226-231 (adapted: monitored ramp, hooked stop for the unbounded line)"
+  },
+  {
+   "id": "S13b-217",
+   "file": "design/spec.md",
+   "line": 11888,
+   "kind": "decl",
+   "claim": "The record names the source as a typed value",
+   "evidence": "src/sim.jl:150-157"
+  },
+  {
+   "id": "S13b-218",
+   "file": "design/spec.md",
+   "line": 11889,
+   "kind": "law",
+   "claim": "The record carries the outcome and the ending advance's StopPolicy",
+   "evidence": "probe:192"
+  },
+  {
+   "id": "S13b-219",
+   "file": "design/spec.md",
+   "line": 11890,
+   "kind": "decl",
+   "claim": "The record holds time, policy, source and residue",
+   "evidence": "probe:194"
+  },
+  {
+   "id": "S13b-220",
+   "file": "design/spec.md",
+   "line": 11891,
+   "kind": "mech",
+   "claim": "The tail residue is what the run's-end sweep folds in",
+   "evidence": "src/sim.jl:1744-1747, 1759"
+  },
+  {
+   "id": "S13b-221",
+   "file": "design/spec.md",
+   "line": 11893,
+   "kind": "law",
+   "claim": "The time is always present; a boundary-zero throw writes no record",
+   "evidence": "probe:81; src/sim.jl:144-146"
+  },
+  {
+   "id": "S13b-222",
+   "file": "design/spec.md",
+   "line": 11895,
+   "kind": "law",
+   "claim": "The source's type is its identity and its payload plain data",
+   "evidence": "src/sim.jl:57-100"
+  },
+  {
+   "id": "S13b-223",
+   "file": "design/spec.md",
+   "line": 11896,
+   "kind": "law",
+   "claim": "There are four source types",
+   "evidence": "probe:196"
+  },
+  {
+   "id": "S13b-224",
+   "file": "design/spec.md",
+   "line": 11898,
+   "kind": "law",
+   "claim": "EndTimeReached means t_end's frame completed",
+   "evidence": "src/sim.jl:2096; probe:207"
+  },
+  {
+   "id": "S13b-225",
+   "file": "design/spec.md",
+   "line": 11899,
+   "kind": "decl",
+   "claim": "EndTimeReached has no payload",
+   "evidence": "probe:199"
+  },
+  {
+   "id": "S13b-226",
+   "file": "design/spec.md",
+   "line": 11899,
+   "kind": "law",
+   "claim": "The record's own t is the fact and the bound is in the record's policy",
+   "evidence": "probe:192; src/sim.jl:57-66"
+  },
+  {
+   "id": "S13b-227",
+   "file": "design/spec.md",
+   "line": 11901,
+   "kind": "law",
+   "claim": "ModelRequestedStop means an honoured request read STOP_REQUESTED",
+   "evidence": "probe:205"
+  },
+  {
+   "id": "S13b-228",
+   "file": "design/spec.md",
+   "line": 11902,
+   "kind": "decl",
+   "claim": "Its payload is path, port and reason",
+   "evidence": "probe:197"
+  },
+  {
+   "id": "S13b-229",
+   "file": "design/spec.md",
+   "line": 11903,
+   "kind": "law",
+   "claim": "Two requests at one boundary give the first in roster order",
+   "evidence": "probe:261, 264"
+  },
+  {
+   "id": "S13b-230",
+   "file": "design/spec.md",
+   "line": 11905,
+   "kind": "law",
+   "claim": "ControlRequestedStop means a control-plane stop",
+   "evidence": "src/sim.jl:2095; probe:231"
+  },
+  {
+   "id": "S13b-231",
+   "file": "design/spec.md",
+   "line": 11906,
+   "kind": "decl",
+   "claim": "Its payload is the issuer, a device, :code or :interrupt",
+   "evidence": "probe:198; src/sim.jl:96-100"
+  },
+  {
+   "id": "S13b-232",
+   "file": "design/spec.md",
+   "line": 11907,
+   "kind": "law",
+   "claim": "LoopError is the abnormal entry whose payload is the propagated cause",
+   "evidence": "src/sim.jl:1762; probe:68"
+  },
+  {
+   "id": "S13b-233",
+   "file": "design/spec.md",
+   "line": 11908,
+   "kind": "law",
+   "claim": "A throw in the frame reaches the record with the Model :inconsistent and the sim errored",
+   "evidence": "probe:67-68"
+  },
+  {
+   "id": "S13b-234",
+   "file": "design/spec.md",
+   "line": 11910,
+   "kind": "law",
+   "claim": "A loop fault outside the frame closes the run stopped with the Model consistent",
+   "evidence": "src/sim.jl:508-513, 1749-1755"
+  },
+  {
+   "id": "S13b-235",
+   "file": "design/spec.md",
+   "line": 11913,
+   "kind": "law",
+   "claim": "Only the Model's own catch sites mark it",
+   "evidence": "rg of status writes: src/frame.jl:94, src/model.jl 323, 336, 470, 476, 1332, 1337 only"
+  },
+  {
+   "id": "S13b-236",
+   "file": "design/spec.md",
+   "line": 11913,
+   "kind": "law",
+   "claim": "frame!'s refusal of a frame past the lattice range precedes the frame, so is such a fault",
+   "evidence": "src/frame.jl:72-77 (before the try)"
+  },
+  {
+   "id": "S13b-237",
+   "file": "design/spec.md",
+   "line": 11915,
+   "kind": "law",
+   "claim": "The record covers both cases exactly alike",
+   "evidence": "src/sim.jl:1762-1764"
+  },
+  {
+   "id": "S13b-238",
+   "file": "design/spec.md",
+   "line": 11919,
+   "kind": "law",
+   "claim": "The operator interrupt is a tag on an ordinary stop, not a source type",
+   "evidence": "src/sim.jl:2148-2151; probe:196"
+  },
+  {
+   "id": "S13b-239",
+   "file": "design/spec.md",
+   "line": 11921,
+   "kind": "law",
+   "claim": "Appendix C gains no kind from it",
+   "evidence": "src/diagnostics.jl (no interrupt kind); sim.jl:96-100"
+  },
+  {
+   "id": "S13b-240",
+   "file": "design/spec.md",
+   "line": 11925,
+   "kind": "law",
+   "claim": "An ignored request is still a cell in every snapshot",
+   "evidence": "src/sim.jl:582-593 (mask touches the scan only); probe:283"
+  },
+  {
+   "id": "S13b-241",
+   "file": "design/spec.md",
+   "line": 11926,
+   "kind": "law",
+   "claim": "The log records when validity broke even on a continued run",
+   "evidence": "probe:283 (logged snapshots hold the flag)"
+  },
+  {
+   "id": "S13b-242",
+   "file": "design/spec.md",
+   "line": 11930,
+   "kind": "why",
+   "claim": "robot2d is FlightApps' self-balancing robot in Flight.jl (lead: prior art)",
+   "evidence": "external prior art, not Redstone API"
+  },
+  {
+   "id": "S13b-243",
+   "file": "design/spec.md",
+   "line": 11931,
+   "kind": "why",
+   "claim": "LostBalance, a SimulationTermination, is thrown past 45 degrees (lead: prior art)",
+   "evidence": "external prior art, not Redstone API"
+  },
+  {
+   "id": "S13b-244",
+   "file": "design/spec.md",
+   "line": 11932,
+   "kind": "why",
+   "claim": "SimulationTermination is the Flight.jl exception (lead: prior art)",
+   "evidence": "rg: absent from src/ and test/"
+  },
+  {
+   "id": "S13b-245",
+   "file": "design/spec.md",
+   "line": 11934,
+   "kind": "ex",
+   "claim": "Here the model declares the fall as an event and feeds fallen to a stop request (lead: local name)",
+   "evidence": "illustrative; the mechanism is the monitored model of probe:159"
+  },
+  {
+   "id": "S13b-246",
+   "file": "design/spec.md",
+   "line": 11935,
+   "kind": "mech",
+   "claim": "The frozen mode is a mode-dependent x_deriv, machinery the model already has",
+   "evidence": "src/executor.jl (_merge_modes!, mode m in the x_deriv bundle); test/fixtures.jl Trigger"
+  },
+  {
+   "id": "S13b-247",
+   "file": "design/spec.md",
+   "line": 11936,
+   "kind": "law",
+   "claim": "Honoured, the request ends the sim at the fall; ignored, the sim keeps integrating",
+   "evidence": "probe:205, 207"
+  },
+  {
+   "id": "S13b-248",
+   "file": "design/spec.md",
+   "line": 11943,
+   "kind": "why",
+   "claim": "stop_when = snap -> ... is a rejected predicate closure (lead)",
+   "evidence": "rg: no stop_when in src/; log D-060, D-316 reject it"
+  },
+  {
+   "id": "S13b-249",
+   "file": "design/spec.md",
+   "line": 11957,
+   "kind": "law",
+   "claim": "The stop scan reads only the StopFlag block",
+   "evidence": "src/sim.jl:588-594"
+  },
+  {
+   "id": "S13b-250",
+   "file": "design/spec.md",
+   "line": 11961,
+   "kind": "mech",
+   "claim": "The ignore list addresses the Build's requester roster",
+   "evidence": "src/sim.jl:473 (layout.requesters)"
+  },
+  {
+   "id": "S13b-251",
+   "file": "design/spec.md",
+   "line": 11962,
+   "kind": "law",
+   "claim": "The ignore list binds at an advance, a stopped-sim point",
+   "evidence": "src/sim.jl:1562, 1383, 2248"
+  },
+  {
+   "id": "S13b-252",
+   "file": "design/spec.md",
+   "line": 11964,
+   "kind": "mech",
+   "claim": "The requester is loud at inspection through the roster and the termination record",
+   "evidence": "src/build.jl:362; src/sim.jl:2090; probe:205"
+  },
+  {
+   "id": "S13b-253",
+   "file": "design/spec.md",
+   "line": 11968,
+   "kind": "law",
+   "claim": "Attach resolves output-device reads strictly, as §13.3's service clients",
+   "evidence": "src/sim.jl:2926-2930 (D-406 read resolver)"
+  }
+ ],
+ "counts": {
+  "law": 173,
+  "mech": 48,
+  "decl": 22,
+  "ex": 9,
+  "ptr": 7,
+  "why": 24
+ }
+}

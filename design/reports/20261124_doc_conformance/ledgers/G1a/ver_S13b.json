@@ -1,0 +1,166 @@
+{
+ "judgments": [
+  {
+   "id": "S13b-001",
+   "conforms": false,
+   "evidence": "src/model.jl:473-477 (overlay! catch, host :overlay) and src/model.jl:1333-1336 (restore catch, host :restore) wrap throws of model code run in their settling, beside src/frame.jl:85-95 (:loop) and src/model.jl:333-337 (:boundary_zero)",
+   "class": "drift",
+   "fix": "A runtime failure of model code is a throw inside a [frame](#g-frame) (one iteration of the loop), inside [boundary zero](#g-boundary-zero), or inside the settling `overlay!` or `restore!` runs.",
+   "clear": true,
+   "backing_entry": "D-429, D-441",
+   "note": "The same section already names the :overlay and :restore hosts at spec 11530-11532. Only this opening scope sentence lags them."
+  },
+  {
+   "id": "S13b-010",
+   "conforms": true,
+   "evidence": "src/frame.jl:85-95 is the only try in frame.jl, around the whole frame. No try exists in src/executor.jl or src/stepper.jl. The only other try in model.jl's path (model.jl:1108) sits inside the catch's species rule."
+  },
+  {
+   "id": "S13b-019",
+   "conforms": true,
+   "evidence": "src/executor.jl:168,174,185,261,372 each store into fields of the preallocated mutable ExecutionCursor (executor.jl:17-25), with no allocation and no try",
+   "note": "Each dispatch writes two fields, comp and fn. The code itself calls that pair 'the dispatch store' (executor.jl:168), so I read the spec's 'one cheap store' as a cost statement and accept it. Phase transitions (_phase!, executor.jl:32) and the stage ordinal (model.jl:616) are further stores, but they are per phase or per stage, not per dispatch."
+  },
+  {
+   "id": "S13b-028",
+   "conforms": true,
+   "evidence": "src/frame.jl:95 _wrap_step(model, k - 1, :loop, err). Probe: a frame-three failure gives boundary 2, and replay!(sim2, trc; to_boundary = 2) then step! reproduces the same cursor, boundary and t"
+  },
+  {
+   "id": "S13b-037",
+   "conforms": true,
+   "evidence": "src/model.jl:1093 _species(::Model, err::DiagnosticError{<:Diagnostic}) = err.carried. Probe: single carrier gives StepError{ArgumentInvalid} with a Diagnostic cause, and a collected carrier gives StepError{DiagnosticError{Vector{Diagnostic}}}"
+  },
+  {
+   "id": "S13b-046",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:245 struct StepError{C <: Union{Diagnostic, Exception}} <: Exception"
+  },
+  {
+   "id": "S13b-051",
+   "conforms": false,
+   "evidence": "Probe: x_deriv throwing 42 makes frame! throw a MethodError (not 42), with status :inconsistent. test/test_failures.jl:706-712 asserts the MethodError. src/model.jl:1080 builds StepError(..., _species(model, err)) inside rethrow, so the constructor's MethodError escapes in place of the value",
+   "class": "drift",
+   "fix": "A bare value thrown deliberately by model code is neither, and the constructor refuses it with a `MethodError` inside the catch. That `MethodError` propagates in the value's place, unframed. The framework does not handle that throw ([D-225][d-225]).",
+   "clear": true,
+   "backing_entry": "D-225",
+   "note": "D-225 (log.md:9175-9176) already says the bare value 'fails the constructor with a MethodError inside the catch and leaves unframed'. The spec's 'it propagates from the catch unwrapped' reads as the value itself propagating."
+  },
+  {
+   "id": "S13b-057",
+   "conforms": true,
+   "evidence": "src/frame.jl:92-95 catches every throw and writes :inconsistent. Probe: InterruptException from x_deriv gives StepError{InterruptException}, status :inconsistent, and under run! the lifecycle is :errored with a LoopError source"
+  },
+  {
+   "id": "S13b-066",
+   "conforms": true,
+   "evidence": "src/sim.jl:1732 isempty(roster) && rethrow(cause) in _run_body!, which both run! (sim.jl:1574) and replay! (sim.jl:1403) call. Probe: deviceless run! rethrew the StepError"
+  },
+  {
+   "id": "S13b-075",
+   "conforms": true,
+   "evidence": "src/sim.jl:1593-1599 _settle_mode! detaches the feed only when run.frame >= feed.frames. Probe: after replay!(…; to_boundary = 2) on a trace of 3 frames, and to_boundary = 0 on a trace of 1 frame, mode is :replay"
+  },
+  {
+   "id": "S13b-085",
+   "conforms": true,
+   "evidence": "src/model.jl:1082 t = _seconds(model.exec.clock.t). Probe: init!(sim; t0 = 1//2) with a throwing y_state gives StepError t = 0.5, boundary 0, host :boundary_zero"
+  },
+  {
+   "id": "S13b-094",
+   "conforms": true,
+   "evidence": "src/sim.jl:848-853: the header is taken only after init!(sim.model, …) returns. Probe: the run's trace header is nothing, checkpoint(sim) is refused as ServiceLifecycle and trace(sim) as MissingInit"
+  },
+  {
+   "id": "S13b-103",
+   "conforms": true,
+   "evidence": "Probe: a frame-one failure gives boundary 0, host :loop, trace frames 1. replay!(sim2, trc; to_boundary = 0) halts :initialized in :replay at t 0.0, and step!(sim2; frames = 1) rethrows the same cursor and t. The rendered recipe reads 'replay!(sim2, trc; to_boundary = 0) then step!(sim2)'"
+  },
+  {
+   "id": "S13b-112",
+   "conforms": true,
+   "evidence": "src/sim.jl:694-700 _open_run! builds the Run with termination nothing, and init! writes none on a throw. Probe: termination(sim) === nothing after a boundary-zero throw"
+  },
+  {
+   "id": "S13b-121",
+   "conforms": true,
+   "evidence": "src/model.jl:830-833 calls _check_finite! on exec.xnext right after acceptance and before copyto!(xbuf, xnext), inside integrate_step!, so before projection and the boundary sweep. model.jl:933 comment: 'The boundary's first act (D-157, §13.4)'"
+  },
+  {
+   "id": "S13b-130",
+   "conforms": true,
+   "evidence": "src/devices.jl:651-671 reports a crash as DeviceCrash and honours should_abort. src/diagnostics.jl:1592-1597 makes MalformedDatum a warning the author reports via report!(handle, …) (devices.jl:381)"
+  },
+  {
+   "id": "S13b-139",
+   "conforms": true,
+   "evidence": "src/frame.jl:92-95 wraps every throw inside the frame, an interrupt included, and src/sim.jl:1759 records it as LoopError. Probe: InterruptException from model code ends the run :errored with a LoopError source. No exception type maps to a graceful source"
+  },
+  {
+   "id": "S13b-149",
+   "conforms": true,
+   "evidence": "src/build.jl:500-506 lists a Requester for every output port with P === StopFlag on any component. Probe: a plain component with y_types (flag = StopFlag,) yields Requester(\"s\", :flag, \"\")"
+  },
+  {
+   "id": "S13b-159",
+   "conforms": true,
+   "evidence": "src/library.jl:434-442 matches the spec block line for line. Only the spec's comments differ"
+  },
+  {
+   "id": "S13b-168",
+   "conforms": true,
+   "evidence": "src/build.jl:466-470 places output ports only (keyed_outs), and the requester walk (build.jl:500) reads outputs only. Probe: a component with u_types (f = StopFlag,) wired from a StopFlag output builds, and the roster holds just the producer"
+  },
+  {
+   "id": "S13b-177",
+   "conforms": true,
+   "evidence": "src/sim.jl:1558-1559 (run!), sim.jl:1331-1333 (replay!), sim.jl:2216-2217 (step!): t_end = Inf, ignore_stop_requests = ()"
+  },
+  {
+   "id": "S13b-186",
+   "conforms": true,
+   "evidence": "src/sim.jl:436-443 pushes one StopRequestInvalid per unknown path and continues, and sim.jl:461 throws the collected carrier. Probe: two bad paths give DiagnosticError{Vector{Diagnostic}} with two StopRequestInvalid"
+  },
+  {
+   "id": "S13b-195",
+   "conforms": true,
+   "evidence": "src/sim.jl:2115 requester = hit ? _stop_hit(sim, ignore_mask) : nothing. _stop_hit (sim.jl:582-593) reads latest(sim)'s StopFlag buffer"
+  },
+  {
+   "id": "S13b-204",
+   "conforms": true,
+   "evidence": "src/sim.jl:2100 (stop word at frame top), 2101 (t_end), 2115 and 2140 (requests after the frame's publication). sim.jl:2091 adds the entry check (D-413)"
+  },
+  {
+   "id": "S13b-205",
+   "conforms": false,
+   "evidence": "Probe: with run!(sim; t_end = 0.3) and a request first holding at 0.3, the source is ModelRequestedStop, not EndTimeReached. With stop!(sim) issued inside frame 3 and a request holding at 0.3, the source is ModelRequestedStop, not ControlRequestedStop(:code). Code: sim.jl:2115/2140 return on the publication's request before the next frame top's checks at sim.jl:2100-2101",
+   "class": "drift",
+   "fix": "The loop checks a pending control stop at frame top, then `t_end`, then the stop requests at each publication. A frame's last publication comes before the next frame top, so a request holding at that boundary is the recorded source even when a control stop is pending or `t_end`'s frame has completed. At a frame top, a control stop is named before `t_end` ([D-203][d-203], [D-268][d-268]).",
+   "clear": false,
+   "backing_entry": "D-268",
+   "note": "D-203 (log.md:8101-8103) states the result this sentence copies. D-268 (log.md:11804-11807) and spec §12.4 (10237-10243) apply the order to positions in time instead: requests are read at the publication and the stop word at the next frame top. The code follows that reading for every source, not only for the interrupt. Whether t_end should beat a request at its own boundary needs the user's ruling."
+  },
+  {
+   "id": "S13b-214",
+   "conforms": true,
+   "evidence": "src/sim.jl:1567-1568 mode(sim) === :live && isinf(policy.t_end) && all(ignore_mask) && report_cell!(…, UnboundedRun(…)). replay! and step! never raise it"
+  },
+  {
+   "id": "S13b-224",
+   "conforms": true,
+   "evidence": "src/sim.jl:2101 run.frame < t_end_frame || return EndTimeReached(), with t_end_frame from _frames_to (model.jl:570-574). Probe: t_end = 0.3 with requests ignored gives EndTimeReached at t 0.3"
+  },
+  {
+   "id": "S13b-233",
+   "conforms": true,
+   "evidence": "src/frame.jl:94 writes :inconsistent before the rethrow, and src/sim.jl:508-513 reads it as :errored. Probe: a frame failure under run! gives model status :inconsistent, lifecycle :errored, source LoopError"
+  },
+  {
+   "id": "S13b-246",
+   "conforms": true,
+   "evidence": "src/declare.jl:858-860: on the continuous tier, m joins every bundle when m_init is declared, x_deriv's included (fixture Motor, test/fixtures.jl:161-167)"
+  }
+ ],
+ "notes": "I checked all 29 claims at W = 89a10a14. 26 conform and 3 do not. I changed no tracked file. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S13b_v/probe.jl, and I ran it once in full.\n\nThe 3 that do not conform:\n- **S13b-205** is the significant one. The code names a stop request over a pending control stop and over a reached t_end at the same boundary, because the publication's request is read before the next frame top's checks. That fits D-268's reading, where requests are read at the publication and the stop word at the next frame top. It does not fit D-203's 'first in that order' sentence, which the spec copies. Which one wins needs the user's ruling.\n- **S13b-051**: the spec says a bare value propagates unwrapped. In fact the constructor's MethodError propagates in its place, as D-225 and test_failures.jl:706 already say.\n- **S13b-001**: the opening sentence leaves out the :overlay and :restore catch sites, which the same section names further down.\n\nOpen and minor: on S13b-019, each dispatch writes two cursor fields, comp and fn. The code calls that pair one 'dispatch store', so I accepted the spec's 'one cheap store'."
+}

@@ -1,0 +1,1824 @@
+{
+ "rows": [
+  {
+   "id": "S13c-031",
+   "file": "design/spec.md",
+   "line": 12023,
+   "kind": "law",
+   "claim": "The join timeout already bounds a hook that hangs rather than throws.",
+   "evidence": "src/sim.jl:1896 calls unblock!(entry.dev) inline on the calling task, before the deadline is set at src/sim.jl:1904. src/devices.jl:670 runs shutdown! on the device task, which the join does bound.",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "Holds for a hanging shutdown! (device task) and for a loop blocked after unblock!. A hanging unblock! stalls run! itself, and nothing bounds it. A shutdown! in the direct-release path (src/sim.jl:1711) is unbounded too.",
+   "fix": "The join timeout bounds a loop or `shutdown!` that hangs on the device's task, rather than throws. A hanging `unblock!` runs on the calling task and is outside the bound."
+  },
+  {
+   "id": "S13c-041",
+   "file": "design/spec.md",
+   "line": 12037,
+   "kind": "law",
+   "claim": "The published record (snapshot chain, log, trace) ends at the last consistent boundary.",
+   "evidence": "probe:281 prints trace frames 3, batch frames [3], and the last snapshot frame 2. The failing frame's drained batch sits in the trace. test/test_lifecycle.jl:826 comments that the failed frame's batch is in the trace, and replay of it reproduces the failure.",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "Snapshot chain and log do end at the last consistent boundary (probe:266). The trace ends one frame later by design, since replay needs the failing frame's inputs (spec.md:10880).",
+   "fix": "The published record (snapshot chain, log) ends at the last consistent boundary. The trace also holds the failed frame's drained batch, which replay needs to reproduce the failure."
+  },
+  {
+   "id": "S13c-165",
+   "file": "design/spec.md",
+   "line": 12323,
+   "kind": "decl",
+   "claim": "local_wires(::StrutRig) = (\"stub/out\" => \"strut/terrain\",) wires the Constant stub's output as face `out`.",
+   "evidence": "probe:202 refuses it as UnknownPort (source stub, face :out, available [:y]). src/library.jl:350 declares Constant's output bare, so its face is `y`. probe:209 builds with \"stub/y\". test/fixtures.jl:1571 writes \"stub/y\".",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Constant's output became a bare port (D-437), and the spec's own block comment says 'bare and pinned' at spec.md:12237. The wire spelling was not updated.",
+   "fix": "local_wires(::StrutRig) = (\"stub/y\" => \"strut/terrain\",)"
+  },
+  {
+   "id": "S13c-213",
+   "file": "design/spec.md",
+   "line": 12418,
+   "kind": "law",
+   "claim": "Each SCC member is evaluated once, in isolation, at the probe point.",
+   "evidence": "src/tracer.jl:336-339 falls back to _trace_sampled on Undecidable. src/tracer.jl:224 loops `for _ in 1:8`, so a sampled member runs the global trace once and then eight sampled evaluations. probe:169 (branchy) shows `b` traced :sampled.",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "True for a global-mode or structural member. A member that falls back to the sampled mode is evaluated up to nine times. D-012 says 'each member evaluated once in isolation' and has not been amended for the sampled count.",
+   "fix": "each SCC member is evaluated in isolation at the probe point, once by the global tracer and, where that meets an undecidable branch, eight more times at sampled states"
+  },
+  {
+   "id": "S13c-219",
+   "file": "design/spec.md",
+   "line": 12428,
+   "kind": "law",
+   "claim": "Classification has no layouts and no table.",
+   "evidence": "src/tracer.jl:287 calls cell_layout(structure, decls, Float64) and src/tracer.jl:288 calls _workspaces(structure, Float64). src/tracer.jl:290-292 pass the layout to _probe_direct! for the acyclic prefix (src/build.jl:1178), which reads the table products.",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "No Activation is built, and no layout for the cluster exists (tracer.jl:4-6). The prefix probe does build a Float64 cell layout and a probe-product table in the failure path.",
+   "fix": "Classification builds no activation. It builds a Float64 cell layout and the acyclic prefix's probe products to read out-of-cycle values, and no layout or table for the cluster itself."
+  },
+  {
+   "id": "S13c-206",
+   "file": "design/spec.md",
+   "line": 12405,
+   "kind": "mech",
+   "claim": "Linear and cubic interpolation are immune to the Int-index blind spot, because dependence flows through the fractional weights.",
+   "evidence": "src/ has no interpolation routine to probe (rg finds none outside tracer.jl). A user's interpolation would need floor(Int, x) on a tainted value, which src/tracer.jl:120-123 refuses in global mode and severs in sampled mode.",
+   "verdict": "unverifiable",
+   "note": "Depends on how a user writes the interpolation. The probe did not build one."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S13c-001",
+   "file": "design/spec.md",
+   "line": 11974,
+   "kind": "law",
+   "claim": "An abnormal run still ends through the §12.4 tail",
+   "evidence": "src/sim.jl:1660-1663"
+  },
+  {
+   "id": "S13c-002",
+   "file": "design/spec.md",
+   "line": 11981,
+   "kind": "law",
+   "claim": "Abnormal path discards the failed boundary",
+   "evidence": "src/sim.jl:98-99; probe:266 (frames [0,1,2], failed frame 3 absent)"
+  },
+  {
+   "id": "S13c-003",
+   "file": "design/spec.md",
+   "line": 11981,
+   "kind": "law",
+   "claim": "Previous snapshot is promoted to final",
+   "evidence": "probe:266 (latest.frame 2 equals last logged)"
+  },
+  {
+   "id": "S13c-004",
+   "file": "design/spec.md",
+   "line": 11982,
+   "kind": "mech",
+   "claim": "Abnormal path rejoins the ordinary tail (one tail, two entries)",
+   "evidence": "src/sim.jl:1660-1663 (finally runs _finish! and _tail! off a throw)"
+  },
+  {
+   "id": "S13c-005",
+   "file": "design/spec.md",
+   "line": 11983,
+   "kind": "law",
+   "claim": "Graceful entry follows a completed boundary, abnormal a discarded one",
+   "evidence": "src/sim.jl:1654-1663, 1757"
+  },
+  {
+   "id": "S13c-006",
+   "file": "design/spec.md",
+   "line": 11984,
+   "kind": "law",
+   "claim": "Everything downstream of final snapshot runs identically",
+   "evidence": "src/sim.jl:1660-1663 (same calls on both exits)"
+  },
+  {
+   "id": "S13c-007",
+   "file": "design/spec.md",
+   "line": 11985,
+   "kind": "mech",
+   "claim": "Sticky stopped is set in the shared tail",
+   "evidence": "src/sim.jl:1861-1863"
+  },
+  {
+   "id": "S13c-008",
+   "file": "design/spec.md",
+   "line": 11985,
+   "kind": "mech",
+   "claim": "Waiters woken through boundary counter plus Condition",
+   "evidence": "src/sim.jl:1865-1869; src/devices.jl:437-441"
+  },
+  {
+   "id": "S13c-009",
+   "file": "design/spec.md",
+   "line": 11986,
+   "kind": "mech",
+   "claim": "Hooks unblock! and shutdown! run on the abnormal path",
+   "evidence": "probe:267 (Bad and Probe logs hold :unblock, :shutdown)"
+  },
+  {
+   "id": "S13c-010",
+   "file": "design/spec.md",
+   "line": 11987,
+   "kind": "mech",
+   "claim": "Named joins with timeout run in the tail",
+   "evidence": "src/sim.jl:1904-1910, 1935"
+  },
+  {
+   "id": "S13c-011",
+   "file": "design/spec.md",
+   "line": 11987,
+   "kind": "law",
+   "claim": "Waiters observe stopped rather than a new boundary",
+   "evidence": "src/devices.jl:439-442"
+  },
+  {
+   "id": "S13c-012",
+   "file": "design/spec.md",
+   "line": 11988,
+   "kind": "law",
+   "claim": "No device is left with a hanging task",
+   "evidence": "probe:267 (both loops reached :loop_end and :shutdown)"
+  },
+  {
+   "id": "S13c-013",
+   "file": "design/spec.md",
+   "line": 11992,
+   "kind": "law",
+   "claim": "A StepError cannot break §12.4",
+   "evidence": "probe:263-267 (errored run, tail completed)"
+  },
+  {
+   "id": "S13c-014",
+   "file": "design/spec.md",
+   "line": 11993,
+   "kind": "mech",
+   "claim": "Sweeps write into table blocks",
+   "evidence": "src/executor.jl:76,89 (stages read the complete fresh table)"
+  },
+  {
+   "id": "S13c-015",
+   "file": "design/spec.md",
+   "line": 11993,
+   "kind": "mech",
+   "claim": "Integration intermediates live in framework-owned integrator buffers",
+   "evidence": "src/stepper.jl:32,41"
+  },
+  {
+   "id": "S13c-016",
+   "file": "design/spec.md",
+   "line": 11994,
+   "kind": "law",
+   "claim": "Intermediates never live in a component's scratch (workspace)",
+   "evidence": "src/stepper.jl:32,263; component workspace is ws_init, src/tracer.jl:200"
+  },
+  {
+   "id": "S13c-017",
+   "file": "design/spec.md",
+   "line": 11997,
+   "kind": "law",
+   "claim": "Only externally visible act is snapshot publication at the very end",
+   "evidence": "src/sim.jl:98-99"
+  },
+  {
+   "id": "S13c-018",
+   "file": "design/spec.md",
+   "line": 11998,
+   "kind": "law",
+   "claim": "A boundary that throws has published nothing",
+   "evidence": "probe:266"
+  },
+  {
+   "id": "S13c-019",
+   "file": "design/spec.md",
+   "line": 11999,
+   "kind": "law",
+   "claim": "Last published snapshot is the newest anything has seen",
+   "evidence": "probe:266 (record.t equals latest.t)"
+  },
+  {
+   "id": "S13c-020",
+   "file": "design/spec.md",
+   "line": 12002,
+   "kind": "ex",
+   "claim": "Chart: stopped, waiters woken, unblock!/shutdown!, named joins",
+   "evidence": "src/sim.jl:1861-1869, 1891-1935; src/devices.jl:670"
+  },
+  {
+   "id": "S13c-021",
+   "file": "design/spec.md",
+   "line": 12015,
+   "kind": "mech",
+   "claim": "A loop-side failure runs the same protocol from the catch path",
+   "evidence": "src/sim.jl:1657-1663"
+  },
+  {
+   "id": "S13c-022",
+   "file": "design/spec.md",
+   "line": 12017,
+   "kind": "law",
+   "claim": "Termination record covers the abnormal entry",
+   "evidence": "src/sim.jl:1757-1758; probe:265"
+  },
+  {
+   "id": "S13c-023",
+   "file": "design/spec.md",
+   "line": 12018,
+   "kind": "decl",
+   "claim": "Record source is LoopError",
+   "evidence": "probe:265"
+  },
+  {
+   "id": "S13c-024",
+   "file": "design/spec.md",
+   "line": 12019,
+   "kind": "law",
+   "claim": "LoopError payload is the propagated cause",
+   "evidence": "probe:265 (exception StepError, cause Exploded)"
+  },
+  {
+   "id": "S13c-025",
+   "file": "design/spec.md",
+   "line": 12021,
+   "kind": "law",
+   "claim": "Each tail hook is individually caught and logged",
+   "evidence": "src/sim.jl:1896-1900; src/devices.jl:619-628; probe:268 (two warnings)"
+  },
+  {
+   "id": "S13c-026",
+   "file": "design/spec.md",
+   "line": 12022,
+   "kind": "law",
+   "claim": "Shutdown runs to completion despite a throwing hook",
+   "evidence": "probe:267 (second device completed after Bad threw twice)"
+  },
+  {
+   "id": "S13c-027",
+   "file": "design/spec.md",
+   "line": 12026,
+   "kind": "mech",
+   "claim": "A frame throw leaves stores possibly holding mid-boundary values",
+   "evidence": "src/model.jl:78 (status :inconsistent, no rollback); probe:269"
+  },
+  {
+   "id": "S13c-028",
+   "file": "design/spec.md",
+   "line": 12029,
+   "kind": "law",
+   "claim": "Stores retained on the errored sim for post-mortem",
+   "evidence": "probe:269 (state(sim, c) reads q = 0.2)"
+  },
+  {
+   "id": "S13c-029",
+   "file": "design/spec.md",
+   "line": 12030,
+   "kind": "law",
+   "claim": "Errored simulation is terminal, not resumable",
+   "evidence": "probe:270-271 (init!, run! refused ServiceLifecycle :errored)"
+  },
+  {
+   "id": "S13c-030",
+   "file": "design/spec.md",
+   "line": 12030,
+   "kind": "mech",
+   "claim": "Reproduction is trace replay on a fresh sim",
+   "evidence": "src/sim.jl:1331, 1340-1342; test/test_lifecycle.jl:820-835"
+  },
+  {
+   "id": "S13c-032",
+   "file": "design/spec.md",
+   "line": 12032,
+   "kind": "mech",
+   "claim": "A trace records the session's drained inputs",
+   "evidence": "src/trace.jl:22-26,78-83"
+  },
+  {
+   "id": "S13c-033",
+   "file": "design/spec.md",
+   "line": 12033,
+   "kind": "law",
+   "claim": "Stopped-sim services refuse an errored simulation",
+   "evidence": "src/sim.jl:835-837,1065,1125,1165; probe:270,275-277"
+  },
+  {
+   "id": "S13c-034",
+   "file": "design/spec.md",
+   "line": 12034,
+   "kind": "law",
+   "claim": "The refusal is ServiceLifecycle",
+   "evidence": "probe:270,275,277"
+  },
+  {
+   "id": "S13c-035",
+   "file": "design/spec.md",
+   "line": 12034,
+   "kind": "law",
+   "claim": "Roster operations (attach!, detach!) refuse an errored sim",
+   "evidence": "probe:272-273; src/sim.jl:2504,2572"
+  },
+  {
+   "id": "S13c-036",
+   "file": "design/spec.md",
+   "line": 12036,
+   "kind": "law",
+   "claim": "Inspection (reading) is admitted on an errored sim",
+   "evidence": "src/sim.jl:612-616; probe:269"
+  },
+  {
+   "id": "S13c-037",
+   "file": "design/spec.md",
+   "line": 12037,
+   "kind": "law",
+   "claim": "Snapshot chain and log end at the last consistent boundary",
+   "evidence": "probe:266"
+  },
+  {
+   "id": "S13c-038",
+   "file": "design/spec.md",
+   "line": 12038,
+   "kind": "law",
+   "claim": "Nothing downstream of the sim sees half a boundary",
+   "evidence": "probe:266 (published frames end at 2)"
+  },
+  {
+   "id": "S13c-039",
+   "file": "design/spec.md",
+   "line": 12051,
+   "kind": "decl",
+   "claim": "select is a third selector beside except and only",
+   "evidence": "src/assembly.jl:546,597"
+  },
+  {
+   "id": "S13c-040",
+   "file": "design/spec.md",
+   "line": 12052,
+   "kind": "decl",
+   "claim": "select exists on input_passthrough and output_passthrough alike",
+   "evidence": "src/assembly.jl:546,597"
+  },
+  {
+   "id": "S13c-042",
+   "file": "design/spec.md",
+   "line": 12054,
+   "kind": "mech",
+   "claim": "The rule is evaluated at build into inspectable data",
+   "evidence": "src/assembly.jl:548-549 (returns the wire pairs)"
+  },
+  {
+   "id": "S13c-043",
+   "file": "design/spec.md",
+   "line": 12062,
+   "kind": "decl",
+   "claim": "Structure has a show",
+   "evidence": "src/show.jl:66,677"
+  },
+  {
+   "id": "S13c-044",
+   "file": "design/spec.md",
+   "line": 12064,
+   "kind": "law",
+   "claim": "show(::Structure) prints routes for every root face",
+   "evidence": "src/show.jl:129-131; probe:89"
+  },
+  {
+   "id": "S13c-045",
+   "file": "design/spec.md",
+   "line": 12065,
+   "kind": "mech",
+   "claim": "A route is the chain resolved down to the producing terminal",
+   "evidence": "src/structure.jl:1082-1101"
+  },
+  {
+   "id": "S13c-046",
+   "file": "design/spec.md",
+   "line": 12065,
+   "kind": "law",
+   "claim": "One printed line per chain",
+   "evidence": "src/show.jl:76-85; probe:89"
+  },
+  {
+   "id": "S13c-047",
+   "file": "design/spec.md",
+   "line": 12066,
+   "kind": "ex",
+   "claim": "crashed → aircraft/crashed → aircraft/monitor/out form",
+   "evidence": "probe:89 (output routes block prints that exact form)"
+  },
+  {
+   "id": "S13c-048",
+   "file": "design/spec.md",
+   "line": 12068,
+   "kind": "mech",
+   "claim": "Chain derived from the declared wires",
+   "evidence": "src/structure.jl:1082-1101; src/show.jl:78"
+  },
+  {
+   "id": "S13c-049",
+   "file": "design/spec.md",
+   "line": 12070,
+   "kind": "law",
+   "claim": "Hops joined with → and the line ends at the terminal",
+   "evidence": "src/show.jl:70-71"
+  },
+  {
+   "id": "S13c-050",
+   "file": "design/spec.md",
+   "line": 12070,
+   "kind": "law",
+   "claim": "A fanned-out input face prints one line per consumer",
+   "evidence": "probe:89 (ref gives monitor/a and m2/a lines)"
+  },
+  {
+   "id": "S13c-051",
+   "file": "design/spec.md",
+   "line": 12071,
+   "kind": "law",
+   "claim": "Wiring diagnostics name endpoints in the same slash form",
+   "evidence": "src/diagnostics.jl:1006; probe:169 (a/y → b/u)"
+  },
+  {
+   "id": "S13c-052",
+   "file": "design/spec.md",
+   "line": 12074,
+   "kind": "law",
+   "claim": "show marks each input route ending at a pinning consumer",
+   "evidence": "src/show.jl:89-93,76-85; probe:89"
+  },
+  {
+   "id": "S13c-053",
+   "file": "design/spec.md",
+   "line": 12075,
+   "kind": "mech",
+   "claim": "Pinning consumer: entry refuses the root input's type walked to a Dual",
+   "evidence": "src/build.jl:542-553"
+  },
+  {
+   "id": "S13c-054",
+   "file": "design/spec.md",
+   "line": 12076,
+   "kind": "law",
+   "claim": "A root input with a pinning consumer is pinned",
+   "evidence": "src/descriptor.jl:181-187"
+  },
+  {
+   "id": "S13c-055",
+   "file": "design/spec.md",
+   "line": 12078,
+   "kind": "decl",
+   "claim": "Mark `pinned by tier` on a discrete consumer",
+   "evidence": "src/show.jl:92; probe:89 (ref4 → dly/u)"
+  },
+  {
+   "id": "S13c-056",
+   "file": "design/spec.md",
+   "line": 12078,
+   "kind": "decl",
+   "claim": "Mark `pinned by declaration` on a continuous consumer",
+   "evidence": "src/show.jl:92; probe:89 (ref3 → pin/a)"
+  },
+  {
+   "id": "S13c-057",
+   "file": "design/spec.md",
+   "line": 12079,
+   "kind": "mech",
+   "claim": "Continuous pin entry is Pinned or an abstract type admitting no Dual",
+   "evidence": "src/build.jl:538-541,548-550"
+  },
+  {
+   "id": "S13c-058",
+   "file": "design/spec.md",
+   "line": 12080,
+   "kind": "law",
+   "claim": "Routes list every terminal consumer of a root input",
+   "evidence": "src/structure.jl:1090-1096; src/show.jl:78"
+  },
+  {
+   "id": "S13c-059",
+   "file": "design/spec.md",
+   "line": 12084,
+   "kind": "law",
+   "claim": "A primitive root prints no routes",
+   "evidence": "probe:97 (primitive root show has no routes block); src/structure.jl:1086"
+  },
+  {
+   "id": "S13c-060",
+   "file": "design/spec.md",
+   "line": 12085,
+   "kind": "law",
+   "claim": "Descriptor carries the primitive root's pin",
+   "evidence": "src/descriptor.jl:181-187; probe:98 (root_inputs pinned, pinned_by)"
+  },
+  {
+   "id": "S13c-061",
+   "file": "design/spec.md",
+   "line": 12091,
+   "kind": "mech",
+   "claim": "Junctions, summing junctions and Bool gates are the library's seed",
+   "evidence": "src/library.jl:42,60,75,89"
+  },
+  {
+   "id": "S13c-062",
+   "file": "design/spec.md",
+   "line": 12093,
+   "kind": "law",
+   "claim": "A library component has no privilege of its own",
+   "evidence": "src/library.jl:3-8 (import list is its whole reach)"
+  },
+  {
+   "id": "S13c-063",
+   "file": "design/spec.md",
+   "line": 12107,
+   "kind": "decl",
+   "claim": "The named components exist: Junction, SumJunction, Or, And, UnitDelay, Constant, Freeze, StopRequest",
+   "evidence": "src/library.jl:42,60,75,89,346,377,405,434"
+  },
+  {
+   "id": "S13c-064",
+   "file": "design/spec.md",
+   "line": 12111,
+   "kind": "mech",
+   "claim": "Constant{V} is the source component",
+   "evidence": "src/library.jl:346-351"
+  },
+  {
+   "id": "S13c-065",
+   "file": "design/spec.md",
+   "line": 12112,
+   "kind": "mech",
+   "claim": "Freeze{V} is the declared stop-gradient",
+   "evidence": "src/library.jl:405-409; probe:49"
+  },
+  {
+   "id": "S13c-066",
+   "file": "design/spec.md",
+   "line": 12112,
+   "kind": "mech",
+   "claim": "StopRequest spells a stop request, an output port of type StopFlag",
+   "evidence": "src/library.jl:440; probe:55"
+  },
+  {
+   "id": "S13c-067",
+   "file": "design/spec.md",
+   "line": 12113,
+   "kind": "decl",
+   "claim": "StopFlag is a framework enum",
+   "evidence": "probe:56-57"
+  },
+  {
+   "id": "S13c-068",
+   "file": "design/spec.md",
+   "line": 12116,
+   "kind": "decl",
+   "claim": "The library is the submodule Redstone.Library",
+   "evidence": "probe:54; src/library.jl:1"
+  },
+  {
+   "id": "S13c-069",
+   "file": "design/spec.md",
+   "line": 12117,
+   "kind": "mech",
+   "claim": "Written against the extension-only surface like a user file",
+   "evidence": "src/library.jl:3-8"
+  },
+  {
+   "id": "S13c-070",
+   "file": "design/spec.md",
+   "line": 12121,
+   "kind": "law",
+   "claim": "Group is not a library member",
+   "evidence": "probe:53; src/assembly.jl:872"
+  },
+  {
+   "id": "S13c-071",
+   "file": "design/spec.md",
+   "line": 12122,
+   "kind": "mech",
+   "claim": "The core defines Group as the on-the-fly assembly",
+   "evidence": "src/assembly.jl:837-872"
+  },
+  {
+   "id": "S13c-072",
+   "file": "design/spec.md",
+   "line": 12127,
+   "kind": "law",
+   "claim": "A library component is an ordinary component, no framework privilege",
+   "evidence": "src/library.jl:3-8"
+  },
+  {
+   "id": "S13c-073",
+   "file": "design/spec.md",
+   "line": 12136,
+   "kind": "mech",
+   "claim": "Arity and port types come from type parameters",
+   "evidence": "src/library.jl:116-118; probe:25-27"
+  },
+  {
+   "id": "S13c-074",
+   "file": "design/spec.md",
+   "line": 12137,
+   "kind": "mech",
+   "claim": "Junction builds (in1 = In, …, inN = In) programmatically",
+   "evidence": "src/library.jl:116-117; probe:25"
+  },
+  {
+   "id": "S13c-075",
+   "file": "design/spec.md",
+   "line": 12138,
+   "kind": "mech",
+   "claim": "Junction applies the fold its instance holds",
+   "evidence": "src/library.jl:119"
+  },
+  {
+   "id": "S13c-076",
+   "file": "design/spec.md",
+   "line": 12138,
+   "kind": "decl",
+   "claim": "Or{N} is the junction at |",
+   "evidence": "src/library.jl:75; probe:29"
+  },
+  {
+   "id": "S13c-077",
+   "file": "design/spec.md",
+   "line": 12139,
+   "kind": "decl",
+   "claim": "And{N} is the junction at &",
+   "evidence": "src/library.jl:89; probe:28"
+  },
+  {
+   "id": "S13c-078",
+   "file": "design/spec.md",
+   "line": 12139,
+   "kind": "decl",
+   "claim": "Or and And are constant aliases",
+   "evidence": "src/library.jl:60,75,89"
+  },
+  {
+   "id": "S13c-079",
+   "file": "design/spec.md",
+   "line": 12145,
+   "kind": "ex",
+   "claim": "Junction struct has one field f::F",
+   "evidence": "src/library.jl:42-44"
+  },
+  {
+   "id": "S13c-080",
+   "file": "design/spec.md",
+   "line": 12148,
+   "kind": "ex",
+   "claim": "const SumJunction{V,N} = Junction{V,V,N,typeof(+)}",
+   "evidence": "src/library.jl:60"
+  },
+  {
+   "id": "S13c-081",
+   "file": "design/spec.md",
+   "line": 12150,
+   "kind": "ex",
+   "claim": "x_init(::Junction) = nothing",
+   "evidence": "src/library.jl:115; probe:33"
+  },
+  {
+   "id": "S13c-082",
+   "file": "design/spec.md",
+   "line": 12151,
+   "kind": "ex",
+   "claim": "u_types builds in1..inN of type In",
+   "evidence": "src/library.jl:116-117; probe:25,27"
+  },
+  {
+   "id": "S13c-083",
+   "file": "design/spec.md",
+   "line": 12153,
+   "kind": "ex",
+   "claim": "y_types is bare Out, the face y",
+   "evidence": "src/library.jl:118; probe:26"
+  },
+  {
+   "id": "S13c-084",
+   "file": "design/spec.md",
+   "line": 12154,
+   "kind": "ex",
+   "claim": "y_direct(j, (; u)) = j.f(u...)",
+   "evidence": "src/library.jl:119"
+  },
+  {
+   "id": "S13c-085",
+   "file": "design/spec.md",
+   "line": 12157,
+   "kind": "mech",
+   "claim": "Parameters are nominal port types and arity; fold is instance data",
+   "evidence": "src/library.jl:42-44,116-119"
+  },
+  {
+   "id": "S13c-086",
+   "file": "design/spec.md",
+   "line": 12158,
+   "kind": "ex",
+   "claim": "SumJunction{Wrench{Float64}, 3} (Wrench is FlightPhysics', a placeholder)",
+   "evidence": "lead: Wrench is another package's type; SumJunction{V,N} shape at src/library.jl:60"
+  },
+  {
+   "id": "S13c-087",
+   "file": "design/spec.md",
+   "line": 12161,
+   "kind": "decl",
+   "claim": "SumJunction{V,N} is the Junction at +",
+   "evidence": "src/library.jl:60; probe:30"
+  },
+  {
+   "id": "S13c-088",
+   "file": "design/spec.md",
+   "line": 12162,
+   "kind": "decl",
+   "claim": "Custom fold written Junction{In,Out,N}(f) infers F",
+   "evidence": "src/library.jl:46; probe:31"
+  },
+  {
+   "id": "S13c-089",
+   "file": "design/spec.md",
+   "line": 12165,
+   "kind": "law",
+   "claim": "Junction is a continuous primitive at nominal Float64 contract",
+   "evidence": "src/library.jl:115-119 (stateless y_direct, x_init nothing)"
+  },
+  {
+   "id": "S13c-090",
+   "file": "design/spec.md",
+   "line": 12167,
+   "kind": "law",
+   "claim": "A plain nominal input entry admits walking, frozen and root-input contributors",
+   "evidence": "src/library.jl:338-340 (plain Float64 admits value with or without partials)"
+  },
+  {
+   "id": "S13c-091",
+   "file": "design/spec.md",
+   "line": 12173,
+   "kind": "ex",
+   "claim": "u_types(::VehicleWrenchSum) names aero, ldg, pwp (placeholder type)",
+   "evidence": "lead: VehicleWrenchSum is a user-side example, no src definition"
+  },
+  {
+   "id": "S13c-092",
+   "file": "design/spec.md",
+   "line": 12175,
+   "kind": "ex",
+   "claim": "`Systems` assembly of aerodynamics, landing gear, powerplant (example name)",
+   "evidence": "lead: test-only name, illustration of §6.2"
+  },
+  {
+   "id": "S13c-093",
+   "file": "design/spec.md",
+   "line": 12176,
+   "kind": "law",
+   "claim": "Named and generic junctions are plain components, framework not involved",
+   "evidence": "src/library.jl:3-8"
+  },
+  {
+   "id": "S13c-094",
+   "file": "design/spec.md",
+   "line": 12185,
+   "kind": "ex",
+   "claim": "sum_ports! helper is hypothetical sugar, not built",
+   "evidence": "lead: no sum_ports! in src; spec says the design does not build it"
+  },
+  {
+   "id": "S13c-095",
+   "file": "design/spec.md",
+   "line": 12192,
+   "kind": "mech",
+   "claim": "A stateless continuous y_direct recomputes every sweep",
+   "evidence": "src/executor.jl:76,480; src/library.jl:119"
+  },
+  {
+   "id": "S13c-096",
+   "file": "design/spec.md",
+   "line": 12194,
+   "kind": "law",
+   "claim": "Fed held discrete signals, its output changes only at ticks",
+   "evidence": "src/library.jl:115-119 (no state, pure function of held inputs)"
+  },
+  {
+   "id": "S13c-097",
+   "file": "design/spec.md",
+   "line": 12196,
+   "kind": "law",
+   "claim": "No tier-neutral junction variant is needed",
+   "evidence": "src/library.jl:42-119 (one Junction serves both tiers)"
+  },
+  {
+   "id": "S13c-098",
+   "file": "design/spec.md",
+   "line": 12198,
+   "kind": "decl",
+   "claim": "UnitDelay{V} is a discrete primitive at Dₛ = 1",
+   "evidence": "probe:67 (table: d discrete A₀ Dₐ 1 Φₐ 0)"
+  },
+  {
+   "id": "S13c-099",
+   "file": "design/spec.md",
+   "line": 12198,
+   "kind": "mech",
+   "claim": "UnitDelay is the native z⁻¹ of the discrete tier",
+   "evidence": "src/library.jl:377-384 (publishes s, stores u)"
+  },
+  {
+   "id": "S13c-100",
+   "file": "design/spec.md",
+   "line": 12200,
+   "kind": "law",
+   "claim": "UnitDelay needs no framework support",
+   "evidence": "src/library.jl:3-8,377-384"
+  },
+  {
+   "id": "S13c-101",
+   "file": "design/spec.md",
+   "line": 12206,
+   "kind": "ex",
+   "claim": "UnitDelay struct holds s0::V",
+   "evidence": "src/library.jl:377-379"
+  },
+  {
+   "id": "S13c-102",
+   "file": "design/spec.md",
+   "line": 12209,
+   "kind": "ex",
+   "claim": "s_init(d::UnitDelay) = d.s0",
+   "evidence": "src/library.jl:380; probe:40"
+  },
+  {
+   "id": "S13c-103",
+   "file": "design/spec.md",
+   "line": 12210,
+   "kind": "ex",
+   "claim": "u_types and y_types bare V",
+   "evidence": "src/library.jl:381-382; probe:41"
+  },
+  {
+   "id": "S13c-104",
+   "file": "design/spec.md",
+   "line": 12212,
+   "kind": "ex",
+   "claim": "y_state publishes the stored s",
+   "evidence": "src/library.jl:383; probe:42"
+  },
+  {
+   "id": "S13c-105",
+   "file": "design/spec.md",
+   "line": 12213,
+   "kind": "ex",
+   "claim": "s_update stores the incoming u",
+   "evidence": "src/library.jl:384; probe:43"
+  },
+  {
+   "id": "S13c-106",
+   "file": "design/spec.md",
+   "line": 12216,
+   "kind": "law",
+   "claim": "Delay holds its initial value as instance data",
+   "evidence": "src/library.jl:377-380"
+  },
+  {
+   "id": "S13c-107",
+   "file": "design/spec.md",
+   "line": 12217,
+   "kind": "law",
+   "claim": "UnitDelay(s0) needs no zero method on V",
+   "evidence": "probe:63,65 (NoZero has no zero; build succeeds)"
+  },
+  {
+   "id": "S13c-108",
+   "file": "design/spec.md",
+   "line": 12217,
+   "kind": "law",
+   "claim": "Store is isbits by rule, which bounds V",
+   "evidence": "probe:71-72 (IllegalStoreField for String and Vector)"
+  },
+  {
+   "id": "S13c-109",
+   "file": "design/spec.md",
+   "line": 12221,
+   "kind": "law",
+   "claim": "UnitDelay in a continuous loop moves the signal onto the discrete tier",
+   "evidence": "probe:67 (d is discrete)"
+  },
+  {
+   "id": "S13c-110",
+   "file": "design/spec.md",
+   "line": 12222,
+   "kind": "law",
+   "claim": "It inserts a Δt_base-scale zero-order hold",
+   "evidence": "src/library.jl:370-374 (docstring); probe:67 (D = 1)"
+  },
+  {
+   "id": "S13c-111",
+   "file": "design/spec.md",
+   "line": 12225,
+   "kind": "law",
+   "claim": "The cycle diagnostic states the tier caveat, not a free remedy",
+   "evidence": "src/diagnostics.jl:1033-1034; probe:169"
+  },
+  {
+   "id": "S13c-112",
+   "file": "design/spec.md",
+   "line": 12228,
+   "kind": "law",
+   "claim": "Constant has no inputs and no state",
+   "evidence": "src/library.jl:346-349; probe:38"
+  },
+  {
+   "id": "S13c-113",
+   "file": "design/spec.md",
+   "line": 12228,
+   "kind": "mech",
+   "claim": "Constant's stage-1 body returns the held value",
+   "evidence": "src/library.jl:351; probe:37"
+  },
+  {
+   "id": "S13c-114",
+   "file": "design/spec.md",
+   "line": 12233,
+   "kind": "ex",
+   "claim": "Constant struct holds value::V",
+   "evidence": "src/library.jl:346-348; probe:36"
+  },
+  {
+   "id": "S13c-115",
+   "file": "design/spec.md",
+   "line": 12236,
+   "kind": "ex",
+   "claim": "x_init(::Constant) = nothing",
+   "evidence": "src/library.jl:349; probe:38"
+  },
+  {
+   "id": "S13c-116",
+   "file": "design/spec.md",
+   "line": 12237,
+   "kind": "ex",
+   "claim": "y_types is bare Pinned{V}",
+   "evidence": "src/library.jl:350; probe:34-35"
+  },
+  {
+   "id": "S13c-117",
+   "file": "design/spec.md",
+   "line": 12238,
+   "kind": "ex",
+   "claim": "y_state(c::Constant, _) = c.value",
+   "evidence": "src/library.jl:351; probe:37"
+  },
+  {
+   "id": "S13c-118",
+   "file": "design/spec.md",
+   "line": 12241,
+   "kind": "law",
+   "claim": "Constant is a stateless continuous primitive",
+   "evidence": "src/library.jl:349-351"
+  },
+  {
+   "id": "S13c-119",
+   "file": "design/spec.md",
+   "line": 12243,
+   "kind": "law",
+   "claim": "Constant is pinned at the value's own type",
+   "evidence": "probe:34-35"
+  },
+  {
+   "id": "S13c-120",
+   "file": "design/spec.md",
+   "line": 12245,
+   "kind": "law",
+   "claim": "Constant{Float64} declares a Pinned{Float64} port",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "S13c-121",
+   "file": "design/spec.md",
+   "line": 12246,
+   "kind": "law",
+   "claim": "A constant carries zero partials under any Dual activation",
+   "evidence": "src/library.jl:350 (pinned port, never seeded); src/library.jl:338-340"
+  },
+  {
+   "id": "S13c-122",
+   "file": "design/spec.md",
+   "line": 12250,
+   "kind": "law",
+   "claim": "Components with no state or walking-input dependence declare outputs pinned",
+   "evidence": "src/library.jl:350,899,1641,1720,2142,2246 (Constant, Source, Step, Sequence, Relay, Comparator)"
+  },
+  {
+   "id": "S13c-123",
+   "file": "design/spec.md",
+   "line": 12257,
+   "kind": "law",
+   "claim": "Constant's value is instance data, not an overridable default",
+   "evidence": "src/library.jl:346-348"
+  },
+  {
+   "id": "S13c-124",
+   "file": "design/spec.md",
+   "line": 12260,
+   "kind": "law",
+   "claim": "A handle on bulk data never surfaces as a root input",
+   "evidence": "src/build.jl:409-411,455-463 (reason :handle_at_root)"
+  },
+  {
+   "id": "S13c-125",
+   "file": "design/spec.md",
+   "line": 12261,
+   "kind": "ex",
+   "claim": "A rig holds such a handle through a Constant",
+   "evidence": "test/fixtures.jl:1564-1569"
+  },
+  {
+   "id": "S13c-126",
+   "file": "design/spec.md",
+   "line": 12265,
+   "kind": "law",
+   "claim": "Freeze feeds a walking producer into a pinned entry the walk clause refuses",
+   "evidence": "probe:223 (WalkingFaceAtFrozenEntry), probe:225 (builds with Freeze)"
+  },
+  {
+   "id": "S13c-127",
+   "file": "design/spec.md",
+   "line": 12270,
+   "kind": "ex",
+   "claim": "Freeze struct bounded to Float64 or SArray of Float64",
+   "evidence": "src/library.jl:405; probe:44-48"
+  },
+  {
+   "id": "S13c-128",
+   "file": "design/spec.md",
+   "line": 12271,
+   "kind": "ex",
+   "claim": "x_init(::Freeze) = nothing",
+   "evidence": "src/library.jl:406"
+  },
+  {
+   "id": "S13c-129",
+   "file": "design/spec.md",
+   "line": 12272,
+   "kind": "ex",
+   "claim": "u_types(::Freeze{V}) = V (tolerant in)",
+   "evidence": "src/library.jl:407; probe:52"
+  },
+  {
+   "id": "S13c-130",
+   "file": "design/spec.md",
+   "line": 12273,
+   "kind": "ex",
+   "claim": "y_types(::Freeze{V}) = Pinned{V}",
+   "evidence": "src/library.jl:408; probe:52"
+  },
+  {
+   "id": "S13c-131",
+   "file": "design/spec.md",
+   "line": 12274,
+   "kind": "ex",
+   "claim": "y_direct strips partials by broadcast",
+   "evidence": "src/library.jl:409; probe:49-50"
+  },
+  {
+   "id": "S13c-132",
+   "file": "design/spec.md",
+   "line": 12277,
+   "kind": "law",
+   "claim": "At nominal the strip is the identity",
+   "evidence": "probe:51"
+  },
+  {
+   "id": "S13c-133",
+   "file": "design/spec.md",
+   "line": 12278,
+   "kind": "law",
+   "claim": "V is Float64 or an SArray of Float64, constrained at the type",
+   "evidence": "src/library.jl:405; probe:44-48"
+  },
+  {
+   "id": "S13c-134",
+   "file": "design/spec.md",
+   "line": 12279,
+   "kind": "law",
+   "claim": "A struct-valued freeze is refused at the spelling",
+   "evidence": "probe:46 (TypeError)"
+  },
+  {
+   "id": "S13c-135",
+   "file": "design/spec.md",
+   "line": 12281,
+   "kind": "law",
+   "claim": "The bound refuses Float32 and MVector",
+   "evidence": "probe:44-45 (TypeError both)"
+  },
+  {
+   "id": "S13c-136",
+   "file": "design/spec.md",
+   "line": 12283,
+   "kind": "law",
+   "claim": "Under a Dual activation Freeze drops partials and satisfies the pinned entry",
+   "evidence": "probe:49-50,225,227"
+  },
+  {
+   "id": "S13c-137",
+   "file": "design/spec.md",
+   "line": 12296,
+   "kind": "law",
+   "claim": "Any component may be a build root; its input faces become root inputs",
+   "evidence": "probe:97-98 (primitive root, root inputs: a)"
+  },
+  {
+   "id": "S13c-138",
+   "file": "design/spec.md",
+   "line": 12297,
+   "kind": "law",
+   "claim": "Ordinary conditions feed root inputs",
+   "evidence": "probe:256 (init! with set(u = (in = ...)))"
+  },
+  {
+   "id": "S13c-139",
+   "file": "design/spec.md",
+   "line": 12299,
+   "kind": "law",
+   "claim": "Devices feed root inputs",
+   "evidence": "probe:255,258 (attach! device, stage! into root input)"
+  },
+  {
+   "id": "S13c-140",
+   "file": "design/spec.md",
+   "line": 12299,
+   "kind": "law",
+   "claim": "Every output is observable in each snapshot's table",
+   "evidence": "src/sim.jl:571-575 (snapshot.store); probe:269"
+  },
+  {
+   "id": "S13c-141",
+   "file": "design/spec.md",
+   "line": 12301,
+   "kind": "mech",
+   "claim": "input_passthrough(rig,\"child\") surfaces the child's whole input face set",
+   "evidence": "src/assembly.jl:543-549 (no selector keeps every face)"
+  },
+  {
+   "id": "S13c-142",
+   "file": "design/spec.md",
+   "line": 12306,
+   "kind": "law",
+   "claim": "An abstract entry cannot surface as a root input",
+   "evidence": "probe:195"
+  },
+  {
+   "id": "S13c-143",
+   "file": "design/spec.md",
+   "line": 12308,
+   "kind": "law",
+   "claim": "Abstract-at-root is the build error AbstractAtRoot",
+   "evidence": "probe:195 (AbstractAtRoot)"
+  },
+  {
+   "id": "S13c-144",
+   "file": "design/spec.md",
+   "line": 12308,
+   "kind": "ex",
+   "claim": "terrain = AbstractTerrainField (illustrative name)",
+   "evidence": "lead: spec says illustrative; the shape matches test/fixtures.jl:1555 TerrainGain"
+  },
+  {
+   "id": "S13c-145",
+   "file": "design/spec.md",
+   "line": 12310,
+   "kind": "law",
+   "claim": "The rig satisfies the abstract entry inside the rig",
+   "evidence": "probe:209-211 (builds, terrain not a root input)"
+  },
+  {
+   "id": "S13c-146",
+   "file": "design/spec.md",
+   "line": 12311,
+   "kind": "ex",
+   "claim": "Strut is an illustrative landing-gear strut with abstract terrain input",
+   "evidence": "lead: placeholder; probe:190-193 defined it"
+  },
+  {
+   "id": "S13c-147",
+   "file": "design/spec.md",
+   "line": 12312,
+   "kind": "law",
+   "claim": "A concrete stub child is wired to the abstract face",
+   "evidence": "probe:209 (builds with stub/y)"
+  },
+  {
+   "id": "S13c-148",
+   "file": "design/spec.md",
+   "line": 12313,
+   "kind": "mech",
+   "claim": "Remainder exposed via input_passthrough(rig,\"strut\"; except=(\"terrain\",))",
+   "evidence": "probe:127-128 (root input strut.k only)"
+  },
+  {
+   "id": "S13c-149",
+   "file": "design/spec.md",
+   "line": 12315,
+   "kind": "ex",
+   "claim": "SampleTerrainField is an illustrative concrete terrain",
+   "evidence": "lead: placeholder; probe:191 defined it"
+  },
+  {
+   "id": "S13c-150",
+   "file": "design/spec.md",
+   "line": 12318,
+   "kind": "ex",
+   "claim": "StrutRig holds strut::Strut and stub::Constant{SampleTerrainField}",
+   "evidence": "probe:197-199,205-207 (fields compile and build)"
+  },
+  {
+   "id": "S13c-151",
+   "file": "design/spec.md",
+   "line": 12324,
+   "kind": "ex",
+   "claim": "input_wires(rig) = (input_passthrough(rig,\"strut\"; except=(\"terrain\",))...,)",
+   "evidence": "probe:200,208,212"
+  },
+  {
+   "id": "S13c-152",
+   "file": "design/spec.md",
+   "line": 12328,
+   "kind": "ex",
+   "claim": "The stub is typically a Constant holding the test handle",
+   "evidence": "test/fixtures.jl:1564-1569"
+  },
+  {
+   "id": "S13c-153",
+   "file": "design/spec.md",
+   "line": 12332,
+   "kind": "law",
+   "claim": "The rig adds no machinery beyond wiring and except",
+   "evidence": "src/assembly.jl:546; probe:209"
+  },
+  {
+   "id": "S13c-154",
+   "file": "design/spec.md",
+   "line": 12338,
+   "kind": "ex",
+   "claim": "design_world(ac) is a FlightPhysics-side rig (other package)",
+   "evidence": "lead: not in src; spec glossary g-design_world names it as the design's record"
+  },
+  {
+   "id": "S13c-155",
+   "file": "design/spec.md",
+   "line": 12342,
+   "kind": "law",
+   "claim": "Rig machinery is ordinary, with no framework support",
+   "evidence": "test/fixtures.jl:1564-1572; probe:209"
+  },
+  {
+   "id": "S13c-156",
+   "file": "design/spec.md",
+   "line": 12347,
+   "kind": "law",
+   "claim": "The build rejects an algebraic loop",
+   "evidence": "src/build.jl:234-236; probe:169 (real Neg/Neg)"
+  },
+  {
+   "id": "S13c-157",
+   "file": "design/spec.md",
+   "line": 12348,
+   "kind": "law",
+   "claim": "Tracing is diagnostic only, never relied on for correctness",
+   "evidence": "src/tracer.jl:3-4; src/build.jl:197-236 (order from Kahn alone)"
+  },
+  {
+   "id": "S13c-158",
+   "file": "design/spec.md",
+   "line": 12349,
+   "kind": "mech",
+   "claim": "On a cycle the build triggers the tracer to classify it",
+   "evidence": "src/build.jl:277-279"
+  },
+  {
+   "id": "S13c-159",
+   "file": "design/spec.md",
+   "line": 12352,
+   "kind": "law",
+   "claim": "A real cycle gets the 'break it with a state, a y_state port, or a UnitDelay' text",
+   "evidence": "src/diagnostics.jl:1033,1042-1046; probe:169"
+  },
+  {
+   "id": "S13c-160",
+   "file": "design/spec.md",
+   "line": 12353,
+   "kind": "law",
+   "claim": "An artificial cycle gets the remedy ladder",
+   "evidence": "src/diagnostics.jl:1023-1030,1050-1055; probe:169 (artificial)"
+  },
+  {
+   "id": "S13c-161",
+   "file": "design/spec.md",
+   "line": 12354,
+   "kind": "law",
+   "claim": "A recommended unit delay carries the tier caveat",
+   "evidence": "src/diagnostics.jl:1033-1034"
+  },
+  {
+   "id": "S13c-162",
+   "file": "design/spec.md",
+   "line": 12363,
+   "kind": "law",
+   "claim": "A cycle surfaces as a topological-sort stall in the nominal evaluation",
+   "evidence": "src/build.jl:197-236,1011"
+  },
+  {
+   "id": "S13c-163",
+   "file": "design/spec.md",
+   "line": 12364,
+   "kind": "mech",
+   "claim": "Nominal evaluation is the build's second step",
+   "evidence": "src/build.jl:795,1001"
+  },
+  {
+   "id": "S13c-164",
+   "file": "design/spec.md",
+   "line": 12365,
+   "kind": "mech",
+   "claim": "The stalled subgraph is decomposed into SCCs",
+   "evidence": "src/build.jl:251-265,290"
+  },
+  {
+   "id": "S13c-166",
+   "file": "design/spec.md",
+   "line": 12366,
+   "kind": "law",
+   "claim": "Each nontrivial SCC names one cyclic cluster",
+   "evidence": "src/build.jl:265; probe:109 (self-loop and pair, two clusters)"
+  },
+  {
+   "id": "S13c-167",
+   "file": "design/spec.md",
+   "line": 12367,
+   "kind": "law",
+   "claim": "Each cluster becomes one diagnostic",
+   "evidence": "probe:109,181 (two clusters, kinds [AlgebraicCycle])"
+  },
+  {
+   "id": "S13c-168",
+   "file": "design/spec.md",
+   "line": 12367,
+   "kind": "decl",
+   "claim": "The diagnostic kind is AlgebraicCycle",
+   "evidence": "src/diagnostics.jl:995"
+  },
+  {
+   "id": "S13c-169",
+   "file": "design/spec.md",
+   "line": 12368,
+   "kind": "law",
+   "claim": "Members and wires print as one loop of terminal pairs in slash form",
+   "evidence": "src/diagnostics.jl:1006,1037; probe:169"
+  },
+  {
+   "id": "S13c-170",
+   "file": "design/spec.md",
+   "line": 12370,
+   "kind": "ex",
+   "claim": "Form `aero/F → dyn/F, dyn/a → aero/a`",
+   "evidence": "src/diagnostics.jl:1006; probe:112 (aero/o → dyn/p, ...)"
+  },
+  {
+   "id": "S13c-171",
+   "file": "design/spec.md",
+   "line": 12376,
+   "kind": "mech",
+   "claim": "The tracer has two modes that degrade gracefully",
+   "evidence": "src/tracer.jl:334-340"
+  },
+  {
+   "id": "S13c-172",
+   "file": "design/spec.md",
+   "line": 12377,
+   "kind": "mech",
+   "claim": "Both modes carry a set of input indices (tags)",
+   "evidence": "src/tracer.jl:27-29"
+  },
+  {
+   "id": "S13c-173",
+   "file": "design/spec.md",
+   "line": 12380,
+   "kind": "decl",
+   "claim": "Global tracer is a Real subtype",
+   "evidence": "src/tracer.jl:27"
+  },
+  {
+   "id": "S13c-174",
+   "file": "design/spec.md",
+   "line": 12381,
+   "kind": "mech",
+   "claim": "Index sets are unioned by every operation",
+   "evidence": "src/tracer.jl:53-71"
+  },
+  {
+   "id": "S13c-175",
+   "file": "design/spec.md",
+   "line": 12382,
+   "kind": "law",
+   "claim": "May-depend semantics, a sound over-approximation",
+   "evidence": "src/tracer.jl:53-71,105"
+  },
+  {
+   "id": "S13c-176",
+   "file": "design/spec.md",
+   "line": 12382,
+   "kind": "law",
+   "claim": "A saturated clamp still reports",
+   "evidence": "src/tracer.jl:61; probe:169 (clamp real)"
+  },
+  {
+   "id": "S13c-177",
+   "file": "design/spec.md",
+   "line": 12383,
+   "kind": "law",
+   "claim": "u² at u = 0 still reports",
+   "evidence": "probe:169 (square real)"
+  },
+  {
+   "id": "S13c-178",
+   "file": "design/spec.md",
+   "line": 12383,
+   "kind": "law",
+   "claim": "Global tracer is exact in one evaluation",
+   "evidence": "src/tracer.jl:185-205,333-335"
+  },
+  {
+   "id": "S13c-179",
+   "file": "design/spec.md",
+   "line": 12384,
+   "kind": "law",
+   "claim": "Global tracer needs no branches or lookups on input-tainted values",
+   "evidence": "src/tracer.jl:105,108-123; probe:169 (branchy falls to sampled)"
+  },
+  {
+   "id": "S13c-180",
+   "file": "design/spec.md",
+   "line": 12386,
+   "kind": "mech",
+   "claim": "Sampled mode carries the primal",
+   "evidence": "src/tracer.jl:27-29 (value field), 41"
+  },
+  {
+   "id": "S13c-181",
+   "file": "design/spec.md",
+   "line": 12387,
+   "kind": "law",
+   "claim": "Sampled mode is the fallback when the global tracer meets an undecidable branch",
+   "evidence": "src/tracer.jl:336-339; probe:169 (branchy b :sampled)"
+  },
+  {
+   "id": "S13c-182",
+   "file": "design/spec.md",
+   "line": 12389,
+   "kind": "mech",
+   "claim": "Sampled mode reports taken paths across randomized states",
+   "evidence": "src/tracer.jl:216-230"
+  },
+  {
+   "id": "S13c-183",
+   "file": "design/spec.md",
+   "line": 12390,
+   "kind": "law",
+   "claim": "Its only misses are untaken branches",
+   "evidence": "src/tracer.jl:224-228 (union over eight draws)"
+  },
+  {
+   "id": "S13c-184",
+   "file": "design/spec.md",
+   "line": 12395,
+   "kind": "law",
+   "claim": "Only inputs are seeded",
+   "evidence": "src/tracer.jl:185-198,240-263"
+  },
+  {
+   "id": "S13c-185",
+   "file": "design/spec.md",
+   "line": 12395,
+   "kind": "law",
+   "claim": "Branching on state never interferes",
+   "evidence": "probe:169 (modebranch traced :global)"
+  },
+  {
+   "id": "S13c-186",
+   "file": "design/spec.md",
+   "line": 12396,
+   "kind": "mech",
+   "claim": "Stage-2 functions also receive state views",
+   "evidence": "src/tracer.jl:199-203"
+  },
+  {
+   "id": "S13c-187",
+   "file": "design/spec.md",
+   "line": 12396,
+   "kind": "law",
+   "claim": "State views and stage-1 hand-down are never seeded",
+   "evidence": "src/tracer.jl:202 (_lift untagged), 206-208"
+  },
+  {
+   "id": "S13c-188",
+   "file": "design/spec.md",
+   "line": 12398,
+   "kind": "law",
+   "claim": "Stage-1 functions are never traced",
+   "evidence": "src/tracer.jl:185-205 (y_direct only)"
+  },
+  {
+   "id": "S13c-189",
+   "file": "design/spec.md",
+   "line": 12399,
+   "kind": "law",
+   "claim": "Derivatives, guards, handlers, projections are outside tracing",
+   "evidence": "src/tracer.jl:185-205 (only y_direct is evaluated)"
+  },
+  {
+   "id": "S13c-190",
+   "file": "design/spec.md",
+   "line": 12400,
+   "kind": "decl",
+   "claim": "A projection is the per-component hook x_projection",
+   "evidence": "src/declare.jl:579-586"
+  },
+  {
+   "id": "S13c-191",
+   "file": "design/spec.md",
+   "line": 12403,
+   "kind": "law",
+   "claim": "A bare Int index (value-severing op) is a tracer blind spot",
+   "evidence": "src/tracer.jl:46-48; probe:169 (int-sever classified artificial)"
+  },
+  {
+   "id": "S13c-192",
+   "file": "design/spec.md",
+   "line": 12410,
+   "kind": "mech",
+   "claim": "Both modes ride the same T <: Real genericity as Dual",
+   "evidence": "src/tracer.jl:27 (Tracer{S} <: Real)"
+  },
+  {
+   "id": "S13c-193",
+   "file": "design/spec.md",
+   "line": 12415,
+   "kind": "law",
+   "claim": "Classification needs no execution order",
+   "evidence": "src/tracer.jl:1-8,280-380"
+  },
+  {
+   "id": "S13c-194",
+   "file": "design/spec.md",
+   "line": 12416,
+   "kind": "law",
+   "claim": "It runs in the nominal evaluation's failure path",
+   "evidence": "src/build.jl:235-236,277"
+  },
+  {
+   "id": "S13c-195",
+   "file": "design/spec.md",
+   "line": 12419,
+   "kind": "law",
+   "claim": "Member evaluated at the probe point (initial state)",
+   "evidence": "src/tracer.jl:5-6,199-203"
+  },
+  {
+   "id": "S13c-196",
+   "file": "design/spec.md",
+   "line": 12420,
+   "kind": "mech",
+   "claim": "State views read from x_init, s_init, m_init declarations",
+   "evidence": "src/tracer.jl:199-203,206-208"
+  },
+  {
+   "id": "S13c-197",
+   "file": "design/spec.md",
+   "line": 12421,
+   "kind": "mech",
+   "claim": "Out-of-cycle cells come from the acyclic prefix's probe values",
+   "evidence": "src/tracer.jl:287-293,260-263"
+  },
+  {
+   "id": "S13c-198",
+   "file": "design/spec.md",
+   "line": 12422,
+   "kind": "mech",
+   "claim": "In-cycle cells synthesized via probe_value under tags",
+   "evidence": "src/tracer.jl:255-259"
+  },
+  {
+   "id": "S13c-199",
+   "file": "design/spec.md",
+   "line": 12423,
+   "kind": "mech",
+   "claim": "The tracer's product is a per-member dependence set",
+   "evidence": "src/tracer.jl:208"
+  },
+  {
+   "id": "S13c-200",
+   "file": "design/spec.md",
+   "line": 12427,
+   "kind": "law",
+   "claim": "Classification builds no activation",
+   "evidence": "src/tracer.jl:280-380 (no Activation constructed)"
+  },
+  {
+   "id": "S13c-201",
+   "file": "design/spec.md",
+   "line": 12429,
+   "kind": "mech",
+   "claim": "The classifier uses the per-member, order-free trace at the probe point",
+   "evidence": "src/tracer.jl:1-8"
+  },
+  {
+   "id": "S13c-202",
+   "file": "design/spec.md",
+   "line": 12432,
+   "kind": "law",
+   "claim": "A member's map may come from either mode",
+   "evidence": "src/tracer.jl:334-340; probe:169 (branchy: a global, b sampled)"
+  },
+  {
+   "id": "S13c-203",
+   "file": "design/spec.md",
+   "line": 12435,
+   "kind": "law",
+   "claim": "Verdict is one graph question over the cluster",
+   "evidence": "src/tracer.jl:352-374"
+  },
+  {
+   "id": "S13c-204",
+   "file": "design/spec.md",
+   "line": 12437,
+   "kind": "mech",
+   "claim": "A hop runs from the entering face to the leaving port inside a member",
+   "evidence": "src/tracer.jl:361-367"
+  },
+  {
+   "id": "S13c-205",
+   "file": "design/spec.md",
+   "line": 12439,
+   "kind": "law",
+   "claim": "A hop holds iff the map routes the face to the port",
+   "evidence": "src/tracer.jl:345-352"
+  },
+  {
+   "id": "S13c-207",
+   "file": "design/spec.md",
+   "line": 12440,
+   "kind": "law",
+   "claim": "Loop is real iff a cycle survives the graph",
+   "evidence": "src/tracer.jl:374; probe:169 (real Neg/Neg)"
+  },
+  {
+   "id": "S13c-208",
+   "file": "design/spec.md",
+   "line": 12440,
+   "kind": "law",
+   "claim": "Loop is artificial iff none survives",
+   "evidence": "src/tracer.jl:374; probe:169 (Neg/Mute artificial)"
+  },
+  {
+   "id": "S13c-209",
+   "file": "design/spec.md",
+   "line": 12443,
+   "kind": "law",
+   "claim": "Every dead hop is listed under either verdict",
+   "evidence": "probe:107 (real loop with dead hop m q→o); src/diagnostics.jl:1044-1046"
+  },
+  {
+   "id": "S13c-210",
+   "file": "design/spec.md",
+   "line": 12445,
+   "kind": "law",
+   "claim": "Simple cycle: real iff every hop survives",
+   "evidence": "probe:169 (real and artificial rows)"
+  },
+  {
+   "id": "S13c-211",
+   "file": "design/spec.md",
+   "line": 12452,
+   "kind": "law",
+   "claim": "Discrete members trace structurally",
+   "evidence": "src/tracer.jl:323-325; probe:169 (discrete member :structural)"
+  },
+  {
+   "id": "S13c-212",
+   "file": "design/spec.md",
+   "line": 12454,
+   "kind": "law",
+   "claim": "Remedy hint is offered only for continuous members",
+   "evidence": "src/diagnostics.jl:1023-1030 (hint from dead hops, which structural members never have)"
+  },
+  {
+   "id": "S13c-214",
+   "file": "design/spec.md",
+   "line": 12457,
+   "kind": "law",
+   "claim": "Continuous faces/ports with no walking leaf trace structurally",
+   "evidence": "src/tracer.jl:318-330,346-348"
+  },
+  {
+   "id": "S13c-215",
+   "file": "design/spec.md",
+   "line": 12460,
+   "kind": "decl",
+   "claim": "A walking leaf is one whose type follows the activation scalar",
+   "evidence": "src/tracer.jl:318-321 (T in leaf_types)"
+  },
+  {
+   "id": "S13c-216",
+   "file": "design/spec.md",
+   "line": 12462,
+   "kind": "law",
+   "claim": "Diagnostic records each member's source: global, sampled or structure",
+   "evidence": "src/diagnostics.jl:998-1000; probe:169 (traced :global/:sampled/:structural)"
+  },
+  {
+   "id": "S13c-217",
+   "file": "design/spec.md",
+   "line": 12465,
+   "kind": "mech",
+   "claim": "Hint: split the component or narrow the neighbor's contract",
+   "evidence": "src/diagnostics.jl:1023-1030; probe:169"
+  },
+  {
+   "id": "S13c-218",
+   "file": "design/spec.md",
+   "line": 12470,
+   "kind": "ex",
+   "claim": "Message reads 'artificial at port level: `m`'s `F` does not route `a`; split `m`, or narrow ...'",
+   "evidence": "src/diagnostics.jl:1007,1050-1055; probe:169 (artificial Neg/Mute message)"
+  },
+  {
+   "id": "S13c-220",
+   "file": "design/spec.md",
+   "line": 12473,
+   "kind": "law",
+   "claim": "Dead hop runs from the input face not routed to the output port",
+   "evidence": "src/diagnostics.jl:1007; src/tracer.jl:350-352"
+  },
+  {
+   "id": "S13c-221",
+   "file": "design/spec.md",
+   "line": 12475,
+   "kind": "law",
+   "claim": "Dead hop is a separate payload field, not dotted onto the path",
+   "evidence": "src/diagnostics.jl:999"
+  },
+  {
+   "id": "S13c-222",
+   "file": "design/spec.md",
+   "line": 12479,
+   "kind": "law",
+   "claim": "A throwing member evaluation ships the cycle unclassified",
+   "evidence": "src/tracer.jl:378-380; probe:169 (thrower: classification nothing)"
+  },
+  {
+   "id": "S13c-223",
+   "file": "design/spec.md",
+   "line": 12480,
+   "kind": "law",
+   "claim": "Classification is a bonus, never the error's precondition",
+   "evidence": "src/tracer.jl:378-380; probe:169 (thrower)"
+  }
+ ],
+ "counts": {
+  "law": 97,
+  "mech": 51,
+  "decl": 22,
+  "ex": 27,
+  "ptr": 14,
+  "why": 28,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

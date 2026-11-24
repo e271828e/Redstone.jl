@@ -34,7 +34,7 @@ The user ruled on 2026-11-24:
   by a new superseding entry.
 - **Scope.** The spec and its four appendices, the ratified log entries,
   the docstrings, `docs/src/api.md`, `docs/src/index.md`, the tutorial
-  pages, `docs/src/descriptor.json`, the README, `code_map.md`, the `§N`
+  pages, `src/descriptor.json`, the README, `code_map.md`, the `§N`
   and `D-nnn` citations in code comments, and all nineteen companions.
   `docs/src/glossary.md` is generated from Appendix D by
   `docs/glossary.jl`, so it is audited through Appendix D.
@@ -104,7 +104,7 @@ scripts live in `probes/`. Their output reaches each slice as pre-findings.
 4. **Diagnostic kinds.** Appendix C's kind set is compared with every kind
    the code raises, in both directions.
 5. **The descriptor.** §13.9's schema keys are compared with what the writer
-   emits and with `docs/src/descriptor.json`.
+   emits and with `src/descriptor.json`.
 6. **Citations in code.** Every `§N` and `D-nnn` in `src/`, `test/` and
    `examples/` is checked to resolve. Whether it cites the right topic is
    left to the agents.

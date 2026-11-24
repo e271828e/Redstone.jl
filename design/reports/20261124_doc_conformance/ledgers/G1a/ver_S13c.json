@@ -1,0 +1,163 @@
+{
+ "judgments": [
+  {
+   "id": "S13c-001",
+   "conforms": true,
+   "evidence": "src/sim.jl:1661-1663 run _finish! and _tail! in the inner finally, even off a loop-side throw. src/sim.jl:1757 records LoopError. Probe line 42-43 (probe.jl): a Tripwire throw in frame 2 ends with source LoopError and lifecycle errored, after the tail ran (line 48 shows the device's shutdown!)."
+  },
+  {
+   "id": "S13c-010",
+   "conforms": true,
+   "evidence": "src/sim.jl:1903-1909 joins every spawned task under one join_timeout deadline and reports a late one by name (DeviceJoinTimeout, src/sim.jl:1934-1939). The same _tail! runs on the abnormal path (src/sim.jl:1663). Probe line 69: HangShutdown is abandoned at the 0.5 s cap with a DeviceJoinTimeout naming 'device 1 (HangShutdown)'."
+  },
+  {
+   "id": "S13c-019",
+   "conforms": true,
+   "evidence": "Probe lines 45-51: StepError.boundary = 1 at t = 0.15, latest(sim) is boundary 1 at t = 0.1, logged boundaries [0, 1], and the device saw no newer boundary. src/sim.jl:1748-1751: publication is a boundary's last act, so the failed boundary published nothing."
+  },
+  {
+   "id": "S13c-031",
+   "conforms": false,
+   "evidence": "src/sim.jl:1894-1903: _tail! calls unblock!(entry.dev) synchronously on the calling task, before it sets the join deadline. Only the joins run under join_timeout. Probe line 69, with join_timeout = 0.5: a shutdown! that sleeps 3 s returns run! in 0.58 s, but an unblock! that sleeps 3 s holds run! for 3.0 s. A hanging shutdown! is bounded because it runs on the device task inside the wrapper (src/devices.jl:664-667). A hanging unblock! is not bounded.",
+   "class": "defect",
+   "fix": "Bring unblock! under the tail's join_timeout deadline. For example, run each unblock! on its own task and wait for it within the shared deadline, so that a hanging unblock! is reported and abandoned the way a hanging task is.",
+   "clear": false
+  },
+  {
+   "id": "S13c-029",
+   "conforms": true,
+   "evidence": "Probe line 59: on an errored simulation, run!, step!, init!, replay!, live!, attach! and detach! are each refused as ServiceLifecycle with status :errored. latest and trace still read. src/sim.jl:598-608 (_assert_advanceable) and src/sim.jl:836-837 (init!) refuse errored."
+  },
+  {
+   "id": "S13c-041",
+   "conforms": true,
+   "evidence": "Probe lines 50-51: logged boundaries are [0, 1], the last consistent boundary. The trace's last record is the batch drained at the top of the failing frame (frame 2, entering from boundary 1), which src/dataplane.jl:496 records at the drain. That frame top is the last consistent boundary, as §13.4 requires for replay. Nothing past it is published.",
+   "note": "The trace holds the failing frame's top-drain batch. It is keyed at the last consistent frame top, so the claim holds. A reader could still take 'ends at' more strictly."
+  },
+  {
+   "id": "S13c-039",
+   "conforms": true,
+   "evidence": "src/assembly.jl:543-548 and src/assembly.jl:594-599: input_passthrough and output_passthrough both take except, only and select. src/assembly.jl:611-630 evaluates the selector at the call and refuses more than one selector."
+  },
+  {
+   "id": "S13c-050",
+   "conforms": true,
+   "evidence": "src/structure.jl:1090-1094 gives one route per consumer wire of an input face. Probe line 76 prints 'in → a/e' and 'in → b/e' for a face routed to two children."
+  },
+  {
+   "id": "S13c-059",
+   "conforms": true,
+   "evidence": "src/structure.jl:508-509 gives a primitive root a level row with no wires, so _boundary_inputs is empty (src/structure.jl:1036-1039). Probe line 78: show of build(Gain(1.0)).structure prints no route block."
+  },
+  {
+   "id": "S13c-068",
+   "conforms": true,
+   "evidence": "src/library.jl:1-5 declares 'module Library' and imports only extension names from ..Redstone. src/Redstone.jl includes it. Probe line 83: Redstone.Library is a Module and the parent module of Constant."
+  },
+  {
+   "id": "S13c-077",
+   "conforms": true,
+   "evidence": "src/library.jl:89 'const And{N} = Junction{Bool, Bool, N, typeof(&)}', with the constructor at src/library.jl:112. Probe line 84: And{3}().f is &."
+  },
+  {
+   "id": "S13c-096",
+   "conforms": true,
+   "evidence": "Probe line 122: a SumJunction fed by two discrete counters is read in x_deriv at RK4 stage times. Its value holds at 0.0 on [0, 0.1], at 2.0 on [0.1, 0.2] and at 4.0 from 0.2, so it changes only at ticks."
+  },
+  {
+   "id": "S13c-110",
+   "conforms": true,
+   "evidence": "src/library.jl:377-384: UnitDelay declares s_init, so it is discrete. Probe line 96: in the structure table the delay is 'discrete' with Dₐ 1 on A₀, whose Δt is Δt_base."
+  },
+  {
+   "id": "S13c-123",
+   "conforms": true,
+   "evidence": "src/library.jl:346-351: Constant{V} holds value as a struct field and declares no state. y_state returns c.value, so no condition or default can override it.",
+   "note": "The probe's condition call at probe line 92 hit a MethodError from my own condition spelling. It is not evidence either way."
+  },
+  {
+   "id": "S13c-138",
+   "conforms": true,
+   "evidence": "test/test_library.jl:3793-3794: init!(sim, set(u = (var\"dut.k\" = 2.0,))) feeds the rig's root input through an ordinary condition. Probe line 94: the rig's root inputs are [dut.k]."
+  },
+  {
+   "id": "S13c-165",
+   "conforms": false,
+   "evidence": "src/library.jl:350: Constant has a bare y_types, so its one output face is y. Probe line 85: output_faces(Constant(1.0)) == [\"y\"]. Probe line 87: wiring \"c/out\" is refused as UnknownPort, and \"c/y\" builds (probe line 89). The test fixture writes local_wires(::TerrainRig) = (\"stub/y\" => \"dut/terrain\",) (test/fixtures.jl:1568).",
+   "class": "drift",
+   "fix": "local_wires(::StrutRig) = (\"stub/y\" => \"strut/terrain\",)",
+   "clear": true,
+   "note": "D-437 renamed a bare contract's port to the default face y. The rig sketch kept the pre-D-437 name out."
+  },
+  {
+   "id": "S13c-153",
+   "conforms": true,
+   "evidence": "test/fixtures.jl:1561-1569: TerrainRig is a plain struct with local_wires and input_passthrough(rig, \"dut\"; except = (\"terrain\",)), and it builds and runs (test/test_library.jl:3787-3795). No framework support is involved."
+  },
+  {
+   "id": "S13c-163",
+   "conforms": true,
+   "evidence": "src/build.jl:1011: _outputs runs inside _nominal, the nominal evaluation (the second build step). Its Kahn stall throws AlgebraicCycle via _cycle_diagnostics (src/build.jl:236-238)."
+  },
+  {
+   "id": "S13c-174",
+   "conforms": true,
+   "evidence": "src/tracer.jl:27-30: Tracer{S} <: Real carries a UInt64 dependency set. src/tracer.jl:53-75 unions the sets in every arithmetic op, in ifelse and in min/max."
+  },
+  {
+   "id": "S13c-183",
+   "conforms": false,
+   "evidence": "src/tracer.jl:48: Float64(::Tracer{false}) = x.value, and the Int conversions at src/tracer.jl:113-127 sever the set in local mode. Probe line 165: a branch-free member F = TABLE[round(Int, v)] falls back to :sampled and is classified :artificial with dead hop (m, v, F), although F does depend on v. That is a sampled-mode miss with no untaken branch.",
+   "class": "deviation",
+   "fix": "Its misses are untaken branches and the value-severing blind spot below ([D-012][d-012], [D-349][d-349]).",
+   "clear": true,
+   "backing_entry": "D-349",
+   "note": "The blind spot is documented three paragraphs later as a general tracer limit. The global mode refuses it, so it bites only in sampled mode, which makes the 'only' in this sentence false."
+  },
+  {
+   "id": "S13c-206",
+   "conforms": true,
+   "evidence": "Probe line 166: a linear interpolation member (floor(Int, v) index, fractional weight w = v - i) falls back to :sampled and is classified :real with no dead hop. The weight carries v's set (src/tracer.jl:53-55)."
+  },
+  {
+   "id": "S13c-192",
+   "conforms": true,
+   "evidence": "src/tracer.jl:27: Tracer{S} <: Real for both modes. src/tracer.jl:316-317 retypes declarations at T as a Dual activation does. Probe line 174: both Tracer{true} and Tracer{false} are <: Real."
+  },
+  {
+   "id": "S13c-213",
+   "conforms": false,
+   "evidence": "src/tracer.jl:333-340 and 216-231: a member whose global trace meets an undecidable branch is re-evaluated eight times at redrawn primals. Probe line 168: the piecewise member's y_direct ran 9 times, at v = 0.0 and then at 8 random values. Only a global-mode member runs once at the probe point (probe line 170: 1 call at 0.0).",
+   "class": "drift",
+   "fix": "None is needed, because each SCC member is evaluated *in isolation* at the [probe](#g-probe) point: once under the global tracer, or at sampled states when that tracer meets an undecidable branch ([D-245][d-245], [D-349][d-349]).",
+   "clear": false,
+   "backing_entry": "D-245",
+   "note": "D-012 says 'evaluated once'. D-245 and D-349 record the sampled-state member maps later."
+  },
+  {
+   "id": "S13c-219",
+   "conforms": false,
+   "evidence": "src/tracer.jl:287: _classify builds layout = cell_layout(structure, decls, Float64) and passes it to _probe_direct! for the acyclic prefix. _probe_input reads root-input probe values from layout.root_inputs (src/build.jl:1659-1660). No table or activation is built, but a layout is.",
+   "class": "deviation",
+   "fix": "There is no activation and no table. The one layout built is the nominal cell layout, from which the acyclic prefix's root-input probe values are read.",
+   "clear": false
+  },
+  {
+   "id": "S13c-201",
+   "conforms": true,
+   "evidence": "src/tracer.jl:180-206 (_trace_direct) evaluates each member alone, with out-of-cluster faces from the prefix's probe products and in-cluster faces from probe_value under tags, so no order is used. A sampled-mode member redraws only its state and its in-cycle faces (src/tracer.jl:156-157, 244-247).",
+   "note": "The sampled redraw is not strictly 'at the probe point'. The paragraph's closing sentences ('A member's map may come from either mode') cover it, unlike S13c-213."
+  },
+  {
+   "id": "S13c-211",
+   "conforms": true,
+   "evidence": "src/tracer.jl:316-325 gives a non-CONTINUOUS member no traced declaration, so its hops are kept by structure (:structural). Probe line 172: a DiscreteMap pair is classified :real with traced p => :structural and q => :structural."
+  },
+  {
+   "id": "S13c-223",
+   "conforms": true,
+   "evidence": "src/tracer.jl:378-380: any throw but InternalInvariant returns the cycle unchanged. Probe line 171: a member whose y_direct throws gives AlgebraicCycle with classification nothing, members [m, g] and wires intact."
+  }
+ ],
+ "notes": "I ran the probe at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S13c_v/probe.jl from W three times. I edited no tracked file. Summary of the non-conforming items. 031 is a real defect: a hanging unblock! is not bounded by join_timeout (run! took 3.0 s with a 0.5 s cap). 165 is drift after D-437: the stub's face is y, not out. 183, 213 and 219 are precision deviations in §13.8's tracer prose. A side observation outside these claims: the src/sim.jl:1590 comment says 'init! and replay! are the resets' after an errored exit, but both refuse an errored simulation (src/sim.jl:836, 1341). That comment looks stale."
+}

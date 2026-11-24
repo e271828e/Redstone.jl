@@ -1,0 +1,88 @@
+{
+ "judgments": [
+  {
+   "id": "S13d-002",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:44-45 define descriptor(::Build) and descriptor(::Deployment); _envelope (src/descriptor.jl:48-52) writes format_version from DESCRIPTOR_FORMAT (src/descriptor.jl:10). Probe line '002' lists the three methods (the third, the DiagnosticError one, is covered later in the section)."
+  },
+  {
+   "id": "S13d-012",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:54-56: the build body is structure, outputs, events and warnings only. Probe '012 build body keys' gives (:structure, :outputs, :events, :warnings), and '012 show mentions activation' is true, so show prints the list and the descriptor leaves it out."
+  },
+  {
+   "id": "S13d-022",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:279-280 and 284: wire endpoints are _endpoint((path, port)) with port = String(port). The level's wires store a bare port as :u/:y (test/test_build.jl:1822). Probe '022 loop wires' shows port = \"y\"/\"u\" on bare faces, and '022 port types' is [String]."
+  },
+  {
+   "id": "S13d-032",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:181-186: pinned_by = [_endpoint((consumer.path, consumer.port)) for consumer in consumers]. Probe '032 rows' gives the 'free' row an empty typed vector, and '032 json' encodes it as [] (not {})."
+  },
+  {
+   "id": "S13d-042",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:252-260 and 272-282: node fields are identity, class, tier, timing, rates, type identity, faces, wires and parameters. Probe '042 node keys' shows no initial state, layout or compiled field."
+  },
+  {
+   "id": "S13d-001",
+   "conforms": false,
+   "evidence": "src/descriptor.jl:290-293: _primitive_faces calls invoke_declaration(fn, instance), which takes the instance alone with no tier and no scalar type. _primitive_face (src/descriptor.jl:296-299) then unwraps Pinned itself on either tier. The reader the doc names, contract_at/declared_at(fn, comp, tier, Float64) at src/declare.jl:794-807, takes the tier but unwraps Pinned on the continuous tier, so it would lose the pinned flag. Probe '001': declared_at gives (e = Float64,), while raw invoke_declaration gives (e = Pinned{Float64},), which the descriptor flags pinned = true. The code has read the raw declaration since c749addf (_leaf_faces).",
+   "class": "deviation",
+   "fix": "Faces come from each instance's own declarations, read as written with a `Pinned` entry unwrapped and flagged. The instances are in the `Structure`, so a failure after the structure step can still carry them.",
+   "clear": true,
+   "backing_entry": "D-432 (\"Faces come from the declaration reader at `Float64` over the `Structure`'s instances\"). It does not mention the tier."
+  },
+  {
+   "id": "S13d-052",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:207: _unfactored(attribution.prime) adds unfactored = true. _unfactored is at src/diagnostics.jl:1351. Probe '052 primes' shows the Mersenne cofactor 2305843009213693951 with unfactored = true and suppliers = [1]."
+  },
+  {
+   "id": "S13d-062",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:64-77. Probe '062 body keys' gives build, dt_frame, dt_base, h_max, h_min, algorithm, firing_budget, localization_tol, localization_budget, attempt_budget, schedule, warnings. That follows fieldnames(Deployment) (src/deployment.jl:539-553) in order, with the internal lattice left out. The doc's own list does not name lattice either."
+  },
+  {
+   "id": "S13d-072",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:87: rows = [(path = row.path, D = row.D, phi = row.Φ) for row in schedule.rows]. Probe '072' for MultiRate, chained_model and Vehicle: the schedule rows' paths equal the walk-order discrete primitive nodes ('match | true' each time)."
+  },
+  {
+   "id": "S13d-082",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:313: face_type <: AbstractFloat returns (kind = \"float\",). Probe '082/092 marker' gives float for Float64, Float32, Float16, BigFloat and abstract AbstractFloat."
+  },
+  {
+   "id": "S13d-092",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:341-344: _struct_fields takes an isbits tuple's fieldnames as strings. Probe gives Tuple{Float64, Int64} -> (kind = \"struct\", fields = [\"1\", \"2\"])."
+  },
+  {
+   "id": "S13d-102",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:13-15: LOCATED_DECLARATIONS holds u_types, y_types, x_init, s_init, m_init, sample_times, state_events, local_wires, input_wires, output_wires, stop_reason and transparent_container, which is 12 (probe '102 count | 12'). src/descriptor.jl:478-485 writes each as file = String(method.file) and line = Int(method.line), for the methods the type defines (_declares)."
+  },
+  {
+   "id": "S13d-112",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:409: only a non-empty NamedTuple opens. Probe '112 params' gives fixed -> \"NamedTuple()\" and nested g.b -> \"NamedTuple()\" as single entries."
+  },
+  {
+   "id": "S13d-123",
+   "conforms": true,
+   "evidence": "Project.toml:9-14 [deps] lists ForwardDiff, LinearAlgebra, PrecompileTools, Random and StaticArrays, with no JSON. test/Project.toml:7-8 holds JSON and JSONSchema. docs/Project.toml and examples/Project.toml have no JSON. test/test_descriptor.jl:7 is the only user."
+  },
+  {
+   "id": "S13d-133",
+   "conforms": false,
+   "evidence": "src/descriptor.jl:120-124 write `function` for UserCodeFraming, ConformanceFailure, DeadStage and UndeclaredReturnField only. BundleFieldError is raised at the probe (spec §13.1 at design/spec.md:11194; src/declare.jl:985 inside invoke_probed), and its payload holds the method at fault as `family` (src/diagnostics.jl:1195-1200). Even so, it gets no `function`. Probe '133 ReadsM' and '133 ReadsU' give (\"BundleFieldError\", \"<none>\", \"`c`: `y_state` destructures ...\").",
+   "class": "defect",
+   "fix": "Add `_function(d::BundleFieldError) = d.family` beside the other _function methods in src/descriptor.jl, with a function_of test on single(ReadsM()) == \"y_state\".",
+   "clear": false,
+   "note": "The spec and D-434 never list which kinds count as probe-chain kinds. The other option is to narrow the doc to name the four kinds the writer covers. Either way the user needs to rule."
+  }
+ ],
+ "notes": "I ran the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S13d_v/probe.jl once against W at 89a10a14, and it printed every line cited above. I edited no tracked file. Two claims do not match the code. S13d-001 is a deviation: the descriptor reads the raw declaration and does not use the tier-taking Float64 reader. S13d-133 is a defect: BundleFieldError gets no `function` field. In S13d-012, '012 json has activation' is true only because the types table's docstrings contain the word. The body itself has no activations section."
+}

@@ -1,0 +1,121 @@
+{
+ "judgments": [
+  {
+   "id": "S13a-002",
+   "conforms": true,
+   "evidence": "probe.jl P1a/P1b: unfed inputs and a wire typo throw one DiagnosticError{Vector{Diagnostic}} holding every violation (UnknownPort + UnconnectedInput); P2a/P2b: a throwing x_deriv or x_init throws DiagnosticError{UserCodeFraming} alone (src/declare.jl:965,979)."
+  },
+  {
+   "id": "S13a-011",
+   "conforms": true,
+   "evidence": "src/build.jl:781-793: walk, trial-binding and event passes push into one diags list, then one throw at :787; the wire pass runs only on a clean walk and merges into the throw at :793. Probe P1b shows two passes' diagnostics in one carrier.",
+   "note": "The wire pass is skipped whenever any earlier pass recorded something, including an event-declaration failure that leaves the wiring clean. That is stricter than 'runs when the results it reads are clean' (S13a-011's preceding sentence) but does not contradict this claim."
+  },
+  {
+   "id": "S13a-020",
+   "conforms": true,
+   "evidence": "probe.jl P3: two mixed containers on one component throw DiagnosticError{Vector{Diagnostic}} with two ContainerMixed; src/build.jl:142 _check_ports throws DiagnosticError(diags) for a stage's port check."
+  },
+  {
+   "id": "S13a-029",
+   "conforms": true,
+   "evidence": "src/deployment.jl:560-576 collects every DeploymentInvalid then throws once; probe P4: firing_budget, localization_budget and attempt_budget all 0 give one DiagnosticError{Vector{Diagnostic}} with three diagnostics."
+  },
+  {
+   "id": "S13a-040",
+   "conforms": false,
+   "evidence": "test/test_failures.jl:906 `@test occursin(\"zero(\", message(err.cause))` and :1022 `occursin(\"NamedTuple\", message(err.cause))`, test/test_devices.jl:1083 `occursin(\"was detached\", logline(d))` assert diagnostic message text outside test_diagnostics.jl's rendering testset (test/test_diagnostics.jl:772), against the spec and design/rules/code_rules.md:341.",
+   "class": "defect",
+   "fix": "Move the message-text assertions at test/test_failures.jl:906 and :1022 and test/test_devices.jl:1083 into test_diagnostics.jl's rendering testset, or drop them, so the other tests assert kind and payload alone.",
+   "clear": false
+  },
+  {
+   "id": "S13a-049",
+   "conforms": true,
+   "evidence": "src/declare.jl:984-988 raises BundleFieldError at the probe (probe P5: DiagnosticError{BundleFieldError}); src/model.jl:1099-1128 makes it the runtime species (probe P6: StepError{BundleFieldError})."
+  },
+  {
+   "id": "S13a-058",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:245 `struct StepError{C <: Union{Diagnostic, Exception}}` with `cause::C`; src/model.jl:1080 builds it from `_species(model, err)`; probe P6 gives StepError{BundleFieldError}."
+  },
+  {
+   "id": "S13a-067",
+   "conforms": true,
+   "evidence": "src/build.jl:809-810 the door's catch rewraps as DiagnosticError(err.carried, raised_warnings, structure); probe P2a/P5 carry a Structure past the structure step, P2b/P1 carry nothing."
+  },
+  {
+   "id": "S13a-080",
+   "conforms": true,
+   "evidence": "src/declare.jl:965 invoke_declaration and :979 invoke_probed are the two framing accessors; src/declare.jl:794-796 contract_at reads declarations through invoke_declaration.",
+   "note": "The invoke_declaration docstring (src/declare.jl:957-962) lists re-reads that stay bare after a framed call returned (conditions.jl, build.jl establish_defaults!, tracer.jl). Most sit outside build, so the claim holds for what the build invokes."
+  },
+  {
+   "id": "S13a-089",
+   "conforms": true,
+   "evidence": "src/declare.jl:984 matches `err isa FieldError && err.type === typeof(bundle)` at the probe; src/model.jl:1121 matches by `fieldnames(err.type) == legal_names` at the runtime catch site; any other FieldError rides as itself."
+  },
+  {
+   "id": "S13a-099",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1213-1219 message leads and repeats `_at_path(d.path)`; probe P5: \"`c`: `x_deriv` destructures `m`, but `c` declares no `m_init` — the bundle carries {x, y, t} (§5.2)\"."
+  },
+  {
+   "id": "S13a-108",
+   "conforms": true,
+   "evidence": "src/assembly.jl:638 is the only _warn! call, raising EmptyFaceSelection into the build's channel (src/diagnostics.jl:193-199, src/build.jl:779)."
+  },
+  {
+   "id": "S13a-117",
+   "conforms": true,
+   "evidence": "src/sim.jl:2538-2546 attach! reports EmptyGreedyClaim into diag_cell, the new roster entry's handle cell (src/sim.jl:2527)."
+  },
+  {
+   "id": "S13a-126",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:36-38 KINDS and src/diagnostics.jl:1652-1664,1732 include the runtime warning StepFloor (§10.2, D-460), which the §13.2 list omits.",
+   "class": "drift",
+   "fix": "Add a bullet after `FiringBudget`: \"- `StepFloor`, a floor step ([§10.2][s10-2], [D-460][d-460]). An adaptive step is taken at the floor `h_min`, accepted though its error test failed or reached once the step spent its `attempt_budget`, and is reported at most once per frame into the model's own diagnostic cell.\"",
+   "clear": true
+  },
+  {
+   "id": "S13a-127",
+   "conforms": false,
+   "evidence": "src/frame.jl:231-243: the budget test is `localizations ≥ model.deployment.localization_budget`, the frame's count across all events and steps (D-446), and a ChatteringBudget is reported per triggered event at the step end; the doc calls it 'the event's bracketing budget'.",
+   "class": "drift",
+   "fix": "`ChatteringBudget`, for chattering or localization-budget exhaustion ([§10.4][s10-4]). A localized event's crossing instant is bracketed by root-finding. The frame's localization budget, counted across all its steps, runs out, and the event's further crossings that frame fire at boundary granularity.",
+   "clear": true
+  },
+  {
+   "id": "S13a-136",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:424-429 the harness writer's write to a claimed face reports ClaimedFaceEntry(face, incumbent, value, site); src/roster.jl:404-405 the attach's renormalization of a pending batch reports it with site = :renormalization."
+  },
+  {
+   "id": "S13a-146",
+   "conforms": true,
+   "evidence": "src/sim.jl:1903-1909 the tail joins each device task against the join_timeout deadline and reports DeviceJoinTimeout by name (src/sim.jl:1932-1937) instead of waiting."
+  },
+  {
+   "id": "S13a-155",
+   "conforms": true,
+   "evidence": "src/sim.jl:1567-1568 run! reports UnboundedRun into sim.plane.loop_diag, the loop's own cell."
+  },
+  {
+   "id": "S13a-164",
+   "conforms": true,
+   "evidence": "src/assembly.jl:396-404 resolve_terminal(assembly, path) returns (component, name); probe P8: (Plant, \"y\") for \"plant/y\", (Plant, \"\") for \"plant\", PathResolution for a deeper path."
+  },
+  {
+   "id": "S13a-173",
+   "conforms": true,
+   "evidence": "src/structure.jl:1116-1150 resolve_authored walks the structure's level rows with no field-type check; probe P9: get_output(\"inner/plant\", :y) under GenericHold resolves and reads 0.3; test/test_conditions.jl:391."
+  },
+  {
+   "id": "S13a-182",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:576-577 port(snapshot, path, name) reads through port_addr over layout.addr (src/build.jl:357-384); probe P10 reads inner/plant y = 0.3 off latest(sim) and refuses an unknown path as PathResolution."
+  }
+ ],
+ "notes": "I verified all 21 claims at W = 89a10a14, read-only. 18 conform and 3 do not: S13a-126 (drift), S13a-127 (drift) and S13a-040 (defect).\n- S13a-126: §13.2 says it lists the committed runtime warnings in one place, but it omits StepFloor. D-460 added StepFloor in commit 106cb8ad (spec) and 4367fa55 (code).\n- S13a-127: since D-446 the localization budget is per frame, but the text still calls it the event's budget.\n- S13a-040: a few tests assert diagnostic message text outside the rendering testset in test_diagnostics.jl. The spec and code_rules.md:341 both forbid this. This one is borderline: those tests also assert kind and payload. A related case is test/utils.jl:79, which detects residue kinds by matching log message text.\nI ran the probe script twice. The first run failed at the deployment probe because its fixture had an unfed input; I fixed that and the second run completed. Script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S13a_v/probe.jl. I edited no tracked file and committed nothing."
+}

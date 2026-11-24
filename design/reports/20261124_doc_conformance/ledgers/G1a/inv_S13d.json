@@ -1,0 +1,1158 @@
+{
+ "rows": [
+  {
+   "id": "S13d-001",
+   "file": "design/spec.md",
+   "line": 12586,
+   "kind": "mech",
+   "claim": "Faces come from the declaration reader at `Float64`, which takes an instance and its tier",
+   "evidence": "src/descriptor.jl:288-293: `_primitive_faces` calls `invoke_declaration(fn, instance)` and `_keyed`, the declarations as written; no `declared_at`, no scalar type, no tier argument",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "code_map.md:433-476 already says 'read off the declarations as written'. Only the tier of the node field is read from the Structure.",
+   "fix": "Faces come from the declarations as the component writes them, `invoke_declaration` over the instance in the `Structure`, with no scalar type, so a failure after the structure step can still carry them."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S13d-002",
+   "file": "design/spec.md",
+   "line": 12498,
+   "kind": "mech",
+   "claim": "descriptor renders a Build or a Deployment to data",
+   "evidence": "src/descriptor.jl:42-43"
+  },
+  {
+   "id": "S13d-003",
+   "file": "design/spec.md",
+   "line": 12508,
+   "kind": "law",
+   "claim": "A descriptor is one object with a header and one body",
+   "evidence": "src/descriptor.jl:46-50; descriptor.json oneOf"
+  },
+  {
+   "id": "S13d-004",
+   "file": "design/spec.md",
+   "line": 12509,
+   "kind": "decl",
+   "claim": "format_version is {major:1, minor:0}",
+   "evidence": "src/descriptor.jl:11; probe:36"
+  },
+  {
+   "id": "S13d-005",
+   "file": "design/spec.md",
+   "line": 12510,
+   "kind": "decl",
+   "claim": "redstone_version is a string",
+   "evidence": "src/descriptor.jl:48; descriptor.json redstone_version"
+  },
+  {
+   "id": "S13d-006",
+   "file": "design/spec.md",
+   "line": 12511,
+   "kind": "decl",
+   "claim": "kind is build, deployment or failure",
+   "evidence": "src/descriptor.jl:42-44; descriptor.json kind enum"
+  },
+  {
+   "id": "S13d-007",
+   "file": "design/spec.md",
+   "line": 12512,
+   "kind": "law",
+   "claim": "name is optional and descriptor never writes it",
+   "evidence": "src/descriptor.jl:46-50 writes no name; descriptor.json:name not required"
+  },
+  {
+   "id": "S13d-008",
+   "file": "design/spec.md",
+   "line": 12513,
+   "kind": "law",
+   "claim": "The body sits under the key the kind names",
+   "evidence": "src/descriptor.jl:49-50"
+  },
+  {
+   "id": "S13d-009",
+   "file": "design/spec.md",
+   "line": 12514,
+   "kind": "law",
+   "claim": "A deployment body embeds the build body whole under `build`",
+   "evidence": "src/descriptor.jl:70"
+  },
+  {
+   "id": "S13d-010",
+   "file": "design/spec.md",
+   "line": 12519,
+   "kind": "law",
+   "claim": "Format is 1.0 and the schema requires each section",
+   "evidence": "src/descriptor.jl:11; descriptor.json BuildBody required"
+  },
+  {
+   "id": "S13d-011",
+   "file": "design/spec.md",
+   "line": 12526,
+   "kind": "mech",
+   "claim": "Routes, feedthrough, hyperperiod, steps per frame are client-derived, not in the file",
+   "evidence": "descriptor.json has no such key; src/descriptor.jl"
+  },
+  {
+   "id": "S13d-012",
+   "file": "design/spec.md",
+   "line": 12530,
+   "kind": "law",
+   "claim": "The activations list is not carried",
+   "evidence": "src/descriptor.jl:_build_body has four keys; descriptor.json BuildBody"
+  },
+  {
+   "id": "S13d-013",
+   "file": "design/spec.md",
+   "line": 12533,
+   "kind": "law",
+   "claim": "Build body has structure, outputs, events and warnings",
+   "evidence": "src/descriptor.jl:59-61; probe:37"
+  },
+  {
+   "id": "S13d-014",
+   "file": "design/spec.md",
+   "line": 12537,
+   "kind": "mech",
+   "claim": "nodes lists every component in walk order, assemblies included",
+   "evidence": "src/descriptor.jl:178-205"
+  },
+  {
+   "id": "S13d-015",
+   "file": "design/spec.md",
+   "line": 12538,
+   "kind": "decl",
+   "claim": "Each node keyed by path, with class and field; key for container element",
+   "evidence": "src/descriptor.jl:208-215, 228-247"
+  },
+  {
+   "id": "S13d-016",
+   "file": "design/spec.md",
+   "line": 12540,
+   "kind": "decl",
+   "claim": "A primitive node carries tier, timing, rates",
+   "evidence": "src/descriptor.jl:221-224; probe:38"
+  },
+  {
+   "id": "S13d-017",
+   "file": "design/spec.md",
+   "line": 12542,
+   "kind": "decl",
+   "claim": "Node carries qualified base name `type` and printed `signature`",
+   "evidence": "src/descriptor.jl:313-319; probe:38"
+  },
+  {
+   "id": "S13d-018",
+   "file": "design/spec.md",
+   "line": 12543,
+   "kind": "decl",
+   "claim": "alias present when a const of own module binds a parameterization",
+   "evidence": "src/descriptor.jl:322-337"
+  },
+  {
+   "id": "S13d-019",
+   "file": "design/spec.md",
+   "line": 12544,
+   "kind": "decl",
+   "claim": "A primitive face has printed type, kind marker, pinned",
+   "evidence": "src/descriptor.jl:297-301"
+  },
+  {
+   "id": "S13d-020",
+   "file": "design/spec.md",
+   "line": 12546,
+   "kind": "decl",
+   "claim": "An assembly's faces are names alone",
+   "evidence": "src/descriptor.jl:239-240; descriptor.json AssemblyFace"
+  },
+  {
+   "id": "S13d-021",
+   "file": "design/spec.md",
+   "line": 12547,
+   "kind": "law",
+   "claim": "A bare contract's face is named `u` or `y`",
+   "evidence": "src/descriptor.jl:293 default_name; probe:38 (`y`)"
+  },
+  {
+   "id": "S13d-022",
+   "file": "design/spec.md",
+   "line": 12548,
+   "kind": "law",
+   "claim": "A wire endpoint on a bare face carries it as its port, an ordinary string",
+   "evidence": "src/descriptor.jl:150-154, 252; descriptor.json Endpoint"
+  },
+  {
+   "id": "S13d-023",
+   "file": "design/spec.md",
+   "line": 12550,
+   "kind": "law",
+   "claim": "Root node carries no field and no key; a primitive root is one primitive node",
+   "evidence": "src/descriptor.jl:183 identity (path=\"\"); probe:38"
+  },
+  {
+   "id": "S13d-024",
+   "file": "design/spec.md",
+   "line": 12551,
+   "kind": "decl",
+   "claim": "An assembly node carries its level's wires verbatim, from/to endpoints",
+   "evidence": "src/descriptor.jl:241-243; descriptor.json Wire"
+  },
+  {
+   "id": "S13d-025",
+   "file": "design/spec.md",
+   "line": 12553,
+   "kind": "law",
+   "claim": "Boundary face carries the level's own path; a root input is path \"\"",
+   "evidence": "descriptor.json Wire description; src/descriptor.jl:241 passes level.wires verbatim"
+  },
+  {
+   "id": "S13d-026",
+   "file": "design/spec.md",
+   "line": 12555,
+   "kind": "decl",
+   "claim": "root_inputs, anchors and scopes project the remaining rows",
+   "evidence": "src/descriptor.jl:105-113"
+  },
+  {
+   "id": "S13d-027",
+   "file": "design/spec.md",
+   "line": 12556,
+   "kind": "decl",
+   "claim": "An anchor's period is under the key `dt`",
+   "evidence": "src/descriptor.jl:107; probe:50"
+  },
+  {
+   "id": "S13d-028",
+   "file": "design/spec.md",
+   "line": 12557,
+   "kind": "decl",
+   "claim": "`grid` is the grid report as data",
+   "evidence": "src/descriptor.jl:114, 150-170"
+  },
+  {
+   "id": "S13d-029",
+   "file": "design/spec.md",
+   "line": 12558,
+   "kind": "decl",
+   "claim": "A `types` table describes each type once",
+   "evidence": "src/descriptor.jl:115, 369-381"
+  },
+  {
+   "id": "S13d-030",
+   "file": "design/spec.md",
+   "line": 12559,
+   "kind": "decl",
+   "claim": "A root input has a primitive face's shape",
+   "evidence": "src/descriptor.jl:140-144; descriptor.json RootInput"
+  },
+  {
+   "id": "S13d-031",
+   "file": "design/spec.md",
+   "line": 12560,
+   "kind": "law",
+   "claim": "Root input pinned is the fan-out meet: true when some consumer refuses the type walked to a Dual",
+   "evidence": "src/build.jl:542-553; src/descriptor.jl:141"
+  },
+  {
+   "id": "S13d-032",
+   "file": "design/spec.md",
+   "line": 12562,
+   "kind": "decl",
+   "claim": "pinned_by lists consumers as path/port endpoints, empty array when none",
+   "evidence": "src/descriptor.jl:142; descriptor.json RootInput required"
+  },
+  {
+   "id": "S13d-033",
+   "file": "design/spec.md",
+   "line": 12563,
+   "kind": "law",
+   "claim": "The cause (tier or declaration) has no key",
+   "evidence": "src/descriptor.jl:142 emits path and port only"
+  },
+  {
+   "id": "S13d-034",
+   "file": "design/spec.md",
+   "line": 12565,
+   "kind": "mech",
+   "claim": "The meet is computed from the Structure alone",
+   "evidence": "src/build.jl:542 pinning_consumers(structure)"
+  },
+  {
+   "id": "S13d-035",
+   "file": "design/spec.md",
+   "line": 12567,
+   "kind": "decl",
+   "claim": "outputs holds the order as paths and per primitive stage1/stage2 port names",
+   "evidence": "src/descriptor.jl:484-488; probe:41"
+  },
+  {
+   "id": "S13d-036",
+   "file": "design/spec.md",
+   "line": 12569,
+   "kind": "law",
+   "claim": "A bare port is named `y` in outputs",
+   "evidence": "probe:41 (stage1 [\"y\"])"
+  },
+  {
+   "id": "S13d-037",
+   "file": "design/spec.md",
+   "line": 12571,
+   "kind": "decl",
+   "claim": "events holds one row per primitive in walk order under `components`",
+   "evidence": "src/descriptor.jl:497-505; probe:41"
+  },
+  {
+   "id": "S13d-038",
+   "file": "design/spec.md",
+   "line": 12574,
+   "kind": "decl",
+   "claim": "An events row holds path, events (name, policy) in declaration order, bundle field names",
+   "evidence": "src/descriptor.jl:500-503"
+  },
+  {
+   "id": "S13d-039",
+   "file": "design/spec.md",
+   "line": 12575,
+   "kind": "law",
+   "claim": "Policy is localized or non_localized",
+   "evidence": "descriptor.json Event enum; src/build.jl:628"
+  },
+  {
+   "id": "S13d-040",
+   "file": "design/spec.md",
+   "line": 12576,
+   "kind": "law",
+   "claim": "A primitive with no events has both lists empty",
+   "evidence": "probe:41 (events [], bundle [])"
+  },
+  {
+   "id": "S13d-041",
+   "file": "design/spec.md",
+   "line": 12578,
+   "kind": "decl",
+   "claim": "warnings lists build warnings as diagnostics, empty array when none",
+   "evidence": "src/descriptor.jl:60; descriptor.json BuildBody"
+  },
+  {
+   "id": "S13d-042",
+   "file": "design/spec.md",
+   "line": 12585,
+   "kind": "law",
+   "claim": "Initial states, cell layouts and compiled forms are not carried",
+   "evidence": "descriptor.json has no such key"
+  },
+  {
+   "id": "S13d-043",
+   "file": "design/spec.md",
+   "line": 12589,
+   "kind": "mech",
+   "claim": "Port classes live in outputs (stage lists)",
+   "evidence": "src/descriptor.jl:484-488"
+  },
+  {
+   "id": "S13d-044",
+   "file": "design/spec.md",
+   "line": 12591,
+   "kind": "decl",
+   "claim": "structure carries the grid report under `grid`",
+   "evidence": "src/descriptor.jl:114"
+  },
+  {
+   "id": "S13d-045",
+   "file": "design/spec.md",
+   "line": 12592,
+   "kind": "mech",
+   "claim": "Writer derives grid from the anchors via the same report as show",
+   "evidence": "src/descriptor.jl:151 _grid_report(anchors); src/show.jl:393"
+  },
+  {
+   "id": "S13d-046",
+   "file": "design/spec.md",
+   "line": 12595,
+   "kind": "decl",
+   "claim": "admissible is the coarsest admissible Δt_base",
+   "evidence": "src/structure.jl:859; src/descriptor.jl:168"
+  },
+  {
+   "id": "S13d-047",
+   "file": "design/spec.md",
+   "line": 12595,
+   "kind": "decl",
+   "claim": "pool lists entries in report order with anchor, kind, factor, alternatives",
+   "evidence": "src/descriptor.jl:152-160; probe:50"
+  },
+  {
+   "id": "S13d-048",
+   "file": "design/spec.md",
+   "line": 12596,
+   "kind": "law",
+   "claim": "kind is period or offset",
+   "evidence": "descriptor.json PoolEntry; src/structure.jl:850,854"
+  },
+  {
+   "id": "S13d-049",
+   "file": "design/spec.md",
+   "line": 12597,
+   "kind": "law",
+   "claim": "alternatives present only where an entry has some",
+   "evidence": "src/descriptor.jl:157-158; probe:50"
+  },
+  {
+   "id": "S13d-050",
+   "file": "design/spec.md",
+   "line": 12598,
+   "kind": "law",
+   "claim": "An entry's value, scope and key are its anchor's row (not repeated)",
+   "evidence": "src/descriptor.jl:155-156; descriptor.json PoolEntry"
+  },
+  {
+   "id": "S13d-051",
+   "file": "design/spec.md",
+   "line": 12598,
+   "kind": "decl",
+   "claim": "primes lists prime, power, suppliers (pool entries)",
+   "evidence": "src/descriptor.jl:162-167; probe:50"
+  },
+  {
+   "id": "S13d-052",
+   "file": "design/spec.md",
+   "line": 12600,
+   "kind": "law",
+   "claim": "A cofactor left unfactored carries unfactored",
+   "evidence": "src/descriptor.jl:166; src/diagnostics.jl:1351"
+  },
+  {
+   "id": "S13d-053",
+   "file": "design/spec.md",
+   "line": 12601,
+   "kind": "law",
+   "claim": "An unfactored prime's suppliers are entries sharing a factor with it",
+   "evidence": "src/structure.jl:830"
+  },
+  {
+   "id": "S13d-054",
+   "file": "design/spec.md",
+   "line": 12603,
+   "kind": "law",
+   "claim": "No anchors: empty pool, empty primes, no admissible",
+   "evidence": "probe:39 (pool [] primes []); src/descriptor.jl:168"
+  },
+  {
+   "id": "S13d-055",
+   "file": "design/spec.md",
+   "line": 12606,
+   "kind": "decl",
+   "claim": "A primitive node carries its rate chain as `rates`",
+   "evidence": "src/descriptor.jl:222; probe:50"
+  },
+  {
+   "id": "S13d-056",
+   "file": "design/spec.md",
+   "line": 12607,
+   "kind": "mech",
+   "claim": "rates is the chain of sample_times links, from the root down",
+   "evidence": "src/descriptor.jl:263-270 over entry.rates; probe:50"
+  },
+  {
+   "id": "S13d-057",
+   "file": "design/spec.md",
+   "line": 12608,
+   "kind": "decl",
+   "claim": "Each link holds scope and key; D and phi for Relative",
+   "evidence": "src/descriptor.jl:266-267"
+  },
+  {
+   "id": "S13d-058",
+   "file": "design/spec.md",
+   "line": 12610,
+   "kind": "decl",
+   "claim": "An Absolute link holds dt and tau",
+   "evidence": "src/descriptor.jl:268-269; probe:50"
+  },
+  {
+   "id": "S13d-059",
+   "file": "design/spec.md",
+   "line": 12611,
+   "kind": "mech",
+   "claim": "Explicit Relative(1) changes no timing, so timings do not determine the chain",
+   "evidence": "src/descriptor.jl:261-265 comment; test_descriptor.jl:127-131"
+  },
+  {
+   "id": "S13d-060",
+   "file": "design/spec.md",
+   "line": 12614,
+   "kind": "law",
+   "claim": "An anchor position counts from 1, 0 is the base grid with no row",
+   "evidence": "src/descriptor.jl:155; probe:50 (anchor 1, scopes timing anchor 0)"
+  },
+  {
+   "id": "S13d-061",
+   "file": "design/spec.md",
+   "line": 12615,
+   "kind": "law",
+   "claim": "A supplier is a position in pool from 1",
+   "evidence": "src/descriptor.jl:162-165; probe:50"
+  },
+  {
+   "id": "S13d-062",
+   "file": "design/spec.md",
+   "line": 12619,
+   "kind": "law",
+   "claim": "The deployment body is flat, in the Deployment's field order",
+   "evidence": "src/descriptor.jl:68-82; probe:43"
+  },
+  {
+   "id": "S13d-063",
+   "file": "design/spec.md",
+   "line": 12620,
+   "kind": "decl",
+   "claim": "After build: dt_frame, dt_base, h_max, each as num/den",
+   "evidence": "src/descriptor.jl:70-71; probe:44"
+  },
+  {
+   "id": "S13d-064",
+   "file": "design/spec.md",
+   "line": 12621,
+   "kind": "law",
+   "claim": "h_min present only when set",
+   "evidence": "src/descriptor.jl:72; probe:43 (absent)"
+  },
+  {
+   "id": "S13d-065",
+   "file": "design/spec.md",
+   "line": 12622,
+   "kind": "mech",
+   "claim": "h_max is the resolved bound",
+   "evidence": "src/deployment.jl:191; src/descriptor.jl:71"
+  },
+  {
+   "id": "S13d-066",
+   "file": "design/spec.md",
+   "line": 12622,
+   "kind": "decl",
+   "claim": "algorithm holds the token's show text and proposes",
+   "evidence": "src/descriptor.jl:73-74; probe:44"
+  },
+  {
+   "id": "S13d-067",
+   "file": "design/spec.md",
+   "line": 12625,
+   "kind": "decl",
+   "claim": "firing_budget, localization_tol, localization_budget, attempt_budget follow, then schedule and warnings",
+   "evidence": "src/descriptor.jl:75-80"
+  },
+  {
+   "id": "S13d-068",
+   "file": "design/spec.md",
+   "line": 12626,
+   "kind": "decl",
+   "claim": "Deployment warnings are its own, encoded as the build's",
+   "evidence": "src/descriptor.jl:81"
+  },
+  {
+   "id": "S13d-069",
+   "file": "design/spec.md",
+   "line": 12629,
+   "kind": "decl",
+   "claim": "schedule projects the Schedule with the anchors' counts beside rows",
+   "evidence": "src/descriptor.jl:90-99"
+  },
+  {
+   "id": "S13d-070",
+   "file": "design/spec.md",
+   "line": 12631,
+   "kind": "decl",
+   "claim": "schedule.anchors holds (D, phi) per anchor in structure anchors order",
+   "evidence": "src/descriptor.jl:92-94"
+  },
+  {
+   "id": "S13d-071",
+   "file": "design/spec.md",
+   "line": 12632,
+   "kind": "mech",
+   "claim": "Anchor counts are Δt(a)/Δt_base and τ(a)/Δt_base",
+   "evidence": "src/structure.jl:905; src/descriptor.jl:92"
+  },
+  {
+   "id": "S13d-072",
+   "file": "design/spec.md",
+   "line": 12634,
+   "kind": "decl",
+   "claim": "rows holds each discrete primitive's path with D and phi, walk order",
+   "evidence": "src/deployment.jl:303-307; src/descriptor.jl:95"
+  },
+  {
+   "id": "S13d-073",
+   "file": "design/spec.md",
+   "line": 12635,
+   "kind": "decl",
+   "claim": "scopes holds path, key, D, phi in structure scopes order",
+   "evidence": "src/descriptor.jl:96-97; src/deployment.jl:308-310"
+  },
+  {
+   "id": "S13d-074",
+   "file": "design/spec.md",
+   "line": 12637,
+   "kind": "law",
+   "claim": "A row carries no anchor, no rate chain and no Δt",
+   "evidence": "src/descriptor.jl:95; descriptor.json ScheduleRow"
+  },
+  {
+   "id": "S13d-075",
+   "file": "design/spec.md",
+   "line": 12641,
+   "kind": "mech",
+   "claim": "Each primitive face carries a kind marker computed in the core",
+   "evidence": "src/descriptor.jl:297-301"
+  },
+  {
+   "id": "S13d-076",
+   "file": "design/spec.md",
+   "line": 12645,
+   "kind": "law",
+   "claim": "A Pinned entry unwraps to its primitive and sets pinned",
+   "evidence": "src/descriptor.jl:297-300"
+  },
+  {
+   "id": "S13d-077",
+   "file": "design/spec.md",
+   "line": 12646,
+   "kind": "law",
+   "claim": "Marker is the first matching row, Bool tested before Integer",
+   "evidence": "src/descriptor.jl:308-324; probe:5 (Bool, Int8)"
+  },
+  {
+   "id": "S13d-078",
+   "file": "design/spec.md",
+   "line": 12651,
+   "kind": "law",
+   "claim": "Bool gives boolean",
+   "evidence": "probe:5"
+  },
+  {
+   "id": "S13d-079",
+   "file": "design/spec.md",
+   "line": 12652,
+   "kind": "law",
+   "claim": "Enum gives enum with instance names",
+   "evidence": "probe:6"
+  },
+  {
+   "id": "S13d-080",
+   "file": "design/spec.md",
+   "line": 12653,
+   "kind": "law",
+   "claim": "Symbol gives symbol",
+   "evidence": "probe:7"
+  },
+  {
+   "id": "S13d-081",
+   "file": "design/spec.md",
+   "line": 12654,
+   "kind": "law",
+   "claim": "Integer gives integer",
+   "evidence": "probe:8,15"
+  },
+  {
+   "id": "S13d-082",
+   "file": "design/spec.md",
+   "line": 12655,
+   "kind": "law",
+   "claim": "AbstractFloat gives float",
+   "evidence": "probe:9,10"
+  },
+  {
+   "id": "S13d-083",
+   "file": "design/spec.md",
+   "line": 12656,
+   "kind": "law",
+   "claim": "Real gives number",
+   "evidence": "probe:11,12"
+  },
+  {
+   "id": "S13d-084",
+   "file": "design/spec.md",
+   "line": 12657,
+   "kind": "law",
+   "claim": "StaticArray gives vector with shape and recursed element marker",
+   "evidence": "probe:13,14,16"
+  },
+  {
+   "id": "S13d-085",
+   "file": "design/spec.md",
+   "line": 12658,
+   "kind": "law",
+   "claim": "Function types and non-isbits handles are opaque",
+   "evidence": "src/descriptor.jl:322,285; probe:18-20,25"
+  },
+  {
+   "id": "S13d-086",
+   "file": "design/spec.md",
+   "line": 12659,
+   "kind": "law",
+   "claim": "An isbits NamedTuple or struct with fields gives struct with field names",
+   "evidence": "probe:21-22"
+  },
+  {
+   "id": "S13d-087",
+   "file": "design/spec.md",
+   "line": 12660,
+   "kind": "law",
+   "claim": "Anything else is opaque",
+   "evidence": "probe:23-31"
+  },
+  {
+   "id": "S13d-088",
+   "file": "design/spec.md",
+   "line": 12662,
+   "kind": "mech",
+   "claim": "struct fields is the first level only",
+   "evidence": "src/descriptor.jl:285-288"
+  },
+  {
+   "id": "S13d-089",
+   "file": "design/spec.md",
+   "line": 12665,
+   "kind": "law",
+   "claim": "A function type is opaque even where the walk would open its captures",
+   "evidence": "probe:20 (closure opaque); src/descriptor.jl:322 before struct"
+  },
+  {
+   "id": "S13d-090",
+   "file": "design/spec.md",
+   "line": 12666,
+   "kind": "law",
+   "claim": "String, Any and an unmatched abstract declaration are opaque",
+   "evidence": "probe:25-28"
+  },
+  {
+   "id": "S13d-091",
+   "file": "design/spec.md",
+   "line": 12667,
+   "kind": "law",
+   "claim": "An abstract declaration a row matches takes that row",
+   "evidence": "probe:9,11"
+  },
+  {
+   "id": "S13d-092",
+   "file": "design/spec.md",
+   "line": 12668,
+   "kind": "law",
+   "claim": "A tuple is a struct whose fields are its positions \"1\",\"2\"",
+   "evidence": "probe:23"
+  },
+  {
+   "id": "S13d-093",
+   "file": "design/spec.md",
+   "line": 12669,
+   "kind": "law",
+   "claim": "A static array of free size is opaque",
+   "evidence": "probe:14; src/descriptor.jl:313"
+  },
+  {
+   "id": "S13d-094",
+   "file": "design/spec.md",
+   "line": 12670,
+   "kind": "law",
+   "claim": "An abstract Enum is opaque",
+   "evidence": "probe:29; src/descriptor.jl:310"
+  },
+  {
+   "id": "S13d-095",
+   "file": "design/spec.md",
+   "line": 12671,
+   "kind": "law",
+   "claim": "A declaration method inherited from an abstract supertype is located",
+   "evidence": "src/descriptor.jl:377 which(fn, Tuple{typeof(instance)})"
+  },
+  {
+   "id": "S13d-096",
+   "file": "design/spec.md",
+   "line": 12675,
+   "kind": "law",
+   "claim": "A type is described once, by qualified base name, in first-appearance order",
+   "evidence": "src/descriptor.jl:369-381"
+  },
+  {
+   "id": "S13d-097",
+   "file": "design/spec.md",
+   "line": 12676,
+   "kind": "mech",
+   "claim": "Name joins parent module (submodules included) and unparameterized name",
+   "evidence": "src/descriptor.jl:319; probe:34 (Main.Foo.FooC)"
+  },
+  {
+   "id": "S13d-098",
+   "file": "design/spec.md",
+   "line": 12678,
+   "kind": "law",
+   "claim": "A const alias is reported as the type it aliases",
+   "evidence": "src/descriptor.jl:319 nameof of the type"
+  },
+  {
+   "id": "S13d-099",
+   "file": "design/spec.md",
+   "line": 12679,
+   "kind": "mech",
+   "claim": "signature and face type are display text as REPL prints",
+   "evidence": "src/descriptor.jl:340"
+  },
+  {
+   "id": "S13d-100",
+   "file": "design/spec.md",
+   "line": 12680,
+   "kind": "mech",
+   "claim": "Docstring is the type's own, else the first its binding holds",
+   "evidence": "src/descriptor.jl:403-405"
+  },
+  {
+   "id": "S13d-101",
+   "file": "design/spec.md",
+   "line": 12682,
+   "kind": "decl",
+   "claim": "types row holds docstring as Markdown source and locations",
+   "evidence": "src/descriptor.jl:376-380; descriptor.json TypeRow"
+  },
+  {
+   "id": "S13d-102",
+   "file": "design/spec.md",
+   "line": 12683,
+   "kind": "decl",
+   "claim": "Located declarations are the twelve named, each as file and line",
+   "evidence": "src/descriptor.jl:14-16,371-379; descriptor.json Location enum"
+  },
+  {
+   "id": "S13d-103",
+   "file": "design/spec.md",
+   "line": 12687,
+   "kind": "mech",
+   "claim": "Writer targets a bare @ref link whose name resolves to a binding its owner exports",
+   "evidence": "src/descriptor.jl:408-425; probe:33"
+  },
+  {
+   "id": "S13d-104",
+   "file": "design/spec.md",
+   "line": 12689,
+   "kind": "mech",
+   "claim": "The owner is the target and the text is kept",
+   "evidence": "src/descriptor.jl:424; probe:33"
+  },
+  {
+   "id": "S13d-105",
+   "file": "design/spec.md",
+   "line": 12691,
+   "kind": "law",
+   "claim": "Name is an identifier or dotted path of identifiers",
+   "evidence": "src/descriptor.jl:411-412"
+  },
+  {
+   "id": "S13d-106",
+   "file": "design/spec.md",
+   "line": 12692,
+   "kind": "law",
+   "claim": "Macro or operator link stays as written",
+   "evidence": "src/descriptor.jl:412 isidentifier; test_descriptor.jl:107-111"
+  },
+  {
+   "id": "S13d-107",
+   "file": "design/spec.md",
+   "line": 12694,
+   "kind": "law",
+   "claim": "A module name takes the module as its own target, not Owner.Owner",
+   "evidence": "src/descriptor.jl:423; probe:33 (`@ref Main.Foo`)"
+  },
+  {
+   "id": "S13d-108",
+   "file": "design/spec.md",
+   "line": 12696,
+   "kind": "law",
+   "claim": "Any other link stays as written",
+   "evidence": "src/descriptor.jl:412-421; probe:33 (`Redstone.Pinned` unrewritten)"
+  },
+  {
+   "id": "S13d-109",
+   "file": "design/spec.md",
+   "line": 12698,
+   "kind": "law",
+   "claim": "Package exports nothing yet, so no own link is rewritten",
+   "evidence": "rg export src/: no export statement; probe:33 (`Pinned`, `Redstone.Pinned` unchanged)"
+  },
+  {
+   "id": "S13d-110",
+   "file": "design/spec.md",
+   "line": 12699,
+   "kind": "mech",
+   "claim": "Inert fields listed as repr under :compact and :limit, cut at 80 characters",
+   "evidence": "src/descriptor.jl:356-361"
+  },
+  {
+   "id": "S13d-111",
+   "file": "design/spec.md",
+   "line": 12701,
+   "kind": "law",
+   "claim": "A nonempty NamedTuple field lists one entry per field, dotted path, nested opening in turn",
+   "evidence": "src/descriptor.jl:350-355; probe:56 (a.b, a.c.d)"
+  },
+  {
+   "id": "S13d-112",
+   "file": "design/spec.md",
+   "line": 12705,
+   "kind": "law",
+   "claim": "An empty NamedTuple keeps its one entry",
+   "evidence": "probe:56 (e = NamedTuple())"
+  },
+  {
+   "id": "S13d-113",
+   "file": "design/spec.md",
+   "line": 12709,
+   "kind": "law",
+   "claim": "descriptor returns a tree of NamedTuples, vectors, strings, numbers, Booleans",
+   "evidence": "probe:36-44"
+  },
+  {
+   "id": "S13d-114",
+   "file": "design/spec.md",
+   "line": 12710,
+   "kind": "law",
+   "claim": "The core takes no JSON dependency",
+   "evidence": "Project.toml deps lack JSON; test/Project.toml has it"
+  },
+  {
+   "id": "S13d-115",
+   "file": "design/spec.md",
+   "line": 12712,
+   "kind": "law",
+   "claim": "A field that does not apply is omitted, never null",
+   "evidence": "src/descriptor.jl:72,157,166; test_descriptor.jl:17"
+  },
+  {
+   "id": "S13d-116",
+   "file": "design/spec.md",
+   "line": 12713,
+   "kind": "law",
+   "claim": "A collection keyed by data is an array of objects carrying name",
+   "evidence": "src/descriptor.jl:369-381 (types rows); descriptor.json TypeRow"
+  },
+  {
+   "id": "S13d-117",
+   "file": "design/spec.md",
+   "line": 12714,
+   "kind": "law",
+   "claim": "Every object has the schema's fixed key set; key order is field order",
+   "evidence": "descriptor.json additionalProperties false; NamedTuple order, probe:36-44"
+  },
+  {
+   "id": "S13d-118",
+   "file": "design/spec.md",
+   "line": 12718,
+   "kind": "ex",
+   "claim": "descriptor(build) and descriptor(deployment) return the envelopes",
+   "evidence": "probe:36,43"
+  },
+  {
+   "id": "S13d-119",
+   "file": "design/spec.md",
+   "line": 12723,
+   "kind": "decl",
+   "claim": "The schema of record is src/descriptor.json, shipped with the package",
+   "evidence": "test_descriptor.jl:9 pkgdir(Redstone)/src/descriptor.json"
+  },
+  {
+   "id": "S13d-120",
+   "file": "design/spec.md",
+   "line": 12725,
+   "kind": "law",
+   "claim": "The schema is draft 7",
+   "evidence": "descriptor.json:$schema draft-07"
+  },
+  {
+   "id": "S13d-121",
+   "file": "design/spec.md",
+   "line": 12726,
+   "kind": "law",
+   "claim": "additionalProperties false on every object, required per class",
+   "evidence": "descriptor.json; the shared NodeIdentity base is open but each Node class closes its object"
+  },
+  {
+   "id": "S13d-122",
+   "file": "design/spec.md",
+   "line": 12729,
+   "kind": "mech",
+   "claim": "The test encodes to text, parses to generic dictionaries, validates",
+   "evidence": "test/test_descriptor.jl:13-18"
+  },
+  {
+   "id": "S13d-123",
+   "file": "design/spec.md",
+   "line": 12731,
+   "kind": "law",
+   "claim": "JSON and JSONSchema are test dependencies only",
+   "evidence": "test/Project.toml:JSON,JSONSchema; Project.toml deps"
+  },
+  {
+   "id": "S13d-124",
+   "file": "design/spec.md",
+   "line": 12736,
+   "kind": "decl",
+   "claim": "descriptor(err::DiagnosticError) takes any carrier exception",
+   "evidence": "src/descriptor.jl:44"
+  },
+  {
+   "id": "S13d-125",
+   "file": "design/spec.md",
+   "line": 12738,
+   "kind": "decl",
+   "claim": "Failure body holds policy fail-fast or collected",
+   "evidence": "src/descriptor.jl:105-106; probe:53"
+  },
+  {
+   "id": "S13d-126",
+   "file": "design/spec.md",
+   "line": 12739,
+   "kind": "mech",
+   "claim": "policy is read off the carrier's type parameter",
+   "evidence": "src/descriptor.jl:105 tests err.carried isa Diagnostic, the type parameter's two cases (src/diagnostics.jl:109)"
+  },
+  {
+   "id": "S13d-127",
+   "file": "design/spec.md",
+   "line": 12741,
+   "kind": "law",
+   "claim": "structure present only when the carrier holds one",
+   "evidence": "src/descriptor.jl:106-107; probe:53-54"
+  },
+  {
+   "id": "S13d-128",
+   "file": "design/spec.md",
+   "line": 12742,
+   "kind": "decl",
+   "claim": "Failure body also holds diagnostics and warnings",
+   "evidence": "src/descriptor.jl:109-111; probe:53"
+  },
+  {
+   "id": "S13d-129",
+   "file": "design/spec.md",
+   "line": 12749,
+   "kind": "law",
+   "claim": "A diagnostic never carries its payload",
+   "evidence": "src/descriptor.jl:116-125"
+  },
+  {
+   "id": "S13d-130",
+   "file": "design/spec.md",
+   "line": 12750,
+   "kind": "decl",
+   "claim": "Four fields: kind (type name), severity, path, message",
+   "evidence": "src/descriptor.jl:117-118; probe:54"
+  },
+  {
+   "id": "S13d-131",
+   "file": "design/spec.md",
+   "line": 12751,
+   "kind": "mech",
+   "claim": "path is path(d), \"\" for the root",
+   "evidence": "src/descriptor.jl:118"
+  },
+  {
+   "id": "S13d-132",
+   "file": "design/spec.md",
+   "line": 12751,
+   "kind": "mech",
+   "claim": "message is the text showerror renders for it, UserCodeFraming cause on the second line",
+   "evidence": "src/descriptor.jl:118 message(d); src/diagnostics.jl:152-155,1258"
+  },
+  {
+   "id": "S13d-133",
+   "file": "design/spec.md",
+   "line": 12753,
+   "kind": "decl",
+   "claim": "function is the user method at fault for the probe-chain kinds",
+   "evidence": "src/descriptor.jl:129-133"
+  },
+  {
+   "id": "S13d-134",
+   "file": "design/spec.md",
+   "line": 12754,
+   "kind": "decl",
+   "claim": "marks: UnconnectedInput's input, TwoProducers' destination",
+   "evidence": "src/descriptor.jl:139-140; probe:54"
+  },
+  {
+   "id": "S13d-135",
+   "file": "design/spec.md",
+   "line": 12756,
+   "kind": "decl",
+   "claim": "marks: WireTypeMismatch and WalkingFaceAtFrozenEntry consumer and producer-to-consumer wire",
+   "evidence": "src/descriptor.jl:141-146"
+  },
+  {
+   "id": "S13d-136",
+   "file": "design/spec.md",
+   "line": 12757,
+   "kind": "decl",
+   "claim": "cycle only for AlgebraicCycle: members, terminal-pair wires, classification when present, dead, traced",
+   "evidence": "src/descriptor.jl:123,150-163"
+  },
+  {
+   "id": "S13d-137",
+   "file": "design/spec.md",
+   "line": 12759,
+   "kind": "law",
+   "claim": "Appendix C payloads are not exported, and the format binds none of their fields",
+   "evidence": "src/descriptor.jl:116-125 encodes no payload"
+  },
+  {
+   "id": "S13d-138",
+   "file": "design/spec.md",
+   "line": 12763,
+   "kind": "mech",
+   "claim": "Carrier structure holds the complete Structure when a throw leaves the door past the structure step",
+   "evidence": "src/build.jl:790,807-810"
+  },
+  {
+   "id": "S13d-139",
+   "file": "design/spec.md",
+   "line": 12765,
+   "kind": "law",
+   "claim": "structure is nothing on every other throw",
+   "evidence": "src/diagnostics.jl:115-120 default; src/build.jl:775 structure = nothing until built"
+  },
+  {
+   "id": "S13d-140",
+   "file": "design/spec.md",
+   "line": 12766,
+   "kind": "decl",
+   "claim": "structure field is typed Any",
+   "evidence": "src/diagnostics.jl:112"
+  },
+  {
+   "id": "S13d-141",
+   "file": "design/spec.md",
+   "line": 12767,
+   "kind": "mech",
+   "claim": "The door fills it in one place, where it rewraps with the build's warnings",
+   "evidence": "src/build.jl:806-810"
+  },
+  {
+   "id": "S13d-142",
+   "file": "design/spec.md",
+   "line": 12768,
+   "kind": "law",
+   "claim": "A throw from an activation requested at build carries the structure too",
+   "evidence": "src/build.jl:790-796,800-810"
+  }
+ ],
+ "counts": {
+  "law": 58,
+  "mech": 28,
+  "decl": 45,
+  "ptr": 6,
+  "why": 9,
+  "ex": 1,
+  "surface": 0,
+  "cite": 0,
+  "map": 0,
+  "docstring": 0
+ }
+}
