@@ -1,0 +1,712 @@
+{
+ "rows": [
+  {
+   "id": "S14a-023",
+   "file": "design/spec.md",
+   "line": 12987,
+   "kind": "law",
+   "claim": "Composition checks three things by type or length alone, including that each `set` payload is a NamedTuple",
+   "evidence": "src/conditions.jl:177 (`_payload` refuses `nothing` alone); probe:23-26 (`set(x=3.0)`, `set(x=(1,2))`, `set(s=5, m=\"str\")` all return a Fragment; only `set(x=nothing)` throws)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Composition checks three things, each by type or length alone, and none allocates. A `set` payload is not `nothing`, since a bare payload names a bare store or a bare input and its shape is checked against the build ([§14.3][s14-3], [D-437][d-437], [D-438][d-438]). Each combinator operand is a node, and each `at` prefix is nonempty.",
+   "note": "Bare payloads (D-437/D-438) made non-NamedTuple payloads legal. test_conditions.jl:~226 asserts `set(x = 3.0) isa Fragment`."
+  },
+  {
+   "id": "S14a-024",
+   "file": "design/spec.md",
+   "line": 12988,
+   "kind": "law",
+   "claim": "A `set` payload that is not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload`",
+   "evidence": "src/conditions.jl:177-179 refuses only `nothing`; src/diagnostics.jl:2070 message reads \"payload is `nothing`\"; probe:23-26",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A `set` payload that is `nothing` is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC]). Any other non-NamedTuple payload is a bare payload, which resolution checks against the target's store or contract.",
+   "note": "Same cause as S14a-023."
+  },
+  {
+   "id": "S14a-076",
+   "file": "design/spec.md",
+   "line": 13441,
+   "kind": "decl",
+   "claim": "`t₀` is an init-service argument (default `0.0`)",
+   "evidence": "src/model.jl:318 (`t0 = 0`), src/sim.jl:831 (`t0 = 0`), src/trim.jl:560 (`t0 = 0`); probe:68 prints origin `0//1`",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "- **`t₀` is an init-service argument** (default `0`, an exact integer), never a condition entry",
+   "note": "The origin is held exact (D-457), and the docstrings give `0`. The value is the same as 0.0, so the harm is only the stated type."
+  },
+  {
+   "id": "S14a-085",
+   "file": "design/spec.md",
+   "line": 12912,
+   "kind": "ptr",
+   "claim": "lead: `FlightCore` (f_init!, per-model init hook)",
+   "evidence": "prior art named in prose; no Redstone name",
+   "verdict": "unverifiable",
+   "note": "Lead closed as ok-class: prior art, not a Redstone API claim. Listed here only so the lead ends in a row; no discrepancy."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S14a-001",
+   "file": "design/spec.md",
+   "line": 12842,
+   "kind": "law",
+   "claim": "Modes `m` exist only on continuous components; a condition may set x, s, m",
+   "evidence": "probe:35,36,38; src/conditions.jl:649 (`_no_store` message says modes are continuous-only)"
+  },
+  {
+   "id": "S14a-002",
+   "file": "design/spec.md",
+   "line": 12846,
+   "kind": "law",
+   "claim": "A bare store has the field x, s or m, which a bare payload names headless",
+   "evidence": "probe:44,48; src/conditions.jl:317-340 (`_flat` files bare payload under the letter)"
+  },
+  {
+   "id": "S14a-003",
+   "file": "design/spec.md",
+   "line": 12849,
+   "kind": "law",
+   "claim": "A condition never specifies outputs",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "S14a-004",
+   "file": "design/spec.md",
+   "line": 12850,
+   "kind": "law",
+   "claim": "A condition never specifies workspace",
+   "evidence": "src/conditions.jl:655-665 (role :workspace); test/test_conditions.jl:265-272"
+  },
+  {
+   "id": "S14a-005",
+   "file": "design/spec.md",
+   "line": 12851,
+   "kind": "law",
+   "claim": "Entries are validated in collecting form; one DiagnosticError for the full list",
+   "evidence": "src/conditions.jl:681-684; probe:39-41"
+  },
+  {
+   "id": "S14a-006",
+   "file": "design/spec.md",
+   "line": 12853,
+   "kind": "law",
+   "claim": "Output or workspace entry is ConditionResolution :undeclared_field",
+   "evidence": "probe:37; src/conditions.jl:655"
+  },
+  {
+   "id": "S14a-007",
+   "file": "design/spec.md",
+   "line": 12857,
+   "kind": "law",
+   "claim": "init! overlays declared defaults; overlay! overlays the stopped run's stores",
+   "evidence": "src/model.jl:324 (establish_defaults!), src/model.jl:459-465 (bases = _store_values); probe:79-82"
+  },
+  {
+   "id": "S14a-008",
+   "file": "design/spec.md",
+   "line": 12866,
+   "kind": "law",
+   "claim": "A partial store entry merges onto its base; a bare store's entry replaces it",
+   "evidence": "src/conditions.jl:584-585; probe:79 (count kept at 7 while state set)"
+  },
+  {
+   "id": "S14a-009",
+   "file": "design/spec.md",
+   "line": 12865,
+   "kind": "mech",
+   "claim": "overlay! takes its trace header after the overlay settles",
+   "evidence": "src/sim.jl:977"
+  },
+  {
+   "id": "S14a-010",
+   "file": "design/spec.md",
+   "line": 12868,
+   "kind": "law",
+   "claim": "A checkpoint enters no condition expression",
+   "evidence": "src/conditions.jl:580 (non-node refused as ConditionNodeMisuse); probe:130"
+  },
+  {
+   "id": "S14a-011",
+   "file": "design/spec.md",
+   "line": 12882,
+   "kind": "law",
+   "claim": "Condition writes precede the first sweep",
+   "evidence": "src/model.jl:325-331 (apply, then boundary_zero!)"
+  },
+  {
+   "id": "S14a-012",
+   "file": "design/spec.md",
+   "line": 12895,
+   "kind": "decl",
+   "claim": "`baseline` is a keyword of trim!",
+   "evidence": "src/trim.jl:559-560"
+  },
+  {
+   "id": "S14a-013",
+   "file": "design/spec.md",
+   "line": 12919,
+   "kind": "decl",
+   "claim": "`condition` is a framework-owned generic extended by model packages",
+   "evidence": "src/conditions.jl:134; test/test_conditions.jl:60-61"
+  },
+  {
+   "id": "S14a-014",
+   "file": "design/spec.md",
+   "line": 12926,
+   "kind": "law",
+   "claim": "A foreign condition method fails at the pull as a MethodError",
+   "evidence": "test/test_conditions.jl:63"
+  },
+  {
+   "id": "S14a-015",
+   "file": "design/spec.md",
+   "line": 12954,
+   "kind": "law",
+   "claim": "A bare u payload names the bare input of a primitive level",
+   "evidence": "probe:51"
+  },
+  {
+   "id": "S14a-016",
+   "file": "design/spec.md",
+   "line": 12957,
+   "kind": "law",
+   "claim": "Bare u at named faces or at an assembly is :port_shape",
+   "evidence": "probe:49,52 (role :assembly_face at assembly)"
+  },
+  {
+   "id": "S14a-017",
+   "file": "design/spec.md",
+   "line": 12959,
+   "kind": "law",
+   "claim": "Face resolution walks the export chain; :no_input_face, or :unexported_face at the root",
+   "evidence": "probe:54,55; src/conditions.jl:630-646"
+  },
+  {
+   "id": "S14a-018",
+   "file": "design/spec.md",
+   "line": 12965,
+   "kind": "law",
+   "claim": "An internally wired input write is :internally_wired",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "S14a-019",
+   "file": "design/spec.md",
+   "line": 12971,
+   "kind": "mech",
+   "claim": "The tree is Fragment, Scoped, Combined and Override nodes; set builds leaf, at/combine inner nodes",
+   "evidence": "src/conditions.jl:110"
+  },
+  {
+   "id": "S14a-020",
+   "file": "design/spec.md",
+   "line": 12978,
+   "kind": "decl",
+   "claim": "Fragment{X,S,M,L}(x,s,m,u), Scoped{N}(prefix::String,node), Combined{T<:Tuple}(nodes)",
+   "evidence": "probe:63; src/conditions.jl:23-60"
+  },
+  {
+   "id": "S14a-021",
+   "file": "design/spec.md",
+   "line": 12983,
+   "kind": "mech",
+   "claim": "Nodes are isbits but for prefix strings; rebuilding a literal-prefix tree allocates nothing",
+   "evidence": "probe:61 (0 bytes), probe:62 (Fragment isbits, Scoped not)"
+  },
+  {
+   "id": "S14a-022",
+   "file": "design/spec.md",
+   "line": 12996,
+   "kind": "law",
+   "claim": "at refuses an empty prefix with ConditionNodeMisuse :empty_prefix",
+   "evidence": "probe:28; src/conditions.jl:207-209"
+  },
+  {
+   "id": "S14a-025",
+   "file": "design/spec.md",
+   "line": 13011,
+   "kind": "law",
+   "claim": "The read side's lifts refuse an empty prefix the same way",
+   "evidence": "probe:29 (ReadSetMisuse :empty_prefix); src/conditions.jl:212-214"
+  },
+  {
+   "id": "S14a-026",
+   "file": "design/spec.md",
+   "line": 13028,
+   "kind": "law",
+   "claim": "A combine collision is DuplicateConditionLeaf, both origins, message names override",
+   "evidence": "probe:33 (message text); src/conditions.jl:390-402; src/diagnostics.jl:2057"
+  },
+  {
+   "id": "S14a-027",
+   "file": "design/spec.md",
+   "line": 13034,
+   "kind": "law",
+   "claim": "The combinator is its own function, not Base.merge",
+   "evidence": "src/conditions.jl:239"
+  },
+  {
+   "id": "S14a-028",
+   "file": "design/spec.md",
+   "line": 13044,
+   "kind": "law",
+   "claim": "Blending a node with a NamedTuple is ConditionNodeMisuse at composition, with type and nodes in hand, directive message",
+   "evidence": "probe:31; src/conditions.jl:245-249; src/diagnostics.jl:2072-2077"
+  },
+  {
+   "id": "S14a-029",
+   "file": "design/spec.md",
+   "line": 13060,
+   "kind": "mech",
+   "claim": "Flattening is the only place path strings are concatenated, and records tree positions",
+   "evidence": "src/conditions.jl:354 (only `_join` in the file), :303-311 (CEntry.position)"
+  },
+  {
+   "id": "S14a-030",
+   "file": "design/spec.md",
+   "line": 13066,
+   "kind": "law",
+   "claim": "The collecting pass checks path, declared field, convertibility, face reaches root input, no duplicate leaf",
+   "evidence": "src/conditions.jl:508-578, :390-402"
+  },
+  {
+   "id": "S14a-031",
+   "file": "design/spec.md",
+   "line": 13076,
+   "kind": "law",
+   "claim": "Unresolved path is PathResolution :unknown_child",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "S14a-032",
+   "file": "design/spec.md",
+   "line": 13077,
+   "kind": "law",
+   "claim": "Reasons :undeclared_field, :no_store, :assembly_path",
+   "evidence": "probe:35,37,40"
+  },
+  {
+   "id": "S14a-033",
+   "file": "design/spec.md",
+   "line": 13079,
+   "kind": "law",
+   "claim": "Bare payload vs named store is :store_shape; named payload vs bare store is :undeclared_field",
+   "evidence": "probe:45,47"
+  },
+  {
+   "id": "S14a-034",
+   "file": "design/spec.md",
+   "line": 13083,
+   "kind": "law",
+   "claim": "Bare u vs named contract or assembly is :port_shape",
+   "evidence": "probe:49,52"
+  },
+  {
+   "id": "S14a-035",
+   "file": "design/spec.md",
+   "line": 13085,
+   "kind": "law",
+   "claim": "A value that does not convert is :unconvertible",
+   "evidence": "probe:41"
+  },
+  {
+   "id": "S14a-036",
+   "file": "design/spec.md",
+   "line": 13086,
+   "kind": "law",
+   "claim": "A face reaching no root input takes a §14.2 reason; a twice-written leaf is DuplicateConditionLeaf",
+   "evidence": "probe:54-56,33"
+  },
+  {
+   "id": "S14a-037",
+   "file": "design/spec.md",
+   "line": 13089,
+   "kind": "mech",
+   "claim": "Schema authorizes the field and leaf type; layout holds x ranges, store indices, root-input indices; face chains come from Structure",
+   "evidence": "src/conditions.jl:508-513, :630-646 (`_face_producer` over structure)"
+  },
+  {
+   "id": "S14a-038",
+   "file": "design/spec.md",
+   "line": 13100,
+   "kind": "mech",
+   "claim": "Specialized plan holds lens, destination, converter per leaf; dynamic plan holds converted values",
+   "evidence": "src/conditions.jl:424-429, :766, :788-800, :844-850"
+  },
+  {
+   "id": "S14a-039",
+   "file": "design/spec.md",
+   "line": 13107,
+   "kind": "mech",
+   "claim": "The converter is baked per leaf at resolution, from the leaf's resolved type",
+   "evidence": "src/conditions.jl:766 (Authored{P,L}), :886-900"
+  },
+  {
+   "id": "S14a-040",
+   "file": "design/spec.md",
+   "line": 13120,
+   "kind": "law",
+   "claim": "A leaf already at the activation scalar takes ordinary convert; partials flow through",
+   "evidence": "test/test_conditions.jl:632-636"
+  },
+  {
+   "id": "S14a-041",
+   "file": "design/spec.md",
+   "line": 13131,
+   "kind": "law",
+   "claim": "A plain Float64 leaf at a non-nominal activation takes the zero-partial embedding",
+   "evidence": "test/test_conditions.jl:626-630"
+  },
+  {
+   "id": "S14a-042",
+   "file": "design/spec.md",
+   "line": 13144,
+   "kind": "law",
+   "claim": "Converters run on the write path, never on state views",
+   "evidence": "src/conditions.jl:766 (only Authored and `_convert` call convert)"
+  },
+  {
+   "id": "S14a-043",
+   "file": "design/spec.md",
+   "line": 13147,
+   "kind": "law",
+   "claim": "An s or m store's write is one whole merge(defaults, overlay); a bare store's is the overlay value",
+   "evidence": "src/conditions.jl:584-585, :788-800 (StoreWrite)"
+  },
+  {
+   "id": "S14a-044",
+   "file": "design/spec.md",
+   "line": 13167,
+   "kind": "mech",
+   "claim": "Specialized apply! serves trim's per-evaluation write",
+   "evidence": "src/trim.jl:628,646"
+  },
+  {
+   "id": "S14a-045",
+   "file": "design/spec.md",
+   "line": 13174,
+   "kind": "law",
+   "claim": "=== on strings compares content",
+   "evidence": "probe:64; test/test_conditions.jl:605-611"
+  },
+  {
+   "id": "S14a-046",
+   "file": "design/spec.md",
+   "line": 13177,
+   "kind": "law",
+   "claim": "Shape drift is ConditionShapeDrift reason :tree_type or :prefix",
+   "evidence": "src/conditions.jl:951-952, :962-970"
+  },
+  {
+   "id": "S14a-047",
+   "file": "design/spec.md",
+   "line": 13181,
+   "kind": "why",
+   "claim": "Codegen cost 0.09 s at 64 writes, 0.2 s at 128",
+   "evidence": "design/reports/20261002_tuple_walks/report.md:22 (0.09 s, 0.22 s)"
+  },
+  {
+   "id": "S14a-048",
+   "file": "design/spec.md",
+   "line": 13187,
+   "kind": "mech",
+   "claim": "The dynamic walk serves init!, linearize's operating condition and trim's setup write",
+   "evidence": "src/model.jl:318-331, src/linearize.jl:315-317, src/trim.jl:597-599"
+  },
+  {
+   "id": "S14a-049",
+   "file": "design/spec.md",
+   "line": 13212,
+   "kind": "decl",
+   "claim": "The selector family is get_state, get_deriv, get_output, get_input, get_face with leaf defaulting to the empty address",
+   "evidence": "src/readers.jl:152, :190-250"
+  },
+  {
+   "id": "S14a-050",
+   "file": "design/spec.md",
+   "line": 13219,
+   "kind": "law",
+   "claim": "Leaf address grammar: field or face name, then .name and [k] or [k,l] steps; a Symbol is the plain name",
+   "evidence": "src/readers.jl:365-390; probe:106"
+  },
+  {
+   "id": "S14a-051",
+   "file": "design/spec.md",
+   "line": 13223,
+   "kind": "law",
+   "claim": "Where the store is bare, an empty or step-first address takes the store's letter",
+   "evidence": "probe:101,102; src/readers.jl:757-790"
+  },
+  {
+   "id": "S14a-052",
+   "file": "design/spec.md",
+   "line": 13229,
+   "kind": "law",
+   "claim": "Headless address vs named or stateless store is ReadResolution :store_shape; named head vs bare is :undeclared",
+   "evidence": "probe:103,104,105"
+  },
+  {
+   "id": "S14a-053",
+   "file": "design/spec.md",
+   "line": 13236,
+   "kind": "law",
+   "claim": "Headless address at a named contract or assembly is :port_shape",
+   "evidence": "probe:113,120,121"
+  },
+  {
+   "id": "S14a-054",
+   "file": "design/spec.md",
+   "line": 13238,
+   "kind": "law",
+   "claim": "get_input()/get_face() at a primitive root with a bare contract read the bare port",
+   "evidence": "probe:127,128"
+  },
+  {
+   "id": "S14a-055",
+   "file": "design/spec.md",
+   "line": 13247,
+   "kind": "law",
+   "claim": "On get_input/get_face the head is the longest declared face name followed by end, . or [; a Symbol names the face whole",
+   "evidence": "src/readers.jl:405-418"
+  },
+  {
+   "id": "S14a-056",
+   "file": "design/spec.md",
+   "line": 13253,
+   "kind": "law",
+   "claim": "Each step is checked at resolution: .name needs a struct field, index needs a static array with matching arity, no step enters an opaque leaf",
+   "evidence": "src/readers.jl:441-465; src/leaves.jl:18; probe:107,109,110,115"
+  },
+  {
+   "id": "S14a-057",
+   "file": "design/spec.md",
+   "line": 13255,
+   "kind": "law",
+   "claim": "get_deriv and continuous get_state take at most an index step",
+   "evidence": "probe:107,108,111"
+  },
+  {
+   "id": "S14a-058",
+   "file": "design/spec.md",
+   "line": 13260,
+   "kind": "mech",
+   "claim": "The address is checked once and baked; the read runs as unrolled field loads and indexing",
+   "evidence": "src/readers.jl:468-480 (walk_steps @generated)"
+  },
+  {
+   "id": "S14a-059",
+   "file": "design/spec.md",
+   "line": 13270,
+   "kind": "law",
+   "claim": "Only declared cells and stores are addressable; no selector for an undeclared value",
+   "evidence": "src/readers.jl:152"
+  },
+  {
+   "id": "S14a-060",
+   "file": "design/spec.md",
+   "line": 13277,
+   "kind": "mech",
+   "claim": "at(prefix, ...) mounts a problem or tap set; get_face reads the mount level's output face",
+   "evidence": "src/trim.jl:122, src/linearize.jl:84, src/readers.jl:844-880"
+  },
+  {
+   "id": "S14a-061",
+   "file": "design/spec.md",
+   "line": 13292,
+   "kind": "law",
+   "claim": "A store selector against a table source is ReadResolution :store_selector; the resolver takes the source",
+   "evidence": "probe:116,117,118; src/readers.jl:665-700"
+  },
+  {
+   "id": "S14a-062",
+   "file": "design/spec.md",
+   "line": 13318,
+   "kind": "law",
+   "claim": "ignore_stop_requests names requesters from the roster, not path selectors",
+   "evidence": "src/sim.jl:430-452"
+  },
+  {
+   "id": "S14a-063",
+   "file": "design/spec.md",
+   "line": 13346,
+   "kind": "law",
+   "claim": "A plan or reader applies only to its activation",
+   "evidence": "src/conditions.jl:736,951-953; src/readers.jl:~598 (`_activation_mismatch`)"
+  },
+  {
+   "id": "S14a-064",
+   "file": "design/spec.md",
+   "line": 13357,
+   "kind": "mech",
+   "claim": "Boundary zero is the §10.6 macro-sequence with an empty integrate: project, sweep/guards/handlers, due s_update",
+   "evidence": "src/model.jl:650-660, :700"
+  },
+  {
+   "id": "S14a-065",
+   "file": "design/spec.md",
+   "line": 13367,
+   "kind": "mech",
+   "claim": "init! takes the trace header after the first snapshot",
+   "evidence": "src/sim.jl:848-853"
+  },
+  {
+   "id": "S14a-066",
+   "file": "design/spec.md",
+   "line": 13375,
+   "kind": "law",
+   "claim": "Projection runs first at boundary zero",
+   "evidence": "src/model.jl:652"
+  },
+  {
+   "id": "S14a-067",
+   "file": "design/spec.md",
+   "line": 13381,
+   "kind": "law",
+   "claim": "Every discrete output stage publishes at t0, due or not; an offset component's s_update does not run",
+   "evidence": "probe:93 (acc stays 7.0, cell 7.0, hold out 3.0); src/executor.jl:522-525"
+  },
+  {
+   "id": "S14a-068",
+   "file": "design/spec.md",
+   "line": 13394,
+   "kind": "law",
+   "claim": "A guard in holding territory fires at t0; priors start not-holding",
+   "evidence": "probe:96 (count 1); src/model.jl:330"
+  },
+  {
+   "id": "S14a-069",
+   "file": "design/spec.md",
+   "line": 13404,
+   "kind": "law",
+   "claim": "Replay restores the header and runs no boundary zero",
+   "evidence": "src/model.jl:1307, :700 (boundary_zero! called only by init!)"
+  },
+  {
+   "id": "S14a-070",
+   "file": "design/spec.md",
+   "line": 13438,
+   "kind": "law",
+   "claim": "A counter due at boundary zero and authored at 0 holds 1 after init! alone, its cell holding 0",
+   "evidence": "probe:90"
+  },
+  {
+   "id": "S14a-071",
+   "file": "design/spec.md",
+   "line": 13441,
+   "kind": "law",
+   "claim": "t0 is an init-service argument, not a condition entry",
+   "evidence": "src/model.jl:318"
+  },
+  {
+   "id": "S14a-072",
+   "file": "design/spec.md",
+   "line": 13445,
+   "kind": "law",
+   "claim": "init!(model), init!(sim) and trim! all take t0 with the same default",
+   "evidence": "src/model.jl:318, src/sim.jl:831, src/trim.jl:560"
+  },
+  {
+   "id": "S14a-073",
+   "file": "design/spec.md",
+   "line": 13447,
+   "kind": "mech",
+   "claim": "init!(sim) resolves and opens the run before the model's method writes; trim! commits through the matching init!",
+   "evidence": "src/sim.jl:838-848, :1130; src/trim.jl:565"
+  },
+  {
+   "id": "S14a-074",
+   "file": "design/spec.md",
+   "line": 13452,
+   "kind": "law",
+   "claim": "A non-finite or inexact t0 is ArgumentInvalid before any write; trim! refuses before its search",
+   "evidence": "probe:69,70,71; src/model.jl:347-353; src/trim.jl:562; src/sim.jl:838"
+  },
+  {
+   "id": "S14a-075",
+   "file": "design/spec.md",
+   "line": 13458,
+   "kind": "law",
+   "claim": "A restore takes no t0",
+   "evidence": "src/model.jl:1307; src/sim.jl:1060,1077"
+  },
+  {
+   "id": "S14a-077",
+   "file": "design/spec.md",
+   "line": 13460,
+   "kind": "law",
+   "claim": "Trim iterations run no boundaries; only the committed solution runs boundary zero",
+   "evidence": "src/trim.jl:597-646, :565"
+  },
+  {
+   "id": "S14a-078",
+   "file": "design/spec.md",
+   "line": 13472,
+   "kind": "mech",
+   "claim": "The trim report is the channel for commit-moved stores",
+   "evidence": "src/trim.jl:137-148"
+  },
+  {
+   "id": "S14a-079",
+   "file": "design/spec.md",
+   "line": 13474,
+   "kind": "law",
+   "claim": "The committed x is x_projection(x*), since projection is boundary zero's first act",
+   "evidence": "src/model.jl:652"
+  },
+  {
+   "id": "S14a-080",
+   "file": "design/spec.md",
+   "line": 12928,
+   "kind": "ptr",
+   "claim": "lead: `FlightPhysics` (PistonEngine, assign!, RQuat) at 12928, 12990, 13124, 13169",
+   "evidence": "prior art and illustrative names, not Redstone API"
+  },
+  {
+   "id": "S14a-081",
+   "file": "design/spec.md",
+   "line": 12937,
+   "kind": "ptr",
+   "claim": "lead: `FlightApps` (C172X.Systems) prior art",
+   "evidence": "prior art name, not Redstone API"
+  },
+  {
+   "id": "S14a-082",
+   "file": "design/spec.md",
+   "line": 12962,
+   "kind": "ptr",
+   "claim": "lead: `sC` is the link reference [Appendix C][sC] at 12962, 12989, 13029, 13044, 13179",
+   "evidence": "a link label, not a code name"
+  },
+  {
+   "id": "S14a-083",
+   "file": "design/spec.md",
+   "line": 13034,
+   "kind": "ptr",
+   "claim": "lead: `NamedTuples` is Base prose for NamedTuple values",
+   "evidence": "prose, not a Redstone name"
+  },
+  {
+   "id": "S14a-084",
+   "file": "design/spec.md",
+   "line": 13427,
+   "kind": "ex",
+   "claim": "lead: e_k, s_k, s_0, s_, t_0, t_1 are math symbols in the accumulator example",
+   "evidence": "LaTeX variables in an illustration, not code names"
+  }
+ ],
+ "counts": {
+  "law": 47,
+  "mech": 24,
+  "decl": 5,
+  "ptr": 14,
+  "why": 16,
+  "ex": 6,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

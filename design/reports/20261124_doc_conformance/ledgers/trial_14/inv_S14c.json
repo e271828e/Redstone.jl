@@ -1,0 +1,1806 @@
+{
+ "rows": [
+  {
+   "id": "S14c-011",
+   "file": "design/spec.md",
+   "line": 14160,
+   "kind": "ex",
+   "claim": "The at lift code block: at(prefix::String, p::TrimProblem) with reads = at(prefix, p.reads)",
+   "evidence": "src/trim.jl:122-127 takes AbstractString and lifts reads only when problem.reads isa Reads, otherwise passes it through; probe:71 prints NamedTuple() for a problem whose reads is (;); test/test_trim.jl:978-986",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "In the block, write `at(prefix::AbstractString, p::TrimProblem)` and `reads = p.reads isa Reads ? at(prefix, p.reads) : p.reads,  #inert selector data: the prefix is prepended to the read set's mount chain; a malformed reads passes through so trim!'s setup names it as TrimProblemInvalid :not_a_read_set`. Nothing in the log records the pass-through (D-278 covers only the empty prefix); code_map.md:1478 alone does.",
+   "note": "The prose at 14153-14156 says the lift prepends to a read set, which stays true."
+  },
+  {
+   "id": "S14c-242",
+   "file": "design/spec.md",
+   "line": 15801,
+   "kind": "law",
+   "claim": "UninitializedInputs: Error, service pre-write, collected",
+   "evidence": "src/conditions.jl:705 throws DiagnosticError(UninitializedInputs(...)), one diagnostic in a fail-fast carrier; probe:17 prints DiagnosticError{UninitializedInputs} and the descriptor body reports policy fail-fast; probe:21 and probe:23 show the same carrier for linearize about and trim!; src/descriptor.jl:98 reads policy off the carrier type; test/test_assembly.jl:103 and test/test_trim.jl:631 expect DiagnosticError{UninitializedInputs}",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Appendix C entry: `Error · service, pre-write · fail-fast.` and say the one diagnostic names every uncovered root face in declaration order. §14.6 (spec.md:13503) says `one collected, declaration-ordered diagnostic` and wants the same rewording, for example `one declaration-ordered diagnostic naming every uncovered face`. The alternative is a defect fix, wrapping the diagnostic in a Vector{Diagnostic} carrier in assert_total, which changes the carrier type the tests match on.",
+   "note": "Appendix C defines collected as thrown as one carrier with its siblings. The code gathers the faces into one value, not into a collection."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S14c-002",
+   "file": "design/spec.md",
+   "line": 14140,
+   "kind": "mech",
+   "claim": "condition field is a condition-valued function over the decision space",
+   "evidence": "src/trim.jl:86"
+  },
+  {
+   "id": "S14c-003",
+   "file": "design/spec.md",
+   "line": 14143,
+   "kind": "mech",
+   "claim": "commit is override(baseline, condition(d*)) through boundary zero",
+   "evidence": "src/trim.jl:729"
+  },
+  {
+   "id": "S14c-004",
+   "file": "design/spec.md",
+   "line": 14146,
+   "kind": "law",
+   "claim": "override layers in order, patch wins on shared leaf",
+   "evidence": "src/conditions.jl:275"
+  },
+  {
+   "id": "S14c-005",
+   "file": "design/spec.md",
+   "line": 14147,
+   "kind": "mech",
+   "claim": "init! applies an explicit condition, trim! searches a family",
+   "evidence": "src/trim.jl:562"
+  },
+  {
+   "id": "S14c-006",
+   "file": "design/spec.md",
+   "line": 14151,
+   "kind": "law",
+   "claim": "at lifts a problem field by field in three cases",
+   "evidence": "src/trim.jl:122"
+  },
+  {
+   "id": "S14c-007",
+   "file": "design/spec.md",
+   "line": 14152,
+   "kind": "mech",
+   "claim": "lift post-composes the condition field",
+   "evidence": "src/trim.jl:124"
+  },
+  {
+   "id": "S14c-008",
+   "file": "design/spec.md",
+   "line": 14154,
+   "kind": "mech",
+   "claim": "lift prepends the prefix to the read set mount chain",
+   "evidence": "src/trim.jl:125; probe:73"
+  },
+  {
+   "id": "S14c-009",
+   "file": "design/spec.md",
+   "line": 14156,
+   "kind": "mech",
+   "claim": "every other field is path-free and passes through",
+   "evidence": "src/trim.jl:126-127"
+  },
+  {
+   "id": "S14c-012",
+   "file": "design/spec.md",
+   "line": 14172,
+   "kind": "mech",
+   "claim": "flattening accumulator enters each Scoped and prefixes entries",
+   "evidence": "src/conditions.jl:349"
+  },
+  {
+   "id": "S14c-013",
+   "file": "design/spec.md",
+   "line": 14176,
+   "kind": "decl",
+   "claim": "a read set is a Reads value; at(prefix, read_set) prepends to mount chain",
+   "evidence": "src/conditions.jl:213"
+  },
+  {
+   "id": "S14c-014",
+   "file": "design/spec.md",
+   "line": 14178,
+   "kind": "law",
+   "claim": "a Reads value is no condition node, Scoped never wraps one",
+   "evidence": "src/conditions.jl:110"
+  },
+  {
+   "id": "S14c-015",
+   "file": "design/spec.md",
+   "line": 14179,
+   "kind": "mech",
+   "claim": "resolution walks the mount chain from the root level by level",
+   "evidence": "src/readers.jl:739"
+  },
+  {
+   "id": "S14c-016",
+   "file": "design/spec.md",
+   "line": 14180,
+   "kind": "mech",
+   "claim": "resolution rebases every selector to the root before it resolves",
+   "evidence": "src/readers.jl:757"
+  },
+  {
+   "id": "S14c-017",
+   "file": "design/spec.md",
+   "line": 14182,
+   "kind": "mech",
+   "claim": "path selector path is joined to the mount",
+   "evidence": "src/readers.jl:765"
+  },
+  {
+   "id": "S14c-018",
+   "file": "design/spec.md",
+   "line": 14183,
+   "kind": "mech",
+   "claim": "get_input names an input face of the mount level, follows export chain",
+   "evidence": "src/readers.jl:812"
+  },
+  {
+   "id": "S14c-019",
+   "file": "design/spec.md",
+   "line": 14185,
+   "kind": "mech",
+   "claim": "get_face names an output face of the mount level, reads producer port",
+   "evidence": "src/readers.jl:844"
+  },
+  {
+   "id": "S14c-020",
+   "file": "design/spec.md",
+   "line": 14188,
+   "kind": "law",
+   "claim": "refusal spells the selector as authored and names the mount",
+   "evidence": "src/diagnostics.jl:2123"
+  },
+  {
+   "id": "S14c-021",
+   "file": "design/spec.md",
+   "line": 14189,
+   "kind": "law",
+   "claim": "at refuses an empty prefix on a read set as ReadSetMisuse",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "S14c-022",
+   "file": "design/spec.md",
+   "line": 14190,
+   "kind": "law",
+   "claim": "problem and tap set lifts reach the refusal through at on read sets",
+   "evidence": "probe:76"
+  },
+  {
+   "id": "S14c-023",
+   "file": "design/spec.md",
+   "line": 14194,
+   "kind": "mech",
+   "claim": "input entries in the face vocabulary resolve via export chain from mount",
+   "evidence": "src/conditions.jl:630"
+  },
+  {
+   "id": "S14c-024",
+   "file": "design/spec.md",
+   "line": 14196,
+   "kind": "ex",
+   "claim": "throttle at \"wing\" resolves to root input \"wing.throttle\"",
+   "evidence": "placeholder example, root face names are the world author's; src/conditions.jl:630"
+  },
+  {
+   "id": "S14c-025",
+   "file": "design/spec.md",
+   "line": 14197,
+   "kind": "law",
+   "claim": "an unexported face fails resolution by name",
+   "evidence": "src/conditions.jl:635"
+  },
+  {
+   "id": "S14c-026",
+   "file": "design/spec.md",
+   "line": 14198,
+   "kind": "law",
+   "claim": "internally wired input refused by name with its producer",
+   "evidence": "src/conditions.jl:642"
+  },
+  {
+   "id": "S14c-027",
+   "file": "design/spec.md",
+   "line": 14200,
+   "kind": "law",
+   "claim": "refusal is ConditionResolution for an entry, ReadResolution for get_input",
+   "evidence": "src/conditions.jl:642; src/readers.jl:830"
+  },
+  {
+   "id": "S14c-028",
+   "file": "design/spec.md",
+   "line": 14202,
+   "kind": "mech",
+   "claim": "service compiles scoped condition and reads, never knows the mount",
+   "evidence": "test/test_trim.jl:963"
+  },
+  {
+   "id": "S14c-030",
+   "file": "design/spec.md",
+   "line": 14207,
+   "kind": "mech",
+   "claim": "baseline is the full-coverage condition trim! takes as keyword",
+   "evidence": "src/trim.jl:560"
+  },
+  {
+   "id": "S14c-035",
+   "file": "design/spec.md",
+   "line": 14222,
+   "kind": "ptr",
+   "claim": "FlightPhysics world initializer has no successor method (prior art)",
+   "evidence": "lead:FlightCore,FlightPhysics, Flight.jl prior art, no code to check"
+  },
+  {
+   "id": "S14c-036",
+   "file": "design/spec.md",
+   "line": 14225,
+   "kind": "mech",
+   "claim": "environment, other aircraft, root inputs covered by baseline applied once at setup",
+   "evidence": "src/trim.jl:598"
+  },
+  {
+   "id": "S14c-037",
+   "file": "design/spec.md",
+   "line": 14227,
+   "kind": "mech",
+   "claim": "commit is override(baseline, at(mount, condition(d*)))",
+   "evidence": "src/trim.jl:122; src/trim.jl:729"
+  },
+  {
+   "id": "S14c-039",
+   "file": "design/spec.md",
+   "line": 14230,
+   "kind": "ptr",
+   "claim": "design tasks use design_world(ac) rig",
+   "evidence": "lead:design_world, recorded name, glossary spec.md:17107; absent from src"
+  },
+  {
+   "id": "S14c-040",
+   "file": "design/spec.md",
+   "line": 14233,
+   "kind": "ptr",
+   "claim": "design_world(ac) = aircraft + SimpleAtmosphere + HorizontalTerrain",
+   "evidence": "lead:FlightPhysics,design_world, recorded name, prior art"
+  },
+  {
+   "id": "S14c-041",
+   "file": "design/spec.md",
+   "line": 14235,
+   "kind": "ptr",
+   "claim": "design_world promotes ad-hoc models inside Flight.jl linearize (prior art)",
+   "evidence": "lead:FlightCore, Flight.jl prior art"
+  },
+  {
+   "id": "S14c-043",
+   "file": "design/spec.md",
+   "line": 14240,
+   "kind": "law",
+   "claim": "an unconnected env face holding an isbits handle is an ordinary root input",
+   "evidence": "src/structure.jl:439"
+  },
+  {
+   "id": "S14c-044",
+   "file": "design/spec.md",
+   "line": 14244,
+   "kind": "law",
+   "claim": "a bulk-data handle is never a root input, a constant source holds it",
+   "evidence": "design/log.md:9713; src/library.jl:346"
+  },
+  {
+   "id": "S14c-046",
+   "file": "design/spec.md",
+   "line": 14252,
+   "kind": "mech",
+   "claim": "the service solves one problem at a time",
+   "evidence": "src/trim.jl:562"
+  },
+  {
+   "id": "S14c-051",
+   "file": "design/spec.md",
+   "line": 14264,
+   "kind": "mech",
+   "claim": "linearize computes A,B,C,D in one seeded evaluation and commits nothing",
+   "evidence": "src/linearize.jl:357"
+  },
+  {
+   "id": "S14c-052",
+   "file": "design/spec.md",
+   "line": 14266,
+   "kind": "decl",
+   "claim": "the tap set is three labeled lists",
+   "evidence": "src/linearize.jl:37"
+  },
+  {
+   "id": "S14c-054",
+   "file": "design/spec.md",
+   "line": 14279,
+   "kind": "decl",
+   "claim": "taps(x = ..., u = ..., y = ...) declares the three lists",
+   "evidence": "src/linearize.jl:70"
+  },
+  {
+   "id": "S14c-055",
+   "file": "design/spec.md",
+   "line": 14281,
+   "kind": "law",
+   "claim": "membership is closed per list: x get_state, u get_input, y get_output/get_face",
+   "evidence": "src/linearize.jl:391"
+  },
+  {
+   "id": "S14c-056",
+   "file": "design/spec.md",
+   "line": 14283,
+   "kind": "law",
+   "claim": "NamedTuple key is the label control design slices by",
+   "evidence": "src/linearize.jl:373"
+  },
+  {
+   "id": "S14c-057",
+   "file": "design/spec.md",
+   "line": 14285,
+   "kind": "law",
+   "claim": "a tap names one scalar leaf",
+   "evidence": "src/linearize.jl:482"
+  },
+  {
+   "id": "S14c-059",
+   "file": "design/spec.md",
+   "line": 14288,
+   "kind": "law",
+   "claim": "a seeded tap takes one index step at most and never a .name step",
+   "evidence": "src/linearize.jl:484"
+  },
+  {
+   "id": "S14c-060",
+   "file": "design/spec.md",
+   "line": 14291,
+   "kind": "law",
+   "claim": "a seeded tap leaf is exactly Float64",
+   "evidence": "src/linearize.jl:490"
+  },
+  {
+   "id": "S14c-061",
+   "file": "design/spec.md",
+   "line": 14292,
+   "kind": "law",
+   "claim": "any other seeded address is TapResolution",
+   "evidence": "src/linearize.jl:486"
+  },
+  {
+   "id": "S14c-062",
+   "file": "design/spec.md",
+   "line": 14292,
+   "kind": "law",
+   "claim": "a y tap is a read and takes any leaf address",
+   "evidence": "src/linearize.jl:550"
+  },
+  {
+   "id": "S14c-063",
+   "file": "design/spec.md",
+   "line": 14293,
+   "kind": "law",
+   "claim": "vector or struct tap, and a wrong-list member, are TapResolution",
+   "evidence": "src/linearize.jl:489; src/linearize.jl:444"
+  },
+  {
+   "id": "S14c-064",
+   "file": "design/spec.md",
+   "line": 14295,
+   "kind": "law",
+   "claim": "second tap at a seeded site rejected naming the earlier label",
+   "evidence": "src/linearize.jl:455"
+  },
+  {
+   "id": "S14c-065",
+   "file": "design/spec.md",
+   "line": 14298,
+   "kind": "ex",
+   "claim": "taps(...) example with get_state/get_input/get_output",
+   "evidence": "src/readers.jl:188; src/readers.jl:243; src/readers.jl:269"
+  },
+  {
+   "id": "S14c-066",
+   "file": "design/spec.md",
+   "line": 14306,
+   "kind": "law",
+   "claim": "lists are validated at resolution with did-you-mean errors",
+   "evidence": "src/diagnostics.jl:1925"
+  },
+  {
+   "id": "S14c-067",
+   "file": "design/spec.md",
+   "line": 14308,
+   "kind": "law",
+   "claim": "those errors are the selectors own ReadResolution (D-406)",
+   "evidence": "src/linearize.jl:448; test/test_linearize.jl:420"
+  },
+  {
+   "id": "S14c-068",
+   "file": "design/spec.md",
+   "line": 14309,
+   "kind": "mech",
+   "claim": "x list checked against x_init stores, u against faces, y against y_types",
+   "evidence": "src/linearize.jl:500"
+  },
+  {
+   "id": "S14c-069",
+   "file": "design/spec.md",
+   "line": 14311,
+   "kind": "law",
+   "claim": "x tap on a discrete store is TapResolution with tap and tier in hand",
+   "evidence": "src/linearize.jl:500; src/diagnostics.jl:2164"
+  },
+  {
+   "id": "S14c-072",
+   "file": "design/spec.md",
+   "line": 14314,
+   "kind": "mech",
+   "claim": "rejection guidance points at the recorded step map",
+   "evidence": "src/diagnostics.jl:2167"
+  },
+  {
+   "id": "S14c-073",
+   "file": "design/spec.md",
+   "line": 14315,
+   "kind": "mech",
+   "claim": "lists compile to offsets once and relocate whole via at(prefix, taps)",
+   "evidence": "src/linearize.jl:84"
+  },
+  {
+   "id": "S14c-075",
+   "file": "design/spec.md",
+   "line": 14321,
+   "kind": "law",
+   "claim": "linearization is a pure query: commits nothing, no boundary zero",
+   "evidence": "src/linearize.jl:309"
+  },
+  {
+   "id": "S14c-076",
+   "file": "design/spec.md",
+   "line": 14324,
+   "kind": "mech",
+   "claim": "it works only on scratch buffers",
+   "evidence": "src/linearize.jl:309"
+  },
+  {
+   "id": "S14c-078",
+   "file": "design/spec.md",
+   "line": 14329,
+   "kind": "law",
+   "claim": "default operating point is checkpoint(sim) or checkpoint(model)",
+   "evidence": "src/linearize.jl:275; src/sim.jl:1167"
+  },
+  {
+   "id": "S14c-079",
+   "file": "design/spec.md",
+   "line": 14331,
+   "kind": "mech",
+   "claim": "a checkpoint is the Model state at a frame top as one value",
+   "evidence": "src/model.jl:1178"
+  },
+  {
+   "id": "S14c-080",
+   "file": "design/spec.md",
+   "line": 14332,
+   "kind": "mech",
+   "claim": "default point restored into scratch world with no boundary zero",
+   "evidence": "src/linearize.jl:311"
+  },
+  {
+   "id": "S14c-081",
+   "file": "design/spec.md",
+   "line": 14334,
+   "kind": "mech",
+   "claim": "frozen tier cells are the checkpoint held cells",
+   "evidence": "src/linearize.jl:311; src/linearize.jl:347"
+  },
+  {
+   "id": "S14c-082",
+   "file": "design/spec.md",
+   "line": 14335,
+   "kind": "mech",
+   "claim": "seeded half takes each root input checkpoint value through convert",
+   "evidence": "src/linearize.jl:335"
+  },
+  {
+   "id": "S14c-083",
+   "file": "design/spec.md",
+   "line": 14337,
+   "kind": "law",
+   "claim": "non-converting root input is ConditionResolution :unconvertible",
+   "evidence": "src/linearize.jl:336; test/test_linearize.jl:346"
+  },
+  {
+   "id": "S14c-084",
+   "file": "design/spec.md",
+   "line": 14338,
+   "kind": "law",
+   "claim": "every such root input in one throw before first evaluation, origin checkpoint",
+   "evidence": "src/linearize.jl:341"
+  },
+  {
+   "id": "S14c-085",
+   "file": "design/spec.md",
+   "line": 14340,
+   "kind": "law",
+   "claim": "after trim! commit linearize(sim, taps) is about the trim point",
+   "evidence": "src/linearize.jl:275"
+  },
+  {
+   "id": "S14c-086",
+   "file": "design/spec.md",
+   "line": 14341,
+   "kind": "law",
+   "claim": "about = condition with t0 linearizes elsewhere, sim untouched",
+   "evidence": "src/linearize.jl:313; test/test_linearize.jl:204"
+  },
+  {
+   "id": "S14c-087",
+   "file": "design/spec.md",
+   "line": 14343,
+   "kind": "law",
+   "claim": "about condition coverage checked as 14.6 requires",
+   "evidence": "src/linearize.jl:316"
+  },
+  {
+   "id": "S14c-088",
+   "file": "design/spec.md",
+   "line": 14343,
+   "kind": "law",
+   "claim": "t0 admitted only beside about, else ArgumentInvalid",
+   "evidence": "src/linearize.jl:294; probe:50"
+  },
+  {
+   "id": "S14c-089",
+   "file": "design/spec.md",
+   "line": 14344,
+   "kind": "law",
+   "claim": "t0 defaults to 0",
+   "evidence": "src/linearize.jl:313; probe:46"
+  },
+  {
+   "id": "S14c-090",
+   "file": "design/spec.md",
+   "line": 14346,
+   "kind": "law",
+   "claim": "t0 takes init! exact forms, other form ArgumentInvalid",
+   "evidence": "src/linearize.jl:313; probe:52"
+  },
+  {
+   "id": "S14c-091",
+   "file": "design/spec.md",
+   "line": 14351,
+   "kind": "mech",
+   "claim": "each invocation instantiates its own scratch store set",
+   "evidence": "src/linearize.jl:309"
+  },
+  {
+   "id": "S14c-092",
+   "file": "design/spec.md",
+   "line": 14353,
+   "kind": "mech",
+   "claim": "seeded Dual evaluation, one direction per x and u tap, groups of width",
+   "evidence": "src/linearize.jl:357"
+  },
+  {
+   "id": "S14c-093",
+   "file": "design/spec.md",
+   "line": 14354,
+   "kind": "decl",
+   "claim": "width is a keyword of linearize, default 8",
+   "evidence": "src/linearize.jl:267; probe:54"
+  },
+  {
+   "id": "S14c-094",
+   "file": "design/spec.md",
+   "line": 14356,
+   "kind": "mech",
+   "claim": "default width scalar type is named (LinearizeDual)",
+   "evidence": "src/linearize.jl:104"
+  },
+  {
+   "id": "S14c-095",
+   "file": "design/spec.md",
+   "line": 14357,
+   "kind": "law",
+   "claim": "pre-materialized activation serves any tap set with no activation at call",
+   "evidence": "test/test_linearize.jl:275"
+  },
+  {
+   "id": "S14c-096",
+   "file": "design/spec.md",
+   "line": 14358,
+   "kind": "mech",
+   "claim": "Julia compiles each new tap set shape once",
+   "evidence": "src/linearize.jl:473"
+  },
+  {
+   "id": "S14c-097",
+   "file": "design/spec.md",
+   "line": 14359,
+   "kind": "mech",
+   "claim": "value parts give x0dot and y0",
+   "evidence": "src/linearize.jl:364; src/linearize.jl:369"
+  },
+  {
+   "id": "S14c-098",
+   "file": "design/spec.md",
+   "line": 14360,
+   "kind": "mech",
+   "claim": "partials give A,B against x/u seeds and C,D against same seeds at y",
+   "evidence": "src/linearize.jl:582"
+  },
+  {
+   "id": "S14c-099",
+   "file": "design/spec.md",
+   "line": 14361,
+   "kind": "law",
+   "claim": "all four come out simultaneously, exact to machine precision",
+   "evidence": "test/test_linearize.jl:103"
+  },
+  {
+   "id": "S14c-103",
+   "file": "design/spec.md",
+   "line": 14375,
+   "kind": "law",
+   "claim": "unseeded states and root inputs sit constant at the operating point",
+   "evidence": "src/linearize.jl:359"
+  },
+  {
+   "id": "S14c-104",
+   "file": "design/spec.md",
+   "line": 14376,
+   "kind": "mech",
+   "claim": "operating point embeds Float64 values as zero-partial constants",
+   "evidence": "src/linearize.jl:325"
+  },
+  {
+   "id": "S14c-105",
+   "file": "design/spec.md",
+   "line": 14377,
+   "kind": "law",
+   "claim": "discrete tier frozen with zero partials",
+   "evidence": "src/linearize.jl:347"
+  },
+  {
+   "id": "S14c-106",
+   "file": "design/spec.md",
+   "line": 14379,
+   "kind": "mech",
+   "claim": "partials enter through per-invocation seeding, one rule for x and u",
+   "evidence": "src/linearize.jl:360"
+  },
+  {
+   "id": "S14c-108",
+   "file": "design/spec.md",
+   "line": 14381,
+   "kind": "law",
+   "claim": "Pinned input entry makes the root input declaredly unseedable",
+   "evidence": "src/linearize.jl:541"
+  },
+  {
+   "id": "S14c-109",
+   "file": "design/spec.md",
+   "line": 14383,
+   "kind": "law",
+   "claim": "unseeded means fed by nothing seeded; scheduled gain carries partials",
+   "evidence": "src/linearize.jl:362"
+  },
+  {
+   "id": "S14c-110",
+   "file": "design/spec.md",
+   "line": 14385,
+   "kind": "mech",
+   "claim": "Freeze routes a value at nominal, dropping partials",
+   "evidence": "src/library.jl:388"
+  },
+  {
+   "id": "S14c-111",
+   "file": "design/spec.md",
+   "line": 14387,
+   "kind": "law",
+   "claim": "pinned root input as B tap is TapResolution with the entry in hand",
+   "evidence": "src/linearize.jl:542"
+  },
+  {
+   "id": "S14c-112",
+   "file": "design/spec.md",
+   "line": 14389,
+   "kind": "law",
+   "claim": "under fan-out the rejection names the pinning consumer",
+   "evidence": "src/linearize.jl:529"
+  },
+  {
+   "id": "S14c-113",
+   "file": "design/spec.md",
+   "line": 14390,
+   "kind": "law",
+   "claim": "a root input is unseedable if any consumer demands frozen (meet)",
+   "evidence": "src/linearize.jl:536"
+  },
+  {
+   "id": "S14c-115",
+   "file": "design/spec.md",
+   "line": 14394,
+   "kind": "law",
+   "claim": "discrete consumer pins by tier, unseedable at every activation",
+   "evidence": "test/test_linearize.jl:512"
+  },
+  {
+   "id": "S14c-116",
+   "file": "design/spec.md",
+   "line": 14396,
+   "kind": "mech",
+   "claim": "rejection names the tier, next move tap continuous cell or step map",
+   "evidence": "src/diagnostics.jl:2213"
+  },
+  {
+   "id": "S14c-117",
+   "file": "design/spec.md",
+   "line": 14398,
+   "kind": "mech",
+   "claim": "show(Structure) marks consumers and descriptor lists them",
+   "evidence": "src/show.jl:93; src/descriptor.jl:186"
+  },
+  {
+   "id": "S14c-118",
+   "file": "design/spec.md",
+   "line": 14406,
+   "kind": "law",
+   "claim": "table: x-tap state leaf seeded, one direction",
+   "evidence": "src/linearize.jl:511"
+  },
+  {
+   "id": "S14c-119",
+   "file": "design/spec.md",
+   "line": 14407,
+   "kind": "law",
+   "claim": "table: any other state leaf constant at operating point",
+   "evidence": "src/linearize.jl:359"
+  },
+  {
+   "id": "S14c-120",
+   "file": "design/spec.md",
+   "line": 14408,
+   "kind": "law",
+   "claim": "table: u-tap root input seeded, one direction",
+   "evidence": "src/linearize.jl:545"
+  },
+  {
+   "id": "S14c-121",
+   "file": "design/spec.md",
+   "line": 14409,
+   "kind": "law",
+   "claim": "table: other seedable root input constant, zero-partial",
+   "evidence": "src/linearize.jl:359"
+  },
+  {
+   "id": "S14c-122",
+   "file": "design/spec.md",
+   "line": 14410,
+   "kind": "law",
+   "claim": "table: Pinned root input frozen at every activation, rejected as B tap",
+   "evidence": "src/linearize.jl:541"
+  },
+  {
+   "id": "S14c-123",
+   "file": "design/spec.md",
+   "line": 14411,
+   "kind": "law",
+   "claim": "table: root input a discrete consumer reads frozen, rejected as B tap",
+   "evidence": "test/test_linearize.jl:512"
+  },
+  {
+   "id": "S14c-124",
+   "file": "design/spec.md",
+   "line": 14412,
+   "kind": "law",
+   "claim": "table: any discrete-tier leaf frozen, zero partials",
+   "evidence": "src/linearize.jl:347"
+  },
+  {
+   "id": "S14c-125",
+   "file": "design/spec.md",
+   "line": 14416,
+   "kind": "decl",
+   "claim": "linearize returns a Linearization value",
+   "evidence": "src/linearize.jl:375"
+  },
+  {
+   "id": "S14c-126",
+   "file": "design/spec.md",
+   "line": 14417,
+   "kind": "law",
+   "claim": "Linearization holds plain arrays in the order of the taps",
+   "evidence": "probe:63"
+  },
+  {
+   "id": "S14c-127",
+   "file": "design/spec.md",
+   "line": 14418,
+   "kind": "law",
+   "claim": "x0dot,x0,u0,y0 are Vector{Float64}, A,B,C,D Matrix{Float64}",
+   "evidence": "probe:63"
+  },
+  {
+   "id": "S14c-128",
+   "file": "design/spec.md",
+   "line": 14419,
+   "kind": "decl",
+   "claim": "three label tuples stand beside the arrays",
+   "evidence": "src/linearize.jl:141"
+  },
+  {
+   "id": "S14c-129",
+   "file": "design/spec.md",
+   "line": 14420,
+   "kind": "law",
+   "claim": "y tap on a non-Float64 Real leaf reads as Float64, C,D rows zero",
+   "evidence": "test/test_linearize.jl:449"
+  },
+  {
+   "id": "S14c-131",
+   "file": "design/spec.md",
+   "line": 14424,
+   "kind": "mech",
+   "claim": "labeled form comes from a package extension",
+   "evidence": "ext/RedstoneComponentArraysExt.jl:12"
+  },
+  {
+   "id": "S14c-132",
+   "file": "design/spec.md",
+   "line": 14426,
+   "kind": "law",
+   "claim": "labeled returns a Linearization with component arrays over label axes",
+   "evidence": "probe:64"
+  },
+  {
+   "id": "S14c-133",
+   "file": "design/spec.md",
+   "line": 14427,
+   "kind": "law",
+   "claim": "empty tap list: vector plain, matrix with both lists empty plain",
+   "evidence": "test/test_linearize.jl:575"
+  },
+  {
+   "id": "S14c-134",
+   "file": "design/spec.md",
+   "line": 14429,
+   "kind": "law",
+   "claim": "matrix with one empty list is a component matrix with no rows or columns",
+   "evidence": "test/test_linearize.jl:575"
+  },
+  {
+   "id": "S14c-135",
+   "file": "design/spec.md",
+   "line": 14430,
+   "kind": "ex",
+   "claim": "A[:h, :γ] and A[(:V,:γ),(:V,:γ)] read entry and block",
+   "evidence": "test/test_linearize.jl:562"
+  },
+  {
+   "id": "S14c-136",
+   "file": "design/spec.md",
+   "line": 14431,
+   "kind": "law",
+   "claim": "without ComponentArrays the call fails with a hint naming it",
+   "evidence": "src/linearize.jl:176"
+  },
+  {
+   "id": "S14c-137",
+   "file": "design/spec.md",
+   "line": 14434,
+   "kind": "law",
+   "claim": "plain and labeled form are one type, eight abstract-typed arrays",
+   "evidence": "src/linearize.jl:133; probe:62"
+  },
+  {
+   "id": "S14c-138",
+   "file": "design/spec.md",
+   "line": 14437,
+   "kind": "law",
+   "claim": "prints each matrix as a table under row/column labels, same for both forms",
+   "evidence": "src/show.jl:643; probe:65"
+  },
+  {
+   "id": "S14c-139",
+   "file": "design/spec.md",
+   "line": 14439,
+   "kind": "law",
+   "claim": "operating point prints per tap list, numbers as a trim report",
+   "evidence": "src/show.jl:661"
+  },
+  {
+   "id": "S14c-140",
+   "file": "design/spec.md",
+   "line": 14442,
+   "kind": "mech",
+   "claim": "ComponentArrays computes by position, no label check",
+   "evidence": "src/linearize.jl:164"
+  },
+  {
+   "id": "S14c-141",
+   "file": "design/spec.md",
+   "line": 14445,
+   "kind": "ptr",
+   "claim": "FlightPhysics subsystem/delete_vars survive as label slicing (prior art)",
+   "evidence": "lead:FlightPhysics, prior art; absent from src"
+  },
+  {
+   "id": "S14c-149",
+   "file": "design/spec.md",
+   "line": 14459,
+   "kind": "ptr",
+   "claim": "design_world(ac) rigs that variant",
+   "evidence": "lead:design_world, recorded name"
+  },
+  {
+   "id": "S14c-153",
+   "file": "design/spec.md",
+   "line": 14469,
+   "kind": "law",
+   "claim": "trim and linearization differentiate continuous dynamics with discrete state held",
+   "evidence": "src/linearize.jl:347"
+  },
+  {
+   "id": "S14c-162",
+   "file": "design/spec.md",
+   "line": 14497,
+   "kind": "law",
+   "claim": "an adaptive method error norm reads values alone, Dual takes Float64 steps",
+   "evidence": "src/stepper.jl:223; src/stepper.jl:311"
+  },
+  {
+   "id": "S14c-168",
+   "file": "design/spec.md",
+   "line": 14520,
+   "kind": "mech",
+   "claim": "output half is the freeze door declaring a leaf frozen",
+   "evidence": "src/library.jl:388"
+  },
+  {
+   "id": "S14c-170",
+   "file": "design/spec.md",
+   "line": 14524,
+   "kind": "mech",
+   "claim": "conformance check holds frozen declarations at every activation",
+   "evidence": "src/build.jl:84"
+  },
+  {
+   "id": "S14c-171",
+   "file": "design/spec.md",
+   "line": 14525,
+   "kind": "mech",
+   "claim": "input half: Pinned input entry says never hand me partials, enforced at the wire",
+   "evidence": "src/build.jl:37"
+  },
+  {
+   "id": "S14c-172",
+   "file": "design/spec.md",
+   "line": 14527,
+   "kind": "law",
+   "claim": "at a root input a Pinned entry is the forbid-seeding marker typing the cell at every activation",
+   "evidence": "src/linearize.jl:536"
+  },
+  {
+   "id": "S14c-175",
+   "file": "design/spec.md",
+   "line": 14534,
+   "kind": "law",
+   "claim": "a participating component keeps its entry tolerant and supplies a local derivative",
+   "evidence": "src/library.jl:150"
+  },
+  {
+   "id": "S14c-177",
+   "file": "design/spec.md",
+   "line": 14553,
+   "kind": "mech",
+   "claim": "ForwardDiff.value mid-expression is legal at an unpinned leaf (9.5)",
+   "evidence": "src/library.jl:150"
+  },
+  {
+   "id": "S14c-178",
+   "file": "design/spec.md",
+   "line": 14556,
+   "kind": "law",
+   "claim": "linearization keeps one mechanism and no perturbation fallback",
+   "evidence": "src/linearize.jl:302"
+  },
+  {
+   "id": "S14c-179",
+   "file": "design/spec.md",
+   "line": 14557,
+   "kind": "mech",
+   "claim": "derivative-free trim fallback (14.8) is designed, not built, serves no-Jacobian problems",
+   "evidence": "design/spec.md:13827; src/trim.jl:300"
+  },
+  {
+   "id": "S14c-184",
+   "file": "design/spec.md",
+   "line": 15203,
+   "kind": "decl",
+   "claim": "set(; x, s, m, u) is the leaf, a fragment of self-vocabulary payloads",
+   "evidence": "src/conditions.jl:169"
+  },
+  {
+   "id": "S14c-185",
+   "file": "design/spec.md",
+   "line": 15205,
+   "kind": "decl",
+   "claim": "at(prefix, node) stores, never applies",
+   "evidence": "src/conditions.jl:208"
+  },
+  {
+   "id": "S14c-186",
+   "file": "design/spec.md",
+   "line": 15206,
+   "kind": "decl",
+   "claim": "at also lifts TrimProblem, read set, tap set",
+   "evidence": "src/trim.jl:122; src/conditions.jl:213; src/linearize.jl:84"
+  },
+  {
+   "id": "S14c-187",
+   "file": "design/spec.md",
+   "line": 15209,
+   "kind": "law",
+   "claim": "combine(nodes...) symmetric; duplicate leaves error with both origins",
+   "evidence": "probe:27"
+  },
+  {
+   "id": "S14c-188",
+   "file": "design/spec.md",
+   "line": 15211,
+   "kind": "law",
+   "claim": "override(base, patches...) ordered, patch wins, origin keeps both",
+   "evidence": "src/conditions.jl:366"
+  },
+  {
+   "id": "S14c-189",
+   "file": "design/spec.md",
+   "line": 15213,
+   "kind": "decl",
+   "claim": "condition(comp; kw) is the shipped condition-method idiom",
+   "evidence": "src/conditions.jl:134"
+  },
+  {
+   "id": "S14c-190",
+   "file": "design/spec.md",
+   "line": 15214,
+   "kind": "decl",
+   "claim": "Fragment, Scoped, Combined, Override are what set/at/combine/override return; ConditionNode is their union",
+   "evidence": "src/conditions.jl:110"
+  },
+  {
+   "id": "S14c-191",
+   "file": "design/spec.md",
+   "line": 15220,
+   "kind": "decl",
+   "claim": "init!(sim, condition = set(); t0 = 0, trace, log, log_every = 1, log_max = 65536)",
+   "evidence": "src/sim.jl:831"
+  },
+  {
+   "id": "S14c-192",
+   "file": "design/spec.md",
+   "line": 15222,
+   "kind": "law",
+   "claim": "root-input totality checked pre-write",
+   "evidence": "src/sim.jl:841"
+  },
+  {
+   "id": "S14c-193",
+   "file": "design/spec.md",
+   "line": 15223,
+   "kind": "mech",
+   "claim": "then boundary zero runs at t0 held as exact origin, then the checkpoint trace header follows",
+   "evidence": "src/sim.jl:847"
+  },
+  {
+   "id": "S14c-194",
+   "file": "design/spec.md",
+   "line": 15230,
+   "kind": "decl",
+   "claim": "keyword trace default true, the input trace kill switch",
+   "evidence": "src/sim.jl:831"
+  },
+  {
+   "id": "S14c-195",
+   "file": "design/spec.md",
+   "line": 15231,
+   "kind": "decl",
+   "claim": "keyword log default true, the snapshot log kill switch",
+   "evidence": "src/sim.jl:831"
+  },
+  {
+   "id": "S14c-196",
+   "file": "design/spec.md",
+   "line": 15232,
+   "kind": "decl",
+   "claim": "keyword log_every default 1, keep every kth",
+   "evidence": "src/sim.jl:831"
+  },
+  {
+   "id": "S14c-197",
+   "file": "design/spec.md",
+   "line": 15233,
+   "kind": "decl",
+   "claim": "keyword log_max default 65536, Inf opt-out",
+   "evidence": "src/sim.jl:832"
+  },
+  {
+   "id": "S14c-198",
+   "file": "design/spec.md",
+   "line": 15235,
+   "kind": "law",
+   "claim": "the four keywords configure the run this call builds",
+   "evidence": "src/sim.jl:838"
+  },
+  {
+   "id": "S14c-199",
+   "file": "design/spec.md",
+   "line": 15236,
+   "kind": "decl",
+   "claim": "overlay!, restore!, replay! take the same four",
+   "evidence": "src/sim.jl:961; src/sim.jl:1060; src/sim.jl:1331"
+  },
+  {
+   "id": "S14c-200",
+   "file": "design/spec.md",
+   "line": 15238,
+   "kind": "decl",
+   "claim": "trim!(sim, problem; baseline, t0 = 0, backend = LevenbergMarquardt()) -> TrimReport",
+   "evidence": "src/sim.jl:1120"
+  },
+  {
+   "id": "S14c-201",
+   "file": "design/spec.md",
+   "line": 15240,
+   "kind": "law",
+   "claim": "solves against own tolerances, NLS on packed residuals with exact Dual Jacobians",
+   "evidence": "src/trim.jl:300"
+  },
+  {
+   "id": "S14c-202",
+   "file": "design/spec.md",
+   "line": 15242,
+   "kind": "decl",
+   "claim": "LevenbergMarquardt() is the default in-house dense backend (lead: maxiter, λ₀ keywords exist, doc does not deny them)",
+   "evidence": "src/trim.jl:282; probe:80"
+  },
+  {
+   "id": "S14c-203",
+   "file": "design/spec.md",
+   "line": 15243,
+   "kind": "law",
+   "claim": "commit is init! with override(baseline, condition(solution)), gated on converged",
+   "evidence": "src/trim.jl:729"
+  },
+  {
+   "id": "S14c-204",
+   "file": "design/spec.md",
+   "line": 15246,
+   "kind": "decl",
+   "claim": "solve(backend, eval!, d0, lower, upper, tol) -> (; d, status, n_evaluations, n_iterations)",
+   "evidence": "src/trim.jl:300; probe:83"
+  },
+  {
+   "id": "S14c-205",
+   "file": "design/spec.md",
+   "line": 15247,
+   "kind": "law",
+   "claim": "solve is the backend seam, a pinned one-method signature",
+   "evidence": "src/trim.jl:236"
+  },
+  {
+   "id": "S14c-206",
+   "file": "design/spec.md",
+   "line": 15249,
+   "kind": "decl",
+   "claim": "checkpoint(sim) -> Checkpoint",
+   "evidence": "src/sim.jl:889"
+  },
+  {
+   "id": "S14c-207",
+   "file": "design/spec.md",
+   "line": 15249,
+   "kind": "mech",
+   "claim": "checkpoint holds Model state at frame top with t0, fingerprint, deployment, frame index, boundary ordinal",
+   "evidence": "src/checkpoint.jl:60; probe:87"
+  },
+  {
+   "id": "S14c-208",
+   "file": "design/spec.md",
+   "line": 15252,
+   "kind": "decl",
+   "claim": "restore!(sim, cp; trace, log, log_every, log_max)",
+   "evidence": "src/sim.jl:1060"
+  },
+  {
+   "id": "S14c-209",
+   "file": "design/spec.md",
+   "line": 15253,
+   "kind": "law",
+   "claim": "restore! legal where init! is",
+   "evidence": "src/sim.jl:1061"
+  },
+  {
+   "id": "S14c-210",
+   "file": "design/spec.md",
+   "line": 15254,
+   "kind": "law",
+   "claim": "restore! checks fingerprint and deployment (CheckpointMismatch), t vs grid (CheckpointMidFrame)",
+   "evidence": "src/sim.jl:1068"
+  },
+  {
+   "id": "S14c-211",
+   "file": "design/spec.md",
+   "line": 15256,
+   "kind": "law",
+   "claim": "warm restart is checkpoint, restore!, run!",
+   "evidence": "src/sim.jl:1023"
+  },
+  {
+   "id": "S14c-212",
+   "file": "design/spec.md",
+   "line": 15258,
+   "kind": "decl",
+   "claim": "restore!(sim, model_state; ...) takes a ModelState",
+   "evidence": "src/sim.jl:1077"
+  },
+  {
+   "id": "S14c-213",
+   "file": "design/spec.md",
+   "line": 15260,
+   "kind": "law",
+   "claim": "same fingerprint and deployment check, off-grid state is CheckpointMidFrame",
+   "evidence": "src/sim.jl:1085"
+  },
+  {
+   "id": "S14c-214",
+   "file": "design/spec.md",
+   "line": 15261,
+   "kind": "law",
+   "claim": "opens a fresh trajectory at the state frame, restored boundary under ordinal 0",
+   "evidence": "src/sim.jl:1089"
+  },
+  {
+   "id": "S14c-215",
+   "file": "design/spec.md",
+   "line": 15263,
+   "kind": "decl",
+   "claim": "overlay!(sim, condition = set(); trace, log, log_every, log_max)",
+   "evidence": "src/sim.jl:961"
+  },
+  {
+   "id": "S14c-216",
+   "file": "design/spec.md",
+   "line": 15264,
+   "kind": "law",
+   "claim": "condition stores written onto a stopped run, fresh run header is the checkpoint after settling",
+   "evidence": "src/sim.jl:977"
+  },
+  {
+   "id": "S14c-217",
+   "file": "design/spec.md",
+   "line": 15268,
+   "kind": "decl",
+   "claim": "linearize(sim, taps; about = nothing, t0 = nothing, width = 8) -> Linearization",
+   "evidence": "src/sim.jl:1156"
+  },
+  {
+   "id": "S14c-218",
+   "file": "design/spec.md",
+   "line": 15269,
+   "kind": "law",
+   "claim": "pure query, default operating point is checkpoint of the sim",
+   "evidence": "src/sim.jl:1167"
+  },
+  {
+   "id": "S14c-219",
+   "file": "design/spec.md",
+   "line": 15270,
+   "kind": "law",
+   "claim": "about with t0 (default 0 beside about) places it elsewhere",
+   "evidence": "probe:46"
+  },
+  {
+   "id": "S14c-220",
+   "file": "design/spec.md",
+   "line": 15273,
+   "kind": "decl",
+   "claim": "labeled(linearization) -> Linearization, component arrays under the tap labels",
+   "evidence": "src/linearize.jl:168"
+  },
+  {
+   "id": "S14c-221",
+   "file": "design/spec.md",
+   "line": 15274,
+   "kind": "law",
+   "claim": "arrays whose tap lists are all empty stay plain",
+   "evidence": "test/test_linearize.jl:575"
+  },
+  {
+   "id": "S14c-222",
+   "file": "design/spec.md",
+   "line": 15275,
+   "kind": "mech",
+   "claim": "a package extension provides the method when ComponentArrays is loaded",
+   "evidence": "ext/RedstoneComponentArraysExt.jl:12"
+  },
+  {
+   "id": "S14c-223",
+   "file": "design/spec.md",
+   "line": 15277,
+   "kind": "decl",
+   "claim": "get_state/get_deriv/get_output(path, leaf = \"\"), get_input/get_face(leaf = \"\")",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "S14c-224",
+   "file": "design/spec.md",
+   "line": 15278,
+   "kind": "law",
+   "claim": "closed read-selector family, one address space for every reader",
+   "evidence": "src/readers.jl:57"
+  },
+  {
+   "id": "S14c-225",
+   "file": "design/spec.md",
+   "line": 15281,
+   "kind": "law",
+   "claim": "empty default is a bare store letter x/s/m or bare contract default face u or y",
+   "evidence": "src/readers.jl:269"
+  },
+  {
+   "id": "S14c-226",
+   "file": "design/spec.md",
+   "line": 15283,
+   "kind": "decl",
+   "claim": "taps(; x, u, y) builds the tap set, closed membership",
+   "evidence": "src/linearize.jl:70"
+  },
+  {
+   "id": "S14c-227",
+   "file": "design/spec.md",
+   "line": 15287,
+   "kind": "decl",
+   "claim": "GetState..GetFace are what the selectors return; Taps what taps returns; Reads what reads returns",
+   "evidence": "src/readers.jl:522; src/linearize.jl:37"
+  },
+  {
+   "id": "S14c-228",
+   "file": "design/spec.md",
+   "line": 15749,
+   "kind": "law",
+   "claim": "ConditionResolution severity error, stage service, policy collected",
+   "evidence": "src/conditions.jl:681"
+  },
+  {
+   "id": "S14c-229",
+   "file": "design/spec.md",
+   "line": 15750,
+   "kind": "decl",
+   "claim": "ConditionResolution payload: path, store, field (nothing for bare payload)",
+   "evidence": "src/diagnostics.jl:1954"
+  },
+  {
+   "id": "S14c-230",
+   "file": "design/spec.md",
+   "line": 15752,
+   "kind": "decl",
+   "claim": "payload: value with type, declared leaf type, activation",
+   "evidence": "src/diagnostics.jl:1962"
+  },
+  {
+   "id": "S14c-231",
+   "file": "design/spec.md",
+   "line": 15753,
+   "kind": "decl",
+   "claim": "payload: tier and role, producer, candidates, origin",
+   "evidence": "src/diagnostics.jl:1964"
+  },
+  {
+   "id": "S14c-232",
+   "file": "design/spec.md",
+   "line": 15756,
+   "kind": "law",
+   "claim": "origin is the condition tree chain, or the checkpoint at linearize default",
+   "evidence": "src/diagnostics.jl:1951; src/linearize.jl:337"
+  },
+  {
+   "id": "S14c-233",
+   "file": "design/spec.md",
+   "line": 15758,
+   "kind": "decl",
+   "claim": "ConditionResolution reason set matches the nine sub-kinds",
+   "evidence": "src/diagnostics.jl:1958"
+  },
+  {
+   "id": "S14c-234",
+   "file": "design/spec.md",
+   "line": 15763,
+   "kind": "law",
+   "claim": "an unknown path is PathResolution",
+   "evidence": "src/conditions.jl:352"
+  },
+  {
+   "id": "S14c-235",
+   "file": "design/spec.md",
+   "line": 15765,
+   "kind": "law",
+   "claim": "DuplicateConditionLeaf error, service, collected",
+   "evidence": "src/conditions.jl:396; probe:27"
+  },
+  {
+   "id": "S14c-236",
+   "file": "design/spec.md",
+   "line": 15766,
+   "kind": "decl",
+   "claim": "payload: leaf (path, store, field) and both origins",
+   "evidence": "src/diagnostics.jl:2044"
+  },
+  {
+   "id": "S14c-237",
+   "file": "design/spec.md",
+   "line": 15767,
+   "kind": "decl",
+   "claim": "a u payload leaf is the root input its face resolves to, face in hand",
+   "evidence": "probe:29"
+  },
+  {
+   "id": "S14c-238",
+   "file": "design/spec.md",
+   "line": 15768,
+   "kind": "law",
+   "claim": "the message gives the override advice",
+   "evidence": "src/diagnostics.jl:2054"
+  },
+  {
+   "id": "S14c-239",
+   "file": "design/spec.md",
+   "line": 15769,
+   "kind": "law",
+   "claim": "ConditionNodeMisuse error, service, fail-fast",
+   "evidence": "src/conditions.jl:178; probe:33"
+  },
+  {
+   "id": "S14c-240",
+   "file": "design/spec.md",
+   "line": 15770,
+   "kind": "decl",
+   "claim": "payload: offending argument type, node types in hand, reason",
+   "evidence": "src/diagnostics.jl:2060"
+  },
+  {
+   "id": "S14c-241",
+   "file": "design/spec.md",
+   "line": 15771,
+   "kind": "decl",
+   "claim": "reasons :not_a_node, :set_payload (payload named), :empty_prefix",
+   "evidence": "src/diagnostics.jl:2060; probe:33"
+  },
+  {
+   "id": "S14c-243",
+   "file": "design/spec.md",
+   "line": 15802,
+   "kind": "decl",
+   "claim": "payload: operation (init!, trim!, linearize) and every uncovered root face in declaration order",
+   "evidence": "src/diagnostics.jl:2080; probe:18"
+  },
+  {
+   "id": "S14c-244",
+   "file": "design/spec.md",
+   "line": 15804,
+   "kind": "law",
+   "claim": "TapResolution error, service, collected",
+   "evidence": "src/linearize.jl:465"
+  },
+  {
+   "id": "S14c-245",
+   "file": "design/spec.md",
+   "line": 15805,
+   "kind": "law",
+   "claim": "raised beside the reads ReadResolution values",
+   "evidence": "src/linearize.jl:448"
+  },
+  {
+   "id": "S14c-246",
+   "file": "design/spec.md",
+   "line": 15806,
+   "kind": "decl",
+   "claim": "payload: read as ReadResolution describes it, tap set x/u/y, reason",
+   "evidence": "src/diagnostics.jl:2091"
+  },
+  {
+   "id": "S14c-247",
+   "file": "design/spec.md",
+   "line": 15808,
+   "kind": "decl",
+   "claim": "reason :tap_kind carries the list the selector sat in",
+   "evidence": "src/diagnostics.jl:2108"
+  },
+  {
+   "id": "S14c-248",
+   "file": "design/spec.md",
+   "line": 15809,
+   "kind": "decl",
+   "claim": "reason :discrete_state, a discrete store",
+   "evidence": "src/linearize.jl:500"
+  },
+  {
+   "id": "S14c-249",
+   "file": "design/spec.md",
+   "line": 15810,
+   "kind": "decl",
+   "claim": "reason :vector_tap, a leaf that is not a real scalar",
+   "evidence": "src/linearize.jl:488; src/linearize.jl:553"
+  },
+  {
+   "id": "S14c-250",
+   "file": "design/spec.md",
+   "line": 15811,
+   "kind": "decl",
+   "claim": "reason :duplicate_site carries the earlier tap label",
+   "evidence": "src/diagnostics.jl:2110"
+  },
+  {
+   "id": "S14c-251",
+   "file": "design/spec.md",
+   "line": 15812,
+   "kind": "decl",
+   "claim": "reason :unseedable: index step at most, never .name, leaf exactly Float64",
+   "evidence": "src/linearize.jl:484"
+  },
+  {
+   "id": "S14c-252",
+   "file": "design/spec.md",
+   "line": 15814,
+   "kind": "decl",
+   "claim": "payload carries the step or the leaf type",
+   "evidence": "src/linearize.jl:486; src/linearize.jl:491"
+  },
+  {
+   "id": "S14c-253",
+   "file": "design/spec.md",
+   "line": 15814,
+   "kind": "decl",
+   "claim": "declaredly unseedable root input: same reason, pinning consumer path, tier, u_types entry",
+   "evidence": "src/linearize.jl:542"
+  },
+  {
+   "id": "S14c-254",
+   "file": "design/spec.md",
+   "line": 15817,
+   "kind": "law",
+   "claim": "TrimProblemInvalid error, service, collected",
+   "evidence": "src/trim.jl:365; src/trim.jl:359"
+  },
+  {
+   "id": "S14c-255",
+   "file": "design/spec.md",
+   "line": 15818,
+   "kind": "decl",
+   "claim": "payload: offending field or residuals/checks return, and a reason",
+   "evidence": "src/diagnostics.jl:2225"
+  },
+  {
+   "id": "S14c-256",
+   "file": "design/spec.md",
+   "line": 15819,
+   "kind": "decl",
+   "claim": ":not_a_namedtuple and :not_a_read_set carry the observed type",
+   "evidence": "src/trim.jl:375; src/trim.jl:441"
+  },
+  {
+   "id": "S14c-257",
+   "file": "design/spec.md",
+   "line": 15820,
+   "kind": "decl",
+   "claim": ":key_set carries names against expected",
+   "evidence": "src/trim.jl:381"
+  },
+  {
+   "id": "S14c-258",
+   "file": "design/spec.md",
+   "line": 15821,
+   "kind": "decl",
+   "claim": ":field_types carries the offending fields",
+   "evidence": "src/trim.jl:430"
+  },
+  {
+   "id": "S14c-259",
+   "file": "design/spec.md",
+   "line": 15821,
+   "kind": "law",
+   "claim": "a field-order difference is never a mismatch",
+   "evidence": "src/trim.jl:379"
+  },
+  {
+   "id": "S14c-260",
+   "file": "design/spec.md",
+   "line": 15822,
+   "kind": "decl",
+   "claim": ":inverted_box carries decision and both bounds",
+   "evidence": "src/trim.jl:396"
+  },
+  {
+   "id": "S14c-261",
+   "file": "design/spec.md",
+   "line": 15823,
+   "kind": "decl",
+   "claim": ":nonpositive_tolerance carries key and value",
+   "evidence": "src/trim.jl:421"
+  },
+  {
+   "id": "S14c-262",
+   "file": "design/spec.md",
+   "line": 15825,
+   "kind": "law",
+   "claim": "TrimCommitEvents warning, service, logged at the commit beside the report",
+   "evidence": "src/trim.jl:737; probe:97"
+  },
+  {
+   "id": "S14c-263",
+   "file": "design/spec.md",
+   "line": 15827,
+   "kind": "decl",
+   "claim": "payload: events as component paths and event names; same list rides TrimReport",
+   "evidence": "src/diagnostics.jl:2296; src/trim.jl:764"
+  },
+  {
+   "id": "S14c-264",
+   "file": "design/spec.md",
+   "line": 15829,
+   "kind": "law",
+   "claim": "TrimCommitResiduals warning, service, logged",
+   "evidence": "src/trim.jl:750"
+  },
+  {
+   "id": "S14c-265",
+   "file": "design/spec.md",
+   "line": 15831,
+   "kind": "decl",
+   "claim": "payload: offending residual names with committed values and tolerances",
+   "evidence": "src/diagnostics.jl:2307"
+  },
+  {
+   "id": "S14c-266",
+   "file": "design/spec.md",
+   "line": 15832,
+   "kind": "law",
+   "claim": "raised for a converged solve whose committed residuals violate the box test",
+   "evidence": "src/trim.jl:741"
+  },
+  {
+   "id": "S14c-267",
+   "file": "design/spec.md",
+   "line": 15833,
+   "kind": "law",
+   "claim": "TrimCommitChecks warning, service, logged",
+   "evidence": "src/trim.jl:761"
+  },
+  {
+   "id": "S14c-268",
+   "file": "design/spec.md",
+   "line": 15835,
+   "kind": "decl",
+   "claim": "payload: offending check names with committed values and tolerances",
+   "evidence": "src/diagnostics.jl:2319"
+  },
+  {
+   "id": "S14c-269",
+   "file": "design/spec.md",
+   "line": 15835,
+   "kind": "law",
+   "claim": "raised for a converged solve whose committed checks leave their tolerances",
+   "evidence": "src/trim.jl:758"
+  },
+  {
+   "id": "S14c-270",
+   "file": "design/spec.md",
+   "line": 15837,
+   "kind": "law",
+   "claim": "ConditionShapeDrift error, service, fail-fast",
+   "evidence": "src/conditions.jl:968"
+  },
+  {
+   "id": "S14c-271",
+   "file": "design/spec.md",
+   "line": 15838,
+   "kind": "decl",
+   "claim": "payload: reason :tree_type or :prefix",
+   "evidence": "src/diagnostics.jl:2331"
+  },
+  {
+   "id": "S14c-272",
+   "file": "design/spec.md",
+   "line": 15839,
+   "kind": "decl",
+   "claim": "compiled tree type and observed one, or for :prefix node position and both strings",
+   "evidence": "src/conditions.jl:969; src/conditions.jl:973"
+  },
+  {
+   "id": "S14c-273",
+   "file": "design/spec.md",
+   "line": 15840,
+   "kind": "law",
+   "claim": "message states the remedy, one shape for every decision",
+   "evidence": "src/diagnostics.jl:2343"
+  },
+  {
+   "id": "S14c-274",
+   "file": "design/spec.md",
+   "line": 15920,
+   "kind": "law",
+   "claim": "ReadSetMisuse error, service, fail-fast",
+   "evidence": "src/conditions.jl:213; src/linearize.jl:88"
+  },
+  {
+   "id": "S14c-275",
+   "file": "design/spec.md",
+   "line": 15921,
+   "kind": "decl",
+   "claim": "payload: offending argument type, selector kinds in hand, label, reason",
+   "evidence": "src/diagnostics.jl:2522"
+  },
+  {
+   "id": "S14c-276",
+   "file": "design/spec.md",
+   "line": 15922,
+   "kind": "decl",
+   "claim": "reason :not_a_selector for a non-selector read set entry",
+   "evidence": "src/readers.jl:555"
+  },
+  {
+   "id": "S14c-277",
+   "file": "design/spec.md",
+   "line": 15924,
+   "kind": "decl",
+   "claim": "reason :not_a_read_set for an argument that is no read set",
+   "evidence": "src/readers.jl:675"
+  },
+  {
+   "id": "S14c-278",
+   "file": "design/spec.md",
+   "line": 15924,
+   "kind": "decl",
+   "claim": "reason :not_a_tap_list for a tap list that is no NamedTuple",
+   "evidence": "src/linearize.jl:88; probe:94"
+  },
+  {
+   "id": "S14c-279",
+   "file": "design/spec.md",
+   "line": 15925,
+   "kind": "decl",
+   "claim": "reason :empty_prefix for an empty prefix handed to at on a read set",
+   "evidence": "src/conditions.jl:213"
+  },
+  {
+   "id": "S14c-280",
+   "file": "design/spec.md",
+   "line": 15926,
+   "kind": "decl",
+   "claim": "reason :reserved_label for a read series gets under a Series field name",
+   "evidence": "src/sim.jl:2956"
+  }
+ ],
+ "counts": {
+  "law": 102,
+  "mech": 48,
+  "decl": 63,
+  "ptr": 37,
+  "why": 24,
+  "ex": 7
+ }
+}

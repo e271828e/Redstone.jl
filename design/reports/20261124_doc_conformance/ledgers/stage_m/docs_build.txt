@@ -1,0 +1,188 @@
+[ Info: SetupBuildDirectory: setting up build directory.
+[ Info: Doctest: running doctests.
+[ Info: ExpandTemplates: expanding markdown templates.
+┌ Error: failed to run `@example` block in docs/src/tutorial/linearize.md:74-83
+│ ```@example linearize
+│ import Redstone: x_deriv
+│ using LinearAlgebra: I
+│ 
+│ x₀, u₀ = linearization.x₀, linearization.u₀
+│ f(x) = collect(x_deriv(Longitudinal(), (; x, u = u₀)))
+│ ε = 1e-6
+│ A_fd = reduce(hcat, [(f(x₀ + ε * e) - f(x₀ - ε * e)) / 2ε for e in eachcol(I(5))])
+│ maximum(abs, A_fd - linearization.A)
+│ ```
+│   exception =
+│    ArgumentError: Package LinearAlgebra not found in current path.
+│    - Run `import Pkg; Pkg.add("LinearAlgebra")` to install the LinearAlgebra package.
+│    Stacktrace:
+│      [1] macro expansion
+│        @ ./loading.jl:2550 [inlined]
+│      [2] macro expansion
+│        @ ./lock.jl:376 [inlined]
+│      [3] __require(into::Module, mod::Symbol)
+│        @ Base ./loading.jl:2533
+│      [4] require
+│        @ ./loading.jl:2509 [inlined]
+│      [5] eval_import_path
+│        @ ./module.jl:36 [inlined]
+│      [6] eval_import_path_all(at::Module, path::Expr, keyword::String)
+│        @ Base ./module.jl:60
+│      [7] _eval_import(::Bool, ::Module, ::Expr, ::Expr, ::Vararg{Expr})
+│        @ Base ./module.jl:101
+│      [8] top-level scope
+│        @ linearize.md:76
+│      [9] eval(m::Module, e::Any)
+│        @ Core ./boot.jl:489
+│     [10] #68
+│        @ ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:919 [inlined]
+│     [11] cd(f::Documenter.var"#68#69"{Module, Expr}, dir::String)
+│        @ Base.Filesystem ./file.jl:112
+│     [12] #66
+│        @ ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:918 [inlined]
+│     [13] (::IOCapture.var"#12#13"{Type{InterruptException}, Documenter.var"#66#67"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream})()
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:170
+│     [14] with_logstate(f::IOCapture.var"#12#13"{Type{InterruptException}, Documenter.var"#66#67"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream}, logstate::Base.CoreLogging.LogState)
+│        @ Base.CoreLogging ./logging/logging.jl:542
+│     [15] with_logger(f::Function, logger::Base.CoreLogging.ConsoleLogger)
+│        @ Base.CoreLogging ./logging/logging.jl:653
+│     [16] capture(f::Documenter.var"#66#67"{Documenter.Page, Module, Expr}; rethrow::Type, color::Bool, passthrough::Bool, capture_buffer::IOBuffer, io_context::Vector{Any})
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:167
+│     [17] runner(::Type{Documenter.Expanders.ExampleBlocks}, node::MarkdownAST.Node{Nothing}, page::Documenter.Page, doc::Documenter.Document)
+│        @ Documenter ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:917
+└ @ Documenter ~/.julia/packages/Documenter/13nbQ/src/utilities/utilities.jl:47
+┌ Error: failed to run `@example` block in docs/src/tutorial/linearize.md:100-104
+│ ```@example linearize
+│ using LinearAlgebra: eigvals
+│ 
+│ λs = eigvals(linearization.A)
+│ ```
+│   exception =
+│    ArgumentError: Package LinearAlgebra not found in current path.
+│    - Run `import Pkg; Pkg.add("LinearAlgebra")` to install the LinearAlgebra package.
+│    Stacktrace:
+│      [1] macro expansion
+│        @ ./loading.jl:2550 [inlined]
+│      [2] macro expansion
+│        @ ./lock.jl:376 [inlined]
+│      [3] __require(into::Module, mod::Symbol)
+│        @ Base ./loading.jl:2533
+│      [4] require
+│        @ ./loading.jl:2509 [inlined]
+│      [5] eval_import_path
+│        @ ./module.jl:36 [inlined]
+│      [6] eval_import_path_all(at::Module, path::Expr, keyword::String)
+│        @ Base ./module.jl:60
+│      [7] _eval_import(::Bool, ::Module, ::Expr, ::Expr, ::Vararg{Expr})
+│        @ Base ./module.jl:101
+│      [8] top-level scope
+│        @ linearize.md:101
+│      [9] eval(m::Module, e::Any)
+│        @ Core ./boot.jl:489
+│     [10] #68
+│        @ ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:919 [inlined]
+│     [11] cd(f::Documenter.var"#68#69"{Module, Expr}, dir::String)
+│        @ Base.Filesystem ./file.jl:112
+│     [12] #66
+│        @ ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:918 [inlined]
+│     [13] (::IOCapture.var"#12#13"{Type{InterruptException}, Documenter.var"#66#67"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream})()
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:170
+│     [14] with_logstate(f::IOCapture.var"#12#13"{Type{InterruptException}, Documenter.var"#66#67"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream}, logstate::Base.CoreLogging.LogState)
+│        @ Base.CoreLogging ./logging/logging.jl:542
+│     [15] with_logger(f::Function, logger::Base.CoreLogging.ConsoleLogger)
+│        @ Base.CoreLogging ./logging/logging.jl:653
+│     [16] capture(f::Documenter.var"#66#67"{Documenter.Page, Module, Expr}; rethrow::Type, color::Bool, passthrough::Bool, capture_buffer::IOBuffer, io_context::Vector{Any})
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:167
+│     [17] runner(::Type{Documenter.Expanders.ExampleBlocks}, node::MarkdownAST.Node{Nothing}, page::Documenter.Page, doc::Documenter.Document)
+│        @ Documenter ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:917
+└ @ Documenter ~/.julia/packages/Documenter/13nbQ/src/utilities/utilities.jl:47
+┌ Error: failed to run `@example` block in docs/src/tutorial/linearize.md:106-110
+│ ```@example linearize
+│ mode(λ) = (ωn = abs(λ), ζ = -real(λ) / abs(λ), period = 2π / imag(λ))
+│ 
+│ phugoid, short_period = mode.(sort(filter(λ -> imag(λ) > 0, λs); by = abs))
+│ ```
+│   exception =
+│    UndefVarError: `λs` not defined in `Main.__atexample__named__linearize`
+│    Suggestion: check for spelling errors or missing imports.
+│    Stacktrace:
+│      [1] top-level scope
+│        @ linearize.md:109
+│      [2] eval(m::Module, e::Any)
+│        @ Core ./boot.jl:489
+│      [3] #68
+│        @ ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:919 [inlined]
+│      [4] cd(f::Documenter.var"#68#69"{Module, Expr}, dir::String)
+│        @ Base.Filesystem ./file.jl:112
+│      [5] #66
+│        @ ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:918 [inlined]
+│      [6] (::IOCapture.var"#12#13"{Type{InterruptException}, Documenter.var"#66#67"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream})()
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:170
+│      [7] with_logstate(f::IOCapture.var"#12#13"{Type{InterruptException}, Documenter.var"#66#67"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream}, logstate::Base.CoreLogging.LogState)
+│        @ Base.CoreLogging ./logging/logging.jl:542
+│      [8] with_logger(f::Function, logger::Base.CoreLogging.ConsoleLogger)
+│        @ Base.CoreLogging ./logging/logging.jl:653
+│      [9] capture(f::Documenter.var"#66#67"{Documenter.Page, Module, Expr}; rethrow::Type, color::Bool, passthrough::Bool, capture_buffer::IOBuffer, io_context::Vector{Any})
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:167
+│     [10] runner(::Type{Documenter.Expanders.ExampleBlocks}, node::MarkdownAST.Node{Nothing}, page::Documenter.Page, doc::Documenter.Document)
+│        @ Documenter ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:917
+└ @ Documenter ~/.julia/packages/Documenter/13nbQ/src/utilities/utilities.jl:47
+┌ Error: failed to run `@example` block in docs/src/tutorial/linearize.md:117-119
+│ ```@example linearize
+│ phugoid.period
+│ ```
+│   exception =
+│    UndefVarError: `phugoid` not defined in `Main.__atexample__named__linearize`
+│    Suggestion: check for spelling errors or missing imports.
+│    Stacktrace:
+│      [1] top-level scope
+│        @ linearize.md:118
+│      [2] eval(m::Module, e::Any)
+│        @ Core ./boot.jl:489
+│      [3] #68
+│        @ ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:919 [inlined]
+│      [4] cd(f::Documenter.var"#68#69"{Module, Expr}, dir::String)
+│        @ Base.Filesystem ./file.jl:112
+│      [5] #66
+│        @ ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:918 [inlined]
+│      [6] (::IOCapture.var"#12#13"{Type{InterruptException}, Documenter.var"#66#67"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream})()
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:170
+│      [7] with_logstate(f::IOCapture.var"#12#13"{Type{InterruptException}, Documenter.var"#66#67"{Documenter.Page, Module, Expr}, IOContext{Base.PipeEndpoint}, IOContext{Base.PipeEndpoint}, IOStream, IOStream}, logstate::Base.CoreLogging.LogState)
+│        @ Base.CoreLogging ./logging/logging.jl:542
+│      [8] with_logger(f::Function, logger::Base.CoreLogging.ConsoleLogger)
+│        @ Base.CoreLogging ./logging/logging.jl:653
+│      [9] capture(f::Documenter.var"#66#67"{Documenter.Page, Module, Expr}; rethrow::Type, color::Bool, passthrough::Bool, capture_buffer::IOBuffer, io_context::Vector{Any})
+│        @ IOCapture ~/.julia/packages/IOCapture/MR051/src/IOCapture.jl:167
+│     [10] runner(::Type{Documenter.Expanders.ExampleBlocks}, node::MarkdownAST.Node{Nothing}, page::Documenter.Page, doc::Documenter.Document)
+│        @ Documenter ~/.julia/packages/Documenter/13nbQ/src/expander_pipeline.jl:917
+└ @ Documenter ~/.julia/packages/Documenter/13nbQ/src/utilities/utilities.jl:47
+[ Info: CrossReferences: building cross-references.
+[ Info: CheckDocument: running document checks.
+[ Info: Populate: populating indices.
+ERROR: LoadError: `makedocs` encountered an error [:example_block] -- terminating build before rendering.
+Stacktrace:
+  [1] error(s::String)
+    @ Base ./error.jl:44
+  [2] runner(::Type{Documenter.Builder.RenderDocument}, doc::Documenter.Document)
+    @ Documenter ~/.julia/packages/Documenter/13nbQ/src/builder_pipeline.jl:259
+  [3] dispatch(::Type{Documenter.Builder.DocumentPipeline}, x::Documenter.Document)
+    @ Documenter.Selectors ~/.julia/packages/Documenter/13nbQ/src/utilities/Selectors.jl:170
+  [4] #101
+    @ ~/.julia/packages/Documenter/13nbQ/src/makedocs.jl:283 [inlined]
+  [5] withenv(::Documenter.var"#101#102"{Documenter.Document}, ::Pair{String, Nothing}, ::Vararg{Pair{String, Nothing}})
+    @ Base ./env.jl:273
+  [6] #99
+    @ ~/.julia/packages/Documenter/13nbQ/src/makedocs.jl:282 [inlined]
+  [7] cd(f::Documenter.var"#99#100"{Documenter.Document}, dir::String)
+    @ Base.Filesystem ./file.jl:112
+  [8] makedocs(; debug::Bool, format::Documenter.HTMLWriter.HTML, kwargs::@Kwargs{sitename::String, authors::String, modules::Vector{Module}, doctest::Bool, checkdocs::Symbol, pagesonly::Bool, pages::Vector{Pair{String, Any}}})
+    @ Documenter ~/.julia/packages/Documenter/13nbQ/src/makedocs.jl:281
+  [9] top-level scope
+    @ ~/.julia/dev/Redstone.jl-worktrees/doc_conformance/docs/make.jl:25
+ [10] include(mod::Module, _path::String)
+    @ Base ./Base.jl:309
+ [11] exec_options(opts::Base.JLOptions)
+    @ Base ./client.jl:344
+ [12] _start()
+    @ Base ./client.jl:577
+in expression starting at /Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance/docs/make.jl:25

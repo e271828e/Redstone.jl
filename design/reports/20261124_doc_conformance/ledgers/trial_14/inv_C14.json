@@ -1,0 +1,645 @@
+{
+ "rows": [
+  {
+   "id": "C14-001",
+   "file": "src/conditions.jl",
+   "line": 177,
+   "kind": "law",
+   "verdict": "finding",
+   "class": "drift",
+   "claim": "spec 12987-12989 (§14.2): composition checks that each `set` payload is a NamedTuple, and a `set` payload that is not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload`.",
+   "evidence": "src/conditions.jl:177 `_payload` refuses `nothing` alone. probe: `set(x = 1.0)` builds a Fragment, `set(x = nothing)` gives ConditionNodeMisuse(reason=:set_payload, payload=:x). Appendix C (design/spec.md ~15769) already says `:set_payload` is for a payload of `nothing`, and D-437/D-438 admit a bare payload (spec 12941, 13090).",
+   "note": "The spec's own §14.2 paragraph on bare `u` payloads and Appendix C contradict the sentence at 12987-12989.",
+   "fix": "Replace with: \"Each `set` payload is not `nothing`, each combinator operand is a node, and each `at` prefix is nonempty. A `set` payload of `nothing` is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC]). A payload that is not a NamedTuple is a bare payload and is checked at resolution ([D-437][d-437], [D-438][d-438]).\""
+  },
+  {
+   "id": "C14-002",
+   "file": "src/conditions.jl",
+   "line": 701,
+   "kind": "mech",
+   "verdict": "finding",
+   "class": "drift",
+   "claim": "spec 13501-13502 (§14.6): each totality site compares the resolved plan's root-input coverage against the `Build`'s `input_faces`.",
+   "evidence": "src/conditions.jl:701-706 `assert_total` compares `plan.faces` to `structure.root_inputs`. `input_faces` is only a component function (src/assembly.jl:435); the Build has no such field or accessor. D-068 (log 2305) is the origin of the wording.",
+   "fix": "Replace \"the `Build`'s `input_faces`\" with \"the build's root input faces (`Structure.root_inputs`)\"."
+  },
+  {
+   "id": "C14-003",
+   "file": "src/trim.jl",
+   "line": 125,
+   "kind": "mech",
+   "verdict": "finding",
+   "class": "drift",
+   "claim": "spec 14165 (§14.9) sketch of `at(prefix::String, p::TrimProblem)` writes `reads = at(prefix, p.reads)` unconditionally, and the prose at 14154 says the lift prepends the prefix to the read set's mount chain.",
+   "evidence": "src/trim.jl:122-127 passes a `reads` that is not a `Reads` through untouched (`problem.reads isa Reads ? at(prefix, problem.reads) : problem.reads`), so `trim!` names it as `TrimProblemInvalid :not_a_read_set` (probe: `trim!` with a bare NamedTuple of selectors). The prefix is `AbstractString` in code. The docstring (trim.jl:108-119) and code_map.md:1486 record the pass-through; §14.9 does not.",
+   "fix": "Add to the sketch comment on `reads`: \"a `reads` that is no read set passes through, so `trim!`'s setup names it ([§14.8][s14-8])\", and write `prefix::AbstractString` in the sketch."
+  },
+  {
+   "id": "C14-004",
+   "file": "src/linearize.jl",
+   "line": 502,
+   "kind": "law",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "spec 14311-14312 (§14.10): an `x` tap naming a discrete store is rejected as `TapResolution` \"with the tap and its tier in hand (D-197)\".",
+   "evidence": "src/linearize.jl:502 raises `_tap_violation(read, :discrete_state)`; the TapResolution struct (src/diagnostics.jl:2091-2108) has no tier field, and probe P6 prints fields label, selector, mount, reason, tap=:x, path, field, leaf, step, declared, list, pinning, duplicate_of. The message (diagnostics.jl:2164-2169) says only \"is a discrete component\". Appendix C lists `:discrete_state` as \"a discrete store\" with no tier payload.",
+   "note": "The `pinning` payload of `:unseedable` does carry tiers; `:discrete_state` does not.",
+   "fix": "Spec: \"rejected at resolution as a `TapResolution`, with the tap and the offending store in hand\". Or code: add `tier = :discrete` to the `:discrete_state` refusal."
+  },
+  {
+   "id": "C14-005",
+   "file": "src/conditions.jl",
+   "line": 670,
+   "kind": "cite",
+   "verdict": "finding",
+   "class": "drift",
+   "claim": "The comment on `_unconvertible` cites D-166 for the frozen discrete `s` and the pinned leaf at the seeded activation.",
+   "evidence": "design/log.md:193 marks D-166 \"superseded → D-263\"; D-263 (log.md:11272) \"One arity on both tiers: plain contracts, the `Pinned` marker and the mandatory store\" treats frozen discrete and pinned leaves. Also the lead 'citation superseded: D-166 at src/conditions.jl:670'.",
+   "fix": "Cite `D-263` in place of `D-166` on conditions.jl:670."
+  },
+  {
+   "id": "C14-006",
+   "file": "src/linearize.jl",
+   "line": 518,
+   "kind": "cite",
+   "verdict": "finding",
+   "class": "drift",
+   "claim": "The comment on the `u` list's `_seeded_tap` cites D-167 for \"a continuous one pins by declaration\".",
+   "evidence": "design/log.md:194 marks D-167 \"superseded → D-263\". The same comment already cites D-168 for the meet. Lead 'citation superseded: D-167 at src/linearize.jl:518'.",
+   "fix": "Cite `D-263` in place of `D-167` on linearize.jl:518."
+  },
+  {
+   "id": "C14-007",
+   "file": "design/code_map.md",
+   "line": 882,
+   "kind": "map",
+   "verdict": "finding",
+   "class": "drift",
+   "claim": "The `src/linearize.jl` entry's Spec line lists D-167.",
+   "evidence": "design/code_map.md:882 lists D-036, D-167, D-168 ...; D-167 is superseded by D-263 (log.md:194), and linearize.jl cites D-263 in its service comment (src/linearize.jl:211-213) but the map's Spec line omits D-263.",
+   "fix": "Replace `D-167` with `D-263` in the Spec line at code_map.md:882."
+  },
+  {
+   "id": "C14-008",
+   "file": "src/linearize.jl",
+   "line": 291,
+   "kind": "surface",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "Appendix C's `ArgumentInvalid` entry (spec ~15888-15915) and §14.8/§14.10 do not list the reasons these sites raise: `:nonpositive_width` (a `width` below 1), `:t0_without_about`, `:not_a_tap_set` (linearize.jl:282-285, 291-298), `:not_a_problem` (trim.jl:568-570), and `:range` on a `t0` that is not exact or cannot carry a run (model.jl `_origin`, via trim.jl:562 and linearize.jl:318).",
+   "evidence": "probe P5/P7: linearize width=0 -> ArgumentInvalid(:nonpositive_width), t0 without about -> :t0_without_about, linearize(m, 3) -> :not_a_tap_set, trim!(m, 3) -> :not_a_problem, t0 = NaN or 1e-4 -> :range. rg of design/spec.md finds none of the four reason names. Only D-420 (log 17191) names `:t0_without_about`. The linearize and trim! docstrings name the kind, not the reasons.",
+   "fix": "Add to Appendix C `ArgumentInvalid`: \"`trim!` refuses a second argument that is no `TrimProblem` as `:not_a_problem`, and `linearize` one that is no tap set as `:not_a_tap_set`, a `width` below 1 as `:nonpositive_width` and a `t0` without `about` as `:t0_without_about`. A `t0` that is not finite, not exact or whose run the clock cannot carry is `:range`.\""
+  },
+  {
+   "id": "C14-009",
+   "file": "src/trim.jl",
+   "line": 674,
+   "kind": "surface",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "Neither §14.8, the `trim!` docstring nor the `TrimProblem` docstring says that the guess is projected into the box before the search.",
+   "evidence": "src/trim.jl:667-674: `d0 = clamp.(guess, lower, upper)`, so a guess outside the bounds starts the backend at the bound while setup's condition and first evaluation (trim.jl:597-606) use the unclamped guess. Only the `solve` docstring (trim.jl:222-223) says \"a `d0` that is not `NaN` already lies within the bounds\". Spec 13851-13857 says only that bounds are honored by step projection.",
+   "fix": "Add to §14.8 \"Box bounds\" and the `trim!` docstring: \"The service projects `guess` into the box once before it calls the backend, so a backend never sees a start outside the bounds.\""
+  },
+  {
+   "id": "C14-010",
+   "file": "src/sim.jl",
+   "line": 1136,
+   "kind": "docstring",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "The `linearize(sim, tap_set; about, t0, width)` docstring has no keyword bullets and says only \"The keywords mean what they mean on the model's method\". `trim!(sim, …; baseline, t0, backend)` (sim.jl:1100-1120) does the same.",
+   "evidence": "design/rules/docstring_rules.md rule 5 (one bullet per name, default in the signature) and rule 12 (a delegating method with no docstring of its own takes its line on the sibling's). These docstrings are own docstrings, not shared ones. Lead: 'signature: sim.jl:1136 linearize: on a signature, not listed: [about, t0, width]'. Code: sim.jl:1156-1165 takes the same keywords.",
+   "fix": "Add a `# Keywords` list (`about`, `t0`, `width`; `baseline`, `t0`, `backend`) with the model method's one-line meanings, or drop the two docstrings and add the simulation signature lines to the model methods' docstrings."
+  },
+  {
+   "id": "C14-011",
+   "file": "src/trim.jl",
+   "line": 359,
+   "kind": "map",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "design/code_map.md:1474-1496 (`src/trim.jl`) names `_solve_problem` and `_verdict!` but not the setup validation (`_check_decisions!`, `_check_tolerances!`, `_check_reads!`, `_check_equations`, `_report_trim!`, trim.jl:359-470), `TrimTag` (trim.jl:135), `_seeded`/`_reordered`/`_saturated`, or the default `_no_checks`.",
+   "evidence": "src/trim.jl:359-470 holds the collecting setup validation that raises every `TrimProblemInvalid` reason; the map's bullets cover the problem, `at`, `solve`, `trim!`, `_solve_problem`, the misuse fallbacks and `TrimReport` only. The linearize and conditions entries do name their analogues (`_tap_violation`, `_payload`).",
+   "fix": "Add a bullet: \"The setup validation, `_check_decisions!`, `_check_tolerances!`, `_check_reads!` and `_check_equations`, collecting `TrimProblemInvalid` with the read set's own `ReadResolution` values spliced in (D-422); `TrimTag`, the service's seeding tag.\""
+  }
+ ],
+ "ok": [
+  {
+   "id": "C14-ok-01",
+   "file": "src/conditions.jl",
+   "line": 655,
+   "kind": "law",
+   "claim": "A condition entry naming an output or workspace field is `ConditionResolution :undeclared_field` (spec §14.1).",
+   "evidence": "src/conditions.jl:655-663 `_undeclared`, role :output_port/:workspace; diagnostics.jl:2030."
+  },
+  {
+   "id": "C14-ok-02",
+   "file": "src/conditions.jl",
+   "line": 134,
+   "kind": "decl",
+   "claim": "`condition` is a framework-owned generic with no fallback (§14.2, Appendix B).",
+   "evidence": "src/conditions.jl:134 `function condition end`; test/fixtures.jl Voiceless gives MethodError."
+  },
+  {
+   "id": "C14-ok-03",
+   "file": "src/conditions.jl",
+   "line": 32,
+   "kind": "mech",
+   "claim": "Every node is isbits except prefix strings, and rebuilding a tree with literal prefixes allocates nothing (§14.2).",
+   "evidence": "probe:P1 `alloc tree: 0`, Fragment isbits true, Scoped false (String field)."
+  },
+  {
+   "id": "C14-ok-04",
+   "file": "src/conditions.jl",
+   "line": 207,
+   "kind": "law",
+   "claim": "`at` refuses an empty prefix when called, as `ConditionNodeMisuse :empty_prefix` on a node (§14.2).",
+   "evidence": "src/conditions.jl:207-210; probe:P2 `at('' node)`."
+  },
+  {
+   "id": "C14-ok-05",
+   "file": "src/conditions.jl",
+   "line": 245,
+   "kind": "law",
+   "claim": "A blend of a node with a bare NamedTuple is `ConditionNodeMisuse` carrying the argument's type and the node types in hand (§14.2, D-113).",
+   "evidence": "src/conditions.jl:245-249, 281-283; probe:P2 combine(set(), NT), in_hand payload."
+  },
+  {
+   "id": "C14-ok-06",
+   "file": "src/conditions.jl",
+   "line": 390,
+   "kind": "law",
+   "claim": "A leaf written twice in one `combine` is `DuplicateConditionLeaf` with both origins and the `override` advice (§14.2).",
+   "evidence": "src/conditions.jl:390-403; diagnostics.jl:2044-2058; probe:P3 duplicate."
+  },
+  {
+   "id": "C14-ok-07",
+   "file": "src/conditions.jl",
+   "line": 630,
+   "kind": "law",
+   "claim": "An unexported face is `:unexported_face` at the root, `:no_input_face` below it, and an internally wired face is `:internally_wired` (§14.2).",
+   "evidence": "src/conditions.jl:630-648; probe:P3 unexported face, no_input_face, internally wired."
+  },
+  {
+   "id": "C14-ok-08",
+   "file": "src/conditions.jl",
+   "line": 536,
+   "kind": "law",
+   "claim": "A bare payload against a named store is `:store_shape`; a bare `u` payload against a named contract or an assembly is `:port_shape` (§14.2, §14.3, D-437, D-438).",
+   "evidence": "src/conditions.jl:328-337, 536-541; probe:P3 bare payload named store, bare u at named contract."
+  },
+  {
+   "id": "C14-ok-09",
+   "file": "src/conditions.jl",
+   "line": 508,
+   "kind": "law",
+   "claim": "The collecting pass names `PathResolution :unknown_child`, `:undeclared_field`, `:no_store`, `:assembly_path`, `:unconvertible`, one DiagnosticError (§14.3).",
+   "evidence": "src/conditions.jl:508-555, 616-622; probe:P3 unknown child, undeclared field, no_store, assembly_path, unconvertible."
+  },
+  {
+   "id": "C14-ok-10",
+   "file": "src/conditions.jl",
+   "line": 764,
+   "kind": "mech",
+   "claim": "The converter is baked per leaf by `convert` at the activation's leaf type, so a Float64 leaf takes the zero-partial embedding (§14.3).",
+   "evidence": "src/conditions.jl:535-555, 764-768 `Authored`, `_convert` at 580-595."
+  },
+  {
+   "id": "C14-ok-11",
+   "file": "src/conditions.jl",
+   "line": 451,
+   "kind": "mech",
+   "claim": "A partial `s`/`m` store entry merges onto its base (declared default or current store); a bare store's entry replaces it (§14.1, §14.3).",
+   "evidence": "src/conditions.jl:451-488, 585-586 `_store_overlay`; model.jl:484 `_store_values`."
+  },
+  {
+   "id": "C14-ok-12",
+   "file": "src/conditions.jl",
+   "line": 940,
+   "kind": "law",
+   "claim": "Shape drift is `ConditionShapeDrift` with reason `:tree_type` or `:prefix`; the prefix compare is content equality (§14.4, D-423).",
+   "evidence": "src/conditions.jl:940-960, 986-992."
+  },
+  {
+   "id": "C14-ok-13",
+   "file": "src/trim.jl",
+   "line": 597,
+   "kind": "mech",
+   "claim": "The dynamic walk serves init!, linearize's operating condition and trim's setup; the specialized `apply!` serves trim's iterations (§14.4).",
+   "evidence": "trim.jl:597-601, 628, 646; linearize.jl:316-318, 346; sim.jl:~835."
+  },
+  {
+   "id": "C14-ok-14",
+   "file": "src/readers.jl",
+   "line": 151,
+   "kind": "decl",
+   "claim": "The read-selector family is closed at five: get_state, get_deriv, get_output, get_input, get_face (§14.4).",
+   "evidence": "src/readers.jl:151 `ReadSelector`."
+  },
+  {
+   "id": "C14-ok-15",
+   "file": "src/readers.jl",
+   "line": 401,
+   "kind": "law",
+   "claim": "On get_input and get_face the head is the longest declared face name followed by end, `.` or `[`; a Symbol names the face whole (§14.4, D-418).",
+   "evidence": "src/readers.jl:401-418 `match_leaf`, `match_face`."
+  },
+  {
+   "id": "C14-ok-16",
+   "file": "src/readers.jl",
+   "line": 757,
+   "kind": "law",
+   "claim": "A headless address takes the store letter or default face where the declaration is bare; otherwise `:store_shape` or `:port_shape` with the names in hand (§14.4, D-437, D-438).",
+   "evidence": "src/readers.jl:757-806, 878-887; probe:P4 stateless headless, named headless, get_output missing port, get_input headless root."
+  },
+  {
+   "id": "C14-ok-17",
+   "file": "src/readers.jl",
+   "line": 441,
+   "kind": "law",
+   "claim": "Each leaf step is checked at resolution: `.name` needs an isbits struct, index needs an SArray, an opaque leaf is not entered (§14.4, D-276).",
+   "evidence": "src/readers.jl:441-467; probe:P4 .name, leaf syntax, index on scalar."
+  },
+  {
+   "id": "C14-ok-18",
+   "file": "src/readers.jl",
+   "line": 992,
+   "kind": "law",
+   "claim": "get_deriv and get_state on the continuous tier take at most an index step; get_deriv on a discrete component is `:discrete_deriv` (§14.4).",
+   "evidence": "src/readers.jl:992-1038; probe:P4 .name on state -> :no_such_field."
+  },
+  {
+   "id": "C14-ok-19",
+   "file": "src/readers.jl",
+   "line": 684,
+   "kind": "law",
+   "claim": "A store selector under a table source is refused `ReadResolution :store_selector`, by source not client (§14.4, D-406).",
+   "evidence": "src/readers.jl:695-699; probe:P4 get_state table src."
+  },
+  {
+   "id": "C14-ok-20",
+   "file": "src/model.jl",
+   "line": 333,
+   "kind": "law",
+   "claim": "`t0` is a service argument held exact; a `t0` not finite, not exact or whose run the clock cannot carry is `ArgumentInvalid` before any write (§14.5).",
+   "evidence": "model.jl:309-320, 350-391; probe:P3 t0 float inexact, t0 NaN -> reason :range."
+  },
+  {
+   "id": "C14-ok-21",
+   "file": "src/model.jl",
+   "line": 314,
+   "kind": "mech",
+   "claim": "init! resolves, checks totality, writes defaults and condition, runs boundary zero, settles through hooks, writes :consistent last (§14.5, §14.6).",
+   "evidence": "src/model.jl:310-340."
+  },
+  {
+   "id": "C14-ok-22",
+   "file": "src/conditions.jl",
+   "line": 701,
+   "kind": "law",
+   "claim": "Totality is one collected, declaration-ordered `UninitializedInputs` naming every uncovered face, raised before any write at init!, trim setup and linearize about (§14.6).",
+   "evidence": "src/conditions.jl:701-707; model.jl:314; trim.jl:598; linearize.jl:316; probe:P3 totality, P5 lin about partial."
+  },
+  {
+   "id": "C14-ok-23",
+   "file": "src/conditions.jl",
+   "line": 368,
+   "kind": "law",
+   "claim": "`override` layers in order, last layer wins, origin names both layers, collisions within one layer remain errors, a `u` leaf is the root input (§14.6).",
+   "evidence": "src/conditions.jl:368-388; probe:P3 override dup within layer, override layered face spelling."
+  },
+  {
+   "id": "C14-ok-24",
+   "file": "src/trim.jl",
+   "line": 86,
+   "kind": "decl",
+   "claim": "TrimProblem is a closed nine-field value; `checks` and `check_tolerances` default to empty (§14.7, §14.9, D-262).",
+   "evidence": "src/trim.jl:86-107; probe:P7 default checks."
+  },
+  {
+   "id": "C14-ok-25",
+   "file": "src/trim.jl",
+   "line": 370,
+   "kind": "law",
+   "claim": "guess, lower, upper are same-named all-Float64 NamedTuples; key-set mismatch is by set; inverted box is `:inverted_box` (§14.7, D-422).",
+   "evidence": "src/trim.jl:370-400; probe:P7 inverted box."
+  },
+  {
+   "id": "C14-ok-26",
+   "file": "src/trim.jl",
+   "line": 411,
+   "kind": "law",
+   "claim": "A tolerance that is not finite and positive is `TrimProblemInvalid :nonpositive_tolerance` (§14.8, D-422).",
+   "evidence": "src/trim.jl:411-425; probe:P7 nonpos tol."
+  },
+  {
+   "id": "C14-ok-27",
+   "file": "src/trim.jl",
+   "line": 453,
+   "kind": "law",
+   "claim": "Residual and check returns are checked at the guess evaluation for key set (order free) and real scalars; a key mismatch is `:key_set`, a type fault `:field_types` (§14.7).",
+   "evidence": "src/trim.jl:453-466; probe:P7 residual wrong keys, non-real."
+  },
+  {
+   "id": "C14-ok-28",
+   "file": "src/trim.jl",
+   "line": 559,
+   "kind": "decl",
+   "claim": "trim!(model, problem; baseline, t0 = 0, backend = LevenbergMarquardt()); non-Float64 model is `:non_nominal`; claimed model is `:claimed` before any check (§14.8, D-318, D-319).",
+   "evidence": "src/trim.jl:559-575; probe:P5 trim claimed model, P7 trim Dual model."
+  },
+  {
+   "id": "C14-ok-29",
+   "file": "src/trim.jl",
+   "line": 236,
+   "kind": "decl",
+   "claim": "The backend seam is the one method `solve(backend, eval!, d0, lower, upper, tol) -> (; d, status, n_evaluations, n_iterations)` (§14.8, D-158).",
+   "evidence": "src/trim.jl:236, 300-343."
+  },
+  {
+   "id": "C14-ok-30",
+   "file": "src/trim.jl",
+   "line": 720,
+   "kind": "law",
+   "claim": "`converged` is the service's own box test at the returned point and alone gates the commit; non-convergence is reported, never thrown, and leaves the model untouched (§14.8, D-150).",
+   "evidence": "src/trim.jl:720-727; probe:P7 nonconv: converged=false, committed=nothing, model status=built."
+  },
+  {
+   "id": "C14-ok-31",
+   "file": "src/trim.jl",
+   "line": 705,
+   "kind": "mech",
+   "claim": "`saturated` lists decisions at a bound as `(name, :lower|:upper)` (§14.8, D-070).",
+   "evidence": "src/trim.jl:705-713; probe:P7 saturated=[(:u,:upper)]."
+  },
+  {
+   "id": "C14-ok-32",
+   "file": "src/trim.jl",
+   "line": 579,
+   "kind": "mech",
+   "claim": "Setup runs the establishment round on a nominal scratch half, then seeds a second half; the frozen cells are copied; the clock is at t0 (§14.8, D-213).",
+   "evidence": "src/trim.jl:592-632; model.jl:136-163."
+  },
+  {
+   "id": "C14-ok-33",
+   "file": "src/trim.jl",
+   "line": 610,
+   "kind": "law",
+   "claim": "A problem with `guess = (;)` is legal, bypasses the backend, evaluates once, status :bypassed, 1 evaluation, 0 iterations (§14.8, D-156).",
+   "evidence": "src/trim.jl:610-617; probe:P7 empty problem: 'converged, committed, no iterations'."
+  },
+  {
+   "id": "C14-ok-34",
+   "file": "src/trim.jl",
+   "line": 188,
+   "kind": "decl",
+   "claim": "TrimReport has eleven fields in the spec's order (§14.8).",
+   "evidence": "src/trim.jl:188-200; probe:P7 report fields."
+  },
+  {
+   "id": "C14-ok-35",
+   "file": "src/trim.jl",
+   "line": 737,
+   "kind": "law",
+   "claim": "Fired events, out-of-tolerance committed residuals and out-of-tolerance checks raise `TrimCommitEvents`, `TrimCommitResiduals`, `TrimCommitChecks` as logged warnings (§14.8, D-126, D-155, D-262).",
+   "evidence": "src/trim.jl:737, 750, 761."
+  },
+  {
+   "id": "C14-ok-36",
+   "file": "src/trim.jl",
+   "line": 300,
+   "kind": "mech",
+   "claim": "The default backend is a dense Levenberg-Marquardt that tests the per-residual box (§14.8, D-070, D-150).",
+   "evidence": "src/trim.jl:300-343 `_within`, `_scaled_norm`."
+  },
+  {
+   "id": "C14-ok-37",
+   "file": "src/trim.jl",
+   "line": 122,
+   "kind": "mech",
+   "claim": "`at` lifts a problem field by field: condition post-composed, read set mounted, other fields pass through (§14.9, D-071, D-277).",
+   "evidence": "src/trim.jl:122-129; probe:P7 at(problem) reads prefixes, condition wrapped in Scoped."
+  },
+  {
+   "id": "C14-ok-38",
+   "file": "src/conditions.jl",
+   "line": 212,
+   "kind": "law",
+   "claim": "`at` on a read set prepends the prefix to the mount chain, joins nothing; empty prefix is `ReadSetMisuse` (§14.9, D-277, D-278).",
+   "evidence": "src/conditions.jl:212-215; probe:P2 at('' reads), P7 prefixes ('x',)."
+  },
+  {
+   "id": "C14-ok-39",
+   "file": "src/readers.jl",
+   "line": 739,
+   "kind": "mech",
+   "claim": "Resolution walks the mount chain from the root and rebases every selector; get_input follows the export chain to the root input; get_face reads the producer's port (§14.9, D-277).",
+   "evidence": "src/readers.jl:739-749, 812-874."
+  },
+  {
+   "id": "C14-ok-40",
+   "file": "src/readers.jl",
+   "line": 812,
+   "kind": "law",
+   "claim": "An internally wired input is refused by name with its producer, as `ConditionResolution` for a condition entry and `ReadResolution` for get_input (§14.9, D-427).",
+   "evidence": "src/readers.jl:830-834; conditions.jl:630-648."
+  },
+  {
+   "id": "C14-ok-41",
+   "file": "src/linearize.jl",
+   "line": 70,
+   "kind": "decl",
+   "claim": "taps(x, u, y) are three NamedTuple lists with closed membership; x takes get_state, u get_input, y get_output and get_face (§14.10, D-272).",
+   "evidence": "src/linearize.jl:70, 88-90, 369-373; probe:P5 tap wrong list -> :tap_kind."
+  },
+  {
+   "id": "C14-ok-42",
+   "file": "src/linearize.jl",
+   "line": 482,
+   "kind": "law",
+   "claim": "A seeded tap reaches its scalar through one index step at most, never a `.name`; its leaf is exactly Float64; else `:unseedable` (§14.10, D-424).",
+   "evidence": "src/linearize.jl:482-497."
+  },
+  {
+   "id": "C14-ok-43",
+   "file": "src/linearize.jl",
+   "line": 431,
+   "kind": "law",
+   "claim": "A second tap at an already seeded site is refused naming the earlier label (§14.10, D-272, D-419).",
+   "evidence": "src/linearize.jl:431-478; probe:P5 two seeds one site -> :duplicate_site."
+  },
+  {
+   "id": "C14-ok-44",
+   "file": "src/linearize.jl",
+   "line": 266,
+   "kind": "law",
+   "claim": "linearize: default operating point is the checkpoint, `about` with `t0` places it elsewhere, `t0` without `about` is `ArgumentInvalid`, `about` form legal at any status (§14.10, D-272, D-420).",
+   "evidence": "src/linearize.jl:266-300, 302-345; probe:P5, P9 (about on :built model)."
+  },
+  {
+   "id": "C14-ok-45",
+   "file": "src/linearize.jl",
+   "line": 327,
+   "kind": "law",
+   "claim": "A root input whose checkpoint value does not convert is `ConditionResolution :unconvertible` with the checkpoint as origin, all in one throw (§14.10, D-428).",
+   "evidence": "src/linearize.jl:327-341."
+  },
+  {
+   "id": "C14-ok-46",
+   "file": "src/linearize.jl",
+   "line": 101,
+   "kind": "decl",
+   "claim": "`width` is a keyword of linearize, default 8, its scalar is named, and the answer does not depend on it (§14.10, D-272).",
+   "evidence": "src/linearize.jl:101-104, 266-268; probe:P5 LinearizeDual, P8 widths equal."
+  },
+  {
+   "id": "C14-ok-47",
+   "file": "src/linearize.jl",
+   "line": 520,
+   "kind": "law",
+   "claim": "A root input unseedable through a pinning consumer is `:unseedable` naming each consumer's path, tier and entry (§14.10, D-295, D-296).",
+   "evidence": "src/linearize.jl:520-548; probe:P6 u tap -> :unseedable."
+  },
+  {
+   "id": "C14-ok-48",
+   "file": "src/linearize.jl",
+   "line": 132,
+   "kind": "decl",
+   "claim": "Linearization holds eight abstractly typed arrays plus three label tuples, plain by default, y0 converted to Float64 (§14.10, D-475).",
+   "evidence": "src/linearize.jl:132-144; probe:P5 plain Matrix, P8 bool y y0=[1.0], C=[0.0]."
+  },
+  {
+   "id": "C14-ok-49",
+   "file": "src/linearize.jl",
+   "line": 168,
+   "kind": "mech",
+   "claim": "`labeled` comes from the ComponentArrays extension, empty lists stay plain, a failing call hints the package (§14.10, D-475).",
+   "evidence": "src/linearize.jl:168-180; ext/RedstoneComponentArraysExt.jl:15-24; probe:P8 hint text, empty u / all empty, A[:θ,:ω], == false."
+  },
+  {
+   "id": "C14-ok-50",
+   "file": "design/spec.md",
+   "line": 15050,
+   "kind": "decl",
+   "claim": "Appendix B signatures for set, at, combine, override, condition, trim!, linearize, solve, taps, get_*, reads match the code.",
+   "evidence": "src/conditions.jl:169, 207, 239, 275; trim.jl:559; linearize.jl:266; readers.jl:188-293, 551."
+  },
+  {
+   "id": "C14-ok-51",
+   "file": "design/spec.md",
+   "line": 15760,
+   "kind": "law",
+   "claim": "Appendix C reason sets for ConditionResolution, TapResolution, TrimProblemInvalid, ReadResolution, ReadSetMisuse, ConditionNodeMisuse, UninitializedInputs, ConditionShapeDrift match the raise sites.",
+   "evidence": "probe:P2-P7; conditions.jl:543-660; linearize.jl:431-560; trim.jl:370-466; readers.jl:693-1060."
+  },
+  {
+   "id": "C14-ok-52",
+   "file": "src/conditions.jl",
+   "line": 134,
+   "kind": "docstring",
+   "claim": "Docstrings of condition, set, at, combine, override, Fragment, Scoped, Combined, Override, ConditionNode match signature, keywords, defaults and raised kinds.",
+   "evidence": "probe:P2, P3; conditions.jl:134-276."
+  },
+  {
+   "id": "C14-ok-53",
+   "file": "src/trim.jl",
+   "line": 86,
+   "kind": "docstring",
+   "claim": "TrimProblem, at(::TrimProblem), TrimReport, solve, LevenbergMarquardt and trim! docstrings match signature, keywords, defaults and raised kinds.",
+   "evidence": "probe:P7; trim.jl:40-275, 479-558."
+  },
+  {
+   "id": "C14-ok-54",
+   "file": "src/linearize.jl",
+   "line": 266,
+   "kind": "docstring",
+   "claim": "Taps, taps, at(::Taps), Linearization, labeled and linearize docstrings match signature, keywords, defaults and raised kinds.",
+   "evidence": "probe:P5, P6, P8, P9; linearize.jl:18-264."
+  },
+  {
+   "id": "C14-ok-55",
+   "file": "src/readers.jl",
+   "line": 188,
+   "kind": "docstring",
+   "claim": "Selector, get_*, Reads and reads docstrings match code, including headless addresses and refusal kinds.",
+   "evidence": "probe:P4; readers.jl:38-295, 500-551."
+  },
+  {
+   "id": "C14-ok-56",
+   "file": "src/trim.jl",
+   "line": 217,
+   "kind": "surface",
+   "claim": "Lead: `MyBackend` in the `solve` docstring is a placeholder type name for a user backend.",
+   "evidence": "trim.jl:217 prose; no such type is meant to exist."
+  },
+  {
+   "id": "C14-ok-57",
+   "file": "src/conditions.jl",
+   "line": 125,
+   "kind": "surface",
+   "claim": "Lead: `n_eng` in the `condition` docstring is the illustrative keyword of the §14.2 engine example.",
+   "evidence": "conditions.jl:125-128; spec 12935-12938."
+  },
+  {
+   "id": "C14-ok-58",
+   "file": "src/readers.jl",
+   "line": 225,
+   "kind": "surface",
+   "claim": "Lead: `q_eb` at readers.jl:225 and 346 is an illustrative leaf name in the `get_output` example `\"pose.q_eb[2]\"` and the `parse_leaf` example.",
+   "evidence": "readers.jl:225, 346; spec 13221 uses the same address."
+  },
+  {
+   "id": "C14-ok-59",
+   "file": "src/conditions.jl",
+   "line": 115,
+   "kind": "surface",
+   "claim": "Lead: `condition(c; kw...)` signature lists a slurped `kw...` the docstring does not bullet.",
+   "evidence": "docstring_rules.md rule 5, a slurped `kw...` whose names the caller chooses takes prose and no bullet."
+  },
+  {
+   "id": "C14-ok-60",
+   "file": "src/readers.jl",
+   "line": 530,
+   "kind": "surface",
+   "claim": "Lead: `reads(; selectors...)` lists a slurped keyword with no bullet.",
+   "evidence": "docstring_rules.md rule 5; readers.jl:530-551."
+  },
+  {
+   "id": "C14-ok-61",
+   "file": "src/trim.jl",
+   "line": 42,
+   "kind": "surface",
+   "claim": "Lead: TrimProblem `lower`, `upper` not listed in the signature.",
+   "evidence": "trim.jl:40-84 lists them in the signature and, with `guess`, in one shared bullet (rule 5, parallel names may share a bullet)."
+  },
+  {
+   "id": "C14-ok-62",
+   "file": "design/code_map.md",
+   "line": 224,
+   "kind": "map",
+   "claim": "code_map entries for conditions.jl, linearize.jl (except the Spec line), readers.jl and the sim.jl/model.jl bullets for trim!, linearize, init!, apply!, _scratch, _claimed_gate match the code.",
+   "evidence": "conditions.jl:207-216, 451-488, 508-558, 701, 868, 940; linearize.jl:70-90, 266-345, 431-570; readers.jl:151, 355-367, 441, 665-714, 739-1070; sim.jl:1120-1165; model.jl:140-163, 258-260, 492-494."
+  },
+  {
+   "id": "C14-ok-63",
+   "file": "src/conditions.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "The § and D-nnn citations in conditions.jl, trim.jl, linearize.jl, readers.jl and the §14 comments of sim.jl and model.jl point at sections or entries that treat their topic, except D-166 and D-167.",
+   "evidence": "outline rg '^#' design/spec.md and rg '^### D-' design/log.md checked for each cited number; D-036 (sub-field wiring rejected) fits linearize.jl:480-484; D-195 fits conditions.jl:~607; D-246 fits conditions.jl:122."
+  }
+ ],
+ "counts": {
+  "law": 58,
+  "mech": 52,
+  "decl": 30,
+  "ptr": 18,
+  "why": 24,
+  "ex": 9,
+  "surface": 34,
+  "docstring": 46,
+  "map": 38,
+  "cite": 62
+ }
+}

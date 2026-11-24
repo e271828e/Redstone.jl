@@ -1,0 +1,470 @@
+{
+ "rows": [
+  {
+   "id": "S14b-001",
+   "file": "design/spec.md",
+   "line": 13502,
+   "kind": "mech",
+   "claim": "Each site compares the resolved plan's root-input coverage against the `Build`'s `input_faces`",
+   "evidence": "src/conditions.jl:701-706 compares plan.faces with structure.root_inputs (src/structure.jl:247); `input_faces` is a component-level function (src/structure.jl:64), not a Build field",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Each compares the resolved plan's root-input coverage against the structure's `root_inputs` before writing anything.",
+   "note": "Wording only; behavior matches."
+  },
+  {
+   "id": "S14b-002",
+   "file": "design/spec.md",
+   "line": 13603,
+   "kind": "mech",
+   "claim": "lower and upper are canonicalized to guess's field order by the same type-level reorder (`NamedTuple{keys(guess)}(lower)`)",
+   "evidence": "src/trim.jl:665-666 packs `Float64[problem.lower[k] for k in decision_names]` by name lookup; only the residual return uses `NamedTuple{names}(...)` (src/trim.jl:700). The key-set check is by Set (src/trim.jl:380). Probe:5 permuted bounds solve identically.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "They are then packed in `guess`'s field order by name (`[lower[k] for k in keys(guess)]`), so a permuted bound spelling is a non-event, rather than `α`'s bound silently applied to `throttle`.",
+   "note": "Outcome as claimed; the mechanism named is not the one used for bounds."
+  },
+  {
+   "id": "S14b-003",
+   "file": "design/spec.md",
+   "line": 13936,
+   "kind": "law",
+   "claim": "An interrupt inside the commit's boundary zero moves the simulation to `built` and propagates raw",
+   "evidence": "src/model.jl:333-338 wraps every throw, an InterruptException included, via _wrap_step (comment src/model.jl:268 'wraps it like any throw (D-441)'); probe:9 shows trim! throws StepError{InterruptException} (host :boundary_zero) and status :built. The same section at 14075 says a throw propagates as the commit's StepError.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "An interrupt inside the commit's boundary zero moves the simulation to `built` and arrives as the commit's `StepError` like any throw ([§13.4][s13-4], [D-223][d-223], [D-441][d-441]).",
+   "note": "Probably stale against D-441; a verifier should confirm the log entry."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S14b-004",
+   "file": "design/spec.md",
+   "line": 13492,
+   "kind": "law",
+   "claim": "Totality checked by init!, trim setup, trim commit, linearize about",
+   "evidence": "src/model.jl:314, src/sim.jl:841, src/trim.jl:598, src/linearize.jl:316"
+  },
+  {
+   "id": "S14b-005",
+   "file": "design/spec.md",
+   "line": 13503,
+   "kind": "law",
+   "claim": "Shortfall is one collected declaration-ordered UninitializedInputs naming every uncovered face",
+   "evidence": "src/conditions.jl:701-706; probe:1 (faces [:zz,:aa] in declaration order)"
+  },
+  {
+   "id": "S14b-006",
+   "file": "design/spec.md",
+   "line": 13509,
+   "kind": "law",
+   "claim": "Rejected init leaves the sim as it was",
+   "evidence": "src/sim.jl:841 before _reset_periphery!; probe:1 lifecycle built"
+  },
+  {
+   "id": "S14b-007",
+   "file": "design/spec.md",
+   "line": 13515,
+   "kind": "law",
+   "claim": "Services path contains no call to probe_value; no third branch",
+   "evidence": "rg probe_value: only build.jl, tracer.jl, declare.jl; src/conditions.jl:697"
+  },
+  {
+   "id": "S14b-008",
+   "file": "design/spec.md",
+   "line": 13513,
+   "kind": "mech",
+   "claim": "probe_value synthesis is zero, false, first enum value or T()",
+   "evidence": "src/declare.jl:931-935"
+  },
+  {
+   "id": "S14b-009",
+   "file": "design/spec.md",
+   "line": 13530,
+   "kind": "decl",
+   "claim": "override(base, patch) fourth node type; variadic layering composes",
+   "evidence": "src/conditions.jl:275, probe:2 (3 layers, last wins 3.0)"
+  },
+  {
+   "id": "S14b-010",
+   "file": "design/spec.md",
+   "line": 13532,
+   "kind": "law",
+   "claim": "Leaf in both layers takes patch value; origin names both layers",
+   "evidence": "src/conditions.jl:376-387; probe:2 override value 2.0"
+  },
+  {
+   "id": "S14b-011",
+   "file": "design/spec.md",
+   "line": 13533,
+   "kind": "law",
+   "claim": "Collisions within one layer remain errors",
+   "evidence": "src/conditions.jl:374; probe:2 within-layer DuplicateConditionLeaf"
+  },
+  {
+   "id": "S14b-012",
+   "file": "design/spec.md",
+   "line": 13536,
+   "kind": "mech",
+   "claim": "Trim commits override(baseline, condition(d*))",
+   "evidence": "src/trim.jl:729"
+  },
+  {
+   "id": "S14b-013",
+   "file": "design/spec.md",
+   "line": 13549,
+   "kind": "decl",
+   "claim": "TrimProblem fields guess, lower, upper, condition, reads, residuals, tolerances, checks, check_tolerances; checks default empty",
+   "evidence": "src/trim.jl:86-104; probe:4 fields"
+  },
+  {
+   "id": "S14b-014",
+   "file": "design/spec.md",
+   "line": 13570,
+   "kind": "mech",
+   "claim": "at passes tolerances through untouched",
+   "evidence": "src/trim.jl:122-127; probe:7 at fields"
+  },
+  {
+   "id": "S14b-015",
+   "file": "design/spec.md",
+   "line": 13572,
+   "kind": "ex",
+   "claim": "cruise TrimProblem example keywords and reads(...) with get_deriv/get_output",
+   "evidence": "src/trim.jl:101-102, src/readers.jl:213,243,551"
+  },
+  {
+   "id": "S14b-016",
+   "file": "design/spec.md",
+   "line": 13605,
+   "kind": "law",
+   "claim": "Key-set or field-type mismatch is TrimProblemInvalid",
+   "evidence": "src/trim.jl:380-387; probe:5 key mismatch, int field"
+  },
+  {
+   "id": "S14b-017",
+   "file": "design/spec.md",
+   "line": 13620,
+   "kind": "decl",
+   "claim": "reads spelling get_state/get_deriv/get_output(path, leaf), get_input/get_face(leaf)",
+   "evidence": "src/readers.jl:188,213,243,269,293"
+  },
+  {
+   "id": "S14b-018",
+   "file": "design/spec.md",
+   "line": 13624,
+   "kind": "law",
+   "claim": "get_state/get_deriv validated against declared fields; undeclared refused ReadResolution",
+   "evidence": "src/readers.jl:1003,1030; probe:5 reads unknown leaf"
+  },
+  {
+   "id": "S14b-019",
+   "file": "design/spec.md",
+   "line": 13626,
+   "kind": "law",
+   "claim": "get_input addresses a root input face, get_face an output face",
+   "evidence": "probe:12 ReadResolution text: get_face reads output faces, input face read with get_input; src/readers.jl:286"
+  },
+  {
+   "id": "S14b-020",
+   "file": "design/spec.md",
+   "line": 13667,
+   "kind": "mech",
+   "claim": "Residuals reordered to tolerances order via NamedTuple{keys(tolerances)}(r)",
+   "evidence": "src/trim.jl:653,700; probe:5 permuted keys (:torque,:hold)"
+  },
+  {
+   "id": "S14b-021",
+   "file": "design/spec.md",
+   "line": 13671,
+   "kind": "law",
+   "claim": "tolerances key-set mismatch or field-type disagreement is TrimProblemInvalid, observed at guess evaluation",
+   "evidence": "src/trim.jl:453-466,606; probe:5 residual key mismatch, nonscalar"
+  },
+  {
+   "id": "S14b-022",
+   "file": "design/spec.md",
+   "line": 13677,
+   "kind": "law",
+   "claim": "Checks reported once at the committed state, never solved; check shape observed at guess",
+   "evidence": "src/trim.jl:604,607,756; probe:7 checks"
+  },
+  {
+   "id": "S14b-023",
+   "file": "design/spec.md",
+   "line": 13772,
+   "kind": "decl",
+   "claim": "trim!(model, problem; baseline, t0 = 0, backend = LevenbergMarquardt())",
+   "evidence": "src/trim.jl:559-560; probe:3"
+  },
+  {
+   "id": "S14b-024",
+   "file": "design/spec.md",
+   "line": 13763,
+   "kind": "law",
+   "claim": "Model at another scalar refused ArgumentInvalid :non_nominal",
+   "evidence": "src/trim.jl:573-574; probe:3 non_nominal"
+  },
+  {
+   "id": "S14b-025",
+   "file": "design/spec.md",
+   "line": 13767,
+   "kind": "law",
+   "claim": "Claimed Model refused :claimed before any check",
+   "evidence": "src/trim.jl:561, src/model.jl:258-260; probe:3 claimed"
+  },
+  {
+   "id": "S14b-026",
+   "file": "design/spec.md",
+   "line": 13769,
+   "kind": "mech",
+   "claim": "trim!(sim, ...) gates on lifecycle and commits through sim's init!",
+   "evidence": "src/sim.jl:1120-1131"
+  },
+  {
+   "id": "S14b-027",
+   "file": "design/spec.md",
+   "line": 13786,
+   "kind": "decl",
+   "claim": "solve(backend, eval!, d0, lower, upper, tol) returns (; d, status, n_evaluations, n_iterations)",
+   "evidence": "src/trim.jl:236,300,347; probe:13"
+  },
+  {
+   "id": "S14b-028",
+   "file": "design/spec.md",
+   "line": 13788,
+   "kind": "law",
+   "claim": "eval!(r,J,d) always fills r, fills J exactly when J !== nothing",
+   "evidence": "src/trim.jl:644-661"
+  },
+  {
+   "id": "S14b-029",
+   "file": "design/spec.md",
+   "line": 13792,
+   "kind": "law",
+   "claim": "d0, lower, upper packed Vector{Float64} in guess order, ±Inf unbounded; tol in tolerances order",
+   "evidence": "src/trim.jl:592,665-674"
+  },
+  {
+   "id": "S14b-030",
+   "file": "design/spec.md",
+   "line": 13803,
+   "kind": "law",
+   "claim": "Status open, recorded verbatim",
+   "evidence": "probe:6 liar backend status :converged recorded, converged false; src/trim.jl:681"
+  },
+  {
+   "id": "S14b-031",
+   "file": "design/spec.md",
+   "line": 13813,
+   "kind": "law",
+   "claim": "converged is the service's box test at returned point, gates commit, backend status diagnostic",
+   "evidence": "src/trim.jl:679-680,724-725; probe:6 liar"
+  },
+  {
+   "id": "S14b-032",
+   "file": "design/spec.md",
+   "line": 13822,
+   "kind": "mech",
+   "claim": "LM stops on the per-residual tolerances",
+   "evidence": "src/trim.jl:293,309"
+  },
+  {
+   "id": "S14b-033",
+   "file": "design/spec.md",
+   "line": 13853,
+   "kind": "law",
+   "claim": "Box bounds by step projection; saturated list e.g. (:elevator, :upper)",
+   "evidence": "src/trim.jl:328,705-713; probe:6 saturated [(:u,:upper)]"
+  },
+  {
+   "id": "S14b-034",
+   "file": "design/spec.md",
+   "line": 13861,
+   "kind": "mech",
+   "claim": "Each trim! builds fresh scratch Models (two halves) from the deployment",
+   "evidence": "src/model.jl:106-135,152; src/trim.jl:595,621"
+  },
+  {
+   "id": "S14b-035",
+   "file": "design/spec.md",
+   "line": 13868,
+   "kind": "mech",
+   "claim": "Each set calls every workspace allocator once at the activation's scalar",
+   "evidence": "src/build.jl:1052-1060,1474 (via Model constructor)"
+  },
+  {
+   "id": "S14b-036",
+   "file": "design/spec.md",
+   "line": 13878,
+   "kind": "mech",
+   "claim": "Setup applies override(baseline, condition(guess)) once, totality checked there",
+   "evidence": "src/trim.jl:597-599"
+  },
+  {
+   "id": "S14b-037",
+   "file": "design/spec.md",
+   "line": 13888,
+   "kind": "law",
+   "claim": "Both halves' clock origin set to t0 before the first evaluation",
+   "evidence": "src/trim.jl:596,622; probe:11 clock 2.0"
+  },
+  {
+   "id": "S14b-038",
+   "file": "design/spec.md",
+   "line": 13893,
+   "kind": "mech",
+   "claim": "Nominal half first, establishment round, seeded half takes frozen cells from nominal",
+   "evidence": "src/trim.jl:595-623, src/model.jl:152-163"
+  },
+  {
+   "id": "S14b-039",
+   "file": "design/spec.md",
+   "line": 13912,
+   "kind": "mech",
+   "claim": "Empty problem is nominal half alone; one derivative evaluation for reads",
+   "evidence": "src/trim.jl:601,610-616"
+  },
+  {
+   "id": "S14b-040",
+   "file": "design/spec.md",
+   "line": 13924,
+   "kind": "law",
+   "claim": "No convergence means no commit; sim untouched",
+   "evidence": "src/trim.jl:725-727; probe:6 sim stays built"
+  },
+  {
+   "id": "S14b-041",
+   "file": "design/spec.md",
+   "line": 13941,
+   "kind": "mech",
+   "claim": "Commit is init! of override(baseline, condition(d*)) with pre-write totality and boundary zero",
+   "evidence": "src/trim.jl:564-565,729; src/model.jl:314"
+  },
+  {
+   "id": "S14b-042",
+   "file": "design/spec.md",
+   "line": 13951,
+   "kind": "law",
+   "claim": "Recorders restart; trace and log new objects; staged batches cleared",
+   "evidence": "src/sim.jl:651-657,843-845"
+  },
+  {
+   "id": "S14b-043",
+   "file": "design/spec.md",
+   "line": 13965,
+   "kind": "decl",
+   "claim": "TrimReport has eleven fields in the stated order",
+   "evidence": "src/trim.jl:188-200; probe:4"
+  },
+  {
+   "id": "S14b-044",
+   "file": "design/spec.md",
+   "line": 14013,
+   "kind": "law",
+   "claim": "Report heading states verdict alone; backend status on next line; six significant digits, decimal-aligned",
+   "evidence": "src/show.jl:508,617-619; probe:10 printout"
+  },
+  {
+   "id": "S14b-045",
+   "file": "design/spec.md",
+   "line": 14017,
+   "kind": "mech",
+   "claim": "Committed residuals need one derivative evaluation and a gather",
+   "evidence": "src/trim.jl:743-745"
+  },
+  {
+   "id": "S14b-046",
+   "file": "design/spec.md",
+   "line": 14027,
+   "kind": "law",
+   "claim": "Non-empty fired events raise TrimCommitEvents, a logged warning",
+   "evidence": "src/trim.jl:737; src/diagnostics.jl:2299; probe:8"
+  },
+  {
+   "id": "S14b-047",
+   "file": "design/spec.md",
+   "line": 14032,
+   "kind": "law",
+   "claim": "Committed residuals outside box raise TrimCommitResiduals; verdict unchanged",
+   "evidence": "src/trim.jl:746-750, src/diagnostics.jl:2310"
+  },
+  {
+   "id": "S14b-048",
+   "file": "design/spec.md",
+   "line": 14040,
+   "kind": "law",
+   "claim": "Committed checks outside tolerance raise TrimCommitChecks",
+   "evidence": "src/trim.jl:757-761; probe:7 checks"
+  },
+  {
+   "id": "S14b-049",
+   "file": "design/spec.md",
+   "line": 14049,
+   "kind": "law",
+   "claim": "Non-convergence never throws",
+   "evidence": "src/trim.jl:725; probe:6"
+  },
+  {
+   "id": "S14b-050",
+   "file": "design/spec.md",
+   "line": 14053,
+   "kind": "law",
+   "claim": "Malformed-problem cases (non-NamedTuple, non-read-set, box inverted, tolerance non-positive, key mismatches, non-scalar returns)",
+   "evidence": "src/trim.jl:370-466; probe:5"
+  },
+  {
+   "id": "S14b-051",
+   "file": "design/spec.md",
+   "line": 14068,
+   "kind": "law",
+   "claim": "Read set refusals ReadResolution and PathResolution ride beside TrimProblemInvalid",
+   "evidence": "src/trim.jl:444-445; probe:5 reads unknown"
+  },
+  {
+   "id": "S14b-052",
+   "file": "design/spec.md",
+   "line": 14075,
+   "kind": "law",
+   "claim": "Throw in commit propagates as StepError; sim left built",
+   "evidence": "src/model.jl:333-338; probe:9"
+  },
+  {
+   "id": "S14b-053",
+   "file": "design/spec.md",
+   "line": 14080,
+   "kind": "law",
+   "claim": "Empty problem legal; solver bypassed; residuals evaluated once; commit runs",
+   "evidence": "src/trim.jl:610-616; probe:7 empty"
+  },
+  {
+   "id": "S14b-054",
+   "file": "design/spec.md",
+   "line": 14092,
+   "kind": "mech",
+   "claim": "build(world; activations) puts the Dual probe in CI",
+   "evidence": "src/build.jl:739,768,798"
+  },
+  {
+   "id": "S14b-055",
+   "file": "design/spec.md",
+   "line": 13722,
+   "kind": "mech",
+   "claim": "Dual activation seeds decision variables through assignment, sweep and x_deriv",
+   "evidence": "src/trim.jl:619,692-697,646"
+  }
+ ],
+ "counts": {
+  "law": 34,
+  "mech": 24,
+  "decl": 8,
+  "ptr": 18,
+  "why": 22,
+  "ex": 2,
+  "cite": 0,
+  "surface": 0,
+  "docstring": 0,
+  "map": 0
+ }
+}

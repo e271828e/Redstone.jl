@@ -1,0 +1,7 @@
+names missing: `FlightCore` at spec.md:14223
+names missing: `FlightCore` at spec.md:14235
+names missing: `FlightPhysics` at spec.md:14235
+names missing: `FlightPhysics` at spec.md:14446
+names missing: `design_world` at spec.md:14231
+kwargs code-only: `LevenbergMarquardt` keyword `maxiter`, Appendix B at spec.md:15242
+kwargs code-only: `LevenbergMarquardt` keyword `λ₀`, Appendix B at spec.md:15242

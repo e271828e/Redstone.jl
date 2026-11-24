@@ -1,0 +1,1000 @@
+[
+ {
+  "slice": "S14a",
+  "counts": {
+   "law": 47,
+   "mech": 24,
+   "decl": 5,
+   "ptr": 14,
+   "why": 16,
+   "ex": 6,
+   "cite": 0,
+   "docstring": 0,
+   "map": 0,
+   "surface": 0
+  },
+  "n_ok": 81,
+  "n_rows": 4,
+  "n_sampled": 9,
+  "confirmed": [
+   {
+    "id": "S14a-023",
+    "file": "design/spec.md",
+    "line": 12987,
+    "kind": "law",
+    "claim": "Composition checks three things by type or length alone, including that each `set` payload is a NamedTuple",
+    "evidence": "src/conditions.jl:177 (`_payload` refuses `nothing` alone); probe:23-26 (`set(x=3.0)`, `set(x=(1,2))`, `set(s=5, m=\"str\")` all return a Fragment; only `set(x=nothing)` throws)",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Composition checks three things, each by type or length alone, and none allocates. A `set` payload is not `nothing`, since a bare payload names a bare store or a bare input and its shape is checked against the build ([§14.3][s14-3], [D-437][d-437], [D-438][d-438]). Each combinator operand is a node, and each `at` prefix is nonempty.",
+    "note": "Bare payloads (D-437/D-438) made non-NamedTuple payloads legal. test_conditions.jl:~226 asserts `set(x = 3.0) isa Fragment`.",
+    "ver": {
+     "id": "S14a-023",
+     "conforms": false,
+     "evidence": "src/conditions.jl:176-179 `_payload` refuses only `nothing` (`p !== nothing || throw(...)`); probe.jl:37-38,40 show set(x = 1.0), set(s = (1,2), m = \"str\") and set(u = [1.0]) all build a Fragment without error.",
+     "class": "drift",
+     "fix": "Composition checks three things, each by type or length alone, and none allocates. No `set` payload is `nothing`, each combinator operand is a node, and each `at` prefix is nonempty.",
+     "clear": true,
+     "note": "D-437 (log.md:18177-18180) rules that `set` admits a bare payload and refuses `nothing` alone; D-438 likewise for stores; commit dc5e833e made the change. Appendix C (spec.md:15771-15772) already says `:set_payload` is for a payload of `nothing`."
+    }
+   },
+   {
+    "id": "S14a-024",
+    "file": "design/spec.md",
+    "line": 12988,
+    "kind": "law",
+    "claim": "A `set` payload that is not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload`",
+    "evidence": "src/conditions.jl:177-179 refuses only `nothing`; src/diagnostics.jl:2070 message reads \"payload is `nothing`\"; probe:23-26",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "A `set` payload that is `nothing` is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC]). Any other non-NamedTuple payload is a bare payload, which resolution checks against the target's store or contract.",
+    "note": "Same cause as S14a-023.",
+    "ver": {
+     "id": "S14a-024",
+     "conforms": false,
+     "evidence": "src/conditions.jl:176-179 raises ConditionNodeMisuse :set_payload only for a payload of `nothing` (probe.jl:39); a non-NamedTuple payload such as 1.0 or [1.0] is accepted (probe.jl:37,40) and checked at resolution as a bare payload (src/conditions.jl:322-326).",
+     "class": "drift",
+     "fix": "A `set` payload of `nothing` is `ConditionNodeMisuse` with reason `:set_payload`, the payload named ([Appendix C][sC], [D-437][d-437]).",
+     "clear": true,
+     "note": "Recorded by D-437/D-438 and commit dc5e833e; Appendix C at spec.md:15771 already carries the new wording."
+    }
+   },
+   {
+    "id": "S14a-076",
+    "file": "design/spec.md",
+    "line": 13441,
+    "kind": "decl",
+    "claim": "`t₀` is an init-service argument (default `0.0`)",
+    "evidence": "src/model.jl:318 (`t0 = 0`), src/sim.jl:831 (`t0 = 0`), src/trim.jl:560 (`t0 = 0`); probe:68 prints origin `0//1`",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "- **`t₀` is an init-service argument** (default `0`, an exact integer), never a condition entry",
+    "note": "The origin is held exact (D-457), and the docstrings give `0`. The value is the same as 0.0, so the harm is only the stated type.",
+    "ver": {
+     "id": "S14a-076",
+     "conforms": false,
+     "evidence": "src/model.jl:271 and :318 declare `t0 = 0`; so do src/sim.jl:751, :831, :1121 and src/trim.jl:560. The default is the integer 0, held exact (probe.jl:59 clock origin 0//1).",
+     "class": "drift",
+     "fix": "**`t₀` is an init-service argument** (default `0`), never a condition entry, because time is not a store of any component ([D-067][d-067]).",
+     "clear": true,
+     "note": "Commit c58ce63d (D-457, hold the origin exact) replaced `t0::Real = 0.0` with `t0 = 0`. spec.md:15270 already writes the default as `0`."
+    }
+   }
+  ],
+  "overturned": [
+   {
+    "id": "S14a-085",
+    "at": "design/spec.md:12912",
+    "claim": "lead: `FlightCore` (f_init!, per-model init hook)",
+    "inv_verdict": "unverifiable",
+    "why": "External pointer checked against the local Flight.jl checkout: /Users/miguel/.julia/dev/Flight.jl/lib/FlightCore/src/modeling.jl:8 exports f_init!, and lines 200-206 define it as the per-model init method that models extend (default no-op, MethodError on leftover arguments)."
+   }
+  ],
+  "missed": [],
+  "unjudged": [],
+  "inv_notes": "",
+  "ver_notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S14a_v/probe.jl, run once against W at bd471af7. No tracked file was edited and nothing was committed. Three claims fail, all drift. S14a-023 and S14a-024 still say a `set` payload must be a NamedTuple, but D-437/D-438 (commit dc5e833e) changed this so that only `nothing` is refused, and Appendix C already says so. S14a-076 gives the t0 default as `0.0`, but D-457 (commit c58ce63d) made it the exact integer `0`. The external pointer S14a-085 was checked against the local Flight.jl checkout, not W."
+ },
+ {
+  "slice": "S14b",
+  "counts": {
+   "law": 34,
+   "mech": 24,
+   "decl": 8,
+   "ptr": 18,
+   "why": 22,
+   "ex": 2,
+   "cite": 0,
+   "surface": 0,
+   "docstring": 0,
+   "map": 0
+  },
+  "n_ok": 52,
+  "n_rows": 3,
+  "n_sampled": 7,
+  "confirmed": [
+   {
+    "id": "S14b-001",
+    "file": "design/spec.md",
+    "line": 13502,
+    "kind": "mech",
+    "claim": "Each site compares the resolved plan's root-input coverage against the `Build`'s `input_faces`",
+    "evidence": "src/conditions.jl:701-706 compares plan.faces with structure.root_inputs (src/structure.jl:247); `input_faces` is a component-level function (src/structure.jl:64), not a Build field",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Each compares the resolved plan's root-input coverage against the structure's `root_inputs` before writing anything.",
+    "note": "Wording only; behavior matches.",
+    "ver": {
+     "id": "S14b-001",
+     "conforms": false,
+     "evidence": "src/conditions.jl:701-703 compares Set(plan.faces) with structure.root_inputs, and the call sites pass build.structure (src/trim.jl:598, src/model.jl:314, src/sim.jl:841, src/linearize.jl:316). Build has no input_faces field (src/build.jl:703-710; probe line 63 prints hasfield(Build, :input_faces) = false). input_faces exists only as a per-component accessor (src/assembly.jl:435). The check does run before any write: probe line 56 shows status :built.",
+     "class": "deviation",
+     "fix": "Each compares the resolved plan's root-input coverage against the root inputs the `Build`'s structure lists (`structure.root_inputs`) before writing anything.",
+     "clear": true,
+     "backing_entry": "",
+     "note": "The code has never read a Build-level input_faces. Increment 18 (29a25b61) compared against flat.slots, and later renames led to structure.root_inputs. The operand's data is the same as input_faces(root). The log repeats the wording at design/log.md:2305 and 5861."
+    }
+   },
+   {
+    "id": "S14b-002",
+    "file": "design/spec.md",
+    "line": 13603,
+    "kind": "mech",
+    "claim": "lower and upper are canonicalized to guess's field order by the same type-level reorder (`NamedTuple{keys(guess)}(lower)`)",
+    "evidence": "src/trim.jl:665-666 packs `Float64[problem.lower[k] for k in decision_names]` by name lookup; only the residual return uses `NamedTuple{names}(...)` (src/trim.jl:700). The key-set check is by Set (src/trim.jl:380). Probe:5 permuted bounds solve identically.",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "They are then packed in `guess`'s field order by name (`[lower[k] for k in keys(guess)]`), so a permuted bound spelling is a non-event, rather than `α`'s bound silently applied to `throttle`.",
+    "note": "Outcome as claimed; the mechanism named is not the one used for bounds.",
+    "ver": {
+     "id": "S14b-002",
+     "conforms": false,
+     "evidence": "src/trim.jl:665-666 packs the bounds by name, as lower = Float64[problem.lower[k] for k in decision_names] (and the same for upper). No NamedTuple{keys(guess)}(lower) reorder appears anywhere in the code. The type-level reorder is used only for residuals (src/trim.jl:653, 700). The behaviour matches: probe line 75 shows a permuted lower packed as [-π/2, -Inf] in guess order (θ, u).",
+     "class": "deviation",
+     "fix": "They are then read out in `guess`'s field order by name (`lower[k]` for each `k` in `keys(guess)`).",
+     "clear": false,
+     "backing_entry": "D-151",
+     "note": "D-151 rules a type-level reorder NamedTuple{canonical_names}(y) at every seam, decisions and bounds included. Changing the doc to the code's by-name pack therefore touches D-151's wording. The other way out is to make the code use the reorder. The observable effect is the same either way."
+    }
+   },
+   {
+    "id": "S14b-003",
+    "file": "design/spec.md",
+    "line": 13936,
+    "kind": "law",
+    "claim": "An interrupt inside the commit's boundary zero moves the simulation to `built` and propagates raw",
+    "evidence": "src/model.jl:333-338 wraps every throw, an InterruptException included, via _wrap_step (comment src/model.jl:268 'wraps it like any throw (D-441)'); probe:9 shows trim! throws StepError{InterruptException} (host :boundary_zero) and status :built. The same section at 14075 says a throw propagates as the commit's StepError.",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "An interrupt inside the commit's boundary zero moves the simulation to `built` and arrives as the commit's `StepError` like any throw ([§13.4][s13-4], [D-223][d-223], [D-441][d-441]).",
+    "note": "Probably stale against D-441; a verifier should confirm the log entry.",
+    "ver": {
+     "id": "S14b-003",
+     "conforms": false,
+     "evidence": "src/model.jl:337 sets the status to :built and rethrows _wrap_step(model, 0, :boundary_zero, err) for any throw, interrupts included. The docstring at src/sim.jl:812 agrees. Probe lines 107-112 show an InterruptException in the commit's boundary zero leaving trim! as StepError{InterruptException} with host :boundary_zero and boundary 0, with lifecycle :built (and model status :built).",
+     "class": "drift",
+     "fix": "An interrupt inside the commit's boundary zero moves the simulation to `built` and propagates out of `trim!` as the commit's `StepError`, like any throw there ([§13.4][s13-4], [D-223][d-223], [D-441][d-441]).",
+     "clear": true,
+     "backing_entry": "",
+     "note": "D-441 (ratified, design/log.md:18435) rules that every catch site wraps what reaches it, an InterruptException included. Its Rejected list drops 'letting the interrupt through raw'. Commit afc15682 made the change. D-223's last bullet, which says 'propagates raw', is the stale source."
+    }
+   }
+  ],
+  "overturned": [],
+  "missed": [],
+  "unjudged": [],
+  "inv_notes": "",
+  "ver_notes": "I checked all 10 claims against W at bd471af7: 7 conform and 3 do not. I edited no tracked file and committed nothing. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S14b_v/probe.jl. I ran it twice; the first run had a wrong taps spelling for the linearize case, which I fixed. In it I defined TimedDecay locally (it lives in test_linearize.jl), plus a Bomb component and an Arming backend that raises an InterruptException only in the commit's boundary zero. I also added a Recorder backend to capture the solve arguments and a Forbidden backend that errors if called. The 3 that do not conform: S14b-003 is drift, superseded by D-441 and commit afc15682. S14b-001 is a deviation: the operand is named `Build`'s `input_faces`, but the code compares against structure.root_inputs. S14b-002 is a deviation: the bounds are packed by name, not by the type-level reorder that D-151 rules, so the doc text is backed by D-151 and that fix is not clear-cut."
+ },
+ {
+  "slice": "S14c",
+  "counts": {
+   "law": 102,
+   "mech": 48,
+   "decl": 63,
+   "ptr": 37,
+   "why": 24,
+   "ex": 7
+  },
+  "n_ok": 221,
+  "n_rows": 2,
+  "n_sampled": 24,
+  "confirmed": [],
+  "overturned": [
+   {
+    "id": "S14c-011",
+    "at": "design/spec.md:14160",
+    "claim": "The at lift code block: at(prefix::String, p::TrimProblem) with reads = at(prefix, p.reads)",
+    "inv_verdict": "finding",
+    "why": "src/trim.jl:122-127 lifts field by field: condition post-composed, reads = problem.reads isa Reads ? at(prefix, problem.reads) : problem.reads, the rest passed through; probe '011 problem lift reads prefixes => (\"wing\",)', '011 other fields same => all true' | The sketch simplifies two points: the code takes prefix::AbstractString, and a reads that is not a Reads passes through untouched so trim!'s setup names it (probe '011 non-Reads reads passes through => true'), where the sketch's literal at(prefix, p.reads) would raise ConditionNodeMisuse. spec_rules.md:79-80 allows simplified sketches, so I judged this conforming. A one-line comment in the sketch could mention the guard."
+   },
+   {
+    "id": "S14c-242",
+    "at": "design/spec.md:15801",
+    "claim": "UninitializedInputs: Error, service pre-write, collected",
+    "inv_verdict": "finding",
+    "why": "src/conditions.jl:701-706 (every uncovered face in root_inputs order, one throw); src/sim.jl:840-843 (before _open_run! and any write); probe '242 => UninitializedInputs(:init!, [:d]), :error, lifecycle :built'"
+   }
+  ],
+  "missed": [],
+  "unjudged": [],
+  "inv_notes": "",
+  "ver_notes": "All 26 claims conform to the code at W (bd471af7). I edited no tracked file. My only file is the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S14c_v/probe.jl, which I ran 4 times. Two points sit at the edge of conforming. S14c-011: the spec's sketch writes reads = at(prefix, p.reads), but the code passes a reads that is not a Reads through untouched (src/trim.jl:125). spec_rules.md:79-80 allows simplified sketches, so I judged it conforming. S14c-069: TapResolution :discrete_state has no tier field of its own; the reason and the message carry the tier. One side observation, not a claim in this slice: an isbits handle used as a root input needs a probe_value method (or a zero-argument constructor) to build, which sits a little against the 'zero ceremony' wording at spec.md:14243."
+ },
+ {
+  "slice": "K14a",
+  "counts": {
+   "law": 14,
+   "mech": 12,
+   "decl": 14,
+   "ptr": 28,
+   "why": 36,
+   "ex": 12
+  },
+  "n_ok": 17,
+  "n_rows": 5,
+  "n_sampled": 4,
+  "confirmed": [
+   {
+    "id": "K14a-001",
+    "file": "design/companions/trim_environment_walkthrough.md",
+    "line": 7,
+    "kind": "ptr",
+    "claim": "Decision D-139 was settled in commit `daf3298d` (also line 561)",
+    "evidence": "git cat-file -t daf3298d in the pinned worktree: not a valid object name; no other file in W carries the hash",
+    "verdict": "unverifiable",
+    "note": "The hash is not in this repo's object database, so it may come from the Flight.jl-era history. I could not settle it without that repo.",
+    "ver": {
+     "id": "K14a-001",
+     "conforms": false,
+     "evidence": "`git cat-file -t daf3298d` at W fails (\"Not a valid object name\"). The commit that settled row 139 / D-139 on 2026-08-05 is f2658bc1 (\"Adjudicate round-4 dry-run finding 3 (row 139): give environment handles value-level constructors...\"). The walkthrough was added the same day in d60be1b2, which already carried the dangling hash at both places.",
+     "class": "drift",
+     "fix": "Replace `daf3298d` with `f2658bc1` at line 7 (\"...during the round-4 dry-run adjudication (commit `f2658bc1`)\") and at line 561 (\"For the record, commit `f2658bc1`, decision [D-139][d-139]:\").",
+     "clear": true,
+     "note": "The hash resolves to no object in the repo, which suggests a history rewrite. The git history is what records the real commit."
+    }
+   },
+   {
+    "id": "K14a-004",
+    "file": "design/companions/trim_environment_walkthrough.md",
+    "line": 146,
+    "kind": "mech",
+    "claim": "This is what `design_world(ac)` ships, the blessed default for design tasks",
+    "evidence": "rg design_world in src/ and test/ of W: no match; the name appears only in spec.md (glossary g-design_world, line 17107) and docs",
+    "verdict": "finding",
+    "class": "deviation",
+    "fix": "This is what `design_world(ac)` is to be, the rig the design records for design tasks.",
+    "note": "The spec agrees with the companion (spec.md:14231-14247, 'the rig this design records'). The rig has no code yet, so 'ships' is only a plan. The same holds for ISAField, atmospheric_field, ready_for_taxi and HorizontalTerrainField, all absent from src/.",
+    "ver": {
+     "id": "K14a-004",
+     "conforms": false,
+     "evidence": "`rg design_world` finds no definition in src/, test/ or examples/. design/log.md:2454-2456 (the D-071 annotation of 2026-10-20) says \"no source ships a `design_world`; it is the rig this design records for design-time work (§14.9)\". design/spec.md:14230-14231 and 17107 use \"the rig this design records\".",
+     "class": "drift",
+     "fix": "This is the rig this design records for design tasks, `design_world(ac)`. No source ships it.",
+     "clear": true
+    }
+   },
+   {
+    "id": "K14a-006",
+    "file": "design/companions/trim_environment_walkthrough.md",
+    "line": 269,
+    "kind": "decl",
+    "claim": "`condition(\"atmosphere.T_sl\" => T_sl, ...)` writes root inputs by dotted path (also lines 314, 345, 383, 726)",
+    "evidence": "probe:P1 raises MethodError. `condition` is the component-condition generic `condition(c; kw...)` (src/conditions.jl:125-ish doc, no fallback method). The real spelling is `at(\"atmosphere\", set(u = (T_sl = ..., p_sl = ..., wind = ...)))` (src/conditions.jl:169, 207).",
+    "verdict": "finding",
+    "class": "deviation",
+    "fix": "Replace each `condition(\"a.b\" => v, ...)` with combine(at(\"atmosphere\", set(u = (T_sl = T_sl, p_sl = p_sl, wind = wind))), at(\"terrain\", set(u = (elevation = 0.0,)))), and `condition(\"atm\" => atm, \"trn\" => trn)` with set(u = (atm = atm, trn = trn)).",
+    "note": "Low severity. The disclaimer at lines 253-256 says root-input write spellings are illustrative. The pair form shadows the real `condition` generic and no spec or log text records it. Spec 14.9 says only that the face becomes an ordinary root input written by the baseline.",
+    "ver": {
+     "id": "K14a-006",
+     "conforms": false,
+     "evidence": "Probe P1: `condition(\"c.u\" => 1.0)` raises MethodError, and no method of `condition` takes a Pair. src/conditions.jl:116-135 defines `condition(c; kw...)` only as a component's keyword method. Root inputs are written with `set(u = ...)` at the authoring level, scoped with `at` (conditions.jl:137-176 and the walk to the root input at 622-643). Probe P1: `init!(sim, at(\"c\", set(u = (u = 2.5,))))` sets root input `in` to 2.5. Paths use slashes, not dots (D-040, log.md:1472-1488).",
+     "class": "drift",
+     "fix": "Write the baseline's environment layer with the algebra: `combine(at(\"atmosphere\", set(u = (T_sl = T_sl, p_sl = p_sl, wind = wind))), at(\"terrain\", set(u = (elevation = 0.0,))))` at lines 269 and 345, the same shape with `env.*` at 726, and `set(u = (atm = atm, trn = trn))` for the aircraft-as-root rigs at 314 and 383.",
+     "clear": false,
+     "note": "No version of the spec ever had a pair-keyed `condition(\"path\" => value)` form. The spec (§14.1, §14.2) and D-040 record the actual form, and the companion sketch never matched it. The fix is unclear because it touches five sketches and assumes the atmosphere and terrain input face names."
+    }
+   },
+   {
+    "id": "K14a-012",
+    "file": "design/companions/trim_environment_walkthrough.md",
+    "line": 542,
+    "kind": "law",
+    "claim": "§14.1's overlay-base decision: the base is always the declared defaults, never the stopped sim's current stores",
+    "evidence": "spec.md:12857-12859 and D-429: `init!` overlays the declared defaults, `overlay!` overlays the stopped run's stores; src/model.jl overlay! resolves with `_store_values` as merge bases (code_map.md:885-1003)",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "§14.1's overlay-base decision for `init!` and for `trim!`'s commit, which is an `init!`: the base is the declared defaults, never the stopped sim's current stores. `overlay!` is the one door that takes the stores (D-429).",
+    "note": "The spec's current text (spec.md:12857) agrees with the fix and not with 'always'. The companion predates D-429.",
+    "ver": {
+     "id": "K14a-012",
+     "conforms": false,
+     "evidence": "src/model.jl:459-462. `overlay!` resolves with `bases = _store_values(model.exec)`, so a partial entry merges onto the current stores (docstring model.jl:418-420). design/spec.md:12859-12861 says \"applied through `init!` it overlays the declared defaults, and applied through `overlay!` it overlays the stopped run's stores\". design/log.md:2155-2158 (D-063 annotation 2026-10-20) records that the rejected current-stores base returns as `overlay!`'s base (D-429).",
+     "class": "drift",
+     "fix": "§14.1's overlay base for `init!` is always the declared defaults, never the stopped sim's current stores. Only `overlay!` takes the current stores, and it takes its trace header after the overlay settles. That base exists precisely to keep a condition's meaning independent of history.",
+     "clear": true
+    }
+   }
+  ],
+  "overturned": [
+   {
+    "id": "K14a-013",
+    "at": "design/companions/trim_environment_walkthrough.md:608",
+    "claim": "A check outside its tolerance raises `TrimCommitChecks`, a logged warning that rides the report",
+    "inv_verdict": "finding",
+    "why": "src/trim.jl:754-761 (the committed checks outside tolerance give `@warn logline(TrimCommitChecks(...))`). src/diagnostics.jl:2319-2322 (severity :warning). TrimReport carries `committed_checks` (trim.jl:194). Probe P3: one Warn log record \"TrimCommitChecks: ...\", and the report has committed_checks = (θ = 0.05,). spec.md:11299-11301 says trim! \"logs ... `TrimCommitChecks` beside it\". | \"Raises\" means warns here. The warning is logged beside the report, not stored in a report field. This matches the spec's and D-262's own wording."
+   }
+  ],
+  "missed": [],
+  "unjudged": [],
+  "inv_notes": "",
+  "ver_notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K14a_v/probe.jl. It ran twice against W at bd471af7; the first run failed on a `using Logging` import. I edited no tracked file. Four of the nine claims do not conform: 001, 004, 006 and 012. K14a-006 is the broadest: every `condition(\"path\" => value, ...)` sketch in the walkthrough (lines 269, 314, 345, 383, 726) uses a form that never existed in the spec or the code."
+ },
+ {
+  "slice": "K14b",
+  "counts": {
+   "law": 16,
+   "mech": 27,
+   "decl": 6,
+   "ptr": 9,
+   "why": 10,
+   "ex": 8
+  },
+  "n_ok": 49,
+  "n_rows": 6,
+  "n_sampled": 6,
+  "confirmed": [
+   {
+    "id": "K14b-001",
+    "file": "design/companions/linearization_walkthrough.md",
+    "line": 327,
+    "kind": "mech",
+    "claim": "Trim's seeded half builds its executor with `_scratch(sim, T, act)`",
+    "evidence": "src/trim.jl:603 reads `seeded_exec = _scratch(model, T).exec`; `_scratch` takes (model, T) only (src/model.jl:143-144). The activation is looked up inside `Model(deployment, T)`.",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "seeded_exec = _scratch(model, T).exec                # buffers at T, die with the call",
+    "note": "The other lines of the snippet match src/trim.jl:600-624 up to simplification (`_seeded` takes `Val` keys, `_establish_frozen!` takes `model.deployment.build`).",
+    "ver": {
+     "id": "K14b-001",
+     "conforms": false,
+     "evidence": "src/trim.jl:621 `seeded_exec = _scratch(model, T).exec`; src/model.jl:143 `_scratch(model::Model, ::Type{T})` takes no activation. Commit 29c3f5b6 replaced `_scratch(sim, T, act)` with `_scratch(sim, T).exec`, and trim now takes the model.",
+     "class": "drift",
+     "fix": "seeded_exec = _scratch(model, T).exec                # buffers at T, die with the call",
+     "clear": true
+    }
+   },
+   {
+    "id": "K14b-002",
+    "file": "design/companions/linearization_walkthrough.md",
+    "line": 375,
+    "kind": "law",
+    "claim": "A bare NamedTuple handed to `linearize` gets the directive refusal `reads` gives (`ReadSetMisuse`)",
+    "evidence": "src/linearize.jl:282-284 refuses any non-Taps second argument as ArgumentInvalid(call=:linearize, argument=:taps, reason=:not_a_tap_set); test/test_linearize.jl:468-469; probe:D (first fail line). ReadSetMisuse comes only from `taps(...)` on a bad list (probe:D, taps(x=2.0)).",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "`taps` returns a `Taps` value holding three `Reads`, so a bare NamedTuple handed to `linearize` is refused as `ArgumentInvalid` with reason `:not_a_tap_set`, and a list that is not a NamedTuple of selectors is refused by `taps` as `ReadSetMisuse`.",
+    "note": "The spec (§14.10) does not name ReadSetMisuse for a bare NamedTuple at `linearize`; no spec line agrees with the companion.",
+    "ver": {
+     "id": "K14b-002",
+     "conforms": false,
+     "evidence": "src/linearize.jl:282 `linearize(::Model, other; kw...)` throws `ArgumentInvalid(call = :linearize, argument = :taps, reason = :not_a_tap_set)`, and src/sim.jl:1171 forwards the Simulation method to it. test/test_linearize.jl:469-470 pins this. Probe P002 shows a bare NamedTuple gives `DiagnosticError{ArgumentInvalid}` with `:not_a_tap_set`, not `ReadSetMisuse`. The code has been this way since its first commit, 4f795b30, as the increment 54 brief planned (brief lines 137 and 330). The walkthrough was promoted afterwards (c347a010) with the wrong kind, and no record covers the difference.",
+     "class": "deviation",
+     "fix": "`taps` returns a `Taps` value holding three `Reads`, so a bare NamedTuple handed to `linearize` is refused as `ArgumentInvalid` with reason `:not_a_tap_set`.",
+     "clear": true,
+     "backing_entry": ""
+    }
+   },
+   {
+    "id": "K14b-003",
+    "file": "design/companions/linearization_walkthrough.md",
+    "line": 396,
+    "kind": "mech",
+    "claim": "`x.θ` resolves to `StateRead{Dual,Nothing}(offset = 0)`, `x.ω` to `StateRead{Dual,Nothing}(offset = 1)`",
+    "evidence": "src/linearize.jl:512-518: the x entry the pass keeps is the pair (xbuf slot, `DerivRead{retype(T,P),C}(entry.offset)`); probe:C4 prints `(1, DerivRead{Dual{LinearizeTag,Float64,4},()}(0))` and `(2, DerivRead{...,()}(1))`. The chain parameter is `()`, not `Nothing`, and the `StateRead` is only the nominal intermediate.",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "| `x.θ` | `(1, DerivRead{Dual,()}(0))` | seed slot `xbuf[1]`, and the derivative read at `ẋbuf[1]` |   (and `(2, DerivRead{Dual,()}(1))` for `x.ω`)",
+    "note": "The offsets 0 and 1 are right. The prose at L403-407 (a `StateRead` bakes the `xbuf` offset) should say the resolved `x` entry pairs that site with a `DerivRead`.",
+    "ver": {
+     "id": "K14b-003",
+     "conforms": false,
+     "evidence": "Probe P003: `_resolve_selector` gives `StateRead{Float64, ()}(0)` and `StateRead{Float64, ()}(1)` at the nominal activation. The x entries `_resolve_taps` keeps are `(1, DerivRead{Dual{LinearizeTag,Float64,8}, ()}(0))` and `(2, DerivRead{Dual8, ()}(1))` (src/linearize.jl:507-511). The offsets 0 and 1 agree. The chain parameter is `()`, not `Nothing`. At 4f795b30 the entry was `StateRead{P,I}` with an index field, so `I = Nothing` matched then. Commit 0c2ac39c ('Take a leaf address on every read selector and bake its step chain into the compiled read', D-276) replaced it with the chain `C`.",
+     "class": "drift",
+     "fix": "| `x.θ` | `StateRead{Float64,()}(offset = 0)`, kept as `(1, DerivRead{Dual,()}(offset = 0))` | `xbuf[1]`, and `ẋbuf[1]` for its derivative |\n| `x.ω` | `StateRead{Float64,()}(offset = 1)`, kept as `(2, DerivRead{Dual,()}(offset = 1))` | `xbuf[2]`, `ẋbuf[2]` |",
+     "clear": false,
+     "note": "The table could instead show only the nominal StateRead with `()`, since the prose below speaks of the StateRead baking the offset. Either wording is faithful to the code, so the fix is not unique."
+    }
+   },
+   {
+    "id": "K14b-005",
+    "file": "design/companions/linearization_walkthrough.md",
+    "line": 557,
+    "kind": "mech",
+    "claim": "The readback loop is `for (i, entry) in enumerate(x_entries)` with `_read(entry, ẋbuf_at(exec))` and a per-column `partials` loop over all columns",
+    "evidence": "src/linearize.jl:370-378: x entries are `(site, DerivRead)` pairs read as `_read(entry, seeded_exec)`; the partials split goes through `_readback!` (src/linearize.jl:564-571) once per group of `width` columns, inside the `Iterators.partition` loop. `ẋbuf_at` appears nowhere in src/.",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "for (i, (_, entry)) in enumerate(x_entries)         # rows of A and B\n    ẋ₀[i] = _readback!(A, B, i, _read(entry, seeded_exec), group, n_x)\nend\nfor (i, entry) in enumerate(y_entries)              # rows of C and D\n    y₀[i] = Float64(_readback!(C, D, i, _read(entry, seeded_exec), group, n_x))\nend",
+    "note": "`_readback!` writes the group's partials into the `x` matrix for columns up to n_x and into the `u` matrix after. The snippet's two column ranges are right in effect.",
+    "ver": {
+     "id": "K14b-005",
+     "conforms": false,
+     "evidence": "src/linearize.jl:357-369 loops `for group in Iterators.partition(1:N, width)`. It reads x rows with `for (i, (_, entry)) in enumerate(x_entries)` and `_readback!(A, B, i, _read(entry, seeded_exec), group, n_x)` (:363-364). The entry is the DerivRead half of an `(site, DerivRead)` pair, and `_read` takes the executor itself (src/readers.jl:590). `_readback!` (linearize.jl:578-586) fills only the group's columns. No `ẋbuf_at` exists in src/, and `git log -S'ẋbuf_at'` finds only c347a010, the walkthrough's own commit. The grouped loop has been there since the first code commit, 4f795b30, which predates the walkthrough's promotion. No record covers the full-column sketch.",
+     "class": "deviation",
+     "fix": "for group in Iterators.partition(1:N, width)        # one evaluation per group of `width` directions\n    # seed the group's sites, then evaluate!(exec)\n    for (i, (_, entry)) in enumerate(x_entries)      # rows of A and B; entry is the DerivRead\n        ẋ₀[i] = _readback!(A, B, i, _read(entry, exec), group, n_x)\n    end\n    for (i, entry) in enumerate(y_entries)           # rows of C and D\n        y₀[i] = Float64(_readback!(C, D, i, _read(entry, exec), group, n_x))\n    end\nend\n# _readback! writes partial `pos` of the group's direction k into A/C (k ≤ n_x) or B/D (k > n_x)",
+     "clear": false,
+     "backing_entry": "",
+     "note": "D-272 backs the code's grouping, which the walkthrough's own section 7 describes. No entry backs the doc's full-column loop. Writing the sketch with or without the `_readback!` helper are both faithful, so the fix is not unique."
+    }
+   },
+   {
+    "id": "K14b-006",
+    "file": "design/companions/linearization_walkthrough.md",
+    "line": 638,
+    "kind": "law",
+    "claim": "The tests perturb one root input by 1e-6 through `about`, linearize twice and compare the difference quotient of ẋ₀ to a column of B",
+    "evidence": "No such test: rg '1e-6' test/test_linearize.jl is empty, and the testsets at test/test_linearize.jl:103-590 hold no finite-difference witness. probe:L1 shows the quotient (1.0000000001) matches B[:,1] = [0,1], so the check would pass.",
+    "verdict": "finding",
+    "class": "deviation",
+    "fix": "Say the witness is a check one can run, not one the suite makes: '- **Finite differences as a witness.** Perturbing one root input by `1e-6` through `about` and linearizing twice gives a difference quotient of ẋ₀ that matches the corresponding column of B. The suite does not run it; ...' Or add the test.",
+    "note": "The sentence at L632 'Two checks the tests make' also needs the change if the bullet stays untested.",
+    "ver": {
+     "id": "K14b-006",
+     "conforms": false,
+     "evidence": "No test does this. rg for finite/quotient/1e-6/perturb in test/test_linearize.jl and the other linearize callers (test/test_library.jl, test/test_trace.jl, test/test_failures.jl, examples/test/test_longitudinal.jl) finds no finite-difference witness. Every linearize test compares against closed forms or other linearizations. The increment 54 brief plans no such test (its only hit, line 224, says 'nothing here is a finite difference'). design/pending.md has no bullet owing it.",
+     "class": "deviation",
+     "fix": "Replace 'Two checks the tests make, independently of the mechanism:' with 'One check the tests make, independently of the mechanism:' and drop the 'Finite differences as a witness' bullet. Or keep a sentence that [§14.10] and [D-266] keep every perturbation-based path out of the framework.",
+     "clear": false,
+     "backing_entry": "",
+     "note": "The alternative is a defect-style fix: add the test-side finite-difference witness to test/test_linearize.jl."
+    }
+   }
+  ],
+  "overturned": [
+   {
+    "id": "K14b-004",
+    "at": "design/companions/linearization_walkthrough.md:452",
+    "claim": "Two taps resolving to one site are refused 'in `x`, in `u`, or one in each'",
+    "inv_verdict": "finding",
+    "why": "src/linearize.jl:434 keeps one `seeded_by` dict across the x and u lists, and :455-458 refuses the later tap as `:duplicate_site` naming the earlier label. Probe P004 gives `(:b, :duplicate_site, :x, :a)` and `(:again, :duplicate_site, :u, :τ)`. y has no site key (:475), so y taps repeat freely (test/test_linearize.jl:444-446). | The 'one in each' case cannot arise. An x site key is an xbuf slot Int (:472) and a u site key is a (CellAddr, index) tuple (:473), so they never collide (probe P004 prints `1` against `(CellAddr((3,)), 0)`). The shared dict would catch such a collision, so the doc is not contradicted, but the phrase describes a case that never happens. Dropping 'or one in each' would be more exact."
+   }
+  ],
+  "missed": [],
+  "unjudged": [],
+  "inv_notes": "",
+  "ver_notes": "All probes ran in one script, run three times while fixing harness errors: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K14b_v/probe.jl. It includes test/imports.jl and test/fixtures.jl from W, and every line cited is a line of W at bd471af7. No tracked file was edited and nothing was committed. 7 of the 12 claims conform: K14b-ok-001, -012, -020, -029, -037, -048 and K14b-004. K14b-004 conforms, but its 'one in each' case can never arise (x and u site keys have different shapes), so dropping the phrase would be more exact. 5 do not conform. K14b-001 (drift, commit 29c3f5b6) and K14b-003 (drift, commit 0c2ac39c / D-276) are stale. K14b-002, K14b-005 and K14b-006 are deviations: the code or tests have differed since increment 54's code commit 4f795b30, and no record covers the doc's text."
+ },
+ {
+  "slice": "L14",
+  "counts": {
+   "law": 83,
+   "mech": 21,
+   "decl": 26,
+   "ex": 7,
+   "ptr": 8,
+   "why": 9
+  },
+  "n_ok": 124,
+  "n_rows": 14,
+  "n_sampled": 13,
+  "confirmed": [
+   {
+    "id": "L14-004",
+    "file": "design/log.md",
+    "line": 2306,
+    "kind": "law",
+    "claim": "A slot-coverage shortfall raises one batched, declaration-ordered `UninitializedSlots` diagnostic, all-or-nothing",
+    "evidence": "src/conditions.jl:705 throws UninitializedInputs(op, faces); probe:113-114 prints UninitializedInputs with faces [:in]",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Read `UninitializedInputs` for `UninitializedSlots`. The log keeps its day's vocabulary, so no edit is owed.",
+    "note": "Renamed by D-206 (log.md:8257, rename list at 8268-8269). Behaviour (batched, declaration order, before any write) matches.",
+    "ver": {
+     "id": "L14-004",
+     "conforms": false,
+     "evidence": "src/conditions.jl:700-705 (`assert_total` collects every uncovered root input, in declaration order, into one `UninitializedInputs`, and is called before any write at src/model.jl:313). Probe: an uncovered `in` raises DiagnosticError{UninitializedInputs}([:in]), the status stays :built and xbuf stays [0,0]. isdefined(Redstone, :UninitializedSlots) is false.",
+     "class": "drift",
+     "fix": "`init!` and commit compare resolved root-input coverage against the root inputs before writing anything, and a shortfall raises one batched, declaration-ordered `UninitializedInputs` diagnostic, all-or-nothing — a rejected init leaves the sim untouched.",
+     "clear": true,
+     "note": "The rename to `UninitializedInputs` is recorded by D-206 (log.md:8269) and by the annotation at log.md:3028. The batched, ordered, all-or-nothing behaviour conforms."
+    }
+   },
+   {
+    "id": "L14-031",
+    "file": "design/log.md",
+    "line": 2396,
+    "kind": "law",
+    "claim": "A malformed trim problem is a `BuildError` at setup",
+    "evidence": "src/trim.jl:361 throws DiagnosticError(diags) of TrimProblemInvalid values; probe:80 shows three TrimProblemInvalid; no BuildError in src/",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "A malformed problem is a `TrimProblemInvalid` carried by `DiagnosticError` at setup.",
+    "note": "BuildError replaced by DiagnosticError in D-222 (log.md:9056). Lead `BuildError` at 2396.",
+    "ver": {
+     "id": "L14-031",
+     "conforms": false,
+     "evidence": "src/trim.jl:359-365 and 587: a malformed problem throws DiagnosticError carrying TrimProblemInvalid. src/diagnostics.jl:2225. Probe: an inverted box raises DiagnosticError{Vector{Diagnostic}}[TrimProblemInvalid(:lower, :inverted_box, …)], and isdefined(Redstone, :BuildError) is false.",
+     "class": "drift",
+     "fix": "`TrimReport` is a no-throw structured value: non-convergence is an expected envelope-sweep outcome, a malformed problem a `DiagnosticError` carrying `TrimProblemInvalid` at setup.",
+     "clear": true,
+     "note": "D-222 (log.md:9056) replaced `BuildError` with `DiagnosticError`."
+    }
+   },
+   {
+    "id": "L14-038",
+    "file": "design/log.md",
+    "line": 2440,
+    "kind": "decl",
+    "claim": "`design_world(ac)` is a shipped rig for design-time linearize models, root = shallowest world",
+    "evidence": "rg design_world over src/, test/, ext/, examples/ finds nothing",
+    "verdict": "unverifiable",
+    "note": "The rig belongs to the aircraft package, which is not in this repo. D-155-era text (log.md:5174) says it 'remains the shipped rig'. Lead `design_world` at 2440.",
+    "ver": {
+     "id": "L14-038",
+     "conforms": false,
+     "evidence": "`design_world` appears nowhere in src/, test/ or examples/ (rg). Probe: isdefined(Redstone, :design_world) is false.",
+     "class": "drift",
+     "fix": "- `design_world(ac)` is the rig this design records for today's ad-hoc linearize models, unshipped (\"root\" = shallowest world, one idiom).",
+     "clear": true,
+     "note": "The D-071 annotation of 2026-10-20 (log.md:2465-2467) records that no source ships a `design_world`. Spec §14.9 (spec.md:14230) calls it \"the rig this design records\"."
+    }
+   },
+   {
+    "id": "L14-041",
+    "file": "design/log.md",
+    "line": 3330,
+    "kind": "law",
+    "claim": "Table selectors are `get_output`/`get_local`/`get_slot`/`get_face`, resolved against boundary snapshots",
+    "evidence": "src/readers.jl:151 closes the family at GetState, GetDeriv, GetOutput, GetInput, GetFace; no get_local or get_slot in src/",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Table selectors are `get_output`, `get_input` and `get_face`.",
+    "note": "`get_slot` became `get_input` in D-206 (log.md:8268); `get_local` was retired with `local_types` (D-165, log.md:6440). The source rule itself holds (readers.jl:694-699). Leads `get_local`, `get_slot` at 3330.",
+    "ver": {
+     "id": "L14-041",
+     "conforms": false,
+     "evidence": "src/readers.jl:243,269,293: the table selectors are get_output, get_input and get_face, and there is no get_local or get_slot (probe: isdefined of both is false). src/bindings.jl:145-147: a binding resolves for a table source and refuses a store selector by source.",
+     "class": "drift",
+     "fix": "table selectors (`get_output`/`get_input`/`get_face`) against table sources, a boundary snapshot or a service evaluation's scratch tables;",
+     "clear": true,
+     "note": "`get_local` retired with `local_types` (D-165), and `get_slot` is `get_input` since D-206. The annotation at log.md:3242-3245 records both. D-124 widened the source to include service scratch tables."
+    }
+   },
+   {
+    "id": "L14-043",
+    "file": "design/log.md",
+    "line": 3332,
+    "kind": "mech",
+    "claim": "Live stores are held only by stopped-sim service evaluations, `capture` and post-run inspection",
+    "evidence": "No `capture` in src/; the operating point of linearize is `checkpoint` (src/linearize.jl:275)",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Drop `capture`: live stores are held by stopped-sim service evaluations and post-run inspection; a checkpoint is a value, not a live store.",
+    "note": "capture left the algebra in D-273 (log.md:12241), checkpoints in D-274 (log.md:12334). Lead `capture` at 3332.",
+    "ver": {
+     "id": "L14-043",
+     "conforms": false,
+     "evidence": "src/model.jl:1178 and src/sim.jl:889 define `checkpoint`, and there is no `capture` (probe: isdefined(Redstone, :capture) is false). src/linearize.jl:275 takes the default point from checkpoint(model).",
+     "class": "drift",
+     "fix": "store selectors (`get_state`/`get_deriv`) only against live stores, which only stopped-sim service evaluations, `checkpoint` and post-run inspection ever hold.",
+     "clear": true,
+     "note": "The annotation at log.md:3345 (\"`capture` reads `checkpoint` here\") and D-273/D-274 record the rename."
+    }
+   },
+   {
+    "id": "L14-044",
+    "file": "design/log.md",
+    "line": 4070,
+    "kind": "decl",
+    "claim": "The `TrimProblem` field set closes at seven fields",
+    "evidence": "src/trim.jl:86-96 has nine fields; probe:54 prints (:guess, :lower, :upper, :condition, :reads, :residuals, :tolerances, :checks, :check_tolerances)",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "The seven keywords listed stay required; `checks` and `check_tolerances` default to empty (nine fields).",
+    "note": "Two fields added by D-262 (log.md:11199). Lead `TrimParameters` at 4077 is a user struct, ok.",
+    "ver": {
+     "id": "L14-044",
+     "conforms": false,
+     "evidence": "src/trim.jl:86-96. Probe: fieldnames(TrimProblem) is the 9-tuple (guess, lower, upper, condition, reads, residuals, tolerances, checks, check_tolerances).",
+     "class": "drift",
+     "fix": "The `TrimProblem` field set closes at nine — `guess`/`lower`/`upper`, `condition`, `reads`, `residuals`, `tolerances`, `checks`, `check_tolerances` — with …",
+     "clear": true,
+     "note": "D-262 added the two check fields. D-118's annotation at log.md:4088 records it."
+    }
+   },
+   {
+    "id": "L14-050",
+    "file": "design/log.md",
+    "line": 4285,
+    "kind": "decl",
+    "claim": "The `reads` grammar admits get_state, get_deriv, get_output, get_slot and get_face",
+    "evidence": "src/readers.jl:151 lists GetState, GetDeriv, GetOutput, GetInput, GetFace; no get_slot",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Read `get_input` for `get_slot`.",
+    "note": "Renamed by D-206 (log.md:8268). Lead `get_slot` at 4285.",
+    "ver": {
+     "id": "L14-050",
+     "conforms": false,
+     "evidence": "src/readers.jl:188,213,243,269,293: the family is get_state, get_deriv, get_output, get_input and get_face. Probe: isdefined(Redstone, :get_slot) is false, and a trim read get_input(:in) resolves.",
+     "class": "drift",
+     "fix": "§14.7's `reads` grammar widens to the full service set (D-095's four plus D-125's `get_face`: `get_state`, `get_deriv`, `get_output`, `get_input` and `get_face`) …",
+     "clear": true,
+     "note": "D-206 renamed `get_slot` to `get_input` (log.md:8268). The annotation at log.md:3242 records it as well."
+    }
+   },
+   {
+    "id": "L14-051",
+    "file": "design/log.md",
+    "line": 4284,
+    "kind": "law",
+    "claim": "get_state/get_deriv validate against `init_x`, get_output against `output_types`",
+    "evidence": "src/readers.jl:992-1057 validates against the `x_init`/`s_init` state decls and the `y_types` ports; no init_x or output_types in src/",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Read `x_init` for `init_x` and `y_types` for `output_types`.",
+    "note": "Renamed by D-267 (log.md:11632 for init_x; log.md:5505 and 2636 for output_types). Targets are right. Leads `init_x`, `output_types` at 4284.",
+    "ver": {
+     "id": "L14-051",
+     "conforms": false,
+     "evidence": "src/readers.jl:992-1013: get_state resolves against x_init for a continuous component and s_init for a discrete one (a StoreRead). src/readers.jl:1016-1037: get_deriv resolves against x_init. src/readers.jl:1040-1047: get_output resolves against the declared ports. src/readers.jl:1060: get_input. Probe: a trim read get_state(\"ctl\", :acc) on a DiscreteAccumulator resolves and reads 4.0. get_output(\"c\", :nope) is refused with candidates [:θ, :ω].",
+     "class": "drift",
+     "fix": "`get_state` against `x_init` or `s_init` by the component's tier, `get_deriv` against `x_init`, `get_output` against `y_types`, `get_input`/`get_face` against the root face lists;",
+     "clear": true,
+     "note": "Three moves are recorded. D-267 renamed init_x to x_init and output_types to y_types. D-206 renamed get_slot to get_input. D-197 (log.md:7900) records that trim's get_state reads span both tiers."
+    }
+   },
+   {
+    "id": "L14-061",
+    "file": "design/log.md",
+    "line": 6108,
+    "kind": "mech",
+    "claim": "The committed point is what `capture`-defaulted `linearize` reads",
+    "evidence": "src/linearize.jl:275 the default operating point is checkpoint(model); no capture in src/",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Read `checkpoint`-defaulted `linearize`.",
+    "note": "capture replaced by checkpoints in D-273/D-274 (log.md:12241, 12334). Lead `capture` at 6108.",
+    "ver": {
+     "id": "L14-061",
+     "conforms": false,
+     "evidence": "src/sim.jl:1170 and src/linearize.jl:275: the default operating point is checkpoint(sim)/checkpoint(model), and there is no `capture`. Probe: after trim!(sim), linearize(sim, taps).x₀ = [0.41998548194158236, 0.0], which equals the committed solution and checkpoint(sim).state.x.",
+     "class": "drift",
+     "fix": "… and they describe the state the simulation is actually in, the point `checkpoint`-defaulted `linearize` reads);",
+     "clear": true,
+     "note": "The behaviour holds. Only the name is stale, and the D-272 annotation of 2026-10-20 and D-273/D-274 record the move."
+    }
+   },
+   {
+    "id": "L14-072",
+    "file": "design/log.md",
+    "line": 7898,
+    "kind": "law",
+    "claim": "linearize's x-tap list resolves against the continuous tier's `init_x` stores only",
+    "evidence": "src/linearize.jl:500-507 refuses a StoreRead with :discrete_state; src/diagnostics.jl:2166 names the discrete component; the register is `x_init`",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "Read `x_init` for `init_x`.",
+    "note": "Rename in D-267 (log.md:11632). The rule holds. The refusal names the discrete component and store (diagnostics.jl:2166), with no separate tier field. Lead `init_x` at 7898.",
+    "ver": {
+     "id": "L14-072",
+     "conforms": false,
+     "evidence": "src/linearize.jl:391 (`x` admits GetState) and src/linearize.jl:500-502 (a StoreRead in `x` raises TapResolution :discrete_state). src/diagnostics.jl:2164-2169 names the path, the store field and the frozen tier. Probe: get_state(\"ctl\", :acc) in `x` gives (:discrete_state, \"ctl\", :acc, :x). The declaration is named x_init (src/declare.jl:75).",
+     "class": "drift",
+     "fix": "`linearize`'s `x`-tap list resolves against the continuous tier's `x_init` stores only; …",
+     "clear": true,
+     "note": "The behaviour conforms. Only the declaration name is stale: D-267 renamed init_x to x_init (log.md:11632)."
+    }
+   },
+   {
+    "id": "L14-096",
+    "file": "design/log.md",
+    "line": 12161,
+    "kind": "decl",
+    "claim": "The operating point is `capture(sim)` by default",
+    "evidence": "src/linearize.jl:275 checkpoint(model); src/sim.jl:1167 checkpoint(sim).state",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "The operating point is `checkpoint(sim)` by default.",
+    "note": "capture left the algebra in D-273 (log.md:12241); checkpoints in D-274. Lead `capture` at 12161.",
+    "ver": {
+     "id": "L14-096",
+     "conforms": false,
+     "evidence": "src/sim.jl:1170 `operating_point = about === nothing ? checkpoint(sim).state : nothing` and src/linearize.jl:218,275. Probe: isdefined(Redstone, :capture) is false.",
+     "class": "drift",
+     "fix": "- The operating point is `checkpoint(sim)` by default.",
+     "clear": true,
+     "note": "The D-272 annotation of 2026-10-20 (log.md:12225-12227) and D-274 record the move."
+    }
+   },
+   {
+    "id": "L14-098",
+    "file": "design/log.md",
+    "line": 12163,
+    "kind": "decl",
+    "claim": "`ẋ₀`, `x₀`, `u₀`, `y₀` are NamedTuples under the tap labels",
+    "evidence": "src/linearize.jl:133-136 and probe:34 give Vector{Float64} fields, labels in separate tuples",
+    "verdict": "finding",
+    "class": "drift",
+    "fix": "`ẋ₀`, `x₀`, `u₀`, `y₀` are `Float64` vectors in tap order, and the three label tuples name the positions.",
+    "note": "Replaced by D-475 (log.md:20928 says so).",
+    "ver": {
+     "id": "L14-098",
+     "conforms": false,
+     "evidence": "src/linearize.jl:132-144 (the fields are AbstractVector{Float64}) and src/linearize.jl:375. Probe: ẋ₀, x₀, u₀ and y₀ are all Vector{Float64}, not NamedTuples.",
+     "class": "drift",
+     "fix": "- The return is a `Linearization` value: `ẋ₀`, `x₀`, `u₀` and `y₀` as `Float64` vectors in the order of the taps, `A`, `B`, `C` and `D` as `Float64` matrices, and the three label tuples.",
+     "clear": true,
+     "note": "D-475 (log.md:20926-20928) replaces this ruling, and the D-272 annotation of 2026-11-21 records it."
+    }
+   }
+  ],
+  "overturned": [
+   {
+    "id": "L14-016",
+    "at": "design/log.md:2350",
+    "claim": "Assignment is the pure `trim_condition` fragment function",
+    "inv_verdict": "finding",
+    "why": "src/trim.jl:74 (`condition`: a function of the decisions that returns a condition) and src/trim.jl:597,628,646, which call `problem.condition(d)` at Float64 and at Dual decisions. `trim_condition` is the user function of the spec's worked problem (spec.md:13572,13579), not a framework name. | The assignment half of the bullet holds. \"Fragment function\" is vocabulary D-405 retired. The same bullet's reads half (`deriv`/`output` selectors) is stale, and the D-069 annotation already records that the full `get_` family applies since D-124."
+   },
+   {
+    "id": "L14-111",
+    "at": "design/log.md:17101",
+    "claim": "A trim problem never authors the environment; it receives it and never writes it",
+    "inv_verdict": "unverifiable",
+    "why": "src/trim.jl:597,628,729: the service writes only `override(baseline, problem.condition(d))`, and the problem has no environment field (src/trim.jl:86-96). src/conditions.jl:642 refuses a condition entry on an internally wired face. Probe: a trim condition writing c/u, which a discrete producer drives, is refused as ConditionResolution :internally_wired. | This is an authoring rule. The code enforces only the mechanism the rationale cites, the refusal of a wired face. A problem can still set an unconnected root input or a component's state, and nothing can mark either as environment."
+   }
+  ],
+  "missed": [
+   {
+    "id": "L14-001",
+    "file": "design/log.md",
+    "line": 2176,
+    "kind": "mech",
+    "claim": "Per-component init knowledge is user methods of one generic, composed by pull via at/combine",
+    "evidence": "src/conditions.jl:134 (condition), 224-239 (combine; `merge` became combine in D-204)",
+    "ver": {
+     "id": "L14-001",
+     "conforms": false,
+     "evidence": "src/conditions.jl:134 (`function condition end`, the framework-owned generic a component extends) and src/conditions.jl:239 (`combine(nodes::ConditionNode...)`). Probe: isdefined(Redstone, :fragment) is false, and Base.merge has no method on Fragment.",
+     "class": "drift",
+     "fix": "Per-component init knowledge = user methods of the framework's `condition` generic, dispatched on component types and returning condition nodes, composed by pull (`at`/`combine` invoked by the structure's owner); …",
+     "clear": true,
+     "note": "The pull composition holds. The stale parts are `merge`, renamed `combine` by D-204, and \"fragment-returning user functions\", which became methods of the `condition` generic under D-405. Both D-204 and D-405 say the log keeps its day's vocabulary, so the fix might be better made as an annotation than as a rewrite."
+    }
+   },
+   {
+    "id": "L14-078",
+    "file": "design/log.md",
+    "line": 8545,
+    "kind": "mech",
+    "claim": "Frozen discrete cells come from a nominal scratch set with the condition applied and one establishment round",
+    "evidence": "src/trim.jl:595-601,623; src/model.jl:152-163",
+    "ver": {
+     "id": "L14-078",
+     "conforms": false,
+     "evidence": "src/trim.jl:595-600,623 (trim: nominal scratch, condition applied, ESTABLISH round, frozen cells copied by src/model.jl:152-163). src/linearize.jl:310-319: linearize's default form instead restores the checkpoint into the nominal half and runs no condition and no establishment round (D-274). Probe: with a discrete producer at acc = 4.0, trim converges to asin(4/g_l).",
+     "class": "drift",
+     "fix": "A service's seeded scratch set takes its frozen discrete cells from a nominal scratch set, copied as zero-partial constants: under a condition (trim, `linearize`'s `about` form), one on which the composite condition has been applied and one establishment round run — every discrete output stage, due or not (D-205), with no projection, events or `g`; under `linearize`'s default form, the restored checkpoint, whose held cells are the frozen tier's (D-274).",
+     "clear": true,
+     "note": "The claim holds for trim and for `linearize`'s about form. D-274 (log.md:12371-12374) records that linearize's default point is the restored checkpoint, whose held cells replace what D-213's establishment round approximated."
+    }
+   },
+   {
+    "id": "L14-087",
+    "file": "design/log.md",
+    "line": 11207,
+    "kind": "law",
+    "claim": "Checks are never solved; evaluated once at the committed state on the committed-residual reads",
+    "evidence": "src/trim.jl:743-756",
+    "ver": {
+     "id": "L14-087",
+     "conforms": false,
+     "evidence": "src/trim.jl:604 calls problem.checks at the setup guess, and src/trim.jl:744,756 call it at the committed state on the gather the committed residuals use. Probe: a counting check function is called twice, with (θ = 0.1,) at the guess and then with the solution, and committed_checks = (ω = 0.0,).",
+     "class": "drift",
+     "fix": "The service never solves them. It evaluates them at the committed state, on the reads the committed-state residuals gather, and the `TrimReport` carries the values as `committed_checks`; setup also evaluates them once at the guess, to observe the return's shape.",
+     "clear": true,
+     "note": "\"Never solved\" holds, and so does \"reported from the committed-residual gather\". \"Evaluates them once\" is literally false. The spec records the guess-time shape observation (spec.md:13684-13686 and 14062-14066), and commit 3e1f087c, which implemented D-262, introduced it."
+    }
+   }
+  ],
+  "unjudged": [],
+  "inv_notes": "",
+  "ver_notes": "I checked all 27 claims at W = bd471af7. 12 conform and 15 do not, and every mismatch is drift: a log entry, an annotation or the spec records the move. The drifts are mostly renames: merge→combine (D-204), UninitializedSlots→UninitializedInputs and get_slot→get_input (D-206), init_x→x_init and output_types→y_types (D-267), capture→checkpoint (D-273/D-274), BuildError→DiagnosticError (D-222), seven→nine TrimProblem fields (D-262) and NamedTuple→plain arrays (D-475). Several entries say the log keeps its day's vocabulary (D-204, D-206, D-405), so the user may prefer annotations to rewrites for the rename-only drifts. Two drifts are about behaviour, not names. L14-078: linearize's default form takes its frozen cells from the restored checkpoint, with no establishment round (D-274). L14-087: checks are also evaluated once at the setup guess to observe their shape (src/trim.jl:604), which the spec states and the log does not. I edited no tracked file and committed nothing. My one artifact is the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L14_v/probe.jl, run twice. The second run fixed my own bisection backend, which had first searched in the wrong direction."
+ },
+ {
+  "slice": "C14",
+  "counts": {
+   "law": 58,
+   "mech": 52,
+   "decl": 30,
+   "ptr": 18,
+   "why": 24,
+   "ex": 9,
+   "surface": 34,
+   "docstring": 46,
+   "map": 38,
+   "cite": 62
+  },
+  "n_ok": 63,
+  "n_rows": 11,
+  "n_sampled": 8,
+  "confirmed": [
+   {
+    "id": "C14-001",
+    "file": "src/conditions.jl",
+    "line": 177,
+    "kind": "law",
+    "verdict": "finding",
+    "class": "drift",
+    "claim": "spec 12987-12989 (§14.2): composition checks that each `set` payload is a NamedTuple, and a `set` payload that is not a NamedTuple is `ConditionNodeMisuse` with reason `:set_payload`.",
+    "evidence": "src/conditions.jl:177 `_payload` refuses `nothing` alone. probe: `set(x = 1.0)` builds a Fragment, `set(x = nothing)` gives ConditionNodeMisuse(reason=:set_payload, payload=:x). Appendix C (design/spec.md ~15769) already says `:set_payload` is for a payload of `nothing`, and D-437/D-438 admit a bare payload (spec 12941, 13090).",
+    "note": "The spec's own §14.2 paragraph on bare `u` payloads and Appendix C contradict the sentence at 12987-12989.",
+    "fix": "Replace with: \"Each `set` payload is not `nothing`, each combinator operand is a node, and each `at` prefix is nonempty. A `set` payload of `nothing` is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC]). A payload that is not a NamedTuple is a bare payload and is checked at resolution ([D-437][d-437], [D-438][d-438]).\"",
+    "ver": {
+     "id": "C14-001",
+     "conforms": false,
+     "evidence": "src/conditions.jl:177 is `_payload(name, p) = p !== nothing || throw(... :set_payload ...)`. In the probe, `set(x = 1.0)` and `set(s = :sym)` raise nothing, and only `set(x = nothing)` raises ConditionNodeMisuse :set_payload. Appendix C (spec 15771-15772) already says `:set_payload` is for a payload of `nothing` (D-437). D-437 (log.md:18179) says `set` admits a bare payload and refuses `nothing` alone. Commit dc5e833e records the change.",
+     "class": "drift",
+     "fix": "Each `set` payload is a NamedTuple or one bare value, each combinator operand is a node, and each `at` prefix is nonempty. A `set` payload of `nothing` is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC]). A bare payload's shape is checked at resolution ([§14.3][s14-3]).",
+     "clear": true
+    }
+   },
+   {
+    "id": "C14-003",
+    "file": "src/trim.jl",
+    "line": 125,
+    "kind": "mech",
+    "verdict": "finding",
+    "class": "drift",
+    "claim": "spec 14165 (§14.9) sketch of `at(prefix::String, p::TrimProblem)` writes `reads = at(prefix, p.reads)` unconditionally, and the prose at 14154 says the lift prepends the prefix to the read set's mount chain.",
+    "evidence": "src/trim.jl:122-127 passes a `reads` that is not a `Reads` through untouched (`problem.reads isa Reads ? at(prefix, problem.reads) : problem.reads`), so `trim!` names it as `TrimProblemInvalid :not_a_read_set` (probe: `trim!` with a bare NamedTuple of selectors). The prefix is `AbstractString` in code. The docstring (trim.jl:108-119) and code_map.md:1486 record the pass-through; §14.9 does not.",
+    "fix": "Add to the sketch comment on `reads`: \"a `reads` that is no read set passes through, so `trim!`'s setup names it ([§14.8][s14-8])\", and write `prefix::AbstractString` in the sketch.",
+    "ver": {
+     "id": "C14-003",
+     "conforms": false,
+     "evidence": "src/trim.jl:125 is `reads = problem.reads isa Reads ? at(prefix, problem.reads) : problem.reads`, and the docstring at trim.jl:116-118 states it. In the probe, `at(\"rig\", p).reads === p.reads` for a NamedTuple reads, and trim! then raises TrimProblemInvalid :not_a_read_set. The spec sketch's unconditional `at(prefix, p.reads)` raises ConditionNodeMisuse :not_a_node instead (probe). No spec or log text records the pass-through, and code_map.md:1478-1480 names it as code fact only.",
+     "class": "deviation",
+     "fix": "Sketch line: `reads = p.reads isa Reads ? at(prefix, p.reads) : p.reads,  #inert selector data: the prefix is prepended to the read set's mount chain; anything else passes through for setup to refuse`. Prose at 14154: \"The `reads` field is a read set, and the lift prepends the prefix to the set's mount chain (...). A `reads` that is no read set passes through, so that `trim!`'s setup refuses it as `TrimProblemInvalid`.\"",
+     "clear": true,
+     "backing_entry": ""
+    }
+   },
+   {
+    "id": "C14-005",
+    "file": "src/conditions.jl",
+    "line": 670,
+    "kind": "cite",
+    "verdict": "finding",
+    "class": "drift",
+    "claim": "The comment on `_unconvertible` cites D-166 for the frozen discrete `s` and the pinned leaf at the seeded activation.",
+    "evidence": "design/log.md:193 marks D-166 \"superseded → D-263\"; D-263 (log.md:11272) \"One arity on both tiers: plain contracts, the `Pinned` marker and the mandatory store\" treats frozen discrete and pinned leaves. Also the lead 'citation superseded: D-166 at src/conditions.jl:670'.",
+    "fix": "Cite `D-263` in place of `D-166` on conditions.jl:670.",
+    "ver": {
+     "id": "C14-005",
+     "conforms": false,
+     "evidence": "src/conditions.jl:669-670 cites D-166 for a frozen discrete `s` and for a leaf a `Pinned` declaration holds. D-166 (log.md:6484-6486) concerns `Type{T}` output signatures and is `superseded → D-263`. D-263 (log.md:11272ff) rules the `Pinned` marker and the discrete tier's wholesale pinning. spec_rules.md:115 says never to cite a superseded entry.",
+     "class": "drift",
+     "fix": "# is the non-nominal case: at a seeded activation the leaves a decision descends into are the ones the activation retyped, and a *frozen* discrete `s` (§9.4, D-263) or a leaf a `Pinned` declaration holds at `Float64` is not one of them",
+     "clear": true
+    }
+   },
+   {
+    "id": "C14-006",
+    "file": "src/linearize.jl",
+    "line": 518,
+    "kind": "cite",
+    "verdict": "finding",
+    "class": "drift",
+    "claim": "The comment on the `u` list's `_seeded_tap` cites D-167 for \"a continuous one pins by declaration\".",
+    "evidence": "design/log.md:194 marks D-167 \"superseded → D-263\". The same comment already cites D-168 for the meet. Lead 'citation superseded: D-167 at src/linearize.jl:518'.",
+    "fix": "Cite `D-263` in place of `D-167` on linearize.jl:518.",
+    "ver": {
+     "id": "C14-006",
+     "conforms": false,
+     "evidence": "src/linearize.jl:517-518 cites D-167 for \"a continuous one pins by declaration\". D-167 is `superseded → D-263` (log.md:6586), and its annotation (log.md:6640-6643) moves \"demands frozen\" to D-263's `Pinned{P}`. D-263's Position (log.md:11286-11288) now states the ruling. spec_rules.md:115 says never to cite a superseded entry.",
+     "class": "drift",
+     "fix": "# activation's scalar, named with its tier and its declared entry: a continuous one pins by declaration (D-263), a discrete one by tier (§8.2).",
+     "clear": true,
+     "note": "Other code sites cite D-167 too: build.jl:896, build.jl:1644, diagnostics.jl:2190/2210. The last one emits \"D-167\" in a message's citation."
+    }
+   },
+   {
+    "id": "C14-007",
+    "file": "design/code_map.md",
+    "line": 882,
+    "kind": "map",
+    "verdict": "finding",
+    "class": "drift",
+    "claim": "The `src/linearize.jl` entry's Spec line lists D-167.",
+    "evidence": "design/code_map.md:882 lists D-036, D-167, D-168 ...; D-167 is superseded by D-263 (log.md:194), and linearize.jl cites D-263 in its service comment (src/linearize.jl:211-213) but the map's Spec line omits D-263.",
+    "fix": "Replace `D-167` with `D-263` in the Spec line at code_map.md:882.",
+    "ver": {
+     "id": "C14-007",
+     "conforms": false,
+     "evidence": "design/code_map.md:882 lists D-167, which src/linearize.jl:518 cites. design/log.md:6586 gives D-167's status as `superseded → D-263`. D-263's Position (log.md:11286) carries the permissive reading with `Pinned` as its spelling, and linearize.jl cites D-263 twice. spec_rules.md:115 says never to cite a superseded entry.",
+     "class": "drift",
+     "fix": "Spec: §9.7, §14.4, §14.10, D-036, D-168, D-197, D-213, D-263, D-272, D-274, ... (D-263 in place of D-167, moved with the comment at linearize.jl:518)",
+     "clear": true,
+     "note": "This follows C14-006. If the comment keeps D-167, the map line matches the file as it stands."
+    }
+   },
+   {
+    "id": "C14-008",
+    "file": "src/linearize.jl",
+    "line": 291,
+    "kind": "surface",
+    "verdict": "finding",
+    "class": "deviation",
+    "claim": "Appendix C's `ArgumentInvalid` entry (spec ~15888-15915) and §14.8/§14.10 do not list the reasons these sites raise: `:nonpositive_width` (a `width` below 1), `:t0_without_about`, `:not_a_tap_set` (linearize.jl:282-285, 291-298), `:not_a_problem` (trim.jl:568-570), and `:range` on a `t0` that is not exact or cannot carry a run (model.jl `_origin`, via trim.jl:562 and linearize.jl:318).",
+    "evidence": "probe P5/P7: linearize width=0 -> ArgumentInvalid(:nonpositive_width), t0 without about -> :t0_without_about, linearize(m, 3) -> :not_a_tap_set, trim!(m, 3) -> :not_a_problem, t0 = NaN or 1e-4 -> :range. rg of design/spec.md finds none of the four reason names. Only D-420 (log 17191) names `:t0_without_about`. The linearize and trim! docstrings name the kind, not the reasons.",
+    "fix": "Add to Appendix C `ArgumentInvalid`: \"`trim!` refuses a second argument that is no `TrimProblem` as `:not_a_problem`, and `linearize` one that is no tap set as `:not_a_tap_set`, a `width` below 1 as `:nonpositive_width` and a `t0` without `about` as `:t0_without_about`. A `t0` that is not finite, not exact or whose run the clock cannot carry is `:range`.\"",
+    "ver": {
+     "id": "C14-008",
+     "conforms": false,
+     "evidence": "In the probe, linearize with width=0 gives ArgumentInvalid :nonpositive_width (linearize.jl:292). A t0 without about gives :t0_without_about (linearize.jl:294). A non-tap-set second argument gives :not_a_tap_set (linearize.jl:283). trim!(model, 1) gives :not_a_problem (trim.jl:569). A t0 of 1//0 or big(2)^70 gives :range (model.jl:375-376, 350). rg finds none of these reason names in spec.md. §14.10 (14343-14347) names only the kind for t0, says nothing of a width below 1, and Appendix C's ArgumentInvalid entry (15887-15915) lists none of them. D-420 names :t0_without_about only in its Rationale.",
+     "class": "deviation",
+     "fix": "Add to Appendix C's ArgumentInvalid entry: \"`linearize` refuses a `width` below 1 as `:nonpositive_width`, a `t0` without `about` as `:t0_without_about` ([D-420][d-420]), and a second argument that is no tap set as `:not_a_tap_set`; `trim!` refuses one that is no `TrimProblem` as `:not_a_problem`. A `t0` handed to `init!`, `trim!` or `linearize` that is not exact or whose run the clock's integers cannot carry is `:range` ([D-457][d-457]).\" Also add to §14.10: \"A `width` below 1 is refused as `ArgumentInvalid`.\"",
+     "clear": false,
+     "backing_entry": "D-420 (t0 without about), D-457 (t0 form), D-272 (width)",
+     "note": "The width-below-1 refusal adds a rule that §14.10 does not state, so it goes past wording."
+    }
+   },
+   {
+    "id": "C14-009",
+    "file": "src/trim.jl",
+    "line": 674,
+    "kind": "surface",
+    "verdict": "finding",
+    "class": "deviation",
+    "claim": "Neither §14.8, the `trim!` docstring nor the `TrimProblem` docstring says that the guess is projected into the box before the search.",
+    "evidence": "src/trim.jl:667-674: `d0 = clamp.(guess, lower, upper)`, so a guess outside the bounds starts the backend at the bound while setup's condition and first evaluation (trim.jl:597-606) use the unclamped guess. Only the `solve` docstring (trim.jl:222-223) says \"a `d0` that is not `NaN` already lies within the bounds\". Spec 13851-13857 says only that bounds are honored by step projection.",
+    "fix": "Add to §14.8 \"Box bounds\" and the `trim!` docstring: \"The service projects `guess` into the box once before it calls the backend, so a backend never sees a start outside the bounds.\"",
+    "ver": {
+     "id": "C14-009",
+     "conforms": false,
+     "evidence": "src/trim.jl:666-674 clamps the guess into the box once, `d0 = clamp.(...)`, before `solve`. The setup evaluation at trim.jl:597 still uses the unprojected guess. In the probe, guess u=10.0 in box [-1, 3] showed condition calls at 10.0, 10.0, then 3.0, and returned solution u=3.0, status=stalled, saturated=[(:u, :upper)]. §14.8 (13792-13802) says only that d0 is packed and that bounds are honored by step projection (D-070). The trim! docstring (trim.jl:500-557) and the TrimProblem docstring (trim.jl:24-66) are silent on it, and no log or pending text records it.",
+     "class": "deviation",
+     "fix": "Add to §14.8's \"Box bounds and saturated decisions\": \"The search starts from the guess projected into the box, so a guess outside it starts at the nearest point inside, and every point the backend sees and returns lies in the box. Setup's guess evaluation reads the guess as authored.\" Add to the `trim!` or `TrimProblem` docstring: \"The search starts from the guess clamped into the bounds.\"",
+     "clear": true,
+     "backing_entry": "D-070"
+    }
+   }
+  ],
+  "overturned": [
+   {
+    "id": "C14-002",
+    "at": "src/conditions.jl:701",
+    "claim": "spec 13501-13502 (§14.6): each totality site compares the resolved plan's root-input coverage against the `Build`'s `input_faces`.",
+    "inv_verdict": "finding",
+    "why": "src/conditions.jl:701-705 compares `Set(plan.faces)` against `structure.root_inputs` before any write. The callers pass `build.structure` (trim.jl:598, linearize.jl:316, model.jl:314, sim.jl:841). In the probe, `root_inputs = [:in, :e, :pu]` equals `input_faces(root) = [\"in\", \"e\", \"pu\"]`, and the shortfall was one UninitializedInputs naming [:e, :pu]. | The mechanism matches. The operand is stored as `build.structure.root_inputs`, the root's input faces, and `Build` has no `input_faces` field. A tighter wording would be \"against the `Build`'s root inputs\"."
+   },
+   {
+    "id": "C14-004",
+    "at": "src/linearize.jl:502",
+    "claim": "spec 14311-14312 (§14.10): an `x` tap naming a discrete store is rejected as `TapResolution` \"with the tap and its tier in hand (D-197)\".",
+    "inv_verdict": "finding",
+    "why": "src/linearize.jl:499-502 refuses a StoreRead in the x list as `_tap_violation(read, :discrete_state)`. In the probe the result was TapResolution label=:acc, selector=get_state(\"ctl\", :acc), tap=:x, path=\"ctl\", field=:acc, reason=:discrete_state, and the message says \"`ctl` is a discrete component\". The reason itself fixes the tier, and Appendix C (15809) lists `:discrete_state, a discrete store`. | There is no separate `tier` field. The tier is in hand through the reason and the message."
+   },
+   {
+    "id": "C14-010",
+    "at": "src/sim.jl:1136",
+    "claim": "The `linearize(sim, tap_set; about, t0, width)` docstring has no keyword bullets and says only \"The keywords mean what they mean on the model's method\". `trim!(sim, …; baseline, t0, backend)` (sim.jl:1100-1120) does the same.",
+    "inv_verdict": "finding",
+    "why": "src/sim.jl:1113-1114 and 1145-1147 defer to the model's method. That method's docstring has `# Keywords` bullets for about, t0 and width (linearize.jl:258-264) and for baseline, t0 and backend (trim.jl:547-557). The sim methods take the same keywords with the same defaults (sim.jl:1119-1120, 1153-1154). docstring_rules.md rule 4 makes a keyword list optional. | The statement is accurate, and no rule requires a keyword list on the sibling."
+   },
+   {
+    "id": "C14-011",
+    "at": "src/trim.jl:359",
+    "claim": "design/code_map.md:1474-1496 (`src/trim.jl`) names `_solve_problem` and `_verdict!` but not the setup validation (`_check_decisions!`, `_check_tolerances!`, `_check_reads!`, `_check_equations`, `_report_trim!`, trim.jl:359-470), `TrimTag` (trim.jl:135), `_seeded`/`_reordered`/`_saturated`, or the default `_no_checks`.",
+    "inv_verdict": "finding",
+    "why": "design/code_map.md:1474-1496. code_map.md:3-12 says an entry names constructs and cites their sections, not every helper. Every construct it names exists, including `at`'s pass-through of a non-read-set (trim.jl:125). The setup checks (trim.jl:368-470) carry out the spec's TrimProblemInvalid (§14.7, Appendix C) and are no deviation that code_rules.md:10-15 would require the map to name. | TrimTag goes unnamed while the linearize entry names LinearizeTag (code_map.md:832). That is a possible symmetry nit, not a mismatch."
+   }
+  ],
+  "missed": [],
+  "unjudged": [],
+  "inv_notes": "",
+  "ver_notes": "I edited no tracked file. My one probe script is at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/C14_v/probe.jl, run from W with JULIA_LOAD_PATH=\"@\" julia --project=test. The final run covered every behavioural claim. Findings: C14-001 is a stale §14.2 sentence (Appendix C already has the D-437 wording). C14-005, C14-006 and C14-007 cite D-166 or D-167, both superseded by D-263. I applied spec_rules.md:115 by analogy, since code_rules.md has no rule on citations. If the user accepts superseded citations in code for rulings that survive, those three become conforming. C14-003, C14-008 and C14-009 are code behaviour no doc records. C14-002 and C14-004 conform in substance, with wording notes."
+ }
+]

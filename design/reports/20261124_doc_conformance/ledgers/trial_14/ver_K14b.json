@@ -1,0 +1,87 @@
+{
+ "judgments": [
+  {
+   "id": "K14b-ok-001",
+   "conforms": true,
+   "evidence": "test/test_linearize.jl:16 builds the same Group (lin_pend); probe P001 prints `built: true root_inputs=[:τ, :d]` for the walkthrough's exact Group call."
+  },
+  {
+   "id": "K14b-ok-012",
+   "conforms": true,
+   "evidence": "src/linearize.jl:305 `T = ForwardDiff.Dual{LinearizeTag,Float64,width}`; probe P012 `Dual{LinearizeTag,Float64,4} === Dual{LinearizeTag,Float64,5}` prints false. test/test_linearize.jl:284 shows width 3 adding its own activation key."
+  },
+  {
+   "id": "K14b-ok-020",
+   "conforms": true,
+   "evidence": "src/conditions.jl:766 `(::Authored{P,L})(tree) = convert(L, walk_steps(tree, Val(P)))`; probe P020: Authored{(),Float64}()(0.5) === 0.5, and Authored{(),Dual4}()(0.5) gives Dual(0.5,0,0,0,0) with all-zero partials."
+  },
+  {
+   "id": "K14b-001",
+   "conforms": false,
+   "evidence": "src/trim.jl:621 `seeded_exec = _scratch(model, T).exec`; src/model.jl:143 `_scratch(model::Model, ::Type{T})` takes no activation. Commit 29c3f5b6 replaced `_scratch(sim, T, act)` with `_scratch(sim, T).exec`, and trim now takes the model.",
+   "class": "drift",
+   "fix": "seeded_exec = _scratch(model, T).exec                # buffers at T, die with the call",
+   "clear": true
+  },
+  {
+   "id": "K14b-002",
+   "conforms": false,
+   "evidence": "src/linearize.jl:282 `linearize(::Model, other; kw...)` throws `ArgumentInvalid(call = :linearize, argument = :taps, reason = :not_a_tap_set)`, and src/sim.jl:1171 forwards the Simulation method to it. test/test_linearize.jl:469-470 pins this. Probe P002 shows a bare NamedTuple gives `DiagnosticError{ArgumentInvalid}` with `:not_a_tap_set`, not `ReadSetMisuse`. The code has been this way since its first commit, 4f795b30, as the increment 54 brief planned (brief lines 137 and 330). The walkthrough was promoted afterwards (c347a010) with the wrong kind, and no record covers the difference.",
+   "class": "deviation",
+   "fix": "`taps` returns a `Taps` value holding three `Reads`, so a bare NamedTuple handed to `linearize` is refused as `ArgumentInvalid` with reason `:not_a_tap_set`.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "K14b-003",
+   "conforms": false,
+   "evidence": "Probe P003: `_resolve_selector` gives `StateRead{Float64, ()}(0)` and `StateRead{Float64, ()}(1)` at the nominal activation. The x entries `_resolve_taps` keeps are `(1, DerivRead{Dual{LinearizeTag,Float64,8}, ()}(0))` and `(2, DerivRead{Dual8, ()}(1))` (src/linearize.jl:507-511). The offsets 0 and 1 agree. The chain parameter is `()`, not `Nothing`. At 4f795b30 the entry was `StateRead{P,I}` with an index field, so `I = Nothing` matched then. Commit 0c2ac39c ('Take a leaf address on every read selector and bake its step chain into the compiled read', D-276) replaced it with the chain `C`.",
+   "class": "drift",
+   "fix": "| `x.θ` | `StateRead{Float64,()}(offset = 0)`, kept as `(1, DerivRead{Dual,()}(offset = 0))` | `xbuf[1]`, and `ẋbuf[1]` for its derivative |\n| `x.ω` | `StateRead{Float64,()}(offset = 1)`, kept as `(2, DerivRead{Dual,()}(offset = 1))` | `xbuf[2]`, `ẋbuf[2]` |",
+   "clear": false,
+   "note": "The table could instead show only the nominal StateRead with `()`, since the prose below speaks of the StateRead baking the offset. Either wording is faithful to the code, so the fix is not unique."
+  },
+  {
+   "id": "K14b-ok-029",
+   "conforms": true,
+   "evidence": "src/linearize.jl:500-502 refuses a StoreRead in x as `:discrete_state`. The message at src/diagnostics.jl:2164-2169 names the discrete component and 'the recorded next move is the sampled-data step map Φ'. Probe P029 prints that message for get_state(\"ctl\", :acc), and test/test_linearize.jl:373-375 pins it."
+  },
+  {
+   "id": "K14b-004",
+   "conforms": true,
+   "evidence": "src/linearize.jl:434 keeps one `seeded_by` dict across the x and u lists, and :455-458 refuses the later tap as `:duplicate_site` naming the earlier label. Probe P004 gives `(:b, :duplicate_site, :x, :a)` and `(:again, :duplicate_site, :u, :τ)`. y has no site key (:475), so y taps repeat freely (test/test_linearize.jl:444-446).",
+   "note": "The 'one in each' case cannot arise. An x site key is an xbuf slot Int (:472) and a u site key is a (CellAddr, index) tuple (:473), so they never collide (probe P004 prints `1` against `(CellAddr((3,)), 0)`). The shared dict would catch such a collision, so the doc is not contradicted, but the phrase describes a case that never happens. Dropping 'or one in each' would be more exact."
+  },
+  {
+   "id": "K14b-ok-037",
+   "conforms": true,
+   "evidence": "src/linearize.jl:309-318. The default form only restores the checkpoint (`_restore_state!`, :311). The `about` form runs resolve_condition, `assert_total` (:316), `apply!` and `_round!(nominal_exec, ESTABLISH)` (:318)."
+  },
+  {
+   "id": "K14b-005",
+   "conforms": false,
+   "evidence": "src/linearize.jl:357-369 loops `for group in Iterators.partition(1:N, width)`. It reads x rows with `for (i, (_, entry)) in enumerate(x_entries)` and `_readback!(A, B, i, _read(entry, seeded_exec), group, n_x)` (:363-364). The entry is the DerivRead half of an `(site, DerivRead)` pair, and `_read` takes the executor itself (src/readers.jl:590). `_readback!` (linearize.jl:578-586) fills only the group's columns. No `ẋbuf_at` exists in src/, and `git log -S'ẋbuf_at'` finds only c347a010, the walkthrough's own commit. The grouped loop has been there since the first code commit, 4f795b30, which predates the walkthrough's promotion. No record covers the full-column sketch.",
+   "class": "deviation",
+   "fix": "for group in Iterators.partition(1:N, width)        # one evaluation per group of `width` directions\n    # seed the group's sites, then evaluate!(exec)\n    for (i, (_, entry)) in enumerate(x_entries)      # rows of A and B; entry is the DerivRead\n        ẋ₀[i] = _readback!(A, B, i, _read(entry, exec), group, n_x)\n    end\n    for (i, entry) in enumerate(y_entries)           # rows of C and D\n        y₀[i] = Float64(_readback!(C, D, i, _read(entry, exec), group, n_x))\n    end\nend\n# _readback! writes partial `pos` of the group's direction k into A/C (k ≤ n_x) or B/D (k > n_x)",
+   "clear": false,
+   "backing_entry": "",
+   "note": "D-272 backs the code's grouping, which the walkthrough's own section 7 describes. No entry backs the doc's full-column loop. Writing the sketch with or without the `_readback!` helper are both faithful, so the fix is not unique."
+  },
+  {
+   "id": "K14b-ok-048",
+   "conforms": true,
+   "evidence": "test/test_linearize.jl:107-110 checks A, B, C, D to atol 1e-12. test/test_linearize.jl:265-272 runs widths (1, 3, LINEARIZE_WIDTH = 8) and requires `same_linearization` (field-wise ==). Probe P048 prints `closed: true  bitwise: true`."
+  },
+  {
+   "id": "K14b-006",
+   "conforms": false,
+   "evidence": "No test does this. rg for finite/quotient/1e-6/perturb in test/test_linearize.jl and the other linearize callers (test/test_library.jl, test/test_trace.jl, test/test_failures.jl, examples/test/test_longitudinal.jl) finds no finite-difference witness. Every linearize test compares against closed forms or other linearizations. The increment 54 brief plans no such test (its only hit, line 224, says 'nothing here is a finite difference'). design/pending.md has no bullet owing it.",
+   "class": "deviation",
+   "fix": "Replace 'Two checks the tests make, independently of the mechanism:' with 'One check the tests make, independently of the mechanism:' and drop the 'Finite differences as a witness' bullet. Or keep a sentence that [§14.10] and [D-266] keep every perturbation-based path out of the framework.",
+   "clear": false,
+   "backing_entry": "",
+   "note": "The alternative is a defect-style fix: add the test-side finite-difference witness to test/test_linearize.jl."
+  }
+ ],
+ "notes": "All probes ran in one script, run three times while fixing harness errors: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K14b_v/probe.jl. It includes test/imports.jl and test/fixtures.jl from W, and every line cited is a line of W at bd471af7. No tracked file was edited and nothing was committed. 7 of the 12 claims conform: K14b-ok-001, -012, -020, -029, -037, -048 and K14b-004. K14b-004 conforms, but its 'one in each' case can never arise (x and u site keys have different shapes), so dropping the phrase would be more exact. 5 do not conform. K14b-001 (drift, commit 29c3f5b6) and K14b-003 (drift, commit 0c2ac39c / D-276) are stale. K14b-002, K14b-005 and K14b-006 are deviations: the code or tests have differed since increment 54's code commit 4f795b30, and no record covers the doc's text."
+}

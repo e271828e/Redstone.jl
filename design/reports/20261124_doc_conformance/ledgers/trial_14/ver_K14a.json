@@ -1,0 +1,65 @@
+{
+ "judgments": [
+  {
+   "id": "K14a-001",
+   "conforms": false,
+   "evidence": "`git cat-file -t daf3298d` at W fails (\"Not a valid object name\"). The commit that settled row 139 / D-139 on 2026-08-05 is f2658bc1 (\"Adjudicate round-4 dry-run finding 3 (row 139): give environment handles value-level constructors...\"). The walkthrough was added the same day in d60be1b2, which already carried the dangling hash at both places.",
+   "class": "drift",
+   "fix": "Replace `daf3298d` with `f2658bc1` at line 7 (\"...during the round-4 dry-run adjudication (commit `f2658bc1`)\") and at line 561 (\"For the record, commit `f2658bc1`, decision [D-139][d-139]:\").",
+   "clear": true,
+   "note": "The hash resolves to no object in the repo, which suggests a history rewrite. The git history is what records the real commit."
+  },
+  {
+   "id": "K14a-002",
+   "conforms": true,
+   "evidence": "src/trim.jl:72 (`condition`: a function of the decisions `d` that returns a condition, closing over everything fixed for the problem, trim.jl:55-56). src/trim.jl:597 calls `problem.condition(guess)`. Probe P3: a closure `d -> decide_u(d)` that captures a user `params` record converged (u = 2.899)."
+  },
+  {
+   "id": "K14a-004",
+   "conforms": false,
+   "evidence": "`rg design_world` finds no definition in src/, test/ or examples/. design/log.md:2454-2456 (the D-071 annotation of 2026-10-20) says \"no source ships a `design_world`; it is the rig this design records for design-time work (§14.9)\". design/spec.md:14230-14231 and 17107 use \"the rig this design records\".",
+   "class": "drift",
+   "fix": "This is the rig this design records for design tasks, `design_world(ac)`. No source ships it.",
+   "clear": true
+  },
+  {
+   "id": "K14a-006",
+   "conforms": false,
+   "evidence": "Probe P1: `condition(\"c.u\" => 1.0)` raises MethodError, and no method of `condition` takes a Pair. src/conditions.jl:116-135 defines `condition(c; kw...)` only as a component's keyword method. Root inputs are written with `set(u = ...)` at the authoring level, scoped with `at` (conditions.jl:137-176 and the walk to the root input at 622-643). Probe P1: `init!(sim, at(\"c\", set(u = (u = 2.5,))))` sets root input `in` to 2.5. Paths use slashes, not dots (D-040, log.md:1472-1488).",
+   "class": "drift",
+   "fix": "Write the baseline's environment layer with the algebra: `combine(at(\"atmosphere\", set(u = (T_sl = T_sl, p_sl = p_sl, wind = wind))), at(\"terrain\", set(u = (elevation = 0.0,))))` at lines 269 and 345, the same shape with `env.*` at 726, and `set(u = (atm = atm, trn = trn))` for the aircraft-as-root rigs at 314 and 383.",
+   "clear": false,
+   "note": "No version of the spec ever had a pair-keyed `condition(\"path\" => value)` form. The spec (§14.1, §14.2) and D-040 record the actual form, and the companion sketch never matched it. The fix is unclear because it touches five sketches and assumes the atmosphere and terrain input face names."
+  },
+  {
+   "id": "K14a-009",
+   "conforms": true,
+   "evidence": "src/conditions.jl:631-642 (`_root_input` pushes ConditionResolution `:internally_wired` with the producer). Probe P2: `at(\"c\", set(u = (u = 1.0,)))` on a `c/u` fed by `ctl/u` is refused as ConditionResolution :internally_wired, and the message names `c`'s face `u` and its producer `ctl/u`. Backed by D-427 (log.md:17358)."
+  },
+  {
+   "id": "K14a-012",
+   "conforms": false,
+   "evidence": "src/model.jl:459-462. `overlay!` resolves with `bases = _store_values(model.exec)`, so a partial entry merges onto the current stores (docstring model.jl:418-420). design/spec.md:12859-12861 says \"applied through `init!` it overlays the declared defaults, and applied through `overlay!` it overlays the stopped run's stores\". design/log.md:2155-2158 (D-063 annotation 2026-10-20) records that the rejected current-stores base returns as `overlay!`'s base (D-429).",
+   "class": "drift",
+   "fix": "§14.1's overlay base for `init!` is always the declared defaults, never the stopped sim's current stores. Only `overlay!` takes the current stores, and it takes its trace header after the overlay settles. That base exists precisely to keep a condition's meaning independent of history.",
+   "clear": true
+  },
+  {
+   "id": "K14a-013",
+   "conforms": true,
+   "evidence": "src/trim.jl:754-761 (the committed checks outside tolerance give `@warn logline(TrimCommitChecks(...))`). src/diagnostics.jl:2319-2322 (severity :warning). TrimReport carries `committed_checks` (trim.jl:194). Probe P3: one Warn log record \"TrimCommitChecks: ...\", and the report has committed_checks = (θ = 0.05,). spec.md:11299-11301 says trim! \"logs ... `TrimCommitChecks` beside it\".",
+   "note": "\"Raises\" means warns here. The warning is logged beside the report, not stored in a report field. This matches the spec's and D-262's own wording."
+  },
+  {
+   "id": "K14a-016",
+   "conforms": true,
+   "evidence": "src/trim.jl:604-608 (`c0 = problem.checks(gathered, guess)` and `_check_equations(:checks, c0, ...)` in the guess evaluation's collected throw, before any backend call). Probe P4: a checks return with the wrong key set is refused as TrimProblemInvalid field=:checks reason=:key_set, the counting backend is called 0 times, and the lifecycle stays :built. test/test_trim.jl:503-513 covers the same case."
+  },
+  {
+   "id": "K14a-021",
+   "conforms": true,
+   "evidence": "src/readers.jl:213 `get_deriv(path, leaf)`, readers.jl:293 `get_face(leaf)`, readers.jl:551 `reads(; selectors...) -> Reads`. Probe P5: `reads(v̇ = get_deriv(\"c\", :ω), θf = get_face(\"θ\"))` returns Reads{NamedTuple{(:v̇, :θf)}}."
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K14a_v/probe.jl. It ran twice against W at bd471af7; the first run failed on a `using Logging` import. I edited no tracked file. Four of the nine claims do not conform: 001, 004, 006 and 012. K14a-006 is the broadest: every `condition(\"path\" => value, ...)` sketch in the walkthrough (lines 269, 314, 345, 383, 726) uses a form that never existed in the spec or the code."
+}

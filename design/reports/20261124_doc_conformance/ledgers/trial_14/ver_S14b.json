@@ -1,0 +1,72 @@
+{
+ "judgments": [
+  {
+   "id": "S14b-004",
+   "conforms": true,
+   "evidence": "assert_total runs at src/model.jl:314 and src/sim.jl:841 (init!), src/trim.jl:598 (trim setup) and src/linearize.jl:316 (about form). The trim commit is the model's own init! (src/trim.jl:565, 729). Probe lines 56-62 print UninitializedInputs with op :trim!, :init! and :linearize, each with [:in]."
+  },
+  {
+   "id": "S14b-001",
+   "conforms": false,
+   "evidence": "src/conditions.jl:701-703 compares Set(plan.faces) with structure.root_inputs, and the call sites pass build.structure (src/trim.jl:598, src/model.jl:314, src/sim.jl:841, src/linearize.jl:316). Build has no input_faces field (src/build.jl:703-710; probe line 63 prints hasfield(Build, :input_faces) = false). input_faces exists only as a per-component accessor (src/assembly.jl:435). The check does run before any write: probe line 56 shows status :built.",
+   "class": "deviation",
+   "fix": "Each compares the resolved plan's root-input coverage against the root inputs the `Build`'s structure lists (`structure.root_inputs`) before writing anything.",
+   "clear": true,
+   "backing_entry": "",
+   "note": "The code has never read a Build-level input_faces. Increment 18 (29a25b61) compared against flat.slots, and later renames led to structure.root_inputs. The operand's data is the same as input_faces(root). The log repeats the wording at design/log.md:2305 and 5861."
+  },
+  {
+   "id": "S14b-012",
+   "conforms": true,
+   "evidence": "src/trim.jl:729 calls commit!(override(baseline, problem.condition(solution))), and commit! is init!(model, condition; t0 = origin) (src/trim.jl:565)."
+  },
+  {
+   "id": "S14b-002",
+   "conforms": false,
+   "evidence": "src/trim.jl:665-666 packs the bounds by name, as lower = Float64[problem.lower[k] for k in decision_names] (and the same for upper). No NamedTuple{keys(guess)}(lower) reorder appears anywhere in the code. The type-level reorder is used only for residuals (src/trim.jl:653, 700). The behaviour matches: probe line 75 shows a permuted lower packed as [-π/2, -Inf] in guess order (θ, u).",
+   "class": "deviation",
+   "fix": "They are then read out in `guess`'s field order by name (`lower[k]` for each `k` in `keys(guess)`).",
+   "clear": false,
+   "backing_entry": "D-151",
+   "note": "D-151 rules a type-level reorder NamedTuple{canonical_names}(y) at every seam, decisions and bounds included. Changing the doc to the code's by-name pack therefore touches D-151's wording. The other way out is to make the code use the reorder. The observable effect is the same either way."
+  },
+  {
+   "id": "S14b-021",
+   "conforms": true,
+   "evidence": "src/trim.jl:604-606 runs _check_equations on the guess-evaluation return. Probe line 88 shows a key mismatch as TrimProblemInvalid(:residuals, :key_set, [:torque] vs [:other]) and a non-real residual as TrimProblemInvalid(:residuals, :field_types, :torque => String), each after one condition evaluation. A non-Float64 tolerance is TrimProblemInvalid(:tolerances, :field_types) at setup before any evaluation (src/trim.jl:404-417), which the doc's 'checked at setup' covers.",
+   "note": "The tolerance-side type check runs at setup but before the guess evaluation, not at it. The doc says only 'checked at setup', which covers this."
+  },
+  {
+   "id": "S14b-029",
+   "conforms": true,
+   "evidence": "src/trim.jl:592, 665-666 and 674 pack tol in tolerances order and d0, lower and upper in guess order as Vector{Float64}. Probe line 75 shows d0=[0.1,0.0], lower=[-π/2,-Inf], upper=[π/2,Inf], tol=[1e-8,1e-9] for tolerances (hold, torque), r0 packed with hold first, and every type Vector{Float64}.",
+   "note": "d0 is clamped into the box before the call (src/trim.jl:674). The doc does not contradict this."
+  },
+  {
+   "id": "S14b-037",
+   "conforms": true,
+   "evidence": "src/trim.jl:596 sets the nominal clock before apply!/_round!. src/trim.jl:622 sets the seeded clock before _establish_frozen! and any eval!. _set_origin! writes the origin, t₀ and t (src/store.jl:184-188). Probe line 98 reads q̇ = -0.4 at t0 = 2//5 in both the first nominal and the first seeded evaluation."
+  },
+  {
+   "id": "S14b-003",
+   "conforms": false,
+   "evidence": "src/model.jl:337 sets the status to :built and rethrows _wrap_step(model, 0, :boundary_zero, err) for any throw, interrupts included. The docstring at src/sim.jl:812 agrees. Probe lines 107-112 show an InterruptException in the commit's boundary zero leaving trim! as StepError{InterruptException} with host :boundary_zero and boundary 0, with lifecycle :built (and model status :built).",
+   "class": "drift",
+   "fix": "An interrupt inside the commit's boundary zero moves the simulation to `built` and propagates out of `trim!` as the commit's `StepError`, like any throw there ([§13.4][s13-4], [D-223][d-223], [D-441][d-441]).",
+   "clear": true,
+   "backing_entry": "",
+   "note": "D-441 (ratified, design/log.md:18435) rules that every catch site wraps what reaches it, an InterruptException included. Its Rejected list drops 'letting the interrupt through raw'. Commit afc15682 made the change. D-223's last bullet, which says 'propagates raw', is the stale source."
+  },
+  {
+   "id": "S14b-045",
+   "conforms": true,
+   "evidence": "src/trim.jl:743-744 makes one model.exec.bodies.rhs() call and then gather_reads(reader, model.exec) on the committed state. Probe line 122 shows committed_residuals (b = 0.0,)."
+  },
+  {
+   "id": "S14b-053",
+   "conforms": true,
+   "evidence": "src/trim.jl:610-615 returns at N == 0 with status :bypassed and n_evaluations = 1, before any seeded activation or solve call. _verdict! then commits (src/trim.jl:729). Probe line 122 shows a backend that errors on any call was never called, status=bypassed, converged=true, n_eval=1 and model status :consistent. There were 2 residual calls: one for the verdict and one committed-state call after the commit."
+  }
+ ],
+ "notes": "I checked all 10 claims against W at bd471af7: 7 conform and 3 do not. I edited no tracked file and committed nothing. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S14b_v/probe.jl. I ran it twice; the first run had a wrong taps spelling for the linearize case, which I fixed. In it I defined TimedDecay locally (it lives in test_linearize.jl), plus a Bomb component and an Arming backend that raises an InterruptException only in the commit's boundary zero. I also added a Recorder backend to capture the solve arguments and a Forbidden backend that errors if called. The 3 that do not conform: S14b-003 is drift, superseded by D-441 and commit afc15682. S14b-001 is a deviation: the operand is named `Build`'s `input_faces`, but the code compares against structure.root_inputs. S14b-002 is a deviation: the bounds are packed by name, not by the type-level reorder that D-151 rules, so the doc text is backed by D-151 and that fix is not clear-cut."
+}

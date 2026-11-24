@@ -1,0 +1,132 @@
+{
+ "judgments": [
+  {
+   "id": "C14-007",
+   "conforms": false,
+   "evidence": "design/code_map.md:882 lists D-167, which src/linearize.jl:518 cites. design/log.md:6586 gives D-167's status as `superseded → D-263`. D-263's Position (log.md:11286) carries the permissive reading with `Pinned` as its spelling, and linearize.jl cites D-263 twice. spec_rules.md:115 says never to cite a superseded entry.",
+   "class": "drift",
+   "fix": "Spec: §9.7, §14.4, §14.10, D-036, D-168, D-197, D-213, D-263, D-272, D-274, ... (D-263 in place of D-167, moved with the comment at linearize.jl:518)",
+   "clear": true,
+   "note": "This follows C14-006. If the comment keeps D-167, the map line matches the file as it stands."
+  },
+  {
+   "id": "C14-ok-57",
+   "conforms": true,
+   "evidence": "src/conditions.jl:125 has `combine(at(\"engine\", condition(sys.engine; n_eng)), …)`. Spec 12933-12944 (§14.2) writes `condition(eng::PistonEngine; n_eng)` and `at(\"pwp/engine\", condition(sys.pwp.engine; n_eng))`. The keyword is the example's own, and only the path is shortened."
+  },
+  {
+   "id": "C14-001",
+   "conforms": false,
+   "evidence": "src/conditions.jl:177 is `_payload(name, p) = p !== nothing || throw(... :set_payload ...)`. In the probe, `set(x = 1.0)` and `set(s = :sym)` raise nothing, and only `set(x = nothing)` raises ConditionNodeMisuse :set_payload. Appendix C (spec 15771-15772) already says `:set_payload` is for a payload of `nothing` (D-437). D-437 (log.md:18179) says `set` admits a bare payload and refuses `nothing` alone. Commit dc5e833e records the change.",
+   "class": "drift",
+   "fix": "Each `set` payload is a NamedTuple or one bare value, each combinator operand is a node, and each `at` prefix is nonempty. A `set` payload of `nothing` is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC]). A bare payload's shape is checked at resolution ([§14.3][s14-3]).",
+   "clear": true
+  },
+  {
+   "id": "C14-ok-09",
+   "conforms": true,
+   "evidence": "src/conditions.jl:513-551 (via structure.jl:1129/1140 for the prefix walk) and _report_violations at conditions.jl:454. In the probe, one condition with seven faults gave one DiagnosticError with 7 entries: PathResolution :unknown_child, then ConditionResolution :undeclared_field, :no_store (tier=:discrete), :assembly_path and :unconvertible."
+  },
+  {
+   "id": "C14-ok-01",
+   "conforms": true,
+   "evidence": "src/conditions.jl:655-662 (`_undeclared`). In the probe, `set(x = (out = 1.0,))` on a component with output `out` gave ConditionResolution :undeclared_field with role=:output_port. `set(x = (tmp = 1.0,))` on a workspace field `tmp` gave :undeclared_field with role=:workspace."
+  },
+  {
+   "id": "C14-005",
+   "conforms": false,
+   "evidence": "src/conditions.jl:669-670 cites D-166 for a frozen discrete `s` and for a leaf a `Pinned` declaration holds. D-166 (log.md:6484-6486) concerns `Type{T}` output signatures and is `superseded → D-263`. D-263 (log.md:11272ff) rules the `Pinned` marker and the discrete tier's wholesale pinning. spec_rules.md:115 says never to cite a superseded entry.",
+   "class": "drift",
+   "fix": "# is the non-nominal case: at a seeded activation the leaves a decision descends into are the ones the activation retyped, and a *frozen* discrete `s` (§9.4, D-263) or a leaf a `Pinned` declaration holds at `Float64` is not one of them",
+   "clear": true
+  },
+  {
+   "id": "C14-002",
+   "conforms": true,
+   "evidence": "src/conditions.jl:701-705 compares `Set(plan.faces)` against `structure.root_inputs` before any write. The callers pass `build.structure` (trim.jl:598, linearize.jl:316, model.jl:314, sim.jl:841). In the probe, `root_inputs = [:in, :e, :pu]` equals `input_faces(root) = [\"in\", \"e\", \"pu\"]`, and the shortfall was one UninitializedInputs naming [:e, :pu].",
+   "note": "The mechanism matches. The operand is stored as `build.structure.root_inputs`, the root's input faces, and `Build` has no `input_faces` field. A tighter wording would be \"against the `Build`'s root inputs\"."
+  },
+  {
+   "id": "C14-ok-41",
+   "conforms": true,
+   "evidence": "src/linearize.jl:70 and 87-89 refuse a list that is not a NamedTuple as ReadSetMisuse :not_a_tap_list. linearize.jl:391-393 makes `_tap_kind` x=GetState, u=GetInput, y=Union{GetOutput,GetFace}, and the check sits at linearize.jl:443. In the probe, a get_input in x, a get_state in u and a get_state in y each gave TapResolution :tap_kind, and a get_face in y was accepted."
+  },
+  {
+   "id": "C14-ok-49",
+   "conforms": true,
+   "evidence": "src/linearize.jl:150-172 declares `labeled` without a method, and ext/RedstoneComponentArraysExt.jl adds it. The `__init__` hint is at linearize.jl:166-173. In the probe, with only x taps, A and C were ComponentArrays, u₀ and y₀ plain Vector{Float64}, and D plain Matrix{Float64}. test/test_linearize.jl:579-590 checks the hint in a child process."
+  },
+  {
+   "id": "C14-008",
+   "conforms": false,
+   "evidence": "In the probe, linearize with width=0 gives ArgumentInvalid :nonpositive_width (linearize.jl:292). A t0 without about gives :t0_without_about (linearize.jl:294). A non-tap-set second argument gives :not_a_tap_set (linearize.jl:283). trim!(model, 1) gives :not_a_problem (trim.jl:569). A t0 of 1//0 or big(2)^70 gives :range (model.jl:375-376, 350). rg finds none of these reason names in spec.md. §14.10 (14343-14347) names only the kind for t0, says nothing of a width below 1, and Appendix C's ArgumentInvalid entry (15887-15915) lists none of them. D-420 names :t0_without_about only in its Rationale.",
+   "class": "deviation",
+   "fix": "Add to Appendix C's ArgumentInvalid entry: \"`linearize` refuses a `width` below 1 as `:nonpositive_width`, a `t0` without `about` as `:t0_without_about` ([D-420][d-420]), and a second argument that is no tap set as `:not_a_tap_set`; `trim!` refuses one that is no `TrimProblem` as `:not_a_problem`. A `t0` handed to `init!`, `trim!` or `linearize` that is not exact or whose run the clock's integers cannot carry is `:range` ([D-457][d-457]).\" Also add to §14.10: \"A `width` below 1 is refused as `ArgumentInvalid`.\"",
+   "clear": false,
+   "backing_entry": "D-420 (t0 without about), D-457 (t0 form), D-272 (width)",
+   "note": "The width-below-1 refusal adds a rule that §14.10 does not state, so it goes past wording."
+  },
+  {
+   "id": "C14-004",
+   "conforms": true,
+   "evidence": "src/linearize.jl:499-502 refuses a StoreRead in the x list as `_tap_violation(read, :discrete_state)`. In the probe the result was TapResolution label=:acc, selector=get_state(\"ctl\", :acc), tap=:x, path=\"ctl\", field=:acc, reason=:discrete_state, and the message says \"`ctl` is a discrete component\". The reason itself fixes the tier, and Appendix C (15809) lists `:discrete_state, a discrete store`.",
+   "note": "There is no separate `tier` field. The tier is in hand through the reason and the message."
+  },
+  {
+   "id": "C14-006",
+   "conforms": false,
+   "evidence": "src/linearize.jl:517-518 cites D-167 for \"a continuous one pins by declaration\". D-167 is `superseded → D-263` (log.md:6586), and its annotation (log.md:6640-6643) moves \"demands frozen\" to D-263's `Pinned{P}`. D-263's Position (log.md:11286-11288) now states the ruling. spec_rules.md:115 says never to cite a superseded entry.",
+   "class": "drift",
+   "fix": "# activation's scalar, named with its tier and its declared entry: a continuous one pins by declaration (D-263), a discrete one by tier (§8.2).",
+   "clear": true,
+   "note": "Other code sites cite D-167 too: build.jl:896, build.jl:1644, diagnostics.jl:2190/2210. The last one emits \"D-167\" in a message's citation."
+  },
+  {
+   "id": "C14-ok-17",
+   "conforms": true,
+   "evidence": "src/readers.jl:441-465 (resolve_leaf). In the probe, `.a` on an isbits struct resolves. `.a` on a non-isbits immutable struct or on a Symbol is :opaque_leaf. `[1]` on Float64 is :not_indexable. `[2]` on an SVector and `[1,2]` on an SMatrix resolve. `.x` on an SVector is :no_such_field.",
+   "note": "resolve_leaf would enter a mutable struct (in the probe, MutS `.a` resolved). Port and store vocabularies refuse mutable types upstream (spec 996-997, D-438), so no user path reaches it."
+  },
+  {
+   "id": "C14-010",
+   "conforms": true,
+   "evidence": "src/sim.jl:1113-1114 and 1145-1147 defer to the model's method. That method's docstring has `# Keywords` bullets for about, t0 and width (linearize.jl:258-264) and for baseline, t0 and backend (trim.jl:547-557). The sim methods take the same keywords with the same defaults (sim.jl:1119-1120, 1153-1154). docstring_rules.md rule 4 makes a keyword list optional.",
+   "note": "The statement is accurate, and no rule requires a keyword list on the sibling."
+  },
+  {
+   "id": "C14-003",
+   "conforms": false,
+   "evidence": "src/trim.jl:125 is `reads = problem.reads isa Reads ? at(prefix, problem.reads) : problem.reads`, and the docstring at trim.jl:116-118 states it. In the probe, `at(\"rig\", p).reads === p.reads` for a NamedTuple reads, and trim! then raises TrimProblemInvalid :not_a_read_set. The spec sketch's unconditional `at(prefix, p.reads)` raises ConditionNodeMisuse :not_a_node instead (probe). No spec or log text records the pass-through, and code_map.md:1478-1480 names it as code fact only.",
+   "class": "deviation",
+   "fix": "Sketch line: `reads = p.reads isa Reads ? at(prefix, p.reads) : p.reads,  #inert selector data: the prefix is prepended to the read set's mount chain; anything else passes through for setup to refuse`. Prose at 14154: \"The `reads` field is a read set, and the lift prepends the prefix to the set's mount chain (...). A `reads` that is no read set passes through, so that `trim!`'s setup refuses it as `TrimProblemInvalid`.\"",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "C14-011",
+   "conforms": true,
+   "evidence": "design/code_map.md:1474-1496. code_map.md:3-12 says an entry names constructs and cites their sections, not every helper. Every construct it names exists, including `at`'s pass-through of a non-read-set (trim.jl:125). The setup checks (trim.jl:368-470) carry out the spec's TrimProblemInvalid (§14.7, Appendix C) and are no deviation that code_rules.md:10-15 would require the map to name.",
+   "note": "TrimTag goes unnamed while the linearize entry names LinearizeTag (code_map.md:832). That is a possible symmetry nit, not a mismatch."
+  },
+  {
+   "id": "C14-ok-25",
+   "conforms": true,
+   "evidence": "src/trim.jl:370-400 (_check_decisions!). In the probe, permuted bound keys still converged. A bound with an extra key gave :key_set with names=[:u, :w] and expected=[:u]. An Int bound gave :field_types with bad=[:u => Int64]. lower=2.0 with upper=1.0 gave :inverted_box with key=:u, value=2.0, bound=1.0."
+  },
+  {
+   "id": "C14-ok-33",
+   "conforms": true,
+   "evidence": "src/trim.jl:610-616 returns `status = :bypassed, n_evaluations = 1, n_iterations = 0` before the seeded half. In the probe, guess=(;) gave status=bypassed, converged=true, evals=1, iters=0."
+  },
+  {
+   "id": "C14-009",
+   "conforms": false,
+   "evidence": "src/trim.jl:666-674 clamps the guess into the box once, `d0 = clamp.(...)`, before `solve`. The setup evaluation at trim.jl:597 still uses the unprojected guess. In the probe, guess u=10.0 in box [-1, 3] showed condition calls at 10.0, 10.0, then 3.0, and returned solution u=3.0, status=stalled, saturated=[(:u, :upper)]. §14.8 (13792-13802) says only that d0 is packed and that bounds are honored by step projection (D-070). The trim! docstring (trim.jl:500-557) and the TrimProblem docstring (trim.jl:24-66) are silent on it, and no log or pending text records it.",
+   "class": "deviation",
+   "fix": "Add to §14.8's \"Box bounds and saturated decisions\": \"The search starts from the guess projected into the box, so a guess outside it starts at the nearest point inside, and every point the backend sees and returns lies in the box. Setup's guess evaluation reads the guess as authored.\" Add to the `trim!` or `TrimProblem` docstring: \"The search starts from the guess clamped into the bounds.\"",
+   "clear": true,
+   "backing_entry": "D-070"
+  }
+ ],
+ "notes": "I edited no tracked file. My one probe script is at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/C14_v/probe.jl, run from W with JULIA_LOAD_PATH=\"@\" julia --project=test. The final run covered every behavioural claim. Findings: C14-001 is a stale §14.2 sentence (Appendix C already has the D-437 wording). C14-005, C14-006 and C14-007 cite D-166 or D-167, both superseded by D-263. I applied spec_rules.md:115 by analogy, since code_rules.md has no rule on citations. If the user accepts superseded citations in code for rulings that survive, those three become conforming. C14-003, C14-008 and C14-009 are code behaviour no doc records. C14-002 and C14-004 conform in substance, with wording notes."
+}

@@ -1,0 +1,66 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-064: 2172-2193
+D-068: 2300-2337
+D-069: 2338-2379
+D-070: 2380-2419
+D-071: 2420-2465
+D-098: 3324-3361
+D-118: 4066-4101
+D-124: 4278-4303
+D-126: 4347-4372
+D-150: 5890-5937
+D-155: 6096-6125
+D-158: 6184-6214
+D-188: 7573-7592
+D-197: 7893-7924
+D-204: 8175-8208
+D-213: 8541-8580
+D-224: 9135-9161
+D-262: 11199-11271
+D-272: 12145-12240
+D-278: 12658-12692
+D-405: 16649-16700
+D-415: 17052-17069
+D-416: 17070-17096
+D-417: 17097-17116
+D-418: 17117-17150
+D-419: 17151-17176
+D-420: 17177-17196
+D-421: 17197-17225
+D-422: 17226-17252
+D-423: 17253-17274
+D-424: 17275-17304
+D-425: 17305-17324
+D-426: 17325-17357
+D-427: 17358-17380
+D-428: 17381-17413
+D-430: 17507-17527
+D-475: 20918-20998
+
+# Stage M leads
+names missing: `BuildError` at log.md:2396 (D-070)
+names missing: `NLoptBackend` at log.md:2385 (D-070)
+names missing: `SystemsInitializer` at log.md:2313 (D-068)
+names missing: `TrimParameters` at log.md:2348 (D-069)
+names missing: `TrimParameters` at log.md:4077 (D-118)
+names missing: `UninitializedSlots` at log.md:2306 (D-068)
+names missing: `capture` at log.md:3332 (D-098)
+names missing: `capture` at log.md:6108 (D-155)
+names missing: `capture` at log.md:12161 (D-272)
+names missing: `design_world` at log.md:2440 (D-071)
+names missing: `f_init!` at log.md:2438 (D-071)
+names missing: `fragment` at log.md:16654 (D-405)
+names missing: `fragment_payload` at log.md:16661 (D-405)
+names missing: `get_local` at log.md:3330 (D-098)
+names missing: `get_slot` at log.md:3330 (D-098)
+names missing: `get_slot` at log.md:4285 (D-124)
+names missing: `init_x` at log.md:4284 (D-124)
+names missing: `init_x` at log.md:7898 (D-197)
+names missing: `output_types` at log.md:4284 (D-124)
+names missing: `ready_for_taxi` at log.md:2313 (D-068)
+names missing: `stopval` at log.md:17208 (D-421)
+names missing: `subsystem` at log.md:20939 (D-475)
+names missing: `trim_condition` at log.md:2350 (D-069)
+names missing: `α_a` at log.md:2179 (D-064)
+names missing: `α_filt` at log.md:2179 (D-064)
+names missing: `θ_constraint` at log.md:2355 (D-069)

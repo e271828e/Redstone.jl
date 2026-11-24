@@ -1,0 +1,82 @@
+{
+ "judgments": [
+  {
+   "id": "S14a-001",
+   "conforms": true,
+   "evidence": "src/assembly.jl:730 gives m_init a CONTINUOUS tier vote; probe.jl:29 shows a discrete component declaring m_init is refused (DeclarationOnWrongTier :tier_form); probe.jl:33 shows set(m=…) on the discrete ctl is ConditionResolution :no_store, and probe.jl:34 resolves m on continuous trig. src/conditions.jl:318-319 flattens x, s, m (and u) payloads."
+  },
+  {
+   "id": "S14a-010",
+   "conforms": true,
+   "evidence": "No condition method or converter takes a Checkpoint (rg over src finds none). probe.jl:62-64: combine(ck), at(p, ck) and init!(sim, ck) are ConditionNodeMisuse :not_a_node; probe.jl:65: a checkpoint as a set payload is refused at resolution (:store_shape)."
+  },
+  {
+   "id": "S14a-085",
+   "conforms": true,
+   "evidence": "External pointer checked against the local Flight.jl checkout: /Users/miguel/.julia/dev/Flight.jl/lib/FlightCore/src/modeling.jl:8 exports f_init!, and lines 200-206 define it as the per-model init method that models extend (default no-op, MethodError on leftover arguments)."
+  },
+  {
+   "id": "S14a-019",
+   "conforms": true,
+   "evidence": "src/conditions.jl:32, 53, 73, 93 define Fragment, Scoped, Combined and Override; :111 ConditionNode = Union of the four; set builds Fragment (:169-172), at builds Scoped (:207), combine builds Combined (:239), override builds Override (:258)."
+  },
+  {
+   "id": "S14a-023",
+   "conforms": false,
+   "evidence": "src/conditions.jl:176-179 `_payload` refuses only `nothing` (`p !== nothing || throw(...)`); probe.jl:37-38,40 show set(x = 1.0), set(s = (1,2), m = \"str\") and set(u = [1.0]) all build a Fragment without error.",
+   "class": "drift",
+   "fix": "Composition checks three things, each by type or length alone, and none allocates. No `set` payload is `nothing`, each combinator operand is a node, and each `at` prefix is nonempty.",
+   "clear": true,
+   "note": "D-437 (log.md:18177-18180) rules that `set` admits a bare payload and refuses `nothing` alone; D-438 likewise for stores; commit dc5e833e made the change. Appendix C (spec.md:15771-15772) already says `:set_payload` is for a payload of `nothing`."
+  },
+  {
+   "id": "S14a-024",
+   "conforms": false,
+   "evidence": "src/conditions.jl:176-179 raises ConditionNodeMisuse :set_payload only for a payload of `nothing` (probe.jl:39); a non-NamedTuple payload such as 1.0 or [1.0] is accepted (probe.jl:37,40) and checked at resolution as a bare payload (src/conditions.jl:322-326).",
+   "class": "drift",
+   "fix": "A `set` payload of `nothing` is `ConditionNodeMisuse` with reason `:set_payload`, the payload named ([Appendix C][sC], [D-437][d-437]).",
+   "clear": true,
+   "note": "Recorded by D-437/D-438 and commit dc5e833e; Appendix C at spec.md:15771 already carries the new wording."
+  },
+  {
+   "id": "S14a-030",
+   "conforms": true,
+   "evidence": "src/conditions.jl:353 (path via resolve_authored, PathResolution), :524-531 (store/field declared, :no_store, :store_shape, :undeclared_field), :532-534 (convertibility, :unconvertible), :654-669 (face reaches root input via export chain), :394-409 and :519 (_check_duplicates!, root-input key at :314)."
+  },
+  {
+   "id": "S14a-039",
+   "conforms": true,
+   "evidence": "src/conditions.jl:532 takes leaf_type = typeof(fields[entry.field]) from the activation's resolved declarations and converts at resolution (:533); compile_plan bakes it per leaf as Authored{position,leaf_type} (src/conditions.jl:874-876, 885)."
+  },
+  {
+   "id": "S14a-049",
+   "conforms": true,
+   "evidence": "src/readers.jl:152 ReadSelector = Union{GetState,GetDeriv,GetOutput,GetInput,GetFace}; :188, 213, 243 take (path, leaf = \"\"), :269, 293 take (leaf = \"\"); probe.jl:43-45 return the empty leaf."
+  },
+  {
+   "id": "S14a-058",
+   "conforms": true,
+   "evidence": "src/readers.jl:442-468 resolve_leaf checks each step against the declared type once and returns the chain tuple; :478-489 walk_steps is @generated, unrolling getfield/getindex at compile time."
+  },
+  {
+   "id": "S14a-067",
+   "conforms": true,
+   "evidence": "src/executor.jl:523-524 admits every Gated entry under ESTABLISH; src/model.jl:700 boundary_zero! uses ESTABLISH, and :656-657 run_ticks! passes index 0 to the Φ₀-gated updates. probe.jl:56-58: an offset ZOH and accumulator at Relative(2,1) publish 3.0 and 7.0 at t0, and the authored acc stays 7.0 (no s_update)."
+  },
+  {
+   "id": "S14a-076",
+   "conforms": false,
+   "evidence": "src/model.jl:271 and :318 declare `t0 = 0`; so do src/sim.jl:751, :831, :1121 and src/trim.jl:560. The default is the integer 0, held exact (probe.jl:59 clock origin 0//1).",
+   "class": "drift",
+   "fix": "**`t₀` is an init-service argument** (default `0`), never a condition entry, because time is not a store of any component ([D-067][d-067]).",
+   "clear": true,
+   "note": "Commit c58ce63d (D-457, hold the origin exact) replaced `t0::Real = 0.0` with `t0 = 0`. spec.md:15270 already writes the default as `0`."
+  },
+  {
+   "id": "S14a-077",
+   "conforms": true,
+   "evidence": "src/trim.jl:643-647 each iteration is apply! through the specialized plan, then evaluate! (src/model.jl:615-621: sweep_1, sweep_2, rhs), with no boundary, events or s_update; the setup round at :600 is the sweep only; the commit is init! (src/trim.jl:565), which alone runs boundary_zero! (src/model.jl:334)."
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S14a_v/probe.jl, run once against W at bd471af7. No tracked file was edited and nothing was committed. Three claims fail, all drift. S14a-023 and S14a-024 still say a `set` payload must be a NamedTuple, but D-437/D-438 (commit dc5e833e) changed this so that only `nothing` is refused, and Appendix C already says so. S14a-076 gives the t0 default as `0.0`, but D-457 (commit c58ce63d) made it the exact integer `0`. The external pointer S14a-085 was checked against the local Flight.jl checkout, not W."
+}

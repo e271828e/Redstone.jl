@@ -1,0 +1,11 @@
+names missing: `n_eng` in a docstring near src/conditions.jl:125
+names missing: `q_eb` in a docstring near src/readers.jl:225
+names missing: `q_eb` in a docstring near src/readers.jl:346
+names missing: `MyBackend` in a docstring near src/trim.jl:217
+citation superseded: D-166 at src/conditions.jl:670 (superseded → [D-263][d-263])
+citation superseded: D-167 at src/linearize.jl:518 (superseded → [D-263][d-263])
+signature: conditions.jl:115 condition: shown, not accepted: [:kw]
+signature: conditions.jl:115 condition: on a signature, not listed: [:kw]
+signature: readers.jl:530 reads: on a signature, not listed: [:selectors]
+signature: trim.jl:42 TrimProblem: on a signature, not listed: [:lower, :upper]
+signature: sim.jl:1136 linearize: on a signature, not listed: [:about, :t0, :width]

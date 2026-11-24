@@ -1,0 +1,478 @@
+{
+ "rows": [
+  {
+   "id": "K14b-001",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 327,
+   "kind": "mech",
+   "claim": "Trim's seeded half builds its executor with `_scratch(sim, T, act)`",
+   "evidence": "src/trim.jl:603 reads `seeded_exec = _scratch(model, T).exec`; `_scratch` takes (model, T) only (src/model.jl:143-144). The activation is looked up inside `Model(deployment, T)`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "seeded_exec = _scratch(model, T).exec                # buffers at T, die with the call",
+   "note": "The other lines of the snippet match src/trim.jl:600-624 up to simplification (`_seeded` takes `Val` keys, `_establish_frozen!` takes `model.deployment.build`)."
+  },
+  {
+   "id": "K14b-002",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 375,
+   "kind": "law",
+   "claim": "A bare NamedTuple handed to `linearize` gets the directive refusal `reads` gives (`ReadSetMisuse`)",
+   "evidence": "src/linearize.jl:282-284 refuses any non-Taps second argument as ArgumentInvalid(call=:linearize, argument=:taps, reason=:not_a_tap_set); test/test_linearize.jl:468-469; probe:D (first fail line). ReadSetMisuse comes only from `taps(...)` on a bad list (probe:D, taps(x=2.0)).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`taps` returns a `Taps` value holding three `Reads`, so a bare NamedTuple handed to `linearize` is refused as `ArgumentInvalid` with reason `:not_a_tap_set`, and a list that is not a NamedTuple of selectors is refused by `taps` as `ReadSetMisuse`.",
+   "note": "The spec (§14.10) does not name ReadSetMisuse for a bare NamedTuple at `linearize`; no spec line agrees with the companion."
+  },
+  {
+   "id": "K14b-003",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 396,
+   "kind": "mech",
+   "claim": "`x.θ` resolves to `StateRead{Dual,Nothing}(offset = 0)`, `x.ω` to `StateRead{Dual,Nothing}(offset = 1)`",
+   "evidence": "src/linearize.jl:512-518: the x entry the pass keeps is the pair (xbuf slot, `DerivRead{retype(T,P),C}(entry.offset)`); probe:C4 prints `(1, DerivRead{Dual{LinearizeTag,Float64,4},()}(0))` and `(2, DerivRead{...,()}(1))`. The chain parameter is `()`, not `Nothing`, and the `StateRead` is only the nominal intermediate.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "| `x.θ` | `(1, DerivRead{Dual,()}(0))` | seed slot `xbuf[1]`, and the derivative read at `ẋbuf[1]` |   (and `(2, DerivRead{Dual,()}(1))` for `x.ω`)",
+   "note": "The offsets 0 and 1 are right. The prose at L403-407 (a `StateRead` bakes the `xbuf` offset) should say the resolved `x` entry pairs that site with a `DerivRead`."
+  },
+  {
+   "id": "K14b-004",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 452,
+   "kind": "law",
+   "claim": "Two taps resolving to one site are refused 'in `x`, in `u`, or one in each'",
+   "evidence": "src/linearize.jl:462-466 and 475-479: an `x` site is an Int (`xbuf` slot), a `u` site is a tuple (cell addr, linear index), so a key from one list never equals one from the other. probe:H: an `x` and a `u` tap in one set give no failure. test/test_linearize.jl:425-433 covers only same-list duplicates. Spec §14.10 says only 'a second tap resolving to a site already seeded'.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "- **Two taps resolving to one site**, in `x` or in `u`: a second seed at a site would overwrite the first ...",
+   "note": "The spec (design/spec.md:14294-14296) does not carry 'one in each' either, so the spec and the code agree and only the companion differs."
+  },
+  {
+   "id": "K14b-005",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 557,
+   "kind": "mech",
+   "claim": "The readback loop is `for (i, entry) in enumerate(x_entries)` with `_read(entry, ẋbuf_at(exec))` and a per-column `partials` loop over all columns",
+   "evidence": "src/linearize.jl:370-378: x entries are `(site, DerivRead)` pairs read as `_read(entry, seeded_exec)`; the partials split goes through `_readback!` (src/linearize.jl:564-571) once per group of `width` columns, inside the `Iterators.partition` loop. `ẋbuf_at` appears nowhere in src/.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "for (i, (_, entry)) in enumerate(x_entries)         # rows of A and B\n    ẋ₀[i] = _readback!(A, B, i, _read(entry, seeded_exec), group, n_x)\nend\nfor (i, entry) in enumerate(y_entries)              # rows of C and D\n    y₀[i] = Float64(_readback!(C, D, i, _read(entry, seeded_exec), group, n_x))\nend",
+   "note": "`_readback!` writes the group's partials into the `x` matrix for columns up to n_x and into the `u` matrix after. The snippet's two column ranges are right in effect."
+  },
+  {
+   "id": "K14b-006",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 638,
+   "kind": "law",
+   "claim": "The tests perturb one root input by 1e-6 through `about`, linearize twice and compare the difference quotient of ẋ₀ to a column of B",
+   "evidence": "No such test: rg '1e-6' test/test_linearize.jl is empty, and the testsets at test/test_linearize.jl:103-590 hold no finite-difference witness. probe:L1 shows the quotient (1.0000000001) matches B[:,1] = [0,1], so the check would pass.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Say the witness is a check one can run, not one the suite makes: '- **Finite differences as a witness.** Perturbing one root input by `1e-6` through `about` and linearizing twice gives a difference quotient of ẋ₀ that matches the corresponding column of B. The suite does not run it; ...' Or add the test.",
+   "note": "The sentence at L632 'Two checks the tests make' also needs the change if the bullet stays untested."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K14b-ok-001",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 26,
+   "kind": "decl",
+   "claim": "Root Group of Sum and Pendulum with the stated local, input and output wires builds",
+   "evidence": "probe:6-15; test/test_linearize.jl:16-18"
+  },
+  {
+   "id": "K14b-ok-002",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 33,
+   "kind": "decl",
+   "claim": "Sum is stateless, e = sa*a + sb*b, defaults sa=1, sb=-1",
+   "evidence": "test/fixtures.jl:275-281"
+  },
+  {
+   "id": "K14b-ok-003",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 37,
+   "kind": "decl",
+   "claim": "Pendulum declarations match the fixture; g/l = 9.81, c = 0.5",
+   "evidence": "test/fixtures.jl:1769-1776"
+  },
+  {
+   "id": "K14b-ok-004",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 48,
+   "kind": "mech",
+   "claim": "Faces θ and u_eff alias the pendulum's and the sum's output cells",
+   "evidence": "probe:C7 (addr (\"\",θ) equals (\"c\",θ); (\"\",u_eff) equals (\"s\",e))"
+  },
+  {
+   "id": "K14b-ok-005",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 59,
+   "kind": "law",
+   "claim": "n_x=n_u=n_y=2, D nonzero",
+   "evidence": "test/test_linearize.jl:103-117"
+  },
+  {
+   "id": "K14b-ok-006",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 94,
+   "kind": "law",
+   "claim": "A, B, C, D closed forms with A21 = -9.372 at θ0=0.3",
+   "evidence": "test/test_linearize.jl:107-110; probe:A14 (-9.371850958322195)"
+  },
+  {
+   "id": "K14b-ok-007",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 101,
+   "kind": "law",
+   "claim": "Trim torque 9.81 sin 0.3 ≈ 2.899 gives ω̇0 = 0",
+   "evidence": "probe:A12, probe:A13 (ẋ₀ = [0,0])"
+  },
+  {
+   "id": "K14b-ok-008",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 112,
+   "kind": "why",
+   "claim": "Lead FiniteDiff: Flight.jl prior art, not a Redstone name",
+   "evidence": "design/spec.md:14398-14400 names it as Flight.jl's package"
+  },
+  {
+   "id": "K14b-ok-009",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 152,
+   "kind": "ex",
+   "claim": "Hand dual computation of ω̇ gives value 0 and derivative -9.372",
+   "evidence": "probe:B4, probe:B1"
+  },
+  {
+   "id": "K14b-ok-010",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 184,
+   "kind": "decl",
+   "claim": "ForwardDiff.Dual{Tag,V,N}, with value and partials accessors",
+   "evidence": "probe:B2; src/linearize.jl:567"
+  },
+  {
+   "id": "K14b-ok-011",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 194,
+   "kind": "ex",
+   "claim": "Four-wide seed dual example and its four partials (-9.372,-0.5,1,-1); LinTag lead is a local name",
+   "evidence": "probe:B1; src/linearize.jl:31 names LinearizeTag"
+  },
+  {
+   "id": "K14b-ok-012",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 214,
+   "kind": "mech",
+   "claim": "Width N is part of the Dual type, so a new width is a new type",
+   "evidence": "probe:B2; src/linearize.jl:270"
+  },
+  {
+   "id": "K14b-ok-013",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 218,
+   "kind": "law",
+   "claim": "An unseeded Float64 behaves as a zero-partial dual; convert gives it",
+   "evidence": "probe:B3; probe:B1"
+  },
+  {
+   "id": "K14b-ok-014",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 232,
+   "kind": "mech",
+   "claim": "activation(build,T) returns a cached activation per T; SomeTag lead is a placeholder",
+   "evidence": "probe:C3; src/linearize.jl:333"
+  },
+  {
+   "id": "K14b-ok-015",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 238,
+   "kind": "mech",
+   "claim": "retype walks the type; Pinned entry stripped at top by retype_entry, nothing inside follows T",
+   "evidence": "src/leaves.jl:281-303"
+  },
+  {
+   "id": "K14b-ok-016",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 250,
+   "kind": "mech",
+   "claim": "Executor owns xbuf and ẋbuf at T and a store with a buffer per element type",
+   "evidence": "src/build.jl:1414-1420; probe:C9"
+  },
+  {
+   "id": "K14b-ok-017",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 260,
+   "kind": "mech",
+   "claim": "Component order s,c; Sum block empty, Pendulum 1:2",
+   "evidence": "probe:C2"
+  },
+  {
+   "id": "K14b-ok-018",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 267,
+   "kind": "mech",
+   "claim": "layout.addr keyed (path,name) holds the seven listed keys",
+   "evidence": "probe:C1"
+  },
+  {
+   "id": "K14b-ok-019",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 276,
+   "kind": "law",
+   "claim": "Root input cell follows T only when every consumer admits it (D-168 meet); cells Dual here",
+   "evidence": "src/build.jl:522-531; probe:C8"
+  },
+  {
+   "id": "K14b-ok-020",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 294,
+   "kind": "mech",
+   "claim": "Authored{P,L} converts the walked value to L; identity at Float64, zero-partial at Dual",
+   "evidence": "src/conditions.jl:764-766; probe:B3"
+  },
+  {
+   "id": "K14b-ok-021",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 308,
+   "kind": "law",
+   "claim": "Discrete stages are frozen at non-nominal activations; _establish_frozen! copies their cells from the nominal half",
+   "evidence": "src/build.jl:1066; src/model.jl:152-163"
+  },
+  {
+   "id": "K14b-ok-022",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 347,
+   "kind": "mech",
+   "claim": "Trim seeds enter through the condition; the plan's converters pass duals through",
+   "evidence": "src/trim.jl:603-621"
+  },
+  {
+   "id": "K14b-ok-023",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 378,
+   "kind": "law",
+   "claim": "x admits get_state, u get_input, y get_output and get_face",
+   "evidence": "src/linearize.jl:393-395"
+  },
+  {
+   "id": "K14b-ok-024",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 398,
+   "kind": "mech",
+   "claim": "u and y taps resolve to CellRead at the root-input cells and the producer cells (aliases share the address)",
+   "evidence": "probe:C5, probe:C6, probe:C7"
+  },
+  {
+   "id": "K14b-ok-025",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 403,
+   "kind": "mech",
+   "claim": "A resolved entry gives both the seed site and the readback site",
+   "evidence": "src/linearize.jl:492-496, 545-550"
+  },
+  {
+   "id": "K14b-ok-026",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 410,
+   "kind": "law",
+   "claim": "Directions run x first then u; N = n_x + n_u",
+   "evidence": "src/linearize.jl:359-361"
+  },
+  {
+   "id": "K14b-ok-027",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 416,
+   "kind": "ex",
+   "claim": "Leads addr_τ and addr_d are local pseudo-names for the cells at layout.addr",
+   "evidence": "probe:C8"
+  },
+  {
+   "id": "K14b-ok-028",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 423,
+   "kind": "law",
+   "claim": "Collected resolution, one DiagnosticError; reader misses are ReadResolution; five TapResolution reasons",
+   "evidence": "src/linearize.jl:424-448; src/diagnostics.jl:2096-2097; test/test_linearize.jl:401-418"
+  },
+  {
+   "id": "K14b-ok-029",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 430,
+   "kind": "law",
+   "claim": "A discrete store in x is refused with the tier and the step map named",
+   "evidence": "src/linearize.jl:502; probe:E (discrete_state message)"
+  },
+  {
+   "id": "K14b-ok-030",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 434,
+   "kind": "law",
+   "claim": "Unseedable root input names pinning consumer and entry; a discrete consumer names the tier and the continuous cell or step map",
+   "evidence": "src/diagnostics.jl:2201-2220; probe:E, probe:F"
+  },
+  {
+   "id": "K14b-ok-031",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 445,
+   "kind": "law",
+   "claim": "Unindexed vector leaf refused; q[1], qin[1] address one scalar",
+   "evidence": "src/linearize.jl:521-527; probe:G"
+  },
+  {
+   "id": "K14b-ok-032",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 450,
+   "kind": "law",
+   "claim": "A selector of the wrong kind in a list is refused (:tap_kind)",
+   "evidence": "src/linearize.jl:437-440; test/test_linearize.jl:407-408"
+  },
+  {
+   "id": "K14b-ok-033",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 455,
+   "kind": "law",
+   "claim": "Duplicate site in one list refused naming the earlier label; y taps may repeat",
+   "evidence": "src/linearize.jl:462-470; probe:H; test/test_linearize.jl:425-445"
+  },
+  {
+   "id": "K14b-ok-034",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 466,
+   "kind": "decl",
+   "claim": "Default width is 8",
+   "evidence": "src/linearize.jl:30"
+  },
+  {
+   "id": "K14b-ok-035",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 468,
+   "kind": "mech",
+   "claim": "Default point is checkpoint(sim): flat buffer, stores, table, priors, clock",
+   "evidence": "src/checkpoint.jl:50-63; src/sim.jl:1167"
+  },
+  {
+   "id": "K14b-ok-036",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 471,
+   "kind": "law",
+   "claim": "Default form legal in initialized/stopped, refused mid-frame; about legal where init! is, takes t0",
+   "evidence": "src/sim.jl:880-883, 1160-1165; src/linearize.jl:250-253"
+  },
+  {
+   "id": "K14b-ok-037",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 476,
+   "kind": "mech",
+   "claim": "Nominal half: default restores the checkpoint, no apply or round; about applies, assert_total, one establishment round",
+   "evidence": "src/linearize.jl:303-315; probe:K"
+  },
+  {
+   "id": "K14b-ok-038",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 486,
+   "kind": "mech",
+   "claim": "Seeded half at Dual{LinearizeTag,Float64,width}: x copy, s/m stores, root inputs converted, clock, frozen copy",
+   "evidence": "src/linearize.jl:317-347"
+  },
+  {
+   "id": "K14b-ok-039",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 498,
+   "kind": "mech",
+   "claim": "Seed writes put unit partials at xbuf slots and root-input cells",
+   "evidence": "src/linearize.jl:359-366, 545-550"
+  },
+  {
+   "id": "K14b-ok-040",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 509,
+   "kind": "mech",
+   "claim": "evaluate! runs sweep_1, sweep_2, rhs; Sum row of D is τ-d partials",
+   "evidence": "src/model.jl:615-621; test/test_linearize.jl:107-110"
+  },
+  {
+   "id": "K14b-ok-041",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 524,
+   "kind": "mech",
+   "claim": "Readback gives eight results x₀,u₀,ẋ₀,y₀,A,B,C,D with the stated values",
+   "evidence": "probe:A13; src/linearize.jl:370-384"
+  },
+  {
+   "id": "K14b-ok-042",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 570,
+   "kind": "law",
+   "claim": "Pure query: scratch executors die, sim untouched; returns Linearization with plain arrays and labels; labeled converts",
+   "evidence": "src/linearize.jl:380-384; probe:I; probe:J"
+  },
+  {
+   "id": "K14b-ok-043",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 586,
+   "kind": "mech",
+   "claim": "Directions run in ceil(N/width) groups at one activation; setup once, seeds and evaluate! repeat",
+   "evidence": "src/linearize.jl:361-369"
+  },
+  {
+   "id": "K14b-ok-044",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 598,
+   "kind": "decl",
+   "claim": "build(m; activations = (Float64, LinearizeDual)) pre-materializes the default width",
+   "evidence": "test/test_linearize.jl:276-283; src/linearize.jl:34"
+  },
+  {
+   "id": "K14b-ok-045",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 605,
+   "kind": "ex",
+   "claim": "With a DiscreteAccumulator ctl, the A is the pendulum's open-loop A; x tap on ctl refused",
+   "evidence": "probe:E1; probe:E"
+  },
+  {
+   "id": "K14b-ok-046",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 614,
+   "kind": "ex",
+   "claim": "Root input read only by ctl is refused by tier for a u tap",
+   "evidence": "probe:E; test/test_linearize.jl:380-384"
+  },
+  {
+   "id": "K14b-ok-047",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 622,
+   "kind": "ex",
+   "claim": "PinnedGain with a root input τ: u tap refused naming g and its entry",
+   "evidence": "probe:F; test/test_linearize.jl:386-391"
+  },
+  {
+   "id": "K14b-ok-048",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 634,
+   "kind": "law",
+   "claim": "Closed form to 1e-12; widths 1, 3, 8 bitwise equal",
+   "evidence": "test/test_linearize.jl:107-110, 262-273; probe:A15"
+  },
+  {
+   "id": "K14b-ok-049",
+   "file": "design/companions/linearization_walkthrough.md",
+   "line": 644,
+   "kind": "law",
+   "claim": "Sim lifecycle, latest and xbuf unchanged; pre-materialized default width makes no new activation",
+   "evidence": "probe:I; test/test_linearize.jl:144, 281"
+  }
+ ],
+ "counts": {
+  "law": 16,
+  "mech": 27,
+  "decl": 6,
+  "ptr": 9,
+  "why": 10,
+  "ex": 8
+ }
+}

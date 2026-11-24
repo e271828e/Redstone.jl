@@ -1,0 +1,139 @@
+{
+ "judgments": [
+  {
+   "id": "S14c-002",
+   "conforms": true,
+   "evidence": "src/trim.jl:72 (keyword doc: a function of the decisions d that returns a condition); src/trim.jl:597,628,729 call problem.condition(guess/d_dual/solution); probe '002 condition called => 8'"
+  },
+  {
+   "id": "S14c-011",
+   "conforms": true,
+   "evidence": "src/trim.jl:122-127 lifts field by field: condition post-composed, reads = problem.reads isa Reads ? at(prefix, problem.reads) : problem.reads, the rest passed through; probe '011 problem lift reads prefixes => (\"wing\",)', '011 other fields same => all true'",
+   "note": "The sketch simplifies two points: the code takes prefix::AbstractString, and a reads that is not a Reads passes through untouched so trim!'s setup names it (probe '011 non-Reads reads passes through => true'), where the sketch's literal at(prefix, p.reads) would raise ConditionNodeMisuse. spec_rules.md:79-80 allows simplified sketches, so I judged this conforming. A one-line comment in the sketch could mention the guard."
+  },
+  {
+   "id": "S14c-013",
+   "conforms": true,
+   "evidence": "src/readers.jl:522-525 (Reads holds prefixes and selectors); src/conditions.jl:212-215 prepend the prefix to read_set.prefixes; probe '013 Reads? => (true, (\"wing\",), (\"lead\", \"wing\"), true)', '013 not Scoped => true'"
+  },
+  {
+   "id": "S14c-022",
+   "conforms": true,
+   "evidence": "src/conditions.jl:212-214 (ReadSetMisuse :empty_prefix); src/trim.jl:125; src/linearize.jl:84-85; probe '022 at empty on problem => (ReadSetMisuse, :empty_prefix)', '022 at empty on taps => (ReadSetMisuse, :empty_prefix)'",
+   "note": "With a reads that is not a Reads, at(\"\", problem) does not throw at composition (probe 'no throw'). trim! then refuses the problem as TrimProblemInvalid :not_a_read_set, so the claim holds for every well-formed problem."
+  },
+  {
+   "id": "S14c-043",
+   "conforms": true,
+   "evidence": "src/structure.jl:446-458 (the root's own unfed input face is the one legitimate terminus); src/build.jl:455 refuses only an opaque, non-isbits leaf at a root input; probe '043 root inputs => [:env]', '043 uncovered => UninitializedInputs [:env]', '043 init ok => initialized', '043 linearize A => [-2.0]'",
+   "note": "My isbits handle struct needed a probe_value method (MissingProbeValue, §9.3) before it would build. That is a cost of the handle type itself, not of the root-input path."
+  },
+  {
+   "id": "S14c-059",
+   "conforms": true,
+   "evidence": "src/linearize.jl:483-493 (_check_seedable: offending step if Symbol or k > 1; leaf must be <: Real then === Float64); test/test_linearize.jl:334-344; probe '059 index step ok', '059 Float32 u tap => (TapResolution, :unseedable, Float32)'"
+  },
+  {
+   "id": "S14c-069",
+   "conforms": true,
+   "evidence": "src/linearize.jl:499-502 (_seeded_tap on StoreRead → TapResolution :discrete_state); src/diagnostics.jl:2164-2169; probe '069 discrete x tap => (TapResolution, :discrete_state, :x, \"ctl\", :acc, false)' and message '`ctl` is a discrete component'",
+   "note": "The tap is the field tap = :x. The tier has no field of its own. The reason :discrete_state carries it, and the message names the component as discrete."
+  },
+  {
+   "id": "S14c-082",
+   "conforms": true,
+   "evidence": "src/linearize.jl:330-341 (each root input's checkpoint value through _convert(_port_type(addr), value)); src/conditions.jl:598-603 (_convert is Base.convert); probe '082 u₀ is checkpoint value => ([2.899053227347741], 2.899053227347741)'"
+  },
+  {
+   "id": "S14c-091",
+   "conforms": true,
+   "evidence": "src/linearize.jl:309,322 (_scratch(model, Float64), _scratch(model, T) per call); src/model.jl:143-144 (a fresh Model per call); probe '091 _scratch fresh => (true, true, true)', '091 sim untouched => (true, true, :initialized)'"
+  },
+  {
+   "id": "S14c-103",
+   "conforms": true,
+   "evidence": "src/linearize.jl:323-325 (xbuf copied with zero partials), 351-355 (only tapped sites take unit partials); probe '103 D (d unseeded) => ([1.0;;], (2, 1))'"
+  },
+  {
+   "id": "S14c-113",
+   "conforms": true,
+   "evidence": "src/build.jl:542-554 (pinning_consumers: any consumer whose entry refuses the walked type pins); src/linearize.jl:524-545; probe '113 fan-out meet => (TapResolution, :unseedable, [(\"g\", :continuous, Pinned{Float64})])' with a tolerant Gain on the same root input"
+  },
+  {
+   "id": "S14c-123",
+   "conforms": true,
+   "evidence": "src/build.jl:542-554 (a discrete consumer pins by tier); src/linearize.jl:530-545; test/test_linearize.jl:382-383; probe '123 discrete consumer root input => (TapResolution, :unseedable, [(\"ctl\", :discrete, Float64)])', '123 seeded cell type => Float64'"
+  },
+  {
+   "id": "S14c-133",
+   "conforms": true,
+   "evidence": "ext/RedstoneComponentArraysExt.jl:15-23; test/test_linearize.jl:571-576; probe '133 types': u₀, y₀ Vector{Float64}, D Matrix{Float64}, B and C ComponentMatrix with a FlatAxis"
+  },
+  {
+   "id": "S14c-168",
+   "conforms": true,
+   "evidence": "src/leaves.jl:366 (misplaced-pin hint); src/library.jl:405 (Freeze); probe '168 frozen output D row => [0.0;;]' for a Pinned{Float64} output stripped in the stage, '168 leak => ConformanceFailure ... remove its `Pinned`' when it is not stripped"
+  },
+  {
+   "id": "S14c-185",
+   "conforms": true,
+   "evidence": "src/conditions.jl:207-209 (Scoped(String(prefix), node), nothing applied); probe '185 Scoped stores => (true, (:prefix, :node), \"c\", true)'"
+  },
+  {
+   "id": "S14c-194",
+   "conforms": true,
+   "evidence": "src/sim.jl:831-832 (init!(sim, condition = set(); t0 = 0, trace = true, ...)); probe '194 trace=false => (ArgumentInvalid, :disabled)' on trace(sim)"
+  },
+  {
+   "id": "S14c-203",
+   "conforms": true,
+   "evidence": "src/trim.jl:724-729 (converged || return report; commit!(override(baseline, problem.condition(solution)))); src/sim.jl:1131-1132 (commit! = init!(sim, condition; t0)); probe '203 same checkpoint x => true', same table values, '203 nonconv => (false, :built)'"
+  },
+  {
+   "id": "S14c-212",
+   "conforms": true,
+   "evidence": "src/sim.jl:1077-1092 (restore!(sim, model_state::ModelState{Float64}; trace, log, log_every, log_max)); probe '212 method => true', '212 restored lifecycle => initialized' from checkpoint(model)"
+  },
+  {
+   "id": "S14c-221",
+   "conforms": true,
+   "evidence": "ext/RedstoneComponentArraysExt.jl:15-23; probe '133 only u types': ẋ₀, x₀, y₀ Vector, A and C Matrix, the arrays whose lists are all empty"
+  },
+  {
+   "id": "S14c-230",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1954-1971 (value, observed, declared, activation fields); src/linearize.jl:336-338"
+  },
+  {
+   "id": "S14c-239",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:2060-2065 (default severity :error, diagnostics.jl:59); src/conditions.jl:281-282 thrown singly when called; probe '239 ConditionNodeMisuse => (ConditionNodeMisuse, :error)'"
+  },
+  {
+   "id": "S14c-242",
+   "conforms": true,
+   "evidence": "src/conditions.jl:701-706 (every uncovered face in root_inputs order, one throw); src/sim.jl:840-843 (before _open_run! and any write); probe '242 => UninitializedInputs(:init!, [:d]), :error, lifecycle :built'"
+  },
+  {
+   "id": "S14c-249",
+   "conforms": true,
+   "evidence": "src/linearize.jl:488-489 and 552-554 (leaf_type <: Real || :vector_tap); probe '059/249 whole SVector x tap => (TapResolution, :vector_tap)'"
+  },
+  {
+   "id": "S14c-258",
+   "conforms": true,
+   "evidence": "src/trim.jl:427-431 and 461-463 (bad = field => observed type, reason :field_types); src/diagnostics.jl:2235; probe '258 field_types => (TrimProblemInvalid, :guess, :field_types, [:u => Int64])'"
+  },
+  {
+   "id": "S14c-267",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:2319-2322 (severity :warning); src/trim.jl:760-761 (@warn logline at the commit); probe '267 log records => (Warn, \"TrimCommitChecks: ...\")'"
+  },
+  {
+   "id": "S14c-276",
+   "conforms": true,
+   "evidence": "src/readers.jl:553-558 (ReadSetMisuse reason :not_a_selector with label and in_hand); probe '276 not_a_selector => (ReadSetMisuse, :not_a_selector, :a)'"
+  }
+ ],
+ "notes": "All 26 claims conform to the code at W (bd471af7). I edited no tracked file. My only file is the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S14c_v/probe.jl, which I ran 4 times. Two points sit at the edge of conforming. S14c-011: the spec's sketch writes reads = at(prefix, p.reads), but the code passes a reads that is not a Reads through untouched (src/trim.jl:125). spec_rules.md:79-80 allows simplified sketches, so I judged it conforming. S14c-069: TapResolution :discrete_state has no tier field of its own; the reason and the message carry the tier. One side observation, not a claim in this slice: an isbits handle used as a root input needs a probe_value method (or a zero-argument constructor) to build, which sits a little against the 'zero ceremony' wording at spec.md:14243."
+}

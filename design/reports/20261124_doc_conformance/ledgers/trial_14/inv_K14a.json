@@ -1,0 +1,208 @@
+{
+ "rows": [
+  {
+   "id": "K14a-001",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 7,
+   "kind": "ptr",
+   "claim": "Decision D-139 was settled in commit `daf3298d` (also line 561)",
+   "evidence": "git cat-file -t daf3298d in the pinned worktree: not a valid object name; no other file in W carries the hash",
+   "verdict": "unverifiable",
+   "note": "The hash is not in this repo's object database, so it may come from the Flight.jl-era history. I could not settle it without that repo."
+  },
+  {
+   "id": "K14a-004",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 146,
+   "kind": "mech",
+   "claim": "This is what `design_world(ac)` ships, the blessed default for design tasks",
+   "evidence": "rg design_world in src/ and test/ of W: no match; the name appears only in spec.md (glossary g-design_world, line 17107) and docs",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "This is what `design_world(ac)` is to be, the rig the design records for design tasks.",
+   "note": "The spec agrees with the companion (spec.md:14231-14247, 'the rig this design records'). The rig has no code yet, so 'ships' is only a plan. The same holds for ISAField, atmospheric_field, ready_for_taxi and HorizontalTerrainField, all absent from src/."
+  },
+  {
+   "id": "K14a-006",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 269,
+   "kind": "decl",
+   "claim": "`condition(\"atmosphere.T_sl\" => T_sl, ...)` writes root inputs by dotted path (also lines 314, 345, 383, 726)",
+   "evidence": "probe:P1 raises MethodError. `condition` is the component-condition generic `condition(c; kw...)` (src/conditions.jl:125-ish doc, no fallback method). The real spelling is `at(\"atmosphere\", set(u = (T_sl = ..., p_sl = ..., wind = ...)))` (src/conditions.jl:169, 207).",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Replace each `condition(\"a.b\" => v, ...)` with combine(at(\"atmosphere\", set(u = (T_sl = T_sl, p_sl = p_sl, wind = wind))), at(\"terrain\", set(u = (elevation = 0.0,)))), and `condition(\"atm\" => atm, \"trn\" => trn)` with set(u = (atm = atm, trn = trn)).",
+   "note": "Low severity. The disclaimer at lines 253-256 says root-input write spellings are illustrative. The pair form shadows the real `condition` generic and no spec or log text records it. Spec 14.9 says only that the face becomes an ordinary root input written by the baseline."
+  },
+  {
+   "id": "K14a-012",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 542,
+   "kind": "law",
+   "claim": "§14.1's overlay-base decision: the base is always the declared defaults, never the stopped sim's current stores",
+   "evidence": "spec.md:12857-12859 and D-429: `init!` overlays the declared defaults, `overlay!` overlays the stopped run's stores; src/model.jl overlay! resolves with `_store_values` as merge bases (code_map.md:885-1003)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "§14.1's overlay-base decision for `init!` and for `trim!`'s commit, which is an `init!`: the base is the declared defaults, never the stopped sim's current stores. `overlay!` is the one door that takes the stores (D-429).",
+   "note": "The spec's current text (spec.md:12857) agrees with the fix and not with 'always'. The companion predates D-429."
+  },
+  {
+   "id": "K14a-013",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 608,
+   "kind": "mech",
+   "claim": "A check outside its tolerance raises `TrimCommitChecks`, a logged warning that rides the report",
+   "evidence": "src/trim.jl:760-761 logs it with @warn; TrimReport (src/trim.jl:188-200) has no warning field and carries only the values as `committed_checks`; probe:P4 shows the warning on the log and the fields of TrimReport",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A check outside its tolerance raises `TrimCommitChecks`, a logged warning issued beside the report, which carries the values as `committed_checks`.",
+   "note": "The wording comes from D-262's Position (log.md:11199). The spec says only 'logged' (spec.md:15833, Appendix C), so the spec does not carry 'rides the report'."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K14a-002",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 44,
+   "kind": "decl",
+   "claim": "The condition function is `d -> trim_condition(ac, params, d)` closing over the aircraft and a user record",
+   "evidence": "src/trim.jl:101-102 (the `condition` keyword takes a function of the decisions)"
+  },
+  {
+   "id": "K14a-003",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 62,
+   "kind": "law",
+   "claim": "Reading the environment through `reads` is circular: reads are gathered after the sweep the condition precedes",
+   "evidence": "src/trim.jl:597-602 (condition applied and plan resolved, then rhs sweep, then gather_reads)"
+  },
+  {
+   "id": "K14a-005",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 149,
+   "kind": "law",
+   "claim": "An unconnected environment face becomes a root input that the baseline writes like any other",
+   "evidence": "src/conditions.jl:641 (a face whose producer is a root input resolves to it); test/test_conditions.jl:213-215"
+  },
+  {
+   "id": "K14a-007",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 280,
+   "kind": "decl",
+   "claim": "TrimProblem takes guess, lower, upper, condition, reads, residuals, tolerances keywords",
+   "evidence": "src/trim.jl:101-102"
+  },
+  {
+   "id": "K14a-008",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 329,
+   "kind": "law",
+   "claim": "`trim!(sim, cruise; baseline)` is mounted at the root, no `at` needed",
+   "evidence": "probe:P4 (unmounted problem on a Simulation commits and reports); src/sim.jl:1120"
+  },
+  {
+   "id": "K14a-009",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 335,
+   "kind": "law",
+   "claim": "A condition entry naming a wired input fails resolution by name",
+   "evidence": "src/conditions.jl:641-642 (ConditionResolution :internally_wired, carries path and face); test/test_conditions.jl:216-220"
+  },
+  {
+   "id": "K14a-010",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 506,
+   "kind": "mech",
+   "claim": "Dual seeding gives exact Jacobians, each extra decision one more seeded direction through the same sweep",
+   "evidence": "src/trim.jl:620-654 (Dual{TrimTag,Float64,N}, one evaluation yields r and J)"
+  },
+  {
+   "id": "K14a-011",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 504,
+   "kind": "decl",
+   "claim": "Tolerances are per-residual numbers carried by the problem",
+   "evidence": "src/trim.jl:86-95 (tolerances field, NamedTuple of Float64 named as the residuals)"
+  },
+  {
+   "id": "K14a-014",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 602,
+   "kind": "decl",
+   "claim": "`checks` is a function of the gathered reads and decisions returning a NamedTuple; `check_tolerances` same-named; both default to empty",
+   "evidence": "src/trim.jl:81-84, 101-102; probe:P5"
+  },
+  {
+   "id": "K14a-015",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 604,
+   "kind": "mech",
+   "claim": "The service gathers checks once after the commit from the sweep the committed residuals gather from, and reports them as `committed_checks`",
+   "evidence": "src/trim.jl:735-756, 763"
+  },
+  {
+   "id": "K14a-016",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 609,
+   "kind": "law",
+   "claim": "Setup observes the check return's shape at the guess evaluation; a malformed check is refused before any solve",
+   "evidence": "src/trim.jl:604-608; probe:P6 (TrimProblemInvalid :key_set)"
+  },
+  {
+   "id": "K14a-017",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 613,
+   "kind": "law",
+   "claim": "Checks are not in the residual vector, the solver never sees them, and a failed check changes nothing about the committed state",
+   "evidence": "src/trim.jl:729, 754-761; probe:P4 (converged, committed, warning, committed_checks.θ = 0.2)"
+  },
+  {
+   "id": "K14a-018",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 631,
+   "kind": "mech",
+   "claim": "The backend is a least-squares one",
+   "evidence": "src/trim.jl:560 (default LevenbergMarquardt)"
+  },
+  {
+   "id": "K14a-019",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 739,
+   "kind": "decl",
+   "claim": "combine(at(path, set(x = ...)), at(path, set(x = ...)), set(u = ...)) builds a condition",
+   "evidence": "src/conditions.jl:169, 207, 239"
+  },
+  {
+   "id": "K14a-020",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 764,
+   "kind": "decl",
+   "claim": "TrimProblem accepts checks and check_tolerances keywords",
+   "evidence": "src/trim.jl:101-102"
+  },
+  {
+   "id": "K14a-021",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 751,
+   "kind": "decl",
+   "claim": "reads(name = get_deriv(path, leaf), name = get_face(leaf)) builds the read set",
+   "evidence": "src/readers.jl:551; get_deriv src/readers.jl:213; get_face src/readers.jl:293"
+  },
+  {
+   "id": "K14a-022",
+   "file": "design/companions/trim_environment_walkthrough.md",
+   "line": 769,
+   "kind": "mech",
+   "claim": "`trim!(sim, at(\"aircraft\", cruise); baseline)` returns the report",
+   "evidence": "src/sim.jl:1120-1127; at on a TrimProblem src/trim.jl:122"
+  }
+ ],
+ "counts": {
+  "law": 14,
+  "mech": 12,
+  "decl": 14,
+  "ptr": 28,
+  "why": 36,
+  "ex": 12
+ }
+}

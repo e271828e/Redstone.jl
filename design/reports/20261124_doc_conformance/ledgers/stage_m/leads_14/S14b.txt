@@ -1,0 +1,10 @@
+names missing: `FlightCore` at spec.md:13715
+names missing: `FlightCore` at spec.md:13748
+names missing: `FlightPhysics` at spec.md:13513
+names missing: `FlightPhysics` at spec.md:14116
+names missing: `NamedTuples` at spec.md:13552
+names missing: `_i` at spec.md:13829
+names missing: `r_i` at spec.md:13829
+names missing: `sC` at spec.md:14027
+names missing: `sC` at spec.md:14032
+names missing: `sum_i` at spec.md:13829
