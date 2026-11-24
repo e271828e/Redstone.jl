@@ -376,28 +376,28 @@
       "additionalProperties": false
     },
     "Timing": {
-      "description": "The anchor a primitive or a scope hangs from (0 the base grid), its period multiple and its phase in that anchor's ticks.",
+      "description": "The anchor a primitive or a scope hangs from (0 the base grid), and its divisor `D` and its phase `phi` in that anchor's ticks.",
       "type": "object",
       "properties": {
         "anchor": { "type": "integer", "minimum": 0 },
-        "m": { "type": "integer", "minimum": 1 },
-        "c": { "type": "integer", "minimum": 0 }
+        "D": { "type": "integer", "minimum": 1 },
+        "phi": { "type": "integer", "minimum": 0 }
       },
-      "required": ["anchor", "m", "c"],
+      "required": ["anchor", "D", "phi"],
       "additionalProperties": false
     },
     "RateLink": {
-      "description": "One `sample_times` link of a primitive's chain, outermost first, as the component row holds it: `scope`, the declaring assembly's path, \"\" for the root; `key`, the key as written, a container's bare field name included; and the entry, a Relative's `K` and `phi` or an Absolute's `dt` and `tau`. The timing alone does not determine the chain: an explicit Relative(1) changes no timing.",
+      "description": "One `sample_times` link of a primitive's chain, outermost first, as the component row holds it: `scope`, the declaring assembly's path, \"\" for the root; `key`, the key as written, a container's bare field name included; and the entry, a Relative's `D` and `phi` or an Absolute's `dt` and `tau`. The timing alone does not determine the chain: an explicit Relative(1) changes no timing.",
       "oneOf": [
         {
           "type": "object",
           "properties": {
             "scope": { "type": "string" },
             "key": { "type": "string" },
-            "K": { "type": "integer", "minimum": 1 },
+            "D": { "type": "integer", "minimum": 1 },
             "phi": { "type": "integer", "minimum": 0 }
           },
-          "required": ["scope", "key", "K", "phi"],
+          "required": ["scope", "key", "D", "phi"],
           "additionalProperties": false
         },
         {
