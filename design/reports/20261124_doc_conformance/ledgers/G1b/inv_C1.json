@@ -1,0 +1,1966 @@
+{
+ "rows": [
+  {
+   "id": "C1-001",
+   "file": "design/spec.md",
+   "line": 15411,
+   "kind": "law",
+   "claim": "Every kind's payload carries paths and names as strings, never instances",
+   "evidence": "src/diagnostics.jl:376-381 (UnknownPort.port, UnconnectedInput.face, EventHalfMissing.event, ConformanceFailure.field, HandlerReturnKey.key are Symbol)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Paths and names as strings or symbols, never component instances or component types; expected and observed port types are the one exception.",
+   "note": "Face, port, event, key and store names are Symbol fields in most kinds; only paths and type names are String. The same rule is worded the same way at 11235."
+  },
+  {
+   "id": "C1-047",
+   "file": "design/spec.md",
+   "line": 15484,
+   "kind": "mech",
+   "claim": "The Declaration and wiring group is the kinds raised by the structure step",
+   "evidence": "src/build.jl:1012 (cell_layout inside _nominal raises IllegalPortType placement arms and MissingProbeValue, build.jl:417-475); src/build.jl:1154-1159 (DeclarationOnWrongTier :continuous_only and :no_manifold raised in probe_stage2)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "**Declaration and wiring** (the structure step, and the layout and `x_projection` checks of the nominal evaluation that read the same declarations):",
+   "note": "MissingProbeValue, IllegalPortType's :no_leaves, :mutable, :handle_at_root and stop-flag arms, and DeclarationOnWrongTier's x_projection arms are raised during the nominal evaluation, not the structure step. Their own raised field says only 'build'."
+  },
+  {
+   "id": "C1-065",
+   "file": "design/spec.md",
+   "line": 15502,
+   "kind": "decl",
+   "claim": "WireTypeMismatch carries both face names, empty where a side is bare",
+   "evidence": "src/diagnostics.jl:~442-449 (fields path, face, producer_path, producer_port); probe output: bare Float64 into bare Int gives face=:u, producer_port=:y",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Consumer path and face name, producer path (empty for a root input) and port name, declared entry type, producer face type.",
+   "note": "A bare contract takes its default face u or y (D-437), so no face name is ever empty. Only producer_path is empty, for a root input (build.jl:929). The payload names the consumer's face and the producer's port, not two face names."
+  },
+  {
+   "id": "C1-205",
+   "file": "design/spec.md",
+   "line": 15654,
+   "kind": "decl",
+   "claim": "ProducedByTwoStages carries one port name",
+   "evidence": "src/diagnostics.jl:1055-1058 (ports::Vector{Symbol}); src/build.jl:1207-1208; probe output ports=[:a, :b]",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Component path, the ports both stages write (`ports`; `y` on a bare contract).",
+   "note": "One diagnostic names every port in the intersection of the two stages."
+  },
+  {
+   "id": "C1-209",
+   "file": "design/spec.md",
+   "line": 15659,
+   "kind": "decl",
+   "claim": "DeclaredNotProduced carries one declared name",
+   "evidence": "src/diagnostics.jl:1066-1070 (ports::Vector{Symbol}); src/build.jl:1113-1115; probe output ports=[:b]",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Component path, the declared ports no stage produces (`ports`; `y` on a bare contract), the stage-product list and the state-field list, the latter as context.",
+   "note": "One diagnostic per component holds all its unproduced ports, as a vector."
+  }
+ ],
+ "ok": [
+  {
+   "id": "C1-002",
+   "file": "design/spec.md",
+   "line": 15411,
+   "kind": "law",
+   "claim": "The list-in-hand rides wherever a did-you-mean renders",
+   "evidence": "src/diagnostics.jl:380 (UnknownPort.candidates), 1196 area and 520 (candidates fields)"
+  },
+  {
+   "id": "C1-003",
+   "file": "design/spec.md",
+   "line": 15418,
+   "kind": "mech",
+   "claim": "Severity is a property of the kind, read as severity(d)",
+   "evidence": "src/diagnostics.jl:59"
+  },
+  {
+   "id": "C1-004",
+   "file": "design/spec.md",
+   "line": 15419,
+   "kind": "law",
+   "claim": "Severity takes error or warning; EmptyFaceSelection is the one warning in this group",
+   "evidence": "src/diagnostics.jl:59,755; probe:severity methods listing"
+  },
+  {
+   "id": "C1-005",
+   "file": "design/spec.md",
+   "line": 15421,
+   "kind": "law",
+   "claim": "An error occurrence throws, alone or within a collection",
+   "evidence": "src/build.jl:773-779"
+  },
+  {
+   "id": "C1-006",
+   "file": "design/spec.md",
+   "line": 15422,
+   "kind": "law",
+   "claim": "A step that produced an error throws before the next step begins",
+   "evidence": "src/build.jl:776-779,787"
+  },
+  {
+   "id": "C1-007",
+   "file": "design/spec.md",
+   "line": 15423,
+   "kind": "law",
+   "claim": "A warning never throws and joins no throw",
+   "evidence": "src/diagnostics.jl:196-198"
+  },
+  {
+   "id": "C1-008",
+   "file": "design/spec.md",
+   "line": 15424,
+   "kind": "mech",
+   "claim": "A warning renders with a collection when its step throws",
+   "evidence": "src/build.jl:784; probe:carrier warnings [:EmptyFaceSelection]"
+  },
+  {
+   "id": "C1-009",
+   "file": "design/spec.md",
+   "line": 15424,
+   "kind": "mech",
+   "claim": "A warning is logged beside a returned value",
+   "evidence": "src/build.jl:815-817"
+  },
+  {
+   "id": "C1-010",
+   "file": "design/spec.md",
+   "line": 15425,
+   "kind": "mech",
+   "claim": "A warning can ride the runtime stream",
+   "evidence": "src/dataplane.jl:36-41"
+  },
+  {
+   "id": "C1-011",
+   "file": "design/spec.md",
+   "line": 15429,
+   "kind": "mech",
+   "claim": "BundleFieldError is raised at the probe",
+   "evidence": "src/declare.jl:985"
+  },
+  {
+   "id": "C1-012",
+   "file": "design/spec.md",
+   "line": 15429,
+   "kind": "mech",
+   "claim": "BundleFieldError is a StepError species thereafter",
+   "evidence": "src/model.jl:1125"
+  },
+  {
+   "id": "C1-014",
+   "file": "design/spec.md",
+   "line": 15434,
+   "kind": "mech",
+   "claim": "The build has three steps",
+   "evidence": "src/build.jl:779-799"
+  },
+  {
+   "id": "C1-015",
+   "file": "design/spec.md",
+   "line": 15435,
+   "kind": "mech",
+   "claim": "Build stage covers declarative passes and user code (declaration body, probe)",
+   "evidence": "src/declare.jl:968,985; src/structure.jl:535"
+  },
+  {
+   "id": "C1-016",
+   "file": "design/spec.md",
+   "line": 15443,
+   "kind": "law",
+   "claim": "Collected: gathered with siblings and thrown as one carrier",
+   "evidence": "src/build.jl:773"
+  },
+  {
+   "id": "C1-017",
+   "file": "design/spec.md",
+   "line": 15444,
+   "kind": "mech",
+   "claim": "A declarative pass's violations are the DiagnosticError of the step barrier",
+   "evidence": "src/build.jl:773,779"
+  },
+  {
+   "id": "C1-018",
+   "file": "design/spec.md",
+   "line": 15445,
+   "kind": "law",
+   "claim": "Every pass that ran under the dependency rule merges into the one throw",
+   "evidence": "src/build.jl:770-779"
+  },
+  {
+   "id": "C1-019",
+   "file": "design/spec.md",
+   "line": 15446,
+   "kind": "law",
+   "claim": "A check that stops the step collects over its own unit",
+   "evidence": "src/build.jl:121-140"
+  },
+  {
+   "id": "C1-020",
+   "file": "design/spec.md",
+   "line": 15447,
+   "kind": "law",
+   "claim": "That check throws its list at once",
+   "evidence": "src/build.jl:139"
+  },
+  {
+   "id": "C1-021",
+   "file": "design/spec.md",
+   "line": 15451,
+   "kind": "law",
+   "claim": "Fail-fast: the first occurrence throws on its own, nothing else gathered",
+   "evidence": "src/assembly.jl:62"
+  },
+  {
+   "id": "C1-022",
+   "file": "design/spec.md",
+   "line": 15452,
+   "kind": "law",
+   "claim": "At build the first user-code failure aborts the phase",
+   "evidence": "src/declare.jl:968,990"
+  },
+  {
+   "id": "C1-023",
+   "file": "design/spec.md",
+   "line": 15453,
+   "kind": "law",
+   "claim": "At a service call the first violation is the throw",
+   "evidence": "src/build.jl:400"
+  },
+  {
+   "id": "C1-024",
+   "file": "design/spec.md",
+   "line": 15454,
+   "kind": "law",
+   "claim": "At runtime a fail-fast kind reaches the catch site as a StepError species",
+   "evidence": "src/model.jl:1125; src/diagnostics.jl:245"
+  },
+  {
+   "id": "C1-025",
+   "file": "design/spec.md",
+   "line": 15456,
+   "kind": "law",
+   "claim": "Logged covers the build and the Deployment constructor",
+   "evidence": "src/build.jl:815; src/deployment.jl:604"
+  },
+  {
+   "id": "C1-026",
+   "file": "design/spec.md",
+   "line": 15458,
+   "kind": "mech",
+   "claim": "The warning lives on the artifact the call returns",
+   "evidence": "src/build.jl:795; src/deployment.jl:600"
+  },
+  {
+   "id": "C1-027",
+   "file": "design/spec.md",
+   "line": 15459,
+   "kind": "mech",
+   "claim": "The entry point logs each warning once at return via the standard backend",
+   "evidence": "src/build.jl:815-817"
+  },
+  {
+   "id": "C1-028",
+   "file": "design/spec.md",
+   "line": 15459,
+   "kind": "mech",
+   "claim": "trim! logs its warnings beside the report",
+   "evidence": "src/trim.jl:738,751,762"
+  },
+  {
+   "id": "C1-029",
+   "file": "design/spec.md",
+   "line": 15460,
+   "kind": "mech",
+   "claim": "TrimReport holds the facts",
+   "evidence": "src/trim.jl:765"
+  },
+  {
+   "id": "C1-030",
+   "file": "design/spec.md",
+   "line": 15461,
+   "kind": "law",
+   "claim": "A logged warning is part of no collection",
+   "evidence": "src/diagnostics.jl:196-198"
+  },
+  {
+   "id": "C1-031",
+   "file": "design/spec.md",
+   "line": 15461,
+   "kind": "law",
+   "claim": "There is no rate limit on logged warnings",
+   "evidence": "src/build.jl:815"
+  },
+  {
+   "id": "C1-032",
+   "file": "design/spec.md",
+   "line": 15462,
+   "kind": "law",
+   "claim": "A warning about the artifact fires at most once per call",
+   "evidence": "src/deployment.jl:591-597"
+  },
+  {
+   "id": "C1-033",
+   "file": "design/spec.md",
+   "line": 15462,
+   "kind": "mech",
+   "claim": "Its payload is drawn from the artifact the call returns",
+   "evidence": "src/deployment.jl:593-596"
+  },
+  {
+   "id": "C1-034",
+   "file": "design/spec.md",
+   "line": 15464,
+   "kind": "law",
+   "claim": "EmptyFaceSelection fires once per raising site with that site's payload",
+   "evidence": "src/assembly.jl:636-641"
+  },
+  {
+   "id": "C1-035",
+   "file": "design/spec.md",
+   "line": 15466,
+   "kind": "law",
+   "claim": "One artifact may hold several warnings of one kind",
+   "evidence": "src/diagnostics.jl:198"
+  },
+  {
+   "id": "C1-036",
+   "file": "design/spec.md",
+   "line": 15467,
+   "kind": "mech",
+   "claim": "The runtime warning stream is carried by per-writer diagnostic cells",
+   "evidence": "src/dataplane.jl:96-106"
+  },
+  {
+   "id": "C1-037",
+   "file": "design/spec.md",
+   "line": 15469,
+   "kind": "law",
+   "claim": "Every such kind is bounded per writer per boundary",
+   "evidence": "src/dataplane.jl:140-146"
+  },
+  {
+   "id": "C1-038",
+   "file": "design/spec.md",
+   "line": 15470,
+   "kind": "law",
+   "claim": "The ring retains sixteen values",
+   "evidence": "src/dataplane.jl:93"
+  },
+  {
+   "id": "C1-039",
+   "file": "design/spec.md",
+   "line": 15471,
+   "kind": "law",
+   "claim": "The excess becomes per-kind suppressed counts",
+   "evidence": "src/dataplane.jl:146"
+  },
+  {
+   "id": "C1-040",
+   "file": "design/spec.md",
+   "line": 15473,
+   "kind": "law",
+   "claim": "A rate-limited kind names subjects in its payload, never its writer",
+   "evidence": "src/diagnostics.jl:1699-1704,1717-1720"
+  },
+  {
+   "id": "C1-041",
+   "file": "design/spec.md",
+   "line": 15474,
+   "kind": "mech",
+   "claim": "The cell attributes the writer",
+   "evidence": "src/dataplane.jl:416-418"
+  },
+  {
+   "id": "C1-042",
+   "file": "design/spec.md",
+   "line": 15475,
+   "kind": "mech",
+   "claim": "The status record's who and the tail residue carry the attribution",
+   "evidence": "src/dataplane.jl:252,267"
+  },
+  {
+   "id": "C1-043",
+   "file": "design/spec.md",
+   "line": 15476,
+   "kind": "law",
+   "claim": "DeviceJoinTimeout's device id is a subject, the abandoned device",
+   "evidence": "src/diagnostics.jl:1699-1704"
+  },
+  {
+   "id": "C1-044",
+   "file": "design/spec.md",
+   "line": 15479,
+   "kind": "law",
+   "claim": "The collected-warning slot is empty",
+   "evidence": "src/diagnostics.jl:190-198; src/build.jl:773-779 (only error kinds enter diags)"
+  },
+  {
+   "id": "C1-045",
+   "file": "design/spec.md",
+   "line": 15480,
+   "kind": "mech",
+   "claim": "Build warnings live on the Build",
+   "evidence": "src/build.jl:795"
+  },
+  {
+   "id": "C1-046",
+   "file": "design/spec.md",
+   "line": 15481,
+   "kind": "law",
+   "claim": "A step that throws renders its warnings with the collection",
+   "evidence": "src/build.jl:784; probe:carrier warnings"
+  },
+  {
+   "id": "C1-048",
+   "file": "design/spec.md",
+   "line": 15486,
+   "kind": "law",
+   "claim": "UnknownPort is Error, build, collected",
+   "evidence": "src/structure.jl:112; probe:UnknownPort"
+  },
+  {
+   "id": "C1-049",
+   "file": "design/spec.md",
+   "line": 15487,
+   "kind": "decl",
+   "claim": "Wire end is :source, :destination or :connection",
+   "evidence": "src/diagnostics.jl:377; src/structure.jl:114,678"
+  },
+  {
+   "id": "C1-050",
+   "file": "design/spec.md",
+   "line": 15488,
+   "kind": "decl",
+   "claim": "Payload carries the declaring entry",
+   "evidence": "src/diagnostics.jl:376"
+  },
+  {
+   "id": "C1-051",
+   "file": "design/spec.md",
+   "line": 15489,
+   "kind": "decl",
+   "claim": "Payload carries the end's path as resolved and as written",
+   "evidence": "src/diagnostics.jl:378-379"
+  },
+  {
+   "id": "C1-052",
+   "file": "design/spec.md",
+   "line": 15489,
+   "kind": "decl",
+   "claim": "Payload carries the unknown port name",
+   "evidence": "src/diagnostics.jl:380"
+  },
+  {
+   "id": "C1-053",
+   "file": "design/spec.md",
+   "line": 15490,
+   "kind": "decl",
+   "claim": "Payload carries that end's port list",
+   "evidence": "src/structure.jl:114-116"
+  },
+  {
+   "id": "C1-054",
+   "file": "design/spec.md",
+   "line": 15490,
+   "kind": "law",
+   "claim": "A one-segment endpoint carries nothing as the port",
+   "evidence": "src/structure.jl:112-113; probe:port=nothing"
+  },
+  {
+   "id": "C1-055",
+   "file": "design/spec.md",
+   "line": 15491,
+   "kind": "law",
+   "claim": "It lists the child's face list, with no empty name standing in",
+   "evidence": "src/structure.jl:115-116; probe:candidates=[:y]"
+  },
+  {
+   "id": "C1-056",
+   "file": "design/spec.md",
+   "line": 15493,
+   "kind": "law",
+   "claim": "UnconnectedInput is Error, build, collected",
+   "evidence": "src/structure.jl:456"
+  },
+  {
+   "id": "C1-057",
+   "file": "design/spec.md",
+   "line": 15494,
+   "kind": "decl",
+   "claim": "Payload: primitive path, input name, declared entry type",
+   "evidence": "src/diagnostics.jl:139-143; src/structure.jl:456-458"
+  },
+  {
+   "id": "C1-058",
+   "file": "design/spec.md",
+   "line": 15494,
+   "kind": "law",
+   "claim": "Handed faces run innermost first, the last the outermost face nobody wired",
+   "evidence": "src/structure.jl:464-467"
+  },
+  {
+   "id": "C1-059",
+   "file": "design/spec.md",
+   "line": 15497,
+   "kind": "law",
+   "claim": "TwoProducers is Error, build, collected",
+   "evidence": "src/structure.jl:663,712"
+  },
+  {
+   "id": "C1-060",
+   "file": "design/spec.md",
+   "line": 15498,
+   "kind": "decl",
+   "claim": "Payload names the destination terminal",
+   "evidence": "src/structure.jl:663"
+  },
+  {
+   "id": "C1-061",
+   "file": "design/spec.md",
+   "line": 15498,
+   "kind": "decl",
+   "claim": "Payload names both producers with their declarations",
+   "evidence": "src/structure.jl:664-667,713-716"
+  },
+  {
+   "id": "C1-062",
+   "file": "design/spec.md",
+   "line": 15499,
+   "kind": "mech",
+   "claim": "Each producer is a terminal or the handing face",
+   "evidence": "src/structure.jl:666-667"
+  },
+  {
+   "id": "C1-063",
+   "file": "design/spec.md",
+   "line": 15501,
+   "kind": "law",
+   "claim": "WireTypeMismatch is Error, build, collected",
+   "evidence": "src/build.jl:891,929"
+  },
+  {
+   "id": "C1-064",
+   "file": "design/spec.md",
+   "line": 15502,
+   "kind": "decl",
+   "claim": "Payload carries both endpoint paths",
+   "evidence": "src/build.jl:891-893; probe:WireTypeMismatch"
+  },
+  {
+   "id": "C1-066",
+   "file": "design/spec.md",
+   "line": 15503,
+   "kind": "decl",
+   "claim": "Payload carries declared entry type and producer face type",
+   "evidence": "src/build.jl:891-893"
+  },
+  {
+   "id": "C1-067",
+   "file": "design/spec.md",
+   "line": 15505,
+   "kind": "law",
+   "claim": "WalkingFaceAtFrozenEntry is Error, build, collected",
+   "evidence": "src/build.jl:900"
+  },
+  {
+   "id": "C1-068",
+   "file": "design/spec.md",
+   "line": 15506,
+   "kind": "decl",
+   "claim": "Payload: consumer path and entry, producer path and face",
+   "evidence": "src/build.jl:900-903"
+  },
+  {
+   "id": "C1-069",
+   "file": "design/spec.md",
+   "line": 15507,
+   "kind": "decl",
+   "claim": "Payload: offending leaf and both declared leaf types",
+   "evidence": "src/build.jl:904-905"
+  },
+  {
+   "id": "C1-070",
+   "file": "design/spec.md",
+   "line": 15507,
+   "kind": "law",
+   "claim": "Both remedies appear in the message",
+   "evidence": "src/diagnostics.jl:461-469"
+  },
+  {
+   "id": "C1-071",
+   "file": "design/spec.md",
+   "line": 15510,
+   "kind": "law",
+   "claim": "PathResolution is Error at build, service path and value read",
+   "evidence": "src/structure.jl:1128; src/assembly.jl:301; src/build.jl:400"
+  },
+  {
+   "id": "C1-072",
+   "file": "design/spec.md",
+   "line": 15512,
+   "kind": "law",
+   "claim": "It is collected for wiring entries and service paths",
+   "evidence": "src/assembly.jl:301,329,337; src/structure.jl:1128"
+  },
+  {
+   "id": "C1-073",
+   "file": "design/spec.md",
+   "line": 15512,
+   "kind": "law",
+   "claim": "It is fail-fast where a declaration body calls resolve",
+   "evidence": "src/assembly.jl:377,383"
+  },
+  {
+   "id": "C1-074",
+   "file": "design/spec.md",
+   "line": 15513,
+   "kind": "law",
+   "claim": "It is fail-fast where a declaration body calls resolve_terminal",
+   "evidence": "src/assembly.jl:400"
+  },
+  {
+   "id": "C1-075",
+   "file": "design/spec.md",
+   "line": 15513,
+   "kind": "law",
+   "claim": "It is fail-fast at a value read",
+   "evidence": "src/build.jl:400"
+  },
+  {
+   "id": "C1-076",
+   "file": "design/spec.md",
+   "line": 15513,
+   "kind": "decl",
+   "claim": "Payload: entry, path as written, owner, segment, sibling list, reason",
+   "evidence": "src/diagnostics.jl:~493-501"
+  },
+  {
+   "id": "C1-077",
+   "file": "design/spec.md",
+   "line": 15515,
+   "kind": "law",
+   "claim": "The four reasons are :unknown_child, :not_a_terminal, :empty_path, :reaches_past",
+   "evidence": "src/assembly.jl:301,329,337,377"
+  },
+  {
+   "id": "C1-078",
+   "file": "design/spec.md",
+   "line": 15516,
+   "kind": "law",
+   "claim": ":reaches_past is a path going past the immediate child",
+   "evidence": "src/assembly.jl:336-341"
+  },
+  {
+   "id": "C1-079",
+   "file": "design/spec.md",
+   "line": 15517,
+   "kind": "decl",
+   "claim": ":reaches_past carries the level it stopped at",
+   "evidence": "src/assembly.jl:340"
+  },
+  {
+   "id": "C1-080",
+   "file": "design/spec.md",
+   "line": 15518,
+   "kind": "decl",
+   "claim": ":reaches_past carries whether the path ends in a port name",
+   "evidence": "src/assembly.jl:340 (tail); src/diagnostics.jl:~500"
+  },
+  {
+   "id": "C1-081",
+   "file": "design/spec.md",
+   "line": 15519,
+   "kind": "law",
+   "claim": "AbstractAtRoot is Error, build, collected",
+   "evidence": "src/build.jl:918"
+  },
+  {
+   "id": "C1-082",
+   "file": "design/spec.md",
+   "line": 15519,
+   "kind": "decl",
+   "claim": "Payload: face name, consuming paths, abstract entries",
+   "evidence": "src/build.jl:918"
+  },
+  {
+   "id": "C1-083",
+   "file": "design/spec.md",
+   "line": 15520,
+   "kind": "law",
+   "claim": "A remedy hint names a concrete producer or a rig stub child",
+   "evidence": "src/diagnostics.jl:479-486"
+  },
+  {
+   "id": "C1-084",
+   "file": "design/spec.md",
+   "line": 15522,
+   "kind": "law",
+   "claim": "RootInputTypeConflict is Error, build, collected",
+   "evidence": "src/build.jl:924"
+  },
+  {
+   "id": "C1-085",
+   "file": "design/spec.md",
+   "line": 15522,
+   "kind": "decl",
+   "claim": "Payload: face, consuming paths, conflicting concrete declarations",
+   "evidence": "src/build.jl:924-926"
+  },
+  {
+   "id": "C1-086",
+   "file": "design/spec.md",
+   "line": 15524,
+   "kind": "law",
+   "claim": "A tolerance difference is not a conflict",
+   "evidence": "src/build.jl:922-923 (compares declarations at Float64)"
+  },
+  {
+   "id": "C1-087",
+   "file": "design/spec.md",
+   "line": 15526,
+   "kind": "law",
+   "claim": "EmptyStore is Error, build, collected",
+   "evidence": "src/assembly.jl:692; probe:EmptyStore"
+  },
+  {
+   "id": "C1-088",
+   "file": "design/spec.md",
+   "line": 15527,
+   "kind": "decl",
+   "claim": "Payload: component path and the store",
+   "evidence": "src/assembly.jl:692"
+  },
+  {
+   "id": "C1-089",
+   "file": "design/spec.md",
+   "line": 15528,
+   "kind": "law",
+   "claim": "Raised when the declaration returned (;)",
+   "evidence": "src/assembly.jl:691"
+  },
+  {
+   "id": "C1-090",
+   "file": "design/spec.md",
+   "line": 15528,
+   "kind": "law",
+   "claim": "The message spells nothing, the stateless form",
+   "evidence": "src/diagnostics.jl:941-945"
+  },
+  {
+   "id": "C1-091",
+   "file": "design/spec.md",
+   "line": 15530,
+   "kind": "law",
+   "claim": "IllegalStateLeaf is Error, build, collected",
+   "evidence": "src/assembly.jl:680"
+  },
+  {
+   "id": "C1-092",
+   "file": "design/spec.md",
+   "line": 15531,
+   "kind": "decl",
+   "claim": "Payload: path, field name (x on bare store), leaf type",
+   "evidence": "src/assembly.jl:672,680"
+  },
+  {
+   "id": "C1-093",
+   "file": "design/spec.md",
+   "line": 15533,
+   "kind": "law",
+   "claim": "Reasons are :mode_value, :eltype, :nested, :wrapper",
+   "evidence": "src/assembly.jl:677-679"
+  },
+  {
+   "id": "C1-094",
+   "file": "design/spec.md",
+   "line": 15533,
+   "kind": "law",
+   "claim": "Closed vocabulary is scalar or SArray at the common eltype",
+   "evidence": "src/assembly.jl:674-676"
+  },
+  {
+   "id": "C1-095",
+   "file": "design/spec.md",
+   "line": 15535,
+   "kind": "law",
+   "claim": "StoreWithoutUpdate is Error, build, collected",
+   "evidence": "src/assembly.jl:744"
+  },
+  {
+   "id": "C1-096",
+   "file": "design/spec.md",
+   "line": 15536,
+   "kind": "decl",
+   "claim": "Payload: path and the store; the missing update follows from it",
+   "evidence": "src/assembly.jl:744; src/diagnostics.jl:536-541"
+  },
+  {
+   "id": "C1-097",
+   "file": "design/spec.md",
+   "line": 15538,
+   "kind": "law",
+   "claim": "A state declaration of nothing owes no update",
+   "evidence": "src/assembly.jl:740-745"
+  },
+  {
+   "id": "C1-098",
+   "file": "design/spec.md",
+   "line": 15539,
+   "kind": "law",
+   "claim": "EventHalfMissing is Error, build, collected",
+   "evidence": "src/build.jl:835,844"
+  },
+  {
+   "id": "C1-099",
+   "file": "design/spec.md",
+   "line": 15540,
+   "kind": "decl",
+   "claim": "Payload: path and event name",
+   "evidence": "src/build.jl:835"
+  },
+  {
+   "id": "C1-100",
+   "file": "design/spec.md",
+   "line": 15540,
+   "kind": "law",
+   "claim": "Reasons are guard half, handler half, entry not a StateEvent",
+   "evidence": "src/build.jl:835,843-846"
+  },
+  {
+   "id": "C1-101",
+   "file": "design/spec.md",
+   "line": 15541,
+   "kind": "decl",
+   "claim": "found is the component type for a half, the entry type otherwise",
+   "evidence": "src/build.jl:836,845"
+  },
+  {
+   "id": "C1-102",
+   "file": "design/spec.md",
+   "line": 15543,
+   "kind": "law",
+   "claim": "DeclarationShadowed is Error, build, fail-fast",
+   "evidence": "src/structure.jl:535"
+  },
+  {
+   "id": "C1-103",
+   "file": "design/spec.md",
+   "line": 15544,
+   "kind": "decl",
+   "claim": "Payload: path, parent module, family names",
+   "evidence": "src/structure.jl:535-537"
+  },
+  {
+   "id": "C1-104",
+   "file": "design/spec.md",
+   "line": 15544,
+   "kind": "mech",
+   "claim": "Names are family names the module binds to a non-framework function",
+   "evidence": "src/declare.jl:757-762"
+  },
+  {
+   "id": "C1-105",
+   "file": "design/spec.md",
+   "line": 15545,
+   "kind": "law",
+   "claim": "The message spells the import line",
+   "evidence": "src/diagnostics.jl:574-580"
+  },
+  {
+   "id": "C1-106",
+   "file": "design/spec.md",
+   "line": 15547,
+   "kind": "law",
+   "claim": "ClassUnreadable is Error, build, fail-fast",
+   "evidence": "src/assembly.jl:66; probe:ClassUnreadable"
+  },
+  {
+   "id": "C1-107",
+   "file": "design/spec.md",
+   "line": 15548,
+   "kind": "decl",
+   "claim": "Payload: path, type, declarations found, both family lists",
+   "evidence": "src/assembly.jl:66-70"
+  },
+  {
+   "id": "C1-108",
+   "file": "design/spec.md",
+   "line": 15548,
+   "kind": "law",
+   "claim": "Sharpens when the type holds component-typed fields",
+   "evidence": "src/assembly.jl:70; probe:holds_components=true"
+  },
+  {
+   "id": "C1-109",
+   "file": "design/spec.md",
+   "line": 15550,
+   "kind": "law",
+   "claim": "ClassMixed is Error, build, fail-fast",
+   "evidence": "src/assembly.jl:62"
+  },
+  {
+   "id": "C1-110",
+   "file": "design/spec.md",
+   "line": 15551,
+   "kind": "decl",
+   "claim": "Payload: path and the offending primitive declarations",
+   "evidence": "src/assembly.jl:62"
+  },
+  {
+   "id": "C1-111",
+   "file": "design/spec.md",
+   "line": 15552,
+   "kind": "law",
+   "claim": "ContainerMixed is collected over the child-naming pass, thrown at once",
+   "evidence": "src/assembly.jl:170,202"
+  },
+  {
+   "id": "C1-112",
+   "file": "design/spec.md",
+   "line": 15553,
+   "kind": "decl",
+   "claim": "Payload: path, field, offending keys, their types",
+   "evidence": "src/assembly.jl:170-171"
+  },
+  {
+   "id": "C1-113",
+   "file": "design/spec.md",
+   "line": 15555,
+   "kind": "law",
+   "claim": "ContainerNested is collected as ContainerMixed is",
+   "evidence": "src/assembly.jl:164,202"
+  },
+  {
+   "id": "C1-114",
+   "file": "design/spec.md",
+   "line": 15556,
+   "kind": "decl",
+   "claim": "Payload: path, field, nested container keys, their types",
+   "evidence": "src/assembly.jl:164-165"
+  },
+  {
+   "id": "C1-115",
+   "file": "design/spec.md",
+   "line": 15559,
+   "kind": "law",
+   "claim": "DeclarationOnWrongTier is Error, build, collected",
+   "evidence": "src/assembly.jl:763; src/build.jl:1154"
+  },
+  {
+   "id": "C1-116",
+   "file": "design/spec.md",
+   "line": 15560,
+   "kind": "decl",
+   "claim": "Payload: path, offending declaration, reason",
+   "evidence": "src/assembly.jl:763-765"
+  },
+  {
+   "id": "C1-117",
+   "file": "design/spec.md",
+   "line": 15561,
+   "kind": "law",
+   "claim": ":tier_form covers x_deriv, s_update, wrong-family store, state_events, m_init",
+   "evidence": "src/assembly.jl:723-728,762-765"
+  },
+  {
+   "id": "C1-118",
+   "file": "design/spec.md",
+   "line": 15563,
+   "kind": "decl",
+   "claim": "Carries the tier written in and the tier announced",
+   "evidence": "src/assembly.jl:765-766"
+  },
+  {
+   "id": "C1-119",
+   "file": "design/spec.md",
+   "line": 15564,
+   "kind": "law",
+   "claim": "A Pinned entry on a discrete primitive is :pinned_entry",
+   "evidence": "src/assembly.jl:789-792"
+  },
+  {
+   "id": "C1-120",
+   "file": "design/spec.md",
+   "line": 15565,
+   "kind": "decl",
+   "claim": "The entry is named with its contract",
+   "evidence": "src/assembly.jl:790-791"
+  },
+  {
+   "id": "C1-121",
+   "file": "design/spec.md",
+   "line": 15566,
+   "kind": "law",
+   "claim": "x_projection on a discrete primitive is :continuous_only",
+   "evidence": "src/build.jl:1153-1156"
+  },
+  {
+   "id": "C1-122",
+   "file": "design/spec.md",
+   "line": 15567,
+   "kind": "law",
+   "claim": "x_projection with an empty x_init is :no_manifold",
+   "evidence": "src/build.jl:1158-1161"
+  },
+  {
+   "id": "C1-123",
+   "file": "design/spec.md",
+   "line": 15568,
+   "kind": "law",
+   "claim": "FaceNameIllegal is Error, build, collected",
+   "evidence": "src/structure.jl:761-762"
+  },
+  {
+   "id": "C1-124",
+   "file": "design/spec.md",
+   "line": 15569,
+   "kind": "decl",
+   "claim": "Payload: path, face name, violated invariant",
+   "evidence": "src/structure.jl:761"
+  },
+  {
+   "id": "C1-125",
+   "file": "design/spec.md",
+   "line": 15569,
+   "kind": "law",
+   "claim": "Invariants are a slash in the name, or an empty name",
+   "evidence": "src/structure.jl:760-762"
+  },
+  {
+   "id": "C1-126",
+   "file": "design/spec.md",
+   "line": 15570,
+   "kind": "law",
+   "claim": "A primitive's contract key is included",
+   "evidence": "src/assembly.jl:699-705"
+  },
+  {
+   "id": "C1-127",
+   "file": "design/spec.md",
+   "line": 15571,
+   "kind": "law",
+   "claim": "FaceNameCollision is Error, build, collected",
+   "evidence": "src/structure.jl:765,785"
+  },
+  {
+   "id": "C1-128",
+   "file": "design/spec.md",
+   "line": 15571,
+   "kind": "decl",
+   "claim": "Payload: path, colliding names, site",
+   "evidence": "src/structure.jl:765-767"
+  },
+  {
+   "id": "C1-129",
+   "file": "design/spec.md",
+   "line": 15572,
+   "kind": "law",
+   "claim": ":assembly is a name repeated across input and output faces",
+   "evidence": "src/structure.jl:757-767"
+  },
+  {
+   "id": "C1-130",
+   "file": "design/spec.md",
+   "line": 15573,
+   "kind": "law",
+   "claim": ":root is a primitive root whose u_types and y_types share a name",
+   "evidence": "src/structure.jl:781-786"
+  },
+  {
+   "id": "C1-131",
+   "file": "design/spec.md",
+   "line": 15574,
+   "kind": "law",
+   "claim": "A bare contract counts as its default face u or y",
+   "evidence": "src/structure.jl:780-783; src/assembly.jl (_contract)"
+  },
+  {
+   "id": "C1-132",
+   "file": "design/spec.md",
+   "line": 15576,
+   "kind": "law",
+   "claim": "A computed entry collides like a hand-written one",
+   "evidence": "src/structure.jl:757-759,622-625"
+  },
+  {
+   "id": "C1-133",
+   "file": "design/spec.md",
+   "line": 15578,
+   "kind": "law",
+   "claim": "IllegalWireEntry is Error, build, collected over three declarations at once",
+   "evidence": "src/structure.jl:616-619; probe:IllegalWireEntry"
+  },
+  {
+   "id": "C1-134",
+   "file": "design/spec.md",
+   "line": 15580,
+   "kind": "decl",
+   "claim": "Payload: path, declaration, repr text, reason",
+   "evidence": "src/structure.jl:730-731"
+  },
+  {
+   "id": "C1-135",
+   "file": "design/spec.md",
+   "line": 15581,
+   "kind": "law",
+   "claim": ":bare_pair is a declaration returning one Pair",
+   "evidence": "src/structure.jl:735-736; probe:bare_pair"
+  },
+  {
+   "id": "C1-136",
+   "file": "design/spec.md",
+   "line": 15582,
+   "kind": "law",
+   "claim": ":not_a_pair is an entry that is not a Pair",
+   "evidence": "src/structure.jl:737-742; probe:not_a_pair"
+  },
+  {
+   "id": "C1-137",
+   "file": "design/spec.md",
+   "line": 15583,
+   "kind": "law",
+   "claim": ":not_a_collection is a non-collection, a string included",
+   "evidence": "src/structure.jl:743-744; probe:not_a_collection"
+  },
+  {
+   "id": "C1-138",
+   "file": "design/spec.md",
+   "line": 15584,
+   "kind": "law",
+   "claim": "A face primitive outside a build refuses the same way at the empty path",
+   "evidence": "src/assembly.jl:476-478"
+  },
+  {
+   "id": "C1-139",
+   "file": "design/spec.md",
+   "line": 15586,
+   "kind": "law",
+   "claim": "FaceDirectionConflict is Error, build, collected",
+   "evidence": "src/structure.jl:119"
+  },
+  {
+   "id": "C1-140",
+   "file": "design/spec.md",
+   "line": 15587,
+   "kind": "decl",
+   "claim": "Payload: entry, endpoint as written, child, actual direction",
+   "evidence": "src/structure.jl:119-122"
+  },
+  {
+   "id": "C1-141",
+   "file": "design/spec.md",
+   "line": 15589,
+   "kind": "decl",
+   "claim": "Required side is :producer or :consumer",
+   "evidence": "src/structure.jl:122; src/diagnostics.jl:~"
+  },
+  {
+   "id": "C1-142",
+   "file": "design/spec.md",
+   "line": 15590,
+   "kind": "law",
+   "claim": "UnknownFaceSelection is Error, build, fail-fast",
+   "evidence": "src/assembly.jl:621,626"
+  },
+  {
+   "id": "C1-143",
+   "file": "design/spec.md",
+   "line": 15591,
+   "kind": "decl",
+   "claim": "Payload: helper, child's full path, reason",
+   "evidence": "src/assembly.jl:621-623"
+  },
+  {
+   "id": "C1-144",
+   "file": "design/spec.md",
+   "line": 15591,
+   "kind": "law",
+   "claim": "Reasons are unknown names and more than one selector",
+   "evidence": "src/assembly.jl:622,627"
+  },
+  {
+   "id": "C1-145",
+   "file": "design/spec.md",
+   "line": 15592,
+   "kind": "decl",
+   "claim": "Carries offending names or selectors, and the face list",
+   "evidence": "src/assembly.jl:623,627-628"
+  },
+  {
+   "id": "C1-146",
+   "file": "design/spec.md",
+   "line": 15593,
+   "kind": "law",
+   "claim": "EmptyFaceSelection is Warning, build, logged on the Build's warnings",
+   "evidence": "src/assembly.jl:638; src/diagnostics.jl:755; probe:carrier warnings"
+  },
+  {
+   "id": "C1-147",
+   "file": "design/spec.md",
+   "line": 15594,
+   "kind": "decl",
+   "claim": "Payload: helper, path, selector and names, face list",
+   "evidence": "src/assembly.jl:638-641"
+  },
+  {
+   "id": "C1-148",
+   "file": "design/spec.md",
+   "line": 15595,
+   "kind": "law",
+   "claim": "Raised when a selector was given and nothing survived",
+   "evidence": "src/assembly.jl:636-637"
+  },
+  {
+   "id": "C1-149",
+   "file": "design/spec.md",
+   "line": 15596,
+   "kind": "law",
+   "claim": "A bare call over a faceless child raises nothing",
+   "evidence": "src/assembly.jl:636"
+  },
+  {
+   "id": "C1-150",
+   "file": "design/spec.md",
+   "line": 15597,
+   "kind": "law",
+   "claim": "RatesViolation is Error, build, collected",
+   "evidence": "src/structure.jl:322-323"
+  },
+  {
+   "id": "C1-151",
+   "file": "design/spec.md",
+   "line": 15598,
+   "kind": "decl",
+   "claim": "Payload: path, key, value, child names where a did-you-mean renders",
+   "evidence": "src/structure.jl:347-348"
+  },
+  {
+   "id": "C1-152",
+   "file": "design/spec.md",
+   "line": 15599,
+   "kind": "law",
+   "claim": ":declaration_shape reason exists",
+   "evidence": "src/structure.jl:325"
+  },
+  {
+   "id": "C1-153",
+   "file": "design/spec.md",
+   "line": 15600,
+   "kind": "law",
+   "claim": ":value_vocabulary reason exists",
+   "evidence": "src/structure.jl:330"
+  },
+  {
+   "id": "C1-154",
+   "file": "design/spec.md",
+   "line": 15600,
+   "kind": "law",
+   "claim": ":multiplier is a Dₛ below 1",
+   "evidence": "src/structure.jl:335,339"
+  },
+  {
+   "id": "C1-155",
+   "file": "design/spec.md",
+   "line": 15600,
+   "kind": "law",
+   "claim": ":phase reason exists",
+   "evidence": "src/structure.jl:337-338"
+  },
+  {
+   "id": "C1-156",
+   "file": "design/spec.md",
+   "line": 15600,
+   "kind": "law",
+   "claim": ":range covers a composed divisor or phase past Int",
+   "evidence": "src/structure.jl:~405-407"
+  },
+  {
+   "id": "C1-157",
+   "file": "design/spec.md",
+   "line": 15601,
+   "kind": "law",
+   "claim": ":range covers a count leaving Int at the coarsest base tick",
+   "evidence": "src/structure.jl:960-966"
+  },
+  {
+   "id": "C1-158",
+   "file": "design/spec.md",
+   "line": 15602,
+   "kind": "decl",
+   "claim": ":range carries the entry that composed it",
+   "evidence": "src/structure.jl:964-966"
+  },
+  {
+   "id": "C1-159",
+   "file": "design/spec.md",
+   "line": 15603,
+   "kind": "law",
+   "claim": ":period reason exists",
+   "evidence": "src/structure.jl:343"
+  },
+  {
+   "id": "C1-160",
+   "file": "design/spec.md",
+   "line": 15603,
+   "kind": "law",
+   "claim": ":offset reason exists",
+   "evidence": "src/structure.jl:342"
+  },
+  {
+   "id": "C1-161",
+   "file": "design/spec.md",
+   "line": 15603,
+   "kind": "law",
+   "claim": ":unknown_child covers a key naming no immediate child, a deep key included",
+   "evidence": "src/structure.jl:345-348"
+  },
+  {
+   "id": "C1-162",
+   "file": "design/spec.md",
+   "line": 15604,
+   "kind": "law",
+   "claim": ":continuous_child is a sample_times key on a continuous child",
+   "evidence": "src/structure.jl:598-600"
+  },
+  {
+   "id": "C1-163",
+   "file": "design/spec.md",
+   "line": 15605,
+   "kind": "law",
+   "claim": "MissingProbeValue is Error, build, collected",
+   "evidence": "src/build.jl:475"
+  },
+  {
+   "id": "C1-164",
+   "file": "design/spec.md",
+   "line": 15605,
+   "kind": "decl",
+   "claim": "Payload: face name and type",
+   "evidence": "src/build.jl:475"
+  },
+  {
+   "id": "C1-165",
+   "file": "design/spec.md",
+   "line": 15607,
+   "kind": "law",
+   "claim": "ChildNameCollision is Error, build, collected as ContainerMixed is",
+   "evidence": "src/assembly.jl:182,188,264,202"
+  },
+  {
+   "id": "C1-166",
+   "file": "design/spec.md",
+   "line": 15608,
+   "kind": "decl",
+   "claim": "Payload: path, child name, reason, declarations",
+   "evidence": "src/assembly.jl:182-185"
+  },
+  {
+   "id": "C1-167",
+   "file": "design/spec.md",
+   "line": 15608,
+   "kind": "law",
+   "claim": "Reasons are the sugar clash, a sibling field, two children",
+   "evidence": "src/assembly.jl:183,189,265"
+  },
+  {
+   "id": "C1-168",
+   "file": "design/spec.md",
+   "line": 15610,
+   "kind": "decl",
+   "claim": "Declarations: both children for a duplicate, one element for a bare key",
+   "evidence": "src/assembly.jl:185,190,266"
+  },
+  {
+   "id": "C1-169",
+   "file": "design/spec.md",
+   "line": 15612,
+   "kind": "decl",
+   "claim": "The container field rides on the sample_times arm only",
+   "evidence": "src/assembly.jl:184,189-190"
+  },
+  {
+   "id": "C1-170",
+   "file": "design/spec.md",
+   "line": 15613,
+   "kind": "law",
+   "claim": "TransparentContainerUnknown is Error, build, collected as ContainerMixed is",
+   "evidence": "src/assembly.jl:251,202"
+  },
+  {
+   "id": "C1-171",
+   "file": "design/spec.md",
+   "line": 15614,
+   "kind": "decl",
+   "claim": "Payload: path, type, field named, container fields",
+   "evidence": "src/assembly.jl:251-254"
+  },
+  {
+   "id": "C1-172",
+   "file": "design/spec.md",
+   "line": 15617,
+   "kind": "law",
+   "claim": "TierUnreadable is Error, build, collected",
+   "evidence": "src/assembly.jl:735"
+  },
+  {
+   "id": "C1-173",
+   "file": "design/spec.md",
+   "line": 15618,
+   "kind": "decl",
+   "claim": "Payload: path, type, declarations found",
+   "evidence": "src/assembly.jl:735-737"
+  },
+  {
+   "id": "C1-174",
+   "file": "design/spec.md",
+   "line": 15619,
+   "kind": "law",
+   "claim": "Raised for a primitive declaring neither x_init nor s_init",
+   "evidence": "src/assembly.jl:733-734"
+  },
+  {
+   "id": "C1-175",
+   "file": "design/spec.md",
+   "line": 15619,
+   "kind": "law",
+   "claim": "The message spells the nothing a stateless primitive writes",
+   "evidence": "src/diagnostics.jl:874-878"
+  },
+  {
+   "id": "C1-176",
+   "file": "design/spec.md",
+   "line": 15621,
+   "kind": "law",
+   "claim": "StatelessWithoutOutputs is Error, build, collected",
+   "evidence": "src/assembly.jl:755"
+  },
+  {
+   "id": "C1-177",
+   "file": "design/spec.md",
+   "line": 15622,
+   "kind": "decl",
+   "claim": "Payload: path, type, declarations found",
+   "evidence": "src/assembly.jl:755-757"
+  },
+  {
+   "id": "C1-178",
+   "file": "design/spec.md",
+   "line": 15623,
+   "kind": "law",
+   "claim": "Raised when the store is empty and y_types is undeclared",
+   "evidence": "src/assembly.jl:754-755"
+  },
+  {
+   "id": "C1-179",
+   "file": "design/spec.md",
+   "line": 15624,
+   "kind": "law",
+   "claim": "IllegalPortType is Error, build, collected",
+   "evidence": "src/build.jl:417,423; src/assembly.jl:782"
+  },
+  {
+   "id": "C1-180",
+   "file": "design/spec.md",
+   "line": 15625,
+   "kind": "decl",
+   "claim": "Payload: path, site, name, type, reason",
+   "evidence": "src/diagnostics.jl:~902-910"
+  },
+  {
+   "id": "C1-181",
+   "file": "design/spec.md",
+   "line": 15625,
+   "kind": "law",
+   "claim": "Site is :face for u_types, :port for y_types, :root_input",
+   "evidence": "src/assembly.jl:777; src/build.jl:451"
+  },
+  {
+   "id": "C1-182",
+   "file": "design/spec.md",
+   "line": 15626,
+   "kind": "law",
+   "claim": "Port name is u or y on a bare contract",
+   "evidence": "src/assembly.jl:778,780"
+  },
+  {
+   "id": "C1-183",
+   "file": "design/spec.md",
+   "line": 15629,
+   "kind": "law",
+   "claim": ":no_leaves reason",
+   "evidence": "src/build.jl:421-424"
+  },
+  {
+   "id": "C1-184",
+   "file": "design/spec.md",
+   "line": 15629,
+   "kind": "law",
+   "claim": ":mutable carries the dotted position",
+   "evidence": "src/build.jl:415-418"
+  },
+  {
+   "id": "C1-185",
+   "file": "design/spec.md",
+   "line": 15630,
+   "kind": "law",
+   "claim": ":handle_at_root is an opaque leaf at a root input",
+   "evidence": "src/build.jl:459-463"
+  },
+  {
+   "id": "C1-186",
+   "file": "design/spec.md",
+   "line": 15631,
+   "kind": "law",
+   "claim": ":nested_marker is a Pinned marker below the entry's top",
+   "evidence": "src/assembly.jl:785-788"
+  },
+  {
+   "id": "C1-187",
+   "file": "design/spec.md",
+   "line": 15633,
+   "kind": "law",
+   "claim": ":stop_flag_nested is a StopFlag leaf in a port not StopFlag itself",
+   "evidence": "src/build.jl:427-431"
+  },
+  {
+   "id": "C1-188",
+   "file": "design/spec.md",
+   "line": 15634,
+   "kind": "law",
+   "claim": ":stop_flag_at_root is a root input carrying a StopFlag anywhere",
+   "evidence": "src/build.jl:449-453"
+  },
+  {
+   "id": "C1-189",
+   "file": "design/spec.md",
+   "line": 15635,
+   "kind": "law",
+   "claim": ":not_a_type is an entry that is no type, named or bare",
+   "evidence": "src/assembly.jl:778-784"
+  },
+  {
+   "id": "C1-190",
+   "file": "design/spec.md",
+   "line": 15637,
+   "kind": "decl",
+   "claim": "Under :not_a_type the payload carries the value itself",
+   "evidence": "src/assembly.jl:783"
+  },
+  {
+   "id": "C1-191",
+   "file": "design/spec.md",
+   "line": 15639,
+   "kind": "law",
+   "claim": "IllegalStoreField is Error, build, collected",
+   "evidence": "src/assembly.jl:714"
+  },
+  {
+   "id": "C1-192",
+   "file": "design/spec.md",
+   "line": 15640,
+   "kind": "decl",
+   "claim": "Payload: path, store, field name (s or m on bare), type",
+   "evidence": "src/assembly.jl:714-715"
+  },
+  {
+   "id": "C1-193",
+   "file": "design/spec.md",
+   "line": 15641,
+   "kind": "law",
+   "claim": "Offending type is one neither isbits nor Symbol",
+   "evidence": "src/assembly.jl:713"
+  },
+  {
+   "id": "C1-194",
+   "file": "design/spec.md",
+   "line": 15641,
+   "kind": "law",
+   "claim": "The message states the fix about the component instance",
+   "evidence": "src/diagnostics.jl:977-981"
+  },
+  {
+   "id": "C1-195",
+   "file": "design/spec.md",
+   "line": 15648,
+   "kind": "law",
+   "claim": "AlgebraicCycle is Error, build, collected",
+   "evidence": "src/build.jl:277-299"
+  },
+  {
+   "id": "C1-196",
+   "file": "design/spec.md",
+   "line": 15649,
+   "kind": "decl",
+   "claim": "Payload: the SCC's members",
+   "evidence": "src/build.jl:277"
+  },
+  {
+   "id": "C1-197",
+   "file": "design/spec.md",
+   "line": 15649,
+   "kind": "decl",
+   "claim": "Wires are terminal pairs in slash form",
+   "evidence": "src/build.jl:278-282"
+  },
+  {
+   "id": "C1-198",
+   "file": "design/spec.md",
+   "line": 15650,
+   "kind": "law",
+   "claim": "Classification is optional, real or artificial",
+   "evidence": "src/tracer.jl:373-374; src/diagnostics.jl:900-905"
+  },
+  {
+   "id": "C1-199",
+   "file": "design/spec.md",
+   "line": 15650,
+   "kind": "decl",
+   "claim": "Every dead hop is (member, input face, output port)",
+   "evidence": "src/diagnostics.jl:~905; src/tracer.jl:375"
+  },
+  {
+   "id": "C1-200",
+   "file": "design/spec.md",
+   "line": 15651,
+   "kind": "decl",
+   "claim": "Per member tracing mode is global, sampled or structural",
+   "evidence": "src/tracer.jl:376-377; src/diagnostics.jl:~890"
+  },
+  {
+   "id": "C1-201",
+   "file": "design/spec.md",
+   "line": 15653,
+   "kind": "law",
+   "claim": "ProducedByTwoStages is Error, build, fail-fast",
+   "evidence": "src/build.jl:1207-1208; probe:ProducedByTwoStages"
+  },
+  {
+   "id": "C1-202",
+   "file": "design/spec.md",
+   "line": 15654,
+   "kind": "decl",
+   "claim": "Payload carries the component path",
+   "evidence": "src/build.jl:1208"
+  },
+  {
+   "id": "C1-203",
+   "file": "design/spec.md",
+   "line": 15655,
+   "kind": "law",
+   "claim": "It carries no producer column",
+   "evidence": "src/diagnostics.jl:1055-1058"
+  },
+  {
+   "id": "C1-204",
+   "file": "design/spec.md",
+   "line": 15657,
+   "kind": "law",
+   "claim": "DeclaredNotProduced is Error, build, collected",
+   "evidence": "src/build.jl:1113-1121"
+  },
+  {
+   "id": "C1-206",
+   "file": "design/spec.md",
+   "line": 15658,
+   "kind": "law",
+   "claim": "The completeness pass runs only after every port check passed",
+   "evidence": "src/build.jl:1091-1100,1121"
+  },
+  {
+   "id": "C1-207",
+   "file": "design/spec.md",
+   "line": 15661,
+   "kind": "decl",
+   "claim": "Payload: stage-product list and state-field list",
+   "evidence": "src/build.jl:1115-1118"
+  },
+  {
+   "id": "C1-208",
+   "file": "design/spec.md",
+   "line": 15662,
+   "kind": "law",
+   "claim": "The remedy is returning the name from y_state",
+   "evidence": "src/diagnostics.jl:1074-1077"
+  },
+  {
+   "id": "C1-210",
+   "file": "design/spec.md",
+   "line": 15664,
+   "kind": "law",
+   "claim": "UndeclaredReturnField is Error, build, collected over the port check, at once",
+   "evidence": "src/build.jl:128-140"
+  },
+  {
+   "id": "C1-211",
+   "file": "design/spec.md",
+   "line": 15665,
+   "kind": "law",
+   "claim": "It is thrown with that stage's ConformanceFailures",
+   "evidence": "src/build.jl:131,136-139"
+  },
+  {
+   "id": "C1-212",
+   "file": "design/spec.md",
+   "line": 15666,
+   "kind": "law",
+   "claim": "It stops the probe chain before the completeness pass",
+   "evidence": "src/build.jl:139,1100,1105-1121"
+  },
+  {
+   "id": "C1-213",
+   "file": "design/spec.md",
+   "line": 15668,
+   "kind": "decl",
+   "claim": "Payload: path, stage, field name, candidates",
+   "evidence": "src/build.jl:131-132"
+  },
+  {
+   "id": "C1-214",
+   "file": "design/spec.md",
+   "line": 15670,
+   "kind": "law",
+   "claim": "DeadStage is Error, build at probe, fail-fast",
+   "evidence": "src/build.jl:87,1200; probe:DeadStage"
+  },
+  {
+   "id": "C1-215",
+   "file": "design/spec.md",
+   "line": 15671,
+   "kind": "decl",
+   "claim": "Payload: path and stage",
+   "evidence": "src/build.jl:87"
+  },
+  {
+   "id": "C1-216",
+   "file": "design/spec.md",
+   "line": 15671,
+   "kind": "law",
+   "claim": "Raised when the stage returned bare (;)",
+   "evidence": "src/build.jl:86-87,1199-1200"
+  },
+  {
+   "id": "C1-217",
+   "file": "design/spec.md",
+   "line": 15673,
+   "kind": "law",
+   "claim": "ConformanceFailure is Error at build probe and at runtime",
+   "evidence": "src/build.jl:84,136; src/executor.jl:416"
+  },
+  {
+   "id": "C1-218",
+   "file": "design/spec.md",
+   "line": 15674,
+   "kind": "law",
+   "claim": "At probe it is collected over its unit and thrown at once",
+   "evidence": "src/build.jl:136-140,1359-1360"
+  },
+  {
+   "id": "C1-219",
+   "file": "design/spec.md",
+   "line": 15675,
+   "kind": "law",
+   "claim": "Units: a stage's port check, a handler's return, update or projection pass",
+   "evidence": "src/build.jl:139,1359,1160-1175,1694-1725"
+  },
+  {
+   "id": "C1-220",
+   "file": "design/spec.md",
+   "line": 15676,
+   "kind": "law",
+   "claim": "A return of the wrong shape throws alone",
+   "evidence": "src/build.jl:84,1197,1226-1236,1315"
+  },
+  {
+   "id": "C1-221",
+   "file": "design/spec.md",
+   "line": 15677,
+   "kind": "law",
+   "claim": "Wrong shape means bare vs named, or NamedTuple vs bare",
+   "evidence": "src/build.jl:1226-1236,1676-1690"
+  },
+  {
+   "id": "C1-222",
+   "file": "design/spec.md",
+   "line": 15679,
+   "kind": "law",
+   "claim": "At runtime it is fail-fast, a StepError species",
+   "evidence": "src/executor.jl:416,432-447"
+  },
+  {
+   "id": "C1-223",
+   "file": "design/spec.md",
+   "line": 15679,
+   "kind": "decl",
+   "claim": "Payload: path, function, event name on a handler occurrence",
+   "evidence": "src/diagnostics.jl:1109-1120; src/build.jl:1226"
+  },
+  {
+   "id": "C1-224",
+   "file": "design/spec.md",
+   "line": 15681,
+   "kind": "mech",
+   "claim": "Field diff is order-insensitive, pairing fields by name",
+   "evidence": "src/build.jl:1236-1238"
+  },
+  {
+   "id": "C1-225",
+   "file": "design/spec.md",
+   "line": 15682,
+   "kind": "law",
+   "claim": "reason is :return_type, :field_set or :field_type",
+   "evidence": "src/build.jl:85,137,1233,1237"
+  },
+  {
+   "id": "C1-226",
+   "file": "design/spec.md",
+   "line": 15683,
+   "kind": "law",
+   "claim": "shape is :ports, :namedtuple, :state, :x_init, :s_init, :stores or :mode",
+   "evidence": "src/build.jl:85,1198,1227,1677,1712,1317,1338"
+  },
+  {
+   "id": "C1-227",
+   "file": "design/spec.md",
+   "line": 15685,
+   "kind": "decl",
+   "claim": "The activation scalar rides for the pin hint",
+   "evidence": "src/build.jl:139; src/diagnostics.jl:1118"
+  },
+  {
+   "id": "C1-228",
+   "file": "design/spec.md",
+   "line": 15685,
+   "kind": "law",
+   "claim": "Simulation time rides the runtime carrier",
+   "evidence": "src/diagnostics.jl:1100-1106"
+  },
+  {
+   "id": "C1-229",
+   "file": "design/spec.md",
+   "line": 15686,
+   "kind": "law",
+   "claim": "GuardForm is Error, build, fail-fast",
+   "evidence": "src/build.jl:1289; probe:GuardForm"
+  },
+  {
+   "id": "C1-230",
+   "file": "design/spec.md",
+   "line": 15686,
+   "kind": "decl",
+   "claim": "Payload: path, event name, observed return type",
+   "evidence": "src/build.jl:1289-1290"
+  },
+  {
+   "id": "C1-231",
+   "file": "design/spec.md",
+   "line": 15687,
+   "kind": "law",
+   "claim": "Both admissible forms appear in the message",
+   "evidence": "src/diagnostics.jl:1189-1193"
+  },
+  {
+   "id": "C1-232",
+   "file": "design/spec.md",
+   "line": 15688,
+   "kind": "law",
+   "claim": "BundleFieldError is Error, fail-fast at build probe",
+   "evidence": "src/declare.jl:985"
+  },
+  {
+   "id": "C1-233",
+   "file": "design/spec.md",
+   "line": 15689,
+   "kind": "law",
+   "claim": "At runtime it is a StepError species",
+   "evidence": "src/model.jl:1125"
+  },
+  {
+   "id": "C1-234",
+   "file": "design/spec.md",
+   "line": 15690,
+   "kind": "decl",
+   "claim": "Payload: path, family, tier, field, legal field set",
+   "evidence": "src/diagnostics.jl:1195-1202"
+  },
+  {
+   "id": "C1-235",
+   "file": "design/spec.md",
+   "line": 15691,
+   "kind": "law",
+   "claim": "Classification: undeclared, wrong-tier, illegal for family",
+   "evidence": "src/declare.jl:919-924"
+  },
+  {
+   "id": "C1-236",
+   "file": "design/spec.md",
+   "line": 15693,
+   "kind": "law",
+   "claim": "HandlerReturnKey is Error, collected over the handler's return, at once",
+   "evidence": "src/build.jl:1323-1326,1359"
+  },
+  {
+   "id": "C1-237",
+   "file": "design/spec.md",
+   "line": 15694,
+   "kind": "law",
+   "claim": "It is thrown with the handler's ConformanceFailures",
+   "evidence": "src/build.jl:1328-1359"
+  },
+  {
+   "id": "C1-238",
+   "file": "design/spec.md",
+   "line": 15695,
+   "kind": "decl",
+   "claim": "Payload: path, event, offending key, legal stores",
+   "evidence": "src/build.jl:1325"
+  },
+  {
+   "id": "C1-239",
+   "file": "design/spec.md",
+   "line": 15695,
+   "kind": "law",
+   "claim": "Legal set {x, m} is narrowed to the stores that exist",
+   "evidence": "src/build.jl:1318-1320"
+  },
+  {
+   "id": "C1-240",
+   "file": "design/spec.md",
+   "line": 15697,
+   "kind": "law",
+   "claim": "UserCodeFraming is Error, build, fail-fast",
+   "evidence": "src/declare.jl:968,990"
+  },
+  {
+   "id": "C1-241",
+   "file": "design/spec.md",
+   "line": 15698,
+   "kind": "decl",
+   "claim": "Payload: path, function, bundle names, inputs spelling, cause",
+   "evidence": "src/declare.jl:990-991; src/diagnostics.jl:1242-1248"
+  },
+  {
+   "id": "C1-242",
+   "file": "design/spec.md",
+   "line": 15700,
+   "kind": "law",
+   "claim": "Every user-authored method the build invokes is framed, declarations included",
+   "evidence": "src/declare.jl:955-975"
+  }
+ ],
+ "counts": {
+  "law": 148,
+  "mech": 29,
+  "decl": 59,
+  "ptr": 6,
+  "why": 3,
+  "ex": 0,
+  "cite": 0,
+  "map": 0,
+  "surface": 0,
+  "docstring": 0
+ }
+}

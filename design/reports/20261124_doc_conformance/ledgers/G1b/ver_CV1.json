@@ -1,0 +1,193 @@
+{
+ "judgments": [
+  {
+   "id": "CV1-003",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl holds 85 `struct X <: Diagnostic` declarations and no abstract subtype. Probe line '003 abstract/mutable => Symbol[]': no subtype of Diagnostic is abstract or mutable. Each kind's fields are its payload, for example src/diagnostics.jl:599-602 (ClassMixed)."
+  },
+  {
+   "id": "CV1-005",
+   "conforms": true,
+   "evidence": "design/code_map.md:8-12 says an entry names constructs, and adds 'For more, read the file itself'; it does not promise to list every helper. `_typespell` (src/diagnostics.jl:49) is private, and only assembly.jl uses it outside its own file. The trial overturned C14-011, a similar helper-omission row, on the same ground (ledgers/trial_14/ver_C14.json:108)."
+  },
+  {
+   "id": "CV1-008",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:75-79 defines the private renderers `_at_path`, `_namelist`, `_faceset`, `_plainlist` and `_symtuple`. code_map.md:8-12 makes an entry a selective list of constructs, not a full inventory, and C14-011 set the precedent for helper omissions."
+  },
+  {
+   "id": "CV1-011",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:89 reads `# --- the carrier (§13.1, §13.2, D-058)`. D-058's Position (log.md:1950-1957) names a `BuildError` carrier. Its 2026-10-19 annotation says D-222 replaced it with `DiagnosticError{P}`, which is the carrier this section defines (src/diagnostics.jl:107-111). The section's own docstring already cites D-222 (src/diagnostics.jl:94). spec_rules.md:112 says to cite the entry that rules.",
+   "class": "drift",
+   "fix": "# --- the carrier (§13.1, §13.2, D-222) ---",
+   "clear": false
+  },
+  {
+   "id": "CV1-018",
+   "conforms": true,
+   "evidence": "`_groups` at src/diagnostics.jl:133-141 orders groups by first appearance and sorts each by `path` with MergeSort, a stable sort. In the probe's showerror output, the StoreWithoutUpdate group comes first, sorted a, a, z, with the two `a` entries in input order. The ClassMixed group follows, sorted a, b. This matches spec.md:11206-11207: grouped by kind and sorted by path."
+  },
+  {
+   "id": "CV1-025",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:204 says Appendix C's time payloads are plain `Float64` and cites D-214. D-214's Position (log.md:8581-8592) only splits severity, raised and policy. No log entry rules on the type of time payloads. The citation dates from commit 0435139c. The only spec text that types a time is §13.4's code block for `StepError` (spec.md:11575).",
+   "class": "deviation",
+   "fix": "# Appendix C's time payloads are plain `Float64` (§13.2, §13.4): a diagnostic is reportage, never a value the model differentiates through. … (drop D-214)",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV1-026",
+   "conforms": true,
+   "evidence": "The probe gives fieldtype(:t) = Float64 for all eight kinds, and '027 _seconds nested => (1.5, Float64)' for a nested Dual. Appendix C names these times without a type (spec.md:15976-16004). §13.4 types `StepError.t` as Float64 (spec.md:11575). §13.2 requires plain payload values. No doc text contradicts the code."
+  },
+  {
+   "id": "CV1-027",
+   "conforms": true,
+   "evidence": "`_seconds` (src/diagnostics.jl:209-210) is a private helper used by stepper.jl, sim.jl, frame.jl and model.jl. code_map.md:8-12 makes entries selective, and C14-011 set the precedent for helper omissions."
+  },
+  {
+   "id": "CV1-034",
+   "conforms": false,
+   "evidence": "In the probe, showerror on a StepError gives: init! for :boundary_zero, overlay! for :overlay, 'restore!(sim2, cp) of the same checkpoint reproduces it' for :restore, and 'replay! … then step!' for :loop. When the cause is an InterruptException, it prints 'an interrupt cut …, so nothing reproduces it; <door> runs it again / resumes from boundary 3' instead (src/diagnostics.jl:296-327). §13.4 states the init!, overlay! and halt-then-step! recipes (spec.md:11610-11658). No spec text and no docstring states the restore! recipe or the interrupt lines. The restore!, overlay! and init! docstrings only say an interrupt arrives as a StepError (src/sim.jl:815, 958, 1056). D-441, which the code comment cites, does not state the rendered recipe.",
+   "class": "deviation",
+   "fix": "Add to §13.4 after the overlay! sentence: \"A throw inside the copy or the settling that `restore!` runs reproduces under `restore!` of the same checkpoint. An interrupt that cut a door or a frame reproduces nothing, so the rendered line names the door that runs the cut sequence again: `init!` or `overlay!` under the same condition, `restore!` of the same checkpoint, or for a frame `replay!` to the pointer, which resumes from the boundary the frame started at ([D-441][d-441]).\"",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV1-047",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:510-519 has the reasons :not_a_terminal, :unknown_child, :reaches_past and :empty_path, with the `level` and `tail` fields. The probe gives `resolve(model, \"sum/a\")` → (:reaches_past, level \"sum\", tail 0), `resolve_terminal(model, \"sum/a/b\")` → (:reaches_past, \"sum\", tail 1), and `resolve(model, \"\")` → :empty_path. This matches Appendix C (spec.md:15510-15518): the four reasons, the level, and whether the path ends in a port name (tail 1 means an endpoint)."
+  },
+  {
+   "id": "CV1-057",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:227 has the four-field constructor with attempt 0. The probe gives '057 four-field attempt => 0'. `_phase_text` prints 'integration stage 2' at attempt 1 and 'integration stage 2 in attempt 3' at attempt 3. code_map.md:572-575 says the same."
+  },
+  {
+   "id": "CV1-060",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:599-602: the ClassMixed fields are (path, declarations) only (probe 'fields ClassMixed'). `local_wires` appears only in the message text (probe '060 msg'). ASSEMBLY_FAMILY is (:local_wires,) (src/assembly.jl:15), so no field could vary. Appendix C (spec.md:15550-15551) lists 'the `local_wires` declaration' as payload. No log entry or pending.md bullet records the shortfall.",
+   "class": "deviation",
+   "fix": "- **`ClassMixed`** ([§8.5][s8-5]). Error · build · fail-fast. Component path and the offending primitive declarations; the message names the `local_wires` declaration.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV1-070",
+   "conforms": true,
+   "evidence": "src/assembly.jl:636-641 raises the warning through `_warn!`, with a severity override at src/diagnostics.jl:756. Probe under BUILD_WARNINGS: `select` keeping nothing gives (EmptyFaceSelection, :select, [], [a, b]). `except` naming every face gives (:except, [a, b], [a, b]). Severity is :warning. A non-empty `only` of known names keeps every face, so it never warns. This matches Appendix C (spec.md:15593-15596)."
+  },
+  {
+   "id": "CV1-085",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1183-1187: the GuardForm fields are (path, event, observed) (probe 'fields GuardForm'). The two admissible forms appear only in the message (probe '085 msg'). Appendix C (spec.md:15686-15687) lists 'both admissible forms' as payload. §9.5 (spec.md:5990) says the error names them, which the message does.",
+   "class": "deviation",
+   "fix": "- **`GuardForm`** ([§9.5][s9-5]). Error · build · fail-fast. Component path, event name, observed probe return type; the message names both admissible forms.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV1-088",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1242-1248 has the fields path, fn, bundle, inputs and cause::Exception (probe 'fields UserCodeFraming'). These match Appendix C (spec.md:15697-15701): component path, which function, the bundle's field names, the synthesized inputs as a spelling, and the original exception as cause."
+  },
+  {
+   "id": "CV1-090",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1280-1282 defines private constants that sim.jl reads. code_map.md:8-12 makes entries selective, and C14-011 set the precedent. The claim's 'every ServiceLifecycle site' overstates: src/sim.jl:1163 fills `legal` with the literal `[:initialized, :stopped]`, as the comment at src/diagnostics.jl:1277-1278 allows."
+  },
+  {
+   "id": "CV1-093",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1319 reads `site::Symbol # :run! | :replay! | :step!, the advance (D-249)`. D-249's fourth bullet (log.md:10283-10284) concerns the retired StopFaceInvalid and its sites, the constructor, run! and replay!. Its 2026-10-15 annotation marks that bullet historical. D-316 (log.md:14419-14425) introduces StopRequestInvalid(path, site, candidates) with run!, replay! and step! as the sites that take `ignore_stop_requests`.",
+   "class": "drift",
+   "fix": "site::Symbol # :run! | :replay! | :step!, the advance (D-316)",
+   "clear": true
+  },
+  {
+   "id": "CV1-102",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1597-1599 declares `struct MalformedDatum <: Diagnostic; cause::Any; end`. The probe shows one constructor method, MalformedDatum(cause), and MalformedDatum(\"s\") builds. This matches the docstring signature and its 'any value the device chooses'."
+  },
+  {
+   "id": "CV1-104",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1598 declares `cause::Any`, and MalformedDatum(\"s\") builds (probe). The docstring (src/diagnostics.jl:1585) says cause is any value the device chooses, such as the caught exception. Appendix C (spec.md:16014-16016) says 'The cause exception'. The field has been untyped since commit 415ed0b7. No log entry types it: D-105 and D-217 write only `MalformedDatum(cause)`.",
+   "class": "deviation",
+   "fix": "- **`MalformedDatum`** (…). Warning · runtime · rate-limited, a repeating source ([§11.8][s11-8]). The cause, any value the device records, typically the caught exception. Emitted by the author's loop body via `report!(handle, …)`.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV1-105",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:36-38 KINDS = (MalformedDatum, OutOfClaimEntry, ClaimedFaceEntry, EntryTypeMismatch, ChatteringBudget, FiringBudget, StepFloor, DebtReanchor, UnboundedRun, ThreadBudget, DeviceCrash, DeviceJoinTimeout, ReplayDiscardedStaging, EmptyGreedyClaim), confirmed by the probe's '105 KINDS'. design/code_map.md:519-529 enumerates 'the members of dataplane.jl's `KINDS`' and names thirteen, leaving out MalformedDatum, which src/diagnostics.jl:1597 declares in that section. The list was written when commit e2ae3a9b moved the channel's kinds into diagnostics.jl, MalformedDatum among them, and it left MalformedDatum out from the start.",
+   "class": "drift",
+   "fix": "- The runtime channel's kinds, the members of dataplane.jl's `KINDS` (§11.8, Appendix C), in their own section beside `EmptyGreedyClaim`: `MalformedDatum`, the author's bad-datum report (§11.6), the three staging kinds (§11.4), …",
+   "clear": true
+  },
+  {
+   "id": "CV1-107",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1618-1622: the EntryTypeMismatch fields are (face, value, declared) (probe 'fields EntryTypeMismatch'). The raise site src/dataplane.jl:438 passes the face, the value and the declared type. No field carries the value's type, and the message prints only repr(value) (probe '107 msg'). Appendix C (spec.md:16017-16019) lists 'the offending value's type' as payload, next to 'the discarded value'.",
+   "class": "deviation",
+   "fix": "- **`EntryTypeMismatch`** ([§11.4][s11-4]). Warning · runtime · rate-limited. Face name, the root input's declared type, the discarded value.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV1-114",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1699-1704 has the fields who, timeout, t and boundary. The raise site src/sim.jl:1935-1936 fills them with `_who(entry)` (the handle's device id, src/roster.jl:271), the join timeout, and the snapshot's t and boundary. This matches Appendix C (spec.md:16001-16006): device id, join timeout, boundary time and index at shutdown."
+  },
+  {
+   "id": "CV1-117",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1803-1809 has the fields binding, reason (nine values) and observed. Each reason names the trait, the method and the direction, for example :claims_missing and :claims_without_input. `observed` carries the offending type for the two `reads` shape reasons (src/bindings.jl:168-174). Appendix C (spec.md:15755-15768) itself says 'A `reason` tells the cases apart' and lists the same nine reasons. D-371's Position (log.md:15736-15742) requires only that the diagnostic name the trait and the method at fault, and the reason does that."
+  },
+  {
+   "id": "CV1-124",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1951 defines a private constant, set at src/linearize.jl:337 and compared at src/diagnostics.jl:2035. code_map.md:8-12 makes entries selective, and C14-011 set the precedent. The claim is also inexact: conditions.jl never names CHECKPOINT_ORIGIN (rg -w finds only diagnostics.jl, linearize.jl and tests)."
+  },
+  {
+   "id": "CV1-129",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:2080-2083 has the fields op and faces. assert_total (src/conditions.jl:701-706) fills op with :init!, :trim! or :linearize (src/sim.jl:841, src/trim.jl:599, src/linearize.jl:316, src/model.jl:314) and faces with the uncovered root inputs in declaration order. This matches Appendix C (spec.md:15825-15827)."
+  },
+  {
+   "id": "CV1-139",
+   "conforms": false,
+   "evidence": "src/sim.jl:2222 (step!) and src/sim.jl:1349 (replay!) raise :both_given. src/sim.jl:1444 (live!) raises :not_replaying. src/bindings.jl:67-87 (TableBinding) raises :entry_shape, :no_face, :face_name, :deadzone and :expo. Each has its own message arm (src/diagnostics.jl:2379-2427). The probe yields the five TableBinding reasons and the two messages. Appendix C (spec.md:15913-15950) names :inexact, :range, :not_a_count, :vocabulary, :claimed, :not_built, :disabled, :non_nominal, :nonpositive_width, :t0_without_about, :not_a_tap_set, :not_a_problem and :scalar one by one, but none of these seven. Neither the spec nor any docstring names them.",
+   "class": "deviation",
+   "fix": "Add to Appendix C's ArgumentInvalid entry: \"`step!` given both `frames` and `t_plus`, and `replay!` given both `to_boundary` and `to_time`, are reason `:both_given`. `live!` on a simulation already `:live` is `:not_replaying`. A `TableBinding` entry that is no NamedTuple is `:entry_shape`, one with no `face` `:no_face`, a face that is neither a string nor a symbol `:face_name`, and a `deadzone` outside [0, 1) or an `expo` outside [0, 1] is `:deadzone` or `:expo`.\"",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV1-140",
+   "conforms": false,
+   "evidence": "The comment at src/diagnostics.jl:2356 lists :Model|:Simulation|:init!|:restore!|:Absolute|:Relative|:step!|:run!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding. The code also raises the call as :overlay! (`_check_recording(:overlay!, …)`, src/sim.jl:965), :apply! (`_claimed_gate`, src/model.jl:493), :frame! (src/frame.jl:80), and :BS3 (src/deployment.jl:420; probe '147 BS3' shows call :BS3). Appendix C (spec.md:15919-15921) lists all four. D-318, D-261 and D-461 record the refusals that added them.",
+   "class": "drift",
+   "fix": "call::Symbol # :Model|:Simulation|:init!|:overlay!|:frame!|:apply!|:restore!|:run!|:step!|:replay!|:live!|:pace!|:margin!|:trim!|:linearize|:trace|:TableBinding|:Absolute|:Relative|:BS3",
+   "clear": true
+  },
+  {
+   "id": "CV1-147",
+   "conforms": false,
+   "evidence": "In the probe, BS3(-1.0, Inf) throws DiagnosticError with [(:BS3, :range, :reltol, -1.0), (:BS3, :range, :abstol, Inf)]. Both render as 'ArgumentInvalid: t_plus must be a finite real > 0 whose end frame the run may take — the duration spelling — got -1.0 (§12.6)'. No message arm matches call :BS3 or the arguments :reltol and :abstol, so the message falls through to the last arm (src/diagnostics.jl:2517-2518). Appendix C (spec.md:15926-15928) and D-461 state the refusal of a tolerance that is not positive and finite.",
+   "class": "defect",
+   "fix": "Add an ArgumentInvalid message arm for `d.call === :BS3` that names the argument (`reltol` or `abstol`) and states that a tolerance must be a positive finite real, citing §10.2 and D-461, ahead of the argument fallthrough.",
+   "clear": true
+  },
+  {
+   "id": "CV1-150",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:2549-2552 has the fields device and roster. src/sim.jl:2574-2575 fills them with `_typename(dev)` and the roster's `_who` ids. This matches Appendix C (spec.md:15959-15960): the device offered to detach!, by type, and the roster's device ids."
+  }
+ ],
+ "notes": "I checked all 28 claims read-only at W = 02745494: 15 conform and 13 do not. I edited no tracked file and committed nothing. I wrote one probe script and ran it once: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV1_v/probe.jl. Every probe line cited in the judgments comes from that run.\n\nHow I ruled the map rows. code_map.md:8-12 says an entry names constructs, and adds 'For more, read the file itself'. On that ground the trial overturned C14-011. So I found that leaving out private helpers or constants does not break conformance: CV1-005, 008, 027, 090 and 124. CV1-105 is different, because that bullet lists 'the members of dataplane.jl's KINDS' and so claims to be complete.\n\nHow I ruled the Appendix C payload rows. Appendix C calls its payload column the acceptance-test contract (spec.md:15406-15409), and D-216 calls the column the design. Where the appendix names a payload item that no field holds and no sentence ties to another field, I found non-conformance: ClassMixed, GuardForm and EntryTypeMismatch. BindingContractMismatch conforms, because its entry says itself that the `reason` tells the cases apart.\n\nLeads I found outside the claims:\n(1) UninitializedInputs is listed in Appendix C as 'collected'. assert_total throws DiagnosticError(UninitializedInputs(...)), whose carrier type is the fail-fast DiagnosticError{UninitializedInputs} (src/conditions.jl:705). The collection lives inside the `faces` payload.\n(2) BS3's constructor collects both tolerance refusals into DiagnosticError{Vector{Diagnostic}} (src/deployment.jl:416-423). Appendix C's ArgumentInvalid policy list does not name BS3 among the collected cases.\n(3) The claim in CV1-124 misstates the code: conditions.jl never uses CHECKPOINT_ORIGIN. The claim in CV1-090 overstates it: src/sim.jl:1163 fills `legal` with a literal list."
+}

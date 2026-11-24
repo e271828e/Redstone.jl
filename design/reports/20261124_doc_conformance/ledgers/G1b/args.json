@@ -1,0 +1,44 @@
+{
+ "group": "G1b",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "02745494",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "C1",
+   "kind": "spec",
+   "range": [
+    15404,
+    15702
+   ],
+   "desc": "Appendix C: its preamble, the policies, Declaration and wiring, and Execution order and contract conformance",
+   "map": "516-612 (src/diagnostics.jl), 105-186 (src/build.jl), 38-93 (src/assembly.jl), 316-352 (src/declare.jl), 1364-1436 (src/structure.jl)",
+   "extra": " Check every kind entry's severity, stage, policy, reasons and every payload field against the kind's struct in src/diagnostics.jl and against each raise site (rg -n 'KindName(' src/). Stage M's kind comparison found the kind sets agree, except that StepError is doc-only (it is the runtime carrier, not a kind) and DeviceCrash and WireTypeMismatch name no severity."
+  },
+  {
+   "key": "C2",
+   "kind": "spec",
+   "range": [
+    15703,
+    16031
+   ],
+   "desc": "Appendix C: Deployment, periphery and services, and Runtime",
+   "map": "516-612 (src/diagnostics.jl), 353-432 (src/deployment.jl), 477-515 (src/devices.jl), 1183-1302 (src/sim.jl), 654-710 (src/frame.jl), 1474-1496 (src/trim.jl)",
+   "extra": " Check every kind entry's severity, stage, policy, reasons and every payload field against the kind's struct in src/diagnostics.jl and against each raise site (rg -n 'KindName(' src/). Stage M's kind comparison found the kind sets agree, except that StepError is doc-only (it is the runtime carrier, not a kind) and DeviceCrash and WireTypeMismatch name no severity."
+  },
+  {
+   "key": "CV1",
+   "kind": "coverage",
+   "files": "src/diagnostics.jl whole",
+   "docs": "design/spec.md §13 (lines 11069-12784)",
+   "map": "lines 516-612"
+  },
+  {
+   "key": "CV2",
+   "kind": "coverage",
+   "files": "src/descriptor.jl and src/tracer.jl whole, and in src/sim.jl and src/executor.jl the functions whose comments cite §13 (rg -n '§13' src/sim.jl src/executor.jl)",
+   "docs": "design/spec.md §13 (lines 11069-12784), and src/descriptor.json for the descriptor",
+   "map": "lines 433-476, 1460-1473, 1183-1302 and 613-653"
+  }
+ ]
+}

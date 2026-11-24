@@ -36,8 +36,9 @@ item changes what the spec says, the spec edit is part of the item.
   is the source of truth, in both directions, and what drifted is fixed.
   It runs as a trial on §14, then one workflow per chapter group. Stage
   reached: the §14 trial and its two follow-up batches have landed. Group
-  G1a (§13) has run, and its clear fixes have landed. Three wording rows
-  and three defects wait on the user, and G1b is next.
+  G1a and G1b (§13 and Appendix C) have run, and their clear fixes have
+  landed. The rows that wait on the user are in `ledgers/user_rows.md`
+  beside the brief, and G2 (§8) is next.
   The brief is `design/reports/20261124_doc_conformance/00_brief.md`; the
   state, the rulings, the group plan and the tools are in
   `notes_doc_conformance.md` beside it.

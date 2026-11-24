@@ -14,6 +14,7 @@ export const meta = {
 // Leads are read from `${R}/ledgers/stage_m/leads_${group}/${key}.txt`.
 // Returns compact measurements; merge_run.py builds the ledgers from the journal.
 const { group, W, tip, R, slices } = args
+for (const s of slices) if (!s.lines && s.range) s.lines = s.range[1] - s.range[0] + 1
 const LEADS = `${R}/ledgers/stage_m/leads_${group}`
 
 let active = 0
@@ -69,15 +70,32 @@ Leads. Stage M scripts flagged names, keywords and citations; your slice's leads
 
 Output. Findings and unverifiable claims go in rows, in full. ok claims go in ok, with a claim summary under 100 characters. IDs run <slice>-001 upward in document order, shared by rows and ok. counts holds the number of claims per kind, listed or not.`
 
+// A slice may give task in full, or the template fields below, from which task is built:
+// spec {range: [a, b], desc, map, extra}; companion {file, map, extra}; log {n, map}; coverage {files, docs, map}.
+function taskOf(s) {
+  if (s.task) return s.task
+  const x = s.extra ? ' ' + s.extra : ''
+  if (s.kind === 'spec') return `Your slice: design/spec.md lines ${s.range[0]}-${s.range[1]} (${s.desc}).${x} For context, take the heading outline with rg -n '^#' design/spec.md and read another section only when a claim depends on it. The glossary entries a claim links to (#g-...) sit in Appendix D. Read these code_map.md entries for the files involved: ${s.map}. Then read the code each claim names. A complete Julia code block in your range is run in your probe script, adapted only as far as it needs fixtures.`
+  if (s.kind === 'companion') return `Your slice: ${s.file}. It is a companion: the spec outranks it. When a companion claim disagrees with the code but agrees with the spec, report it as a finding on the companion and name the agreeing spec line in note. Read these code_map.md entries: ${s.map}, then the code each claim names. The companion's own section numbers are "section N"; a § is a spec citation. Numerical claims (a derivative, a gain, a sign) are probed.${x}`
+  if (s.kind === 'log') return `Your slice: the ${s.n} ratified design/log.md entries listed at the top of your leads file, each with its line range. For each entry read the Status line and the Position section only (from **Position.** to **Rationale.**). Each Position bullet or sentence that settles a rule is a claim; split as the granularity rule says. The log is never rewritten (design/rules/log_rules.md rule 1), so old vocabulary or notation is not a finding; a wrong code identifier, keyword, kind or default is, and so is a rule the code contradicts. A contradicted rule is class deviation, unless a later entry already moved it: then drift, naming that entry in note (find it with rg on the topic's names in design/log.md). Check every superseded → chain an entry carries ends at a ratified entry, and every D-nnn and § citation in the Position resolves. Flag a rejected alternative only if the code visibly does the rejected thing. These code_map.md entries route you to the code: ${s.map}.${x}`
+  if (s.kind === 'coverage') return `Your slice is the code-to-docs direction, for ${s.files}. The docs to search: ${s.docs}, Appendix B and Appendix C (rg -n '^## Appendix' design/spec.md for their ranges), the docstrings, docs/src/api.md and design/code_map.md. Answer four questions, and use kind for the question:
+- surface: every author-facing name (named in Appendix B or in docs/src/api.md), keyword argument, public field, diagnostic raise site (its kind and reason) and user-visible behaviour in these files. Is it covered by the spec, an appendix or a docstring? Internal helpers owe only code_map.md. Not covered is a finding, usually class deviation.
+- docstring: does each docstring in these files match its code: signature, keywords, defaults, return, raised kinds? design/rules/docstring_rules.md says what a docstring must state; do not audit style.
+- map: do the code_map.md entries for these files (${s.map}) match the code?
+- cite: does every § and D-nnn comment in these files point at a section or entry that treats its topic? Use the heading outline (rg -n '^#' design/spec.md) and the entry titles (rg -n '^### D-' design/log.md).
+For every row, file and line are the code site; claim states what the doc says or omits; evidence names where you looked. In the leads, "names" rows are names a docstring mentions that no Julia file defines.${x}`
+  throw new Error(`slice ${s.key}: no task and unknown kind ${s.kind}`)
+}
+
 function invPrompt(s, nudge) {
-  return `${COMMON}\n\n${INV_METHOD}\n\n${s.task}\n\nYour leads file: ${LEADS}/${s.key}.txt\nYour probe script P: ${R}/probes/${s.key}/probe.jl (create the folder).\nYour slice id: ${s.key}.${nudge || ''}`
+  return `${COMMON}\n\n${INV_METHOD}\n\n${taskOf(s)}\n\nYour leads file: ${LEADS}/${s.key}.txt\nYour probe script P: ${R}/probes/${s.key}/probe.jl (create the folder).\nYour slice id: ${s.key}.${nudge || ''}`
 }
 
 const FLOOR = { spec: 0.3, companion: 0.2 }
 function counted(inv) { return Object.values(inv.counts).reduce((a, b) => a + (b || 0), 0) }
 
 async function inventory(s) {
-  const opts = (label) => ({ label, phase: 'Inventory', schema: INV, agentType: s.agent || 'mid-tier' })
+  const opts = (label) => ({ label, phase: 'Inventory', schema: INV, agentType: s.agent || (s.kind === 'log' ? 'high-tier' : 'mid-tier') })
   const inv = await slot(() => agent(invPrompt(s), opts(`inv:${s.key}`)))
   if (!inv || !FLOOR[s.kind] || !s.lines) return inv
   const density = counted(inv) / s.lines

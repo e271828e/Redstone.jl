@@ -1,0 +1,9 @@
+names test-only: `ballocated` in a docstring near src/executor.jl:552
+citation superseded: D-166 at src/tracer.jl:164 (superseded → [D-263][d-263])
+signature: sim.jl:1102 trim!: on a signature, not listed: [:baseline, :t0, :backend]
+signature: sim.jl:1243 replay!: on a signature, not listed: [:margin, :ignore_stop_requests, :log, :log_every, :log_max]
+signature: sim.jl:914 overlay!: on a signature, not listed: [:trace, :log, :log_every, :log_max]
+signature: sim.jl:1014 restore!: on a signature, not listed: [:trace, :log, :log_every, :log_max]
+signature: sim.jl:306 Simulation: on a signature, not listed: [:chunk_size, :Δt_frame, :Δt_base, :h_max, :h_min, :algorithm, :firing_budget, :localization_tol, :localization_budget, :attempt_budget]
+signature: sim.jl:2162 step!: on a signature, not listed: [:ignore_stop_requests]
+signature: sim.jl:1136 linearize: on a signature, not listed: [:about, :t0, :width]

@@ -25,8 +25,12 @@ the tools.
   layouts). Three defects: S13a-040 with L13-017 (tests that assert
   message text), S13c-031 (`unblock!` outside the join timeout) and
   S13d-133 (`BundleFieldError` writes no `function`).
-- **Next.** G1b, Appendix C and §13's code. `14eab094` moved the spec's
-  line numbers, so re-pin at master's tip and re-run Stage M first.
+- **G1b, Appendix C and §13's code.** It ran at `02745494` as
+  `wf_c713d808-c43`: 8 agents, 1.68M subagent tokens, 18 min. The
+  verifiers overturned 14 of 42 flags, 13 of them from the two coverage
+  slices, and found 1 miss in 77 sampled rows. 18 rows landed as `adff8b24`.
+- **The rows for the user** now live in `ledgers/user_rows.md`, by group.
+- **Next.** G2, §8, split in two runs: G2a and G2b.
 
 ## Rulings since the trial
 
@@ -89,7 +93,7 @@ cherry-picked onto master and can be deleted.
 4. **Launch.** Run `probes/audit_run.js` through the Workflow tool, by
    `scriptPath`, with args `{group, W, tip, R, slices}`. Here
    R = `/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance`.
-   Each slice is `{key, kind, agent, lines, task}`. task routes the
+   Each slice is `{key, kind, agent, lines, task}`, or gives template fields in place of task, which the script expands: see `taskOf` in `audit_run.js`. task routes the
    reading the way the trial's slice tasks did (`probes/trial_14_run.js`,
    its `SLICES`): the doc line ranges, the code_map.md entries with their
    line ranges, and the code to read. A coverage slice's task carries the

@@ -1,0 +1,138 @@
+{
+ "judgments": [
+  {
+   "id": "CV2-001",
+   "conforms": false,
+   "evidence": "design/code_map.md:474-475 lists D-418 and omits D-168, D-261, D-439, D-478. src/descriptor.jl cites D-168 (179), D-261 (81), D-439 (body of the summary writer) and D-478 (176), and the entry's body cites D-439 and D-478 (code_map.md:480, 472). D-418 (log.md:17117, face-selector head matching) is never cited in src/descriptor.jl: `git log -S'D-418' -- src/descriptor.jl` is empty. The citations came in with commits 44d52cce (D-168, D-261), cbfcc5f6 (D-439) and 7c24c484 (D-478), and none of them updated the footer.",
+   "class": "drift",
+   "fix": "Spec: §8.5, §9.1, §9.2, §13.2, §13.8, §13.9, D-168, D-211, D-237, D-261, D-432, D-433, D-434, D-437, D-439, D-466, D-467, D-468, D-478.",
+   "clear": true
+  },
+  {
+   "id": "CV2-003",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:10 `const DESCRIPTOR_FORMAT = (major = 1, minor = 0)`, and descriptor.jl:49 writes it as format_version. spec.md:12517 states the same. Probe probe.jl:38-39 prints (major = 1, minor = 0) for both."
+  },
+  {
+   "id": "CV2-011",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:140-148: members; wires as terminal pairs; classification only when not nothing; dead as (path, input, output); traced as (path, mode). This matches spec.md:12766-12768 and the Cycle schema. Probe probe.jl:50 gives keys (:members, :wires, :classification, :dead, :traced). test/test_descriptor.jl:489-490 shows classification absent on an unclassified cycle."
+  },
+  {
+   "id": "CV2-019",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:490-509: outputs = (order as paths, components with path/stage1/stage2), and events = components with path, events as (name, policy), and bundle. Structure.components lists primitives only (structure.jl:244). Probe probe.jl:43-45 gives outputs keys (:order, :components) and an events row (path = \"c\", events = [(name = \"cross\", policy = \"localized\")], bundle = [\"m\",\"u\",\"y\",\"t\"]), which matches spec.md:12574-12586."
+  },
+  {
+   "id": "CV2-062",
+   "conforms": true,
+   "evidence": "Every dispatch makes two plain stores to the cursor, and none allocates or opens a try: src/executor.jl:168 (stage), 174 (x_deriv), 185 (s_update), 261 (x_projection), 372 (guard), 392 (handler), 458 (projection after a handler, fn alone since the component is the handler's). This matches spec §13.4 at spec.md:11506-11510."
+  },
+  {
+   "id": "CV2-064",
+   "conforms": true,
+   "evidence": "src/executor.jl:190 heads the block with (§10.6, §5.3), and lines 195-198 say the component-then-declaration order makes the dispatch order deterministic. Spec §10.6 (spec.md:7544-7548) states that order and says it keeps the §13.4 execution cursor deterministic. The §13.4 reference names the cursor's per-dispatch record, which §13.4 defines (spec.md:11491-11507). The rule's own section, §10.6, is cited at the block head."
+  },
+  {
+   "id": "CV2-036",
+   "conforms": true,
+   "evidence": "src/sim.jl:44 `abstract type TerminationSource`; 58 EndTimeReached with no fields; 73-77 ModelRequestedStop(path::String, port::Symbol, reason::String); 89-91 ControlRequestedStop(issuer); 111-113 LoopError(exception). Probe probe.jl:60-61 gives fields [(), (:path,:port,:reason), (:issuer,), (:exception,)] and exactly these four subtypes. Appendix B (spec.md:15358-15361) and docs/src/api.md:173-177 name all five. Nothing is exported until the export audit (D-226), so export status does not bear on the claim."
+  },
+  {
+   "id": "CV2-034",
+   "conforms": false,
+   "evidence": "src/sim.jl:1749-1758 builds LoopError(cause) for any loop fault. A fault outside the frame leaves the model consistent, and the run reads stopped. Probe probe.jl:71-72 runs an unbounded run! on test_lattices' long-period rig: it throws ArgumentInvalid(:frame!, :range, k = 1001) and ends lifecycle :stopped with LoopError whose exception is the raw DiagnosticError{ArgumentInvalid}, not a StepError wrapper (also test/test_lattices.jl:404-408). The LoopError docstring (sim.jl:100-108) says a run ends with it when a frame throws, that this leaves the simulation errored, and that exception is a wrapper. run!'s docstring (sim.jl:1514) says a failure inside the loop leaves it errored. Spec §13.5 (spec.md:11915-11923) took the out-of-frame case in commit f010ff26 (2026-11-11), after the docstring's commit afc15682 (2026-11-05).",
+   "class": "drift",
+   "fix": "LoopError: \"A run ends with it when the loop fails. A throw inside a [frame](@ref g-frame), whatever it throws, leaves the simulation `errored`, and the previous [snapshot](@ref g-snapshot) is the run's final one. A fault outside the frame, such as `frame!`'s refusal of a frame past the last the run may take, leaves it `stopped` at its last settled boundary. … `exception` holds the failure as the loop caught it. From inside a frame it is a wrapper whose `cause` is the raw error or the failed check's diagnostic, beside the time and the place in the frame where it was thrown. From outside the frame it is the raw exception.\" run!: \"A failure inside a frame leaves the simulation `errored` instead, the cause kept on the record, and a fault outside the frame leaves it `stopped` with the same record. With no device rostered, `run!` then rethrows the failure.\"",
+   "clear": true
+  },
+  {
+   "id": "CV2-040",
+   "conforms": true,
+   "evidence": "design/code_map.md:3-12 makes an entry name constructs and cite sections, not every private helper. code_rules.md:10-14 requires an entry only for a construct a reader could mistake for the design's. The sim.jl entry covers the sites these helpers serve: `_bind_policy` and the t_end bound through `_frames_fit` (code_map.md:1265-1275), the pacing verbs (1243-1244), the replay bound through `_last_frame` (1271-1273), and the interrupt arms of run! and step! (1281-1283). _t_bound (sim.jl:406) is called only from _bind_policy (472), and _replay_bound, _settle_mode! and _interrupt_source are private helpers of those named sites."
+  },
+  {
+   "id": "CV2-041",
+   "conforms": false,
+   "evidence": "src/sim.jl:437-438 converts each element with `string(requested)`. Probe probe.jl:79 runs `ignore_stop_requests = (:s,)`: the policy records [\"s\"] and the run ends EndTimeReached, so the Symbol ignored requester \"s\". probe.jl:83 runs (1,), which is refused as StopRequestInvalid(\"1\"), and probe.jl:85 runs (:all,), refused as StopRequestInvalid(\"all\"). Spec §13.5 (spec.md:11823-11824) says \"An iterable of strings names requesters by component path\", and run!'s docstring (sim.jl:1555-1556) says \"an iterable of the requesting components' paths\". pending.md has no bullet for this, and no log entry records non-string elements.",
+   "class": "deviation",
+   "fix": "Spec: \"An iterable names requesters by component path, each element read through `string`, so `(:s,)` names the path `\\\"s\\\"`.\" Docstring: \"`:all` or an iterable of the requesting components' paths, each element read through `string`.\" The alternative is a code change that refuses a non-string element as ArgumentInvalid.",
+   "clear": false
+  },
+  {
+   "id": "CV2-046",
+   "conforms": true,
+   "evidence": "src/sim.jl:1103-1104 shows `baseline` with no default (required) and `backend = LevenbergMarquardt()`, and sim.jl:1113 defers: \"The keywords mean what they mean on the model's method.\" That method's docstring has the bullets (src/trim.jl:550 `baseline`: the required baseline…, trim.jl:557 `backend`). docstring_rules.md rule 4 makes the # Keywords list optional, and rule 7 has the signature carry the defaults."
+  },
+  {
+   "id": "CV2-047",
+   "conforms": true,
+   "evidence": "src/sim.jl:1136-1137 shows `width::Int = 8`, and sim.jl:1146-1147 says \"The keywords mean what they mean on the model's method\". src/linearize.jl:264 has \"`width`: how many directions one evaluation seeds, at least 1, by default 8.\" docstring_rules.md rule 4 makes the keyword list optional."
+  },
+  {
+   "id": "CV2-048",
+   "conforms": true,
+   "evidence": "The signature at src/sim.jl:1244-1247 has to_boundary, to_time, pace, margin, t_end, ignore_stop_requests, trace, log, log_every, log_max and restore. The bullets at sim.jl:1319-1330 cover each one, with pace/margin, t_end/ignore_stop_requests and the four recording keywords grouped (rule 5 allows parallel names to share a bullet)."
+  },
+  {
+   "id": "CV2-050",
+   "conforms": false,
+   "evidence": "src/sim.jl:1349 (replay!) and 2222 (step!) throw ArgumentInvalid(reason = :both_given), and sim.jl:1444 (live!) throws reason :not_replaying. Probe probe.jl:91-92 confirms both reasons. Appendix C's ArgumentInvalid entry (spec.md:15913-15946) lists replay!, step! and live! among its calls and names the reason of nearly every other arm (:claimed, :not_built, :disabled, :non_nominal, :nonpositive_width, :t0_without_about, :not_a_tap_set, :not_a_problem, :range, :scalar, :inexact, :not_a_count). It names neither of these two. The prose states both refusals without a reason (spec.md:10533-10534, 10822, 10854-10855), and nothing in pending.md or the log records them.",
+   "class": "deviation",
+   "fix": "Add to Appendix C's ArgumentInvalid entry: \"`step!` given both `frames` and `t_plus`, and `replay!` given both `to_boundary` and `to_time`, are reason `:both_given`. `live!` on a simulation already `:live` is reason `:not_replaying`.\"",
+   "clear": true
+  },
+  {
+   "id": "CV2-056",
+   "conforms": false,
+   "evidence": "src/sim.jl:2090-2091 reads `_stop_hit` and returns ModelRequestedStop before the loop reads `control.stop_issuer` (2099-2100). Inside the loop, a request read at a publication (2115, 2141) returns before the next frame top's control and t_end checks. Probe probe.jl:100 does stop!(sim) and then step! with a request holding at boundary zero: the record is ModelRequestedStop, and with requests ignored (probe.jl:103) the same pending word gives ControlRequestedStop(:code). probe.jl:106 sets t_end = 0.3 with a request holding at the 0.3 publication: the record at t = 0.3 is ModelRequestedStop, and without the request (probe.jl:108) it is EndTimeReached. Spec §13.5 (spec.md:11858-11861) and D-203 (log.md:8101-8103) fix the order as control stop, then t_end, then requests, the first naming the record when two hold at one boundary. D-413 rules the entry read itself, but not its precedence over the control stop.",
+   "class": "deviation",
+   "fix": "Spec §13.5: \"The sources are consulted in a fixed order. Every advance reads the latest snapshot's requests at its entry, and the loop reads the requests at each publication, ending the run there. A pending control stop and `t_end` are read at the next frame top. A request holding at a boundary therefore names the record ahead of a control stop pending or a `t_end` reached at the same boundary.\" The alternative is a code change: read the stop word and t_end ahead of `_stop_hit` at entry and at each frame-ending publication.",
+   "clear": false,
+   "backing_entry": "D-203"
+  },
+  {
+   "id": "CV2-058",
+   "conforms": false,
+   "evidence": "src/sim.jl:2228-2229 bounds frames by `_last_frame(sim.model) - sim.run.frame`. Probe probe.jl:67-69 on the long-period rig shows _last_frame = 1000 (typemax(Int) = 9223372036854775807): frames = 1001 is refused as ArgumentInvalid :range and frames = 1000 is accepted (also test/test_lattices.jl:393-395). The refusal's own message reads \"keeps the frame index within the last frame the run may take\". Commit 4868f309 (D-445, D-450) moved the bound, and the docstring line (sim.jl:2209-2210) predates it.",
+   "class": "drift",
+   "fix": "- `frames`: the number of frames to advance, an integer of at least 1 that keeps the frame index within the last frame the run may take.",
+   "clear": true
+  },
+  {
+   "id": "CV2-021",
+   "conforms": true,
+   "evidence": "src/tracer.jl:10-15 records the weighing. Choosing an in-house scalar over SparseConnectivityTracer.jl is implementation policy, which per design/rules/log_rules.md:124-133 (rule 9) earns no log entry. The design content, the two tracer modes and the sampled fallback, is carried by §13.8 and D-012/D-349. rg finds the name nowhere in design/ or docs/, which is consistent with that rule."
+  },
+  {
+   "id": "CV2-023",
+   "conforms": false,
+   "evidence": "src/tracer.jl:46 has `Base.Float64(::Tracer{true}) = throw(Undecidable())` with no tag check, while Int, Bool, round/floor/trunc and the comparisons go through `_decide`, which throws only on a non-empty set (tracer.jl:106, 119-131). Probe probe.jl:112-116: Float64 of an untagged Tracer{true} throws Undecidable, while Int, Bool and < of an untagged one return values and Int of a tagged one throws. The docstring (tracer.jl:19-26) says the global tracer refuses a conversion touching a tagged operand. Spec §13.8 (spec.md:12403-12405) says branching on state, modes, parameters or time never interferes. A Float64 of an untainted state value in global mode forces the sampled fallback.",
+   "class": "defect",
+   "fix": "Make `Base.Float64(x::Tracer{true})` refuse through `_decide(true, x.dependencies)` and return `x.value` otherwise, as `Int` and `Bool` do.",
+   "clear": true
+  },
+  {
+   "id": "CV2-026",
+   "conforms": false,
+   "evidence": "src/tracer.jl:164 cites D-166, which is `superseded → D-263` (log.md:6660-6662). D-263 rules the walked contracts, the `Pinned` marker and the discrete tier's wholesale pinning, which make a port stay `Float64` and carry no Tracer leaf. Commit 4f92f7eb re-pointed other such citations to their successors and left this one, as the audit's trial ledger did for conditions.jl:670.",
+   "class": "drift",
+   "fix": "\"\"\"The union of the tags a value's `Tracer` leaves carry; a `Float64` port has none (D-263).\"\"\"",
+   "clear": true
+  },
+  {
+   "id": "CV2-028",
+   "conforms": true,
+   "evidence": "src/tracer.jl:211-232 runs eight evaluations from a fresh Xoshiro(0) per member, the draws through `_sample` (randn), and unions the routes. Spec §13.8 (spec.md:12394-12398) says the sampled tracer reports the paths taken \"sampled across randomized states\". Pseudo-random draws at a fixed seed are randomized states. The spec leaves the count and the seed to the code and states nothing they contradict, and D-012/D-349 fix neither."
+  },
+  {
+   "id": "CV2-030",
+   "conforms": false,
+   "evidence": "src/tracer.jl:313-316 gives a member a traced declaration only when `length(faces) ≤ 64` (\"Beyond 64 faces the bitmask runs out\"), and Tracer.dependencies is a UInt64 (tracer.jl:29). Probe probe.jl:50 builds a fan cycle: with 64 entering faces b traces global, and with 65 it traces structural, a continuous member with walking leaves. Spec §13.8 (spec.md:12459-12467) lists only two causes of structural tracing: discrete members, and faces or ports with no walking leaf. No log entry or pending.md bullet states the limit.",
+   "class": "deviation",
+   "fix": "Add to §13.8's caveats: \"A member with more than 64 faces entering the cluster traces structurally too, because a traced value's tags are a 64-bit set.\"",
+   "clear": true
+  }
+ ],
+ "notes": "I judged all 21 CV2 claims against W at 02745494, reading the doc text, the code, and probe runs. Of the 21, 10 do not conform: CV2-001, 023, 026, 030, 034, 041, 050, 056 and 058 are non-conformances by their own wording, and CV2-034 is drift across both the LoopError and run! docstrings. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV2_v/probe.jl. It loads test/imports.jl and test/fixtures.jl into Main, not RedstoneTests.jl, since that file would run the suite, and it ran four times at about 4 s each. I edited no tracked file and committed nothing. Two judgment calls: CV2-040 (the map omits private helpers) and CV2-021 (the SparseConnectivityTracer weighing lives only in a code comment) I judged conforming, under code_map.md's preamble and log_rules rule 9. CV2-056 goes beyond the entry case the claim names: the probe also shows a request at the same publication as t_end winning over EndTimeReached, so the in-loop order contradicts D-203 too, and the fix is a design choice for the user. One finding is outside the claim list: Appendix C's ArgumentInvalid entry also omits the code's :face_name reason (src grep), which is not checked here."
+}

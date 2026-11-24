@@ -1,0 +1,184 @@
+{
+ "judgments": [
+  {
+   "id": "C1-001",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1-9 (payload fields are strings and symbols, never component instances or component types; component types go through _typename at :37-42). Port types (:405, :438-441) are §13.2's ratified exception. Probe C1_v/probe.jl P1b, P2 and P6b print payloads that hold only strings, symbols and port types.",
+   "note": "Names are mostly held as Symbols, not Strings. That is string data, not an instance, so it keeps the rule. UserCodeFraming.cause::Exception (:1247) is the original exception, which §13.2 and Appendix C name explicitly."
+  },
+  {
+   "id": "C1-002",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:381 (UnknownPort.candidates), :517 (PathResolution.candidates), :734 (UnknownFaceSelection.candidates), :776 (RatesViolation.candidates), :857 (TransparentContainerUnknown.candidates), :1084 (UndeclaredReturnField.candidates), :1200 (BundleFieldError.legal), :1233 (HandlerReturnKey.stores). Every kind that names an offending name against a list carries that list, and rg finds no message that renders a suggestion without one."
+  },
+  {
+   "id": "C1-011",
+   "conforms": true,
+   "evidence": "src/declare.jl:984-988: invoke_probed throws DiagnosticError(BundleFieldError) at the probe. src/model.jl:1125: _species turns a runtime FieldError into a BundleFieldError StepError species. Probe P7 prints DiagnosticError{BundleFieldError}."
+  },
+  {
+   "id": "C1-021",
+   "conforms": true,
+   "evidence": "src/declare.jl:968, :985 and :990: the user-code accessors throw a single-diagnostic DiagnosticError at once. src/structure.jl:535 (DeclarationShadowed) and src/build.jl:87 and :1200 (DeadStage) also throw alone. No catch in the build collects a DiagnosticError{<:Diagnostic}: src/declare.jl:1018 only rewraps the path, and src/diagnostics.jl:122 builds the single-diagnostic carrier."
+  },
+  {
+   "id": "C1-030",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:193-199: _warn! pushes onto BUILD_WARNINGS, never onto a step's diags. src/diagnostics.jl:98-101 keeps carrier.warnings apart from carried. test/test_build.jl:2453-2457 asserts only(diagnostics(err)) isa UnconnectedInput with one warning alongside."
+  },
+  {
+   "id": "C1-039",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:93 sets DIAG_RING = 16. src/dataplane.jl:144-146: past the ring, report_cell! bumps a per-kind KindCounts (_bump(current.suppressed, _kind(occurrence))) and drops the value."
+  },
+  {
+   "id": "C1-047",
+   "conforms": false,
+   "evidence": "src/build.jl:1012: cell_layout runs inside _nominal, the nominal evaluation, and raises MissingProbeValue (src/build.jl:475) and IllegalPortType's :mutable, :no_leaves, :stop_flag_nested, :stop_flag_at_root and :handle_at_root arms (src/build.jl:417-462). src/build.jl:1154-1161: DeclarationOnWrongTier's :continuous_only and :no_manifold arms are raised in probe_stage2. Probe P1a, P1b and P1c: each carrier holds structure=Structure, so the throw left the build after the structure step completed (src/build.jl:803-810).",
+   "class": "drift",
+   "fix": "**Declaration and wiring** (the structure step; the cell layout's placement checks, `MissingProbeValue` and `x_projection`'s two `DeclarationOnWrongTier` reasons are raised by the nominal evaluation):",
+   "clear": false,
+   "note": "§9.1 already puts the cell layout in the activation step, per D-253 and D-259, and §9.3 owns the probe-value synthesis. Only the Appendix C group label lags. Another fix would be to move these kinds to the 'Execution order' group, so the new text is not fixed in one way."
+  },
+  {
+   "id": "C1-049",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:377 types endpoint as :source | :destination | :connection. src/structure.jl:113 sets :source or :destination by side, and src/structure.jl:678 sets :connection for an input_wires entry's internal side."
+  },
+  {
+   "id": "C1-058",
+   "conforms": true,
+   "evidence": "src/structure.jl:469-485: _handed walks upward from the consumer, pushes each handing face and stops at the level nobody wires. Probe P2 printed handed = [(\"m/k\", :ie), (\"m\", :oe)], innermost first, with the last being the outermost face nobody wired."
+  },
+  {
+   "id": "C1-065",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:437 and :440 type face and producer_port as Symbol, never empty. src/build.jl:891-893 fills them from the resolved faces. Probe P3 (bare Int producer into a bare Bool consumer) printed face=:u and producer_port=:y, not empty names.",
+   "class": "drift",
+   "fix": "Both endpoint paths, both face names (`u` or `y` on a bare contract side, [D-437][d-437]), declared entry type, producer face type.",
+   "clear": true,
+   "note": "D-437 (design/log.md:18128) gives a bare contract the default face u or y and rules that a face name is never empty."
+  },
+  {
+   "id": "C1-068",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:451-459: WalkingFaceAtFrozenEntry holds path (the consumer), face (its entry), producer_path and producer_port. src/build.jl:900-904 fills them."
+  },
+  {
+   "id": "C1-077",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:513 lists the reasons :not_a_terminal|:unknown_child|:reaches_past|:empty_path. The 7 construction sites (src/assembly.jl:301, :329, :337, :377, src/build.jl:400, src/structure.jl:1128, :1139) use only these four."
+  },
+  {
+   "id": "C1-086",
+   "conforms": true,
+   "evidence": "src/build.jl:916-925 compares the consumer entries at Float64 with markers stripped (src/diagnostics.jl:117-127). Probe P4: PinnedGain (e = Pinned{Float64}) and Gain (e = Float64) fanned out from one root input built without a diagnostic."
+  },
+  {
+   "id": "C1-095",
+   "conforms": true,
+   "evidence": "src/assembly.jl:744: classify_tier, run in the structure step's walk, push!es StoreWithoutUpdate onto the collected diags. Its severity is the default :error (src/diagnostics.jl:59)."
+  },
+  {
+   "id": "C1-104",
+   "conforms": true,
+   "evidence": "src/declare.jl:757-762: foreign_declarations lists every DECLARATION_FAMILY name the component's parent module binds to something !== Redstone's own function. src/structure.jl:535-537 puts them in DeclarationShadowed.names with parent_module."
+  },
+  {
+   "id": "C1-113",
+   "conforms": true,
+   "evidence": "src/assembly.jl:164 push!es ContainerNested onto the child-naming pass's diags, the same list as ContainerMixed (:170), and src/assembly.jl:204 throws it at once."
+  },
+  {
+   "id": "C1-122",
+   "conforms": true,
+   "evidence": "src/build.jl:1158-1161: a continuous primitive with decl.x === nothing (the empty, stateless x_init) and an x_projection gets reason :no_manifold. Probe P1c printed DeclarationOnWrongTier(\"c\", :x_projection, :no_manifold, ...)."
+  },
+  {
+   "id": "C1-131",
+   "conforms": true,
+   "evidence": "src/structure.jl:776-786: _check_root_faces keys both contracts through _contract, where a bare contract is u or y. Probe P5 (bare u_types plus y_types (u = Float64,)) printed FaceNameCollision(\"\", [\"u\"], :root)."
+  },
+  {
+   "id": "C1-140",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:715-721: FaceDirectionConflict holds entry, path (the child it resolved to), spelling (the endpoint as written), found (:input|:output, the actual direction) and wanted (:producer|:consumer). src/structure.jl:119-123 fills them."
+  },
+  {
+   "id": "C1-149",
+   "conforms": true,
+   "evidence": "src/assembly.jl:633-641: the warning fires only when length(given) == 1 and nothing is wanted. A bare call has no selector, so given is empty and nothing is raised."
+  },
+  {
+   "id": "C1-158",
+   "conforms": true,
+   "evidence": "src/structure.jl:406 and :964-965: the :range RatesViolation carries key and value = the composing entry (the Relative rate, or link.entry for an anchor or chain link)."
+  },
+  {
+   "id": "C1-167",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:826 lists :sample_times_sugar | :sibling_field | :two_children. They are raised at src/assembly.jl:182, :188 and :264."
+  },
+  {
+   "id": "C1-176",
+   "conforms": true,
+   "evidence": "src/assembly.jl:755 push!es StatelessWithoutOutputs onto the structure walk's collected diags. Its severity is the default :error (src/diagnostics.jl:59)."
+  },
+  {
+   "id": "C1-185",
+   "conforms": true,
+   "evidence": "src/build.jl:460-464: a root input whose leaves are not all Real or Enum (a handle or a Symbol, the opaque leaves) is IllegalPortType :handle_at_root. Probe P1b (Symbol root input) printed IllegalPortType(\"\", :root_input, :in, Symbol, :handle_at_root, nothing)."
+  },
+  {
+   "id": "C1-194",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:977-979: IllegalStoreField's message ends 'text and bulk data belong on the component instance (§7.3)'."
+  },
+  {
+   "id": "C1-205",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1057 types the payload as ports::Vector{Symbol}. src/build.jl:1206-1208 puts every port both stages returned into one diagnostic (collect(twice)). Probe P6a printed ProducedByTwoStages(\"c\", [:a, :b]): one occurrence carrying two port names.",
+   "class": "deviation",
+   "fix": "Component path, the port names both stages return (`y` on a bare contract, [D-437][d-437]).",
+   "clear": true,
+   "backing_entry": "D-252",
+   "note": "The vector field dates from the first commit of the kinds (415ed0b7), before D-252. D-252 says the kind 'carries the component path and the port name'."
+  },
+  {
+   "id": "C1-203",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1055-1058: ProducedByTwoStages has only path and ports, with no producer field."
+  },
+  {
+   "id": "C1-209",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1069 types the payload as ports::Vector{Symbol}. src/build.jl:1111-1117 puts every unproduced port of a component into one diagnostic. Probe P6b printed DeclaredNotProduced(\"c\", [:a, :b], [:c], [:q]): one occurrence carrying two declared names.",
+   "class": "deviation",
+   "fix": "Component path, the declared names no stage produces (`y` on a bare contract, [D-437][d-437]), the stage-product list and the state-field list, the latter as context.",
+   "clear": true,
+   "backing_entry": "D-252",
+   "note": "D-252's rationale says DeclaredNotProduced 'names the declared port', singular. The message itself says 'declared port(s)' (src/diagnostics.jl:1075)."
+  },
+  {
+   "id": "C1-214",
+   "conforms": true,
+   "evidence": "src/build.jl:87 (stage 1) and :1200 (stage 2): the probe throws DiagnosticError(DeadStage(...)) alone when a stage returns bare (;). Its severity is the default :error."
+  },
+  {
+   "id": "C1-223",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1109-1120: ConformanceFailure holds path, what (the function) and event (the event on a handler's occurrence). src/build.jl:1315-1354 sets event = name on the handler checks. src/executor.jl:214 carries the entry's event for the runtime handler write."
+  },
+  {
+   "id": "C1-232",
+   "conforms": true,
+   "evidence": "src/declare.jl:984-988: the probe throws a single-diagnostic DiagnosticError{BundleFieldError}, so it is fail-fast. Probe P7 printed DiagnosticError{BundleFieldError} with severity=error."
+  },
+  {
+   "id": "C1-241",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1242-1248: UserCodeFraming holds path, fn, bundle (the field names), inputs (a spelling) and cause::Exception. src/declare.jl:990-991 fills bundle = keys(bundle), inputs = _inputs_spelling(bundle) and cause = err."
+  }
+ ],
+ "notes": "I read every claim's doc text at design/spec.md 15405-15700 in W (02745494) and the matching code. The one probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/C1_v/probe.jl. I ran it once from W with --project=test and it printed the P1-P7 results cited above. I changed no tracked file. 26 of the 31 claims conform and 5 do not. C1-065 is drift: D-437 gives a bare side the face u or y, never an empty name. C1-205 and C1-209 are deviations: ProducedByTwoStages and DeclaredNotProduced carry a list of ports, but the doc and D-252 name one port. C1-047 is drift: the group label '(the structure step)' does not hold for MissingProbeValue, the cell layout's IllegalPortType arms and x_projection's DeclarationOnWrongTier arms, which the nominal evaluation raises (§9.1 and D-259 already say so). Outside my claims: (1) ClassUnreadable's 'did-you-mean when the type holds component-typed fields' is only a Bool (holds_components, src/diagnostics.jl:587) with no field list. (2) FaceNameCollision's :root site has path \\\"\\\", while the doc says 'Assembly path'."
+}

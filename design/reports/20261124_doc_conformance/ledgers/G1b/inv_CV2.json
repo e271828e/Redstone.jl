@@ -1,0 +1,577 @@
+{
+ "rows": [
+  {
+   "id": "CV2-001",
+   "file": "src/descriptor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "code_map.md:474 lists D-418 in the descriptor entry's Spec footer, omits D-439, D-478, D-168 and D-261 that the body and the code cite",
+   "evidence": "design/code_map.md:433-476 (body names D-439, D-467, D-468, D-478-keyed phi); src/descriptor.jl cites D-168, D-211, D-237, D-261, D-439, D-478; D-418 (log.md) is a face-selector head rule no line of descriptor.jl uses",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Footer of the src/descriptor.jl entry: replace D-418 with D-168, D-261, D-439 and D-478, keeping D-211, D-237, D-432, D-433, D-434, D-437, D-466, D-467, D-468."
+  },
+  {
+   "id": "CV2-021",
+   "file": "src/tracer.jl",
+   "line": 10,
+   "kind": "surface",
+   "claim": "The header records that SparseConnectivityTracer.jl was weighed and not adopted, with the reason; no log entry or companion carries that rejected alternative",
+   "evidence": "rg -i SparseConnectivity design/ (excluding reports) finds nothing; D-012 and D-349 list only Dual-based tracing as rejected",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a Rejected bullet to D-012 or D-349, or a new entry: SparseConnectivityTracer.jl, whose global tracer carries no primal so a branch on state, mode or time would force the sampled fallback; it stays the drop-in behind _lift, _tag and _classify if the method list proves too narrow."
+  },
+  {
+   "id": "CV2-023",
+   "file": "src/tracer.jl",
+   "line": 49,
+   "kind": "docstring",
+   "claim": "Tracer docstring (tracer.jl:19-26) says the global tracer throws Undecidable on a value-severing conversion 'touching a tagged operand'; the code throws on any Tracer{true}, tagged or not",
+   "evidence": "src/tracer.jl:49 Base.Float64(::Tracer{true}) = throw(Undecidable()); probe:12 Float64 of an untagged Tracer{true} throws Undecidable, while probe:13 an untagged comparison passes (src/tracer.jl:103 _decide). So a Float64() of a state, mode or parameter value in stage 2 forces the sampled fallback, against spec.md:12403 'branching on state, modes, parameters or time never interferes'",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Code: Base.Float64(x::Tracer{S}) where {S} = (_decide(S, x.dependencies); x.value), so only a tainted conversion refuses. If the blanket refusal is intended, change the docstring to 'a value-severing conversion of any global-tracer value' and add the rule to spec §13.8."
+  },
+  {
+   "id": "CV2-026",
+   "file": "src/tracer.jl",
+   "line": 164,
+   "kind": "cite",
+   "claim": "Comment 'a Float64 port has none (D-166)' cites D-166, which is superseded",
+   "evidence": "design/log.md:6484 D-166 Status superseded -> D-263; D-263 (log.md:11272) makes a plain Float64 leaf follow the activation scalar and a Pinned{Float64} leaf pin, so only a pinned port or a discrete one carries no tag",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "'... a pinned `Float64` port has none (D-263).'"
+  },
+  {
+   "id": "CV2-028",
+   "file": "src/tracer.jl",
+   "line": 222,
+   "kind": "surface",
+   "claim": "The sampled fallback runs eight evaluations at a fixed seed, Xoshiro(0), reseeded per member and unioned, so the verdict is reproducible; spec §13.8 says only 'sampled across randomized states'",
+   "evidence": "src/tracer.jl:222-229; design/spec.md:12394-12400 (sampled bullet), 12470-12476 (mode recorded); rg of spec, log and code_map for eight, seed and Xoshiro finds nothing for the tracer",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Spec §13.8, sampled bullet: 'It reports the dependence pattern of the taken paths over eight evaluations at states redrawn from a fixed per-member seed, so the verdict is reproducible; its misses are untaken branches ...'. Log it under D-349 if the sample count is a ruling."
+  },
+  {
+   "id": "CV2-030",
+   "file": "src/tracer.jl",
+   "line": 316,
+   "kind": "surface",
+   "claim": "A member with more than 64 entering faces traces structurally, because the tag set is a 64-bit mask; neither the spec nor the log states the limit",
+   "evidence": "src/tracer.jl:316 `length(faces) ≤ 64`, and the `UInt64(1) << (j - 1)` tags at tracer.jl:166-170; design/spec.md:12456-12490 lists the structural cases (discrete member, face or port with no walking leaf) without this one",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Spec §13.8, caveats: add 'A member with more than 64 entering faces traces structurally too, since the tags are a 64-bit mask.'"
+  },
+  {
+   "id": "CV2-034",
+   "file": "src/sim.jl",
+   "line": 100,
+   "kind": "docstring",
+   "claim": "LoopError docstring says a run ends with it 'when a frame throws, whatever it throws', that the throw leaves the simulation errored, and that exception is a wrapper whose cause is the raw error; a fault outside the frame ends stopped and holds the raw exception (run! docstring, sim.jl:1514, repeats it)",
+   "evidence": "test/test_lattices.jl:392-409 an unbounded run! ends :stopped with sim.model.status :consistent and a LoopError whose exception is DiagnosticError{ArgumentInvalid}, not a StepError; src/sim.jl:1757 LoopError(cause) on any cause; design/spec.md:11906-11915 states both cases (D-317, D-445, D-450)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "LoopError docstring: 'A failure inside a frame leaves the simulation `errored`, and `exception` is the `StepError` that wraps the raw error or the failed check's diagnostic as `cause`. A fault outside a frame, such as the refusal of a frame past the last the run may take, leaves it `stopped` with `exception` the raw throw.' Give run!'s sentence the same split."
+  },
+  {
+   "id": "CV2-040",
+   "file": "src/sim.jl",
+   "line": 406,
+   "kind": "map",
+   "claim": "code_map.md:1183-1302 does not name _t_bound (the one validator of §13.5's clock bound), nor _pace_value, _margin_value, _replay_bound, _settle_mode! or _interrupt_source",
+   "evidence": "rg -c over design/code_map.md gives 0 for each name; the sim.jl entry names _bind_policy, _ignored_requests and _stop_hit only",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the sim.jl entry beside _bind_policy: '_t_bound, the clock bound's one validator, fail-fast as ArgumentInvalid before the ignore list is read (D-255, D-413)'; and one line for _pace_value and _margin_value (the four calls' shared knob checks, D-269), _replay_bound and _settle_mode! (§12.7's recording bound and flip, D-218), _interrupt_source (the frame loop's interrupt arm, D-268)."
+  },
+  {
+   "id": "CV2-041",
+   "file": "src/sim.jl",
+   "line": 438,
+   "kind": "surface",
+   "claim": "ignore_stop_requests takes any iterable and converts each element with string(); a Symbol names a requester (`(:s,)` ignores \"s\"), while spec and docstring say 'an iterable of strings' and 'component paths'",
+   "evidence": "src/sim.jl:438 requester_path = string(requested); probe:60 run!(sim; ignore_stop_requests = (:s,)) is accepted and the ignored request ends nothing (EndTimeReached); design/spec.md:11824 'An iterable of strings'; run! docstring sim.jl:1537",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Docs: 'an iterable of component paths, each converted with `string`'. Alternatively refuse a non-String element as ArgumentInvalid :range."
+  },
+  {
+   "id": "CV2-046",
+   "file": "src/sim.jl",
+   "line": 1103,
+   "kind": "docstring",
+   "claim": "trim!(sim) docstring never names baseline or backend, and never says baseline is required; it says only 'the keywords mean what they mean on the model's method'",
+   "evidence": "src/sim.jl:1103-1126 (signature baseline, t0 = 0, backend = LevenbergMarquardt()); a missing baseline is an UndefKeywordError, which docstring_rules.md rule 14 says a keyword list states; spec.md:15262-15266 (Appendix B) names all three",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add '# Keywords': `baseline`: the condition the solve starts from, required; `t0`: the time the solve and the commit use, `0` by default, held exact as for `init!`; `backend`: the solver, `LevenbergMarquardt()` by default. Link `trim!(model, ...)` for the rest."
+  },
+  {
+   "id": "CV2-047",
+   "file": "src/sim.jl",
+   "line": 1156,
+   "kind": "docstring",
+   "claim": "linearize(sim) docstring describes about and t0 but never says what width means; it appears only in a refusal sentence",
+   "evidence": "src/sim.jl:1140-1155 docstring; signature width::Int = 8 at sim.jl:1157; design/spec.md:15276 Appendix B shows width = 8 with no gloss either",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add '# Keywords' with `width`: the step width of the central differences, `8` by default, at least 1 (state the unit the model's method uses); fold the about and t0 sentences in as bullets."
+  },
+  {
+   "id": "CV2-050",
+   "file": "src/sim.jl",
+   "line": 1349,
+   "kind": "surface",
+   "claim": "replay! (and step!, line 2222) refuse a call giving both halt or advance spellings as ArgumentInvalid with reason :both_given, and live! (line 1444) refuses a :live simulation with reason :not_replaying; Appendix C's ArgumentInvalid entry names neither reason",
+   "evidence": "src/sim.jl:1349, 2222, 1444; probe:39-40 both reasons observed as :both_given; design/spec.md:15913-15953 lists :range, :inexact, :not_a_count, :claimed, :not_built, :disabled, :non_nominal, :nonpositive_width, :t0_without_about, :not_a_tap_set, :not_a_problem, :scalar; spec.md:10832 and 10851 say only 'ArgumentInvalid'; rg both_given|not_replaying design/spec.md is empty",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Appendix C, ArgumentInvalid: add 'replay! given both to_boundary and to_time, and step! given both frames and t_plus, refuse as `:both_given`; live! on a simulation already `:live` refuses as `:not_replaying`.'"
+  },
+  {
+   "id": "CV2-056",
+   "file": "src/sim.jl",
+   "line": 2090,
+   "kind": "surface",
+   "claim": "Each advance reads an honoured stop request off the latest snapshot before it reads the pending control stop word; with both holding, the record names ModelRequestedStop, whereas spec §13.5's fixed order puts the control stop first",
+   "evidence": "src/sim.jl:2090-2091 _stop_hit returns before the loop's `issuer` read at 2099-2100; probe:44-47 stop!(sim) then step!(sim) with a request holding at boundary zero gives 0 frames and ModelRequestedStop(\"s\", :y, \"x\"), probe:54 the same without a request gives ControlRequestedStop(:code); design/spec.md:11859-11863 'checks a pending control stop at frame top, then t_end, then the stop requests'; D-413 records the entry check but not its place in the order; step! docstring says a stop issued before the call 'ends that call at once' with 0 frames",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Spec §13.5, 'The scan and the source order': 'The entry check of the latest snapshot for an honoured request comes before the pending control stop, so a request holding at entry is named even beside a pending stop.' Or, if the order is meant to hold, a code change: move the entry `_stop_hit` after the `stop_issuer` read in _advance!."
+  },
+  {
+   "id": "CV2-058",
+   "file": "src/sim.jl",
+   "line": 2216,
+   "kind": "docstring",
+   "claim": "step! docstring says frames is 'an integer of at least 1 that keeps the frame index within Int'; the code bounds it by the last frame the run may take, which can be far below typemax(Int)",
+   "evidence": "src/sim.jl:2229 `1 ≤ frame_count ≤ _last_frame(sim.model) - sim.run.frame`; test/test_lattices.jl:389-390 step!(sim; frames = 1001) refused on a model whose last frame is 1000; the t_plus bullet and run!'s t_end bullet already say 'within the frame range'",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`frames`: the number of frames to advance, an integer of at least 1 within the frame range, so that the frame index stays at or below the last frame the run may take."
+  },
+  {
+   "id": "CV2-064",
+   "file": "src/executor.jl",
+   "line": 197,
+   "kind": "cite",
+   "claim": "Comment 'the §13.4-style dispatch order' cites §13.4 for the deterministic order of event entries (executor component order, then declaration order)",
+   "evidence": "design/spec.md §13.4 (11463-11715) holds the cursor, the carrier and the disposition and says nothing of event order; the order is §10.6 (spec.md:7526, 7546: declaration order within a component, which keeps the execution cursor deterministic)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "'which is what makes the §10.6 dispatch order deterministic.'"
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV2-002",
+   "file": "src/descriptor.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header cites §13.9, D-432, D-434, D-467; all treat the descriptor, its failure form and its content",
+   "evidence": "design/log.md:### D-432, D-434, D-467 titles; design/spec.md:12491 §13.9"
+  },
+  {
+   "id": "CV2-003",
+   "file": "src/descriptor.jl",
+   "line": 10,
+   "kind": "surface",
+   "claim": "DESCRIPTOR_FORMAT is {major 1, minor 0}, the header's format_version",
+   "evidence": "design/spec.md:12516-12522; probe:19"
+  },
+  {
+   "id": "CV2-004",
+   "file": "src/descriptor.jl",
+   "line": 25,
+   "kind": "docstring",
+   "claim": "descriptor docstring: header fields, body key by kind, embedded build, failure structure, schema file",
+   "evidence": "probe:19-20, 30; src/descriptor.jl:25-40"
+  },
+  {
+   "id": "CV2-005",
+   "file": "src/descriptor.jl",
+   "line": 44,
+   "kind": "surface",
+   "claim": "descriptor has Build, Deployment and DiagnosticError methods, named in Appendix B and api.md",
+   "evidence": "design/spec.md:15022; docs/src/api.md:46"
+  },
+  {
+   "id": "CV2-006",
+   "file": "src/descriptor.jl",
+   "line": 70,
+   "kind": "surface",
+   "claim": "Deployment body is flat in field order, with h_min only when set and algorithm text plus proposes",
+   "evidence": "design/spec.md:12628-12640; src/descriptor.json:30-60"
+  },
+  {
+   "id": "CV2-007",
+   "file": "src/descriptor.jl",
+   "line": 97,
+   "kind": "surface",
+   "claim": "Failure body: policy, structure when held, diagnostics, warnings; policy follows the carried value's type",
+   "evidence": "design/spec.md:12743-12756; probe:20; src/diagnostics.jl:109-113"
+  },
+  {
+   "id": "CV2-008",
+   "file": "src/descriptor.jl",
+   "line": 109,
+   "kind": "surface",
+   "claim": "A diagnostic is kind, severity, path, message, then optional function, marks and cycle, never the payload",
+   "evidence": "design/spec.md:12757-12771; probe:21"
+  },
+  {
+   "id": "CV2-009",
+   "file": "src/descriptor.jl",
+   "line": 120,
+   "kind": "surface",
+   "claim": "function is written for UserCodeFraming, ConformanceFailure, DeadStage and UndeclaredReturnField",
+   "evidence": "src/descriptor.json:142-150 (Diagnostic description); design/spec.md:12762"
+  },
+  {
+   "id": "CV2-010",
+   "file": "src/descriptor.jl",
+   "line": 129,
+   "kind": "surface",
+   "claim": "marks: UnconnectedInput and TwoProducers mark a port, WireTypeMismatch and WalkingFaceAtFrozenEntry a port and a wire",
+   "evidence": "design/spec.md:12764-12768"
+  },
+  {
+   "id": "CV2-011",
+   "file": "src/descriptor.jl",
+   "line": 141,
+   "kind": "surface",
+   "claim": "cycle holds members, wires as terminal pairs, classification when present, dead hops, traced modes",
+   "evidence": "design/spec.md:12768-12770; probe:22"
+  },
+  {
+   "id": "CV2-012",
+   "file": "src/descriptor.jl",
+   "line": 193,
+   "kind": "surface",
+   "claim": "grid: admissible when anchors exist, pool with anchor, kind, factor, alternatives, primes with suppliers and unfactored, from 1",
+   "evidence": "design/spec.md:12600-12614, 12625"
+  },
+  {
+   "id": "CV2-013",
+   "file": "src/descriptor.jl",
+   "line": 266,
+   "kind": "surface",
+   "claim": "rates: scope, key, D and phi for Relative, dt and tau for Absolute",
+   "evidence": "design/spec.md:12615-12624"
+  },
+  {
+   "id": "CV2-014",
+   "file": "src/descriptor.jl",
+   "line": 307,
+   "kind": "surface",
+   "claim": "Kind marker rows match the table in test order, with tuple, free-size static array and abstract Enum cases",
+   "evidence": "design/spec.md:12650-12682; test/test_descriptor.jl kinds_model"
+  },
+  {
+   "id": "CV2-015",
+   "file": "src/descriptor.jl",
+   "line": 363,
+   "kind": "surface",
+   "claim": "alias is the most specific const of the type's own module; the type row reports the base name",
+   "evidence": "src/descriptor.json:221-232 (NodeIdentity); design/spec.md:12683-12700; probe:31 row Redstone.Library.Junction"
+  },
+  {
+   "id": "CV2-016",
+   "file": "src/descriptor.jl",
+   "line": 394,
+   "kind": "surface",
+   "claim": "Parameter summary: repr under compact and limit, cut at 80, NamedTuple fields opened by dotted path",
+   "evidence": "design/spec.md:12708-12717; src/descriptor.json (Parameter)"
+  },
+  {
+   "id": "CV2-017",
+   "file": "src/descriptor.jl",
+   "line": 437,
+   "kind": "surface",
+   "claim": "Docstring as Markdown source, with bare @ref links targeted when the owner exports the binding",
+   "evidence": "design/spec.md:12700-12708"
+  },
+  {
+   "id": "CV2-018",
+   "file": "src/descriptor.jl",
+   "line": 478,
+   "kind": "surface",
+   "claim": "locations list the declaration methods the type defines, in the spec's order, as file and line",
+   "evidence": "design/spec.md:12692-12699; src/descriptor.json (Location enum)"
+  },
+  {
+   "id": "CV2-019",
+   "file": "src/descriptor.jl",
+   "line": 498,
+   "kind": "surface",
+   "claim": "outputs holds order as paths and stage1 and stage2 per primitive; events holds name, policy and bundle per primitive",
+   "evidence": "design/spec.md:12577-12599"
+  },
+  {
+   "id": "CV2-020",
+   "file": "src/tracer.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header cites §13.8, D-012, D-140, D-245 and §9.4's tracer activation; each treats its topic",
+   "evidence": "design/spec.md:12353, 5703-5706, 12439; log.md D-012, D-140, D-245"
+  },
+  {
+   "id": "CV2-022",
+   "file": "src/tracer.jl",
+   "line": 27,
+   "kind": "docstring",
+   "claim": "Tracer: leaves carry a bitmask unioned by every operation, value is the primal, S=true decides nothing on a tagged branch, S=false decides on value",
+   "evidence": "src/tracer.jl:27-30, 103-110; design/spec.md:12388-12400"
+  },
+  {
+   "id": "CV2-024",
+   "file": "src/tracer.jl",
+   "line": 103,
+   "kind": "docstring",
+   "claim": "_decide: a decision is legal with no operand carrying a set, or in the local tracer",
+   "evidence": "src/tracer.jl:103-106; probe:13"
+  },
+  {
+   "id": "CV2-025",
+   "file": "src/tracer.jl",
+   "line": 139,
+   "kind": "cite",
+   "claim": "'an opaque leaf (D-237) passes through untouched' cites D-237, which makes a non-isbits immutable one opaque leaf",
+   "evidence": "design/log.md:9713 D-237"
+  },
+  {
+   "id": "CV2-027",
+   "file": "src/tracer.jl",
+   "line": 175,
+   "kind": "docstring",
+   "claim": "_trace_direct: in-cluster faces seeded, every other bundle field untagged, returns port => union of tags; with an rng the state x and the seeded faces are redrawn",
+   "evidence": "src/tracer.jl:175-206 (Decls with _sample on decl.x, s and ins from traced_decl); design/spec.md:12403-12410"
+  },
+  {
+   "id": "CV2-029",
+   "file": "src/tracer.jl",
+   "line": 269,
+   "kind": "docstring",
+   "claim": "_classify returns cycle with classification, dead and traced, or cycle unchanged when a member threw; InternalInvariant rethrown",
+   "evidence": "src/tracer.jl:256-267, 377-380; design/spec.md:12487-12490; probe:22"
+  },
+  {
+   "id": "CV2-031",
+   "file": "src/tracer.jl",
+   "line": 316,
+   "kind": "surface",
+   "claim": "Discrete members, and faces or ports with no walking leaf, trace structurally; their hops stay alive",
+   "evidence": "src/tracer.jl:314-331; design/spec.md:12462-12469; test/test_build.jl cycle sets"
+  },
+  {
+   "id": "CV2-032",
+   "file": "src/tracer.jl",
+   "line": 356,
+   "kind": "surface",
+   "claim": "Every dead hop is listed under either verdict, and each member's mode is recorded as global, sampled or structural",
+   "evidence": "src/tracer.jl:354-364; design/spec.md:12451-12453, 12470-12476; probe:22"
+  },
+  {
+   "id": "CV2-033",
+   "file": "src/tracer.jl",
+   "line": 27,
+   "kind": "map",
+   "claim": "code_map.md:1460-1473 matches tracer.jl: Tracer{S}, Undecidable, _lift, _tag, _sample, _classify, fixed-seed fallback, keyed probe",
+   "evidence": "design/code_map.md:1460-1473; src/tracer.jl:27, 144-175, 269"
+  },
+  {
+   "id": "CV2-035",
+   "file": "src/sim.jl",
+   "line": 6,
+   "kind": "cite",
+   "claim": "Header cites §13.4, §13.5, §13.6, D-203, D-268, D-316 for the four termination sources; each treats its topic",
+   "evidence": "design/spec.md:11894-11930, 11979-12046; log.md D-203, D-268, D-316"
+  },
+  {
+   "id": "CV2-036",
+   "file": "src/sim.jl",
+   "line": 27,
+   "kind": "surface",
+   "claim": "Four sources, EndTimeReached, ModelRequestedStop(path, port, reason), ControlRequestedStop(issuer), LoopError(exception), under TerminationSource, named in Appendix B and api.md",
+   "evidence": "design/spec.md:11896-11930, 15337-15340; docs/src/api.md; probe:46-47"
+  },
+  {
+   "id": "CV2-037",
+   "file": "src/sim.jl",
+   "line": 128,
+   "kind": "surface",
+   "claim": "StopPolicy holds t_end and the ignored paths, built per advance and carried to the record",
+   "evidence": "design/spec.md:11833-11840; src/sim.jl:128-136"
+  },
+  {
+   "id": "CV2-038",
+   "file": "src/sim.jl",
+   "line": 143,
+   "kind": "docstring",
+   "claim": "TerminationRecord holds t, policy, source and residue, written once at the run's end",
+   "evidence": "design/spec.md:11896-11903; src/sim.jl:149-170, 1757-1770"
+  },
+  {
+   "id": "CV2-039",
+   "file": "src/sim.jl",
+   "line": 306,
+   "kind": "docstring",
+   "claim": "Simulation docstring: four forms, deployment keywords by pointer to Deployment and Model, defaults match, join_timeout refused as ArgumentInvalid :range",
+   "evidence": "src/deployment.jl:555-557 defaults; src/model.jl:111; src/sim.jl:345-372; lead 'Simulation not listed' is covered by prose pointer (rule 24)"
+  },
+  {
+   "id": "CV2-042",
+   "file": "src/sim.jl",
+   "line": 454,
+   "kind": "surface",
+   "claim": "A bare string or a symbol other than :all as ignore_stop_requests is ArgumentInvalid :range; an unknown path is StopRequestInvalid, collected",
+   "evidence": "design/spec.md:11822-11832, 15713-15717; src/sim.jl:454-465"
+  },
+  {
+   "id": "CV2-043",
+   "file": "src/sim.jl",
+   "line": 477,
+   "kind": "docstring",
+   "claim": "lifecycle returns :built, :initialized, :running, :stopped or :errored, derived from the flag, status and closed(run)",
+   "evidence": "src/sim.jl:493-499; design/spec.md:15345-15349"
+  },
+  {
+   "id": "CV2-044",
+   "file": "src/sim.jl",
+   "line": 839,
+   "kind": "docstring",
+   "claim": "init! docstring: keywords, defaults, refusal kinds, boundary-zero StepError leaves the simulation built",
+   "evidence": "src/sim.jl:839-857; design/spec.md:11626-11640, 15244-15262"
+  },
+  {
+   "id": "CV2-045",
+   "file": "src/sim.jl",
+   "line": 914,
+   "kind": "docstring",
+   "claim": "overlay! and restore! (sim.jl:1014) name the four recording keywords by pointer to init!, with matching defaults; the lead is not a gap",
+   "evidence": "src/sim.jl:914-916, 1014-1018; design/spec.md:15262-15264 'take the same four'; docstring_rules.md rule 24"
+  },
+  {
+   "id": "CV2-048",
+   "file": "src/sim.jl",
+   "line": 1243,
+   "kind": "docstring",
+   "claim": "replay! keyword bullets cover every signature keyword, grouped (pace, margin; t_end, ignore_stop_requests; the four recording ones)",
+   "evidence": "src/sim.jl:1243-1247 signature; docstring '# Keywords' list; lead 'replay! not listed' is a grouping"
+  },
+  {
+   "id": "CV2-049",
+   "file": "src/sim.jl",
+   "line": 1307,
+   "kind": "cite",
+   "claim": "replay!'s §13.4 cites (replay pointer, reproduction workflow) and §13.5 cites point at sections that treat them",
+   "evidence": "design/spec.md:11610-11625, 11811-11840; sim.jl:1222-1235, 1354, 1389"
+  },
+  {
+   "id": "CV2-051",
+   "file": "src/sim.jl",
+   "line": 1514,
+   "kind": "docstring",
+   "claim": "run! docstring: sources, UnboundedRun in :live only, Ctrl-C a stop, rethrow with no device and log with one, refusal kinds",
+   "evidence": "src/sim.jl:1563-1568, 1456-1465; design/spec.md:11596-11609, 11874-11893, 15985-16031"
+  },
+  {
+   "id": "CV2-052",
+   "file": "src/sim.jl",
+   "line": 1757,
+   "kind": "surface",
+   "claim": "A loop throw writes LoopError(cause) after the sweep; the lifecycle reads errored after a throw in the frame, stopped after one outside",
+   "evidence": "design/spec.md:11906-11915; test/test_failures.jl:489-492; test/test_lattices.jl:405-409"
+  },
+  {
+   "id": "CV2-053",
+   "file": "src/sim.jl",
+   "line": 1763,
+   "kind": "surface",
+   "claim": "With devices rostered a loop failure is logged through @error and run! returns; with none it is rethrown; step! always rethrows",
+   "evidence": "src/sim.jl:1730-1735, 1773-1776, 2285-2290; design/spec.md:11596-11609"
+  },
+  {
+   "id": "CV2-054",
+   "file": "src/sim.jl",
+   "line": 1990,
+   "kind": "cite",
+   "claim": "LoopHooks and the frame_top!/settled! comments cite §13.4 and §13.5 for the catch and the stop scan",
+   "evidence": "design/spec.md:11475-11500, 11841-11858; sim.jl:2017-2040"
+  },
+  {
+   "id": "CV2-055",
+   "file": "src/sim.jl",
+   "line": 2084,
+   "kind": "map",
+   "claim": "code_map.md:1183-1302 matches the sim.jl entry: sources, Run, Simulation constructors, lifecycle, doors, run bracket, loop hooks, _advance!, accessors, series and forwarding methods",
+   "evidence": "design/code_map.md:1183-1302; src/sim.jl definitions listed by rg"
+  },
+  {
+   "id": "CV2-057",
+   "file": "src/sim.jl",
+   "line": 2216,
+   "kind": "docstring",
+   "claim": "step! docstring: keywords frames, t_plus, t_end, ignore_stop_requests (grouped), returns frames advanced, pacer record Inf and zeros, refusals",
+   "evidence": "src/sim.jl:2216-2260; probe:38 pacer PacerStatus(Inf, 0.0, ...); probe:39 :both_given; lead 'step! not listed' is a grouping"
+  },
+  {
+   "id": "CV2-059",
+   "file": "src/sim.jl",
+   "line": 2324,
+   "kind": "docstring",
+   "claim": "stop! issues ControlRequestedStop(:code), first issuer wins, a stop before run! is dropped, before step! ends that call at once",
+   "evidence": "src/sim.jl:2324, 1566; probe:52-54 (0 frames, ControlRequestedStop(:code) with no request holding)"
+  },
+  {
+   "id": "CV2-060",
+   "file": "src/executor.jl",
+   "line": 6,
+   "kind": "cite",
+   "claim": "Cursor comments cite §13.4, D-059, D-261, D-317 and §13.5 for the cursor, the catch site and frame!'s Bool return",
+   "evidence": "design/spec.md:11489-11512, 11833-11840; log.md D-059"
+  },
+  {
+   "id": "CV2-061",
+   "file": "src/executor.jl",
+   "line": 17,
+   "kind": "surface",
+   "claim": "ExecutionCursor holds comp, fn, phase, index and attempt; fn and phase values match the spec's lists",
+   "evidence": "design/spec.md:11493-11512; src/executor.jl:17-23; src/model.jl:1080-1102"
+  },
+  {
+   "id": "CV2-062",
+   "file": "src/executor.jl",
+   "line": 168,
+   "kind": "surface",
+   "claim": "Each entry stores the cursor's comp and fn per dispatch, with no allocation and no handler; guards, handlers and projections included",
+   "evidence": "src/executor.jl:168, 177, 185, 261, 372, 392; design/spec.md:11500-11507"
+  },
+  {
+   "id": "CV2-063",
+   "file": "src/executor.jl",
+   "line": 552,
+   "kind": "surface",
+   "claim": "@ballocated in the PhaseBody docstring is BenchmarkTools' test macro, a placeholder for the zero-allocation measurement",
+   "evidence": "src/executor.jl:552; test/RedstoneTests.jl:3 imports BenchmarkTools; lead 'names test-only'"
+  },
+  {
+   "id": "CV2-065",
+   "file": "src/executor.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "code_map.md:613-653 matches executor.jl: entry types, Chunk and chunked_body, _unrolled and _unrolled_tuple, PhaseBody, Gated, EventSet chunks, _guards!/_fire!/_projects!, cursor",
+   "evidence": "design/code_map.md:613-653; src/executor.jl:17, 55-249, 302-396, 486-597"
+  }
+ ],
+ "counts": {
+  "surface": 29,
+  "docstring": 16,
+  "map": 5,
+  "cite": 10
+ }
+}

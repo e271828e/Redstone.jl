@@ -1,0 +1,1307 @@
+{
+ "rows": [
+  {
+   "id": "CV1-005",
+   "file": "src/diagnostics.jl",
+   "line": 49,
+   "kind": "map",
+   "claim": "code_map omits `_typespell`, the shape-spelling used for the two container kinds' type payloads (assembly.jl:165)",
+   "evidence": "code_map.md 516-612 names `_typename` (530) but not `_typespell`; rg `_typespell` design/code_map.md finds none",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the `_typename` bullet: `_typespell`, a plain-data type with its parameters, each unqualified, for ContainerMixed's and ContainerNested's `types` (§13.2)."
+  },
+  {
+   "id": "CV1-008",
+   "file": "src/diagnostics.jl",
+   "line": 75,
+   "kind": "map",
+   "claim": "code_map omits the shared renderings `_at_path`, `_namelist`, `_faceset`, `_plainlist` and `_symtuple`, which every message calls",
+   "evidence": "code_map.md 530-532 names `_typename`, `_named`, `_at_port` only; rg of the five names in design/code_map.md finds none",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet beside `_named`: `_at_path`, `_namelist`, `_faceset`, `_plainlist` and `_symtuple`, the shared spellings of a component path, a name list, a face set, a plain list and a symbol tuple."
+  },
+  {
+   "id": "CV1-011",
+   "file": "src/diagnostics.jl",
+   "line": 89,
+   "kind": "cite",
+   "claim": "header cites D-058 for the carrier; D-058 is titled `BuildError` carrier and D-222 replaced it with DiagnosticError",
+   "evidence": "log 1950 (D-058 title), 9056 (D-222 title); line 92 already cites D-222",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Cite `(§13.1, §13.2, D-058, D-222)`, or `D-222` alone for the carrier."
+  },
+  {
+   "id": "CV1-025",
+   "file": "src/diagnostics.jl",
+   "line": 204,
+   "kind": "cite",
+   "claim": "comment says Appendix C's time payloads are plain Float64 per D-214; D-214 splits severity, raised and policy and says nothing of time payload types",
+   "evidence": "log D-214 (8581) text has no Float64 or Dual; rg for the rule in spec.md and log.md finds none",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Re-point the cite to the entry that settles it, or record the rule: diagnostic time payloads are plain `Float64`, a `ForwardDiff.Dual` clock read as its value, in Appendix C's runtime entries and a log entry."
+  },
+  {
+   "id": "CV1-026",
+   "file": "src/diagnostics.jl",
+   "line": 204,
+   "kind": "surface",
+   "claim": "every time payload (ChatteringBudget.t, FiringBudget.t, StepFloor.t, DebtReanchor.t, DeviceJoinTimeout.t, NonfiniteState.t, StepError.t, CheckpointMidFrame.t) is a plain Float64, a Dual activation's clock read off as its value; Appendix C names the times without a type",
+   "evidence": "probe:5g; src/diagnostics.jl:209-210; Appendix C 15404-16031 gives no payload type for times",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to Appendix C's runtime intro: time payloads are plain `Float64`, read from the value under a `ForwardDiff.Dual` activation."
+  },
+  {
+   "id": "CV1-027",
+   "file": "src/diagnostics.jl",
+   "line": 209,
+   "kind": "map",
+   "claim": "code_map omits `_seconds`, the Float64 reading of a clock that unwraps a nested ForwardDiff.Dual",
+   "evidence": "code_map.md 516-612 has no `_seconds` (the 1138 hit is `_seconds_label`, another helper)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet: `_seconds`, a clock or stamp as `Float64`, a `Dual` read off recursively, for the time payloads."
+  },
+  {
+   "id": "CV1-060",
+   "file": "src/diagnostics.jl",
+   "line": 599,
+   "kind": "surface",
+   "claim": "Appendix C says ClassMixed carries `the local_wires declaration and the offending primitive declarations`; the payload is path and declarations only, `local_wires` is in the message",
+   "evidence": "src/diagnostics.jl:599-602; probe:6i; Appendix C ClassMixed",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Appendix C: `Component path, the offending primitive declarations; the message names the `local_wires` they sit beside.`"
+  },
+  {
+   "id": "CV1-085",
+   "file": "src/diagnostics.jl",
+   "line": 1183,
+   "kind": "surface",
+   "claim": "Appendix C says GuardForm carries `both admissible forms`; the payload is path, event, observed, and the two forms appear only in the message",
+   "evidence": "src/diagnostics.jl:1183-1187; probe:6j; Appendix C GuardForm",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Appendix C: `Component path, event name, observed probe return type; the message names both admissible forms.`"
+  },
+  {
+   "id": "CV1-090",
+   "file": "src/diagnostics.jl",
+   "line": 1280,
+   "kind": "map",
+   "claim": "code_map omits the lifecycle-status lists `ADVANCE_LEGAL`, `READER_LEGAL` and `STOPPED_SIM_LEGAL`, which every ServiceLifecycle site in sim.jl fills its `legal` from",
+   "evidence": "code_map.md 516-612 has none of the three; src/sim.jl:604-630, 835",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet: the three legal-status tuples `ADVANCE_LEGAL`, `READER_LEGAL` and `STOPPED_SIM_LEGAL` (§12.6, D-232), each collected into a refusal's `legal`."
+  },
+  {
+   "id": "CV1-093",
+   "file": "src/diagnostics.jl",
+   "line": 1319,
+   "kind": "cite",
+   "claim": "`site` vocabulary :run! | :replay! | :step! cites D-249, whose entry lists the binding site as one of three, the constructor, run! or replay!",
+   "evidence": "log D-249 (10268, `StopFaceInvalid`'s binding site); D-316 line 42 records `StopRequestInvalid(path, site, candidates)` with step!",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Cite `(D-316)` for the site vocabulary, or `(D-249, D-316)`."
+  },
+  {
+   "id": "CV1-104",
+   "file": "src/diagnostics.jl",
+   "line": 1597,
+   "kind": "surface",
+   "claim": "Appendix C says MalformedDatum carries `The cause exception`; the field is `cause::Any`, and the docstring says any value the device chooses",
+   "evidence": "src/diagnostics.jl:1597-1599; probe:6k; Appendix C MalformedDatum",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Appendix C: `The cause, any value the device chooses to record, such as the caught exception.`"
+  },
+  {
+   "id": "CV1-105",
+   "file": "src/diagnostics.jl",
+   "line": 1597,
+   "kind": "map",
+   "claim": "code_map's list of the runtime channel's kinds omits `MalformedDatum`, a member of `KINDS` beside the thirteen it names",
+   "evidence": "code_map.md 519-529 lists the three staging kinds, two budgets, DebtReanchor, UnboundedRun, ThreadBudget, DeviceCrash, DeviceJoinTimeout, ReplayDiscardedStaging and StepFloor; src/dataplane.jl:36 holds MalformedDatum first",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add `MalformedDatum`, the author's kind (§11.6), to the list."
+  },
+  {
+   "id": "CV1-107",
+   "file": "src/diagnostics.jl",
+   "line": 1618,
+   "kind": "surface",
+   "claim": "Appendix C says EntryTypeMismatch carries `the offending value's type`; the payload is face, value and declared, with no value type",
+   "evidence": "src/diagnostics.jl:1618-1622; probe:6j; Appendix C EntryTypeMismatch",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Appendix C: `Face name, the discarded value, the root input's declared type.`"
+  },
+  {
+   "id": "CV1-117",
+   "file": "src/diagnostics.jl",
+   "line": 1803,
+   "kind": "surface",
+   "claim": "Appendix C says BindingContractMismatch carries `the trait and the method at fault, and the direction`; the payload is binding, reason and observed, and the nine reasons carry the case",
+   "evidence": "src/diagnostics.jl:1803-1809; probe:6j; Appendix C BindingContractMismatch",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Appendix C: `The binding type, the offending type for a bad `reads` return, and a `reason` naming the trait and method at fault.`"
+  },
+  {
+   "id": "CV1-124",
+   "file": "src/diagnostics.jl",
+   "line": 1951,
+   "kind": "map",
+   "claim": "code_map omits `CHECKPOINT_ORIGIN`, the origin string a root input's checkpoint value carries, which conditions.jl and linearize.jl compare against",
+   "evidence": "code_map.md 516-612 does not name it; src/diagnostics.jl:1951, 2035",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet: `CHECKPOINT_ORIGIN`, the `origin` a root input's checkpoint value carries at `linearize`'s default operating point (§14.10, D-428)."
+  },
+  {
+   "id": "CV1-139",
+   "file": "src/diagnostics.jl",
+   "line": 2354,
+   "kind": "surface",
+   "claim": "ArgumentInvalid reasons :both_given (step!, replay!), :not_replaying (live!), :entry_shape, :no_face, :face_name, :deadzone and :expo (TableBinding) are raised and rendered, but Appendix C names none of them, while it names the other reasons one by one",
+   "evidence": "src/sim.jl:1349, 1444, 2222; src/bindings.jl:66-87; rg of the seven in design/spec.md finds none; the call sites' docstrings name `ArgumentInvalid` without a reason",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Appendix C, ArgumentInvalid: add `step!` and `replay!` refusing `frames` with `t_plus`, or `to_boundary` with `to_time`, as `:both_given`; `live!` on an already live simulation as `:not_replaying`; and a `TableBinding` entry that is no NamedTuple, names no face, names a face that is no name, or carries a deadzone outside [0, 1) or an expo outside [0, 1] as `:entry_shape`, `:no_face`, `:face_name`, `:deadzone` and `:expo`."
+  },
+  {
+   "id": "CV1-140",
+   "file": "src/diagnostics.jl",
+   "line": 2356,
+   "kind": "surface",
+   "claim": "the `call` field's comment lists the calls ArgumentInvalid refuses for, and omits :overlay!, :frame!, :apply! and :BS3 that Appendix C lists and the code raises",
+   "evidence": "src/diagnostics.jl:2356; src/model.jl:460-493, src/frame.jl:83, src/deployment.jl:420; Appendix C ArgumentInvalid call list",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Make the comment's list the Appendix C one: Model, Simulation, init!, overlay!, frame!, apply!, restore!, run!, step!, replay!, live!, pace!, margin!, trim!, linearize, trace, TableBinding, Absolute, Relative, BS3."
+  },
+  {
+   "id": "CV1-147",
+   "file": "src/diagnostics.jl",
+   "line": 2517,
+   "kind": "surface",
+   "claim": "BS3's `:range` refusal (argument :reltol or :abstol, Appendix C and D-461) renders through ArgumentInvalid's last arm, `t_plus must be a finite real > 0 whose end frame the run may take`, since no arm names the BS3 call or its two arguments",
+   "evidence": "probe:2b and probe:6a print that sentence for `BS3(-1.0, 1e-6)`; src/deployment.jl:420; src/diagnostics.jl:2517-2518",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Add an arm before the `frames` chain: `d.call === :BS3 && return \"`BS3` `$(d.argument)` must be positive and finite, got $(repr(d.value)) (§10.2, D-461)\"`."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV1-001",
+   "file": "src/diagnostics.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "header cites §13.1, §13.2, Appendix C, D-214, D-215 for kind set and carrier",
+   "evidence": "spec §13.2 heading 11166; log D-214 8581, D-215 8626"
+  },
+  {
+   "id": "CV1-002",
+   "file": "src/diagnostics.jl",
+   "line": 20,
+   "kind": "cite",
+   "claim": "Design line cites §13.2, Appendix B, Appendix C",
+   "evidence": "spec 11166, 14933, 15404"
+  },
+  {
+   "id": "CV1-003",
+   "file": "src/diagnostics.jl",
+   "line": 23,
+   "kind": "docstring",
+   "claim": "Diagnostic docstring: kinds are structs under Diagnostic, fields are the payload",
+   "evidence": "probe:7g; src/diagnostics.jl:33"
+  },
+  {
+   "id": "CV1-004",
+   "file": "src/diagnostics.jl",
+   "line": 31,
+   "kind": "docstring",
+   "claim": "Diagnostic docstring: warnings returns a Vector{Diagnostic}",
+   "evidence": "src/build.jl:709, src/model.jl:971"
+  },
+  {
+   "id": "CV1-006",
+   "file": "src/diagnostics.jl",
+   "line": 54,
+   "kind": "docstring",
+   "claim": "severity docstring: default :error, warning kinds override, never stored per occurrence",
+   "evidence": "probe:1g; src/diagnostics.jl:59; probe:1f"
+  },
+  {
+   "id": "CV1-007",
+   "file": "src/diagnostics.jl",
+   "line": 59,
+   "kind": "cite",
+   "claim": "severity cites §13.2, D-214",
+   "evidence": "log D-214 8581"
+  },
+  {
+   "id": "CV1-009",
+   "file": "src/diagnostics.jl",
+   "line": 82,
+   "kind": "map",
+   "claim": "`_named` is the one renderer of a (path, name) pair and `_at_port` renders a port over it",
+   "evidence": "src/diagnostics.jl:82, 86; code_map.md 531"
+  },
+  {
+   "id": "CV1-010",
+   "file": "src/diagnostics.jl",
+   "line": 89,
+   "kind": "surface",
+   "claim": "DiagnosticError is the one carrier; fail-fast holds one diagnostic, a barrier holds the collection",
+   "evidence": "probe:3a, probe:3c"
+  },
+  {
+   "id": "CV1-012",
+   "file": "src/diagnostics.jl",
+   "line": 92,
+   "kind": "cite",
+   "claim": "carrier cites §13.2, D-222 for the policy parameter",
+   "evidence": "log D-222 9056"
+  },
+  {
+   "id": "CV1-013",
+   "file": "src/diagnostics.jl",
+   "line": 103,
+   "kind": "cite",
+   "claim": "structure field cites §13.9, D-434",
+   "evidence": "spec 12491; log D-434 17807"
+  },
+  {
+   "id": "CV1-014",
+   "file": "src/diagnostics.jl",
+   "line": 109,
+   "kind": "docstring",
+   "claim": "DiagnosticError docstring: type parameter is the kind for fail-fast, Vector{Diagnostic} for collected",
+   "evidence": "probe:3a, probe:3c"
+  },
+  {
+   "id": "CV1-015",
+   "file": "src/diagnostics.jl",
+   "line": 109,
+   "kind": "docstring",
+   "claim": "DiagnosticError docstring: warnings joins no collection, so diagnostic, diagnostics and kinds never see one",
+   "evidence": "probe:3g"
+  },
+  {
+   "id": "CV1-016",
+   "file": "src/diagnostics.jl",
+   "line": 109,
+   "kind": "docstring",
+   "claim": "DiagnosticError docstring: structure holds the Structure or nothing, typed Any",
+   "evidence": "src/diagnostics.jl:112; probe:3c"
+  },
+  {
+   "id": "CV1-017",
+   "file": "src/diagnostics.jl",
+   "line": 129,
+   "kind": "surface",
+   "claim": "`kinds(carrier)` returns the collection's kinds in first-appearance order",
+   "evidence": "probe:3a"
+  },
+  {
+   "id": "CV1-018",
+   "file": "src/diagnostics.jl",
+   "line": 152,
+   "kind": "surface",
+   "claim": "showerror groups a collection by kind, first-appearance order, sorted by path, stably",
+   "evidence": "probe:3b; spec 11166 §13.2 renders compiler-style"
+  },
+  {
+   "id": "CV1-019",
+   "file": "src/diagnostics.jl",
+   "line": 152,
+   "kind": "surface",
+   "claim": "showerror renders a fail-fast carrier as one line and appends warnings",
+   "evidence": "probe:3e"
+  },
+  {
+   "id": "CV1-020",
+   "file": "src/diagnostics.jl",
+   "line": 171,
+   "kind": "cite",
+   "claim": "logline cites §13.2 and D-214's logged policy",
+   "evidence": "spec Appendix C policies; log D-214"
+  },
+  {
+   "id": "CV1-021",
+   "file": "src/diagnostics.jl",
+   "line": 178,
+   "kind": "docstring",
+   "claim": "logline renders the kind-name-leading line without the carrier",
+   "evidence": "probe:3f"
+  },
+  {
+   "id": "CV1-022",
+   "file": "src/diagnostics.jl",
+   "line": 181,
+   "kind": "cite",
+   "claim": "BUILD_WARNINGS cites §9.1, D-250",
+   "evidence": "log D-250 10337"
+  },
+  {
+   "id": "CV1-023",
+   "file": "src/diagnostics.jl",
+   "line": 186,
+   "kind": "docstring",
+   "claim": "BUILD_WARNINGS is bound by build around its steps; _warn! appends there or logs outside a build",
+   "evidence": "src/build.jl:779; probe:4b; probe:4c"
+  },
+  {
+   "id": "CV1-024",
+   "file": "src/diagnostics.jl",
+   "line": 193,
+   "kind": "mech",
+   "claim": "_warn! refuses an error-severity kind with InternalInvariant",
+   "evidence": "probe:4a"
+  },
+  {
+   "id": "CV1-028",
+   "file": "src/diagnostics.jl",
+   "line": 212,
+   "kind": "cite",
+   "claim": "CursorFrame cites §13.4, D-452",
+   "evidence": "spec 11463; log D-452 19091"
+  },
+  {
+   "id": "CV1-029",
+   "file": "src/diagnostics.jl",
+   "line": 220,
+   "kind": "docstring",
+   "claim": "CursorFrame docstring: path is nothing where the cursor named none, attempt is 0 outside integration",
+   "evidence": "probe:5c; probe:5d-boundary_zero; src/diagnostics.jl:227"
+  },
+  {
+   "id": "CV1-030",
+   "file": "src/diagnostics.jl",
+   "line": 235,
+   "kind": "docstring",
+   "claim": "StepError docstring: carries cursor, clock, boundary index, host and cause, parameter is the cause's type",
+   "evidence": "probe:5i; src/diagnostics.jl:245-254"
+  },
+  {
+   "id": "CV1-031",
+   "file": "src/diagnostics.jl",
+   "line": 245,
+   "kind": "surface",
+   "claim": "StepError fields and the host vocabulary :loop, :boundary_zero, :overlay, :restore match Appendix C",
+   "evidence": "src/diagnostics.jl:249-252; spec 11463 §13.4 StepError struct"
+  },
+  {
+   "id": "CV1-032",
+   "file": "src/diagnostics.jl",
+   "line": 256,
+   "kind": "cite",
+   "claim": "species payload read cites D-225",
+   "evidence": "log D-225 9162"
+  },
+  {
+   "id": "CV1-033",
+   "file": "src/diagnostics.jl",
+   "line": 265,
+   "kind": "surface",
+   "claim": "StepError renders each cursor phase per case; unknown phase renders as its own symbol",
+   "evidence": "probe:5f"
+  },
+  {
+   "id": "CV1-034",
+   "file": "src/diagnostics.jl",
+   "line": 283,
+   "kind": "surface",
+   "claim": "StepError recipe follows the host: init!, overlay!, restore!, replay!+step!; an interrupt names the door that resumes",
+   "evidence": "probe:5c, probe:5d-*, probe:5e; spec §13.4 Reproduction"
+  },
+  {
+   "id": "CV1-035",
+   "file": "src/diagnostics.jl",
+   "line": 296,
+   "kind": "cite",
+   "claim": "recipe cites §13.4, D-274, D-429, D-441",
+   "evidence": "log D-274 12334, D-429 17414, D-441 18435"
+  },
+  {
+   "id": "CV1-036",
+   "file": "src/diagnostics.jl",
+   "line": 335,
+   "kind": "cite",
+   "claim": "NonfiniteState cites §13.4, D-157",
+   "evidence": "log D-157 6155"
+  },
+  {
+   "id": "CV1-037",
+   "file": "src/diagnostics.jl",
+   "line": 343,
+   "kind": "surface",
+   "claim": "NonfiniteState payload: path, leaf, value, t, boundary, severity error",
+   "evidence": "probe:5b; Appendix C NonfiniteState"
+  },
+  {
+   "id": "CV1-038",
+   "file": "src/diagnostics.jl",
+   "line": 359,
+   "kind": "cite",
+   "claim": "InternalInvariant cites D-215",
+   "evidence": "log D-215 8626 line 19"
+  },
+  {
+   "id": "CV1-039",
+   "file": "src/diagnostics.jl",
+   "line": 363,
+   "kind": "surface",
+   "claim": "InternalInvariant is an Exception outside the kind set",
+   "evidence": "probe:5h; probe:1b"
+  },
+  {
+   "id": "CV1-040",
+   "file": "src/diagnostics.jl",
+   "line": 374,
+   "kind": "surface",
+   "claim": "UnknownPort payload: entry, endpoint, path, spelling, port (nothing for one segment), candidates",
+   "evidence": "probe:7g; Appendix C UnknownPort"
+  },
+  {
+   "id": "CV1-041",
+   "file": "src/diagnostics.jl",
+   "line": 402,
+   "kind": "surface",
+   "claim": "UnconnectedInput payload: path, face, declared, handed",
+   "evidence": "src/diagnostics.jl:402-409; Appendix C UnconnectedInput"
+  },
+  {
+   "id": "CV1-042",
+   "file": "src/diagnostics.jl",
+   "line": 420,
+   "kind": "surface",
+   "claim": "TwoProducers payload names destination, both entries and both producers",
+   "evidence": "src/diagnostics.jl:420-427; Appendix C TwoProducers"
+  },
+  {
+   "id": "CV1-043",
+   "file": "src/diagnostics.jl",
+   "line": 435,
+   "kind": "surface",
+   "claim": "WireTypeMismatch payload: consumer path and face, declared, producer path and port, observed",
+   "evidence": "src/diagnostics.jl:435-442; Appendix C WireTypeMismatch"
+  },
+  {
+   "id": "CV1-044",
+   "file": "src/diagnostics.jl",
+   "line": 470,
+   "kind": "surface",
+   "claim": "AbstractAtRoot payload: face, paths, declared",
+   "evidence": "src/diagnostics.jl:470-474"
+  },
+  {
+   "id": "CV1-045",
+   "file": "src/diagnostics.jl",
+   "line": 495,
+   "kind": "cite",
+   "claim": "RootInputTypeConflict cites D-168 and D-236",
+   "evidence": "log D-168 6660, D-236 9652"
+  },
+  {
+   "id": "CV1-046",
+   "file": "src/diagnostics.jl",
+   "line": 497,
+   "kind": "surface",
+   "claim": "RootInputTypeConflict payload: face, paths, declared at nominal",
+   "evidence": "src/diagnostics.jl:497-501"
+  },
+  {
+   "id": "CV1-047",
+   "file": "src/diagnostics.jl",
+   "line": 510,
+   "kind": "surface",
+   "claim": "PathResolution reasons :not_a_terminal, :unknown_child, :reaches_past, :empty_path and tail/level payload",
+   "evidence": "src/diagnostics.jl:510-519; Appendix C PathResolution"
+  },
+  {
+   "id": "CV1-048",
+   "file": "src/diagnostics.jl",
+   "line": 518,
+   "kind": "map",
+   "claim": "map: the diagnostic kinds sit under Diagnostic, 85 concrete kinds each with message",
+   "evidence": "probe:7a; probe:1a"
+  },
+  {
+   "id": "CV1-049",
+   "file": "src/diagnostics.jl",
+   "line": 540,
+   "kind": "map",
+   "claim": "map: DiagnosticError carries warnings and structure (typed Any), with diagnostic, diagnostics, kinds, two renderings",
+   "evidence": "src/diagnostics.jl:109-168"
+  },
+  {
+   "id": "CV1-050",
+   "file": "src/diagnostics.jl",
+   "line": 545,
+   "kind": "map",
+   "claim": "map: GridEntry, GridReport, _unfactored, _anchor_label are defined here and filled by structure.jl",
+   "evidence": "src/diagnostics.jl:1341-1355; src/structure.jl:857-898"
+  },
+  {
+   "id": "CV1-051",
+   "file": "src/diagnostics.jl",
+   "line": 552,
+   "kind": "surface",
+   "claim": "EventHalfMissing reasons :guard, :handler, :not_an_event",
+   "evidence": "src/diagnostics.jl:553-558; Appendix C EventHalfMissing"
+  },
+  {
+   "id": "CV1-052",
+   "file": "src/diagnostics.jl",
+   "line": 553,
+   "kind": "map",
+   "claim": "map: the :range arms of RatesViolation and ArgumentInvalid on Relative and Absolute",
+   "evidence": "src/diagnostics.jl:787-790, 2378-2383"
+  },
+  {
+   "id": "CV1-053",
+   "file": "src/diagnostics.jl",
+   "line": 559,
+   "kind": "map",
+   "claim": "map: ReadResolution, _read_message shared with TapResolution",
+   "evidence": "src/diagnostics.jl:2122"
+  },
+  {
+   "id": "CV1-054",
+   "file": "src/diagnostics.jl",
+   "line": 565,
+   "kind": "map",
+   "claim": "map: LEAF_REASONS and _leaf_clause",
+   "evidence": "src/diagnostics.jl:2128-2155"
+  },
+  {
+   "id": "CV1-055",
+   "file": "src/diagnostics.jl",
+   "line": 567,
+   "kind": "surface",
+   "claim": "DeclarationShadowed payload: path, parent_module, names",
+   "evidence": "src/diagnostics.jl:568-572"
+  },
+  {
+   "id": "CV1-056",
+   "file": "src/diagnostics.jl",
+   "line": 567,
+   "kind": "cite",
+   "claim": "DeclarationShadowed cites §8.1, D-246",
+   "evidence": "log D-246 10084"
+  },
+  {
+   "id": "CV1-057",
+   "file": "src/diagnostics.jl",
+   "line": 572,
+   "kind": "map",
+   "claim": "map: CursorFrame carries the attempt, four-field form spells 0, _phase_text renders it past the first",
+   "evidence": "src/diagnostics.jl:227, 268; probe:5a, probe:5f"
+  },
+  {
+   "id": "CV1-058",
+   "file": "src/diagnostics.jl",
+   "line": 581,
+   "kind": "surface",
+   "claim": "ClassUnreadable payload: path, type, found, both family lists, holds_components",
+   "evidence": "src/diagnostics.jl:581-588; Appendix C ClassUnreadable"
+  },
+  {
+   "id": "CV1-059",
+   "file": "src/diagnostics.jl",
+   "line": 592,
+   "kind": "map",
+   "claim": "map: ArgumentInvalid related, frame!'s refusal, DeploymentInvalid :range on Δt_base and h_max, retired reasons gone",
+   "evidence": "src/diagnostics.jl:1458-1465; rg for :subcycling, :not_frame_multiple, :not_harmonic in src finds none"
+  },
+  {
+   "id": "CV1-061",
+   "file": "src/diagnostics.jl",
+   "line": 600,
+   "kind": "map",
+   "claim": "map: DeploymentInvalid h_min arms; CheckpointMismatch counts nine parameters",
+   "evidence": "src/diagnostics.jl:1452-1455, 2612"
+  },
+  {
+   "id": "CV1-062",
+   "file": "src/diagnostics.jl",
+   "line": 610,
+   "kind": "surface",
+   "claim": "ContainerMixed payload: path, field, keys, types",
+   "evidence": "src/diagnostics.jl:610-615"
+  },
+  {
+   "id": "CV1-063",
+   "file": "src/diagnostics.jl",
+   "line": 635,
+   "kind": "cite",
+   "claim": "DeclarationOnWrongTier cites §5.2, §8.2, §8.5, D-263",
+   "evidence": "log D-263 11272"
+  },
+  {
+   "id": "CV1-064",
+   "file": "src/diagnostics.jl",
+   "line": 636,
+   "kind": "surface",
+   "claim": "DeclarationOnWrongTier reasons :tier_form, :pinned_entry, :continuous_only, :no_manifold",
+   "evidence": "src/diagnostics.jl:636-643; Appendix C DeclarationOnWrongTier"
+  },
+  {
+   "id": "CV1-065",
+   "file": "src/diagnostics.jl",
+   "line": 659,
+   "kind": "surface",
+   "claim": "FaceNameIllegal invariant :contains_slash and :empty",
+   "evidence": "src/diagnostics.jl:659-663; Appendix C FaceNameIllegal"
+  },
+  {
+   "id": "CV1-066",
+   "file": "src/diagnostics.jl",
+   "line": 692,
+   "kind": "cite",
+   "claim": "IllegalWireEntry cites D-477",
+   "evidence": "log D-477 21065"
+  },
+  {
+   "id": "CV1-067",
+   "file": "src/diagnostics.jl",
+   "line": 693,
+   "kind": "surface",
+   "claim": "IllegalWireEntry reasons :bare_pair, :not_a_pair, :not_a_collection",
+   "evidence": "src/diagnostics.jl:693-698; Appendix C IllegalWireEntry"
+  },
+  {
+   "id": "CV1-068",
+   "file": "src/diagnostics.jl",
+   "line": 729,
+   "kind": "surface",
+   "claim": "UnknownFaceSelection reasons :multiple_selectors and :unknown_names",
+   "evidence": "src/diagnostics.jl:729-735; Appendix C UnknownFaceSelection"
+  },
+  {
+   "id": "CV1-069",
+   "file": "src/diagnostics.jl",
+   "line": 745,
+   "kind": "cite",
+   "claim": "EmptyFaceSelection cites D-251",
+   "evidence": "log D-251 10400"
+  },
+  {
+   "id": "CV1-070",
+   "file": "src/diagnostics.jl",
+   "line": 746,
+   "kind": "surface",
+   "claim": "EmptyFaceSelection is a warning raised through _warn! with selector :except or :select",
+   "evidence": "src/assembly.jl:637-640; probe:1f"
+  },
+  {
+   "id": "CV1-071",
+   "file": "src/diagnostics.jl",
+   "line": 771,
+   "kind": "surface",
+   "claim": "RatesViolation reasons match Appendix C's nine",
+   "evidence": "src/diagnostics.jl:773; Appendix C RatesViolation"
+  },
+  {
+   "id": "CV1-072",
+   "file": "src/diagnostics.jl",
+   "line": 806,
+   "kind": "cite",
+   "claim": "MissingProbeValue cites §9.3, D-051",
+   "evidence": "log D-051 1765"
+  },
+  {
+   "id": "CV1-073",
+   "file": "src/diagnostics.jl",
+   "line": 822,
+   "kind": "cite",
+   "claim": "ChildNameCollision cites D-211, D-212",
+   "evidence": "log D-211 8443, D-212 8499"
+  },
+  {
+   "id": "CV1-074",
+   "file": "src/diagnostics.jl",
+   "line": 868,
+   "kind": "surface",
+   "claim": "TierUnreadable and StatelessWithoutOutputs payloads: path, type, declarations",
+   "evidence": "src/diagnostics.jl:868-884; Appendix C TierUnreadable, StatelessWithoutOutputs"
+  },
+  {
+   "id": "CV1-075",
+   "file": "src/diagnostics.jl",
+   "line": 892,
+   "kind": "cite",
+   "claim": "IllegalPortType cites D-215, D-237, D-243, D-265, D-316",
+   "evidence": "log 8626, 9713, 9974, 11499, 14382"
+  },
+  {
+   "id": "CV1-076",
+   "file": "src/diagnostics.jl",
+   "line": 893,
+   "kind": "surface",
+   "claim": "IllegalPortType reasons: the seven Appendix C lists, with site :port, :face, :root_input",
+   "evidence": "src/diagnostics.jl:893-901; Appendix C IllegalPortType"
+  },
+  {
+   "id": "CV1-077",
+   "file": "src/diagnostics.jl",
+   "line": 946,
+   "kind": "cite",
+   "claim": "IllegalStateLeaf cites D-094",
+   "evidence": "log D-094 3179"
+  },
+  {
+   "id": "CV1-078",
+   "file": "src/diagnostics.jl",
+   "line": 947,
+   "kind": "surface",
+   "claim": "IllegalStateLeaf reasons :mode_value, :eltype, :nested, :wrapper",
+   "evidence": "src/diagnostics.jl:947-952; Appendix C IllegalStateLeaf"
+  },
+  {
+   "id": "CV1-079",
+   "file": "src/diagnostics.jl",
+   "line": 969,
+   "kind": "cite",
+   "claim": "IllegalStoreField cites D-231",
+   "evidence": "log D-231 9449"
+  },
+  {
+   "id": "CV1-080",
+   "file": "src/diagnostics.jl",
+   "line": 995,
+   "kind": "surface",
+   "claim": "AlgebraicCycle payload: members, wires, classification, dead, traced",
+   "evidence": "src/diagnostics.jl:995-1001; Appendix C AlgebraicCycle"
+  },
+  {
+   "id": "CV1-081",
+   "file": "src/diagnostics.jl",
+   "line": 1022,
+   "kind": "cite",
+   "claim": "cycle ladder cites §13.8, D-140",
+   "evidence": "log D-140 5231"
+  },
+  {
+   "id": "CV1-082",
+   "file": "src/diagnostics.jl",
+   "line": 1054,
+   "kind": "surface",
+   "claim": "ProducedByTwoStages, DeclaredNotProduced, UndeclaredReturnField, DeadStage payloads match Appendix C",
+   "evidence": "src/diagnostics.jl:1055-1095"
+  },
+  {
+   "id": "CV1-083",
+   "file": "src/diagnostics.jl",
+   "line": 1105,
+   "kind": "cite",
+   "claim": "ConformanceFailure cites D-249 for the event name on a handler",
+   "evidence": "log D-249 line 14"
+  },
+  {
+   "id": "CV1-084",
+   "file": "src/diagnostics.jl",
+   "line": 1109,
+   "kind": "surface",
+   "claim": "ConformanceFailure reasons :return_type, :field_set, :field_type and the shape vocabulary",
+   "evidence": "src/diagnostics.jl:1112-1113; Appendix C ConformanceFailure"
+  },
+  {
+   "id": "CV1-086",
+   "file": "src/diagnostics.jl",
+   "line": 1195,
+   "kind": "surface",
+   "claim": "BundleFieldError reasons :undeclared, :wrong_tier, :illegal_for_family with legal field set",
+   "evidence": "src/diagnostics.jl:1195-1202; Appendix C BundleFieldError"
+  },
+  {
+   "id": "CV1-087",
+   "file": "src/diagnostics.jl",
+   "line": 1241,
+   "kind": "cite",
+   "claim": "UserCodeFraming cites §13.2, D-248",
+   "evidence": "log D-248 10216"
+  },
+  {
+   "id": "CV1-088",
+   "file": "src/diagnostics.jl",
+   "line": 1242,
+   "kind": "surface",
+   "claim": "UserCodeFraming payload: path, fn, bundle, inputs, cause",
+   "evidence": "src/diagnostics.jl:1242-1248; Appendix C UserCodeFraming"
+  },
+  {
+   "id": "CV1-089",
+   "file": "src/diagnostics.jl",
+   "line": 1274,
+   "kind": "cite",
+   "claim": "legality lists cite §12.6, §11.3, D-232",
+   "evidence": "log D-232 9509"
+  },
+  {
+   "id": "CV1-091",
+   "file": "src/diagnostics.jl",
+   "line": 1285,
+   "kind": "surface",
+   "claim": "ServiceLifecycle payload: op, status, legal",
+   "evidence": "src/diagnostics.jl:1285-1289; Appendix C ServiceLifecycle"
+  },
+  {
+   "id": "CV1-092",
+   "file": "src/diagnostics.jl",
+   "line": 1317,
+   "kind": "surface",
+   "claim": "StopRequestInvalid payload: path, site, candidates",
+   "evidence": "src/diagnostics.jl:1317-1321; Appendix C StopRequestInvalid"
+  },
+  {
+   "id": "CV1-094",
+   "file": "src/diagnostics.jl",
+   "line": 1328,
+   "kind": "cite",
+   "claim": "grid attribution cites §9.2, D-187, D-466",
+   "evidence": "log D-187 7508, D-466 20197"
+  },
+  {
+   "id": "CV1-095",
+   "file": "src/diagnostics.jl",
+   "line": 1341,
+   "kind": "surface",
+   "claim": "GridEntry and GridReport carry the pool, the coarsest admissible Δt_base and the prime attribution",
+   "evidence": "src/diagnostics.jl:1341-1367; spec 5424 Grid diagnostics"
+  },
+  {
+   "id": "CV1-096",
+   "file": "src/diagnostics.jl",
+   "line": 1370,
+   "kind": "surface",
+   "claim": "DeploymentInvalid parameters and reasons match Appendix C, the grid on the three grid refusals",
+   "evidence": "src/diagnostics.jl:1370-1379, 1480-1493; Appendix C DeploymentInvalid"
+  },
+  {
+   "id": "CV1-097",
+   "file": "src/diagnostics.jl",
+   "line": 1418,
+   "kind": "mech",
+   "claim": "_grid_block lists every pool entry and a prime row per supplier, `unfactored` at or above PRIME_DIVISOR_CAP^2 = 2^40",
+   "evidence": "probe:6g; src/diagnostics.jl:1437-1438; spec 5446"
+  },
+  {
+   "id": "CV1-098",
+   "file": "src/diagnostics.jl",
+   "line": 1499,
+   "kind": "surface",
+   "claim": "GridUtilization payload: Δt_base, utilization, fastest, grid; a warning",
+   "evidence": "src/diagnostics.jl:1499-1505; probe:1f"
+  },
+  {
+   "id": "CV1-099",
+   "file": "src/diagnostics.jl",
+   "line": 1511,
+   "kind": "surface",
+   "claim": "AttachUnknownFace, AlreadyAttached, ClaimConflict payloads match Appendix C",
+   "evidence": "src/diagnostics.jl:1511-1536"
+  },
+  {
+   "id": "CV1-100",
+   "file": "src/diagnostics.jl",
+   "line": 1542,
+   "kind": "surface",
+   "claim": "EmptyGreedyClaim is a warning with device and binding",
+   "evidence": "src/diagnostics.jl:1542-1546; probe:1f"
+  },
+  {
+   "id": "CV1-101",
+   "file": "src/diagnostics.jl",
+   "line": 1555,
+   "kind": "cite",
+   "claim": "runtime-channel Design block cites §10.4 §10.6 §10.7 §11.x §12.x D-203 D-250 D-317",
+   "evidence": "spec headings 6786, 7378, 7661, 8207, 8460, 8879, 9477, 9772, 9944; log D-203 8078, D-317 14517"
+  },
+  {
+   "id": "CV1-102",
+   "file": "src/diagnostics.jl",
+   "line": 1575,
+   "kind": "docstring",
+   "claim": "MalformedDatum signature `MalformedDatum(cause) -> MalformedDatum` and `cause` any value",
+   "evidence": "src/diagnostics.jl:1597-1599; probe:6k"
+  },
+  {
+   "id": "CV1-103",
+   "file": "src/diagnostics.jl",
+   "line": 1575,
+   "kind": "docstring",
+   "claim": "MalformedDatum is a warning, never throws",
+   "evidence": "probe:1f"
+  },
+  {
+   "id": "CV1-106",
+   "file": "src/diagnostics.jl",
+   "line": 1601,
+   "kind": "surface",
+   "claim": "OutOfClaimEntry and ClaimedFaceEntry payloads match Appendix C",
+   "evidence": "src/diagnostics.jl:1602-1615"
+  },
+  {
+   "id": "CV1-108",
+   "file": "src/diagnostics.jl",
+   "line": 1625,
+   "kind": "surface",
+   "claim": "ChatteringBudget and FiringBudget payloads: path, event, t, budget, count",
+   "evidence": "src/diagnostics.jl:1625-1640; Appendix C ChatteringBudget, FiringBudget"
+  },
+  {
+   "id": "CV1-109",
+   "file": "src/diagnostics.jl",
+   "line": 1649,
+   "kind": "surface",
+   "claim": "StepFloor payload: t, h, h_min, attempts, reason :rejected or :budget",
+   "evidence": "src/diagnostics.jl:1649-1655; Appendix C StepFloor"
+  },
+  {
+   "id": "CV1-110",
+   "file": "src/diagnostics.jl",
+   "line": 1658,
+   "kind": "surface",
+   "claim": "DebtReanchor payload: forgiven, t, τ",
+   "evidence": "src/diagnostics.jl:1658-1662"
+  },
+  {
+   "id": "CV1-111",
+   "file": "src/diagnostics.jl",
+   "line": 1671,
+   "kind": "surface",
+   "claim": "UnboundedRun payload: t_end, ignored",
+   "evidence": "src/diagnostics.jl:1671-1674; Appendix C UnboundedRun"
+  },
+  {
+   "id": "CV1-112",
+   "file": "src/diagnostics.jl",
+   "line": 1682,
+   "kind": "surface",
+   "claim": "ThreadBudget payload: threads, device_tasks",
+   "evidence": "src/diagnostics.jl:1682-1685"
+  },
+  {
+   "id": "CV1-113",
+   "file": "src/diagnostics.jl",
+   "line": 1688,
+   "kind": "surface",
+   "claim": "DeviceCrash payload: cause, abort",
+   "evidence": "src/diagnostics.jl:1688-1691"
+  },
+  {
+   "id": "CV1-114",
+   "file": "src/diagnostics.jl",
+   "line": 1699,
+   "kind": "surface",
+   "claim": "DeviceJoinTimeout payload: who, timeout, t, boundary",
+   "evidence": "src/diagnostics.jl:1699-1704"
+  },
+  {
+   "id": "CV1-115",
+   "file": "src/diagnostics.jl",
+   "line": 1717,
+   "kind": "surface",
+   "claim": "ReplayDiscardedStaging payload: faces, frame",
+   "evidence": "src/diagnostics.jl:1717-1720"
+  },
+  {
+   "id": "CV1-116",
+   "file": "src/diagnostics.jl",
+   "line": 1726,
+   "kind": "surface",
+   "claim": "Every runtime-channel kind and the Trim, GridUtilization, EmptyGreedyClaim and EmptyFaceSelection kinds are warnings, and no other kind",
+   "evidence": "probe:1f"
+  },
+  {
+   "id": "CV1-118",
+   "file": "src/diagnostics.jl",
+   "line": 1840,
+   "kind": "cite",
+   "claim": "DeviceContractMismatch cites D-244",
+   "evidence": "log D-244 10010"
+  },
+  {
+   "id": "CV1-119",
+   "file": "src/diagnostics.jl",
+   "line": 1841,
+   "kind": "surface",
+   "claim": "DeviceContractMismatch reasons :no_loop, :no_output_side, :detached",
+   "evidence": "src/diagnostics.jl:1841-1844; Appendix C DeviceContractMismatch"
+  },
+  {
+   "id": "CV1-120",
+   "file": "src/diagnostics.jl",
+   "line": 1856,
+   "kind": "cite",
+   "claim": "ReadResolution cites §14.4, D-406, D-277, D-276, D-437, D-438",
+   "evidence": "log D-406 16701, D-277 12605, D-276 12474"
+  },
+  {
+   "id": "CV1-121",
+   "file": "src/diagnostics.jl",
+   "line": 1857,
+   "kind": "surface",
+   "claim": "ReadResolution reasons and fields (label, selector, mount, path, field, leaf, step, declares, producer) match Appendix C",
+   "evidence": "src/diagnostics.jl:1857-1884; Appendix C ReadResolution"
+  },
+  {
+   "id": "CV1-122",
+   "file": "src/diagnostics.jl",
+   "line": 1950,
+   "kind": "cite",
+   "claim": "CHECKPOINT_ORIGIN cites §14.10, D-428",
+   "evidence": "log D-428 17381"
+  },
+  {
+   "id": "CV1-123",
+   "file": "src/diagnostics.jl",
+   "line": 1951,
+   "kind": "surface",
+   "claim": "The checkpoint origin string `checkpoint` appears in ConditionResolution messages for linearize's default operating point",
+   "evidence": "src/diagnostics.jl:1951, 2035; Appendix C ConditionResolution"
+  },
+  {
+   "id": "CV1-125",
+   "file": "src/diagnostics.jl",
+   "line": 1954,
+   "kind": "surface",
+   "claim": "ConditionResolution reasons match Appendix C's nine",
+   "evidence": "src/diagnostics.jl:1958-1960; Appendix C ConditionResolution"
+  },
+  {
+   "id": "CV1-126",
+   "file": "src/diagnostics.jl",
+   "line": 2044,
+   "kind": "surface",
+   "claim": "DuplicateConditionLeaf payload: path, store, field, face, origins",
+   "evidence": "src/diagnostics.jl:2044-2050"
+  },
+  {
+   "id": "CV1-127",
+   "file": "src/diagnostics.jl",
+   "line": 2059,
+   "kind": "cite",
+   "claim": "ConditionNodeMisuse cites §14.2, D-278",
+   "evidence": "log D-278 12658"
+  },
+  {
+   "id": "CV1-128",
+   "file": "src/diagnostics.jl",
+   "line": 2060,
+   "kind": "surface",
+   "claim": "ConditionNodeMisuse reasons :not_a_node, :set_payload, :empty_prefix with payload and in_hand",
+   "evidence": "src/diagnostics.jl:2060-2065; Appendix C ConditionNodeMisuse"
+  },
+  {
+   "id": "CV1-129",
+   "file": "src/diagnostics.jl",
+   "line": 2080,
+   "kind": "surface",
+   "claim": "UninitializedInputs payload: op, faces",
+   "evidence": "src/diagnostics.jl:2080-2083"
+  },
+  {
+   "id": "CV1-130",
+   "file": "src/diagnostics.jl",
+   "line": 2087,
+   "kind": "cite",
+   "claim": "UninitializedInputs message cites D-068",
+   "evidence": "log D-068 2300"
+  },
+  {
+   "id": "CV1-131",
+   "file": "src/diagnostics.jl",
+   "line": 2091,
+   "kind": "surface",
+   "claim": "TapResolution reasons :tap_kind, :discrete_state, :vector_tap, :unseedable, :duplicate_site and their fields",
+   "evidence": "src/diagnostics.jl:2091-2111; Appendix C TapResolution"
+  },
+  {
+   "id": "CV1-132",
+   "file": "src/diagnostics.jl",
+   "line": 2114,
+   "kind": "cite",
+   "claim": "tap lists cite §14.10, D-272",
+   "evidence": "log D-272 12145"
+  },
+  {
+   "id": "CV1-133",
+   "file": "src/diagnostics.jl",
+   "line": 2169,
+   "kind": "cite",
+   "claim": "discrete_state cites D-197",
+   "evidence": "log D-197 7893"
+  },
+  {
+   "id": "CV1-134",
+   "file": "src/diagnostics.jl",
+   "line": 2225,
+   "kind": "surface",
+   "claim": "TrimProblemInvalid reasons and fields match Appendix C",
+   "evidence": "src/diagnostics.jl:2225-2236; Appendix C TrimProblemInvalid"
+  },
+  {
+   "id": "CV1-135",
+   "file": "src/diagnostics.jl",
+   "line": 2296,
+   "kind": "surface",
+   "claim": "TrimCommitEvents, TrimCommitResiduals and TrimCommitChecks are warnings with the Appendix C payloads",
+   "evidence": "src/diagnostics.jl:2296-2328; probe:1f"
+  },
+  {
+   "id": "CV1-136",
+   "file": "src/diagnostics.jl",
+   "line": 2328,
+   "kind": "cite",
+   "claim": "TrimCommitChecks cites §14.7, D-262",
+   "evidence": "log D-262 11199"
+  },
+  {
+   "id": "CV1-137",
+   "file": "src/diagnostics.jl",
+   "line": 2331,
+   "kind": "surface",
+   "claim": "ConditionShapeDrift reasons :tree_type and :prefix, fields compiled, observed, position",
+   "evidence": "src/diagnostics.jl:2331-2336; Appendix C ConditionShapeDrift"
+  },
+  {
+   "id": "CV1-138",
+   "file": "src/diagnostics.jl",
+   "line": 2347,
+   "kind": "cite",
+   "claim": "ConditionShapeDrift cites D-066",
+   "evidence": "log D-066 2234"
+  },
+  {
+   "id": "CV1-141",
+   "file": "src/diagnostics.jl",
+   "line": 2366,
+   "kind": "surface",
+   "claim": "ArgumentInvalid :inexact on Absolute names the period or offset argument",
+   "evidence": "src/diagnostics.jl:2366-2371; src/declare.jl:481"
+  },
+  {
+   "id": "CV1-142",
+   "file": "src/diagnostics.jl",
+   "line": 2384,
+   "kind": "surface",
+   "claim": "ArgumentInvalid :claimed on Simulation and on a model door, :not_built, :scalar, :non_nominal arms render",
+   "evidence": "probe:6c; src/diagnostics.jl:2441-2458"
+  },
+  {
+   "id": "CV1-143",
+   "file": "src/diagnostics.jl",
+   "line": 2422,
+   "kind": "cite",
+   "claim": "disabled message cites D-029, D-261",
+   "evidence": "log D-029 1140"
+  },
+  {
+   "id": "CV1-144",
+   "file": "src/diagnostics.jl",
+   "line": 2444,
+   "kind": "cite",
+   "claim": "claimed message cites D-318",
+   "evidence": "log D-318 14699"
+  },
+  {
+   "id": "CV1-145",
+   "file": "src/diagnostics.jl",
+   "line": 2458,
+   "kind": "cite",
+   "claim": "scalar message cites D-320",
+   "evidence": "log D-320 14899"
+  },
+  {
+   "id": "CV1-146",
+   "file": "src/diagnostics.jl",
+   "line": 2461,
+   "kind": "surface",
+   "claim": "frame!'s :range refusal carries the last frame in `related`",
+   "evidence": "probe:6d; src/frame.jl:83"
+  },
+  {
+   "id": "CV1-148",
+   "file": "src/diagnostics.jl",
+   "line": 2521,
+   "kind": "cite",
+   "claim": "ReadSetMisuse cites D-474 for reserved_label",
+   "evidence": "log D-474 20879"
+  },
+  {
+   "id": "CV1-149",
+   "file": "src/diagnostics.jl",
+   "line": 2522,
+   "kind": "surface",
+   "claim": "ReadSetMisuse reasons :not_a_selector, :not_a_read_set, :not_a_tap_list, :empty_prefix, :reserved_label",
+   "evidence": "src/diagnostics.jl:2524; Appendix C ReadSetMisuse"
+  },
+  {
+   "id": "CV1-150",
+   "file": "src/diagnostics.jl",
+   "line": 2549,
+   "kind": "surface",
+   "claim": "NotAttached payload: device, roster",
+   "evidence": "src/diagnostics.jl:2549-2552"
+  },
+  {
+   "id": "CV1-151",
+   "file": "src/diagnostics.jl",
+   "line": 2567,
+   "kind": "surface",
+   "claim": "CheckpointMismatch what vocabulary :store, :root_input, :deployment, :scalar, :frame, :clock",
+   "evidence": "src/diagnostics.jl:2567-2578; Appendix C CheckpointMismatch"
+  },
+  {
+   "id": "CV1-152",
+   "file": "src/diagnostics.jl",
+   "line": 2597,
+   "kind": "mech",
+   "claim": "CheckpointMismatch deployment arms compare the nine trajectory-determining parameters",
+   "evidence": "src/diagnostics.jl:2612-2613; Appendix C DeploymentInvalid parameter list names nine"
+  },
+  {
+   "id": "CV1-153",
+   "file": "src/diagnostics.jl",
+   "line": 2661,
+   "kind": "cite",
+   "claim": "CheckpointMidFrame cites D-274, D-319, D-445",
+   "evidence": "log D-319 14778, D-445 18709"
+  },
+  {
+   "id": "CV1-154",
+   "file": "src/diagnostics.jl",
+   "line": 2662,
+   "kind": "surface",
+   "claim": "CheckpointMidFrame payload: t, t_frame, frame",
+   "evidence": "src/diagnostics.jl:2662-2666; Appendix C CheckpointMidFrame"
+  },
+  {
+   "id": "CV1-155",
+   "file": "src/diagnostics.jl",
+   "line": 2677,
+   "kind": "surface",
+   "claim": "ReplaySchemaMismatch and ReplayUnknownFace payloads match Appendix C",
+   "evidence": "src/diagnostics.jl:2677-2696"
+  }
+ ],
+ "counts": {
+  "surface": 79,
+  "cite": 45,
+  "map": 16,
+  "docstring": 12,
+  "mech": 3
+ }
+}

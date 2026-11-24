@@ -1,0 +1,206 @@
+{
+ "judgments": [
+  {
+   "id": "C2-001",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1266 MissingInit has no severity override, so the default at src/diagnostics.jl:59 (:error) applies; probe.jl:20 printed severity=error, DiagnosticError{MissingInit} for run! before init!"
+  },
+  {
+   "id": "C2-010",
+   "conforms": true,
+   "evidence": "ServiceLifecycle op=:init! at src/sim.jl:835, :restore! at src/sim.jl:1064/1081, :overlay! via _assert_at_rest at src/sim.jl:963 and src/model.jl:1193; probe.jl:22 gave ServiceLifecycle op=:overlay! status=:built"
+  },
+  {
+   "id": "C2-019",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1319 site::Symbol # :run! | :replay! | :step!; _bind_policy called only with :replay! (src/sim.jl:1383), :run! (1562), :step! (2248); probe.jl:25 gave StopRequestInvalid site=:step!"
+  },
+  {
+   "id": "C2-028",
+   "conforms": true,
+   "evidence": "src/deployment.jl:232 and :237 push DeploymentInvalid(parameter = :h_min, ...); probe.jl:28-29 gave parameter=:h_min reason=:missing and reason=:range related=1//10"
+  },
+  {
+   "id": "C2-037",
+   "conforms": true,
+   "evidence": "src/deployment.jl:153-156 _lattice returns :Δt_base when the unit's denominator or the frame count leaves Int, and src/deployment.jl:322 pushes DeploymentInvalid(parameter = :Δt_base, reason = :range, related = Δt_frame); probe.jl:30 confirmed"
+  },
+  {
+   "id": "C2-047",
+   "conforms": true,
+   "evidence": "src/deployment.jl:282-288 pass scope = anchor.scope, key = anchor.key on :anchor_period and :anchor_offset; fields at src/diagnostics.jl:1376-1377"
+  },
+  {
+   "id": "C2-055",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1511-1516 AttachUnknownFace carries device, binding::String (the binding type, filled with _typename(b) at src/roster.jl:363), face and candidates; no field holds a binding entry, and the face is the claims entry as Symbol",
+   "class": "deviation",
+   "fix": "The device (by type, since its roster id is assigned only at admission), the binding by type, face name, the root input-face list.",
+   "clear": true,
+   "note": "\"binding entry\" dates from the Appendix C table of d0e20505, before the code; read as \"the binding\" it would match, but the payload holds the binding's type name and nothing called an entry."
+  },
+  {
+   "id": "C2-057",
+   "conforms": true,
+   "evidence": "src/roster.jl:357,363-364 candidates = face_set, the root input faces; src/diagnostics.jl:1515 comment 'the root input-face list'"
+  },
+  {
+   "id": "C2-066",
+   "conforms": true,
+   "evidence": "src/sim.jl:2516-2517 ClaimConflict(incumbent = plane.claimedby[face]); src/roster.jl:393 fills claimedby[face] = _who(entry), the device id"
+  },
+  {
+   "id": "C2-073",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1803-1809 BindingContractMismatch carries binding, reason and observed only; trait, method and direction exist only as the reason symbol (src/roster.jl:206-215), and :neither_side names no method",
+   "class": "deviation",
+   "fix": "The binding type and a `reason` naming the case, which fixes the trait and the method at fault and the direction where the case has them.",
+   "clear": false,
+   "note": "Whether a reason symbol counts as carrying the trait, method and direction is a wording ruling; the doc's following sentence already says a reason tells the cases apart, so the earlier list is redundant at best."
+  },
+  {
+   "id": "C2-076",
+   "conforms": true,
+   "evidence": "src/roster.jl:206-207 greedy && !input_side throws BindingContractMismatch(reason = :greedy_without_input); probe.jl:35 confirmed"
+  },
+  {
+   "id": "C2-085",
+   "conforms": true,
+   "evidence": "src/devices.jl:369-370 gather throws DeviceContractMismatch(reason = :no_output_side) when handle.gatherer === nothing"
+  },
+  {
+   "id": "C2-095",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1967-1968 ConditionResolution has tier and role fields; tier filled on :no_store (src/conditions.jl:650), role on :undeclared_field (src/conditions.jl:657-661)"
+  },
+  {
+   "id": "C2-104",
+   "conforms": true,
+   "evidence": "no severity override (default :error, src/diagnostics.jl:59); src/conditions.jl:396 pushes into the diags list; probe.jl:49 gave DiagnosticError{Vector{Diagnostic}} holding DuplicateConditionLeaf at init!"
+  },
+  {
+   "id": "C2-113",
+   "conforms": true,
+   "evidence": "src/conditions.jl:177-179 _payload throws ConditionNodeMisuse(reason = :set_payload, payload = name) for nothing; probe.jl:37 gave reason=:set_payload payload=:x"
+  },
+  {
+   "id": "C2-122",
+   "conforms": true,
+   "evidence": "src/readers.jl:1003 and :1030 declares = :state_field, src/readers.jl:1048 declares :output_port, both with reason :undeclared"
+  },
+  {
+   "id": "C2-131",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:2128 LEAF_REASONS = (:leaf_syntax, :no_such_field, :opaque_leaf, :not_indexable, :index_arity, :index_bounds); raised at src/readers.jl:358-460"
+  },
+  {
+   "id": "C2-139",
+   "conforms": false,
+   "evidence": "src/conditions.jl:705 throws DiagnosticError(UninitializedInputs(...)), a single-diagnostic carrier, which by D-222 (src/diagnostics.jl:85-90) spells fail-fast; test/test_conditions.jl:269 and test/test_trim.jl:631 assert DiagnosticError{UninitializedInputs}; probe.jl:45 confirmed",
+   "class": "deviation",
+   "fix": "Error · service, pre-write · fail-fast, one diagnostic naming every uncovered face.",
+   "clear": false,
+   "note": "D-068/D-149 and §14.6 use 'collected' for one batched diagnostic listing every face, which the code does. Appendix C's policy column means the carrier's parameter, which the code spells fail-fast. The policy definition at design/spec.md:15449 also names the §14.6 pre-write check as collected, so the fix reaches beyond this row. The other way is to throw it as a one-element Vector."
+  },
+  {
+   "id": "C2-141",
+   "conforms": true,
+   "evidence": "assert_total called with :init! (src/sim.jl:841, src/model.jl:314), :trim! (src/trim.jl:599), :linearize (src/linearize.jl:316)"
+  },
+  {
+   "id": "C2-150",
+   "conforms": true,
+   "evidence": "src/linearize.jl:456-457 _tap_violation(read, :duplicate_site; duplicate_of = seeded_by[site]), the earlier tap's label (src/diagnostics.jl:2110)"
+  },
+  {
+   "id": "C2-159",
+   "conforms": true,
+   "evidence": "src/trim.jl:428-430 and :463 push :field_types with bad = [field => observed type] for each offending field"
+  },
+  {
+   "id": "C2-168",
+   "conforms": true,
+   "evidence": "src/trim.jl:726 returns before commit when not converged; src/trim.jl:744-751 re-gathers committed residuals and warns TrimCommitResiduals for those with !(abs ≤ tol)"
+  },
+  {
+   "id": "C2-177",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1505 severity(::GridUtilization) = :warning; raised at the Deployment constructor, src/deployment.jl:593"
+  },
+  {
+   "id": "C2-186",
+   "conforms": true,
+   "evidence": "default :error severity; pushed into diags at src/model.jl:1214-1244 and thrown as a collection (src/sim.jl:1071, :1205); the scalar case throws alone at src/sim.jl:1097 and src/model.jl:1319"
+  },
+  {
+   "id": "C2-195",
+   "conforms": true,
+   "evidence": "src/model.jl:1244 CheckpointMismatch(what = :store, name = :events, ...)"
+  },
+  {
+   "id": "C2-204",
+   "conforms": true,
+   "evidence": "src/trace.jl:209-213 CheckpointMismatch(what = :frame, name = writer tag, expected = recorded_frames, found = record.frame)"
+  },
+  {
+   "id": "C2-213",
+   "conforms": true,
+   "evidence": "default :error severity; src/trace.jl:158 pushes ReplaySchemaMismatch into diags, thrown as a collection at src/sim.jl:1205"
+  },
+  {
+   "id": "C2-222",
+   "conforms": true,
+   "evidence": "Every ArgumentInvalid call value in src/ is one of the twenty: literals at src/model.jl:113, src/sim.jl:365, src/frame.jl:83, src/bindings.jl:66, src/linearize.jl:292, src/trim.jl:570, src/sim.jl:3016, src/sim.jl:1444, src/deployment.jl:420; passed-through calls :init!/:overlay!/:restore!/:replay! (src/sim.jl:838-1346), :run!/:step!/:pace!/:margin! (src/sim.jl:1561,2248,2392,2409), :apply! (src/model.jl:493), :Absolute/:Relative (src/declare.jl:438,477)"
+  },
+  {
+   "id": "C2-231",
+   "conforms": true,
+   "evidence": "src/bindings.jl:66-87 every TableBinding ArgumentInvalid sets entry = channel; probe.jl:47 gave entry=:stick, argument=:bogus, vocabulary=[:face, :deadzone, :expo]"
+  },
+  {
+   "id": "C2-240",
+   "conforms": true,
+   "evidence": "src/trim.jl:569-571 trim!(::Model, other) throws ArgumentInvalid(reason = :not_a_problem); src/sim.jl:1133 forwards the Simulation form; probe.jl:42 confirmed"
+  },
+  {
+   "id": "C2-250",
+   "conforms": true,
+   "evidence": "src/conditions.jl:211-213 at(prefix, ::Reads) throws ReadSetMisuse(reason = :empty_prefix); probe.jl:39 confirmed"
+  },
+  {
+   "id": "C2-260",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:245 struct StepError{C <: Union{Diagnostic, Exception}} with cause::C at :253"
+  },
+  {
+   "id": "C2-269",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1732 severity(::StepFloor) = :warning; src/model.jl:895 report_cell!(model.frame_diag, StepFloor(...)), the runtime cell stream"
+  },
+  {
+   "id": "C2-278",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:416-418 site defaults to :staging; src/roster.jl:404-405 passes site = :renormalization in the attach's harness recompile"
+  },
+  {
+   "id": "C2-287",
+   "conforms": true,
+   "evidence": "src/sim.jl:1932-1936 reports DeviceJoinTimeout into the loop cell; _sweep_tail! (src/sim.jl:1950-1964) folds it into ResidueRecords and _residue! logs each with @warn (src/sim.jl:1972-1974)"
+  },
+  {
+   "id": "C2-296",
+   "conforms": true,
+   "evidence": "src/devices.jl:401-403 report!(handle::DeviceHandle, occurrence::MalformedDatum); docstring src/diagnostics.jl:1576-1585 says the loop builds and reports it"
+  },
+  {
+   "id": "C2-299",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1618-1622 EntryTypeMismatch carries face, value and declared; the value's type has no field of its own and is only typeof(value) (src/dataplane.jl:438)",
+   "class": "deviation",
+   "fix": "Face name, the discarded value, whose type is the offending one, and the root input's declared type.",
+   "clear": true,
+   "note": "If the audit counts a type read off a carried value as carried, this row conforms; the payload holds one item, not two."
+  }
+ ],
+ "notes": "Read-only verification of slice C2 at W (02745494). I changed no tracked file. I created one probe, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/C2_v/probe.jl, and ran it twice. The second run fixed the C2-037 case, whose first inputs were too coarse to trip the lattice. 33 claims conform. 4 do not: C2-055, C2-073 and C2-299 are payload wording, and C2-139 is a policy-label mismatch. C2-139 has the most at stake. The code throws UninitializedInputs as a single-diagnostic carrier, which D-222 calls fail-fast, and the tests assert that. Appendix C labels the row 'collected', and its policy definition at design/spec.md:15449 names the §14.6 check as collected, so the fix needs a ruling. One side note: the field comment on ArgumentInvalid.call (src/diagnostics.jl:2356) omits :overlay!, :frame!, :apply! and :BS3, which the code does raise. That is a code comment, not a doc row."
+}

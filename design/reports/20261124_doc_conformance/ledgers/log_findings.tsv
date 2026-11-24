@@ -49,3 +49,5 @@ L13-178	design/log.md:17725	law	drift	D-433: a root input's `pinned` is false in
 L13-183	design/log.md:17732	ptr	drift	D-433: the node `alias` (and the envelope `name`) wait as minor bumps on the pending list.	The node `alias` and the envelope `name` joined version one's shape; the type and kind on an assembly face are closed.	"The node `alias` is written: src/descriptor.jl:349-353 and `_alias` at :365. Probe probes/L13_v/probe.jl:127 gives alias ""Redstone.Library.SumJunction"". The envelope `name` is in the schema (src/descriptor.json:11), which the inspector writes and `descriptor` never does (probe: envelope keys have no name). D-433's 2026-10-27 annotation (log.md:17773-17777) records that both joined version one."		log slice (flagged)
 S13c-183	D-012, D-349
 S13d-001	D-432
+C1-205	D-252
+C1-209	D-252

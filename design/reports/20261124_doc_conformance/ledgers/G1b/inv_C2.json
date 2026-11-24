@@ -1,0 +1,2470 @@
+{
+ "rows": [
+  {
+   "id": "C2-055",
+   "file": "design/spec.md",
+   "line": 15740,
+   "kind": "decl",
+   "claim": "payload carries the binding entry",
+   "evidence": "src/diagnostics.jl:1513",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The device (by type, since its roster id is assigned only at admission), the binding type, face name, the root input-face list.",
+   "note": "The payload has `binding::String`, the binding's type name, and no field for an entry of the binding. A claimed face is the `face` field. Low confidence that the doc means anything else."
+  },
+  {
+   "id": "C2-073",
+   "file": "design/spec.md",
+   "line": 15752,
+   "kind": "decl",
+   "claim": "payload carries the trait, the method at fault and the direction",
+   "evidence": "src/diagnostics.jl:1803",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The binding type, a `reason` naming the case, and the offending type where `reads` returned a bad value.",
+   "note": "The struct holds `binding`, `reason` and `observed`. No field holds a trait, a method or a direction. The reason carries all three."
+  },
+  {
+   "id": "C2-139",
+   "file": "design/spec.md",
+   "line": 15825,
+   "kind": "law",
+   "claim": "UninitializedInputs is Error, service, pre-write, collected",
+   "evidence": "src/conditions.jl:705",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Error · service, pre-write · fail-fast. One diagnostic, naming every uncovered root face.",
+   "note": "The check throws one UninitializedInputs in a fail-fast carrier (DiagnosticError{UninitializedInputs}, test/test_conditions.jl:269, probe:171). The diagnostic lists all faces, but the carrier holds no collection. The docstring at src/conditions.jl:687 calls it one collected diagnostic. Spec lines 13521 and 17184 say collected too."
+  },
+  {
+   "id": "C2-299",
+   "file": "design/spec.md",
+   "line": 16018,
+   "kind": "decl",
+   "claim": "payload carries the offending value's type and the discarded value as two items",
+   "evidence": "src/diagnostics.jl:1618",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Face name, the discarded value, the root input's declared type.",
+   "note": "The struct has `face`, `value` and `declared`. The value's type is no field."
+  }
+ ],
+ "ok": [
+  {
+   "id": "C2-001",
+   "file": "design/spec.md",
+   "line": 15705,
+   "kind": "law",
+   "claim": "MissingInit has Error severity",
+   "evidence": "src/diagnostics.jl:59"
+  },
+  {
+   "id": "C2-002",
+   "file": "design/spec.md",
+   "line": 15705,
+   "kind": "law",
+   "claim": "MissingInit is raised by a service, fail-fast",
+   "evidence": "src/sim.jl:601"
+  },
+  {
+   "id": "C2-003",
+   "file": "design/spec.md",
+   "line": 15706,
+   "kind": "decl",
+   "claim": "payload carries the simulation's status",
+   "evidence": "src/diagnostics.jl:1268"
+  },
+  {
+   "id": "C2-004",
+   "file": "design/spec.md",
+   "line": 15706,
+   "kind": "decl",
+   "claim": "payload carries the entry point called",
+   "evidence": "src/diagnostics.jl:1267"
+  },
+  {
+   "id": "C2-005",
+   "file": "design/spec.md",
+   "line": 15707,
+   "kind": "law",
+   "claim": "the entry point is run!, step!, replay! or live!",
+   "evidence": "src/sim.jl:1344"
+  },
+  {
+   "id": "C2-006",
+   "file": "design/spec.md",
+   "line": 15707,
+   "kind": "law",
+   "claim": "trace is refused as MissingInit on a built simulation",
+   "evidence": "src/sim.jl:3015"
+  },
+  {
+   "id": "C2-007",
+   "file": "design/spec.md",
+   "line": 15708,
+   "kind": "law",
+   "claim": "ServiceLifecycle has Error severity",
+   "evidence": "src/diagnostics.jl:59"
+  },
+  {
+   "id": "C2-008",
+   "file": "design/spec.md",
+   "line": 15708,
+   "kind": "law",
+   "claim": "ServiceLifecycle is raised by a service, fail-fast",
+   "evidence": "src/sim.jl:604"
+  },
+  {
+   "id": "C2-009",
+   "file": "design/spec.md",
+   "line": 15709,
+   "kind": "law",
+   "claim": "op may be attach! or detach!",
+   "evidence": "src/sim.jl:2504"
+  },
+  {
+   "id": "C2-010",
+   "file": "design/spec.md",
+   "line": 15709,
+   "kind": "law",
+   "claim": "op may be init!, restore! or overlay!",
+   "evidence": "src/sim.jl:835"
+  },
+  {
+   "id": "C2-011",
+   "file": "design/spec.md",
+   "line": 15710,
+   "kind": "law",
+   "claim": "op may be trim!, checkpoint or linearize",
+   "evidence": "src/sim.jl:1123"
+  },
+  {
+   "id": "C2-012",
+   "file": "design/spec.md",
+   "line": 15711,
+   "kind": "law",
+   "claim": "op may be the advances run!/step!/replay!/live!",
+   "evidence": "src/sim.jl:604"
+  },
+  {
+   "id": "C2-013",
+   "file": "design/spec.md",
+   "line": 15711,
+   "kind": "law",
+   "claim": "op may be the readers logged or series",
+   "evidence": "src/sim.jl:2876"
+  },
+  {
+   "id": "C2-014",
+   "file": "design/spec.md",
+   "line": 15712,
+   "kind": "decl",
+   "claim": "payload carries the current status",
+   "evidence": "src/diagnostics.jl:1287"
+  },
+  {
+   "id": "C2-015",
+   "file": "design/spec.md",
+   "line": 15712,
+   "kind": "decl",
+   "claim": "payload carries the legal statuses",
+   "evidence": "src/diagnostics.jl:1288"
+  },
+  {
+   "id": "C2-016",
+   "file": "design/spec.md",
+   "line": 15713,
+   "kind": "law",
+   "claim": "StopRequestInvalid has Error severity, service stage",
+   "evidence": "src/sim.jl:440"
+  },
+  {
+   "id": "C2-017",
+   "file": "design/spec.md",
+   "line": 15713,
+   "kind": "law",
+   "claim": "StopRequestInvalid is collected over the given paths",
+   "evidence": "src/sim.jl:440"
+  },
+  {
+   "id": "C2-018",
+   "file": "design/spec.md",
+   "line": 15714,
+   "kind": "decl",
+   "claim": "payload carries the path naming no requester",
+   "evidence": "src/diagnostics.jl:1318"
+  },
+  {
+   "id": "C2-019",
+   "file": "design/spec.md",
+   "line": 15714,
+   "kind": "decl",
+   "claim": "payload carries the binding site run!, replay! or step!",
+   "evidence": "probe:115"
+  },
+  {
+   "id": "C2-020",
+   "file": "design/spec.md",
+   "line": 15715,
+   "kind": "decl",
+   "claim": "payload carries the roster's requester paths as candidates",
+   "evidence": "src/sim.jl:432"
+  },
+  {
+   "id": "C2-021",
+   "file": "design/spec.md",
+   "line": 15715,
+   "kind": "mech",
+   "claim": "candidates come in roster order",
+   "evidence": "src/sim.jl:432"
+  },
+  {
+   "id": "C2-022",
+   "file": "design/spec.md",
+   "line": 15717,
+   "kind": "law",
+   "claim": "DeploymentInvalid has Error severity, service stage, collected",
+   "evidence": "src/deployment.jl:576"
+  },
+  {
+   "id": "C2-023",
+   "file": "design/spec.md",
+   "line": 15718,
+   "kind": "decl",
+   "claim": "payload carries the deployment parameter",
+   "evidence": "src/diagnostics.jl:1371"
+  },
+  {
+   "id": "C2-024",
+   "file": "design/spec.md",
+   "line": 15718,
+   "kind": "decl",
+   "claim": "payload carries the value in hand",
+   "evidence": "src/diagnostics.jl:1373"
+  },
+  {
+   "id": "C2-025",
+   "file": "design/spec.md",
+   "line": 15719,
+   "kind": "decl",
+   "claim": "payload carries the value it is measured against",
+   "evidence": "src/diagnostics.jl:1374"
+  },
+  {
+   "id": "C2-026",
+   "file": "design/spec.md",
+   "line": 15719,
+   "kind": "decl",
+   "claim": "payload carries a reason naming the violated constraint",
+   "evidence": "src/diagnostics.jl:1372"
+  },
+  {
+   "id": "C2-027",
+   "file": "design/spec.md",
+   "line": 15720,
+   "kind": "law",
+   "claim": "Δt_frame, Δt_base and h_max are parameters of the kind",
+   "evidence": "src/deployment.jl:218"
+  },
+  {
+   "id": "C2-028",
+   "file": "design/spec.md",
+   "line": 15721,
+   "kind": "law",
+   "claim": "h_min is a parameter of the kind",
+   "evidence": "src/deployment.jl:232"
+  },
+  {
+   "id": "C2-029",
+   "file": "design/spec.md",
+   "line": 15721,
+   "kind": "law",
+   "claim": "algorithm, localization_tol, localization_budget, firing_budget, attempt_budget are parameters",
+   "evidence": "src/deployment.jl:562"
+  },
+  {
+   "id": "C2-030",
+   "file": "design/spec.md",
+   "line": 15722,
+   "kind": "law",
+   "claim": "the reasons :range, :inexact, :not_a_quantity, :missing exist",
+   "evidence": "src/deployment.jl:19"
+  },
+  {
+   "id": "C2-031",
+   "file": "design/spec.md",
+   "line": 15723,
+   "kind": "law",
+   "claim": "no Δt_frame is :missing",
+   "evidence": "probe:35"
+  },
+  {
+   "id": "C2-032",
+   "file": "design/spec.md",
+   "line": 15723,
+   "kind": "law",
+   "claim": "no h_min under a proposing method is :missing",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "C2-033",
+   "file": "design/spec.md",
+   "line": 15724,
+   "kind": "law",
+   "claim": "a floor above half the resolved bound is :range on h_min",
+   "evidence": "src/deployment.jl:236"
+  },
+  {
+   "id": "C2-034",
+   "file": "design/spec.md",
+   "line": 15725,
+   "kind": "decl",
+   "claim": "that :range carries h_max in hand as related",
+   "evidence": "src/deployment.jl:237"
+  },
+  {
+   "id": "C2-035",
+   "file": "design/spec.md",
+   "line": 15725,
+   "kind": "law",
+   "claim": "non-positive or non-finite Δt_frame, Δt_base or h_max is :range",
+   "evidence": "src/deployment.jl:181"
+  },
+  {
+   "id": "C2-036",
+   "file": "design/spec.md",
+   "line": 15726,
+   "kind": "law",
+   "claim": "a value Rational{Int} cannot hold is :range",
+   "evidence": "src/deployment.jl:19"
+  },
+  {
+   "id": "C2-037",
+   "file": "design/spec.md",
+   "line": 15727,
+   "kind": "law",
+   "claim": "Δt_base whose Δt_unit cannot index one frame in an Int is :range",
+   "evidence": "src/deployment.jl:321"
+  },
+  {
+   "id": "C2-038",
+   "file": "design/spec.md",
+   "line": 15728,
+   "kind": "ptr",
+   "claim": "Δt_unit links to glossary entry g-dt_unit, which exists in Appendix D (lead resolved)",
+   "evidence": "design/spec.md:16481"
+  },
+  {
+   "id": "C2-039",
+   "file": "design/spec.md",
+   "line": 15728,
+   "kind": "law",
+   "claim": "Δt_base under which a component divisor leaves Int after composition is :range",
+   "evidence": "src/deployment.jl:319"
+  },
+  {
+   "id": "C2-040",
+   "file": "design/spec.md",
+   "line": 15729,
+   "kind": "law",
+   "claim": "h_max too fine to count one frame's steps in an Int is :range",
+   "evidence": "src/deployment.jl:325"
+  },
+  {
+   "id": "C2-041",
+   "file": "design/spec.md",
+   "line": 15729,
+   "kind": "decl",
+   "claim": "those two :range arms carry Δt_frame in hand",
+   "evidence": "src/deployment.jl:323"
+  },
+  {
+   "id": "C2-042",
+   "file": "design/spec.md",
+   "line": 15731,
+   "kind": "law",
+   "claim": "unanchored discrete components under derivation give :unanchored",
+   "evidence": "src/deployment.jl:257"
+  },
+  {
+   "id": "C2-043",
+   "file": "design/spec.md",
+   "line": 15731,
+   "kind": "decl",
+   "claim": "the :unanchored refusal carries the component paths",
+   "evidence": "src/deployment.jl:258"
+  },
+  {
+   "id": "C2-044",
+   "file": "design/spec.md",
+   "line": 15732,
+   "kind": "law",
+   "claim": "derivation with no anchored work is :no_constraint",
+   "evidence": "src/deployment.jl:260"
+  },
+  {
+   "id": "C2-045",
+   "file": "design/spec.md",
+   "line": 15733,
+   "kind": "law",
+   "claim": "a non-dividing anchor period is :anchor_period",
+   "evidence": "src/deployment.jl:282"
+  },
+  {
+   "id": "C2-046",
+   "file": "design/spec.md",
+   "line": 15733,
+   "kind": "law",
+   "claim": "a non-dividing anchor offset is :anchor_offset",
+   "evidence": "src/deployment.jl:286"
+  },
+  {
+   "id": "C2-047",
+   "file": "design/spec.md",
+   "line": 15734,
+   "kind": "decl",
+   "claim": "the anchor is named with its declaring scope and key",
+   "evidence": "src/deployment.jl:284"
+  },
+  {
+   "id": "C2-048",
+   "file": "design/spec.md",
+   "line": 15735,
+   "kind": "law",
+   "claim": "anchor refusals carry the grid attribution",
+   "evidence": "src/deployment.jl:284"
+  },
+  {
+   "id": "C2-049",
+   "file": "design/spec.md",
+   "line": 15735,
+   "kind": "law",
+   "claim": ":unanchored carries the grid attribution",
+   "evidence": "src/deployment.jl:258"
+  },
+  {
+   "id": "C2-050",
+   "file": "design/spec.md",
+   "line": 15736,
+   "kind": "mech",
+   "claim": "every built structure has the grid attribution (_grid_report always runs)",
+   "evidence": "src/deployment.jl:247"
+  },
+  {
+   "id": "C2-051",
+   "file": "design/spec.md",
+   "line": 15737,
+   "kind": "law",
+   "claim": "arguments that are no deployment parameters validate under ArgumentInvalid",
+   "evidence": "src/model.jl:118"
+  },
+  {
+   "id": "C2-052",
+   "file": "design/spec.md",
+   "line": 15739,
+   "kind": "law",
+   "claim": "AttachUnknownFace is Error, service, fail-fast",
+   "evidence": "src/roster.jl:362"
+  },
+  {
+   "id": "C2-053",
+   "file": "design/spec.md",
+   "line": 15739,
+   "kind": "decl",
+   "claim": "payload carries the device by type",
+   "evidence": "src/roster.jl:363"
+  },
+  {
+   "id": "C2-054",
+   "file": "design/spec.md",
+   "line": 15740,
+   "kind": "mech",
+   "claim": "the device is named by type since its id is assigned only at admission",
+   "evidence": "src/sim.jl:2524"
+  },
+  {
+   "id": "C2-056",
+   "file": "design/spec.md",
+   "line": 15741,
+   "kind": "decl",
+   "claim": "payload carries the face name",
+   "evidence": "src/diagnostics.jl:1514"
+  },
+  {
+   "id": "C2-057",
+   "file": "design/spec.md",
+   "line": 15741,
+   "kind": "decl",
+   "claim": "payload carries the root input-face list",
+   "evidence": "src/diagnostics.jl:1515"
+  },
+  {
+   "id": "C2-058",
+   "file": "design/spec.md",
+   "line": 15742,
+   "kind": "law",
+   "claim": "AlreadyAttached is Error, service, fail-fast",
+   "evidence": "src/sim.jl:2508"
+  },
+  {
+   "id": "C2-059",
+   "file": "design/spec.md",
+   "line": 15742,
+   "kind": "decl",
+   "claim": "payload carries the offered device by type",
+   "evidence": "src/sim.jl:2509"
+  },
+  {
+   "id": "C2-060",
+   "file": "design/spec.md",
+   "line": 15743,
+   "kind": "decl",
+   "claim": "payload carries the device id of the existing roster entry",
+   "evidence": "probe:125"
+  },
+  {
+   "id": "C2-061",
+   "file": "design/spec.md",
+   "line": 15743,
+   "kind": "decl",
+   "claim": "payload carries the existing entry's binding",
+   "evidence": "src/sim.jl:2510"
+  },
+  {
+   "id": "C2-062",
+   "file": "design/spec.md",
+   "line": 15745,
+   "kind": "law",
+   "claim": "ClaimConflict is Error, service, collected",
+   "evidence": "src/sim.jl:2516"
+  },
+  {
+   "id": "C2-063",
+   "file": "design/spec.md",
+   "line": 15745,
+   "kind": "mech",
+   "claim": "it is collected over the device's claim set",
+   "evidence": "src/sim.jl:2515"
+  },
+  {
+   "id": "C2-064",
+   "file": "design/spec.md",
+   "line": 15746,
+   "kind": "decl",
+   "claim": "payload carries the face name",
+   "evidence": "src/diagnostics.jl:1533"
+  },
+  {
+   "id": "C2-065",
+   "file": "design/spec.md",
+   "line": 15746,
+   "kind": "decl",
+   "claim": "payload carries the claiming device by type",
+   "evidence": "src/sim.jl:2517"
+  },
+  {
+   "id": "C2-066",
+   "file": "design/spec.md",
+   "line": 15747,
+   "kind": "decl",
+   "claim": "payload carries the incumbent device id",
+   "evidence": "probe:126"
+  },
+  {
+   "id": "C2-067",
+   "file": "design/spec.md",
+   "line": 15748,
+   "kind": "law",
+   "claim": "EmptyGreedyClaim has Warning severity",
+   "evidence": "src/diagnostics.jl:1546"
+  },
+  {
+   "id": "C2-068",
+   "file": "design/spec.md",
+   "line": 15748,
+   "kind": "law",
+   "claim": "it is raised by a service, rate-limited in the roster entry's cell",
+   "evidence": "src/sim.jl:2544"
+  },
+  {
+   "id": "C2-069",
+   "file": "design/spec.md",
+   "line": 15749,
+   "kind": "decl",
+   "claim": "payload carries the greedy device's id",
+   "evidence": "src/sim.jl:2542"
+  },
+  {
+   "id": "C2-070",
+   "file": "design/spec.md",
+   "line": 15749,
+   "kind": "decl",
+   "claim": "payload carries its binding",
+   "evidence": "src/sim.jl:2543"
+  },
+  {
+   "id": "C2-071",
+   "file": "design/spec.md",
+   "line": 15750,
+   "kind": "law",
+   "claim": "it fires when the computed complement is empty",
+   "evidence": "src/sim.jl:2537"
+  },
+  {
+   "id": "C2-072",
+   "file": "design/spec.md",
+   "line": 15752,
+   "kind": "law",
+   "claim": "BindingContractMismatch is Error, service, fail-fast",
+   "evidence": "src/roster.jl:207"
+  },
+  {
+   "id": "C2-074",
+   "file": "design/spec.md",
+   "line": 15754,
+   "kind": "mech",
+   "claim": "a declared side with no enumeration reaches the root's error fallback",
+   "evidence": "src/roster.jl:158"
+  },
+  {
+   "id": "C2-075",
+   "file": "design/spec.md",
+   "line": 15756,
+   "kind": "mech",
+   "claim": "a claims/reads method under a false trait is detected by which against the fallback",
+   "evidence": "src/roster.jl:204"
+  },
+  {
+   "id": "C2-076",
+   "file": "design/spec.md",
+   "line": 15758,
+   "kind": "law",
+   "claim": "is_greedy without is_input is :greedy_without_input",
+   "evidence": "src/roster.jl:207"
+  },
+  {
+   "id": "C2-077",
+   "file": "design/spec.md",
+   "line": 15758,
+   "kind": "law",
+   "claim": "claims on a greedy binding is :greedy_with_claims",
+   "evidence": "src/roster.jl:211"
+  },
+  {
+   "id": "C2-078",
+   "file": "design/spec.md",
+   "line": 15759,
+   "kind": "law",
+   "claim": "a binding declaring neither side is :neither_side",
+   "evidence": "src/roster.jl:209"
+  },
+  {
+   "id": "C2-079",
+   "file": "design/spec.md",
+   "line": 15759,
+   "kind": "law",
+   "claim": "a reads that returns no NamedTuple is :reads_not_namedtuple",
+   "evidence": "src/bindings.jl:166"
+  },
+  {
+   "id": "C2-080",
+   "file": "design/spec.md",
+   "line": 15760,
+   "kind": "law",
+   "claim": "a reads entry that is no read selector is :reads_not_selectors",
+   "evidence": "src/bindings.jl:170"
+  },
+  {
+   "id": "C2-081",
+   "file": "design/spec.md",
+   "line": 15760,
+   "kind": "decl",
+   "claim": "the offending type is in hand",
+   "evidence": "src/bindings.jl:169"
+  },
+  {
+   "id": "C2-082",
+   "file": "design/spec.md",
+   "line": 15762,
+   "kind": "decl",
+   "claim": "the nine reasons are the ones the code raises",
+   "evidence": "src/diagnostics.jl:1806"
+  },
+  {
+   "id": "C2-083",
+   "file": "design/spec.md",
+   "line": 15768,
+   "kind": "law",
+   "claim": "DeviceContractMismatch is Error, service, fail-fast",
+   "evidence": "src/roster.jl:235"
+  },
+  {
+   "id": "C2-084",
+   "file": "design/spec.md",
+   "line": 15769,
+   "kind": "law",
+   "claim": "a device with no loop method is refused",
+   "evidence": "src/roster.jl:235"
+  },
+  {
+   "id": "C2-085",
+   "file": "design/spec.md",
+   "line": 15769,
+   "kind": "law",
+   "claim": "gather on a binding with no output side is refused",
+   "evidence": "src/devices.jl:370"
+  },
+  {
+   "id": "C2-086",
+   "file": "design/spec.md",
+   "line": 15770,
+   "kind": "law",
+   "claim": "stage!/report! on a detached handle is refused",
+   "evidence": "src/devices.jl:81"
+  },
+  {
+   "id": "C2-087",
+   "file": "design/spec.md",
+   "line": 15771,
+   "kind": "why",
+   "claim": "it is the device twin of BindingContractMismatch",
+   "evidence": "src/diagnostics.jl:1841"
+  },
+  {
+   "id": "C2-088",
+   "file": "design/spec.md",
+   "line": 15773,
+   "kind": "law",
+   "claim": "ConditionResolution is Error, service, collected",
+   "evidence": "src/conditions.jl:607"
+  },
+  {
+   "id": "C2-089",
+   "file": "design/spec.md",
+   "line": 15775,
+   "kind": "decl",
+   "claim": "payload carries entry path, store and field",
+   "evidence": "src/diagnostics.jl:1956"
+  },
+  {
+   "id": "C2-090",
+   "file": "design/spec.md",
+   "line": 15775,
+   "kind": "decl",
+   "claim": "payload carries the root-input face the entry addresses",
+   "evidence": "src/diagnostics.jl:1961"
+  },
+  {
+   "id": "C2-091",
+   "file": "design/spec.md",
+   "line": 15775,
+   "kind": "law",
+   "claim": "field is nothing for a bare payload the store or input did not take",
+   "evidence": "src/diagnostics.jl:1958"
+  },
+  {
+   "id": "C2-092",
+   "file": "design/spec.md",
+   "line": 15776,
+   "kind": "decl",
+   "claim": "payload carries the offending value and its type",
+   "evidence": "src/diagnostics.jl:1965"
+  },
+  {
+   "id": "C2-093",
+   "file": "design/spec.md",
+   "line": 15776,
+   "kind": "decl",
+   "claim": "payload carries the declared leaf type",
+   "evidence": "src/diagnostics.jl:1964"
+  },
+  {
+   "id": "C2-094",
+   "file": "design/spec.md",
+   "line": 15777,
+   "kind": "decl",
+   "claim": "payload carries the activation where the seeded activation refuses",
+   "evidence": "src/diagnostics.jl:1970"
+  },
+  {
+   "id": "C2-095",
+   "file": "design/spec.md",
+   "line": 15777,
+   "kind": "decl",
+   "claim": "payload carries the primitive's tier and role",
+   "evidence": "src/diagnostics.jl:1968"
+  },
+  {
+   "id": "C2-096",
+   "file": "design/spec.md",
+   "line": 15778,
+   "kind": "decl",
+   "claim": "payload carries the producer where a face is fed",
+   "evidence": "src/diagnostics.jl:1969"
+  },
+  {
+   "id": "C2-097",
+   "file": "design/spec.md",
+   "line": 15778,
+   "kind": "decl",
+   "claim": "payload carries candidates where a list is in hand",
+   "evidence": "src/diagnostics.jl:1963"
+  },
+  {
+   "id": "C2-098",
+   "file": "design/spec.md",
+   "line": 15778,
+   "kind": "decl",
+   "claim": "payload carries the origin",
+   "evidence": "src/diagnostics.jl:1962"
+  },
+  {
+   "id": "C2-099",
+   "file": "design/spec.md",
+   "line": 15779,
+   "kind": "mech",
+   "claim": "origin is the checkpoint where linearize's default operating point supplies a root input",
+   "evidence": "src/diagnostics.jl:1951"
+  },
+  {
+   "id": "C2-100",
+   "file": "design/spec.md",
+   "line": 15781,
+   "kind": "decl",
+   "claim": "reason names the sub-kind from the nine listed",
+   "evidence": "src/diagnostics.jl:1959"
+  },
+  {
+   "id": "C2-101",
+   "file": "design/spec.md",
+   "line": 15783,
+   "kind": "law",
+   "claim": "a bare u payload against a named contract or an assembly is :port_shape",
+   "evidence": "src/diagnostics.jl:2022"
+  },
+  {
+   "id": "C2-102",
+   "file": "design/spec.md",
+   "line": 15784,
+   "kind": "decl",
+   "claim": "the role is :assembly_face at an assembly",
+   "evidence": "src/diagnostics.jl:1968"
+  },
+  {
+   "id": "C2-103",
+   "file": "design/spec.md",
+   "line": 15786,
+   "kind": "law",
+   "claim": "an unknown path is PathResolution's, not this kind's",
+   "evidence": "src/conditions.jl:608"
+  },
+  {
+   "id": "C2-104",
+   "file": "design/spec.md",
+   "line": 15789,
+   "kind": "law",
+   "claim": "DuplicateConditionLeaf is Error, service, collected",
+   "evidence": "src/conditions.jl:396"
+  },
+  {
+   "id": "C2-105",
+   "file": "design/spec.md",
+   "line": 15790,
+   "kind": "decl",
+   "claim": "payload carries the leaf and both origins",
+   "evidence": "src/diagnostics.jl:2049"
+  },
+  {
+   "id": "C2-106",
+   "file": "design/spec.md",
+   "line": 15790,
+   "kind": "decl",
+   "claim": "a store leaf is (path, store, field)",
+   "evidence": "src/diagnostics.jl:2046"
+  },
+  {
+   "id": "C2-107",
+   "file": "design/spec.md",
+   "line": 15791,
+   "kind": "decl",
+   "claim": "a u payload's leaf is the root input its face resolves to, the face in hand",
+   "evidence": "src/diagnostics.jl:2048"
+  },
+  {
+   "id": "C2-108",
+   "file": "design/spec.md",
+   "line": 15792,
+   "kind": "mech",
+   "claim": "the message gives the override advice",
+   "evidence": "src/diagnostics.jl:2057"
+  },
+  {
+   "id": "C2-109",
+   "file": "design/spec.md",
+   "line": 15793,
+   "kind": "law",
+   "claim": "ConditionNodeMisuse is Error, service, fail-fast",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "C2-110",
+   "file": "design/spec.md",
+   "line": 15794,
+   "kind": "decl",
+   "claim": "payload carries the offending argument's type",
+   "evidence": "src/diagnostics.jl:2061"
+  },
+  {
+   "id": "C2-111",
+   "file": "design/spec.md",
+   "line": 15794,
+   "kind": "decl",
+   "claim": "payload carries the node types in hand",
+   "evidence": "src/diagnostics.jl:2064"
+  },
+  {
+   "id": "C2-112",
+   "file": "design/spec.md",
+   "line": 15795,
+   "kind": "law",
+   "claim": ":not_a_node is raised for an operand that is no node",
+   "evidence": "src/conditions.jl:281"
+  },
+  {
+   "id": "C2-113",
+   "file": "design/spec.md",
+   "line": 15795,
+   "kind": "law",
+   "claim": ":set_payload is raised for a set payload of nothing",
+   "evidence": "src/conditions.jl:178"
+  },
+  {
+   "id": "C2-114",
+   "file": "design/spec.md",
+   "line": 15796,
+   "kind": "decl",
+   "claim": "the :set_payload refusal names the payload",
+   "evidence": "src/diagnostics.jl:2063"
+  },
+  {
+   "id": "C2-115",
+   "file": "design/spec.md",
+   "line": 15796,
+   "kind": "law",
+   "claim": ":empty_prefix is raised for an empty prefix handed to at",
+   "evidence": "src/conditions.jl:208"
+  },
+  {
+   "id": "C2-116",
+   "file": "design/spec.md",
+   "line": 15798,
+   "kind": "law",
+   "claim": "ReadResolution is Error, service, collected",
+   "evidence": "src/readers.jl:928"
+  },
+  {
+   "id": "C2-117",
+   "file": "design/spec.md",
+   "line": 15799,
+   "kind": "decl",
+   "claim": "payload carries the read's label and the selector as authored",
+   "evidence": "src/diagnostics.jl:1860"
+  },
+  {
+   "id": "C2-118",
+   "file": "design/spec.md",
+   "line": 15800,
+   "kind": "decl",
+   "claim": "payload carries mount path, path and field",
+   "evidence": "src/diagnostics.jl:1861"
+  },
+  {
+   "id": "C2-119",
+   "file": "design/spec.md",
+   "line": 15800,
+   "kind": "decl",
+   "claim": "payload carries the leaf address and offending step",
+   "evidence": "src/diagnostics.jl:1878"
+  },
+  {
+   "id": "C2-120",
+   "file": "design/spec.md",
+   "line": 15801,
+   "kind": "decl",
+   "claim": "payload carries candidates and the producer",
+   "evidence": "src/diagnostics.jl:1883"
+  },
+  {
+   "id": "C2-121",
+   "file": "design/spec.md",
+   "line": 15801,
+   "kind": "decl",
+   "claim": "payload carries a reason",
+   "evidence": "src/diagnostics.jl:1862"
+  },
+  {
+   "id": "C2-122",
+   "file": "design/spec.md",
+   "line": 15802,
+   "kind": "decl",
+   "claim": "on :undeclared the payload names the family searched (:state_field or :output_port)",
+   "evidence": "src/readers.jl:990"
+  },
+  {
+   "id": "C2-123",
+   "file": "design/spec.md",
+   "line": 15802,
+   "kind": "decl",
+   "claim": "on :undeclared the candidates are the names of that family",
+   "evidence": "src/readers.jl:990"
+  },
+  {
+   "id": "C2-124",
+   "file": "design/spec.md",
+   "line": 15803,
+   "kind": "decl",
+   "claim": "on :port_shape the payload names :input_face, :output_port or :assembly_face",
+   "evidence": "src/readers.jl:884"
+  },
+  {
+   "id": "C2-125",
+   "file": "design/spec.md",
+   "line": 15804,
+   "kind": "decl",
+   "claim": "on a leaf-step reason it carries the type the step met",
+   "evidence": "src/readers.jl:952"
+  },
+  {
+   "id": "C2-126",
+   "file": "design/spec.md",
+   "line": 15806,
+   "kind": "law",
+   "claim": "the reasons listed are the ones the code raises",
+   "evidence": "src/diagnostics.jl:1862"
+  },
+  {
+   "id": "C2-127",
+   "file": "design/spec.md",
+   "line": 15807,
+   "kind": "law",
+   "claim": ":assembly_path is the assembly-path reason",
+   "evidence": "src/readers.jl:928"
+  },
+  {
+   "id": "C2-128",
+   "file": "design/spec.md",
+   "line": 15808,
+   "kind": "law",
+   "claim": ":undeclared and :discrete_deriv are the name reasons",
+   "evidence": "src/readers.jl:1022"
+  },
+  {
+   "id": "C2-129",
+   "file": "design/spec.md",
+   "line": 15810,
+   "kind": "law",
+   "claim": "face misses are :unknown_root_input at root, :no_input_face at a mount",
+   "evidence": "src/readers.jl:827"
+  },
+  {
+   "id": "C2-130",
+   "file": "design/spec.md",
+   "line": 15811,
+   "kind": "law",
+   "claim": ":unknown_output_face, :input_face_not_output, :internally_wired are face reasons",
+   "evidence": "src/readers.jl:862"
+  },
+  {
+   "id": "C2-131",
+   "file": "design/spec.md",
+   "line": 15812,
+   "kind": "law",
+   "claim": "leaf reasons are :leaf_syntax, :no_such_field, :opaque_leaf, :not_indexable, :index_arity, :index_bounds",
+   "evidence": "src/diagnostics.jl:2128"
+  },
+  {
+   "id": "C2-132",
+   "file": "design/spec.md",
+   "line": 15814,
+   "kind": "law",
+   "claim": ":store_selector is raised for a store selector under a table source",
+   "evidence": "src/readers.jl:697"
+  },
+  {
+   "id": "C2-133",
+   "file": "design/spec.md",
+   "line": 15816,
+   "kind": "law",
+   "claim": "a headless address against a named contract or assembly is :port_shape",
+   "evidence": "src/readers.jl:804"
+  },
+  {
+   "id": "C2-134",
+   "file": "design/spec.md",
+   "line": 15817,
+   "kind": "law",
+   "claim": "against a named store or a stateless component it is :store_shape",
+   "evidence": "src/readers.jl:790"
+  },
+  {
+   "id": "C2-135",
+   "file": "design/spec.md",
+   "line": 15820,
+   "kind": "mech",
+   "claim": "it is raised at attach (via _compile_binding_reads)",
+   "evidence": "src/bindings.jl:176"
+  },
+  {
+   "id": "C2-136",
+   "file": "design/spec.md",
+   "line": 15820,
+   "kind": "mech",
+   "claim": "it is raised at series",
+   "evidence": "src/sim.jl:2960"
+  },
+  {
+   "id": "C2-137",
+   "file": "design/spec.md",
+   "line": 15820,
+   "kind": "mech",
+   "claim": "it is raised at trim",
+   "evidence": "src/trim.jl:444"
+  },
+  {
+   "id": "C2-138",
+   "file": "design/spec.md",
+   "line": 15820,
+   "kind": "mech",
+   "claim": "it is raised at linearization (the tap resolution)",
+   "evidence": "src/linearize.jl:450"
+  },
+  {
+   "id": "C2-140",
+   "file": "design/spec.md",
+   "line": 15826,
+   "kind": "decl",
+   "claim": "payload carries the operation that applied the condition",
+   "evidence": "src/diagnostics.jl:2081"
+  },
+  {
+   "id": "C2-141",
+   "file": "design/spec.md",
+   "line": 15826,
+   "kind": "law",
+   "claim": "the operation is init!, trim! or linearize",
+   "evidence": "src/conditions.jl:705"
+  },
+  {
+   "id": "C2-142",
+   "file": "design/spec.md",
+   "line": 15827,
+   "kind": "decl",
+   "claim": "payload carries every uncovered root face in declaration order",
+   "evidence": "src/conditions.jl:703"
+  },
+  {
+   "id": "C2-143",
+   "file": "design/spec.md",
+   "line": 15828,
+   "kind": "law",
+   "claim": "TapResolution is Error, service, collected",
+   "evidence": "src/linearize.jl:444"
+  },
+  {
+   "id": "C2-144",
+   "file": "design/spec.md",
+   "line": 15829,
+   "kind": "mech",
+   "claim": "it is raised beside the reads' ReadResolution values",
+   "evidence": "probe:190"
+  },
+  {
+   "id": "C2-145",
+   "file": "design/spec.md",
+   "line": 15830,
+   "kind": "decl",
+   "claim": "the read is described as ReadResolution describes it",
+   "evidence": "src/diagnostics.jl:2091"
+  },
+  {
+   "id": "C2-146",
+   "file": "design/spec.md",
+   "line": 15831,
+   "kind": "decl",
+   "claim": "payload carries the tap set x/u/y",
+   "evidence": "src/diagnostics.jl:2098"
+  },
+  {
+   "id": "C2-147",
+   "file": "design/spec.md",
+   "line": 15832,
+   "kind": "law",
+   "claim": ":tap_kind carries the list the selector sat in",
+   "evidence": "src/linearize.jl:444"
+  },
+  {
+   "id": "C2-148",
+   "file": "design/spec.md",
+   "line": 15833,
+   "kind": "law",
+   "claim": ":discrete_state is raised for a discrete store",
+   "evidence": "src/linearize.jl:502"
+  },
+  {
+   "id": "C2-149",
+   "file": "design/spec.md",
+   "line": 15834,
+   "kind": "law",
+   "claim": ":vector_tap is raised for a leaf that is not a real scalar",
+   "evidence": "src/linearize.jl:489"
+  },
+  {
+   "id": "C2-150",
+   "file": "design/spec.md",
+   "line": 15835,
+   "kind": "law",
+   "claim": ":duplicate_site carries the earlier tap's label",
+   "evidence": "src/linearize.jl:456"
+  },
+  {
+   "id": "C2-151",
+   "file": "design/spec.md",
+   "line": 15836,
+   "kind": "law",
+   "claim": ":unseedable is raised for more than one index step or a .name step",
+   "evidence": "src/linearize.jl:482"
+  },
+  {
+   "id": "C2-152",
+   "file": "design/spec.md",
+   "line": 15837,
+   "kind": "law",
+   "claim": "a seeded tap's leaf must be exactly Float64",
+   "evidence": "src/linearize.jl:490"
+  },
+  {
+   "id": "C2-153",
+   "file": "design/spec.md",
+   "line": 15838,
+   "kind": "decl",
+   "claim": "the step or the leaf type is in hand",
+   "evidence": "src/linearize.jl:486"
+  },
+  {
+   "id": "C2-154",
+   "file": "design/spec.md",
+   "line": 15839,
+   "kind": "decl",
+   "claim": "a declaredly unseedable root input carries each pinning consumer's path, tier and u_types entry",
+   "evidence": "src/linearize.jl:542"
+  },
+  {
+   "id": "C2-155",
+   "file": "design/spec.md",
+   "line": 15841,
+   "kind": "law",
+   "claim": "TrimProblemInvalid is Error, service, collected",
+   "evidence": "src/trim.jl:359"
+  },
+  {
+   "id": "C2-156",
+   "file": "design/spec.md",
+   "line": 15842,
+   "kind": "decl",
+   "claim": "payload carries the TrimProblem field, or the residuals/checks return",
+   "evidence": "src/diagnostics.jl:2226"
+  },
+  {
+   "id": "C2-157",
+   "file": "design/spec.md",
+   "line": 15843,
+   "kind": "decl",
+   "claim": ":not_a_namedtuple and :not_a_read_set carry the observed type",
+   "evidence": "src/trim.jl:375"
+  },
+  {
+   "id": "C2-158",
+   "file": "design/spec.md",
+   "line": 15843,
+   "kind": "decl",
+   "claim": ":key_set carries the names against the expected ones",
+   "evidence": "src/trim.jl:381"
+  },
+  {
+   "id": "C2-159",
+   "file": "design/spec.md",
+   "line": 15844,
+   "kind": "decl",
+   "claim": ":field_types carries the offending fields",
+   "evidence": "src/trim.jl:430"
+  },
+  {
+   "id": "C2-160",
+   "file": "design/spec.md",
+   "line": 15844,
+   "kind": "law",
+   "claim": "a field-order difference is never a mismatch",
+   "evidence": "src/trim.jl:368"
+  },
+  {
+   "id": "C2-161",
+   "file": "design/spec.md",
+   "line": 15845,
+   "kind": "decl",
+   "claim": ":inverted_box carries the decision and both bounds",
+   "evidence": "src/trim.jl:396"
+  },
+  {
+   "id": "C2-162",
+   "file": "design/spec.md",
+   "line": 15846,
+   "kind": "decl",
+   "claim": ":nonpositive_tolerance carries the key and the value",
+   "evidence": "src/trim.jl:421"
+  },
+  {
+   "id": "C2-163",
+   "file": "design/spec.md",
+   "line": 15849,
+   "kind": "law",
+   "claim": "TrimCommitEvents is Warning, service, logged at the commit",
+   "evidence": "src/trim.jl:738"
+  },
+  {
+   "id": "C2-164",
+   "file": "design/spec.md",
+   "line": 15851,
+   "kind": "decl",
+   "claim": "payload is the events fired at boundary zero as paths and event names",
+   "evidence": "src/diagnostics.jl:2297"
+  },
+  {
+   "id": "C2-165",
+   "file": "design/spec.md",
+   "line": 15852,
+   "kind": "mech",
+   "claim": "the same list rides the TrimReport",
+   "evidence": "src/trim.jl:765"
+  },
+  {
+   "id": "C2-166",
+   "file": "design/spec.md",
+   "line": 15853,
+   "kind": "law",
+   "claim": "TrimCommitResiduals is Warning, service, logged",
+   "evidence": "src/trim.jl:751"
+  },
+  {
+   "id": "C2-167",
+   "file": "design/spec.md",
+   "line": 15855,
+   "kind": "decl",
+   "claim": "payload carries residual names, committed values and tolerances",
+   "evidence": "src/diagnostics.jl:2308"
+  },
+  {
+   "id": "C2-168",
+   "file": "design/spec.md",
+   "line": 15856,
+   "kind": "law",
+   "claim": "it fires on a converged solve whose committed residuals leave the box",
+   "evidence": "src/trim.jl:747"
+  },
+  {
+   "id": "C2-169",
+   "file": "design/spec.md",
+   "line": 15857,
+   "kind": "law",
+   "claim": "TrimCommitChecks is Warning, service, logged",
+   "evidence": "src/trim.jl:762"
+  },
+  {
+   "id": "C2-170",
+   "file": "design/spec.md",
+   "line": 15859,
+   "kind": "decl",
+   "claim": "payload carries check names, committed values and tolerances",
+   "evidence": "src/diagnostics.jl:2320"
+  },
+  {
+   "id": "C2-171",
+   "file": "design/spec.md",
+   "line": 15860,
+   "kind": "law",
+   "claim": "it fires on a converged solve whose committed checks leave their tolerances",
+   "evidence": "src/trim.jl:758"
+  },
+  {
+   "id": "C2-172",
+   "file": "design/spec.md",
+   "line": 15861,
+   "kind": "law",
+   "claim": "ConditionShapeDrift is Error, service, fail-fast",
+   "evidence": "src/conditions.jl:968"
+  },
+  {
+   "id": "C2-173",
+   "file": "design/spec.md",
+   "line": 15862,
+   "kind": "law",
+   "claim": "reason is :tree_type or :prefix",
+   "evidence": "src/diagnostics.jl:2332"
+  },
+  {
+   "id": "C2-174",
+   "file": "design/spec.md",
+   "line": 15863,
+   "kind": "decl",
+   "claim": "payload carries the compiled tree type and the observed one",
+   "evidence": "src/conditions.jl:969"
+  },
+  {
+   "id": "C2-175",
+   "file": "design/spec.md",
+   "line": 15863,
+   "kind": "decl",
+   "claim": "for :prefix it carries the node position and both strings",
+   "evidence": "src/conditions.jl:973"
+  },
+  {
+   "id": "C2-176",
+   "file": "design/spec.md",
+   "line": 15864,
+   "kind": "mech",
+   "claim": "the message states the one-shape-per-decision remedy",
+   "evidence": "src/diagnostics.jl:2350"
+  },
+  {
+   "id": "C2-177",
+   "file": "design/spec.md",
+   "line": 15866,
+   "kind": "law",
+   "claim": "GridUtilization has Warning severity, service stage",
+   "evidence": "src/diagnostics.jl:1505"
+  },
+  {
+   "id": "C2-178",
+   "file": "design/spec.md",
+   "line": 15866,
+   "kind": "law",
+   "claim": "it is raised at the Deployment constructor on the derivation path only",
+   "evidence": "src/deployment.jl:581"
+  },
+  {
+   "id": "C2-179",
+   "file": "design/spec.md",
+   "line": 15867,
+   "kind": "mech",
+   "claim": "it is logged on the deployment's warnings",
+   "evidence": "src/deployment.jl:604"
+  },
+  {
+   "id": "C2-180",
+   "file": "design/spec.md",
+   "line": 15868,
+   "kind": "decl",
+   "claim": "payload carries the derived Δt_base",
+   "evidence": "src/diagnostics.jl:1500"
+  },
+  {
+   "id": "C2-181",
+   "file": "design/spec.md",
+   "line": 15868,
+   "kind": "decl",
+   "claim": "payload carries the grid attribution",
+   "evidence": "src/diagnostics.jl:1503"
+  },
+  {
+   "id": "C2-182",
+   "file": "design/spec.md",
+   "line": 15869,
+   "kind": "decl",
+   "claim": "the attribution lists each pool entry's anchor and refinement factor",
+   "evidence": "src/diagnostics.jl:1341"
+  },
+  {
+   "id": "C2-183",
+   "file": "design/spec.md",
+   "line": 15870,
+   "kind": "mech",
+   "claim": "a cofactor at or above 2^40 prints as unfactored",
+   "evidence": "src/diagnostics.jl:1351"
+  },
+  {
+   "id": "C2-184",
+   "file": "design/spec.md",
+   "line": 15871,
+   "kind": "decl",
+   "claim": "payload carries min D₀(i) and the fastest work's path",
+   "evidence": "src/deployment.jl:592"
+  },
+  {
+   "id": "C2-185",
+   "file": "design/spec.md",
+   "line": 15872,
+   "kind": "mech",
+   "claim": "the message renders the grid as N× finer than the fastest declared work",
+   "evidence": "src/diagnostics.jl:1507"
+  },
+  {
+   "id": "C2-186",
+   "file": "design/spec.md",
+   "line": 15874,
+   "kind": "law",
+   "claim": "CheckpointMismatch is Error, service, collected",
+   "evidence": "src/sim.jl:1207"
+  },
+  {
+   "id": "C2-187",
+   "file": "design/spec.md",
+   "line": 15875,
+   "kind": "law",
+   "claim": "the scalar case throws alone on restore! by dispatch",
+   "evidence": "src/model.jl:1319"
+  },
+  {
+   "id": "C2-188",
+   "file": "design/spec.md",
+   "line": 15876,
+   "kind": "mech",
+   "claim": "one kind serves the replay entry pass and restore!",
+   "evidence": "src/sim.jl:1195"
+  },
+  {
+   "id": "C2-189",
+   "file": "design/spec.md",
+   "line": 15878,
+   "kind": "decl",
+   "claim": "what is :store, :root_input, :deployment, :scalar, :frame or :clock",
+   "evidence": "src/diagnostics.jl:2568"
+  },
+  {
+   "id": "C2-190",
+   "file": "design/spec.md",
+   "line": 15879,
+   "kind": "decl",
+   "claim": "the :store arm names the component-path list or the cell-size list",
+   "evidence": "src/model.jl:1214"
+  },
+  {
+   "id": "C2-191",
+   "file": "design/spec.md",
+   "line": 15880,
+   "kind": "decl",
+   "claim": "a store or root input arm carries component path, store, expected and found",
+   "evidence": "src/checkpoint.jl:169"
+  },
+  {
+   "id": "C2-192",
+   "file": "design/spec.md",
+   "line": 15881,
+   "kind": "decl",
+   "claim": "the root input-face list is a :root_input arm",
+   "evidence": "src/model.jl:1220"
+  },
+  {
+   "id": "C2-193",
+   "file": "design/spec.md",
+   "line": 15881,
+   "kind": "decl",
+   "claim": "a component's x type is a :store arm",
+   "evidence": "src/model.jl:1230"
+  },
+  {
+   "id": "C2-194",
+   "file": "design/spec.md",
+   "line": 15881,
+   "kind": "decl",
+   "claim": "a cell's address or type is a :store arm",
+   "evidence": "src/checkpoint.jl:169"
+  },
+  {
+   "id": "C2-195",
+   "file": "design/spec.md",
+   "line": 15882,
+   "kind": "decl",
+   "claim": "the event list is a :store arm",
+   "evidence": "src/model.jl:1244"
+  },
+  {
+   "id": "C2-196",
+   "file": "design/spec.md",
+   "line": 15882,
+   "kind": "law",
+   "claim": "a recorded root-input value that does not convert is :root_input",
+   "evidence": "src/trace.jl:246"
+  },
+  {
+   "id": "C2-197",
+   "file": "design/spec.md",
+   "line": 15884,
+   "kind": "decl",
+   "claim": "the scalar arm carries the recorded and the target scalar",
+   "evidence": "src/model.jl:1319"
+  },
+  {
+   "id": "C2-198",
+   "file": "design/spec.md",
+   "line": 15885,
+   "kind": "law",
+   "claim": "the deployment parameters compared are the nine named",
+   "evidence": "src/checkpoint.jl:197"
+  },
+  {
+   "id": "C2-199",
+   "file": "design/spec.md",
+   "line": 15886,
+   "kind": "law",
+   "claim": "a time quantity compares exact",
+   "evidence": "src/checkpoint.jl:183"
+  },
+  {
+   "id": "C2-200",
+   "file": "design/spec.md",
+   "line": 15886,
+   "kind": "decl",
+   "claim": "an algorithm field is named by its dotted name such as algorithm.reltol",
+   "evidence": "src/checkpoint.jl:201"
+  },
+  {
+   "id": "C2-201",
+   "file": "design/spec.md",
+   "line": 15887,
+   "kind": "decl",
+   "claim": "a schedule row column arm carries the path, column, recorded and bound value",
+   "evidence": "src/checkpoint.jl:215"
+  },
+  {
+   "id": "C2-202",
+   "file": "design/spec.md",
+   "line": 15888,
+   "kind": "decl",
+   "claim": "a rate scope column arm carries the path, column, recorded and bound value",
+   "evidence": "src/checkpoint.jl:227"
+  },
+  {
+   "id": "C2-203",
+   "file": "design/spec.md",
+   "line": 15889,
+   "kind": "decl",
+   "claim": "a differing schedule row or scope list is reported whole with the name and the two lists",
+   "evidence": "src/checkpoint.jl:211"
+  },
+  {
+   "id": "C2-204",
+   "file": "design/spec.md",
+   "line": 15891,
+   "kind": "decl",
+   "claim": "a frame ordinal outside the recording's frames carries writer, ordinal and range",
+   "evidence": "src/trace.jl:209"
+  },
+  {
+   "id": "C2-205",
+   "file": "design/spec.md",
+   "line": 15892,
+   "kind": "law",
+   "claim": "under restore = false a differing origin or frame index is :clock",
+   "evidence": "src/sim.jl:1198"
+  },
+  {
+   "id": "C2-206",
+   "file": "design/spec.md",
+   "line": 15894,
+   "kind": "decl",
+   "claim": "the :clock arm carries the one that differs, the recording's value or range, and the simulation's",
+   "evidence": "src/sim.jl:1201"
+  },
+  {
+   "id": "C2-207",
+   "file": "design/spec.md",
+   "line": 15898,
+   "kind": "law",
+   "claim": "CheckpointMidFrame is Error, service, fail-fast",
+   "evidence": "src/model.jl:1201"
+  },
+  {
+   "id": "C2-208",
+   "file": "design/spec.md",
+   "line": 15898,
+   "kind": "law",
+   "claim": "it is collected with CheckpointMismatch on restore!",
+   "evidence": "src/model.jl:1270"
+  },
+  {
+   "id": "C2-209",
+   "file": "design/spec.md",
+   "line": 15899,
+   "kind": "law",
+   "claim": "checkpoint on a simulation or model off a frame top is refused",
+   "evidence": "src/model.jl:1179"
+  },
+  {
+   "id": "C2-210",
+   "file": "design/spec.md",
+   "line": 15902,
+   "kind": "law",
+   "claim": "overlay! raises it on the same rest",
+   "evidence": "src/model.jl:461"
+  },
+  {
+   "id": "C2-211",
+   "file": "design/spec.md",
+   "line": 15903,
+   "kind": "law",
+   "claim": "restore! raises it on any form for a state whose t is off the grid",
+   "evidence": "src/model.jl:1270"
+  },
+  {
+   "id": "C2-212",
+   "file": "design/spec.md",
+   "line": 15904,
+   "kind": "decl",
+   "claim": "payload carries t, the frame top t_frame and the frame index",
+   "evidence": "src/diagnostics.jl:2663"
+  },
+  {
+   "id": "C2-213",
+   "file": "design/spec.md",
+   "line": 15906,
+   "kind": "law",
+   "claim": "ReplaySchemaMismatch is Error, service, collected",
+   "evidence": "src/trace.jl:158"
+  },
+  {
+   "id": "C2-214",
+   "file": "design/spec.md",
+   "line": 15908,
+   "kind": "decl",
+   "claim": "payload carries device tag, recorded schema, disagreeing names, target face list",
+   "evidence": "src/diagnostics.jl:2678"
+  },
+  {
+   "id": "C2-215",
+   "file": "design/spec.md",
+   "line": 15910,
+   "kind": "law",
+   "claim": "ReplayUnknownFace is Error, service, collected",
+   "evidence": "src/trace.jl:179"
+  },
+  {
+   "id": "C2-216",
+   "file": "design/spec.md",
+   "line": 15911,
+   "kind": "decl",
+   "claim": "payload carries face name or the bare position",
+   "evidence": "src/trace.jl:221"
+  },
+  {
+   "id": "C2-217",
+   "file": "design/spec.md",
+   "line": 15912,
+   "kind": "decl",
+   "claim": "payload carries frame ordinal, device tag and the face list",
+   "evidence": "src/diagnostics.jl:2692"
+  },
+  {
+   "id": "C2-218",
+   "file": "design/spec.md",
+   "line": 15913,
+   "kind": "law",
+   "claim": "ArgumentInvalid is Error, service, fail-fast, or build in a sample_times declaration",
+   "evidence": "src/declare.jl:481"
+  },
+  {
+   "id": "C2-219",
+   "file": "design/spec.md",
+   "line": 15915,
+   "kind": "law",
+   "claim": "it is collected over a TableBinding's entry table",
+   "evidence": "src/bindings.jl:89"
+  },
+  {
+   "id": "C2-220",
+   "file": "design/spec.md",
+   "line": 15916,
+   "kind": "law",
+   "claim": "it is collected over the Model and Simulation keywords and the claim on the model",
+   "evidence": "src/sim.jl:372"
+  },
+  {
+   "id": "C2-221",
+   "file": "design/spec.md",
+   "line": 15917,
+   "kind": "law",
+   "claim": "it is collected over the recording keywords of init!, overlay!, restore!, replay!",
+   "evidence": "src/sim.jl:665"
+  },
+  {
+   "id": "C2-222",
+   "file": "design/spec.md",
+   "line": 15918,
+   "kind": "decl",
+   "claim": "the call names one of the twenty listed doors",
+   "evidence": "src/diagnostics.jl:2356"
+  },
+  {
+   "id": "C2-223",
+   "file": "design/spec.md",
+   "line": 15920,
+   "kind": "decl",
+   "claim": "payload carries the argument, the value in hand and a reason",
+   "evidence": "src/diagnostics.jl:2357"
+  },
+  {
+   "id": "C2-224",
+   "file": "design/spec.md",
+   "line": 15921,
+   "kind": "law",
+   "claim": "Absolute refuses an inexact period or offset as :inexact with the argument named",
+   "evidence": "probe:82"
+  },
+  {
+   "id": "C2-225",
+   "file": "design/spec.md",
+   "line": 15922,
+   "kind": "law",
+   "claim": "Absolute refuses a value Rational{Int} cannot hold as :range",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "C2-226",
+   "file": "design/spec.md",
+   "line": 15923,
+   "kind": "law",
+   "claim": "Relative refuses a count Int cannot hold as :range",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "C2-227",
+   "file": "design/spec.md",
+   "line": 15923,
+   "kind": "law",
+   "claim": "Relative refuses a float or a rational as :not_a_count",
+   "evidence": "probe:86"
+  },
+  {
+   "id": "C2-228",
+   "file": "design/spec.md",
+   "line": 15924,
+   "kind": "law",
+   "claim": "BS3 refuses a tolerance not positive and finite as :range",
+   "evidence": "probe:89"
+  },
+  {
+   "id": "C2-229",
+   "file": "design/spec.md",
+   "line": 15926,
+   "kind": "law",
+   "claim": "a :range refusal of frame!'s k carries the last frame the run may take",
+   "evidence": "src/frame.jl:83"
+  },
+  {
+   "id": "C2-230",
+   "file": "design/spec.md",
+   "line": 15927,
+   "kind": "mech",
+   "claim": "that last frame is the lesser of the lattices' and the clock's last",
+   "evidence": "src/model.jl:588"
+  },
+  {
+   "id": "C2-231",
+   "file": "design/spec.md",
+   "line": 15929,
+   "kind": "decl",
+   "claim": "a TableBinding refusal carries the entry key",
+   "evidence": "src/bindings.jl:67"
+  },
+  {
+   "id": "C2-232",
+   "file": "design/spec.md",
+   "line": 15930,
+   "kind": "decl",
+   "claim": "a :vocabulary refusal carries the offending key and the legal vocabulary",
+   "evidence": "src/bindings.jl:79"
+  },
+  {
+   "id": "C2-233",
+   "file": "design/spec.md",
+   "line": 15931,
+   "kind": "law",
+   "claim": "a claimed model is reason :claimed",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "C2-234",
+   "file": "design/spec.md",
+   "line": 15931,
+   "kind": "law",
+   "claim": "a Simulation over a model not at :built is :not_built",
+   "evidence": "probe:102"
+  },
+  {
+   "id": "C2-235",
+   "file": "design/spec.md",
+   "line": 15932,
+   "kind": "law",
+   "claim": "trace(sim) under trace = false is :disabled",
+   "evidence": "src/sim.jl:3017"
+  },
+  {
+   "id": "C2-236",
+   "file": "design/spec.md",
+   "line": 15933,
+   "kind": "law",
+   "claim": "trim! and linearize on a Model at another scalar are :non_nominal",
+   "evidence": "src/trim.jl:575"
+  },
+  {
+   "id": "C2-237",
+   "file": "design/spec.md",
+   "line": 15934,
+   "kind": "law",
+   "claim": "linearize refuses a width below 1 as :nonpositive_width",
+   "evidence": "probe:184"
+  },
+  {
+   "id": "C2-238",
+   "file": "design/spec.md",
+   "line": 15934,
+   "kind": "law",
+   "claim": "linearize refuses a t0 without about as :t0_without_about",
+   "evidence": "probe:185"
+  },
+  {
+   "id": "C2-239",
+   "file": "design/spec.md",
+   "line": 15935,
+   "kind": "law",
+   "claim": "linearize refuses a second argument that is no tap set as :not_a_tap_set",
+   "evidence": "src/linearize.jl:283"
+  },
+  {
+   "id": "C2-240",
+   "file": "design/spec.md",
+   "line": 15936,
+   "kind": "law",
+   "claim": "trim! refuses a second argument that is no TrimProblem as :not_a_problem",
+   "evidence": "probe:186"
+  },
+  {
+   "id": "C2-241",
+   "file": "design/spec.md",
+   "line": 15937,
+   "kind": "law",
+   "claim": "an inexact t0, or one whose run the clock cannot carry, is :range on init!, trim!, linearize",
+   "evidence": "src/model.jl:369"
+  },
+  {
+   "id": "C2-242",
+   "file": "design/spec.md",
+   "line": 15939,
+   "kind": "law",
+   "claim": "Model at a scalar other than Float64 or a Dual over Float64 raises :scalar",
+   "evidence": "probe:93"
+  },
+  {
+   "id": "C2-243",
+   "file": "design/spec.md",
+   "line": 15940,
+   "kind": "law",
+   "claim": "the :scalar refusal is alone and precedes the keywords",
+   "evidence": "src/model.jl:112"
+  },
+  {
+   "id": "C2-244",
+   "file": "design/spec.md",
+   "line": 15941,
+   "kind": "why",
+   "claim": "it is the twin of DeploymentInvalid for non-deployment arguments",
+   "evidence": "src/diagnostics.jl:2354"
+  },
+  {
+   "id": "C2-245",
+   "file": "design/spec.md",
+   "line": 15950,
+   "kind": "law",
+   "claim": "ReadSetMisuse is Error, service, fail-fast",
+   "evidence": "src/readers.jl:555"
+  },
+  {
+   "id": "C2-246",
+   "file": "design/spec.md",
+   "line": 15951,
+   "kind": "decl",
+   "claim": "payload carries the offending argument's type, the selector kinds, the label and a reason",
+   "evidence": "src/diagnostics.jl:2523"
+  },
+  {
+   "id": "C2-247",
+   "file": "design/spec.md",
+   "line": 15952,
+   "kind": "law",
+   "claim": ":not_a_selector is raised for an entry of a read set that is no selector",
+   "evidence": "src/readers.jl:555"
+  },
+  {
+   "id": "C2-248",
+   "file": "design/spec.md",
+   "line": 15953,
+   "kind": "law",
+   "claim": ":not_a_read_set is raised for an argument that is no read set",
+   "evidence": "src/readers.jl:675"
+  },
+  {
+   "id": "C2-249",
+   "file": "design/spec.md",
+   "line": 15953,
+   "kind": "law",
+   "claim": ":not_a_tap_list is raised for a tap list that is no NamedTuple",
+   "evidence": "src/linearize.jl:89"
+  },
+  {
+   "id": "C2-250",
+   "file": "design/spec.md",
+   "line": 15954,
+   "kind": "law",
+   "claim": ":empty_prefix is raised for an empty prefix handed to at on a read set",
+   "evidence": "src/conditions.jl:213"
+  },
+  {
+   "id": "C2-251",
+   "file": "design/spec.md",
+   "line": 15955,
+   "kind": "law",
+   "claim": ":reserved_label is raised for a series read under a Series field's name",
+   "evidence": "src/sim.jl:2956"
+  },
+  {
+   "id": "C2-252",
+   "file": "design/spec.md",
+   "line": 15957,
+   "kind": "why",
+   "claim": "it is the read side's twin of ConditionNodeMisuse",
+   "evidence": "src/diagnostics.jl:2522"
+  },
+  {
+   "id": "C2-253",
+   "file": "design/spec.md",
+   "line": 15959,
+   "kind": "law",
+   "claim": "NotAttached is Error, service, fail-fast",
+   "evidence": "src/sim.jl:2574"
+  },
+  {
+   "id": "C2-254",
+   "file": "design/spec.md",
+   "line": 15960,
+   "kind": "decl",
+   "claim": "payload carries the device by type and the roster's device ids",
+   "evidence": "src/sim.jl:2575"
+  },
+  {
+   "id": "C2-255",
+   "file": "design/spec.md",
+   "line": 15964,
+   "kind": "law",
+   "claim": "StepError is a runtime carrier Exception, not a kind",
+   "evidence": "src/diagnostics.jl:245"
+  },
+  {
+   "id": "C2-256",
+   "file": "design/spec.md",
+   "line": 15965,
+   "kind": "decl",
+   "claim": "it carries the cursor frame: component path, function, phase",
+   "evidence": "src/diagnostics.jl:220"
+  },
+  {
+   "id": "C2-257",
+   "file": "design/spec.md",
+   "line": 15966,
+   "kind": "decl",
+   "claim": "the phase is drain, integration stage, arrival, validation, trial, projection, round or ticks",
+   "evidence": "src/diagnostics.jl:265"
+  },
+  {
+   "id": "C2-258",
+   "file": "design/spec.md",
+   "line": 15968,
+   "kind": "decl",
+   "claim": "it carries the clock at the failure and the frame-entry boundary index",
+   "evidence": "src/diagnostics.jl:249"
+  },
+  {
+   "id": "C2-259",
+   "file": "design/spec.md",
+   "line": 15969,
+   "kind": "decl",
+   "claim": "it carries the host :loop, :boundary_zero, :overlay or :restore",
+   "evidence": "src/diagnostics.jl:250"
+  },
+  {
+   "id": "C2-260",
+   "file": "design/spec.md",
+   "line": 15970,
+   "kind": "decl",
+   "claim": "it carries the cause, whose type is the parameter",
+   "evidence": "src/diagnostics.jl:253"
+  },
+  {
+   "id": "C2-261",
+   "file": "design/spec.md",
+   "line": 15972,
+   "kind": "law",
+   "claim": "NonfiniteState is Error, runtime, fail-fast",
+   "evidence": "src/model.jl:944"
+  },
+  {
+   "id": "C2-262",
+   "file": "design/spec.md",
+   "line": 15973,
+   "kind": "decl",
+   "claim": "payload carries component path, state leaf and value",
+   "evidence": "src/diagnostics.jl:344"
+  },
+  {
+   "id": "C2-263",
+   "file": "design/spec.md",
+   "line": 15973,
+   "kind": "decl",
+   "claim": "a bare leaf is named by its letter",
+   "evidence": "src/diagnostics.jl:345"
+  },
+  {
+   "id": "C2-264",
+   "file": "design/spec.md",
+   "line": 15974,
+   "kind": "decl",
+   "claim": "payload carries the time the step ended at and the frame-entry boundary index",
+   "evidence": "src/diagnostics.jl:347"
+  },
+  {
+   "id": "C2-265",
+   "file": "design/spec.md",
+   "line": 15976,
+   "kind": "law",
+   "claim": "ChatteringBudget has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1730"
+  },
+  {
+   "id": "C2-266",
+   "file": "design/spec.md",
+   "line": 15977,
+   "kind": "decl",
+   "claim": "payload carries path, event name, boundary time, the budget and the localization count",
+   "evidence": "src/diagnostics.jl:1625"
+  },
+  {
+   "id": "C2-267",
+   "file": "design/spec.md",
+   "line": 15979,
+   "kind": "law",
+   "claim": "FiringBudget has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1731"
+  },
+  {
+   "id": "C2-268",
+   "file": "design/spec.md",
+   "line": 15980,
+   "kind": "decl",
+   "claim": "payload carries path, event name, boundary time, the budget and the firing count",
+   "evidence": "src/diagnostics.jl:1634"
+  },
+  {
+   "id": "C2-269",
+   "file": "design/spec.md",
+   "line": 15982,
+   "kind": "law",
+   "claim": "StepFloor has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1732"
+  },
+  {
+   "id": "C2-270",
+   "file": "design/spec.md",
+   "line": 15982,
+   "kind": "law",
+   "claim": "at most one report per frame",
+   "evidence": "src/model.jl:893"
+  },
+  {
+   "id": "C2-271",
+   "file": "design/spec.md",
+   "line": 15983,
+   "kind": "decl",
+   "claim": "payload carries the step start, floor attempt length, h_min, attempts so far and reason",
+   "evidence": "src/diagnostics.jl:1649"
+  },
+  {
+   "id": "C2-272",
+   "file": "design/spec.md",
+   "line": 15985,
+   "kind": "law",
+   "claim": ":rejected is an attempt accepted at the floor against the backend's verdict",
+   "evidence": "src/diagnostics.jl:1763"
+  },
+  {
+   "id": "C2-273",
+   "file": "design/spec.md",
+   "line": 15986,
+   "kind": "law",
+   "claim": ":budget is a step whose attempt budget sent it to the floor",
+   "evidence": "src/model.jl:843"
+  },
+  {
+   "id": "C2-274",
+   "file": "design/spec.md",
+   "line": 15988,
+   "kind": "law",
+   "claim": "DebtReanchor has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1733"
+  },
+  {
+   "id": "C2-275",
+   "file": "design/spec.md",
+   "line": 15989,
+   "kind": "decl",
+   "claim": "payload carries forgiven debt in seconds, the new anchor's t and τ",
+   "evidence": "src/diagnostics.jl:1658"
+  },
+  {
+   "id": "C2-276",
+   "file": "design/spec.md",
+   "line": 15991,
+   "kind": "law",
+   "claim": "ClaimedFaceEntry has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1728"
+  },
+  {
+   "id": "C2-277",
+   "file": "design/spec.md",
+   "line": 15992,
+   "kind": "decl",
+   "claim": "payload carries face name, incumbent device id, discarded value and site",
+   "evidence": "src/diagnostics.jl:1610"
+  },
+  {
+   "id": "C2-278",
+   "file": "design/spec.md",
+   "line": 15993,
+   "kind": "decl",
+   "claim": "the site is staging or an attach's renormalization",
+   "evidence": "src/roster.jl:405"
+  },
+  {
+   "id": "C2-279",
+   "file": "design/spec.md",
+   "line": 15994,
+   "kind": "law",
+   "claim": "it is raised for the harness writer only",
+   "evidence": "src/dataplane.jl:429"
+  },
+  {
+   "id": "C2-280",
+   "file": "design/spec.md",
+   "line": 15995,
+   "kind": "law",
+   "claim": "a device's out-of-surface entry is OutOfClaimEntry",
+   "evidence": "src/dataplane.jl:427"
+  },
+  {
+   "id": "C2-281",
+   "file": "design/spec.md",
+   "line": 15996,
+   "kind": "law",
+   "claim": "OutOfClaimEntry has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1727"
+  },
+  {
+   "id": "C2-282",
+   "file": "design/spec.md",
+   "line": 15997,
+   "kind": "decl",
+   "claim": "payload carries face name, discarded value, the writer's claim set and the incumbent",
+   "evidence": "src/diagnostics.jl:1602"
+  },
+  {
+   "id": "C2-283",
+   "file": "design/spec.md",
+   "line": 15999,
+   "kind": "law",
+   "claim": "ThreadBudget has Warning severity, runtime, at run! or replay!",
+   "evidence": "src/sim.jl:1643"
+  },
+  {
+   "id": "C2-284",
+   "file": "design/spec.md",
+   "line": 16000,
+   "kind": "decl",
+   "claim": "payload carries thread count and device-task count",
+   "evidence": "src/diagnostics.jl:1682"
+  },
+  {
+   "id": "C2-285",
+   "file": "design/spec.md",
+   "line": 16001,
+   "kind": "law",
+   "claim": "DeviceJoinTimeout has Warning severity, runtime, at the shutdown tail",
+   "evidence": "src/sim.jl:1935"
+  },
+  {
+   "id": "C2-286",
+   "file": "design/spec.md",
+   "line": 16002,
+   "kind": "mech",
+   "claim": "it is written to the loop's cell",
+   "evidence": "src/sim.jl:1934"
+  },
+  {
+   "id": "C2-287",
+   "file": "design/spec.md",
+   "line": 16003,
+   "kind": "mech",
+   "claim": "the run's-end sweep collects it into the termination record and logs it",
+   "evidence": "src/sim.jl:1947"
+  },
+  {
+   "id": "C2-288",
+   "file": "design/spec.md",
+   "line": 16005,
+   "kind": "decl",
+   "claim": "payload carries device id, join timeout, boundary time and index",
+   "evidence": "src/diagnostics.jl:1699"
+  },
+  {
+   "id": "C2-289",
+   "file": "design/spec.md",
+   "line": 16007,
+   "kind": "law",
+   "claim": "DeviceCrash has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1736"
+  },
+  {
+   "id": "C2-290",
+   "file": "design/spec.md",
+   "line": 16008,
+   "kind": "decl",
+   "claim": "payload carries the original exception as cause and whether should_abort was set",
+   "evidence": "src/diagnostics.jl:1688"
+  },
+  {
+   "id": "C2-291",
+   "file": "design/spec.md",
+   "line": 16009,
+   "kind": "mech",
+   "claim": "an init-time failure is reported pre-spawn after its shutdown!",
+   "evidence": "src/sim.jl:1845"
+  },
+  {
+   "id": "C2-292",
+   "file": "design/spec.md",
+   "line": 16011,
+   "kind": "law",
+   "claim": "ReplayDiscardedStaging has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1738"
+  },
+  {
+   "id": "C2-293",
+   "file": "design/spec.md",
+   "line": 16013,
+   "kind": "decl",
+   "claim": "payload carries the discarded batch's face names and the frame ordinal",
+   "evidence": "src/diagnostics.jl:1717"
+  },
+  {
+   "id": "C2-294",
+   "file": "design/spec.md",
+   "line": 16014,
+   "kind": "law",
+   "claim": "MalformedDatum has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1726"
+  },
+  {
+   "id": "C2-295",
+   "file": "design/spec.md",
+   "line": 16015,
+   "kind": "decl",
+   "claim": "payload carries the cause",
+   "evidence": "src/diagnostics.jl:1597"
+  },
+  {
+   "id": "C2-296",
+   "file": "design/spec.md",
+   "line": 16016,
+   "kind": "mech",
+   "claim": "it is emitted by the author's loop body via report!(handle, ...)",
+   "evidence": "src/devices.jl:401"
+  },
+  {
+   "id": "C2-297",
+   "file": "design/spec.md",
+   "line": 16017,
+   "kind": "law",
+   "claim": "EntryTypeMismatch has Warning severity, runtime, rate-limited",
+   "evidence": "src/diagnostics.jl:1729"
+  },
+  {
+   "id": "C2-298",
+   "file": "design/spec.md",
+   "line": 16018,
+   "kind": "decl",
+   "claim": "payload carries the face name and the root input's declared type",
+   "evidence": "src/diagnostics.jl:1618"
+  },
+  {
+   "id": "C2-300",
+   "file": "design/spec.md",
+   "line": 16020,
+   "kind": "law",
+   "claim": "UnboundedRun has Warning severity, runtime, rate-limited in the loop's cell",
+   "evidence": "src/sim.jl:1568"
+  },
+  {
+   "id": "C2-301",
+   "file": "design/spec.md",
+   "line": 16021,
+   "kind": "law",
+   "claim": "it is raised at run! in :live with t_end Inf and no stop request honoured",
+   "evidence": "src/sim.jl:1567"
+  },
+  {
+   "id": "C2-302",
+   "file": "design/spec.md",
+   "line": 16023,
+   "kind": "law",
+   "claim": "a run! in :replay is not warned",
+   "evidence": "src/sim.jl:1567"
+  },
+  {
+   "id": "C2-303",
+   "file": "design/spec.md",
+   "line": 16024,
+   "kind": "decl",
+   "claim": "payload carries the effective t_end and the ignored requester paths",
+   "evidence": "src/diagnostics.jl:1671"
+  },
+  {
+   "id": "C2-304",
+   "file": "design/spec.md",
+   "line": 16025,
+   "kind": "mech",
+   "claim": "the message says which of the two cases holds",
+   "evidence": "src/diagnostics.jl:1773"
+  },
+  {
+   "id": "C2-305",
+   "file": "design/spec.md",
+   "line": 16026,
+   "kind": "mech",
+   "claim": "the remedy names both and the operator interrupt as the escape",
+   "evidence": "src/diagnostics.jl:1779"
+  }
+ ],
+ "counts": {
+  "law": 151,
+  "decl": 124,
+  "mech": 26,
+  "ptr": 1,
+  "why": 3
+ },
+ "notes": "Slice C2 (design/spec.md 15703-16031) done. 305 claims, 4 findings, no unverifiable. Findings: C2-055 AttachUnknownFace says \"binding entry\" (payload holds the binding type; low confidence), C2-073 BindingContractMismatch payload lists trait, method and direction (struct holds binding, reason, observed), C2-139 UninitializedInputs is called collected (code throws it fail-fast, test_conditions.jl:269; spec 13521 and 17184 say collected too), C2-299 EntryTypeMismatch lists the value's type as a separate item (no such field). The one lead (dt_unit) is a glossary anchor, g-dt_unit exists at spec.md:16481 (C2-038). The range holds no Julia code block. Probe at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/C2/probe.jl, run three times. Not exercised in a run, settled by reading code and tests: the DeploymentInvalid lattice :range arms on Δt_base and h_max (test/test_lattices.jl:514-530 covers them), ReadResolution reasons beyond code reading (my series probe misused the API), CheckpointMidFrame on a stopped sim. Side notes, no row: MissingInit under replay! is raised only with restore = false (sim.jl:1344). The probe showed Absolute's :range carries no argument name, and the spec ties \"with the argument named\" to :inexact only, so no finding. Evidence 'probe:N' is a line of that probe script."
+}
