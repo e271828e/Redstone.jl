@@ -879,7 +879,7 @@ Spec: §2.3, §5.4, §5.5, §6.2, §6.3, §8.1, §8.7, §10.4, §13.5, §13.7, D
   pinning meet reads the consumers' contracts keyed, a bare input under its
   face `u` (D-437).
 
-Spec: §9.7, §14.4, §14.10, D-036, D-167, D-168, D-197, D-213, D-272, D-274,
+Spec: §9.7, §14.4, §14.10, D-036, D-168, D-197, D-213, D-263, D-272, D-274,
 D-276, D-277, D-317, D-319, D-406, D-428, D-437, D-438, D-458, D-468, D-475.
 
 ### `src/model.jl`

@@ -324,7 +324,7 @@ linearization of the residual map $r(d)$ with respect to the decisions $d$:
 ```julia
 T = ForwardDiff.Dual{TrimTag,Float64,N}             # N = number of decisions
 act = activation(build, T)
-seeded_exec = _scratch(sim, T, act)                  # buffers at T, die with the call
+seeded_exec = _scratch(model, T).exec               # buffers at T, die with the call
 _establish_frozen!(seeded_exec, act, nominal_exec, build)
 d_dual = _seeded(decision_names, guess, T)           # decision k carries unit partial k
 seeded_plan = compile_plan(override(baseline, problem.condition(d_dual)), build, T)
@@ -373,7 +373,7 @@ vector leaf. `get_input(leaf)` names a root input and `get_face(leaf)` a
 root-exported output face, taking the same leaf address since [D-276][d-276].
 `get_output(path, leaf)` names a component's own output port. `taps`
 returns a `Taps` value holding three `Reads`, so a bare NamedTuple handed to
-`linearize` gets the same directive refusal `reads` gives (`ReadSetMisuse`).
+`linearize` is refused as `ArgumentInvalid` with reason `:not_a_tap_set`.
 
 Membership is closed per list, because each list has one job:
 
@@ -393,8 +393,8 @@ an activation. For our taps:
 
 | tap | resolves to | meaning |
 |---|---|---|
-| `x.θ` | `StateRead{Dual,Nothing}(offset = 0)` | `xbuf[1]`, and `ẋbuf[1]` for its derivative |
-| `x.ω` | `StateRead{Dual,Nothing}(offset = 1)` | `xbuf[2]`, `ẋbuf[2]` |
+| `x.θ` | `StateRead{Float64,()}(offset = 0)`, kept as `(1, DerivRead{Dual,()}(offset = 0))` | `xbuf[1]`, and `ẋbuf[1]` for its derivative |
+| `x.ω` | `StateRead{Float64,()}(offset = 1)`, kept as `(2, DerivRead{Dual,()}(offset = 1))` | `xbuf[2]`, `ẋbuf[2]` |
 | `u.τ` | `CellRead(addr = layout.addr[("", :τ)])` | the root-input cell |
 | `u.d` | `CellRead(addr = layout.addr[("", :d)])` | likewise |
 | `y.θ` | `CellRead(addr = layout.addr[("", :θ)])` | the alias onto `("c", :θ)` |
@@ -553,18 +553,16 @@ These are section 2's matrices, entry for entry. In code, the split is the
 same loop trim runs, with two column ranges:
 
 ```julia
-for (i, entry) in enumerate(x_entries)              # rows of A and B
-    ẋ = _read(entry, ẋbuf_at(exec))                 # the DerivRead twin of the StateRead
-    ẋ₀[i] = ForwardDiff.value(ẋ)
-    for j in 1:n_x;  A[i, j] = ForwardDiff.partials(ẋ, j);        end
-    for j in 1:n_u;  B[i, j] = ForwardDiff.partials(ẋ, n_x + j);  end
+for group in Iterators.partition(1:N, width)        # one evaluation per group of `width` directions
+    # seed the group's sites, then evaluate!(exec)
+    for (i, (_, entry)) in enumerate(x_entries)     # rows of A and B; the DerivRead twin of the StateRead
+        ẋ₀[i] = _readback!(A, B, i, _read(entry, exec), group, n_x)
+    end
+    for (i, entry) in enumerate(y_entries)          # rows of C and D
+        y₀[i] = Float64(_readback!(C, D, i, _read(entry, exec), group, n_x))
+    end
 end
-for (i, entry) in enumerate(y_entries)              # rows of C and D
-    y = _read(entry, exec)
-    y₀[i] = ForwardDiff.value(y)
-    for j in 1:n_x;  C[i, j] = ForwardDiff.partials(y, j);        end
-    for j in 1:n_u;  D[i, j] = ForwardDiff.partials(y, n_x + j);  end
-end
+# _readback! writes the group's direction k into A or C (k ≤ n_x), else B or D
 ```
 
 **Step 7: return, and nothing else.** Both scratch executors are locals and

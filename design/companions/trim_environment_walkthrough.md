@@ -4,7 +4,7 @@
 `spec.md` [§4.4][s4-4] (field handles), [§8.2][s8-2] (the value-level constructor),
 [§14.1][s14-1] (the pre-sweep doctrine), [§14.7][s14-7] and [§14.9][s14-9] (the trim problem and its
 mounting), `flight_case_studies.md` section 4, and decision [D-139][d-139], which settled all of it on
-2026-08-05 during the round-4 dry-run adjudication (commit `daf3298d`). This
+2026-08-05 during the round-4 dry-run adjudication (commit `f2658bc1`). This
 document records the discussion that produced that row — the alternatives,
 the arguments, and the two shapes that were kept as legitimate options rather
 than decided between. Part II, added 2026-09-24 after decision [D-262][d-262]
@@ -143,8 +143,8 @@ layer. The environment's tunables — sea-level temperature and pressure, the
 wind vector, terrain elevation — are the *atmosphere component's* root inputs,
 which is the vocabulary everything else already speaks: conditions write them,
 a checkpoint carries them, linearization can take them as inputs, and the
-trace header records them. This is what `design_world(ac)` ships, and it is
-the blessed default for design tasks.
+trace header records them. This is the rig this design records for design
+tasks, `design_world(ac)`. No source ships it.
 
 **(b) Aircraft as root.** Leave the environment faces unconnected. Then, by
 the ordinary rules, each becomes a root input — one whose *value* is a
@@ -266,10 +266,8 @@ T_sl, p_sl, wind = 288.15, 101325.0, WindVector(-10.0, 0.0, 0.0)
 
 #the baseline is the sole writer of the environment (§14.6, §14.9)
 baseline = override(ready_for_taxi(ac),
-                    condition("atmosphere.T_sl" => T_sl,
-                              "atmosphere.p_sl" => p_sl,
-                              "atmosphere.wind" => wind,
-                              "terrain.elevation" => 0.0))
+                    combine(at("atmosphere", set(u = (T_sl = T_sl, p_sl = p_sl, wind = wind))),
+                            at("terrain", set(u = (elevation = 0.0,)))))
 
 #the same handle the sweep will build, built one level up from the same
 #values, by the component's own value-level constructor (§8.2)
@@ -311,7 +309,7 @@ trn = HorizontalTerrainField(; elevation = 0.0)
 #one variable, two uses: the root input the sweep reads, and the params the
 #condition math queries. No value-level constructor needed — in this rig
 #the handle is not produced by anything, it is written.
-baseline = override(ready_for_taxi(ac), condition("atm" => atm, "trn" => trn))
+baseline = override(ready_for_taxi(ac), set(u = (atm = atm, trn = trn)))
 
 params = TrimParameters(; Ob, EAS = 50.0, γ = 0.0, β = 0.0, ψ = 0.0, atm)
 
@@ -342,10 +340,9 @@ heard of the atmosphere.
 ```julia
 world    = design_world(ac)
 baseline = override(ready_for_taxi(ac),
-                    condition("atmosphere.T_sl" => 288.15,
-                              "atmosphere.p_sl" => 101325.0,
-                              "atmosphere.wind" => WindVector(-10.0, 0.0, 0.0),
-                              "terrain.elevation" => 0.0))
+                    combine(at("atmosphere", set(u = (T_sl = 288.15, p_sl = 101325.0,
+                                                      wind = WindVector(-10.0, 0.0, 0.0)))),
+                            at("terrain", set(u = (elevation = 0.0,)))))
 
 #no handle field anywhere in here: targets, not derived quantities
 params = TrimParameters(; Ob, EAS = 50.0, γ = 0.0, β = 0.0, ψ = 0.0)
@@ -380,7 +377,7 @@ under this formulation.
 sim = Simulation(ac; Δt_frame = 1//50)
 atm = ISAField(; T_sl = 288.15, p_sl = 101325.0, wind = WindVector(-10.0, 0.0, 0.0))
 baseline = override(ready_for_taxi(ac),
-                    condition("atm" => atm, "trn" => HorizontalTerrainField()))
+                    set(u = (atm = atm, trn = HorizontalTerrainField())))
 
 params = TrimParameters(; Ob, EAS = 50.0, γ = 0.0, β = 0.0, ψ = 0.0)   #no handle
 
@@ -540,9 +537,10 @@ the services to reason about which subtrees are state-independent and
 therefore safe to pre-sweep — graph reasoning they deliberately do not do.
 
 And it **reintroduces a hidden input one level up**. [§14.1][s14-1]'s overlay-base
-decision — the base is always the declared defaults, never the stopped sim's
-current stores — exists precisely to keep a condition's meaning independent
-of history. A `condition(d, baseline)` seam makes every problem's meaning
+decision for `init!` — the base is always the declared defaults, never the
+stopped sim's current stores — exists precisely to keep a condition's meaning
+independent of history. Only `overlay!` takes the current stores as its base.
+A `condition(d, baseline)` seam makes every problem's meaning
 depend on the baseline it happens to be applied against: the same
 `TrimProblem` value, applied over two baselines, is two different problems.
 That also breaks the pure condition algebra that lets [§14.9][s14-9]'s `at`-lifting be
@@ -558,7 +556,7 @@ holds.
 
 ## What landed in the spec
 
-For the record, commit `daf3298d`, decision [D-139][d-139]:
+For the record, commit `f2658bc1`, decision [D-139][d-139]:
 
 - **[§4.4][s4-4]** gains the value-level constructor as a shipped component's
   obligation, with the taught-contract entry in [Appendix A][sA] and the glossary
@@ -723,10 +721,9 @@ sim   = Simulation(world; Δt_frame = 1//50)
 env = (T_sl = 288.15, p_sl = 101325.0, wind = WindVector(-10.0, 0.0, 0.0),
        elevation = 0.0)
 
-environment(env) = condition("atmosphere.T_sl" => env.T_sl,
-                             "atmosphere.p_sl" => env.p_sl,
-                             "atmosphere.wind" => env.wind,
-                             "terrain.elevation" => env.elevation)
+environment(env) = combine(at("atmosphere", set(u = (T_sl = env.T_sl, p_sl = env.p_sl,
+                                                     wind = env.wind))),
+                           at("terrain", set(u = (elevation = env.elevation,))))
 
 baseline = override(ready_for_taxi(ac), environment(env))
 targets  = (EAS = 50.0, β = 0.0, γ = 0.0)

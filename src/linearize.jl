@@ -515,7 +515,7 @@ end
 # consumer tolerates it, D-168's meet. A consumer whose entry refuses the walked
 # type is a pinning consumer, build.jl's `pinning_consumers` at this
 # activation's scalar, named with its tier and its declared entry: a continuous
-# one pins by declaration (D-167), a discrete one by tier (§8.2). The face is the
+# one pins by declaration (D-263), a discrete one by tier (§8.2). The face is the
 # root input the mount step landed on, so the meet is right at a mount (D-277).
 function _seeded_tap(::Val{:u}, entry::CellRead{A,C}, ::GetInput, read::MountedRead,
                      build::Build, act::Activation{T}, diags::Vector{Diagnostic}) where {A,C,T}

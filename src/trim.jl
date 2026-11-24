@@ -495,7 +495,8 @@ Solve a trim problem on the model, and commit the solution through `init!`.
 `trim!` searches the [`TrimProblem`](@ref)'s decisions for a point where every
 residual sits within its tolerance. Every evaluation runs on
 [scratch](@ref g-scratch) [stores](@ref g-store), so the search never writes the
-model. The search runs with the clock at `t0`. The Jacobian is exact, carried by
+model. The search runs with the clock at `t0`. It starts from the guess clamped
+into the problem's bounds. The Jacobian is exact, carried by
 dual numbers through the same evaluation.
 
 Setup layers the problem's [condition](@ref g-condition) at the guess over the

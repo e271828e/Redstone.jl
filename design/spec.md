@@ -12990,9 +12990,10 @@ Every node is isbits except the prefix strings, and a prefix is a reference to
 the author's own literal. So, with literal prefixes, rebuilding the tree per
 trim iteration allocates nothing. There is no path arithmetic and no copy of the
 payloads. Composition checks three things, each by type or length alone, and
-none allocates. Each `set` payload is a NamedTuple, each combinator operand is a
-node, and each `at` prefix is nonempty. A `set` payload that is not a NamedTuple
-is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC]). The trim of
+none allocates. No `set` payload is `nothing`, each combinator operand is a
+node, and each `at` prefix is nonempty. A `set` payload of `nothing`
+is `ConditionNodeMisuse` with reason `:set_payload` ([Appendix C][sC], [D-437][d-437]).
+A bare payload's shape is checked at resolution ([§14.3][s14-3]). The trim of
 Flight.jl's Cessna 172 model (`c172.jl`) writes each trial state through
 FlightPhysics' `assign!`, a loop that allocates nothing. That property holds of
 the construction with literal prefixes and of the specialized `apply!` that
@@ -13444,7 +13445,7 @@ boundary, the ordinary macro-sequence with an empty integrate) means for trim.
   tick published; a counter due at boundary zero and authored at 0 holds 1
   after `init!` alone. A discrete store copied off a stopped run into a
   condition therefore starts that component one tick ahead ([D-273][d-273]).
-- **`t₀` is an init-service argument** (default `0.0`), never a condition
+- **`t₀` is an init-service argument** (default `0`), never a condition
   entry, because time is not a store of any component ([D-067][d-067]). The
   [harmonic grid](#g-harmonic-grid) (every discrete period an integer
   multiple of `Δt_base`) anchors at whatever `t₀` boundary zero runs at.
@@ -13505,7 +13506,8 @@ stores** ([D-149][d-149]). That principle, not an enumeration, names the sites. 
 commit through boundary zero ([§14.8][s14-8]), and linearization's operating condition
 under `about`, applied to its own scratch ([§14.10][s14-10]). That is one group of sites,
 one mechanism and one kind. Each compares the resolved plan's root-input
-coverage against the `Build`'s `input_faces` before writing anything. A
+coverage against the root inputs the `Build`'s structure lists
+(`structure.root_inputs`) before writing anything. A
 shortfall is one collected, declaration-ordered diagnostic
 (`UninitializedInputs`, [Appendix C][sC]) naming every uncovered face. Coverage is a
 *plan-level fact*, because both operands are resolution-time data. The check is
@@ -13605,8 +13607,8 @@ vectorization, and vectorization is the service's ([D-069][d-069]). The service 
 unpacks by field order, and that order is the `guess` NamedTuple's own. This [seam](#g-seam)
 runs on the rule [§9.5][s9-5] states, "the names are the pairing, order carries no
 semantics" ([D-151][d-151]). `lower` and `upper` are checked at setup for key-set equality
-with `guess` and for `Float64` fields. They are then canonicalized to `guess`'s field
-order by the same type-level reorder (`NamedTuple{keys(guess)}(lower)`). A
+with `guess` and for `Float64` fields. They are then read out in `guess`'s field
+order by name (`lower[k]` for each `k` in `keys(guess)`). A
 permuted bound spelling is therefore a non-event, rather than `α`'s bound silently
 applied to `throttle`. A key-set or field-type mismatch is `TrimProblemInvalid`.
 Guess, bounds and the returned solution share one spelling, and
@@ -13856,7 +13858,11 @@ eliminated is per-backend meanings of `converged`.
 
 #### Box bounds and saturated decisions
 
-**Box bounds are honored by step projection** ([D-070][d-070]). A decision variable saturated
+**Box bounds are honored by step projection** ([D-070][d-070]). The search starts from the
+guess projected into the box. A guess outside the box therefore starts at the
+nearest point inside it, and every point the backend sees and returns lies in
+the box. Setup's evaluation of the guess reads the guess as authored. A
+decision variable saturated
 *at the solution* is listed in the report's saturated list, as
 `(:elevator, :upper)`. That is the classic CG-limit diagnostic (CG is the center
 of gravity), which Flight.jl's trim leaves inferable only from mysterious
@@ -13939,8 +13945,8 @@ ordinary Julia call operating on per-invocation scratch stores. No commit has
 happened, and the simulation is bit-for-bit untouched, exactly as a
 non-converged solve leaves it. The services need no counterpart to the loop's
 boundary masking ([§12.4][s12-4]). An interrupt inside the commit's boundary
-zero moves the simulation to `built` and propagates raw ([§13.4][s13-4],
-[D-223][d-223]).
+zero moves the simulation to `built` and propagates out of `trim!` as the
+commit's `StepError`, like any throw there ([§13.4][s13-4], [D-223][d-223], [D-441][d-441]).
 
 #### The commit, in full
 
@@ -14158,7 +14164,9 @@ satisfying its equations.
 cases ([D-071][d-071], [D-277][d-277]). The `condition` field is
 condition-producing (path-relative), so the lift post-composes it. The
 `reads` field is a read set, and the lift prepends the prefix to the set's
-mount chain (the prefixes it is mounted under, root first). Every other field
+mount chain (the prefixes it is mounted under, root first). A `reads` that is
+no read set passes through, so that `trim!`'s setup refuses it as
+`TrimProblemInvalid`. Every other field
 is path-free and passes through. The rule that residual math sees only the
 gathered NamedTuple ([§14.7][s14-7]) is what makes the residuals path-free.
 
@@ -14168,7 +14176,7 @@ at(prefix::String, p::TrimProblem) = TrimProblem(
     lower      = p.lower,
     upper      = p.upper,
     condition  = d -> at(prefix, p.condition(d)),  #post-compose: wrap each returned tree
-    reads      = at(prefix, p.reads),              #inert selector data: the prefix is prepended to the read set's mount chain
+    reads      = p.reads isa Reads ? at(prefix, p.reads) : p.reads,  #inert selector data: the prefix is prepended to the read set's mount chain; anything else passes through for setup to refuse
     residuals  = p.residuals,                      #path-free: pass through
     tolerances = p.tolerances,
     checks     = p.checks,
@@ -14358,7 +14366,8 @@ Each invocation instantiates its own scratch store set, the trim service's
 mechanism verbatim ([§14.8][s14-8]), and establishes the operating point in it (above).
 **It then runs the seeded `Dual` evaluation**, one direction per `x` tap and per `u` tap,
 in groups of `width` directions per pass ([D-072][d-072]). **`width` is a keyword of `linearize`,
-default 8** ([D-272][d-272]). The default width's scalar type is named. A build can
+default 8** ([D-272][d-272]). A `width` below 1 is refused as `ArgumentInvalid`.
+The default width's scalar type is named. A build can
 therefore pre-materialize its [activation](#g-activation) (the build's typed products at a given
 scalar type) through `activations` ([§9.4][s9-4]), and a tap set of any size then
 linearizes with no activation at the call ([D-272][d-272]). Julia still compiles each new tap
@@ -15917,7 +15926,13 @@ activation):
   a simulation has claimed is reason `:claimed`, and a `Simulation` over a
   model not at `:built` is reason `:not_built` ([D-318][d-318]). `trace(sim)`
   under `trace = false` is reason `:disabled`. `trim!` and `linearize` on a `Model` at another scalar raise it
-  with reason `:non_nominal` ([D-319][d-319]). `Model` at a scalar other than
+  with reason `:non_nominal` ([D-319][d-319]). `linearize` refuses a `width` below 1 as
+  `:nonpositive_width`, a `t0` without `about` as `:t0_without_about`
+  ([D-420][d-420]), and a second argument that is no tap set as `:not_a_tap_set`.
+  `trim!` refuses a second argument that is no `TrimProblem` as
+  `:not_a_problem`. A `t0` handed to `init!`, `trim!` or `linearize` that is
+  not exact, or whose run the clock's integers cannot carry, is `:range`
+  ([D-457][d-457]). `Model` at a scalar other than
   `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not,
   raises it with reason `:scalar`, alone
   and before the keywords are read ([D-320][d-320]).
