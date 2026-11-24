@@ -4421,10 +4421,36 @@ instance wrapper in the style of FlightCore's `Subsampled` is rejected
 Relative is the default form because, in a layered control architecture,
 the *ratios* are intrinsic to the design and travel with the assembly type.
 The inner loop runs at `Relative(1)` and the outer loops at `Relative(5)`,
-whatever the deployment. One convention keeps `Dₛ ≥ 1` livable. A scope's
-base rate is its fastest relative member, and that member gets `Dₛ = 1`.
-The convention counts relative members only, since an anchored child may
-tick faster than its scope ([§6.3][s6-3], [D-186][d-186]).
+whatever the deployment.
+
+A scope's own rate comes from the entry its parent gives it, never from its
+children. Its relative members count its ticks, so none ticks faster than
+the scope. Two choices then give the same schedule. Setting the scope's
+rate to its fastest relative member, which takes `Dₛ = 1`, reads every
+other member as a whole multiple of it. Setting the scope finer leaves
+slots between that member's ticks, and a phase can then place a member in
+one of them. The first suits a scope whose members need no offset finer
+than the fastest member's period, and the second one that does. Only
+relative members count here, since an anchored child may tick faster than
+its scope ([§6.3][s6-3], [D-186][d-186]).
+
+At `Δt_base = 2 ms`, these two declarations run `inner` every 4 ms and
+`outer` every 20 ms.
+
+```julia
+# the scope at its fastest member
+sample_times(::Vehicle) = (fcs = Relative(2),)                        # 4 ms
+sample_times(::FCS)     = (inner = Relative(1), outer = Relative(5))
+
+# the scope finer, with a free slot between inner's ticks
+sample_times(::Vehicle) = (fcs = Relative(1),)                        # 2 ms
+sample_times(::FCS)     = (inner = Relative(2), outer = Relative(10))
+```
+
+Only the second can move `outer` by 2 ms. `outer = Relative(10, 1)` puts
+it one slot after `inner`, while under the first a phase moves `outer` in
+steps of 4 ms. The finer scope makes the grid report the finer grid
+([§9.2][s9-2]), which it reads as information, never as a fault.
 
 #### When an anchor belongs in a library type
 
