@@ -787,9 +787,9 @@ function message(d::RatesViolation)
     d.reason === :range && d.value isa Absolute &&
         return "$(_rates_entry(d)): no base tick the model's anchors admit counts " *
                "Absolute($(d.value.Δt), $(d.value.τ)) in an `Int` (§9.2)"
-    d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.K), $(d.value.φ)) composes a divisor past `Int` (§10.5)"
-    d.reason === :multiplier && return "$(_rates_entry(d)): K = $(d.value), and K ≥ 1 (§10.5)"
-    d.reason === :phase && return "$(_rates_entry(d)): φ = $(d.value), and 0 ≤ φ < K (§10.5)"
+    d.reason === :range && return "$(_rates_entry(d)): Relative($(d.value.D), $(d.value.Φ)) composes a divisor past `Int` (§10.5)"
+    d.reason === :multiplier && return "$(_rates_entry(d)): Dₛ = $(d.value), and Dₛ ≥ 1 (§10.5)"
+    d.reason === :phase && return "$(_rates_entry(d)): Φₛ = $(d.value), and 0 ≤ Φₛ < Dₛ (§10.5)"
     d.reason === :period && return "$(_rates_entry(d)): period $(d.value), and Δt > 0 (§10.5)"
     d.reason === :offset && return "$(_rates_entry(d)): offset $(d.value), and 0 ≤ τ < Δt (§10.5)"
     d.reason === :continuous_child &&
@@ -1334,7 +1334,7 @@ message(d::StopRequestInvalid) =
 """
 One constraint-pool entry (§9.1, §9.2): an anchor's period or its nonzero offset,
 with the scope path and key of the `sample_times` entry that declared the
-anchor, its leave-one-out refinement factor `r_p = gcd(pool ∖ p) / gcd(pool)`
+anchor, its leave-one-out refinement factor `Qₚ = gcd(pool ∖ p) / gcd(pool)`
 and, for an offset that drives, the nearest offsets on the grid the rest of
 the pool supports.
 """
@@ -1343,7 +1343,7 @@ struct GridEntry
     value::Rational{Int}
     scope::String                         # the anchor's declaring scope path
     key::Symbol                           # the anchor's declaring key
-    factor::Int                           # r_p ≥ 1
+    factor::Int                           # Qₚ ≥ 1
     alternatives::Vector{Rational{Int}}   # a driving offset's nearest non-refining neighbours that fit `Int`; else empty
 end
 
@@ -1422,7 +1422,7 @@ function _grid_block(grid::Union{Nothing,GridReport})
     factors = ["×$(e.factor)" for e in grid.pool]
     label_width, kind_value_width, factor_width =
         maximum(textwidth, labels), maximum(textwidth, kind_values), maximum(textwidth, factors)
-    rows = ["  admissible: gcd(pool)/k, coarsest $(grid.admissible)", "  pool:"]
+    rows = ["  admissible: gcd(pool)/Q, coarsest $(grid.admissible)", "  pool:"]
     for (i, entry) in enumerate(grid.pool)
         row = "    " * rpad(labels[i], label_width) * "  " * rpad(kind_values[i], kind_value_width) *
               "  " * rpad(factors[i], factor_width)
@@ -1459,7 +1459,7 @@ function message(d::DeploymentInvalid)
         return "the step bound h_max = $(d.value) is too fine to count the steps of one " *
                "frame of Δt_frame = $(d.related) in an `Int` — coarsen `h_max` (§9.2, §10.5)"
     d.reason === :range && d.related !== nothing &&
-        return "the lattices' exact unit, gcd(Δt_frame, Δt_base) for Δt_base = $(d.value) " *
+        return "Δt_unit = gcd(Δt_frame, Δt_base) for Δt_base = $(d.value) " *
                "and Δt_frame = $(d.related), is too fine to index one frame, or to count " *
                "a component's period, in an `Int` — " *
                "coarsen `Δt_base` or `Δt_frame` (§9.2, §10.5)"
@@ -1479,7 +1479,7 @@ function message(d::DeploymentInvalid)
                "domain rate is not a framework default (§9.2)"
     d.reason === :unanchored &&
         return "Δt_base cannot be derived: `$(join(d.paths, "`, `"))` is/are unanchored, " *
-               "with period `m·Δt_base` — an anchor edit anywhere in the tree would " *
+               "with period `Dₐ·Δt_base` — an anchor edit anywhere in the tree would " *
                "silently rescale it. Declare the base tick period instead: `Δt_base = …` " *
                "(§9.1)" * _grid_block(d.grid)
     d.reason === :no_constraint &&
@@ -1498,14 +1498,14 @@ end
 "§9.1, §9.2: the derived grid is finer than the fastest declared work."
 Base.@kwdef struct GridUtilization <: Diagnostic
     Δt_base::Rational{Int}
-    utilization::Int                     # min_i Dᵢ over the discrete rows
+    utilization::Int                     # min D₀(i) over the discrete rows
     fastest::String                      # the path attaining it
     grid::GridReport                     # the attribution the block renders
 end
 severity(::GridUtilization) = :warning  # COV_EXCL_LINE
 message(d::GridUtilization) =
     "Δt_base derived as $(d.Δt_base) s: the grid is $(d.utilization)× finer than the " *
-    "fastest declared work (`$(d.fastest)` at D = $(d.utilization)) (§9.2)" * _grid_block(d.grid)
+    "fastest declared work (`$(d.fastest)` at D₀ = $(d.utilization)) (§9.2)" * _grid_block(d.grid)
 
 "§11.3: a claim naming no root input face."
 Base.@kwdef struct AttachUnknownFace <: Diagnostic
@@ -2372,7 +2372,7 @@ function message(d::ArgumentInvalid)
     # `Relative`'s two refusals: a fraction, which teaches `Absolute`, and a
     # count past `Int` (D-459).
     d.reason === :not_a_count &&
-        return "`Relative` counts ticks of the enclosing scope, so `K` and `φ` are integers — " *
+        return "`Relative` counts ticks of the enclosing scope, so `Dₛ` and `Φₛ` are integers — " *
                "got $(repr(d.value)). A child that ticks faster than its scope, or at a " *
                "period in seconds, takes `Absolute`, as in `Absolute(1//100)` (§10.5)"
     d.reason === :range && d.call === :Relative &&
@@ -2461,7 +2461,7 @@ function message(d::ArgumentInvalid)
     d.call === :frame! && d.argument === :k &&
         return "frame $(d.value) is past frame $(d.related), the last a run of this " *
                "deployment from this origin may take: past it the frame's positions, counted " *
-               "in the lattices' exact unit, would leave `Int`, or two of its boundaries " *
+               "in Δt_unit, would leave `Int`, or two of its boundaries " *
                "could take clocks out of order (§10.5)"
     # The materialization's `join_timeout` (D-256) and the doors' four recording
     # keywords (D-261): each carries the constraint text and section its

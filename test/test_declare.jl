@@ -26,7 +26,7 @@ function test_declare()
         # Plain data carriers: no range checks of their own — those are the structure step's,
         # with path attribution, at the fold.
         @test Relative(5) === Relative(5, 0)
-        @test Relative(0).K == 0
+        @test Relative(0).D == 0
         @test Absolute(0).Δt == 0
     end
 

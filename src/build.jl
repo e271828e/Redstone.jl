@@ -1365,7 +1365,7 @@ function _check_handler(path, name, returned, decl::Decls, @nospecialize(comp))
 end
 
 # --- 7. entry compilation, per deployment ---------------------------------------
-# What moves behind deployment binding: `Δt`, `D` and `Φ` are entry data (§9.7),
+# What moves behind deployment binding: `Δt`, `D₀` and `Φ₀` are entry data (§9.7),
 # so the executor cannot exist until `Δt_base` does. Each call materializes its
 # own stores and buffers — the `Build` stays immutable and backs many
 # `Model`s (§9.2). No user stage runs here: every check already ran at the

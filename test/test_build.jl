@@ -1653,7 +1653,7 @@ function build_tier()
 
         # The base tick period is deployment's, not the build's: the same `Build`
         # deploys at any admissible grid, and the executor cannot exist before one
-        # binds because `Δt`, `D` and `Φ` are entry-field data (§9.1, §9.7).
+        # binds because `Δt`, `D₀` and `Φ₀` are entry-field data (§9.1, §9.7).
         counter_build = build(single(DiscreteCounter()))
         @test counter_build isa Build
         d = only(diagnostics(failure(() -> Simulation(counter_build))))

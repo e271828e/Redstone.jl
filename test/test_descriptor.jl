@@ -142,7 +142,7 @@ _digits(k, glyphs) = join(collect(glyphs)[d - '0' + 1] for d in string(k))
 _anchor_text(k) = "A" * _digits(k, "₀₁₂₃₄₅₆₇₈₉")
 _power_text(p) = p == 1 ? "" : _digits(p, "⁰¹²³⁴⁵⁶⁷⁸⁹")
 _path_text(path) = isempty(path) ? "root" : path
-_link_text(link) = haskey(link, "K") ? "$(link["key"]) = Relative($(link["K"]), $(link["phi"]))" :
+_link_text(link) = haskey(link, "D") ? "$(link["key"]) = Relative($(link["D"]), $(link["phi"]))" :
                    "$(link["key"]) = Absolute($(_rational_text(link["dt"])), $(_rational_text(link["tau"])))"
 _chain_text(links) = isempty(links) ? "—" : join(_link_text.(links), " → ")
 
@@ -173,11 +173,11 @@ function client_structure(structure)
     levels = Dict(node["path"] => node for node in structure["nodes"] if node["class"] == "assembly")
     anchors = structure["anchors"]
     components = [tokens(join([_path_text(node["path"]), node["tier"], _anchor_text(node["timing"]["anchor"]),
-                               string(node["timing"]["m"]), string(node["timing"]["c"]),
+                               string(node["timing"]["D"]), string(node["timing"]["phi"]),
                                _chain_text(node["rates"])], " "))
                   for node in structure["nodes"] if node["class"] == "primitive"]
     scopes = [[_path_text(scope["path"]), scope["key"], _anchor_text(scope["timing"]["anchor"]),
-               string(scope["timing"]["m"]), string(scope["timing"]["c"])] for scope in structure["scopes"]]
+               string(scope["timing"]["D"]), string(scope["timing"]["phi"])] for scope in structure["scopes"]]
     anchor_rows = vcat([["A₀", "Δt_base", "0//1", "—", "—"]],
                        [[_anchor_text(k), _rational_text(anchor["dt"]), _rational_text(anchor["tau"]), _path_text(anchor["scope"]), anchor["key"]]
                         for (k, anchor) in enumerate(anchors)])
@@ -185,7 +185,7 @@ function client_structure(structure)
     report, grid = Vector{String}[], structure["grid"]
     if haskey(grid, "admissible")
         admissible = _rational_of(grid["admissible"])
-        push!(report, tokens("admissible: gcd(pool)/k, coarsest $admissible"), ["pool:"])
+        push!(report, tokens("admissible: gcd(pool)/Q, coarsest $admissible"), ["pool:"])
         labels = String[]
         for entry in grid["pool"]
             anchor = anchors[entry["anchor"]]
@@ -295,29 +295,29 @@ function client_schedule(body)
     # the base tick against the grid report's coarsest, where the structure has anchors
     if haskey(structure["grid"], "admissible")
         admissible = _rational_of(structure["grid"]["admissible"])
-        k = Int(admissible / dt_base)
+        Q = Int(admissible / dt_base)
         push!(lines, tokens("Δt_base: $(repr(dt_base)), the coarsest admissible" *
-                            (k == 1 ? "" : " $(repr(admissible)) divided by $k")))
+                            (Q == 1 ? "" : " $(repr(admissible)) divided by $Q")))
     end
-    push!(lines, ["anchors:"], ["anchor", "Δtₖ", "τₖ", "Dₖ", "Φₖ"],
+    push!(lines, ["anchors:"], ["anchor", "Δt", "τ", "D₀", "Φ₀"],
           ["A₀", repr(dt_base), "0//1", "1", "0"])
     for (k, (anchor, counts)) in enumerate(zip(structure["anchors"], schedule["anchors"]))
         push!(lines, [_anchor_text(k), _rational_text(anchor["dt"]), _rational_text(anchor["tau"]),
                       string(counts["D"]), string(counts["phi"])])
     end
     timing_cells(timing, row) =
-        [_anchor_text(timing["anchor"]), string(timing["m"]), string(timing["c"]),
+        [_anchor_text(timing["anchor"]), string(timing["D"]), string(timing["phi"]),
          string(row["D"]), string(row["phi"]), repr(row["D"] * dt_base), repr(row["phi"] * dt_base)]
     if !isempty(rows)
-        push!(lines, ["components:"], ["path", "anchor", "m", "c", "D", "Φ", "Δt", "τ"])
+        push!(lines, ["components:"], ["path", "anchor", "Dₐ", "Φₐ", "D₀", "Φ₀", "Δt", "τ"])
         for row in rows
             push!(lines, [_path_text(row["path"]); timing_cells(nodes[row["path"]]["timing"], row)])
         end
     end
     if !isempty(scopes)
-        # a scope's `(m, c)` by its path and key, which needs no order
+        # a scope's `(Dₐ, Φₐ)` by its path and key, which needs no order
         scope_timing = Dict((scope["path"], scope["key"]) => scope["timing"] for scope in structure["scopes"])
-        push!(lines, ["rate", "scopes:"], ["path", "key", "anchor", "m", "c", "D", "Φ", "Δt", "τ"])
+        push!(lines, ["rate", "scopes:"], ["path", "key", "anchor", "Dₐ", "Φₐ", "D₀", "Φ₀", "Δt", "τ"])
         for row in scopes
             push!(lines, [_path_text(row["path"]); row["key"];
                           timing_cells(scope_timing[(row["path"], row["key"])], row)])
@@ -626,12 +626,12 @@ function test_descriptor()
     @testset "a primitive node carries its tier and timing, and the structure its anchors and scopes (§9.1, §13.9)" begin
         body = descriptor(build(MultiRate())).build
         @test node_at(body, "gnss").tier == "discrete"
-        @test node_at(body, "gnss").timing == (anchor = 1, m = 1, c = 0)
-        @test node_at(body, "fcs/outer").timing == (anchor = 0, m = 5, c = 2)
+        @test node_at(body, "gnss").timing == (anchor = 1, D = 1, phi = 0)
+        @test node_at(body, "fcs/outer").timing == (anchor = 0, D = 5, phi = 2)
         @test node_at(body, "src").tier == "continuous"
         @test !haskey(node_at(body, "fcs"), :tier) && !haskey(node_at(body, "fcs"), :timing)
         @test body.structure.anchors == [(dt = (num = 1, den = 50), tau = (num = 0, den = 1), scope = "", key = "gnss")]
-        @test body.structure.scopes == [(path = "fcs", key = "fcs", timing = (anchor = 0, m = 1, c = 0))]
+        @test body.structure.scopes == [(path = "fcs", key = "fcs", timing = (anchor = 0, D = 1, phi = 0))]
     end
 
     @testset "a node carries its alias when a const binds its type, and the envelope admits a name (§13.9)" begin
@@ -878,10 +878,10 @@ function test_descriptor()
         body = descriptor(build(chained_model())).build
         # a container's bare field key is the key the chain prints
         @test node_at(body, "g/a").rates ==
-              [(scope = "", key = "g", K = 3, phi = 1), (scope = "g", key = "children", K = 2, phi = 0)]
+              [(scope = "", key = "g", D = 3, phi = 1), (scope = "g", key = "children", D = 2, phi = 0)]
         # an explicit `Relative(1)` is a link, at the timing an unkeyed child has
-        @test node_at(body, "one").rates == [(scope = "", key = "one", K = 1, phi = 0)]
-        @test node_at(body, "one").timing == (anchor = 0, m = 1, c = 0)
+        @test node_at(body, "one").rates == [(scope = "", key = "one", D = 1, phi = 0)]
+        @test node_at(body, "one").timing == (anchor = 0, D = 1, phi = 0)
         multirate = descriptor(build(MultiRate())).build
         @test node_at(multirate, "gnss").rates ==
               [(scope = "", key = "gnss", dt = (num = 1, den = 50), tau = (num = 0, den = 1))]

@@ -76,7 +76,7 @@ function _deployment_body(deployment::Deployment)
            warnings = [_diagnostic(d) for d in deployment.warnings]))
 end
 
-# The `Schedule`'s rows and scopes, beside each anchor's `(Dₖ, Φₖ)` in the order
+# The `Schedule`'s rows and scopes, beside each anchor's `(D₀(a), Φ₀(a))` in the order
 # of the structure's anchors, which the writer computes as `bind_schedule` does,
 # the `Schedule` holding none (D-261). A bound schedule fits every count.
 function _schedule_section(deployment::Deployment)
@@ -163,13 +163,17 @@ function _structure_section(structure::Structure)
      anchors = [(dt = _rational(anchor.Δt), tau = _rational(anchor.τ),
                  scope = anchor.scope, key = String(anchor.key))
                 for anchor in structure.anchors],
-     scopes = [(path = scope.path, key = String(scope.key), timing = scope.timing)
+     scopes = [(path = scope.path, key = String(scope.key), timing = _timing(scope.timing))
                for scope in structure.scopes],
      grid = _grid_section(structure.anchors),
      types = _type_rows(node_instances))
 end
 
 _rational(x::Rational{Int}) = (num = numerator(x), den = denominator(x))
+
+# A fold's timing under the format's ASCII keys, `Φ` written `phi` as the
+# schedule's rows write it (D-478).
+_timing(timing::Timing) = (anchor = timing.anchor, D = timing.D, phi = timing.Φ)
 
 # The root inputs as primitive faces, typed by the wire pass, each `pinned` by
 # D-168's meet and `pinned_by` its pinning consumers as endpoints (D-468). The
@@ -248,7 +252,7 @@ end
 function _primitive_node(identity::NamedTuple, entry::ComponentEntry)
     instance = entry.instance
     merge(identity,
-          (class = "primitive", tier = tier_word(entry.tier), timing = entry.timing,
+          (class = "primitive", tier = tier_word(entry.tier), timing = _timing(entry.timing),
            rates = [_rate_link(link) for link in entry.rates]),
           _type_identity(typeof(instance)),
           (inputs = _primitive_faces(u_types, instance), outputs = _primitive_faces(y_types, instance),
@@ -261,7 +265,7 @@ end
 # container's bare field key leaves unchanged.
 _rate_link(link::RateLink) =
     link.entry isa Relative ?
-        (scope = link.scope, key = String(link.key), K = link.entry.K, phi = link.entry.φ) :
+        (scope = link.scope, key = String(link.key), D = link.entry.D, phi = link.entry.Φ) :
         (scope = link.scope, key = String(link.key), dt = _rational(link.entry.Δt),
          tau = _rational(link.entry.τ))
 

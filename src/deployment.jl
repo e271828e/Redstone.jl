@@ -29,7 +29,7 @@ _exact(name::Symbol, value, diags::Vector{Diagnostic}) =
 # --- the typed schedule (§9.2, §10.5, D-254) ------------------------------------
 
 """
-One discrete component's row of the schedule (§9.2): its `(D, Φ, Δt)` with the
+One discrete component's row of the schedule (§9.2): its `(D₀, Φ₀, Δt)` with the
 anchor it resolved against (0 is the base grid `A₀`) and its `rates`, the
 `sample_times` links met on the way down.
 """
@@ -54,7 +54,7 @@ Base.hash(entry::ScheduleEntry, seed::UInt) =
 
 """
 One rate scope's row (§9.2, §10.5): the assembly an explicit `sample_times` key
-opened, resolved to its own `(Dₛ, Φₛ)` by the same multiply-add its members use.
+opened, resolved to its own `(D₀, Φ₀)` by the same multiply-add its members use.
 """
 struct ScopeEntry
     path::String
@@ -64,7 +64,7 @@ struct ScopeEntry
     Φ::Int
 end
 
-# Design: §9.2, §10.5, D-254, D-261. The per-component `(D, Φ, Δt)` the
+# Design: §9.2, §10.5, D-254, D-261, D-478. The per-component `(D₀, Φ₀, Δt)` the
 # executor compiles over are derived from the rows at `compile`, never stored
 # beside them (D-261). The component rows sit in walk order.
 """
@@ -75,8 +75,9 @@ The deployment's [tick](@ref g-tick) table, one row per discrete
 [rate scope](@ref g-rate-scope).
 
 A component row holds the component's path, the [anchor](@ref g-anchor) it
-resolved against, its tick divisor `D` and [phase](@ref g-phase) `Φ` in
-[base ticks](@ref g-tick), and its period `Δt` in seconds.
+resolved against, its tick [divisor](@ref g-divisor) `D₀` and [phase](@ref g-phase)
+`Φ₀` in [base ticks](@ref g-tick) under the fields `D` and `Φ`, and its period `Δt`
+in seconds.
 [`Deployment`](@ref) builds the schedule and carries it. A run reads every `Δt`
 it uses from it.
 """
@@ -88,7 +89,7 @@ end
 Base.:(==)(a::Schedule, b::Schedule) = a.rows == b.rows && a.scopes == b.scopes
 Base.hash(schedule::Schedule, seed::UInt) = hash(schedule.scopes, hash(schedule.rows, seed))
 
-# The per-component `(D, Φ, Δt)` the executor compiles over, derived from the
+# The per-component `(D₀, Φ₀, Δt)` the executor compiles over, derived from the
 # rows by path at `compile` (§9.2, D-261); a component with no row is the
 # continuous tier's `(1, 0, 0.0)`.
 function _gates(schedule::Schedule, structure::Structure)
@@ -105,14 +106,14 @@ end
 
 # --- the lattices (§2.1, §10.5, D-445, D-449) -----------------------------------
 
-# Design: §10.5, D-445, D-449. The frame tops and the base ticks stand in no
-# required ratio, so the loop reads them as integer multiples of one exact unit,
-# `gcd(Δt_frame, Δt_base)`: the nearest mandatory instant and every coincidence
-# are integer comparisons, never float ones. A tree with no discrete component
-# has no due instant, so `Δt_base` then constrains nothing and the unit is the
-# frame. The bound `h_max` is no lattice: it stays a ratio to the unit, and a
-# span's step count is one `cld`. The instants themselves are written by
-# model.jl's grid, each from its own index and stride.
+# Design: §10.5, D-445, D-449, D-479. The frame tops and the base ticks stand in
+# no required ratio, so the loop reads them as integer multiples of one exact
+# unit, `Δt_unit = gcd(Δt_frame, Δt_base)`: the nearest mandatory instant and
+# every coincidence are integer comparisons, never float ones. A tree with no
+# discrete component has no due instant, so `Δt_base` then constrains nothing
+# and the unit is the frame. The bound `h_max` is no lattice: it stays a ratio
+# to the unit, and a span's step count is one `cld`. The instants themselves are
+# written by model.jl's grid, each from its own index and stride.
 """
 The index-to-time map of a deployment's lattices (§2.1, §10.5, D-445, D-449):
 the exact `unit`, the frame period and the base tick as whole units (`base`
@@ -274,7 +275,7 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
     # (`_anchor_counts`, structure.jl's, the trial binding's too).
     Δt_r === nothing && return nothing
     anchors_on_entry = length(diags)
-    Dk, Φk = [1], [0]
+    D_anchors, Φ_anchors = [1], [0]
     for anchor in anchors
         D, Φ = _anchor_counts(anchor, Δt_r)
         D === nothing &&
@@ -285,15 +286,15 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
             push!(diags, DeploymentInvalid(parameter = :Δt_base, reason = :anchor_offset,
                                           value = anchor.τ, related = Δt_r,
                                           scope = anchor.scope, key = anchor.key, grid = grid))
-        push!(Dk, something(D, 1)); push!(Φk, something(Φ, 0))
+        push!(D_anchors, something(D, 1)); push!(Φ_anchors, something(Φ, 0))
     end
     length(diags) == anchors_on_entry || return nothing
 
-    # Per component, one multiply-add; the canonical residue 0 ≤ Φ < D survives
+    # Per component, one multiply-add; the canonical residue 0 ≤ Φ₀ < D₀ survives
     # composition (§10.5), which is what the gate's truncated rem relies on. The
     # rate scopes resolve by the same law, off the timing the fold left them.
     # The law runs in checked `Int`, and a schedule it cannot hold is `nothing`:
-    # `Φ < D`, so a divisor past `Int` counts a period in base ticks, and so in
+    # `Φ₀ < D₀`, so a divisor past `Int` counts a period in base ticks, and so in
     # units, past it, the lattices' refusal below. `_timing_counts` is the
     # trial binding's law too (structure.jl).
     Δtb = Float64(Δt_r)
@@ -301,12 +302,12 @@ function bind_schedule(build::Build, Δt_frame, Δt_base, h_max, h_min, proposin
         rows = ScheduleEntry[]
         for entry in structure.components
             entry.tier === DISCRETE || continue
-            D, Φ = _timing_counts(entry.timing, Dk, Φk)
+            D, Φ = _timing_counts(entry.timing, D_anchors, Φ_anchors)
             # the rates vector itself: the structure is immutable, so no copy
             push!(rows, ScheduleEntry(entry.path, entry.timing.anchor, D, Φ, D * Δtb, entry.rates))
         end
         scopes = [ScopeEntry(scope.path, scope.key, scope.timing.anchor,
-                             _timing_counts(scope.timing, Dk, Φk)...)
+                             _timing_counts(scope.timing, D_anchors, Φ_anchors)...)
                   for scope in structure.scopes]
         Schedule(rows, scopes)
     end

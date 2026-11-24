@@ -322,7 +322,7 @@ function conditions_algebra()
     end
 
     @testset "boundary zero publishes every output stage, due or not (§14.5, D-205)" begin
-        # Neither component is due at boundary zero — first tick at Φ·Δt_base — and
+        # Neither component is due at boundary zero — first tick at Φ₀·Δt_base — and
         # both publish there all the same, evaluated from the authored world: the
         # ZOH from the condition's root-input value, the integrator from its authored `s`.
         # The probe's synthesized 0.0 reaches no published cell.
@@ -335,11 +335,11 @@ function conditions_algebra()
         @test port(latest(sim), "", :held) === 3.0     # and the t₀ snapshot carries both
         @test port(latest(sim), "", :acc) === 7.0
 
-        # `s_update` stays gated by Φ (§10.5): the evaluation above is establishment, not a
+        # `s_update` stays gated by Φ₀ (§10.5): the evaluation above is establishment, not a
         # scheduled sample, so the authored `s` survives boundary zero untouched and
-        # the first sample `off` *consumes* is its own tick's, at Φ·Δt_base.
+        # the first sample `off` *consumes* is its own tick's, at Φ₀·Δt_base.
         @test state(sim, "off").acc === 7.0
-        step!(sim)                                     # base tick 1 = Φ·Δt_base: the first tick
+        step!(sim)                                     # base tick 1 = Φ₀·Δt_base: the first tick
         @test state(sim, "off").acc ≈ 7.0 + 0.02 * 3.0    # one period, one sample
 
         # Cold and warm are the same world: the authored condition determines the

@@ -27,7 +27,7 @@ _path_label(path::String) = isempty(path) ? "root" : path
 
 # A rate entry as its fields spell it. Not the default `show`, whose
 # qualification of the type name depends on the printing module.
-_entry_label(entry::Relative) = "Relative($(entry.K), $(entry.φ))"
+_entry_label(entry::Relative) = "Relative($(entry.D), $(entry.Φ))"
 _entry_label(entry::Absolute) = "Absolute($(entry.Δt), $(entry.τ))"
 
 # A `RateLink` chain, `key = entry` joined by ` → `; empty is a dash.
@@ -104,21 +104,21 @@ function _lines(structure::Structure)
     lines = ["Structure: " * _structure_counts(structure) * "; root inputs: " *
              (isempty(structure.root_inputs) ? "none" : join(structure.root_inputs, ", ")),
              "  components:"]
-    append!(lines, _table("    ", ["path", "tier", "anchor", "m", "c", "rates"],
+    append!(lines, _table("    ", ["path", "tier", "anchor", "Dₐ", "Φₐ", "rates"],
                           [[_path_label(entry.path), tier_word(entry.tier),
-                            _anchor_name(entry.timing.anchor), string(entry.timing.m),
-                            string(entry.timing.c), _rates_label(entry.rates)]
+                            _anchor_name(entry.timing.anchor), string(entry.timing.D),
+                            string(entry.timing.Φ), _rates_label(entry.rates)]
                            for entry in structure.components]))
     if !isempty(structure.scopes)
         push!(lines, "  rate scopes:")
-        append!(lines, _table("    ", ["path", "key", "anchor", "m", "c"],
+        append!(lines, _table("    ", ["path", "key", "anchor", "Dₐ", "Φₐ"],
                               [[_path_label(scope.path), string(scope.key),
-                                _anchor_name(scope.timing.anchor), string(scope.timing.m),
-                                string(scope.timing.c)]
+                                _anchor_name(scope.timing.anchor), string(scope.timing.D),
+                                string(scope.timing.Φ)]
                                for scope in structure.scopes]))
     end
     push!(lines, "  anchors:")
-    append!(lines, _table("    ", ["anchor", "Δtₖ", "τₖ", "scope", "key"],
+    append!(lines, _table("    ", ["anchor", "Δt", "τ", "scope", "key"],
                           vcat([[_anchor_name(0), "Δt_base", string(zero(Rational{Int})), "—", "—"]],
                                [[_anchor_name(k), string(anchor.Δt), string(anchor.τ),
                                  _path_label(anchor.scope), string(anchor.key)]
@@ -171,9 +171,9 @@ end
 
 # --- Schedule ---------------------------------------------------------------------
 
-# The hyperperiod: the pattern repeats with `lcm(Dᵢ)` base ticks, so one is the
-# complete truth (§9.2). A `BigInt`, since coprime periods can take it past
-# `Int` and it is printed, never indexed past the chart's guard.
+# The hyperperiod: the pattern repeats every `H = lcm D₀(i)` base ticks, so one
+# is the complete truth (§9.2). A `BigInt`, since coprime periods can take it
+# past `Int` and it is printed, never indexed past the chart's guard.
 _hyperperiod(schedule::Schedule) = lcm(big.([row.D for row in schedule.rows]))
 
 function Base.show(io::IO, schedule::Schedule)
@@ -199,21 +199,21 @@ function _chart_ruler(columns::Int)
 end
 
 # The rows, the rate-scope rows when any exist, and the hyperperiod chart: one
-# row per schedule row, one character per base tick `k = 0 … hyperperiod−1`, `●`
-# where `(k − Φ) % D == 0`, under a ruler carrying the tick index at every
+# row per schedule row, one character per base tick `n = 0 … H − 1`, `●`
+# where `(n − Φ₀) % D₀ == 0`, under a ruler carrying the tick index at every
 # column divisible by 10. The guard is binary (D-257): at `hyperperiod > 100`
 # the chart's place holds one line naming the length instead.
 function _lines(schedule::Schedule)
     rows = schedule.rows
     lines = ["Schedule: " * _schedule_counts(schedule)]
     isempty(rows) ||
-        append!(lines, _table("  ", ["path", "anchor", "D", "Φ", "Δt", "rates"],
+        append!(lines, _table("  ", ["path", "anchor", "D₀", "Φ₀", "Δt", "rates"],
                               [[_path_label(row.path), _anchor_name(row.anchor), string(row.D),
                                 string(row.Φ), repr(row.Δt), _rates_label(row.rates)]
                                for row in rows]))
     if !isempty(schedule.scopes)
         push!(lines, "  rate scopes:")
-        append!(lines, _table("    ", ["path", "key", "anchor", "D", "Φ"],
+        append!(lines, _table("    ", ["path", "key", "anchor", "D₀", "Φ₀"],
                               [[_path_label(scope.path), string(scope.key), _anchor_name(scope.anchor),
                                 string(scope.D), string(scope.Φ)]
                                for scope in schedule.scopes]))
@@ -228,7 +228,7 @@ function _lines(schedule::Schedule)
     push!(lines, " "^(4 + width + 2) * _chart_ruler(hyperperiod))
     for row in rows
         push!(lines, "    " * rpad(_path_label(row.path), width) * "  " *
-                     join(((k - row.Φ) % row.D == 0 ? '●' : '·') for k in 0:hyperperiod-1))
+                     join(((n - row.Φ) % row.D == 0 ? '●' : '·') for n in 0:hyperperiod-1))
     end
     lines
 end
@@ -304,11 +304,11 @@ Base.show(io::IO, deployment::Deployment) =
 # fixed count, which a proposal at or above the bound takes, and at most
 # `⌊Δt_frame / h_min⌋`, since no step of an unsplit frame is shorter than the
 # floor; a localized event's `t*` adds a step beyond it (D-460). A row's ticks lie at
-# `(Φ + j·D)·base` units, all of them frame tops exactly when the frame divides
-# both `Φ·base` and `D·base`; every other row splits frames, and the line names
+# `(Φ₀ + j·D₀)·base` units, all of them frame tops exactly when the frame divides
+# both `Φ₀·base` and `D₀·base`; every other row splits frames, and the line names
 # it, the count then labelled as the unsplit frame's. No frame is walked, so
 # the line costs one check per row. The products fit
-# `Int`, since `_lattice` fits `D·base` past a frame top and `Φ < D`.
+# `Int`, since `_lattice` fits `D₀·base` past a frame top and `Φ₀ < D₀`.
 function _steps_line(deployment::Deployment)
     lattice = deployment.lattice
     steps = cld(lattice.frame * denominator(lattice.bound), numerator(lattice.bound))
@@ -360,25 +360,25 @@ function _chart_lines(deployment::Deployment)
 end
 
 # The deployment's base tick against the coarsest admissible one (§9.2,
-# D-471): `gcd(pool)` over the whole number `k` the base tick divides it by,
-# the clause dropped at `k = 1`. A structure with no anchors admits every base
-# tick and gets no line. A bound deployment's base tick divides every pool
-# entry, so `k` is whole, and the division runs in `Int128` as the anchors'
+# D-471, D-479): `gcd(pool)` over the whole number `Q` the base tick divides it
+# by, the clause dropped at `Q = 1`. A structure with no anchors admits every
+# base tick and gets no line. A bound deployment's base tick divides every pool
+# entry, so `Q` is whole, and the division runs in `Int128` as the anchors'
 # counts do.
 function _admissible_line(structure::Structure, Δt_base::Rational{Int})
     admissible = _grid_report(structure.anchors).admissible
     admissible === nothing && return nothing
-    k = something(_as_int(Rational{Int128}(admissible) / Δt_base))
+    Q = something(_as_int(Rational{Int128}(admissible) / Δt_base))
     "Δt_base: $(repr(Δt_base)), the coarsest admissible" *
-        (k == 1 ? "" : " $(repr(admissible)) divided by $k")
+        (Q == 1 ? "" : " $(repr(admissible)) divided by $Q")
 end
 
-# The schedule under the four frames' symbols (§9.2, D-464, D-471), the
+# The schedule under the four frames' symbols (§9.2, D-464, D-471, D-478), the
 # deployment's own block: the base tick against the coarsest admissible one,
 # where the structure has anchors; the anchor table with each anchor's seconds
 # pair and its counts, `A₀` at `Δt_base` by its value; one row per discrete component
-# with `(m, c)`, `(D, Φ)` and `(Δt, τ)`, the seconds exact; the rate-scope rows
-# under the same columns; and the chart. `(m, c)` are the structure's, whose
+# with `(Dₐ, Φₐ)`, `(D₀, Φ₀)` and `(Δt, τ)`, the seconds exact; the rate-scope rows
+# under the same columns; and the chart. `(Dₐ, Φₐ)` are the structure's, whose
 # discrete components and scopes stand in the schedule's order, and the
 # anchors' counts are derived by the constructor's own division, since the
 # `Schedule` holds neither (D-261). No rows and no scopes is the heading alone.
@@ -390,25 +390,25 @@ function _schedule_lines(deployment::Deployment)
     admissible_line === nothing || push!(lines, "  " * admissible_line)
     anchor_rows =[[_anchor_name(0), repr(Δt_base), string(zero(Rational{Int})), "1", "0"]]
     for (k, anchor) in enumerate(structure.anchors)
-        Dk, Φk = _anchor_counts(anchor, Δt_base)   # whole on a bound deployment
+        D_anchor, Φ_anchor = _anchor_counts(anchor, Δt_base)   # whole on a bound deployment
         push!(anchor_rows, [_anchor_name(k), string(anchor.Δt), string(anchor.τ),
-                            string(something(Dk)), string(something(Φk))])
+                            string(something(D_anchor)), string(something(Φ_anchor))])
     end
     push!(lines, "  anchors:")
-    append!(lines, _table("    ", ["anchor", "Δtₖ", "τₖ", "Dₖ", "Φₖ"], anchor_rows))
+    append!(lines, _table("    ", ["anchor", "Δt", "τ", "D₀", "Φ₀"], anchor_rows))
     timing_cells(timing::Timing, D::Int, Φ::Int) =
-        [_anchor_name(timing.anchor), string(timing.m), string(timing.c), string(D), string(Φ),
+        [_anchor_name(timing.anchor), string(timing.D), string(timing.Φ), string(D), string(Φ),
          _seconds_label(D, Δt_base), _seconds_label(Φ, Δt_base)]
     if !isempty(schedule.rows)
         discrete = [entry for entry in structure.components if entry.tier === DISCRETE]
         push!(lines, "  components:")
-        append!(lines, _table("    ", ["path", "anchor", "m", "c", "D", "Φ", "Δt", "τ"],
+        append!(lines, _table("    ", ["path", "anchor", "Dₐ", "Φₐ", "D₀", "Φ₀", "Δt", "τ"],
                               Vector{String}[[_path_label(row.path); timing_cells(entry.timing, row.D, row.Φ)]
                                              for (row, entry) in zip(schedule.rows, discrete)]))
     end
     if !isempty(schedule.scopes)
         push!(lines, "  rate scopes:")
-        append!(lines, _table("    ", ["path", "key", "anchor", "m", "c", "D", "Φ", "Δt", "τ"],
+        append!(lines, _table("    ", ["path", "key", "anchor", "Dₐ", "Φₐ", "D₀", "Φ₀", "Δt", "τ"],
                               Vector{String}[[_path_label(row.path); string(row.key);
                                               timing_cells(scope.timing, row.D, row.Φ)]
                                              for (row, scope) in zip(schedule.scopes, structure.scopes)]))

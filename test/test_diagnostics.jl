@@ -736,7 +736,7 @@ function diagnostics_kind_set()
         rendered = message(only(d for d in occurrences
                                 if d isa DeploymentInvalid && d.reason === :anchor_offset))
         @test startswith(rendered, "`sample_times` at `a`, key `b`: offset 1//7")
-        @test occursin("\n  admissible: gcd(pool)/k, coarsest 1//300\n  pool:\n", rendered)
+        @test occursin("\n  admissible: gcd(pool)/Q, coarsest 1//300\n  pool:\n", rendered)
         @test occursin("offset 1//7   ×3   declaring 7//50 or 3//20 keeps 1//100", rendered)
         @test occursin("\n  primes: 300 = 2²·3·5²\n", rendered)
         @test occursin("\n    2²  b period\n    3   b period\n    5²  b offset", rendered)
@@ -744,7 +744,7 @@ function diagnostics_kind_set()
         rendered = message(only(d for d in occurrences if d isa GridUtilization))
         @test startswith(rendered,
                           "Δt_base derived as 1//300 s: the grid is 3× finer than the " *
-                          "fastest declared work (`a/b` at D = 3) (§9.2)\n  admissible:")
+                          "fastest declared work (`a/b` at D₀ = 3) (§9.2)\n  admissible:")
         @test occursin("\n    5²  b offset", rendered)
         # A label `series` reserves names itself and the four fields (D-474).
         rendered = message(only(d for d in occurrences
@@ -812,9 +812,15 @@ function diagnostics_kind_set()
         # and the frame (§10.5, D-445, D-459).
         @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :range,
                                                    value = 1//(10^10 + 1), related = 1//10^10)),
-                         "the lattices' exact unit, gcd(Δt_frame, Δt_base) for Δt_base = " *
+                         "Δt_unit = gcd(Δt_frame, Δt_base) for Δt_base = " *
                          "1//10000000001 and Δt_frame = 1//10000000000, is too fine to index " *
                          "one frame, or to count a component's period, in an `Int`")
+        # An unanchored component's period is a multiple of the base tick it
+        # would derive, `Dₐ·Δt_base` (§9.1, D-478).
+        @test startswith(message(DeploymentInvalid(parameter = :Δt_base, reason = :unanchored,
+                                                   paths = ["a/b"])),
+                         "Δt_base cannot be derived: `a/b` is/are unanchored, with period " *
+                         "`Dₐ·Δt_base` — an anchor edit")
         # A bound too fine to count one frame's steps names itself and the frame (D-449).
         @test startswith(message(DeploymentInvalid(parameter = :h_max, reason = :range,
                                                    value = 1//2^60, related = 1//1)),
@@ -840,7 +846,7 @@ function diagnostics_kind_set()
         @test message(ArgumentInvalid(call = :Relative, reason = :range, value = big(2)^70)) ==
               "`Relative` holds its counts in `Int`, and 1180591620717411303424 is past it (§10.5)"
         @test message(ArgumentInvalid(call = :Relative, reason = :not_a_count, value = 1//2)) ==
-              "`Relative` counts ticks of the enclosing scope, so `K` and `φ` are integers — " *
+              "`Relative` counts ticks of the enclosing scope, so `Dₛ` and `Φₛ` are integers — " *
               "got 1//2. A child that ticks faster than its scope, or at a period in seconds, " *
               "takes `Absolute`, as in `Absolute(1//100)` (§10.5)"
         @test message(DeploymentInvalid(parameter = :Δt_frame, reason = :range,
@@ -852,6 +858,12 @@ function diagnostics_kind_set()
                                      value = Relative(2^32 + 1))) ==
               "`sample_times` at `g`, key `a`: Relative(4294967297, 0) composes a divisor " *
               "past `Int` (§10.5)"
+        # A `Relative` entry's constraints read in scope ticks, its child's `Dₛ`
+        # and `Φₛ` (§10.5, D-478).
+        @test message(RatesViolation(path = "g", reason = :multiplier, key = :a, value = 0)) ==
+              "`sample_times` at `g`, key `a`: Dₛ = 0, and Dₛ ≥ 1 (§10.5)"
+        @test message(RatesViolation(path = "g", reason = :phase, key = :a, value = 5)) ==
+              "`sample_times` at `g`, key `a`: Φₛ = 5, and 0 ≤ Φₛ < Dₛ (§10.5)"
         # An `Absolute` entry's constraints read in its own letters (§10.5, D-464).
         @test message(RatesViolation(path = "g", reason = :period, key = :a, value = 0//1)) ==
               "`sample_times` at `g`, key `a`: period 0//1, and Δt > 0 (§10.5)"

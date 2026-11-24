@@ -361,7 +361,7 @@ D-459, D-464.
   `_timing_counts` and `_max_frame`, which the build's trial binding runs
   too (D-465).
 - The typed `Schedule`, over `ScheduleEntry` and `ScopeEntry` (D-261):
-  - the anchor and rates columns beside `(D, Φ, Δt)`, in `ScheduleEntry`;
+  - the anchor and rates columns beside `(D₀, Φ₀, Δt)`, in `ScheduleEntry`;
   - the rate-scope rows, in `ScopeEntry`;
   - `_gates`, which derives the per-component triple the executor compiles
     over from the rows at `compile`.
@@ -381,7 +381,7 @@ D-459, D-464.
   It is scalar-free. The `Deployment` constructor has one throw per call
   (§9.2, D-229). It also holds the `Lattice`, the frame loop's index-to-time
   map, derived from the exact periods once (§10.5, D-445).
-- The `Lattice`: the exact unit `gcd(Δt_frame, Δt_base)` (`Δt_frame` alone
+- The `Lattice`: the exact unit `Δt_unit = gcd(Δt_frame, Δt_base)` (`Δt_frame` alone
   when no discrete component exists), the frame and base tick as whole
   units, the bound `h_max` as an exact ratio to the unit, `max_frame`, the
   last frame index whose positions fit `Int`, and `reach`, the clock bound's
@@ -424,7 +424,7 @@ D-459, D-464.
   `Deployment` holds none (D-466). `:derive` has no `:range` refusal.
 - The derivation path's info line shows the derived value over the same block,
   with both attribution forms. The derivation path also raises the
-  `GridUtilization` advisory at `min_i Dᵢ > 1`.
+  `GridUtilization` advisory at `min D₀(i) > 1`.
 
 Spec: §9.2, §10.2, §10.5, §12.6, §12.7, Appendix B, Appendix C, D-187, D-229,
 D-250, D-254, D-256, D-261, D-442, D-443, D-444, D-445, D-449, D-450, D-454,
@@ -455,7 +455,8 @@ D-459, D-460, D-461, D-463, D-465, D-466.
   `pinned_by` off build.jl's `pinning_consumers` (D-468), and `_grid_section`,
   structure.jl's `_grid_report` as data, each pool entry's anchor found by
   its scope and key, positions from 1 (D-466, D-467). A primitive node's
-  `rates`, its chain by `_rate_link`.
+  `rates`, its chain by `_rate_link`, and its `timing` and a scope's by
+  `_timing`, the fold's `Φ` under the key `phi` (D-478).
 - The primitive faces `_primitive_faces`, read off the declarations as written with a
   `Pinned` entry unwrapped and flagged, a bare contract's face `u` or `y`, and the kind marker `_kind_marker`,
   §13.9's table in test order, its `struct` row the leaf walk's isbits cut
@@ -625,7 +626,7 @@ D-463, D-465.
   conditions.jl.
 - The interior/boundary split `PhaseBody`. A body with no gated entry has two
   tuples of one type and walks its interior at a boundary.
-- The `(tick − Φ) % D` gate `Gated`, with boundary zero's `ESTABLISH` beside
+- The `(n − Φ₀) % D₀` gate `Gated`, with boundary zero's `ESTABLISH` beside
   it.
 - `_merge_modes!`, one generated method, which replaces a bare `m` whole and
   merges a named one, a bare one's failure on the field `m` (§9.5, D-438).
@@ -1120,13 +1121,13 @@ D-261.
   A side with no root face prints no block. `_pin_marks` marks an input route
   ending at a pinning consumer, `pinned by tier` or `pinned by declaration`, in
   one column after the block's widest route (D-468).
-- The `Schedule`'s hyperperiod chart, over `lcm(Dᵢ)` base ticks, with its
+- The `Schedule`'s hyperperiod chart, over `H = lcm D₀(i)` base ticks, with its
   binary guard at 100.
 - The `Deployment`'s `schedule:` block, its own and not the `Schedule`'s
   lines (D-471):
-  - `_schedule_lines` prints the anchor table with each anchor's `Δtₖ`,
-    `τₖ`, `Dₖ` and `Φₖ`, then one row per discrete component and per rate
-    scope with `m`, `c`, `D`, `Φ`, `Δt` and `τ`. It reads `(m, c)` from the
+  - `_schedule_lines` prints the anchor table with each anchor's `Δt`,
+    `τ`, `D₀` and `Φ₀`, then one row per discrete component and per rate
+    scope with `Dₐ`, `Φₐ`, `D₀`, `Φ₀`, `Δt` and `τ`. It reads `(Dₐ, Φₐ)` from the
     structure, whose discrete components and scopes stand in the schedule's
     order, and derives the anchors' counts through structure.jl's
     `_anchor_counts`, as `bind_schedule` and the descriptor's writer do;
@@ -1340,7 +1341,7 @@ Spec: §10.2, §10.4, §12.6, §14.10, D-017, D-274, D-442, D-452, D-461.
   run's (D-260, D-317):
   - its `t` is in the model's scalar;
   - its origin `t₀` is a `Rational{Int}`, exact, beside `origin`, `unit` and
-    `scale`, the origin and the lattices' unit over one denominator in
+    `scale`, the origin and `Δt_unit` over one denominator in
     `Int128`, which `_set_origin!` writes where the origin is set and
     `_grid_integers` computes (D-457);
   - `_instant`, the float nearest an exact instant from its position, one

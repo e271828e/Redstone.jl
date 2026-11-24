@@ -1379,7 +1379,7 @@ sample_times(::FCS) = (inner = Relative(1), outer = Relative(5, 2))
 The §9.2 worked example: three discrete components under two scopes, `fcs` on
 the root grid and `gnss` anchored at `1//50`. Deployed at `Δt_base = 2 ms` the
 compiled pairs are inner `(1, 0)`, outer `(5, 2)`, gnss `(10, 0)`, and one
-hyperperiod is `lcm(Dᵢ) = 10` base ticks. The ramp source makes every sample
+hyperperiod is `H = lcm D₀(i) = 10` base ticks. The ramp source makes every sample
 carry its own acquisition time, so the chart's dots — and the stagger's aging —
 are readable off the cells.
 """

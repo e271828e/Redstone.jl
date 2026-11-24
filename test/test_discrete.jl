@@ -1,6 +1,6 @@
 # --- the discrete tier: one rate, then several (§10.5) ------------------------
-# §10.5 is "Multi-rate tick scheduling", and the single-rate case is its D = 1,
-# Φ = 0 corner — which is why the ZOH proof runs twice in this file. Once at one
+# §10.5 is "Multi-rate tick scheduling", and the single-rate case is its D₀ = 1,
+# Φ₀ = 0 corner — which is why the ZOH proof runs twice in this file. Once at one
 # rate, where the closed form is the plain sampled-data recursion and the only
 # claim is that the hold is real; and once at several, where the same reference
 # closes only if the gate admits a component at exactly its own ticks, the hold
@@ -157,15 +157,15 @@ function discrete_rate_fold()
     end
 
     @testset "a divisor composed past `Int` is refused at the inner key, never wrapped (§9.1, §10.5, D-459)" begin
-        # `Relative(K₂)` inside `Relative(K₁)` composes the multiplier `K₂·K₁`.
+        # `Relative(D2)` inside `Relative(D1)` composes the multiplier `D2·D1`.
         # Past `Int` it wrapped to a wrong divisor, to 0 or below; now the inner
         # key is refused as `:range`, alone.
-        nested(K1, K2) = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(K2))));
-                               sample_times = (; g = Relative(K1)))
-        for (K1, K2) in ((2^32 + 1, 2^32 + 1), (2^32, 2^32), (2^62, 3))
-            d = only(diagnostics(failure(() -> build(nested(K1, K2)))))
+        nested(D1, D2) = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(D2))));
+                               sample_times = (; g = Relative(D1)))
+        for (D1, D2) in ((2^32 + 1, 2^32 + 1), (2^32, 2^32), (2^62, 3))
+            d = only(diagnostics(failure(() -> build(nested(D1, D2)))))
             @test d isa RatesViolation && d.reason === :range && d.path == "g" &&
-                  d.key === :a && d.value === Relative(K2)
+                  d.key === :a && d.value === Relative(D2)
         end
         # A bare container key composes once per element, and its one entry is
         # refused once.
@@ -189,11 +189,11 @@ function discrete_rate_fold()
               (0, 2^62, (2^31 - 1) + (2^31 - 1) * 2^31)
         # A rate its own check refuses composes nothing, so a multiplier or a
         # phase that would also overflow is refused once, by its own reason.
-        for (K2, φ2, reason) in ((-2^62, 0, :multiplier), (2, 2^62, :phase))
-            bad = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(K2, φ2))));
+        for (D2, Φ2, reason) in ((-2^62, 0, :multiplier), (2, 2^62, :phase))
+            bad = Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(D2, Φ2))));
                         sample_times = (; g = Relative(4)))
             d = only(diagnostics(failure(() -> build(bad))))
-            @test d isa RatesViolation && d.reason === reason && d.value == (reason === :phase ? φ2 : K2)
+            @test d isa RatesViolation && d.reason === reason && d.value == (reason === :phase ? Φ2 : D2)
         end
     end
 
@@ -235,7 +235,7 @@ function discrete_rate_fold()
         # cell says when its owner last ticked — the chart's dots, and the
         # deterministic aging of the stagger, in the spec's own numbers.
         sim = Simulation(MultiRate(); Δt_frame = 1//500)
-        init!(sim)                                       # boundary zero: Φ = 0 is due
+        init!(sim)                                       # boundary zero: Φ₀ = 0 is due
         @test port(sim, "fcs/inner", :out) == 1.0
         @test port(sim, "gnss", :out) == 1.0
 
@@ -252,14 +252,14 @@ function discrete_rate_fold()
     end
 
     @testset "relative scopes compose affinely; anchors sever (§10.5, §9.1)" begin
-        # Under a scope at Relative(2, 1): D = K·Dₛ, Φ = Φₛ + φ·Dₛ.
+        # Under a scope at Relative(2, 1): D₀(i) = Dₛ(i)·D₀(s), Φ₀(i) = Φ₀(s) + Φₛ(i)·D₀(s).
         inner_group = Group((; a = TickCounter(), b = TickCounter());
                             sample_times = (; a = Relative(1), b = Relative(5, 2)))
         sim = Simulation(Group((; f = inner_group);
                                sample_times = (; f = Relative(2, 1))); Δt_frame = 1//100)
         @test [(e.D, e.Φ) for e in sim.model.deployment.schedule.rows] == [(2, 1), (10, 5)]
 
-        # Neither has Φ = 0, so boundary zero admits neither; over base ticks 1…10,
+        # Neither has Φ₀ = 0, so boundary zero admits neither; over base ticks 1…10,
         # `a` ticks at the odd indices and `b` at 5 alone.
         init!(sim)
         @test state(sim, "f/a") === (n = 0,)
@@ -268,7 +268,7 @@ function discrete_rate_fold()
         @test state(sim, "f/b") === (n = 1,)
 
         # An anchor severs: a relative child of an anchored subtree composes against
-        # the anchor, not the enclosing grid — D = 3·D₁ with D₁ = (1//50)/(1//500).
+        # the anchor, not the enclosing grid — D₀ = 3·D₀(A₁) with D₀(A₁) = (1//50)/(1//500).
         gps = Group((; rx = TickCounter());
                     sample_times = (; rx = Relative(3)))
         sim = Simulation(Group((; gps = gps);
@@ -408,7 +408,7 @@ function discrete_deployment()
 
         # `Δt_frame` (the default path) and the explicit keyword (an integer or a
         # `Rational`): the anchored divisor is deployment's, not the build's — the
-        # same Build lands gnss at D = 10 or D = 5.
+        # same Build lands gnss at D₀ = 10 or D₀ = 5.
         default_sim = Simulation(multirate_build; Δt_frame = 1//500)
         Δt_base_sim = Simulation(multirate_build; Δt_frame = 1//500, Δt_base = 1//250)
         @test [e.D for e in default_sim.model.deployment.schedule.rows] == [1, 5, 10]
@@ -742,20 +742,20 @@ function discrete_deployment()
         refusals(root) = [(d isa RatesViolation && d.reason === :range, d.path, d.key, d.value)
                           for d in diagnostics(failure(() -> build(root)))]
         deploys(root, g) = Deployment(build(root); Δt_frame = g, Δt_base = g)
-        # Two `Relative(2^30)` compose `m = 2^60`, which the fold holds, beneath an
+        # Two `Relative(2^30)` compose `Dₐ = 2^60`, which the fold holds, beneath an
         # anchor that counts 1000 base ticks at its gcd: no base tick counts the
         # product. The inner entry is the one the running count passes.
         @test only(build(nest(TickCounter(), Relative(2^30), Relative(2^30))).structure.components).timing ==
-              (anchor = 0, m = 2^60, c = 0)
+              (anchor = 0, D = 2^60, Φ = 0)
         anchor = Absolute(1, 1//1000)
         @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(2^30))) ==
               [(true, "n/n", :n, Relative(2^30))]
-        # The frontier itself: `K·1000·2^30` at the last `K` that fits, and one past.
-        K = typemax(Int) ÷ (1000 * 2^30)
-        @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(K + 1))) ==
-              [(true, "n/n", :n, Relative(K + 1))]
-        @test only(deploys(nest(TickCounter(), anchor, Relative(2^30), Relative(K)),
-                           1//1000).schedule.rows).D == K * 1000 * 2^30
+        # The frontier itself: `D·1000·2^30` at the last `D` that fits, and one past.
+        D = typemax(Int) ÷ (1000 * 2^30)
+        @test refusals(nest(TickCounter(), anchor, Relative(2^30), Relative(D + 1))) ==
+              [(true, "n/n", :n, Relative(D + 1))]
+        @test only(deploys(nest(TickCounter(), anchor, Relative(2^30), Relative(D)),
+                           1//1000).schedule.rows).D == D * 1000 * 2^30
         # A count that reaches `typemax(Int)` exactly still fits: the entry refused
         # is the next one, which passes it.
         @test refusals(nest(TickCounter(), Absolute(1, 1//7), Relative(typemax(Int) ÷ 7),
@@ -771,11 +771,11 @@ function discrete_deployment()
                             Relative(2^60))) ==
               [(true, "n", :n, Relative(2^60))]
         # A rate scope with no discrete member is counted too.
-        K = typemax(Int) ÷ 1000
-        scope_only(K) = nest(Group((; s = Sawtooth(1.0))), anchor, Relative(K))
-        @test refusals(scope_only(K + 1)) == [(true, "n", :n, Relative(K + 1))]
-        @test [scope.D for scope in deploys(scope_only(K), 1//1000).schedule.scopes] ==
-              [1000, K * 1000]
+        D = typemax(Int) ÷ 1000
+        scope_only(D) = nest(Group((; s = Sawtooth(1.0))), anchor, Relative(D))
+        @test refusals(scope_only(D + 1)) == [(true, "n", :n, Relative(D + 1))]
+        @test [scope.D for scope in deploys(scope_only(D), 1//1000).schedule.scopes] ==
+              [1000, D * 1000]
     end
 
     @testset "a largest divisor that leaves no frame in an `Int` at the gcd is refused at the build on the entry where its count reaches it (§9.2, §10.5, D-465)" begin
@@ -869,9 +869,9 @@ function discrete_deployment()
 
     # --- multi-rate: the gate at run time (§10.5) -----------------------------------
 
-    @testset "boundary zero admits Φ = 0 for updates, and publishes every output stage" begin
+    @testset "boundary zero admits Φ₀ = 0 for updates, and publishes every output stage" begin
         # `z` at Relative(2, 1) is not due at boundary zero: its first tick is at
-        # Φ·Δt_base. Its output stage runs there all the same (D-205), publishing
+        # Φ₀·Δt_base. Its output stage runs there all the same (D-205), publishing
         # from the t₀ table — the ramp *at t₀*, not the build probe's value; the
         # dueness the gate reads at index 0 governs the `s_update` updates alone (§10.5).
         late = Group((; src = Ramp(5.0), z = ZOH());

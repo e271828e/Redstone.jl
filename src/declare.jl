@@ -401,29 +401,30 @@ function _declared_quantity(to_exact, call::Symbol, value)
     throw(DiagnosticError(ArgumentInvalid(call = call, reason = :range, value = value)))
 end
 
-# Design: §10.5, D-459.
+# Design: §10.5, D-459, D-478.
 """
-    Relative(K::Integer, φ::Integer = 0) -> Relative
+    Relative(D::Integer, Φ::Integer = 0) -> Relative
 
 A sample time in [ticks](@ref g-tick) of the enclosing
-[scope](@ref g-rate-scope), every `K`-th tick starting from the `φ`-th.
+[scope](@ref g-rate-scope), every `D`-th tick starting from the `Φ`-th.
 
-A [`sample_times`](@ref) [entry](@ref g-entry) `Relative(K, φ)` runs its child
-at every `K`-th tick of the enclosing rate scope, starting from its `φ`-th. `φ`
-defaults to `0`. Relative entries count scope ticks, so they compose affinely
-down the tree. Under a scope that ticks every `D_s` [base ticks](@ref g-tick)
-at [phase](@ref g-phase) `Φ_s`, the child ticks every `K·D_s` base ticks at
-phase `Φ_s + φ·D_s`.
+A [`sample_times`](@ref) [entry](@ref g-entry) `Relative(D, Φ)` runs its child
+at every `D`-th tick of the enclosing rate scope, starting from its `Φ`-th. `Φ`
+defaults to `0`. They are the child's [divisor](@ref g-divisor) `Dₛ` and
+[phase](@ref g-phase) `Φₛ`. Relative entries count scope ticks, so they compose
+affinely down the tree. Under a scope `s` that ticks every `D₀(s)`
+[base ticks](@ref g-tick) at phase `Φ₀(s)`, the child ticks every `D·D₀(s)`
+base ticks at phase `Φ₀(s) + Φ·D₀(s)`.
 
-`K = 1` admits no stagger. Stagger two same-rate siblings one level down
+`D = 1` admits no stagger. Stagger two same-rate siblings one level down
 instead. Declare their scope at twice their rate, and give them `Relative(2, 0)`
 and `Relative(2, 1)`.
 
-`K` and `φ` are integers of any type. A count that `Int` cannot hold is refused
+`D` and `Φ` are integers of any type. A count that `Int` cannot hold is refused
 as `ArgumentInvalid`, and so is a float or a rational. A child that ticks faster
 than its scope, or at a period in seconds, takes [`Absolute`](@ref). The
-constructor checks no range. The build refuses `K < 1`, or a `φ` outside
-`0 ≤ φ < K`, as `RatesViolation`.
+constructor checks no range. The build refuses `D < 1`, or a `Φ` outside
+`0 ≤ Φ < D`, as `RatesViolation`.
 
 The build also refuses the entry as `RatesViolation` when the multipliers
 composed down the tree leave no [`Δt_base`](@ref g-dt_base) to deploy at. Their
@@ -431,22 +432,22 @@ count of base ticks then leaves `Int`, or leaves no room in it for one
 [frame](@ref g-frame).
 """
 struct Relative
-    K::Int
-    φ::Int
-    Relative(K::Integer, φ::Integer = 0) =
-        new(_declared_quantity(Int, :Relative, K), _declared_quantity(Int, :Relative, φ))
-    Relative(K::Real, φ::Real = 0) =
+    D::Int
+    Φ::Int
+    Relative(D::Integer, Φ::Integer = 0) =
+        new(_declared_quantity(Int, :Relative, D), _declared_quantity(Int, :Relative, Φ))
+    Relative(D::Real, Φ::Real = 0) =
         throw(DiagnosticError(ArgumentInvalid(call = :Relative, reason = :not_a_count,
-                                              value = K isa Integer ? φ : K)))
+                                              value = D isa Integer ? Φ : D)))
 end
 
-# Design: §9.1, §9.2, §10.5, D-186, D-464, D-469.
+# Design: §9.1, §9.2, §10.5, D-186, D-464, D-469, D-479.
 """
     Absolute(Δt::Union{Integer,Rational{<:Integer}},
              τ::Union{Integer,Rational{<:Integer}} = 0) -> Absolute
 
-A sample time in exact rational seconds, with [ticks](@ref g-tick) at
-`t = t₀ + τ + k·Δt`.
+A sample time in exact rational seconds, with [ticks](@ref g-tick) at `t₀ + τ`,
+then every `Δt`.
 
 `Δt` is the period and `τ` the offset, each in seconds. Each is an integer or a
 `Rational` of any integer type. `Absolute(1//50)` is a 50 Hz entry, and

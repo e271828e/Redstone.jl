@@ -292,7 +292,7 @@ end
 # that runs in real time (§9.4); a model at any other scalar is a service's
 # scratch, stepped frame by frame with no ticks and no events. The three other
 # forms are defined as the compositions through a `Float64` model. Entry
-# compilation lives behind the deployment because `Δt`, `D` and `Φ` are entry
+# compilation lives behind the deployment because `Δt`, `D₀` and `Φ₀` are entry
 # data, and one `Build` backs many deployments. `join_timeout` defaults to 5,
 # generous for GUI teardown and socket closes, short enough that an abandoned
 # join reads as a diagnosed timeout rather than a hang (D-198). It is the one
@@ -717,7 +717,7 @@ end
 # Boundary zero is an ordinary boundary with an empty integrate (§10.5, §14.5),
 # run with the sweep's one amendment: every discrete output stage publishes, due
 # or not (D-205, `boundary_zero!`), while the `s_update` calls keep the gate at
-# index 0, which admits exactly the components with `Φ = 0`, implemented by
+# index 0, which admits exactly the components with `Φ₀ = 0`, implemented by
 # nothing. It establishes every event prior as not-holding (§10.6), so a firing
 # at `t₀` is derived, not asserted, and a re-run resets all three registers from
 # scratch. A re-run is a new trajectory and therefore a new `Run` (§12.6,

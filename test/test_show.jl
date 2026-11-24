@@ -11,7 +11,7 @@ plain(x) = sprint(show, MIME("text/plain"), x)
 compact(x) = sprint(show, x)
 
 # The anchored group of `test_discrete.jl`'s attribution test, derived at
-# `h = 1//1500`: `lcm(Dᵢ) = 150`, past the chart guard.
+# `h = 1//1500`: `H = lcm D₀(i) = 150`, past the chart guard.
 function anchored_group()
     comp = Group((; a = TickCounter(), b = TickCounter());
                  sample_times = (; a = Absolute(1//500), b = Absolute(1//10, 1//150)))
@@ -51,20 +51,20 @@ FrameworkStatus: 3 writers, no occurrences, unpaced
 const MULTIRATE_STRUCTURE = """
 Structure: 4 components, 1 anchor, 1 rate scope; root inputs: none
   components:
-    path       tier        anchor  m  c  rates
-    src        continuous  A₀      1  0  —
-    fcs/inner  discrete    A₀      1  0  fcs = Relative(1, 0) → inner = Relative(1, 0)
-    fcs/outer  discrete    A₀      5  2  fcs = Relative(1, 0) → outer = Relative(5, 2)
-    gnss       discrete    A₁      1  0  gnss = Absolute(1//50, 0//1)
+    path       tier        anchor  Dₐ  Φₐ  rates
+    src        continuous  A₀      1   0   —
+    fcs/inner  discrete    A₀      1   0   fcs = Relative(1, 0) → inner = Relative(1, 0)
+    fcs/outer  discrete    A₀      5   2   fcs = Relative(1, 0) → outer = Relative(5, 2)
+    gnss       discrete    A₁      1   0   gnss = Absolute(1//50, 0//1)
   rate scopes:
-    path  key  anchor  m  c
-    fcs   fcs  A₀      1  0
+    path  key  anchor  Dₐ  Φₐ
+    fcs   fcs  A₀      1   0
   anchors:
-    anchor  Δtₖ      τₖ    scope  key
+    anchor  Δt       τ     scope  key
     A₀      Δt_base  0//1  —      —
     A₁      1//50    0//1  root   gnss
   grid:
-    admissible: gcd(pool)/k, coarsest 1//50
+    admissible: gcd(pool)/Q, coarsest 1//50
     pool:
       `sample_times` at the root component, key `gnss`  period 1//50  ×1
     primes: 50 = 2·5²
@@ -85,13 +85,13 @@ Outputs: execution order over 4 components
 
 const MULTIRATE_SCHEDULE = """
 Schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
-  path       anchor  D   Φ  Δt     rates
-  fcs/inner  A₀      1   0  0.002  fcs = Relative(1, 0) → inner = Relative(1, 0)
-  fcs/outer  A₀      5   2  0.01   fcs = Relative(1, 0) → outer = Relative(5, 2)
-  gnss       A₁      10  0  0.02   gnss = Absolute(1//50, 0//1)
+  path       anchor  D₀  Φ₀  Δt     rates
+  fcs/inner  A₀      1   0   0.002  fcs = Relative(1, 0) → inner = Relative(1, 0)
+  fcs/outer  A₀      5   2   0.01   fcs = Relative(1, 0) → outer = Relative(5, 2)
+  gnss       A₁      10  0   0.02   gnss = Absolute(1//50, 0//1)
   rate scopes:
-    path  key  anchor  D  Φ
-    fcs   fcs  A₀      1  0
+    path  key  anchor  D₀  Φ₀
+    fcs   fcs  A₀      1   0
   hyperperiod chart, 10 base ticks:
                0
     fcs/inner  ●●●●●●●●●●
@@ -104,17 +104,17 @@ const MULTIRATE_DEPLOYED_SCHEDULE = """
 schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
   Δt_base: 1//500, the coarsest admissible 1//50 divided by 10
   anchors:
-    anchor  Δtₖ     τₖ    Dₖ  Φₖ
+    anchor  Δt      τ     D₀  Φ₀
     A₀      1//500  0//1  1   0
     A₁      1//50   0//1  10  0
   components:
-    path       anchor  m  c  D   Φ  Δt      τ
-    fcs/inner  A₀      1  0  1   0  1//500  0//1
-    fcs/outer  A₀      5  2  5   2  1//100  1//250
-    gnss       A₁      1  0  10  0  1//50   0//1
+    path       anchor  Dₐ  Φₐ  D₀  Φ₀  Δt      τ
+    fcs/inner  A₀      1   0   1   0   1//500  0//1
+    fcs/outer  A₀      5   2   5   2   1//100  1//250
+    gnss       A₁      1   0   10  0   1//50   0//1
   rate scopes:
-    path  key  anchor  m  c  D  Φ  Δt      τ
-    fcs   fcs  A₀      1  0  1  0  1//500  0//1
+    path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt      τ
+    fcs   fcs  A₀      1   0   1   0   1//500  0//1
   chart, 10 columns of 1//500 s over 10 base ticks and 10 frames:
                 0
     frame tops  ││││││││││
@@ -163,10 +163,10 @@ function test_show()
 
     @testset "Structure: the component, rate-scope and anchor tables (§9.2, D-257)" begin
         @test plain(multirate.structure) == MULTIRATE_STRUCTURE
-        # The `m` and `c` columns are the fold's timing, row by row.
+        # The `Dₐ` and `Φₐ` columns are the fold's timing, row by row.
         for (entry, line) in zip(multirate.structure.components, split(MULTIRATE_STRUCTURE, '\n')[4:7])
             columns = split(line)
-            @test columns[1] == entry.path && parse.(Int, columns[4:5]) == [entry.timing.m, entry.timing.c]
+            @test columns[1] == entry.path && parse.(Int, columns[4:5]) == [entry.timing.D, entry.timing.Φ]
         end
         # The `A₀` row is always present, `Δt_base` symbolic and no declaring scope.
         @test occursin("\n    A₀      Δt_base  0//1  —      —", plain(multirate.structure))
@@ -174,9 +174,9 @@ function test_show()
         # rate-scope block and its root input on the heading.
         text = plain(pendulum.structure)
         @test startswith(text, "Structure: 1 component, no anchors, no rate scopes; root inputs: u\n")
-        @test occursin("\n    root  continuous  A₀      1  0  —\n", text)
+        @test occursin("\n    root  continuous  A₀      1   0   —\n", text)
         @test !occursin("rate scopes:", text)
-        @test occursin("\n  anchors:\n    anchor  Δtₖ      τₖ    scope  key\n    A₀      Δt_base  0//1  —      —", text)
+        @test occursin("\n  anchors:\n    anchor  Δt       τ     scope  key\n    A₀      Δt_base  0//1  —      —", text)
         @test count('\n', text) == 6
     end
 
@@ -184,11 +184,11 @@ function test_show()
         # Derived from the anchors, the grid block's lines re-indented under
         # `grid:`, between the anchor table and the routes.
         @test occursin("    A₁      1//50    0//1  root   gnss\n  grid:\n" *
-                       "    admissible: gcd(pool)/k, coarsest 1//50\n", plain(multirate.structure))
+                       "    admissible: gcd(pool)/Q, coarsest 1//50\n", plain(multirate.structure))
         @test occursin("      5²  gnss period\n  output routes:\n", plain(multirate.structure))
         # A driving offset's repair rides its pool row, as in the refusals.
         text = plain(group.build.structure)
-        @test occursin("\n  grid:\n    admissible: gcd(pool)/k, coarsest 1//1500\n    pool:\n" *
+        @test occursin("\n  grid:\n    admissible: gcd(pool)/Q, coarsest 1//1500\n    pool:\n" *
                        "      `sample_times` at the root component, key `a`  period 1//500  ×10\n" *
                        "      `sample_times` at the root component, key `b`  period 1//10   ×1\n" *
                        "      `sample_times` at the root component, key `b`  offset 1//150  ×3   " *
@@ -206,7 +206,7 @@ function test_show()
         # routes print nowhere.
         text = plain(build(routed_pair()).structure)
         @test endswith(text, "\n  anchors:\n" *
-                             "    anchor  Δtₖ      τₖ    scope  key\n" *
+                             "    anchor  Δt       τ     scope  key\n" *
                              "    A₀      Δt_base  0//1  —      —\n" *
                              "  input routes:\n" *
                              "    u → pair/u → pair/a/e\n" *
@@ -266,15 +266,15 @@ function test_show()
         @test lines[end-2:end] == ["    fcs/inner  ●●●●●●●●●●",
                                    "    fcs/outer  ··●····●··",
                                    "    gnss       ●·········"]
-        # The gate, computed here: `●` exactly where `(k − Φ) % D == 0`.
+        # The gate, computed here: `●` exactly where `(n − Φ₀) % D₀ == 0`.
         rows = deployed.schedule.rows
         hyperperiod = lcm([row.D for row in rows])
         @test hyperperiod == 10
         for (row, line) in zip(rows, lines[end-2:end])
             chart = collect(last(split(line)))
             @test length(chart) == hyperperiod
-            @test [k for k in 0:hyperperiod-1 if chart[k+1] == '●'] ==
-                  [k for k in 0:hyperperiod-1 if (k - row.Φ) % row.D == 0]
+            @test [n for n in 0:hyperperiod-1 if chart[n+1] == '●'] ==
+                  [n for n in 0:hyperperiod-1 if (n - row.Φ) % row.D == 0]
         end
         # The guard is binary: past 100 base ticks the chart's place holds one line.
         text = plain(group.schedule)
@@ -350,7 +350,7 @@ function test_show()
                              "  warnings: none")
     end
 
-    @testset "Deployment: each row under the four frames' symbols, the seconds exact (§9.2, D-464, D-471)" begin
+    @testset "Deployment: each row under the four frames' symbols, the seconds exact (§9.2, D-464, D-471, D-478)" begin
         # An anchor off the origin, with a member off its own: every pair of the
         # two tables differs from its neighbours, so no column stands for another.
         nested = build(Group((; g = Group((; a = TickCounter(), b = TickCounter());
@@ -360,39 +360,40 @@ function test_show()
         @test block[1:12] == ["schedule: 2 rows, 1 rate scope, hyperperiod 24 base ticks",
                               "  Δt_base: 1//200, the coarsest admissible 1//100 divided by 2",
                               "  anchors:",
-                              "    anchor  Δtₖ     τₖ      Dₖ  Φₖ",
+                              "    anchor  Δt      τ       D₀  Φ₀",
                               "    A₀      1//200  0//1    1   0",
                               "    A₁      1//50   1//100  4   2",
                               "  components:",
-                              "    path  anchor  m  c  D   Φ  Δt     τ",
-                              "    g/a   A₁      3  1  12  6  3//50  3//100",
-                              "    g/b   A₁      2  0  8   2  1//25  1//100",
+                              "    path  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt     τ",
+                              "    g/a   A₁      3   1   12  6   3//50  3//100",
+                              "    g/b   A₁      2   0   8   2   1//25  1//100",
                               "  rate scopes:",
-                              "    path  key  anchor  m  c  D  Φ  Δt     τ"]
-        @test block[13] == "    g     g    A₁      1  0  4  2  1//50  1//100"
-        # The composition law, read off the printed cells (D-464): `D = m·Dₖ`,
-        # `Φ = Φₖ + c·Dₖ`, `Δt = D·Δt_base` and `τ = Φ·Δt_base`.
-        (Dk, Φk) = parse.(Int, split(block[6])[4:5])
+                              "    path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt     τ"]
+        @test block[13] == "    g     g    A₁      1   0   4   2   1//50  1//100"
+        # The composition law, read off the printed cells (D-478):
+        # `D₀(i) = Dₐ(i)·D₀(a)`, `Φ₀(i) = Φ₀(a) + Φₐ(i)·D₀(a)`, `Δt = D₀·Δt_base`
+        # and `τ = Φ₀·Δt_base`.
+        (D_anchor, Φ_anchor) = parse.(Int, split(block[6])[4:5])
         for line in block[9:10]
-            (m, c, D, Φ) = parse.(Int, split(line)[3:6])
-            @test (D, Φ) == (m * Dk, Φk + c * Dk)
-            @test split(line)[7:8] == [repr(D * 1//200), repr(Φ * 1//200)]
+            (D_a, Φ_a, D_0, Φ_0) = parse.(Int, split(line)[3:6])
+            @test (D_0, Φ_0) == (D_a * D_anchor, Φ_anchor + Φ_a * D_anchor)
+            @test split(line)[7:8] == [repr(D_0 * 1//200), repr(Φ_0 * 1//200)]
         end
         # Three base ticks of 1//10: the deployment prints the period exact,
         # where the schedule's row holds a float that is not the nearest to it.
         thirds = Deployment(build(Group((; a = TickCounter()); sample_times = (; a = Relative(3))));
                             Δt_frame = 1//10)
-        @test schedule_block(thirds)[7] == "    a     A₀      3  0  3  0  3//10  0//1"
+        @test schedule_block(thirds)[7] == "    a     A₀      3   0   3   0   3//10  0//1"
         @test occursin("0.30000000000000004", plain(thirds.schedule))
         @test !occursin("0.30000000000000004", plain(thirds))
         # A base tick coarser than the frame: the anchors' counts are in base
-        # ticks, never in the lattices' unit.
+        # ticks, never in `Δt_unit`.
         coarse = schedule_block(Deployment(multirate; Δt_frame = 1//500, Δt_base = 1//100))
         @test coarse[2] == "  Δt_base: 1//100, the coarsest admissible 1//50 divided by 2"
         @test coarse[5:6] == ["    A₀      1//100  0//1  1   0", "    A₁      1//50   0//1  2   0"]
-        @test coarse[9:11] == ["    fcs/inner  A₀      1  0  1  0  1//100  0//1",
-                               "    fcs/outer  A₀      5  2  5  2  1//20   1//50",
-                               "    gnss       A₁      1  0  2  0  1//50   0//1"]
+        @test coarse[9:11] == ["    fcs/inner  A₀      1   0   1   0   1//100  0//1",
+                               "    fcs/outer  A₀      5   2   5   2   1//20   1//50",
+                               "    gnss       A₁      1   0   2   0   1//50   0//1"]
         # A rate scope with no discrete member: the anchors and the scope's
         # row, no component table and no chart.
         inner = Group((; c = Plant()); input_wires = ("in" => "c/u",))
@@ -401,20 +402,20 @@ function test_show()
         @test schedule_block(Deployment(scoped; Δt_frame = 1//100)) ==
               ["schedule: no rows, 1 rate scope",
                "  anchors:",
-               "    anchor  Δtₖ     τₖ    Dₖ  Φₖ",
+               "    anchor  Δt      τ     D₀  Φ₀",
                "    A₀      1//100  0//1  1   0",
                "  rate scopes:",
-               "    path  key  anchor  m  c  D  Φ  Δt     τ",
-               "    g     g    A₀      2  0  2  0  1//50  0//1"]
+               "    path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt     τ",
+               "    g     g    A₀      2   0   2   0   1//50  0//1"]
         # Two rate scopes on two anchors, each off `(1, 0)`: a scope's row
-        # takes its own `(m, c)`, never its neighbour's.
+        # takes its own `(Dₐ, Φₐ)`, never its neighbour's.
         two = build(Group((; g = Group((; a = TickCounter()); sample_times = (; a = Relative(2))),
                              h = Group((; b = TickCounter()); sample_times = (; b = Relative(1))));
                           sample_times = (; g = Relative(3, 1), h = Absolute(1//25, 1//50))))
         @test schedule_block(Deployment(two; Δt_frame = 1//100))[12:14] ==
-              ["    path  key  anchor  m  c  D  Φ  Δt      τ",
-               "    g     g    A₀      3  1  3  1  3//100  1//100",
-               "    h     h    A₁      1  0  4  2  1//25   1//50"]
+              ["    path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt      τ",
+               "    g     g    A₀      3   1   3   1   3//100  1//100",
+               "    h     h    A₁      1   0   4   2   1//25   1//50"]
         # A period whose seconds leave `Int`: the product is taken wide.
         wide = Deployment(build(Group((; a = TickCounter()); sample_times = (; a = Relative(2^40 + 15))));
                           Δt_frame = (2^31 - 1)//2^31)
@@ -424,8 +425,8 @@ function test_show()
         # the chart, whose one column is a base tick and a frame top.
         @test schedule_block(Deployment(build(TickCounter()); Δt_frame = 1//10))[5:end] ==
               ["  components:",
-               "    path  anchor  m  c  D  Φ  Δt     τ",
-               "    root  A₀      1  0  1  0  1//10  0//1",
+               "    path  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt     τ",
+               "    root  A₀      1   0   1   0   1//10  0//1",
                "  chart, 1 column of 1//10 s over 1 base tick and 1 frame:",
                "                0",
                "    frame tops  │",
@@ -436,7 +437,7 @@ function test_show()
         admissible(deployment) = schedule_block(deployment)[2]
         # A tenth of the coarsest, which the structure's grid block names.
         @test admissible(deployed) == "  Δt_base: 1//500, the coarsest admissible 1//50 divided by 10"
-        @test occursin("admissible: gcd(pool)/k, coarsest 1//50", plain(multirate.structure))
+        @test occursin("admissible: gcd(pool)/Q, coarsest 1//50", plain(multirate.structure))
         # The coarsest itself drops the clause, given or derived.
         @test admissible(Deployment(multirate; Δt_frame = 1//50, Δt_base = 1//50)) ==
               "  Δt_base: 1//50, the coarsest admissible"
@@ -476,7 +477,7 @@ function test_show()
         marks(line, label) = collect(rpad(chopprefix(line, "    " * rpad(label, 10) * "  "), 60))
         @test [k for k in 0:59 if marks(lines[3], "frame tops")[k+1] == '│'] == collect(0:3:57)
         @test all(mark in ('│', ' ') for mark in marks(lines[3], "frame tops"))
-        # The gate, computed here: `●` at a base tick where `(n − Φ) % D == 0`,
+        # The gate, computed here: `●` at a base tick where `(n − Φ₀) % D₀ == 0`,
         # `·` at every other base tick, blank off the base grid.
         for (row, line) in zip(between.schedule.rows, lines[4:6])
             cells = marks(line, row.path)

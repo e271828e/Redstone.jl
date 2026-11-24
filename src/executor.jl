@@ -478,7 +478,7 @@ _project_body(entry::ProjectEntry, xbuf) = () -> run_project!(entry, xbuf)
 
 # --- the gate (§10.5, D-185, D-205) ---------------------------------------------
 # The boundary sweep walks the full list with *discrete* entries gated by
-# `(tick − Φ) % D == 0`. The gate is a wrapper only discrete entries wear, so a
+# `(n − Φ₀) % D₀ == 0`. The gate is a wrapper only discrete entries wear, so a
 # continuous entry pays nothing at a boundary, and the interior walk — compiled
 # from continuous entries alone — never meets an index at all: an empty due set
 # is arity selection, never a sentinel index failing every gate (D-185).
@@ -498,8 +498,8 @@ published cell holds the probe's synthesized values.
 It is a *marker*, not an index, precisely so the measured path keeps its
 shape: `run_at!` against an `Int` is the method the frame loop compiles and
 nothing was added to it. The `s_update` updates are not walked this way —
-they take the ordinary index 0 and stay gated by `Φ`, an offset component's
-first consumed sample remaining its `Φ·Δt_base` tick's.
+they take the ordinary index 0 and stay gated by `Φ₀`, an offset component's
+first consumed sample remaining its `Φ₀·Δt_base` tick's.
 """
 struct Establish end
 const ESTABLISH = Establish()
@@ -511,9 +511,9 @@ const ESTABLISH = Establish()
 @inline run_at!(entry, store, xbuf, ẋbuf, tick) = run_entry!(entry, store, xbuf, ẋbuf)
 
 @inline function run_at!(entry::Gated, store, xbuf, ẋbuf, tick::Int)
-    # Under the canonical residue 0 ≤ Φ < D, truncated rem is never 0 on the
+    # Under the canonical residue 0 ≤ Φ₀ < D₀, truncated rem is never 0 on the
     # negative pre-first-tick differences, so one subtraction and one remainder
-    # are the whole admission test — and "everything with Φ = 0" is this same
+    # are the whole admission test — and "everything with Φ₀ = 0" is this same
     # gate at index 0, implemented by nothing (§10.5).
     (tick - entry.Φ) % entry.D == 0 && run_entry!(entry.entry, store, xbuf, ẋbuf)
     nothing
@@ -554,7 +554,7 @@ construction**: discrete entries are not gated out at runtime, they are absent
 from the compiled walk, and the hot path carries no gating test at all.
 
 The one-arg call is the *boundary* variant, walking the full list with each
-discrete entry gated by `(tick - Φ) % D` against the index it takes (§10.5,
+discrete entry gated by `(n − Φ₀) % D₀` against the index it takes (§10.5,
 D-185) — or admitted outright, when the argument is `ESTABLISH` rather than an
 index (§14.5, D-205). Both take the one compiled tuple; only `run_at!`'s
 dispatch differs, so boundary zero's wide walk costs the measured path
@@ -583,7 +583,7 @@ end
 # Construction is type-opaque: entries are built into untyped buffers and
 # splatted once per chunk; the compiled tuple's only consumer is the walk.
 # `gates` runs parallel to `entries`: `nothing` for a continuous entry, the
-# compiled `(D, Φ)` pair for a discrete one — which is also what selects the
+# compiled `(D₀, Φ₀)` pair for a discrete one — which is also what selects the
 # interior subset, discreteness being a build-time fact (§10.5, D-147).
 function chunked_body(entries::Vector, gates::Vector, store, xbuf, ẋbuf;
                       chunk_size::Int = 16)

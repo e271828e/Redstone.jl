@@ -20,7 +20,7 @@ item changes what the spec says, the spec edit is part of the item.
   diagnostics' docstrings, and rules on the descriptor's keys (`m`, `c` and
   `K` in the `Timing` and `RateLink` schemas, §13.9). The inspector follows
   with a pin bump and its own adaptation, before its increment 10b. In
-  flight: the prototype, recorded in
+  flight: the code has landed, and the cold review is next, all recorded in
   `design/increments/20261124_timing_notation/notes_timing_notation.md`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose

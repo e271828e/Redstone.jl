@@ -687,9 +687,9 @@ published cell holds the probe's synthesized values (§14.6's barrier extended
 from the root inputs to the whole table).
 
 The `s_update` calls keep the ordinary gate at index 0, which under the
-canonical residue admits exactly `Φ = 0` (§10.5): that evaluation is
+canonical residue admits exactly `Φ₀ = 0` (§10.5): that evaluation is
 establishment, not a scheduled sample, and an offset component's first
-*consumed* sample stays its `Φ·Δt_base` tick's. A component frozen at a
+*consumed* sample stays its `Φ₀·Δt_base` tick's. A component frozen at a
 non-nominal activation has no entries here at all (§9.4's executable set), so
 its pinned cells keep the carried nominal products — at boundary zero as
 everywhere.

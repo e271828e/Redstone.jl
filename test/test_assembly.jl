@@ -838,7 +838,7 @@ function assembly_rate_chains()
         @test entry("fcs/outer").rates == [(scope = "", key = :fcs, entry = Relative(1)),
                                            (scope = "fcs", key = :outer, entry = Relative(5, 2))]
         # An anchor severs and re-seeds, and its one link is the anchor's own; the
-        # anchor's row carries its `(Δtₖ, τₖ)` with the declaring scope and key.
+        # anchor's row carries its `(Δt(a), τ(a))` with the declaring scope and key.
         @test timing("gnss") == (1, 1, 0)
         @test entry("gnss").rates == [(scope = "", key = :gnss, entry = Absolute(1//50))]
         @test structure.anchors == [Anchor(1//50, 0, "", :gnss)]
@@ -849,7 +849,7 @@ function assembly_rate_chains()
 
         # One row per assembly a key names: `fcs`, at the timing everything under
         # it folds from. `src` and `gnss` are not assemblies, so neither has a row.
-        @test structure.scopes == [(path = "fcs", key = :fcs, timing = (anchor = 0, m = 1, c = 0))]
+        @test structure.scopes == [(path = "fcs", key = :fcs, timing = (anchor = 0, D = 1, Φ = 0))]
     end
 end
 

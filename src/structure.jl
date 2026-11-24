@@ -131,14 +131,14 @@ One `sample_times` link (§9.1, D-253): the declaring assembly's path, the key a
 """
 const RateLink = @NamedTuple{scope::String, key::Symbol, entry::Union{Relative,Absolute}}
 
-"The sample-time fold's value for one scope or component (§9.1): the anchor it hangs from (0 the base grid), and its period multiple and phase in that anchor's ticks."
-const Timing = @NamedTuple{anchor::Int, m::Int, c::Int}
+"The sample-time fold's value for one scope or component (§9.1): the anchor it hangs from (0 the base grid), and its divisor and phase in that anchor's ticks, `(Dₐ, Φₐ)`."
+const Timing = @NamedTuple{anchor::Int, D::Int, Φ::Int}
 
 """One keyed scope: the assembly an explicit `sample_times` key names, and its timing."""
 const RateScope = @NamedTuple{path::String, key::Symbol, timing::Timing}
 
 """
-One anchor (§9.1, §9.2): the exact `(Δtₖ, τₖ)` an `Absolute` entry seeds, with
+One anchor (§9.1, §9.2): the exact `(Δt(a), τ(a))` an `Absolute` entry seeds, with
 the `sample_times` entry that declared it, by scope path and key. Anchor 0,
 the base grid, has no record here; it is symbolic until `Δt_base` binds.
 """
@@ -225,7 +225,7 @@ A `Structure` holds these fields.
 
 - `components`: one entry per [primitive](@ref g-primitive), in the order the
   build walks the tree.
-- `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(Δtₖ, τₖ)`
+- `anchors`: one entry per [`Absolute`](@ref) declaration, the exact `(Δt, τ)`
   pair (period and offset in rational seconds) with the declaring
   [scope](@ref g-rate-scope) and key.
 - `scopes`: one entry per [assembly](@ref g-assembly) a `sample_times` key
@@ -303,18 +303,19 @@ function index_of(draft::StructureDraft, path::String)
 end
 
 # --- the sample-time fold (§8.7, §9.1, §10.5) -----------------------------------
-# Nested rate declarations compile to one `(anchor, m, c)` timing per component,
+# Nested rate declarations compile to one `(a, Dₐ, Φₐ)` timing per component,
 # folding down the tree beside the wiring walk: the root scope seeds
-# `(A₀, 1, 0)`, `Relative(K, φ)` under a scope at `(a, mₛ, cₛ)` steps to
-# `(a, K·mₛ, cₛ + φ·mₛ)`, and `Absolute` severs and re-seeds a fresh anchor at
-# `(Aₖ, 1, 0)` — a nested anchor simply severs again. Anchor 0 is the base grid,
-# symbolic until deployment binds `Δt_base`: final divisors for anchored entries
-# do not exist until then (§9.1). The canonical residue `c < m` holds within each
-# anchor's subtree by the affine law's one-line induction.
+# `(A₀, 1, 0)`, `Relative(D, Φ)` under a scope `s` at `(a, Dₐ(s), Φₐ(s))` steps to
+# `(a, D·Dₐ(s), Φₐ(s) + Φ·Dₐ(s))`, and `Absolute` severs and re-seeds a fresh
+# anchor `a` at `(a, 1, 0)` — a nested anchor simply severs again. Anchor 0 is the
+# base grid, symbolic until deployment binds `Δt_base`: final divisors for
+# anchored entries do not exist until then (§9.1). The canonical residue
+# `Φₐ < Dₐ` holds within each anchor's subtree by the affine law's one-line
+# induction (D-478).
 
 """
 Validate a scope's `sample_times` against §10.5's constraints, with path
-attribution (§9.1, §13.1): wrapper-typed values only, `K ≥ 1`, `0 ≤ φ < K`,
+attribution (§9.1, §13.1): wrapper-typed values only, `Dₛ ≥ 1`, `0 ≤ Φₛ < Dₛ`,
 `Δt > 0`, `0 ≤ τ < Δt`, and every key naming an immediate child.
 """
 function _check_sample_times(path::String, rate_decl, kids, fields, diags::Vector{Diagnostic})
@@ -329,13 +330,13 @@ function _check_sample_times(path::String, rate_decl, kids, fields, diags::Vecto
             record_violation(:value_vocabulary; key = key, value = rate)
             continue                               # neither residue arm applies
         end
-        # The residue bound is stated against the multiplier, so an invalid `K`
-        # (or `Δt`) leaves `φ` (or `τ`) with nothing to be measured against: the
+        # The residue bound is stated against the multiplier, so an invalid `Dₛ`
+        # (or `Δt`) leaves `Φₛ` (or `τ`) with nothing to be measured against: the
         # dependent check is skipped, not doubled up.
         if rate isa Relative
-            rate.K ≥ 1 ? (0 ≤ rate.φ < rate.K ||
-                          record_violation(:phase; key = key, value = rate.φ)) :
-                         record_violation(:multiplier; key = key, value = rate.K)
+            rate.D ≥ 1 ? (0 ≤ rate.Φ < rate.D ||
+                          record_violation(:phase; key = key, value = rate.Φ)) :
+                         record_violation(:multiplier; key = key, value = rate.D)
         else
             rate.Δt > 0 ? (0 ≤ rate.τ < rate.Δt ||
                            record_violation(:offset; key = key, value = rate.τ)) :
@@ -374,7 +375,7 @@ The child's scope timing, and the link an explicit key declared — the declarin
 assembly's path, the key as `_rate_entry` returned it, and the wrapper value —
 or `nothing` for an unlisted child. The unlisted child continues at the
 enclosing timing: the `Relative(1)` default is the affine law at
-`(K, φ) = (1, 0)`, implemented by nothing. The law runs in checked `Int`
+`(Dₛ, Φₛ) = (1, 0)`, implemented by nothing. The law runs in checked `Int`
 arithmetic, and a composed divisor or phase past `Int` is recorded as `:range`
 on the entry; the child then continues at the enclosing timing too.
 """
@@ -391,12 +392,12 @@ function _child_scope(draft::StructureDraft, path::String, rate_decl, segment::S
     link = RateLink((scope = path, key = key, entry = rate))
     if rate isa Relative
         # A rate its own check refused composes nothing. A sound one keeps
-        # `c < m`, so a phase past `Int` needs a multiplier past it first.
-        1 ≤ rate.K && 0 ≤ rate.φ < rate.K || return scope, link
+        # `Φₐ < Dₐ`, so a phase past `Int` needs a multiplier past it first.
+        1 ≤ rate.D && 0 ≤ rate.Φ < rate.D || return scope, link
         timing = _exact_or_nothing(
-            () -> Timing((scope.anchor, Base.Checked.checked_mul(rate.K, scope.m),
-                          Base.Checked.checked_add(scope.c,
-                                                   Base.Checked.checked_mul(rate.φ, scope.m)))))
+            () -> Timing((scope.anchor, Base.Checked.checked_mul(rate.D, scope.D),
+                          Base.Checked.checked_add(scope.Φ,
+                                                   Base.Checked.checked_mul(rate.Φ, scope.D)))))
         timing === nothing || return timing, link
         # A bare container key composes once per element, all alike, so the
         # elements share one refusal, as they share one anchor below (D-459).
@@ -833,7 +834,7 @@ _supplies(pool_denominator::Int, prime::Int, power::Int) =
 The grid attribution D-187 asks for (§9.2), a pure function of the structure's
 anchors: the constraint pool — every anchor's period and every nonzero offset,
 in anchor order, periods first — with each entry's leave-one-out refinement
-factor `r_p = gcd(pool ∖ p)/gcd(pool)`, the prime attribution of `gcd(pool)`'s
+factor `Qₚ = gcd(pool ∖ p)/gcd(pool)`, the prime attribution of `gcd(pool)`'s
 denominator, and, for a driving offset, the nearest offsets the rest of the pool
 already supports, those whose arithmetic fits `Int`. No artifact holds it
 (D-466). `bind_schedule` computes one per `Deployment` call, ahead of the
@@ -876,14 +877,14 @@ function _grid_report(anchors::Vector{Anchor})
             # `Absolute` refuses what `Rational{Int}` cannot hold (D-459). Each is a
             # product, which Julia reduces before it multiplies, so it fails only
             # for a value past `Int`; a sum could fail in an intermediate product.
-            τ, Δt_k = entry_values[i], anchors[anchor_indices[i]].Δt
+            τ, Δt_anchor = entry_values[i], anchors[anchor_indices[i]].Δt
             lower_index = _exact_or_nothing(() -> floor(Int, τ / partial))
             if lower_index !== nothing
                 lower = _exact_or_nothing(() -> lower_index * partial)
                 upper = _exact_or_nothing(
                     () -> Base.Checked.checked_add(lower_index, 1) * partial)
                 lower === nothing || push!(alternatives, lower)
-                upper !== nothing && upper < Δt_k && push!(alternatives, upper)
+                upper !== nothing && upper < Δt_anchor && push!(alternatives, upper)
             end
         end
         anchor = anchors[anchor_indices[i]]
@@ -897,7 +898,7 @@ function _grid_report(anchors::Vector{Anchor})
     GridReport(pool, admissible, primes)
 end
 
-# One anchor's counts at a base tick, `(Dₖ, Φₖ)` (§9.2): one exact division
+# One anchor's counts at a base tick, `(D₀(a), Φ₀(a))` (§9.2): one exact division
 # pair, each `nothing` where its quotient is not a whole `Int`. Each division
 # runs in `Int128`, as `_lattice`'s do, so a count past `Int` is `nothing`,
 # never a raw `OverflowError`.
@@ -905,17 +906,18 @@ _anchor_counts(anchor::Anchor, Δt_base::Rational{Int}) =
     (_as_int(Rational{Int128}(anchor.Δt) / Δt_base),
      _as_int(Rational{Int128}(anchor.τ) / Δt_base))
 
-# One timing's `(D, Φ)` in base ticks (§9.2): `D = m·Dₖ` and `Φ = Φₖ + c·Dₖ`,
-# against the anchors' counts, whose first entry is anchor 0's `(1, 0)`. The law
-# runs in checked `Int`, so a count past it throws, and the caller catches.
-function _timing_counts(timing::Timing, Dk::Vector{Int}, Φk::Vector{Int})
-    D_anchor, Φ_anchor = Dk[timing.anchor + 1], Φk[timing.anchor + 1]
-    (Base.Checked.checked_mul(timing.m, D_anchor),
-     Base.Checked.checked_add(Φ_anchor, Base.Checked.checked_mul(timing.c, D_anchor)))
+# One timing's `(D₀, Φ₀)` in base ticks (§9.2): `D₀(i) = Dₐ(i)·D₀(a)` and
+# `Φ₀(i) = Φ₀(a) + Φₐ(i)·D₀(a)`, against the anchors' counts, whose first entry is
+# anchor 0's `(1, 0)`. The law runs in checked `Int`, so a count past it throws,
+# and the caller catches.
+function _timing_counts(timing::Timing, D_anchors::Vector{Int}, Φ_anchors::Vector{Int})
+    D_anchor, Φ_anchor = D_anchors[timing.anchor + 1], Φ_anchors[timing.anchor + 1]
+    (Base.Checked.checked_mul(timing.D, D_anchor),
+     Base.Checked.checked_add(Φ_anchor, Base.Checked.checked_mul(timing.Φ, D_anchor)))
 end
 
 # The last frame index whose positions fit an `Int` (§10.5, D-445), from the
-# frame and the base tick in the lattices' unit and the components' divisors.
+# frame and the base tick in `Δt_unit` and the components' divisors.
 # Inside frame `k` the largest position the loop forms is a due index's, at most
 # the largest divisor's period past the frame top, so `k·frame` plus that margin
 # must fit. In `Int128`; below 1, no frame fits.
@@ -932,7 +934,7 @@ function _composing_link(chain::Vector{RateLink}, D_anchor::Int, limit::Int)
     running = Int128(D_anchor)
     anchor_index > 0 && running > limit && return chain[anchor_index]
     for link in chain[anchor_index+1:end]
-        running *= link.entry.K
+        running *= link.entry.D
         running > limit && return link
     end
     throw(InternalInvariant("no link of the chain composes a count past $limit"))
@@ -975,19 +977,19 @@ function _check_trial_binding(draft::StructureDraft, diags::Vector{Diagnostic})
         return nothing
     end
     # Anchor 0 is the base grid itself.
-    Dk, Φk, counted = [1], [0], [true]
+    D_anchors, Φ_anchors, counted = [1], [0], [true]
     for anchor in draft.anchors
         D, Φ = _anchor_counts(anchor, Δt_base)
         formed = D !== nothing && Φ !== nothing
         formed || refuse(anchor_link(anchor))
-        push!(Dk, something(D, 1)); push!(Φk, something(Φ, 0)); push!(counted, formed)
+        push!(D_anchors, something(D, 1)); push!(Φ_anchors, something(Φ, 0)); push!(counted, formed)
     end
     # A row's divisor, or `nothing` where it leaves `Int` or its anchor did. The
-    # count of a sound composition keeps `Φ < D`, so only a divisor overflows.
+    # count of a sound composition keeps `Φ₀ < D₀`, so only a divisor overflows.
     function tick_divisor(timing::Timing, chain::Vector{RateLink})
         counted[timing.anchor + 1] || return nothing
-        counts = _exact_or_nothing(() -> _timing_counts(timing, Dk, Φk))
-        counts === nothing && refuse(_composing_link(chain, Dk[timing.anchor + 1], typemax(Int)))
+        counts = _exact_or_nothing(() -> _timing_counts(timing, D_anchors, Φ_anchors))
+        counts === nothing && refuse(_composing_link(chain, D_anchors[timing.anchor + 1], typemax(Int)))
         counts === nothing ? nothing : first(counts)
     end
     discrete = [ci for ci in eachindex(draft.paths) if draft.tiers[ci] === DISCRETE]
@@ -1002,7 +1004,7 @@ function _check_trial_binding(draft::StructureDraft, diags::Vector{Diagnostic})
     largest = maximum(tick_divisors)
     for (ci, D) in zip(discrete, tick_divisors)
         D == largest || continue
-        refuse(_composing_link(draft.rates[ci], Dk[draft.timings[ci].anchor + 1], largest - 1))
+        refuse(_composing_link(draft.rates[ci], D_anchors[draft.timings[ci].anchor + 1], largest - 1))
     end
     nothing
 end
