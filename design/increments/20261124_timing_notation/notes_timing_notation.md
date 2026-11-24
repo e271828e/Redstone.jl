@@ -9,8 +9,8 @@ each open to the user's morning review. Nothing is pushed.
 
 ## 1. State
 
-- Stage reached: the review's fixes landed; the reviewer's delta check
-  next. Earlier: the record, committed with the prototype's patch
+- Stage reached: the delta check passed; the user's diff-verify of the
+  arc is next, then the push. Earlier: the record, committed with the prototype's patch
   `timing_notation.patch`. The docs commit `d1b447f` carries the one spec
   sentence the key rename changes (§13.9's rate chain).
 - Prototype worktree: `/Users/miguel/.julia/dev/Redstone.jl-worktrees/timing_notation`
@@ -184,8 +184,8 @@ The coordinator's rulings, each with its reason:
   its pin stops before that clause. The pin extends to it.
 - **F3, accepted.** The fold's phase law was tested only at scopes where
   `Dₐ(s) = Φₐ(s) + 1`, so `scope.Φ + 1` for `scope.D` survived. A scope at
-  `Relative(3, 1)` over `Relative(5, 2)`, `(D₀, Φ₀) = (15, 7)`, separates
-  them.
+  `Relative(5, 2)` over a child at `Relative(3, 1)`, `(D₀, Φ₀) = (15, 7)`,
+  separates them.
 - **F4, accepted.** `test_show.jl`'s `ticking(K)` becomes `ticking(D)`.
 - **F5, accepted.** `test_discrete.jl`'s `D1`, `D2`, `Φ2` read as counts in
   ticks of `A₁` and `A₂` under D-478, so they become `D_outer`, `D_inner`,
@@ -205,3 +205,23 @@ The fixer landed all seven in the real tree. The gate passes 10896/10896,
 the one assertion added being F3's, and F3's mutant turns that assertion
 red (`[(15, 5)] == [(15, 7)]`). In `frame.jl` the step end's offset is
 written `i·l/N`, `l` being the code's `units·unit`.
+
+The reviewer verified the delta at `57ac7dc`: each fix does what its
+finding asked, nothing else in `src/` or `test/` changed, and M23 and M28
+are now killed.
+
+## 10. For the user's review
+
+- The arc, unpushed: `d1b447f` (§13.9), `e15d7b2` (this record and the
+  patch), `7c24c48` (the code), `57ac7dc` (the review's fixes), and the
+  commit that closes this file.
+- Rulings 1 to 5 in section 2 and the review's in section 9 are the
+  coordinator's. Ruling 1, the descriptor's keys, breaks
+  `RedstoneInspector.jl`'s reads of `m`, `c` and `K` until its pin bump.
+- After the diff-verify the `pending.md` bullet retires, and the
+  inspector's bullet names the key rename it follows.
+- Worktrees to delete once the arc is pushed:
+  `/Users/miguel/.julia/dev/Redstone.jl-worktrees/timing_notation` (branch
+  `timing-notation-proto`), `…/timing_notation_review` (detached), and the
+  probe folders `…/timing_notation_probes` and
+  `…/timing_notation_review_probes`.
