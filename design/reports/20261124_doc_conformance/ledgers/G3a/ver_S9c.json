@@ -1,0 +1,211 @@
+{
+ "judgments": [
+  {
+   "id": "S9c-001",
+   "conforms": true,
+   "evidence": "src/build.jl:797 seeds the dictionary with Float64 => nominal alone; probe: default build keys = [Float64]"
+  },
+  {
+   "id": "S9c-010",
+   "conforms": true,
+   "evidence": "src/build.jl:521-530 (_root_input_cell walks the root type to T when the consuming entry admits it, else keeps it); probe: FreeGain root cell at ProbeDual is Dual{ProbeTag}(0.0,0.0), PinGain's stays 0.0::Float64",
+   "note": "With fan-out the cell follows T only when every consumer admits it (D-168's meet, stated in §8.2 at spec.md:3134); the single-consumer reading here holds."
+  },
+  {
+   "id": "S9c-019",
+   "conforms": true,
+   "evidence": "src/build.jl:1053-1058 (_workspace allocates a continuous component's ws_init at T, a discrete one's at Float64); the generic fallback under Dual eltypes is Julia's, not framework code"
+  },
+  {
+   "id": "S9c-028",
+   "conforms": true,
+   "evidence": "src/build.jl:1061 (_frozen gates discrete components at any T !== Float64) and src/build.jl:1263 (probe_events takes Activation{Float64} only)"
+  },
+  {
+   "id": "S9c-032",
+   "conforms": false,
+   "evidence": "src/build.jl:1145-1166 probes x_projection at every activation, T included; src/build.jl:1607-1614 puts projection entries in every executable set; probe: x_projection saw ForwardDiff.Dual{ProbeTag,Float64,1} during activation(b, ProbeDual)",
+   "class": "drift",
+   "fix": "Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and `x_projection` ever see a `Dual`. So only they are probed at it.",
+   "clear": true,
+   "note": "D-111 (later than D-052) folds the projection into the check at the activation's T, and spec.md:5963 already says so; the 5706 bullet kept D-052's list."
+  },
+  {
+   "id": "S9c-033",
+   "conforms": true,
+   "evidence": "src/build.jl:969-974 and 1030-1041 run any scalar through the same _activate with the same _frozen gating; probe: activation(build(FreeGain()), Redstone.Tracer{true}) returns an Activation{Tracer{true}}",
+   "note": "Nothing in src/ requests the tracer activation; src/tracer.jl:7-8 says it is not built there. The rule holds for it whenever it is requested."
+  },
+  {
+   "id": "S9c-039",
+   "conforms": true,
+   "evidence": "src/build.jl:796-800 (build makes only the nominal entry plus the keyword's list) and src/build.jl:969-974 (others derived at first request); probe: keys grow only after activation(b, ProbeDual)"
+  },
+  {
+   "id": "S9c-049",
+   "conforms": true,
+   "evidence": "src/build.jl:798-800 (each listed scalar's activation is made inside build); probe: build(...; activations=(Float64, ProbeDual)) holds both keys"
+  },
+  {
+   "id": "S9c-051",
+   "conforms": true,
+   "evidence": "test/test_build.jl:2260-2300 (build_dual_sweep builds every zero-argument component with activations=(Float64, ProbeDual), one Dual activation per component)"
+  },
+  {
+   "id": "S9c-055",
+   "conforms": false,
+   "evidence": "src/build.jl:970 takes build.lock on every lookup, a hit included; src/model.jl:121 calls activation() at each Model construction, so a pre-materialized build still synchronizes on that path",
+   "class": "deviation",
+   "fix": "Pre-materialize the activations the sweep will need. The shared `Build` then derives nothing at run time, and each lookup takes the build's lock only briefly, at service time and never on the hot path.",
+   "clear": false,
+   "backing_entry": "D-135"
+  },
+  {
+   "id": "S9c-061",
+   "conforms": true,
+   "evidence": "probe: declared_at(u_types, FreeGain(), CONTINUOUS, ForwardDiff.Dual) yields (e = ForwardDiff.Dual,), a UnionAll leaf, and _activate at the bare Dual fails (MethodError converting Type{ForwardDiff.Dual} to DataType); src/model.jl:108-110 refuses it at the Model door"
+  },
+  {
+   "id": "S9c-062",
+   "conforms": false,
+   "evidence": "probe: zero(ForwardDiff.Dual) returns ForwardDiff.Dual{Nothing,Int64,0}, so the bare Dual does answer zero(T), though not at any scalar a model holds",
+   "class": "deviation",
+   "fix": "The bare `Dual` is a `UnionAll`. It cannot key an activation or be walked to, and its `zero(T)` is a tagless `Dual{Nothing,Int64,0}`, a value at no scalar a model holds.",
+   "clear": false,
+   "backing_entry": "D-099"
+  },
+  {
+   "id": "S9c-067",
+   "conforms": false,
+   "evidence": "src/build.jl:565-569 (struct Activation{T} holds decls, products and layout); probe: fieldnames = (:decls, :products, :layout). Compiled plans are built per Model by compile() (src/model.jl:122), and there is no validated flag",
+   "class": "deviation",
+   "fix": "Each entry holds the declarations retyped at that scalar, the probe products and the cell layout.",
+   "clear": false,
+   "backing_entry": "D-135"
+  },
+  {
+   "id": "S9c-072",
+   "conforms": true,
+   "evidence": "src/model.jl:121-124 (Model reads the cached activation and compile() materializes its own store from act.layout)"
+  },
+  {
+   "id": "S9c-081",
+   "conforms": true,
+   "evidence": "src/model.jl:139-140 (_scratch constructs a fresh Model per service call from the cached activation)"
+  },
+  {
+   "id": "S9c-090",
+   "conforms": true,
+   "evidence": "src/build.jl:969-974 (derive outside the lock, insert with get! under it; a race duplicates the re-run and every caller gets the first writer's entry)"
+  },
+  {
+   "id": "S9c-099",
+   "conforms": true,
+   "evidence": "src/declare.jl:816 (default_name(y_types) = :y) and src/declare.jl:830 (is_bare: a declaration that is not a NamedTuple); probe: is_bare(Float64)=true, default name y"
+  },
+  {
+   "id": "S9c-108",
+   "conforms": true,
+   "evidence": "src/store.jl:107-128 (@generated scatter_group! decides key set and per-field acceptance at generation and emits only scatter_cell! stores for a conformant type)"
+  },
+  {
+   "id": "S9c-119",
+   "conforms": true,
+   "evidence": "src/store.jl:117-123 (each port name reads getfield(y, name) and stores into its own address addrs[i])"
+  },
+  {
+   "id": "S9c-128",
+   "conforms": true,
+   "evidence": "src/sim.jl:310 (Simulation(model::Model{Float64})); only the nominal model is driven by the real-time loop"
+  },
+  {
+   "id": "S9c-132",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1142-1148 and 1167-1169; probe on a Shaft returning M_shaft = 0: \"y_state returns `M_shaft`::Int64, declared Float64 — an integer literal where a real was declared: return `zero(…)` of a value at the activation, not `0`\"",
+   "class": "deviation",
+   "fix": "The error can afford to be didactic, as in \"`y_state` returns `M_shaft`::Int64, declared Float64 — an integer literal where a real was declared: return `zero(…)` of a value at the activation, not `0`\".",
+   "clear": true
+  },
+  {
+   "id": "S9c-139",
+   "conforms": false,
+   "evidence": "src/store.jl:59-70 and src/leaves.jl:193-213 (scatter_cell! flattens the arrival leaf by leaf into the cell's eltype buffers) and src/leaves.jl:116-141 (the read rebuilds the declared type from its leaves); no cross-eltype constructor is called and no diagnostic names both types",
+   "class": "deviation",
+   "fix": "Struct-valued ports embed leaf by leaf: the store takes the arrival's leaves at the cell's eltypes and rebuilds the declared type from them, so no cross-eltype constructor is called.",
+   "clear": false,
+   "backing_entry": "D-287",
+   "note": "D-238 (log.md:9776) describes the leaf store that rebuilds the declaration, the mechanism the code follows."
+  },
+  {
+   "id": "S9c-148",
+   "conforms": true,
+   "evidence": "src/leaves.jl:352-361 (_accepts compares the NamedTuple's name parameter by identity); probe: _accepts((a=PD,), (b=Float64,), PD) = false, (a=Float64,) = true"
+  },
+  {
+   "id": "S9c-154",
+   "conforms": false,
+   "evidence": "src/leaves.jl:364-366 (_pin_hint: \" — if this leaf participates in differentiation, remove its `Pinned`\"); probe: \"y_state returns `F`::Dual{ProbeTag,Float64,1}, declared Float64 — if this leaf participates in differentiation, remove its `Pinned`\"",
+   "class": "deviation",
+   "fix": "The didactic hint is attached, \"if this leaf participates in differentiation, remove its `Pinned`\".",
+   "clear": true,
+   "backing_entry": "D-286"
+  },
+  {
+   "id": "S9c-158",
+   "conforms": true,
+   "evidence": "src/model.jl:106-110 (_embeds_float64 admits Float64 and a concrete Dual over it at any depth); probe: Float64, ProbeDual and a nested Dual over Float64 accepted, Float32, Dual over Float32 and the bare Dual refused"
+  },
+  {
+   "id": "S9c-167",
+   "conforms": true,
+   "evidence": "src/build.jl:1121-1135 (x_deriv and s_update each against its own shape), src/build.jl:1145-1166 (x_projection), src/build.jl:1287-1290 (guard form), src/build.jl:1307-1340 (handler), src/store.jl:107-128 (ports)"
+  },
+  {
+   "id": "S9c-176",
+   "conforms": true,
+   "evidence": "src/build.jl:1674-1680 (bare x_deriv), src/build.jl:1709-1714 (bare s_update), src/build.jl:1224-1230 (bare x_projection and handler x); probe: BareX builds at (Float64, ProbeDual), and a NamedTuple derivative for a bare state is refused"
+  },
+  {
+   "id": "S9c-185",
+   "conforms": true,
+   "evidence": "src/build.jl:1314-1326 (HandlerReturnKey carries the key and {x, m} narrowed to the declared stores); probe: key :s, stores [:x]"
+  },
+  {
+   "id": "S9c-186",
+   "conforms": false,
+   "evidence": "src/build.jl:1323-1326 compares the returned keys against a store list and raises HandlerReturnKey (src/diagnostics.jl:1229-1240) with no classification; the bundle path matches a thrown FieldError and classifies it as BundleFieldError (src/declare.jl:975-990). The two share no machinery",
+   "class": "deviation",
+   "fix": "That is the bundle law's did-you-mean shape run in the return direction: the payload names the key and the stores that exist.",
+   "clear": false,
+   "backing_entry": "D-287"
+  },
+  {
+   "id": "S9c-195",
+   "conforms": true,
+   "evidence": "src/build.jl:1287-1290 (Bool → :non_localized, Float64 → :localized, anything else GuardForm); probe: an Int guard raises GuardForm naming both forms"
+  },
+  {
+   "id": "S9c-204",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1109-1121 (ConformanceFailure.what names the function); probe: what=x_deriv"
+  },
+  {
+   "id": "S9c-206",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1114-1118 (observed/declared per field, observed_fields/declared_fields for the key set); probe: observed_fields=[:a,:z], declared_fields=[:a,:b]",
+   "note": "Missing and unexpected are carried as the two field lists, not as separate computed sets."
+  },
+  {
+   "id": "S9c-214",
+   "conforms": true,
+   "evidence": "src/model.jl:923-930 (_check_finite! right after integrate throws NonfiniteState) and src/model.jl:1086-1091 (the single catch site wraps it as a StepError species beside the conformance failure)",
+   "note": "The check runs after integrate; the catch site wraps it rather than running it. Read as the catch site carrying the sibling species, the text holds."
+  },
+  {
+   "id": "S9c-223",
+   "conforms": true,
+   "evidence": "src/trim.jl:646-649 (decisions are seeded and passed only to the user's condition and residuals; the framework writes override(baseline, problem.condition(decisions)))"
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S9c_v/probe.jl, run three times against W at d7d3ddff. No tracked file was touched. Nine claims do not conform: 032 (drift, D-111 adds x_projection to the Dual set), 055, 062, 067, 132, 139, 154 and 186 (deviations). 033 conforms only in that activation() accepts the tracer scalar; nothing in src/ builds the tracer activation."
+}

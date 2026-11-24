@@ -72,3 +72,40 @@ the verifier's probe.
   refuse it as `FaceNameIllegal` with invariant `:contains_slash`.
 - **S8d-003, gap.** The shared path form across the HDF5 log tree is owed by
   `pending.md`; no action.
+
+## G3, §9
+
+- **S9a-029, S9a-039 and S9a-051, wording.** §9.1: materialization runs the
+  `*_init` bodies and an activation, not "no user code"; the structure walk's
+  five steps run in another order; the did-you-mean list holds the endpoint's
+  faces, inputs and outputs alike.
+- **S9b-112, wording.** §9.2: the refusal covers any value that is not an
+  algorithm token, not an algorithm the seam does not know.
+- **S9c-055, wording.** §9.4: after pre-materialization each lookup still
+  takes the build's lock. D-135 backs the doc's text. (S9c-067 landed as
+  G3b's CV9a-017.)
+- **S9c-062, wording.** §9.4's reason the bare `Dual` is refused. D-099
+  backs the doc's text.
+- **S9c-139 and S9c-186, wording.** §9.5: struct-valued ports embed leaf by
+  leaf, and the handler key check reuses the did-you-mean shape, not the
+  `FieldError` machinery. D-287 backs the doc's text.
+- **S9c-154, wording.** The `Pinned` hint again; rule it with S8b-182.
+- **S9d-057, wording.** §9.7's compile-cost figures no longer match the
+  measurements.
+- **S9b-300, defect.** §9.3 says everything the probe writes is garbage
+  after the build, but `init!` of a model at a non-nominal scalar leans on
+  it. Proposed: establish the frozen discrete cells from a nominal round, as
+  the services' seeded half does.
+- **S9d, a thin inventory.** Its mid-tier inventory missed 3 of 9 sampled
+  rows. A high-tier re-inventory of §9.7 and §9.8 costs about 0.3M tokens.
+- **CV9a-049, wording.** §9.3's probe-scoped values: `compile` seeds every
+  fresh table from the probe's values. Rule it with S9b-300.
+- **CV9a-050, wording.** Appendix C and D-431 say a misshapen return throws
+  alone; that holds for the port check only.
+- **CV9b-049, wording.** The scalar refusal is not always alone and before
+  the keywords are read. D-320 backs the doc's text.
+- **K9b-014, K9b-027, K9b-041 and K9b-052, wording.** The two walkthroughs:
+  a loop closed through B is schedulable only through `y_state`; pinning the
+  deck's output would also need a stripping stage; the grid copy is kept off
+  by the shape rule, not D-263; `Freeze` cannot take a handle, its `V` being
+  bounded at the type.

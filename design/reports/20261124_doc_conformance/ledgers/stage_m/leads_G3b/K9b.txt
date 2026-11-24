@@ -1,0 +1,11 @@
+names missing: `c2d` at design/companions/frozen_discrete_walkthrough.md:108
+names missing: `DeckField` at design/companions/handle_walk_walkthrough.md:42
+names missing: `DeckField` at design/companions/handle_walk_walkthrough.md:43
+names missing: `DeckField` at design/companions/handle_walk_walkthrough.md:121
+names missing: `DeckField` at design/companions/handle_walk_walkthrough.md:156
+names missing: `DeckField` at design/companions/handle_walk_walkthrough.md:157
+names missing: `Mixed` at design/companions/handle_walk_walkthrough.md:238
+names missing: `MixedRight` at design/companions/handle_walk_walkthrough.md:254
+names missing: `MixedRight` at design/companions/handle_walk_walkthrough.md:268
+names missing: `f.heave` at design/companions/handle_walk_walkthrough.md:89
+names missing: `f.pitch` at design/companions/handle_walk_walkthrough.md:89

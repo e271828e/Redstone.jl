@@ -1,0 +1,2114 @@
+{
+ "rows": [
+  {
+   "id": "S9a-021",
+   "file": "design/spec.md",
+   "line": 4816,
+   "kind": "law",
+   "claim": "nominal evaluation runs every user function once",
+   "evidence": "probe3.jl:21; every stage function and guard and handler once at Float64; the `ws_init` allocation runs twice, once in the nominal probes and again in the event probe",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "probe3.jl C1: ws_init => 2, others 1; src/build.jl:1008 and 1266",
+   "fix": "Reword the cell to name the stage, guard and handler functions, or have `probe_events` reuse the workspaces `_nominal` allocated."
+  },
+  {
+   "id": "S9a-029",
+   "file": "design/spec.md",
+   "line": 4819,
+   "kind": "law",
+   "claim": "materialization runs no user code",
+   "evidence": "src/model.jl:121; Model(deployment, T) calls activation(build, T), which derives and runs the activation step's user functions when the build holds none at T",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "probe3.jl C2: activation(ProbeDual) runs y_state, y_direct, x_deriv, ws_init",
+   "fix": "Say that materialization runs no user code of its own and derives the activation at T (step 3) when the Build holds none."
+  },
+  {
+   "id": "S9a-032",
+   "file": "design/spec.md",
+   "line": 4822,
+   "kind": "mech",
+   "claim": "the first three are the build and build(world) runs them",
+   "evidence": "src/build.jl:795; build runs the structure step and the nominal evaluation; the activation step runs in build only for scalars named in the `activations` keyword, else at first activation(build, T) request, e.g. in Model(deployment, T)",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "src/build.jl:795-800",
+   "fix": "The first two are the build, and `build(world)` runs them. Activation at `T` follows on request, or at build for the scalars `activations` names."
+  },
+  {
+   "id": "S9a-039",
+   "file": "design/spec.md",
+   "line": 4834,
+   "kind": "mech",
+   "claim": "the walk does the five steps in this order",
+   "evidence": "src/structure.jl:525; one pre-order pass does them per node: class read before the path is pushed, contracts at once, an assembly's faces and wires after its children; type clauses and the obligation check run after the walk",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "src/structure.jl:534-560, 603-690; src/build.jl:788",
+   "fix": "Reword to say the five are facts the one walk gathers, with faces and wires resolved per level after the children, and the type clauses and obligation check after the walk."
+  },
+  {
+   "id": "S9a-051",
+   "file": "design/spec.md",
+   "line": 4853,
+   "kind": "law",
+   "claim": "the did-you-mean list is the destination's input list",
+   "evidence": "probe4.jl:6; a destination typo's candidates are the resolved component's input and output faces together, not its input list alone",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "src/structure.jl:112; probe4: UnknownPort(:destination, :ee, [:e, :out])",
+   "fix": "against the faces of the component the endpoint resolved to, inputs then outputs"
+  }
+ ],
+ "ok": [
+  {
+   "id": "S9a-001",
+   "file": "design/spec.md",
+   "line": 4779,
+   "kind": "mech",
+   "claim": "build consumes a root component instance, produces a Build",
+   "evidence": "src/build.jl:767"
+  },
+  {
+   "id": "S9a-002",
+   "file": "design/spec.md",
+   "line": 4780,
+   "kind": "mech",
+   "claim": "build holds the declared wires and their resolution (Structure.levels)",
+   "evidence": "src/structure.jl:249"
+  },
+  {
+   "id": "S9a-003",
+   "file": "design/spec.md",
+   "line": 4781,
+   "kind": "mech",
+   "claim": "build holds the execution order (Outputs.order)",
+   "evidence": "src/build.jl:616"
+  },
+  {
+   "id": "S9a-004",
+   "file": "design/spec.md",
+   "line": 4781,
+   "kind": "mech",
+   "claim": "build holds the anchor-relative rate triples (ComponentEntry.timing)",
+   "evidence": "src/structure.jl:158"
+  },
+  {
+   "id": "S9a-005",
+   "file": "design/spec.md",
+   "line": 4782,
+   "kind": "mech",
+   "claim": "build holds the root inputs",
+   "evidence": "src/structure.jl:247"
+  },
+  {
+   "id": "S9a-006",
+   "file": "design/spec.md",
+   "line": 4782,
+   "kind": "mech",
+   "claim": "build holds the nominal activation's typed signal table and flat layout",
+   "evidence": "src/build.jl:565"
+  },
+  {
+   "id": "S9a-007",
+   "file": "design/spec.md",
+   "line": 4787,
+   "kind": "law",
+   "claim": "declarative checking passes collect",
+   "evidence": "src/build.jl:782"
+  },
+  {
+   "id": "S9a-008",
+   "file": "design/spec.md",
+   "line": 4788,
+   "kind": "law",
+   "claim": "user-code evaluation fails fast",
+   "evidence": "src/build.jl:1137"
+  },
+  {
+   "id": "S9a-009",
+   "file": "design/spec.md",
+   "line": 4800,
+   "kind": "law",
+   "claim": "face derivation is bottom-up",
+   "evidence": "src/structure.jl:603"
+  },
+  {
+   "id": "S9a-010",
+   "file": "design/spec.md",
+   "line": 4803,
+   "kind": "law",
+   "claim": "unconnected-input check is global, after the walk",
+   "evidence": "src/structure.jl:455"
+  },
+  {
+   "id": "S9a-011",
+   "file": "design/spec.md",
+   "line": 4804,
+   "kind": "law",
+   "claim": "cross-level two-producers detection is global (one claims table)",
+   "evidence": "src/structure.jl:709"
+  },
+  {
+   "id": "S9a-012",
+   "file": "design/spec.md",
+   "line": 4806,
+   "kind": "law",
+   "claim": "stage membership is derived by probing the stage-1 functions",
+   "evidence": "src/build.jl:197"
+  },
+  {
+   "id": "S9a-013",
+   "file": "design/spec.md",
+   "line": 4807,
+   "kind": "mech",
+   "claim": "evaluation interleaves with graph construction at one spot",
+   "evidence": "src/build.jl:1010"
+  },
+  {
+   "id": "S9a-014",
+   "file": "design/spec.md",
+   "line": 4809,
+   "kind": "law",
+   "claim": "each step consumes one artifact and produces the next",
+   "evidence": "src/build.jl:782"
+  },
+  {
+   "id": "S9a-015",
+   "file": "design/spec.md",
+   "line": 4810,
+   "kind": "law",
+   "claim": "each step is a barrier",
+   "evidence": "src/build.jl:787"
+  },
+  {
+   "id": "S9a-016",
+   "file": "design/spec.md",
+   "line": 4811,
+   "kind": "law",
+   "claim": "a step with any error throws before the next begins",
+   "evidence": "src/build.jl:793"
+  },
+  {
+   "id": "S9a-017",
+   "file": "design/spec.md",
+   "line": 4815,
+   "kind": "mech",
+   "claim": "structure step: root instance in, Structure out",
+   "evidence": "src/build.jl:782"
+  },
+  {
+   "id": "S9a-018",
+   "file": "design/spec.md",
+   "line": 4815,
+   "kind": "law",
+   "claim": "structure step runs declaration bodies only",
+   "evidence": "probe.jl:61"
+  },
+  {
+   "id": "S9a-019",
+   "file": "design/spec.md",
+   "line": 4816,
+   "kind": "mech",
+   "claim": "nominal evaluation: Structure in",
+   "evidence": "src/build.jl:1001"
+  },
+  {
+   "id": "S9a-020",
+   "file": "design/spec.md",
+   "line": 4816,
+   "kind": "mech",
+   "claim": "nominal evaluation produces Outputs, Events and the nominal Float64 activation",
+   "evidence": "src/build.jl:1016"
+  },
+  {
+   "id": "S9a-022",
+   "file": "design/spec.md",
+   "line": 4817,
+   "kind": "mech",
+   "claim": "activation at T: Structure, Outputs, nominal activation and T in",
+   "evidence": "src/build.jl:1030"
+  },
+  {
+   "id": "S9a-023",
+   "file": "design/spec.md",
+   "line": 4817,
+   "kind": "mech",
+   "claim": "activation at T produces Activation{T}",
+   "evidence": "src/build.jl:1040"
+  },
+  {
+   "id": "S9a-024",
+   "file": "design/spec.md",
+   "line": 4817,
+   "kind": "mech",
+   "claim": "activation at T runs the continuous tier's functions at T",
+   "evidence": "src/build.jl:1066"
+  },
+  {
+   "id": "S9a-025",
+   "file": "design/spec.md",
+   "line": 4818,
+   "kind": "mech",
+   "claim": "deployment: Build and grid parameters in",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S9a-026",
+   "file": "design/spec.md",
+   "line": 4818,
+   "kind": "mech",
+   "claim": "deployment produces a Deployment with its Schedule",
+   "evidence": "src/deployment.jl:539"
+  },
+  {
+   "id": "S9a-027",
+   "file": "design/spec.md",
+   "line": 4818,
+   "kind": "law",
+   "claim": "deployment runs no user code",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S9a-028",
+   "file": "design/spec.md",
+   "line": 4819,
+   "kind": "mech",
+   "claim": "materialization: Deployment and scalar T in, Model{T} out",
+   "evidence": "src/model.jl:111"
+  },
+  {
+   "id": "S9a-030",
+   "file": "design/spec.md",
+   "line": 4820,
+   "kind": "mech",
+   "claim": "simulation: Model{Float64} in, Simulation out",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9a-031",
+   "file": "design/spec.md",
+   "line": 4820,
+   "kind": "law",
+   "claim": "simulation constructor runs no user code",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9a-033",
+   "file": "design/spec.md",
+   "line": 4823,
+   "kind": "mech",
+   "claim": "Build bundles the products",
+   "evidence": "src/build.jl:703"
+  },
+  {
+   "id": "S9a-034",
+   "file": "design/spec.md",
+   "line": 4824,
+   "kind": "mech",
+   "claim": "last three steps are the Deployment, Model and Simulation constructors",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S9a-035",
+   "file": "design/spec.md",
+   "line": 4829,
+   "kind": "law",
+   "claim": "structure step is pure declaration reading",
+   "evidence": "probe.jl:61"
+  },
+  {
+   "id": "S9a-036",
+   "file": "design/spec.md",
+   "line": 4830,
+   "kind": "law",
+   "claim": "no user stage code executes in the structure step",
+   "evidence": "probe.jl:61"
+  },
+  {
+   "id": "S9a-037",
+   "file": "design/spec.md",
+   "line": 4831,
+   "kind": "law",
+   "claim": "input_wires, output_wires and input_passthrough bodies are declaration code",
+   "evidence": "src/structure.jl:609"
+  },
+  {
+   "id": "S9a-038",
+   "file": "design/spec.md",
+   "line": 4833,
+   "kind": "mech",
+   "claim": "step is a tree walk from the root instance",
+   "evidence": "src/structure.jl:435"
+  },
+  {
+   "id": "S9a-040",
+   "file": "design/spec.md",
+   "line": 4836,
+   "kind": "mech",
+   "claim": "components are collected by path",
+   "evidence": "src/structure.jl:543"
+  },
+  {
+   "id": "S9a-041",
+   "file": "design/spec.md",
+   "line": 4837,
+   "kind": "mech",
+   "claim": "class is read off declaration shape",
+   "evidence": "src/structure.jl:538"
+  },
+  {
+   "id": "S9a-042",
+   "file": "design/spec.md",
+   "line": 4839,
+   "kind": "mech",
+   "claim": "primitive contracts are collected",
+   "evidence": "src/structure.jl:551"
+  },
+  {
+   "id": "S9a-043",
+   "file": "design/spec.md",
+   "line": 4839,
+   "kind": "decl",
+   "claim": "`*_init` in the contract list is a glob over x_init, s_init and m_init, a placeholder",
+   "evidence": "src/assembly.jl:688"
+  },
+  {
+   "id": "S9a-044",
+   "file": "design/spec.md",
+   "line": 4841,
+   "kind": "mech",
+   "claim": "face derivation runs bottom-up",
+   "evidence": "src/structure.jl:603"
+  },
+  {
+   "id": "S9a-045",
+   "file": "design/spec.md",
+   "line": 4841,
+   "kind": "mech",
+   "claim": "records at every level the faces it declares and their routing chain",
+   "evidence": "src/structure.jl:625"
+  },
+  {
+   "id": "S9a-046",
+   "file": "design/spec.md",
+   "line": 4843,
+   "kind": "mech",
+   "claim": "global wiring resolution resolves wires to absolute primitive terminals",
+   "evidence": "src/structure.jl:629"
+  },
+  {
+   "id": "S9a-047",
+   "file": "design/spec.md",
+   "line": 4846,
+   "kind": "law",
+   "claim": "shadowing check runs before a component's class is read",
+   "evidence": "src/structure.jl:534"
+  },
+  {
+   "id": "S9a-048",
+   "file": "design/spec.md",
+   "line": 4847,
+   "kind": "decl",
+   "claim": "shadowing check refuses a module shadowing a declaration name (DeclarationShadowed)",
+   "evidence": "src/structure.jl:535"
+  },
+  {
+   "id": "S9a-049",
+   "file": "design/spec.md",
+   "line": 4851,
+   "kind": "law",
+   "claim": "one-writer-per-input is checked",
+   "evidence": "src/structure.jl:709"
+  },
+  {
+   "id": "S9a-050",
+   "file": "design/spec.md",
+   "line": 4852,
+   "kind": "law",
+   "claim": "typo refusal carries the offending name and the list in hand",
+   "evidence": "src/diagnostics.jl:375"
+  },
+  {
+   "id": "S9a-052",
+   "file": "design/spec.md",
+   "line": 4854,
+   "kind": "law",
+   "claim": "typo refusal is raised as UnknownPort",
+   "evidence": "probe4.jl:6"
+  },
+  {
+   "id": "S9a-053",
+   "file": "design/spec.md",
+   "line": 4855,
+   "kind": "law",
+   "claim": "the two wiring type clauses are checked in resolution",
+   "evidence": "src/build.jl:871"
+  },
+  {
+   "id": "S9a-054",
+   "file": "design/spec.md",
+   "line": 4856,
+   "kind": "law",
+   "claim": "whole-tree obligation check runs in resolution",
+   "evidence": "src/structure.jl:455"
+  },
+  {
+   "id": "S9a-055",
+   "file": "design/spec.md",
+   "line": 4857,
+   "kind": "law",
+   "claim": "store shape and contract shape are checked",
+   "evidence": "src/assembly.jl:688"
+  },
+  {
+   "id": "S9a-056",
+   "file": "design/spec.md",
+   "line": 4858,
+   "kind": "law",
+   "claim": "closed leaf vocabulary is checked",
+   "evidence": "src/assembly.jl:673"
+  },
+  {
+   "id": "S9a-057",
+   "file": "design/spec.md",
+   "line": 4860,
+   "kind": "decl",
+   "claim": "store shape is NamedTuple, bare store or nothing",
+   "evidence": "probe.jl:100"
+  },
+  {
+   "id": "S9a-058",
+   "file": "design/spec.md",
+   "line": 4861,
+   "kind": "decl",
+   "claim": "bare store is one leaf under field x, s or m",
+   "evidence": "src/assembly.jl:663"
+  },
+  {
+   "id": "S9a-059",
+   "file": "design/spec.md",
+   "line": 4862,
+   "kind": "law",
+   "claim": "the empty NamedTuple is refused as EmptyStore",
+   "evidence": "probe.jl:74"
+  },
+  {
+   "id": "S9a-060",
+   "file": "design/spec.md",
+   "line": 4863,
+   "kind": "law",
+   "claim": "store shape is read before the tier classifier and vocabulary checks",
+   "evidence": "src/structure.jl:551"
+  },
+  {
+   "id": "S9a-061",
+   "file": "design/spec.md",
+   "line": 4864,
+   "kind": "law",
+   "claim": "the vocabulary checks take a bare store as its one leaf",
+   "evidence": "src/assembly.jl:663"
+  },
+  {
+   "id": "S9a-062",
+   "file": "design/spec.md",
+   "line": 4865,
+   "kind": "decl",
+   "claim": "contract shape is a NamedTuple of types or one type",
+   "evidence": "src/assembly.jl:782"
+  },
+  {
+   "id": "S9a-063",
+   "file": "design/spec.md",
+   "line": 4866,
+   "kind": "decl",
+   "claim": "bare contract is one port under default face u or y",
+   "evidence": "src/structure.jl:565"
+  },
+  {
+   "id": "S9a-064",
+   "file": "design/spec.md",
+   "line": 4867,
+   "kind": "law",
+   "claim": "contract shape is read the same way as store shape",
+   "evidence": "src/assembly.jl:700"
+  },
+  {
+   "id": "S9a-065",
+   "file": "design/spec.md",
+   "line": 4867,
+   "kind": "law",
+   "claim": "closed leaf vocabulary is checked on every x_init",
+   "evidence": "src/assembly.jl:673"
+  },
+  {
+   "id": "S9a-066",
+   "file": "design/spec.md",
+   "line": 4869,
+   "kind": "law",
+   "claim": "a leaf outside the vocabulary is IllegalStateLeaf",
+   "evidence": "probe.jl:89"
+  },
+  {
+   "id": "S9a-067",
+   "file": "design/spec.md",
+   "line": 4869,
+   "kind": "law",
+   "claim": "s_init pins wholesale and answers to the isbits rule",
+   "evidence": "src/assembly.jl:710"
+  },
+  {
+   "id": "S9a-068",
+   "file": "design/spec.md",
+   "line": 4870,
+   "kind": "law",
+   "claim": "isbits rule is checked on s_init and m_init field by field",
+   "evidence": "src/assembly.jl:710"
+  },
+  {
+   "id": "S9a-069",
+   "file": "design/spec.md",
+   "line": 4871,
+   "kind": "law",
+   "claim": "a field neither isbits nor Symbol is IllegalStoreField",
+   "evidence": "probe.jl:94"
+  },
+  {
+   "id": "S9a-070",
+   "file": "design/spec.md",
+   "line": 4874,
+   "kind": "law",
+   "claim": "the bound check is the first type clause",
+   "evidence": "src/build.jl:890"
+  },
+  {
+   "id": "S9a-071",
+   "file": "design/spec.md",
+   "line": 4874,
+   "kind": "law",
+   "claim": "the bound check applies at nominal faces (Float64)",
+   "evidence": "src/build.jl:883"
+  },
+  {
+   "id": "S9a-072",
+   "file": "design/spec.md",
+   "line": 4875,
+   "kind": "law",
+   "claim": "producer's declaration at Float64 must be <: the entry's",
+   "evidence": "src/leaves.jl:380"
+  },
+  {
+   "id": "S9a-073",
+   "file": "design/spec.md",
+   "line": 4876,
+   "kind": "law",
+   "claim": "equality is the concrete degenerate case",
+   "evidence": "src/leaves.jl:380"
+  },
+  {
+   "id": "S9a-074",
+   "file": "design/spec.md",
+   "line": 4877,
+   "kind": "law",
+   "claim": "abstract-at-root is detected in the wire check (AbstractAtRoot)",
+   "evidence": "src/build.jl:918"
+  },
+  {
+   "id": "S9a-075",
+   "file": "design/spec.md",
+   "line": 4879,
+   "kind": "law",
+   "claim": "walk clause is the second type clause",
+   "evidence": "src/build.jl:896"
+  },
+  {
+   "id": "S9a-076",
+   "file": "design/spec.md",
+   "line": 4879,
+   "kind": "law",
+   "claim": "walk clause applies to continuous consumers only",
+   "evidence": "src/build.jl:896"
+  },
+  {
+   "id": "S9a-077",
+   "file": "design/spec.md",
+   "line": 4880,
+   "kind": "mech",
+   "claim": "walk clause retypes both declarations at a marker scalar",
+   "evidence": "src/build.jl:884"
+  },
+  {
+   "id": "S9a-078",
+   "file": "design/spec.md",
+   "line": 4881,
+   "kind": "mech",
+   "claim": "compares per leaf at a concrete entry, whole declaration at an abstract one",
+   "evidence": "src/leaves.jl:380"
+  },
+  {
+   "id": "S9a-079",
+   "file": "design/spec.md",
+   "line": 4883,
+   "kind": "law",
+   "claim": "walk clause diagnostic is WalkingFaceAtFrozenEntry",
+   "evidence": "src/build.jl:900"
+  },
+  {
+   "id": "S9a-080",
+   "file": "design/spec.md",
+   "line": 4885,
+   "kind": "law",
+   "claim": "the clause runs no user stage code",
+   "evidence": "src/build.jl:871"
+  },
+  {
+   "id": "S9a-081",
+   "file": "design/spec.md",
+   "line": 4889,
+   "kind": "law",
+   "claim": "an unfed child input within one assembly awaits a wire from above",
+   "evidence": "src/structure.jl:455"
+  },
+  {
+   "id": "S9a-082",
+   "file": "design/spec.md",
+   "line": 4890,
+   "kind": "law",
+   "claim": "the wire is a local wire or an input_wires entry handing the obligation up",
+   "evidence": "src/structure.jl:469"
+  },
+  {
+   "id": "S9a-083",
+   "file": "design/spec.md",
+   "line": 4891,
+   "kind": "law",
+   "claim": "UnconnectedInput fires at the root build for a chain that never terminates",
+   "evidence": "probe.jl:68"
+  },
+  {
+   "id": "S9a-084",
+   "file": "design/spec.md",
+   "line": 4892,
+   "kind": "law",
+   "claim": "input fed by a local wire and handed up by input_wires is TwoProducers",
+   "evidence": "src/structure.jl:663"
+  },
+  {
+   "id": "S9a-085",
+   "file": "design/spec.md",
+   "line": 4896,
+   "kind": "law",
+   "claim": "root inputs are the root component's input faces",
+   "evidence": "src/structure.jl:686"
+  },
+  {
+   "id": "S9a-086",
+   "file": "design/spec.md",
+   "line": 4900,
+   "kind": "law",
+   "claim": "a store without its update is refused",
+   "evidence": "probe.jl:84"
+  },
+  {
+   "id": "S9a-087",
+   "file": "design/spec.md",
+   "line": 4901,
+   "kind": "law",
+   "claim": "a primitive declaring no store is refused",
+   "evidence": "probe.jl:77"
+  },
+  {
+   "id": "S9a-088",
+   "file": "design/spec.md",
+   "line": 4902,
+   "kind": "law",
+   "claim": "an event missing a guard or handler method is refused",
+   "evidence": "src/build.jl:825"
+  },
+  {
+   "id": "S9a-089",
+   "file": "design/spec.md",
+   "line": 4903,
+   "kind": "law",
+   "claim": "a primitive mixing tier families is refused",
+   "evidence": "src/assembly.jl:763"
+  },
+  {
+   "id": "S9a-090",
+   "file": "design/spec.md",
+   "line": 4904,
+   "kind": "law",
+   "claim": "a stateless primitive with no output contract is refused",
+   "evidence": "probe.jl:80"
+  },
+  {
+   "id": "S9a-091",
+   "file": "design/spec.md",
+   "line": 4907,
+   "kind": "law",
+   "claim": "sample_times validation belongs to the structure step",
+   "evidence": "src/structure.jl:589"
+  },
+  {
+   "id": "S9a-092",
+   "file": "design/spec.md",
+   "line": 4908,
+   "kind": "mech",
+   "claim": "validation has three parts",
+   "evidence": "src/structure.jl:321"
+  },
+  {
+   "id": "S9a-093",
+   "file": "design/spec.md",
+   "line": 4909,
+   "kind": "law",
+   "claim": "per-entry validity requires wrapper-typed values",
+   "evidence": "src/structure.jl:329"
+  },
+  {
+   "id": "S9a-094",
+   "file": "design/spec.md",
+   "line": 4910,
+   "kind": "law",
+   "claim": "Relative needs D at least 1",
+   "evidence": "src/structure.jl:339"
+  },
+  {
+   "id": "S9a-095",
+   "file": "design/spec.md",
+   "line": 4910,
+   "kind": "law",
+   "claim": "Relative needs 0 <= Phi < D",
+   "evidence": "src/structure.jl:338"
+  },
+  {
+   "id": "S9a-096",
+   "file": "design/spec.md",
+   "line": 4911,
+   "kind": "law",
+   "claim": "Absolute needs period > 0",
+   "evidence": "src/structure.jl:343"
+  },
+  {
+   "id": "S9a-097",
+   "file": "design/spec.md",
+   "line": 4911,
+   "kind": "law",
+   "claim": "Absolute needs 0 <= tau < period",
+   "evidence": "src/structure.jl:342"
+  },
+  {
+   "id": "S9a-098",
+   "file": "design/spec.md",
+   "line": 4911,
+   "kind": "law",
+   "claim": "keys must name discrete or scope children",
+   "evidence": "src/structure.jl:347"
+  },
+  {
+   "id": "S9a-099",
+   "file": "design/spec.md",
+   "line": 4912,
+   "kind": "law",
+   "claim": "violations are collected with path attribution",
+   "evidence": "src/structure.jl:321"
+  },
+  {
+   "id": "S9a-100",
+   "file": "design/spec.md",
+   "line": 4913,
+   "kind": "mech",
+   "claim": "second part compiles entries into triples",
+   "evidence": "src/structure.jl:382"
+  },
+  {
+   "id": "S9a-101",
+   "file": "design/spec.md",
+   "line": 4913,
+   "kind": "decl",
+   "claim": "a discrete component's triple is (a, Da, Phi_a)",
+   "evidence": "src/structure.jl:158"
+  },
+  {
+   "id": "S9a-102",
+   "file": "design/spec.md",
+   "line": 4914,
+   "kind": "decl",
+   "claim": "divisor and phase are counted in the anchor's ticks",
+   "evidence": "src/structure.jl:158"
+  },
+  {
+   "id": "S9a-103",
+   "file": "design/spec.md",
+   "line": 4916,
+   "kind": "decl",
+   "claim": "anchor is the exact (dt, tau) an Absolute entry establishes",
+   "evidence": "src/structure.jl:145"
+  },
+  {
+   "id": "S9a-104",
+   "file": "design/spec.md",
+   "line": 4919,
+   "kind": "mech",
+   "claim": "compilation is a fold down the tree",
+   "evidence": "src/structure.jl:382"
+  },
+  {
+   "id": "S9a-105",
+   "file": "design/spec.md",
+   "line": 4923,
+   "kind": "law",
+   "claim": "root scope seeds (A0, 1, 0)",
+   "evidence": "src/structure.jl:442"
+  },
+  {
+   "id": "S9a-106",
+   "file": "design/spec.md",
+   "line": 4923,
+   "kind": "decl",
+   "claim": "A0 is the base grid, (dt, tau) = (dt_base, 0)",
+   "evidence": "src/show.jl:122"
+  },
+  {
+   "id": "S9a-107",
+   "file": "design/spec.md",
+   "line": 4925,
+   "kind": "law",
+   "claim": "Relative under scope s steps to (a, D*Da(s), Phi_a(s)+Phi*Da(s))",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "S9a-108",
+   "file": "design/spec.md",
+   "line": 4926,
+   "kind": "law",
+   "claim": "Absolute severs and re-seeds a fresh anchor, subtree at (a, 1, 0)",
+   "evidence": "src/structure.jl:418"
+  },
+  {
+   "id": "S9a-109",
+   "file": "design/spec.md",
+   "line": 4929,
+   "kind": "law",
+   "claim": "A0 is symbolic until deployment",
+   "evidence": "src/show.jl:122"
+  },
+  {
+   "id": "S9a-110",
+   "file": "design/spec.md",
+   "line": 4929,
+   "kind": "law",
+   "claim": "Relative row is 6.3's composition law in anchor ticks",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "S9a-111",
+   "file": "design/spec.md",
+   "line": 4930,
+   "kind": "law",
+   "claim": "child i has Ds(i)=D and Phis(i)=Phi, so Da(i)=Ds(i)*Da(s)",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "S9a-112",
+   "file": "design/spec.md",
+   "line": 4930,
+   "kind": "law",
+   "claim": "Phi_a(i)=Phi_a(s)+Phis(i)*Da(s)",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "S9a-113",
+   "file": "design/spec.md",
+   "line": 4931,
+   "kind": "law",
+   "claim": "canonical residue 0<=Phi_a<Da holds in each anchor's subtree",
+   "evidence": "probe.jl:104"
+  },
+  {
+   "id": "S9a-114",
+   "file": "design/spec.md",
+   "line": 4934,
+   "kind": "law",
+   "claim": "structure step composes in checked Int",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "S9a-115",
+   "file": "design/spec.md",
+   "line": 4935,
+   "kind": "law",
+   "claim": "composed divisor past Int is RatesViolation :range",
+   "evidence": "probe.jl:110"
+  },
+  {
+   "id": "S9a-116",
+   "file": "design/spec.md",
+   "line": 4935,
+   "kind": "law",
+   "claim": "composed phase past Int is RatesViolation :range",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "S9a-117",
+   "file": "design/spec.md",
+   "line": 4936,
+   "kind": "law",
+   "claim": "refusal lands on the entry that composed it",
+   "evidence": "src/structure.jl:404"
+  },
+  {
+   "id": "S9a-118",
+   "file": "design/spec.md",
+   "line": 4936,
+   "kind": "law",
+   "claim": "a rate its own check refuses composes nothing",
+   "evidence": "src/structure.jl:396"
+  },
+  {
+   "id": "S9a-119",
+   "file": "design/spec.md",
+   "line": 4937,
+   "kind": "law",
+   "claim": "one fault is one refusal",
+   "evidence": "src/structure.jl:404"
+  },
+  {
+   "id": "S9a-120",
+   "file": "design/spec.md",
+   "line": 4937,
+   "kind": "mech",
+   "claim": "anchor's divisor D0(a) joins the product only when a base tick binds",
+   "evidence": "src/structure.jl:982"
+  },
+  {
+   "id": "S9a-121",
+   "file": "design/spec.md",
+   "line": 4938,
+   "kind": "mech",
+   "claim": "the trial composes D0(a) at the coarsest base tick the anchors admit",
+   "evidence": "src/structure.jl:974"
+  },
+  {
+   "id": "S9a-122",
+   "file": "design/spec.md",
+   "line": 4939,
+   "kind": "law",
+   "claim": "at a finer caller-chosen base tick, deployment refuses overflow on dt_base",
+   "evidence": "probe2.jl:28"
+  },
+  {
+   "id": "S9a-123",
+   "file": "design/spec.md",
+   "line": 4942,
+   "kind": "law",
+   "claim": "everything but binding dt_base happens in the structure step",
+   "evidence": "src/build.jl:782"
+  },
+  {
+   "id": "S9a-124",
+   "file": "design/spec.md",
+   "line": 4946,
+   "kind": "law",
+   "claim": "the structure step refuses a structure no deployment binds",
+   "evidence": "src/structure.jl:958"
+  },
+  {
+   "id": "S9a-125",
+   "file": "design/spec.md",
+   "line": 4947,
+   "kind": "mech",
+   "claim": "binds the triples once, after the fold",
+   "evidence": "src/build.jl:783"
+  },
+  {
+   "id": "S9a-126",
+   "file": "design/spec.md",
+   "line": 4947,
+   "kind": "mech",
+   "claim": "binds at the coarsest base tick and a frame period equal to it",
+   "evidence": "src/structure.jl:974"
+  },
+  {
+   "id": "S9a-127",
+   "file": "design/spec.md",
+   "line": 4949,
+   "kind": "mech",
+   "claim": "runs the arithmetic the Deployment constructor runs",
+   "evidence": "src/structure.jl:905"
+  },
+  {
+   "id": "S9a-128",
+   "file": "design/spec.md",
+   "line": 4949,
+   "kind": "law",
+   "claim": "no other base tick and frame period form a smaller count",
+   "evidence": "src/structure.jl:958"
+  },
+  {
+   "id": "S9a-129",
+   "file": "design/spec.md",
+   "line": 4951,
+   "kind": "law",
+   "claim": "a count leaving Int in the trial is RatesViolation :range",
+   "evidence": "probe2.jl:24"
+  },
+  {
+   "id": "S9a-130",
+   "file": "design/spec.md",
+   "line": 4952,
+   "kind": "law",
+   "claim": "entry named is the Absolute entry of an anchor whose own count leaves Int",
+   "evidence": "probe2.jl:23"
+  },
+  {
+   "id": "S9a-131",
+   "file": "design/spec.md",
+   "line": 4953,
+   "kind": "law",
+   "claim": "or the Relative entry beneath an anchor where a divisor first leaves Int",
+   "evidence": "src/structure.jl:932"
+  },
+  {
+   "id": "S9a-132",
+   "file": "design/spec.md",
+   "line": 4954,
+   "kind": "law",
+   "claim": "no Rational{Int} dividing every period and offset refuses every anchor's entry",
+   "evidence": "probe2.jl:22"
+  },
+  {
+   "id": "S9a-133",
+   "file": "design/spec.md",
+   "line": 4955,
+   "kind": "law",
+   "claim": "trial's premise is a fold that recorded no violation",
+   "evidence": "src/structure.jl:959"
+  },
+  {
+   "id": "S9a-134",
+   "file": "design/spec.md",
+   "line": 4958,
+   "kind": "mech",
+   "claim": "structure step returns Structure as its whole product",
+   "evidence": "src/build.jl:794"
+  },
+  {
+   "id": "S9a-135",
+   "file": "design/spec.md",
+   "line": 4959,
+   "kind": "decl",
+   "claim": "Structure holds what the instance alone fixes",
+   "evidence": "src/structure.jl:243"
+  },
+  {
+   "id": "S9a-136",
+   "file": "design/spec.md",
+   "line": 4962,
+   "kind": "decl",
+   "claim": "Structure holds the component instances by path",
+   "evidence": "src/structure.jl:158"
+  },
+  {
+   "id": "S9a-137",
+   "file": "design/spec.md",
+   "line": 4963,
+   "kind": "decl",
+   "claim": "Structure holds each component's tier",
+   "evidence": "src/structure.jl:158"
+  },
+  {
+   "id": "S9a-138",
+   "file": "design/spec.md",
+   "line": 4964,
+   "kind": "decl",
+   "claim": "one row per assembly, root included",
+   "evidence": "src/structure.jl:249"
+  },
+  {
+   "id": "S9a-139",
+   "file": "design/spec.md",
+   "line": 4965,
+   "kind": "decl",
+   "claim": "row holds children in declaration order with contributing field",
+   "evidence": "src/structure.jl:171"
+  },
+  {
+   "id": "S9a-140",
+   "file": "design/spec.md",
+   "line": 4965,
+   "kind": "decl",
+   "claim": "row holds declared wires as producer-to-consumer pairs in declaration order",
+   "evidence": "src/structure.jl:197"
+  },
+  {
+   "id": "S9a-141",
+   "file": "design/spec.md",
+   "line": 4967,
+   "kind": "decl",
+   "claim": "Structure holds the root inputs",
+   "evidence": "src/structure.jl:247"
+  },
+  {
+   "id": "S9a-142",
+   "file": "design/spec.md",
+   "line": 4968,
+   "kind": "decl",
+   "claim": "Structure holds per component its rate chain",
+   "evidence": "src/structure.jl:158"
+  },
+  {
+   "id": "S9a-143",
+   "file": "design/spec.md",
+   "line": 4969,
+   "kind": "decl",
+   "claim": "Structure holds the scope triple of each assembly an explicit key names",
+   "evidence": "src/structure.jl:247"
+  },
+  {
+   "id": "S9a-144",
+   "file": "design/spec.md",
+   "line": 4972,
+   "kind": "law",
+   "claim": "class and contracts are read off the instance on demand",
+   "evidence": "src/structure.jl:243"
+  },
+  {
+   "id": "S9a-145",
+   "file": "design/spec.md",
+   "line": 4973,
+   "kind": "law",
+   "claim": "Structure holds no resolved table",
+   "evidence": "src/structure.jl:243"
+  },
+  {
+   "id": "S9a-146",
+   "file": "design/spec.md",
+   "line": 4973,
+   "kind": "mech",
+   "claim": "terminal producer, face table and routing chain are functions over the wires",
+   "evidence": "src/structure.jl:1051"
+  },
+  {
+   "id": "S9a-147",
+   "file": "design/spec.md",
+   "line": 4975,
+   "kind": "law",
+   "claim": "nothing in Structure depends on a scalar type",
+   "evidence": "src/structure.jl:243"
+  },
+  {
+   "id": "S9a-148",
+   "file": "design/spec.md",
+   "line": 4980,
+   "kind": "mech",
+   "claim": "nominal evaluation is a function of the Structure",
+   "evidence": "src/build.jl:1001"
+  },
+  {
+   "id": "S9a-149",
+   "file": "design/spec.md",
+   "line": 4981,
+   "kind": "mech",
+   "claim": "returns Outputs, Events and the nominal Float64 activation",
+   "evidence": "src/build.jl:1016"
+  },
+  {
+   "id": "S9a-150",
+   "file": "design/spec.md",
+   "line": 4982,
+   "kind": "mech",
+   "claim": "it is the single evaluation-feeds-structure step",
+   "evidence": "src/build.jl:1001"
+  },
+  {
+   "id": "S9a-151",
+   "file": "design/spec.md",
+   "line": 4985,
+   "kind": "decl",
+   "claim": "Outputs holds the port classification and the order",
+   "evidence": "src/build.jl:616"
+  },
+  {
+   "id": "S9a-152",
+   "file": "design/spec.md",
+   "line": 4986,
+   "kind": "decl",
+   "claim": "Outputs holds per component the stage-1 and stage-2 names",
+   "evidence": "src/build.jl:576"
+  },
+  {
+   "id": "S9a-153",
+   "file": "design/spec.md",
+   "line": 4987,
+   "kind": "decl",
+   "claim": "Outputs holds the execution order over the components",
+   "evidence": "src/build.jl:621"
+  },
+  {
+   "id": "S9a-154",
+   "file": "design/spec.md",
+   "line": 4988,
+   "kind": "law",
+   "claim": "the feedthrough graph is not carried",
+   "evidence": "src/build.jl:616"
+  },
+  {
+   "id": "S9a-155",
+   "file": "design/spec.md",
+   "line": 4989,
+   "kind": "mech",
+   "claim": "graph is derived from connections and stage-2 names where shown",
+   "evidence": "src/show.jl:254"
+  },
+  {
+   "id": "S9a-156",
+   "file": "design/spec.md",
+   "line": 4991,
+   "kind": "decl",
+   "claim": "Events holds the event tables",
+   "evidence": "src/build.jl:662"
+  },
+  {
+   "id": "S9a-157",
+   "file": "design/spec.md",
+   "line": 4992,
+   "kind": "decl",
+   "claim": "Events holds per component event names, policies and bundle names",
+   "evidence": "probe.jl:127"
+  },
+  {
+   "id": "S9a-158",
+   "file": "design/spec.md",
+   "line": 4997,
+   "kind": "mech",
+   "claim": "workspace is allocated at Float64",
+   "evidence": "src/build.jl:1008"
+  },
+  {
+   "id": "S9a-159",
+   "file": "design/spec.md",
+   "line": 4997,
+   "kind": "decl",
+   "claim": "workspace is component-declared mutable scratch arriving as the ws field",
+   "evidence": "src/build.jl:1008"
+  },
+  {
+   "id": "S9a-160",
+   "file": "design/spec.md",
+   "line": 5000,
+   "kind": "mech",
+   "claim": "stage-1 probes run at Float64 on x_init, s_init and m_init values",
+   "evidence": "src/build.jl:1010"
+  },
+  {
+   "id": "S9a-161",
+   "file": "design/spec.md",
+   "line": 5001,
+   "kind": "law",
+   "claim": "stage-1 probes are well-founded, the stage takes no inputs",
+   "evidence": "src/build.jl:76"
+  },
+  {
+   "id": "S9a-162",
+   "file": "design/spec.md",
+   "line": 5003,
+   "kind": "mech",
+   "claim": "ports are classified over y_types and the stage-1 return",
+   "evidence": "src/build.jl:197"
+  },
+  {
+   "id": "S9a-163",
+   "file": "design/spec.md",
+   "line": 5003,
+   "kind": "law",
+   "claim": "classification has two classes, stage-1 names and stage-2 remainder",
+   "evidence": "src/build.jl:202"
+  },
+  {
+   "id": "S9a-164",
+   "file": "design/spec.md",
+   "line": 5005,
+   "kind": "mech",
+   "claim": "feedthrough graph is built from wires carrying stage-2 ports",
+   "evidence": "src/build.jl:206"
+  },
+  {
+   "id": "S9a-165",
+   "file": "design/spec.md",
+   "line": 5005,
+   "kind": "mech",
+   "claim": "a topological order follows",
+   "evidence": "src/build.jl:222"
+  },
+  {
+   "id": "S9a-166",
+   "file": "design/spec.md",
+   "line": 5006,
+   "kind": "law",
+   "claim": "5.5 cycle rejection applies (AlgebraicCycle)",
+   "evidence": "probe.jl:63"
+  },
+  {
+   "id": "S9a-167",
+   "file": "design/spec.md",
+   "line": 5007,
+   "kind": "law",
+   "claim": "event declarations are read last, after the stage probes",
+   "evidence": "src/build.jl:1016"
+  },
+  {
+   "id": "S9a-168",
+   "file": "design/spec.md",
+   "line": 5008,
+   "kind": "mech",
+   "claim": "the event declarations become Events",
+   "evidence": "src/build.jl:1263"
+  },
+  {
+   "id": "S9a-169",
+   "file": "design/spec.md",
+   "line": 5011,
+   "kind": "law",
+   "claim": "Outputs and Events hold names only",
+   "evidence": "src/build.jl:576"
+  },
+  {
+   "id": "S9a-170",
+   "file": "design/spec.md",
+   "line": 5012,
+   "kind": "law",
+   "claim": "Outputs and Events are T-independent",
+   "evidence": "src/build.jl:616"
+  },
+  {
+   "id": "S9a-171",
+   "file": "design/spec.md",
+   "line": 5012,
+   "kind": "law",
+   "claim": "Outputs and Events are branch-protected by the branch-shape rule",
+   "evidence": "src/store.jl:102"
+  },
+  {
+   "id": "S9a-172",
+   "file": "design/spec.md",
+   "line": 5013,
+   "kind": "decl",
+   "claim": "branch-shape rule: a stage returns one NamedTuple shape on every branch",
+   "evidence": "src/store.jl:102"
+  },
+  {
+   "id": "S9a-173",
+   "file": "design/spec.md",
+   "line": 5013,
+   "kind": "mech",
+   "claim": "the always-on check also protects them",
+   "evidence": "src/store.jl:102"
+  },
+  {
+   "id": "S9a-174",
+   "file": "design/spec.md",
+   "line": 5015,
+   "kind": "law",
+   "claim": "nominal evaluation fixes the structure and Float64 typing at once",
+   "evidence": "src/build.jl:1016"
+  },
+  {
+   "id": "S9a-175",
+   "file": "design/spec.md",
+   "line": 5017,
+   "kind": "mech",
+   "claim": "nominal activation is a product beside Outputs and Events",
+   "evidence": "src/build.jl:1016"
+  },
+  {
+   "id": "S9a-176",
+   "file": "design/spec.md",
+   "line": 5018,
+   "kind": "mech",
+   "claim": "activation is assembled from the same probe chain, never a separate pass",
+   "evidence": "src/build.jl:1013"
+  },
+  {
+   "id": "S9a-177",
+   "file": "design/spec.md",
+   "line": 5023,
+   "kind": "mech",
+   "claim": "activation at T takes Structure, Outputs and the nominal activation",
+   "evidence": "src/build.jl:1030"
+  },
+  {
+   "id": "S9a-178",
+   "file": "design/spec.md",
+   "line": 5023,
+   "kind": "mech",
+   "claim": "it completes an Activation{T}",
+   "evidence": "src/build.jl:1040"
+  },
+  {
+   "id": "S9a-179",
+   "file": "design/spec.md",
+   "line": 5025,
+   "kind": "mech",
+   "claim": "the step retypes the cells and the walked state type at T",
+   "evidence": "src/build.jl:1032"
+  },
+  {
+   "id": "S9a-180",
+   "file": "design/spec.md",
+   "line": 5026,
+   "kind": "mech",
+   "claim": "the step lays out the buffers",
+   "evidence": "src/build.jl:1037"
+  },
+  {
+   "id": "S9a-181",
+   "file": "design/spec.md",
+   "line": 5027,
+   "kind": "mech",
+   "claim": "the probe chain runs in topological order",
+   "evidence": "src/build.jl:1038"
+  },
+  {
+   "id": "S9a-182",
+   "file": "design/spec.md",
+   "line": 5028,
+   "kind": "mech",
+   "claim": "observed is compared against declared",
+   "evidence": "src/build.jl:1136"
+  },
+  {
+   "id": "S9a-183",
+   "file": "design/spec.md",
+   "line": 5030,
+   "kind": "mech",
+   "claim": "the nominal evaluation produces the Float64 activation at build",
+   "evidence": "src/build.jl:796"
+  },
+  {
+   "id": "S9a-184",
+   "file": "design/spec.md",
+   "line": 5031,
+   "kind": "mech",
+   "claim": "every other activation re-runs only this step",
+   "evidence": "probe3.jl:24"
+  },
+  {
+   "id": "S9a-185",
+   "file": "design/spec.md",
+   "line": 5035,
+   "kind": "mech",
+   "claim": "the three steps leave their products on a Build",
+   "evidence": "src/build.jl:796"
+  },
+  {
+   "id": "S9a-186",
+   "file": "design/spec.md",
+   "line": 5037,
+   "kind": "decl",
+   "claim": "Deployment is the scalar-free artifact the grid parameters fix",
+   "evidence": "src/deployment.jl:539"
+  },
+  {
+   "id": "S9a-187",
+   "file": "design/spec.md",
+   "line": 5038,
+   "kind": "decl",
+   "claim": "Deployment carries the Schedule",
+   "evidence": "src/deployment.jl:550"
+  },
+  {
+   "id": "S9a-188",
+   "file": "design/spec.md",
+   "line": 5039,
+   "kind": "decl",
+   "claim": "Schedule is the typed per-component (D0, Phi0, dt) tick table",
+   "evidence": "src/deployment.jl:84"
+  },
+  {
+   "id": "S9a-189",
+   "file": "design/spec.md",
+   "line": 5040,
+   "kind": "decl",
+   "claim": "Model is the deployment and its executor at one scalar",
+   "evidence": "src/model.jl:95"
+  },
+  {
+   "id": "S9a-190",
+   "file": "design/spec.md",
+   "line": 5040,
+   "kind": "mech",
+   "claim": "Model materializes a Deployment at a scalar type",
+   "evidence": "src/model.jl:111"
+  },
+  {
+   "id": "S9a-191",
+   "file": "design/spec.md",
+   "line": 5041,
+   "kind": "mech",
+   "claim": "Simulation runs a Model{Float64}",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9a-192",
+   "file": "design/spec.md",
+   "line": 5048,
+   "kind": "decl",
+   "claim": "build(world) returns a Build and is a standalone entry point",
+   "evidence": "src/build.jl:767"
+  },
+  {
+   "id": "S9a-193",
+   "file": "design/spec.md",
+   "line": 5049,
+   "kind": "mech",
+   "claim": "attach! validates device bindings against the Build",
+   "evidence": "src/sim.jl:2526"
+  },
+  {
+   "id": "S9a-194",
+   "file": "design/spec.md",
+   "line": 5053,
+   "kind": "decl",
+   "claim": "a Build is structure, outputs, events, activations and warnings",
+   "evidence": "src/build.jl:703"
+  },
+  {
+   "id": "S9a-195",
+   "file": "design/spec.md",
+   "line": 5055,
+   "kind": "mech",
+   "claim": "first three are products of the structure step and nominal evaluation",
+   "evidence": "src/build.jl:795"
+  },
+  {
+   "id": "S9a-196",
+   "file": "design/spec.md",
+   "line": 5057,
+   "kind": "law",
+   "claim": "deploying and materializing are two steps",
+   "evidence": "src/model.jl:111"
+  },
+  {
+   "id": "S9a-197",
+   "file": "design/spec.md",
+   "line": 5057,
+   "kind": "decl",
+   "claim": "there are three sugar forms over them",
+   "evidence": "src/sim.jl:393"
+  },
+  {
+   "id": "S9a-198",
+   "file": "design/spec.md",
+   "line": 5059,
+   "kind": "mech",
+   "claim": "Deployment constructor is the first step",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S9a-199",
+   "file": "design/spec.md",
+   "line": 5059,
+   "kind": "mech",
+   "claim": "Model constructor is the materialization step",
+   "evidence": "src/model.jl:111"
+  },
+  {
+   "id": "S9a-200",
+   "file": "design/spec.md",
+   "line": 5060,
+   "kind": "mech",
+   "claim": "Simulation constructor runs the Model",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9a-201",
+   "file": "design/spec.md",
+   "line": 5060,
+   "kind": "decl",
+   "claim": "the three sugar forms are Simulation's",
+   "evidence": "src/sim.jl:393"
+  },
+  {
+   "id": "S9a-202",
+   "file": "design/spec.md",
+   "line": 5063,
+   "kind": "decl",
+   "claim": "Model(deployment, T) materializes a deployment at a scalar type",
+   "evidence": "probe.jl:38"
+  },
+  {
+   "id": "S9a-203",
+   "file": "design/spec.md",
+   "line": 5064,
+   "kind": "decl",
+   "claim": "Simulation(model) runs a Model{Float64}",
+   "evidence": "probe.jl:39"
+  },
+  {
+   "id": "S9a-204",
+   "file": "design/spec.md",
+   "line": 5065,
+   "kind": "decl",
+   "claim": "Simulation(deployment; kw...) materializes a Float64 model and runs it",
+   "evidence": "probe.jl:40"
+  },
+  {
+   "id": "S9a-205",
+   "file": "design/spec.md",
+   "line": 5066,
+   "kind": "decl",
+   "claim": "Simulation(build; kw...) composes the steps through a Float64 model",
+   "evidence": "probe.jl:41"
+  },
+  {
+   "id": "S9a-206",
+   "file": "design/spec.md",
+   "line": 5067,
+   "kind": "decl",
+   "claim": "Simulation(world; kw...) calls build first",
+   "evidence": "probe.jl:42"
+  },
+  {
+   "id": "S9a-207",
+   "file": "design/spec.md",
+   "line": 5070,
+   "kind": "law",
+   "claim": "a Simulation runs a Model{Float64} and nothing else",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9a-208",
+   "file": "design/spec.md",
+   "line": 5072,
+   "kind": "law",
+   "claim": "the constraint is a type on the one constructor that owns a loop",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9a-209",
+   "file": "design/spec.md",
+   "line": 5073,
+   "kind": "mech",
+   "claim": "a Model at another scalar is a service's scratch",
+   "evidence": "src/model.jl:143"
+  },
+  {
+   "id": "S9a-210",
+   "file": "design/spec.md",
+   "line": 5073,
+   "kind": "mech",
+   "claim": "a scratch model is written to, evaluated and stepped frame by frame",
+   "evidence": "src/frame.jl:69"
+  },
+  {
+   "id": "S9a-211",
+   "file": "design/spec.md",
+   "line": 5074,
+   "kind": "law",
+   "claim": "a scratch model has no ticks and no events",
+   "evidence": "src/frame.jl:21"
+  },
+  {
+   "id": "S9a-212",
+   "file": "design/spec.md",
+   "line": 5076,
+   "kind": "law",
+   "claim": "a Simulation claims its Model",
+   "evidence": "src/sim.jl:376"
+  },
+  {
+   "id": "S9a-213",
+   "file": "design/spec.md",
+   "line": 5077,
+   "kind": "mech",
+   "claim": "the constructor claims the model once",
+   "evidence": "src/sim.jl:376"
+  },
+  {
+   "id": "S9a-214",
+   "file": "design/spec.md",
+   "line": 5077,
+   "kind": "law",
+   "claim": "an already claimed model is refused as ArgumentInvalid",
+   "evidence": "probe.jl:43"
+  },
+  {
+   "id": "S9a-215",
+   "file": "design/spec.md",
+   "line": 5078,
+   "kind": "law",
+   "claim": "a model whose status is not :built is refused as ArgumentInvalid",
+   "evidence": "src/sim.jl:372"
+  },
+  {
+   "id": "S9a-216",
+   "file": "design/spec.md",
+   "line": 5078,
+   "kind": "law",
+   "claim": "refusal comes before anything is allocated",
+   "evidence": "src/sim.jl:376"
+  },
+  {
+   "id": "S9a-217",
+   "file": "design/spec.md",
+   "line": 5079,
+   "kind": "law",
+   "claim": "a simulation never shares its model",
+   "evidence": "src/sim.jl:376"
+  },
+  {
+   "id": "S9a-218",
+   "file": "design/spec.md",
+   "line": 5080,
+   "kind": "law",
+   "claim": "on a claimed model a direct init! is refused as ArgumentInvalid",
+   "evidence": "probe.jl:44"
+  },
+  {
+   "id": "S9a-219",
+   "file": "design/spec.md",
+   "line": 5080,
+   "kind": "law",
+   "claim": "on a claimed model a direct frame! is refused",
+   "evidence": "src/frame.jl:80"
+  },
+  {
+   "id": "S9a-220",
+   "file": "design/spec.md",
+   "line": 5080,
+   "kind": "law",
+   "claim": "on a claimed model a direct apply! is refused",
+   "evidence": "src/model.jl:493"
+  },
+  {
+   "id": "S9a-221",
+   "file": "design/spec.md",
+   "line": 5081,
+   "kind": "law",
+   "claim": "on a claimed model the restore door is refused",
+   "evidence": "src/model.jl:1309"
+  },
+  {
+   "id": "S9a-222",
+   "file": "design/spec.md",
+   "line": 5081,
+   "kind": "law",
+   "claim": "a state prepared on a standalone model enters through a restore door",
+   "evidence": "src/model.jl:1309"
+  },
+  {
+   "id": "S9a-223",
+   "file": "design/spec.md",
+   "line": 5081,
+   "kind": "decl",
+   "claim": "a door is an entry point that builds a run",
+   "evidence": "src/model.jl:1309"
+  },
+  {
+   "id": "S9a-224",
+   "file": "design/spec.md",
+   "line": 5083,
+   "kind": "law",
+   "claim": "a prepared state never enters through the constructor",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9a-225",
+   "file": "design/spec.md",
+   "line": 5085,
+   "kind": "law",
+   "claim": "the artifact deployed is the very build that was checked",
+   "evidence": "probe.jl:50"
+  },
+  {
+   "id": "S9a-226",
+   "file": "design/spec.md",
+   "line": 5091,
+   "kind": "law",
+   "claim": "the Build is immutable apart from its activation dictionary",
+   "evidence": "src/build.jl:703"
+  },
+  {
+   "id": "S9a-227",
+   "file": "design/spec.md",
+   "line": 5092,
+   "kind": "law",
+   "claim": "a Build may back any number of Deployments and Simulations concurrently",
+   "evidence": "probe.jl:50"
+  },
+  {
+   "id": "S9a-228",
+   "file": "design/spec.md",
+   "line": 5093,
+   "kind": "law",
+   "claim": "insertion into the activation dictionary is torn-state-free",
+   "evidence": "src/build.jl:969"
+  },
+  {
+   "id": "S9a-229",
+   "file": "design/spec.md",
+   "line": 5096,
+   "kind": "mech",
+   "claim": "Build is the inspectable derived contract of the instantiation",
+   "evidence": "src/build.jl:703"
+  },
+  {
+   "id": "S9a-230",
+   "file": "design/spec.md",
+   "line": 5097,
+   "kind": "mech",
+   "claim": "parts hold the wire list per assembly and as declared",
+   "evidence": "src/structure.jl:197"
+  },
+  {
+   "id": "S9a-231",
+   "file": "design/spec.md",
+   "line": 5099,
+   "kind": "mech",
+   "claim": "parts hold the root inputs and the execution order as plain data",
+   "evidence": "src/structure.jl:247"
+  },
+  {
+   "id": "S9a-232",
+   "file": "design/spec.md",
+   "line": 5100,
+   "kind": "mech",
+   "claim": "wire list and root inputs sit on Structure",
+   "evidence": "src/structure.jl:243"
+  },
+  {
+   "id": "S9a-233",
+   "file": "design/spec.md",
+   "line": 5102,
+   "kind": "mech",
+   "claim": "execution order sits on Outputs",
+   "evidence": "src/build.jl:616"
+  },
+  {
+   "id": "S9a-234",
+   "file": "design/spec.md",
+   "line": 5104,
+   "kind": "mech",
+   "claim": "paths, names and rationals are inspectable as fields",
+   "evidence": "src/structure.jl:243"
+  },
+  {
+   "id": "S9a-235",
+   "file": "design/spec.md",
+   "line": 5105,
+   "kind": "mech",
+   "claim": "any REPL prints the fields without a method of their own",
+   "evidence": "src/show.jl:66"
+  },
+  {
+   "id": "S9a-236",
+   "file": "design/spec.md",
+   "line": 5109,
+   "kind": "mech",
+   "claim": "the activation's cell layout is the home for address facts",
+   "evidence": "src/build.jl:484"
+  },
+  {
+   "id": "S9a-237",
+   "file": "design/spec.md",
+   "line": 5114,
+   "kind": "law",
+   "claim": "face table is two-sided and Structure answers it as a function over wires",
+   "evidence": "src/structure.jl:1051"
+  },
+  {
+   "id": "S9a-238",
+   "file": "design/spec.md",
+   "line": 5115,
+   "kind": "mech",
+   "claim": "an input face's resolution runs producer-ward to the one feed its consumers share",
+   "evidence": "src/structure.jl:1051"
+  },
+  {
+   "id": "S9a-239",
+   "file": "design/spec.md",
+   "line": 5117,
+   "kind": "mech",
+   "claim": "the feed is a root input or a producer inside the model",
+   "evidence": "probe.jl:120"
+  },
+  {
+   "id": "S9a-240",
+   "file": "design/spec.md",
+   "line": 5117,
+   "kind": "mech",
+   "claim": "an output face's resolution runs down to the producing terminal",
+   "evidence": "src/structure.jl:1082"
+  },
+  {
+   "id": "S9a-241",
+   "file": "design/spec.md",
+   "line": 5118,
+   "kind": "law",
+   "claim": "the record is total at every level",
+   "evidence": "src/structure.jl:1051"
+  },
+  {
+   "id": "S9a-242",
+   "file": "design/spec.md",
+   "line": 5120,
+   "kind": "law",
+   "claim": "no resolved table is stored on the artifact",
+   "evidence": "src/structure.jl:243"
+  },
+  {
+   "id": "S9a-243",
+   "file": "design/spec.md",
+   "line": 5121,
+   "kind": "mech",
+   "claim": "the cell layout compiles the addresses it needs once",
+   "evidence": "src/build.jl:484"
+  },
+  {
+   "id": "S9a-244",
+   "file": "design/spec.md",
+   "line": 5122,
+   "kind": "mech",
+   "claim": "every other reader calls the function",
+   "evidence": "src/readers.jl:915"
+  },
+  {
+   "id": "S9a-245",
+   "file": "design/spec.md",
+   "line": 5122,
+   "kind": "mech",
+   "claim": "a fragment's u payload resolves against the input side",
+   "evidence": "src/conditions.jl:335"
+  },
+  {
+   "id": "S9a-246",
+   "file": "design/spec.md",
+   "line": 5124,
+   "kind": "mech",
+   "claim": "port views read the input side",
+   "evidence": "src/devices.jl:543"
+  },
+  {
+   "id": "S9a-247",
+   "file": "design/spec.md",
+   "line": 5125,
+   "kind": "mech",
+   "claim": "mounting reads the input side",
+   "evidence": "src/readers.jl:869"
+  },
+  {
+   "id": "S9a-248",
+   "file": "design/spec.md",
+   "line": 5127,
+   "kind": "law",
+   "claim": "Structure's timing tables are anchor-relative",
+   "evidence": "src/structure.jl:158"
+  },
+  {
+   "id": "S9a-249",
+   "file": "design/spec.md",
+   "line": 5127,
+   "kind": "mech",
+   "claim": "the Deployment binds the timing tables",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S9a-250",
+   "file": "design/spec.md",
+   "line": 5129,
+   "kind": "decl",
+   "claim": "the structure step gives two printable tables",
+   "evidence": "src/show.jl:103"
+  },
+  {
+   "id": "S9a-251",
+   "file": "design/spec.md",
+   "line": 5131,
+   "kind": "decl",
+   "claim": "anchor table holds exact (dt, tau) with scope path and key",
+   "evidence": "src/show.jl:121"
+  },
+  {
+   "id": "S9a-252",
+   "file": "design/spec.md",
+   "line": 5133,
+   "kind": "decl",
+   "claim": "component table holds (a, Da, Phi_a) triples with the rate chain",
+   "evidence": "src/show.jl:107"
+  },
+  {
+   "id": "S9a-253",
+   "file": "design/spec.md",
+   "line": 5135,
+   "kind": "decl",
+   "claim": "A0 takes its own anchor-table row",
+   "evidence": "probe.jl:29"
+  },
+  {
+   "id": "S9a-254",
+   "file": "design/spec.md",
+   "line": 5136,
+   "kind": "decl",
+   "claim": "A0's scope and key columns hold a dash",
+   "evidence": "src/show.jl:122"
+  },
+  {
+   "id": "S9a-255",
+   "file": "design/spec.md",
+   "line": 5137,
+   "kind": "mech",
+   "claim": "dt(A0) is symbolic until dt_base binds",
+   "evidence": "src/show.jl:122"
+  },
+  {
+   "id": "S9a-256",
+   "file": "design/spec.md",
+   "line": 5138,
+   "kind": "law",
+   "claim": "a fully relative model has A0 as its only anchor",
+   "evidence": "probe.jl:29"
+  },
+  {
+   "id": "S9a-257",
+   "file": "design/spec.md",
+   "line": 5139,
+   "kind": "law",
+   "claim": "each triple's (Da, Phi_a) is its final (D0, Phi0) in that case",
+   "evidence": "probe.jl:104"
+  },
+  {
+   "id": "S9a-258",
+   "file": "design/spec.md",
+   "line": 5140,
+   "kind": "law",
+   "claim": "with anchors, final divisors cannot live in the Structure",
+   "evidence": "src/structure.jl:158"
+  },
+  {
+   "id": "S9a-259",
+   "file": "design/spec.md",
+   "line": 5141,
+   "kind": "law",
+   "claim": "final divisors do not exist until dt_base binds",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S9a-260",
+   "file": "design/spec.md",
+   "line": 5142,
+   "kind": "law",
+   "claim": "the same Build backs many Deployments with different grid parameters",
+   "evidence": "probe.jl:50"
+  }
+ ],
+ "counts": {
+  "law": 125,
+  "mech": 90,
+  "decl": 45,
+  "ptr": 8,
+  "why": 17,
+  "ex": 0
+ }
+}

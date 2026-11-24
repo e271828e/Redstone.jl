@@ -1,0 +1,220 @@
+{
+ "judgments": [
+  {
+   "id": "L9b-001",
+   "conforms": true,
+   "evidence": "src/sim.jl:285-290 Simulation{E} holds model, plane, control, run; probe P1 ((:model,:plane,:control,:run), mutable). The 2026-10-09 annotation at log.md:10769 gives four fields, matching."
+  },
+  {
+   "id": "L9b-008",
+   "conforms": false,
+   "evidence": "src/deployment.jl:539-553 Deployment has no D, Φ or Δt vectors (probe P2). deployment.jl:91-95 `_gates` derives the per-component (D₀, Φ₀, Δt) from the schedule rows at compile. D-261 (log.md:11071-11073, 11085) supersedes D-254's vectors clause, and D-256 carries no annotation for it.",
+   "class": "drift",
+   "fix": "Annotation (D-261): the deployment holds the `Schedule`'s rows, not the per-component `D`, `Φ`, `Δt` vectors; the executor derives those from the rows at `compile`.",
+   "clear": true
+  },
+  {
+   "id": "L9b-012",
+   "conforms": false,
+   "evidence": "src/roster.jl:332-333 DataPlane holds `loop_diag` and `loop_account` (probe P3). The cell and account do sit on the plane, but the field is now `loop_account`. Commit 1a0eac36 'Name the short fields the src inventory left' renamed `loop_acct`.",
+   "class": "drift",
+   "fix": "- To the periphery's own types: `join_timeout` into `Control`; `loop_diag`, `loop_account` and `published` into the plane.",
+   "clear": true
+  },
+  {
+   "id": "L9b-013",
+   "conforms": true,
+   "evidence": "src/roster.jl:334 `published::Published` is a DataPlane field (probe P3)."
+  },
+  {
+   "id": "L9b-014",
+   "conforms": false,
+   "evidence": "src/sim.jl:228-235 Run holds log, trace, feed, termination, frame, boundary and no t_end, stop faces or policy (probe P4). sim.jl:141-144 StopPolicy is each advance's argument. D-260 (log.md D-260 bullet 'The stop policy is the advance's argument') and D-261 record the move, and D-256 carries no annotation for it.",
+   "class": "drift",
+   "fix": "Annotation (D-260, D-261, D-316): `t_end` and the stop requests do not go to the run. The stop policy is each advance's argument, and its one lasting home is the termination record; the run keeps `log` and `trace`.",
+   "clear": true
+  },
+  {
+   "id": "L9b-018",
+   "conforms": false,
+   "evidence": "src/sim.jl:357 `Simulation(model; join_timeout)`, sim.jl:392-395 forms take no recording keywords; probe P7: `Simulation(dep; trace=false)` throws MethodError. sim.jl:834 `init!(sim, ...; t0, trace = true, ...)` and overlay!/restore! take them. D-261 (log.md:11082-11086) supersedes this D-256 clause, and D-317 removed `Simulation(deployment, T)`.",
+   "class": "drift",
+   "fix": "`join_timeout` is a keyword of `Simulation` and its convenience forms. `trace`, `log`, `log_every` and `log_max` are keywords of the doors that open a run: `init!`, `overlay!`, `restore!` and `replay!`.",
+   "clear": true
+  },
+  {
+   "id": "L9b-025",
+   "conforms": true,
+   "evidence": "src/show.jl:142-149 prints 'Outputs: execution order over N components' with stage 1 and stage 2 columns, the two port classes of D-252; probe P15."
+  },
+  {
+   "id": "L9b-035",
+   "conforms": true,
+   "evidence": "src/roster.jl:441 `_install_writers!(plane, store, trc)` takes the store and trace as arguments, and DataPlane (roster.jl:326-338) holds no store or trace field."
+  },
+  {
+   "id": "L9b-045",
+   "conforms": true,
+   "evidence": "src/build.jl:565-569 Activation{T} keeps parallel columns `decls`, `products`, `layout` (probe P6)."
+  },
+  {
+   "id": "L9b-049",
+   "conforms": false,
+   "evidence": "src/frame.jl:69 `frame!(...)` returns a Bool (probe P14: Bool). src/sim.jl:2116-2119 the loop takes `hit = run_frame!(...)` as a Bool and re-reads the requester with `_stop_hit`. D-317 (log.md:14598-14599) supersedes D-261's 'face or nothing' clause, and D-261 carries only D-316's annotation.",
+   "class": "drift",
+   "fix": "Annotation (D-317): `frame!` returns a `Bool`, `true` when `settled!` found an honoured stop request. The loop then reads the requester again off the published snapshot. The execution cursor keeps its dispatch fields alone.",
+   "clear": true
+  },
+  {
+   "id": "L9b-056",
+   "conforms": true,
+   "evidence": "src/sim.jl:3015-3020 reads the lifecycle and throws MissingInit at :built before testing `trc === nothing`; probe P8: a built sim with no trace throws MissingInit, not ArgumentInvalid."
+  },
+  {
+   "id": "L9b-066",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:18-20 Fingerprint keeps `root_faces::Vector{Symbol}`; model.jl:1137 fills it from the layout's root inputs."
+  },
+  {
+   "id": "L9b-076",
+   "conforms": true,
+   "evidence": "src/model.jl:141-144 `_scratch` builds a fresh Model from the same deployment and cached activation; trim.jl:596,622 and linearize.jl:309,323 instantiate one per call."
+  },
+  {
+   "id": "L9b-086",
+   "conforms": true,
+   "evidence": "src/executor.jl:529-535 `mutable struct Chunk`, held by reference per chunk in PhaseBody tuples (executor.jl:563); executor.jl:302 `mutable struct EventSet`, held by reference by Executor.events (build.jl:1423)."
+  },
+  {
+   "id": "L9b-096",
+   "conforms": true,
+   "evidence": "src/structure.jl:243-250 Structure holds components, anchors, scopes, root_inputs, root_types, levels and no resolved table (probe P6)."
+  },
+  {
+   "id": "L9b-106",
+   "conforms": true,
+   "evidence": "src/structure.jl:1051 `terminal_producer(structure::Structure, face::Tuple{String,Symbol})`; probe P16 resolves (\"plant/spin\", :u) to (\"plant/loop/flow\", :y) and (\"plant/summer\", :u) to the root input (\"\", :u)."
+  },
+  {
+   "id": "L9b-116",
+   "conforms": true,
+   "evidence": "src/sim.jl:285-290 `mutable struct Simulation{E}` with four fields; probe P1."
+  },
+  {
+   "id": "L9b-126",
+   "conforms": true,
+   "evidence": "src/build.jl:707 Build caches activations only. src/model.jl:141-144 and src/sim.jl:394 materialize a new executor through Model(...) on each use, with no executor cache anywhere."
+  },
+  {
+   "id": "L9b-136",
+   "conforms": true,
+   "evidence": "src/model.jl:318-339 `init!(model, plan; t0, hooks::FrameHooks = NoHooks())` runs boundary_zero! and then `settled!(hooks)`."
+  },
+  {
+   "id": "L9b-146",
+   "conforms": true,
+   "evidence": "src/frame.jl:91-96 the catch wraps every throw and writes :inconsistent; probe P13: InterruptException from frame_top! arrives as StepError{InterruptException} with host :loop and status :inconsistent, as the D-441 annotation (log.md:14687-14690) states."
+  },
+  {
+   "id": "L9b-156",
+   "conforms": true,
+   "evidence": "src/sim.jl:365-377 collects :not_built and :claimed before the CAS and before Run/DataPlane/Control are built; probe P11a/P11b (:claimed, :not_built) and P11c (refused model left unclaimed)."
+  },
+  {
+   "id": "L9b-166",
+   "conforms": true,
+   "evidence": "src/model.jl:1178 checkpoint(model), model.jl:1307 restore!(model, ...), trim.jl:560 trim!(model::Model{Float64}, ...), linearize.jl:266 linearize(model::Model{Float64}, ...); sim.jl:892-894, 1123-1134, 1159-1173 gate on lifecycle and compose them."
+  },
+  {
+   "id": "L9b-167",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:74-85 ModelState has ten fields, `stepper` among them; probe P5 count 10. D-452 (log.md:19091, bullet 'A ModelState holds the stepper's carried state') records the addition, and D-319 carries no annotation for it.",
+   "class": "drift",
+   "fix": "`ModelState{T}` holds every field the former `Checkpoint{T}` held but the two counters, and the stepper's carried state ([D-452]): ten in all, `x`, `s`, `m`, `table`, `prior`, `stepper`, `t`, `t₀`, `deployment` and `layout`.",
+   "clear": true
+  },
+  {
+   "id": "L9b-177",
+   "conforms": true,
+   "evidence": "src/sim.jl:1070-1073 `_check_checkpoint!(diags, sim.model, cp.state)` then `_check_grid!(diags, cp.state)` into one throw; probe P20b: an off-grid cp.state throws CheckpointMidFrame."
+  },
+  {
+   "id": "L9b-183",
+   "conforms": false,
+   "evidence": "src/trim.jl:560-561 `trim!(model::Model{Float64}, problem::TrimProblem; baseline, t0 = 0, backend = LevenbergMarquardt())`: the default is the integer 0, not 0.0. The exact origin came with D-457 (log.md:19440) and commit c58ce63d.",
+   "class": "drift",
+   "fix": "`trim!(model, problem; baseline, t0 = 0, backend = LevenbergMarquardt())`",
+   "clear": true
+  },
+  {
+   "id": "L9b-188",
+   "conforms": true,
+   "evidence": "src/sim.jl:1123-1134 trim!(sim) gates on running/errored and calls `_solve_problem(sim.model, ...)` and commits via init!(sim); sim.jl:1159-1173 linearize(sim) gates and calls `_linearize(sim.model, ...)`, its default point from checkpoint(sim)."
+  },
+  {
+   "id": "L9b-193",
+   "conforms": false,
+   "evidence": "src/model.jl:530 `_grid_time`, model.jl:567-576 and 600-605 `_frame_slack`, `_frames_to`, `_frame_at`, all in model.jl; probe P18. Commit 0947bce2 'Move the grid arithmetic from frame.jl to model.jl' records the move.",
+   "class": "drift",
+   "fix": "- The grid arithmetic the model layer reads, `_frame_slack`, `_frames_to` and `_frame_at`, lives in `model.jl` beside `_grid_time`.",
+   "clear": true
+  },
+  {
+   "id": "L9b-199",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:10 `DESCRIPTOR_FORMAT = (major = 1, minor = 0)`; descriptor.jl:48-52 envelope with format_version, redstone_version, kind and the body; probe P12."
+  },
+  {
+   "id": "L9b-201",
+   "conforms": false,
+   "evidence": "src/descriptor.jl:46 `descriptor(err::DiagnosticError) = _envelope(\"failure\", ...)`: the failure kind is live, not reserved; probe P21b kind \"failure\". D-434 (log.md:17807) records it. D-432's annotation at log.md:17666 covers the carrier field but not the kind.",
+   "class": "drift",
+   "fix": "The kinds are `build`, `deployment` and `failure` ([D-434]).",
+   "clear": true
+  },
+  {
+   "id": "L9b-210",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:356-358 `_qualified_name` is module plus unparameterized name; descriptor.jl:420-436 `_type_rows` emits one row per qualified base name, deduplicated (probe P12b)."
+  },
+  {
+   "id": "L9b-220",
+   "conforms": true,
+   "evidence": "src/build.jl:803-811: only the build door's catch rewraps with `structure`. src/diagnostics.jl:115-120 defaults it to nothing everywhere else."
+  },
+  {
+   "id": "L9b-230",
+   "conforms": true,
+   "evidence": "src/deployment.jl:541 `Δt_frame::Rational{Int}` on Deployment; probe P9: Deployment(build) without it throws DeploymentInvalid :missing."
+  },
+  {
+   "id": "L9b-235",
+   "conforms": false,
+   "evidence": "No `:not_harmonic` exists in src/. Probe P10/P10b: h_max = 3//100 and 7//100 at Δt_frame = 1//10 deploy without refusal. src/deployment.jl:109-116 says the lattices stand in no required ratio (D-449). D-443's 2026-11-11 annotation (log.md:18636-18639) still says ':not_harmonic relates the step to the frame only', which D-449 later removed (log.md:18690-18695).",
+   "class": "drift",
+   "fix": "Annotation (D-449): the fourth bullet is superseded whole. Nothing relates the step bound `h_max` to `Δt_frame` or `Δt_base`, and no `:not_harmonic` refusal exists; a fixed-step method takes each span between two mandatory instants in the fewest equal steps `h_max` allows.",
+   "clear": true
+  },
+  {
+   "id": "L9b-241",
+   "conforms": true,
+   "evidence": "src/structure.jl:958-1010 `_check_trial_binding` pushes RatesViolation :range on the composing link (anchor_link or _composing_link); test/test_discrete.jl:709-743 pins it."
+  },
+  {
+   "id": "L9b-251",
+   "conforms": true,
+   "evidence": "src/deployment.jl:539-553 Deployment has no grid field; probe P2."
+  },
+  {
+   "id": "L9b-261",
+   "conforms": true,
+   "evidence": "src/build.jl:542 `pinning_consumers(structure::Structure)` reads the Structure alone; src/descriptor.jl:181-186 builds `pinned`/`pinned_by` from it, and descriptor.jl:97-100 puts the structure section in a failure body; probe P21b: an AlgebraicCycle failure descriptor carries `structure`."
+  },
+  {
+   "id": "L9b-271",
+   "conforms": true,
+   "evidence": "src/deployment.jl:149 unit = gcd(Δt_frame, Δt_base) with discrete rows; src/show.jl:333-350 one chart column per lattice.unit; probe P19 unit 1//20 = gcd(1//10, 1//4), chart '10 columns of 1//20 s'."
+  }
+ ],
+ "notes": "Pinned worktree d7d3ddff; probe at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L9b_v/probe.jl (three runs, all lines P1-P21b printed). Read-only: no tracked file touched. Judgment calls: L9b-001 and L9b-146 count as conforming because the in-place annotation (D-317, D-441) states what the code does. L9b-012 is a name-only drift: the account moved to the plane but is named `loop_account`. L9b-235 is flagged because D-443's D-444 annotation still says `:not_harmonic` exists. L9b-183's difference is only the default literal (0 vs 0.0). Behaviour is the same, since the origin is held exact."
+}

@@ -1,0 +1,666 @@
+{
+ "rows": [
+  {
+   "id": "CV9b-008",
+   "file": "src/structure.jl",
+   "line": 158,
+   "kind": "surface",
+   "claim": "The row types ComponentEntry, Anchor, RateScope, LevelEntry, Child and the accessor `membership` are reachable as `build.structure` rows and have docstrings, but spec §9.1/§9.2, Appendix B and docs/src/api.md name none of them or their fields.",
+   "evidence": "rg for ComponentEntry|LevelEntry|RateScope|membership( over design/spec.md, docs/src/api.md and design/log.md finds nothing. api.md lists only `Structure` (line 43). §9.1's list says 'one row per assembly ... children, each with the field that contributed it' without names. Only code_map.md 1371-1383 and the Structure docstring cover them. probe:S1-S4",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add one sentence to §9.1's 'Structure carries' list naming the row types (`ComponentEntry`, `Anchor`, `RateScope`, `LevelEntry`, `Child`) and `membership`, and list them in docs/src/api.md under Build; or record in Appendix B that they are holder types public as a group."
+  },
+  {
+   "id": "CV9b-013",
+   "file": "src/structure.jl",
+   "line": 248,
+   "kind": "surface",
+   "claim": "`Structure.root_types` (the root inputs' types, as the wire pass fixed them) is a public field that spec §9.1's list of what `Structure` carries, the g-structure glossary entry, Appendix B and the log omit; only the docstring and code_map.md 1376 state it.",
+   "evidence": "rg root_types over design/spec.md, design/log.md, design/companions, docs finds nothing. §9.1 (spec.md 4955-4968) lists instances, tiers, assembly rows, root inputs, rate chains and scope triples. g-structure (spec.md 16813) repeats that list. probe:S2 prints `root_types Type[Float64]`.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add 'the root inputs and the type the wire check fixed for each' to §9.1's list and to the g-structure entry, citing D-236 and D-261."
+  },
+  {
+   "id": "CV9b-017",
+   "file": "src/structure.jl",
+   "line": 435,
+   "kind": "docstring",
+   "claim": "The `flatten_tree!` docstring says sample times are folded to `(anchor, m, c)` timings; the fold's value is `Timing = (anchor, D, Φ)`.",
+   "evidence": "src/structure.jl:135 `Timing = @NamedTuple{anchor::Int, D::Int, Φ::Int}`; spec §9.1 4890 'triple is `(a, Dₐ, Φₐ)`'; D-478 (log.md 21111) renamed the tick-count symbols. probe:S4 prints (anchor, D, Φ).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write 'sample times folded to `(anchor, D, Φ)` timings' in the docstring (src/structure.jl:427-433)."
+  },
+  {
+   "id": "CV9b-025",
+   "file": "src/structure.jl",
+   "line": 756,
+   "kind": "map",
+   "claim": "code_map.md 1409-1411 says `_check_face_names` 'refuses an empty assembly face as FaceNameIllegal :empty'; the function also refuses a `/` in a face name (:contains_slash) and a repeated name across the two boundary declarations (FaceNameCollision, site :assembly).",
+   "evidence": "src/structure.jl:756-770; probe:W face slash, W face empty, W face collision each raise the kind named. Spec §8.6 4000-4004 and Appendix C 15581-15589 state all three invariants.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write: '`_check_face_names` refuses an empty or slash-bearing assembly face as `FaceNameIllegal` (`:empty`, `:contains_slash`) and a name repeated across `input_wires` and `output_wires` as `FaceNameCollision` `:assembly`; the root check ...'"
+  },
+  {
+   "id": "CV9b-046",
+   "file": "src/model.jl",
+   "line": 95,
+   "kind": "docstring",
+   "claim": "The `Model` docstring says 'A model holds six values, each a field' and lists six; the struct has seven fields. `floor_reported` (the frame's StepFloor latch, D-460) is not listed.",
+   "evidence": "src/model.jl:95-103 fields deployment, exec, status, claimed, frame_diag, fresh, floor_reported; docstring bullets at model.jl:62-72 stop at `fresh`; probe:P1 prints all seven. code_map.md 890-893 names `floor_reported`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write 'A model holds seven values, each a field.' and add: '`floor_reported`: whether the current frame has filed its `StepFloor` warning. The frame resets it, and at most one report a frame follows.'"
+  },
+  {
+   "id": "CV9b-047",
+   "file": "src/model.jl",
+   "line": 117,
+   "kind": "surface",
+   "claim": "A `chunk_size` that is not an integer of at least 1 is refused as `ArgumentInvalid` reason `:range` on argument `:chunk_size`, collected with the call; Appendix B's chunk_size row, Appendix C's ArgumentInvalid entry and §9.7 state no refusal or reason for it.",
+   "evidence": "src/model.jl:117-119; probe:P2 and P7 raise ArgumentInvalid :range. rg chunk_size over design/spec.md hits only 10454, 15082, 15087. Appendix C 15932-15972 lists the Model call and the :scalar and :claimed reasons only. The Model docstring and code_map.md 903-905 state it.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to Appendix C's ArgumentInvalid entry: 'A `chunk_size` that is not an integer of at least 1 is `:range` on `Model`, collected with the call.' Add 'an integer ≥ 1' to Appendix B's chunk_size row."
+  },
+  {
+   "id": "CV9b-049",
+   "file": "src/model.jl",
+   "line": 129,
+   "kind": "surface",
+   "claim": "Appendix C says the scalar refusal comes 'alone and before the keywords are read', and the docstring says 'before anything is compiled'. That holds for `Model(deployment, T)` only. `Model(build, T; kw...)` and `Model(root, T; kw...)` run `Deployment(build; kw...)` (and `build(root)`) first, so a bad deployment keyword or a missing `Δt_frame` raises `DeploymentInvalid` ahead of `:scalar`, and the root form builds the whole pipeline before refusing.",
+   "evidence": "src/model.jl:129-132. probe:P4 `Model(b, Float32; Δt_frame = -1)` throws DeploymentInvalid :range; probe:P5 `Model(root, Float32)` throws DeploymentInvalid :missing; probe:P3 and P6 (deployment form) throw ArgumentInvalid :scalar alone. Spec 5159 and Appendix C 15971-15972 (D-320).",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Check `_embeds_float64(T)` first in both sugar forms (a shared helper before `Deployment(build; kw...)` and `build(root)`), so the refusal precedes the keywords and the build."
+  },
+  {
+   "id": "CV9b-064",
+   "file": "src/model.jl",
+   "line": 1262,
+   "kind": "surface",
+   "claim": "`restore!` can raise `ArgumentInvalid` reason `:range` on argument `:t0`, collected beside the mismatches, for a hand-built state whose origin fails the clock-integers check. The `restore!` docstring and Appendix C (which gives `:range` on `t0` to init!, trim! and linearize only) omit it.",
+   "evidence": "src/model.jl:1256-1265 `_check_grid!` pushes ArgumentInvalid(call = :restore!, reason = :range, argument = :t0). restore! docstring (model.jl:1275-1305) lists CheckpointMismatch, CheckpointMidFrame and :claimed. Appendix C 15965-15968. code_map.md 998-1000 states it. probe:Q2 could not reach the arm (a Float64 `t₀` field went another route), so this is read from the code.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the restore! docstring: 'A state whose origin `t₀` no door could have accepted is refused as `ArgumentInvalid` with reason `:range`.' Extend Appendix C's `:range` sentence on `t0` to name `restore!`."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV9b-001",
+   "file": "src/structure.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header cites §9.1 and D-261 for the structure step.",
+   "evidence": "spec §9.1 'The structure step' 4827; log.md 11038 D-261 'Three ownership rules for fields' (Structure complete at construction)."
+  },
+  {
+   "id": "CV9b-002",
+   "file": "src/structure.jl",
+   "line": 9,
+   "kind": "cite",
+   "claim": "§8.6 and D-172 for kind-blind faces and derived face type and tier.",
+   "evidence": "spec §8.6 3912 'Face types and tiers are derived'; log.md 6825 D-172 'Rule face kind-blind'."
+  },
+  {
+   "id": "CV9b-003",
+   "file": "src/structure.jl",
+   "line": 20,
+   "kind": "docstring",
+   "claim": "resolve_source: hops (path, face) ending at the producer, or nothing with refusal recorded.",
+   "evidence": "src/structure.jl:20-44; probe:W direction, W one-segment record UnknownPort/FaceDirectionConflict."
+  },
+  {
+   "id": "CV9b-004",
+   "file": "src/structure.jl",
+   "line": 47,
+   "kind": "docstring",
+   "claim": "resolve_dest: one route per consumer, several for a fan-out face, none on failure.",
+   "evidence": "src/structure.jl:47-70; probe:S3 shows fan-out wires; probe:W empty route."
+  },
+  {
+   "id": "CV9b-005",
+   "file": "src/structure.jl",
+   "line": 105,
+   "kind": "surface",
+   "claim": "UnknownPort and FaceDirectionConflict raise sites and payloads are covered.",
+   "evidence": "Appendix C 15498-15504, 15600-15604; spec §8.6 3939, 3966-3970, 3992-3998; src/diagnostics.jl:375, 715; probe:W direction, W one-segment."
+  },
+  {
+   "id": "CV9b-006",
+   "file": "src/structure.jl",
+   "line": 141,
+   "kind": "docstring",
+   "claim": "Anchor holds exact (Δt, τ), scope and key; anchor 0 has no row in `anchors`.",
+   "evidence": "src/structure.jl:145-150; probe:S2, S9 (anchors = [Anchor(1//2, 0//1, \"\", :b)]); show prints A₀ row itself (probe:S9)."
+  },
+  {
+   "id": "CV9b-007",
+   "file": "src/structure.jl",
+   "line": 153,
+   "kind": "docstring",
+   "claim": "ComponentEntry holds path, instance, tier, rate links and timing; producers not held.",
+   "evidence": "src/structure.jl:158-164; probe:S4."
+  },
+  {
+   "id": "CV9b-009",
+   "file": "src/structure.jl",
+   "line": 167,
+   "kind": "docstring",
+   "claim": "Child holds segment, contributing field and instance.",
+   "evidence": "src/structure.jl:171-175; probe:S3."
+  },
+  {
+   "id": "CV9b-010",
+   "file": "src/structure.jl",
+   "line": 180,
+   "kind": "docstring",
+   "claim": "membership returns :field, :container or :transparent from segment against field.",
+   "evidence": "src/structure.jl:185-187; probe:S7 prints :transparent for Group fields under `children`."
+  },
+  {
+   "id": "CV9b-011",
+   "file": "src/structure.jl",
+   "line": 190,
+   "kind": "docstring",
+   "claim": "LevelEntry wires: one-level (path, face) pairs, local then input then output, fan-out one pair per target.",
+   "evidence": "src/structure.jl:645-700; probe:S3 wire order local, input (\"\",:ref)=>(\"sum\",:a), output (\"plant\",:y)=>(\"\",:y)."
+  },
+  {
+   "id": "CV9b-012",
+   "file": "src/structure.jl",
+   "line": 225,
+   "kind": "docstring",
+   "claim": "Structure docstring: field list, pre-order levels with root first, primitive root has a childless wireless row.",
+   "evidence": "src/structure.jl:243-250; probe:S1, S3, S8."
+  },
+  {
+   "id": "CV9b-014",
+   "file": "src/structure.jl",
+   "line": 317,
+   "kind": "docstring",
+   "claim": "_check_sample_times checks wrapper values, Dₛ≥1, 0≤Φ<D, Δt>0, 0≤τ<Δt, keys naming children.",
+   "evidence": "src/structure.jl:321-351; probe:R bare int, mult, phase, period, offset, unknown."
+  },
+  {
+   "id": "CV9b-015",
+   "file": "src/structure.jl",
+   "line": 321,
+   "kind": "surface",
+   "claim": "RatesViolation reasons raised here are all listed in Appendix C.",
+   "evidence": "Appendix C 15612-15624 lists :declaration_shape, :value_vocabulary, :multiplier, :phase, :range, :period, :offset, :unknown_child, :continuous_child; probe:R lines raise each."
+  },
+  {
+   "id": "CV9b-016",
+   "file": "src/structure.jl",
+   "line": 376,
+   "kind": "docstring",
+   "claim": "_child_scope: unlisted child keeps enclosing timing; checked-Int overflow records :range once per entry.",
+   "evidence": "src/structure.jl:382-419; probe:R two-level range (one :range). Spec §9.1 4930-4940."
+  },
+  {
+   "id": "CV9b-018",
+   "file": "src/structure.jl",
+   "line": 469,
+   "kind": "surface",
+   "claim": "UnconnectedInput with the handed-up face chain is covered.",
+   "evidence": "Appendix C 15505-15508; spec §9.1 4891-4894; probe:W unconnected."
+  },
+  {
+   "id": "CV9b-019",
+   "file": "src/structure.jl",
+   "line": 529,
+   "kind": "surface",
+   "claim": "DeclarationShadowed is thrown alone before class is read, with path, names, parent module.",
+   "evidence": "spec 2619 and Appendix C 15555-15558; src/structure.jl:533-536."
+  },
+  {
+   "id": "CV9b-020",
+   "file": "src/structure.jl",
+   "line": 597,
+   "kind": "surface",
+   "claim": "A sample_times key on a continuous child is RatesViolation :continuous_child.",
+   "evidence": "Appendix C 15622-15624; probe:R continuous child."
+  },
+  {
+   "id": "CV9b-021",
+   "file": "src/structure.jl",
+   "line": 614,
+   "kind": "surface",
+   "claim": "IllegalWireEntry reasons :bare_pair, :not_a_pair, :not_a_collection, collected over three declarations.",
+   "evidence": "spec 3969-3977, Appendix C 15592-15599; src/structure.jl:727-745; probe:W string, W nonpair (a Group wraps a bare Pair, spec 3974)."
+  },
+  {
+   "id": "CV9b-022",
+   "file": "src/structure.jl",
+   "line": 650,
+   "kind": "surface",
+   "claim": "An input handed up while also wired locally is TwoProducers.",
+   "evidence": "spec 4893-4894, Appendix C 15509-15511; probe:W two producers."
+  },
+  {
+   "id": "CV9b-023",
+   "file": "src/structure.jl",
+   "line": 671,
+   "kind": "surface",
+   "claim": "An empty input_wires route is UnknownPort with endpoint :connection.",
+   "evidence": "spec 3962-3963, Appendix C 15498-15500; probe:W empty route."
+  },
+  {
+   "id": "CV9b-024",
+   "file": "src/structure.jl",
+   "line": 756,
+   "kind": "surface",
+   "claim": "FaceNameIllegal (:contains_slash, :empty) and FaceNameCollision (:assembly) are covered.",
+   "evidence": "spec 3999-4004, Appendix C 15581-15589; probe:W face slash, W face empty, W face collision."
+  },
+  {
+   "id": "CV9b-026",
+   "file": "src/structure.jl",
+   "line": 772,
+   "kind": "surface",
+   "claim": "A primitive root's shared u_types/y_types key is FaceNameCollision site :root; bare contracts collide on nothing.",
+   "evidence": "Appendix C 15585-15588; src/structure.jl:781-787; probe:W root collision."
+  },
+  {
+   "id": "CV9b-027",
+   "file": "src/structure.jl",
+   "line": 834,
+   "kind": "docstring",
+   "claim": "_grid_report: pool, leave-one-out factor, prime attribution, neighbours; held by no artifact; bind_schedule and show derive it.",
+   "evidence": "src/structure.jl:847-900; src/deployment.jl:247; src/show.jl:126, 369; probe:S9 grid block."
+  },
+  {
+   "id": "CV9b-028",
+   "file": "src/structure.jl",
+   "line": 944,
+   "kind": "docstring",
+   "claim": "_check_trial_binding: binds at gcd(pool), refuses :range once per entry, premise is a violation-free fold.",
+   "evidence": "src/structure.jl:958-1010; spec 4943-4957; probe:R two-level range."
+  },
+  {
+   "id": "CV9b-029",
+   "file": "src/structure.jl",
+   "line": 1044,
+   "kind": "docstring",
+   "claim": "terminal_producer returns the primitive port or the root input a face resolves to.",
+   "evidence": "src/structure.jl:1051-1069; probe:S5 (plant,u)->(ctl,out), (sum,a)->(\"\",ref)."
+  },
+  {
+   "id": "CV9b-030",
+   "file": "src/structure.jl",
+   "line": 1077,
+   "kind": "docstring",
+   "claim": "face_routes returns one route per consumer for an input face, one producer route for an output face.",
+   "evidence": "src/structure.jl:1082-1097; probe:S6."
+  },
+  {
+   "id": "CV9b-031",
+   "file": "src/structure.jl",
+   "line": 1106,
+   "kind": "docstring",
+   "claim": "resolve_authored walks the level rows, matches container pairs, records PathResolution :unknown_child.",
+   "evidence": "src/structure.jl:1116-1150; probe:Q17, C at deep, C at deep2."
+  },
+  {
+   "id": "CV9b-032",
+   "file": "src/structure.jl",
+   "line": 243,
+   "kind": "map",
+   "claim": "code_map: StructureDraft, scope_rates, root_types, ComponentEntry per primitive, Anchor per Absolute entry.",
+   "evidence": "src/structure.jl:243-292, 492-522; code_map.md 1367-1380."
+  },
+  {
+   "id": "CV9b-033",
+   "file": "src/structure.jl",
+   "line": 190,
+   "kind": "map",
+   "claim": "code_map: LevelEntry and Child rows, membership, terminal_producer/face_routes.",
+   "evidence": "code_map.md 1381-1383; src/structure.jl:171-205, 1051-1097."
+  },
+  {
+   "id": "CV9b-034",
+   "file": "src/structure.jl",
+   "line": 382,
+   "kind": "map",
+   "claim": "code_map: _child_scope fold in checked Int, :range once per entry.",
+   "evidence": "code_map.md 1384-1387; src/structure.jl:382-419."
+  },
+  {
+   "id": "CV9b-035",
+   "file": "src/structure.jl",
+   "line": 797,
+   "kind": "map",
+   "claim": "code_map: grid arithmetic, _grid_report pool, _prime_powers cap, _supplies, neighbours.",
+   "evidence": "code_map.md 1388-1401; src/structure.jl:798-935."
+  },
+  {
+   "id": "CV9b-036",
+   "file": "src/structure.jl",
+   "line": 958,
+   "kind": "map",
+   "claim": "code_map: trial binding refusals per case, rate scopes outside the margin.",
+   "evidence": "code_map.md 1402-1410; src/structure.jl:958-1010."
+  },
+  {
+   "id": "CV9b-037",
+   "file": "src/structure.jl",
+   "line": 727,
+   "kind": "map",
+   "claim": "code_map: _check_wire_shape reading by nfields; _check_root_faces; root claims bare u as `u`.",
+   "evidence": "code_map.md 1412-1415; src/structure.jl:727-745, 781-787, 560-570."
+  },
+  {
+   "id": "CV9b-038",
+   "file": "src/structure.jl",
+   "line": 1116,
+   "kind": "map",
+   "claim": "code_map: resolve_authored in the last section, unspecialized walk, _fanout compiles per connection type.",
+   "evidence": "code_map.md 1422-1432; src/structure.jl:92-100, 525-527, 1116."
+  },
+  {
+   "id": "CV9b-039",
+   "file": "src/structure.jl",
+   "line": 156,
+   "kind": "cite",
+   "claim": "D-315 cited for level rows and wire functions.",
+   "evidence": "log.md 14274 D-315 'Hold the declared wiring on Structure and resolve it by function'."
+  },
+  {
+   "id": "CV9b-040",
+   "file": "src/structure.jl",
+   "line": 1077,
+   "kind": "cite",
+   "claim": "§13.7 cited for face routes.",
+   "evidence": "spec §13.7 12056 'face routes and the component library'."
+  },
+  {
+   "id": "CV9b-041",
+   "file": "src/structure.jl",
+   "line": 1106,
+   "kind": "cite",
+   "claim": "§13.3 and D-414 cited for the service walk.",
+   "evidence": "spec 11382-11450 service walk; log.md 16972 D-414."
+  },
+  {
+   "id": "CV9b-042",
+   "file": "src/structure.jl",
+   "line": 723,
+   "kind": "cite",
+   "claim": "D-477 cited for the wire-shape check.",
+   "evidence": "log.md 21065 D-477 'Refuse a wire declaration that returns no collection of pairs'."
+  },
+  {
+   "id": "CV9b-043",
+   "file": "src/structure.jl",
+   "line": 960,
+   "kind": "cite",
+   "claim": "D-459 and D-465 cited for exact overflow refusals and the trial binding.",
+   "evidence": "log.md 19561 D-459, 20098 D-465."
+  },
+  {
+   "id": "CV9b-044",
+   "file": "src/model.jl",
+   "line": 28,
+   "kind": "docstring",
+   "claim": "Lead: Model's docstring lists keywords (Δt_frame, Δt_base, h_max, h_min, algorithm, firing_budget, localization_tol, localization_budget, attempt_budget) that are not on its signature.",
+   "evidence": "They are Deployment's, passed through `kw...` (model.jl:129-132). Defaults match src/deployment.jl:555-557; probe:P4, P5 show Deployment refuses them. Appendix B 15064-15075 lists the same set. A pass-through, not a missing name."
+  },
+  {
+   "id": "CV9b-045",
+   "file": "src/model.jl",
+   "line": 36,
+   "kind": "docstring",
+   "claim": "T must embed Float64 exactly; any other T is ArgumentInvalid :scalar.",
+   "evidence": "src/model.jl:105-114; probe:P3, P6, Q11. Ordering for the sugar forms is row CV9b-049."
+  },
+  {
+   "id": "CV9b-048",
+   "file": "src/model.jl",
+   "line": 117,
+   "kind": "docstring",
+   "claim": "A chunk_size that is not an integer of at least 1 is ArgumentInvalid.",
+   "evidence": "src/model.jl:117-119; probe:P2 (0), P7 (2.0)."
+  },
+  {
+   "id": "CV9b-050",
+   "file": "src/model.jl",
+   "line": 55,
+   "kind": "docstring",
+   "claim": "status: :built until boundary zero completes; :consistent after init! or restore; a door throw returns :built.",
+   "evidence": "src/model.jl:323-340, 470-481, 1332-1342; probe:P8, P11, P24b; src/frame.jl:94 writes :inconsistent."
+  },
+  {
+   "id": "CV9b-051",
+   "file": "src/model.jl",
+   "line": 258,
+   "kind": "docstring",
+   "claim": "A claimed model refuses init!, overlay!, restore! (and frame!, apply!) as ArgumentInvalid :claimed.",
+   "evidence": "src/model.jl:258-260, 312, 460, 1309; probe:P32-P34, P36."
+  },
+  {
+   "id": "CV9b-052",
+   "file": "src/model.jl",
+   "line": 195,
+   "kind": "docstring",
+   "claim": "FrameHooks contract: frame_top! returns whether it wrote; settled! writes nothing and returns abandon.",
+   "evidence": "src/frame.jl:89, 168, 322; src/model.jl:339, 479, 1335."
+  },
+  {
+   "id": "CV9b-053",
+   "file": "src/model.jl",
+   "line": 213,
+   "kind": "docstring",
+   "claim": "NoHooks is the default hooks; frame_top! and settled! return false.",
+   "evidence": "src/model.jl:224-253, 318, 467, 1307; probe:Q15."
+  },
+  {
+   "id": "CV9b-054",
+   "file": "src/model.jl",
+   "line": 274,
+   "kind": "docstring",
+   "claim": "init! resolves and checks root inputs before any write; refusals UninitializedInputs and resolution kinds; boundary zero throw is StepError host :boundary_zero.",
+   "evidence": "src/model.jl:311-341; probe:P10 (UninitializedInputs), Q12 (DuplicateConditionLeaf), Q3 (Dual model has no events)."
+  },
+  {
+   "id": "CV9b-055",
+   "file": "src/model.jl",
+   "line": 347,
+   "kind": "docstring",
+   "claim": "t0 must be finite, exactly held, with a first frame; otherwise ArgumentInvalid :range before any write.",
+   "evidence": "src/model.jl:347-386; probe:P24 (NaN) and P24b status unchanged."
+  },
+  {
+   "id": "CV9b-056",
+   "file": "src/model.jl",
+   "line": 401,
+   "kind": "docstring",
+   "claim": "overlay! needs :consistent and a frame-top clock (ServiceLifecycle, CheckpointMidFrame), merges onto stores, throw is StepError host :overlay.",
+   "evidence": "src/model.jl:459-482, 1193-1204; probe:P29, P30, Q10."
+  },
+  {
+   "id": "CV9b-057",
+   "file": "src/model.jl",
+   "line": 496,
+   "kind": "docstring",
+   "claim": "phase_bodies returns sweep_1, sweep_2, rhs, ticks, events (guard, handler) and projections.",
+   "evidence": "src/build.jl:1625-1629; probe:P23, Q4, Q4b."
+  },
+  {
+   "id": "CV9b-058",
+   "file": "src/model.jl",
+   "line": 958,
+   "kind": "docstring",
+   "claim": "warnings(model) is the build's warnings followed by the deployment's.",
+   "evidence": "src/model.jl:971; probe:P22."
+  },
+  {
+   "id": "CV9b-059",
+   "file": "src/model.jl",
+   "line": 979,
+   "kind": "docstring",
+   "claim": "port: unknown path is PathResolution, unknown name or nameless read at a named contract is ArgumentError, root path reads root inputs and exported outputs.",
+   "evidence": "src/build.jl:370-402; probe:P12, P12b, P14, P15, P16, Q1."
+  },
+  {
+   "id": "CV9b-060",
+   "file": "src/model.jl",
+   "line": 1007,
+   "kind": "docstring",
+   "claim": "state reads x or s, nothing for a stateless component or an assembly; unknown path is PathResolution.",
+   "evidence": "src/model.jl:1024-1042; probe:P17-P19, P21, Q5, Q7."
+  },
+  {
+   "id": "CV9b-061",
+   "file": "src/model.jl",
+   "line": 1037,
+   "kind": "docstring",
+   "claim": "modes reads the m store, nothing when absent.",
+   "evidence": "src/model.jl:1053-1058; probe:P20, Q6."
+  },
+  {
+   "id": "CV9b-062",
+   "file": "src/model.jl",
+   "line": 1149,
+   "kind": "docstring",
+   "claim": "checkpoint: ServiceLifecycle at :built/:inconsistent, CheckpointMidFrame off a frame top.",
+   "evidence": "src/model.jl:1178-1204; probe:P9, Q9."
+  },
+  {
+   "id": "CV9b-063",
+   "file": "src/model.jl",
+   "line": 1274,
+   "kind": "docstring",
+   "claim": "restore!: any status accepted, mismatches collected before a write, scalar mismatch CheckpointMismatch, :claimed refused.",
+   "evidence": "src/model.jl:1307-1320; probe:P26-P28, P34. The omitted :range arm is row CV9b-064."
+  },
+  {
+   "id": "CV9b-065",
+   "file": "src/model.jl",
+   "line": 779,
+   "kind": "docstring",
+   "claim": "integrate!(model, h): one step offered h, empty state advances t only; sim method exists.",
+   "evidence": "src/model.jl:793, 812-820; src/sim.jl:644; probe:Q8."
+  },
+  {
+   "id": "CV9b-066",
+   "file": "src/model.jl",
+   "line": 1193,
+   "kind": "surface",
+   "claim": "ServiceLifecycle, CheckpointMidFrame, CheckpointMismatch raise sites are covered.",
+   "evidence": "Appendix C 15893-15930; Appendix B 15137-15146; probe:P9, P28, Q9."
+  },
+  {
+   "id": "CV9b-067",
+   "file": "src/model.jl",
+   "line": 746,
+   "kind": "surface",
+   "claim": "FiringBudget, StepFloor, NonfiniteState and the NaN-proposal InternalInvariant are covered.",
+   "evidence": "Appendix C 15994-16013; spec 6561, 6588-6599; src/model.jl:746-760, 893-898, 940-955, 904-909."
+  },
+  {
+   "id": "CV9b-068",
+   "file": "src/model.jl",
+   "line": 95,
+   "kind": "surface",
+   "claim": "Model, FrameHooks, NoHooks, frame_top!, settled!, port, state, modes, init!, overlay!, restore!, checkpoint, phase_bodies, warnings are in Appendix B and api.md.",
+   "evidence": "Appendix B 15082-15160, 15357, 15393; docs/src/api.md 63-71, 128-137, 163, 184. apply!, integrate!, evaluate!, boundary! are declared internal (Appendix B 15158-15162)."
+  },
+  {
+   "id": "CV9b-069",
+   "file": "src/model.jl",
+   "line": 95,
+   "kind": "map",
+   "claim": "code_map: Model{T,E} fields, materialization forms, scalar and chunk_size refusals, scratch world.",
+   "evidence": "code_map.md 893-912; src/model.jl:95-150."
+  },
+  {
+   "id": "CV9b-070",
+   "file": "src/model.jl",
+   "line": 311,
+   "kind": "map",
+   "claim": "code_map: the doors init!, overlay!, apply!, restore! and their gate, origin and rest checks.",
+   "evidence": "code_map.md 930-960; src/model.jl:258, 311-480, 486-494, 1193-1342."
+  },
+  {
+   "id": "CV9b-071",
+   "file": "src/model.jl",
+   "line": 521,
+   "kind": "map",
+   "claim": "code_map: grid helpers _grid_time, _tick_time, _next_due, _frames_to, _last_frame.",
+   "evidence": "code_map.md 917-929; src/model.jl:530-605."
+  },
+  {
+   "id": "CV9b-072",
+   "file": "src/model.jl",
+   "line": 650,
+   "kind": "map",
+   "claim": "code_map: run_boundary!, event_phase!, integrate_step!, _shaped, floor reporting, _check_finite!.",
+   "evidence": "code_map.md 962-985; src/model.jl:650-960."
+  },
+  {
+   "id": "CV9b-073",
+   "file": "src/model.jl",
+   "line": 1067,
+   "kind": "map",
+   "claim": "code_map: _wrap_step, _species, _fingerprint, _assert_at_rest, _check_checkpoint!, _check_grid!.",
+   "evidence": "code_map.md 986-1000; src/model.jl:1067-1270."
+  },
+  {
+   "id": "CV9b-074",
+   "file": "src/model.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "D-317, D-318, D-319, D-320 cited for the split, the claim, the checkpoint split and the scalar door.",
+   "evidence": "log.md 14517, 14699, 14778, 14899 titles match their uses."
+  },
+  {
+   "id": "CV9b-075",
+   "file": "src/model.jl",
+   "line": 323,
+   "kind": "cite",
+   "claim": "D-440, D-441, D-457 cited for path refusal, door status and the exact origin.",
+   "evidence": "log.md 18390, 18435, 19440."
+  },
+  {
+   "id": "CV9b-076",
+   "file": "src/model.jl",
+   "line": 19,
+   "kind": "cite",
+   "claim": "D-256 cited for single deployment reference and constructor keyword validation.",
+   "evidence": "log.md 10730 D-256 'Regroup the Simulation's fields by owner' (field ownership; keyword validation rule at its lines 19-24)."
+  },
+  {
+   "id": "CV9b-077",
+   "file": "src/model.jl",
+   "line": 328,
+   "kind": "cite",
+   "claim": "D-260, D-456, D-458 cited for the clock's scalar and nearest-float writes.",
+   "evidence": "log.md 10947 (clock t stays in deployment's scalar), 19393, 19496."
+  },
+  {
+   "id": "CV9b-078",
+   "file": "src/model.jl",
+   "line": 9,
+   "kind": "cite",
+   "claim": "Section citations (§9.2, §10.2-§10.6, §11.8, §12.6, §13.4, §14.5, Appendix C) point at sections treating the topic.",
+   "evidence": "spec headings 5033, 6491, 7387, 9486, 10387, 11472, 13383, 15416."
+  }
+ ],
+ "counts": {
+  "cite": 12,
+  "docstring": 35,
+  "surface": 18,
+  "map": 13,
+  "law": 0,
+  "mech": 0,
+  "decl": 0,
+  "ptr": 0,
+  "why": 0,
+  "ex": 0
+ }
+}

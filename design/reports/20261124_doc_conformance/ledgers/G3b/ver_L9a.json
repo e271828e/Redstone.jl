@@ -1,0 +1,317 @@
+{
+ "judgments": [
+  {
+   "id": "L9a-001",
+   "conforms": true,
+   "evidence": "test/test_store.jl:203 measures phase_bodies(sim) with @ballocated; the zero-allocation tests target the stepping bodies (test/test_adaptive.jl:190-200), and publication copies are outside the check (src/store.jl:147-149)."
+  },
+  {
+   "id": "L9a-005",
+   "conforms": false,
+   "evidence": "src/structure.jl:203-210 and 240-242: 'A Structure stores no table of resolved faces. A face at any level resolves over the levels wires when it is read'; terminal_producer and face_routes are functions (src/build.jl:209). The probe prints the Structure fields (:components, :anchors, :scopes, :root_inputs, :root_types, :levels). None of them is a face table.",
+   "class": "drift",
+   "fix": "Standalone `build(world) → Build` artifact: an inspectable wire list from which `Structure` answers the face table as a function, plus the schedule and root slots; `Simulation(world; ...)` wraps it.",
+   "clear": false,
+   "note": "D-315 retired the stored in/out face and route columns. Under log rule 1 the fix is an annotation, not a rewrite. The spec's glossary still counts the face table in the Build's derived contract, answered by function (spec.md:5114, 16148)."
+  },
+  {
+   "id": "L9a-006",
+   "conforms": true,
+   "evidence": "Probe: Outputs fields (:components, :order), so the Build carries the execution order. src/build.jl:669-671: each Structure component entry's `timing` is the anchor-relative schedule.",
+   "note": "In D-049's day 'schedule' meant the stage sequence (D-258). The bound tick table `Schedule` was never on the Build and now sits on the Deployment (src/deployment.jl:550, D-254)."
+  },
+  {
+   "id": "L9a-012",
+   "conforms": true,
+   "evidence": "src/build.jl:1001-1016: _nominal probes the whole chain at Float64. src/build.jl:40-45: the probe declarations read x_init and s_init, the initial state."
+  },
+  {
+   "id": "L9a-021",
+   "conforms": true,
+   "evidence": "Probe: isdefined(Redstone, :SimulationTermination) is false. Stops are TerminationSource values on the run's record (src/sim.jl:95-127), and model-code throws become LoopError or StepError (src/model.jl:1075)."
+  },
+  {
+   "id": "L9a-023",
+   "conforms": false,
+   "evidence": "src/build.jl:348-362, 495-509: a stop request is an output port of the enum type `StopFlag`, rostered as a Requester. The probe shows isdefined StopFlag is true, and no Bool face is involved.",
+   "class": "drift",
+   "fix": "a stop is published as an output port of the framework enum `StopFlag`",
+   "clear": true,
+   "note": "D-316 (commit a682407c) records the move."
+  },
+  {
+   "id": "L9a-024",
+   "conforms": false,
+   "evidence": "src/sim.jl:141-144: StopPolicy is (t_end, ignored). Probe: no run! or Simulation method takes `stop_on`, and run! takes `ignore_stop_requests`.",
+   "class": "drift",
+   "fix": "the stop policy is spelled as the `ignore_stop_requests` keyword, naming the requester paths the advance does not honour",
+   "clear": true,
+   "note": "D-316 replaced `stop_on` with `ignore_stop_requests` (commit a682407c retires stop_on)."
+  },
+  {
+   "id": "L9a-025",
+   "conforms": false,
+   "evidence": "src/sim.jl:305-307: 'termination policy is declared per advance and is no keyword here (D-255)'. src/sim.jl:129-134: StopPolicy is built and validated by run!, replay! and step! per call. Probe: Simulation takes no stop keyword.",
+   "class": "drift",
+   "fix": "the stop policy is declared per advance, by `run!`, `replay!` and `step!`",
+   "clear": true,
+   "note": "D-255 explicitly supersedes D-060's 'policy at Simulation construction' clause (log.md:10671-10672)."
+  },
+  {
+   "id": "L9a-033",
+   "conforms": false,
+   "evidence": "src/conditions.jl:764-766: the lens is `Authored{P,L}`, which walks walk_steps(tree, Val(P)) and converts to L. Probe: the lens type is Redstone.Authored{...}, and isdefined(Redstone, :Getter) is false.",
+   "class": "drift",
+   "fix": "the specialized `apply!` reads condition leaves through `Authored{P,L}` lenses",
+   "clear": true,
+   "note": "Commit 4365e8d4 'Unify the lens and reader walks as walk_steps over AccessStep, delete Getter'."
+  },
+  {
+   "id": "L9a-034",
+   "conforms": true,
+   "evidence": "src/conditions.jl:803-808, 878-883: StoreWrite bakes its defaults and field names. src/conditions.jl:955-956: _writes! is a generated unroll over the plan's tuples. Probe: apply! allocates 0 bytes."
+  },
+  {
+   "id": "L9a-037",
+   "conforms": true,
+   "evidence": "Probe: a fresh shape's first apply! took 6.4 ms with Redstone warm (33 ms cold), and its compile_plan took 69 ms (319 ms cold). Codegen is paid once per shape, and the second apply! took 3.8 µs.",
+   "note": "An order-of-magnitude estimate. For the specialized apply!'s own codegen the probe agrees. The whole per-shape cost, compile_plan included, is nearer 75 ms on a small tree."
+  },
+  {
+   "id": "L9a-040",
+   "conforms": false,
+   "evidence": "Probe: isdefined(Redstone, :capture) is false. checkpoint copies stores wholesale (src/sim.jl:892-895, src/store.jl:149) with no compiled reader. Compiled readers serve trim's cost reads (src/trim.jl:603, 630) and linearize's CellRead (src/linearize.jl:562-575).",
+   "class": "drift",
+   "fix": "compiled readers as the gather twin (cost reads, linearization gather)",
+   "clear": true,
+   "note": "D-273 retired `capture`'s condition form, and D-274 replaced it with checkpoint."
+  },
+  {
+   "id": "L9a-044",
+   "conforms": false,
+   "evidence": "src/trace.jl:113-135: _record! sparse-converts every writer's drained batch into position ⇒ value pairs. src/trace.jl:16-26: TraceBatch has a single record format.",
+   "class": "drift",
+   "fix": "every writer's drained batch is sparse-converted at the drain into (position ⇒ value) pairs against its schema",
+   "clear": true,
+   "note": "D-176 supersedes D-107's density rule (log.md:7003-7007)."
+  },
+  {
+   "id": "L9a-046",
+   "conforms": false,
+   "evidence": "src/trace.jl:113-135: every drained batch from any writer allocates one entries vector at its final length, plus the boxed values. Nothing is specific to the interactive writer.",
+   "class": "drift",
+   "fix": "the conversion allocates one entries vector per drained batch, for every writer, on each frame that drains one",
+   "clear": true,
+   "note": "Superseded by D-176."
+  },
+  {
+   "id": "L9a-047",
+   "conforms": true,
+   "evidence": "src/trace.jl:122-133: only the masked (touched) positions are retained, so a record's size follows the touched entries and not the schema width."
+  },
+  {
+   "id": "L9a-056",
+   "conforms": true,
+   "evidence": "src/build.jl:1625-1629 and the probe: phase_bodies keys are (:sweep_1, :sweep_2, :rhs, :ticks, :events, :projections), four blocks plus the per-event and per-projection callables.",
+   "note": "The log text's sweep_hx and sweep_hxu are the names of their day. D-196 renamed them sweep_1 and sweep_2, and log rule 2 keeps the old names."
+  },
+  {
+   "id": "L9a-065",
+   "conforms": true,
+   "evidence": "src/sim.jl:397: Simulation(root::AbstractComponent; kw...) = Simulation(build(root); kw...)"
+  },
+  {
+   "id": "L9a-067",
+   "conforms": false,
+   "evidence": "src/build.jl:565-569: Activation{T} holds decls, products and layout, and the probe confirms these fields. No compiled plan or validated flag is stored: plans come from compile_plan per call (src/conditions.jl:865), and rg finds no validated flag in src/build.jl.",
+   "class": "deviation",
+   "fix": "each activation-cache entry holds the declarations retyped at T, the probe products and the cell layout",
+   "clear": true,
+   "backing_entry": "D-135 (the spec repeats it at spec.md:5767)",
+   "note": "Nothing in the log or in pending.md records dropping the plans or the flag. A cached entry's presence already means it was validated."
+  },
+  {
+   "id": "L9a-075",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:132-135: mutable struct DiagCell has `@atomic heartbeat::Float64`. Probe: isfieldatomic is true."
+  },
+  {
+   "id": "L9a-080",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:161 _heartbeat is an acquire load, called from _status at publication (src/sim.jl:2835) and not from the frame-top drain (_fold!, src/dataplane.jl:186-197).",
+   "class": "drift",
+   "fix": "the heartbeat is acquire-loaded at publication, when the loop assembles the status",
+   "clear": true,
+   "note": "D-240 records the move."
+  },
+  {
+   "id": "L9a-085",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:166-183: WriterAccount.totals is loop-owned. src/sim.jl:2815-2816: the isbits totals are copied into each WriterStatus."
+  },
+  {
+   "id": "L9a-089",
+   "conforms": false,
+   "evidence": "src/sim.jl:2828-2838: _status allocates a fresh Vector{WriterStatus} at each publication. Probe: FrameworkStatus.writers is a Vector{WriterStatus}, and WriterStatus is not isbits.",
+   "class": "drift",
+   "fix": "the per-writer status is one small vector of records per publication, beside the per-boundary snapshot allocation",
+   "clear": true,
+   "note": "D-241 records the move."
+  },
+  {
+   "id": "L9a-092",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:141-150: report_cell! builds DiagBatch(push!(copy(current.ring), occurrence), ...) at every accepted emission. Probe: emissions 1 to 16 after a drain allocated 112, 160, ..., 576 bytes each, and emissions 17 to 20 allocated 0.",
+   "class": "deviation",
+   "fix": "each emission the ring accepts allocates a fresh copy of the ring (the CAS handoff's value semantics), so a noisy frame allocates up to sixteen rings of growing length per writer",
+   "clear": false,
+   "backing_entry": "D-136 (restated in D-369 and spec §11.8, spec.md:9662-9664)",
+   "note": "The DiagBatch docstring (src/dataplane.jl:100-103) states the copy-on-append choice, so the copy is deliberate. Nothing in the log or pending records it. The alternative fix is code that appends in place to a ring allocated once per frame."
+  },
+  {
+   "id": "L9a-093",
+   "conforms": false,
+   "evidence": "Probe: past the ring, emissions 17 to 20 allocated 0 bytes, so the integer-increment half holds. Up to the bound, sixteen ring copies of lengths 1 to 16 were allocated (about 5.6 KB), not one ring of 16 (src/dataplane.jl:144-145).",
+   "class": "deviation",
+   "fix": "the worst case per writer per boundary is sixteen ring copies of growing length, the last holding sixteen values, and everything past the ring is an integer increment",
+   "clear": false,
+   "backing_entry": "D-136 (spec.md:9667-9668 states the one-ring bound)"
+  },
+  {
+   "id": "L9a-097",
+   "conforms": true,
+   "evidence": "src/model.jl:1067-1083: _wrap_step is the one StepError constructor, at the loop's, boundary-zero's, overlay's and restore's catch sites. A raw throw rides as its cause (src/model.jl:1089)."
+  },
+  {
+   "id": "L9a-106",
+   "conforms": true,
+   "evidence": "src/store.jl:102-123: scatter_group! compares key sets as sets and stores each port by getfield(y, port_name). src/leaves.jl:403-404: 'Fields pair by name, never by position.'"
+  },
+  {
+   "id": "L9a-108",
+   "conforms": false,
+   "evidence": "src/store.jl:107-129: the seam has no NamedTuple{canonical_names}(y) reorder. The generated write pairs by name with getfield(y, name) per declared port, decided on the return type.",
+   "class": "drift",
+   "fix": "at the stage-return seam the framework pairs fields by name in the write generated over the return type, one getfield per declared port",
+   "clear": false,
+   "note": "D-235 moved the check and the pairing into the generated write."
+  },
+  {
+   "id": "L9a-109",
+   "conforms": false,
+   "evidence": "src/store.jl:102-123: the always-on check is a key-set compare plus a per-field _accepts(declared, observed, T), evaluated at generation. No whole-type isa remains.",
+   "class": "drift",
+   "fix": "§9.5's check is decided per field at the generated write, against the cell types, with no per-field instruction at runtime",
+   "clear": false,
+   "note": "D-235 records it: 'D-053's rejection of per-field checks holds in the sense it was made, which is cost.'"
+  },
+  {
+   "id": "L9a-112",
+   "conforms": false,
+   "evidence": "src/trace.jl:78-83: the Trace header is a Checkpoint, and the schemas are the trace's own `schemas` list. Probe: Trace fields are (header::Union{Nothing,Checkpoint}, schemas, batches, frames). src/trace.jl:16-18: entries pair against trace.schemas[writer].",
+   "class": "drift",
+   "fix": "records are converted against the writer's schema in the trace's `schemas` list",
+   "clear": true,
+   "note": "D-255: 'The header loses its schema list'. D-274 made the header a checkpoint."
+  },
+  {
+   "id": "L9a-118",
+   "conforms": true,
+   "evidence": "src/build.jl:1625-1628: the bodies are named sweep_1, sweep_2, rhs and ticks."
+  },
+  {
+   "id": "L9a-126",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:245: struct StepError{C <: Union{Diagnostic, Exception}}. The deferral was carried out.",
+   "class": "drift",
+   "fix": "parametrizing `StepError` on its cause's type, deferred here, landed with D-225 as `StepError{C}`",
+   "clear": true,
+   "note": "D-225 (log.md:9162) and commit 0a555155 record it. Under log rule 1 the fix is an annotation."
+  },
+  {
+   "id": "L9a-128",
+   "conforms": true,
+   "evidence": "src/build.jl:780-792: the passes push into one diags list and the barrier throws once. src/build.jl:865-867: _check_wires checks every wire."
+  },
+  {
+   "id": "L9a-132",
+   "conforms": false,
+   "evidence": "src/structure.jl:614: the child-naming pass collects its unit and throws every violation at once (D-431, D-477). The class checks still throw a single diagnostic (src/assembly.jl:62-66).",
+   "class": "drift",
+   "fix": "a structural failure throws at once, with every violation of its own unit and nothing from other passes",
+   "clear": true,
+   "note": "D-229's own annotation of 2026-10-21 and D-431 narrow 'alone'."
+  },
+  {
+   "id": "L9a-134",
+   "conforms": false,
+   "evidence": "src/build.jl:863-867 and 889-894: the wire bound clause pushes WireTypeMismatch and continues. The structure step's barrier throws the whole list (src/build.jl:792).",
+   "class": "drift",
+   "fix": "the wire bound check collects under the structure step's barrier; the chain's fail-fast keeps stage-2 conformance and two-stage production",
+   "clear": true,
+   "note": "D-229's annotation of 2026-09-08 and D-236 record the move."
+  },
+  {
+   "id": "L9a-139",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1242-1248: UserCodeFraming has path, fn, bundle::Vector{Symbol}, inputs::String and cause::Exception."
+  },
+  {
+   "id": "L9a-148",
+   "conforms": true,
+   "evidence": "src/build.jl:709 Build.warnings and src/deployment.jl:552 Deployment.warnings. Probe: _warn! under BUILD_WARNINGS appends to the list and logs nothing, giving (1, 0)."
+  },
+  {
+   "id": "L9a-157",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:192-200: _warn! calls @warn when BUILD_WARNINGS is unbound. Probe: a standalone _warn! logged 1 record."
+  },
+  {
+   "id": "L9a-166",
+   "conforms": true,
+   "evidence": "src/structure.jl:243-250: struct Structure. rg finds no `Flat` type in src (only a prose word at src/descriptor.jl:60)."
+  },
+  {
+   "id": "L9a-170",
+   "conforms": false,
+   "evidence": "src/build.jl:589-596: the nominal evaluation's first product is `Outputs`, and Build has an `outputs` field (src/build.jl:705). Probe: isdefined(Redstone, :Dataflow) is false.",
+   "class": "drift",
+   "fix": "Stratum B's product is the artifact `Outputs`",
+   "clear": true,
+   "note": "D-261 renames Dataflow to Outputs and supersedes D-253's clause keeping the name."
+  },
+  {
+   "id": "L9a-172",
+   "conforms": false,
+   "evidence": "src/build.jl:585-588: 'The feedthrough graph the order was computed over is not carried'. Probe: Outputs fields are (:components, :order).",
+   "class": "drift",
+   "fix": "`Outputs` carries no feedthrough edges; where they are shown, they are derived from the `Structure`'s connections and the producers' stage-2 names",
+   "clear": true,
+   "note": "D-261's 2026-09-21 extension dropped the edges column ('Dataflow.edges fell')."
+  },
+  {
+   "id": "L9a-177",
+   "conforms": true,
+   "evidence": "src/build.jl:969-974 and 1030-1040: activation(build, T) calls _activate(build.structure, build.outputs, nominal, T), and frozen components' products carry over from the nominal."
+  },
+  {
+   "id": "L9a-182",
+   "conforms": false,
+   "evidence": "src/tracer.jl:4-8, 281-317: the tracer runs inside the nominal evaluation's failure path, before Outputs exists. It reads names from structure, the nominal decls and the stage-1 products. It never reads an Activation, and it never reads Dataflow or Outputs.",
+   "class": "drift",
+   "fix": "the tracer takes its name lists from `Structure` and the nominal evaluation's own declarations, never from an activation",
+   "clear": false,
+   "note": "The 'never from an activation' half holds. D-261 renamed `Dataflow`, and the tracer cannot read `Outputs` because it runs before `Outputs` exists."
+  },
+  {
+   "id": "L9a-184",
+   "conforms": false,
+   "evidence": "src/build.jl:993-1016: _nominal builds Activation{Float64} inside the nominal evaluation, from its own probe chain. Activation is not re-run at Float64.",
+   "class": "drift",
+   "fix": "the nominal evaluation fixes both the structure and the `Float64` typing, and no activation step runs at `Float64`",
+   "clear": true,
+   "note": "D-253's own annotation of 2026-10-02 marks the bullet superseded by D-259."
+  }
+ ],
+ "notes": "I verified all 42 claims at W = d7d3ddff and modified no tracked file. The probe is at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L9a_v/probe.jl and I ran it twice; the first run failed on a missing Logging import, which I fixed. Every claim is a log entry. Under log_rules.md rules 1 and 2, a drift fix lands as an annotation or a superseding note, not as a rewrite of the old prose. The fix texts give the current fact. The two deviations of substance are L9a-092 and L9a-093: the diagnostic ring is copied at every accepted emission (16 copies of growing length, about 5.6 KB per noisy writer per frame), while D-136, D-369 and spec §11.8 promise one lazily allocated ring of 16. L9a-067 is a smaller deviation: an activation entry holds no compiled plans and no validated flag, and spec §9.4 at spec.md:5767 still says it does."
+}

@@ -1,0 +1,96 @@
+{
+ "judgments": [
+  {
+   "id": "K9b-001",
+   "conforms": true,
+   "evidence": "src/build.jl:1066 `_frozen(tier, T) = tier === DISCRETE && T !== Float64`; build.jl:1084-1092 carries a frozen component's products over from the nominal activation, and build.jl:1183/1526/1540/1555 skip its y_state, y_direct and update under a Dual activation."
+  },
+  {
+   "id": "K9b-004",
+   "conforms": false,
+   "evidence": "src/declare.jl:904-905 LEGAL_BUNDLE: discrete `y_state` gets (:s, :t, :Δt, :ws) with no `u`. Only `y_direct` gets (:s, :u, :y_s, ...). Spec §5.3 says y_state 'carries no u'.",
+   "class": "deviation",
+   "fix": "at B's tick times $t_k$, its stages run: `y_direct` reads whatever B's inputs *are at that instant*, `y_state` reads B's `s`, the two compute B's outputs and write them to B's cells, and `s_update` updates B's `s`.",
+   "clear": true,
+   "note": "The text is true only if 'inputs' means each stage's bundle. In Redstone's vocabulary inputs are the `u` ports, and y_state never sees them."
+  },
+  {
+   "id": "K9b-012",
+   "conforms": true,
+   "evidence": "probe K9b_v/probe.jl, 'K9b-012' lines: chain A→B→C linearized with B discrete gives A = [-1 0; 0 -1], so ∂ẋ_C/∂x_A = 0. With B continuous it gives 2.0. Mechanism at src/build.jl:1084-1092."
+  },
+  {
+   "id": "K9b-014",
+   "conforms": false,
+   "evidence": "src/build.jl:199-213 (`_outputs`) adds a feedthrough edge for every consumed stage-2 port on either tier, with no tier test. Probe 'K9b-014': a loop through a discrete component's `y_direct` is refused as AlgebraicCycle :real. The same loop through UnitDelay, whose output comes from y_state, builds.",
+   "class": "deviation",
+   "fix": "A feedback loop closed through B is schedulable when B publishes the looped output from `y_state`, held state rather than feedthrough ([§5.3][s5-3]). A loop through B's `y_direct` is feedthrough in the boundary sweep, on the discrete tier as on the continuous one, and [§5.5][s5-5] rejects it as algebraic.",
+   "clear": false,
+   "note": "The doc says the framework does not treat a discrete y_direct as in-sweep feedthrough. The code, and spec §5.3's D-006 sentence ('every stage-2 output is presumed dependent on every wired input'), do treat it so. No log entry backs the doc's reading."
+  },
+  {
+   "id": "K9b-023",
+   "conforms": true,
+   "evidence": "probe 'K9b-023': Gear with u_types (terrain = DeckField{Float64},), y_types (clearance = Float64,) and y_direct on (; x, u) builds at activations (Float64, LinearizeDual), fed by the static and by the moving producer. src/declare.jl:902 allows (:x, :m, :u, ...) in a continuous y_direct bundle.",
+   "note": "The sketch omits Gear's x_init and x_deriv. The probe had to add them."
+  },
+  {
+   "id": "K9b-027",
+   "conforms": false,
+   "evidence": "probe 'K9b-027': the moving deck declared `Pinned{DeckField{Float64}}`, with the walkthrough's y_state, is refused at build as ConformanceFailure (y_state, :field_type, got DeckField{Dual}, declared DeckField{Float64}). The pin fails loudly. The coupling goes to zero silently only if the author also strips the pose's partials.",
+   "class": "deviation",
+   "fix": "Pinning here would zero the coupling between ship motion and touchdown. The stage would then have to strip the pose's partials, and as written it is refused as `ConformanceFailure` at the build's `Dual` probe.",
+   "clear": false
+  },
+  {
+   "id": "K9b-034",
+   "conforms": true,
+   "evidence": "probe 'K9b-034': inside Gear's y_direct under LinearizeDual, f.heave, f.pitch and eltype(x.p) are all Dual{LinearizeTag,Float64,8}.",
+   "note": "This holds for the moving-deck producer. From the pinned static terrain, f.heave and f.pitch arrive as Float64. The doc's section 3 covers that case."
+  },
+  {
+   "id": "K9b-041",
+   "conforms": false,
+   "evidence": "src/leaves.jl:276 retype stops only at a mutable type itself. Probe 'K9b-041': retype(LinearizeDual, DeckFieldT{Float64}) with grid::Matrix{T} gives a Matrix{Dual} grid field, and a producer that builds that copy under Dual passes the build with no error. The mutable rule only pins a grid type carried as a parameter: H{Matrix{Float64}} stays H{Matrix{Float64}}.",
+   "class": "deviation",
+   "fix": "The walk substitutes parameters and never fields, so no rule refuses that copy. The shape rule keeps it off the table, a grid typed `Matrix{Float64}` in the struct. [D-263][d-263]'s rule that a mutable type's parameters pin covers only a grid type carried as a parameter. The one-scalar-plus-reference shape gets the same derivatives for free.",
+   "clear": false,
+   "note": "Spec §8.2 (spec.md:3228-3230, 3248-3249) makes the same attribution ('That is the copy the mutable-parameter rule above refuses'), so the fix also reaches the spec."
+  },
+  {
+   "id": "K9b-045",
+   "conforms": true,
+   "evidence": "src/build.jl:1059 calls `ws_init(comp, entry.tier === CONTINUOUS ? T : Float64)` (also conditions.jl:665, tracer.jl:200). declare.jl:131-140 documents `ws_init(c, ::Type{T})` as the one declaration that takes the scalar."
+  },
+  {
+   "id": "K9b-052",
+   "conforms": false,
+   "evidence": "src/library.jl:405 `struct Freeze{V <: Union{Float64, SArray{<:Tuple, Float64}}}`. test/test_library.jl:1556 `@test_throws TypeError Freeze{HeightField}`. Probe 'K9b-052': Freeze{DeckField{Float64}} throws TypeError.",
+   "class": "drift",
+   "fix": "The `Freeze` component ([§13.7][s13-7]) is that page for a scalar or an `SArray` of `Float64`. Its `V` is bounded at the type, so a handle is stripped by a leaf of the author's own, tolerant in and pinned out as `Freeze` is ([D-312][d-312]). The `local_wires` example routes `deck/terrain` through that leaf.",
+   "clear": false,
+   "backing_entry": "D-312 (struct V refused at the spelling; annotations of 2026-11-05 narrow the bound and retire the struct-valued Freeze); spec.md:12293-12298"
+  },
+  {
+   "id": "K9b-055",
+   "conforms": true,
+   "evidence": "src/library.jl:408-409 `y_types(::Freeze{V}) = Pinned{V}`, `y_direct(::Freeze, (; u)) = ForwardDiff.value.(u)`. Probe 'K9b-055': y_direct on a LinearizeDual returns the plain 1.5, and y_types is Pinned{Float64}.",
+   "note": "True for the V that Freeze admits (Float64 or an SArray). In the walkthrough's handle context Freeze cannot be written at all (see K9b-052)."
+  },
+  {
+   "id": "K9b-065",
+   "conforms": true,
+   "evidence": "probe 'K9b-065': retype(LinearizeDual, MixedRight{Float64}) = MixedRight{Dual}, and leaf_types = [Dual, Float64]. src/leaves.jl:274-277 substitutes parameters only."
+  },
+  {
+   "id": "K9b-067",
+   "conforms": false,
+   "evidence": "probe 'K9b-067': MixedRight{Dual}(d, d) throws `MethodError: no method matching Float64(::Dual{LinearizeTag,Float64,8})`. which(convert, (Type{Float64}, LinearizeDual)) resolves to Base number.jl:7, `convert(::Type{T}, x::Number)`. The convert method exists. The missing method is the Float64 constructor it calls.",
+   "class": "deviation",
+   "fix": "a stage that hands a `Dual` for `b` dies in `convert(Float64, ::Dual)`, whose fallback calls `Float64(::Dual)`, which has no method.",
+   "clear": true,
+   "note": "This is a Julia and ForwardDiff fact, not Redstone code. The behaviour the doc describes, a loud failure at construction, holds."
+  }
+ ],
+ "notes": "I verified all 13 claims against W at d7d3ddff. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K9b_v/probe.jl and it ran cleanly once after fixing an import. No tracked file was touched.\n\nSix claims do not conform:\n- 004: y_state does not read inputs.\n- 014: a loop through a discrete y_direct is an AlgebraicCycle.\n- 027: pinning the moving deck is loud, not silent.\n- 041: the mutable-parameter rule does not refuse a Matrix{T} field copy. Spec §8.2 makes the same claim.\n- 052: Freeze cannot take a handle, per D-312.\n- 067: the missing method is Float64(::Dual), not convert."
+}

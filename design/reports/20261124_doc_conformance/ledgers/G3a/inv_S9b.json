@@ -1,0 +1,2574 @@
+{
+ "rows": [
+  {
+   "id": "S9b-008",
+   "file": "design/spec.md",
+   "line": 5153,
+   "kind": "mech",
+   "claim": "Deployment holds build, params, bound, floor, algorithm, budgets, Schedule, warnings",
+   "evidence": "src/deployment.jl:539-553; probe:58",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add the `Lattice` (the loop's index-to-time map, §10.5) to the list of what the `Deployment` holds, before the `Schedule`.",
+   "note": "The struct has a thirteenth field `lattice` (D-445) that the list omits; probe:58 prints the field names."
+  },
+  {
+   "id": "S9b-060",
+   "file": "design/spec.md",
+   "line": 5227,
+   "kind": "law",
+   "claim": "If any unanchored component exists, deployment must declare Δt_base",
+   "evidence": "src/deployment.jl:253-267; probe:211",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "**`Δt_base = :derive` is refused if any unanchored component exists** ([D-283][d-283], [D-443][d-443]). The refusal is constructive, carrying the suggestion message of the grid diagnostics.",
+   "note": "D-443 made Δt_base default to Δt_frame, so no declaration is required. Only :derive is refused (:unanchored). Deployment(MultiRate; Δt_frame = 1//100) binds with no Δt_base."
+  },
+  {
+   "id": "S9b-112",
+   "file": "design/spec.md",
+   "line": 5303,
+   "kind": "law",
+   "claim": "an algorithm the stepper seam does not know is refused",
+   "evidence": "src/deployment.jl:558-559,570; probe:459",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Collect an `AbstractAlgorithm` with no `proposes` method as `DeploymentInvalid` on `algorithm`, or narrow the sentence to an algorithm that is not an `AbstractAlgorithm`.",
+   "note": "Only a non-AbstractAlgorithm is refused (:range). A user subtype with no proposes method escapes as a raw MethodError from proposes (deployment.jl:570), shown by the probe."
+  },
+  {
+   "id": "S9b-280",
+   "file": "design/spec.md",
+   "line": 5561,
+   "kind": "law",
+   "claim": "framework methods cover three kinds of type: Real, Bool, enums",
+   "evidence": "src/declare.jl:932-936; probe:452",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Framework methods cover four kinds of type: `Real`, with `zero(T)`; `Bool`, with `false`; enums, with their first instance; and `StaticArray`, with `zero(P)`.",
+   "note": "declare.jl:935 defines probe_value(::Type{P}) where P<:StaticArray = zero(P), a fourth arm. D-051 lists zero, false, first instance and T(), and no entry records the fourth. probe:452 shows an SVector gives [0.0, 0.0]."
+  },
+  {
+   "id": "S9b-298",
+   "file": "design/spec.md",
+   "line": 5583,
+   "kind": "law",
+   "claim": "abstract entries only occur on component-fed inputs",
+   "evidence": "src/build.jl:915-930",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Abstract entries occur on component-fed inputs and, beside a concrete co-consumer, on a root input, where the concrete consumer fixes the type. With no concrete consumer the root input is `AbstractAtRoot`.",
+   "note": "A root input with one concrete and one abstract consumer builds: the abstract co-consumer is checked against the concrete type (build.jl:925-930). Synthesis still sees only the concrete type."
+  },
+  {
+   "id": "S9b-300",
+   "file": "design/spec.md",
+   "line": 5592,
+   "kind": "law",
+   "claim": "everything the probe writes is garbage once the build finishes",
+   "evidence": "src/build.jl:1507-1516",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Probe values never serve as initial root-input values: the executor seeds cells with them only until a writer replaces them, and `init!` refuses a root input no condition covers ([§14.6]).",
+   "note": "compile seeds each component product and each root-input cell with the probe value (build.jl:1507-1516), and a frozen discrete cell keeps its probe product. The build output is not garbage."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S9b-001",
+   "file": "design/spec.md",
+   "line": 5147,
+   "kind": "law",
+   "claim": "Deployment is scalar-free",
+   "evidence": "src/deployment.jl:539"
+  },
+  {
+   "id": "S9b-002",
+   "file": "design/spec.md",
+   "line": 5147,
+   "kind": "mech",
+   "claim": "Deployment carries everything the grid parameters fix",
+   "evidence": "src/deployment.jl:539-553"
+  },
+  {
+   "id": "S9b-003",
+   "file": "design/spec.md",
+   "line": 5148,
+   "kind": "mech",
+   "claim": "constructor comes after the build steps; the steps do not depend on it",
+   "evidence": "src/build.jl:775-800"
+  },
+  {
+   "id": "S9b-004",
+   "file": "design/spec.md",
+   "line": 5149,
+   "kind": "mech",
+   "claim": "constructor consumes the Build and the grid parameters",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "S9b-005",
+   "file": "design/spec.md",
+   "line": 5150,
+   "kind": "mech",
+   "claim": "binds grid params, step bound, floor, algorithm, attempt budget, event params",
+   "evidence": "src/deployment.jl:555-579"
+  },
+  {
+   "id": "S9b-006",
+   "file": "design/spec.md",
+   "line": 5152,
+   "kind": "mech",
+   "claim": "constructor runs harmonic-grid validation (anchor divisibility)",
+   "evidence": "src/deployment.jl:268-277"
+  },
+  {
+   "id": "S9b-007",
+   "file": "design/spec.md",
+   "line": 5152,
+   "kind": "mech",
+   "claim": "constructor builds the Schedule",
+   "evidence": "src/deployment.jl:279-293"
+  },
+  {
+   "id": "S9b-009",
+   "file": "design/spec.md",
+   "line": 5156,
+   "kind": "mech",
+   "claim": "Model materializes at Float64 or a concrete Dual over Float64, nested or not",
+   "evidence": "src/model.jl:107-113; probe:318-319"
+  },
+  {
+   "id": "S9b-010",
+   "file": "design/spec.md",
+   "line": 5158,
+   "kind": "mech",
+   "claim": "Simulation runs a Model{Float64}",
+   "evidence": "src/sim.jl:310"
+  },
+  {
+   "id": "S9b-011",
+   "file": "design/spec.md",
+   "line": 5159,
+   "kind": "law",
+   "claim": "Model refuses any other scalar as ArgumentInvalid",
+   "evidence": "src/model.jl:112; probe:314-317"
+  },
+  {
+   "id": "S9b-012",
+   "file": "design/spec.md",
+   "line": 5160,
+   "kind": "law",
+   "claim": "the refusal comes before the activation is derived",
+   "evidence": "src/model.jl:112-124"
+  },
+  {
+   "id": "S9b-013",
+   "file": "design/spec.md",
+   "line": 5162,
+   "kind": "law",
+   "claim": "two Deployments compare as values",
+   "evidence": "src/deployment.jl:619-623; probe:140"
+  },
+  {
+   "id": "S9b-014",
+   "file": "design/spec.md",
+   "line": 5162,
+   "kind": "mech",
+   "claim": "replay header check reads that comparison",
+   "evidence": "src/model.jl:1247"
+  },
+  {
+   "id": "S9b-015",
+   "file": "design/spec.md",
+   "line": 5164,
+   "kind": "law",
+   "claim": "a Deployment fixes three time quantities, Δt_frame, Δt_base, h_max",
+   "evidence": "src/deployment.jl:539-543"
+  },
+  {
+   "id": "S9b-016",
+   "file": "design/spec.md",
+   "line": 5167,
+   "kind": "mech",
+   "claim": "Δt_base is the lattice of the discrete tier",
+   "evidence": "src/deployment.jl:106-113,153-156"
+  },
+  {
+   "id": "S9b-017",
+   "file": "design/spec.md",
+   "line": 5168,
+   "kind": "mech",
+   "claim": "h_max is the longest step, under every method",
+   "evidence": "src/deployment.jl:224-229; probe:134-139"
+  },
+  {
+   "id": "S9b-018",
+   "file": "design/spec.md",
+   "line": 5169,
+   "kind": "law",
+   "claim": "the three stand in no required ratio",
+   "evidence": "src/deployment.jl:210-212; probe:60,222"
+  },
+  {
+   "id": "S9b-019",
+   "file": "design/spec.md",
+   "line": 5172,
+   "kind": "law",
+   "claim": "Δt_frame has no default and is required",
+   "evidence": "src/deployment.jl:216-218; probe:163-164"
+  },
+  {
+   "id": "S9b-020",
+   "file": "design/spec.md",
+   "line": 5173,
+   "kind": "law",
+   "claim": "an adaptive method adds a fourth quantity, the floor h_min",
+   "evidence": "src/deployment.jl:231-238"
+  },
+  {
+   "id": "S9b-021",
+   "file": "design/spec.md",
+   "line": 5176,
+   "kind": "law",
+   "claim": "Δt_base has exactly one of three sources",
+   "evidence": "src/deployment.jl:253-267"
+  },
+  {
+   "id": "S9b-022",
+   "file": "design/spec.md",
+   "line": 5179,
+   "kind": "decl",
+   "claim": "explicit Δt_base keyword is an integer or a Rational",
+   "evidence": "src/deployment.jl:15-27,265"
+  },
+  {
+   "id": "S9b-023",
+   "file": "design/spec.md",
+   "line": 5180,
+   "kind": "law",
+   "claim": "Δt_frame is the source when the keyword is absent",
+   "evidence": "src/deployment.jl:266-267"
+  },
+  {
+   "id": "S9b-024",
+   "file": "design/spec.md",
+   "line": 5181,
+   "kind": "law",
+   "claim": "derivation is permitted only when every discrete component is anchored",
+   "evidence": "src/deployment.jl:254-258; probe:211"
+  },
+  {
+   "id": "S9b-025",
+   "file": "design/spec.md",
+   "line": 5182,
+   "kind": "mech",
+   "claim": "\"anchored\" means the component timing anchor is not A₀",
+   "evidence": "src/deployment.jl:255"
+  },
+  {
+   "id": "S9b-026",
+   "file": "design/spec.md",
+   "line": 5184,
+   "kind": "decl",
+   "claim": "derivation is requested as Δt_base = :derive",
+   "evidence": "src/deployment.jl:253; probe:221"
+  },
+  {
+   "id": "S9b-027",
+   "file": "design/spec.md",
+   "line": 5190,
+   "kind": "law",
+   "claim": "derivation is never entered by default",
+   "evidence": "src/deployment.jl:555,266-267"
+  },
+  {
+   "id": "S9b-028",
+   "file": "design/spec.md",
+   "line": 5192,
+   "kind": "law",
+   "claim": "h_max is an optional exact time",
+   "evidence": "src/deployment.jl:224-225"
+  },
+  {
+   "id": "S9b-029",
+   "file": "design/spec.md",
+   "line": 5192,
+   "kind": "law",
+   "claim": "h_max need divide neither period",
+   "evidence": "src/deployment.jl:210-212; probe:134"
+  },
+  {
+   "id": "S9b-030",
+   "file": "design/spec.md",
+   "line": 5193,
+   "kind": "law",
+   "claim": "h_max takes the values Δt_frame takes",
+   "evidence": "src/deployment.jl:220-225; probe:167"
+  },
+  {
+   "id": "S9b-031",
+   "file": "design/spec.md",
+   "line": 5194,
+   "kind": "mech",
+   "claim": "fixed-step method takes each span between mandatory instants in the fewest equal steps",
+   "evidence": "src/frame.jl:104-130"
+  },
+  {
+   "id": "S9b-032",
+   "file": "design/spec.md",
+   "line": 5195,
+   "kind": "mech",
+   "claim": "mandatory instants are the frame tops and the due instants",
+   "evidence": "src/frame.jl:104-130"
+  },
+  {
+   "id": "S9b-033",
+   "file": "design/spec.md",
+   "line": 5196,
+   "kind": "law",
+   "claim": "without h_max a span is one step",
+   "evidence": "src/deployment.jl:226-227; probe:136"
+  },
+  {
+   "id": "S9b-034",
+   "file": "design/spec.md",
+   "line": 5196,
+   "kind": "law",
+   "claim": "the deployment records the lesser of h_max and Δt_frame",
+   "evidence": "src/deployment.jl:226-228; probe:137-138"
+  },
+  {
+   "id": "S9b-035",
+   "file": "design/spec.md",
+   "line": 5198,
+   "kind": "law",
+   "claim": "a bound at or above the frame splits no span",
+   "evidence": "src/deployment.jl:166-172; probe:137-138"
+  },
+  {
+   "id": "S9b-036",
+   "file": "design/spec.md",
+   "line": 5199,
+   "kind": "law",
+   "claim": "absent, at-frame and above-frame bounds compare as one value",
+   "evidence": "src/deployment.jl:619-623; probe:140"
+  },
+  {
+   "id": "S9b-037",
+   "file": "design/spec.md",
+   "line": 5201,
+   "kind": "decl",
+   "claim": "h_min is an optional exact time",
+   "evidence": "src/deployment.jl:233-235"
+  },
+  {
+   "id": "S9b-038",
+   "file": "design/spec.md",
+   "line": 5201,
+   "kind": "law",
+   "claim": "a proposing method requires h_min",
+   "evidence": "src/deployment.jl:231-232; probe:172-173"
+  },
+  {
+   "id": "S9b-039",
+   "file": "design/spec.md",
+   "line": 5202,
+   "kind": "law",
+   "claim": "h_min takes the values h_max takes",
+   "evidence": "src/deployment.jl:233-235; probe:178-179"
+  },
+  {
+   "id": "S9b-040",
+   "file": "design/spec.md",
+   "line": 5203,
+   "kind": "law",
+   "claim": "a floor above half the resolved h_max is refused",
+   "evidence": "src/deployment.jl:235-238; probe:174-177"
+  },
+  {
+   "id": "S9b-041",
+   "file": "design/spec.md",
+   "line": 5206,
+   "kind": "mech",
+   "claim": "the algorithm token states whether its method proposes",
+   "evidence": "src/deployment.jl:434-436"
+  },
+  {
+   "id": "S9b-042",
+   "file": "design/spec.md",
+   "line": 5207,
+   "kind": "law",
+   "claim": "a fixed-step method leaves the floor unused",
+   "evidence": "src/deployment.jl:318"
+  },
+  {
+   "id": "S9b-043",
+   "file": "design/spec.md",
+   "line": 5207,
+   "kind": "law",
+   "claim": "the deployment still records and compares the floor",
+   "evidence": "src/deployment.jl:619-623; probe:182"
+  },
+  {
+   "id": "S9b-044",
+   "file": "design/spec.md",
+   "line": 5208,
+   "kind": "law",
+   "claim": "localization_budget is likewise recorded and compared with no localized event",
+   "evidence": "src/deployment.jl:619-622"
+  },
+  {
+   "id": "S9b-045",
+   "file": "design/spec.md",
+   "line": 5209,
+   "kind": "decl",
+   "claim": "attempt_budget defaults to 7",
+   "evidence": "src/deployment.jl:555-557; probe:183"
+  },
+  {
+   "id": "S9b-046",
+   "file": "design/spec.md",
+   "line": 5209,
+   "kind": "mech",
+   "claim": "attempt_budget bounds attempts of a step before the next attempt is at the floor",
+   "evidence": "src/model.jl:810,841"
+  },
+  {
+   "id": "S9b-047",
+   "file": "design/spec.md",
+   "line": 5212,
+   "kind": "law",
+   "claim": "a Deployment holds its time quantities exact",
+   "evidence": "src/deployment.jl:540-543"
+  },
+  {
+   "id": "S9b-048",
+   "file": "design/spec.md",
+   "line": 5212,
+   "kind": "law",
+   "claim": "a Deployment compares its time quantities exact",
+   "evidence": "src/deployment.jl:619-623"
+  },
+  {
+   "id": "S9b-049",
+   "file": "design/spec.md",
+   "line": 5213,
+   "kind": "mech",
+   "claim": "lattices, step counts and coincidences are decided on exact values",
+   "evidence": "src/deployment.jl:149-176"
+  },
+  {
+   "id": "S9b-050",
+   "file": "design/spec.md",
+   "line": 5215,
+   "kind": "law",
+   "claim": "two values rounding to one Float64 are two deployments",
+   "evidence": "src/deployment.jl:619; probe:141"
+  },
+  {
+   "id": "S9b-051",
+   "file": "design/spec.md",
+   "line": 5216,
+   "kind": "ex",
+   "claim": "1 s frame, h_max = 1//3 takes three steps a frame",
+   "evidence": "probe:134"
+  },
+  {
+   "id": "S9b-052",
+   "file": "design/spec.md",
+   "line": 5217,
+   "kind": "ex",
+   "claim": "h_max = Rational(1/3) takes four steps a frame",
+   "evidence": "probe:135"
+  },
+  {
+   "id": "S9b-053",
+   "file": "design/spec.md",
+   "line": 5218,
+   "kind": "mech",
+   "claim": "the loop reads the Float64 nearest the exact value where it needs seconds",
+   "evidence": "src/store.jl:202-206"
+  },
+  {
+   "id": "S9b-054",
+   "file": "design/spec.md",
+   "line": 5221,
+   "kind": "law",
+   "claim": "each time quantity takes an integer or a Rational of any integer type",
+   "evidence": "src/deployment.jl:15-17; probe:148-150"
+  },
+  {
+   "id": "S9b-055",
+   "file": "design/spec.md",
+   "line": 5222,
+   "kind": "law",
+   "claim": "a value Rational{Int} cannot hold finitely is refused",
+   "evidence": "src/deployment.jl:17-20; probe:152-154"
+  },
+  {
+   "id": "S9b-056",
+   "file": "design/spec.md",
+   "line": 5224,
+   "kind": "law",
+   "claim": "a float is refused as :inexact",
+   "evidence": "src/deployment.jl:22-24; probe:146,167"
+  },
+  {
+   "id": "S9b-057",
+   "file": "design/spec.md",
+   "line": 5224,
+   "kind": "law",
+   "claim": "Rational{Int32} and a fitting BigInt are the values they spell",
+   "evidence": "src/deployment.jl:17; probe:148-150"
+  },
+  {
+   "id": "S9b-058",
+   "file": "design/spec.md",
+   "line": 5225,
+   "kind": "law",
+   "claim": "big(2)^70 is refused as :range",
+   "evidence": "src/deployment.jl:17-20; probe:152"
+  },
+  {
+   "id": "S9b-059",
+   "file": "design/spec.md",
+   "line": 5225,
+   "kind": "law",
+   "claim": "1//0 is refused as :range",
+   "evidence": "src/deployment.jl:178-184; probe:154"
+  },
+  {
+   "id": "S9b-061",
+   "file": "design/spec.md",
+   "line": 5228,
+   "kind": "law",
+   "claim": "the :unanchored refusal carries the grid diagnostics suggestion message",
+   "evidence": "src/deployment.jl:254-257; src/diagnostics.jl:1477-1481; probe:211-217"
+  },
+  {
+   "id": "S9b-062",
+   "file": "design/spec.md",
+   "line": 5229,
+   "kind": "mech",
+   "claim": "with only anchored components Δt_base is bookkeeping no period depends on",
+   "evidence": "src/deployment.jl:279-290; probe:231"
+  },
+  {
+   "id": "S9b-063",
+   "file": "design/spec.md",
+   "line": 5231,
+   "kind": "law",
+   "claim": "an unanchored component period is Dₐ(i)·Δt_base",
+   "evidence": "src/deployment.jl:289; probe:45-46"
+  },
+  {
+   "id": "S9b-064",
+   "file": "design/spec.md",
+   "line": 5239,
+   "kind": "law",
+   "claim": "constraint pool is every anchor period and every nonzero offset",
+   "evidence": "src/structure.jl:851-857"
+  },
+  {
+   "id": "S9b-065",
+   "file": "design/spec.md",
+   "line": 5240,
+   "kind": "law",
+   "claim": "admissible Δt_base divides every pool entry, equivalently gcd(pool)",
+   "evidence": "src/deployment.jl:268-277; src/structure.jl:858"
+  },
+  {
+   "id": "S9b-066",
+   "file": "design/spec.md",
+   "line": 5241,
+   "kind": "law",
+   "claim": "admissible set is gcd(pool)/Q for integer Q ≥ 1",
+   "evidence": "src/structure.jl:858; probe:222-231"
+  },
+  {
+   "id": "S9b-067",
+   "file": "design/spec.md",
+   "line": 5242,
+   "kind": "law",
+   "claim": "derived Δt_base is gcd(pool), the coarsest admissible",
+   "evidence": "src/deployment.jl:261-262; probe:221"
+  },
+  {
+   "id": "S9b-068",
+   "file": "design/spec.md",
+   "line": 5243,
+   "kind": "law",
+   "claim": "per anchor D₀(a)=Δt(a)/Δt_base, Φ₀(a)=τ(a)/Δt_base",
+   "evidence": "src/structure.jl:905-907"
+  },
+  {
+   "id": "S9b-069",
+   "file": "design/spec.md",
+   "line": 5244,
+   "kind": "law",
+   "claim": "per component D₀(i)=Dₐ(i)·D₀(a)",
+   "evidence": "src/structure.jl:913-918"
+  },
+  {
+   "id": "S9b-070",
+   "file": "design/spec.md",
+   "line": 5244,
+   "kind": "law",
+   "claim": "per component Φ₀(i)=Φ₀(a)+Φₐ(i)·D₀(a)",
+   "evidence": "src/structure.jl:913-918"
+  },
+  {
+   "id": "S9b-071",
+   "file": "design/spec.md",
+   "line": 5244,
+   "kind": "law",
+   "claim": "Δt(i)=D₀(i)·Δt_base and τ(i)=Φ₀(i)·Δt_base",
+   "evidence": "src/deployment.jl:289; src/show.jl:331"
+  },
+  {
+   "id": "S9b-072",
+   "file": "design/spec.md",
+   "line": 5246,
+   "kind": "mech",
+   "claim": "resolution is one division pair per anchor and one multiply-add per component",
+   "evidence": "src/deployment.jl:269-290"
+  },
+  {
+   "id": "S9b-073",
+   "file": "design/spec.md",
+   "line": 5247,
+   "kind": "law",
+   "claim": "D₀(a) and Φ₀(a) must both be exact integers",
+   "evidence": "src/structure.jl:905-907; src/deployment.jl:270-277"
+  },
+  {
+   "id": "S9b-074",
+   "file": "design/spec.md",
+   "line": 5248,
+   "kind": "law",
+   "claim": "otherwise DeploymentInvalid naming the anchor scope and key",
+   "evidence": "src/deployment.jl:270-277; probe:200,282"
+  },
+  {
+   "id": "S9b-075",
+   "file": "design/spec.md",
+   "line": 5249,
+   "kind": "law",
+   "claim": "the multiply-add runs in checked Int",
+   "evidence": "src/structure.jl:913-918"
+  },
+  {
+   "id": "S9b-076",
+   "file": "design/spec.md",
+   "line": 5250,
+   "kind": "law",
+   "claim": "a divisor past Int is the lattices refusal on Δt_base",
+   "evidence": "src/deployment.jl:279-293,316-322"
+  },
+  {
+   "id": "S9b-077",
+   "file": "design/spec.md",
+   "line": 5251,
+   "kind": "mech",
+   "claim": "such a divisor counts a period past Int in base ticks and in Δt_unit",
+   "evidence": "src/deployment.jl:153-156; src/structure.jl:913"
+  },
+  {
+   "id": "S9b-078",
+   "file": "design/spec.md",
+   "line": 5252,
+   "kind": "decl",
+   "claim": "Δt_unit is the exact unit the loop counts in",
+   "evidence": "src/deployment.jl:111-113"
+  },
+  {
+   "id": "S9b-079",
+   "file": "design/spec.md",
+   "line": 5254,
+   "kind": "mech",
+   "claim": "per-component triples are the content of the Schedule",
+   "evidence": "src/deployment.jl:279-293"
+  },
+  {
+   "id": "S9b-080",
+   "file": "design/spec.md",
+   "line": 5254,
+   "kind": "mech",
+   "claim": "the constructor builds the Schedule and the Deployment carries it",
+   "evidence": "src/deployment.jl:609"
+  },
+  {
+   "id": "S9b-081",
+   "file": "design/spec.md",
+   "line": 5257,
+   "kind": "mech",
+   "claim": "a timing is one period and one phase counted in a reference lattice",
+   "evidence": "src/structure.jl:913"
+  },
+  {
+   "id": "S9b-082",
+   "file": "design/spec.md",
+   "line": 5260,
+   "kind": "mech",
+   "claim": "table last row is the composition law with j the anchor and k the base grid",
+   "evidence": "src/structure.jl:913-918"
+  },
+  {
+   "id": "S9b-083",
+   "file": "design/spec.md",
+   "line": 5262,
+   "kind": "law",
+   "claim": "spec and printed output always write the subscript",
+   "evidence": "src/show.jl:104,396-409"
+  },
+  {
+   "id": "S9b-084",
+   "file": "design/spec.md",
+   "line": 5263,
+   "kind": "decl",
+   "claim": "a bare D or Φ is only a field name",
+   "evidence": "src/deployment.jl:32-39"
+  },
+  {
+   "id": "S9b-085",
+   "file": "design/spec.md",
+   "line": 5264,
+   "kind": "mech",
+   "claim": "under an anchor other than A₀ the build knows the seconds pair",
+   "evidence": "src/structure.jl:145-150; src/show.jl:107-123"
+  },
+  {
+   "id": "S9b-086",
+   "file": "design/spec.md",
+   "line": 5265,
+   "kind": "mech",
+   "claim": "under A₀ a timing is a multiple of Δt_base until deployment binds",
+   "evidence": "src/structure.jl:913; src/show.jl:112-117"
+  },
+  {
+   "id": "S9b-087",
+   "file": "design/spec.md",
+   "line": 5268,
+   "kind": "law",
+   "claim": "a structure admits a deployment exactly when it binds at Δt_frame=Δt_base=gcd(pool)",
+   "evidence": "src/structure.jl:958-1010"
+  },
+  {
+   "id": "S9b-088",
+   "file": "design/spec.md",
+   "line": 5269,
+   "kind": "law",
+   "claim": "with an empty pool any base tick serves",
+   "evidence": "src/structure.jl:975"
+  },
+  {
+   "id": "S9b-089",
+   "file": "design/spec.md",
+   "line": 5270,
+   "kind": "law",
+   "claim": "every count the binding forms is least at that point",
+   "evidence": "src/structure.jl:958-1010"
+  },
+  {
+   "id": "S9b-090",
+   "file": "design/spec.md",
+   "line": 5274,
+   "kind": "law",
+   "claim": "Δt_base=gcd(pool)/Q scales every D₀ and Φ₀ by Q, least at Q=1",
+   "evidence": "src/deployment.jl:269-290; probe:41-42"
+  },
+  {
+   "id": "S9b-091",
+   "file": "design/spec.md",
+   "line": 5275,
+   "kind": "law",
+   "claim": "Δt_frame scales frame and base in Δt_unit, each at least one unit; least at Δt_frame=Δt_base",
+   "evidence": "src/deployment.jl:153-156"
+  },
+  {
+   "id": "S9b-092",
+   "file": "design/spec.md",
+   "line": 5276,
+   "kind": "law",
+   "claim": "h_max scales the steps of one frame; least when absent, one step",
+   "evidence": "src/deployment.jl:163-167; probe:136"
+  },
+  {
+   "id": "S9b-093",
+   "file": "design/spec.md",
+   "line": 5278,
+   "kind": "law",
+   "claim": "the frame loop indexes one frame past the largest divisor, which must fit Int",
+   "evidence": "src/structure.jl:924-925"
+  },
+  {
+   "id": "S9b-094",
+   "file": "design/spec.md",
+   "line": 5280,
+   "kind": "law",
+   "claim": "if any choice binds, the gcd choice does",
+   "evidence": "src/structure.jl:958-1010"
+  },
+  {
+   "id": "S9b-095",
+   "file": "design/spec.md",
+   "line": 5281,
+   "kind": "law",
+   "claim": "if the gcd choice fails every other fails on the same count",
+   "evidence": "src/structure.jl:958-1010"
+  },
+  {
+   "id": "S9b-096",
+   "file": "design/spec.md",
+   "line": 5281,
+   "kind": "mech",
+   "claim": "the structure step runs it as one trial",
+   "evidence": "src/build.jl:780-784"
+  },
+  {
+   "id": "S9b-097",
+   "file": "design/spec.md",
+   "line": 5282,
+   "kind": "law",
+   "claim": "a failure of the trial is refused at the build",
+   "evidence": "src/structure.jl:1003-1010; probe:326"
+  },
+  {
+   "id": "S9b-098",
+   "file": "design/spec.md",
+   "line": 5282,
+   "kind": "law",
+   "claim": "a built structure therefore has a deployment",
+   "evidence": "src/structure.jl:958-1010"
+  },
+  {
+   "id": "S9b-099",
+   "file": "design/spec.md",
+   "line": 5283,
+   "kind": "law",
+   "claim": "every DeploymentInvalid names a keyword the caller can change",
+   "evidence": "src/diagnostics.jl:1370-1378,1458-1496"
+  },
+  {
+   "id": "S9b-100",
+   "file": "design/spec.md",
+   "line": 5286,
+   "kind": "law",
+   "claim": "validation is collected like its declarative siblings",
+   "evidence": "src/deployment.jl:555-576"
+  },
+  {
+   "id": "S9b-101",
+   "file": "design/spec.md",
+   "line": 5288,
+   "kind": "law",
+   "claim": "violations are reported as DeploymentInvalid",
+   "evidence": "src/deployment.jl:576; probe:146-198"
+  },
+  {
+   "id": "S9b-102",
+   "file": "design/spec.md",
+   "line": 5289,
+   "kind": "decl",
+   "claim": "DeploymentInvalid carries parameter, value and the violated constraint",
+   "evidence": "src/diagnostics.jl:1370-1378,1458-1496"
+  },
+  {
+   "id": "S9b-103",
+   "file": "design/spec.md",
+   "line": 5291,
+   "kind": "law",
+   "claim": "Δt_frame, Δt_base, h_max not positive and finite are refused, each on its own",
+   "evidence": "src/deployment.jl:178-184; probe:156-158,196-198"
+  },
+  {
+   "id": "S9b-104",
+   "file": "design/spec.md",
+   "line": 5292,
+   "kind": "law",
+   "claim": "those Rational{Int} cannot hold are refused",
+   "evidence": "src/deployment.jl:15-20; probe:152"
+  },
+  {
+   "id": "S9b-105",
+   "file": "design/spec.md",
+   "line": 5294,
+   "kind": "law",
+   "claim": "a non-dividing anchor period or offset is refused",
+   "evidence": "src/deployment.jl:270-277; probe:200,282"
+  },
+  {
+   "id": "S9b-106",
+   "file": "design/spec.md",
+   "line": 5295,
+   "kind": "law",
+   "claim": "a Δt_base making Δt_unit too fine to index one frame in Int is refused",
+   "evidence": "src/deployment.jl:316-324; src/diagnostics.jl:1471-1475"
+  },
+  {
+   "id": "S9b-107",
+   "file": "design/spec.md",
+   "line": 5296,
+   "kind": "law",
+   "claim": "a Δt_base under which a component divisor leaves Int is refused",
+   "evidence": "src/deployment.jl:279-293,316-324"
+  },
+  {
+   "id": "S9b-108",
+   "file": "design/spec.md",
+   "line": 5298,
+   "kind": "law",
+   "claim": "an h_max too fine to count one frame steps in Int is refused",
+   "evidence": "src/deployment.jl:166-176,325-328"
+  },
+  {
+   "id": "S9b-109",
+   "file": "design/spec.md",
+   "line": 5300,
+   "kind": "law",
+   "claim": "h_min is refused as h_max is",
+   "evidence": "src/deployment.jl:233-235; probe:178"
+  },
+  {
+   "id": "S9b-110",
+   "file": "design/spec.md",
+   "line": 5300,
+   "kind": "law",
+   "claim": "an absent h_min under a proposing method is refused",
+   "evidence": "src/deployment.jl:231-232; probe:172-173"
+  },
+  {
+   "id": "S9b-111",
+   "file": "design/spec.md",
+   "line": 5301,
+   "kind": "law",
+   "claim": "an h_min above half the resolved h_max is refused",
+   "evidence": "src/deployment.jl:235-238; probe:174-175"
+  },
+  {
+   "id": "S9b-113",
+   "file": "design/spec.md",
+   "line": 5304,
+   "kind": "law",
+   "claim": "a localization_tol that is not positive and finite is refused",
+   "evidence": "src/deployment.jl:562-563; probe:193-194"
+  },
+  {
+   "id": "S9b-114",
+   "file": "design/spec.md",
+   "line": 5305,
+   "kind": "law",
+   "claim": "a localization_budget, firing_budget or attempt_budget not an integer ≥ 1 is refused",
+   "evidence": "src/deployment.jl:560-566; probe:188-191"
+  },
+  {
+   "id": "S9b-115",
+   "file": "design/spec.md",
+   "line": 5308,
+   "kind": "law",
+   "claim": "every check whose premise holds runs",
+   "evidence": "src/deployment.jl:214-330; probe:196-198"
+  },
+  {
+   "id": "S9b-116",
+   "file": "design/spec.md",
+   "line": 5308,
+   "kind": "law",
+   "claim": "the constructor throws once",
+   "evidence": "src/deployment.jl:576"
+  },
+  {
+   "id": "S9b-117",
+   "file": "design/spec.md",
+   "line": 5309,
+   "kind": "law",
+   "claim": "overflow, inexact conversion or zero division in a premise is that premise refusal",
+   "evidence": "src/deployment.jl:15-27,279-293; probe:152-154"
+  },
+  {
+   "id": "S9b-118",
+   "file": "design/spec.md",
+   "line": 5311,
+   "kind": "law",
+   "claim": "a raw failure never drops another premise fault",
+   "evidence": "src/deployment.jl:214-330; probe:196-198"
+  },
+  {
+   "id": "S9b-119",
+   "file": "design/spec.md",
+   "line": 5313,
+   "kind": "law",
+   "claim": "event parameters validate on their own terms only",
+   "evidence": "src/deployment.jl:559-566"
+  },
+  {
+   "id": "S9b-120",
+   "file": "design/spec.md",
+   "line": 5314,
+   "kind": "law",
+   "claim": "event parameters take no part in the harmonic-grid check",
+   "evidence": "src/deployment.jl:214,559-566"
+  },
+  {
+   "id": "S9b-121",
+   "file": "design/spec.md",
+   "line": 5317,
+   "kind": "mech",
+   "claim": "the Schedule lives on the Deployment",
+   "evidence": "src/deployment.jl:549"
+  },
+  {
+   "id": "S9b-122",
+   "file": "design/spec.md",
+   "line": 5318,
+   "kind": "mech",
+   "claim": "the constructor builds it from the structure triples and anchors",
+   "evidence": "src/deployment.jl:279-293"
+  },
+  {
+   "id": "S9b-123",
+   "file": "design/spec.md",
+   "line": 5318,
+   "kind": "law",
+   "claim": "the Schedule is typed",
+   "evidence": "src/deployment.jl:75-77"
+  },
+  {
+   "id": "S9b-124",
+   "file": "design/spec.md",
+   "line": 5319,
+   "kind": "decl",
+   "claim": "one row per discrete component with (D₀,Φ₀,Δt), anchor and rate-chain columns",
+   "evidence": "src/deployment.jl:32-39,281-287"
+  },
+  {
+   "id": "S9b-125",
+   "file": "design/spec.md",
+   "line": 5320,
+   "kind": "decl",
+   "claim": "rate-scope rows each with its own (D₀,Φ₀)",
+   "evidence": "src/deployment.jl:56-62,288-292"
+  },
+  {
+   "id": "S9b-126",
+   "file": "design/spec.md",
+   "line": 5321,
+   "kind": "mech",
+   "claim": "executor per-component (D₀,Φ₀,Δt) derived from the rows at compile, never stored beside",
+   "evidence": "src/deployment.jl:79-91"
+  },
+  {
+   "id": "S9b-127",
+   "file": "design/spec.md",
+   "line": 5323,
+   "kind": "mech",
+   "claim": "the Schedule is the single source of truth for Δt",
+   "evidence": "src/deployment.jl:58-60,79-91"
+  },
+  {
+   "id": "S9b-128",
+   "file": "design/spec.md",
+   "line": 5324,
+   "kind": "mech",
+   "claim": "the GridUtilization advisory reads the Schedule",
+   "evidence": "src/deployment.jl:587-596"
+  },
+  {
+   "id": "S9b-129",
+   "file": "design/spec.md",
+   "line": 5328,
+   "kind": "ex",
+   "claim": "example has three discrete components under two scopes",
+   "evidence": "probe:31-33"
+  },
+  {
+   "id": "S9b-130",
+   "file": "design/spec.md",
+   "line": 5330,
+   "kind": "ex",
+   "claim": "root holds scope fcs and discrete GNSS component gnss",
+   "evidence": "test/fixtures.jl:1391-1411"
+  },
+  {
+   "id": "S9b-131",
+   "file": "design/spec.md",
+   "line": 5331,
+   "kind": "ex",
+   "claim": "declared fcs = Relative(1) and gnss = Absolute(1//50)",
+   "evidence": "test/fixtures.jl:1410"
+  },
+  {
+   "id": "S9b-132",
+   "file": "design/spec.md",
+   "line": 5331,
+   "kind": "ex",
+   "claim": "deployed at Δt_base = 2 ms",
+   "evidence": "probe:31-34"
+  },
+  {
+   "id": "S9b-133",
+   "file": "design/spec.md",
+   "line": 5333,
+   "kind": "ex",
+   "claim": "Absolute entry seeds anchor A₁ at (1//50, 0)",
+   "evidence": "probe:59"
+  },
+  {
+   "id": "S9b-134",
+   "file": "design/spec.md",
+   "line": 5333,
+   "kind": "ex",
+   "claim": "the rest of the tree stays on A₀",
+   "evidence": "probe:87-91"
+  },
+  {
+   "id": "S9b-135",
+   "file": "design/spec.md",
+   "line": 5336,
+   "kind": "ex",
+   "claim": "inner: Relative(1) under fcs, A₀, (1,0), bound (1,0), 2 ms",
+   "evidence": "probe:45"
+  },
+  {
+   "id": "S9b-136",
+   "file": "design/spec.md",
+   "line": 5338,
+   "kind": "ex",
+   "claim": "outer: Relative(5,2) under fcs, A₀, (5,2), bound (5,2), 10 ms",
+   "evidence": "probe:46"
+  },
+  {
+   "id": "S9b-137",
+   "file": "design/spec.md",
+   "line": 5338,
+   "kind": "ex",
+   "claim": "gnss: Absolute(1//50) at root, A₁, (1,0), bound (10,0), 20 ms",
+   "evidence": "probe:47"
+  },
+  {
+   "id": "S9b-138",
+   "file": "design/spec.md",
+   "line": 5344,
+   "kind": "ex",
+   "claim": "gnss divisor could not exist before Δt_base bound",
+   "evidence": "src/structure.jl:905-918"
+  },
+  {
+   "id": "S9b-139",
+   "file": "design/spec.md",
+   "line": 5345,
+   "kind": "ex",
+   "claim": "gnss D₀ = Dₐ·D₀(A₁)",
+   "evidence": "src/structure.jl:913-918"
+  },
+  {
+   "id": "S9b-140",
+   "file": "design/spec.md",
+   "line": 5346,
+   "kind": "ex",
+   "claim": "D₀(A₁) = (1//50)/(1//500) = 10",
+   "evidence": "probe:42"
+  },
+  {
+   "id": "S9b-141",
+   "file": "design/spec.md",
+   "line": 5350,
+   "kind": "mech",
+   "claim": "each artifact renders through show with no accessors",
+   "evidence": "src/show.jl:1-14"
+  },
+  {
+   "id": "S9b-142",
+   "file": "design/spec.md",
+   "line": 5353,
+   "kind": "mech",
+   "claim": "show(Structure) prints the anchor table with the A₀ row",
+   "evidence": "src/show.jl:119-123; probe:95-98"
+  },
+  {
+   "id": "S9b-143",
+   "file": "design/spec.md",
+   "line": 5354,
+   "kind": "mech",
+   "claim": "show(Structure) prints the component table with rate-scope rows",
+   "evidence": "src/show.jl:105-118; probe:86-94"
+  },
+  {
+   "id": "S9b-144",
+   "file": "design/spec.md",
+   "line": 5355,
+   "kind": "mech",
+   "claim": "rate-scope rows are an assembly sample_times declaration against the enclosing scope",
+   "evidence": "src/show.jl:111-117"
+  },
+  {
+   "id": "S9b-145",
+   "file": "design/spec.md",
+   "line": 5356,
+   "kind": "mech",
+   "claim": "show(Structure) prints the grid report under the anchor table",
+   "evidence": "src/show.jl:126-127; probe:99-105"
+  },
+  {
+   "id": "S9b-146",
+   "file": "design/spec.md",
+   "line": 5357,
+   "kind": "mech",
+   "claim": "the report states which base ticks the anchors admit",
+   "evidence": "src/diagnostics.jl:1418-1440"
+  },
+  {
+   "id": "S9b-147",
+   "file": "design/spec.md",
+   "line": 5359,
+   "kind": "mech",
+   "claim": "it derives the report from the anchors",
+   "evidence": "src/show.jl:126"
+  },
+  {
+   "id": "S9b-148",
+   "file": "design/spec.md",
+   "line": 5360,
+   "kind": "mech",
+   "claim": "it sets the grid block lines under grid:",
+   "evidence": "src/show.jl:127; probe:99"
+  },
+  {
+   "id": "S9b-149",
+   "file": "design/spec.md",
+   "line": 5360,
+   "kind": "law",
+   "claim": "a structure with no anchors prints no block",
+   "evidence": "src/show.jl:127; src/diagnostics.jl:1419"
+  },
+  {
+   "id": "S9b-150",
+   "file": "design/spec.md",
+   "line": 5361,
+   "kind": "mech",
+   "claim": "show(Structure) derives each root face routing chain from the declared wires",
+   "evidence": "src/show.jl:76-86,128-131; probe:106-109"
+  },
+  {
+   "id": "S9b-151",
+   "file": "design/spec.md",
+   "line": 5362,
+   "kind": "mech",
+   "claim": "an input route is marked where its consumer pins the root input",
+   "evidence": "src/show.jl:89-94"
+  },
+  {
+   "id": "S9b-152",
+   "file": "design/spec.md",
+   "line": 5363,
+   "kind": "mech",
+   "claim": "show(Outputs) prints the execution order with each port class",
+   "evidence": "src/show.jl:142-149; probe:110-115"
+  },
+  {
+   "id": "S9b-153",
+   "file": "design/spec.md",
+   "line": 5364,
+   "kind": "mech",
+   "claim": "show(Events) prints each component event names with policies",
+   "evidence": "src/show.jl:162-173"
+  },
+  {
+   "id": "S9b-154",
+   "file": "design/spec.md",
+   "line": 5365,
+   "kind": "mech",
+   "claim": "show(Schedule) prints the rows and the hyperperiod chart",
+   "evidence": "src/show.jl:206-235; probe:119-131"
+  },
+  {
+   "id": "S9b-155",
+   "file": "design/spec.md",
+   "line": 5366,
+   "kind": "mech",
+   "claim": "show(Build) and show(Deployment) print a summary and their parts",
+   "evidence": "src/show.jl:272-285,423-433"
+  },
+  {
+   "id": "S9b-156",
+   "file": "design/spec.md",
+   "line": 5367,
+   "kind": "mech",
+   "claim": "show(Build) parts include the events",
+   "evidence": "src/show.jl:283"
+  },
+  {
+   "id": "S9b-157",
+   "file": "design/spec.md",
+   "line": 5367,
+   "kind": "mech",
+   "claim": "a feedthrough line sits between the outputs table and the events table",
+   "evidence": "src/show.jl:281-282; probe:116"
+  },
+  {
+   "id": "S9b-158",
+   "file": "design/spec.md",
+   "line": 5369,
+   "kind": "mech",
+   "claim": "feedthrough edges derive from connections and producers stage-2 names",
+   "evidence": "src/show.jl:254-269"
+  },
+  {
+   "id": "S9b-159",
+   "file": "design/spec.md",
+   "line": 5371,
+   "kind": "mech",
+   "claim": "show(Deployment) states the steps per frame of a frame no due instant falls inside",
+   "evidence": "src/show.jl:312-327; probe:35"
+  },
+  {
+   "id": "S9b-160",
+   "file": "design/spec.md",
+   "line": 5372,
+   "kind": "mech",
+   "claim": "it states them under its parameters",
+   "evidence": "src/show.jl:423-428"
+  },
+  {
+   "id": "S9b-161",
+   "file": "design/spec.md",
+   "line": 5373,
+   "kind": "mech",
+   "claim": "it then names every discrete component whose due instants fall inside frames",
+   "evidence": "src/show.jl:318-326; probe:61"
+  },
+  {
+   "id": "S9b-162",
+   "file": "design/spec.md",
+   "line": 5374,
+   "kind": "law",
+   "claim": "a frame with a due instant inside splits into spans in their own equal steps, never fewer",
+   "evidence": "src/frame.jl:104-130"
+  },
+  {
+   "id": "S9b-163",
+   "file": "design/spec.md",
+   "line": 5376,
+   "kind": "law",
+   "claim": "construction raises no warning for a split",
+   "evidence": "src/deployment.jl:555-615; probe:60-83"
+  },
+  {
+   "id": "S9b-164",
+   "file": "design/spec.md",
+   "line": 5377,
+   "kind": "mech",
+   "claim": "where a component splits frames the count is labelled per unsplit frame",
+   "evidence": "src/show.jl:324-326; probe:61"
+  },
+  {
+   "id": "S9b-165",
+   "file": "design/spec.md",
+   "line": 5380,
+   "kind": "mech",
+   "claim": "the line costs one check per component",
+   "evidence": "src/show.jl:318-321"
+  },
+  {
+   "id": "S9b-166",
+   "file": "design/spec.md",
+   "line": 5380,
+   "kind": "law",
+   "claim": "a component ticks all fall on frame tops exactly when the frame divides period and offset",
+   "evidence": "src/show.jl:318-321"
+  },
+  {
+   "id": "S9b-167",
+   "file": "design/spec.md",
+   "line": 5382,
+   "kind": "mech",
+   "claim": "show(Deployment) prints the three time quantities exact",
+   "evidence": "src/show.jl:291-296; probe:34"
+  },
+  {
+   "id": "S9b-168",
+   "file": "design/spec.md",
+   "line": 5384,
+   "kind": "law",
+   "claim": "two deployments that compare unequal never print alike",
+   "evidence": "src/show.jl:291-296,423-433"
+  },
+  {
+   "id": "S9b-169",
+   "file": "design/spec.md",
+   "line": 5385,
+   "kind": "mech",
+   "claim": "show(Deployment) prints the schedule under the symbols in a block under schedule:",
+   "evidence": "src/show.jl:385-421; probe:37"
+  },
+  {
+   "id": "S9b-170",
+   "file": "design/spec.md",
+   "line": 5387,
+   "kind": "mech",
+   "claim": "anchor table gives each anchor Δt, τ, D₀ and Φ₀",
+   "evidence": "src/show.jl:394-401; probe:39-42"
+  },
+  {
+   "id": "S9b-171",
+   "file": "design/spec.md",
+   "line": 5388,
+   "kind": "mech",
+   "claim": "the A₀ row prints Δt_base by its value",
+   "evidence": "src/show.jl:392; probe:41"
+  },
+  {
+   "id": "S9b-172",
+   "file": "design/spec.md",
+   "line": 5389,
+   "kind": "mech",
+   "claim": "component table: one row per discrete component with anchor, Dₐ, Φₐ, D₀, Φ₀, Δt, τ",
+   "evidence": "src/show.jl:404-409; probe:44-47"
+  },
+  {
+   "id": "S9b-173",
+   "file": "design/spec.md",
+   "line": 5390,
+   "kind": "mech",
+   "claim": "rate-scope table has the same columns after its key",
+   "evidence": "src/show.jl:412-418; probe:49-50"
+  },
+  {
+   "id": "S9b-174",
+   "file": "design/spec.md",
+   "line": 5391,
+   "kind": "mech",
+   "claim": "show reads Dₐ and Φₐ from the structure",
+   "evidence": "src/show.jl:402-403,409"
+  },
+  {
+   "id": "S9b-175",
+   "file": "design/spec.md",
+   "line": 5392,
+   "kind": "mech",
+   "claim": "show derives each anchor counts since the Schedule holds neither",
+   "evidence": "src/show.jl:396; src/deployment.jl:32-39"
+  },
+  {
+   "id": "S9b-176",
+   "file": "design/spec.md",
+   "line": 5393,
+   "kind": "mech",
+   "claim": "rate chains stay on the structure table and on show(Schedule)",
+   "evidence": "src/show.jl:104-108,206-215; probe:44-47"
+  },
+  {
+   "id": "S9b-177",
+   "file": "design/spec.md",
+   "line": 5395,
+   "kind": "mech",
+   "claim": "show(Deployment) prints Δt and τ exact as D₀·Δt_base and Φ₀·Δt_base",
+   "evidence": "src/show.jl:331,402-403; probe:45-47"
+  },
+  {
+   "id": "S9b-178",
+   "file": "design/spec.md",
+   "line": 5396,
+   "kind": "mech",
+   "claim": "show(Schedule) prints the float its row holds",
+   "evidence": "src/show.jl:216; probe:121"
+  },
+  {
+   "id": "S9b-179",
+   "file": "design/spec.md",
+   "line": 5398,
+   "kind": "mech",
+   "claim": "show(Deployment) states its base tick against the coarsest admissible",
+   "evidence": "src/show.jl:368-377; probe:38"
+  },
+  {
+   "id": "S9b-180",
+   "file": "design/spec.md",
+   "line": 5399,
+   "kind": "mech",
+   "claim": "the statement is one line under the block heading",
+   "evidence": "src/show.jl:395-396"
+  },
+  {
+   "id": "S9b-181",
+   "file": "design/spec.md",
+   "line": 5400,
+   "kind": "mech",
+   "claim": "it gives gcd(pool) and the whole factor Δt_base divides it by",
+   "evidence": "src/show.jl:374-377; probe:38"
+  },
+  {
+   "id": "S9b-182",
+   "file": "design/spec.md",
+   "line": 5401,
+   "kind": "mech",
+   "claim": "it drops the factor where it is 1",
+   "evidence": "src/show.jl:376; probe:226"
+  },
+  {
+   "id": "S9b-183",
+   "file": "design/spec.md",
+   "line": 5401,
+   "kind": "law",
+   "claim": "each declared anchor D₀ and Φ₀ is then a multiple of the factor",
+   "evidence": "probe:41-42"
+  },
+  {
+   "id": "S9b-184",
+   "file": "design/spec.md",
+   "line": 5402,
+   "kind": "law",
+   "claim": "a structure with no anchors admits every base tick; the block prints no line",
+   "evidence": "src/show.jl:369-370"
+  },
+  {
+   "id": "S9b-185",
+   "file": "design/spec.md",
+   "line": 5405,
+   "kind": "mech",
+   "claim": "a REPL user gets each table by evaluating the value",
+   "evidence": "src/show.jl:1-14"
+  },
+  {
+   "id": "S9b-186",
+   "file": "design/spec.md",
+   "line": 5406,
+   "kind": "mech",
+   "claim": "descriptor renders a Build or a Deployment under a published format",
+   "evidence": "src/descriptor.jl:44-45"
+  },
+  {
+   "id": "S9b-187",
+   "file": "design/spec.md",
+   "line": 5409,
+   "kind": "law",
+   "claim": "the chart pattern repeats every hyperperiod H = lcm D₀(i) base ticks",
+   "evidence": "src/show.jl:177"
+  },
+  {
+   "id": "S9b-188",
+   "file": "design/spec.md",
+   "line": 5411,
+   "kind": "law",
+   "claim": "the gate is (n − Φ₀) % D₀ == 0",
+   "evidence": "src/executor.jl:481,557"
+  },
+  {
+   "id": "S9b-189",
+   "file": "design/spec.md",
+   "line": 5412,
+   "kind": "law",
+   "claim": "one hyperperiod is the complete truth",
+   "evidence": "src/executor.jl:481"
+  },
+  {
+   "id": "S9b-190",
+   "file": "design/spec.md",
+   "line": 5412,
+   "kind": "law",
+   "claim": "the Schedule chart guard is binary",
+   "evidence": "src/show.jl:223"
+  },
+  {
+   "id": "S9b-191",
+   "file": "design/spec.md",
+   "line": 5413,
+   "kind": "mech",
+   "claim": "the Schedule chart prints whole over n = 0…H−1 when H is at most 100",
+   "evidence": "src/show.jl:222-235; probe:127-131"
+  },
+  {
+   "id": "S9b-192",
+   "file": "design/spec.md",
+   "line": 5415,
+   "kind": "mech",
+   "claim": "otherwise show prints the hyperperiod length and \"chart omitted\"",
+   "evidence": "src/show.jl:223-224; probe:252"
+  },
+  {
+   "id": "S9b-193",
+   "file": "design/spec.md",
+   "line": 5418,
+   "kind": "mech",
+   "claim": "show(Deployment) draws its chart against the frame tops, one column per Δt_unit",
+   "evidence": "src/show.jl:341-363; probe:51-56"
+  },
+  {
+   "id": "S9b-194",
+   "file": "design/spec.md",
+   "line": 5419,
+   "kind": "decl",
+   "claim": "Δt_unit is gcd(Δt_frame, Δt_base)",
+   "evidence": "src/deployment.jl:153-156"
+  },
+  {
+   "id": "S9b-195",
+   "file": "design/spec.md",
+   "line": 5422,
+   "kind": "mech",
+   "claim": "the chart spans the joint period lcm(hyperperiod, Δt_frame) in time",
+   "evidence": "src/show.jl:343"
+  },
+  {
+   "id": "S9b-196",
+   "file": "design/spec.md",
+   "line": 5424,
+   "kind": "law",
+   "claim": "frame tops and ticks repeat together there and over no shorter span",
+   "evidence": "arithmetic over src/show.jl:343"
+  },
+  {
+   "id": "S9b-197",
+   "file": "design/spec.md",
+   "line": 5425,
+   "kind": "mech",
+   "claim": "first row marks frame tops, in every chart",
+   "evidence": "src/show.jl:352-353; probe:53,79"
+  },
+  {
+   "id": "S9b-198",
+   "file": "design/spec.md",
+   "line": 5426,
+   "kind": "mech",
+   "claim": "a component row marks each base tick due or not due",
+   "evidence": "src/show.jl:355-359"
+  },
+  {
+   "id": "S9b-199",
+   "file": "design/spec.md",
+   "line": 5427,
+   "kind": "mech",
+   "claim": "a column that is no base tick is blank",
+   "evidence": "src/show.jl:356; probe:79-82"
+  },
+  {
+   "id": "S9b-200",
+   "file": "design/spec.md",
+   "line": 5427,
+   "kind": "law",
+   "claim": "the guard stays binary at 100 columns of the joint period",
+   "evidence": "src/show.jl:347"
+  },
+  {
+   "id": "S9b-201",
+   "file": "design/spec.md",
+   "line": 5428,
+   "kind": "mech",
+   "claim": "past it show prints the span length and \"chart omitted\"",
+   "evidence": "src/show.jl:347; probe:236"
+  },
+  {
+   "id": "S9b-202",
+   "file": "design/spec.md",
+   "line": 5429,
+   "kind": "law",
+   "claim": "a deployment with no discrete component prints no chart",
+   "evidence": "src/show.jl:420; probe:332"
+  },
+  {
+   "id": "S9b-203",
+   "file": "design/spec.md",
+   "line": 5430,
+   "kind": "mech",
+   "claim": "show(Schedule) keeps the tick chart over one hyperperiod",
+   "evidence": "src/show.jl:206-235"
+  },
+  {
+   "id": "S9b-204",
+   "file": "design/spec.md",
+   "line": 5430,
+   "kind": "mech",
+   "claim": "a Schedule holds neither Δt_frame nor Δt_base",
+   "evidence": "src/deployment.jl:56-62,75-77"
+  },
+  {
+   "id": "S9b-205",
+   "file": "design/spec.md",
+   "line": 5435,
+   "kind": "mech",
+   "claim": "the grid report is a function of the structure anchors, derived where used",
+   "evidence": "src/structure.jl:847; src/deployment.jl:247"
+  },
+  {
+   "id": "S9b-206",
+   "file": "design/spec.md",
+   "line": 5436,
+   "kind": "mech",
+   "claim": "the report prints from the pool, exactly",
+   "evidence": "src/structure.jl:847-899"
+  },
+  {
+   "id": "S9b-207",
+   "file": "design/spec.md",
+   "line": 5437,
+   "kind": "mech",
+   "claim": "report is the coarsest admissible Δt_base, gcd(pool)/Q set and per-entry attribution",
+   "evidence": "src/diagnostics.jl:1363-1367,1420-1425"
+  },
+  {
+   "id": "S9b-208",
+   "file": "design/spec.md",
+   "line": 5439,
+   "kind": "law",
+   "claim": "no artifact holds the grid report",
+   "evidence": "src/deployment.jl:539-553"
+  },
+  {
+   "id": "S9b-209",
+   "file": "design/spec.md",
+   "line": 5439,
+   "kind": "law",
+   "claim": "no artifact holds the feedthrough graph",
+   "evidence": "src/build.jl:975-990"
+  },
+  {
+   "id": "S9b-210",
+   "file": "design/spec.md",
+   "line": 5439,
+   "kind": "mech",
+   "claim": "show(Structure) prints the report",
+   "evidence": "src/show.jl:126-127"
+  },
+  {
+   "id": "S9b-211",
+   "file": "design/spec.md",
+   "line": 5441,
+   "kind": "mech",
+   "claim": "the constructor grid diagnostics are the refusal suggestion, derivation info line and advisory",
+   "evidence": "src/deployment.jl:247,583-596"
+  },
+  {
+   "id": "S9b-212",
+   "file": "design/spec.md",
+   "line": 5443,
+   "kind": "law",
+   "claim": "the Deployment holds no report",
+   "evidence": "src/deployment.jl:539-553"
+  },
+  {
+   "id": "S9b-213",
+   "file": "design/spec.md",
+   "line": 5444,
+   "kind": "mech",
+   "claim": "show(Deployment) prints no report, only the base tick against the coarsest admissible",
+   "evidence": "src/show.jl:368-377,423-433"
+  },
+  {
+   "id": "S9b-214",
+   "file": "design/spec.md",
+   "line": 5445,
+   "kind": "law",
+   "claim": "attribution has two forms",
+   "evidence": "src/structure.jl:847-899"
+  },
+  {
+   "id": "S9b-215",
+   "file": "design/spec.md",
+   "line": 5447,
+   "kind": "mech",
+   "claim": "form one is leave-one-out refinement factors",
+   "evidence": "src/structure.jl:862-870"
+  },
+  {
+   "id": "S9b-216",
+   "file": "design/spec.md",
+   "line": 5448,
+   "kind": "law",
+   "claim": "Qₚ = gcd(pool ∖ p)/gcd(pool), an integer ≥ 1",
+   "evidence": "src/structure.jl:862-870"
+  },
+  {
+   "id": "S9b-217",
+   "file": "design/spec.md",
+   "line": 5449,
+   "kind": "law",
+   "claim": "every Qₚ > 1 is listed, no single culprit crowned",
+   "evidence": "src/diagnostics.jl:1423-1429; probe:4-6"
+  },
+  {
+   "id": "S9b-218",
+   "file": "design/spec.md",
+   "line": 5452,
+   "kind": "mech",
+   "claim": "form two traces each prime power of 1/Δt_base to supplying entries",
+   "evidence": "src/structure.jl:892-899,829-831; probe:7-10"
+  },
+  {
+   "id": "S9b-219",
+   "file": "design/spec.md",
+   "line": 5454,
+   "kind": "law",
+   "claim": "the trial division stops at divisor 2^20",
+   "evidence": "src/structure.jl:808-812; probe:303"
+  },
+  {
+   "id": "S9b-220",
+   "file": "design/spec.md",
+   "line": 5455,
+   "kind": "law",
+   "claim": "a cofactor at or above 2^40 prints as unfactored",
+   "evidence": "src/diagnostics.jl:1351,1437; probe:310-311"
+  },
+  {
+   "id": "S9b-221",
+   "file": "design/spec.md",
+   "line": 5456,
+   "kind": "law",
+   "claim": "a cofactor below 2^40 is prime, so denominators below 2^40 are factored whole",
+   "evidence": "src/structure.jl:804-806,809-822"
+  },
+  {
+   "id": "S9b-222",
+   "file": "design/spec.md",
+   "line": 5458,
+   "kind": "law",
+   "claim": "an unfactored cofactor may be composite and two entries may supply one prime each",
+   "evidence": "probe:301"
+  },
+  {
+   "id": "S9b-223",
+   "file": "design/spec.md",
+   "line": 5459,
+   "kind": "law",
+   "claim": "it is traced to every entry whose denominator shares a factor with it",
+   "evidence": "src/structure.jl:829-831; probe:311"
+  },
+  {
+   "id": "S9b-224",
+   "file": "design/spec.md",
+   "line": 5460,
+   "kind": "law",
+   "claim": "some entry always shares a factor, as the cofactor divides the lcm of pool denominators",
+   "evidence": "src/structure.jl:826-831"
+  },
+  {
+   "id": "S9b-225",
+   "file": "design/spec.md",
+   "line": 5463,
+   "kind": "mech",
+   "claim": "a driving offset message adds nearest non-refining alternatives",
+   "evidence": "src/structure.jl:869-889; probe:6"
+  },
+  {
+   "id": "S9b-226",
+   "file": "design/spec.md",
+   "line": 5464,
+   "kind": "mech",
+   "claim": "alternatives are admissible offsets on the grid the rest of the pool supports",
+   "evidence": "src/structure.jl:874-884"
+  },
+  {
+   "id": "S9b-227",
+   "file": "design/spec.md",
+   "line": 5466,
+   "kind": "law",
+   "claim": "an alternative whose arithmetic leaves Int is not offered",
+   "evidence": "src/structure.jl:877-885"
+  },
+  {
+   "id": "S9b-228",
+   "file": "design/spec.md",
+   "line": 5467,
+   "kind": "law",
+   "claim": "Absolute refuses a value Rational{Int} cannot hold",
+   "evidence": "src/declare.jl:473-485"
+  },
+  {
+   "id": "S9b-229",
+   "file": "design/spec.md",
+   "line": 5468,
+   "kind": "law",
+   "claim": "in a deployable pool arithmetic leaves Int only for such a value",
+   "evidence": "src/structure.jl:877-885"
+  },
+  {
+   "id": "S9b-230",
+   "file": "design/spec.md",
+   "line": 5470,
+   "kind": "law",
+   "claim": "blame is computed against the actual pool",
+   "evidence": "src/structure.jl:862-870"
+  },
+  {
+   "id": "S9b-231",
+   "file": "design/spec.md",
+   "line": 5471,
+   "kind": "law",
+   "claim": "a simple-fraction test is never the engine own",
+   "evidence": "src/structure.jl:847-899"
+  },
+  {
+   "id": "S9b-232",
+   "file": "design/spec.md",
+   "line": 5474,
+   "kind": "law",
+   "claim": "a built structure always has a grid report",
+   "evidence": "src/structure.jl:958-1010; src/deployment.jl:247"
+  },
+  {
+   "id": "S9b-233",
+   "file": "design/spec.md",
+   "line": 5475,
+   "kind": "mech",
+   "claim": "the trial holds gcd(pool) in Rational{Int} and fits every anchor count at it in Int",
+   "evidence": "src/structure.jl:975-986"
+  },
+  {
+   "id": "S9b-234",
+   "file": "design/spec.md",
+   "line": 5476,
+   "kind": "law",
+   "claim": "each refinement factor is at most one of those counts",
+   "evidence": "src/structure.jl:862-870"
+  },
+  {
+   "id": "S9b-235",
+   "file": "design/spec.md",
+   "line": 5479,
+   "kind": "law",
+   "claim": "derivation is the one place refinement happens silently",
+   "evidence": "src/deployment.jl:581-597"
+  },
+  {
+   "id": "S9b-236",
+   "file": "design/spec.md",
+   "line": 5480,
+   "kind": "mech",
+   "claim": "the derivation path always prints the derived value with its drivers",
+   "evidence": "src/deployment.jl:581-585; probe:1-10"
+  },
+  {
+   "id": "S9b-237",
+   "file": "design/spec.md",
+   "line": 5481,
+   "kind": "mech",
+   "claim": "the derivation path carries the one advisory, GridUtilization",
+   "evidence": "src/deployment.jl:592-596; probe:11"
+  },
+  {
+   "id": "S9b-238",
+   "file": "design/spec.md",
+   "line": 5481,
+   "kind": "mech",
+   "claim": "the advisory reports min D₀(i)",
+   "evidence": "src/deployment.jl:590-596; src/diagnostics.jl:1499-1503"
+  },
+  {
+   "id": "S9b-239",
+   "file": "design/spec.md",
+   "line": 5482,
+   "kind": "mech",
+   "claim": "the advisory text is \"grid is N× finer than the fastest declared work\", drivers named",
+   "evidence": "src/diagnostics.jl:1507-1508; probe:11-21"
+  },
+  {
+   "id": "S9b-240",
+   "file": "design/spec.md",
+   "line": 5489,
+   "kind": "mech",
+   "claim": "a completed step carries its warnings on the artifact",
+   "evidence": "src/build.jl:786-792; src/deployment.jl:609"
+  },
+  {
+   "id": "S9b-241",
+   "file": "design/spec.md",
+   "line": 5489,
+   "kind": "mech",
+   "claim": "the entry point logs each warning once at return",
+   "evidence": "src/build.jl:822-824; src/deployment.jl:612-614"
+  },
+  {
+   "id": "S9b-242",
+   "file": "design/spec.md",
+   "line": 5490,
+   "kind": "mech",
+   "claim": "a throwing step renders its warnings with the collection it throws",
+   "evidence": "src/build.jl:806-812; src/deployment.jl:576; src/diagnostics.jl:157-167"
+  },
+  {
+   "id": "S9b-243",
+   "file": "design/spec.md",
+   "line": 5491,
+   "kind": "law",
+   "claim": "logging is presentation and never a home",
+   "evidence": "src/build.jl:822; src/deployment.jl:612"
+  },
+  {
+   "id": "S9b-244",
+   "file": "design/spec.md",
+   "line": 5495,
+   "kind": "mech",
+   "claim": "build binds a scoped channel around its three steps",
+   "evidence": "src/build.jl:779"
+  },
+  {
+   "id": "S9b-245",
+   "file": "design/spec.md",
+   "line": 5496,
+   "kind": "mech",
+   "claim": "the helper appends to the channel without knowing the build",
+   "evidence": "src/diagnostics.jl:193-199"
+  },
+  {
+   "id": "S9b-246",
+   "file": "design/spec.md",
+   "line": 5497,
+   "kind": "mech",
+   "claim": "the same helper standalone logs directly",
+   "evidence": "src/diagnostics.jl:198"
+  },
+  {
+   "id": "S9b-247",
+   "file": "design/spec.md",
+   "line": 5497,
+   "kind": "mech",
+   "claim": "that is how EmptyFaceSelection reaches the Build list",
+   "evidence": "src/assembly.jl:638"
+  },
+  {
+   "id": "S9b-248",
+   "file": "design/spec.md",
+   "line": 5500,
+   "kind": "law",
+   "claim": "GridUtilization lives on the Deployment list",
+   "evidence": "src/deployment.jl:592-596,609"
+  },
+  {
+   "id": "S9b-249",
+   "file": "design/spec.md",
+   "line": 5501,
+   "kind": "mech",
+   "claim": "the constructor logs it once at return",
+   "evidence": "src/deployment.jl:612-614"
+  },
+  {
+   "id": "S9b-250",
+   "file": "design/spec.md",
+   "line": 5503,
+   "kind": "decl",
+   "claim": "warnings(x) is defined on Build and Deployment",
+   "evidence": "src/build.jl:991; src/deployment.jl:645"
+  },
+  {
+   "id": "S9b-251",
+   "file": "design/spec.md",
+   "line": 5503,
+   "kind": "mech",
+   "claim": "on Simulation it is the concatenation of its artifacts lists",
+   "evidence": "src/model.jl:971; src/sim.jl:399; probe:321"
+  },
+  {
+   "id": "S9b-252",
+   "file": "design/spec.md",
+   "line": 5505,
+   "kind": "law",
+   "claim": "warnings raised while mutating state stay in that state status record, not warnings(x)",
+   "evidence": "src/model.jl:971"
+  },
+  {
+   "id": "S9b-253",
+   "file": "design/spec.md",
+   "line": 5510,
+   "kind": "mech",
+   "claim": "the build calls each user function once as a probe",
+   "evidence": "src/build.jl:1001-1030; probe:441-450"
+  },
+  {
+   "id": "S9b-254",
+   "file": "design/spec.md",
+   "line": 5516,
+   "kind": "law",
+   "claim": "the nominal evaluation probes every user function once, at the initial state",
+   "evidence": "src/build.jl:63-90,1127-1165; probe:441-450"
+  },
+  {
+   "id": "S9b-255",
+   "file": "design/spec.md",
+   "line": 5518,
+   "kind": "mech",
+   "claim": "the set is stages, x_deriv, s_update, guards, handlers, x_projection",
+   "evidence": "src/build.jl:63,1127-1165,1285-1292; probe:441-450"
+  },
+  {
+   "id": "S9b-256",
+   "file": "design/spec.md",
+   "line": 5519,
+   "kind": "mech",
+   "claim": "the probe checks shape and type conformance and discards results",
+   "evidence": "src/build.jl:1136-1141,1163-1165"
+  },
+  {
+   "id": "S9b-257",
+   "file": "design/spec.md",
+   "line": 5520,
+   "kind": "law",
+   "claim": "each probed function costs one evaluation",
+   "evidence": "src/build.jl:1001-1030; probe:441-450"
+  },
+  {
+   "id": "S9b-258",
+   "file": "design/spec.md",
+   "line": 5524,
+   "kind": "law",
+   "claim": "probes see only the initial state branch",
+   "evidence": "src/build.jl:1127-1141"
+  },
+  {
+   "id": "S9b-259",
+   "file": "design/spec.md",
+   "line": 5530,
+   "kind": "mech",
+   "claim": "x, s, m come from x_init, s_init, m_init",
+   "evidence": "src/build.jl:101-103,1047-1049"
+  },
+  {
+   "id": "S9b-260",
+   "file": "design/spec.md",
+   "line": 5531,
+   "kind": "mech",
+   "claim": "those declarations declare by value",
+   "evidence": "src/build.jl:101-103"
+  },
+  {
+   "id": "S9b-261",
+   "file": "design/spec.md",
+   "line": 5532,
+   "kind": "mech",
+   "claim": "stage-1 hand-down is y_x on the continuous tier and y_s on the discrete",
+   "evidence": "src/declare.jl:900-908; src/build.jl:104-105"
+  },
+  {
+   "id": "S9b-262",
+   "file": "design/spec.md",
+   "line": 5533,
+   "kind": "mech",
+   "claim": "the hand-down comes from the stage-1 probes returns",
+   "evidence": "src/build.jl:1129-1130,1182"
+  },
+  {
+   "id": "S9b-263",
+   "file": "design/spec.md",
+   "line": 5534,
+   "kind": "law",
+   "claim": "the hand-down is every stage-1 port",
+   "evidence": "src/build.jl:88-92,1109-1111"
+  },
+  {
+   "id": "S9b-264",
+   "file": "design/spec.md",
+   "line": 5535,
+   "kind": "mech",
+   "claim": "wired inputs come from upstream products",
+   "evidence": "src/build.jl:1654-1668"
+  },
+  {
+   "id": "S9b-265",
+   "file": "design/spec.md",
+   "line": 5537,
+   "kind": "mech",
+   "claim": "stage-2 is probed in topological order, so real values are available",
+   "evidence": "src/build.jl:1089-1101; probe:441-450"
+  },
+  {
+   "id": "S9b-266",
+   "file": "design/spec.md",
+   "line": 5538,
+   "kind": "law",
+   "claim": "every consumer is probed against the value it receives at run time",
+   "evidence": "src/build.jl:1641-1652"
+  },
+  {
+   "id": "S9b-267",
+   "file": "design/spec.md",
+   "line": 5541,
+   "kind": "mech",
+   "claim": "the bundle remaining fields are ws and t",
+   "evidence": "src/build.jl:99-111"
+  },
+  {
+   "id": "S9b-268",
+   "file": "design/spec.md",
+   "line": 5543,
+   "kind": "mech",
+   "claim": "ws comes from invoking the ws_init allocator",
+   "evidence": "src/build.jl:1052-1060; probe:441-450"
+  },
+  {
+   "id": "S9b-269",
+   "file": "design/spec.md",
+   "line": 5543,
+   "kind": "mech",
+   "claim": "at the probing scalar, Float64 at build",
+   "evidence": "src/build.jl:1059; probe:441"
+  },
+  {
+   "id": "S9b-270",
+   "file": "design/spec.md",
+   "line": 5544,
+   "kind": "law",
+   "claim": "the allocator runs before the nominal probes that need it",
+   "evidence": "src/build.jl:1008-1010; probe:441-442"
+  },
+  {
+   "id": "S9b-271",
+   "file": "design/spec.md",
+   "line": 5546,
+   "kind": "law",
+   "claim": "the allocator reads only the instance and the scalar",
+   "evidence": "src/build.jl:1052-1060"
+  },
+  {
+   "id": "S9b-272",
+   "file": "design/spec.md",
+   "line": 5549,
+   "kind": "mech",
+   "claim": "two checks ride the same pass",
+   "evidence": "src/build.jl:63-90,1136-1141"
+  },
+  {
+   "id": "S9b-273",
+   "file": "design/spec.md",
+   "line": 5550,
+   "kind": "law",
+   "claim": "a stage whose return is not its declared shape fails at the probe",
+   "evidence": "src/build.jl:80-86,1195-1199"
+  },
+  {
+   "id": "S9b-274",
+   "file": "design/spec.md",
+   "line": 5551,
+   "kind": "law",
+   "claim": "the shape is a NamedTuple for a named contract",
+   "evidence": "src/build.jl:80-86"
+  },
+  {
+   "id": "S9b-275",
+   "file": "design/spec.md",
+   "line": 5551,
+   "kind": "law",
+   "claim": "the shape is the one port value for a bare contract",
+   "evidence": "src/build.jl:88-92,1171"
+  },
+  {
+   "id": "S9b-276",
+   "file": "design/spec.md",
+   "line": 5553,
+   "kind": "law",
+   "claim": "a stage returning bare (;) is DeadStage",
+   "evidence": "src/build.jl:87,1200; src/diagnostics.jl:1092-1100"
+  },
+  {
+   "id": "S9b-277",
+   "file": "design/spec.md",
+   "line": 5554,
+   "kind": "law",
+   "claim": "DeadStage is fail-fast",
+   "evidence": "src/build.jl:87"
+  },
+  {
+   "id": "S9b-278",
+   "file": "design/spec.md",
+   "line": 5558,
+   "kind": "law",
+   "claim": "root inputs are the one terminal kind with no producer",
+   "evidence": "src/build.jl:1654-1661"
+  },
+  {
+   "id": "S9b-279",
+   "file": "design/spec.md",
+   "line": 5560,
+   "kind": "mech",
+   "claim": "the build synthesizes root input values via probe_value(::Type)",
+   "evidence": "src/build.jl:471-472"
+  },
+  {
+   "id": "S9b-281",
+   "file": "design/spec.md",
+   "line": 5562,
+   "kind": "mech",
+   "claim": "Real is synthesized with zero(T)",
+   "evidence": "src/declare.jl:932"
+  },
+  {
+   "id": "S9b-282",
+   "file": "design/spec.md",
+   "line": 5563,
+   "kind": "mech",
+   "claim": "Bool is synthesized with false",
+   "evidence": "src/declare.jl:933"
+  },
+  {
+   "id": "S9b-283",
+   "file": "design/spec.md",
+   "line": 5564,
+   "kind": "mech",
+   "claim": "enums are synthesized with their first instance",
+   "evidence": "src/declare.jl:934"
+  },
+  {
+   "id": "S9b-284",
+   "file": "design/spec.md",
+   "line": 5567,
+   "kind": "law",
+   "claim": "the ultimate fallback is the zero-argument constructor T()",
+   "evidence": "src/declare.jl:936; probe:452"
+  },
+  {
+   "id": "S9b-285",
+   "file": "design/spec.md",
+   "line": 5569,
+   "kind": "ex",
+   "claim": "RQuat() is the identity; RQuat is an illustrative name (lead)",
+   "evidence": "placeholder, no RQuat in src"
+  },
+  {
+   "id": "S9b-286",
+   "file": "design/spec.md",
+   "line": 5570,
+   "kind": "mech",
+   "claim": "@kwdef supplies a zero-argument default broadly",
+   "evidence": "src/declare.jl:936"
+  },
+  {
+   "id": "S9b-287",
+   "file": "design/spec.md",
+   "line": 5572,
+   "kind": "law",
+   "claim": "probe_value is overridable",
+   "evidence": "src/declare.jl:925-927,939-942"
+  },
+  {
+   "id": "S9b-288",
+   "file": "design/spec.md",
+   "line": 5573,
+   "kind": "decl",
+   "claim": "a type with no reachable default declares its own probe_value method",
+   "evidence": "src/declare.jl:925-927,939-942; probe:455"
+  },
+  {
+   "id": "S9b-289",
+   "file": "design/spec.md",
+   "line": 5574,
+   "kind": "mech",
+   "claim": "that method is the seam a walked type uses to state a constrained default",
+   "evidence": "src/build.jl:471-472; src/declare.jl:939-942"
+  },
+  {
+   "id": "S9b-290",
+   "file": "design/spec.md",
+   "line": 5575,
+   "kind": "law",
+   "claim": "no method is a build error",
+   "evidence": "src/build.jl:473-476; probe:455"
+  },
+  {
+   "id": "S9b-291",
+   "file": "design/spec.md",
+   "line": 5575,
+   "kind": "mech",
+   "claim": "the error names the face and the type",
+   "evidence": "src/diagnostics.jl:818-820; probe:455"
+  },
+  {
+   "id": "S9b-292",
+   "file": "design/spec.md",
+   "line": 5576,
+   "kind": "mech",
+   "claim": "the error asks for one of two fixes",
+   "evidence": "src/diagnostics.jl:819-820"
+  },
+  {
+   "id": "S9b-293",
+   "file": "design/spec.md",
+   "line": 5576,
+   "kind": "ex",
+   "claim": "quoted message \"no `probe_value` for … at face … — define … or a zero-argument constructor\"",
+   "evidence": "src/diagnostics.jl:818-820; probe:455"
+  },
+  {
+   "id": "S9b-294",
+   "file": "design/spec.md",
+   "line": 5577,
+   "kind": "ex",
+   "claim": "Ranged{Float64,-1,1} and face pilot.elevator_axis are illustrative names (lead)",
+   "evidence": "placeholder, no Ranged in src"
+  },
+  {
+   "id": "S9b-295",
+   "file": "design/spec.md",
+   "line": 5581,
+   "kind": "law",
+   "claim": "synthesis never meets an abstract type",
+   "evidence": "src/build.jl:906-921"
+  },
+  {
+   "id": "S9b-296",
+   "file": "design/spec.md",
+   "line": 5582,
+   "kind": "law",
+   "claim": "root inputs are concrete by the tight-bound rule",
+   "evidence": "src/build.jl:915-921"
+  },
+  {
+   "id": "S9b-297",
+   "file": "design/spec.md",
+   "line": 5582,
+   "kind": "mech",
+   "claim": "the root-input type is the consuming entry evaluated at Float64",
+   "evidence": "src/build.jl:908-912,917-921"
+  },
+  {
+   "id": "S9b-299",
+   "file": "design/spec.md",
+   "line": 5592,
+   "kind": "law",
+   "claim": "probe values are strictly probe-scoped",
+   "evidence": "src/build.jl:1514-1516; src/conditions.jl:701-706"
+  },
+  {
+   "id": "S9b-301",
+   "file": "design/spec.md",
+   "line": 5594,
+   "kind": "law",
+   "claim": "probe values never double as initial root-input values",
+   "evidence": "src/build.jl:1514-1516; src/conditions.jl:701-706"
+  },
+  {
+   "id": "S9b-302",
+   "file": "design/spec.md",
+   "line": 5597,
+   "kind": "law",
+   "claim": "t is probe-scoped 0.0",
+   "evidence": "src/build.jl:107; probe:442"
+  },
+  {
+   "id": "S9b-303",
+   "file": "design/spec.md",
+   "line": 5598,
+   "kind": "mech",
+   "claim": "Deployment binds no clock",
+   "evidence": "src/deployment.jl:539-553"
+  },
+  {
+   "id": "S9b-304",
+   "file": "design/spec.md",
+   "line": 5599,
+   "kind": "mech",
+   "claim": "Δt in seconds does not exist until the constructor binds Δt_base",
+   "evidence": "src/deployment.jl:289"
+  },
+  {
+   "id": "S9b-305",
+   "file": "design/spec.md",
+   "line": 5601,
+   "kind": "law",
+   "claim": "discrete-tier probes supply the placeholder period 1.0",
+   "evidence": "src/build.jl:78,1134,1193; probe:443"
+  },
+  {
+   "id": "S9b-306",
+   "file": "design/spec.md",
+   "line": 5606,
+   "kind": "law",
+   "claim": "a Simulation must not reach its first boundary with uninitialized root inputs",
+   "evidence": "src/sim.jl:844; src/conditions.jl:701-706"
+  },
+  {
+   "id": "S9b-307",
+   "file": "design/spec.md",
+   "line": 5607,
+   "kind": "mech",
+   "claim": "init!, trim setup, trim commit and linearization about each carry the check",
+   "evidence": "src/model.jl:314; src/trim.jl:599; src/linearize.jl:316; src/sim.jl:844"
+  },
+  {
+   "id": "S9b-308",
+   "file": "design/spec.md",
+   "line": 5609,
+   "kind": "mech",
+   "claim": "the check is UninitializedInputs, before any write",
+   "evidence": "src/conditions.jl:701-706"
+  },
+  {
+   "id": "S9b-309",
+   "file": "design/spec.md",
+   "line": 5615,
+   "kind": "law",
+   "claim": "stage code must be total over type-valid inputs",
+   "evidence": "src/declare.jl:972-1000"
+  },
+  {
+   "id": "S9b-310",
+   "file": "design/spec.md",
+   "line": 5616,
+   "kind": "law",
+   "claim": "every probed user function evaluates without throwing on type-valid input",
+   "evidence": "src/declare.jl:972-1000"
+  },
+  {
+   "id": "S9b-311",
+   "file": "design/spec.md",
+   "line": 5623,
+   "kind": "mech",
+   "claim": "at build the throw is a UserCodeFraming-wrapped build failure",
+   "evidence": "src/declare.jl:972-1000; src/diagnostics.jl:1242-1249"
+  },
+  {
+   "id": "S9b-312",
+   "file": "design/spec.md",
+   "line": 5627,
+   "kind": "mech",
+   "claim": "at runtime the throw is a StepError and the run ends errored",
+   "evidence": "src/model.jl:1075"
+  },
+  {
+   "id": "S9b-313",
+   "file": "design/spec.md",
+   "line": 5633,
+   "kind": "law",
+   "claim": "a plausibility check meaning \"stop the run\" is a StopFlag stop request",
+   "evidence": "src/diagnostics.jl:1781; src/library.jl:416-438"
+  },
+  {
+   "id": "S9b-314",
+   "file": "design/spec.md",
+   "line": 5635,
+   "kind": "decl",
+   "claim": "StopRequest spells the stop request",
+   "evidence": "src/library.jl:416-438"
+  },
+  {
+   "id": "S9b-315",
+   "file": "design/spec.md",
+   "line": 5636,
+   "kind": "ex",
+   "claim": "a landing-gear strut model throwing on a touchdown overload is one such check",
+   "evidence": "illustration, no API"
+  },
+  {
+   "id": "S9b-316",
+   "file": "design/spec.md",
+   "line": 5638,
+   "kind": "ex",
+   "claim": "self-consistency assert and defensive exhaustiveness examples (else error, static ≥ dynamic)",
+   "evidence": "illustration, no API"
+  },
+  {
+   "id": "S9b-317",
+   "file": "design/spec.md",
+   "line": 5649,
+   "kind": "mech",
+   "claim": "parameter and instance constructors run before the build",
+   "evidence": "src/build.jl:775-800"
+  }
+ ],
+ "counts": {
+  "law": 149,
+  "mech": 136,
+  "decl": 13,
+  "ex": 19,
+  "ptr": 10,
+  "why": 44
+ }
+}

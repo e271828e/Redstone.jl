@@ -1,0 +1,83 @@
+{
+ "judgments": [
+  {
+   "id": "S9d-001",
+   "conforms": false,
+   "evidence": "src/build.jl:576-580 and 616-619: Outputs holds `components::Vector{ComponentOutputs}` (each `path`, `stage1`, `stage2`, which are port-name vectors) and `order::Vector{Int}`. It holds no stage names. Probe P3: `ComponentOutputs(\"c\", [:out], Symbol[])`.",
+   "class": "drift",
+   "fix": "On [`Outputs`](#g-outputs) (the nominal evaluation's product, the port classes and the execution order) it is plain printable data ([§9.2][s9-2]), namely paths, the port names each stage produces, and order.",
+   "clear": true,
+   "note": "The phrase \"paths, stage names, order\" comes from f9e2cacb's old §14.7, which described the Build's schedule. D-253 and the glossary entry g-outputs (spec.md:16775) now describe per-component stage-1/stage-2 port name sets. Paths and order match. \"Stage names\" is wrong only if read literally, since D-253 itself says \"stage-1 and stage-2 name sets\"."
+  },
+  {
+   "id": "S9d-010",
+   "conforms": false,
+   "evidence": "src/store.jl:11-13 `struct CellAddr{P,K}; offsets::NTuple{K,Int}` has one offset per distinct leaf eltype. src/build.jl:433-434 builds it with `length(eltypes)` offsets. Probe P2: MixedCell's port address is `CellAddr{TaggedValue{Float64},2}` with offsets (0, 0), across the Float64 and Int blocks. test/test_store.jl:56-61 does the same. Field carriage and the port-type parameter match: executor.jl:56-60, store.jl:11.",
+   "class": "deviation",
+   "fix": "A cell address is a build-time offset into each block its leaves occupy, one per element type, so a mixed-leaf cell spans several blocks. The offsets are carried in an entry *field*, with the port type as the address's own parameter.",
+   "clear": true,
+   "backing_entry": "D-162",
+   "note": "The spec never says that a cell can span several element-type blocks. The store.jl:1-9 comment cites a 2026-08-20 'C2M' bench that appears in no spec or log text. D-162's Position says 'build-time offsets' in the plural, which fits either reading."
+  },
+  {
+   "id": "S9d-020",
+   "conforms": true,
+   "evidence": "src/build.jl:1530-1551 sends continuous updates to rhs_entries (RHSEntry) and discrete ones to tick_entries (UpdateEntry). Lines 1611-1614 bind them as `rhs` and `ticks`. src/executor.jl:172-188: an RHSEntry writes only its own x_off slice of ẋbuf, and an UpdateEntry writes only its own sstore ('written by this entry, and by nothing else', executor.jl:93). Both read the table and never another entry's product."
+  },
+  {
+   "id": "S9d-017",
+   "conforms": true,
+   "evidence": "Every loop call site calls rhs with no index: src/model.jl:619 and 632, src/trim.jl:602 and 744. rhs has no gated entries (build.jl:1545 pushes `nothing` gates), so its two chunk tuples share one type (probe P4: 'same tuple types: true').",
+   "note": "`rhs(tick)` is still a legal call. PhaseBody{I,I}(tick) (executor.jl:578) ignores the index and walks the interior, and test_executor.jl:21 and 141-143 pin that, so the roster is total in both arities. No index ever reaches rhs semantically. If the sentence is read as 'rhs accepts no argument', the code is broader than the spec."
+  },
+  {
+   "id": "S9d-029",
+   "conforms": true,
+   "evidence": "src/executor.jl:528-538: `mutable struct Chunk` with `@noinline (chunk::Chunk)()`, so a barrier call loads one pointer. The EventChunk and EventSet structs are mutable (executor.jl:271, 302). Probe P5: Chunk and EventSet both ismutable. test/test_executor.jl:103-121 pins one word per chunk."
+  },
+  {
+   "id": "S9d-038",
+   "conforms": true,
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:232-234 reports, for the repeated model (128 components of 2 types, report.md:83): 'Unchunked, the walks cost 23.2 s; at chunk 16 they cost 2.8 s'. The code's default chunk size is 16 (src/build.jl:1461, probe P5).",
+   "note": "The figure comes from the cited report and was not re-measured, because the unchunked variant is not in the code."
+  },
+  {
+   "id": "S9d-043",
+   "conforms": true,
+   "evidence": "report.md:327-330 reports, for the repeated model at the pinned tip, init! 4.62 + run! 12.25 = 16.9 s, and with the patch 0.20 + 0.31 = 0.5 s. That patch has the generated unroll and the pointer chunks (report.md:322-326). The code has both: src/executor.jl:580-581 (`@generated _walk_chunks`) and 530-535 (mutable Chunk).",
+   "note": "These are report figures. They were not re-measured."
+  },
+  {
+   "id": "S9d-048",
+   "conforms": true,
+   "evidence": "src/structure.jl:525-542: _walk! takes `@nospecialize(comp)`, and its at_component closures capture `comp` directly. Probe P1 on Julia 1.13.3: a closure over a @nospecialize argument has field type Any, the same type for Int and String. probe_stage1 and probe_events read `entry.instance`, a field typed AbstractComponent, inside the frame instead of capturing it (src/build.jl:66-70, 1270-1271).",
+   "note": "compile, which runs per Model and is not in the declaration layer, captures a typed local at src/build.jl:1592: `at_component(() -> invoke_declaration(state_events, comp), path)`. Probe P7 shows that such a closure is one type per component type. It is outside the 'once per build' code that the sentence scopes."
+  },
+  {
+   "id": "S9d-058",
+   "conforms": true,
+   "evidence": "src/precompile.jl:62-66 runs `@setup_workload`/`@compile_workload workload()`, and the figure was set by commit 91dec4c2 after increment 79's review. Probe P6: `using Redstone` takes 0.24 s in a cold child on the workload image.",
+   "note": "The 0.08 s delta needs a bare image to measure, so it was not re-measured. Nothing contradicts it."
+  },
+  {
+   "id": "S9d-057",
+   "conforms": false,
+   "evidence": "Probe P6, in a cold child on the workload image over the same path as test/test_precompile.jl, two runs: loop compile 0.017-0.019 s (under 0.1 s, matches), first trim! 0.24-0.25 s (about 0.3 s, roughly matches), first linearize 0.0028-0.0031 s compile and 0.005 s wall, against the spec's '0.1 s more'.",
+   "class": "drift",
+   "fix": "On that loop a cold process pays under 0.1 s, a first `trim!` about 0.25 s more, and a first `linearize` under 0.01 s.",
+   "clear": false,
+   "note": "The figures date from 91dec4c2 (2026-10-19, brief_increment_79: linearize 0.13 s). src/precompile.jl has changed in 10 commits since, including 4367fa55, which added the BS3 run, and src/linearize.jl in 25. No single commit records the new figure. The fix is a measurement on one machine, and the spec's protocol (minimum or median of runs) is the user's to choose."
+  },
+  {
+   "id": "S9d-067",
+   "conforms": true,
+   "evidence": "src/build.jl:1611-1615 builds `bodies` unconditionally with sweep_1, sweep_2, rhs, ticks, events and projections. An empty list chunks to `()` (executor.jl:588-596). Probe P4: a discrete-only model (n_x=0, no events) and a continuous-only model (no ticks) both return all six keys, every block callable in both arities, @ballocated 0. test/test_executor.jl:10-22 asserts the same."
+  },
+  {
+   "id": "S9d-078",
+   "conforms": true,
+   "evidence": "test/test_executor.jl:18-21 asserts `@ballocated(body()) == 0` on every phase_bodies block, and lines 161-163 assert the same on the guard, the handler and the x_projection callables exposed at the seam (src/build.jl:1603-1615, src/executor.jl:469-477). test_executor.jl:86-88 covers the chunked event-set walks."
+  }
+ ],
+ "notes": "I checked all claims at W = d7d3ddff. Probe P: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S9d_v/probe.jl. It ran three times; the first run was cut short by a bug in the probe, fixed in the file. P1 to P7 cover closure typing, mixed-leaf addresses, Outputs fields, roster totality, chunk mutability and the cold-child workload timings. Three claims do not conform. S9d-001: 'stage names' should say port names per stage. S9d-010: an address holds one offset per leaf eltype, and the spec never says a cell can span blocks. S9d-057: a first linearize on the workload image now costs about 0.005 s, not 0.1 s, and trim! measures 0.24 s. Four claims conform only on figures from the cited report or brief, not re-measured: S9d-038, S9d-043 and S9d-058 for their figures, and the trim! figure in S9d-057. Two points are noted but not flagged: rhs accepts an ignored tick index (S9d-017), and compile captures a typed instance in its state_events closure at src/build.jl:1592 (S9d-048). I edited no tracked file."
+}

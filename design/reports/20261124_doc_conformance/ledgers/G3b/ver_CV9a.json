@@ -1,0 +1,92 @@
+{
+ "judgments": [
+  {
+   "id": "CV9a-003",
+   "conforms": true,
+   "evidence": "src/build.jl:71 returns NamedTuple() for a frozen component before any call; :78 passes Δt = 1.0 into the bundle. Probe '003 Δt seen nominal => Any[1.0]', '003 calls at ProbeDual => 0' (the discrete y_state is not called at ProbeDual), and '003 frozen product carried => ((y = 0.0,), (y = 0.0,), Float64)': probe_stage2 carries the nominal product across (src/build.jl:1091-1093)."
+  },
+  {
+   "id": "CV9a-011",
+   "conforms": false,
+   "evidence": "src/build.jl:375-379: with the name left out, port_addr throws ArgumentError unless the path is in layout.bare_outputs, which holds only primitives whose y_types is bare (Layout field comment, :363). Probe: port(m, \"a\", :y) => 0.0, but port(m, \"a\") on an assembly that exports a lone face y throws 'ArgumentError: `a` declares no bare output ... name the port'. The same happens at an assembly root (path \"\"). Appendix B (spec.md:15125-15127) and the port docstrings (src/model.jl:986-998, src/dataplane.jl:550-566) state the throw only for a component whose output contract is named. D-437 names the assembly case for the headless reader leaf (ReadResolution) but not for `port`.",
+   "class": "deviation",
+   "fix": "Appendix B: 'The name may be left out, which names a bare output's face `y`; left out at a component whose output contract is named, or at an assembly, the call throws `ArgumentError`.' The port docstring in model.jl: 'A name left out at a component whose output contract is named, or at an assembly, is an `ArgumentError` too, which tells the caller to name the port.'",
+   "clear": true
+  },
+  {
+   "id": "CV9a-013",
+   "conforms": true,
+   "evidence": "src/build.jl:415-432 (place!) raises :mutable with position, the default :no_leaves, and :stop_flag_nested. :449-465 raise :stop_flag_at_root and :handle_at_root at root inputs. The default is set at src/diagnostics.jl:898. Probe '013 reasons' => (:port,:a,:mutable,\"\"), (:port,:b,:no_leaves), (:port,:c,:stop_flag_nested), (:root_input,:h,:handle_at_root), (:root_input,:f,:stop_flag_at_root). These match Appendix C (spec.md:15641-15654), which also lists :nested_marker and :not_a_type, both raised in src/assembly.jl:782-788."
+  },
+  {
+   "id": "CV9a-017",
+   "conforms": false,
+   "evidence": "src/build.jl:565-569: struct Activation{T} has the fields decls, products and layout. Probe '017 Activation fields => (:decls, :products, :layout)'. No compiled plan and no validated flag exist. Compiled bodies live on the per-Model Executor (src/build.jl:1414-1430), which is never cached. spec.md:5766-5767 says each entry holds 'layouts, compiled plans and a validated flag'. No later entry records the change. D-135 (log.md:4833) and D-052 (log.md:1793) carry the old list, and D-261 (log.md:11068) only says Activation keeps its columns.",
+   "class": "deviation",
+   "fix": "§9.4: 'Each entry holds the declarations retyped at its scalar, the complete probe products and the cell layout.'",
+   "clear": true,
+   "backing_entry": "D-135"
+  },
+  {
+   "id": "CV9a-024",
+   "conforms": true,
+   "evidence": "src/build.jl:779 binds BUILD_WARNINGS once around the structure step, the nominal evaluation and the requested activations (:780-802). :809-810 rewraps a DiagnosticError with raised_warnings and `structure`, which stays nothing until :794. :811 rethrows anything else. :815-817 logs each warning at return. Probe: '024 carrier structure => Redstone.Structure' for a throw from a requested ProbeDual activation, and '024 structure-step failure => ([UnconnectedInput], nothing)'. This matches code_map.md:109-114."
+  },
+  {
+   "id": "CV9a-026",
+   "conforms": true,
+   "evidence": "src/build.jl:784 runs _check_event_declarations between the trial binding (:783) and the first barrier (:787). :825-849 raise EventHalfMissing with :not_an_event, :guard and :handler. code_map.md:107-108 is still true: the trial binding runs after the walk, ahead of the first barrier. code_map.md:8-12 makes an entry a selective list of constructs. G1b (CV1-005/008/027/090/124) and G2b (CV8-104) ruled that the map owes no private helper. The raise itself is covered by Appendix C's EventHalfMissing entry (spec.md:15551-15554), whose three reasons match. The omission is no mismatch."
+  },
+  {
+   "id": "CV9a-034",
+   "conforms": false,
+   "evidence": "src/build.jl:1069-1076: the docstring says stage 2, 'the update laws last', 'then the declaration-completeness check'. The code runs the completeness pass at :1107-1119, the update laws at :1121-1143 and the x_projection pass at :1145-1168. Probe '034 completeness vs bad x_deriv' gives [DeclaredNotProduced] alone for a component whose x_deriv returns a String: completeness throws before the update laws run. '034 update pass before projection pass' gives only the x_deriv ConformanceFailure. The docstring has been wrong since it was written: 983b7390, and its parent, already ran completeness first. No record of a move exists.",
+   "class": "deviation",
+   "fix": "'Probe stage 2 in topological order — real upstream values available by construction — then the declaration-completeness check, for every component, then the update laws and last `x_projection`, checking every return against the declaration (§9.3).' The rest of the docstring is unchanged.",
+   "clear": true
+  },
+  {
+   "id": "CV9a-035",
+   "conforms": true,
+   "evidence": "The listed structure exists: src/build.jl:1107-1119 (DeclaredNotProduced), :1121-1143 (update laws), :1145-1168 (x_projection with DeclarationOnWrongTier :continuous_only/:no_manifold, probe '035 projection on discrete => DeclarationOnWrongTier :continuous_only'), :1091-1093 (carry), :1045-1060 (_mstores/_workspaces/_workspace) and :1651-1652 (_probe_input's InternalInvariant). code_map.md:122 names 'the probe' and the return checks. code_map.md:8-12 makes entries selective, and G1b/G2b precedent (CV1-005, CV8-104) holds that private helpers are not owed. The raises are covered in Appendix C (DeclaredNotProduced spec.md:15674, DeclarationOnWrongTier spec.md:15579). The omission is no mismatch."
+  },
+  {
+   "id": "CV9a-036",
+   "conforms": true,
+   "evidence": "src/build.jl:1107-1119 runs after every _probe_direct! port check (:1100-1103). Each of those throws on failure (:1199-1206), so the pass runs only once every port check has passed. It collects one DeclaredNotProduced per component under one barrier, with ports, products and state_fields. Probe '036 fields => ([:b], [:a], [:q])'. This matches Appendix C at spec.md:15674-15680."
+  },
+  {
+   "id": "CV9a-037",
+   "conforms": false,
+   "evidence": "src/build.jl:1145-1168 probes x_projection at every activation, including a Dual one. compile builds projection entries at every activation (:1608-1615, 'Projection runs at every activation'). Probe '037 projection arg types => [Float64, ForwardDiff.Dual{ProbeTag,Float64,1}]'. A projection that errors on a Dual fails build(...; activations = (Float64, ProbeDual)) as UserCodeFraming. spec.md:5715-5716 says only y_state/y_direct and x_deriv see a Dual and are probed at it. D-052 lists the Dual set as the h chain plus f. D-111 (log.md:3834-3836) holds projection complete 'at the activation's T', and §9.3 (spec.md:5963) says 'at T'. The two log entries pull in different directions, and nothing records the change.",
+   "class": "deviation",
+   "fix": "§9.4: 'Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and `x_projection` ever see a `Dual`. So only they are probed at it.'",
+   "clear": false,
+   "backing_entry": "D-052"
+  },
+  {
+   "id": "CV9a-048",
+   "conforms": true,
+   "evidence": "src/build.jl:1465 derives D/Φ/Δt per component from the schedule via _gates. :1631-1632 gives EventSet the compile's chunk_size. :1634-1637 builds Executor with chunk_size, bind_stepper(algorithm, T, n_x), the arrival pair and any(event_localized), the localized-event key (struct at :1414-1430). entry_addrs at :1491-1493 gives a bare side one CellAddr. evaluate! is at src/model.jl:615, _round! at :704 and apply! at src/conditions.jl:723. One wording note: code_map.md's 'takes its name lists from the products' reads true only if 'products' means the nominal evaluation's Outputs (:1523, :1535-1541 read outputs.components[ci]). The probe products feed only the seed loop at :1508-1512."
+  },
+  {
+   "id": "CV9a-049",
+   "conforms": false,
+   "evidence": "src/build.jl:1508-1516 seeds every product cell and every root-input cell from the activation's probe values. layout.root_inputs (:359) keeps them on the cached Activation, so they outlive the build. Probe on a :built Model with probe_value(::Type{Probed}) = Probed(42.0): port(m, \"\", :p) => Probed(42.0), port(m, \"k\", :y) => 42.0, layout.root_inputs => [(:p, Probed(42.0))]. spec.md:5592-5595 says probe values are 'garbage once the build finishes' and 'never double as initial root-input values'. D-051 says 'never initial slot values'. D-205 and D-213 rule only that no published cell and no service evaluation holds them. The comments at src/build.jl:563 and :1503 cite §6.3 (spec.md:1960-1961), which says the probe's values reach no published cell and does not state the seeding.",
+   "class": "deviation",
+   "fix": "§9.3: 'Probe values are strictly probe-scoped (D-051). No published cell and no service evaluation holds one. A fresh table holds the probe's values until a sweep first writes a cell, so a read before `init!` returns them. They never serve as initial root-input values, since every complete-world application refuses unwritten root inputs as `UninitializedInputs`.' Also change the §6.3 citation at src/build.jl:563 and :1503 to §9.3.",
+   "clear": false,
+   "backing_entry": "D-051"
+  },
+  {
+   "id": "CV9a-050",
+   "conforms": false,
+   "evidence": "src/build.jl:1681-1684: _check_derivative returns a one-entry list for a non-NamedTuple return. :1673-1679 do the same for a NamedTuple against a bare state. :1135-1143 append it to the pass list with other components' failures, as do _check_update (:1708-1717) and _check_state_write in the projection pass (:1163-1168). Probe '050 update pass' => [ConformanceFailure :return_type at s, :field_set at f, :field_type at b] in one throw. '050 projection pass' => [:return_type at p, :field_set at q]. The stage checks (:80-84, :1197-1201) and _check_handler (:1313-1316) throw alone. Appendix C (spec.md:15690-15695) and D-431 (log.md:17546-17547) say such a return throws alone without that restriction. The update loop has collected this way since a9f52a4c, and nothing records it.",
+   "class": "deviation",
+   "fix": "Appendix C: '... but in a stage's port check or a handler's return, a return whose shape is not the declared one, a bare value against a named declaration or a NamedTuple against a bare one, throws alone (D-438, D-437). In the update and projection passes it is one entry of the pass's list.'",
+   "clear": false,
+   "backing_entry": "D-431"
+  }
+ ],
+ "notes": "All 13 claims judged at W = d7d3ddff. Five conform: CV9a-003, CV9a-013, CV9a-024, CV9a-036 and CV9a-048. Two more conform by the G1b/G2b ruling that code_map.md owes no private helpers: CV9a-026 and CV9a-035. Six do not conform: CV9a-011, CV9a-017, CV9a-034, CV9a-037, CV9a-049 and CV9a-050, all deviations.\n\nThe probe script, run twice, is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV9a_v/probe.jl. It is the only file I created, and I edited no tracked file.\n\nThree of the six touch a ratified log entry, so they need a log finding beside the doc fix:\n- CV9a-017: D-135 and D-052 still list 'compiled plans' and 'the validated flag'.\n- CV9a-050: D-431 says a non-NamedTuple return aborts alone.\n- CV9a-049: D-051 says probe values are 'never initial slot values'.\n\nCV9a-037 sets D-052, which leaves x_projection out of the Dual set, against D-111, which checks it 'at the activation's T'. The code follows D-111.\n\nFor CV9a-048, code_map.md's 'The executor takes its name lists from the products' is accurate only if 'products' means the Outputs. The user may want that wording made explicit."
+}

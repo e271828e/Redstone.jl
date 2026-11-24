@@ -1,0 +1,1891 @@
+{
+ "rows": [
+  {
+   "id": "S9c-032",
+   "file": "design/spec.md",
+   "line": 5706,
+   "kind": "law",
+   "claim": "only y_state, y_direct and x_deriv see a Dual, so only they are probed at it",
+   "evidence": "src/build.jl:1151-1166; src/build.jl:1610-1614; probe:58",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and `x_projection` ever see a `Dual`. So only they are probed at it.",
+   "note": "x_projection is probed at every activation (probe A.dual counters: c_proj=1) and compiled into every executor. Spec line 5963 and D-111 already say it checks at T."
+  },
+  {
+   "id": "S9c-033",
+   "file": "design/spec.md",
+   "line": 5712,
+   "kind": "law",
+   "claim": "the §13.8 tracer activation follows the rule identically, a whole-model run at the tracer scalar like any activation",
+   "evidence": "src/tracer.jl:5-8; src/build.jl:1030",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Say the global-tracer activation is designed and not yet built. The code has only the per-member classifier, and `_activate` is never called with a tracer scalar.",
+   "note": "tracer.jl header: 'the tracer activation of §9.4 is a whole-model run at this scalar and is not built here'. No pending.md bullet found. Covers two claims (law: follows the rule; mech: whole-model run)."
+  },
+  {
+   "id": "S9c-051",
+   "file": "design/spec.md",
+   "line": 5741,
+   "kind": "mech",
+   "claim": "the exhaustive set costs one activation per component",
+   "evidence": "src/build.jl:792-800; probe:78-79",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "...at the cost of one extra activation per scalar listed, which covers every component.",
+   "note": "Low confidence, wording. The keyword builds one activation per scalar for the whole build (probe A.exhaustive keys: Float64, ProbeDual), not one per component."
+  },
+  {
+   "id": "S9c-055",
+   "file": "design/spec.md",
+   "line": 5747,
+   "kind": "law",
+   "claim": "after pre-materialization the shared Build is fully immutable with no synchronization on any path",
+   "evidence": "src/build.jl:970-975,708",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The shared `Build` then never inserts into its cache. A lookup still takes the build's lock. (As a defect fix, lock only on a miss.)",
+   "note": "activation() takes build.lock on every lookup, hit or miss, and the dictionary stays mutable."
+  },
+  {
+   "id": "S9c-062",
+   "file": "design/spec.md",
+   "line": 5759,
+   "kind": "law",
+   "claim": "the bare Dual cannot answer zero(T)",
+   "evidence": "probe:73",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Drop 'or answer `zero(T)`', or say it answers `Dual{Nothing}(0)`, a Dual over Int with no partials, which is no usable scalar.",
+   "note": "zero(ForwardDiff.Dual) returns Dual{Nothing}(0) in the probe. Low confidence, rationale sentence."
+  },
+  {
+   "id": "S9c-067",
+   "file": "design/spec.md",
+   "line": 5767,
+   "kind": "mech",
+   "claim": "each entry holds layouts, compiled plans and a validated flag",
+   "evidence": "src/build.jl:565-569",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Each entry holds the retyped declarations, the probe products and the layout.",
+   "note": "Activation has fields decls, products, layout (probe A.fields). No compiled plan and no validated flag. The wording comes from D-135. Plans are compiled per call (conditions.jl, trim.jl)."
+  },
+  {
+   "id": "S9c-132",
+   "file": "design/spec.md",
+   "line": 5885,
+   "kind": "ex",
+   "claim": "didactic message reads 'field `M_shaft`: expected `Float64`, got `Int64` — return `zero(x.ω)`, not `0`'",
+   "evidence": "src/diagnostics.jl:1142-1148; src/diagnostics.jl:1175-1177; probe:187-190",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Show the message as rendered, \"`s`: y_direct returns `M_shaft`::Int64, declared Float64 — an integer literal where a real was declared: return `zero(…)` of a value at the activation, not `0`\", or mark the quoted text as a paraphrase.",
+   "note": "Same hint in substance, different form and wording."
+  },
+  {
+   "id": "S9c-154",
+   "file": "design/spec.md",
+   "line": 5914,
+   "kind": "ex",
+   "claim": "hint reads \"if `F` participates in differentiation, remove its `Pinned`\"",
+   "evidence": "src/leaves.jl:364-366; probe:129",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write the hint as rendered, \"if this leaf participates in differentiation, remove its `Pinned`\".",
+   "note": "The hint never names the leaf. The message names the port elsewhere."
+  },
+  {
+   "id": "S9c-186",
+   "file": "design/spec.md",
+   "line": 5976,
+   "kind": "mech",
+   "claim": "the key check is the bundle law's classification run in the return direction, through the same FieldError-shaped machinery §13.2 builds for bundles",
+   "evidence": "src/build.jl:1325; src/diagnostics.jl:1229-1237,1201-1215",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Say HandlerReturnKey has the same payload shape as a bundle-field error, the offender plus the list in hand. It is built directly in `_check_handler` and shares no classification.",
+   "note": "BundleFieldError comes from the FieldError caught in invoke_probed, with reasons :undeclared, :wrong_tier and :illegal_for_family. HandlerReturnKey has no reason and shares no code. Low confidence."
+  },
+  {
+   "id": "S9c-206",
+   "file": "design/spec.md",
+   "line": 6007,
+   "kind": "law",
+   "claim": "the payload carries the field-level diff (missing / unexpected / per-field expected-vs-observed)",
+   "evidence": "src/diagnostics.jl:1109-1121,1155-1163; probe:119",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "...and the field-level data: the observed and declared field lists, and per field the observed and declared types.",
+   "note": "ConformanceFailure stores observed_fields and declared_fields, and observed/declared per field. No missing or unexpected list is stored or rendered."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S9c-001",
+   "file": "design/spec.md",
+   "line": 5661,
+   "kind": "mech",
+   "claim": "default build types the tree only at Float64",
+   "evidence": "src/build.jl:792,797"
+  },
+  {
+   "id": "S9c-002",
+   "file": "design/spec.md",
+   "line": 5661,
+   "kind": "mech",
+   "claim": "linearize and trim need the tree at a Dual",
+   "evidence": "src/linearize.jl:322; src/trim.jl:621"
+  },
+  {
+   "id": "S9c-003",
+   "file": "design/spec.md",
+   "line": 5663,
+   "kind": "decl",
+   "claim": "activation is the build's typed products at a scalar",
+   "evidence": "src/build.jl:565"
+  },
+  {
+   "id": "S9c-004",
+   "file": "design/spec.md",
+   "line": 5667,
+   "kind": "mech",
+   "claim": "only the activation step re-runs for a new scalar (D-259)",
+   "evidence": "src/build.jl:1030"
+  },
+  {
+   "id": "S9c-005",
+   "file": "design/spec.md",
+   "line": 5667,
+   "kind": "mech",
+   "claim": "an activation redoes five things",
+   "evidence": "src/build.jl:1030-1042"
+  },
+  {
+   "id": "S9c-006",
+   "file": "design/spec.md",
+   "line": 5670,
+   "kind": "mech",
+   "claim": "producer-fed cells retyped by walking producer's output declaration at T",
+   "evidence": "src/build.jl:40-48; probe:63"
+  },
+  {
+   "id": "S9c-007",
+   "file": "design/spec.md",
+   "line": 5671,
+   "kind": "law",
+   "claim": "continuous producer's declaration follows scalar at every unpinned leaf",
+   "evidence": "src/build.jl:41-43; probe:63"
+  },
+  {
+   "id": "S9c-008",
+   "file": "design/spec.md",
+   "line": 5673,
+   "kind": "law",
+   "claim": "discrete producer's declaration is read once and pins",
+   "evidence": "src/build.jl:44-47; probe:62"
+  },
+  {
+   "id": "S9c-009",
+   "file": "design/spec.md",
+   "line": 5674,
+   "kind": "mech",
+   "claim": "root-input cells retyped by walking consumer u_types entry at T",
+   "evidence": "src/build.jl:522-531"
+  },
+  {
+   "id": "S9c-010",
+   "file": "design/spec.md",
+   "line": 5675,
+   "kind": "law",
+   "claim": "unpinned root-input entry follows the activation",
+   "evidence": "src/build.jl:525-530"
+  },
+  {
+   "id": "S9c-011",
+   "file": "design/spec.md",
+   "line": 5676,
+   "kind": "law",
+   "claim": "Pinned root-input entry stays frozen",
+   "evidence": "src/build.jl:530"
+  },
+  {
+   "id": "S9c-012",
+   "file": "design/spec.md",
+   "line": 5677,
+   "kind": "mech",
+   "claim": "state type from x_init re-derived by leaf walk",
+   "evidence": "src/leaves.jl:312; probe:64"
+  },
+  {
+   "id": "S9c-013",
+   "file": "design/spec.md",
+   "line": 5678,
+   "kind": "mech",
+   "claim": "table and flat x buffer laid out again",
+   "evidence": "src/build.jl:1033; probe:65"
+  },
+  {
+   "id": "S9c-014",
+   "file": "design/spec.md",
+   "line": 5680,
+   "kind": "mech",
+   "claim": "workspace allocators invoked again at an activation",
+   "evidence": "src/build.jl:1034; probe:59"
+  },
+  {
+   "id": "S9c-015",
+   "file": "design/spec.md",
+   "line": 5681,
+   "kind": "law",
+   "claim": "continuous allocator runs at T, discrete at Float64 (D-263)",
+   "evidence": "src/build.jl:1059; probe:59"
+  },
+  {
+   "id": "S9c-016",
+   "file": "design/spec.md",
+   "line": 5682,
+   "kind": "mech",
+   "claim": "the activation does not introduce the allocators",
+   "evidence": "src/build.jl:1008"
+  },
+  {
+   "id": "S9c-017",
+   "file": "design/spec.md",
+   "line": 5683,
+   "kind": "law",
+   "claim": "first allocator call precedes the nominal probes",
+   "evidence": "src/build.jl:1008-1010"
+  },
+  {
+   "id": "S9c-018",
+   "file": "design/spec.md",
+   "line": 5685,
+   "kind": "law",
+   "claim": "continuous component's scratch carries the activation scalar",
+   "evidence": "src/build.jl:1059; probe:59"
+  },
+  {
+   "id": "S9c-019",
+   "file": "design/spec.md",
+   "line": 5686,
+   "kind": "mech",
+   "claim": "under Dual the in-place math runs through generic fallbacks, no BLAS",
+   "evidence": "probe:59 (Vector{Dual}); BLAS dispatch is by eltype"
+  },
+  {
+   "id": "S9c-020",
+   "file": "design/spec.md",
+   "line": 5689,
+   "kind": "law",
+   "claim": "mistyped scratch detonates loudly at the Dual probe",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "S9c-021",
+   "file": "design/spec.md",
+   "line": 5690,
+   "kind": "law",
+   "claim": "nothing downstream derives from a workspace's type",
+   "evidence": "src/build.jl:405-520 (cell_layout takes no workspaces)"
+  },
+  {
+   "id": "S9c-022",
+   "file": "design/spec.md",
+   "line": 5691,
+   "kind": "mech",
+   "claim": "the probe chain runs again",
+   "evidence": "src/build.jl:1036-1040; probe:58"
+  },
+  {
+   "id": "S9c-023",
+   "file": "design/spec.md",
+   "line": 5693,
+   "kind": "law",
+   "claim": "no execution order changes across activations (D-253)",
+   "evidence": "src/build.jl:1039; probe:60"
+  },
+  {
+   "id": "S9c-024",
+   "file": "design/spec.md",
+   "line": 5694,
+   "kind": "law",
+   "claim": "no name list changes across activations",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "S9c-025",
+   "file": "design/spec.md",
+   "line": 5694,
+   "kind": "decl",
+   "claim": "Structure is the structure step's product, Outputs the nominal evaluation's",
+   "evidence": "src/build.jl:790-791,1001"
+  },
+  {
+   "id": "S9c-026",
+   "file": "design/spec.md",
+   "line": 5696,
+   "kind": "law",
+   "claim": "neither Structure nor Outputs depends on T",
+   "evidence": "src/build.jl:1030-1042"
+  },
+  {
+   "id": "S9c-027",
+   "file": "design/spec.md",
+   "line": 5698,
+   "kind": "law",
+   "claim": "each activation probes exactly the set of functions it can execute (D-052)",
+   "evidence": "src/build.jl:71,1092,1127,1183; probe:58"
+  },
+  {
+   "id": "S9c-028",
+   "file": "design/spec.md",
+   "line": 5699,
+   "kind": "mech",
+   "claim": "a Dual activation evaluates the model at a frozen instant",
+   "evidence": "src/build.jl:1066; probe:58"
+  },
+  {
+   "id": "S9c-029",
+   "file": "design/spec.md",
+   "line": 5702,
+   "kind": "law",
+   "claim": "discrete stages are gated off at a Dual activation",
+   "evidence": "src/build.jl:71,1127,1183; probe:58"
+  },
+  {
+   "id": "S9c-030",
+   "file": "design/spec.md",
+   "line": 5702,
+   "kind": "law",
+   "claim": "discrete stages hold Float64 values",
+   "evidence": "src/build.jl:1092; probe:61-62"
+  },
+  {
+   "id": "S9c-031",
+   "file": "design/spec.md",
+   "line": 5704,
+   "kind": "law",
+   "claim": "guards and handlers never run at a non-nominal activation",
+   "evidence": "src/build.jl:1583; probe:89"
+  },
+  {
+   "id": "S9c-034",
+   "file": "design/spec.md",
+   "line": 5713,
+   "kind": "decl",
+   "claim": "'tracer activation' names the global set-tracer (D-012)",
+   "evidence": "src/tracer.jl:22,283"
+  },
+  {
+   "id": "S9c-035",
+   "file": "design/spec.md",
+   "line": 5715,
+   "kind": "mech",
+   "claim": "cycle classifier is the other tracer variant, tracing each member locally",
+   "evidence": "src/tracer.jl:5-8,283"
+  },
+  {
+   "id": "S9c-036",
+   "file": "design/spec.md",
+   "line": 5716,
+   "kind": "mech",
+   "claim": "classifier needs no execution order within the cycle",
+   "evidence": "src/build.jl:234-246"
+  },
+  {
+   "id": "S9c-037",
+   "file": "design/spec.md",
+   "line": 5717,
+   "kind": "mech",
+   "claim": "classifier runs in the nominal evaluation's failure path",
+   "evidence": "src/build.jl:236-239"
+  },
+  {
+   "id": "S9c-038",
+   "file": "design/spec.md",
+   "line": 5718,
+   "kind": "law",
+   "claim": "classifier is not an activation at all",
+   "evidence": "src/tracer.jl:283-300 (no Activation built)"
+  },
+  {
+   "id": "S9c-039",
+   "file": "design/spec.md",
+   "line": 5720,
+   "kind": "law",
+   "claim": "non-nominal activations run at first request, not at build (D-052)",
+   "evidence": "src/build.jl:792-800,969"
+  },
+  {
+   "id": "S9c-040",
+   "file": "design/spec.md",
+   "line": 5725,
+   "kind": "law",
+   "claim": "a successful build does not certify linearizability",
+   "evidence": "probe:127-139"
+  },
+  {
+   "id": "S9c-041",
+   "file": "design/spec.md",
+   "line": 5726,
+   "kind": "mech",
+   "claim": "a pinned Float64 may hide in a constructor",
+   "evidence": "probe:138-139"
+  },
+  {
+   "id": "S9c-042",
+   "file": "design/spec.md",
+   "line": 5728,
+   "kind": "mech",
+   "claim": "or be declared Pinned at a leaf that participates",
+   "evidence": "probe:127-129"
+  },
+  {
+   "id": "S9c-043",
+   "file": "design/spec.md",
+   "line": 5729,
+   "kind": "law",
+   "claim": "either lurks until the first Dual activation",
+   "evidence": "probe:127-139"
+  },
+  {
+   "id": "S9c-044",
+   "file": "design/spec.md",
+   "line": 5730,
+   "kind": "law",
+   "claim": "the Dual probe then fails and names the offending constructor or leaf",
+   "evidence": "probe:129,139"
+  },
+  {
+   "id": "S9c-045",
+   "file": "design/spec.md",
+   "line": 5732,
+   "kind": "law",
+   "claim": "the test suite makes linearizability an invariant",
+   "evidence": "test/test_build.jl:2236-2260"
+  },
+  {
+   "id": "S9c-046",
+   "file": "design/spec.md",
+   "line": 5734,
+   "kind": "law",
+   "claim": "every component gets a Dual activation built in CI (D-280)",
+   "evidence": "test/test_build.jl:2236-2260"
+  },
+  {
+   "id": "S9c-047",
+   "file": "design/spec.md",
+   "line": 5734,
+   "kind": "decl",
+   "claim": "an opt-in exhaustive mode builds them",
+   "evidence": "src/build.jl:792-800"
+  },
+  {
+   "id": "S9c-048",
+   "file": "design/spec.md",
+   "line": 5737,
+   "kind": "ex",
+   "claim": "build(world; activations = (Float64, ProbeDual))",
+   "evidence": "probe:77-79"
+  },
+  {
+   "id": "S9c-049",
+   "file": "design/spec.md",
+   "line": 5740,
+   "kind": "mech",
+   "claim": "the call runs the exhaustive set",
+   "evidence": "probe:78-79"
+  },
+  {
+   "id": "S9c-050",
+   "file": "design/spec.md",
+   "line": 5740,
+   "kind": "law",
+   "claim": "it catches genericity violations and misplaced pins at PR time",
+   "evidence": "probe:127-139"
+  },
+  {
+   "id": "S9c-052",
+   "file": "design/spec.md",
+   "line": 5742,
+   "kind": "law",
+   "claim": "the keyword is the whole entry point (D-275)",
+   "evidence": "src/build.jl:792; probe:80"
+  },
+  {
+   "id": "S9c-053",
+   "file": "design/spec.md",
+   "line": 5743,
+   "kind": "law",
+   "claim": "no separate check function exists",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "S9c-054",
+   "file": "design/spec.md",
+   "line": 5745,
+   "kind": "mech",
+   "claim": "pre-materializing activations at build is possible with the keyword",
+   "evidence": "src/build.jl:797-800"
+  },
+  {
+   "id": "S9c-056",
+   "file": "design/spec.md",
+   "line": 5750,
+   "kind": "decl",
+   "claim": "ProbeDual is the framework's public canonical probe scalar (D-099)",
+   "evidence": "src/build.jl:733; docs/src/api.md:47"
+  },
+  {
+   "id": "S9c-057",
+   "file": "design/spec.md",
+   "line": 5754,
+   "kind": "ex",
+   "claim": "const ProbeDual = ForwardDiff.Dual{ProbeTag, Float64, 1}",
+   "evidence": "src/build.jl:733; probe:74"
+  },
+  {
+   "id": "S9c-058",
+   "file": "design/spec.md",
+   "line": 5757,
+   "kind": "law",
+   "claim": "an activation is keyed by a concrete scalar type",
+   "evidence": "src/build.jl:707; probe:68"
+  },
+  {
+   "id": "S9c-059",
+   "file": "design/spec.md",
+   "line": 5758,
+   "kind": "law",
+   "claim": "the bare Dual is a UnionAll",
+   "evidence": "Julia; probe:72"
+  },
+  {
+   "id": "S9c-060",
+   "file": "design/spec.md",
+   "line": 5758,
+   "kind": "law",
+   "claim": "the bare Dual cannot key an activation",
+   "evidence": "probe:72"
+  },
+  {
+   "id": "S9c-061",
+   "file": "design/spec.md",
+   "line": 5758,
+   "kind": "law",
+   "claim": "the bare Dual cannot be walked to",
+   "evidence": "probe:72"
+  },
+  {
+   "id": "S9c-063",
+   "file": "design/spec.md",
+   "line": 5759,
+   "kind": "law",
+   "claim": "the width of ProbeDual is one",
+   "evidence": "src/build.jl:733"
+  },
+  {
+   "id": "S9c-064",
+   "file": "design/spec.md",
+   "line": 5763,
+   "kind": "decl",
+   "claim": "the activation cache lives on the Build",
+   "evidence": "src/build.jl:703-710"
+  },
+  {
+   "id": "S9c-065",
+   "file": "design/spec.md",
+   "line": 5763,
+   "kind": "law",
+   "claim": "the cache holds only immutable compiled artifacts (D-135)",
+   "evidence": "src/build.jl:565-569; probe:67"
+  },
+  {
+   "id": "S9c-066",
+   "file": "design/spec.md",
+   "line": 5766,
+   "kind": "decl",
+   "claim": "the cache is one dictionary keyed by concrete scalar type",
+   "evidence": "src/build.jl:707; probe:68"
+  },
+  {
+   "id": "S9c-068",
+   "file": "design/spec.md",
+   "line": 5768,
+   "kind": "law",
+   "claim": "an entry is immutable once constructed",
+   "evidence": "src/build.jl:565; probe:67"
+  },
+  {
+   "id": "S9c-069",
+   "file": "design/spec.md",
+   "line": 5768,
+   "kind": "mech",
+   "claim": "the nominal Float64 entry is one key like any other (D-253)",
+   "evidence": "src/build.jl:797; probe:68"
+  },
+  {
+   "id": "S9c-070",
+   "file": "design/spec.md",
+   "line": 5769,
+   "kind": "law",
+   "claim": "whether an activation is cached never changes a result",
+   "evidence": "src/build.jl:969-975; probe:69"
+  },
+  {
+   "id": "S9c-071",
+   "file": "design/spec.md",
+   "line": 5772,
+   "kind": "law",
+   "claim": "every buffer set has exactly one owner (D-282)",
+   "evidence": "probe:84-86"
+  },
+  {
+   "id": "S9c-072",
+   "file": "design/spec.md",
+   "line": 5774,
+   "kind": "decl",
+   "claim": "a Model owns its activation's buffers",
+   "evidence": "src/model.jl:111-124; probe:84"
+  },
+  {
+   "id": "S9c-073",
+   "file": "design/spec.md",
+   "line": 5775,
+   "kind": "mech",
+   "claim": "buffers are materialized from the cached layouts at construction",
+   "evidence": "src/model.jl:121-122"
+  },
+  {
+   "id": "S9c-074",
+   "file": "design/spec.md",
+   "line": 5776,
+   "kind": "mech",
+   "claim": "a Simulation owns its Model{Float64}",
+   "evidence": "src/sim.jl:358; probe:87"
+  },
+  {
+   "id": "S9c-075",
+   "file": "design/spec.md",
+   "line": 5777,
+   "kind": "mech",
+   "claim": "the loop's zero-allocation stepping runs on that model's buffers",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9c-076",
+   "file": "design/spec.md",
+   "line": 5778,
+   "kind": "law",
+   "claim": "every service invocation owns the scratch set it instantiates from the same layouts",
+   "evidence": "src/model.jl:143; probe:86"
+  },
+  {
+   "id": "S9c-077",
+   "file": "design/spec.md",
+   "line": 5780,
+   "kind": "law",
+   "claim": "the one-owner rule is general, not local to trim",
+   "evidence": "src/linearize.jl:323; src/trim.jl:622"
+  },
+  {
+   "id": "S9c-078",
+   "file": "design/spec.md",
+   "line": 5782,
+   "kind": "law",
+   "claim": "buffers are never cached",
+   "evidence": "src/build.jl:1414-1418; probe:84"
+  },
+  {
+   "id": "S9c-079",
+   "file": "design/spec.md",
+   "line": 5784,
+   "kind": "mech",
+   "claim": "Julia caches compiled code process-wide",
+   "evidence": "Julia"
+  },
+  {
+   "id": "S9c-080",
+   "file": "design/spec.md",
+   "line": 5785,
+   "kind": "mech",
+   "claim": "the framework cache saves probe re-runs, layout construction and Dual-chain compilation",
+   "evidence": "src/build.jl:969-975; probe:69"
+  },
+  {
+   "id": "S9c-081",
+   "file": "design/spec.md",
+   "line": 5790,
+   "kind": "mech",
+   "claim": "the per-point working-store allocation does not amortize",
+   "evidence": "src/model.jl:143"
+  },
+  {
+   "id": "S9c-082",
+   "file": "design/spec.md",
+   "line": 5793,
+   "kind": "law",
+   "claim": "nothing numerical is ever cached",
+   "evidence": "src/build.jl:561-563 (cache holds types and probe products, no results)"
+  },
+  {
+   "id": "S9c-083",
+   "file": "design/spec.md",
+   "line": 5795,
+   "kind": "law",
+   "claim": "Dual{Tag,V,N} carries the partial count",
+   "evidence": "Julia; probe:71"
+  },
+  {
+   "id": "S9c-084",
+   "file": "design/spec.md",
+   "line": 5796,
+   "kind": "law",
+   "claim": "a different seeding width is a different scalar type with its own entry",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "S9c-085",
+   "file": "design/spec.md",
+   "line": 5797,
+   "kind": "mech",
+   "claim": "a different width costs a separate Julia compile",
+   "evidence": "Julia"
+  },
+  {
+   "id": "S9c-086",
+   "file": "design/spec.md",
+   "line": 5799,
+   "kind": "law",
+   "claim": "lazy materialization is torn-state-free (D-281)",
+   "evidence": "src/build.jl:970-974"
+  },
+  {
+   "id": "S9c-087",
+   "file": "design/spec.md",
+   "line": 5800,
+   "kind": "law",
+   "claim": "concurrent first requests never expose partial cache state",
+   "evidence": "src/build.jl:970-974"
+  },
+  {
+   "id": "S9c-088",
+   "file": "design/spec.md",
+   "line": 5802,
+   "kind": "mech",
+   "claim": "a guard around insertion suffices",
+   "evidence": "src/build.jl:974"
+  },
+  {
+   "id": "S9c-089",
+   "file": "design/spec.md",
+   "line": 5802,
+   "kind": "mech",
+   "claim": "the guard is paid at service time, never on the hot path",
+   "evidence": "src/build.jl:969; src/model.jl:121"
+  },
+  {
+   "id": "S9c-090",
+   "file": "design/spec.md",
+   "line": 5804,
+   "kind": "law",
+   "claim": "the worst benign race is duplicated work",
+   "evidence": "src/build.jl:972-974"
+  },
+  {
+   "id": "S9c-091",
+   "file": "design/spec.md",
+   "line": 5808,
+   "kind": "law",
+   "claim": "the probe validates each function once, on the initial state's branch",
+   "evidence": "src/build.jl:1077-1100"
+  },
+  {
+   "id": "S9c-092",
+   "file": "design/spec.md",
+   "line": 5810,
+   "kind": "mech",
+   "claim": "leaving the probe's comparison in place discharges the second clause",
+   "evidence": "src/store.jl:107-131"
+  },
+  {
+   "id": "S9c-093",
+   "file": "design/spec.md",
+   "line": 5815,
+   "kind": "mech",
+   "claim": "the executor stores a stage return into the table at one write",
+   "evidence": "src/executor.jl:170"
+  },
+  {
+   "id": "S9c-094",
+   "file": "design/spec.md",
+   "line": 5817,
+   "kind": "mech",
+   "claim": "at the write it holds the full expected return type at this activation",
+   "evidence": "src/executor.jl:170; src/store.jl:107"
+  },
+  {
+   "id": "S9c-095",
+   "file": "design/spec.md",
+   "line": 5819,
+   "kind": "decl",
+   "claim": "expected type is the type of the cells the stage writes, as probed at this activation",
+   "evidence": "src/build.jl:1525-1535"
+  },
+  {
+   "id": "S9c-096",
+   "file": "design/spec.md",
+   "line": 5821,
+   "kind": "decl",
+   "claim": "one concrete NamedTuple type per (component, stage)",
+   "evidence": "src/build.jl:1525-1535"
+  },
+  {
+   "id": "S9c-097",
+   "file": "design/spec.md",
+   "line": 5822,
+   "kind": "decl",
+   "claim": "the stage's declared names at the types their cells hold",
+   "evidence": "src/store.jl:107-121"
+  },
+  {
+   "id": "S9c-098",
+   "file": "design/spec.md",
+   "line": 5823,
+   "kind": "decl",
+   "claim": "under a bare contract the expected type is the one cell's type",
+   "evidence": "src/store.jl:133-141; src/build.jl:1439-1445"
+  },
+  {
+   "id": "S9c-099",
+   "file": "design/spec.md",
+   "line": 5823,
+   "kind": "decl",
+   "claim": "a bare contract is y_types as one type, one port with default face y",
+   "evidence": "src/build.jl:30,123; probe:120"
+  },
+  {
+   "id": "S9c-100",
+   "file": "design/spec.md",
+   "line": 5824,
+   "kind": "law",
+   "claim": "the write is generated over the expected and returned types (D-235)",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "S9c-101",
+   "file": "design/spec.md",
+   "line": 5825,
+   "kind": "law",
+   "claim": "the test is decided at method specialization",
+   "evidence": "src/store.jl:107; probe:100-102"
+  },
+  {
+   "id": "S9c-102",
+   "file": "design/spec.md",
+   "line": 5826,
+   "kind": "law",
+   "claim": "no per-field instruction reaches the conformant path",
+   "evidence": "src/store.jl:122-129; probe:105"
+  },
+  {
+   "id": "S9c-103",
+   "file": "design/spec.md",
+   "line": 5829,
+   "kind": "mech",
+   "claim": "the generated write compares the return's key set with the expected type's",
+   "evidence": "src/store.jl:108-112"
+  },
+  {
+   "id": "S9c-104",
+   "file": "design/spec.md",
+   "line": 5830,
+   "kind": "mech",
+   "claim": "each returned field is held to its cell's type under the relation",
+   "evidence": "src/store.jl:114-121"
+  },
+  {
+   "id": "S9c-105",
+   "file": "design/spec.md",
+   "line": 5831,
+   "kind": "law",
+   "claim": "a conformant return type generates the straight stores and nothing else",
+   "evidence": "src/store.jl:122-129"
+  },
+  {
+   "id": "S9c-106",
+   "file": "design/spec.md",
+   "line": 5832,
+   "kind": "law",
+   "claim": "a non-conformant one generates a throw of the failure payload",
+   "evidence": "src/store.jl:111,117-120; probe:100-102"
+  },
+  {
+   "id": "S9c-107",
+   "file": "design/spec.md",
+   "line": 5833,
+   "kind": "law",
+   "claim": "the throw is raised the first time that branch executes",
+   "evidence": "probe:100-102"
+  },
+  {
+   "id": "S9c-108",
+   "file": "design/spec.md",
+   "line": 5837,
+   "kind": "mech",
+   "claim": "type-stable conformant code gets one method and no check instruction",
+   "evidence": "probe:107 (no ConformanceFailure in IR)"
+  },
+  {
+   "id": "S9c-109",
+   "file": "design/spec.md",
+   "line": 5839,
+   "kind": "mech",
+   "claim": "branch-divergent code gets one method per return type",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "S9c-110",
+   "file": "design/spec.md",
+   "line": 5841,
+   "kind": "law",
+   "claim": "the check is absent from every conformant method",
+   "evidence": "src/store.jl:122-129"
+  },
+  {
+   "id": "S9c-111",
+   "file": "design/spec.md",
+   "line": 5842,
+   "kind": "law",
+   "claim": "the divergent branch's method is a loud located error at first execution",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "S9c-112",
+   "file": "design/spec.md",
+   "line": 5843,
+   "kind": "mech",
+   "claim": "type-unstable conformant code pays only its own dynamic dispatch",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "S9c-113",
+   "file": "design/spec.md",
+   "line": 5848,
+   "kind": "law",
+   "claim": "names are the pairing, field order carries no semantics (D-151)",
+   "evidence": "src/store.jl:108,119-121; probe:99,187-190"
+  },
+  {
+   "id": "S9c-114",
+   "file": "design/spec.md",
+   "line": 5849,
+   "kind": "mech",
+   "claim": "the expected type's order is derived from y_types, stage-filtered",
+   "evidence": "src/build.jl:199-201"
+  },
+  {
+   "id": "S9c-115",
+   "file": "design/spec.md",
+   "line": 5851,
+   "kind": "law",
+   "claim": "a return with the right names at the right types conforms in any order",
+   "evidence": "probe:99,187-190"
+  },
+  {
+   "id": "S9c-116",
+   "file": "design/spec.md",
+   "line": 5853,
+   "kind": "ex",
+   "claim": "M_shaft is an example port name, the Motor fixture's (lead)",
+   "evidence": "test/fixtures.jl:163"
+  },
+  {
+   "id": "S9c-117",
+   "file": "design/spec.md",
+   "line": 5855,
+   "kind": "ex",
+   "claim": "(; P = M*ω, M_shaft = M) and (; M_shaft = M, P = M*ω) are the same return",
+   "evidence": "probe:187-190"
+  },
+  {
+   "id": "S9c-118",
+   "file": "design/spec.md",
+   "line": 5860,
+   "kind": "law",
+   "claim": "name pairing is the rule at every NamedTuple seam between author and framework",
+   "evidence": "src/leaves.jl:416-433; src/trim.jl:654,701"
+  },
+  {
+   "id": "S9c-119",
+   "file": "design/spec.md",
+   "line": 5862,
+   "kind": "mech",
+   "claim": "the scatter writes each returned field into its own named cell (§4.3)",
+   "evidence": "src/store.jl:119-121"
+  },
+  {
+   "id": "S9c-120",
+   "file": "design/spec.md",
+   "line": 5867,
+   "kind": "law",
+   "claim": "pairing by name costs nothing",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "S9c-121",
+   "file": "design/spec.md",
+   "line": 5867,
+   "kind": "mech",
+   "claim": "the generated write reads each returned field by name into its cell",
+   "evidence": "src/store.jl:121"
+  },
+  {
+   "id": "S9c-122",
+   "file": "design/spec.md",
+   "line": 5868,
+   "kind": "mech",
+   "claim": "no permutation of the value exists at runtime",
+   "evidence": "src/store.jl:121"
+  },
+  {
+   "id": "S9c-123",
+   "file": "design/spec.md",
+   "line": 5869,
+   "kind": "mech",
+   "claim": "per-field reasoning happens on types and emits no per-field check",
+   "evidence": "src/store.jl:114-121"
+  },
+  {
+   "id": "S9c-124",
+   "file": "design/spec.md",
+   "line": 5871,
+   "kind": "mech",
+   "claim": "the check's one baked type test is resolved by dispatch (D-235)",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "S9c-125",
+   "file": "design/spec.md",
+   "line": 5875,
+   "kind": "law",
+   "claim": "a key-set mismatch or per-field type mismatch is an error",
+   "evidence": "src/store.jl:108,117"
+  },
+  {
+   "id": "S9c-126",
+   "file": "design/spec.md",
+   "line": 5876,
+   "kind": "law",
+   "claim": "a permutation is not an error",
+   "evidence": "probe:99"
+  },
+  {
+   "id": "S9c-127",
+   "file": "design/spec.md",
+   "line": 5881,
+   "kind": "law",
+   "claim": "at the nominal activation the check is an exact type match (D-053)",
+   "evidence": "src/leaves.jl:353-354; probe:118"
+  },
+  {
+   "id": "S9c-128",
+   "file": "design/spec.md",
+   "line": 5881,
+   "kind": "mech",
+   "claim": "the nominal activation is the only one that runs in real time",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "S9c-129",
+   "file": "design/spec.md",
+   "line": 5882,
+   "kind": "law",
+   "claim": "there is no convert-on-write",
+   "evidence": "src/store.jl:119-121; probe:100"
+  },
+  {
+   "id": "S9c-130",
+   "file": "design/spec.md",
+   "line": 5883,
+   "kind": "law",
+   "claim": "the check is decided at generation, absent from the conformant path",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "S9c-131",
+   "file": "design/spec.md",
+   "line": 5884,
+   "kind": "ex",
+   "claim": "M_shaft in the quoted message is an example port name (lead)",
+   "evidence": "test/fixtures.jl:163"
+  },
+  {
+   "id": "S9c-133",
+   "file": "design/spec.md",
+   "line": 5887,
+   "kind": "law",
+   "claim": "non-nominal activations check walking and pinned tiers differently",
+   "evidence": "src/leaves.jl:353-364; probe:159-171"
+  },
+  {
+   "id": "S9c-134",
+   "file": "design/spec.md",
+   "line": 5889,
+   "kind": "decl",
+   "claim": "an opaque leaf is a non-isbits immutable the leaf walk stores whole",
+   "evidence": "src/leaves.jl:18"
+  },
+  {
+   "id": "S9c-135",
+   "file": "design/spec.md",
+   "line": 5890,
+   "kind": "law",
+   "claim": "an opaque leaf has a rule of its own",
+   "evidence": "src/leaves.jl:355"
+  },
+  {
+   "id": "S9c-136",
+   "file": "design/spec.md",
+   "line": 5891,
+   "kind": "law",
+   "claim": "a walking leaf accepts exactly two types, the activation scalar or Float64 (D-053)",
+   "evidence": "src/leaves.jl:353-354; probe:114,116-117"
+  },
+  {
+   "id": "S9c-137",
+   "file": "design/spec.md",
+   "line": 5893,
+   "kind": "mech",
+   "claim": "the activation scalar is the fast path, a straight store",
+   "evidence": "probe:116"
+  },
+  {
+   "id": "S9c-138",
+   "file": "design/spec.md",
+   "line": 5894,
+   "kind": "mech",
+   "claim": "the executor embeds a Float64 as a zero-partial constant",
+   "evidence": "probe:114"
+  },
+  {
+   "id": "S9c-139",
+   "file": "design/spec.md",
+   "line": 5895,
+   "kind": "mech",
+   "claim": "struct-valued ports embed through the standard cross-eltype constructor",
+   "evidence": "src/leaves.jl:140; probe:288"
+  },
+  {
+   "id": "S9c-140",
+   "file": "design/spec.md",
+   "line": 5896,
+   "kind": "law",
+   "claim": "a missing constructor fails loudly with both types named",
+   "evidence": "probe:288 (MethodError names Q{Dual}(::Dual))"
+  },
+  {
+   "id": "S9c-141",
+   "file": "design/spec.md",
+   "line": 5898,
+   "kind": "law",
+   "claim": "an opaque leaf embeds nothing into a store",
+   "evidence": "src/leaves.jl:355"
+  },
+  {
+   "id": "S9c-142",
+   "file": "design/spec.md",
+   "line": 5899,
+   "kind": "law",
+   "claim": "an opaque leaf is accepted at a store by identity alone (D-237)",
+   "evidence": "src/leaves.jl:353,355"
+  },
+  {
+   "id": "S9c-143",
+   "file": "design/spec.md",
+   "line": 5900,
+   "kind": "law",
+   "claim": "at a wire the entry is a bound",
+   "evidence": "src/leaves.jl:380-381"
+  },
+  {
+   "id": "S9c-144",
+   "file": "design/spec.md",
+   "line": 5901,
+   "kind": "law",
+   "claim": "a frozen opaque arrival is admitted as the producer's cell (D-264)",
+   "evidence": "src/leaves.jl:355-356,380"
+  },
+  {
+   "id": "S9c-145",
+   "file": "design/spec.md",
+   "line": 5903,
+   "kind": "law",
+   "claim": "nothing else is accepted",
+   "evidence": "src/leaves.jl:352-360"
+  },
+  {
+   "id": "S9c-146",
+   "file": "design/spec.md",
+   "line": 5903,
+   "kind": "law",
+   "claim": "the check is decided on the type, not leaf by leaf (D-238)",
+   "evidence": "src/leaves.jl:352"
+  },
+  {
+   "id": "S9c-147",
+   "file": "design/spec.md",
+   "line": 5905,
+   "kind": "law",
+   "claim": "the arrival with Float64 lifted to the scalar must be the declaration itself",
+   "evidence": "src/leaves.jl:352-360"
+  },
+  {
+   "id": "S9c-148",
+   "file": "design/spec.md",
+   "line": 5906,
+   "kind": "law",
+   "claim": "a differing field name is refused",
+   "evidence": "src/leaves.jl:358-360"
+  },
+  {
+   "id": "S9c-149",
+   "file": "design/spec.md",
+   "line": 5906,
+   "kind": "law",
+   "claim": "a differing non-numeric type parameter is refused",
+   "evidence": "src/leaves.jl:359"
+  },
+  {
+   "id": "S9c-150",
+   "file": "design/spec.md",
+   "line": 5907,
+   "kind": "law",
+   "claim": "a differing array mutability is refused",
+   "evidence": "src/leaves.jl:357"
+  },
+  {
+   "id": "S9c-151",
+   "file": "design/spec.md",
+   "line": 5909,
+   "kind": "law",
+   "claim": "a pinned leaf takes the exact check at every activation (D-286)",
+   "evidence": "src/leaves.jl:353-354; probe:128-129,159"
+  },
+  {
+   "id": "S9c-152",
+   "file": "design/spec.md",
+   "line": 5910,
+   "kind": "decl",
+   "claim": "a pinned leaf is a Pinned wrap, or an Int, Bool or enum leaf",
+   "evidence": "src/leaves.jl:237-247; probe:171-177"
+  },
+  {
+   "id": "S9c-153",
+   "file": "design/spec.md",
+   "line": 5913,
+   "kind": "law",
+   "claim": "an observed Dual at a pinned leaf is the misplaced-pin error",
+   "evidence": "probe:129"
+  },
+  {
+   "id": "S9c-155",
+   "file": "design/spec.md",
+   "line": 5917,
+   "kind": "law",
+   "claim": "the embedding is exact, not lenient",
+   "evidence": "src/leaves.jl:353-354"
+  },
+  {
+   "id": "S9c-156",
+   "file": "design/spec.md",
+   "line": 5918,
+   "kind": "law",
+   "claim": "there is no lossy Dual to Float64 cast",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "S9c-157",
+   "file": "design/spec.md",
+   "line": 5921,
+   "kind": "law",
+   "claim": "the blanket convert-on-write rejection is scoped to the nominal check",
+   "evidence": "src/leaves.jl:353-354"
+  },
+  {
+   "id": "S9c-158",
+   "file": "design/spec.md",
+   "line": 5922,
+   "kind": "law",
+   "claim": "a Model admits Float64 and a concrete Dual over Float64, nested or not (D-320)",
+   "evidence": "src/model.jl:107-112; probe:91-92"
+  },
+  {
+   "id": "S9c-159",
+   "file": "design/spec.md",
+   "line": 5924,
+   "kind": "law",
+   "claim": "Float64 embeds exactly into each admitted scalar",
+   "evidence": "probe:114"
+  },
+  {
+   "id": "S9c-160",
+   "file": "design/spec.md",
+   "line": 5929,
+   "kind": "law",
+   "claim": "accidental Float64s from Dual operands are impossible, a MethodError",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "S9c-161",
+   "file": "design/spec.md",
+   "line": 5932,
+   "kind": "mech",
+   "claim": "deliberate stripping with ForwardDiff.value silently zeroes partials",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "S9c-162",
+   "file": "design/spec.md",
+   "line": 5936,
+   "kind": "law",
+   "claim": "mid-expression stripping is invisible to a strict exact-match rule",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "S9c-163",
+   "file": "design/spec.md",
+   "line": 5938,
+   "kind": "law",
+   "claim": "the pinned leaf is the schema-visible freeze (D-286)",
+   "evidence": "probe:159"
+  },
+  {
+   "id": "S9c-164",
+   "file": "design/spec.md",
+   "line": 5940,
+   "kind": "mech",
+   "claim": "an author declares the leaf Pinned{Float64} and strips inside the stage",
+   "evidence": "probe:159-160"
+  },
+  {
+   "id": "S9c-165",
+   "file": "design/spec.md",
+   "line": 5941,
+   "kind": "law",
+   "claim": "the check holds the freeze to its word at every activation",
+   "evidence": "probe:128-129"
+  },
+  {
+   "id": "S9c-166",
+   "file": "design/spec.md",
+   "line": 5942,
+   "kind": "law",
+   "claim": "stripping at an unpinned leaf stays legal and unseen",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "S9c-167",
+   "file": "design/spec.md",
+   "line": 5947,
+   "kind": "law",
+   "claim": "the check is uniform across all probed functions (D-053)",
+   "evidence": "src/build.jl:1127-1170; src/leaves.jl:352"
+  },
+  {
+   "id": "S9c-168",
+   "file": "design/spec.md",
+   "line": 5950,
+   "kind": "law",
+   "claim": "x_deriv checks against X's own shape at T (D-190)",
+   "evidence": "src/build.jl:1672-1704"
+  },
+  {
+   "id": "S9c-169",
+   "file": "design/spec.md",
+   "line": 5951,
+   "kind": "law",
+   "claim": "a scalar leaf of x_deriv expects a T",
+   "evidence": "src/build.jl:1696-1700; probe:64"
+  },
+  {
+   "id": "S9c-170",
+   "file": "design/spec.md",
+   "line": 5951,
+   "kind": "law",
+   "claim": "an SArray leaf expects the same SArray at T",
+   "evidence": "probe:242"
+  },
+  {
+   "id": "S9c-171",
+   "file": "design/spec.md",
+   "line": 5953,
+   "kind": "law",
+   "claim": "x_deriv's predicate is that every field scatters into its block at T",
+   "evidence": "src/leaves.jl:416-433"
+  },
+  {
+   "id": "S9c-172",
+   "file": "design/spec.md",
+   "line": 5954,
+   "kind": "law",
+   "claim": "derivative completeness is structural",
+   "evidence": "src/build.jl:1683-1688"
+  },
+  {
+   "id": "S9c-173",
+   "file": "design/spec.md",
+   "line": 5955,
+   "kind": "law",
+   "claim": "s_update checks against its primitive's s shape",
+   "evidence": "src/build.jl:1708-1722; probe:250"
+  },
+  {
+   "id": "S9c-174",
+   "file": "design/spec.md",
+   "line": 5956,
+   "kind": "law",
+   "claim": "the declared shape decides the law a return is held to (D-438, D-437)",
+   "evidence": "src/build.jl:1672-1678,1224-1232"
+  },
+  {
+   "id": "S9c-175",
+   "file": "design/spec.md",
+   "line": 5957,
+   "kind": "decl",
+   "claim": "a bare store is declared as one leaf, the field x, s or m",
+   "evidence": "src/declare.jl:812-814; probe:120"
+  },
+  {
+   "id": "S9c-176",
+   "file": "design/spec.md",
+   "line": 5957,
+   "kind": "law",
+   "claim": "under a bare store x_deriv, s_update, x_projection and handler x return the leaf itself",
+   "evidence": "src/build.jl:1224-1230,1672,1708,1331"
+  },
+  {
+   "id": "S9c-177",
+   "file": "design/spec.md",
+   "line": 5959,
+   "kind": "law",
+   "claim": "a stage over a bare y_types returns the port's value itself",
+   "evidence": "src/build.jl:117-123; probe:121"
+  },
+  {
+   "id": "S9c-178",
+   "file": "design/spec.md",
+   "line": 5960,
+   "kind": "law",
+   "claim": "handlers check against the §5.2 return law, key by key",
+   "evidence": "src/build.jl:1312-1362"
+  },
+  {
+   "id": "S9c-179",
+   "file": "design/spec.md",
+   "line": 5961,
+   "kind": "law",
+   "claim": "guards check against their probe-derived predicate form",
+   "evidence": "src/build.jl:1287-1290"
+  },
+  {
+   "id": "S9c-180",
+   "file": "design/spec.md",
+   "line": 5963,
+   "kind": "law",
+   "claim": "x_projection checks against X's own shape at T, complete (D-111)",
+   "evidence": "src/build.jl:1151-1166; probe:233"
+  },
+  {
+   "id": "S9c-181",
+   "file": "design/spec.md",
+   "line": 5965,
+   "kind": "mech",
+   "claim": "x_projection's result is written back wholesale at both boundary positions",
+   "evidence": "src/model.jl:652; src/executor.jl:456-462"
+  },
+  {
+   "id": "S9c-182",
+   "file": "design/spec.md",
+   "line": 5968,
+   "kind": "law",
+   "claim": "x_projection's predicate is the same as a handler's x key",
+   "evidence": "src/build.jl:1164,1331"
+  },
+  {
+   "id": "S9c-183",
+   "file": "design/spec.md",
+   "line": 5972,
+   "kind": "law",
+   "claim": "a handler's key set is checked first (D-287)",
+   "evidence": "src/build.jl:1320-1331"
+  },
+  {
+   "id": "S9c-184",
+   "file": "design/spec.md",
+   "line": 5973,
+   "kind": "law",
+   "claim": "an unknown or undeclared-store key is a build error HandlerReturnKey",
+   "evidence": "src/build.jl:1325; probe:211-223"
+  },
+  {
+   "id": "S9c-185",
+   "file": "design/spec.md",
+   "line": 5975,
+   "kind": "law",
+   "claim": "the error carries did-you-mean against {x, m} narrowed to existing stores",
+   "evidence": "src/diagnostics.jl:1229-1233; probe:223"
+  },
+  {
+   "id": "S9c-187",
+   "file": "design/spec.md",
+   "line": 5980,
+   "kind": "law",
+   "claim": "a present x must be complete against the state field set",
+   "evidence": "src/build.jl:1331; probe:211"
+  },
+  {
+   "id": "S9c-188",
+   "file": "design/spec.md",
+   "line": 5981,
+   "kind": "law",
+   "claim": "a present m may be partial",
+   "evidence": "src/build.jl:1338-1355; probe:211"
+  },
+  {
+   "id": "S9c-189",
+   "file": "design/spec.md",
+   "line": 5981,
+   "kind": "law",
+   "claim": "x must also be conformant at T like any state value",
+   "evidence": "src/build.jl:1331; probe:211"
+  },
+  {
+   "id": "S9c-190",
+   "file": "design/spec.md",
+   "line": 5983,
+   "kind": "law",
+   "claim": "m is checked against a names-subset-with-matching-types predicate",
+   "evidence": "src/build.jl:1346-1356; probe:211"
+  },
+  {
+   "id": "S9c-191",
+   "file": "design/spec.md",
+   "line": 5983,
+   "kind": "mech",
+   "claim": "the m predicate is a type-level computation that folds when inferred",
+   "evidence": "src/executor.jl:428-455"
+  },
+  {
+   "id": "S9c-192",
+   "file": "design/spec.md",
+   "line": 5984,
+   "kind": "law",
+   "claim": "an absent key is not an error",
+   "evidence": "probe:211"
+  },
+  {
+   "id": "S9c-193",
+   "file": "design/spec.md",
+   "line": 5990,
+   "kind": "law",
+   "claim": "a bare m has one field and its key replaces the value whole (D-438)",
+   "evidence": "src/build.jl:1333-1341; src/executor.jl:429-430"
+  },
+  {
+   "id": "S9c-194",
+   "file": "design/spec.md",
+   "line": 5994,
+   "kind": "law",
+   "claim": "the guard check is form-aware, not a flat isa Bool",
+   "evidence": "src/build.jl:1287-1290"
+  },
+  {
+   "id": "S9c-195",
+   "file": "design/spec.md",
+   "line": 5995,
+   "kind": "law",
+   "claim": "guards have two admissible forms (§2.3)",
+   "evidence": "src/diagnostics.jl:1189-1192"
+  },
+  {
+   "id": "S9c-196",
+   "file": "design/spec.md",
+   "line": 5996,
+   "kind": "law",
+   "claim": "a Bool-form guard's probed return is Bool",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "S9c-197",
+   "file": "design/spec.md",
+   "line": 5997,
+   "kind": "law",
+   "claim": "a sign-form guard's probed return is the nominal scalar",
+   "evidence": "src/build.jl:1288"
+  },
+  {
+   "id": "S9c-198",
+   "file": "design/spec.md",
+   "line": 5997,
+   "kind": "law",
+   "claim": "guards run only at the nominal activation (D-052)",
+   "evidence": "src/build.jl:1263"
+  },
+  {
+   "id": "S9c-199",
+   "file": "design/spec.md",
+   "line": 5998,
+   "kind": "law",
+   "claim": "so no parametrized-leaf case arises for guards",
+   "evidence": "src/build.jl:1263"
+  },
+  {
+   "id": "S9c-200",
+   "file": "design/spec.md",
+   "line": 5999,
+   "kind": "law",
+   "claim": "any other guard return is a build error naming both forms",
+   "evidence": "src/diagnostics.jl:1189-1192; probe:286"
+  },
+  {
+   "id": "S9c-201",
+   "file": "design/spec.md",
+   "line": 6001,
+   "kind": "law",
+   "claim": "the probed form is the detection policy (§10.4, D-179)",
+   "evidence": "src/build.jl:1287-1290"
+  },
+  {
+   "id": "S9c-202",
+   "file": "design/spec.md",
+   "line": 6002,
+   "kind": "law",
+   "claim": "no form/policy mismatch can be declared",
+   "evidence": "src/build.jl:1287-1290"
+  },
+  {
+   "id": "S9c-203",
+   "file": "design/spec.md",
+   "line": 6006,
+   "kind": "law",
+   "claim": "the payload carries the component path",
+   "evidence": "src/diagnostics.jl:1110"
+  },
+  {
+   "id": "S9c-204",
+   "file": "design/spec.md",
+   "line": 6006,
+   "kind": "law",
+   "claim": "the payload carries the function",
+   "evidence": "src/diagnostics.jl:1111"
+  },
+  {
+   "id": "S9c-205",
+   "file": "design/spec.md",
+   "line": 6006,
+   "kind": "law",
+   "claim": "the payload carries the event name on a handler's occurrence",
+   "evidence": "src/diagnostics.jl:1119; probe:211"
+  },
+  {
+   "id": "S9c-207",
+   "file": "design/spec.md",
+   "line": 6008,
+   "kind": "law",
+   "claim": "simulation time is the carrier's, not the diagnostic's",
+   "evidence": "src/diagnostics.jl:245-250; probe:119"
+  },
+  {
+   "id": "S9c-208",
+   "file": "design/spec.md",
+   "line": 6009,
+   "kind": "mech",
+   "claim": "at run time the failure travels as a species of StepError through the single catch site",
+   "evidence": "src/diagnostics.jl:245-254; src/model.jl:1067"
+  },
+  {
+   "id": "S9c-209",
+   "file": "design/spec.md",
+   "line": 6011,
+   "kind": "mech",
+   "claim": "the carrier holds the clock at the failure and the replay pointer",
+   "evidence": "src/diagnostics.jl:247-249"
+  },
+  {
+   "id": "S9c-210",
+   "file": "design/spec.md",
+   "line": 6012,
+   "kind": "law",
+   "claim": "a build-time occurrence has no time to carry",
+   "evidence": "src/diagnostics.jl:1109-1121"
+  },
+  {
+   "id": "S9c-211",
+   "file": "design/spec.md",
+   "line": 6015,
+   "kind": "law",
+   "claim": "the source branch is absent from the payload (D-287)",
+   "evidence": "probe:119"
+  },
+  {
+   "id": "S9c-212",
+   "file": "design/spec.md",
+   "line": 6019,
+   "kind": "law",
+   "claim": "the always-on input trace makes every such failure reproducible by replay",
+   "evidence": "src/diagnostics.jl:249; src/sim.jl:1247"
+  },
+  {
+   "id": "S9c-213",
+   "file": "design/spec.md",
+   "line": 6021,
+   "kind": "mech",
+   "claim": "the error names the boundary to replay to (to_boundary)",
+   "evidence": "src/diagnostics.jl:249"
+  },
+  {
+   "id": "S9c-214",
+   "file": "design/spec.md",
+   "line": 6022,
+   "kind": "mech",
+   "claim": "the catch site adds the nonfinite-state check as the divergence sibling (D-157)",
+   "evidence": "src/model.jl:944"
+  },
+  {
+   "id": "S9c-215",
+   "file": "design/spec.md",
+   "line": 6027,
+   "kind": "decl",
+   "claim": "trim and linearization are stopped-sim services, each a client of an activation",
+   "evidence": "src/trim.jl:621; src/linearize.jl:322"
+  },
+  {
+   "id": "S9c-216",
+   "file": "design/spec.md",
+   "line": 6033,
+   "kind": "mech",
+   "claim": "trim writes a condition, runs a sweep and reads the result, on an activation",
+   "evidence": "src/trim.jl:645-649"
+  },
+  {
+   "id": "S9c-217",
+   "file": "design/spec.md",
+   "line": 6035,
+   "kind": "law",
+   "claim": "by default trim is gradient-based and runs on the Dual activation",
+   "evidence": "src/trim.jl:620-622"
+  },
+  {
+   "id": "S9c-218",
+   "file": "design/spec.md",
+   "line": 6036,
+   "kind": "mech",
+   "claim": "decision variables are seeded through the T-generic assignment",
+   "evidence": "src/trim.jl:644-647"
+  },
+  {
+   "id": "S9c-219",
+   "file": "design/spec.md",
+   "line": 6037,
+   "kind": "mech",
+   "claim": "seeding gives exact residual Jacobians",
+   "evidence": "src/trim.jl:653-659"
+  },
+  {
+   "id": "S9c-220",
+   "file": "design/spec.md",
+   "line": 6038,
+   "kind": "law",
+   "claim": "the derivative-free fallback is designed and not yet built",
+   "evidence": "probe:291; design/pending.md:244"
+  },
+  {
+   "id": "S9c-221",
+   "file": "design/spec.md",
+   "line": 6040,
+   "kind": "mech",
+   "claim": "the fallback would run the same loop on the nominal Float64 activation",
+   "evidence": "design/pending.md:244-246"
+  },
+  {
+   "id": "S9c-222",
+   "file": "design/spec.md",
+   "line": 6041,
+   "kind": "law",
+   "claim": "the always-on checks ride along either way",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "S9c-223",
+   "file": "design/spec.md",
+   "line": 6042,
+   "kind": "law",
+   "claim": "decision variables stay opaque; only the assignment's output is framework vocabulary",
+   "evidence": "src/trim.jl:644"
+  },
+  {
+   "id": "S9c-224",
+   "file": "design/spec.md",
+   "line": 6043,
+   "kind": "mech",
+   "claim": "the service loop handles vectorization, optimizer setup, bounds packing and write-back, root inputs",
+   "evidence": "src/trim.jl:600-640,651-666"
+  },
+  {
+   "id": "S9c-225",
+   "file": "design/spec.md",
+   "line": 6045,
+   "kind": "mech",
+   "claim": "on a simulation the loop takes the trace header after the write-back",
+   "evidence": "src/sim.jl:1114-1116,856"
+  },
+  {
+   "id": "S9c-226",
+   "file": "design/spec.md",
+   "line": 6046,
+   "kind": "law",
+   "claim": "a failed trim leaves the model's stores untouched (D-070)",
+   "evidence": "src/trim.jl:10-15"
+  },
+  {
+   "id": "S9c-227",
+   "file": "design/spec.md",
+   "line": 6047,
+   "kind": "mech",
+   "claim": "linearization is a Dual activation plus seeded sweeps",
+   "evidence": "src/linearize.jl:305-323"
+  },
+  {
+   "id": "S9c-228",
+   "file": "design/spec.md",
+   "line": 6050,
+   "kind": "law",
+   "claim": "root inputs are the input surface of linearization",
+   "evidence": "src/linearize.jl:32,65"
+  },
+  {
+   "id": "S9c-229",
+   "file": "design/spec.md",
+   "line": 6051,
+   "kind": "law",
+   "claim": "frozen discrete outputs are constants with zero partials",
+   "evidence": "src/model.jl:152-165"
+  }
+ ],
+ "counts": {
+  "cite": 0,
+  "decl": 17,
+  "docstring": 0,
+  "ex": 7,
+  "law": 139,
+  "map": 0,
+  "mech": 66,
+  "ptr": 11,
+  "surface": 0,
+  "why": 28
+ },
+ "notes": "Slice S9c, spec.md 5659-6053. I changed no tracked file and ran no git command. My files are the probe script at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S9c/probe.jl and the Julia output I ran from it. The probe ran about four times against W.\n\nI counted 267 claims (counts) and listed 229 of them. The other 38 are ptr and why claims I counted without listing. I gave the 229 listed claims sequential IDs in document order, S9c-001 to S9c-229.\n\nI raised 10 findings (S9c-032, 033, 051, 055, 062, 067, 132, 154, 186, 206):\n- 032: x_projection is also probed at a Dual activation. Class drift.\n- 033: the global-tracer activation is not built. Class deviation.\n- 055: no synchronization after pre-materialization is false, because activation() locks on every lookup. Class deviation.\n- 067: the cache entry holds decls, products and layout. It holds no compiled plans and no validated flag. Class deviation.\n- 132 and 154: the quoted didactic message and the pin hint differ in wording from what the code renders. Class drift.\n- 186: HandlerReturnKey shares no machinery with the bundle FieldError classification. Class drift.\n- 206: the payload carries observed and declared field lists, not a missing/unexpected diff. Class drift.\n\nI rate 051, 062 and 186 low confidence.\n\nI had no unverifiable claims. I listed the lead for M_shaft (spec lines 5853 and 5884) as two ok placeholder rows, S9c-116 and S9c-131. The name is the Motor fixture's, test/fixtures.jl:163.\n\nTwo cases the procedure did not cover, left for the verifier:\n- The glossary calls ProbeDual public, but the package has no export or public statements. I marked it ok because docs/src/api.md lists it.\n- The claim \"nothing numerical is ever cached\" is arguable, because Activation.products holds probe values that seed the cells until first written. I marked it ok.\n\nI checked the complete Julia code blocks in the range: the build(world; activations = (Float64, ProbeDual)) call, the ProbeDual definition and the two permuted return forms. All run as written.\n\nThe probe ran each of the following in a Julia process:\n- A Dual activation of a continuous plus discrete model, counting which user functions it calls.\n- The generated write, called directly with permuted, missing, extra and Int fields at Float64 and at ProbeDual.\n- The handler and guard refusals.\n- Walking, pinned and stripping leaves.\n- A struct-valued port with a missing constructor."
+}

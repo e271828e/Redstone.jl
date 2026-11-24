@@ -1,0 +1,2 @@
+names no_binding: `Redstone.Examples` at design/companions/examples_inventory.md:28
+names test-only: `θ_ref` at design/companions/examples_inventory.md:188

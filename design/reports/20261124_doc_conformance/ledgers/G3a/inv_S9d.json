@@ -1,0 +1,702 @@
+{
+ "rows": [
+  {
+   "id": "S9d-017",
+   "file": "design/spec.md",
+   "line": 6138,
+   "kind": "law",
+   "claim": "`rhs` takes no index",
+   "evidence": "src/executor.jl:555 defines `(body::PhaseBody)(tick)` for every PhaseBody, rhs included; probe:19 shows `b.rhs` is a PhaseBody and `b.rhs(3)` runs; test/test_executor.jl:15 calls every body in both arities.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`rhs` has no gated entry, so it is called with no index; given one it ignores it and walks the same entries. One gate serves the other three tick-sensitive blocks.",
+   "note": "Low severity. D-147 says rhs is unchanged by the split. The code accepts and ignores an index (the roster is total in both arities, test_executor.jl:15), so the doc states intended usage, not a refusal."
+  },
+  {
+   "id": "S9d-058",
+   "file": "design/spec.md",
+   "line": 6290,
+   "kind": "mech",
+   "claim": "The precompile workload adds 0.08 s to loading the package image",
+   "evidence": "No source in W records the load-time figure; increments/079_precompile brief:36-41 records 13.6 s precompile and 37 MB vs 6.4 MB image (not 0.08 s).",
+   "verdict": "unverifiable",
+   "note": "Measured figure, needs a rebuild of the package image and a timed load. The 12 s and 30 MB figures trace to brief_increment_79_precompile.md:141; the 0.08 s load time I could not trace."
+  },
+  {
+   "id": "S9d-043",
+   "file": "design/spec.md",
+   "line": 6232,
+   "kind": "mech",
+   "claim": "At 128 components, init! and first run! cost 0.5 s per new topology with the generated unroll and references in place",
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:20 gives 17 s inline and :286-295 gives 12 s saved per topology; no line gives 0.5 s.",
+   "verdict": "unverifiable",
+   "note": "The 0.5 s end figure was not found in the report's tables. The 16.9 s figure is consistent with report.md:20 (about 17 s). Not rerun."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S9d-001",
+   "file": "design/spec.md",
+   "line": 6058,
+   "kind": "mech",
+   "claim": "Outputs holds paths, stage names and execution order as plain data",
+   "evidence": "src/build.jl:1397-1400 (code_map ComponentOutputs rows with path, stage lists, order as ci's)"
+  },
+  {
+   "id": "S9d-002",
+   "file": "design/spec.md",
+   "line": 6062,
+   "kind": "mech",
+   "claim": "The executor compiles from the Outputs order",
+   "evidence": "src/build.jl:1517 `for ci in outputs.order` builds the stage-2 entries"
+  },
+  {
+   "id": "S9d-003",
+   "file": "design/spec.md",
+   "line": 6066,
+   "kind": "mech",
+   "claim": "The execution form is compiled at Model construction and per activation scalar",
+   "evidence": "src/model.jl:122 compile(...) with act = activation(build, T) at model.jl:121"
+  },
+  {
+   "id": "S9d-004",
+   "file": "design/spec.md",
+   "line": 6068,
+   "kind": "mech",
+   "claim": "Execution form is a concretely typed tuple of entries over statically typed cell storage, walked by an unrolled walk",
+   "evidence": "src/executor.jl:571-580 (_walk generated, _unrolled) and probe:57 (Chunk entries tuples)"
+  },
+  {
+   "id": "S9d-005",
+   "file": "design/spec.md",
+   "line": 6076,
+   "kind": "mech",
+   "claim": "An entry carries component type and stage in type parameters",
+   "evidence": "src/executor.jl:62 StageEntry{F,Comp,...}; F is the stage function, Comp the component"
+  },
+  {
+   "id": "S9d-006",
+   "file": "design/spec.md",
+   "line": 6078,
+   "kind": "mech",
+   "claim": "Divisor and phase (base ticks), Δt and layout offsets ride in fields",
+   "evidence": "src/executor.jl:558-562 Gated{E}(D,Φ); StageEntry fields Δt, x_off (probe:62)"
+  },
+  {
+   "id": "S9d-007",
+   "file": "design/spec.md",
+   "line": 6081,
+   "kind": "law",
+   "claim": "Gating compiles to (n − Φ₀) % D₀ == 0 on the boundary tick index, in the boundary body",
+   "evidence": "src/executor.jl:548-553 run_at!(::Gated,...,tick::Int)"
+  },
+  {
+   "id": "S9d-008",
+   "file": "design/spec.md",
+   "line": 6083,
+   "kind": "law",
+   "claim": "Interior bodies hold no discrete entries",
+   "evidence": "src/executor.jl:591-596 interior list takes gt === nothing only; probe:40 false"
+  },
+  {
+   "id": "S9d-009",
+   "file": "design/spec.md",
+   "line": 6088,
+   "kind": "mech",
+   "claim": "The signal table is one contiguous block per element type",
+   "evidence": "src/store.jl:37-43 StoreBundle of CellStore per eltype; probe:68-69"
+  },
+  {
+   "id": "S9d-010",
+   "file": "design/spec.md",
+   "line": 6090,
+   "kind": "mech",
+   "claim": "A cell address is a build-time offset carried in an entry field with the port type as its parameter",
+   "evidence": "src/store.jl:21-23 CellAddr{P,K}(offsets); probe:70-71"
+  },
+  {
+   "id": "S9d-011",
+   "file": "design/spec.md",
+   "line": 6093,
+   "kind": "mech",
+   "claim": "Gathers reconstruct and scatters flatten through the same leaf walk",
+   "evidence": "src/store.jl:67-90 gather_cell/scatter_cell! over leaf_eltypes(P) with _mreconstruct_expr/_mflatten_expr"
+  },
+  {
+   "id": "S9d-012",
+   "file": "design/spec.md",
+   "line": 6095,
+   "kind": "law",
+   "claim": "Two instances of one component type share an entry type and one body",
+   "evidence": "probe:57: 120 entries of 40 loops have 3 distinct entry types"
+  },
+  {
+   "id": "S9d-013",
+   "file": "design/spec.md",
+   "line": 6102,
+   "kind": "law",
+   "claim": "An opaque leaf such as a field handle is stored whole in its eltype's block, references included",
+   "evidence": "src/leaves.jl:18-19 _opaque, :48 leaf_types; probe:86 store keyed by HeightField, probe:90"
+  },
+  {
+   "id": "S9d-014",
+   "file": "design/spec.md",
+   "line": 6103,
+   "kind": "mech",
+   "claim": "Julia stores an immutable struct with reference fields inline in an array",
+   "evidence": "probe:84 Base.allocatedinline(HeightField) == true"
+  },
+  {
+   "id": "S9d-015",
+   "file": "design/spec.md",
+   "line": 6105,
+   "kind": "law",
+   "claim": "A handle is rebuilt per evaluation without allocation and is never a Ref",
+   "evidence": "probe:88 all four bodies 0 bytes on handle_model; probe:89 a Ref is not an opaque leaf (src/leaves.jl:18-19 excludes mutable types)"
+  },
+  {
+   "id": "S9d-016",
+   "file": "design/spec.md",
+   "line": 6114,
+   "kind": "law",
+   "claim": "Stage-1 block holds both tiers' y_state entries, order-free, reading no u",
+   "evidence": "src/build.jl:1497-1507 enumerate(components) in walk order, discrete gated via gate(ci); inputs = NamedTuple()"
+  },
+  {
+   "id": "S9d-018",
+   "file": "design/spec.md",
+   "line": 6117,
+   "kind": "law",
+   "claim": "Stage-2 block gates in due discrete stages by compiled (D₀,Φ₀) and is the only topologically ordered block",
+   "evidence": "src/build.jl:1510-1519 iterates outputs.order and pushes gate(ci); probe:37 gated discrete entries"
+  },
+  {
+   "id": "S9d-019",
+   "file": "design/spec.md",
+   "line": 6120,
+   "kind": "mech",
+   "claim": "x_deriv block is `rhs`, the body each stage evaluation runs",
+   "evidence": "src/model.jl:615-621 evaluate! runs sweep_1, sweep_2, rhs; src/build.jl:1537 RHSEntry in rhs block"
+  },
+  {
+   "id": "S9d-020",
+   "file": "design/spec.md",
+   "line": 6121,
+   "kind": "mech",
+   "claim": "s_update block is `ticks`; both update blocks have disjoint writes",
+   "evidence": "src/build.jl:1541-1545 UpdateEntry into tick_entries; src/executor.jl:151-155 writes own store only"
+  },
+  {
+   "id": "S9d-021",
+   "file": "design/spec.md",
+   "line": 6123,
+   "kind": "mech",
+   "claim": "Guards and handlers are their own small callables inside the §10.6 iteration",
+   "evidence": "src/executor.jl:313-345 _guards!/_fire! chunk walks; src/model.jl:732-759 event_phase!"
+  },
+  {
+   "id": "S9d-022",
+   "file": "design/spec.md",
+   "line": 6126,
+   "kind": "mech",
+   "claim": "Each sweep block compiles in two arities off one entry list",
+   "evidence": "src/executor.jl:591-596 chunked_body builds interior and boundary tuples from one entries/gates list"
+  },
+  {
+   "id": "S9d-023",
+   "file": "design/spec.md",
+   "line": 6130,
+   "kind": "law",
+   "claim": "Zero-arg sweep_1()/sweep_2() are the interior variants over non-discrete entries only",
+   "evidence": "src/executor.jl:540 `body()` walks body.interior; probe:40,41"
+  },
+  {
+   "id": "S9d-024",
+   "file": "design/spec.md",
+   "line": 6131,
+   "kind": "law",
+   "claim": "@ballocated(sweep_2()) == 0 is a measurement of the interior path",
+   "evidence": "probe:21 (0,0,0,0) and test/test_executor.jl:17-18"
+  },
+  {
+   "id": "S9d-025",
+   "file": "design/spec.md",
+   "line": 6134,
+   "kind": "law",
+   "claim": "sweep_1(tick)/sweep_2(tick) are boundary variants gating discrete entries by (n−Φ₀)%D₀ with n passed as tick, as ticks(tick)",
+   "evidence": "src/executor.jl:541,548-553; probe:100 ticks(1) skipped, ticks(2) ran at D=2"
+  },
+  {
+   "id": "S9d-026",
+   "file": "design/spec.md",
+   "line": 6138,
+   "kind": "law",
+   "claim": "One gate serves sweep_1, sweep_2 and ticks, because dueness is per component, per boundary",
+   "evidence": "src/build.jl:1492 gate(ci) per component used in stage1, stage2 and tick lists; src/executor.jl:533 Gated"
+  },
+  {
+   "id": "S9d-027",
+   "file": "design/spec.md",
+   "line": 6140,
+   "kind": "law",
+   "claim": "At a localized t* the empty due set is arity selection and the t* iteration runs the zero-arg arities",
+   "evidence": "src/frame.jl:304 run_boundary!(model, nothing); src/model.jl:703-707 _round!(exec, ::Nothing) calls sweep_1()/sweep_2()"
+  },
+  {
+   "id": "S9d-028",
+   "file": "design/spec.md",
+   "line": 6145,
+   "kind": "law",
+   "claim": "Bodies communicate only through the stores and table; no value crosses a seam",
+   "evidence": "src/executor.jl:150-160 run_entry! returns nothing and writes cells, ẋbuf or its store"
+  },
+  {
+   "id": "S9d-029",
+   "file": "design/spec.md",
+   "line": 6148,
+   "kind": "mech",
+   "claim": "A chunk barrier takes its chunk by reference, copying nothing",
+   "evidence": "src/executor.jl:520-526 mutable struct Chunk; test/test_executor.jl:111-121 sizeof check"
+  },
+  {
+   "id": "S9d-030",
+   "file": "design/spec.md",
+   "line": 6159,
+   "kind": "law",
+   "claim": "Discrete entries exist only in the boundary variants, so editing a discrete component leaves the RHS body untouched",
+   "evidence": "src/build.jl:1537-1545 discrete updates go to ticks, rhs holds continuous entries only; src/executor.jl:591-596"
+  },
+  {
+   "id": "S9d-031",
+   "file": "design/spec.md",
+   "line": 6166,
+   "kind": "mech",
+   "claim": "Every entry constructs its bundle at its own position, no hoisting or cache",
+   "evidence": "src/executor.jl:150-155 run_entry! calls make_bundle inline per entry; _bundle_expr gathers per call"
+  },
+  {
+   "id": "S9d-032",
+   "file": "design/spec.md",
+   "line": 6178,
+   "kind": "mech",
+   "claim": "A component's aggregate y is reconstructed per call from cells, never stored as an object",
+   "evidence": "src/store.jl:67-79 gather_cell reconstructs per call; src/executor.jl:134 y => gather_input(entry.y)"
+  },
+  {
+   "id": "S9d-033",
+   "file": "design/spec.md",
+   "line": 6183,
+   "kind": "mech",
+   "claim": "Entry tuples are built from untyped buffers and splatted once; the compiled tuple has one consumer, the walk",
+   "evidence": "src/executor.jl:591-596 Any[...] buffers, tuple(...)...; _walk at :571"
+  },
+  {
+   "id": "S9d-034",
+   "file": "design/spec.md",
+   "line": 6193,
+   "kind": "mech",
+   "claim": "Within a large block the tuple splits into chunks behind non-inlined statically typed barriers",
+   "evidence": "src/executor.jl:538-541 @noinline (chunk::Chunk)(); chunked_body :583-597"
+  },
+  {
+   "id": "S9d-035",
+   "file": "design/spec.md",
+   "line": 6198,
+   "kind": "mech",
+   "claim": "The executor keeps projections, guards and handlers in its event set",
+   "evidence": "src/executor.jl:232-245 EventSet entries and projects; src/build.jl:1628-1632"
+  },
+  {
+   "id": "S9d-036",
+   "file": "design/spec.md",
+   "line": 6199,
+   "kind": "law",
+   "claim": "The event set's projection, guard and handler walks chunk the same way",
+   "evidence": "src/executor.jl:276-345 EventChunk, _project_chunk!, _guard_chunk!, _fire_chunk! @noinline; test_executor.jl:73-86"
+  },
+  {
+   "id": "S9d-037",
+   "file": "design/spec.md",
+   "line": 6203,
+   "kind": "law",
+   "claim": "A chunk's type is its entries' types in order, so chunks of one type share one function",
+   "evidence": "src/executor.jl:520-524 Chunk{E<:Tuple,...}; probe:57 8 chunks over 3 entry types"
+  },
+  {
+   "id": "S9d-038",
+   "file": "design/spec.md",
+   "line": 6204,
+   "kind": "mech",
+   "claim": "128 components of 2 types: walks 23.2 s unchunked, 2.8 s at chunk 16",
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:234"
+  },
+  {
+   "id": "S9d-039",
+   "file": "design/spec.md",
+   "line": 6208,
+   "kind": "mech",
+   "claim": "64 components of 64 types: walks 6.4 s unchunked, 3.7 s at chunk 16, 2.7 s at 4",
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:235-237"
+  },
+  {
+   "id": "S9d-040",
+   "file": "design/spec.md",
+   "line": 6212,
+   "kind": "mech",
+   "claim": "Chunking costs a recompile of shifted chunks: 2.4 s at chunk 16, 1.3 s at 4",
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:245-247"
+  },
+  {
+   "id": "S9d-041",
+   "file": "design/spec.md",
+   "line": 6219,
+   "kind": "law",
+   "claim": "Chunk size default is 16; chunk size 4 runs 3 to 9 % slower than 16",
+   "evidence": "src/model.jl:111 chunk_size = 16; report.md:247 (3 to 9 %)"
+  },
+  {
+   "id": "S9d-042",
+   "file": "design/spec.md",
+   "line": 6221,
+   "kind": "law",
+   "claim": "Every walk over an entry or chunk tuple is a generated unroll, one statement per element",
+   "evidence": "src/executor.jl:263-270 _unrolled; walks :280-345, :571-580; no Base.tail in src (rg)"
+  },
+  {
+   "id": "S9d-044",
+   "file": "design/spec.md",
+   "line": 6224,
+   "kind": "mech",
+   "claim": "A tail recursion allocates past 32 elements; 64 projecting components allocated 595 KB per boundary and ran 5 times slower",
+   "evidence": "src/executor.jl:263-266 comment; report.md:700"
+  },
+  {
+   "id": "S9d-045",
+   "file": "design/spec.md",
+   "line": 6227,
+   "kind": "law",
+   "claim": "The executor holds one pointer per chunk and holds the event set by reference",
+   "evidence": "src/build.jl:1417 events::EV, mutable EventSet (executor.jl:232); probe:59 ismutable; test_executor.jl:111-125"
+  },
+  {
+   "id": "S9d-046",
+   "file": "design/spec.md",
+   "line": 6229,
+   "kind": "mech",
+   "claim": "Inline chunks cost 16.9 s per new topology and a fifth to a third of loop runtime",
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:17-20"
+  },
+  {
+   "id": "S9d-047",
+   "file": "design/spec.md",
+   "line": 6235,
+   "kind": "law",
+   "claim": "The declaration layer takes components and the root unspecialized",
+   "evidence": "src/build.jl:767 Base.@nospecializeinfer build(@nospecialize(root...)); src/structure.jl and assembly.jl @nospecialize"
+  },
+  {
+   "id": "S9d-048",
+   "file": "design/spec.md",
+   "line": 6241,
+   "kind": "mech",
+   "claim": "A closure per component reads the instance from an unspecialized binding",
+   "evidence": "design/code_map.md:121-123 (build frames read the instance inside); report.md:~318 nospec patch"
+  },
+  {
+   "id": "S9d-049",
+   "file": "design/spec.md",
+   "line": 6243,
+   "kind": "mech",
+   "claim": "build of 64 components of 64 new types takes 0.86 s vs 40.5 s specialized; new 128-component root 0.08 s vs 12.1 s",
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:352"
+  },
+  {
+   "id": "S9d-050",
+   "file": "design/spec.md",
+   "line": 6268,
+   "kind": "mech",
+   "claim": "Bare-image rows pay about 6 s more at -O2 and 2.5 s more at -O0 than workload rows",
+   "evidence": "spec table rows 6258-6266: 8.7-2.7, 9.8-3.9, 14.0-7.9 all near 6.0; 3.6-1.1, 4.4-1.8, 6.5-3.9 near 2.5"
+  },
+  {
+   "id": "S9d-051",
+   "file": "design/spec.md",
+   "line": 6256,
+   "kind": "mech",
+   "claim": "Table figures: cold, bare-image and new-topology times per model",
+   "evidence": "increments/079_precompile/brief_increment_79_precompile.md:118-125 and report.md:28-36 (new-topology rows match)"
+  },
+  {
+   "id": "S9d-052",
+   "file": "design/spec.md",
+   "line": 6274,
+   "kind": "mech",
+   "claim": "A new component type adds about 0.01 s to build",
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:355 (0.42 s to 0.013 s)"
+  },
+  {
+   "id": "S9d-053",
+   "file": "design/spec.md",
+   "line": 6276,
+   "kind": "mech",
+   "claim": "A Dual activation compiled in about nominal time when last measured",
+   "evidence": "design/reports/20260930_compile_cost/report.md:214-226"
+  },
+  {
+   "id": "S9d-054",
+   "file": "design/spec.md",
+   "line": 6283,
+   "kind": "law",
+   "claim": "Activations are lazy; a session that never linearizes never compiles Dual",
+   "evidence": "src/build.jl:969-975 activation builds a non-nominal scalar on first request and caches it"
+  },
+  {
+   "id": "S9d-055",
+   "file": "design/spec.md",
+   "line": 6285,
+   "kind": "mech",
+   "claim": "The precompile workload runs build, Simulation, init!, step!, run!, readers, series, checkpoint, restore!, trim!, linearize",
+   "evidence": "src/precompile.jl:41-66"
+  },
+  {
+   "id": "S9d-056",
+   "file": "design/spec.md",
+   "line": 6288,
+   "kind": "mech",
+   "claim": "The workload adds about 12 s precompile and 30 MB image",
+   "evidence": "increments/079_precompile/brief_increment_79_precompile.md:141"
+  },
+  {
+   "id": "S9d-057",
+   "file": "design/spec.md",
+   "line": 6291,
+   "kind": "mech",
+   "claim": "On the workload loop a cold process pays under 0.1 s; first trim! about 0.3 s, linearize 0.1 s more",
+   "evidence": "brief_increment_79_precompile.md:38-44 (0.06 s, 0.26 s, 0.13 s)"
+  },
+  {
+   "id": "S9d-059",
+   "file": "design/spec.md",
+   "line": 6294,
+   "kind": "mech",
+   "claim": "-O0 about halves what remains, loop 2.3 to 2.8 times slower",
+   "evidence": "design/reports/20261001_compile_cost_reeval/report.md:510-512"
+  },
+  {
+   "id": "S9d-060",
+   "file": "design/spec.md",
+   "line": 6296,
+   "kind": "law",
+   "claim": "The allocation invariant holds at -O0; trajectories differ from -O2 by round-off",
+   "evidence": "report.md:759-768 (all allocation checks read zero); round-off difference not rechecked"
+  },
+  {
+   "id": "S9d-061",
+   "file": "design/spec.md",
+   "line": 6304,
+   "kind": "decl",
+   "claim": "phase_bodies returns the nominal activation's compiled bodies bound over the simulation's own buffers",
+   "evidence": "src/model.jl:519 model.exec.bodies; src/sim.jl:638; test_continuous.jl:30 identity"
+  },
+  {
+   "id": "S9d-062",
+   "file": "design/spec.md",
+   "line": 6308,
+   "kind": "decl",
+   "claim": "phase_bodies(sim) is the accessor's call form",
+   "evidence": "src/sim.jl:638 and src/model.jl:501-502; probe:15"
+  },
+  {
+   "id": "S9d-063",
+   "file": "design/spec.md",
+   "line": 6311,
+   "kind": "decl",
+   "claim": "It returns four blocks: rhs, sweep_1, sweep_2, ticks",
+   "evidence": "probe:15 keys = (:sweep_1,:sweep_2,:rhs,:ticks,:events,:projections)"
+  },
+  {
+   "id": "S9d-064",
+   "file": "design/spec.md",
+   "line": 6314,
+   "kind": "law",
+   "claim": "sweep_1 and sweep_2 each in both arities",
+   "evidence": "src/executor.jl:540-541; probe:22 body(1) allocates 0 for all four"
+  },
+  {
+   "id": "S9d-065",
+   "file": "design/spec.md",
+   "line": 6316,
+   "kind": "decl",
+   "claim": "ticks takes the tick index its entries gate on",
+   "evidence": "src/model.jl:661 bodies.ticks(tick); probe:100"
+  },
+  {
+   "id": "S9d-066",
+   "file": "design/spec.md",
+   "line": 6318,
+   "kind": "decl",
+   "claim": "Per-event guards and handlers keyed by (path,name) and per-component x_projection callables keyed by path ride with the blocks",
+   "evidence": "src/build.jl:1619-1629; probe:80 events [(\"saw\",:wrap)], projections [\"rot\"]"
+  },
+  {
+   "id": "S9d-067",
+   "file": "design/spec.md",
+   "line": 6321,
+   "kind": "law",
+   "claim": "The four-body roster is fixed and total, whatever the model declares",
+   "evidence": "src/build.jl:1625-1629 always builds all four; probe:101 (no continuous state) and probe:21 (no discrete)"
+  },
+  {
+   "id": "S9d-068",
+   "file": "design/spec.md",
+   "line": 6324,
+   "kind": "law",
+   "claim": "Empty bodies are legal, compile to no-ops, and @ballocated passes vacuously",
+   "evidence": "probe:16-17 ticks() and ticks(3) return nothing; probe:21 zeros; test_executor.jl:14-19"
+  },
+  {
+   "id": "S9d-069",
+   "file": "design/spec.md",
+   "line": 6330,
+   "kind": "law",
+   "claim": "These are the bodies the loop runs, not re-derivations",
+   "evidence": "src/model.jl:615-619 evaluate! calls exec.bodies; probe:23 identity"
+  },
+  {
+   "id": "S9d-070",
+   "file": "design/spec.md",
+   "line": 6336,
+   "kind": "ex",
+   "claim": "Code block `phase_bodies(sim)`",
+   "evidence": "probe:15 runs it on a Simulation"
+  },
+  {
+   "id": "S9d-071",
+   "file": "design/spec.md",
+   "line": 6340,
+   "kind": "ex",
+   "claim": "Code block `@ballocated(body()) == 0`",
+   "evidence": "probe:21 and test/test_executor.jl:18"
+  },
+  {
+   "id": "S9d-072",
+   "file": "design/spec.md",
+   "line": 6343,
+   "kind": "law",
+   "claim": "CI asserts per body and per arity, interior bare and boundary at an index",
+   "evidence": "test/test_executor.jl:17-18, test_discrete.jl:962-968 (body() and body(2))"
+  },
+  {
+   "id": "S9d-073",
+   "file": "design/spec.md",
+   "line": 6347,
+   "kind": "law",
+   "claim": "Publication is not a phase body",
+   "evidence": "src/build.jl:1625-1629 roster holds sweeps, rhs, ticks only; publication lives in dataplane.jl"
+  },
+  {
+   "id": "S9d-074",
+   "file": "design/spec.md",
+   "line": 6349,
+   "kind": "law",
+   "claim": "Invoking bodies in isolation mutates buffers with no clock advance (a tick advances discrete state)",
+   "evidence": "probe:48 state n 1 to 2, clock t 0.0 to 0.0"
+  },
+  {
+   "id": "S9d-075",
+   "file": "design/spec.md",
+   "line": 6352,
+   "kind": "law",
+   "claim": "The buffers stay valid but off-trajectory; init! resets",
+   "evidence": "probe:48,50; src/model.jl init! door (no other reset path)"
+  },
+  {
+   "id": "S9d-076",
+   "file": "design/spec.md",
+   "line": 6367,
+   "kind": "law",
+   "claim": "Invariant scoped to the stepping loop; publication's one snapshot allocation per boundary sits outside it",
+   "evidence": "src/store.jl:149 capture_stores one fresh bundle per boundary; src/dataplane.jl:650-660 log! reuses publication's allocation"
+  },
+  {
+   "id": "S9d-077",
+   "file": "design/spec.md",
+   "line": 6376,
+   "kind": "law",
+   "claim": "Guards run every boundary whether they fire or not; x_projection runs at both positions in the boundary sequence",
+   "evidence": "src/model.jl:750 _guards! each round; :651-653 _projects! first; src/executor.jl:386 _fire_project!"
+  },
+  {
+   "id": "S9d-078",
+   "file": "design/spec.md",
+   "line": 6379,
+   "kind": "law",
+   "claim": "The continuous-path budget is exactly zero, CI-enforced at the seam",
+   "evidence": "test/test_executor.jl:17-18, 53-58, 150-152"
+  },
+  {
+   "id": "S9d-079",
+   "file": "design/spec.md",
+   "line": 6382,
+   "kind": "law",
+   "claim": "A tick runs when due, a handler only on firing",
+   "evidence": "src/executor.jl:548-553 (gate), :353 `if fire[...]`"
+  },
+  {
+   "id": "S9d-080",
+   "file": "design/spec.md",
+   "line": 6385,
+   "kind": "law",
+   "claim": "Tick and handler allocation is zero by the workspace-plus-snapshot idiom; a workspace arrives as the `ws` bundle field",
+   "evidence": "src/executor.jl:130 field === :ws => entry.ws; src/build.jl:1052 _workspaces; test_discrete.jl:962-968"
+  },
+  {
+   "id": "S9d-081",
+   "file": "design/spec.md",
+   "line": 6389,
+   "kind": "law",
+   "claim": "The log retains the published snapshot objects by reference, one slot per retained boundary, no copy",
+   "evidence": "src/dataplane.jl:659-666 log! stores the snapshot; :683-697 _retain! push!(snaps, snapshot)"
+  },
+  {
+   "id": "S9d-082",
+   "file": "design/spec.md",
+   "line": 6392,
+   "kind": "law",
+   "claim": "sizehint! to the retention bound",
+   "evidence": "src/dataplane.jl:642 sizehint!(snaps, log_max) when log is enabled and bounded"
+  },
+  {
+   "id": "S9d-083",
+   "file": "design/spec.md",
+   "line": 6395,
+   "kind": "law",
+   "claim": "Snapshot fields of handle-carrying models ride as references to build-time-frozen data, no per-boundary copy; snapshot need not be isbits",
+   "evidence": "src/store.jl:149 copies each buffer once (shallow for handles); probe:84,88"
+  },
+  {
+   "id": "S9d-084",
+   "file": "design/spec.md",
+   "line": 6131,
+   "kind": "ex",
+   "claim": "Lead: `ballocated` (test-only name) at 6131 and 6325",
+   "evidence": "BenchmarkTools `@ballocated`, used in test/test_executor.jl:18; a measurement tool, not a Redstone name"
+  },
+  {
+   "id": "S9d-085",
+   "file": "design/spec.md",
+   "line": 6407,
+   "kind": "ex",
+   "claim": "Lead: `GC.gc` is Julia Base's, recommended as a user tool",
+   "evidence": "Base.GC.gc(false); src/control.jl:188 uses GC.safepoint; the sentence advises, claims no Redstone API"
+  }
+ ],
+ "counts": {
+  "law": 38,
+  "mech": 40,
+  "decl": 5,
+  "ptr": 25,
+  "why": 45,
+  "ex": 4
+ }
+}

@@ -41,7 +41,7 @@ const JUDG = { type: 'object', properties: {
     required: ['id', 'conforms', 'evidence'] } },
   notes: S }, required: ['judgments'] }
 
-const COMMON = `You are one agent of a docs conformance audit of Redstone.jl, a Julia framework for hierarchical hybrid simulation. The code is the source of truth, and the audit checks the docs against it. Your work is read-only: you edit no tracked file and you commit nothing.
+const COMMON = `You are one agent of a docs conformance audit of Redstone.jl, a Julia framework for hierarchical hybrid simulation. The code is the source of truth, and the audit checks the docs against it. Your work is read-only: you edit, delete, move or overwrite no tracked file, you run no git command that changes the worktree (checkout, stash, reset, clean, rm, mv), and you commit nothing. Your own files go only in your probe folder.
 
 Where to read. Read every file in the pinned worktree W = ${W}, detached at ${tip}. Every line number you report is a line of W. Never read the main checkout for content: other sessions commit there.
 

@@ -1,0 +1,73 @@
+{
+ "judgments": [
+  {
+   "id": "K9a-001",
+   "conforms": true,
+   "evidence": "examples/Project.toml:1 names the package RedstoneExamples. examples/src/RedstoneExamples.jl:4 says \"one file per example\" and :22 includes the single example file, examples/src/longitudinal.jl. test/runtests.jl uses the same layout, one file per example."
+  },
+  {
+   "id": "K9a-011",
+   "conforms": true,
+   "evidence": "design/spec.md:6268 (§9.7) reads: \"The bare-image rows pay about 6 s more than the workload rows at `-O2` ... the same for every model: that is the generic machinery\". The doc's figure of about 6 s whatever the model matches. src/precompile.jl:18-30 is the closed loop of library components alone that the doc names."
+  },
+  {
+   "id": "K9a-017",
+   "conforms": true,
+   "evidence": "Probe probe.jl:56 found an installed package file at mode 100444, so Pkg makes it read-only. Developing examples/ alone (probe.jl:62-66): Redstone is in the manifest, but the direct deps are only [\"RedstoneExamples\"] and Base.identify_package(\"Redstone\") returns nothing, so Redstone is unreachable. Route 2, developing both packages (probe.jl:68-70): both identify. examples/ is tracked, and no .gitattributes export-ignore drops it, so a URL or registry install carries it."
+  },
+  {
+   "id": "K9a-021",
+   "conforms": true,
+   "evidence": "docs/Project.toml [deps] lists Redstone, RedstoneExamples and CairoMakie, beside Documenter, ComponentArrays and LinearAlgebra."
+  },
+  {
+   "id": "K9a-030",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:54 has y_state ... α = x.θ - x.γ. The probe with θ = 0.3 and γ = 0.1 returned α = 0.2."
+  },
+  {
+   "id": "K9a-039",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:51 is x_init(::Longitudinal) = (V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0). The probe printed the same tuple."
+  },
+  {
+   "id": "K9a-048",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:119 is level_flight(; V = 50.0, h = 1000.0) = TrimProblem(...). The probe gave the method signature level_flight(; V, h). trim! converged at the default point and committed h = 2000 for level_flight(h = 2000.0)."
+  },
+  {
+   "id": "K9a-057",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:274-279. The probe gave input_wires (\"h_ref\" => \"cascade/h_ref\", \"V_ref\" => \"cascade/V_ref\") and the children (:plant, :sensing, :cascade, :actuators, :engaged). The engaged child is a Constant the doc does not list, but the claim does not exclude it."
+  },
+  {
+   "id": "K9a-067",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:446 is function closed_loop(solution, gains; noise_σ = 0.3). The probe gave the kwargs [:noise_σ] and the children (:plant, :sensing, :pid_controller, :lqr_controller, :selection, :actuators), which is five groups beside the plant."
+  },
+  {
+   "id": "K9a-075",
+   "conforms": false,
+   "evidence": "README.md has its quick start (lines 52-116) and a Documentation section (118-137). It shows no chapter condensed, no plot and no diagram. Its only link to the tutorial is the docs site link at line 121. design/pending.md:53-59 (the bullet \"The tutorial and the README\") still owes this work: \"The README keeps its quick start, shows three of the chapters condensed with the plot and the diagram\", left to the closing increment 5, and increment 3 is next.",
+   "class": "gap",
+   "fix": "The README is to show three of the chapters condensed, with the plot and the diagram, after the quick start it already has, and to link to the tutorial for the rest; the roadmap's closing increment does it.",
+   "clear": true
+  },
+  {
+   "id": "K9a-078",
+   "conforms": true,
+   "evidence": "examples/test/test_longitudinal.jl:142-155 pins the short period and the phugoid by frequency and damping, and pins count(|λ| < 1e-9) == 1. The probe returned eigvals -3.075 ± 4.479im (|λ| = 5.4326), -0.0154 ± 0.2300im and 0.0."
+  },
+  {
+   "id": "K9a-087",
+   "conforms": true,
+   "evidence": "examples/test/test_longitudinal.jl:394-412 checks that the refusal is a DiagnosticError holding 2 AlgebraicCycles, each :real, one per switch. The probe gave the cycles (:real, [cascade/q_ctl, selection/select_δe]) and (:real, [cascade/V_ctl, selection/select_δt])."
+  },
+  {
+   "id": "K9a-096",
+   "conforms": true,
+   "evidence": "examples/test/test_longitudinal.jl:482 takes descent_top = checkpoint(flight). Lines 515-528 restore it, fly at 2 m/s to a pinned touchdown at 559.969 s, then restore again, fly at 1.5 m/s and check termination(second).t == termination(flight).t, which is the first touchdown to the bit."
+  }
+ ],
+ "notes": "I verified all 13 claims against W at d7d3ddff. Twelve agree with the code. K9a-075 does not: the doc says the README already shows three chapters condensed, but the README has only its quick start, and design/pending.md still lists that work for the tutorial arc's closing increment. I class it as a gap. I changed no tracked file. My only file is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K9a_v/probe.jl, run from W with --project=examples/test, since the test project lacks RedstoneExamples, and with @stdlib pushed onto LOAD_PATH for the Pkg part. The K9a-017 Pkg probe ran offline in temporary environments with auto-precompile off. It did not test an install by URL or from the registry itself: that examples/ ships in an installed copy is inferred from the folder being tracked by git and not excluded by a .gitattributes rule."
+}

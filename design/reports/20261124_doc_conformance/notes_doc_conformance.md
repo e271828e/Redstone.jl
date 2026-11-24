@@ -45,7 +45,17 @@ the tools.
   `design/reports/20261001_chapter9_rewrite/chapter_old.md`. It was
   restored before the fixer's commit. Check `git -C W status` after each
   run, before the fixer starts.
-- **Next.** G3, §9, as G3a and G3b at one pin.
+- **G3, §9.** It ran at `d7d3ddff` as G3a (`wf_8a739be8-68d`, 10 agents,
+  1.77M tokens, 21 min) and G3b (`wf_36938c52-f6d`, 10 agents, 1.81M
+  tokens, 22 min). The verifiers overturned 16 of 83 flags and found 4
+  misses in 170 sampled rows, 3 of them in S9d's 9, whose inventory is
+  thin. 17 clear rows landed as `2255b3c6`.
+- **Seen by G3's fixer, not yet fixed.** The glossary's `g-probe-value`
+  list omits `StaticArray`. The §9.4 bullet on what sees a `Dual` sits
+  under D-052's bold and does not cite D-111, which brings `x_projection`
+  in. The snapshot `port` docstring (src/dataplane.jl, near 550) never
+  names the no-name `ArgumentError`.
+- **Next.** G4, §10, as G4a and G4b at one pin.
 
 ## Rulings since the trial
 

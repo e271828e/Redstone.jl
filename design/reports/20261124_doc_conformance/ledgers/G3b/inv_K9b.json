@@ -1,0 +1,590 @@
+{
+ "rows": [
+  {
+   "id": "K9b-004",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 28,
+   "kind": "decl",
+   "claim": "At B's tick times `y_state`/`y_direct` read whatever their inputs are at that instant",
+   "evidence": "src/declare.jl:865-867 gives the bundle field `u` to `y_direct` and the update stage only; src/declare.jl:630 (y_state docstring) says its bundle carries no inputs; src/build.jl:1043-1047 probes y_state with empty `u`",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "y_state carries no inputs on either tier; only y_direct reads `u`. Spec §5.2 table, spec.md:1315 and 1319, says the same, so the companion misstates it.",
+   "fix": "Replace with: `y_direct` reads whatever its inputs *are at that instant*, `y_state` reads the state alone, and both compute B's outputs, write them to B's cells, ..."
+  },
+  {
+   "id": "K9b-014",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 77,
+   "kind": "law",
+   "claim": "A feedback loop closed through B is schedulable precisely because B's output is held state rather than feedthrough (§5.3)",
+   "evidence": "probe:78 (A with feedthrough y_direct <-> discrete B with y_direct: `AlgebraicCycle`, members a=:global, b=:structural); probe:374 (same loop with B's output in `y_state`: builds); src/build.jl:187-192 (edges follow every consumed stage-2 port, tier-blind)",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "The freeze does not make a loop through B schedulable. A discrete component's `y_direct` port is a stage-2 feedthrough edge like any other, so a loop closed through the `y_direct` B of this very chain is rejected at build. Only a loop closed through a stage-1 (`y_state`) port is legal, on either tier. Spec §5.3 (spec.md:1290 ff.) ties legality to the stage split, not to the tier.",
+   "fix": "There is a structural echo of the same fact. A feedback loop is schedulable precisely because the port it closes through is stage 1, held state with no input dependence ([§5.3]), and not a `y_direct` feedthrough; a discrete B's `y_direct` is feedthrough too, so a loop closed through it is the algebraic loop [§5.5] rejects. The freeze and the schedule are two statements of the same fact: partials flow only along instantaneous dependence."
+  },
+  {
+   "id": "K9b-027",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 55,
+   "kind": "law",
+   "claim": "Pinning the moving deck's output would silently zero the coupling between ship motion and touchdown",
+   "evidence": "probe:385 (SeaMotion output declared `Pinned{DeckField{Float64}}`, stage builds at `x.heave`: `ConformanceFailure` at the Dual probe, hint 'remove its Pinned'); probe:395 (zero coupling only after the author strips with ForwardDiff.value: C = [0.0 -0.1])",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "Pinning alone is refused loudly at the first Dual probe (src/leaves.jl:362-366 hint; log D-264 'the misplaced-pin class'). The coupling goes silently to zero only if the author also strips the pose with `ForwardDiff.value`, as spec §9.5 'Deliberate stripping' (spec.md:5925-5945) describes.",
+   "fix": "Pinning here would be refused at the first `Dual` probe, since the pose carries partials; an author who stripped the pose to satisfy the pin would silently zero the coupling between ship motion and touchdown."
+  },
+  {
+   "id": "K9b-041",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 124,
+   "kind": "why",
+   "claim": "D-263's rule that a mutable type's parameters pin keeps the Matrix{Dual} grid copy off the table",
+   "evidence": "probe:363 (`DeckT{Float64}` with `grid::Matrix{T}` retypes to `DeckT{Dual}` with a `Matrix{Dual}` field); probe:364 (`retype` pins `Matrix{Float64}` only where a mutable type is itself the entry); src/leaves.jl:232-236 (retype leaves a mutable type's parameters alone, and never enters fields)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "For the sketch's immutable `DeckField{T}` the mutable-parameter rule does not apply: the walk substitutes the struct's parameter and the field `Matrix{T}` follows. What keeps the copy off the table is the author typing `grid::Matrix{Float64}` concretely. Spec.md:3243-3245 words it the same way, so spec and companion both want the fix.",
+   "fix": "The concrete `grid::Matrix{Float64}` keeps that copy off the table, because the walk substitutes type parameters and never fields ([D-263]'s mutable-parameter rule pins a mutable type on the walk itself), and the one-scalar-plus-reference shape gets the same derivatives for free."
+  },
+  {
+   "id": "K9b-052",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 175,
+   "kind": "law",
+   "claim": "The `Freeze` component is the page for a handle too: a walking handle producer wired through `freeze/u` to `freeze/y` feeds a `Pinned{DeckField{Float64}}` entry",
+   "evidence": "probe:205 (`Freeze{DeckField{Float64}}` is a `TypeError`: V must be `Union{Float64, SArray{<:Tuple,Float64}}`); src/library.jl:403 (type bound); test/test_library.jl:1556 (`@test_throws TypeError Freeze{HeightField}`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-312 (log.md:14072) narrowed `Freeze{V}` to a `Float64` or an `SArray` of `Float64`. Spec §13.7 (spec.md:12296-12301) says a struct-valued freeze is refused at the spelling and the author writes the strip in a leaf of their own, so the companion disagrees with code and spec. The companion predates D-312 (2026-09-25 vs the later entry). The scalar wiring of the example (faces `u` and `y`, bare contracts) is right.",
+   "fix": "Narrow the paragraph to a scalar or `SArray`, with the example `freeze/u`, `freeze/y` over a `Float64` port feeding `Pinned{Float64}`. For a handle, say the author writes the strip in a leaf of their own, tolerant in and pinned out as `Freeze` is ([§13.7]), and drop `Freeze` from the handle's `local_wires`."
+  },
+  {
+   "id": "K9b-067",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 257,
+   "kind": "law",
+   "claim": "A stage that hands a `Dual` for `b` dies in `convert(Float64, ::Dual)`, which has no method",
+   "evidence": "probe:317 (`MixedRight(px, px)`: `MethodError` on the constructor itself, since the default outer constructor is `MixedRight(::T, ::Float64)`); probe:319 (`MixedRight{P}(px, px)`: `MethodError(Float64, Dual)` through convert); probe:333 (build reports `UserCodeFraming` with 'no method matching MixedRight(::Dual, ::Dual)')",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "It is a `MethodError` either way, but the natural spelling `MixedRight(x.q, x.q)` dies at the outer constructor, not in `convert`. Only the explicit `MixedRight{T}(a, b)` form reaches `convert`. Log D-265 (log.md:11525-11527) has the same wording.",
+   "fix": "The struct's own constructor enforces the freeze on the producer side: a stage that hands a `Dual` for `b` dies in a `MethodError`, at the constructor `MixedRight(::Dual, ::Dual)`, or in `convert(Float64, ::Dual)` under the explicit `MixedRight{T}(a, b)`, and `Float64` has no method for a `Dual`."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K9b-001",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 14,
+   "kind": "law",
+   "claim": "Under a Dual activation B's stages never run",
+   "evidence": "src/build.jl:1062-1066 (`_frozen`); src/build.jl:1089-1092; test/test_discrete.jl:80-83; probe:61"
+  },
+  {
+   "id": "K9b-002",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 15,
+   "kind": "law",
+   "claim": "B's cells are frozen Float64 constants with zero partials under a Dual activation",
+   "evidence": "probe:61 (B cell is Float64, A cell Dual); src/model.jl:145-160 (`_establish_frozen!`, value copy)"
+  },
+  {
+   "id": "K9b-003",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 27,
+   "kind": "mech",
+   "claim": "B's stages run at B's tick times t_k, by gated scheduling",
+   "evidence": "src/executor.jl:486 (`Gated`, the (n - phase) % divisor gate); probe:53"
+  },
+  {
+   "id": "K9b-005",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 29,
+   "kind": "mech",
+   "claim": "At a tick the output stages compute B's outputs and write them to B's cells",
+   "evidence": "probe:50 (b cell == 3 * a at the tick); test/test_discrete.jl:36-47"
+  },
+  {
+   "id": "K9b-006",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 30,
+   "kind": "mech",
+   "claim": "s_update updates B's s at the tick, after the output stages",
+   "evidence": "test/test_discrete.jl:42-47 (cell holds s[n], store holds s[n+1]); src/declare.jl:740 docstring; probe:1 type dump shows `ticks` body holds the UpdateEntry"
+  },
+  {
+   "id": "K9b-007",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 31,
+   "kind": "law",
+   "claim": "Between ticks B's stages do not run and its cells hold (zero-order hold)",
+   "evidence": "probe:53 (b unchanged at t=0.023 while a moved); test/test_discrete.jl:55-70; src/declare.jl:676 'ports hold their values in between'"
+  },
+  {
+   "id": "K9b-008",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 33,
+   "kind": "law",
+   "claim": "The hold is true in every nominal simulation sweep",
+   "evidence": "test/test_discrete.jl:52-70 (interior bodies carry continuous entries only)"
+  },
+  {
+   "id": "K9b-009",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 40,
+   "kind": "ex",
+   "claim": "At t=0.023 A's output is fresh from x(0.023) and B's cell holds the value computed at t=0.02 from A's output then",
+   "evidence": "probe:53 (a moved, b == b at tick == 3*a(0.02))"
+  },
+  {
+   "id": "K9b-010",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 45,
+   "kind": "mech",
+   "claim": "C reads B's held cell between ticks",
+   "evidence": "probe:53; type dump of RHSEntry for C with input `b` address (probe run, executor bodies)"
+  },
+  {
+   "id": "K9b-011",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 53,
+   "kind": "mech",
+   "claim": "Linearization and trim differentiate the vector field at a frozen instant with discrete state and held cells held",
+   "evidence": "src/linearize.jl:347 and src/trim.jl:624 (`_establish_frozen!`); src/trim.jl:228; src/model.jl:143-160"
+  },
+  {
+   "id": "K9b-012",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 57,
+   "kind": "law",
+   "claim": "The sensitivity of C's input to the seeded x through B is exactly zero",
+   "evidence": "probe:58 (A matrix [dz/dq] = 0.0 while dq/dq = -1)"
+  },
+  {
+   "id": "K9b-013",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 61,
+   "kind": "mech",
+   "claim": "The Dual sweep runs the continuous chain only; B's cell embeds as a zero-partial constant",
+   "evidence": "src/build.jl:1062-1066, 1089-1092; src/model.jl:143-160; probe:61"
+  },
+  {
+   "id": "K9b-015",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 79,
+   "kind": "law",
+   "claim": "Treating y_direct as in-sweep feedthrough makes the loop algebraic, which §5.5 rejects",
+   "evidence": "probe:78 and probe:80 (`AlgebraicCycle`); src/build.jl:187-192"
+  },
+  {
+   "id": "K9b-016",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 86,
+   "kind": "mech",
+   "claim": "x(t_k) influences x(t_k+1) through B: B's held output shapes x-dot over the interval",
+   "evidence": "test/test_discrete.jl:19-47 (sampled loop matches the exact ZOH recursion)"
+  },
+  {
+   "id": "K9b-017",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 106,
+   "kind": "mech",
+   "claim": "The frozen sweep gives the plant Jacobian with the digital side held",
+   "evidence": "probe:58; spec.md:14418-14421 agrees; src/trim.jl:228"
+  },
+  {
+   "id": "K9b-018",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 108,
+   "kind": "why",
+   "claim": "`c2d` (lead): the control-practice name of discretizing a plant model, prior art not a Redstone name",
+   "evidence": "no code claim; MATLAB-style prior art"
+  },
+  {
+   "id": "K9b-019",
+   "file": "design/companions/frozen_discrete_walkthrough.md",
+   "line": 112,
+   "kind": "mech",
+   "claim": "The type-level freeze makes differentiating through a ZOH as if a wire unwritable",
+   "evidence": "src/build.jl:37-40 (discrete contracts pin wholesale), src/build.jl:1066; probe:61"
+  },
+  {
+   "id": "K9b-020",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 19,
+   "kind": "law",
+   "claim": "Handle shape rule: bulk behind a reference at fixed Float64, only the activation-dependent part carries the scalar parameter",
+   "evidence": "src/leaves.jl:230-236 (walk substitutes parameters, never fields); probe:314 and probe:398 (MixedRight b stays Float64); spec.md:3234-3236"
+  },
+  {
+   "id": "K9b-021",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 24,
+   "kind": "decl",
+   "claim": "`DeckField{T}` (lead, a sketch type defined in the companion) with heave, pitch :: T and grid::Matrix{Float64}",
+   "evidence": "probe:101-108 defines and builds it; names `DeckField`, `heave`, `pitch`, `grid` are the companion's own, not Redstone names"
+  },
+  {
+   "id": "K9b-022",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 31,
+   "kind": "law",
+   "claim": "A tolerant handle entry admits several producers behind one face (walking, pinned, discrete)",
+   "evidence": "probe:174 (static, sea and discrete producers all build into the same Gear entry); test/test_build.jl:775-783"
+  },
+  {
+   "id": "K9b-023",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 35,
+   "kind": "decl",
+   "claim": "Gear declares u_types terrain = DeckField{Float64}, y_types clearance = Float64, and a y_direct on (; x, u)",
+   "evidence": "probe:174 (builds, Model at Dual runs, clearance cell Dual)"
+  },
+  {
+   "id": "K9b-024",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "Declared unpinned, DeckField{Float64} walks to DeckField{Dual} and a stage building it from Float64 data is refused",
+   "evidence": "probe:182 (`ConformanceFailure` declared DeckField{Dual}, returned DeckField{Float64})"
+  },
+  {
+   "id": "K9b-025",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 48,
+   "kind": "decl",
+   "claim": "y_types(::StaticTerrain) = (terrain = Pinned{DeckField{Float64}},) and y_direct(c, _) builds DeckField(c.datum, 0.0, c.grid)",
+   "evidence": "probe:174 (static builds; cell DeckField{Float64} at Dual)"
+  },
+  {
+   "id": "K9b-026",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 52,
+   "kind": "law",
+   "claim": "With a moving deck the pose carries partials and the gear's clearance differentiates through them",
+   "evidence": "probe:190 (C = [-1.0 -0.1]: heave coefficient -1)"
+  },
+  {
+   "id": "K9b-028",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 56,
+   "kind": "mech",
+   "claim": "The unpinned output builds the handle at T; only the pose is T, the grid stays Matrix{Float64}",
+   "evidence": "probe:177 (cell DeckField{Dual}); probe:112 (grid type unchanged)"
+  },
+  {
+   "id": "K9b-029",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 60,
+   "kind": "decl",
+   "claim": "y_types(::SeaMotion) = (terrain = DeckField{Float64},) with y_state(c, (; x)) building DeckField(x.heave, x.pitch, c.grid)",
+   "evidence": "probe:174 (sea builds, cell DeckField{Dual})"
+  },
+  {
+   "id": "K9b-030",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 64,
+   "kind": "law",
+   "claim": "The walk clause admits the moving deck at the tolerant entry because a walking producer needs an unpinned entry",
+   "evidence": "src/build.jl:890; src/leaves.jl:380; probe:174 (sea)"
+  },
+  {
+   "id": "K9b-031",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 65,
+   "kind": "law",
+   "claim": "The static terrain is admitted at the tolerant entry because a frozen arrival there is the producer's cell (D-264)",
+   "evidence": "src/leaves.jl:370-380 (`_accepts_wire`, at_wire lets the lift enter an opaque leaf); test/test_build.jl:775-783; probe:174 (static)"
+  },
+  {
+   "id": "K9b-032",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 67,
+   "kind": "law",
+   "claim": "A discrete terrain producer pins wholesale with no marker and is admitted on the same terms",
+   "evidence": "probe:174 (disc: builds, cell DeckField{Float64} at Dual); test/test_build.jl:775"
+  },
+  {
+   "id": "K9b-033",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 76,
+   "kind": "ex",
+   "claim": "The bilinear height query runs on Dual weights and returns a Dual",
+   "evidence": "probe:112-114"
+  },
+  {
+   "id": "K9b-034",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 89,
+   "kind": "law",
+   "claim": "Under a Dual activation f.pitch, f.heave and every component of p are Duals of one type (leads f.heave, f.pitch are fields of the sketch)",
+   "evidence": "src/model.jl:107-112 (a Model has one scalar T); probe:177 (cell DeckField{D8}) and probe:174 clearance D8; `f.heave`, `f.pitch` are local field accesses of the sketch struct"
+  },
+  {
+   "id": "K9b-035",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 95,
+   "kind": "mech",
+   "claim": "Dual times Float64 gives a Dual whose partials are the Float64 times the partials of the Dual",
+   "evidence": "probe:116"
+  },
+  {
+   "id": "K9b-036",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 98,
+   "kind": "mech",
+   "claim": "The grid entry is read as a plain Float64 and never stored as a Dual",
+   "evidence": "probe:112 (typeof(f.grid) == Matrix{Float64} after the query)"
+  },
+  {
+   "id": "K9b-037",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 101,
+   "kind": "mech",
+   "claim": "floor(Int, x) on a Dual floors the value and discards the partials",
+   "evidence": "probe:117 (result type Int64)"
+  },
+  {
+   "id": "K9b-038",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 109,
+   "kind": "ex",
+   "claim": "Printed output: Matrix{Float64}, Dual{:act, Float64, 2}, dh/dheave = 1.0, dh/dx = 0.1",
+   "evidence": "probe:112-114 (partials 1.0 and 0.10000000000000003)"
+  },
+  {
+   "id": "K9b-039",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 115,
+   "kind": "mech",
+   "claim": "Pose sensitivity flows through the pose Dual fields, position sensitivity through the weights, and the grid adds slope but no partials",
+   "evidence": "probe:114; probe:190-195 (C row -1.0 heave, -0.1 position)"
+  },
+  {
+   "id": "K9b-040",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 120,
+   "kind": "mech",
+   "claim": "With grid::Matrix{T} the walk produces DeckField{Dual} with a Matrix{Dual} field",
+   "evidence": "probe:363"
+  },
+  {
+   "id": "K9b-042",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 130,
+   "kind": "law",
+   "claim": "The three habits each fail loudly at the Dual probe, not silently",
+   "evidence": "probe:219 (tied: UserCodeFraming MethodError), probe:234 (Float64 buffer), probe:118 (Float64(Dual))"
+  },
+  {
+   "id": "K9b-043",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 134,
+   "kind": "mech",
+   "claim": "A signature tying the handle's parameter to another argument fails with a MethodError when the handle is frozen and the position is not",
+   "evidence": "probe:219 (static producer fails); probe:225 (walking sea producer passes)"
+  },
+  {
+   "id": "K9b-044",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 146,
+   "kind": "law",
+   "claim": "A zeros(n) scratch buffer in a stage cannot receive a Dual",
+   "evidence": "probe:234 (MethodError Float64(Dual) at the probe)"
+  },
+  {
+   "id": "K9b-045",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 147,
+   "kind": "decl",
+   "claim": "ws_init(c, T) hands the stage the scalar T to allocate its workspace with",
+   "evidence": "src/build.jl:1059; probe:244 (zeros(T, 2) workspace works at Dual)"
+  },
+  {
+   "id": "K9b-046",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 150,
+   "kind": "law",
+   "claim": "Float64(x) on a Dual has no method",
+   "evidence": "probe:118 and probe:119 (MethodError even with zero partials)"
+  },
+  {
+   "id": "K9b-047",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 154,
+   "kind": "law",
+   "claim": "Re-emitting a frozen handle under an unpinned handle output hits the store's identity rule at the first Dual activation",
+   "evidence": "probe:256 (`ConformanceFailure` declared DeckField{Dual}, returned DeckField{Float64})"
+  },
+  {
+   "id": "K9b-048",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 157,
+   "kind": "law",
+   "claim": "For a scalar the executor embeds on the write",
+   "evidence": "probe:273 (forwarded cell and sink output are Dual)"
+  },
+  {
+   "id": "K9b-049",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 158,
+   "kind": "law",
+   "claim": "A handle's pin propagates down its chain: each forwarding component must pin the output",
+   "evidence": "probe:256; spec.md:1729-1731"
+  },
+  {
+   "id": "K9b-050",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 168,
+   "kind": "decl",
+   "claim": "u_types(::LegacyGround) = (terrain = Pinned{DeckField{Float64}},)",
+   "evidence": "probe:200 (builds with the static producer, refuses the walking one)"
+  },
+  {
+   "id": "K9b-051",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 171,
+   "kind": "law",
+   "claim": "Wiring the moving deck into the pinned handle entry fires WalkingFaceAtFrozenEntry with both remedies",
+   "evidence": "probe:200; src/diagnostics.jl:458-467; test/test_build.jl:757-763"
+  },
+  {
+   "id": "K9b-053",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 178,
+   "kind": "mech",
+   "claim": "The framework does not strip partials at the wire; the author must say so",
+   "evidence": "probe:200 (build refuses the wire); src/diagnostics.jl:458-467"
+  },
+  {
+   "id": "K9b-054",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 189,
+   "kind": "law",
+   "claim": "At nominal Freeze is the identity",
+   "evidence": "src/library.jl:409 (`ForwardDiff.value.` of a Float64); test/test_library.jl:1536"
+  },
+  {
+   "id": "K9b-055",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 189,
+   "kind": "law",
+   "claim": "Under a Dual activation Freeze drops the partials and its output satisfies the pinned entry",
+   "evidence": "src/library.jl:408-409; test/test_library.jl:1550-1553"
+  },
+  {
+   "id": "K9b-056",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 191,
+   "kind": "law",
+   "claim": "The Freeze wire declares a zero coupling in every Jacobian along that path",
+   "evidence": "test/test_library.jl:1541-1545 (C row of the frozen face is zero)"
+  },
+  {
+   "id": "K9b-057",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 206,
+   "kind": "decl",
+   "claim": "The Table local-rule component: tolerant u_types, y_direct on lookup, Float64 and Dual methods",
+   "evidence": "probe:299 (builds, linearizes)"
+  },
+  {
+   "id": "K9b-058",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 223,
+   "kind": "law",
+   "claim": "Stripping with ForwardDiff.value mid-expression is legal at an unpinned leaf",
+   "evidence": "probe:299 (build and linearize accept it); spec.md:5942"
+  },
+  {
+   "id": "K9b-059",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 224,
+   "kind": "mech",
+   "claim": "The partials are rebuilt by the chain rule so the seeded pass sees an ordinary differentiable component",
+   "evidence": "probe:299 (C = 0.76484219 against cos(0.7) = 0.76484219)"
+  },
+  {
+   "id": "K9b-060",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 225,
+   "kind": "mech",
+   "claim": "The derivative is finite-difference in quality on this component",
+   "evidence": "probe:299 (error about 2e-9, order sqrt(eps))"
+  },
+  {
+   "id": "K9b-061",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 229,
+   "kind": "law",
+   "claim": "Linearization keeps one mechanism and no perturbation-based fallback",
+   "evidence": "src/linearize.jl:130 ('none is a finite difference'); no fallback path in src/linearize.jl"
+  },
+  {
+   "id": "K9b-062",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 238,
+   "kind": "law",
+   "claim": "A per-parameter pin Mixed{Float64, Pinned{Float64}} is refused (D-265)",
+   "evidence": "probe:341 (`IllegalPortType`, 'Pinned marker below the top of the entry')"
+  },
+  {
+   "id": "K9b-063",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 239,
+   "kind": "decl",
+   "claim": "A field that must not follow the scalar is typed concretely in its struct",
+   "evidence": "probe:314 and probe:398 (b::Float64 stays Float64 at the Dual scalar)"
+  },
+  {
+   "id": "K9b-064",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 243,
+   "kind": "ex",
+   "claim": "Mixed{T} (lead `Mixed`): a::T walks, b::Int stays Int; the name is a placeholder, written with two parameters at line 238 and one here",
+   "evidence": "probe:315 and probe:355 (Mixed{Dual} cell, b Int)"
+  },
+  {
+   "id": "K9b-065",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 254,
+   "kind": "mech",
+   "claim": "MixedRight{Float64} walks to MixedRight{Dual} with leaves Dual and Float64 (lead `MixedRight`, a placeholder type)",
+   "evidence": "probe:314; probe:326; probe:398"
+  },
+  {
+   "id": "K9b-066",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 255,
+   "kind": "mech",
+   "claim": "The walk substitutes type parameters and never fields",
+   "evidence": "src/leaves.jl:230-236 and 285-300; probe:363"
+  },
+  {
+   "id": "K9b-068",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 263,
+   "kind": "law",
+   "claim": "A whole leaf that must freeze in one component alone takes the marker, Pinned{Mixed{Float64}}",
+   "evidence": "probe:348 (cell Mixed{Float64} at Dual); src/leaves.jl:302"
+  },
+  {
+   "id": "K9b-069",
+   "file": "design/companions/handle_walk_walkthrough.md",
+   "line": 266,
+   "kind": "mech",
+   "claim": "The reader's rule 'every Float64 position follows the scalar' reads the declared type expression, not the struct body",
+   "evidence": "src/leaves.jl:230-236, 285-300 (retype acts on the declared type); probe:314"
+  }
+ ],
+ "counts": {
+  "law": 35,
+  "mech": 27,
+  "decl": 10,
+  "ex": 12,
+  "why": 27,
+  "ptr": 10
+ }
+}

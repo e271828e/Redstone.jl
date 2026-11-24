@@ -1,0 +1,223 @@
+{
+ "judgments": [
+  {
+   "id": "S9b-001",
+   "conforms": true,
+   "evidence": "src/deployment.jl:539-553 struct Deployment has no scalar type parameter; probe.out 'S9b-001/008' isconcretetype(Deployment) = true; the scalar enters only at Model{T} (src/model.jl:111)."
+  },
+  {
+   "id": "S9b-008",
+   "conforms": true,
+   "evidence": "src/deployment.jl:540-552 fields build, Δt_frame, Δt_base, h_max, h_min, algorithm, firing_budget, localization_tol, localization_budget, attempt_budget, schedule, lattice, warnings (probe.out fieldnames). The one field the spec does not list is `lattice`, which D-454 calls 'a function of the rest by design'.",
+   "note": "The spec's list leaves out the derived `lattice` field (deployment.jl:551). It is a cache, not a parameter, so I did not count it as a mismatch."
+  },
+  {
+   "id": "S9b-011",
+   "conforms": true,
+   "evidence": "src/model.jl:112-113 throws ArgumentInvalid(reason = :scalar) before activation (line 122); probe: Float32, BigFloat and Dual{Nothing,Float32,1} all refused with ArgumentInvalid :scalar, and D8 is accepted."
+  },
+  {
+   "id": "S9b-020",
+   "conforms": true,
+   "evidence": "src/deployment.jl:231-237 binds h_min. It is required only when `proposing` (line 572, proposes(::BS3) = true). Probe: BS3 with no h_min gives DeploymentInvalid (:h_min, :missing)."
+  },
+  {
+   "id": "S9b-029",
+   "conforms": true,
+   "evidence": "src/deployment.jl:221-226 and _lattice (lines 152-178) do no divisibility check on h_max. Probe: h_max = 2//7 at frame 1//2 deploys with 2 steps per frame, and h_max = 1//3 at frame 1 takes 3 steps."
+  },
+  {
+   "id": "S9b-038",
+   "conforms": true,
+   "evidence": "src/deployment.jl:231-232 refuses h_min absent under a proposing method; probe: BS3 with no h_min -> (:h_min, :missing); BS3 with h_min = 1//100 deploys."
+  },
+  {
+   "id": "S9b-047",
+   "conforms": true,
+   "evidence": "src/deployment.jl:541-545 fields are Rational{Int}, and == (lines 623-628) compares them exact. Probe: h_max = 1//3 takes 3 steps and Rational(1/3) takes 4, and d1 == d2 is false."
+  },
+  {
+   "id": "S9b-058",
+   "conforms": true,
+   "evidence": "src/deployment.jl:15-21 _exact refuses as :range what Rational{Int} cannot hold. Probe: Δt_frame = big(2)^70 -> (:Δt_frame, :range); 1//0 -> :range (via _positive_finite, line 184); Rational{Int32}(1,500) and big(1)//500 are accepted; a float is :inexact."
+  },
+  {
+   "id": "S9b-060",
+   "conforms": true,
+   "evidence": "src/deployment.jl:253-258: Δt_base = :derive with an unanchored discrete component is refused as DeploymentInvalid :unanchored, carrying `grid` (the constructive message). Probe: MultiRate :derive -> (:Δt_base, :unanchored), grid carried, paths fcs/inner, fcs/outer. The default path (Δt_base = Δt_frame) is accepted.",
+   "note": "'Must declare Δt_base' means derivation is refused, as the bullet list above it says (derivation only with A₀ unpopulated). D-283 used the same wording beside a non-keyword default source. A clearer wording: 'deployment must not derive `Δt_base`; it takes the keyword or `Δt_frame`'."
+  },
+  {
+   "id": "S9b-068",
+   "conforms": true,
+   "evidence": "src/structure.jl:905-907 _anchor_counts = (Δt(a)/Δt_base, τ(a)/Δt_base) as whole Ints; probe show: A₁ at Δt_base 1//500 has D₀ = 10, Φ₀ = 0."
+  },
+  {
+   "id": "S9b-077",
+   "conforms": true,
+   "evidence": "src/deployment.jl:296-321: _timing_counts runs in checked Int (structure.jl:913-918), and a schedule that overflows makes lattice = :Δt_base, refused as (:Δt_base, :range). Probe: an anchor at 1 s with Relative(2^20) under it, at Δt_base = 1//2^50, gives DeploymentInvalid (:Δt_base, :range); at 1//2^20 it deploys."
+  },
+  {
+   "id": "S9b-086",
+   "conforms": true,
+   "evidence": "src/show.jl:98-123 prints A₀ timing as (Dₐ, Φₐ) with the A₀ row's Δt symbolic 'Δt_base' (probe show(Structure)). Seconds for A₀ components exist only after binding: ScheduleEntry Δt = D·Float64(Δt_r) at deployment.jl:306."
+  },
+  {
+   "id": "S9b-095",
+   "conforms": true,
+   "evidence": "src/structure.jl:958-1010 _check_trial_binding runs anchor division, multiply-add and _max_frame(1, 1, divisors) at Δt_base = gcd(pool). Every count at another choice (Q·D₀, frame and base ≥ 1 unit, _max_frame at deployment.jl:162) is at least as large, so a failure here is a failure on the same count everywhere."
+  },
+  {
+   "id": "S9b-104",
+   "conforms": true,
+   "evidence": "src/deployment.jl:216-226 and 267: each of Δt_frame, h_max and Δt_base goes through _exact (line 15, :range where Rational{Int} cannot hold) and _positive_finite on its own premise. Probe: big(2)^70 -> :range."
+  },
+  {
+   "id": "S9b-112",
+   "conforms": false,
+   "evidence": "src/deployment.jl:561-562 refuses only a value that is not an AbstractAlgorithm. Line 572 then calls proposes(algorithm), and proposes has no fallback (deployment.jl:519-521). Probe: algorithm = :euler -> DeploymentInvalid (:algorithm, :range), but algorithm = MyAlg() (an AbstractAlgorithm subtype with no seam methods) -> raw MethodError: no method matching proposes(::MyAlg). A subtype with `proposes` but no `bind_stepper` passes the Deployment and fails only at Model.",
+   "class": "deviation",
+   "fix": "- a value that is not an algorithm token, an `AbstractAlgorithm`;",
+   "clear": false,
+   "backing_entry": "",
+   "note": "Alternatively a defect: the code would refuse, as DeploymentInvalid :algorithm, a token whose type has no `proposes` or `bind_stepper` method. Test-defined algorithms (test_stepper.jl:23, test_adaptive.jl:12) show the seam is open to subtypes."
+  },
+  {
+   "id": "S9b-114",
+   "conforms": true,
+   "evidence": "src/deployment.jl:563-570 refuses each budget unless `isa Integer && ≥ 1`. Probe: firing_budget = 0 or 2.0, localization_budget = -1 and attempt_budget = 0 each give DeploymentInvalid :range.",
+   "note": "Side finding against spec.md:5309-5311: firing_budget = big(2)^70 passes the check, then Int(firing_budget) at deployment.jl:599 throws a raw InexactError instead of DeploymentInvalid. Also, attempt_budget = true is accepted, since Bool <: Integer."
+  },
+  {
+   "id": "S9b-123",
+   "conforms": true,
+   "evidence": "src/deployment.jl:84-87 struct Schedule with rows::Vector{ScheduleEntry} and scopes::Vector{ScopeEntry}, both typed structs (lines 36-43, 60-66)."
+  },
+  {
+   "id": "S9b-144",
+   "conforms": true,
+   "evidence": "src/show.jl:109-116 prints a 'rate scopes:' table from structure.scopes (ScopeEntry = the assembly an explicit sample_times key opened, deployment.jl:56-59). Probe show(Structure) for MultiRate prints the fcs row."
+  },
+  {
+   "id": "S9b-153",
+   "conforms": true,
+   "evidence": "src/show.jl:162-171 _lines(::Events): one row per component with events, 'name => policy' in declaration order, plus the bundle."
+  },
+  {
+   "id": "S9b-162",
+   "conforms": true,
+   "evidence": "src/frame.jl:125-130: each span between mandatory instants takes cld(units·q, p) steps, so a split frame takes at least the unsplit count. src/show.jl:310-326 _steps_line names the splitting rows. Probe: 'steps per unsplit frame: 1; due instants of fcs/inner, fcs/outer split frames'."
+  },
+  {
+   "id": "S9b-171",
+   "conforms": true,
+   "evidence": "src/show.jl:391 the A₀ anchor row holds repr(Δt_base); probe: 'A₀  1//500  0//1  1  0'."
+  },
+  {
+   "id": "S9b-180",
+   "conforms": true,
+   "evidence": "src/show.jl:386-390 pushes the admissible line right after the 'schedule:' heading, and src/show.jl:368-374 drops the factor at Q = 1. Probe: 'Δt_base: 1//500, the coarsest admissible 1//50 divided by 10' under 'schedule: 3 rows…'."
+  },
+  {
+   "id": "S9b-189",
+   "conforms": true,
+   "evidence": "src/show.jl:177 H = lcm D₀; src/show.jl:222-231 charts n = 0…H−1 with the gate (n − Φ) % D == 0 when H ≤ 100, else 'chart omitted'. Probe show(Schedule): 'hyperperiod chart, 10 base ticks'."
+  },
+  {
+   "id": "S9b-198",
+   "conforms": true,
+   "evidence": "src/show.jl:355-357: a column that is no base tick is ' ', otherwise ● when due and · when not; probe chart rows for fcs/inner, fcs/outer, gnss."
+  },
+  {
+   "id": "S9b-207",
+   "conforms": true,
+   "evidence": "src/structure.jl:847-898 _grid_report returns the pool with leave-one-out factors, admissible = gcd(pool) and prime attribution. src/diagnostics.jl:1425 prints 'admissible: gcd(pool)/Q, coarsest …'. Probe shows the grid block."
+  },
+  {
+   "id": "S9b-216",
+   "conforms": true,
+   "evidence": "src/structure.jl:861-869 factor = gcd(pool ∖ p)/gcd(pool) as a whole Int, and InternalInvariant otherwise. A singleton pool gives 1 by convention (lines 862-864). Probe: the offset entry has ×10 and a singleton factor is [1]."
+  },
+  {
+   "id": "S9b-225",
+   "conforms": true,
+   "evidence": "src/structure.jl:871-889 computes a driving offset's lower and upper neighbours on the partial grid. src/diagnostics.jl:1429-1431 prints them. Probe: 'offset 1//1000 ×10 declaring 0//1 or 1//100 keeps 1//100', in show(Structure) and in the DeploymentInvalid message."
+  },
+  {
+   "id": "S9b-234",
+   "conforms": true,
+   "evidence": "src/structure.jl:836-845 docstring and lines 866-869. Qₚ = gcd(rest)/gcd(pool) ≤ q/gcd(pool) for any other entry q, and that is an anchor count the trial fits in Int (structure.jl:974-987)."
+  },
+  {
+   "id": "S9b-243",
+   "conforms": true,
+   "evidence": "src/deployment.jl:594-606: warnings are stored on Deployment.warnings and logged once with @warn at return. On a throw, line 576 carries `raised` in DiagnosticError(diags, raised). build.jl's warnings(build) = build.warnings (line 991)."
+  },
+  {
+   "id": "S9b-252",
+   "conforms": true,
+   "evidence": "src/model.jl:960-971 warnings(model) = build's + deployment's lists only, with the docstring saying run-time warnings go to the status. src/sim.jl:399 warnings(sim) = warnings(sim.model)."
+  },
+  {
+   "id": "S9b-261",
+   "conforms": true,
+   "evidence": "src/build.jl:105-106: the bundle fields :y_x and :y_s both come from y1, the stage-1 probe products (probe_stage1, build.jl:63-93)."
+  },
+  {
+   "id": "S9b-270",
+   "conforms": true,
+   "evidence": "src/build.jl:1004-1010: workspaces = _workspaces(structure, Float64) is built before probe_stage1. _workspace calls ws_init at T for continuous and Float64 for discrete components (build.jl:1055-1060)."
+  },
+  {
+   "id": "S9b-279",
+   "conforms": true,
+   "evidence": "src/build.jl:466-478 cell_layout calls probe_value(cell_type) for each root input; probe: the SVector root input is synthesized as (:in, [0,0,0])."
+  },
+  {
+   "id": "S9b-280",
+   "conforms": false,
+   "evidence": "src/declare.jl:932-936 has framework methods for Real (zero), Bool (false), Enum (first instance), StaticArray (zero(P)) and the P() fallback. The StaticArray arm is a fourth kind that the doc does not list. Probe: probe_value(SVector{3,Float64}) dispatches to declare.jl:935 and returns zeros, while SVector{3,Float64}() throws DimensionMismatch, so the arm changes behaviour. A root input of type SVector{3,Float64} builds. The arm has been in the code since a9f52a4c (walking skeleton), and no record mentions it.",
+   "class": "deviation",
+   "fix": "Framework methods cover four kinds of type:\n\n- `Real`, with `zero(T)`;\n- `Bool`, with `false`;\n- enums, with their first instance;\n- `StaticArray`, with `zero(T)`.",
+   "clear": true,
+   "backing_entry": "D-051",
+   "note": "The same three-kind list appears in the glossary's probe value entry (spec.md:16790) and in D-051's Position, so a fix there may need to match."
+  },
+  {
+   "id": "S9b-290",
+   "conforms": true,
+   "evidence": "src/build.jl:466-476 turns a framework-chain MethodError into MissingProbeValue, collected. src/diagnostics.jl:819-820 message. Probe: 'no `probe_value` for `NoDef` at face `in` — define `probe_value(::Type{NoDef})` or a zero-argument constructor (§9.3)'."
+  },
+  {
+   "id": "S9b-298",
+   "conforms": false,
+   "evidence": "src/build.jl:916-933: a root input takes its type from the one concrete consumer entry, and abstract co-consumers are admitted under the bound clause. Probe: Group(n = Negator(), a = AbsIn() with u_types (u = Real,)), input_wires ('in' => ('n/u', 'a/u')) builds with root type Float64. The abstract entry `Real` on a/u is fed by the root input, not by a component. Synthesis still meets only the concrete type.",
+   "class": "drift",
+   "fix": "Abstract entries occur only on component-fed inputs, which the probe sources from upstream products, and on a root input's abstract co-consumers, which receive the value synthesized at its one concrete declaration ([§8.2][s8-2], [D-236][d-236]).",
+   "clear": true,
+   "backing_entry": "",
+   "note": "D-236 (abstract co-consumers checked by the bound clause) and spec §8.2 at spec.md:3123-3124 record the fan-out rule."
+  },
+  {
+   "id": "S9b-300",
+   "conforms": false,
+   "evidence": "src/build.jl:561-567: the Activation cached on the Build keeps the complete probe products. src/build.jl:1502-1516 compile writes them, and the synthesized root-input values, into every Model's table as its pre-init content. src/model.jl:691-694: at a non-Float64 Model, a frozen discrete component's pinned cells 'keep the carried nominal products — at boundary zero as everywhere'. So probe products outlive the build, and a standalone Model{Dual} run reads them as values. D-213 fixed this only for trim's and linearize's scratch worlds (_establish_frozen!, model.jl:148-160).",
+   "class": "defect",
+   "fix": "At init! of a Model at a non-nominal scalar, establish the frozen discrete cells from a nominal establishment round, as the services' seeded half does (D-213), so no probe product is ever read as a value after the build.",
+   "clear": false,
+   "backing_entry": "",
+   "note": "At Float64, boundary zero overwrites every seeded cell (D-205), and init!'s totality check covers the root inputs, so the leak is limited to frozen cells at a Dual activation. A doc-side alternative would say that the probe's products seed each table until boundary zero writes them."
+  },
+  {
+   "id": "S9b-303",
+   "conforms": true,
+   "evidence": "src/deployment.jl:539-553 Deployment has no clock or t₀ field. src/model.jl:126 sets a zero origin at Model construction 'until `init!`'. src/build.jl:109 the probe's t is zero(T)."
+  },
+  {
+   "id": "S9b-312",
+   "conforms": true,
+   "evidence": "test/test_failures.jl:232-241 (Tripwire throws mid-integration: err isa StepError, lifecycle(sim) === :errored); probe: StepError{Tripped}, lifecycle errored."
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S9b_v/probe.jl. Output: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S9b_v/probe.out (2 runs; the second fixed the co-consumer wiring). I edited no tracked file.\n\nOf the 38 claims, 34 conform and 4 do not:\n- S9b-112: deviation. The code refuses only non-AbstractAlgorithm values. A seam-less subtype escapes as a raw MethodError.\n- S9b-280: deviation. probe_value has an undocumented StaticArray arm.\n- S9b-298: drift. Abstract co-consumers of a root input exist, per D-236 and §8.2.\n- S9b-300: defect. Probe products outlive the build and seed tables. In a Model{Dual}, frozen discrete cells keep them for the whole run.\n\nSide findings outside the listed claims:\n1. spec.md:5309-5311 says an inexact conversion never escapes raw. But a budget past Int, such as firing_budget = big(2)^70, passes the integer ≥ 1 check and then throws a raw InexactError at Int(firing_budget) (deployment.jl:599).\n2. A Bool budget (true) is accepted.\n3. The Deployment holds a derived `lattice` field that §9.2's list leaves out.\n4. warnings has a Model method (model.jl:971) beside the Build, Deployment and Simulation methods §9.2 names."
+}

@@ -1,0 +1,2294 @@
+{
+ "rows": [
+  {
+   "id": "L9b-008",
+   "file": "design/log.md",
+   "line": 10741,
+   "kind": "law",
+   "claim": "D-256: the per-component `D`, `Φ`, `Δt` vectors move to the deployment.",
+   "evidence": "src/deployment.jl:539-553 has no D, Φ or Δt field. The Schedule holds rows (src/deployment.jl:36-42, 84), and compile derives the per-component gates from them (src/build.jl:1460-1465).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation to D-256: \"Annotation: superseded in part by D-261. The `Schedule` is its component and rate-scope rows, the `Δt` column among them, and the per-component `(D, Φ, Δt)` are derived from the rows at `compile`. No `D`, `Φ` or `Δt` vector lives on the deployment.\"",
+   "note": "D-261 (log.md:11073-11075, 11102) supersedes D-254's \"D, Φ, Δt vectors\" clause, which this bullet carries. D-256 has no annotation recording it."
+  },
+  {
+   "id": "L9b-012",
+   "file": "design/log.md",
+   "line": 10745,
+   "kind": "law",
+   "claim": "D-256: `loop_acct` goes into the plane.",
+   "evidence": "src/roster.jl:333 names the field `loop_account`. Commit 1a0eac36 (\"Name the short fields the src inventory left\") renamed `loop_acct` to `loop_account`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add to D-256's annotation: \"`loop_acct` is now `loop_account` (commit 1a0eac36).\"",
+   "note": "Lead `loop_acct` at log.md:10745. The field had this name when D-256 landed (commit f2c36955). A commit records the rename and no log entry does, so log_rules rule 2 may excuse it as the vocabulary of its day."
+  },
+  {
+   "id": "L9b-014",
+   "file": "design/log.md",
+   "line": 10746,
+   "kind": "law",
+   "claim": "D-256: `t_end`, `stop_on`, `stop_addrs` and `policy` go to the run.",
+   "evidence": "src/sim.jl:228-235: `Run` holds log, trace, feed, termination, frame and boundary, with no t_end, stop_on, stop_addrs or policy. src/sim.jl:141-144: `StopPolicy` is t_end and the ignored requester paths, the advance's argument.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation to D-256: \"Annotation: amended by D-260 and D-316. The stop policy is the advance's argument, `StopPolicy(t_end, ignored)`, built by `run!`, `replay!` and `step!`. The run keeps `log` and `trace`, and `stop_on` and `stop_addrs` are retired.\"",
+   "note": "Leads `stop_on` and `stop_addrs` at log.md:10746. D-260 (\"The stop policy is the advance's argument\") and D-316 (ignored requester paths) moved these off the run. D-256 has no annotation for either."
+  },
+  {
+   "id": "L9b-018",
+   "file": "design/log.md",
+   "line": 10750,
+   "kind": "decl",
+   "claim": "D-256: `trace`, `log`, `log_every` and `log_max` are keywords of `Simulation(deployment, T)` and of the two convenience forms, carried to `init!`.",
+   "evidence": "src/sim.jl:358, 387-391: no Simulation method takes trace, log, log_every or log_max. They are keywords of init! (src/sim.jl:834-835), replay! (src/sim.jl:1337) and restore! (src/sim.jl:1063).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation to D-256: \"Annotation: superseded in part by D-261. `trace`, `log`, `log_every` and `log_max` are keywords of the doors that build a run, `init!`, `restore!`, `overlay!` and `replay!`, not of `Simulation`.\"",
+   "note": "D-261 (log.md:11080-11081, 11104-11105) supersedes \"D-256's clause making the recording flags keywords of Simulation(deployment, T)\". D-256's annotations (log.md:10769, 10775) record D-317, D-442 and D-443, but not D-261."
+  },
+  {
+   "id": "L9b-049",
+   "file": "design/log.md",
+   "line": 11076,
+   "kind": "law",
+   "claim": "D-261: a `t*` stop hit is `frame!`'s return value, a face or `nothing`.",
+   "evidence": "src/frame.jl:69 and 165-169: `frame!` returns a `Bool`, which is `settled!`'s answer. The loop reads the requester again off the snapshot (src/sim.jl:2043, 2057-2058, 2094).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation to D-261, or amend its D-316 one: \"Annotation: superseded by D-317. A `t*` stop hit is `frame!`'s `Bool` return, `settled!`'s answer, and the loop reads the requester off the snapshot.\"",
+   "note": "D-317 (log.md:14546-14549, 14600-14601) supersedes \"D-261's clause typing a t* stop hit as a face or nothing\". D-261's annotation (log.md:11152-11155) records only D-316's \"a requester or nothing\", which is stale too."
+  },
+  {
+   "id": "L9b-167",
+   "file": "design/log.md",
+   "line": 14788,
+   "kind": "law",
+   "claim": "D-319: `ModelState{T}` holds nine fields: `x`, `s`, `m`, `table`, `prior`, `t`, `t₀`, `deployment` and `layout`.",
+   "evidence": "src/checkpoint.jl:74-85 declares ten fields, with `stepper` between `prior` and `t`. probe:66 prints (:x, :s, :m, :table, :prior, :stepper, :t, :t₀, :deployment, :layout).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation to D-319: \"Annotation: amended by D-452. `ModelState` also holds `stepper`, the stepper's carried state, so it has ten fields.\"",
+   "note": "D-452 (log.md:19135-19136) adds the stepper's carried state to `ModelState`. D-319 has no annotation for it."
+  },
+  {
+   "id": "L9b-183",
+   "file": "design/log.md",
+   "line": 14825,
+   "kind": "decl",
+   "claim": "D-319: `trim!(model, problem; baseline, t0 = 0.0, backend = LevenbergMarquardt())`.",
+   "evidence": "src/trim.jl:560-561 and src/sim.jl:1123-1124 default to `t0 = 0`, the exact integer.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add to D-319's annotations: \"`trim!`'s `t0` defaults to the exact `0` since D-457.\"",
+   "note": "D-457 (its first bullet) makes `t0` an exact origin at every door, and the default became `0` with it. `init!` also defaults to `t0 = 0` (src/sim.jl:834). The instant is the same. Only the spelling and the type differ."
+  },
+  {
+   "id": "L9b-193",
+   "file": "design/log.md",
+   "line": 14841,
+   "kind": "mech",
+   "claim": "D-319: the grid arithmetic `_frame_slack`, `_frames_to` and `_frame_at` lives in `frame.jl` beside `_grid_time`.",
+   "evidence": "src/model.jl:567-575 define all three, and `_grid_time` is at src/model.jl:530. frame.jl defines none of them. Commit 0947bce2 is \"Move the grid arithmetic from frame.jl to model.jl\".",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation to D-319: \"Annotation: `_frame_slack`, `_frames_to` and `_frame_at` live in `model.jl` beside `_grid_time`, where the checkpoint and the loop read them (commit 0947bce2).\"",
+   "note": "A commit records the move and no log entry does. code_map.md already places them in model.jl."
+  },
+  {
+   "id": "L9b-201",
+   "file": "design/log.md",
+   "line": 17581,
+   "kind": "law",
+   "claim": "D-432: the kinds are `build` and `deployment`, with `failure` reserved.",
+   "evidence": "src/descriptor.jl:46: `descriptor(err::DiagnosticError) = _envelope(\"failure\", _failure_body(err))` writes the failure kind, and src/descriptor.jl:92-107 builds its body.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Extend D-432's D-434 annotation: \"`failure` is no longer reserved. `descriptor(err::DiagnosticError)` writes it.\"",
+   "note": "D-434 (\"The envelope's third kind is `failure`, no longer reserved\") moved it. D-432's D-434 annotation (log.md:17666-17668) records only the carrier field."
+  },
+  {
+   "id": "L9b-235",
+   "file": "design/log.md",
+   "line": 18615,
+   "kind": "law",
+   "claim": "D-443: a fixed step that does not divide `Δt_frame` (and `Δt_base`) is refused as `DeploymentInvalid` with reason `:not_harmonic`.",
+   "evidence": "rg finds no `:not_harmonic` in src/. src/diagnostics.jl:1372 lists DeploymentInvalid's reasons without it, and src/deployment.jl:220-227 resolves `h_max` with no divisibility test.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Amend the D-444 annotation on D-443: \"… superseded by D-444, and the reason retired with D-449: `h_max` need divide nothing, and no `:not_harmonic` refusal exists.\"",
+   "note": "Lead `not_harmonic` at log.md:18617. D-443's annotation (log.md:18637-18640) sends the fourth bullet to D-444 and still says \"`:not_harmonic` relates the step to the frame only\". D-449 (\"need divide nothing\") retired the reason, and the D-449 annotation (log.md:18642-18644) does not say so."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L9b-001",
+   "file": "design/log.md",
+   "line": 10734,
+   "kind": "law",
+   "claim": "D-256: Simulation keeps five fields (annotated D-317: now four)",
+   "evidence": "annotated log.md:10769; src/sim.jl:285"
+  },
+  {
+   "id": "L9b-002",
+   "file": "design/log.md",
+   "line": 10735,
+   "kind": "law",
+   "claim": "D-256: the build is reached through the deployment, no second reference",
+   "evidence": "src/sim.jl:285; src/deployment.jl:540"
+  },
+  {
+   "id": "L9b-003",
+   "file": "design/log.md",
+   "line": 10740,
+   "kind": "law",
+   "claim": "D-256: h moves to the deployment (annotated D-442/D-443)",
+   "evidence": "annotated log.md:10775; src/deployment.jl:539"
+  },
+  {
+   "id": "L9b-004",
+   "file": "design/log.md",
+   "line": 10740,
+   "kind": "law",
+   "claim": "D-256: N_base moves to the deployment (annotated: retired) [lead N_base]",
+   "evidence": "annotated log.md:10775; probe:94"
+  },
+  {
+   "id": "L9b-005",
+   "file": "design/log.md",
+   "line": 10740,
+   "kind": "law",
+   "claim": "D-256: Δt_base is the deployment's",
+   "evidence": "src/deployment.jl:542"
+  },
+  {
+   "id": "L9b-006",
+   "file": "design/log.md",
+   "line": 10740,
+   "kind": "law",
+   "claim": "D-256: the three event parameters are the deployment's",
+   "evidence": "src/deployment.jl:546"
+  },
+  {
+   "id": "L9b-007",
+   "file": "design/log.md",
+   "line": 10741,
+   "kind": "law",
+   "claim": "D-256: sched (Simulation's field) moves to the deployment, now Deployment.schedule [lead sched]",
+   "evidence": "src/deployment.jl:550"
+  },
+  {
+   "id": "L9b-009",
+   "file": "design/log.md",
+   "line": 10742,
+   "kind": "law",
+   "claim": "D-256: chunk_size, stepper, xnext, ẋnext, has_localized go to the executor",
+   "evidence": "src/build.jl:1424-1429"
+  },
+  {
+   "id": "L9b-010",
+   "file": "design/log.md",
+   "line": 10744,
+   "kind": "law",
+   "claim": "D-256: join_timeout goes into Control",
+   "evidence": "src/control.jl:71"
+  },
+  {
+   "id": "L9b-011",
+   "file": "design/log.md",
+   "line": 10744,
+   "kind": "law",
+   "claim": "D-256: loop_diag goes into the plane",
+   "evidence": "src/roster.jl:332"
+  },
+  {
+   "id": "L9b-013",
+   "file": "design/log.md",
+   "line": 10745,
+   "kind": "law",
+   "claim": "D-256: published goes into the plane",
+   "evidence": "src/roster.jl:334"
+  },
+  {
+   "id": "L9b-015",
+   "file": "design/log.md",
+   "line": 10746,
+   "kind": "law",
+   "claim": "D-256: log and trace go to the run",
+   "evidence": "src/sim.jl:229-230"
+  },
+  {
+   "id": "L9b-016",
+   "file": "design/log.md",
+   "line": 10748,
+   "kind": "decl",
+   "claim": "D-256: Deployment constructor takes the grid and event parameters and the algorithm",
+   "evidence": "src/deployment.jl:555-557"
+  },
+  {
+   "id": "L9b-017",
+   "file": "design/log.md",
+   "line": 10749,
+   "kind": "decl",
+   "claim": "D-256: join_timeout is a keyword of Simulation(deployment) and the convenience forms",
+   "evidence": "src/sim.jl:358, 387-391"
+  },
+  {
+   "id": "L9b-019",
+   "file": "design/log.md",
+   "line": 10752,
+   "kind": "law",
+   "claim": "D-256: DeploymentInvalid names deployment parameters only",
+   "evidence": "src/deployment.jl:218-239, 561-569, 254-305"
+  },
+  {
+   "id": "L9b-020",
+   "file": "design/log.md",
+   "line": 10753,
+   "kind": "law",
+   "claim": "D-256: the materialization's keywords refuse as ArgumentInvalid",
+   "evidence": "src/model.jl:113; src/sim.jl:366"
+  },
+  {
+   "id": "L9b-021",
+   "file": "design/log.md",
+   "line": 10791,
+   "kind": "law",
+   "claim": "D-257: build-side and deployment artifacts print through show",
+   "evidence": "src/show.jl:1-3"
+  },
+  {
+   "id": "L9b-022",
+   "file": "design/log.md",
+   "line": 10792,
+   "kind": "law",
+   "claim": "D-257: no accessors (annotated: descriptor is not one, D-432)",
+   "evidence": "annotated log.md:10839; src/show.jl:2-3"
+  },
+  {
+   "id": "L9b-023",
+   "file": "design/log.md",
+   "line": 10794,
+   "kind": "mech",
+   "claim": "D-257: show(::Structure) prints the anchor table with the A₀ row",
+   "evidence": "src/show.jl:121-125"
+  },
+  {
+   "id": "L9b-024",
+   "file": "design/log.md",
+   "line": 10795,
+   "kind": "mech",
+   "claim": "D-257: show(::Structure) prints the component table with rate-scope rows",
+   "evidence": "src/show.jl:106-119"
+  },
+  {
+   "id": "L9b-025",
+   "file": "design/log.md",
+   "line": 10795,
+   "kind": "mech",
+   "claim": "D-257: show(::Dataflow), now Outputs, prints the execution order with port classes",
+   "evidence": "src/show.jl:141-149"
+  },
+  {
+   "id": "L9b-026",
+   "file": "design/log.md",
+   "line": 10796,
+   "kind": "mech",
+   "claim": "D-257: show(::Schedule) prints the rows and the hyperperiod chart",
+   "evidence": "src/show.jl:206-239"
+  },
+  {
+   "id": "L9b-027",
+   "file": "design/log.md",
+   "line": 10797,
+   "kind": "mech",
+   "claim": "D-257: show(::Build) and show(::Deployment) print a summary and their parts",
+   "evidence": "src/show.jl:272-282, 425-434"
+  },
+  {
+   "id": "L9b-028",
+   "file": "design/log.md",
+   "line": 10799,
+   "kind": "mech",
+   "claim": "D-257: Events renders itself, each component's event names with policies",
+   "evidence": "src/show.jl:162-169"
+  },
+  {
+   "id": "L9b-029",
+   "file": "design/log.md",
+   "line": 10800,
+   "kind": "mech",
+   "claim": "D-257: Events is among the parts show(::Build) prints",
+   "evidence": "src/show.jl:281"
+  },
+  {
+   "id": "L9b-030",
+   "file": "design/log.md",
+   "line": 10801,
+   "kind": "mech",
+   "claim": "D-257: show(::Build) prints the feedthrough line between outputs and events tables",
+   "evidence": "src/show.jl:279-281; probe:104"
+  },
+  {
+   "id": "L9b-031",
+   "file": "design/log.md",
+   "line": 10803,
+   "kind": "mech",
+   "claim": "D-257: feedthrough derived from structure connections and producers' stage-2 names",
+   "evidence": "src/show.jl:254-267"
+  },
+  {
+   "id": "L9b-032",
+   "file": "design/log.md",
+   "line": 10806,
+   "kind": "law",
+   "claim": "D-257: chart guard binary at lcm(Dᵢ) ≤ 100 base ticks, else length and 'chart omitted'",
+   "evidence": "src/show.jl:221-224"
+  },
+  {
+   "id": "L9b-033",
+   "file": "design/log.md",
+   "line": 10811,
+   "kind": "mech",
+   "claim": "D-257: show(::Structure) prints the root's routes one line per chain",
+   "evidence": "src/show.jl:76-85, 128-131"
+  },
+  {
+   "id": "L9b-034",
+   "file": "design/log.md",
+   "line": 10811,
+   "kind": "mech",
+   "claim": "D-257: the structure step records each face's routing chain (annotated: derived via face_routes)",
+   "evidence": "annotated log.md:10835; src/show.jl:78"
+  },
+  {
+   "id": "L9b-035",
+   "file": "design/log.md",
+   "line": 11045,
+   "kind": "law",
+   "claim": "D-261: a callee takes what it reads as an argument (instances: walks and drain thunks)",
+   "evidence": "test/test_executor.jl:87 (guard walks take the buffers); src/roster.jl:316-319"
+  },
+  {
+   "id": "L9b-036",
+   "file": "design/log.md",
+   "line": 11048,
+   "kind": "law",
+   "claim": "D-261: an artifact holds declared facts; the cell layout is the one home for addresses",
+   "evidence": "src/structure.jl:205-213"
+  },
+  {
+   "id": "L9b-037",
+   "file": "design/log.md",
+   "line": 11051,
+   "kind": "law",
+   "claim": "D-261: one ComponentEntry per primitive: path, instance, tier, timing, rates (D-315 note)",
+   "evidence": "src/structure.jl:158-164; annotated log.md:11194"
+  },
+  {
+   "id": "L9b-038",
+   "file": "design/log.md",
+   "line": 11053,
+   "kind": "law",
+   "claim": "D-261: one Anchor per anchor with its pair, scope and key",
+   "evidence": "src/structure.jl:145-150"
+  },
+  {
+   "id": "L9b-039",
+   "file": "design/log.md",
+   "line": 11054,
+   "kind": "law",
+   "claim": "D-261: Schedule carries ScheduleEntry and ScopeEntry rows",
+   "evidence": "src/deployment.jl:36, 59, 84"
+  },
+  {
+   "id": "L9b-040",
+   "file": "design/log.md",
+   "line": 11057,
+   "kind": "mech",
+   "claim": "D-261: the walk's accumulator keeps the columns and is StructureDraft",
+   "evidence": "src/structure.jl:260-278"
+  },
+  {
+   "id": "L9b-041",
+   "file": "design/log.md",
+   "line": 11058,
+   "kind": "law",
+   "claim": "D-261: Outputs is one ComponentOutputs per component, path and stage name lists",
+   "evidence": "src/build.jl:576-580, 616-619"
+  },
+  {
+   "id": "L9b-042",
+   "file": "design/log.md",
+   "line": 11060,
+   "kind": "law",
+   "claim": "D-261: execution order beside the rows as component indices",
+   "evidence": "src/build.jl:618"
+  },
+  {
+   "id": "L9b-043",
+   "file": "design/log.md",
+   "line": 11062,
+   "kind": "law",
+   "claim": "D-261: the ports and edges columns are gone",
+   "evidence": "src/build.jl:616-619"
+  },
+  {
+   "id": "L9b-044",
+   "file": "design/log.md",
+   "line": 11066,
+   "kind": "law",
+   "claim": "D-261: Events is one ComponentEvents per component: path, policies, bundle names",
+   "evidence": "src/build.jl:626-630, 662-664"
+  },
+  {
+   "id": "L9b-045",
+   "file": "design/log.md",
+   "line": 11068,
+   "kind": "law",
+   "claim": "D-261: Activation{T} keeps its columns",
+   "evidence": "src/build.jl:565-569"
+  },
+  {
+   "id": "L9b-046",
+   "file": "design/log.md",
+   "line": 11070,
+   "kind": "law",
+   "claim": "D-261: the placeholder carries no configuration and no compiled state",
+   "evidence": "src/sim.jl:376-378"
+  },
+  {
+   "id": "L9b-047",
+   "file": "design/log.md",
+   "line": 11073,
+   "kind": "law",
+   "claim": "D-261: the Schedule is component rows and rate-scope rows, Δt column among them",
+   "evidence": "src/deployment.jl:36-42, 84"
+  },
+  {
+   "id": "L9b-048",
+   "file": "design/log.md",
+   "line": 11074,
+   "kind": "mech",
+   "claim": "D-261: per-component (D, Φ, Δt) derived from the rows at compile",
+   "evidence": "src/build.jl:1460-1465"
+  },
+  {
+   "id": "L9b-050",
+   "file": "design/log.md",
+   "line": 11077,
+   "kind": "law",
+   "claim": "D-261: the execution cursor keeps its dispatch fields alone",
+   "evidence": "src/executor.jl:17-24"
+  },
+  {
+   "id": "L9b-051",
+   "file": "design/log.md",
+   "line": 11078,
+   "kind": "law",
+   "claim": "D-261: StopPolicy is t_end and the stop faces (annotated D-316: ignored requesters)",
+   "evidence": "annotated log.md:11152; src/sim.jl:141-144"
+  },
+  {
+   "id": "L9b-052",
+   "file": "design/log.md",
+   "line": 11078,
+   "kind": "mech",
+   "claim": "D-261: compiled stop addresses are the loop's argument (annotated D-316: ignore mask)",
+   "evidence": "annotated log.md:11153; src/sim.jl:2057-2059"
+  },
+  {
+   "id": "L9b-053",
+   "file": "design/log.md",
+   "line": 11080,
+   "kind": "decl",
+   "claim": "D-261: trace, log, log_every, log_max are keywords of init! and replay!, defaults unchanged",
+   "evidence": "src/sim.jl:834-835, 1337"
+  },
+  {
+   "id": "L9b-054",
+   "file": "design/log.md",
+   "line": 11082,
+   "kind": "decl",
+   "claim": "D-261: Simulation(deployment) keeps join_timeout and chunk_size (annotated D-317)",
+   "evidence": "src/sim.jl:387-388; annotated log.md:11157"
+  },
+  {
+   "id": "L9b-055",
+   "file": "design/log.md",
+   "line": 11082,
+   "kind": "law",
+   "claim": "D-261: the placeholder run is an empty log and no trace",
+   "evidence": "src/sim.jl:378"
+  },
+  {
+   "id": "L9b-056",
+   "file": "design/log.md",
+   "line": 11083,
+   "kind": "law",
+   "claim": "D-261: trace(sim) refuses a traceless built sim on the lifecycle before the switch",
+   "evidence": "src/sim.jl:3015-3021; probe:60"
+  },
+  {
+   "id": "L9b-057",
+   "file": "design/log.md",
+   "line": 11085,
+   "kind": "law",
+   "claim": "D-261: the roster entry keeps the stable device id; the handle drops its copy",
+   "evidence": "src/roster.jl:254-256; src/devices.jl:63-75"
+  },
+  {
+   "id": "L9b-058",
+   "file": "design/log.md",
+   "line": 11086,
+   "kind": "mech",
+   "claim": "D-261: the entry reads writer, diagnostic cell and binding through the handle",
+   "evidence": "src/roster.jl:248-252; src/devices.jl:65-70"
+  },
+  {
+   "id": "L9b-059",
+   "file": "design/log.md",
+   "line": 11088,
+   "kind": "law",
+   "claim": "D-261: a snapshot carries its frame index beside its boundary ordinal",
+   "evidence": "src/dataplane.jl:539-542"
+  },
+  {
+   "id": "L9b-060",
+   "file": "design/log.md",
+   "line": 11089,
+   "kind": "law",
+   "claim": "D-261: the layout carries the root faces in structure order with probe values",
+   "evidence": "src/build.jl:357-359"
+  },
+  {
+   "id": "L9b-061",
+   "file": "design/log.md",
+   "line": 11092,
+   "kind": "mech",
+   "claim": "D-261: writers, claims and the harness compile against the layout",
+   "evidence": "src/roster.jl:338-339, 356"
+  },
+  {
+   "id": "L9b-062",
+   "file": "design/log.md",
+   "line": 11094,
+   "kind": "law",
+   "claim": "D-261: the data plane compiles no drain thunk at construction",
+   "evidence": "src/roster.jl:316-319, 336-341"
+  },
+  {
+   "id": "L9b-063",
+   "file": "design/log.md",
+   "line": 11095,
+   "kind": "mech",
+   "claim": "D-261: thunks compile at each door and roster change, at one site taking the store",
+   "evidence": "src/roster.jl:316-319"
+  },
+  {
+   "id": "L9b-064",
+   "file": "design/log.md",
+   "line": 11097,
+   "kind": "law",
+   "claim": "D-261: Deployment.grid stays (annotated: superseded by D-466) [lead]",
+   "evidence": "annotated log.md:11168; src/deployment.jl:539-553"
+  },
+  {
+   "id": "L9b-065",
+   "file": "design/log.md",
+   "line": 11097,
+   "kind": "law",
+   "claim": "D-261: Dataflow.edges stays (self-annotated: fell)",
+   "evidence": "src/build.jl:616-619"
+  },
+  {
+   "id": "L9b-066",
+   "file": "design/log.md",
+   "line": 11097,
+   "kind": "law",
+   "claim": "D-261: the header fingerprint's root faces stay",
+   "evidence": "src/checkpoint.jl:20"
+  },
+  {
+   "id": "L9b-067",
+   "file": "design/log.md",
+   "line": 11098,
+   "kind": "law",
+   "claim": "D-261: StepError's time and boundary stay",
+   "evidence": "src/diagnostics.jl:245-249"
+  },
+  {
+   "id": "L9b-068",
+   "file": "design/log.md",
+   "line": 11105,
+   "kind": "law",
+   "claim": "D-261: D-260's trace switch rides on the run",
+   "evidence": "src/sim.jl:230"
+  },
+  {
+   "id": "L9b-069",
+   "file": "design/log.md",
+   "line": 11106,
+   "kind": "law",
+   "claim": "D-261: Dataflow is renamed Outputs [leads Dataflow x2]",
+   "evidence": "src/build.jl:616"
+  },
+  {
+   "id": "L9b-070",
+   "file": "design/log.md",
+   "line": 12455,
+   "kind": "decl",
+   "claim": "D-275: the exhaustive mode is build(root; activations = …)",
+   "evidence": "src/build.jl:767-768"
+  },
+  {
+   "id": "L9b-071",
+   "file": "design/log.md",
+   "line": 12456,
+   "kind": "law",
+   "claim": "D-275: no separate check entry point [lead check]",
+   "evidence": "src/Redstone.jl:8-36; no `check` function in src/ (rg)"
+  },
+  {
+   "id": "L9b-072",
+   "file": "design/log.md",
+   "line": 12812,
+   "kind": "law",
+   "claim": "D-281: lazy activation materialization is torn-state-free under concurrent requests",
+   "evidence": "src/build.jl:969-974"
+  },
+  {
+   "id": "L9b-073",
+   "file": "design/log.md",
+   "line": 12814,
+   "kind": "mech",
+   "claim": "D-281: a guard around insertion, paid at service time, never on the hot path",
+   "evidence": "src/build.jl:969-974; src/model.jl:116"
+  },
+  {
+   "id": "L9b-074",
+   "file": "design/log.md",
+   "line": 12833,
+   "kind": "law",
+   "claim": "D-282: every buffer set has one owner, and buffers are never cached",
+   "evidence": "src/build.jl:1400-1407; src/model.jl:117"
+  },
+  {
+   "id": "L9b-075",
+   "file": "design/log.md",
+   "line": 12836,
+   "kind": "law",
+   "claim": "D-282: the Simulation owns its nominal buffers (annotated D-317: the Model does)",
+   "evidence": "annotated log.md:12851; src/model.jl:95-97"
+  },
+  {
+   "id": "L9b-076",
+   "file": "design/log.md",
+   "line": 12838,
+   "kind": "law",
+   "claim": "D-282: every service invocation owns its scratch set from the same layouts",
+   "evidence": "src/model.jl:136-137"
+  },
+  {
+   "id": "L9b-077",
+   "file": "design/log.md",
+   "line": 12840,
+   "kind": "law",
+   "claim": "D-282: the Build is immutable apart from its lazily filled activation dictionary",
+   "evidence": "src/build.jl:703-710"
+  },
+  {
+   "id": "L9b-078",
+   "file": "design/log.md",
+   "line": 12841,
+   "kind": "law",
+   "claim": "D-282: one Build backs any number of deployments and models concurrently",
+   "evidence": "src/build.jl:696-698, 708"
+  },
+  {
+   "id": "L9b-079",
+   "file": "design/log.md",
+   "line": 12944,
+   "kind": "law",
+   "claim": "D-284: every leave-one-out factor above 1 is listed [lead r_p, notation annotated D-479]",
+   "evidence": "src/structure.jl:858-891; annotated log.md:12957"
+  },
+  {
+   "id": "L9b-080",
+   "file": "design/log.md",
+   "line": 12945,
+   "kind": "law",
+   "claim": "D-284: no single culprit is crowned",
+   "evidence": "src/diagnostics.jl:1426-1433"
+  },
+  {
+   "id": "L9b-081",
+   "file": "design/log.md",
+   "line": 12946,
+   "kind": "law",
+   "claim": "D-284: blame is computed against the actual constraint pool",
+   "evidence": "src/structure.jl:847-858"
+  },
+  {
+   "id": "L9b-082",
+   "file": "design/log.md",
+   "line": 12947,
+   "kind": "law",
+   "claim": "D-284: the simple-fraction offset test is never the engine's",
+   "evidence": "src/structure.jl:847-895"
+  },
+  {
+   "id": "L9b-083",
+   "file": "design/log.md",
+   "line": 13183,
+   "kind": "mech",
+   "claim": "D-289: every walk over an entry or chunk tuple is a generated unroll",
+   "evidence": "src/executor.jl:347-361"
+  },
+  {
+   "id": "L9b-084",
+   "file": "design/log.md",
+   "line": 13185,
+   "kind": "mech",
+   "claim": "D-289: the event set's projection, guard and handler walks chunk",
+   "evidence": "src/executor.jl:271, 302; test/test_executor.jl:76-90"
+  },
+  {
+   "id": "L9b-085",
+   "file": "design/log.md",
+   "line": 13187,
+   "kind": "mech",
+   "claim": "D-289: a barrier takes its chunk by reference",
+   "evidence": "src/executor.jl:531"
+  },
+  {
+   "id": "L9b-086",
+   "file": "design/log.md",
+   "line": 13187,
+   "kind": "mech",
+   "claim": "D-289: the executor holds one pointer per chunk and the event set by reference",
+   "evidence": "test/test_executor.jl:93-100; src/executor.jl:302"
+  },
+  {
+   "id": "L9b-087",
+   "file": "design/log.md",
+   "line": 13189,
+   "kind": "law",
+   "claim": "D-289: the declaration layer takes components unspecialized",
+   "evidence": "src/build.jl:767; test/test_build.jl:2156-2167"
+  },
+  {
+   "id": "L9b-088",
+   "file": "design/log.md",
+   "line": 13190,
+   "kind": "law",
+   "claim": "D-289: once-per-build code compiles nothing again per component or root type",
+   "evidence": "test/test_build.jl:2190-2212"
+  },
+  {
+   "id": "L9b-089",
+   "file": "design/log.md",
+   "line": 13192,
+   "kind": "mech",
+   "claim": "D-289: a per-component closure reads the instance from an unspecialized binding",
+   "evidence": "test/test_build.jl:2153-2155"
+  },
+  {
+   "id": "L9b-090",
+   "file": "design/log.md",
+   "line": 13193,
+   "kind": "law",
+   "claim": "D-289: a component's own declaration methods still compile per type",
+   "evidence": "test/test_build.jl:2192-2196"
+  },
+  {
+   "id": "L9b-091",
+   "file": "design/log.md",
+   "line": 13195,
+   "kind": "mech",
+   "claim": "D-289: lazy activations and precompile workloads mitigate compile cost",
+   "evidence": "src/build.jl:969-974; src/precompile.jl:1-5"
+  },
+  {
+   "id": "L9b-092",
+   "file": "design/log.md",
+   "line": 13196,
+   "kind": "mech",
+   "claim": "D-289: the workload bakes the generic machinery into the package image",
+   "evidence": "src/precompile.jl:1-5"
+  },
+  {
+   "id": "L9b-093",
+   "file": "design/log.md",
+   "line": 13847,
+   "kind": "law",
+   "claim": "D-305: the zero-allocation invariant covers the stepping loop",
+   "evidence": "test/test_discrete.jl:968; test/test_executor.jl:71-72"
+  },
+  {
+   "id": "L9b-094",
+   "file": "design/log.md",
+   "line": 13851,
+   "kind": "law",
+   "claim": "D-305: guards and x_projection take the exactly-zero budget",
+   "evidence": "test/test_executor.jl:88-89"
+  },
+  {
+   "id": "L9b-095",
+   "file": "design/log.md",
+   "line": 13852,
+   "kind": "law",
+   "claim": "D-305: handlers take the ticks' zero-by-idiom budget",
+   "evidence": "test/test_executor.jl:188, 198"
+  },
+  {
+   "id": "L9b-096",
+   "file": "design/log.md",
+   "line": 14278,
+   "kind": "law",
+   "claim": "D-315: Structure holds declared facts and no resolved table",
+   "evidence": "src/structure.jl:243-250"
+  },
+  {
+   "id": "L9b-097",
+   "file": "design/log.md",
+   "line": 14279,
+   "kind": "law",
+   "claim": "D-315: Structure carries entries, anchors, scopes, root inputs with types, one row per assembly",
+   "evidence": "src/structure.jl:243-250"
+  },
+  {
+   "id": "L9b-098",
+   "file": "design/log.md",
+   "line": 14282,
+   "kind": "law",
+   "claim": "D-315: every resolution over the wiring is a function computed where read",
+   "evidence": "src/structure.jl:1032-1036"
+  },
+  {
+   "id": "L9b-099",
+   "file": "design/log.md",
+   "line": 14285,
+   "kind": "law",
+   "claim": "D-315: LevelEntry is one row per assembly in walk order: path, instance, children, wires",
+   "evidence": "src/structure.jl:197-202, 249"
+  },
+  {
+   "id": "L9b-100",
+   "file": "design/log.md",
+   "line": 14287,
+   "kind": "law",
+   "claim": "D-315: a Child holds segment, field and instance",
+   "evidence": "src/structure.jl:171-175"
+  },
+  {
+   "id": "L9b-101",
+   "file": "design/log.md",
+   "line": 14288,
+   "kind": "mech",
+   "claim": "D-315: membership is read off the segment against the field in one accessor",
+   "evidence": "src/structure.jl:186-188"
+  },
+  {
+   "id": "L9b-102",
+   "file": "design/log.md",
+   "line": 14290,
+   "kind": "law",
+   "claim": "D-315: wires are (path, face) => (path, face) pairs, producer to consumer, in declaration order",
+   "evidence": "src/structure.jl:189-196"
+  },
+  {
+   "id": "L9b-103",
+   "file": "design/log.md",
+   "line": 14292,
+   "kind": "law",
+   "claim": "D-315: the root is the first row's instance",
+   "evidence": "src/structure.jl:205; src/show.jl:128"
+  },
+  {
+   "id": "L9b-104",
+   "file": "design/log.md",
+   "line": 14293,
+   "kind": "law",
+   "claim": "D-315: ComponentEntry drops conns",
+   "evidence": "src/structure.jl:158-164"
+  },
+  {
+   "id": "L9b-105",
+   "file": "design/log.md",
+   "line": 14293,
+   "kind": "law",
+   "claim": "D-315: in_faces, out_faces, in_routes, out_routes go [leads]",
+   "evidence": "src/structure.jl:243-250"
+  },
+  {
+   "id": "L9b-106",
+   "file": "design/log.md",
+   "line": 14295,
+   "kind": "decl",
+   "claim": "D-315: terminal_producer(structure, (path, face)) resolves to a primitive port or root input",
+   "evidence": "src/structure.jl:1041-1072"
+  },
+  {
+   "id": "L9b-107",
+   "file": "design/log.md",
+   "line": 14297,
+   "kind": "decl",
+   "claim": "D-315: face_routes(structure, (path, face)) returns hops, one route or one per consumer",
+   "evidence": "src/structure.jl:1074-1095"
+  },
+  {
+   "id": "L9b-108",
+   "file": "design/log.md",
+   "line": 14298,
+   "kind": "law",
+   "claim": "D-315: both take plain data and compile once",
+   "evidence": "src/structure.jl:1032-1034; test/test_build.jl:2167, 2225-2233"
+  },
+  {
+   "id": "L9b-109",
+   "file": "design/log.md",
+   "line": 14300,
+   "kind": "law",
+   "claim": "D-315: the activation's cell layout is the one home for resolved addresses",
+   "evidence": "src/structure.jl:205-213"
+  },
+  {
+   "id": "L9b-110",
+   "file": "design/log.md",
+   "line": 14301,
+   "kind": "mech",
+   "claim": "D-315: the alias pass enters primitive input faces (annotated: output faces only)",
+   "evidence": "annotated log.md:14375; src/structure.jl:209-212"
+  },
+  {
+   "id": "L9b-111",
+   "file": "design/log.md",
+   "line": 14303,
+   "kind": "mech",
+   "claim": "D-315: the graph, meet, probe, tracer, linearizer, mounting, views, printer call the two functions",
+   "evidence": "src/build.jl:542-554; src/show.jl:78, 261; rg in src/tracer.jl, src/readers.jl, src/devices.jl"
+  },
+  {
+   "id": "L9b-112",
+   "file": "design/log.md",
+   "line": 14306,
+   "kind": "law",
+   "claim": "D-315: test_build's specialization test gains the functions and a fourth case",
+   "evidence": "test/test_build.jl:2167, 2225-2233"
+  },
+  {
+   "id": "L9b-113",
+   "file": "design/log.md",
+   "line": 14521,
+   "kind": "law",
+   "claim": "D-317: a Model{T} is a deployment and its executor at one scalar",
+   "evidence": "src/model.jl:95-97"
+  },
+  {
+   "id": "L9b-114",
+   "file": "design/log.md",
+   "line": 14522,
+   "kind": "law",
+   "claim": "D-317: a Simulation runs a Model{Float64} beside the plane, control and run",
+   "evidence": "src/sim.jl:285-290"
+  },
+  {
+   "id": "L9b-115",
+   "file": "design/log.md",
+   "line": 14525,
+   "kind": "law",
+   "claim": "D-317: Model{T} holds deployment, executor, status and diagnostic cell",
+   "evidence": "src/model.jl:95-102"
+  },
+  {
+   "id": "L9b-116",
+   "file": "design/log.md",
+   "line": 14526,
+   "kind": "law",
+   "claim": "D-317: Simulation is a mutable struct of four fields",
+   "evidence": "src/sim.jl:285-290"
+  },
+  {
+   "id": "L9b-117",
+   "file": "design/log.md",
+   "line": 14529,
+   "kind": "law",
+   "claim": "D-317: Simulation(model::Model{Float64}; join_timeout = 5.0) refuses other scalars as MethodError",
+   "evidence": "src/sim.jl:358; probe:34"
+  },
+  {
+   "id": "L9b-118",
+   "file": "design/log.md",
+   "line": 14532,
+   "kind": "law",
+   "claim": "D-317: Simulation, Run, Trace, TerminationRecord have no scalar parameter",
+   "evidence": "src/sim.jl:180, 228, 285; src/trace.jl:78"
+  },
+  {
+   "id": "L9b-119",
+   "file": "design/log.md",
+   "line": 14533,
+   "kind": "decl",
+   "claim": "D-317: Model(deployment, T = Float64; chunk_size = 16)",
+   "evidence": "src/model.jl:107"
+  },
+  {
+   "id": "L9b-120",
+   "file": "design/log.md",
+   "line": 14534,
+   "kind": "mech",
+   "claim": "D-317: Simulation(deployment/build/root) compose through a Float64 model",
+   "evidence": "src/sim.jl:387-392"
+  },
+  {
+   "id": "L9b-121",
+   "file": "design/log.md",
+   "line": 14536,
+   "kind": "law",
+   "claim": "D-317: _frozen and the event compile guard stay",
+   "evidence": "src/build.jl:1066"
+  },
+  {
+   "id": "L9b-122",
+   "file": "design/log.md",
+   "line": 14537,
+   "kind": "law",
+   "claim": "D-317: no AbstractFloat heuristic exists",
+   "evidence": "src/model.jl:103-106"
+  },
+  {
+   "id": "L9b-123",
+   "file": "design/log.md",
+   "line": 14538,
+   "kind": "law",
+   "claim": "D-317: a Model at another scalar is public scratch, stepped frame by frame",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "L9b-124",
+   "file": "design/log.md",
+   "line": 14539,
+   "kind": "law",
+   "claim": "D-317: a non-nominal Model has no ticks and no events",
+   "evidence": "probe:81; src/frame.jl:53-54"
+  },
+  {
+   "id": "L9b-125",
+   "file": "design/log.md",
+   "line": 14540,
+   "kind": "law",
+   "claim": "D-317: activations stay cached on the Build by scalar type",
+   "evidence": "src/build.jl:707, 969-974"
+  },
+  {
+   "id": "L9b-126",
+   "file": "design/log.md",
+   "line": 14541,
+   "kind": "law",
+   "claim": "D-317: executors are instantiated per use, never cached",
+   "evidence": "src/model.jl:117"
+  },
+  {
+   "id": "L9b-127",
+   "file": "design/log.md",
+   "line": 14542,
+   "kind": "law",
+   "claim": "D-317: the clock keeps t and t₀ on the executor, and init! on the model sets both",
+   "evidence": "src/build.jl:1421; src/store.jl:165; src/model.jl:329"
+  },
+  {
+   "id": "L9b-128",
+   "file": "design/log.md",
+   "line": 14543,
+   "kind": "law",
+   "claim": "D-317: the frame index and boundary ordinal are the run's counters",
+   "evidence": "src/sim.jl:234-235"
+  },
+  {
+   "id": "L9b-129",
+   "file": "design/log.md",
+   "line": 14544,
+   "kind": "law",
+   "claim": "D-317: doors set the counters, the loop advances them, every snapshot publishes them",
+   "evidence": "src/dataplane.jl:541-542; probe:64"
+  },
+  {
+   "id": "L9b-130",
+   "file": "design/log.md",
+   "line": 14546,
+   "kind": "decl",
+   "claim": "D-317: frame!(model, k, hooks) → Bool",
+   "evidence": "src/frame.jl:69"
+  },
+  {
+   "id": "L9b-131",
+   "file": "design/log.md",
+   "line": 14547,
+   "kind": "law",
+   "claim": "D-317: frame! runs frame_top!(hooks) before touching state",
+   "evidence": "src/frame.jl:85-89"
+  },
+  {
+   "id": "L9b-132",
+   "file": "design/log.md",
+   "line": 14547,
+   "kind": "law",
+   "claim": "D-317: settled!(hooks) runs at every settled boundary, t* and the frame top included",
+   "evidence": "src/frame.jl:165-169, 322"
+  },
+  {
+   "id": "L9b-133",
+   "file": "design/log.md",
+   "line": 14549,
+   "kind": "law",
+   "claim": "D-317: a true from settled! abandons the remainder and is frame!'s return",
+   "evidence": "src/frame.jl:165-169"
+  },
+  {
+   "id": "L9b-134",
+   "file": "design/log.md",
+   "line": 14550,
+   "kind": "mech",
+   "claim": "D-317: the hooks are one FrameHooks struct with concrete fields, built once per advance",
+   "evidence": "src/sim.jl:1994"
+  },
+  {
+   "id": "L9b-135",
+   "file": "design/log.md",
+   "line": 14551,
+   "kind": "law",
+   "claim": "D-317: NoHooks does nothing and returns false",
+   "evidence": "src/model.jl:224, 237, 253"
+  },
+  {
+   "id": "L9b-136",
+   "file": "design/log.md",
+   "line": 14551,
+   "kind": "law",
+   "claim": "D-317: init! on the model takes the hooks; boundary zero publishes through settled!",
+   "evidence": "src/model.jl:318"
+  },
+  {
+   "id": "L9b-137",
+   "file": "design/log.md",
+   "line": 14553,
+   "kind": "mech",
+   "claim": "D-317: chattering and firing-budget reports go to the model's diagnostic cell",
+   "evidence": "src/model.jl:754; src/frame.jl:238"
+  },
+  {
+   "id": "L9b-138",
+   "file": "design/log.md",
+   "line": 14554,
+   "kind": "mech",
+   "claim": "D-317: the drain folds the model's cell into the loop's account",
+   "evidence": "src/sim.jl:1965"
+  },
+  {
+   "id": "L9b-139",
+   "file": "design/log.md",
+   "line": 14556,
+   "kind": "law",
+   "claim": "D-317: the execution cursor stays on the executor",
+   "evidence": "src/build.jl:1423"
+  },
+  {
+   "id": "L9b-140",
+   "file": "design/log.md",
+   "line": 14557,
+   "kind": "law",
+   "claim": "D-317: frame! writes the drain phase before frame_top! runs",
+   "evidence": "src/frame.jl:86-89"
+  },
+  {
+   "id": "L9b-141",
+   "file": "design/log.md",
+   "line": 14559,
+   "kind": "law",
+   "claim": "D-317: status is :built/:consistent/:inconsistent, written by the model's own doors",
+   "evidence": "src/model.jl:98; src/frame.jl:94"
+  },
+  {
+   "id": "L9b-142",
+   "file": "design/log.md",
+   "line": 14560,
+   "kind": "law",
+   "claim": "D-317: Control holds a running flag in place of the lifecycle state",
+   "evidence": "src/control.jl:70"
+  },
+  {
+   "id": "L9b-143",
+   "file": "design/log.md",
+   "line": 14561,
+   "kind": "law",
+   "claim": "D-317: lifecycle(sim) derives the five states from flag, status and closed run",
+   "evidence": "src/sim.jl:511-517; probe:58-64"
+  },
+  {
+   "id": "L9b-144",
+   "file": "design/log.md",
+   "line": 14566,
+   "kind": "mech",
+   "claim": "D-317: frame! and init! host the catch and build StepError through one constructor",
+   "evidence": "src/frame.jl:91-95"
+  },
+  {
+   "id": "L9b-145",
+   "file": "design/log.md",
+   "line": 14567,
+   "kind": "law",
+   "claim": "D-317: a throw in a frame writes :inconsistent, in boundary zero :built",
+   "evidence": "src/frame.jl:94; src/model.jl:76-79"
+  },
+  {
+   "id": "L9b-146",
+   "file": "design/log.md",
+   "line": 14569,
+   "kind": "law",
+   "claim": "D-317: an interrupt is never wrapped inside a frame (annotated D-441: now wrapped)",
+   "evidence": "annotated log.md:14691; src/frame.jl:31"
+  },
+  {
+   "id": "L9b-147",
+   "file": "design/log.md",
+   "line": 14570,
+   "kind": "mech",
+   "claim": "D-317: the simulation's catch keeps the disposition",
+   "evidence": "src/sim.jl:1660-1675 (interrupt and loop-failure arms)"
+  },
+  {
+   "id": "L9b-148",
+   "file": "design/log.md",
+   "line": 14572,
+   "kind": "decl",
+   "claim": "D-317: the model's doors init! … modes exist on Model",
+   "evidence": "probe:29"
+  },
+  {
+   "id": "L9b-149",
+   "file": "design/log.md",
+   "line": 14575,
+   "kind": "decl",
+   "claim": "D-317: the simulation's doors run!, step!, replay!, restore!, checkpoint, live!",
+   "evidence": "src/sim.jl:892, 1063, 1334; probe:29"
+  },
+  {
+   "id": "L9b-150",
+   "file": "design/log.md",
+   "line": 14576,
+   "kind": "mech",
+   "claim": "D-317: init! on a simulation forwards to the model's after the operational gate",
+   "evidence": "src/sim.jl:834-836"
+  },
+  {
+   "id": "L9b-151",
+   "file": "design/log.md",
+   "line": 14578,
+   "kind": "mech",
+   "claim": "D-317: the model doors a simulation had keep forwarding methods",
+   "evidence": "src/sim.jl:639-642; probe:29"
+  },
+  {
+   "id": "L9b-152",
+   "file": "design/log.md",
+   "line": 14579,
+   "kind": "law",
+   "claim": "D-317: no model door carries a gate (annotated D-318, D-319)",
+   "evidence": "annotated log.md:14581, 14585; src/model.jl:258"
+  },
+  {
+   "id": "L9b-153",
+   "file": "design/log.md",
+   "line": 14706,
+   "kind": "law",
+   "claim": "D-318: Model carries a claim flag set once by Simulation(model) through CAS",
+   "evidence": "src/model.jl:99; src/sim.jl:373"
+  },
+  {
+   "id": "L9b-154",
+   "file": "design/log.md",
+   "line": 14707,
+   "kind": "law",
+   "claim": "D-318: a claimed model is ArgumentInvalid :claimed",
+   "evidence": "probe:47"
+  },
+  {
+   "id": "L9b-155",
+   "file": "design/log.md",
+   "line": 14709,
+   "kind": "law",
+   "claim": "D-318: a model not at :built is ArgumentInvalid :not_built",
+   "evidence": "probe:50"
+  },
+  {
+   "id": "L9b-156",
+   "file": "design/log.md",
+   "line": 14709,
+   "kind": "law",
+   "claim": "D-318: both refusals come before anything is allocated",
+   "evidence": "src/sim.jl:358-378"
+  },
+  {
+   "id": "L9b-157",
+   "file": "design/log.md",
+   "line": 14710,
+   "kind": "law",
+   "claim": "D-318: D-317's lifecycle derivation stands",
+   "evidence": "src/sim.jl:511-517"
+  },
+  {
+   "id": "L9b-158",
+   "file": "design/log.md",
+   "line": 14714,
+   "kind": "law",
+   "claim": "D-318: on a claimed model init!, frame!, restore accept only LoopHooks",
+   "evidence": "src/model.jl:258; src/sim.jl:2002; probe:52, 54"
+  },
+  {
+   "id": "L9b-159",
+   "file": "design/log.md",
+   "line": 14715,
+   "kind": "law",
+   "claim": "D-318: apply! on a claimed model is refused; the sim's forwarding method bypasses",
+   "evidence": "src/model.jl:492-494; src/sim.jl:639"
+  },
+  {
+   "id": "L9b-160",
+   "file": "design/log.md",
+   "line": 14718,
+   "kind": "law",
+   "claim": "D-318: evaluate!, integrate! and the boundary routines are ungated",
+   "evidence": "probe:55"
+  },
+  {
+   "id": "L9b-161",
+   "file": "design/log.md",
+   "line": 14720,
+   "kind": "law",
+   "claim": "D-318: a standalone state enters a simulation through a restore door, not the constructor",
+   "evidence": "src/sim.jl:1080; probe:50"
+  },
+  {
+   "id": "L9b-162",
+   "file": "design/log.md",
+   "line": 14722,
+   "kind": "mech",
+   "claim": "D-318: the restore door takes hooks, restores, settles via settled!, writes :consistent last",
+   "evidence": "src/model.jl:1307-1313, 480-482"
+  },
+  {
+   "id": "L9b-163",
+   "file": "design/log.md",
+   "line": 14724,
+   "kind": "mech",
+   "claim": "D-318: the sim's restore! and replay! open the run before calling it",
+   "evidence": "src/sim.jl:995-1002"
+  },
+  {
+   "id": "L9b-164",
+   "file": "design/log.md",
+   "line": 14782,
+   "kind": "law",
+   "claim": "D-319: a ModelState{T} is a Model's state as one value",
+   "evidence": "src/checkpoint.jl:74"
+  },
+  {
+   "id": "L9b-165",
+   "file": "design/log.md",
+   "line": 14783,
+   "kind": "law",
+   "claim": "D-319: a Checkpoint is a nominal ModelState beside frame index and boundary ordinal",
+   "evidence": "src/checkpoint.jl:106-110"
+  },
+  {
+   "id": "L9b-166",
+   "file": "design/log.md",
+   "line": 14784,
+   "kind": "law",
+   "claim": "D-319: checkpoint, restore!, trim!, linearize are Model doors; sim methods compose",
+   "evidence": "probe:29"
+  },
+  {
+   "id": "L9b-168",
+   "file": "design/log.md",
+   "line": 14790,
+   "kind": "law",
+   "claim": "D-319: Checkpoint holds state::ModelState{Float64}, frame::Int, boundary::Int, no scalar param",
+   "evidence": "src/checkpoint.jl:106-110"
+  },
+  {
+   "id": "L9b-169",
+   "file": "design/log.md",
+   "line": 14794,
+   "kind": "law",
+   "claim": "D-319: checkpoint(model) is legal at :consistent with the clock on a grid top",
+   "evidence": "src/model.jl:1178-1203"
+  },
+  {
+   "id": "L9b-170",
+   "file": "design/log.md",
+   "line": 14795,
+   "kind": "law",
+   "claim": "D-319: off :consistent it is ServiceLifecycle op = :checkpoint, legal = [:consistent]",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "L9b-171",
+   "file": "design/log.md",
+   "line": 14797,
+   "kind": "law",
+   "claim": "D-319: off the grid it is CheckpointMidFrame naming the frame",
+   "evidence": "src/model.jl:1199-1201"
+  },
+  {
+   "id": "L9b-172",
+   "file": "design/log.md",
+   "line": 14798,
+   "kind": "decl",
+   "claim": "D-319: restore!(model, model_state; hooks = NoHooks()) gates the claim, then fingerprint and grid",
+   "evidence": "src/model.jl:1307-1312"
+  },
+  {
+   "id": "L9b-173",
+   "file": "design/log.md",
+   "line": 14800,
+   "kind": "law",
+   "claim": "D-319: every mismatch is collected into one throw before any write",
+   "evidence": "src/model.jl:1309-1312"
+  },
+  {
+   "id": "L9b-174",
+   "file": "design/log.md",
+   "line": 14801,
+   "kind": "law",
+   "claim": "D-319: the grid check asks t = t₀ + k·Δt_frame by _frames_to; before t₀ is frame 0",
+   "evidence": "src/model.jl:1276-1287, 570-574"
+  },
+  {
+   "id": "L9b-175",
+   "file": "design/log.md",
+   "line": 14804,
+   "kind": "law",
+   "claim": "D-319: the door copies back, calls settled!, writes :consistent last, no status gate",
+   "evidence": "src/model.jl:1307-1330, 480-482"
+  },
+  {
+   "id": "L9b-176",
+   "file": "design/log.md",
+   "line": 14806,
+   "kind": "mech",
+   "claim": "D-319: checkpoint(sim) keeps its gates and wraps checkpoint(sim.model) with the counters",
+   "evidence": "src/sim.jl:892-895"
+  },
+  {
+   "id": "L9b-177",
+   "file": "design/log.md",
+   "line": 14808,
+   "kind": "law",
+   "claim": "D-319: restore!(sim, cp) makes the grid check on cp.state with the fingerprint's",
+   "evidence": "src/sim.jl:1071-1073"
+  },
+  {
+   "id": "L9b-178",
+   "file": "design/log.md",
+   "line": 14810,
+   "kind": "decl",
+   "claim": "D-319: restore!(sim, ::ModelState{Float64}) makes lifecycle, recording, fingerprint, grid checks",
+   "evidence": "src/sim.jl:1080-1091"
+  },
+  {
+   "id": "L9b-179",
+   "file": "design/log.md",
+   "line": 14816,
+   "kind": "law",
+   "claim": "D-319: a state off t₀ + k·Δt_frame is CheckpointMidFrame at k; before t₀ at frame 0",
+   "evidence": "src/model.jl:1284-1286, 573"
+  },
+  {
+   "id": "L9b-180",
+   "file": "design/log.md",
+   "line": 14817,
+   "kind": "law",
+   "claim": "D-319: the trajectory opens at k, the boundary under ordinal 0, the run's ordinal 1",
+   "evidence": "src/sim.jl:1092-1093, 1001"
+  },
+  {
+   "id": "L9b-181",
+   "file": "design/log.md",
+   "line": 14821,
+   "kind": "law",
+   "claim": "D-319: a state at another scalar is CheckpointMismatch :scalar, state's expected, target's found",
+   "evidence": "probe:75, 78"
+  },
+  {
+   "id": "L9b-182",
+   "file": "design/log.md",
+   "line": 14824,
+   "kind": "law",
+   "claim": "D-319: the scalar refusal's message names a Model",
+   "evidence": "probe:76"
+  },
+  {
+   "id": "L9b-184",
+   "file": "design/log.md",
+   "line": 14826,
+   "kind": "decl",
+   "claim": "D-319: linearize(model, taps; about = nothing, t0 = nothing, width = 8)",
+   "evidence": "src/linearize.jl:266-267, 101"
+  },
+  {
+   "id": "L9b-185",
+   "file": "design/log.md",
+   "line": 14827,
+   "kind": "law",
+   "claim": "D-319: trim! and linearize take a Model{Float64}; each scratch half is a Model",
+   "evidence": "src/trim.jl:560; src/linearize.jl:266; src/model.jl:136-137"
+  },
+  {
+   "id": "L9b-186",
+   "file": "design/log.md",
+   "line": 14828,
+   "kind": "law",
+   "claim": "D-319: trim! takes the claim gate first and commits through the model's init!",
+   "evidence": "src/trim.jl:562, 566"
+  },
+  {
+   "id": "L9b-187",
+   "file": "design/log.md",
+   "line": 14830,
+   "kind": "law",
+   "claim": "D-319: linearize takes no claim gate; its default point is behind ServiceLifecycle naming linearize",
+   "evidence": "src/linearize.jl:266-280"
+  },
+  {
+   "id": "L9b-188",
+   "file": "design/log.md",
+   "line": 14832,
+   "kind": "law",
+   "claim": "D-319: the sim's trim! and linearize keep lifecycle gates and compose the model's",
+   "evidence": "src/sim.jl:1125-1134, 1166-1172"
+  },
+  {
+   "id": "L9b-189",
+   "file": "design/log.md",
+   "line": 14833,
+   "kind": "mech",
+   "claim": "D-319: trim!(sim) commits via init!(sim); linearize(sim) defaults to checkpoint(sim)",
+   "evidence": "src/sim.jl:1133, 1171"
+  },
+  {
+   "id": "L9b-190",
+   "file": "design/log.md",
+   "line": 14836,
+   "kind": "law",
+   "claim": "D-319: trim!/linearize on Model{T ≠ Float64} is ArgumentInvalid :non_nominal, value Model{T}",
+   "evidence": "src/trim.jl:574-575; src/linearize.jl:287-288"
+  },
+  {
+   "id": "L9b-191",
+   "file": "design/log.md",
+   "line": 14838,
+   "kind": "law",
+   "claim": "D-319: the Model{Float64} methods are more specific and win",
+   "evidence": "src/trim.jl:560, 574; src/linearize.jl:266, 287"
+  },
+  {
+   "id": "L9b-192",
+   "file": "design/log.md",
+   "line": 14839,
+   "kind": "law",
+   "claim": "D-319: trim.jl and linearize.jl are included after frame.jl and before sim.jl",
+   "evidence": "src/Redstone.jl:29-32"
+  },
+  {
+   "id": "L9b-194",
+   "file": "design/log.md",
+   "line": 14903,
+   "kind": "law",
+   "claim": "D-320: Model admits Float64 and Dual (annotated: a Dual over Float64 only)",
+   "evidence": "annotated log.md:14942; probe:38-41"
+  },
+  {
+   "id": "L9b-195",
+   "file": "design/log.md",
+   "line": 14906,
+   "kind": "law",
+   "claim": "D-320: the scalar check runs before the activation is derived",
+   "evidence": "src/model.jl:108-116"
+  },
+  {
+   "id": "L9b-196",
+   "file": "design/log.md",
+   "line": 14907,
+   "kind": "law",
+   "claim": "D-320: refused as ArgumentInvalid call = :Model, reason = :scalar, argument = :T, value = T",
+   "evidence": "probe:38"
+  },
+  {
+   "id": "L9b-197",
+   "file": "design/log.md",
+   "line": 14910,
+   "kind": "law",
+   "claim": "D-320: the list is explicit",
+   "evidence": "src/model.jl:103-106"
+  },
+  {
+   "id": "L9b-198",
+   "file": "design/log.md",
+   "line": 17573,
+   "kind": "mech",
+   "claim": "D-432: descriptor renders a Build or a Deployment to data",
+   "evidence": "src/descriptor.jl:44-45"
+  },
+  {
+   "id": "L9b-199",
+   "file": "design/log.md",
+   "line": 17578,
+   "kind": "law",
+   "claim": "D-432: header format_version {major, minor}, redstone_version and kind",
+   "evidence": "src/descriptor.jl:10, 48-52; probe:109"
+  },
+  {
+   "id": "L9b-200",
+   "file": "design/log.md",
+   "line": 17581,
+   "kind": "law",
+   "claim": "D-432: one body under the key the kind names",
+   "evidence": "src/descriptor.jl:48-52; probe:109"
+  },
+  {
+   "id": "L9b-202",
+   "file": "design/log.md",
+   "line": 17582,
+   "kind": "law",
+   "claim": "D-432: a deployment body embeds the build body whole",
+   "evidence": "src/descriptor.jl:65; probe:112"
+  },
+  {
+   "id": "L9b-203",
+   "file": "design/log.md",
+   "line": 17586,
+   "kind": "law",
+   "claim": "D-432: structure nodes in walk order with class, field, key, tier, timing, type identity, faces",
+   "evidence": "src/descriptor.jl:217-264"
+  },
+  {
+   "id": "L9b-204",
+   "file": "design/log.md",
+   "line": 17588,
+   "kind": "law",
+   "claim": "D-432: assembly nodes' wires verbatim per level with full-path endpoints",
+   "evidence": "src/descriptor.jl:272-283"
+  },
+  {
+   "id": "L9b-205",
+   "file": "design/log.md",
+   "line": 17589,
+   "kind": "law",
+   "claim": "D-432: root inputs, anchors, rate scopes and a types table",
+   "evidence": "src/descriptor.jl:159-169"
+  },
+  {
+   "id": "L9b-206",
+   "file": "design/log.md",
+   "line": 17590,
+   "kind": "law",
+   "claim": "D-432: outputs hold the execution order and each leaf's stage lists",
+   "evidence": "src/descriptor.jl:490-493"
+  },
+  {
+   "id": "L9b-207",
+   "file": "design/log.md",
+   "line": 17592,
+   "kind": "mech",
+   "claim": "D-432: faces from the declaration reader; port classes from probing",
+   "evidence": "src/descriptor.jl:290-293, 490-493"
+  },
+  {
+   "id": "L9b-208",
+   "file": "design/log.md",
+   "line": 17594,
+   "kind": "law",
+   "claim": "D-432: each leaf face's kind marker by one classification in test order",
+   "evidence": "src/descriptor.jl:307-323"
+  },
+  {
+   "id": "L9b-209",
+   "file": "design/log.md",
+   "line": 17598,
+   "kind": "law",
+   "claim": "D-432: a Pinned entry unwraps and sets a pinned flag",
+   "evidence": "src/descriptor.jl:296-299"
+  },
+  {
+   "id": "L9b-210",
+   "file": "design/log.md",
+   "line": 17600,
+   "kind": "law",
+   "claim": "D-432: a type is described once by its qualified base name",
+   "evidence": "src/descriptor.jl:356-357, 421-436"
+  },
+  {
+   "id": "L9b-211",
+   "file": "design/log.md",
+   "line": 17601,
+   "kind": "law",
+   "claim": "D-432: the type row carries its docstring as Markdown and declaration locations",
+   "evidence": "src/descriptor.jl:439-487"
+  },
+  {
+   "id": "L9b-212",
+   "file": "design/log.md",
+   "line": 17603,
+   "kind": "law",
+   "claim": "D-432: an instance carries its full printed type and each inert field cut at 80",
+   "evidence": "src/descriptor.jl:261-263, 394-417"
+  },
+  {
+   "id": "L9b-213",
+   "file": "design/log.md",
+   "line": 17605,
+   "kind": "law",
+   "claim": "D-432: descriptor returns a tree of NamedTuples etc., with no JSON dependency in the core",
+   "evidence": "src/descriptor.jl:1-6; Project.toml:9-14"
+  },
+  {
+   "id": "L9b-214",
+   "file": "design/log.md",
+   "line": 17606,
+   "kind": "law",
+   "claim": "D-432: a field that does not apply is omitted, never null [lead null]",
+   "evidence": "src/descriptor.jl:3-5, 354-356"
+  },
+  {
+   "id": "L9b-215",
+   "file": "design/log.md",
+   "line": 17607,
+   "kind": "law",
+   "claim": "D-432: a collection keyed by data is an array of objects carrying name",
+   "evidence": "src/descriptor.jl:5-6; probe:110"
+  },
+  {
+   "id": "L9b-216",
+   "file": "design/log.md",
+   "line": 17609,
+   "kind": "law",
+   "claim": "D-432: the schema is src/descriptor.json, draft 7, strict",
+   "evidence": "src/descriptor.json:2, 5"
+  },
+  {
+   "id": "L9b-217",
+   "file": "design/log.md",
+   "line": 17611,
+   "kind": "law",
+   "claim": "D-432: the suite validates after a JSON round trip; JSON and JSONSchema are test deps only",
+   "evidence": "test/test_descriptor.jl:13-16; test/Project.toml:7-8"
+  },
+  {
+   "id": "L9b-218",
+   "file": "design/log.md",
+   "line": 17613,
+   "kind": "law",
+   "claim": "D-432: validation is a CI-time check, never a runtime gate",
+   "evidence": "src/descriptor.jl:1-7; Project.toml:9-14"
+  },
+  {
+   "id": "L9b-219",
+   "file": "design/log.md",
+   "line": 17614,
+   "kind": "law",
+   "claim": "D-432: DiagnosticError gains a structure field (trigger annotated D-434)",
+   "evidence": "src/diagnostics.jl:103-112; annotated log.md:17666"
+  },
+  {
+   "id": "L9b-220",
+   "file": "design/log.md",
+   "line": 17616,
+   "kind": "law",
+   "claim": "D-432: the structure field is filled at the build's door alone",
+   "evidence": "src/build.jl:810"
+  },
+  {
+   "id": "L9b-221",
+   "file": "design/log.md",
+   "line": 18532,
+   "kind": "decl",
+   "claim": "D-442: algorithm takes RK4(h)/Heun(h) (annotated D-449: the tokens carry no step)",
+   "evidence": "annotated log.md:18572; src/deployment.jl:357, 368"
+  },
+  {
+   "id": "L9b-222",
+   "file": "design/log.md",
+   "line": 18536,
+   "kind": "law",
+   "claim": "D-442: the token is a separate type, bound to its stepper at Model construction",
+   "evidence": "src/deployment.jl:336-342; src/model.jl:117-118"
+  },
+  {
+   "id": "L9b-223",
+   "file": "design/log.md",
+   "line": 18539,
+   "kind": "law",
+   "claim": "D-442: RK4() is the default",
+   "evidence": "src/deployment.jl:556"
+  },
+  {
+   "id": "L9b-224",
+   "file": "design/log.md",
+   "line": 18539,
+   "kind": "law",
+   "claim": "D-442: a stepless instance steps by Δt_frame, recorded resolved (annotated D-449: h_max)",
+   "evidence": "annotated log.md:18572; src/deployment.jl:226-227"
+  },
+  {
+   "id": "L9b-225",
+   "file": "design/log.md",
+   "line": 18542,
+   "kind": "law",
+   "claim": "D-442: the step is exact and a float is refused at the token (annotated D-449)",
+   "evidence": "annotated log.md:18575"
+  },
+  {
+   "id": "L9b-226",
+   "file": "design/log.md",
+   "line": 18544,
+   "kind": "law",
+   "claim": "D-442: a nonpositive step is DeploymentInvalid with parameter h (annotated D-449)",
+   "evidence": "annotated log.md:18575"
+  },
+  {
+   "id": "L9b-227",
+   "file": "design/log.md",
+   "line": 18546,
+   "kind": "law",
+   "claim": "D-442: the instance compares, hashes and prints as a value",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "L9b-228",
+   "file": "design/log.md",
+   "line": 18547,
+   "kind": "mech",
+   "claim": "D-442: the instance reaches the trace header, replay comparison and checkpoint",
+   "evidence": "src/trace.jl:79; src/checkpoint.jl:83; src/deployment.jl:619"
+  },
+  {
+   "id": "L9b-229",
+   "file": "design/log.md",
+   "line": 18606,
+   "kind": "law",
+   "claim": "D-443: a Deployment fixes Δt_frame, Δt_base and the step (annotated D-449: h_max)",
+   "evidence": "annotated log.md:18642; src/deployment.jl:541-544"
+  },
+  {
+   "id": "L9b-230",
+   "file": "design/log.md",
+   "line": 18610,
+   "kind": "law",
+   "claim": "D-443: Δt_frame is the Deployment's and required",
+   "evidence": "probe:92; src/deployment.jl:218"
+  },
+  {
+   "id": "L9b-231",
+   "file": "design/log.md",
+   "line": 18611,
+   "kind": "law",
+   "claim": "D-443: the simulation never owns the frame",
+   "evidence": "src/deployment.jl:541; src/sim.jl:285-290"
+  },
+  {
+   "id": "L9b-232",
+   "file": "design/log.md",
+   "line": 18612,
+   "kind": "law",
+   "claim": "D-443: Δt_base defaults to Δt_frame",
+   "evidence": "probe:94; src/deployment.jl:268"
+  },
+  {
+   "id": "L9b-233",
+   "file": "design/log.md",
+   "line": 18612,
+   "kind": "decl",
+   "claim": "D-443: derivation stays the explicit Δt_base = :derive",
+   "evidence": "src/deployment.jl:253"
+  },
+  {
+   "id": "L9b-234",
+   "file": "design/log.md",
+   "line": 18614,
+   "kind": "law",
+   "claim": "D-443: N_base retires as a keyword, field and recorded parameter [lead]",
+   "evidence": "probe:93-94"
+  },
+  {
+   "id": "L9b-236",
+   "file": "design/log.md",
+   "line": 20024,
+   "kind": "law",
+   "claim": "D-463: h_min above half the resolved h_max is DeploymentInvalid :range, h_max related, any method",
+   "evidence": "probe:88; src/deployment.jl:236-239"
+  },
+  {
+   "id": "L9b-237",
+   "file": "design/log.md",
+   "line": 20102,
+   "kind": "law",
+   "claim": "D-465: the structure step refuses a structure no deployment binds, by one trial binding",
+   "evidence": "src/build.jl:787; src/structure.jl:958"
+  },
+  {
+   "id": "L9b-238",
+   "file": "design/log.md",
+   "line": 20105,
+   "kind": "law",
+   "claim": "D-465: the trial binds at Δt_frame = Δt_base = gcd(pool), or 1//1 for an empty pool",
+   "evidence": "src/structure.jl:975-977"
+  },
+  {
+   "id": "L9b-239",
+   "file": "design/log.md",
+   "line": 20108,
+   "kind": "mech",
+   "claim": "D-465: the trial uses the constructor's anchor division, multiply-add and frame margin",
+   "evidence": "src/structure.jl:983, 990, 1003"
+  },
+  {
+   "id": "L9b-240",
+   "file": "design/log.md",
+   "line": 20110,
+   "kind": "law",
+   "claim": "D-465: the trial's premise is a fold with no recorded violation",
+   "evidence": "src/structure.jl:959"
+  },
+  {
+   "id": "L9b-241",
+   "file": "design/log.md",
+   "line": 20111,
+   "kind": "law",
+   "claim": "D-465: a failure is RatesViolation :range on the entry that composed the count",
+   "evidence": "src/structure.jl:961-965"
+  },
+  {
+   "id": "L9b-242",
+   "file": "design/log.md",
+   "line": 20112,
+   "kind": "law",
+   "claim": "D-465: the Absolute entry of an anchor whose count leaves Int",
+   "evidence": "src/structure.jl:983-986"
+  },
+  {
+   "id": "L9b-243",
+   "file": "design/log.md",
+   "line": 20113,
+   "kind": "law",
+   "claim": "D-465: the Relative entry beneath the anchor where a divisor first leaves Int",
+   "evidence": "src/structure.jl:932-941, 992"
+  },
+  {
+   "id": "L9b-244",
+   "file": "design/log.md",
+   "line": 20114,
+   "kind": "law",
+   "claim": "D-465: a gcd no Rational{Int} holds refuses every anchor's entry",
+   "evidence": "src/structure.jl:978-981"
+  },
+  {
+   "id": "L9b-245",
+   "file": "design/log.md",
+   "line": 20116,
+   "kind": "law",
+   "claim": "D-465: a built structure always has a grid report",
+   "evidence": "src/structure.jl:843-847"
+  },
+  {
+   "id": "L9b-246",
+   "file": "design/log.md",
+   "line": 20116,
+   "kind": "law",
+   "claim": "D-465: Δt_base = :derive has no :range refusal",
+   "evidence": "src/deployment.jl:253-263"
+  },
+  {
+   "id": "L9b-247",
+   "file": "design/log.md",
+   "line": 20117,
+   "kind": "law",
+   "claim": "D-465: the anchor refusals always carry the grid block",
+   "evidence": "src/deployment.jl:277-284"
+  },
+  {
+   "id": "L9b-248",
+   "file": "design/log.md",
+   "line": 20201,
+   "kind": "law",
+   "claim": "D-466: the grid report is a function of the anchors; no artifact holds it",
+   "evidence": "src/structure.jl:847; src/deployment.jl:539-553"
+  },
+  {
+   "id": "L9b-249",
+   "file": "design/log.md",
+   "line": 20204,
+   "kind": "mech",
+   "claim": "D-466: show(::Structure) prints the report after the anchor table under grid:",
+   "evidence": "src/show.jl:121-127"
+  },
+  {
+   "id": "L9b-250",
+   "file": "design/log.md",
+   "line": 20205,
+   "kind": "law",
+   "claim": "D-466: a structure with no anchors prints no grid block",
+   "evidence": "probe:98; src/diagnostics.jl:1419"
+  },
+  {
+   "id": "L9b-251",
+   "file": "design/log.md",
+   "line": 20207,
+   "kind": "law",
+   "claim": "D-466: Deployment has no grid field [lead]",
+   "evidence": "probe:94"
+  },
+  {
+   "id": "L9b-252",
+   "file": "design/log.md",
+   "line": 20207,
+   "kind": "law",
+   "claim": "D-466: show(::Deployment) prints no grid block",
+   "evidence": "src/show.jl:425-434; probe:100"
+  },
+  {
+   "id": "L9b-253",
+   "file": "design/log.md",
+   "line": 20209,
+   "kind": "law",
+   "claim": "D-466: the refusal's message, the derivation line and GridUtilization stay the constructor's",
+   "evidence": "src/deployment.jl:581-598"
+  },
+  {
+   "id": "L9b-254",
+   "file": "design/log.md",
+   "line": 20210,
+   "kind": "law",
+   "claim": "D-466: the refusal and advisory carry the report; the derivation line prints it",
+   "evidence": "src/deployment.jl:277-284, 581-585, 592-596"
+  },
+  {
+   "id": "L9b-255",
+   "file": "design/log.md",
+   "line": 20212,
+   "kind": "law",
+   "claim": "D-466: GridUtilization alone reads the Schedule's rows; the report reads the anchors",
+   "evidence": "src/deployment.jl:589-596; src/structure.jl:847"
+  },
+  {
+   "id": "L9b-256",
+   "file": "design/log.md",
+   "line": 20477,
+   "kind": "law",
+   "claim": "D-468: a pinning consumer refuses the root input's type walked to a Dual, by tier or declaration",
+   "evidence": "src/build.jl:533-554"
+  },
+  {
+   "id": "L9b-257",
+   "file": "design/log.md",
+   "line": 20480,
+   "kind": "law",
+   "claim": "D-468: a root input with a pinning consumer is pinned",
+   "evidence": "src/descriptor.jl:182-183"
+  },
+  {
+   "id": "L9b-258",
+   "file": "design/log.md",
+   "line": 20481,
+   "kind": "mech",
+   "claim": "D-468: show(::Structure) marks input routes pinned by tier or by declaration",
+   "evidence": "src/show.jl:89-93, 129-130"
+  },
+  {
+   "id": "L9b-259",
+   "file": "design/log.md",
+   "line": 20483,
+   "kind": "law",
+   "claim": "D-468: the descriptor's pinned is the meet's and pinned_by lists endpoints, empty when none",
+   "evidence": "src/descriptor.jl:180-186; probe:110"
+  },
+  {
+   "id": "L9b-260",
+   "file": "design/log.md",
+   "line": 20485,
+   "kind": "law",
+   "claim": "D-468: the cause has no key",
+   "evidence": "src/descriptor.jl:184"
+  },
+  {
+   "id": "L9b-261",
+   "file": "design/log.md",
+   "line": 20486,
+   "kind": "law",
+   "claim": "D-468: the meet is computed from the Structure, so a failure descriptor carries it",
+   "evidence": "src/build.jl:542; src/descriptor.jl:97-100"
+  },
+  {
+   "id": "L9b-262",
+   "file": "design/log.md",
+   "line": 20606,
+   "kind": "law",
+   "claim": "D-470: localization_tol not positive and finite is DeploymentInvalid :range",
+   "evidence": "src/deployment.jl:563-564; probe:90"
+  },
+  {
+   "id": "L9b-263",
+   "file": "design/log.md",
+   "line": 20633,
+   "kind": "mech",
+   "claim": "D-471: show(::Deployment) prints the schedule in its own block under schedule:",
+   "evidence": "src/show.jl:387, 432"
+  },
+  {
+   "id": "L9b-264",
+   "file": "design/log.md",
+   "line": 20634,
+   "kind": "mech",
+   "claim": "D-471: the schedule is charted against the frame tops",
+   "evidence": "src/show.jl:340-360"
+  },
+  {
+   "id": "L9b-265",
+   "file": "design/log.md",
+   "line": 20637,
+   "kind": "mech",
+   "claim": "D-471: the anchor table gives each anchor's Δt, τ, D₀, Φ₀ [lead Δtₖ, notation]",
+   "evidence": "src/show.jl:392-399; annotated log.md:20717"
+  },
+  {
+   "id": "L9b-266",
+   "file": "design/log.md",
+   "line": 20637,
+   "kind": "mech",
+   "claim": "D-471: the A₀ row prints Δt_base by its value",
+   "evidence": "src/show.jl:392"
+  },
+  {
+   "id": "L9b-267",
+   "file": "design/log.md",
+   "line": 20639,
+   "kind": "mech",
+   "claim": "D-471: one row per discrete component with anchor, Dₐ, Φₐ, D₀, Φ₀, Δt, τ",
+   "evidence": "src/show.jl:404-409"
+  },
+  {
+   "id": "L9b-268",
+   "file": "design/log.md",
+   "line": 20640,
+   "kind": "mech",
+   "claim": "D-471: the rate-scope table has the same columns after its key",
+   "evidence": "src/show.jl:410-416"
+  },
+  {
+   "id": "L9b-269",
+   "file": "design/log.md",
+   "line": 20641,
+   "kind": "mech",
+   "claim": "D-471: neither table prints a rate chain",
+   "evidence": "src/show.jl:404-416"
+  },
+  {
+   "id": "L9b-270",
+   "file": "design/log.md",
+   "line": 20642,
+   "kind": "mech",
+   "claim": "D-471: Δt and τ print exact as D·Δt_base and Φ·Δt_base",
+   "evidence": "src/show.jl:367, 400-402"
+  },
+  {
+   "id": "L9b-271",
+   "file": "design/log.md",
+   "line": 20643,
+   "kind": "mech",
+   "claim": "D-471: the chart has one column per exact unit (annotated: Δt_unit)",
+   "evidence": "src/show.jl:341; src/deployment.jl:153"
+  },
+  {
+   "id": "L9b-272",
+   "file": "design/log.md",
+   "line": 20644,
+   "kind": "mech",
+   "claim": "D-471: the chart spans the joint period, lcm of hyperperiod and Δt_frame",
+   "evidence": "src/show.jl:341"
+  },
+  {
+   "id": "L9b-273",
+   "file": "design/log.md",
+   "line": 20646,
+   "kind": "mech",
+   "claim": "D-471: the chart's first row marks the frame tops in every chart",
+   "evidence": "src/show.jl:351-352"
+  },
+  {
+   "id": "L9b-274",
+   "file": "design/log.md",
+   "line": 20647,
+   "kind": "mech",
+   "claim": "D-471: a component row marks due, not due, and blank where no base tick falls",
+   "evidence": "src/show.jl:354-357"
+  },
+  {
+   "id": "L9b-275",
+   "file": "design/log.md",
+   "line": 20649,
+   "kind": "law",
+   "claim": "D-471: the guard stays binary at 100 columns",
+   "evidence": "src/show.jl:347"
+  },
+  {
+   "id": "L9b-276",
+   "file": "design/log.md",
+   "line": 20650,
+   "kind": "law",
+   "claim": "D-471: a deployment with no discrete component prints no chart",
+   "evidence": "src/show.jl:418; probe:101"
+  },
+  {
+   "id": "L9b-277",
+   "file": "design/log.md",
+   "line": 20651,
+   "kind": "mech",
+   "claim": "D-471: one line states Δt_base against gcd(pool) with the whole number factor",
+   "evidence": "src/show.jl:373-381; test/test_show.jl:94"
+  },
+  {
+   "id": "L9b-278",
+   "file": "design/log.md",
+   "line": 20653,
+   "kind": "mech",
+   "claim": "D-471: the factor is dropped where it is 1",
+   "evidence": "src/show.jl:380"
+  },
+  {
+   "id": "L9b-279",
+   "file": "design/log.md",
+   "line": 20653,
+   "kind": "law",
+   "claim": "D-471: a structure with no anchors prints no line",
+   "evidence": "src/show.jl:376; probe:100"
+  },
+  {
+   "id": "L9b-280",
+   "file": "design/log.md",
+   "line": 20655,
+   "kind": "mech",
+   "claim": "D-471: show(::Schedule) prints float Δt, rate chains and the one-hyperperiod chart",
+   "evidence": "src/show.jl:206-239"
+  }
+ ],
+ "counts": {
+  "law": 200,
+  "decl": 18,
+  "mech": 62,
+  "ptr": 9,
+  "why": 5
+ },
+ "notes": "The slice has 23 entries and 280 listed claims. 10 are findings, all class drift, and 270 are ok. Another 14 are counted but not listed. Nine are ptr: the supersedes and amends clauses of D-261, D-317, D-465, D-466, D-468 and D-471, D-432's provisional name, and D-432's two version-bump rules, which its D-467 annotation defers to the first release. Five are why: D-289's optimization-level knob and component-package workload, D-305's tolerant services and type-instability canary, and D-317's \"every field used by every instance\".\n\nAnnotated supersessions are filed as ok. Many Position clauses the code no longer matches carry an annotation on the entry itself, such as D-256's five fields, D-315's alias pass, D-317's interrupt clause, D-320's Dual list and D-442's RK4(h). Those rows are ok with the annotation's line cited, since the log already records the move. The 10 findings are moves that a later entry or a commit records but the entry's own annotations do not.\n\nLeads, 18 in all. Findings: loop_acct, stop_on and stop_addrs, not_harmonic. Ok: sched, which was the Simulation field's name and is Deployment.schedule. Ok: Dataflow ×2 (the rename sentence), N_base ×2 (annotated or a retirement sentence), check (the rejected name), in_faces, in_routes and out_routes (removal sentence), null (the JSON concept), r_p (notation, annotated D-479), Δtₖ (notation, annotated D-478) and Deployment.grid ×2 (annotated D-466, or the superseding clause).\n\nEvery Status line reads ratified, so the slice has no superseded → chains. D-471's Position cites D-464, whose status is superseded → D-478, and D-478 is ratified. Every D-nnn link in the Positions has a reference definition, and the cited § numbers (§9.2, §9.4, §9.8, §13.2, §13.9, §14.3) exist as spec headings.\n\nThe probe ran twice, the second time after fixing a signature check and the condition syntax. It is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L9b/probe.jl, and probe:N refers to its tag lines. One thing the probe showed that the slice claims nothing about: frame! has no Simulation method, while D-317's other model doors do.\n\nTwo findings are borderline. L9b-012 (loop_acct → loop_account) was renamed by commit 1a0eac36, not by a log entry, so log_rules rule 2 may excuse it. L9b-183 (trim! t0 = 0.0, now 0) is the same instant spelled exactly."
+}

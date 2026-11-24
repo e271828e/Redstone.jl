@@ -1,0 +1,1589 @@
+{
+ "rows": [
+  {
+   "id": "L9a-005",
+   "file": "design/log.md",
+   "line": 1737,
+   "kind": "mech",
+   "claim": "D-049: the standalone `Build` artifact carries an inspectable face table.",
+   "evidence": "src/structure.jl:234-236 (\"A `Structure` stores no table of resolved faces. A face at any level resolves over the `levels` wires when it is read.\"); probe:22 (Structure fields: components, anchors, scopes, root_inputs, root_types, levels)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-315 (log.md:14274) removed the resolved face table: `in_faces`, `out_faces` and the routes went, and `terminal_producer`/`face_routes` resolve a face when it is read. D-049 carries no annotation recording this.",
+   "fix": "Annotation (date): since D-315 the `Build` holds no face table. `Structure.levels` holds each assembly's declared wires, and a face resolves over them when read (`terminal_producer`, `face_routes`)."
+  },
+  {
+   "id": "L9a-006",
+   "file": "design/log.md",
+   "line": 1737,
+   "kind": "mech",
+   "claim": "D-049: the standalone `Build` artifact carries the schedule.",
+   "evidence": "probe:19 (Build fields: structure, outputs, events, activations, lock, warnings); src/deployment.jl:84 (`Schedule` lives on the `Deployment`); src/structure.jl:158-164 (each ComponentEntry keeps only its anchor-relative `timing`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-254 (log.md:10569) moved the bound schedule into the `Deployment`. D-049 has no annotation recording the move.",
+   "fix": "Annotation (date): since D-254 the bound `Schedule` belongs to the `Deployment`. The `Build` keeps only each component's anchor-relative timing on its `Structure` entry."
+  },
+  {
+   "id": "L9a-023",
+   "file": "design/log.md",
+   "line": 2018,
+   "kind": "decl",
+   "claim": "D-060: a stop is published as an exported `Bool` face.",
+   "evidence": "src/leaves.jl:270 (`@enum StopFlag NO_STOP STOP_REQUESTED`); src/library.jl:438 (`y_types(::StopRequest) = StopFlag`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-316 made the request a `StopFlag` output port anywhere in the tree. D-060's 2026-10-08 annotation (log.md:2027-2029) records this.",
+   "fix": "No rewrite. The 2026-10-08 annotation already reads: \"Publication is a `StopFlag` output port anywhere in the tree.\""
+  },
+  {
+   "id": "L9a-024",
+   "file": "design/log.md",
+   "line": 2018,
+   "kind": "decl",
+   "claim": "D-060: the stop policy is spelled as `stop_on` root faces.",
+   "evidence": "probe:25 (`isdefined(Redstone, :stop_on)` is false); src/sim.jl:340-343 (the policy is `t_end` and `ignore_stop_requests` on each advance)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Stage M lead `stop_on` (log.md:2018). D-316 replaced it: the policy is `ignore_stop_requests`, and every request is honoured by default. The 2026-10-08 and 2026-10-19 annotations (log.md:2027-2039) record this.",
+   "fix": "No rewrite. The annotations already read: \"the policy is `ignore_stop_requests` on each advance\" and \"The `stop_on` root faces are stop requests since D-316\"."
+  },
+  {
+   "id": "L9a-025",
+   "file": "design/log.md",
+   "line": 2019,
+   "kind": "law",
+   "claim": "D-060: the stop policy is fixed at `Simulation` construction.",
+   "evidence": "src/sim.jl:304-307 (\"§13.5's termination policy is declared per advance and is no keyword here (D-255)\"); src/sim.jl:2089 (`_advance!` takes the ignore mask per advance)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-255 binds the policy per advance. The 2026-10-19 annotation (log.md:2037-2039) records this.",
+   "fix": "No rewrite. The 2026-10-19 annotation already reads: \"the policy binds per advance, not at `Simulation` construction (D-255)\"."
+  },
+  {
+   "id": "L9a-033",
+   "file": "design/log.md",
+   "line": 2239,
+   "kind": "mech",
+   "claim": "D-066: the specialized `apply!` reads condition leaves through `Getter{P}` lenses.",
+   "evidence": "probe:25 (`isdefined(Redstone, :Getter)` is false); src/conditions.jl:764-766 (the lens is `Authored{P,L}`, read with `walk_steps`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Stage M lead `Getter` (log.md:2239). Commit 4365e8d4 deleted `Getter` (\"Unify the lens and reader walks as walk_steps over AccessStep, delete Getter\"). No log entry or annotation records it. Getter{P} was an internal type, not user API.",
+   "fix": "Annotation (date): `Getter{P}` was deleted by commit 4365e8d4. The lens is `Authored{P,L}`, which reads through `walk_steps` and carries the leaf's converter type."
+  },
+  {
+   "id": "L9a-037",
+   "file": "design/log.md",
+   "line": 2240,
+   "kind": "mech",
+   "claim": "D-066: the specialized form costs about 10–50 ms of codegen once per shape.",
+   "evidence": "not timed in this slice; log.md:2250-2252 (annotation: 0.09 s at 64 writes, 0.2 s at 128, from design/reports/20261002_tuple_walks/)",
+   "verdict": "unverifiable",
+   "note": "Timing codegen per shape needs a benchmark over shapes of varied write counts, which is outside a single probe run. The entry's own annotation already narrows the figure to shapes of up to 32 writes."
+  },
+  {
+   "id": "L9a-040",
+   "file": "design/log.md",
+   "line": 2243,
+   "kind": "mech",
+   "claim": "D-066: compiled readers are the gather twin that also serves `capture`.",
+   "evidence": "probe:25 (`isdefined(Redstone, :capture)` is false); src/store.jl `capture_stores` is only the per-boundary snapshot copy",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Stage M lead `capture` (log.md:2243). D-273 (log.md:12241) retired `capture` as a condition-producing call. D-066 has no annotation on this. The G2 slice L8a flagged the same retirement at D-063.",
+   "fix": "Annotation (date): `capture` is retired (D-273). A resume is a checkpoint and a restore, and the readers' remaining gather uses are cost reads and the linearization gather."
+  },
+  {
+   "id": "L9a-044",
+   "file": "design/log.md",
+   "line": 3677,
+   "kind": "law",
+   "claim": "D-107: enumerated writers' positional batches are retained verbatim, zero-copy.",
+   "evidence": "src/trace.jl:107-130 (`_record!` sparse-converts every drained batch, whatever its writer)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-176 replaced the density rule. D-107's 2026-10-13 annotation (log.md:3695-3697) records this.",
+   "fix": "No rewrite. The annotation already reads: \"every writer's batch is sparse-converted at the drain\"."
+  },
+  {
+   "id": "L9a-046",
+   "file": "design/log.md",
+   "line": 3681,
+   "kind": "law",
+   "claim": "D-107: the conversion allocates at most once per frame, and only on frames where the interactive writer is active.",
+   "evidence": "src/trace.jl:107-123 (one `entries` vector per drained batch, for every writer)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Under D-176 the conversion allocates once per drained batch for every writer (D-176 Rationale, log.md:7013-7014). D-107's 2026-10-13 annotation names D-176 as the superseding rule.",
+   "fix": "No rewrite. The existing annotation records it: D-176's one sparse format converts every writer's batch, at one allocation per drained batch."
+  },
+  {
+   "id": "L9a-067",
+   "file": "design/log.md",
+   "line": 4833,
+   "kind": "mech",
+   "claim": "D-135: each activation-cache entry holds layouts, compiled plans and the validated flag.",
+   "evidence": "probe:18 (`Activation` fields: decls, products, layout); src/build.jl:565-569; src/model.jl:121-123 (`compile` builds the executor per `Model`, not cached on the `Build`)",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "No compiled plan and no validated flag lives on an activation. A cached activation is validated by existing. Plans and executors are compiled per consumer against it. Spec §9.4 (spec.md:5766-5767) repeats the same list, so no later entry moved it.",
+   "fix": "Docs: \"Each entry holds the declarations retyped at its scalar, the probe products and the cell layout. An entry exists only once its probes have passed, and plans and executors are compiled from it per consumer.\""
+  },
+  {
+   "id": "L9a-080",
+   "file": "design/log.md",
+   "line": 4896,
+   "kind": "mech",
+   "claim": "D-136: the heartbeat is acquire-loaded at the frame-top drain.",
+   "evidence": "src/sim.jl:2835 (`_heartbeat` read where the status record is built at publication); src/dataplane.jl:159-161",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-240 moved the read to publication. D-136's 2026-10-13 annotation (log.md:4924-4926) records it.",
+   "fix": "No rewrite. The annotation already reads: \"[D-240] (the heartbeat is read at publication)\"."
+  },
+  {
+   "id": "L9a-089",
+   "file": "design/log.md",
+   "line": 4910,
+   "kind": "mech",
+   "claim": "D-136: the per-writer status rides inline in the per-boundary snapshot allocation.",
+   "evidence": "src/dataplane.jl:303-306 (`FrameworkStatus.writers::Vector{WriterStatus}`, one vector per publication)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-241 made it one small vector of records per publication. D-136's 2026-10-13 annotation records it.",
+   "fix": "No rewrite. The annotation already reads: \"[D-241] (one small vector of records per publication)\"."
+  },
+  {
+   "id": "L9a-092",
+   "file": "design/log.md",
+   "line": 4914,
+   "kind": "mech",
+   "claim": "D-136: a noisy frame allocates a fresh ring lazily, once, at the writer's next emission after a drain.",
+   "evidence": "probe:62 (allocations per `report_cell!` call, emissions 1-16: 144, 192, 240, 240, 320, 320, 352, 352, 480, 496, 512, 544, 560, 560, 576, 608 bytes); src/dataplane.jl:141-150 (`DiagBatch(push!(copy(current.ring), occurrence), …)` on every append)",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "Every append below capacity copies the whole ring, because the CAS swaps immutable `DiagBatch` values. Spec §11.8 (spec.md:9661-9664) states the lazy-fresh-ring rule as well. The cost lands on the writer's task, outside the stepping loop's invariant.",
+   "fix": "Docs: \"a noisy frame allocates on the writer's task at each emission: below capacity the CAS appends by copying the ring, so the n-th value of a frame copies n entries.\" Code alternative: let the writer own a fresh ring after each drain and append to it in place, swapping by identity."
+  },
+  {
+   "id": "L9a-093",
+   "file": "design/log.md",
+   "line": 4918,
+   "kind": "law",
+   "claim": "D-136: the worst case per writer per boundary is one ring of 16, and everything past it is an integer increment.",
+   "evidence": "probe:62 (16 ring copies of growing size, about 6 KB in a frame, then 32 bytes for each suppressed emission past capacity); src/dataplane.jl:141-150",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "The bound holds in entry count but not in allocation. Past capacity each emission builds a new `DiagBatch` for the CAS, at 32 bytes measured. Spec §11.8 (spec.md:9666-9667) states the same bound.",
+   "fix": "Docs: \"The worst case per writer per frame is sixteen ring copies of up to sixteen values, then one small batch record for each emission past capacity.\" Or code: count past-capacity emissions with an atomic counter field rather than a rebuilt batch."
+  },
+  {
+   "id": "L9a-108",
+   "file": "design/log.md",
+   "line": 5949,
+   "kind": "mech",
+   "claim": "D-151: at the stage-return seam the framework canonicalizes by a type-level reorder `NamedTuple{canonical_names}(y)`.",
+   "evidence": "src/store.jl:107-127 (the generated `scatter_group!` compares `Set(Ys) == Set(Ns)` and writes each port by name, with no reorder)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-235 (log.md:9595) realized the always-on check at the generated write, so pairing by name happens at generation and no reorder runs. The trim seam does reorder (src/trim.jl:701, row L9a-107). Lead `canonical_names` (log.md:5949) is a placeholder. D-151 has no annotation.",
+   "fix": "Annotation (date): since D-235 a stage return is paired with its cells by name in the generated write, so the stage seam needs no reorder. Trim's residuals still reorder to `tolerances`' names."
+  },
+  {
+   "id": "L9a-109",
+   "file": "design/log.md",
+   "line": 5951,
+   "kind": "law",
+   "claim": "D-151: §9.5 keeps one whole-type `isa` against the declared type, never per-field checks.",
+   "evidence": "src/store.jl:113-121 (per-port `_accepts`, decided when the method is generated, with no runtime `isa`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-235 (log.md:9595) replaced the runtime whole-type test with per-leaf reasoning at generation and rejected \"a runtime `isa` against the declaration's `NamedTuple` type\". D-053's cost-based rejection of per-field checks holds, since no per-field instruction runs.",
+   "fix": "Annotation (date): since D-235 the check is decided when the write is generated, per port and per leaf, with no runtime `isa` and no per-field instruction at runtime."
+  },
+  {
+   "id": "L9a-112",
+   "file": "design/log.md",
+   "line": 7005,
+   "kind": "mech",
+   "claim": "D-176: records are converted against the header's schema.",
+   "evidence": "src/trace.jl:78-83 (`Trace.schemas` holds the writer schemas beside the header); src/trace.jl:16-26",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-255 moved the schema list from the header to the trace. D-176's 2026-10-13 annotation (log.md:7024-7025) records this.",
+   "fix": "No rewrite. The annotation already reads: \"records convert against the trace's schema list\"."
+  },
+  {
+   "id": "L9a-126",
+   "file": "design/log.md",
+   "line": 9029,
+   "kind": "decl",
+   "claim": "D-221: parametrizing `StepError` on its cause's type is deferred to the pending list.",
+   "evidence": "src/diagnostics.jl:245 (`struct StepError{C <: Union{Diagnostic, Exception}}`); probe:68",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-225 (log.md:9162) settled it: `StepError{C}` carries its cause's type, and a species is `StepError{Kind}`. D-221 carries no annotation.",
+   "fix": "Annotation (date): the deferral is settled by D-225. `StepError{C}` carries its cause's type, so a species is assertable as `StepError{Kind}`."
+  },
+  {
+   "id": "L9a-132",
+   "file": "design/log.md",
+   "line": 9358,
+   "kind": "law",
+   "claim": "D-229: a structural failure throws alone.",
+   "evidence": "src/assembly.jl:162-171 (`ContainerNested`/`ContainerMixed` collected into the component's list before its throw)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-431 narrowed \"alone\": a check that stops the step reports every violation in its own unit. D-229's 2026-10-21 annotation (log.md:9393-9395) records this.",
+   "fix": "No rewrite. The annotation already reads: \"A check that stops the step reports every violation in its own unit … and throws that list at once.\""
+  },
+  {
+   "id": "L9a-134",
+   "file": "design/log.md",
+   "line": 9362,
+   "kind": "law",
+   "claim": "D-229: the wire bound check fails fast with the chain.",
+   "evidence": "src/build.jl:788-795 (`_check_wires` collects, then the structure step's barrier throws once)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-236 moved the wire bound check into Stratum A's wire pass, which collects. D-229's 2026-09-08 annotation (log.md:9389-9391) records this.",
+   "fix": "No rewrite. The annotation already reads: \"the wire bound check moved to Stratum A's wire pass with D-236 and collects under that stratum's barrier\"."
+  },
+  {
+   "id": "L9a-170",
+   "file": "design/log.md",
+   "line": 10506,
+   "kind": "decl",
+   "claim": "D-253: Stratum B's product is the artifact `Dataflow`.",
+   "evidence": "probe:20 (`Outputs` with fields components, order); probe:25 (`isdefined(Redstone, :Dataflow)` is false); src/build.jl:616",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Stage M leads `Dataflow` (log.md:10506, 10527). D-261 renamed `Dataflow` to `Outputs` (log.md:11106-11108), which supersedes D-253's clause keeping the name. D-253 has no annotation recording the rename.",
+   "fix": "Annotation (date): `Dataflow` is `Outputs` since D-261, one `ComponentOutputs` row per component with the execution order beside the rows."
+  },
+  {
+   "id": "L9a-172",
+   "file": "design/log.md",
+   "line": 10507,
+   "kind": "decl",
+   "claim": "D-253: `Dataflow` carries the feedthrough edges, each with its port and face.",
+   "evidence": "probe:20 (Outputs fields: components, order; ComponentOutputs: path, stage1, stage2); src/build.jl:585-587 (\"The feedthrough graph … is not carried\")",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-261 (log.md:11061-11066, 11097-11100) dropped `edges` because the structure's connections and the producers' stage-2 names derive them. D-253 has no annotation.",
+   "fix": "Annotation (date): since D-261 the edges are not carried. Where shown, they derive from the `Structure`'s wires and the producers' `stage2`."
+  },
+  {
+   "id": "L9a-182",
+   "file": "design/log.md",
+   "line": 10526,
+   "kind": "law",
+   "claim": "D-253: the tracer takes its name lists from `Structure` and `Dataflow`, never from an activation.",
+   "evidence": "src/tracer.jl:1-8 and 280-311 (the cycle tracer runs inside the nominal evaluation's failure path and takes ports from `decls` and the stage-1 products); src/build.jl:282 (called from `_cycle_diagnostics` before `Outputs` exists)",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "The tracer does not read the `Activation`, so the rule's point holds. But it cannot read `Outputs`, which does not yet exist when a cycle stalls the order. Its names come from the declarations and the stage-1 products. No later entry records this.",
+   "fix": "Docs: drop \"the tracer\" from the list, or annotate: \"the cycle tracer runs inside the nominal evaluation before `Outputs` exists and reads its names off the declarations and the stage-1 products\"."
+  },
+  {
+   "id": "L9a-184",
+   "file": "design/log.md",
+   "line": 10528,
+   "kind": "law",
+   "claim": "D-253: the nominal activation is Stratum B's products plus Stratum C's typing.",
+   "evidence": "src/build.jl:1001-1025 (`_nominal` returns the nominal activation itself, with no `_activate` call at `Float64`)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Superseded by D-259 (log.md:10890). D-253's own 2026-10-02 annotation (log.md:10531-10533) records this.",
+   "fix": "No rewrite. The annotation already reads: \"The nominal evaluation fixes both the structure and the `Float64` typing, and no activation step runs at `Float64`.\""
+  }
+ ],
+ "ok": [
+  {
+   "id": "L9a-001",
+   "file": "design/log.md",
+   "line": 720,
+   "kind": "law",
+   "claim": "D-014: the allocation invariant is scoped to the hot path",
+   "evidence": "test/test_executor.jl:15-19"
+  },
+  {
+   "id": "L9a-002",
+   "file": "design/log.md",
+   "line": 720,
+   "kind": "law",
+   "claim": "D-014: the invariant is CI-enforced",
+   "evidence": "test/test_executor.jl:18"
+  },
+  {
+   "id": "L9a-003",
+   "file": "design/log.md",
+   "line": 1736,
+   "kind": "decl",
+   "claim": "D-049: standalone `build(world) -> Build` exists",
+   "evidence": "src/build.jl:775"
+  },
+  {
+   "id": "L9a-004",
+   "file": "design/log.md",
+   "line": 1736,
+   "kind": "mech",
+   "claim": "D-049: the Build carries an inspectable wire list",
+   "evidence": "src/structure.jl:197-202"
+  },
+  {
+   "id": "L9a-007",
+   "file": "design/log.md",
+   "line": 1737,
+   "kind": "mech",
+   "claim": "D-049: the Build carries the root slots",
+   "evidence": "probe:22"
+  },
+  {
+   "id": "L9a-008",
+   "file": "design/log.md",
+   "line": 1737,
+   "kind": "decl",
+   "claim": "D-049: `Simulation(world; ...)` wraps the build",
+   "evidence": "src/sim.jl:397"
+  },
+  {
+   "id": "L9a-009",
+   "file": "design/log.md",
+   "line": 1752,
+   "kind": "law",
+   "claim": "D-050: the stages, f and g are probed once at build (lead `h_*`: old stage notation)",
+   "evidence": "src/build.jl:63-93; src/build.jl:1121-1137"
+  },
+  {
+   "id": "L9a-010",
+   "file": "design/log.md",
+   "line": 1752,
+   "kind": "law",
+   "claim": "D-050: guards and handlers are probed once at build",
+   "evidence": "src/build.jl:1280-1290"
+  },
+  {
+   "id": "L9a-011",
+   "file": "design/log.md",
+   "line": 1753,
+   "kind": "law",
+   "claim": "D-050: project (`x_projection`) is probed at build",
+   "evidence": "src/build.jl:1139-1160"
+  },
+  {
+   "id": "L9a-012",
+   "file": "design/log.md",
+   "line": 1753,
+   "kind": "law",
+   "claim": "D-050: probing runs at the initial state and nominal T",
+   "evidence": "src/build.jl:101-102; src/build.jl:1001-1011"
+  },
+  {
+   "id": "L9a-013",
+   "file": "design/log.md",
+   "line": 1790,
+   "kind": "law",
+   "claim": "D-052: each activation probes exactly its executable set",
+   "evidence": "src/build.jl:71; src/build.jl:1091-1093"
+  },
+  {
+   "id": "L9a-014",
+   "file": "design/log.md",
+   "line": 1791,
+   "kind": "law",
+   "claim": "D-052: at Dual, the continuous stage chain and f run (lead `h_*`: old notation)",
+   "evidence": "src/build.jl:1125"
+  },
+  {
+   "id": "L9a-015",
+   "file": "design/log.md",
+   "line": 1791,
+   "kind": "law",
+   "claim": "D-052: guards and handlers never see Dual",
+   "evidence": "src/build.jl:1024; src/build.jl:1583"
+  },
+  {
+   "id": "L9a-016",
+   "file": "design/log.md",
+   "line": 1791,
+   "kind": "law",
+   "claim": "D-052: discrete stages never see Dual",
+   "evidence": "src/build.jl:71"
+  },
+  {
+   "id": "L9a-017",
+   "file": "design/log.md",
+   "line": 1792,
+   "kind": "law",
+   "claim": "D-052: activations are lazy, made at first request",
+   "evidence": "probe:12-14"
+  },
+  {
+   "id": "L9a-018",
+   "file": "design/log.md",
+   "line": 1792,
+   "kind": "decl",
+   "claim": "D-052: an opt-in exhaustive `activations` keyword exists",
+   "evidence": "probe:16"
+  },
+  {
+   "id": "L9a-019",
+   "file": "design/log.md",
+   "line": 1793,
+   "kind": "mech",
+   "claim": "D-052: the cache is keyed by concrete scalar type",
+   "evidence": "src/build.jl:707"
+  },
+  {
+   "id": "L9a-020",
+   "file": "design/log.md",
+   "line": 1795,
+   "kind": "mech",
+   "claim": "D-052/D-135: the cache holds no buffers and lives on the Build",
+   "evidence": "src/build.jl:565-569; src/build.jl:707"
+  },
+  {
+   "id": "L9a-021",
+   "file": "design/log.md",
+   "line": 2016,
+   "kind": "law",
+   "claim": "D-060: graceful termination is model state, never an exception",
+   "evidence": "src/library.jl:434-441; src/sim.jl:585-595"
+  },
+  {
+   "id": "L9a-022",
+   "file": "design/log.md",
+   "line": 2017,
+   "kind": "mech",
+   "claim": "D-060: detection uses ordinary event machinery, with a localized event when it must be localized",
+   "evidence": "src/build.jl:1285-1287"
+  },
+  {
+   "id": "L9a-026",
+   "file": "design/log.md",
+   "line": 2019,
+   "kind": "law",
+   "claim": "D-060: stop requests are OR-combined, the first honoured request wins",
+   "evidence": "src/sim.jl:585-595"
+  },
+  {
+   "id": "L9a-027",
+   "file": "design/log.md",
+   "line": 2020,
+   "kind": "law",
+   "claim": "D-060: requests are sampled at completed boundaries",
+   "evidence": "src/sim.jl:580-582; src/sim.jl:2119"
+  },
+  {
+   "id": "L9a-028",
+   "file": "design/log.md",
+   "line": 2020,
+   "kind": "law",
+   "claim": "D-060: the policy is validated against the Build",
+   "evidence": "src/diagnostics.jl:1317"
+  },
+  {
+   "id": "L9a-029",
+   "file": "design/log.md",
+   "line": 2020,
+   "kind": "law",
+   "claim": "D-060: the policy is recorded in the run's metadata",
+   "evidence": "src/sim.jl:576-578"
+  },
+  {
+   "id": "L9a-030",
+   "file": "design/log.md",
+   "line": 2020,
+   "kind": "law",
+   "claim": "D-060: exceptions from model code are always abnormal",
+   "evidence": "src/model.jl:1075-1085; src/sim.jl:515"
+  },
+  {
+   "id": "L9a-031",
+   "file": "design/log.md",
+   "line": 2021,
+   "kind": "decl",
+   "claim": "D-060: there is no `SimulationTermination` exception type (lead)",
+   "evidence": "probe:25"
+  },
+  {
+   "id": "L9a-032",
+   "file": "design/log.md",
+   "line": 2238,
+   "kind": "mech",
+   "claim": "D-066: a specialized `apply!` serves iterating services",
+   "evidence": "src/conditions.jl:940"
+  },
+  {
+   "id": "L9a-034",
+   "file": "design/log.md",
+   "line": 2239,
+   "kind": "mech",
+   "claim": "D-066: the specialized plan bakes unrolled stores",
+   "evidence": "src/conditions.jl:790-812; src/conditions.jl:844-850"
+  },
+  {
+   "id": "L9a-035",
+   "file": "design/log.md",
+   "line": 2239,
+   "kind": "law",
+   "claim": "D-066: the specialized apply! allocates nothing",
+   "evidence": "test/test_conditions.jl:675"
+  },
+  {
+   "id": "L9a-036",
+   "file": "design/log.md",
+   "line": 2239,
+   "kind": "mech",
+   "claim": "D-066: shape check is the tree type plus a `===` prefix sweep",
+   "evidence": "src/conditions.jl:814-827; src/conditions.jl:940"
+  },
+  {
+   "id": "L9a-038",
+   "file": "design/log.md",
+   "line": 2241,
+   "kind": "mech",
+   "claim": "D-066: a dynamic entry-list walk serves one-shot init",
+   "evidence": "src/conditions.jl:723; src/model.jl:327"
+  },
+  {
+   "id": "L9a-039",
+   "file": "design/log.md",
+   "line": 2242,
+   "kind": "mech",
+   "claim": "D-066: compiled readers gather cost reads and the linearization gather",
+   "evidence": "src/readers.jl:621; src/trim.jl:603"
+  },
+  {
+   "id": "L9a-041",
+   "file": "design/log.md",
+   "line": 3366,
+   "kind": "decl",
+   "claim": "D-099: ProbeDual is the public canonical probe scalar (public per D-226)",
+   "evidence": "src/build.jl:715-733"
+  },
+  {
+   "id": "L9a-042",
+   "file": "design/log.md",
+   "line": 3367,
+   "kind": "decl",
+   "claim": "D-099: `const ProbeDual = ForwardDiff.Dual{ProbeTag,Float64,1}`",
+   "evidence": "probe:17"
+  },
+  {
+   "id": "L9a-043",
+   "file": "design/log.md",
+   "line": 3368,
+   "kind": "decl",
+   "claim": "D-099: the pin reads `build(world; activations = (Float64, ProbeDual))`",
+   "evidence": "probe:16"
+  },
+  {
+   "id": "L9a-045",
+   "file": "design/log.md",
+   "line": 3679,
+   "kind": "mech",
+   "claim": "D-107: the conversion to position => value pairs happens at the drain",
+   "evidence": "src/trace.jl:107-130"
+  },
+  {
+   "id": "L9a-047",
+   "file": "design/log.md",
+   "line": 3683,
+   "kind": "law",
+   "claim": "D-107: trace size tracks information, not surface width",
+   "evidence": "src/trace.jl:116-130"
+  },
+  {
+   "id": "L9a-048",
+   "file": "design/log.md",
+   "line": 3964,
+   "kind": "law",
+   "claim": "D-115: the probe's `t` is probe-scoped zero",
+   "evidence": "src/build.jl:109"
+  },
+  {
+   "id": "L9a-049",
+   "file": "design/log.md",
+   "line": 3966,
+   "kind": "law",
+   "claim": "D-115: the probe's Δt placeholder is 1.0",
+   "evidence": "src/build.jl:78"
+  },
+  {
+   "id": "L9a-050",
+   "file": "design/log.md",
+   "line": 3966,
+   "kind": "mech",
+   "claim": "D-115: `ws` comes from the workspace allocator at the probing scalar",
+   "evidence": "src/build.jl:1059-1064"
+  },
+  {
+   "id": "L9a-051",
+   "file": "design/log.md",
+   "line": 3967,
+   "kind": "law",
+   "claim": "D-115: workspaces are allocated before the stage probes",
+   "evidence": "src/build.jl:1008-1011"
+  },
+  {
+   "id": "L9a-052",
+   "file": "design/log.md",
+   "line": 3968,
+   "kind": "mech",
+   "claim": "D-115: the allocator reads only the instance and the scalar",
+   "evidence": "src/build.jl:1063"
+  },
+  {
+   "id": "L9a-053",
+   "file": "design/log.md",
+   "line": 3992,
+   "kind": "decl",
+   "claim": "D-116: `phase_bodies(sim)` is the measurement seam",
+   "evidence": "src/sim.jl:638; src/model.jl:519"
+  },
+  {
+   "id": "L9a-054",
+   "file": "design/log.md",
+   "line": 3992,
+   "kind": "mech",
+   "claim": "D-116: a simulation's bodies are the nominal activation's",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "L9a-055",
+   "file": "design/log.md",
+   "line": 3993,
+   "kind": "mech",
+   "claim": "D-116: the bodies are callables bound over the simulation's own buffers",
+   "evidence": "src/build.jl:1615-1629"
+  },
+  {
+   "id": "L9a-056",
+   "file": "design/log.md",
+   "line": 3994,
+   "kind": "decl",
+   "claim": "D-116: four blocks rhs, sweep_*, ticks (lead `sweep_hx`/`sweep_hxu`: renamed by D-196)",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "L9a-057",
+   "file": "design/log.md",
+   "line": 3994,
+   "kind": "decl",
+   "claim": "D-116: `ticks` takes the tick index",
+   "evidence": "test/test_executor.jl:14-15"
+  },
+  {
+   "id": "L9a-058",
+   "file": "design/log.md",
+   "line": 3995,
+   "kind": "decl",
+   "claim": "D-116: per-event guard and handler callables",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "L9a-059",
+   "file": "design/log.md",
+   "line": 3995,
+   "kind": "decl",
+   "claim": "D-116: per-component project callables",
+   "evidence": "probe:40"
+  },
+  {
+   "id": "L9a-060",
+   "file": "design/log.md",
+   "line": 3996,
+   "kind": "mech",
+   "claim": "D-116: the callables are keyed by the model's roster",
+   "evidence": "src/build.jl:1617-1623"
+  },
+  {
+   "id": "L9a-061",
+   "file": "design/log.md",
+   "line": 3997,
+   "kind": "law",
+   "claim": "D-116: the seam's bodies are identical to the loop's bodies",
+   "evidence": "probe:41; test/test_continuous.jl:30"
+  },
+  {
+   "id": "L9a-062",
+   "file": "design/log.md",
+   "line": 3998,
+   "kind": "law",
+   "claim": "D-116: CI is warm-then-assert per body",
+   "evidence": "test/test_executor.jl:15-19"
+  },
+  {
+   "id": "L9a-063",
+   "file": "design/log.md",
+   "line": 3998,
+   "kind": "law",
+   "claim": "D-116: one assertion per body and arity, so a tolerance loosens one",
+   "evidence": "test/test_executor.jl:16-19"
+  },
+  {
+   "id": "L9a-064",
+   "file": "design/log.md",
+   "line": 4106,
+   "kind": "decl",
+   "claim": "D-119: `Simulation(build::Build; ...)` is a constructor",
+   "evidence": "src/sim.jl:395"
+  },
+  {
+   "id": "L9a-065",
+   "file": "design/log.md",
+   "line": 4107,
+   "kind": "decl",
+   "claim": "D-119: `Simulation(world; ...)` is `Simulation(build(world); ...)`",
+   "evidence": "src/sim.jl:397"
+  },
+  {
+   "id": "L9a-066",
+   "file": "design/log.md",
+   "line": 4832,
+   "kind": "law",
+   "claim": "D-135: the activation cache holds immutable artifacts",
+   "evidence": "src/build.jl:565-569"
+  },
+  {
+   "id": "L9a-068",
+   "file": "design/log.md",
+   "line": 4834,
+   "kind": "mech",
+   "claim": "D-135: the cache is keyed by concrete scalar type",
+   "evidence": "src/build.jl:707"
+  },
+  {
+   "id": "L9a-069",
+   "file": "design/log.md",
+   "line": 4834,
+   "kind": "mech",
+   "claim": "D-135: the cache lives on the Build",
+   "evidence": "probe:19"
+  },
+  {
+   "id": "L9a-070",
+   "file": "design/log.md",
+   "line": 4880,
+   "kind": "mech",
+   "claim": "D-136: the diagnostics stream and the heartbeat share one per-writer cell",
+   "evidence": "src/dataplane.jl:132-135"
+  },
+  {
+   "id": "L9a-071",
+   "file": "design/log.md",
+   "line": 4881,
+   "kind": "mech",
+   "claim": "D-136: one cell per rostered device plus the loop's (harness and model cells added by annotation)",
+   "evidence": "src/sim.jl:1958-1965"
+  },
+  {
+   "id": "L9a-072",
+   "file": "design/log.md",
+   "line": 4882,
+   "kind": "law",
+   "claim": "D-136: each cell is single-writer, with no lock",
+   "evidence": "src/dataplane.jl:141-150"
+  },
+  {
+   "id": "L9a-073",
+   "file": "design/log.md",
+   "line": 4883,
+   "kind": "law",
+   "claim": "D-136: the ring is bounded at 16",
+   "evidence": "probe:63; probe:65"
+  },
+  {
+   "id": "L9a-074",
+   "file": "design/log.md",
+   "line": 4884,
+   "kind": "mech",
+   "claim": "D-136: the batch carries per-kind suppressed counts",
+   "evidence": "src/dataplane.jl:105-108"
+  },
+  {
+   "id": "L9a-075",
+   "file": "design/log.md",
+   "line": 4884,
+   "kind": "mech",
+   "claim": "D-136: the cell holds an atomic heartbeat timestamp",
+   "evidence": "src/dataplane.jl:134"
+  },
+  {
+   "id": "L9a-076",
+   "file": "design/log.md",
+   "line": 4888,
+   "kind": "law",
+   "claim": "D-136: past capacity the value is dropped and its kind counted, the earliest kept",
+   "evidence": "probe:63"
+  },
+  {
+   "id": "L9a-077",
+   "file": "design/log.md",
+   "line": 4892,
+   "kind": "mech",
+   "claim": "D-136: the loop atomicswaps each cell at the frame-top drain",
+   "evidence": "src/dataplane.jl:156; src/sim.jl:1959"
+  },
+  {
+   "id": "L9a-078",
+   "file": "design/log.md",
+   "line": 4893,
+   "kind": "law",
+   "claim": "D-136: a shared empty sentinel makes a quiet frame allocate nothing",
+   "evidence": "probe:88; src/dataplane.jl:111"
+  },
+  {
+   "id": "L9a-079",
+   "file": "design/log.md",
+   "line": 4895,
+   "kind": "mech",
+   "claim": "D-136: the heartbeat is stored from inside the handle primitives",
+   "evidence": "src/devices.jl:230"
+  },
+  {
+   "id": "L9a-081",
+   "file": "design/log.md",
+   "line": 4896,
+   "kind": "law",
+   "claim": "D-136: the 2 s staleness is read against the heartbeat field",
+   "evidence": "src/dataplane.jl:309; src/dataplane.jl:337-338"
+  },
+  {
+   "id": "L9a-082",
+   "file": "design/log.md",
+   "line": 4897,
+   "kind": "law",
+   "claim": "D-136: the heartbeat is not a diagnostic kind",
+   "evidence": "src/dataplane.jl:36-38"
+  },
+  {
+   "id": "L9a-083",
+   "file": "design/log.md",
+   "line": 4898,
+   "kind": "law",
+   "claim": "D-136: the framework status is a concrete frozen value",
+   "evidence": "src/dataplane.jl:303-306"
+  },
+  {
+   "id": "L9a-084",
+   "file": "design/log.md",
+   "line": 4899,
+   "kind": "decl",
+   "claim": "D-136: per writer recent, suppressed, totals and heartbeat",
+   "evidence": "src/dataplane.jl:251-258"
+  },
+  {
+   "id": "L9a-085",
+   "file": "design/log.md",
+   "line": 4900,
+   "kind": "mech",
+   "claim": "D-136: totals are loop-owned and copied into each status",
+   "evidence": "src/dataplane.jl:177-181"
+  },
+  {
+   "id": "L9a-086",
+   "file": "design/log.md",
+   "line": 4901,
+   "kind": "decl",
+   "claim": "D-136: the pacer's diagnostics sit beside the writer records",
+   "evidence": "src/dataplane.jl:303-306"
+  },
+  {
+   "id": "L9a-087",
+   "file": "design/log.md",
+   "line": 4905,
+   "kind": "law",
+   "claim": "D-136: renderers show 25 occurrences per writer and kind, then counts only",
+   "evidence": "src/show.jl:443; src/show.jl:470"
+  },
+  {
+   "id": "L9a-088",
+   "file": "design/log.md",
+   "line": 4907,
+   "kind": "law",
+   "claim": "D-136: the terminal snapshot carries the cumulative counters",
+   "evidence": "src/dataplane.jl:251-258"
+  },
+  {
+   "id": "L9a-090",
+   "file": "design/log.md",
+   "line": 4912,
+   "kind": "law",
+   "claim": "D-136: per-kind counters are an isbits record, never a Dict",
+   "evidence": "probe:64; src/dataplane.jl:50-65"
+  },
+  {
+   "id": "L9a-091",
+   "file": "design/log.md",
+   "line": 4913,
+   "kind": "mech",
+   "claim": "D-136: a noisy frame's values are allocated on the writer's task",
+   "evidence": "src/dataplane.jl:141-150"
+  },
+  {
+   "id": "L9a-094",
+   "file": "design/log.md",
+   "line": 4920,
+   "kind": "law",
+   "claim": "D-136: totals are monotone across logged snapshots (between resets)",
+   "evidence": "src/dataplane.jl:212-213"
+  },
+  {
+   "id": "L9a-095",
+   "file": "design/log.md",
+   "line": 5390,
+   "kind": "law",
+   "claim": "D-142: every probed user function must not throw on type-valid inputs",
+   "evidence": "src/declare.jl:979-994"
+  },
+  {
+   "id": "L9a-096",
+   "file": "design/log.md",
+   "line": 5398,
+   "kind": "law",
+   "claim": "D-142: at build a throw is a UserCodeFraming build failure, fail-fast",
+   "evidence": "src/declare.jl:993"
+  },
+  {
+   "id": "L9a-097",
+   "file": "design/log.md",
+   "line": 5401,
+   "kind": "law",
+   "claim": "D-142: at runtime the same throw is a StepError",
+   "evidence": "src/model.jl:1075-1085"
+  },
+  {
+   "id": "L9a-098",
+   "file": "design/log.md",
+   "line": 5402,
+   "kind": "law",
+   "claim": "D-142: the run then ends errored",
+   "evidence": "src/sim.jl:515"
+  },
+  {
+   "id": "L9a-099",
+   "file": "design/log.md",
+   "line": 5788,
+   "kind": "mech",
+   "claim": "D-148: the converter is selected per leaf by its resolved leaf type",
+   "evidence": "src/conditions.jl:764-766"
+  },
+  {
+   "id": "L9a-100",
+   "file": "design/log.md",
+   "line": 5790,
+   "kind": "mech",
+   "claim": "D-148: a leaf at the activation scalar converts at that eltype (leads `RQuat`, `trim_condition`: placeholders)",
+   "evidence": "src/conditions.jl:766"
+  },
+  {
+   "id": "L9a-101",
+   "file": "design/log.md",
+   "line": 5796,
+   "kind": "mech",
+   "claim": "D-148: a Float64 leaf at a non-nominal activation takes the zero-partial embedding",
+   "evidence": "src/conditions.jl:752-766"
+  },
+  {
+   "id": "L9a-102",
+   "file": "design/log.md",
+   "line": 5942,
+   "kind": "law",
+   "claim": "D-151: at the stage seam names pair and field order carries no semantics",
+   "evidence": "probe:78; src/store.jl:109"
+  },
+  {
+   "id": "L9a-103",
+   "file": "design/log.md",
+   "line": 5944,
+   "kind": "law",
+   "claim": "D-151: bounds take `guess`'s field order",
+   "evidence": "src/trim.jl:666-667"
+  },
+  {
+   "id": "L9a-104",
+   "file": "design/log.md",
+   "line": 5945,
+   "kind": "law",
+   "claim": "D-151: the solver vector is packed in `guess`'s order",
+   "evidence": "src/trim.jl:675"
+  },
+  {
+   "id": "L9a-105",
+   "file": "design/log.md",
+   "line": 5946,
+   "kind": "law",
+   "claim": "D-151: the residual return is reordered to `tolerances`' order before packing",
+   "evidence": "src/trim.jl:654; src/trim.jl:701"
+  },
+  {
+   "id": "L9a-106",
+   "file": "design/log.md",
+   "line": 5947,
+   "kind": "law",
+   "claim": "D-151: the author never reproduces a derived stage-return order (lead `Expected`: old internal name)",
+   "evidence": "probe:78"
+  },
+  {
+   "id": "L9a-107",
+   "file": "design/log.md",
+   "line": 5949,
+   "kind": "mech",
+   "claim": "D-151: trim canonicalizes by a type-level `NamedTuple{names}(y)` reorder",
+   "evidence": "src/trim.jl:701"
+  },
+  {
+   "id": "L9a-110",
+   "file": "design/log.md",
+   "line": 5952,
+   "kind": "law",
+   "claim": "D-151: the §9.8 canary checks the write path allocates nothing",
+   "evidence": "test/test_executor.jl:18"
+  },
+  {
+   "id": "L9a-111",
+   "file": "design/log.md",
+   "line": 7004,
+   "kind": "law",
+   "claim": "D-176: every writer's drained batch is sparse-converted at the drain",
+   "evidence": "src/trace.jl:107-130"
+  },
+  {
+   "id": "L9a-113",
+   "file": "design/log.md",
+   "line": 7006,
+   "kind": "law",
+   "claim": "D-176: one record format with no per-entry format flag",
+   "evidence": "src/trace.jl:22-26"
+  },
+  {
+   "id": "L9a-114",
+   "file": "design/log.md",
+   "line": 7007,
+   "kind": "mech",
+   "claim": "D-176: replay has one inverse-conversion path",
+   "evidence": "src/trace.jl:83-105; src/sim.jl:1195"
+  },
+  {
+   "id": "L9a-115",
+   "file": "design/log.md",
+   "line": 7875,
+   "kind": "decl",
+   "claim": "D-196: `sweep_hx` is renamed `sweep_1`",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "L9a-116",
+   "file": "design/log.md",
+   "line": 7876,
+   "kind": "decl",
+   "claim": "D-196: `sweep_hxu` is renamed `sweep_2`",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "L9a-117",
+   "file": "design/log.md",
+   "line": 7876,
+   "kind": "law",
+   "claim": "D-196: arities and entry sets are unchanged",
+   "evidence": "test/test_executor.jl:15-19"
+  },
+  {
+   "id": "L9a-118",
+   "file": "design/log.md",
+   "line": 7877,
+   "kind": "decl",
+   "claim": "D-196: `rhs` and `ticks` keep their names",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "L9a-119",
+   "file": "design/log.md",
+   "line": 9020,
+   "kind": "mech",
+   "claim": "D-221: a fail-fast runtime throw is the ordinary carrier of one diagnostic",
+   "evidence": "src/executor.jl:416"
+  },
+  {
+   "id": "L9a-120",
+   "file": "design/log.md",
+   "line": 9021,
+   "kind": "mech",
+   "claim": "D-221: the catch site unwraps it into the StepError's `cause`",
+   "evidence": "src/model.jl:1092-1093"
+  },
+  {
+   "id": "L9a-121",
+   "file": "design/log.md",
+   "line": 9022,
+   "kind": "decl",
+   "claim": "D-221: a species is a StepError whose cause is a diagnostic",
+   "evidence": "src/diagnostics.jl:257"
+  },
+  {
+   "id": "L9a-122",
+   "file": "design/log.md",
+   "line": 9025,
+   "kind": "law",
+   "claim": "D-221: the catch site is the only StepError constructor",
+   "evidence": "src/model.jl:1075-1082"
+  },
+  {
+   "id": "L9a-123",
+   "file": "design/log.md",
+   "line": 9026,
+   "kind": "law",
+   "claim": "D-221: a StepError reaching it is an invariant failure",
+   "evidence": "src/model.jl:1076-1078"
+  },
+  {
+   "id": "L9a-124",
+   "file": "design/log.md",
+   "line": 9027,
+   "kind": "law",
+   "claim": "D-221: a collected carrier rides as `cause` unchanged",
+   "evidence": "src/model.jl:1092"
+  },
+  {
+   "id": "L9a-125",
+   "file": "design/log.md",
+   "line": 9028,
+   "kind": "law",
+   "claim": "D-221: no runtime check throws a collected carrier",
+   "evidence": "src/executor.jl:416-447"
+  },
+  {
+   "id": "L9a-127",
+   "file": "design/log.md",
+   "line": 9351,
+   "kind": "law",
+   "claim": "D-229: a pass runs only when the results it reads are clean",
+   "evidence": "src/build.jl:786-788"
+  },
+  {
+   "id": "L9a-128",
+   "file": "design/log.md",
+   "line": 9352,
+   "kind": "law",
+   "claim": "D-229: a pass records every violation it finds",
+   "evidence": "src/build.jl:781-785"
+  },
+  {
+   "id": "L9a-129",
+   "file": "design/log.md",
+   "line": 9353,
+   "kind": "law",
+   "claim": "D-229: every pass that ran merges into one throw at the barrier",
+   "evidence": "src/build.jl:795"
+  },
+  {
+   "id": "L9a-130",
+   "file": "design/log.md",
+   "line": 9355,
+   "kind": "law",
+   "claim": "D-229: a wiring failure is walked past and its unfed input reported beside it",
+   "evidence": "test/test_assembly.jl:951"
+  },
+  {
+   "id": "L9a-131",
+   "file": "design/log.md",
+   "line": 9358,
+   "kind": "law",
+   "claim": "D-229: an unreadable or mixed class throws at once",
+   "evidence": "src/assembly.jl:62; src/assembly.jl:66"
+  },
+  {
+   "id": "L9a-133",
+   "file": "design/log.md",
+   "line": 9361,
+   "kind": "law",
+   "claim": "D-229: stage-2 conformance fails fast",
+   "evidence": "src/build.jl:141"
+  },
+  {
+   "id": "L9a-135",
+   "file": "design/log.md",
+   "line": 9363,
+   "kind": "law",
+   "claim": "D-229: two-stage production throws before the next evaluation",
+   "evidence": "src/build.jl:1107-1118"
+  },
+  {
+   "id": "L9a-136",
+   "file": "design/log.md",
+   "line": 9364,
+   "kind": "law",
+   "claim": "D-229: deployment validation runs every check whose premise holds and throws once",
+   "evidence": "src/deployment.jl:560-575"
+  },
+  {
+   "id": "L9a-137",
+   "file": "design/log.md",
+   "line": 10220,
+   "kind": "law",
+   "claim": "D-248: the build reaches every user method through a framing accessor",
+   "evidence": "src/declare.jl:964; src/declare.jl:979"
+  },
+  {
+   "id": "L9a-138",
+   "file": "design/log.md",
+   "line": 10221,
+   "kind": "law",
+   "claim": "D-248: a throw out of one is UserCodeFraming, fail-fast",
+   "evidence": "src/declare.jl:969"
+  },
+  {
+   "id": "L9a-139",
+   "file": "design/log.md",
+   "line": 10222,
+   "kind": "decl",
+   "claim": "D-248: payload is path, function, bundle names, inputs spelling, cause",
+   "evidence": "src/diagnostics.jl:1242-1248"
+  },
+  {
+   "id": "L9a-140",
+   "file": "design/log.md",
+   "line": 10225,
+   "kind": "law",
+   "claim": "D-248: declarations and probed functions are framed alike",
+   "evidence": "src/declare.jl:964-994; src/build.jl:1045-1048"
+  },
+  {
+   "id": "L9a-141",
+   "file": "design/log.md",
+   "line": 10227,
+   "kind": "law",
+   "claim": "D-248: probe context is names and a spelling, never values",
+   "evidence": "src/declare.jl:993-1001"
+  },
+  {
+   "id": "L9a-142",
+   "file": "design/log.md",
+   "line": 10229,
+   "kind": "law",
+   "claim": "D-248: DiagnosticError, InternalInvariant, InterruptException pass unwrapped",
+   "evidence": "src/declare.jl:950-951"
+  },
+  {
+   "id": "L9a-143",
+   "file": "design/log.md",
+   "line": 10231,
+   "kind": "law",
+   "claim": "D-248: a matched FieldError is BundleFieldError at the probe",
+   "evidence": "src/declare.jl:986-990"
+  },
+  {
+   "id": "L9a-144",
+   "file": "design/log.md",
+   "line": 10232,
+   "kind": "law",
+   "claim": "D-248: a matched FieldError is a StepError species at the catch site",
+   "evidence": "src/model.jl:1099-1121"
+  },
+  {
+   "id": "L9a-145",
+   "file": "design/log.md",
+   "line": 10233,
+   "kind": "mech",
+   "claim": "D-248: the probe matches by the bundle's own type",
+   "evidence": "src/declare.jl:986"
+  },
+  {
+   "id": "L9a-146",
+   "file": "design/log.md",
+   "line": 10234,
+   "kind": "mech",
+   "claim": "D-248: the catch site matches by the bundle's field names",
+   "evidence": "src/model.jl:1119"
+  },
+  {
+   "id": "L9a-147",
+   "file": "design/log.md",
+   "line": 10235,
+   "kind": "law",
+   "claim": "D-248: UserCodeFraming stays build-only",
+   "evidence": "src/model.jl:1096-1098"
+  },
+  {
+   "id": "L9a-148",
+   "file": "design/log.md",
+   "line": 10342,
+   "kind": "law",
+   "claim": "D-250: a warning raised producing an artifact lives on the artifact",
+   "evidence": "src/build.jl:709"
+  },
+  {
+   "id": "L9a-149",
+   "file": "design/log.md",
+   "line": 10344,
+   "kind": "law",
+   "claim": "D-250: a warning raised mutating state lives in its status",
+   "evidence": "src/sim.jl:2541-2547"
+  },
+  {
+   "id": "L9a-150",
+   "file": "design/log.md",
+   "line": 10345,
+   "kind": "law",
+   "claim": "D-250: logging is presentation, never a home",
+   "evidence": "src/diagnostics.jl:193-199"
+  },
+  {
+   "id": "L9a-151",
+   "file": "design/log.md",
+   "line": 10347,
+   "kind": "decl",
+   "claim": "D-250: Build and Deployment carry `warnings`",
+   "evidence": "probe:19; src/deployment.jl:645"
+  },
+  {
+   "id": "L9a-152",
+   "file": "design/log.md",
+   "line": 10347,
+   "kind": "law",
+   "claim": "D-250: a throwing step carries its warnings with the collection",
+   "evidence": "src/build.jl:806"
+  },
+  {
+   "id": "L9a-153",
+   "file": "design/log.md",
+   "line": 10348,
+   "kind": "law",
+   "claim": "D-250: a completed step carries its warnings on the artifact",
+   "evidence": "src/build.jl:790"
+  },
+  {
+   "id": "L9a-154",
+   "file": "design/log.md",
+   "line": 10349,
+   "kind": "law",
+   "claim": "D-250: the entry point logs each warning once at return",
+   "evidence": "src/build.jl:811-813; src/deployment.jl:604-606"
+  },
+  {
+   "id": "L9a-155",
+   "file": "design/log.md",
+   "line": 10350,
+   "kind": "mech",
+   "claim": "D-250: the build binds the warning channel once around its steps",
+   "evidence": "src/build.jl:779"
+  },
+  {
+   "id": "L9a-156",
+   "file": "design/log.md",
+   "line": 10351,
+   "kind": "law",
+   "claim": "D-250: a helper in a declaration appends to the build's warnings",
+   "evidence": "src/diagnostics.jl:197-198"
+  },
+  {
+   "id": "L9a-157",
+   "file": "design/log.md",
+   "line": 10352,
+   "kind": "law",
+   "claim": "D-250: the same helper outside a build logs directly",
+   "evidence": "src/diagnostics.jl:198"
+  },
+  {
+   "id": "L9a-158",
+   "file": "design/log.md",
+   "line": 10355,
+   "kind": "law",
+   "claim": "D-250: artifact-producing calls log at return, the build included",
+   "evidence": "src/build.jl:812; src/deployment.jl:605"
+  },
+  {
+   "id": "L9a-159",
+   "file": "design/log.md",
+   "line": 10358,
+   "kind": "decl",
+   "claim": "D-250: `warnings(x)` is defined on Build and Deployment",
+   "evidence": "probe:82"
+  },
+  {
+   "id": "L9a-160",
+   "file": "design/log.md",
+   "line": 10359,
+   "kind": "law",
+   "claim": "D-250: `warnings(sim)` concatenates its artifacts' lists",
+   "evidence": "src/model.jl:971; src/sim.jl:399"
+  },
+  {
+   "id": "L9a-161",
+   "file": "design/log.md",
+   "line": 10360,
+   "kind": "law",
+   "claim": "D-250: status-side warnings stay in the status record",
+   "evidence": "src/dataplane.jl:36-38"
+  },
+  {
+   "id": "L9a-162",
+   "file": "design/log.md",
+   "line": 10361,
+   "kind": "law",
+   "claim": "D-250: EmptyGreedyClaim goes into the roster entry's diagnostic cell",
+   "evidence": "src/sim.jl:2546-2548"
+  },
+  {
+   "id": "L9a-163",
+   "file": "design/log.md",
+   "line": 10363,
+   "kind": "law",
+   "claim": "D-250: EmptyGreedyClaim surfaces through the status record",
+   "evidence": "src/dataplane.jl:36-38"
+  },
+  {
+   "id": "L9a-164",
+   "file": "design/log.md",
+   "line": 10363,
+   "kind": "law",
+   "claim": "D-250: attach! keeps the log line at return",
+   "evidence": "src/sim.jl:2549"
+  },
+  {
+   "id": "L9a-165",
+   "file": "design/log.md",
+   "line": 10500,
+   "kind": "law",
+   "claim": "D-253: each step returns an immutable artifact, bundled in the Build",
+   "evidence": "src/build.jl:703-710"
+  },
+  {
+   "id": "L9a-166",
+   "file": "design/log.md",
+   "line": 10503,
+   "kind": "decl",
+   "claim": "D-253: Structure replaces Flat (lead `Flat`: the retired name)",
+   "evidence": "probe:22; probe:25"
+  },
+  {
+   "id": "L9a-167",
+   "file": "design/log.md",
+   "line": 10503,
+   "kind": "decl",
+   "claim": "D-253: the tiers live in the Structure",
+   "evidence": "src/structure.jl:161"
+  },
+  {
+   "id": "L9a-168",
+   "file": "design/log.md",
+   "line": 10504,
+   "kind": "decl",
+   "claim": "D-253: each component carries its Relative/Absolute rate chain",
+   "evidence": "src/structure.jl:132; src/structure.jl:162"
+  },
+  {
+   "id": "L9a-169",
+   "file": "design/log.md",
+   "line": 10505,
+   "kind": "decl",
+   "claim": "D-253: scope triples carry an explicit sample_times key",
+   "evidence": "src/structure.jl:138; src/structure.jl:246"
+  },
+  {
+   "id": "L9a-171",
+   "file": "design/log.md",
+   "line": 10506,
+   "kind": "decl",
+   "claim": "D-253: per component the stage-1 and stage-2 name sets",
+   "evidence": "probe:20"
+  },
+  {
+   "id": "L9a-173",
+   "file": "design/log.md",
+   "line": 10508,
+   "kind": "decl",
+   "claim": "D-253: the product carries the execution order",
+   "evidence": "src/build.jl:618"
+  },
+  {
+   "id": "L9a-174",
+   "file": "design/log.md",
+   "line": 10509,
+   "kind": "decl",
+   "claim": "D-253: Events holds event names, policies and bundle names per component",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "L9a-175",
+   "file": "design/log.md",
+   "line": 10510,
+   "kind": "law",
+   "claim": "D-253: Events is produced last, after the nominal stage probes",
+   "evidence": "src/build.jl:1024"
+  },
+  {
+   "id": "L9a-176",
+   "file": "design/log.md",
+   "line": 10512,
+   "kind": "mech",
+   "claim": "D-253: the nominal step is its own function: structure in, three products out",
+   "evidence": "src/build.jl:1001-1025"
+  },
+  {
+   "id": "L9a-177",
+   "file": "design/log.md",
+   "line": 10514,
+   "kind": "mech",
+   "claim": "D-253: other scalars take structure, outputs and the nominal as carry",
+   "evidence": "src/build.jl:1030-1042; src/build.jl:1091-1093"
+  },
+  {
+   "id": "L9a-178",
+   "file": "design/log.md",
+   "line": 10516,
+   "kind": "law",
+   "claim": "D-253: no product changes across activations",
+   "evidence": "src/build.jl:1030-1042"
+  },
+  {
+   "id": "L9a-179",
+   "file": "design/log.md",
+   "line": 10519,
+   "kind": "decl",
+   "claim": "D-253: Build holds products and one activation dict keyed by scalar",
+   "evidence": "probe:19; src/build.jl:799"
+  },
+  {
+   "id": "L9a-180",
+   "file": "design/log.md",
+   "line": 10521,
+   "kind": "mech",
+   "claim": "D-253: insertion into the dictionary is under the build's lock",
+   "evidence": "src/build.jl:708; src/build.jl:969-975"
+  },
+  {
+   "id": "L9a-181",
+   "file": "design/log.md",
+   "line": 10525,
+   "kind": "law",
+   "claim": "D-253: readers, trim and compile take name lists from the products",
+   "evidence": "src/readers.jl:805; src/build.jl:1594-1597"
+  },
+  {
+   "id": "L9a-183",
+   "file": "design/log.md",
+   "line": 10526,
+   "kind": "law",
+   "claim": "D-253: the runtime field-error species takes its names from the outputs",
+   "evidence": "src/model.jl:1108"
+  }
+ ],
+ "counts": {
+  "law": 98,
+  "mech": 50,
+  "decl": 36,
+  "ex": 0,
+  "ptr": 14,
+  "why": 11,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ },
+ "notes": "I edited no tracked file. My one file is the probe, design/reports/20261124_doc_conformance/probes/L9a/probe.jl in the main checkout, which I ran three times against W at d7d3ddff.\n\nStructure checks:\n- All 23 entries have Status ratified, and none carries a superseded → chain.\n- check_refs.jl on W passes, so every D-nnn and § citation in the 23 Positions resolves.\n- D-052's inline amendment by D-135, D-253's by D-259, and the annotations naming D-200, D-225, D-236, D-240, D-241, D-254, D-255, D-259, D-316, D-317 and D-431 all point at ratified entries.\n\nResults: I listed 184 claims, 158 ok, 25 findings and 1 unverifiable. Another 14 ptr claims and 11 why claims are counted but not listed.\n\nFindings, 25 in all:\n- 13 are drift that the entry's own annotation already records, so they need no rewrite: 023, 024, 025, 044, 046, 080, 089, 112, 132, 134 and 184.\n- 8 are drift with no annotation on the entry:\n  - 005 (face table, D-315)\n  - 006 (schedule on the Deployment, D-254)\n  - 033 (`Getter{P}` deleted by commit 4365e8d4; the lens is `Authored{P,L}`)\n  - 040 (`capture`, D-273)\n  - 108 and 109 (D-151's reorder and its whole-type isa, both replaced by D-235's check at the generated write)\n  - 126 (StepError parametrized by D-225)\n  - 170 and 172 (`Dataflow` renamed `Outputs` and its edges dropped, D-261)\n- 4 are deviations:\n  - 067: an activation holds decls, products and layout. It holds no compiled plans and no validated flag, yet spec §9.4 at spec.md:5767 lists both.\n  - 092 and 093: `report_cell!` copies the ring on every emission below capacity. The probe measured 144 to 608 B per emission, about 6 KB for 16 values, then 32 B for each emission past capacity. This contradicts D-136's bound and spec §11.8's, which say one fresh ring and integer increments. It runs on the writer's task, outside the stepping-loop invariant. The quiet path is truly zero: `_fold!` measures 0 B.\n  - 182: the cycle tracer runs inside the nominal evaluation before `Outputs` exists, so it takes its names from the declarations and the stage-1 products.\n\nUnverifiable: 037, D-066's 10–50 ms codegen per shape, which I did not time.\n\nLeads, each with its row:\n- `Dataflow` → 170 (finding)\n- `Getter` → 033 (finding)\n- `capture` → 040 (finding)\n- `stop_on` → 024 (finding, annotated)\n- `SimulationTermination` → 031 (ok, the name is absent as ruled)\n- `Flat` → 166 (ok, the retired name)\n- `h_` at 1752 and 1791 → 009 and 014 (ok, old stage notation)\n- `sweep_hx`/`sweep_hxu` at 3994 → 056 (ok, renamed by D-196); at 7875-7876 → 115 and 116 (ok, D-196 states the rename)\n- `RQuat` and `trim_condition` → 100 (ok, placeholders)\n- `canonical_names` → 108 (placeholder, inside a drift row)\n- `Expected` → 106 (ok, old internal name)\n\nThe module has no `export` and no `public` declarations. Following D-226, I read \"exported\" in D-099 as documented public (row 041)."
+}

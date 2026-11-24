@@ -1,0 +1,445 @@
+{
+ "rows": [
+  {
+   "id": "CV9a-011",
+   "file": "src/build.jl",
+   "line": 375,
+   "kind": "surface",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "Appendix B and the `port` docstring say a left-out name reads a bare output's face `y` and that a bare port is addressed by the path alone; the throw is stated only for a component whose output contract is named. They are silent on an assembly that exports a lone face `y`.",
+   "evidence": "probe:21-30 (P1): Group((; r = Ramp()); output_wires = (\"r/y\" => \"y\",)); port(model, \"r\") returns 0.0 but port(model, \"\") throws ArgumentError 'the root component declares no bare output'. src/build.jl:375 tests `path in layout.bare_outputs`, a set of primitive paths (src/build.jl:403). spec.md:15125-15131; src/model.jl:985-993.",
+   "fix": "State that a nameless `port` read is for a primitive with a bare `y_types`, and that an assembly, even one exporting a single face `y`, needs the face named (ArgumentError). Alternatively add assembly paths whose one output face is `y` to `bare_outputs`.",
+   "note": "Low confidence on class. The spec never says whether an assembly's face `y` counts as a bare output."
+  },
+  {
+   "id": "CV9a-017",
+   "file": "src/build.jl",
+   "line": 565,
+   "kind": "surface",
+   "verdict": "finding",
+   "class": "drift",
+   "claim": "Spec §9.4 says the activation cache's entries each hold 'layouts, compiled plans and a validated flag'. An `Activation{T}` holds `decls`, `products` and `layout` only.",
+   "evidence": "src/build.jl:565-569 (struct Activation); `rg validated src/build.jl` finds no such field; compiled forms are built per executor in `compile`, src/build.jl:1461 (D-261, D-253). design/spec.md:5767.",
+   "fix": "Replace with: 'Each entry holds the activation's retyped declarations, its probe products and its cell layout.' The compiled plans belong to the executor ([§9.7])."
+  },
+  {
+   "id": "CV9a-026",
+   "file": "src/build.jl",
+   "line": 825,
+   "kind": "map",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "code_map.md's build.jl entry names the trial binding as the walk's follower but omits `_check_event_declarations`, the draft-level pass that raises `EventHalfMissing` (reasons :guard, :handler, :not_an_event) and runs between the trial binding and the first barrier.",
+   "evidence": "src/build.jl:782-785 (build calls it), src/build.jl:825-853; design/code_map.md:105-186 has no `_check_event_declarations` or `EventHalfMissing`. probe:P6 shows the three reasons raised.",
+   "fix": "Add a bullet to the build.jl entry: '`_check_event_declarations` runs after the trial binding and collects `EventHalfMissing` for an event entry that is no `StateEvent` and for a guard or handler with no method on the component's type (§8.2).'"
+  },
+  {
+   "id": "CV9a-034",
+   "file": "src/build.jl",
+   "line": 1068,
+   "kind": "docstring",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "The `probe_stage2` docstring orders the work as the stage-2 chain, 'the update laws last', 'then the declaration-completeness check'. The code runs the completeness pass before the update laws, then the `x_projection` pass, which the docstring omits.",
+   "evidence": "src/build.jl:1069-1076 (docstring); code order: stage-2 loop 1099-1102, completeness 1104-1121, update laws 1123-1143, `x_projection` 1145-1166. probe:P5: a component with a missing port and a bad `x_deriv` yields only DeclaredNotProduced. File header, src/build.jl:7-9, states the right order.",
+   "fix": "Rewrite: 'Probe stage 2 in topological order, then check the declaration set for completeness in every component, then probe the update laws (`x_deriv`, `s_update`) and `x_projection` against the complete table, checking every return against its declaration.'"
+  },
+  {
+   "id": "CV9a-035",
+   "file": "src/build.jl",
+   "line": 1077,
+   "kind": "map",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "code_map.md describes only 'the probe and the event probe' and the return checks. It omits the structure of `probe_stage2`: the completeness pass (`DeclaredNotProduced`), the update-law pass, the `x_projection` pass (`DeclarationOnWrongTier` :continuous_only and :no_manifold), the frozen-component `carry`, and the probe-scoped stores `_mstores`/`_workspaces`/`_workspace` and `_probe_input`'s `InternalInvariant` fence.",
+   "evidence": "src/build.jl:1043-1062, 1077-1166, 1654-1670; design/code_map.md:105-186 lacks `DeclaredNotProduced`, `x_projection` (only line 341, other file), `_mstores`, `_workspaces`, `_probe_input`, `_homes`, `_state_fields`.",
+   "fix": "Add bullets: 'probe_stage2 runs the stage-2 chain in order, then the completeness pass (DeclaredNotProduced, with `_homes` and `_state_fields` as context), then the update-law and `x_projection` passes, each under its own barrier; a frozen component's products are carried from the nominal activation.' and '`_mstores` and `_workspaces` give the probes their scoped `m` and `ws`, one read of `m_init` and `ws_init` per component.'"
+  },
+  {
+   "id": "CV9a-037",
+   "file": "src/build.jl",
+   "line": 1145,
+   "kind": "surface",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "Spec §9.4 says 'Only the continuous output stages (`y_state`/`y_direct`) and `x_deriv` ever see a `Dual`. So only they are probed at it.' `x_projection` is also probed at every continuous activation, including a `Dual` one.",
+   "evidence": "src/build.jl:1145-1166 (probe_stage2 projection pass, `_check_state_write(..., decl.x, T)`); src/build.jl:1621-1625 (projection entries at every activation). probe:P2 (scalars seen by `x_projection`: Float64 and ForwardDiff.Dual{ProbeTag,Float64,1}). design/spec.md:5712-5714 (the §9.4 bullet) against spec.md:5961-5966 (§9.5: `x_projection` checks 'at T').",
+   "fix": "'Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and `x_projection` ever see a `Dual`. So only they are probed at it.'"
+  },
+  {
+   "id": "CV9a-049",
+   "file": "src/build.jl",
+   "line": 1513,
+   "kind": "surface",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "Spec §9.3 says probe values are probe-scoped, 'garbage once the build finishes', and 'never double as initial root-input values'. `compile` seeds every root-input cell with its synthesized probe value, and a read before `init!` returns it. The comments at src/build.jl:563 and :1503 cite §6.3, which says the probe's values reach no published cell and does not state the seeding.",
+   "evidence": "src/build.jl:1513-1516 (scatter_cell! of layout.root_inputs), src/build.jl:1503-1512 (products seed the store). probe:P11: a fresh Model's port(m, \"\", :in) returns 0.0, the probe value. design/spec.md:5619-5624 (§9.3), spec.md:1960-1963 (§6.3).",
+   "fix": "Add to §9.3's probe-scoping paragraph: 'The executor's cells start from the probe products and the root inputs from their synthesized values, so a read before `init!` sees them. `init!`'s `UninitializedInputs` check keeps them from reaching a boundary.' Re-cite the two code comments to §9.3 and §9.4."
+  },
+  {
+   "id": "CV9a-050",
+   "file": "src/build.jl",
+   "line": 1672,
+   "kind": "surface",
+   "verdict": "finding",
+   "class": "deviation",
+   "claim": "Appendix C (ConformanceFailure) and D-431 say a return whose shape is not the declared one, or that is not a NamedTuple, 'throws alone'. That holds for stage returns and handler returns. In the update pass (`x_deriv`, `s_update`) and the `x_projection` pass the shape failure is one entry in the pass's list and is thrown together with other components' failures.",
+   "evidence": "src/build.jl:1672-1694 (_check_derivative), 1708-1722 (_check_update), 1222-1245 (_check_state_write) return a Diagnostic list that probe_stage2 appends at 1135-1143 and 1160-1165. probe:P3: two components, one non-NamedTuple `x_deriv` and one wrong field set, give one DiagnosticError carrying both ConformanceFailures (:return_type, :field_set). probe:P4 shows the stage-1 case throws alone. design/spec.md:15690-15696, log.md:17540-17547.",
+   "fix": "Appendix C and D-431: 'A stage's or a handler's return that is not a NamedTuple, or a bare value against a named declaration, throws alone. In the update and projection passes a wrong shape joins the pass's list.' Or, as a defect, make the update and projection passes throw a shape failure alone."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV9a-001",
+   "file": "src/build.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header cites §9.2, §9.3, §5.5 for the pipeline, the probes and the loop policy",
+   "evidence": "spec.md:4796-5145, 5508, 1602 treat those topics"
+  },
+  {
+   "id": "CV9a-002",
+   "file": "src/build.jl",
+   "line": 35,
+   "kind": "cite",
+   "claim": "declarations comment cites D-263 for the one walk and the pin; D-437 for bare shape",
+   "evidence": "log.md:11 D-263 and D-437 titles; build.jl:40-48"
+  },
+  {
+   "id": "CV9a-003",
+   "file": "src/build.jl",
+   "line": 63,
+   "kind": "docstring",
+   "claim": "probe_stage1 docstring: probes y_state per executable component, frozen probe nothing, Δt placeholder",
+   "evidence": "src/build.jl:63-96, 1066"
+  },
+  {
+   "id": "CV9a-004",
+   "file": "src/build.jl",
+   "line": 83,
+   "kind": "surface",
+   "claim": "ConformanceFailure reasons :return_type/:field_type with shapes :ports/:namedtuple are in Appendix C",
+   "evidence": "build.jl:83, 127-143, 1190; spec.md:15701-15705"
+  },
+  {
+   "id": "CV9a-005",
+   "file": "src/build.jl",
+   "line": 88,
+   "kind": "surface",
+   "claim": "DeadStage raised fail-fast for an empty `(;)` return, as Appendix C and §9.3 state",
+   "evidence": "build.jl:88, 1195; spec.md:15687-15689"
+  },
+  {
+   "id": "CV9a-006",
+   "file": "src/build.jl",
+   "line": 127,
+   "kind": "surface",
+   "claim": "UndeclaredReturnField collected with the stage's ConformanceFailures, thrown at once; candidates are y_types",
+   "evidence": "build.jl:127-143; spec.md:15681-15686"
+  },
+  {
+   "id": "CV9a-007",
+   "file": "src/build.jl",
+   "line": 146,
+   "kind": "docstring",
+   "claim": "_embed lifts Float64 leaves at T-declared positions, passes other leaves through",
+   "evidence": "build.jl:154-157"
+  },
+  {
+   "id": "CV9a-008",
+   "file": "src/build.jl",
+   "line": 197,
+   "kind": "docstring",
+   "claim": "_outputs adds edges for stage-2 ports only, keeps port and face, decomposes a stall into AlgebraicCycles",
+   "evidence": "build.jl:197-248"
+  },
+  {
+   "id": "CV9a-009",
+   "file": "src/build.jl",
+   "line": 251,
+   "kind": "surface",
+   "claim": "AlgebraicCycle: one per nontrivial SCC, members in DFS preorder, wires in slash form, as Appendix C",
+   "evidence": "build.jl:251-333; spec.md:15665-15669"
+  },
+  {
+   "id": "CV9a-010",
+   "file": "src/build.jl",
+   "line": 351,
+   "kind": "map",
+   "claim": "code_map layout entry: Requester, bare_outputs, component_paths, three layout IllegalPortType arms, two stop arms, alias pass",
+   "evidence": "build.jl:351-365, 405-505, 482-485"
+  },
+  {
+   "id": "CV9a-012",
+   "file": "src/build.jl",
+   "line": 391,
+   "kind": "surface",
+   "claim": "refuse_path raises PathResolution :unknown_child with owner, segment, candidates (D-440)",
+   "evidence": "build.jl:391-403; probe:P1b; spec.md:15522-15530"
+  },
+  {
+   "id": "CV9a-013",
+   "file": "src/build.jl",
+   "line": 405,
+   "kind": "surface",
+   "claim": "IllegalPortType reasons :no_leaves default, :mutable, :handle_at_root, :stop_flag_nested, :stop_flag_at_root",
+   "evidence": "build.jl:411-470; diagnostics.jl:893-901; spec.md:15641-15660"
+  },
+  {
+   "id": "CV9a-014",
+   "file": "src/build.jl",
+   "line": 497,
+   "kind": "surface",
+   "claim": "MissingProbeValue raised at layout with face and type",
+   "evidence": "build.jl:497-503; probe:P7; spec.md:15620-15621"
+  },
+  {
+   "id": "CV9a-015",
+   "file": "src/build.jl",
+   "line": 535,
+   "kind": "cite",
+   "claim": "pinning_consumers cites §8.2, §13.7, §13.9, §14.10, D-168, D-468",
+   "evidence": "spec.md:2714, 12056, 12503, 14297; log.md:6660, D-468 title"
+  },
+  {
+   "id": "CV9a-016",
+   "file": "src/build.jl",
+   "line": 542,
+   "kind": "map",
+   "claim": "pinning_consumers entry: ProbeDual default, Structure alone, shared by show, descriptor, linearize",
+   "evidence": "build.jl:542-554; show.jl:93; descriptor.jl:186; linearize.jl:533"
+  },
+  {
+   "id": "CV9a-018",
+   "file": "src/build.jl",
+   "line": 576,
+   "kind": "map",
+   "claim": "ComponentOutputs row holds path and two name lists; _ports concatenates; order beside rows",
+   "evidence": "build.jl:576-583, 616-619"
+  },
+  {
+   "id": "CV9a-019",
+   "file": "src/build.jl",
+   "line": 616,
+   "kind": "docstring",
+   "claim": "Outputs docstring: fields components and order; entry fields path, stage1, stage2; names only",
+   "evidence": "build.jl:576-622, 197-248"
+  },
+  {
+   "id": "CV9a-020",
+   "file": "src/build.jl",
+   "line": 662,
+   "kind": "docstring",
+   "claim": "Events docstring: one field components; entries path, policies, bundle; :non_localized for Bool, :localized for Float64",
+   "evidence": "build.jl:626-665, 1286-1293"
+  },
+  {
+   "id": "CV9a-021",
+   "file": "src/build.jl",
+   "line": 703,
+   "kind": "docstring",
+   "claim": "Build docstring: fields structure, outputs, events; activations and warnings held; lock-guarded cache",
+   "evidence": "build.jl:703-710, 969-975"
+  },
+  {
+   "id": "CV9a-022",
+   "file": "src/build.jl",
+   "line": 733,
+   "kind": "docstring",
+   "claim": "ProbeDual is Dual{ProbeTag,Float64,1}; linearize has a `width` keyword",
+   "evidence": "build.jl:733; linearize.jl:206, 264"
+  },
+  {
+   "id": "CV9a-023",
+   "file": "src/build.jl",
+   "line": 767,
+   "kind": "docstring",
+   "claim": "build signature, `activations::Tuple = ()` keyword, one DiagnosticError with warnings, logs once at return",
+   "evidence": "build.jl:767-815; spec.md:14999-15003 (Appendix B)"
+  },
+  {
+   "id": "CV9a-024",
+   "file": "src/build.jl",
+   "line": 777,
+   "kind": "map",
+   "claim": "build binds BUILD_WARNINGS once, rewraps DiagnosticError with warnings and Structure when past the structure step, logs at return",
+   "evidence": "build.jl:777-815; probe:P10"
+  },
+  {
+   "id": "CV9a-025",
+   "file": "src/build.jl",
+   "line": 781,
+   "kind": "map",
+   "claim": "trial binding runs right after the walk, before the first barrier; build is unspecialized",
+   "evidence": "build.jl:767-769, 781-791"
+  },
+  {
+   "id": "CV9a-027",
+   "file": "src/build.jl",
+   "line": 840,
+   "kind": "surface",
+   "claim": "EventHalfMissing reasons :guard, :handler, :not_an_event with found type, as Appendix C",
+   "evidence": "build.jl:836-851; probe:P6, P6b; spec.md:15551-15555"
+  },
+  {
+   "id": "CV9a-028",
+   "file": "src/build.jl",
+   "line": 871,
+   "kind": "map",
+   "claim": "wire pass checks both clauses at Float64 and the marker, fixes root-input types, two refusals",
+   "evidence": "build.jl:871-940"
+  },
+  {
+   "id": "CV9a-029",
+   "file": "src/build.jl",
+   "line": 900,
+   "kind": "surface",
+   "claim": "WireTypeMismatch, WalkingFaceAtFrozenEntry (continuous consumers only), AbstractAtRoot, RootInputTypeConflict are in Appendix C",
+   "evidence": "build.jl:889-940; spec.md:15513-15536, 4895-4902"
+  },
+  {
+   "id": "CV9a-030",
+   "file": "src/build.jl",
+   "line": 969,
+   "kind": "docstring",
+   "claim": "activation docstring: dictionary lookup, derive on miss, lock on lookup and insert, first writer wins",
+   "evidence": "build.jl:969-975"
+  },
+  {
+   "id": "CV9a-031",
+   "file": "src/build.jl",
+   "line": 991,
+   "kind": "docstring",
+   "claim": "warnings(build) returns build.warnings, each also logged once at return",
+   "evidence": "build.jl:991, 810-812"
+  },
+  {
+   "id": "CV9a-032",
+   "file": "src/build.jl",
+   "line": 1001,
+   "kind": "map",
+   "claim": "_nominal returns Outputs, Events and the nominal activation; _activate serves every other scalar",
+   "evidence": "build.jl:1001-1043"
+  },
+  {
+   "id": "CV9a-033",
+   "file": "src/build.jl",
+   "line": 1055,
+   "kind": "surface",
+   "claim": "ws_init at T for continuous, Float64 for discrete, as §9.4",
+   "evidence": "build.jl:1055-1062; spec.md:5679-5683"
+  },
+  {
+   "id": "CV9a-036",
+   "file": "src/build.jl",
+   "line": 1107,
+   "kind": "surface",
+   "claim": "DeclaredNotProduced collected after all port checks, with ports, products, state fields",
+   "evidence": "build.jl:1104-1121; probe:P5; spec.md:15674-15680"
+  },
+  {
+   "id": "CV9a-038",
+   "file": "src/build.jl",
+   "line": 1147,
+   "kind": "surface",
+   "claim": "DeclarationOnWrongTier :continuous_only and :no_manifold for x_projection",
+   "evidence": "build.jl:1147-1158; spec.md:15572-15582"
+  },
+  {
+   "id": "CV9a-039",
+   "file": "src/build.jl",
+   "line": 1178,
+   "kind": "docstring",
+   "claim": "_probe_direct! is a no-op without y_direct or when frozen; shared with tracer.jl",
+   "evidence": "build.jl:1178-1219; tracer.jl:291"
+  },
+  {
+   "id": "CV9a-040",
+   "file": "src/build.jl",
+   "line": 1204,
+   "kind": "surface",
+   "claim": "ProducedByTwoStages fail-fast with ports",
+   "evidence": "build.jl:1210-1213; spec.md:15670-15673"
+  },
+  {
+   "id": "CV9a-041",
+   "file": "src/build.jl",
+   "line": 1263,
+   "kind": "docstring",
+   "claim": "probe_events: nominal only, policy from guard return type, handler checked, returns Events",
+   "evidence": "build.jl:1263-1310"
+  },
+  {
+   "id": "CV9a-042",
+   "file": "src/build.jl",
+   "line": 1290,
+   "kind": "surface",
+   "claim": "GuardForm fail-fast on a non-Bool, non-Float64 guard return",
+   "evidence": "build.jl:1286-1291; probe:P8; spec.md:15703-15706"
+  },
+  {
+   "id": "CV9a-043",
+   "file": "src/build.jl",
+   "line": 1312,
+   "kind": "surface",
+   "claim": "HandlerReturnKey collected with the handler's ConformanceFailures; x complete, m names-subset",
+   "evidence": "build.jl:1312-1365; probe:P9; spec.md:15712-15715, 5970-5990"
+  },
+  {
+   "id": "CV9a-044",
+   "file": "src/build.jl",
+   "line": 1384,
+   "kind": "docstring",
+   "claim": "establish_defaults! writes x into the flat buffer, s and m into stores; shared by construction and init!",
+   "evidence": "build.jl:1384-1401, 1483; model.jl:324"
+  },
+  {
+   "id": "CV9a-045",
+   "file": "src/build.jl",
+   "line": 1414,
+   "kind": "docstring",
+   "claim": "Executor docstring: one scalar, owns stepper, arrival buffers, chunk_size, localized key; buffers not cached",
+   "evidence": "build.jl:1414-1438"
+  },
+  {
+   "id": "CV9a-046",
+   "file": "src/build.jl",
+   "line": 1446,
+   "kind": "cite",
+   "claim": "_activation_mismatch cites §14.4 for the pairing invariant",
+   "evidence": "spec.md:13377-13381"
+  },
+  {
+   "id": "CV9a-047",
+   "file": "src/build.jl",
+   "line": 1454,
+   "kind": "cite",
+   "claim": "compile comment cites §12.7 for trajectory-determining algorithm",
+   "evidence": "spec.md:10729"
+  },
+  {
+   "id": "CV9a-048",
+   "file": "src/build.jl",
+   "line": 1461,
+   "kind": "map",
+   "claim": "compile derives gates from the schedule, builds the stepper from `algorithm`, keeps chunk_size and event set",
+   "evidence": "build.jl:1461-1466, 1472-1473, 1625-1642; deployment.jl:95"
+  },
+  {
+   "id": "CV9a-051",
+   "file": "src/build.jl",
+   "line": 1704,
+   "kind": "cite",
+   "claim": "every D-nnn cited in build.jl names an existing log entry on the cited topic",
+   "evidence": "rg '^### D-' log.md for the 35 cited ids"
+  }
+ ],
+ "counts": {
+  "surface": 19,
+  "docstring": 16,
+  "map": 10,
+  "cite": 6
+ }
+}

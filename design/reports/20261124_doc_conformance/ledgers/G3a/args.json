@@ -1,0 +1,56 @@
+{
+ "group": "G3a",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "d7d3ddff",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "S9a",
+   "kind": "spec",
+   "range": [
+    4777,
+    5144
+   ],
+   "desc": "§9 preamble, §9.1 the build's three steps, §9.2 to the end of The Build",
+   "map": "105-186 (src/build.jl), 1365-1437 (src/structure.jl), 886-1004 (src/model.jl)"
+  },
+  {
+   "key": "S9b",
+   "kind": "spec",
+   "range": [
+    5145,
+    5658
+   ],
+   "desc": "§9.2 from The Deployment through Rendering, Grid diagnostics and Warnings, §9.3 probing and input synthesis",
+   "map": "105-186 (src/build.jl), 1365-1437 (src/structure.jl), 886-1004 (src/model.jl), 353-432 (src/deployment.jl), 1101-1183 (src/show.jl)"
+  },
+  {
+   "key": "S9c",
+   "kind": "spec",
+   "range": [
+    5659,
+    6053
+   ],
+   "desc": "§9.4 activations, §9.5 the conformance check, §9.6 services as activation clients",
+   "map": "105-186 (src/build.jl), 1365-1437 (src/structure.jl), 886-1004 (src/model.jl), 614-654 (src/executor.jl), 1326-1364 (src/store.jl), 516-613 (src/diagnostics.jl)"
+  },
+  {
+   "key": "S9d",
+   "kind": "spec",
+   "range": [
+    6054,
+    6432
+   ],
+   "desc": "§9.7 the compiled executor, §9.8 allocation policy",
+   "map": "105-186 (src/build.jl), 1365-1437 (src/structure.jl), 886-1004 (src/model.jl), 614-654 (src/executor.jl), 1326-1364 (src/store.jl), 516-613 (src/diagnostics.jl)"
+  },
+  {
+   "key": "K9a",
+   "kind": "companion",
+   "file": "design/companions/examples_inventory.md, whole",
+   "lines": 277,
+   "map": "105-186 (src/build.jl), 1365-1437 (src/structure.jl), 886-1004 (src/model.jl)",
+   "extra": "It inventories the examples package (examples/ in W): check each example it names exists and does what it says."
+  }
+ ]
+}

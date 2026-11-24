@@ -1,0 +1,113 @@
+{
+ "judgments": [
+  {
+   "id": "CV9b-046",
+   "conforms": false,
+   "evidence": "src/model.jl:60 says 'A model holds six values, each a field.' and lists six; src/model.jl:96-103 declares seven fields, the seventh `floor_reported::Bool` (D-460). Probe P1: fieldnames(Model) = (:deployment, :exec, :status, :claimed, :frame_diag, :fresh, :floor_reported), count=7. The field is set in src/model.jl:893-894 and cleared once per frame in src/frame.jl:121.",
+   "class": "drift",
+   "fix": "'A model holds seven values, each a field.' Add a bullet after `fresh`: '- `floor_reported`: whether the frame has filed its one `StepFloor` report. The frame loop clears it at the start of each frame.' (Also worth adding StepFloor to the `frame_diag` bullet, since src/model.jl:895 files it into that cell.)",
+   "clear": true,
+   "note": "Commit 4367fa55 (D-460, D-461, D-462) added the field and left the docstring's count and list unchanged."
+  },
+  {
+   "id": "CV9b-047",
+   "conforms": false,
+   "evidence": "src/model.jl:117-120 pushes ArgumentInvalid(call=:Model, reason=:range, argument=:chunk_size) into a collected list. Probe P2: chunk_size=0 and chunk_size=1.5 each give [(ArgumentInvalid, :range, :chunk_size)], and chunk_size=1 is accepted. In the spec, Appendix B's chunk_size row (design/spec.md:15087) states no refusal. Appendix C's ArgumentInvalid entry (design/spec.md:15932-15971) says the Model keywords are collected but gives no reason for chunk_size, and §9.7 never mentions a refusal.",
+   "class": "drift",
+   "fix": "Appendix B row meaning: 'the executor's unroll width, an integer of at least 1, a performance knob that never moves the trajectory; any other value is refused as `ArgumentInvalid` `:range`'. Appendix C, after the `BS3` sentence: 'A `chunk_size` handed to `Model` that is not an integer of at least 1 is `:range`, collected with the call.'",
+   "clear": true,
+   "note": "Commit 945abebf ('Refuse a chunk_size that is not an integer ≥ 1 at the Model door, collected as Appendix C says') records the refusal. The docstring at src/model.jl:56-58 states it but names no reason."
+  },
+  {
+   "id": "CV9b-049",
+   "conforms": false,
+   "evidence": "src/model.jl:129-132: Model(build, T; chunk_size, kw...) = Model(Deployment(build; kw...), T; chunk_size), and Model(root, T; kw...) = Model(build(root), T; kw...), so the deployment (and the build) are evaluated before the scalar check at src/model.jl:111. Probe P3 results. Model(build, Float32; Δt_frame=-1) gives DeploymentInvalid :range on Δt_frame. Model(build, Float32) gives DeploymentInvalid :missing on Δt_frame. Model(root, Float32; Δt_frame=-1) gives DeploymentInvalid. A root that fails to build, at Float32, gives PathResolution + UnconnectedInput. Model(dep, Float32; chunk_size=0) gives :scalar alone, so the claim holds for the deployment form only.",
+   "class": "deviation",
+   "fix": "Appendix C: '`Model(deployment, T)` at a scalar other than `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not, raises it with reason `:scalar`, alone and before its keywords are read ([D-320]). The composed forms build the deployment first, so its refusals come ahead of the scalar's.' Docstring: '... is refused as `ArgumentInvalid` with reason `:scalar`, before the model compiles anything. `Model(build; kw...)` and `Model(root; kw...)` build the deployment first, and its refusals come first.'",
+   "clear": false,
+   "backing_entry": "D-320 backs the scalar check on `Model(deployment, T)` only. D-254 (the composed forms defined as the composition) backs the code's order. The alternative is a code change that checks T first in the composed forms, so the fix is a choice.",
+   "note": "For the root form, build(root) runs the whole build pipeline, including the nominal Float64 activation, before the refusal. So the docstring's 'before anything is compiled' is also too broad there."
+  },
+  {
+   "id": "CV9b-051",
+   "conforms": true,
+   "evidence": "src/model.jl:258-260 `_claimed_gate` throws ArgumentInvalid(reason=:claimed, argument=:model). It is called at src/model.jl:312/320 (init!), 460/468 (overlay!), 493 (apply!) and 1309 (restore!), and also at src/frame.jl:80 (frame!) and src/trim.jl:562 (trim!). Probe P4: on a claimed model, init!, overlay!, frame!, apply! and restore! each give [(ArgumentInvalid, :claimed, :model)].",
+   "note": "The Model docstring's list of refusing calls (src/model.jl:83-85) and Appendix B's (design/spec.md:15096-15098) name init!, frame!, restore!, overlay! and trim!. Neither names apply!, which also refuses. That falls outside this claim."
+  },
+  {
+   "id": "CV9b-070",
+   "conforms": true,
+   "evidence": "design/code_map.md:933-956 describes the doors init!, overlay!, apply! and restore!, the gate, _check_origin/_origin/_exact_origin/_clock_integers, and the _check_checkpoint!/_check_grid! split before _restore_state!. design/code_map.md:990-998 describes the rest gate _assert_at_rest. These match src/model.jl:258, 311-344, 346-384, 459-482, 492-494, 1204-1216, 1256-1272 and 1307-1314. Sim's forwarding apply! (src/sim.jl:639) calls _apply_plan!, and sim's door calls _restore_state! (src/sim.jl:1002), as the map says."
+  },
+  {
+   "id": "CV9b-060",
+   "conforms": true,
+   "evidence": "src/model.jl:1024-1036 reads the s store when it exists and otherwise reconstructs x from xbuf. _component_index (src/model.jl:1062-1065) refuses an unknown path through refuse_path and returns nothing at an assembly. Probe P5 results. acc gives 1.0, tick gives 1, latch gives [0.0, 1.0], plant gives (q=[0,0],). Stateless neg gives nothing, the root assembly \"\" gives nothing, and the stateless discrete DiscreteMap gives nothing. \"nope\" gives PathResolution."
+  },
+  {
+   "id": "CV9b-064",
+   "conforms": false,
+   "evidence": "src/model.jl:1259-1265: _check_grid! pushes ArgumentInvalid(call=:restore!, reason=:range, argument=:t0, value=t₀) into the list the mismatches collect into, when _clock_integers fails on the state's origin. restore! calls it at src/model.jl:1312, and so do sim's doors at src/sim.jl:1073 and 1090. test/test_lifecycle.jl:114-126 asserts this for a forged origin 1//typemax(Int). The restore! docstring (src/model.jl:1287-1292) names only CheckpointMismatch, CheckpointMidFrame and the claim. Appendix C (design/spec.md:15966-15968) gives t0 :range to init!, trim! and linearize only.",
+   "class": "drift",
+   "fix": "Appendix C: 'A `t0` handed to `init!`, `trim!` or `linearize` that is not exact, or whose run the clock's integers cannot carry, is `:range`, and `restore!` refuses a state whose origin's run the clock's integers cannot carry the same way, collected beside the mismatches ([D-457]).' restore! docstring, after the CheckpointMidFrame sentence: 'One whose origin's run the clock's integers cannot carry, as only a state built by hand can, is refused as `ArgumentInvalid`.'",
+   "clear": true,
+   "note": "D-457 (ratified, design/log.md) says: 'A restore checks a state's origin the same way, since a state built by hand carries an origin no door accepted.' code_map.md:996-998 also states it. Only the docstring and Appendix C lag."
+  },
+  {
+   "id": "CV9b-003",
+   "conforms": true,
+   "evidence": "src/structure.jl:20-37: a primitive producer returns [(comp_path, name)]. An assembly face returns its recorded route with the hop pushed first, ending at the producer. Every nothing return has its refusal recorded in diags. resolve_terminal returns nothing after recording. _wrong_direction pushes UnknownPort or FaceDirectionConflict and returns nothing (src/structure.jl:105-124). A declared face refused at the child was recorded there once (src/structure.jl:33)."
+  },
+  {
+   "id": "CV9b-008",
+   "conforms": true,
+   "evidence": "src/structure.jl:139-198 defines the row types and `membership`. Probe P7: Structure's fields are Vector{ComponentEntry}, Vector{Anchor}, Vector{RateScope NamedTuple}, Vector{Symbol}, Vector{Type} and Vector{LevelEntry}. The module exports nothing (src/Redstone.jl has no export, per D-226), and docstring_rules.md rule 1 takes docs/src/api.md as the public set. api.md lists `Structure` but none of its row types, so they are internal. Spec §9.1 (design/spec.md:4958-4976) states the facts the rows hold: the components by path with their tier and rate chain, and one row per assembly with its children (each with its contributing field) and its wires. It does so without naming the types.",
+   "note": "The statement is accurate as a fact: spec, Appendix B and api.md name no row type. But nothing in the docs contradicts the code, and the row type names are internal. D-261 in the log names ComponentEntry and Anchor. Whether Structure's fields and row types become public is owed to the exported-name audit (design/pending.md:89-96, 'It also settles which fields are public'). If they are made public, this becomes a gap row for that bullet."
+  },
+  {
+   "id": "CV9b-013",
+   "conforms": false,
+   "evidence": "src/structure.jl:248 `root_types::Vector{Type}` is a field of Structure. Probe P7 gives root_types = Type[Float64, Float64] beside root_inputs = [:u, :p]. Spec §9.1's list of what Structure carries (design/spec.md:4960-4970) gives 'the root inputs' with no types. The g-structure glossary entry (design/spec.md:16813-16820, docs/src/glossary.md:241) and Appendix B (design/spec.md:15027-15031) omit it as well. rg finds 'root_types' in no spec or log line, only in code_map.md:1376 and the docstring at src/structure.jl:225.",
+   "class": "deviation",
+   "fix": "§9.1 list: replace '- the root inputs;' with '- the root inputs, each with the type the wire check fixed for it;'. Glossary g-structure: '... the [root inputs] with their types, the rate chains and the scope triples.'",
+   "clear": true,
+   "backing_entry": "",
+   "note": "D-236 fixes the root-input type itself and D-261 sets the artifact-holds-declared-facts rule, but no log entry places the types on Structure. The field arrived with commit 1ea65d21 (increment 32) and nothing recorded the placement in the spec."
+  },
+  {
+   "id": "CV9b-014",
+   "conforms": true,
+   "evidence": "src/structure.jl:321-350: a non-NamedTuple declaration gives :declaration_shape, a value that is not Relative/Absolute gives :value_vocabulary, D<1 gives :multiplier, otherwise Φ outside [0,D) gives :phase, Δt≤0 gives :period, otherwise τ outside [0,Δt) gives :offset, and a key that matches no child segment or field gives :unknown_child. Probe P9 shows each reason in turn: Relative(0) gives :multiplier, Relative(2,2) gives :phase, an unknown key gives :unknown_child, 3 gives :value_vocabulary, Absolute(0//1) gives :period and Absolute(1//10,1//10) gives :offset.",
+   "note": "The docstring leaves out the :declaration_shape refusal, and a key whose value is outside the wrapper vocabulary skips the child-name check (the continue at :331). Neither contradicts the listed constraints."
+  },
+  {
+   "id": "CV9b-034",
+   "conforms": true,
+   "evidence": "src/structure.jl:398-410: the Relative fold composes in Base.Checked arithmetic under _exact_or_nothing. On overflow it pushes RatesViolation :range only if no :range diagnostic already exists for the same path and key, and it skips a rate its own check refused (:398). Probe P9: a nested Relative(2^40) over a bare container key with two elements gives one :range, and two keyed elements give two :range. This matches design/code_map.md:1384-1387."
+  },
+  {
+   "id": "CV9b-017",
+   "conforms": false,
+   "evidence": "src/structure.jl:435-437 (flatten_tree! docstring) says 'sample times folded to `(anchor, m, c)` timings'. The fold's value is `Timing = @NamedTuple{anchor::Int, D::Int, Φ::Int}` (src/structure.jl:135), and the walk seeds it as Timing((0, 1, 0)) at src/structure.jl:450. Probe P7 shows the scopes field type timing::@NamedTuple{anchor::Int64, D::Int64, Φ::Int64}.",
+   "class": "drift",
+   "fix": "'... sample times folded to `(anchor, Dₐ, Φₐ)` timings, ...'",
+   "clear": true,
+   "note": "Commit 7c24c484 ('Write the code's timing counts as D and Φ under their lattice's subscript ... (D-478, D-479)') renamed the fields and missed this docstring. The section comment at src/structure.jl:305-313 already uses (a, Dₐ, Φₐ)."
+  },
+  {
+   "id": "CV9b-025",
+   "conforms": false,
+   "evidence": "src/structure.jl:756-769: _check_face_names pushes FaceNameIllegal :contains_slash for a name containing '/', FaceNameIllegal :empty for an empty name, and FaceNameCollision site :assembly when the names across input and output entries are not all unique. Probe P8 shows a slash face giving (FaceNameIllegal, :contains_slash), an empty face giving (FaceNameIllegal, :empty), and 'q' as both input and output face giving (FaceNameCollision, :assembly). design/code_map.md:1418-1421 (the claim's 1409-1411) names only the :empty refusal.",
+   "class": "deviation",
+   "fix": "'`_check_face_names` refuses an assembly face containing `/` or empty as `FaceNameIllegal` `:contains_slash` or `:empty`, and a name repeated across its input and output faces as `FaceNameCollision` `:assembly`; the root check `_check_root_faces` ...'",
+   "clear": true,
+   "note": "The slash and collision refusals predate the map's line (commit 3b5b204b). The :empty clause came with D-437 (commit 4d79875c), and the map line was never complete."
+  },
+  {
+   "id": "CV9b-024",
+   "conforms": true,
+   "evidence": "src/structure.jl:760-767 raises FaceNameIllegal :contains_slash and :empty and FaceNameCollision :assembly (probe P8 confirms all three). Spec §8.6 (design/spec.md:3998-4004) states the three invariants: no '/', unique across the two boundary declarations, never empty. It also states the collision refusal (design/spec.md:3983-3984). Appendix C (design/spec.md:15581-15589) gives FaceNameIllegal with :contains_slash/:empty and FaceNameCollision with site :assembly for a name repeated among an assembly's input and output faces."
+  }
+ ],
+ "notes": "I judged all 15 claims from scratch at W = /Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance (detached at d7d3ddff). One probe script ran three times: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV9b_v/probe.jl. I changed no tracked file and ran no git command that writes.\n\nSix claims do not conform:\n- CV9b-046 (drift): the Model docstring lists six fields and misses `floor_reported`.\n- CV9b-047 (drift): the docs give no `:range` reason for a bad `chunk_size`.\n- CV9b-049 (deviation, not clear): the composed Model forms raise deployment and build refusals before the `:scalar` refusal.\n- CV9b-064 (drift): D-457 records restore!'s `:range` on `t0`, but its docstring and Appendix C lag.\n- CV9b-017 (drift): `(anchor, m, c)` should read `(anchor, Dₐ, Φₐ)`.\n- CV9b-013 (deviation): spec §9.1 and the glossary omit `Structure.root_types`.\n- CV9b-025 (deviation): code_map names only `:empty` for `_check_face_names`.\n\nNine claims conform: 051, 070, 060, 003, 008, 014, 034 and 024. For CV9b-064 my own hand-built origins all fit the clock's integers. I relied on test/test_lifecycle.jl:114-126, whose forged origin 1//typemax(Int) gets the refusal.\n\nTwo side findings fall outside the listed claims. The Model docstring (src/model.jl:83-85) and Appendix B's lists of refusing calls both omit apply!, which also refuses a claimed model. The Model `frame_diag` bullet does not mention StepFloor reports."
+}

@@ -1,0 +1,44 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-256: 10730-10786
+D-257: 10787-10857
+D-261: 11038-11198
+D-275: 12451-12473
+D-281: 12808-12828
+D-282: 12829-12862
+D-284: 12937-12968
+D-289: 13176-13290
+D-305: 13841-13864
+D-315: 14274-14381
+D-317: 14517-14698
+D-318: 14699-14777
+D-319: 14778-14898
+D-320: 14899-14946
+D-432: 17569-17706
+D-442: 18528-18601
+D-443: 18602-18656
+D-463: 20020-20051
+D-465: 20098-20196
+D-466: 20197-20270
+D-468: 20470-20531
+D-470: 20602-20628
+D-471: 20629-20748
+
+# Stage M leads
+names missing: `Dataflow` at log.md:11106 (D-261)
+names missing: `Dataflow` at log.md:11107 (D-261)
+names missing: `N_base` at log.md:10740 (D-256)
+names missing: `N_base` at log.md:18614 (D-443)
+names missing: `check` at log.md:12456 (D-275)
+names missing: `in_faces` at log.md:14293 (D-315)
+names missing: `in_routes` at log.md:14293 (D-315)
+names missing: `loop_acct` at log.md:10745 (D-256)
+names missing: `not_harmonic` at log.md:18617 (D-443)
+names missing: `null` at log.md:17607 (D-432)
+names missing: `out_routes` at log.md:14294 (D-315)
+names missing: `r_p` at log.md:12944 (D-284)
+names missing: `sched` at log.md:10741 (D-256)
+names missing: `stop_addrs` at log.md:10746 (D-256)
+names missing: `stop_on` at log.md:10746 (D-256)
+names missing: `Δtₖ` at log.md:20637 (D-471)
+names no_field: `Deployment.grid` at log.md:11097 (D-261)
+names no_field: `Deployment.grid` at log.md:20217 (D-466)

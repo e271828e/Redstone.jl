@@ -1,0 +1,187 @@
+{
+ "judgments": [
+  {
+   "id": "S9a-001",
+   "conforms": true,
+   "evidence": "src/build.jl:767 `build(root::AbstractComponent; activations)` returns the `Build` built at src/build.jl:796; the Build holds the Structure (wires, root inputs, anchor-relative timings), the Outputs (order) and the nominal activation (layout)."
+  },
+  {
+   "id": "S9a-010",
+   "conforms": true,
+   "evidence": "src/structure.jl:442 runs the whole walk first, then src/structure.jl:452-461 checks every primitive input against draft.feeds and records UnconnectedInput. The probe's typo case reports UnknownPort and UnconnectedInput together."
+  },
+  {
+   "id": "S9a-021",
+   "conforms": true,
+   "evidence": "Probe line '021 build counts': y_state, y_direct, x_deriv, s_update, guard, handler and x_projection each ran exactly once during build. ws_init (2) and m_init/x_init/s_init (several) are declaration bodies outside §9.3's set."
+  },
+  {
+   "id": "S9a-019",
+   "conforms": true,
+   "evidence": "src/build.jl:1001 `_nominal(structure::Structure)` takes the Structure alone; called at src/build.jl:795."
+  },
+  {
+   "id": "S9a-029",
+   "conforms": false,
+   "evidence": "src/build.jl:1473-1474 (compile, called from Model at src/model.jl:124) runs `_mstores` (m_init) and `_workspaces` (ws_init), and src/model.jl:123 `activation(deployment.build, T)` runs activation at T on first request. Probe line '029 Model(dep) counts': m_init 5, s_init 2, ws_init 1, x_init 3. At ProbeDual the stages, x_deriv and x_projection run too.",
+   "class": "deviation",
+   "fix": "In the §9.1 table, materialization's last column: \"the `x_init`, `s_init`, `m_init` and `ws_init` declaration bodies, and activation at `T` when the `Build` holds none yet\".",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "S9a-030",
+   "conforms": true,
+   "evidence": "src/sim.jl:358 `Simulation(model::Model{Float64,E})` is the only non-sugar constructor and returns a Simulation (probe line '030')."
+  },
+  {
+   "id": "S9a-032",
+   "conforms": true,
+   "evidence": "src/build.jl:767-806: build runs the structure step, `_nominal`, and activation at each scalar in `activations`. Other activations derive lazily from the Build (src/build.jl:969), as the spec's next paragraph and §9.4 say. The build docstring says the same."
+  },
+  {
+   "id": "S9a-039",
+   "conforms": false,
+   "evidence": "src/structure.jl:538-571: a primitive is collected, classified and its contracts read during the visit. At an assembly (src/structure.jl:575-700) the children are walked first. Then each level's boundary declarations are evaluated (623) and its local, input and output wires are resolved to primitive terminals (627 onward) in the same visit, before the parent's. Face derivation and resolution are not separate steps, and resolution is not a later global pass. Only the obligation check (452) runs after the walk.",
+   "class": "deviation",
+   "fix": "\"The step is a tree walk from the root instance. At each component: 1. it is collected by path; 2. its class is read off declaration shape (§8.5); 3. a primitive's contracts are collected: `u_types`, `y_types`, `*_init` values, `state_events`. At each assembly, after its children: 4. its boundary declarations are evaluated, recording the input and output faces it declares; 5. its wires are resolved to absolute primitive terminals, each face's route recorded beside it. Face derivation and wiring resolution thus run together, bottom-up.\"",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "S9a-041",
+   "conforms": true,
+   "evidence": "src/assembly.jl:58-72 `classify` reads which declarations the type defines: local_wires means ASSEMBLY, leaf declarations mean PRIMITIVE, both mean ClassMixed and neither means ClassUnreadable."
+  },
+  {
+   "id": "S9a-050",
+   "conforms": true,
+   "evidence": "src/structure.jl:112-116 UnknownPort carries `port = name` and `candidates`. Probe: UnknownPort(..., :uu, [:u, :y, :p]), message \"names no `uu` on `c` — its faces are u, y, p\"."
+  },
+  {
+   "id": "S9a-051",
+   "conforms": false,
+   "evidence": "src/structure.jl:115-116 `candidates = vcat(input_names, output_names)` for a named port. Probe: the destination typo `c/uu` offers [:u, :y, :p], which includes c's outputs. A source typo gets the same list. Appendix C also says \"that end's port list\".",
+   "class": "deviation",
+   "fix": "\"the typo did-you-mean (the offending name plus the list-in-hand it should have matched) against the endpoint's faces, inputs and outputs alike, raised as `UnknownPort`;\"",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "S9a-060",
+   "conforms": true,
+   "evidence": "src/structure.jl:551-556: check_store_form (the EmptyStore gate) runs first. Only when it passes do classify_tier, check_stores and check_state_leaves run, and they read a bare store as one leaf through `store_fields`/`_keyed` (src/assembly.jl:667)."
+  },
+  {
+   "id": "S9a-069",
+   "conforms": true,
+   "evidence": "src/assembly.jl:710-718 checks each s_init/m_init field with `isbits(value) || value isa Symbol`. Probe: s_init `(name = \"abc\",)` gives IllegalStoreField(\"\", :s_init, :name, String)."
+  },
+  {
+   "id": "S9a-078",
+   "conforms": true,
+   "evidence": "src/leaves.jl:380-381 `_accepts_wire`: a concrete P uses `_accepts`, which recurses parameter by parameter (leaf-wise). An abstract P checks `V <: P || retype(T, V) <: P` on the whole declaration. Called at the marker at src/build.jl:898."
+  },
+  {
+   "id": "S9a-087",
+   "conforms": true,
+   "evidence": "src/assembly.jl:733-737: with neither x_init nor s_init declared, the primitive is refused as TierUnreadable. Probe: NoStore gives TierUnreadable(\"\", \"NoStore\", [:y_types, :y_direct])."
+  },
+  {
+   "id": "S9a-096",
+   "conforms": true,
+   "evidence": "src/structure.jl:339-343 records `:period` unless `rate.Δt > 0`. Probe: Absolute(0) gives RatesViolation(\"\", :period, :d, 0//1)."
+  },
+  {
+   "id": "S9a-105",
+   "conforms": true,
+   "evidence": "src/structure.jl:442 seeds the walk with `Timing((0, 1, 0))` (anchor 0 is the base grid). Probe timings: both root-level children (anchor = 0, D = 1, Φ = 0)."
+  },
+  {
+   "id": "S9a-114",
+   "conforms": true,
+   "evidence": "src/structure.jl:396-407 composes with Base.Checked and records RatesViolation :range on the composing entry. Probe: nested Relative(2^40) gives RatesViolation(\"g\", :range, :d, Relative(1099511627776, 0))."
+  },
+  {
+   "id": "S9a-123",
+   "conforms": true,
+   "evidence": "Validation (src/structure.jl:321), the fold (382-428) and the trial binding (958) all run in build's structure step (src/build.jl:784-785). Only `bind_schedule` (src/deployment.jl:214) binds Δt_base and forms the final counts."
+  },
+  {
+   "id": "S9a-132",
+   "conforms": true,
+   "evidence": "src/structure.jl:974-977: when `reduce(gcd, pool)` leaves Rational{Int}, `foreach(anchor -> refuse(anchor_link(anchor)), draft.anchors)`. Probe: Absolute(1//4294967291) and Absolute(1//4294967279) each get RatesViolation :range."
+  },
+  {
+   "id": "S9a-141",
+   "conforms": true,
+   "evidence": "src/structure.jl:247 `root_inputs::Vector{Symbol}` on Structure. Probe: b.structure.root_inputs == [:u]."
+  },
+  {
+   "id": "S9a-150",
+   "conforms": true,
+   "evidence": "src/build.jl:996-1016: `_nominal` runs the probe chain, and `_outputs` derives the classification and execution order from the stage-1 returns. The structure step runs declaration bodies only, and activation at T reuses `outputs.order` (src/build.jl:1030-1039)."
+  },
+  {
+   "id": "S9a-159",
+   "conforms": true,
+   "evidence": "src/declare.jl:873 adds `:ws` to the bundle fields when the component declares ws_init. src/build.jl:1008 allocates it at Float64 before the stage-1 probe."
+  },
+  {
+   "id": "S9a-168",
+   "conforms": true,
+   "evidence": "src/build.jl:1016 `probe_events(structure, nominal)` runs after both stage probes, reads `state_events` (1273) and returns `Events(rows)`."
+  },
+  {
+   "id": "S9a-177",
+   "conforms": true,
+   "evidence": "src/build.jl:1030 `_activate(structure::Structure, outputs::Outputs, nominal::Activation{Float64}, ::Type{T})` returns Activation{T}. It is called from `activation` at src/build.jl:976."
+  },
+  {
+   "id": "S9a-186",
+   "conforms": true,
+   "evidence": "src/deployment.jl:539-553: Deployment has no type parameter (probe: isconcretetype true). Its fields are the build, the grid parameters, Schedule, Lattice and warnings, with no scalar."
+  },
+  {
+   "id": "S9a-195",
+   "conforms": true,
+   "evidence": "src/build.jl:703-706 has Build fields structure, outputs and events. src/build.jl:794-796 fills them from `Structure(draft, …)` and `_nominal`."
+  },
+  {
+   "id": "S9a-204",
+   "conforms": true,
+   "evidence": "src/sim.jl:393-394 `Simulation(deployment::Deployment; join_timeout, chunk_size) = Simulation(Model(deployment; chunk_size); join_timeout)`. Probe: Simulation(dep).model is a Model{Float64} and is claimed."
+  },
+  {
+   "id": "S9a-213",
+   "conforms": true,
+   "evidence": "src/sim.jl:370-379: status other than :built and an existing claim are collected as ArgumentInvalid before anything is allocated. The claim is a single compare-and-swap. Probe: a second Simulation(m) gives ArgumentInvalid :claimed, and an initialized model gives :not_built."
+  },
+  {
+   "id": "S9a-222",
+   "conforms": true,
+   "evidence": "src/sim.jl:1080 `restore!(sim, ::ModelState{Float64})`. Probe: a standalone model is init!'d and checkpointed. Simulation on it is refused (:not_built). restore! of its state into a fresh simulation succeeds, with lifecycle 'initialized'."
+  },
+  {
+   "id": "S9a-231",
+   "conforms": true,
+   "evidence": "src/structure.jl:247-249 Structure.root_inputs (Vector{Symbol}) and levels (wires as path/face pairs). src/build.jl:616-619 Outputs.order::Vector{Int}. All are plain fields with no show method of their own."
+  },
+  {
+   "id": "S9a-240",
+   "conforms": true,
+   "evidence": "src/structure.jl:1051-1074 `terminal_producer` starts an output face from its level's output wire and walks into sibling levels until it reaches a primitive's port. resolve_source (src/structure.jl:20-40) lets an output_wires source name only a child's output, so it always ends at a producing terminal."
+  },
+  {
+   "id": "S9a-249",
+   "conforms": true,
+   "evidence": "src/deployment.jl:214 `bind_schedule(build, Δt_frame, Δt_base, …)` turns the Structure's anchor-relative timings and anchors into the Schedule's (D₀, Φ₀, Δt) rows (ScheduleEntry, src/deployment.jl:36)."
+  },
+  {
+   "id": "S9a-258",
+   "conforms": true,
+   "evidence": "src/structure.jl:158-164 ComponentEntry.timing is `(anchor, D, Φ)` in anchor ticks, and Anchor (145-150) holds the exact (Δt, τ). No base-tick divisor is stored. Final D₀ exists only in Deployment.schedule (src/deployment.jl:36-42)."
+  }
+ ],
+ "notes": "Of the 33 claims in slice S9a, 30 agree with the code and 3 do not. All 3 are deviations (no log entry, commit or pending bullet records them), none backed by a log entry, and none has a single obvious fix:\n- S9a-029: the §9.1 table says materialization runs no user code. Model(deployment, T) runs the m_init, s_init, x_init and ws_init declaration bodies. At a scalar with no cached activation it also runs activation at T.\n- S9a-039: the five-step walk order is wrong. Face derivation and wiring resolution run together at each level as the walk climbs back up, not as two separate passes with a global resolution at the end.\n- S9a-051: the did-you-mean list for a typo'd port is all the endpoint's faces, inputs and outputs, not the destination's input list. Appendix C's \"that end's port list\" is affected too.\n\nOn S9a-032 (\"build(world) runs the first three steps\"): by default build runs only the structure step and the nominal evaluation. Activation at T runs at build only for the scalars named in its `activations` keyword, and otherwise on first request. I judged it conforming because the spec's next paragraph and §9.4 say this.\n\nProbe: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S9a_v/probe.jl, run twice (the first run failed on a missing import).\n\nNothing in the repo was edited or committed."
+}

@@ -1,0 +1,41 @@
+{
+ "group": "G3b",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "d7d3ddff",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "K9b",
+   "kind": "companion",
+   "file": "design/companions/frozen_discrete_walkthrough.md and design/companions/handle_walk_walkthrough.md, both whole",
+   "lines": 407,
+   "map": "105-186 (src/build.jl), 1365-1437 (src/structure.jl), 886-1004 (src/model.jl), 614-654 (src/executor.jl), 1326-1364 (src/store.jl), 516-613 (src/diagnostics.jl)"
+  },
+  {
+   "key": "L9a",
+   "kind": "log",
+   "n": 23,
+   "map": "105-186 (src/build.jl), 1365-1437 (src/structure.jl), 886-1004 (src/model.jl), 614-654 (src/executor.jl), 1326-1364 (src/store.jl), 516-613 (src/diagnostics.jl)"
+  },
+  {
+   "key": "L9b",
+   "kind": "log",
+   "n": 23,
+   "map": "105-186 (src/build.jl), 1365-1437 (src/structure.jl), 886-1004 (src/model.jl), 614-654 (src/executor.jl), 1326-1364 (src/store.jl), 516-613 (src/diagnostics.jl)"
+  },
+  {
+   "key": "CV9a",
+   "kind": "coverage",
+   "files": "src/build.jl whole",
+   "docs": "design/spec.md §9 (lines 4777-6432)",
+   "map": "105-186 (src/build.jl)"
+  },
+  {
+   "key": "CV9b",
+   "kind": "coverage",
+   "files": "src/structure.jl and src/model.jl whole",
+   "docs": "design/spec.md §9 (lines 4777-6432) and §8.6 (rg -n '^### 8.6' design/spec.md)",
+   "map": "1365-1437 (src/structure.jl), 886-1004 (src/model.jl)"
+  }
+ ]
+}

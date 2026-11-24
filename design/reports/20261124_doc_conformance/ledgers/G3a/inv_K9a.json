@@ -1,0 +1,832 @@
+{
+ "rows": [
+  {
+   "id": "K9a-017",
+   "file": "design/companions/examples_inventory.md",
+   "line": 60,
+   "kind": "mech",
+   "claim": "The installed Redstone carries examples/ in its package directory (URL or registry); route 2 (temp env, Pkg.develop of both paths) works; Pkg makes installed dirs read-only; developing the examples alone leaves Redstone unreachable",
+   "evidence": "examples/ is in the repo and no .gitattributes export-ignore exists; the rest is Pkg behavior on a network resolve, outside the repo's code",
+   "verdict": "unverifiable",
+   "note": "Route 1 checks out (examples/Project.toml:11 lists Redstone as a direct dep). Route 2 and the Pkg claims need a fresh resolve against the registry and a read-only installed copy. Redstone is not registered. The companion's own 'run end to end on 2026-10-18' is history I cannot replay."
+  },
+  {
+   "id": "K9a-075",
+   "file": "design/companions/examples_inventory.md",
+   "line": 225,
+   "kind": "ptr",
+   "claim": "The README shows three of the chapters condensed, with the plot and the diagram, after the quick start it already has, and links to the tutorial for the rest",
+   "evidence": "README.md:119-130 (Documentation section) mentions only 'the first chapters of a tutorial'; it holds no condensed chapters, plot or diagram. design/increments/roadmap_tutorial.md:274 lists 'Which three chapters the README condenses' as an open question for increment 5, and roadmap_tutorial.md:317-319 puts the README's condensed chapters in increment 5, not yet done.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The README will show three of the chapters condensed, with the plot and the diagram, after the quick start it already has, and link to the tutorial for the rest; which three, and the work itself, are the tutorial roadmap's increment 5.",
+   "note": "Present tense states something the repo does not yet do. The tutorial pages for chapters 4 to 9 are also not written (docs/src/tutorial/index.md lists chapters 1 to 3 only), so the table at lines 213-223 describes the plan for those chapters. The functions each row names do exist."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K9a-001",
+   "file": "design/companions/examples_inventory.md",
+   "line": 16,
+   "kind": "decl",
+   "claim": "RedstoneExamples lives in examples/, one file per example",
+   "evidence": "examples/src/RedstoneExamples.jl:19"
+  },
+  {
+   "id": "K9a-002",
+   "file": "design/companions/examples_inventory.md",
+   "line": 17,
+   "kind": "law",
+   "claim": "examples/Project.toml is a workspace root with examples/test as member",
+   "evidence": "examples/Project.toml:6-7"
+  },
+  {
+   "id": "K9a-003",
+   "file": "design/companions/examples_inventory.md",
+   "line": 19,
+   "kind": "mech",
+   "claim": "Pkg.test works from --project=examples",
+   "evidence": ".github/workflows/Examples.yml:25 runs it; examples/test/runtests.jl"
+  },
+  {
+   "id": "K9a-004",
+   "file": "design/companions/examples_inventory.md",
+   "line": 20,
+   "kind": "decl",
+   "claim": "Redstone reached by a [sources] entry with path = \"..\"",
+   "evidence": "examples/Project.toml:16-17"
+  },
+  {
+   "id": "K9a-005",
+   "file": "design/companions/examples_inventory.md",
+   "line": 21,
+   "kind": "law",
+   "claim": "examples is also a member of the root workspace",
+   "evidence": "Project.toml:7"
+  },
+  {
+   "id": "K9a-006",
+   "file": "design/companions/examples_inventory.md",
+   "line": 22,
+   "kind": "law",
+   "claim": "the root manifest is never committed",
+   "evidence": ".gitignore:1"
+  },
+  {
+   "id": "K9a-007",
+   "file": "design/companions/examples_inventory.md",
+   "line": 23,
+   "kind": "law",
+   "claim": "Redstone's Project.toml never lists what only an example needs",
+   "evidence": "Project.toml:9-13 has no ControlSystemsBase; examples/Project.toml:9 holds it"
+  },
+  {
+   "id": "K9a-008",
+   "file": "design/companions/examples_inventory.md",
+   "line": 24,
+   "kind": "law",
+   "claim": "the gate loads none of the examples' dependencies",
+   "evidence": "design/rules/code_rules.md:386-387"
+  },
+  {
+   "id": "K9a-009",
+   "file": "design/companions/examples_inventory.md",
+   "line": 28,
+   "kind": "why",
+   "claim": "lead: Redstone.Examples is the rejected alternative, not a binding; Redstone.Library exists",
+   "evidence": "src/precompile.jl:23 uses Library.Step; examples/src/RedstoneExamples.jl:14 imports Redstone.Library"
+  },
+  {
+   "id": "K9a-010",
+   "file": "design/companions/examples_inventory.md",
+   "line": 32,
+   "kind": "mech",
+   "claim": "examples/test pins every example and CI runs it as a workflow of its own",
+   "evidence": "examples/test/runtests.jl:14-17; .github/workflows/Examples.yml:1"
+  },
+  {
+   "id": "K9a-011",
+   "file": "design/companions/examples_inventory.md",
+   "line": 36,
+   "kind": "law",
+   "claim": "spec 9.7 prices the generic machinery at about 6 s whatever the model",
+   "evidence": "design/spec.md:6268-6270"
+  },
+  {
+   "id": "K9a-012",
+   "file": "design/companions/examples_inventory.md",
+   "line": 38,
+   "kind": "mech",
+   "claim": "src/precompile.jl is a closed loop of library components alone",
+   "evidence": "src/precompile.jl:15-30"
+  },
+  {
+   "id": "K9a-013",
+   "file": "design/companions/examples_inventory.md",
+   "line": 54,
+   "kind": "law",
+   "claim": "RedstoneExamples exports nothing",
+   "evidence": "probe:3 (names(E) is only the module); examples/src/RedstoneExamples.jl has no export"
+  },
+  {
+   "id": "K9a-014",
+   "file": "design/companions/examples_inventory.md",
+   "line": 55,
+   "kind": "law",
+   "claim": "Redstone exports nothing (D-226)",
+   "evidence": "no export statement in src/*.jl (grep)"
+  },
+  {
+   "id": "K9a-015",
+   "file": "design/companions/examples_inventory.md",
+   "line": 55,
+   "kind": "mech",
+   "claim": "the tutorial imports the examples' names by name",
+   "evidence": "docs/src/tutorial/linearize.md:19"
+  },
+  {
+   "id": "K9a-016",
+   "file": "design/companions/examples_inventory.md",
+   "line": 57,
+   "kind": "mech",
+   "claim": "docstring says an example is didactic and may change in a minor version",
+   "evidence": "examples/src/longitudinal.jl:32 (Longitudinal only; the other names carry no such sentence)"
+  },
+  {
+   "id": "K9a-018",
+   "file": "design/companions/examples_inventory.md",
+   "line": 64,
+   "kind": "decl",
+   "claim": "route 1 from a clone: instantiate examples, using Redstone, RedstoneExamples",
+   "evidence": "examples/Project.toml:11 lists Redstone as a direct dep"
+  },
+  {
+   "id": "K9a-019",
+   "file": "design/companions/examples_inventory.md",
+   "line": 85,
+   "kind": "mech",
+   "claim": "docs/src/tutorial/index.md teaches two other routes (URL and docs clone) with CairoMakie",
+   "evidence": "docs/src/tutorial/index.md:12-24"
+  },
+  {
+   "id": "K9a-020",
+   "file": "design/companions/examples_inventory.md",
+   "line": 86,
+   "kind": "law",
+   "claim": "neither examples environment holds CairoMakie",
+   "evidence": "examples/Project.toml:9-13; examples/test/Project.toml"
+  },
+  {
+   "id": "K9a-021",
+   "file": "design/companions/examples_inventory.md",
+   "line": 87,
+   "kind": "decl",
+   "claim": "docs/Project.toml holds Redstone, the examples and CairoMakie",
+   "evidence": "docs/Project.toml:2-7"
+  },
+  {
+   "id": "K9a-022",
+   "file": "design/companions/examples_inventory.md",
+   "line": 91,
+   "kind": "decl",
+   "claim": "the URL and docs-clone commands match the tutorial's",
+   "evidence": "docs/src/tutorial/index.md:14-23"
+  },
+  {
+   "id": "K9a-023",
+   "file": "design/companions/examples_inventory.md",
+   "line": 112,
+   "kind": "law",
+   "claim": "the example is one file with its physics in it",
+   "evidence": "examples/src/longitudinal.jl; RedstoneExamples.jl:21 includes only it"
+  },
+  {
+   "id": "K9a-024",
+   "file": "design/companions/examples_inventory.md",
+   "line": 115,
+   "kind": "law",
+   "claim": "an example's dependencies join the examples environment, not Redstone's",
+   "evidence": "examples/Project.toml:9-13"
+  },
+  {
+   "id": "K9a-025",
+   "file": "design/companions/examples_inventory.md",
+   "line": 116,
+   "kind": "mech",
+   "claim": "the gain design lives in the examples package",
+   "evidence": "examples/src/longitudinal.jl:390 lqr_gains uses ControlSystemsBase.lqr"
+  },
+  {
+   "id": "K9a-026",
+   "file": "design/companions/examples_inventory.md",
+   "line": 117,
+   "kind": "mech",
+   "claim": "the tutorial's plotting is in the docs environment",
+   "evidence": "docs/Project.toml:2"
+  },
+  {
+   "id": "K9a-027",
+   "file": "design/companions/examples_inventory.md",
+   "line": 126,
+   "kind": "mech",
+   "claim": "the file carries the trim problem, the tap set and the loops as plain functions beside the plant",
+   "evidence": "examples/src/longitudinal.jl:119,136,154"
+  },
+  {
+   "id": "K9a-028",
+   "file": "design/companions/examples_inventory.md",
+   "line": 135,
+   "kind": "law",
+   "claim": "Longitudinal is shipped, in examples/src/longitudinal.jl",
+   "evidence": "examples/src/longitudinal.jl:34"
+  },
+  {
+   "id": "K9a-029",
+   "file": "design/companions/examples_inventory.md",
+   "line": 140,
+   "kind": "mech",
+   "claim": "states V, γ, θ, q, h; inputs δe, δt; outputs the states and α",
+   "evidence": "examples/src/longitudinal.jl:51-54"
+  },
+  {
+   "id": "K9a-030",
+   "file": "design/companions/examples_inventory.md",
+   "line": 142,
+   "kind": "mech",
+   "claim": "α = θ − γ",
+   "evidence": "examples/src/longitudinal.jl:54,58"
+  },
+  {
+   "id": "K9a-031",
+   "file": "design/companions/examples_inventory.md",
+   "line": 143,
+   "kind": "law",
+   "claim": "outputs all from the state, so no feedthrough",
+   "evidence": "examples/src/longitudinal.jl:54 (y_state only); probe:8 shows linearization D = 0"
+  },
+  {
+   "id": "K9a-032",
+   "file": "design/companions/examples_inventory.md",
+   "line": 145,
+   "kind": "mech",
+   "claim": "lift L = q̄ S (CL0 + CLα α)",
+   "evidence": "examples/src/longitudinal.jl:59-61"
+  },
+  {
+   "id": "K9a-033",
+   "file": "design/companions/examples_inventory.md",
+   "line": 146,
+   "kind": "mech",
+   "claim": "drag D = q̄ S (CD0 + k CL²)",
+   "evidence": "examples/src/longitudinal.jl:62"
+  },
+  {
+   "id": "K9a-034",
+   "file": "design/companions/examples_inventory.md",
+   "line": 146,
+   "kind": "mech",
+   "claim": "moment M = q̄ S c̄ (Cm0 + Cmα α + Cmq q c̄/2V + Cmδe δe)",
+   "evidence": "examples/src/longitudinal.jl:60,63"
+  },
+  {
+   "id": "K9a-035",
+   "file": "design/companions/examples_inventory.md",
+   "line": 147,
+   "kind": "mech",
+   "claim": "thrust T = δt T_max",
+   "evidence": "examples/src/longitudinal.jl:64"
+  },
+  {
+   "id": "K9a-036",
+   "file": "design/companions/examples_inventory.md",
+   "line": 147,
+   "kind": "mech",
+   "claim": "constant density",
+   "evidence": "examples/src/longitudinal.jl:39,57 (field ρ)"
+  },
+  {
+   "id": "K9a-037",
+   "file": "design/companions/examples_inventory.md",
+   "line": 149,
+   "kind": "mech",
+   "claim": "the five equations of motion V̇, γ̇, θ̇, q̇, ḣ",
+   "evidence": "examples/src/longitudinal.jl:65-70"
+  },
+  {
+   "id": "K9a-038",
+   "file": "design/companions/examples_inventory.md",
+   "line": 159,
+   "kind": "decl",
+   "claim": "struct Longitudinal <: AbstractComponent with the 14 Float64 fields listed",
+   "evidence": "examples/src/longitudinal.jl:34-49; the real struct is @kwdef with defaults, which the sketch omits"
+  },
+  {
+   "id": "K9a-039",
+   "file": "design/companions/examples_inventory.md",
+   "line": 165,
+   "kind": "decl",
+   "claim": "x_init(::Longitudinal) = (V = 50, γ = 0, θ = 0, q = 0, h = 1000)",
+   "evidence": "examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "K9a-040",
+   "file": "design/companions/examples_inventory.md",
+   "line": 166,
+   "kind": "decl",
+   "claim": "u_types(::Longitudinal) = (δe, δt) Float64",
+   "evidence": "examples/src/longitudinal.jl:52"
+  },
+  {
+   "id": "K9a-041",
+   "file": "design/companions/examples_inventory.md",
+   "line": 167,
+   "kind": "decl",
+   "claim": "y_types(::Longitudinal) has V, γ, θ, q, h, α",
+   "evidence": "examples/src/longitudinal.jl:53"
+  },
+  {
+   "id": "K9a-042",
+   "file": "design/companions/examples_inventory.md",
+   "line": 179,
+   "kind": "decl",
+   "claim": "GroundContact(; h_ground = 0.0)",
+   "evidence": "examples/src/longitudinal.jl:86"
+  },
+  {
+   "id": "K9a-043",
+   "file": "design/companions/examples_inventory.md",
+   "line": 179,
+   "kind": "mech",
+   "claim": "GroundContact's localized guard fires at touchdown",
+   "evidence": "examples/src/longitudinal.jl:93-95 (sign-form guard h_ground - h)"
+  },
+  {
+   "id": "K9a-044",
+   "file": "design/companions/examples_inventory.md",
+   "line": 180,
+   "kind": "mech",
+   "claim": "its Bool output feeds a StopRequest",
+   "evidence": "examples/src/longitudinal.jl:91,370"
+  },
+  {
+   "id": "K9a-045",
+   "file": "design/companions/examples_inventory.md",
+   "line": 181,
+   "kind": "decl",
+   "claim": "Altimeter()",
+   "evidence": "examples/src/longitudinal.jl:171"
+  },
+  {
+   "id": "K9a-046",
+   "file": "design/companions/examples_inventory.md",
+   "line": 181,
+   "kind": "mech",
+   "claim": "Altimeter is a stateless discrete leaf adding noise to the altitude and holding the sum at its rate",
+   "evidence": "examples/src/longitudinal.jl:173-176,192"
+  },
+  {
+   "id": "K9a-047",
+   "file": "design/companions/examples_inventory.md",
+   "line": 183,
+   "kind": "mech",
+   "claim": "aircraft() is the plant alone under root inputs δe, δt",
+   "evidence": "examples/src/longitudinal.jl:106-107"
+  },
+  {
+   "id": "K9a-048",
+   "file": "design/companions/examples_inventory.md",
+   "line": 184,
+   "kind": "decl",
+   "claim": "level_flight(; V, h) is the level-flight trim problem",
+   "evidence": "examples/src/longitudinal.jl:119; probe:9 converges"
+  },
+  {
+   "id": "K9a-049",
+   "file": "design/companions/examples_inventory.md",
+   "line": 185,
+   "kind": "mech",
+   "claim": "longitudinal_taps(): five states, two inputs, outputs h and V",
+   "evidence": "examples/src/longitudinal.jl:136-141; probe:10-11"
+  },
+  {
+   "id": "K9a-050",
+   "file": "design/companions/examples_inventory.md",
+   "line": 187,
+   "kind": "decl",
+   "claim": "pitch_hold(; discrete)",
+   "evidence": "examples/src/longitudinal.jl:154"
+  },
+  {
+   "id": "K9a-051",
+   "file": "design/companions/examples_inventory.md",
+   "line": 187,
+   "kind": "mech",
+   "claim": "one PID on the pitch angle, on either tier",
+   "evidence": "examples/src/longitudinal.jl:154-161 (PID or DiscretePID)"
+  },
+  {
+   "id": "K9a-052",
+   "file": "design/companions/examples_inventory.md",
+   "line": 188,
+   "kind": "mech",
+   "claim": "lead θ_ref: a root input name of pitch_hold, with δt",
+   "evidence": "examples/src/longitudinal.jl:158 (input_wires θ_ref, δt)"
+  },
+  {
+   "id": "K9a-053",
+   "file": "design/companions/examples_inventory.md",
+   "line": 189,
+   "kind": "decl",
+   "claim": "sensing(; noise_psd), cascade(; standby), actuators(solution), selection(solution)",
+   "evidence": "examples/src/longitudinal.jl:187,215,246,310"
+  },
+  {
+   "id": "K9a-054",
+   "file": "design/companions/examples_inventory.md",
+   "line": 190,
+   "kind": "decl",
+   "claim": "feedback_wires()",
+   "evidence": "examples/src/longitudinal.jl:261"
+  },
+  {
+   "id": "K9a-055",
+   "file": "design/companions/examples_inventory.md",
+   "line": 190,
+   "kind": "mech",
+   "claim": "feedback_wires are the root wires the next three models share",
+   "evidence": "examples/src/longitudinal.jl:274-279,333 use it; approach takes it through piloted"
+  },
+  {
+   "id": "K9a-056",
+   "file": "design/companions/examples_inventory.md",
+   "line": 192,
+   "kind": "decl",
+   "claim": "autopilot(solution; noise_psd)",
+   "evidence": "examples/src/longitudinal.jl:274"
+  },
+  {
+   "id": "K9a-057",
+   "file": "design/companions/examples_inventory.md",
+   "line": 193,
+   "kind": "mech",
+   "claim": "autopilot: cascade with actuators and sensing under root inputs h_ref, V_ref",
+   "evidence": "examples/src/longitudinal.jl:274-279; probe:15 children"
+  },
+  {
+   "id": "K9a-058",
+   "file": "design/companions/examples_inventory.md",
+   "line": 194,
+   "kind": "mech",
+   "claim": "cruise holds the trim references and seeds three integrators via set(s = ...) beside the plant's state",
+   "evidence": "examples/src/longitudinal.jl:291-296; probe:26 shows three s-fragments"
+  },
+  {
+   "id": "K9a-059",
+   "file": "design/companions/examples_inventory.md",
+   "line": 197,
+   "kind": "decl",
+   "claim": "piloted(solution; noise_psd)",
+   "evidence": "examples/src/longitudinal.jl:333"
+  },
+  {
+   "id": "K9a-060",
+   "file": "design/companions/examples_inventory.md",
+   "line": 198,
+   "kind": "mech",
+   "claim": "piloted adds the engage switch and root inputs δe_pilot, δt_pilot, engage",
+   "evidence": "examples/src/longitudinal.jl:333-340"
+  },
+  {
+   "id": "K9a-061",
+   "file": "design/companions/examples_inventory.md",
+   "line": 199,
+   "kind": "decl",
+   "claim": "hand_flown(solution) is piloted's initial condition",
+   "evidence": "examples/src/longitudinal.jl:352"
+  },
+  {
+   "id": "K9a-062",
+   "file": "design/companions/examples_inventory.md",
+   "line": 200,
+   "kind": "decl",
+   "claim": "approach(solution; noise_psd)",
+   "evidence": "examples/src/longitudinal.jl:367"
+  },
+  {
+   "id": "K9a-063",
+   "file": "design/companions/examples_inventory.md",
+   "line": 200,
+   "kind": "mech",
+   "claim": "approach is piloted as child vehicle with the gear and the stop request",
+   "evidence": "examples/src/longitudinal.jl:368-369; probe:19 children (vehicle, gear, stop)"
+  },
+  {
+   "id": "K9a-064",
+   "file": "design/companions/examples_inventory.md",
+   "line": 202,
+   "kind": "decl",
+   "claim": "lqr_gains(linearization; qx, qξ, r)",
+   "evidence": "examples/src/longitudinal.jl:390-391"
+  },
+  {
+   "id": "K9a-065",
+   "file": "design/companions/examples_inventory.md",
+   "line": 202,
+   "kind": "mech",
+   "claim": "lqr_gains returns the tracker's three gains from a linearization",
+   "evidence": "examples/src/longitudinal.jl:397-401; probe:21 sizes (2,5), (2,2), (2,2)"
+  },
+  {
+   "id": "K9a-067",
+   "file": "design/companions/examples_inventory.md",
+   "line": 204,
+   "kind": "decl",
+   "claim": "closed_loop(solution, gains; noise_σ)",
+   "evidence": "examples/src/longitudinal.jl:446"
+  },
+  {
+   "id": "K9a-068",
+   "file": "design/companions/examples_inventory.md",
+   "line": 205,
+   "kind": "mech",
+   "claim": "closed_loop is a Group of five groups beside the plant",
+   "evidence": "probe:20 children (plant, sensing, pid_controller, lqr_controller, selection, actuators)"
+  },
+  {
+   "id": "K9a-069",
+   "file": "design/companions/examples_inventory.md",
+   "line": 205,
+   "kind": "mech",
+   "claim": "closed_loop root inputs h_ref, V_ref, mode",
+   "evidence": "examples/src/longitudinal.jl:510-513"
+  },
+  {
+   "id": "K9a-070",
+   "file": "design/companions/examples_inventory.md",
+   "line": 206,
+   "kind": "decl",
+   "claim": "trimmed(solution) is closed_loop's initial condition with the cascade in command",
+   "evidence": "examples/src/longitudinal.jl:542 (mode = true)"
+  },
+  {
+   "id": "K9a-071",
+   "file": "design/companions/examples_inventory.md",
+   "line": 215,
+   "kind": "mech",
+   "claim": "chapters 1 to 3 end at aircraft(), level_flight(), longitudinal_taps()",
+   "evidence": "docs/src/tutorial/aircraft.md:211, trim.md:136, linearize.md:208"
+  },
+  {
+   "id": "K9a-072",
+   "file": "design/companions/examples_inventory.md",
+   "line": 218,
+   "kind": "mech",
+   "claim": "chapters 4 to 7 end at pitch_hold, autopilot, piloted, approach; all exist",
+   "evidence": "examples/src/longitudinal.jl:154,274,333,367"
+  },
+  {
+   "id": "K9a-073",
+   "file": "design/companions/examples_inventory.md",
+   "line": 222,
+   "kind": "mech",
+   "claim": "chapter 8 adds no function: trace and a checkpoint of chapter 7's flight",
+   "evidence": "examples/test/test_longitudinal.jl:505-528"
+  },
+  {
+   "id": "K9a-076",
+   "file": "design/companions/examples_inventory.md",
+   "line": 230,
+   "kind": "mech",
+   "claim": "every model builds under the nominal and linearization activations",
+   "evidence": "examples/test/test_longitudinal.jl:120-125"
+  },
+  {
+   "id": "K9a-077",
+   "file": "design/companions/examples_inventory.md",
+   "line": 231,
+   "kind": "mech",
+   "claim": "trim converges to pinned θ, δe, δt at a tolerance",
+   "evidence": "examples/test/test_longitudinal.jl:127-141; probe:9 gives the same values"
+  },
+  {
+   "id": "K9a-078",
+   "file": "design/companions/examples_inventory.md",
+   "line": 233,
+   "kind": "mech",
+   "claim": "eigenvalues pin short period, phugoid pair, one zero",
+   "evidence": "examples/test/test_longitudinal.jl:142-155"
+  },
+  {
+   "id": "K9a-079",
+   "file": "design/companions/examples_inventory.md",
+   "line": 235,
+   "kind": "mech",
+   "claim": "open loop from off-trim airspeed crosses trim airspeed at half the phugoid period",
+   "evidence": "examples/test/test_longitudinal.jl:157-168"
+  },
+  {
+   "id": "K9a-080",
+   "file": "design/companions/examples_inventory.md",
+   "line": 238,
+   "kind": "mech",
+   "claim": "pitch hold closed loop has pinned eigenvalues and unit DC gain",
+   "evidence": "examples/test/test_longitudinal.jl:327-331"
+  },
+  {
+   "id": "K9a-081",
+   "file": "design/companions/examples_inventory.md",
+   "line": 239,
+   "kind": "mech",
+   "claim": "the discrete pitch hold refuses the linearization",
+   "evidence": "examples/test/test_longitudinal.jl:332-342"
+  },
+  {
+   "id": "K9a-082",
+   "file": "design/companions/examples_inventory.md",
+   "line": 239,
+   "kind": "mech",
+   "claim": "the two tiers stay within a pinned gap through a step",
+   "evidence": "examples/test/test_longitudinal.jl:344-353"
+  },
+  {
+   "id": "K9a-083",
+   "file": "design/companions/examples_inventory.md",
+   "line": 240,
+   "kind": "mech",
+   "claim": "autopilot rests at trim with no step and no noise",
+   "evidence": "examples/test/test_longitudinal.jl:356-363"
+  },
+  {
+   "id": "K9a-084",
+   "file": "design/companions/examples_inventory.md",
+   "line": 241,
+   "kind": "mech",
+   "claim": "outer loops tick at 10 Hz, pitch loops at 50 Hz",
+   "evidence": "examples/test/test_longitudinal.jl:366-373"
+  },
+  {
+   "id": "K9a-085",
+   "file": "design/companions/examples_inventory.md",
+   "line": 242,
+   "kind": "mech",
+   "claim": "autopilot holds a step within tolerance, peak below a bound, pinned airspeed excursion",
+   "evidence": "examples/test/test_longitudinal.jl:375-384"
+  },
+  {
+   "id": "K9a-086",
+   "file": "design/companions/examples_inventory.md",
+   "line": 244,
+   "kind": "mech",
+   "claim": "altimeter output changes only at its ticks; noise has the declared density to 10%",
+   "evidence": "examples/test/test_longitudinal.jl:386-392"
+  },
+  {
+   "id": "K9a-087",
+   "file": "design/companions/examples_inventory.md",
+   "line": 246,
+   "kind": "mech",
+   "claim": "piloted loop without delays is refused with one real cycle per switch",
+   "evidence": "examples/test/test_longitudinal.jl:394-418"
+  },
+  {
+   "id": "K9a-088",
+   "file": "design/companions/examples_inventory.md",
+   "line": 247,
+   "kind": "mech",
+   "claim": "staged commands land on pinned snapshots",
+   "evidence": "examples/test/test_longitudinal.jl:420-431"
+  },
+  {
+   "id": "K9a-089",
+   "file": "design/companions/examples_inventory.md",
+   "line": 247,
+   "kind": "mech",
+   "claim": "standby cascade within pinned gaps of pilot commands and of tracked measurements",
+   "evidence": "examples/test/test_longitudinal.jl:433-452"
+  },
+  {
+   "id": "K9a-090",
+   "file": "design/companions/examples_inventory.md",
+   "line": 250,
+   "kind": "mech",
+   "claim": "latched engage moves switches and controllers at the pinned tick, jumps below bounds",
+   "evidence": "examples/test/test_longitudinal.jl:453-471"
+  },
+  {
+   "id": "K9a-091",
+   "file": "design/companions/examples_inventory.md",
+   "line": 251,
+   "kind": "mech",
+   "claim": "autopilot recaptures the reference after engage",
+   "evidence": "examples/test/test_longitudinal.jl:473-476"
+  },
+  {
+   "id": "K9a-092",
+   "file": "design/companions/examples_inventory.md",
+   "line": 251,
+   "kind": "mech",
+   "claim": "approach repeats the chapter 6 flight to the bit",
+   "evidence": "examples/test/test_longitudinal.jl:488"
+  },
+  {
+   "id": "K9a-093",
+   "file": "design/companions/examples_inventory.md",
+   "line": 252,
+   "kind": "mech",
+   "claim": "descent has a pinned count of staged writes and stops with the touchdown reason at a pinned time",
+   "evidence": "examples/test/test_longitudinal.jl:489-496"
+  },
+  {
+   "id": "K9a-094",
+   "file": "design/companions/examples_inventory.md",
+   "line": 254,
+   "kind": "mech",
+   "claim": "altitude is zero at the stop within the localization tolerance",
+   "evidence": "examples/test/test_longitudinal.jl:497"
+  },
+  {
+   "id": "K9a-095",
+   "file": "design/companions/examples_inventory.md",
+   "line": 255,
+   "kind": "mech",
+   "claim": "the whole flight replays to the bit",
+   "evidence": "examples/test/test_longitudinal.jl:505-513"
+  },
+  {
+   "id": "K9a-096",
+   "file": "design/companions/examples_inventory.md",
+   "line": 255,
+   "kind": "mech",
+   "claim": "checkpoint at descent top flies a second approach to its pinned touchdown; first again to the bit",
+   "evidence": "examples/test/test_longitudinal.jl:515-528"
+  },
+  {
+   "id": "K9a-097",
+   "file": "design/companions/examples_inventory.md",
+   "line": 257,
+   "kind": "mech",
+   "claim": "the approach's phase bodies allocate nothing",
+   "evidence": "examples/test/test_longitudinal.jl:530-538"
+  },
+  {
+   "id": "K9a-098",
+   "file": "design/companions/examples_inventory.md",
+   "line": 259,
+   "kind": "mech",
+   "claim": "two-controller loop rests at trim under either controller",
+   "evidence": "examples/test/test_longitudinal.jl:239-253"
+  },
+  {
+   "id": "K9a-099",
+   "file": "design/companions/examples_inventory.md",
+   "line": 260,
+   "kind": "mech",
+   "claim": "holds an altitude step under either controller and across switches at 60 s, 10 s and hand-back at 10 s; cascade peak below, tracker above a bound",
+   "evidence": "examples/test/test_longitudinal.jl:265-278"
+  },
+  {
+   "id": "K9a-100",
+   "file": "design/companions/examples_inventory.md",
+   "line": 265,
+   "kind": "mech",
+   "claim": "controller not in command stays within a pinned gap of what it tracks",
+   "evidence": "examples/test/test_longitudinal.jl:280-298 (window [15, 60) s)"
+  },
+  {
+   "id": "K9a-101",
+   "file": "design/companions/examples_inventory.md",
+   "line": 266,
+   "kind": "mech",
+   "claim": "switch jump in steady flight below sensor jitter; mid-climb and hand-back jumps below pinned bounds",
+   "evidence": "examples/test/test_longitudinal.jl:300-312"
+  },
+  {
+   "id": "K9a-102",
+   "file": "design/companions/examples_inventory.md",
+   "line": 268,
+   "kind": "mech",
+   "claim": "sensed altitude noise has the declared standard deviation to 10%",
+   "evidence": "examples/test/test_longitudinal.jl:314-318"
+  },
+  {
+   "id": "K9a-103",
+   "file": "design/companions/examples_inventory.md",
+   "line": 269,
+   "kind": "mech",
+   "claim": "closed loop phase bodies allocate nothing",
+   "evidence": "examples/test/test_longitudinal.jl:540-548"
+  }
+ ],
+ "counts": {
+  "decl": 21,
+  "law": 13,
+  "mech": 65,
+  "ptr": 15,
+  "why": 14,
+  "ex": 0,
+  "cite": 0,
+  "map": 0,
+  "docstring": 0,
+  "surface": 0
+ }
+}

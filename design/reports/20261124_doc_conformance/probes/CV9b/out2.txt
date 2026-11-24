@@ -1,0 +1,106 @@
+P1 fields: (:deployment, :exec, :status, :claimed, :frame_diag, :fresh, :floor_reported)
+P2 chunk_size=0 => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(ArgumentInvalid, :range)]
+P3 scalar Float32 => THROW DiagnosticError{ArgumentInvalid} (ArgumentInvalid, :scalar, :T)
+P4 scalar Float32 + bad kw (composed) => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(DeploymentInvalid, :range)]
+P5 scalar Float32 + missing Δt_frame (root) => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(DeploymentInvalid, :missing)]
+P6 scalar bad + chunk_size bad (deployment) => THROW DiagnosticError{ArgumentInvalid} (ArgumentInvalid, :scalar, :T)
+P7 chunk_size 2.0 => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(ArgumentInvalid, :range)]
+P8 status built claimed false fresh false
+P9 checkpoint at :built => THROW DiagnosticError{ServiceLifecycle} (ServiceLifecycle, nothing, nothing)
+P10 init! no value => THROW DiagnosticError{UninitializedInputs} (UninitializedInputs, nothing, nothing)
+P11 status consistent
+P12 port root path => OK 0.0
+P12b port root path noname => THROW ArgumentError ArgumentError: the root component declares no bare output, whose face `y` a `port` read with no name reads — name the port (§11.2, D-437)
+P13 port assembly output => OK 0.0
+P14 port unknown => THROW ArgumentError ArgumentError: `plant` has no port `zzz` — its ports are `y`, `power` (Appendix B, D-440)
+P15 port noname named contract => THROW ArgumentError ArgumentError: `plant` declares no bare output, whose face `y` a `port` read with no name reads — name the port (§11.2, D-437)
+P16 port unknown path => THROW DiagnosticError{PathResolution} (PathResolution, :unknown_child, nothing)
+P17 state plant => OK (q = [0.0, 0.0],)
+P18 state root (assembly) => OK nothing
+P19 state ctl (stateless) => OK nothing
+P20 modes ctl => OK nothing
+P21 state nope => THROW DiagnosticError{PathResolution} (PathResolution, :unknown_child, nothing)
+P22 warnings => OK Diagnostic[]
+P23 phase_bodies keys (:sweep_1, :sweep_2, :rhs, :ticks, :events, :projections)
+P24 init! t0=NaN => THROW DiagnosticError{ArgumentInvalid} (ArgumentInvalid, :range, :t0)
+P24b status after refused t0: consistent
+P25 cp type ModelState{Float64}
+P26 restore => OK nothing
+P27 restore onto :built => OK nothing
+P27b status consistent
+P28 restore scalar mismatch => THROW DiagnosticError{CheckpointMismatch} (CheckpointMismatch, nothing, nothing)
+P29 overlay! at built => THROW DiagnosticError{ServiceLifecycle} (ServiceLifecycle, nothing, nothing)
+P30 overlay! => OK nothing
+P31 claimed true
+P32 init! claimed => THROW DiagnosticError{ArgumentInvalid} (ArgumentInvalid, :claimed, :model)
+P33 overlay claimed => THROW DiagnosticError{ArgumentInvalid} (ArgumentInvalid, :claimed, :model)
+P34 restore claimed => THROW DiagnosticError{ArgumentInvalid} (ArgumentInvalid, :claimed, :model)
+P35 checkpoint claimed => THROW DiagnosticError{ServiceLifecycle} (ServiceLifecycle, nothing, nothing)
+P36 frame! claimed => THROW DiagnosticError{ArgumentInvalid} (ArgumentInvalid, :claimed, :model)
+P36b trim claimed => THROW DiagnosticError{ArgumentInvalid} (ArgumentInvalid, :not_a_problem, :problem)
+P37 hand-built bad t0 state => THROW FieldError FieldError: type ModelState has no field `xbuf`, available fields: `x`, `s`, `m`, `table`, `prior`, `stepper`, `t`, `t₀`, `deployment`, `layout`
+P37b ModelState fields: (:x, :s, :m, :table, :prior, :stepper, :t, :t₀, :deployment, :layout)
+S1 fields (:components, :anchors, :scopes, :root_inputs, :root_types, :levels)
+S2 anchors Anchor[] scopes @NamedTuple{path::String, key::Symbol, timing::@NamedTuple{anchor::Int64, D::Int64, Φ::Int64}}[] root_inputs [:ref] root_types Type[Float64]
+S3 levels [("", [("plant", :children), ("ctl", :children), ("sum", :children)], [("ctl", :out) => ("plant", :u), ("sum", :e) => ("ctl", :e), ("plant", :y) => ("sum", :b), ("", :ref) => ("sum", :a), ("plant", :y) => ("", :y)])]
+S4 components Tuple{String, Tier, @NamedTuple{anchor::Int64, D::Int64, Φ::Int64}}[("plant", CONTINUOUS, (anchor = 0, D = 1, Φ = 0)), ("ctl", CONTINUOUS, (anchor = 0, D = 1, Φ = 0)), ("sum", CONTINUOUS, (anchor = 0, D = 1, Φ = 0))]
+Structure: 3 components, no anchors, no rate scopes; root inputs: ref
+  components:
+    path   tier        anchor  Dₐ  Φₐ  rates
+    plant  continuous  A₀      1   0   —
+    ctl    continuous  A₀      1   0   —
+    sum    continuous  A₀      1   0   —
+  anchors:
+    anchor  Δt       τ     scope  key
+    A₀      Δt_base  0//1  —      —
+  input routes:
+    ref → sum/a
+  output routes:
+    y → plant/y
+S5 terminal_producer ("ctl", :out) ("", :ref)
+S6 face_routes [[("sum", :a)]]
+S7 membership [:transparent, :transparent, :transparent]
+S8 prim root levels LevelEntry[LevelEntry("", Plant(2.0, 0.1, [0.0, 0.0]), Child[], Pair{Tuple{String, Symbol}, Tuple{String, Symbol}}[])] root_inputs [:u] root_types Type[Float64]
+S9 anchors Anchor[Anchor(1//2, 0//1, "", :b)] scopes @NamedTuple{path::String, key::Symbol, timing::@NamedTuple{anchor::Int64, D::Int64, Φ::Int64}}[]
+Structure: 2 components, 1 anchor, no rate scopes; root inputs: none
+  components:
+    path  tier      anchor  Dₐ  Φₐ  rates
+    a     discrete  A₀      2   0   a = Relative(2, 0)
+    b     discrete  A₁      1   0   b = Absolute(1//2, 0//1)
+  anchors:
+    anchor  Δt       τ     scope  key
+    A₀      Δt_base  0//1  —      —
+    A₁      1//2     0//1  root   b
+  grid:
+    admissible: gcd(pool)/Q, coarsest 1//2
+    pool:
+      `sample_times` at the root component, key `b`  period 1//2  ×1
+    primes: 2 = 2
+      2  b period
+R deep key => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :unknown_child)]
+R unknown => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :unknown_child)]
+R bare int => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :value_vocabulary)]
+R mult => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :multiplier)]
+R phase => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :phase)]
+R period => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :period)]
+R offset => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :offset)]
+R shape => THROW MethodError MethodError: no method matching Group(::@NamedTuple{a::SampledC}, ::Tuple{}, ::Tuple{}, ::Tuple{}, ::Vector{Int64})
+The type `Group` exists, but no method is defined for this combination of argument t
+R range => OK Build(1 component, activations: Float64)
+R continuous child => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :continuous_child)]
+R two-level range => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(RatesViolation, :range)]
+W bare pair => OK Build(1 component, activations: Float64)
+W string => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(IllegalWireEntry, :not_a_collection)]
+W nonpair => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(IllegalWireEntry, :not_a_pair)]
+W face slash => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(FaceNameIllegal, nothing)]
+W face empty => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(FaceNameIllegal, nothing)]
+W face collision => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(FaceNameCollision, nothing)]
+W direction => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(FaceDirectionConflict, nothing), (UnconnectedInput, nothing)]
+W one-segment => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(UnknownPort, nothing), (UnconnectedInput, nothing)]
+W empty route => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(UnknownPort, nothing), (UnconnectedInput, nothing)]
+W two producers => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(TwoProducers, nothing)]
+W unconnected => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(UnconnectedInput, nothing)]
+W root collision => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Nothing}[(FaceNameCollision, nothing)]
+C deep path => OK nothing
+C at deep => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(PathResolution, :unknown_child)]
+C at deep2 => THROW DiagnosticError{Vector{Diagnostic}} Tuple{DataType, Symbol}[(PathResolution, :unknown_child)]

@@ -1,0 +1,43 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-014: 716-736
+D-049: 1732-1747
+D-050: 1748-1764
+D-052: 1786-1808
+D-060: 2012-2061
+D-066: 2234-2260
+D-099: 3362-3384
+D-107: 3673-3709
+D-115: 3959-3986
+D-116: 3987-4031
+D-119: 4102-4127
+D-135: 4828-4874
+D-136: 4875-4952
+D-142: 5386-5460
+D-148: 5784-5846
+D-151: 5938-5980
+D-176: 6998-7034
+D-196: 7871-7892
+D-221: 9016-9055
+D-229: 9347-9410
+D-248: 10216-10267
+D-250: 10337-10399
+D-253: 10496-10568
+
+# Stage M leads
+names missing: `Dataflow` at log.md:10506 (D-253)
+names missing: `Dataflow` at log.md:10527 (D-253)
+names missing: `Expected` at log.md:5947 (D-151)
+names missing: `Flat` at log.md:10503 (D-253)
+names missing: `Getter` at log.md:2239 (D-066)
+names missing: `RQuat` at log.md:5792 (D-148)
+names missing: `SimulationTermination` at log.md:2021 (D-060)
+names missing: `canonical_names` at log.md:5949 (D-151)
+names missing: `capture` at log.md:2243 (D-066)
+names missing: `h_` at log.md:1752 (D-050)
+names missing: `h_` at log.md:1791 (D-052)
+names missing: `stop_on` at log.md:2018 (D-060)
+names missing: `sweep_hx` at log.md:3994 (D-116)
+names missing: `sweep_hx` at log.md:7875 (D-196)
+names missing: `sweep_hxu` at log.md:3994 (D-116)
+names missing: `sweep_hxu` at log.md:7876 (D-196)
+names missing: `trim_condition` at log.md:5794 (D-148)
