@@ -381,6 +381,12 @@ the deployment sets no bound. The bound need divide neither period. The steps
 of a span are therefore equal unless a localized event splits one, and no
 step is longer than `h_max`, each to the clock's round-off.
 
+**The split of a run into steps follows the schedule, never the state**
+([D-444][d-444]). A due instant ends a step because a component is
+scheduled there, whether or not anything discrete changes. A model
+evaluated at dual numbers freezes its discrete tier ([§7.2][s7-2],
+[§9.4][s9-4]). It still takes the steps the model at `Float64` takes.
+
 An adaptive method asks for each step's length from its own error estimate
 ([D-461][d-461]). The run takes the distance to the next mandatory instant in
 the fewest equal steps no longer than that length and `h_max`. The
@@ -7315,7 +7321,7 @@ that boundary, in one snapshot.
 
 The split follows the schedule, not the state. A `Model` at a `Dual` takes
 the steps the `Float64` model takes, though its discrete tier is frozen
-([§9.4][s9-4], [D-444][d-444]).
+([§2.2][s2-2], [§9.4][s9-4], [D-444][d-444]).
 
 #### Clock resolution and the last frame
 

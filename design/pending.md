@@ -12,14 +12,6 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **Part I states no law that the step split follows the schedule** (§2.2,
-  §10.5, D-444): §10.5's "The split follows the schedule, not the state",
-  and its consequence that a `Model` at a `Dual` takes the steps the
-  `Float64` model takes though its discrete tier is frozen, decide which
-  runs are equivalent, so Part I owes them under its depth rule. They are
-  stated only in §10.5. Found by the review of the rates restructure,
-  `design/reports/20261124_rates_restructure/review.md`, finding 14. Not
-  started.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`, whose
   `design/pending.md` holds its work order and its open items, and whose
@@ -43,8 +35,8 @@ item changes what the spec says, the spec edit is part of the item.
   companions and the rest of the docs are checked against the code, which
   is the source of truth, in both directions, and what drifted is fixed.
   It runs as a trial on §14, then one workflow per chapter group. Stage
-  reached: the brief is written, and the audit waits on the timing
-  notation increment before it pins its tip. The brief is
+  reached: the tip is pinned at `bd471af`, Stage M has run, and the §14
+  trial's inventories and verification are running. The brief is
   `design/reports/20261124_doc_conformance/00_brief.md`.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, each ending at a named function
