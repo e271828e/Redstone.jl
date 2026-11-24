@@ -633,9 +633,15 @@ Two checks the tests make, independently of the mechanism:
   `B ≈ [0 0; 1 -1]`, `C ≈ [1 0; 0 0]`, `D ≈ [0 0; 1 -1]` to `1e-12`. Exactness
   is the claim, so the tolerance is round-off, not a finite-difference
   budget. Widths 1, 3 and 8 give bitwise-equal matrices.
-- **Finite differences as a witness.** Perturb one root input by `1e-6`
-  through `about`, linearize twice, and compare the difference quotient of
-  $\dot x_0$ against the corresponding column of $B$. This is a test-side
+- **Finite differences as a witness.** Take the pendulum model off trim, at
+  $\theta = 0.3$, $\omega = 0.2$, $\tau = 0.4$ and $d = 0.1$. Step each state
+  and each root input by `1e-5` either way through `about`, and linearize at
+  both points. The central difference quotients of $\dot x_0$ and $y_0$ must
+  match the columns of $A$, $B$, $C$ and $D$ to `1e-8`. The quotients read
+  value parts alone, so the check never shares the seeding it tests. Only
+  $\partial\dot\omega/\partial\theta$ moves with the point, and its truncation
+  error is near `1.6e-10`, with the round-off about as large. A sign or a
+  seeding error moves an entry by order one. This is a test-side
   cross-check only; [§14.10][s14-10] and [D-266][d-266] keep every perturbation-based path out
   of the framework.
 

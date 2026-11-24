@@ -18,6 +18,10 @@ lin_pend() = Group((; s = Sum(), c = Pendulum()); local_wires = ("s/e" => "c/u",
                    output_wires = ("c/θ" => "θ", "s/e" => "u_eff"))
 lin_point(θ = 0.3) = combine(at("c", condition(Pendulum(); θ = θ)),
                              set(u = (τ = PEND_G_L * sin(θ), d = 0.0)))
+# The same model at any state `x = [θ, ω]` and root input `u = [τ, d]`, in the
+# taps' order, for the difference quotients.
+lin_point_at(x, u) = combine(at("c", condition(Pendulum(); θ = x[1], ω = x[2])),
+                             set(u = (τ = u[1], d = u[2])))
 lin_taps() = taps(x = (θ = get_state("c", :θ), ω = get_state("c", :ω)),
                   u = (τ = get_input(:τ), d = get_input(:d)),
                   y = (θ = get_face(:θ), u_eff = get_face(:u_eff)))
@@ -118,6 +122,30 @@ function test_linearize()
         @test all(getfield(linearization, f) isa Matrix{Float64} for f in (:A, :B, :C, :D))
         @test size(linearization.A) == (2, 2) && size(linearization.B) == (2, 2) &&
               size(linearization.C) == (2, 2) && size(linearization.D) == (2, 2)
+    end
+
+    @testset "every column of A, B, C and D matches a central difference taken through `about` (§14.10)" begin
+        # Each quotient reads the value parts ẋ₀ and y₀ of two linearizations a
+        # step apart, never a partial.
+        # Off trim, so ∂ω̇/∂θ = -g_l·cos θ is read where it differs from the trim
+        # point's. The quotient's truncation error is h²/6·g_l ≈ 1.6e-10 on that
+        # entry and zero on the rest, which are linear; its round-off is about
+        # ε·|ẋ₀|/h ≈ 1e-10. A sign or a seeding error moves an entry by O(1).
+        sim = Simulation(lin_pend(); Δt_frame = 1//10)
+        x₀, u₀ = [0.3, 0.2], [0.4, 0.1]
+        linearized_at(x, u) = linearize(sim, lin_taps(); about = lin_point_at(x, u))
+        linearization = linearized_at(x₀, u₀)
+        @test linearization.x₀ == x₀ && linearization.u₀ == u₀
+        h = 1e-5
+        for k in 1:2
+            δ = [i == k ? h : 0.0 for i in 1:2]
+            plus, minus = linearized_at(x₀ + δ, u₀), linearized_at(x₀ - δ, u₀)
+            @test isapprox((plus.ẋ₀ - minus.ẋ₀) / 2h, linearization.A[:, k]; atol = 1e-8)
+            @test isapprox((plus.y₀ - minus.y₀) / 2h, linearization.C[:, k]; atol = 1e-8)
+            plus, minus = linearized_at(x₀, u₀ + δ), linearized_at(x₀, u₀ - δ)
+            @test isapprox((plus.ẋ₀ - minus.ẋ₀) / 2h, linearization.B[:, k]; atol = 1e-8)
+            @test isapprox((plus.y₀ - minus.y₀) / 2h, linearization.D[:, k]; atol = 1e-8)
+        end
     end
 
     @testset "the default operating point is the checkpoint, and the sim is untouched (§14.10, D-274)" begin
