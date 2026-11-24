@@ -1080,7 +1080,7 @@ function diagnostics_kind_set()
         # The parameter bound is closed; Julia refuses the substitution itself.
         @test_throws TypeError DiagnosticError{Int}(1)
 
-        # The did-you-mean list is carried, not ranked (`pending.md`): the
+        # The did-you-mean list is carried, not ranked (§13.2): the
         # candidates the site had in hand are printed, and no edit distance orders
         # them.
         rendered = message(UnknownPort(entry = "wires", endpoint = :destination,

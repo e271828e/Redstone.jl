@@ -90,10 +90,6 @@ problem:
 
 ## Marking rulings
 
-Chapters the readability rewrite has not reached keep the old **Rule.** /
-**Why.** / **Example.** labels. An edit there follows the chapter's own
-markers. `pending.md` tracks the rewrite.
-
 - **No labels.** No **Rule.**, **Why.** or **Example.** A reason follows its
   rule with a plain connective.
 - **Bold marks a ruling, once, on its headline clause.** The headline clause
