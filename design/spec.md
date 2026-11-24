@@ -7872,9 +7872,11 @@ the two rules that bind their implementation, the task topology, and one
 consequence for execution modes.
 
 The replacement's unit of account is the [frame](#g-frame) (one fixed period of the run, [§10.1][s10-1]). Each
-frame is one iteration of the loop, which runs the [drain](#g-drain) (the frame-top swap
-that applies staged device writes to the root inputs), then integrates, then
-runs the [boundary sequence](#g-boundary-sequence), then publishes. A frame is what `step!` counts, and
+frame is one iteration of the loop. The loop runs the [drain](#g-drain) (the frame-top swap
+that applies staged device writes to the root inputs), then integrates to each
+boundary in turn, every step end and every [`t*`](#g-t) (an event's crossing
+instant inside a step) included. At each boundary it runs the
+[boundary sequence](#g-boundary-sequence) and publishes ([§10.1][s10-1]). A frame is what `step!` counts, and
 it is the ordinal that keys the trace ([D-101][d-101]). "Per frame" means this throughout
 the document. The kinematic *reference frames* of the aircraft domain are a
 different word, and they always appear compounded, as in the b frame and the
@@ -8197,8 +8199,9 @@ have matched), and compile to one gather, the output half of the binding
 interface ([§11.6][s11-6]). `map_output` therefore receives a labeled NamedTuple ([§11.6][s11-6])
 instead of performing its own path lookups. A model substitution that breaks a
 binding therefore fails at attach, not with silent garbage on the wire ([D-130][d-130]).
-**Attach refuses such a binding with the read's own kind, `ReadResolution`,
-every violation collected** ([§13.1][s13-1], [D-406][d-406]). An exporting logger
+**Attach refuses such a binding as `PathResolution` where a read's path names
+no component and as `ReadResolution` otherwise, every violation collected**
+([§13.1][s13-1], [§13.3][s13-3], [D-406][d-406]). An exporting logger
 treats field-handle signals specially. It skips or summarizes them.
 
 An output device's read of the snapshot is inspection ([§13.5][s13-5], [D-083][d-083]). It is
@@ -8753,9 +8756,12 @@ does not have. The findings below are read under that scope.
 
 ### 11.5 Inbound: the input trace
 
-The input [trace](#g-trace) is the sequence of [drained](#g-drain), [device](#g-device)-tagged [batches](#g-batch) per [frame](#g-frame). A
-device is any attached participant in the periphery, and a batch is its staged
-set of writes. A frame is one iteration of the loop, from drain to publication.
+The input [trace](#g-trace) is the sequence of [drained](#g-drain), writer-tagged [batches](#g-batch) per [frame](#g-frame).
+Each batch is tagged by the [device](#g-device) or the
+[harness writer](#g-harness-writer) that staged it. A device is any attached
+participant in the periphery, and a batch is its staged set of writes. The
+harness writer is the framework-owned write path `stage!(sim, …)`. A frame is
+one iteration of the loop, from drain to publication.
 The drain is the frame-top swap that applies staged device writes to the root
 inputs. The trace extends the determinism ([§10.7][s10-7]) end-to-end. [Replay](#g-replay) re-runs the
 ordinary loop on a recorded input trace. Replaying a recorded interactive
@@ -8817,9 +8823,9 @@ at the end of [boundary zero](#g-boundary-zero)** (the initialization boundary a
 first snapshot is published ([D-274][d-274]). `overlay!` takes it the same way,
 after the overlaid state settles and publishes ([§12.6][s12-6], [D-429][d-429]). A checkpoint
 holds the flat buffer `x`, the `s` and `m` stores, the whole [signal table](#g-signal-table) (the collection of cells
-holding every produced signal), the guard [priors](#g-prior), `t` and `t₀`, the frame and
-boundary counters, and the [fingerprint](#g-fingerprint) (the structural layout) and the
-[deployment](#g-deployment) ([D-319][d-319]). The deployment is the scalar-free artifact the grid
+holding every produced signal), the guard [priors](#g-prior), the stepper's carried state,
+`t` and `t₀`, the frame and boundary counters, and the [fingerprint](#g-fingerprint) (the
+structural layout) and the [deployment](#g-deployment) ([D-319][d-319], [D-452][d-452]). The deployment is the scalar-free artifact the grid
 parameters fix. A prior is an event's stored predicate sample from the previous
 boundary. The [executor](#g-executor)'s clock holds `t` and `t₀`, and the [`Run`](#g-run) (the state one
 run owns, a `Simulation` field) holds the frame index and the boundary ordinal
@@ -8879,8 +8885,8 @@ Each writer's face-name → position schema lives in the `schemas` list.
 Positional records are meaningless without it, and replay does not reconstruct
 claims ([§12.7][s12-7]). **The list only grows** ([D-217][d-217]). `attach!` and `detach!` push
 the current writer set onto it in place ([D-255][d-255]). They do so because a roster
-change between advances ([§12.6][s12-6]) recompiles the [harness writer](#g-harness-writer) (the
-framework-owned write path `stage!(sim, …)`) and the same face moves position.
+change between advances ([§12.6][s12-6]) recompiles the harness writer and the
+same face moves position.
 Earlier records keep their index, and a record resolves only through its own
 schema entry.
 
@@ -8975,7 +8981,7 @@ init!(dev)                                   # its own bracket, pre-spawn (§12.
 task = Threads.@spawn try
     loop(dev, handle)
 catch e
-    report!(entry, DeviceCrash(e))           # §12.4(6): sim continues, device absent
+    report!(entry, DeviceCrash(e, entry.should_abort))   # §12.4(6): sim continues, device absent
 finally
     shutdown!(dev)                           # any exit path: OS resources released
                                              # no dead-marking: task_state shows the end,
@@ -9481,8 +9487,9 @@ makes idempotent. No device task reads the loop's store, so no reading is more
 current than this one.
 
 **`incumbent_status(view, snapshot)` returns the incumbent's writer record**
-from the snapshot's status ([§11.8][s11-8]), or `nothing` for a port no device writes
-([D-270][d-270]). On that record, `orphaned` is a task that returned or crashed, and
+from the snapshot's status ([§11.8][s11-8], [D-270][d-270]). It returns the
+harness's record for a root input no device claims, and `nothing` for a port no
+root input drives. On that record, `orphaned` is a task that returned or crashed, and
 `stale` is the silent heartbeat ([§12.2][s12-2]). The record tells an exited loop from a
 crashed one, and the label may. The label text is the GUI package's.
 
@@ -10127,12 +10134,12 @@ roster entry, in attachment order, on the [calling task](#g-calling-task)
 for entry in roster                       # attachment order, calling task
     push!(live, entry)                    # listed for release before `init!` begins
     try
-        init!(entry.device)
+        init!(entry.dev)
     catch e
-        shutdown!(entry.device)           # release, unconditionally (§11.6)
+        shutdown!(entry.dev)              # release, unconditionally (§11.6)
         pop!(live)                        # released, so unlisted
         if e isa InterruptException       # the operator's stop, never a crash (below)
-            stop!(control, :interrupt)
+            _request_stop!(control, :interrupt)   # the stop word, issuer :interrupt; an earlier issuer keeps it
         else
             # pre-spawn: the entry is the address, no task holds a handle yet
             report!(entry, DeviceCrash(e, entry.should_abort))
@@ -10250,8 +10257,9 @@ component's state) half-written ([§13.6][s13-6]). That forces a choice between 
 with dirty stores and a terminal `errored`. The `stopped`-with-consistent-stores
 guarantee is exactly what the masking buys.
 
-The loop masks delivery across the boundary macro-sequence, using Julia's
-`disable_sigint`, a sigatomic counter increment that is negligible per
+The loop masks delivery across the boundary macro-sequence with Julia's
+sigatomic counter, through `Base.sigatomic_begin` and `Base.sigatomic_end`
+(the primitive under `disable_sigint`). Each increment is negligible per
 frame. It takes the deferred raise at the unmask points. They are the frame
 top, where it already consults the control plane ([§12.1][s12-1]), and
 points inside its wait and pause blocks. All of those points are
@@ -10619,8 +10627,8 @@ frame it predates.
 `replay!` sets the mode exactly as it sets the trajectory. `live!` is the one
 call that moves the mode alone. It takes a replaying simulation live where it
 stands ([§12.7][s12-7]). A terminal state makes the mode moot. From `stopped`,
-nothing advances until `init!`, `restore!` or `replay!` opens a new run, and
-`errored` is terminal ([D-218][d-218], [D-219][d-219]).
+nothing advances until `init!`, `overlay!`, `restore!` or `replay!` opens a new
+run, and `errored` is terminal ([D-218][d-218], [D-219][d-219]).
 
 `checkpoint` and `restore!` exist on the `Model` and on the `Simulation`, and
 **a `Checkpoint` is the `Model`'s state beside the run's cursor**
@@ -10791,9 +10799,10 @@ this state". Whatever fired at `t₀` is part of the restored state, so nothing 
 applied twice and nothing is skipped ([D-274][d-274], [D-399][d-399]).
 
 The drain reads the trace. Each frame top applies the recording's batches for
-that [frame ordinal](#g-frame-ordinal), the frame index a batch replays at ([D-101][d-101]). It does not swap
-the [staging cells](#g-staging-cell) of the [roster](#g-roster) (the list of attached device entries). A staging
-cell is where a device's pending write batch waits between drains. Ordinal
+that [frame ordinal](#g-frame-ordinal), the frame index a batch replays at ([D-101][d-101]). It takes
+the [staging cells](#g-staging-cell) of the [roster](#g-roster) (the list of attached device entries) and
+the harness writer's cell, and discards what they hold, applying none of it. A
+staging cell is where a device's pending write batch waits between drains. Ordinal
 keying is exact because the frame sequence is itself deterministic under replay
 (`t*` boundaries derive from state, [§10.4][s10-4]). Frame *k* of the replay *is* frame
 *k* of the recording. Recorded batches apply verbatim, with no surface re-check
@@ -15803,8 +15812,9 @@ activation):
 - **`DeviceContractMismatch`** ([§11.6][s11-6]). Error · service · fail-fast.
   The device, and what the contract lacks: the `loop` method, the output
   side `gather` needs from a binding that declares none, or the roster entry
-  a detached handle's `stage!`/`report!` no longer has ([D-244][d-244]). The device
-  twin of `BindingContractMismatch`.
+  a detached handle's `stage!`/`report!` no longer has ([D-244][d-244]). A
+  `reason` tells the cases apart: `:no_loop`, `:no_output_side` and
+  `:detached`. The device twin of `BindingContractMismatch`.
 - **`ConditionResolution`** ([§14.1][s14-1], [§14.2][s14-2], [§14.3][s14-3], [§14.9][s14-9], [§14.10][s14-10]). Error · service
   · collected. Entry path, store and field (or the root-input face the entry
   addresses; `nothing` for a bare payload the store or input did not take),
@@ -17116,7 +17126,7 @@ front. The default form restores the clock with the rest of the state
 advance declares its own ([§11.5][s11-5], [§13.5][s13-5]).
 
 <a id="g-trace"></a>**trace** — the primary record of a session: the sequence of drained,
-[device](#g-device)-tagged [batches](#g-batch) per [frame](#g-frame), plus its header. It is on by default,
+writer-tagged [batches](#g-batch) per [frame](#g-frame), plus its header. It is on by default,
 because the [log](#g-log) is recomputable from the trace and never the reverse
 ([§11.5][s11-5]).
 

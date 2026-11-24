@@ -1026,8 +1026,8 @@ run from it.
 To start again from a saved state, call [`checkpoint`](@ref), then `restore!`,
 then [`run!`](@ref).
 
-`restore!` drops every [batch](@ref g-batch) still waiting. It opens a fresh run
-with the checkpoint as its [trace header](@ref g-trace-header), and copies the
+`restore!` drops every [batch](@ref g-batch) still waiting and clears the
+[stop word](@ref g-stop-word). It opens a fresh run with the checkpoint as its [trace header](@ref g-trace-header), and copies the
 state back. It then publishes one [snapshot](@ref g-snapshot) at the
 checkpoint's `t`. The [input mode](@ref g-input-mode) returns to `:live`.
 
@@ -1947,7 +1947,7 @@ the way out, a report from a device's exit path, the tail's own
 `DeviceJoinTimeout` — into the accounts, so the per-run record is complete
 and nothing leaks into the next run's status. The terminal snapshot is
 already out, so no snapshot can carry this residue: it is collected into the
-returned `ResidueRecord`s — the termination record's third field — and
+returned `ResidueRecord`s — the termination record's `residue` field — and
 presented through the logging backend, the record's renderer (D-201, D-203).
 The terminal status's account is therefore complete up to its own frame top,
 and the tail's remainder is loud *and* recorded, still never published.
@@ -2897,8 +2897,8 @@ The [log](@ref g-log) gathered into columns, with the
 [snapshots](@ref g-snapshot)' stamps and one typed vector per labeled read.
 
 [`series`](@ref) returns it, gathered over the snapshots that [`logged`](@ref)
-returns, oldest first. A series holds these fields, each vector with one entry
-per snapshot.
+returns, oldest first. A series holds these fields. Each vector in it, every
+column included, has one entry per snapshot.
 
 - `t`: the snapshots' [boundary](@ref g-boundary) times.
 - `frame`: their [frame](@ref g-frame) indices.
@@ -3024,7 +3024,7 @@ end
 
 # The table's reads on the simulation, each forwarded to its model (model.jl, D-317).
 
-# Design: §7.3, D-317, D-440.
+# Design: §7.3, Appendix B, D-317, D-440.
 # Its line sits on `port(model, ...)`'s docstring, as `state` and `modes` do. It
 # returns a port's current value in the simulation's signal table. Address an
 # output by its component's path and its name. An input face below the root has

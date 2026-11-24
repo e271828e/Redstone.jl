@@ -78,8 +78,8 @@ also drives the mapping, or *computed*, when the binding declares
 `is_greedy`:
 
 ```julia
-joystick_binding = (stick_y  = (face = "elevator", expo = 0.6),
-                    throttle = (face = "throttle",))
+joystick_binding = TableBinding(stick_y  = (face = "elevator", expo = 0.6),
+                                throttle = (face = "throttle",))
 # ⇒ claims = ("elevator", "throttle")           # returned: enumerated by the table
 
 is_greedy(::StandardGUIBinding) = true
@@ -113,8 +113,8 @@ Nobody outside the loop ever assigns a root input. Instead, a writer produces a
 mailbox, one per attached device, written by exactly one device task:
 
 ```julia
-mutable struct StagingCell
-    @atomic pending::Union{Nothing, Batch}    # the latest not-yet-applied batch
+mutable struct StagingCell{B}
+    @atomic pending::Union{Nothing, Base.RefValue{B}}   # the latest not-yet-applied batch, boxed
 end
 ```
 
@@ -126,7 +126,7 @@ hand — `map_input` returns sparse face ⇒ value pairs, and `stage!`
 normalizes them through the entry's attach-compiled schema:
 
 ```julia
-map_input(datum, binding)      # ⇒ (throttle = 0.70, elevator = -0.05)
+map_input(datum, binding)      # ⇒ ("throttle" => 0.70, "elevator" => -0.05)
 # stage! normalizes against the schema ("elevator" ⇒ 1, "throttle" ⇒ 2):
 values = (-0.05, 0.70)         # positional over the claim set
 mask   = (true, true)          # false where the batch touched nothing
@@ -172,7 +172,8 @@ periphery's proposals become the frame's root-input constants, and everything af
 it — the sweep, the boundaries, the published snapshot — is a pure function
 of the drained batches. That purity is what makes the **input trace** (the
 per-frame sequence of device-tagged drained batches, plus the header's
-initial state, root-input values and per-writer schemas) a complete record: replay
+initial state and root-input values and the per-writer schemas beside it) a
+complete record: replay
 feeds the same batches to the same drain and gets a bit-identical trajectory.
 One retention detail ([D-176][d-176]): **every** drained batch is converted at the
 drain into sparse (position ⇒ value) pairs against the writer's schema, so
@@ -217,8 +218,10 @@ roster freeze both are static per run, which is why staging can be the
 know. Two warning kinds cover the violations:
 
 - `OutOfClaimEntry` — a device-surface violation: the face has no
-  position in the writer's schema. Writer id, face, discarded value, the
-  claim set (plus the incumbent's id when the face is claimed elsewhere).
+  position in the writer's schema. The harness writer raises it too, for a
+  face that names no root input at all. Face, discarded value, the claim set
+  (plus the incumbent's id when the face is claimed elsewhere). The cell the
+  warning lands in names the writer, never the payload.
   "Your peer drifted from your binding." The GUI's out-of-surface writes are
   this kind too, its claim being an ordinary one — though its widgets cannot
   produce them, since liveness renders out-of-claim root inputs read-only.

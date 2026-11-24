@@ -191,9 +191,8 @@ D-438, D-465, D-468.
   copied, the guard priors, the stepper's carried state `stepper`, the
   value `checkpoint_stepper` reads, typed `Any`, `nothing` for a
   fixed-step method and `BS3`'s proposal and memory for it (D-452, D-461),
-  the clock's `t` and its exact `t₀` (D-457), and
-  the fingerprint, the `Deployment` and the structural
-  layout `Fingerprint`.
+  the clock's `t` and its exact `t₀` (D-457), and the `Deployment` and the
+  structural layout `Fingerprint`.
 - `Checkpoint`, a `ModelState{Float64}` beside the run's frame index and
   boundary ordinal, with no scalar parameter (D-317, D-319).
 - `Fingerprint` holds the cell sizes, the root-input faces, the component
@@ -287,18 +286,29 @@ D-256, D-268, D-269, D-317.
 
 ### `src/dataplane.jl`
 
-- The compiled writer `Writer` and `Batch`, and the staging cells.
+- The compiled writer `Writer` and `Batch`, and the staging cells
+  `StagingCell`, with the staging shim `_normalize`, where every staging
+  diagnostic is raised (§11.4, D-044), the CAS merge `stage_batch!` over the
+  positional `_merge`, and the drain's compiled scatter `_apply!` (D-202).
 - The per-writer drain `_drain!`, which sim.jl's `drain!` reaches through the
   roster's thunks. It returns whether a batch reached the table, the report
   the frame's freshness reads (§10.3, D-447).
 - The diagnostic cells, one per writer and one on each model for its frame
   (D-317). The channel's kinds are diagnostics.jl's.
-- `KINDS`, the closed set's one home. The union `DiagValue` and `KindCounts`'
-  field order are built from it, `StepFloor`'s field `step_floor` after
-  `firing` (D-460).
+- `WriterAccount`, the loop's private account for one writer, with `_fold!`,
+  the frame-top take of a cell into it, and `_reset!`, which zeroes it at each
+  door and as `run!` or `replay!` starts (§11.8, D-317).
+- `KINDS`, the closed set's one home. The union `DiagValue` is built from it,
+  and `KindCounts` and `_kind` are written by hand in its order, one field and
+  one method per kind, `StepFloor`'s field `step_floor` after `firing`
+  (D-460).
 - Snapshots, and the log with re-decimation. The log stores the box
   publication made, which `log!` takes `@nospecialize`d beside its concrete
   type, so the two `boundary` reads stay static (§9.8).
+- `port(snapshot, path, name)`, a published snapshot's read by address, as on
+  the live table (§11.2, D-440).
+- `Published`, the holder of §11.2's one `@atomic latest` reference, which the
+  plane and every handle share (D-256).
 - `gather_reads` over a snapshot, a compiled `Reader`'s gather over the
   snapshot's store, here and not in readers.jl for the include order (§11.2,
   §14.4, D-406).
@@ -307,11 +317,14 @@ D-256, D-268, D-269, D-317.
   `PacerStatus` (D-269):
   - the `PacerStatus` reads `Inf` and zeros where no pacer runs;
   - the copy off a live `Pacer` is control.jl's.
+- `stale`, §12.2's heartbeat read on a `WriterStatus`, with its threshold
+  `STALE_S` (D-133).
 - `ResidueRecord`, one writer's share of the tail residue, which sim.jl's
   sweep builds and the termination record holds (§13.5, D-203).
 
 Spec: §10.3, §10.7, §11.1–§11.4, §11.8, §12.2, §12.4, §12.6, §13.2, §13.5, §14.4, D-023,
-D-027, D-038, D-137, D-203, D-250, D-255, D-269, D-316, D-317, D-406, D-447.
+D-027, D-038, D-044, D-133, D-137, D-202, D-203, D-250, D-255, D-256, D-269, D-316,
+D-317, D-406, D-440, D-447.
 
 ### `src/declare.jl`
 

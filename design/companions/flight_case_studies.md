@@ -365,7 +365,7 @@ The demo, line by line:
   orphan anomaly ([§11.3][s11-3]). Recovery happens between runs: stop,
   `detach!`, then `init!` for a fresh trajectory, or `replay!` to the end
   followed by `run!` to continue the interrupted one ([§12.7][s12-7]).
-  After the run, `TimeSeries` reads the retained snapshots, and the
+  After the run, `series` reads the retained snapshots, and the
   trace can re-drive a fresh `Simulation(world)` bit-identically.
   That replay is also the state-trajectory inspector, which is
   [D-038][d-038] paying its way.

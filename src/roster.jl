@@ -1,6 +1,6 @@
 # The roster and claims (§11.3), with the attach-point slice of §11.6's device
 # contract: the periphery's two roots, the declared sides, the enumeration
-# contract with its bidirectional conformance check, the three-part admission,
+# contract with its bidirectional conformance check, the two-part admission,
 # both claim sources, and the harness writer as the derived remainder. The
 # task side of the contract — the handle, the wrapper and the spawn — lives
 # in devices.jl and the run's bracket and tail in sim.jl, the trace whose
@@ -293,7 +293,8 @@ _no_drain() = throw(InternalInvariant("drain thunk called before a door compiled
 The data plane's mutable holder: the roster in attachment order — which is the
 drain's application order — the harness writer and its drain thunk, the
 exclusivity index behind the `ClaimedFaceEntry` payload, and the id counter;
-the §11.3 freeze itself is the lifecycle's `:running` state (devices.jl).
+the §11.3 freeze itself is `Control`'s `running` flag (control.jl), which
+`lifecycle` reads as `:running`.
 Mutable and abstractly typed deliberately: the harness writer's *type*
 changes at every roster change (its schema is recompiled), so it cannot be a
 `Simulation` type parameter, and everything here is stopped-sim configuration
@@ -306,11 +307,10 @@ Unlike the writer, the cell
 survives roster changes: its diagnostics are the harness's, whatever surface
 it speaks for. `run_tasks` is the run's device-id → `Task` registry, filled
 at spawn and emptied at run end, which is what lets `publish!` read
-`task_state` off the handles the loop owns (D-193); the inline body's entry
-leaves when that body returns, under `wake`'s lock, since the loop reads the
-registry as it publishes. A device absent from it reads `:done` inside a run
-and `:none` outside one — device tasks are run-scoped observables (§12.2,
-§12.4).
+`task_state` off the handles the loop owns (D-193). The emptying runs under
+`wake`'s lock, since the loop reads the registry as it publishes. A device
+absent from it reads `:done` inside a run and `:none` outside one — device
+tasks are run-scoped observables (§12.2, §12.4).
 
 The trace the drain writes into is the run's (§11.5, D-260) and the store it
 scatters into is the executor's: both are closed into every thunk rather than

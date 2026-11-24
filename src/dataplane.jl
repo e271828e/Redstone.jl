@@ -243,6 +243,9 @@ holds these fields.
 - `task_state`: the state of a rostered device's task, `:none`, `:running` or
   `:done`.
 
+A rostered device's `who` is its roster label, such as `"device 1 (Pad)"`. The
+harness writer's is `"harness"`, and the loop's is `"loop"`.
+
 `task_state` is `:none` outside `run!` and `replay!`. Inside them it is
 `:running` while the task lives, and `:done` once it has ended or when the
 device has no live task of its own. The harness writer and the loop have no task
@@ -260,8 +263,9 @@ end
 """
 One writer's share of the tail residue (§11.8, D-203): what the run's-end
 sweep took past the final frame top — the final ring, at most `DIAG_RING`
-entries, and the per-kind counts the ring refused. A quiet writer contributes
-no record.
+entries per diagnostic cell the sweep takes, of which the loop's record folds
+two (D-317), and the per-kind counts the ring refused. A quiet writer
+contributes no record.
 """
 struct ResidueRecord
     writer::String
@@ -308,8 +312,8 @@ end
 "§12.2's staleness threshold, in seconds of wall clock: advisory, a display rule, never a kill trigger."
 const STALE_S = 2.0
 
-# Design: §12.2. The never-heartbeated cell holds `0.0`, which reads stale
-# unconditionally.
+# Design: §12.2. The never-heartbeated cell holds `0.0`, which reads stale at
+# any wall-clock `now`.
 # The heartbeat is the liveness read. A starved, blocked or crashed device shows
 # as a stale heartbeat with a name on it, not as physics that froze for no
 # visible reason.
@@ -322,7 +326,8 @@ Return `true` when the record's [device](@ref g-device)
 The threshold is deliberately loose, so a device that returns to its handle
 within two seconds between blocking reads is not stale. A device parked longer
 reads stale, which is advisory and stops nothing. A device that has not beaten
-since attach reads stale whatever `now` is. The records of the
+since attach reads stale at any wall-clock `now`, since its heartbeat holds
+`0.0`. The records of the
 [harness writer](@ref g-harness-writer) and of the loop have no heartbeat to
 judge, and return `false`.
 
