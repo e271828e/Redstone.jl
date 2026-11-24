@@ -35,10 +35,11 @@ item changes what the spec says, the spec edit is part of the item.
   companions and the rest of the docs are checked against the code, which
   is the source of truth, in both directions, and what drifted is fixed.
   It runs as a trial on §14, then one workflow per chapter group. Stage
-  reached: the §14 trial has run and its fixes have landed, and its
-  proposals for the full run wait on the user. The brief is
-  `design/reports/20261124_doc_conformance/00_brief.md`, and the trial's
-  record is `01_trial_14.md` beside it.
+  reached: the §14 trial and its two follow-up batches have landed, the
+  user has ruled on the trial's proposals, and group G1a (§13) is next.
+  The brief is `design/reports/20261124_doc_conformance/00_brief.md`; the
+  state, the rulings, the group plan and the tools are in
+  `notes_doc_conformance.md` beside it.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, each ending at a named function
   of the examples package: the plant, trim, linearization, a first loop,

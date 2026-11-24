@@ -56,6 +56,13 @@ probes in `probes/`.
    then cherry-picked onto master, kept the line numbers exact and met no
    peer edits.
 
+## Rulings
+
+On 2026-11-24 the user accepted the five changes above and the
+recommendations below. K14b-006 is ruled a defect: the test is written. The
+two new spec sentences stay unmarked. The log's inventories move to
+high-tier, in slices of about 30 entries.
+
 ## Left for the user
 
 - **K14b-006.** The linearization companion says the tests check
