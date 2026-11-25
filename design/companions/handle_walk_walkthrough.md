@@ -120,9 +120,8 @@ slope but no partials of its own, because nobody seeded it.
 `DeckField{Dual}` with a `Matrix{Dual}` field, and the producer would build a
 copy of the whole grid, every entry a zero-partial wrapper around the same
 `Float64`, on every evaluation. The query would return identical numbers.
-[D-263][d-263]'s rule that a mutable type's parameters pin keeps that copy off the
-table, and the one-scalar-plus-reference shape gets the same derivatives for
-free.
+Typing the grid `Matrix{Float64}` keeps that copy off the table, and the
+one-scalar-plus-reference shape gets the same derivatives for free.
 
 ## 3. Three habits that break tolerance
 

@@ -1001,8 +1001,8 @@ references included. A [field handle](#g-field-handle) (an immutable query
 object a consumer evaluates at arguments of its own choosing, [§4.4][s4-4]) is
 such a leaf. **A `Symbol` is an opaque leaf too** ([§7.3][s7-3],
 [D-243][d-243]). So a `Symbol` mode publishes like any other. **A mutable type
-anywhere in a port value is refused, and so is an opaque leaf surfacing as a
-root input** ([§4.4][s4-4], [D-237][d-237]). A
+the walk meets in a port value is refused, and so is an opaque leaf surfacing
+as a root input** ([§4.4][s4-4], [D-237][d-237]). A
 [root input](#g-root-input) is a source cell the periphery feeds.
 
 #### Granularity, read side
@@ -2954,8 +2954,8 @@ named `y_types`. The declaration
 admits two pieces of framework vocabulary. One is the `Pinned{P}` marker
 (above). It wraps the whole entry, a bare declaration whole, and **a marker
 below the top of an entry is `IllegalPortType`** ([D-265][d-265]). The other is a `StopFlag` entry, which
-places nothing and is left alone ([§13.5][s13-5]). A mutable type anywhere in
-an entry of either contract is `IllegalPortType` too ([§4.3][s4-3],
+places nothing and is left alone ([§13.5][s13-5]). A mutable type the walk
+meets in an entry of either contract is `IllegalPortType` too ([§4.3][s4-3],
 [D-237][d-237]). So is an entry that is no type at all, a tuple of types or
 a number among them, named or bare ([Appendix C][sC]). A `u_types` or
 `y_types` declared `nothing` is refused the same way, since `nothing` has a
@@ -3251,7 +3251,7 @@ Inside a query nothing converts the grid. Each product of a grid entry and a
 `Dual` weight promotes on its own. The query's result therefore carries the
 pose's partials and the interpolant's slope, while the grid is read as it was
 loaded. A `Matrix{T}` grid would give the same numbers at the cost of a copy
-per evaluation. That is the copy the mutable-parameter rule above refuses.
+per evaluation.
 
 The producer pins the handle when it is built from build-time data alone, as
 for a static terrain. It leaves the handle walking when its parameters come
@@ -12087,8 +12087,11 @@ payload is the propagated cause ([§13.5][s13-5], [D-203][d-203]).
 
 Tail hygiene follows from the hooks being user code too. Each is individually
 caught and logged. Shutdown therefore runs to completion even if a device's
-hook misbehaves. The join timeout already bounds a hook that hangs rather than
-throws.
+hook throws. The join timeout bounds a loop or a `shutdown!` that hangs on the
+device's task. A hook that runs on the calling task is outside that bound, and
+keeping it prompt is the author's charge. Those hooks are `unblock!` and a
+`shutdown!` released with no task spawned ([§12.4][s12-4]). A hanging
+`unblock!` holds `run!` until an interrupt releases it.
 
 What is lost is quarantined. A throw inside the frame leaves the [stores](#g-store) (the
 framework-owned homes of a component's `x`, `s` and `m`) possibly holding

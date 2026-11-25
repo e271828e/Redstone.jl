@@ -151,6 +151,9 @@ every [`wait_next_snapshot`](@ref) has been woken. A device whose [`loop`](@ref)
 blocks in a call of its own, such as a socket read, overrides it to make that
 call return, for example by closing the socket.
 
+The call runs on the task that advances the simulation, not on the device's.
+The `join_timeout` does not bound it, so the override must return promptly.
+
 A throw the override provokes in the loop, once `running` reads `false`, is
 treated as shutdown, not reported as `DeviceCrash`. A device that does not
 override `unblock!` has nothing to provoke a throw, so any throw from its loop
