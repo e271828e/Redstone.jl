@@ -119,9 +119,10 @@ the tools.
   passage still makes its point; else qualify or replace with the fewest
   words; else rewrite. 53 rows are settled under it, `a991af00`, one of them
   already fixed, and 6 of the 10 rows where doc or code could move took the
-  doc's fix, `cdf92a7f`. `ledgers/user_rows.md` marks each. Left of that
-  class: S8c-047, whose code change is accepted; CV10-263, CV2-041 and
-  S9b-112, in discussion; C2-073, CV9a-049, K9b-041 and CV11a-004, each tied
+  doc's fix, `cdf92a7f`. `ledgers/user_rows.md` marks each. S8c-047
+  took the code's fix, `7a300b9d`, S9b-112 the doc's, `21c08c17`, and CV2-041
+  changes nothing. Left of that class: CV10-263, whose code change is on
+  branch `fix-successor-pairing`; C2-073, CV9a-049, K9b-041 and CV11a-004, each tied
   to another open row or to the API audit; and the figures S9d-057, K8-027
   and K8-046.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the

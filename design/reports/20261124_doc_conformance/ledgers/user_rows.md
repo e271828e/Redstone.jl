@@ -43,7 +43,8 @@ the verifier's probe.
 - **CV1-034, wording.** §13.4 omits `StepError`'s reproduction recipe for the
   `restore!` host and the interrupt's resuming door. Settled, `a991af00`.
 - **CV2-041, wording.** `ignore_stop_requests` reads each element through
-  `string`, so a Symbol names a path. The spec and docstring say paths.
+  `string`, so a Symbol names a path. The spec and docstring say paths. Ruled
+  2026-11-25: doc and code both stay.
 - **CV1-147, defect.** BS3's `:range` refusal renders through
   `ArgumentInvalid`'s `t_plus` arm. Recommended: a message arm for `:BS3`.
 - **CV2-023, defect.** The global tracer's `Float64` conversion throws
@@ -67,8 +68,8 @@ the verifier's probe.
   Settled, `a991af00`.
 - **S8c-047, wording.** §8.2 lists `x_projection` among the continuous-only
   declarations checked in the structure step; the verifier's text names
-  `m_init` and `state_events` instead. Ruled 2026-11-25: the code moves the
-  check to the structure step.
+  `m_init` and `state_events` instead. Settled in the code,
+  `7a300b9d`.
 - **S8c-106, wording.** §8.4's typo'd-wire message differs from the code's.
   Settled, `cdf92a7f`.
 - **S8c-174, defect.** Two transparent containers on one type are said to be
@@ -88,7 +89,8 @@ the verifier's probe.
   five steps run in another order; the did-you-mean list holds the endpoint's
   faces, inputs and outputs alike. Settled, `a991af00`.
 - **S9b-112, wording.** §9.2: the refusal covers any value that is not an
-  algorithm token, not an algorithm the seam does not know.
+  algorithm token, not an algorithm the seam does not know. Settled,
+  `21c08c17`.
 - **S9c-055, wording.** §9.4: after pre-materialization each lookup still
   takes the build's lock. D-135 backs the doc's text. (S9c-067 landed as
   G3b's CV9a-017.) Settled, `a991af00`.
@@ -133,7 +135,8 @@ the verifier's probe.
   the cursor is written and read misses one store. Settled, `a991af00`.
 - **CV10-263, wording.** A named discrete store whose `s_update` returns the
   right field names with a wrong value type reports `:field_set`; Appendix C
-  does not say so.
+  does not say so. Ruled 2026-11-25: the code pairs a successor by name
+  (D-151), its reasons naming the fields.
 - **K10b-043, wording.** The limited-integrator companion's trial count for
   the minmax projection: about ITP's worst case, 21 or 22, not bisection's.
   Settled, `a991af00`.
