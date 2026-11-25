@@ -137,12 +137,31 @@ the tools.
   are identical in both PIDs, though `DiscretePID` adds its saturation code.
   event_visibility_walkthrough.md's section 2 still says `u` gathers foreign
   cells alone, which a self-wire breaks (K6a-013).
-- **Next, for a fresh session.** The rows of `ledgers/user_rows.md` with no
-  "Settled" or "Ruled" mark, less the gaps and the held rows. The user asked
-  for the treatment the doc-or-code rows had: read the rulings behind each,
-  probe it, and bring a recommendation, sorted by certainty. Start with
-  S11c-089, S9b-300 and S6c-001 with S6c-004, since each also settles a
-  waiting wording row. The small sweep and the log clustering follow.
+- **The defect and citation rows, taken on 2026-11-25.** The clear ones landed,
+  the doc rows as `608662ac` and the code rows as `d6636cb0` to `8b8ab49f`, one
+  commit each. `ledgers/user_rows.md` marks each.
+- **Next: the six rows left for discussion**, each with its probe in
+  `probes/user_rows/`.
+  - S9b-300, with CV9a-049. A `Model` at a `Dual` keeps a frozen cell at the
+    probe's value after `init!`, with no diagnostic. The lag's `ẋ` read 0 where
+    the nominal model's read 2. Recommended: `init!` runs a nominal round and
+    copies the frozen cells, as D-205 and D-213 rule for the published world and
+    the services.
+  - S6c-001 and S6c-004, with K9b-041. `BigFloat` is immutable on 1.13, so the
+    `Real` exemption covers `BigInt` and a user's mutable `Real` alone, and the
+    latter changes under a reader. Recommended: test mutability before `Real`,
+    and write "a mutable type the walk meets" in §4.3.
+  - S10d-054. `sleep` overshoots by 1.4 ms at a 2 ms request and by 2.1 ms from
+    10 ms up, so the 2 ms margin rarely reaches the spin. The wait's 95th
+    percentile lands 879 µs late at 2 ms and 1.5 µs at 3 ms. Recommended: 3 ms,
+    or 4 ms against load, with an entry amending D-133.
+  - S13c-031. Recommended, with less certainty: each `unblock!` on its own task
+    within the deadline.
+  - S12b-236. Recommended: the row's second text, in the doc.
+  - CV2-023. The fix is sound by the argument that an empty set loses nothing,
+    but a test pins the refusal.
+
+  The small sweep and the log clustering follow.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

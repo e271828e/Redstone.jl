@@ -17,12 +17,14 @@ the verifier's probe.
 - **S13c-219, wording.** §13.8's "no layouts": `_classify` builds the nominal
   cell layout. Recommended: drop "no layouts". Settled, `a991af00`.
 - **S13a-040 with L13-017, defect.** Three tests assert message text against
-  §13.2 and D-058. Recommended: move them into the rendering testset.
+  §13.2 and D-058. Recommended: move them into the rendering testset. Settled,
+  `8b8ab49f`. `discard_reports` in test_trace.jl stays, since a discard past the
+  final frame top reaches only the log.
 - **S13c-031, defect.** A hanging `unblock!` is not bounded by the join
   timeout. Recommended: run each `unblock!` on its own task within the deadline.
 - **S13d-133, defect.** The descriptor writes no `function` for
   `BundleFieldError`. Recommended: add the `_function` method and a test, after
-  checking the schema allows it.
+  checking the schema allows it. Settled, `dc884b91`.
 
 ## G1b
 
@@ -33,13 +35,13 @@ the verifier's probe.
   Settled, `a991af00`.
 - **C2-073, wording.** A binding kind's payload is the binding type and a
   `reason`, not the trait, method and direction. Rule it with S11c-089: §11.6
-  states what that defect asks of the code.
+  states what that defect asks of the code. Settled, `d6636cb0`.
 - **C2-139, wording.** `UninitializedInputs` is listed as collected; the code
   raises one fail-fast diagnostic naming every uncovered face. Settled,
   `cdf92a7f`.
 - **CV1-011 and CV1-025, citations.** diagnostics.jl:89 cites D-058 for the
   carrier, which D-222 replaced. :204 cites D-214 for plain `Float64` time
-  payloads, which D-214 does not treat.
+  payloads, which D-214 does not treat. Settled, `608662ac`.
 - **CV1-034, wording.** §13.4 omits `StepError`'s reproduction recipe for the
   `restore!` host and the interrupt's resuming door. Settled, `a991af00`.
 - **CV2-041, wording.** `ignore_stop_requests` reads each element through
@@ -47,15 +49,19 @@ the verifier's probe.
   2026-11-25: doc and code both stay.
 - **CV1-147, defect.** BS3's `:range` refusal renders through
   `ArgumentInvalid`'s `t_plus` arm. Recommended: a message arm for `:BS3`.
+  Settled, `fddc0c70`.
 - **CV2-023, defect.** The global tracer's `Float64` conversion throws
   `Undecidable` on any tracer, though the docstring says only on a tagged
-  operand. Recommended: decide through `_decide`, as `Int` and `Bool` do.
+  operand. Recommended: decide through `_decide`, as `Int` and `Bool` do. Held:
+  a test of test_build.jl, from `a5ecf7f5`, pins the refusal on an untagged
+  operand, since the value would leave the trace, and no entry backs either
+  side.
 - **CV2-026, held.** A D-166 citation in tracer.jl, left to the CIT-D166
   finding.
 - **CV2-030, unmarked rule.** The fixer added §13.8's 64-face limit on
   per-member tracing as an unmarked sentence: no entry rules it, and none was
-  rejected. Like the trial's two sentences, it stays unmarked unless you want
-  an entry.
+  rejected. Like the trial's two sentences, it stays unmarked unless you want an
+  entry. Ruled 2026-11-25: it stays unmarked.
 
 ## G2, §8
 
@@ -73,13 +79,14 @@ the verifier's probe.
   `7a300b9d`.
 - **S8c-106, wording.** §8.4's typo'd-wire message differs from the code's.
   Settled, `cdf92a7f`.
-- **S8c-174, defect.** Two transparent containers on one type are said to be
-  a declaration error; `_check_transparent` accepts a return naming several
-  fields. Proposed: refuse it with a collected diagnostic. The doc-side option is CV8-048:
-  a type names at most one, since the declaration returns one name.
+- **S8c-174, defect.** Two transparent containers on one type are said to be a
+  declaration error; `_check_transparent` accepts a return naming several
+  fields. Proposed: refuse it with a collected diagnostic. The doc-side option
+  is CV8-048: a type names at most one, since the declaration returns one name.
+  Settled both ways, `57acc74a`: CV8-048's sentence, and the refusal.
 - **S8d-042, defect.** "A face name contains no `/`" is said to be checked;
-  `check_contract_names` lets a contract key with `/` through. Proposed:
-  refuse it as `FaceNameIllegal` with invariant `:contains_slash`.
+  `check_contract_names` lets a contract key with `/` through. Proposed: refuse
+  it as `FaceNameIllegal` with invariant `:contains_slash`. Settled, `7e7b5da4`.
 - **S8d-003, gap.** The shared path form across the HDF5 log tree is owed by
   `pending.md`; no action.
 
@@ -151,8 +158,9 @@ the verifier's probe.
   owed by `pending.md`; no action.
 - **S10a-064, bold ruling.** §10.2's bold span says the distance is taken in
   equal steps "no longer than" the proposal. The code caps the count at
-  `⌊r / h_min⌋`, so near `h_min` a step can be longer. The fixer added an
-  unbolded sentence saying so; the bold ruling itself is yours to reword.
+  `⌊r / h_min⌋`, so near `h_min` a step can be longer. The fixer added an unbolded
+  sentence saying so; the bold ruling itself is yours to reword. Settled,
+  `608662ac`: the bold ends at "equal steps".
 
 ## G5, §11 and §12
 
@@ -171,10 +179,10 @@ the verifier's probe.
   nothing; each activation lookup takes the build's lock. Rule it with
   S9c-055. Settled, `a991af00`.
 - **S11c-089, defect.** `BindingContractMismatch` messages do not name the
-  `is_input` and `is_output` traits, as §11.6 says every violation report
-  does. Proposed: name both traits in the `:neither_side`, `:claims_missing`
-  and `:reads_missing` messages. C2-073 waits on it: Appendix C and §11.6
-  promise the trait, the method and the direction.
+  `is_input` and `is_output` traits, as §11.6 says every violation report does.
+  Proposed: name both traits in the `:neither_side`, `:claims_missing` and
+  `:reads_missing` messages. C2-073 waits on it: Appendix C and §11.6 promise
+  the trait, the method and the direction. Settled, `d6636cb0`.
 - **S11b-032 and S11c-107, gap.** The greedy standard GUI binding is owed by
   `pending.md`; no action.
 - **K11-002, wording.** The flight case studies say gain trajectories show
@@ -238,17 +246,20 @@ the verifier's probe.
   beats ungated tracking on peak but settles later; the shared methods are
   not "eleven"; the list of vector components is incomplete. Settled,
   `a991af00`.
-- **CV6a-020, CV6c-006 and CV6c-043, code_map.md.** The leaves.jl entry
-  omits the shape walk; the library.jl entry's Spec line and its PID helper
-  list are off. Internal, but the new text is not fixed one way.
+- **CV6a-020, CV6c-006 and CV6c-043, code_map.md.** The leaves.jl entry omits
+  the shape walk; the library.jl entry's Spec line and its PID helper list are
+  off. Internal, but the new text is not fixed one way. CV6a-020 and CV6c-043
+  settled, `608662ac`. CV6c-006 ruled 2026-11-25: no change, since no rule makes
+  a Spec line list every citation in its file.
 - **CV6b-019, a runtime string.** A user-visible `@warn` in library.jl cites
-  §7.1 for a claim §7.1 does not make. Changing it changes a message.
+  §7.1 for a claim §7.1 does not make. Changing it changes a message. Settled,
+  `ea8f9ee8`.
 - **CV6a-033, held.** A D-166 citation in leaves.jl, left to CIT-D166.
-- **S6c-002, a bold ruling reworded.** §5.2's ruling now reads "a primitive
-  has at most two output stages", where it said every primitive provides
-  two. The code requires neither stage. D-006 backs the old text and is in
-  the log ledger. §2's roadmap (line 137) and §8.1 (line 2491) still say
-  "two output stages per primitive".
+- **S6c-002, a bold ruling reworded.** §5.2's ruling now reads "a primitive has
+  at most two output stages", where it said every primitive provides two. The
+  code requires neither stage. D-006 backs the old text and is in the log
+  ledger. §2's roadmap (line 137) and §8.1 (line 2491) still say "two output
+  stages per primitive". Settled, `608662ac`.
 
 ## G7, the appendices and the user-facing docs
 
@@ -262,9 +273,9 @@ the verifier's probe.
 - **SD1-129 and SD3-166, wording.** The glossary's cell entry omits the root
   inputs' cells; its claim-enforcement entry omits the harness's
   `OutOfClaimEntry` on an unknown face. Settled, `a991af00`.
-- **SD1-001, defect.** Appendix D says its entries are alphabetical within
-  each group; several groups are not. Proposed: reorder them, or drop the
-  claim.
+- **SD1-001, defect.** Appendix D says its entries are alphabetical within each
+  group; several groups are not. Proposed: reorder them, or drop the claim.
+  Settled, `608662ac`: reordered.
 - **SD3-071, SD3-111, SD3-143 and SD3-144, gap.** The glossary states GUI
   behaviour the inspector's cockpit still owes; `pending.md` records it. The
   verifier proposes marking each as owed.
@@ -281,8 +292,9 @@ the verifier's probe.
 - **SD4-138, wording.** The glossary says a payload carries paths and names
   as strings; names are symbols. D-058 backs the doc's text. Settled,
   `a991af00`.
-- **CV7a-003, CV7a-024, CV7a-028, CV7a-038 and CV7a-057, undocumented
-  surface.** The artifacts' one-line `show` forms, the `Deployment` REPL
-  heading's extra fields, `show(::FrameworkStatus)`, the public `TraceBatch`
-  record and its `code_map.md` entry have no doc text. Each needs new text,
-  more than one wording of which would do. D-476 and D-454 back parts.
+- **CV7a-003, CV7a-024, CV7a-028, CV7a-038 and CV7a-057, undocumented surface.**
+  The artifacts' one-line `show` forms, the `Deployment` REPL heading's extra
+  fields, `show(::FrameworkStatus)`, the public `TraceBatch` record and its
+  `code_map.md` entry have no doc text. Each needs new text, more than one
+  wording of which would do. D-476 and D-454 back parts. Settled, `608662ac`,
+  except CV7a-038, which waits on the exported-name audit as CV11a-004 does.
