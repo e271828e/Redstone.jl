@@ -5304,7 +5304,7 @@ violated constraint:
 - an `h_min` taken as `h_max` is and refused alike, one absent under a
   proposing method, or one above half the resolved `h_max` ([D-460][d-460],
   [D-463][d-463]);
-- an algorithm the [stepper seam](#g-seam) does not know;
+- a value that is not an algorithm;
 - **a `localization_tol` that is not positive and finite** ([D-470][d-470]);
 - a `localization_budget`, a `firing_budget` or an `attempt_budget` that is
   not an integer ≥ 1.
