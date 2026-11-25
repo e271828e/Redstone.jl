@@ -1150,16 +1150,6 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
         comp = entry.instance
         has_stage(x_projection, comp) || continue
         path, decl = entry.path, decls[ci]
-        if entry.tier !== CONTINUOUS
-            push!(diags, DeclarationOnWrongTier(path = path, declaration = :x_projection,
-                                               reason = :continuous_only))
-            continue                               # no manifold to run it against
-        end
-        if decl.x === nothing
-            push!(diags, DeclarationOnWrongTier(path = path, declaration = :x_projection,
-                                               reason = :no_manifold))
-            continue
-        end
         append!(diags, at_component(path) do
             _check_state_write(path, "x_projection",
                                invoke_declaration(x_projection, entry.instance, decl.x), decl.x, T)

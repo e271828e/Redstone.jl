@@ -15609,11 +15609,11 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   Error · build · collected. Component path, the offending declaration, and
   a `reason`. Reason `:tier_form` covers `x_deriv`/`s_update`, a store from
   the wrong family (`x_init` against `s_init`, [D-195][d-195]),
-  `state_events` and `m_init`. It carries the tier the declaration is
+  `state_events`, `m_init` and `x_projection`. It carries the tier the declaration is
   written in and the tier the primitive's other declarations announce. A `Pinned`
   entry on a discrete primitive is reason `:pinned_entry`, the entry named with
-  its contract ([D-263][d-263]). `x_projection` is reason `:continuous_only` on a discrete
-  primitive and `:no_manifold` on a primitive with an empty `x_init`.
+  its contract ([D-263][d-263]). `x_projection` on a primitive with an empty `x_init`
+  is reason `:no_manifold`.
 - **`FaceNameIllegal`** ([§8.6][s8-6]). Error · build · collected. Component
   path, face name, and the violated `invariant`, `:contains_slash` (the name
   contains `/`) or `:empty` (the name is empty, a primitive's contract key

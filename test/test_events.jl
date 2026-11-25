@@ -177,9 +177,12 @@ function test_events()
         @test :state_events in [d.declaration for d in diags]
         @test all(d -> d isa DeclarationOnWrongTier, diags)
 
+        # `x_projection` votes there too, so its refusal merges with another pass's.
         d = only(diagnostics(failure(() -> build(single(ProjectOnDiscrete())))))
         @test d isa DeclarationOnWrongTier && d.declaration === :x_projection &&
-              d.reason === :continuous_only
+              d.reason === :tier_form && d.found === :continuous && d.announced === :discrete
+        err = failure(() -> build(Group((; c = ProjectOnDiscrete(), d = Gain(1.0)))))
+        @test Set(kinds(err)) == Set([DeclarationOnWrongTier, UnconnectedInput])
         d = only(diagnostics(failure(() -> build(single(ProjectNoState())))))
         @test d isa DeclarationOnWrongTier && d.reason === :no_manifold
         d = only(diagnostics(failure(() -> build(single(BadProjectShape())))))
@@ -230,7 +233,7 @@ function test_events()
 
         # The tier refusals read the typed method as they read an untyped one.
         d = only(diagnostics(failure(() -> build(single(TypedProjectOnDiscrete())))))
-        @test d isa DeclarationOnWrongTier && d.reason === :continuous_only
+        @test d isa DeclarationOnWrongTier && d.reason === :tier_form
         d = only(diagnostics(failure(() -> build(single(TypedProjectNoState())))))
         @test d isa DeclarationOnWrongTier && d.reason === :no_manifold
     end

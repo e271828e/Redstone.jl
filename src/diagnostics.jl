@@ -632,20 +632,17 @@ message(d::ContainerNested) =
     "$(_namelist(d.keys)) ($(_plainlist(d.types))) — containers of containers are " *
     "rejected in the first cut; deeper grouping is an assembly (§8.5)"
 
-"§5.2, §8.2, §8.5, D-263: a declaration written in the other tier's form, a `Pinned` entry on a discrete leaf, or `x_projection` off the continuous tier."
+"§5.2, §8.2, §8.5, D-263: a declaration written in the other tier's form, a `Pinned` entry on a discrete leaf, or `x_projection` on a stateless one."
 Base.@kwdef struct DeclarationOnWrongTier <: Diagnostic
     path::String
     declaration::Symbol                      # the offending declaration
-    reason::Symbol                           # :tier_form | :pinned_entry | :continuous_only | :no_manifold
+    reason::Symbol                           # :tier_form | :pinned_entry | :no_manifold
     found::Union{Nothing,Symbol} = nothing   # the tier the declaration is written in
     announced::Union{Nothing,Symbol} = nothing  # the tier the other declarations announce
     entry::Union{Nothing,Symbol} = nothing   # the `Pinned` entry, on the `:pinned_entry` arm
 end
 path(d::DeclarationOnWrongTier) = d.path
 message(d::DeclarationOnWrongTier) =
-    d.reason === :continuous_only ?
-    "$(_at_path(d.path)) declares `$(d.declaration)`, which is continuous-only — projection " *
-    "normalizes continuous state (§5.2)" :
     d.reason === :no_manifold ?
     "$(_at_path(d.path)) declares `$(d.declaration)` but no `x_init` — there is no state " *
     "manifold to project onto (§5.2)" :

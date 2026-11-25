@@ -729,6 +729,7 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
     _declares(s_init, comp) && push!(votes, (:s_init, DISCRETE))
     invoke_declaration(m_init, comp) !== nothing && push!(votes, (:m_init, CONTINUOUS))
     !isempty(invoke_declaration(state_events, comp)) && push!(votes, (:state_events, CONTINUOUS))
+    has_stage(x_projection, comp) && push!(votes, (:x_projection, CONTINUOUS))
 
     # The store is mandatory, empty when stateless (§8.2, D-263).
     if !_declares(x_init, comp) && !_declares(s_init, comp)
@@ -754,6 +755,9 @@ function classify_tier(path::String, @nospecialize(comp), diags::Vector{Diagnost
     state_store === nothing && !_declares(y_types, comp) &&
         push!(diags, StatelessWithoutOutputs(path = path, type = _typename(comp),
                                             declarations = leaf_declarations(comp)))
+    tier === CONTINUOUS && state_store === nothing && has_stage(x_projection, comp) &&
+        push!(diags, DeclarationOnWrongTier(path = path, declaration = :x_projection,
+                                           reason = :no_manifold))
 
     # The vote loop collects (§13.1): a leaf written half in each tier's spelling
     # names every declaration that disagrees, not the first one found. The tier

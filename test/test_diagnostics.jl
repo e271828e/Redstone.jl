@@ -305,8 +305,6 @@ function diagnostics_kind_set()
                             types = ["Tuple{Gain, Gain}", "NamedTuple{(:c,), Tuple{Gain}}"]),
             DeclarationOnWrongTier(path = "a/b", declaration = :x_init, reason = :tier_form,
                                    found = :continuous, announced = :discrete),
-            DeclarationOnWrongTier(path = "a/b", declaration = :x_projection, reason = :continuous_only,
-                                   found = :discrete),
             DeclarationOnWrongTier(path = "a/b", declaration = :x_projection, reason = :no_manifold),
             DeclarationOnWrongTier(path = "a/b", declaration = :y_types, reason = :pinned_entry,
                                    entry = :a, announced = :discrete),
