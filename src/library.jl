@@ -1843,11 +1843,11 @@ u_types(::LimitedIntegrator{V, L, R}) where {V, L, R} = reset_ports(V, Val(R))
 y_types(::LimitedIntegrator{V}) where {V} = (out = V, saturation = saturation_type(V))
 y_state(::LimitedIntegrator, (; x, m)) = (out = x, saturation = m)
 x_deriv(::LimitedIntegrator, (; u, m)) = (v = signal(u); ifelse.(m .== 0, v, zero(v)))
-# The hit guards are not gated by the free code on purpose. Gated, a hit guard
-# would read `0` the instant a leave handler frees the mode, present a fresh
-# edge and saturate the component again. On the limit they read `u`. Reading
-# `x - limit` alone, a component freed on the limit holds at `0`, so a return
-# within one step shows no edge and it runs past the stop.
+# The hit guards are not gated by the free code on purpose. Gated, one on
+# `x - limit` alone would read `0` the instant a leave handler frees the mode,
+# present a fresh edge and saturate the component again. On the limit they read
+# `u`. Reading `x - limit` alone, a component freed on the limit holds at `0`,
+# so a return within one step shows no edge and it runs past the stop.
 hit_upper_guard(c::LimitedIntegrator, (; x, u)) = first_nonzero(x - c.upper, signal(u))
 hit_lower_guard(c::LimitedIntegrator, (; x, u)) = first_nonzero(c.lower - x, -signal(u))
 # The leave guards gate on strictly inward input. Gated on the mode alone, an
@@ -1856,7 +1856,7 @@ hit_lower_guard(c::LimitedIntegrator, (; x, u)) = first_nonzero(c.lower - x, -si
 # that gates stay fixed through a localization does not cover it: σ jumps from
 # `-1` to a small positive value at the input's zero crossing. The bracket still
 # converges on that crossing, since only the sign drives it, but ITP falls back
-# to bisection's count, about 15 extra interior sweeps per leave.
+# to about bisection's count, some 15 extra interior sweeps per leave.
 leave_upper_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =
     (v = signal(u); m == 1 && v < 0 ? -v : -one(v))
 leave_lower_guard(::LimitedIntegrator{V, true}, (; m, u)) where {V} =

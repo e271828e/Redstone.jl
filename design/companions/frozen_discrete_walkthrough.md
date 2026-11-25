@@ -74,12 +74,6 @@ memoryless analog one. That Jacobian is *wrong* for the hybrid system being
 simulated: the hold is not an implementation detail, it is dynamics — it is
 why discretization matters in control design at all.
 
-There is a structural echo of the same fact. A feedback loop closed through B
-is schedulable precisely because B's output is held state rather than
-feedthrough ([§5.3][s5-3]); treat `y_direct` as in-sweep feedthrough and that loop
-becomes algebraic, which [§5.5][s5-5] would have to reject. The freeze and the
-schedule are the same statement made twice.
-
 ## 5. The dependence that does exist
 
 The intuition behind the question is not wrong — it is aimed at a different
@@ -116,8 +110,6 @@ precisely the error the type-level freeze makes unwritable.
 [d-070]: ../log.md#d-070--trim-service-in-house-dense-lm-behind-a-swappable-backend
 [d-072]: ../log.md#d-072--linearization-surface-three-selector-lists-one-chunked-dual-pass
 [s14-10]: ../spec.md#1410-linearization-tap-selectors-one-seeded-pass-a-pure-query
-[s5-3]: ../spec.md#53-structural-feedthrough-stage-roles-execution-order-and-step-boundaries
-[s5-5]: ../spec.md#55-algebraic-loop-policy-reject-at-build-time
 [s6-3]: ../spec.md#63-rates-down-the-hierarchy
 [s7-2]: ../spec.md#72-numeric-genericity-eltype
 [s8-2]: ../spec.md#82-the-declaration-inventory

@@ -114,8 +114,8 @@ bracketing root-finder reads only the sign, so it still converges on the
 input's zero crossing; the reviewer measured the located instants within
 4.6e-9 of the true zeros, under a bracket of 1e-8. The cost is speed: with
 one end stuck at `-1`, the secant estimate ITP draws lands next to the other
-end and its minmax projection falls back to bisection's count, 21 trials for
-the default tolerance. On a `cos(t)` input into `[-0.5, 0.5]` over 20 s,
+end and its minmax projection falls back to about bisection's count, 21 or 22
+trials for the default tolerance. On a `cos(t)` input into `[-0.5, 0.5]` over 20 s,
 seven hits and six leaves cost 177 trial sweeps against 87 before the
 gate, about 15 extra interior sweeps per leave.
 

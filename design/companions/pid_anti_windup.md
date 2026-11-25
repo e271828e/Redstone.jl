@@ -310,8 +310,8 @@ the first instant after which the output stays within `0.05` of `5`.
 The last four rows are section 3's coupling argument measured. Shortening
 `Tt` degrades ungated tracking, whose correction then slaves the outer
 integrator to every inner transient, and improves gated tracking, which
-pays nothing while the path is free. The hold alone beats ungated tracking
-at its better `Tt`, and the two together beat both.
+pays nothing while the path is free. On peak, the hold alone beats ungated
+tracking at its better `Tt`, and the two together beat both.
 
 The tracking variant wired from a memoryless clamp of its own output is
 refused at build, `AlgebraicCycle` with `classification === :artificial`
@@ -404,11 +404,10 @@ fully exact step would also scale the integral's drive by `Tt β`, which is
 does not already give.
 
 **The law is shared, not the type.** The port sets, the gate and the
-reference rule are identical in both PIDs, eleven methods: the four
-`signal_ports` arms, `u_types`, `y_types`, the two `gated_error` arms and
-the three `correction_reference` arms. With `parameters`, which fetches the
+reference rule are identical in both PIDs. With `parameters`, which fetches the
 nine parameters, they earn a supertype in the `AbstractLinearSystem` style,
-`AbstractPID{V, Hold, Track, Fixed}`, which carries them (section 10). The
+`AbstractPID{V, Hold, Track, Fixed}`, which carries them or inherits them from
+`AbstractAntiWindupController` (section 10). The
 stores and the stages sit on each concrete type, and the field `fixed`
 repeats in the discrete struct, since an abstract type carries none. The
 continuous `PID` reparents in one line.
@@ -431,8 +430,7 @@ nor its parameters, so the design lives here and in the inventory
 
 **Widening, not forking.** The library's vector components are one struct each
 over `V <: Union{Float64, SArray{<:Tuple, Float64}}`, with the law in
-broadcast form: `Integrator`, `FirstOrderLag`, `LimitedIntegrator`, `Relay`,
-`DiscreteLimitedIntegrator` and `RateLimiter`. Only two things fork on
+broadcast form. Only two things fork on
 scalar against vector, `state_events` and the saturation code's port type.
 The PID has no events, and the port type becomes one helper shared with the
 two limited integrators, `saturation_type(V)`, `Int8` over a `Real` and
@@ -556,7 +554,7 @@ both, a bump of `1.92` with the error left in against `0.002` with it gated
 off and `Tt = 0.1`. A standby PID also chases a moving target with lag
 `Tt`, since `v` and its own proportional term both move while another PID
 flies the plant, so the standby `Tt` is short. On the discrete tier `Tt = 0`
-follows exactly, which is the FlightPhysics reset applied every tick.
+follows one tick behind, which is the FlightPhysics reset applied every tick.
 `Tt = Inf` follows nothing, which is why `tracking = true` with a fixed
 infinite `Tt` is refused at construction.
 

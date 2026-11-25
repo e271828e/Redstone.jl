@@ -148,9 +148,8 @@ clock. The trap is only expecting a copied condition to behave as a restore.
 
 **Keeping checkpoints and conditions apart does nothing.** They already are
 apart. There is no conversion from one to the other, and no path-addressed
-reader of a checkpoint; its stores are reachable only through `restore!`
-and the trace header. The one public way to read a discrete store is
-`state(model, path)` on a stopped run. Removing that would give up store
+reader of a checkpoint. The one path-addressed read of a discrete store at rest
+is `state(model, path)`. Removing that would give up store
 inspection, which the test suite's pins, every reviewer's probe and the
 debugging of any discrete state machine rely on, and would not close the
 hazard, since a user can compute any value offline and type it in. The
@@ -327,7 +326,7 @@ continuing, and no mixed configuration means anything: resetting the
 priors while keeping the clock would re-fire held guards mid-run for no
 reason, and re-anchoring the lattice while keeping the stores would shift
 every multi-rate component's phase under a continuing controller. So the
-implementation carries one flag, not five.
+implementation carries two bundles, not five choices.
 
 The first three choices live in the doors' own bodies, before the boundary.
 The last two live inside the boundary, in the routine both doors call.
@@ -378,8 +377,8 @@ alone is not enough:
   time, which is already what `restore!` does at a trajectory's start.
 
 Skipping the update at boundary zero, considered in section 4 as a cure for
-the copy hazard, is `fresh = true` with choice 5 off: it loses the `t₀`
-sample for every authored condition. The flag's two bundles are the reason
+the copy hazard, is `init!` with choice 5 off: it loses the `t₀`
+sample for every authored condition. The two bundles are the reason
 that mixed form is not offered.
 
 ### 7.4 The three layers

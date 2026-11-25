@@ -372,7 +372,7 @@ off leaves `u_raw = v + Tt Ki e` in standby, which is most of the `1.92`.
 And a standby controller chases a moving target with lag `Tt`, since its `v` and
 its own proportional term both move while the other controller flies the plant,
 so the standby `Tt` should be short. On the discrete tier `Tt = 0` follows
-exactly, the FlightPhysics reset applied every tick, and `Tt = Inf` follows
+one tick behind, the FlightPhysics reset applied every tick, and `Tt = Inf` follows
 nothing, which is why a fixed infinite `Tt` is refused with `tracking = true`
 ([D-385][d-385]). The emulation's `Tt = 0` row is not reported: with the shipped
 variant the sibling in command tracked itself at `β = 1`, which the engaged

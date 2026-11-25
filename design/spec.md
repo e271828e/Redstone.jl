@@ -860,7 +860,7 @@ split keeps it a visible wire.
 A strapdown inertial measurement unit (IMU) integrates over each sample
 interval and zeroes its integrals at every sample. No construct expresses
 that periodic reset of `x`. An update writes only its own `s`, and guard-driven handlers
-are the sole writers of continuous state ([D-141][d-141], [D-362][d-362]). A
+alone reset continuous state ([D-141][d-141], [D-362][d-362]). A
 periodic reset is scheduled, not detected, so it is not an event either
 ([D-362][d-362]).
 
@@ -1508,8 +1508,8 @@ parameter mutation nor hand-ordered resets.
 **Scheduled gains are inputs** ([D-089][d-089]). A scheduler component owns the lookup tables
 as inert parameters, reads the scheduling variables as inputs, and publishes one
 gain bundle per compensator. Compensators consume gains as `u`. Ports expose
-what mutation would hide. Gain trajectories are observable in log, [trace](#g-trace) and
-[replay](#g-replay), where a parameter write would be invisible to all three. The trace is
+what mutation would hide. Gain trajectories are observable in log and
+[replay](#g-replay), where a parameter write would be invisible to both. The [trace](#g-trace) is
 the session's recorded inputs, and replay re-drives the ordinary loop from that
 trace. The feedthrough graph carries the compensators' dependence on the gains.
 Linearization holds an unseeded gain root input constant and differentiates
@@ -1541,7 +1541,7 @@ boundary, because republishing from `s⁺` is rejected ([D-067][d-067], [D-342][
 stage is therefore the *only* same-tick path.
 
 **A [continuous component](#g-continuous-component)'s reset is an event** ([D-141][d-141]). The continuous tier admits
-no input spelling at all, because only handlers write `x` ([§3.4][s3-4]). A commanded
+no input spelling at all, because only handlers reset `x` ([§3.4][s3-4]). A commanded
 reset of continuous state, whose condition arrives as an ordinary `Bool` input,
 is therefore an edge-triggered event owned by the reset component. A landing
 gear's friction regulator, re-initialized at touchdown by weight-on-wheels, is
@@ -2569,7 +2569,7 @@ it could sit in fields, dissolving the static typing that the zero runtime graph
 logic ([§5.1][s5-1]), the allocation invariant ([§9.8][s9-8]) and the fold-away conformance test
 ([§9.5][s9-5]) all rest on.
 
-The build reads each declaration once, against the concrete instance, so a
+The build reads each declaration against the concrete instance, so a
 value-dependent contract does not announce itself. This is a rule authors keep,
 not a check the build can run.
 
@@ -3319,8 +3319,8 @@ second is omitting it at one that really does not.
 **The first bug lurks, but is never silent** ([D-286][d-286]). No lossy `Dual → Float64`
 cast exists, so the first `Dual` activation of that component fails. It fails at
 that activation's own lazy compile ([§9.4][s9-4]), not at `build(world)`. The message
-carries the didactic hint ("if `F` participates in differentiation, remove its
-`Pinned`"), because an observed `Dual` at a pinned leaf has exactly one honest
+carries the didactic hint ("if this leaf participates in differentiation, remove
+its `Pinned`"), because an observed `Dual` at a pinned leaf has exactly one honest
 cause. A didactic diagnostic is one that states its fix ([§13.2][s13-2]). The second
 bug fails at the same activation. It fails inside the stage where the frozen
 internals meet a `Dual`, or at the identity comparison on an opaque leaf built
@@ -4120,7 +4120,7 @@ $= \int_{t_{k-1}}^{t_k} R^{c_{k-1}}_{c} f^{c} \, dt$ has its rotation
 anchored at the interval start.
 
 The reset is what neither tier can spell. It is a discrete-tier write
-into continuous state, and only handlers write `x` ([§3.4][s3-4],
+into continuous state, and only handlers reset `x` ([§3.4][s3-4],
 [D-362][d-362]). It is periodic rather than predicate-triggered, so events are
 the wrong mechanism ([D-362][d-362]). Integrate-and-dump is tightly coupled
 continuous and periodic dynamics in one physical instrument, and it falls
@@ -4821,7 +4821,7 @@ produced any error throws before the next begins ([§13.1][s13-1]).
 | the nominal evaluation | `Structure` | [`Outputs`](#g-outputs), [`Events`](#g-events), the nominal `Float64` [activation](#g-activation) | every user function once, at `Float64` ([§9.3][s9-3]) |
 | activation at `T` | `Structure`, `Outputs`, the nominal activation, a scalar `T` | `Activation{T}` | the continuous [tier](#g-tier)'s functions at `T` |
 | deployment | the `Build`, the grid parameters | [`Deployment`](#g-deployment) with its [`Schedule`](#g-schedule) | none |
-| materialization | the `Deployment`, a scalar `T` | [`Model{T}`](#g-model) | none |
+| materialization | the `Deployment`, a scalar `T` | [`Model{T}`](#g-model) | declaration bodies, plus an activation's at a new `T` |
 | the simulation | a `Model{Float64}` | `Simulation` | none |
 
 The first three are the build, and `build(world)` runs them. The
@@ -4836,17 +4836,16 @@ stage code executes in it ([D-259][d-259]). The `input_wires`,
 `output_wires` and `input_passthrough` bodies are declaration code
 ([§8.8][s8-8]).
 
-The step is a tree walk from the root instance, in this order:
+The step is a tree walk from the root instance:
 
-1. [Components](#g-component) are collected by path.
-2. Each component's [class](#g-class) (its primitive-vs-assembly status) is
-   read off declaration shape ([§8.5][s8-5]).
-3. Primitive contracts are collected: `u_types`, `y_types`, `*_init` values,
-   `state_events`.
-4. Face derivation runs bottom-up. It records at every level the input and
-   output faces it declares and the chain each one routes through.
-5. Global wiring resolution then runs, resolving wires to absolute primitive
-   terminals.
+- [Components](#g-component) are collected by path.
+- Each component's [class](#g-class) (its primitive-vs-assembly status) is
+  read off declaration shape ([§8.5][s8-5]).
+- Primitive contracts are collected: `u_types`, `y_types`, `*_init` values,
+  `state_events`.
+- Face derivation runs bottom-up. It records at every level the input and
+  output faces it declares and the chain each one routes through.
+- Wiring resolution resolves wires to absolute primitive terminals.
 
 Before a component's class is read, the walk runs the [shadowing check](#g-shadowing-check) (its check
 for a module shadowing a declaration name) ([§8.1][s8-1], [D-246][d-246]).
@@ -4855,7 +4854,7 @@ Resolution runs these checks:
 
 - one-writer-per-input;
 - the typo [did-you-mean](#g-did-you-mean) (the offending name plus the
-  list-in-hand it should have matched) against the destination's input list,
+  list-in-hand it should have matched) against the endpoint's faces,
   raised as `UnknownPort`;
 - the two wiring type clauses ([§6.1][s6-1], [§8.2][s8-2]), stated below;
 - the whole-tree (unconnected-input) obligation check;
@@ -5754,8 +5753,7 @@ keyword is the whole entry point**, and no separate check function exists
 
 The same keyword is also recommended for the parallel-sweep idiom
 ([§11.1][s11-1]). Pre-materialize the activations the sweep will need. The
-shared `Build` is then a fully immutable artifact, with no synchronization on
-any path.
+shared `Build` is then a fully immutable artifact.
 
 **[`ProbeDual`](#g-probedual) is the framework's public canonical probe
 scalar** ([D-099][d-099]).
@@ -5765,8 +5763,8 @@ const ProbeDual = ForwardDiff.Dual{ProbeTag, Float64, 1}
 ```
 
 It exists because an activation is keyed by a *concrete* scalar type. The bare
-`Dual` is a `UnionAll`. It cannot key an activation, be walked
-to, or answer `zero(T)`. The width of `ProbeDual` is arbitrary. CI pins
+`Dual` is a `UnionAll`. It cannot key an activation or be walked
+to. The width of `ProbeDual` is arbitrary. CI pins
 genericity, not any particular Jacobian. So one canonical width suffices, even
 though [§14.10][s14-10] chunks at whatever widths it needs.
 
@@ -5903,9 +5901,7 @@ immutable the leaf walk stores whole) has a rule of its own. **A walking leaf, o
 the author left unpinned, accepts exactly two types**, the activation scalar or
 `Float64` ([D-053][d-053]). The activation scalar is the fast path, the
 straight store. The executor embeds a `Float64` as a zero-partial constant
-(`convert` through the leaf). Struct-valued [ports](#g-port) use the standard
-cross-eltype constructor, and a missing one fails loudly with both types
-named.
+(`convert` through the leaf).
 
 **An opaque leaf ([§4.3][s4-3]) embeds nothing into a store**, and it is
 accepted there by identity alone ([D-237][d-237]). At a wire the entry is a
@@ -5923,8 +5919,8 @@ activation ([D-286][d-286]). A pinned leaf is one the author
 wrapped as `Pinned`, or an `Int`, `Bool` or enum leaf that never walks. It takes
 that check because its declaration said the leaf never carries partials. An
 observed `Dual` there is the misplaced-pin error, that being the one honest
-cause. The didactic hint is attached, "if `F` participates in differentiation,
-remove its `Pinned`".
+cause. The didactic hint is attached, "if this leaf participates in
+differentiation, remove its `Pinned`".
 
 The embedding is exact, not lenient. Promotion is airtight and there is no
 lossy `Dual → Float64` cast. So a `Float64` observed at a walking leaf means no
@@ -5968,7 +5964,7 @@ function is checked against its own predicate.
 - **The declared shape decides the law a return is held to** ([D-438][d-438], [D-437][d-437]). A
   [bare store](#g-bare-store) (a store declared as one leaf, the field `x`, `s` or `m`) has one leaf, and `x_deriv`, `s_update`, `x_projection` and a
   handler's `x` key return that leaf itself. A stage over a bare `y_types`
-  returns the port's value itself.
+  returns the [port](#g-port)'s value itself.
 - Handlers check against the [§5.2][s5-2] return law, key by key.
 - [Guards](#g-guard) check against their probe-derived
   [predicate](#g-predicate) form (below).
@@ -5985,9 +5981,7 @@ function is checked against its own predicate.
 unknown key, or a key naming a store the component does not declare, is a
 build error, `HandlerReturnKey`, with [did-you-mean](#g-did-you-mean) against
 `{x, m}` narrowed to the stores that exist. That is the
-[bundle law](#g-bundle)'s classification running in the return direction,
-through the same `FieldError`-shaped machinery [§13.2][s13-2] builds for
-bundles.
+[bundle law](#g-bundle) in the return direction.
 
 Then, per present key, `x` must be complete against the state field set,
 while `m` may be partial ([D-053][d-053], [D-287][d-287]). `x` must also
@@ -6150,8 +6144,8 @@ are semantically forced ([D-288][d-288]). The blocks are as follows.
   gate their discrete entries by `(n − Φ₀) % D₀`, with `n` the tick index
   passed as `tick`, symmetric with `ticks(tick)`.
 
-`rhs` takes no index. One gate serves all three tick-sensitive blocks,
-because due-ness is per component, per boundary, never per stage. **At a
+The loop calls `rhs` without an index. One gate serves all three tick-sensitive
+blocks, because due-ness is per component, per boundary, never per stage. **At a
 localized event time `t*` ([§10.4][s10-4]), the empty due set is arity
 selection**, not an index trick ([D-147][d-147], [D-288][d-288]). The `t*`
 iteration therefore runs the zero-arg arities, whose compiled bodies contain
@@ -6308,8 +6302,8 @@ section 4).
   execution from a session tax into a CI artifact.
 - The optimization level is a knob for an iteration session. `-O0` about
   halves what remains, for a loop 2.3 to 2.8 times slower, and the
-  allocation invariant ([§9.8][s9-8]) holds. Its trajectories differ from `-O2`'s by
-  round-off, so a trace recorded at one level does not replay bit for bit
+  allocation invariant ([§9.8][s9-8]) holds. Its trajectories can differ from `-O2`'s by
+  round-off, so a trace recorded at one level need not replay bit for bit
   at the other.
 
 #### The measurement seam
@@ -6907,15 +6901,15 @@ there, since `-0.0 ≥ 0`. Gate on the strict comparison instead,
 step, so it is not constant over the bracket, and σ jumps from `-1` to a
 small positive value at the crossing. Only the sign drives the bracket, so
 it still converges on the crossing, but the root-finder loses its
-interpolation step and pays bisection's count on that event ([D-290][d-290]).
+interpolation step and pays about bisection's count on that event ([D-290][d-290]).
 The `Bool` form `u < 0` is the same predicate non-localized, strict by
 construction. `companions/limited_integrator_variants.md` works the case
 that needed it, and records why the convention itself stays at `σ ≥ 0`. The
-latching predicate of such a pair stays ungated on the mode. Gated on the
-free mode, each handler hands the other guard a fresh edge, and the boundary
-chatters until the firing budget breaks the tie, under a `FiringBudget`
-warning, with the mode decided by which event runs out first ([§10.6][s10-6],
-[D-181][d-181]).
+latching predicate of such a pair stays ungated on the mode. Where it reads `x`
+alone and is gated on the free mode, each handler hands the other guard a fresh
+edge, and the boundary chatters until the firing budget breaks the tie, under a
+`FiringBudget` warning, with the mode decided by which event runs out first
+([§10.6][s10-6], [D-181][d-181]).
 
 #### Trial evaluations
 
@@ -7813,8 +7807,7 @@ phase uses task-yielding `sleep`, with `margin` absorbing its overshoot
 The wait sits at the frame top, after the
 [control plane](#g-control-plane) (the atomic surface carrying pause, pace and
 stop) is consulted. A control change issued during a wait is observed at the
-next frame top, at most one frame budget `Δt_frame/p` later ([§12.1][s12-1],
-[D-269][d-269]). The wait is an unmask point ([§12.4][s12-4],
+next frame top ([§12.1][s12-1], [D-269][d-269]). The wait is an unmask point ([§12.4][s12-4],
 [D-132][d-132], [D-294][d-294]) for the [operator interrupt](#g-operator-interrupt) (Ctrl-C in
 an interactive session). The interrupt raises out of the coarse phase's
 `sleep`.
@@ -7944,7 +7937,7 @@ and each `Simulation` owns its own `Model`, and with it the `Model`'s [buffers](
 (the framework-owned vectors backing continuous state) ([§9.4][s9-4]). Pre-materializing
 the sweep's [activations](#g-activation) (the build's typed products at a scalar type) with
 `build(world; activations = …)` ([§9.4][s9-4], [D-135][d-135]) then leaves no worker
-synchronizing on anything. `run!` blocks its caller until the run ends.
+writing to the `Build`. `run!` blocks its caller until the run ends.
 
 Which devices get a task is decided after initialization, from the frozen roster
 and the outcomes of device `init!`, never from `run!`'s keywords ([D-310][d-310], [D-138][d-138]).
@@ -8006,7 +7999,7 @@ The captured table is the whole table. It holds the declared [ports](#g-port) (t
 addressable unit, one declared name with one cell), every one of them public
 ([§8.3][s8-3]). No presentation layer has anything to filter. Undeclared intermediates
 are not in it, because only declared ports are [cells](#g-cell) (the signal table's typed
-value holders, one per output port, [§8.3][s8-3]). The inspection path for one is
+value holders, [§8.3][s8-3]). The inspection path for one is
 promotion to a declared output ([D-194][d-194]). Add a line in `y_types`, and the value
 appears in the snapshot, the log, the GUI and the wiring alike. Its visibility
 is then an authored fact like every other.
@@ -9735,9 +9728,10 @@ pause, pace and `margin`, and the fields of `Control`, the periphery's own type
 that holds the control plane ([D-256][d-256]).
 
 The loop consults the control plane at frame top, the start of each frame. A
-change issued while a frame runs or waits is observed at the next frame top, at
-most one frame budget (`Δt_frame/p`, the frame period over the pace) later ([D-269][d-269]). The pause
-block, described with the pause verbs below, is the one wait that wakes at once.
+change issued while a frame runs or waits is observed at the next frame top. While
+the run keeps pace, that is at most about one frame budget (`Δt_frame/p`, the frame
+period over the pace) later ([D-269][d-269]). The pause block, described with the
+pause verbs below, is the one wait that wakes at once.
 
 The stop's issuers are the operator's channels and, in an interactive session,
 Ctrl-C. The operator's channels are a front end's button, the handle of a
@@ -9842,10 +9836,10 @@ between completed frames), and hence yielding, is outside the semantics
 ([§10.7][s10-7], [D-021][d-021]).
 
 The yield is implicit in the coarse-phase `sleep` whenever that phase runs.
-An explicit `yield()` covers the frames where it does not run, namely unpaced
-runs and pure-spin frames with budget ≤ margin. The spin phase itself never
-yields ([D-027][d-027]). Yielding there would trade its µs precision for
-scheduler noise.
+An explicit `yield()` at every frame top covers the frames where it does not
+run, such as unpaced runs and pure-spin frames with budget ≤ margin. The spin
+phase itself never yields ([D-027][d-027]). Yielding there would trade its µs
+precision for scheduler noise.
 
 The consequence is a bound on thread occupancy. The loop holds a thread for at
 most one frame before the scheduler can run anyone else. Julia's scheduler is
@@ -10143,7 +10137,8 @@ for entry in roster                       # attachment order, calling task
     try
         init!(entry.dev)
     catch e
-        shutdown!(entry.dev)              # release, unconditionally (§11.6)
+        _shutdown!(entry)                 # release, unconditionally (§11.6): a throw out
+                                          # of it is warned, an interrupt sets the stop word
         pop!(live)                        # released, so unlisted
         if e isa InterruptException       # the operator's stop, never a crash (below)
             _request_stop!(control, :interrupt)   # the stop word, issuer :interrupt; an earlier issuer keeps it
@@ -10614,8 +10609,9 @@ reached, or a [stop request](#g-stop-request) (an output port of the framework e
 ends the run there through the ordinary [§12.4][s12-4] tail and leaves the simulation
 `stopped` ([D-388][d-388]). `step!` therefore returns the number of frames *actually
 advanced*. That is the requested count in the ordinary case, and fewer when the
-run terminated inside the call. That return is how a harness detects the
-truncation without inspecting the clock.
+run terminated before the call's last frame. A stop inside the last frame
+requested returns the full count, so a harness reads `lifecycle` to detect the
+truncation.
 
 #### Re-running and checkpoints
 
@@ -10982,7 +10978,7 @@ frame ordinal against the recording's frames, from the one after the header's to
 the last ([D-217][d-217]). Each writer's face-name → position schema, on the trace's
 `schemas` list ([§11.5][s11-5]), is validated in the same pass. A recorded schema that
 disagrees with the target model's own root-input faces is a replay error. The
-checks are attach-style, and a failure reports [did-you-mean](#g-did-you-mean), the offending name
+checks are attach-style, and a face-name failure reports [did-you-mean](#g-did-you-mean), the offending name
 plus the list-in-hand it should have matched. The kinds are
 `CheckpointMismatch`, `ReplaySchemaMismatch` and `ReplayUnknownFace`
 ([Appendix C][sC]). The pass runs under both forms of `replay!`.
@@ -11185,8 +11181,8 @@ child-naming pass, one assembly's three wire declarations, one probe stage's
 port check, one handler's return, or one
 probe pass over the component list. Three mixed containers on one component
 then cost one build cycle, not three. A user-code exception still aborts the
-phase alone, and so does a return that is not a NamedTuple. An unreadable or
-mixed class also throws alone, since nothing is left to read.
+phase alone, and so does a stage's or handler's return that is not a NamedTuple.
+An unreadable or mixed class also throws alone, since nothing is left to read.
 
 Outside the build the unit is the call.
 Deployment validation ([§9.2][s9-2]) runs every check whose premise holds and throws
@@ -11253,7 +11249,7 @@ diagnostic as its own line.
 abstract type Diagnostic end
 struct WireTypeMismatch <: Diagnostic   # one kind of the closed Appendix C set
     …                                   # payload fields per Appendix C: paths and
-                                        # names as Strings, port types as types
+                                        # names, port types as types
 end
 
 # the carrier: one exception, its parameter the policy — a kind for a
@@ -11273,8 +11269,8 @@ warnings, and the failure descriptor consumes it ([§13.9][s13-9],
 
 Two rendering rules are doctrine, not style ([D-058][d-058]).
 
-- The first rule is *strings, never instances*. Diagnostics carry paths and names
-  as strings, never [component](#g-component) instances and never component types. This is the
+- The first rule is *strings, never instances*. Diagnostics carry paths and names,
+  never [component](#g-component) instances and never component types. This is the
   lesson of FlightCore's `compact_backtrace`. Expected and observed *[port](#g-port)* types are
   the one payload exception, and they are small. Examples are a `Float64` against
   a `Bool`, and a NamedTuple field diff.
@@ -11382,7 +11378,7 @@ The committed runtime warnings, in one place, are these.
   abandons its accumulated debt and re-anchors its schedule.
 - The write-surface and batch-entry violations ([§11.3][s11-3], [§11.4][s11-4]), all raised at
   staging. The [drain](#g-drain) (the frame-top swap that applies staged writes) checks
-  nothing. `OutOfClaimEntry` ([§11.3][s11-3]) is an enumerated surface's binding drift, a
+  nothing. `OutOfClaimEntry` ([§11.3][s11-3]) is a
   name with no position in the attach-compiled schema. `ClaimedFaceEntry` ([§11.3][s11-3],
   [§11.4][s11-4]) is a harness write to a face claimed in the run's frozen partition, and
   it names the incumbent. The stopped-sim attach also fires it when it
@@ -11633,6 +11629,8 @@ point, a stop. A `StepError` is a cut frame, a failure. With the boundary
 masking in force ([§12.4][s12-4]) a single interrupt never raises inside the
 guarded sequence ([D-294][d-294]). Only Julia's forced throw after repeated
 interrupts does, and that frame ends the run `errored` ([§12.4][s12-4]).
+Nothing reproduces an interrupt, so the rendered line names the door that resumes
+from the pointer or runs the cut sequence again.
 
 #### The disposition
 
@@ -11696,7 +11694,8 @@ re-executes frame one from the record. A throw inside the settling `overlay!`
 runs takes boundary zero's disposition. The simulation returns to `built`, the
 run the [door](#g-door) (the entry point that builds a run) opened stays behind with no
 header, and the reproduction is `overlay!` under the same condition on the same
-stopped state ([§12.6][s12-6], [D-429][d-429]).
+stopped state ([§12.6][s12-6], [D-429][d-429]). A throw under `restore!`
+reproduces under `restore!` of the same checkpoint.
 
 Boundary zero's disposition differs from the loop's as well. Nothing was
 published and no advance was under way, so there is no tail to take and no
@@ -12464,19 +12463,19 @@ genericity as `Dual`.
 Classification needs no [execution order](#g-execution-order), the order in
 which the stage functions run ([D-012][d-012]). It runs inside the nominal
 evaluation's failure path, where no execution order exists. None is needed,
-because each SCC member is evaluated *once, in isolation*, at the
+because each SCC member is evaluated *in isolation*, at the
 [probe](#g-probe) point (the initial state, where the build probes every user
-function). That evaluation reads state views from the `x_init`, `s_init` and
-`m_init` declarations, out-of-cycle cell values from the acyclic prefix's probe
-values, and in-cycle cell values synthesized through `probe_value`
-([§9.3][s9-3]) under tracer tags. The tracer's product is a per-member
+function) or at sampled states. At the probe point it reads state views from the
+`x_init`, `s_init` and `m_init` declarations, out-of-cycle cell values from the
+acyclic prefix's probe values, and in-cycle cell values synthesized through
+`probe_value` ([§9.3][s9-3]) under tracer tags. The tracer's product is a per-member
 dependence set rather than a value, so no ordering has to be valid for the
 labels to come out right.
 
 Classification touches no activation machinery. There is no [activation](#g-activation) (the
-build's typed products at a given scalar type), no layouts and no table. The
+build's typed products at a given scalar type) and no table. The
 cycle classifier uses the *per-member* variant of tracing (the log's *local*
-variant), an order-free trace at the probe point ([D-012][d-012]). The "tracer
+variant), an order-free trace ([D-012][d-012]). The "tracer
 activation" ([§9.4][s9-4]) names the other variant ([D-012][d-012]), the global set-tracer run as
 an ordinary activation. The two must not be conflated. The per-member variant is
 not the sampled mode. A member's map may come from either mode.
@@ -14727,12 +14726,12 @@ For component authors:
   tier has no such choice (the next item).
 - **Continuous-tier resets** ([§3.1][s3-1], [§10.6][s10-6], [§5.3][s5-3];
   [D-141][d-141]). A [continuous component](#g-continuous-component)'s state
-  reset is an event. Only handlers write `x`. So even a *commanded* reset,
-  where the reset command arrives as an ordinary `Bool` input (weight-on-wheels
-  is the shipped instance), is spelled as an event whose [guard](#g-guard) reads that
-  input. The discrete tier's input spelling does not transfer. The reason is
-  semantic, not stylistic. Only the discrete tier's update stage is already
-  a jump map, so a reset there is just another value for `s⁺`. A continuous
+  reset is an event. Only handlers reset `x`. So even a *commanded* reset,
+  where the reset command arrives as an ordinary `Bool` input, is spelled as an
+  event whose [guard](#g-guard) reads that input. The discrete tier's input
+  spelling does not transfer. The reason is semantic, not stylistic. Only the
+  discrete tier's update stage is already a jump map, so a reset there is just
+  another value for `s⁺`. A continuous
   state jump, by contrast, must be solver-visible and applied *between*
   integration segments. Every hybrid tool converges on that [flow](#g-flow)/jump split.
   Simulink applies its reset ports through zero-crossing events plus a solver
@@ -14770,10 +14769,11 @@ For component authors:
   the sign form `-u` alone holds there. It gates on the strict comparison
   instead, as `u < 0 ? -u : -one(u)`, or takes the `Bool` form `u < 0`, the
   same predicate non-localized. The
-  predicate that latches the mode stays ungated on it. Gated on the free
-  mode, each handler hands the other guard a fresh edge, and the boundary chatters
-  until the [firing budget](#g-firing-budget) breaks the tie, under a
-  `FiringBudget` warning.
+  predicate that latches the mode stays ungated on it. Where it reads `x`
+  alone and is gated on the free mode, each handler hands the other guard
+  a fresh edge, and the boundary chatters until the
+  [firing budget](#g-firing-budget) breaks the tie, under a `FiringBudget`
+  warning.
 - **Handler-phase visibility** ([§5.3][s5-3], [§10.6][s10-6];
   [D-154][d-154]). A handler
   executes against exactly the world its guard fired on. Its own `y`, foreign
@@ -14815,7 +14815,7 @@ For component authors:
   values. Those declarations are `u_types`, `y_types` and `state_events`, and
   the shapes of `x_init`/`s_init`/`m_init`. A contract that genuinely varies
   takes a type parameter, as `SumJunction{V, N}` and `Or{N}` do. `ws_init` is the
-  one exception. The build reads each declaration once, against the concrete
+  one exception. The build reads each declaration against the concrete
   instance, so a value-dependent contract does not announce itself. This is a
   rule authors keep, not a check the build can run.
 - **Deliberate stripping** ([§13.7][s13-7], [§14.10][s14-10], [§9.5][s9-5];
@@ -15308,8 +15308,8 @@ Authoring list above carries it.
   backend = LevenbergMarquardt()) → TrimReport`. It solves against the
   problem's own `tolerances`, by default as nonlinear least squares on the
   packed residuals with exact Dual Jacobians ([§14.7][s14-7]).
-  `LevenbergMarquardt()`, the default backend, is an in-house dense
-  Levenberg–Marquardt ([§14.8][s14-8], [D-070][d-070]). The commit is `init!` with
+  `LevenbergMarquardt(; maxiter = 100, λ₀ = 1e-3)`, the default backend, is an
+  in-house dense Levenberg–Marquardt ([§14.8][s14-8], [D-070][d-070]). The commit is `init!` with
   `override(baseline, condition(solution))`, gated on the report's
   `converged` ([§14.8][s14-8]).
 - `solve(backend, eval!, d0, lower, upper, tol) → (; d, status,
@@ -15453,7 +15453,7 @@ The kinds below are the closed set [D-058][d-058] commits to, made normative.
 ([§13.2][s13-2]). So the entries below, not any message, are the
 acceptance-test contract. Adding a kind is a decision-log entry. Every
 entry's payload is *in addition to* what [§13.2][s13-2] requires of all
-diagnostics: paths and names as strings, never instances; the list-in-hand
+diagnostics: paths and names, never instances; the list-in-hand
 wherever a did-you-mean renders; the didactic style (state the fix).
 Owning sections stay the normative home of each rule. This appendix is an
 index of the values, in the manner of Appendices A and B.
@@ -15526,7 +15526,7 @@ with a step's throw, is empty ([D-084][d-084]). Build warnings themselves
 live on the `Build`, and a step that throws renders its warnings with the
 collection ([§9.2][s9-2], [D-250][d-250]).
 
-**Declaration and wiring** (the structure step):
+**Declaration and wiring:**
 
 - **`UnknownPort`** ([§6.1][s6-1], [§8.4][s8-4] w1, [§9.1][s9-1], [D-113][d-113]). Error ·
   build · collected. The wire end (`source`/`destination`, or `connection` for an
@@ -15723,9 +15723,9 @@ activation):
 - **`ConformanceFailure`** ([§9.5][s9-5]). Error · build, at probe; runtime
   thereafter · collected at probe over its unit and thrown at once (one
   stage's port check, one handler's return, or the update or projection
-  pass, [D-431][d-431]), but a return whose shape is not the declared one, a
-  bare value against a named declaration or a NamedTuple against a bare one,
-  throws alone ([D-438][d-438], [D-437][d-437]).
+  pass, [D-431][d-431]), but a stage's or handler's return whose shape is not
+  the declared one, a bare value against a named declaration or a NamedTuple
+  against a bare one, throws alone ([D-438][d-438], [D-437][d-437]).
   Fail-fast at runtime, a `StepError` species. Component path,
   function, the event name on a handler's occurrence, field-level diff
   (missing / unexpected / per-field expected-vs-observed, order-insensitive,
@@ -16310,8 +16310,8 @@ iff the corresponding [store](#g-store) or fact exists for that component.
 Undeclared stores are absent, never `nothing`-filled ([§5.2][s5-2]).
 
 <a id="g-cell"></a>**cell** — one concretely typed entry of the [signal table](#g-signal-table),
-one per output [port](#g-port) of the flattened model, written by its producing stage and
-read by every gatherer ([§4.1][s4-1]). Every cell is public, and private
+one per output [port](#g-port) of the flattened model, written by its producing stage, and
+one per [root input](#g-root-input), read by every gatherer ([§4.1][s4-1]). Every cell is public, and private
 intermediates are never cells ([§8.3][s8-3]). Bare "cell" means only this. See
 [staging cell](#g-staging-cell) and [store](#g-store).
 
@@ -17080,8 +17080,7 @@ shutdown [tail](#g-tail) so CI fails honestly ([§11.1][s11-1], [§13.4][s13-4])
 <a id="g-write-surface"></a>**write surface** — the set of [faces](#g-face) a writer's
 [batch](#g-batch) entries may reach. For a [device](#g-device) it is the [claim](#g-claim) set, whether returned by
 `claims` or computed under `is_greedy`. For the [harness writer](#g-harness-writer) it is the derived
-unclaimed complement. It is static per run and enforced entirely at staging,
-`OutOfClaimEntry` for a device and `ClaimedFaceEntry` for the harness
+unclaimed complement. It is static per run and enforced entirely at staging
 ([§11.3][s11-3]).
 
 ### D.7 Recording and replay
@@ -17341,7 +17340,7 @@ payload, never on message text ([§13.2][s13-2]). Not a [component](#g-component
 [class](#g-class) or a [function family](#g-function-family).
 
 <a id="g-payload"></a>**payload** — the structured data a diagnostic carries beside its [kind](#g-kind):
-paths and names as strings (never instances or [component](#g-component) types),
+paths and names (never instances or [component](#g-component) types),
 expected/observed [port](#g-port) types, the list-in-hand ([§13.2][s13-2],
 [Appendix C][sC]). Severity is the kind's, not the payload's.
 

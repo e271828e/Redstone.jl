@@ -72,7 +72,7 @@ plainly belongs is not argued into them.
   - *Tier semantics.* `UnitDelay` moves a signal onto the discrete tier,
     which [§5.5][s5-5] calls a modelling decision. A discrete integrator or
     filter is the same kind of object.
-  - *Activation and pinning.* Every library component walks under `Dual` for
+  - *Activation and pinning.* Every library component runs under `Dual` for
     linearization and trim. A hand-written lag filter that types its
     scratch as `Float64` works at nominal and fails the first `linearize`.
   - *Structure the declaration layer forces.* The junction exists because
@@ -113,14 +113,15 @@ guards on both sides chatters at `lower == upper`; one side is strict.
 
 ## 3. The inventory
 
-Status is one of *shipped*, *candidate* (listed, built when wanted), or
+Status is one of *shipped*, *candidate* (listed, built when wanted),
 *example first* (built as an example model, promoted only if one form
-proves standard). A component is generic over its port type `V`, in the
+proves standard), or *not admitted* (weighed and kept out). A component is
+generic over its port type `V`, in the
 [D-263][d-263] spelling, unless its ports are fixed by what it is: the `Bool`
 gates and the linear systems, whose ports follow their matrix shapes. The
 one input or one output a component has is a bare contract, one port whose face
 is the default `u` or `y`, which a wire addresses as `child/u` or `child/y`
-([D-437][d-437]); a side with several ports names them `in1…inN`, and `out1…outN`
+([D-437][d-437]); a side with several like ports usually names them `in1…inN`, and `out1…outN`
 where a component splits one port into `N` ports alike. The bundle reads a bare
 side as `u` or `y`, the value itself. A long mechanism goes in a note under its
 table, which keeps each row on one line of a full-screen editor.
@@ -446,8 +447,8 @@ row:
 
 ## 4. The order of work
 
-The shipped rows are the first two tranches. The candidate rows follow in any
-order, each when wanted. A second sweep of Simulink's base library on
+The first two tranches shipped first. The candidate rows followed,
+each when wanted. A second sweep of Simulink's base library on
 2026-10-30 added the candidate rows for `Select`, `Sequence`, the
 `Integrator` reset, `LimitedDoubleIntegrator`, `Comparator` and the discrete
 backlash. The comparator, the reset and the schedule shipped first, as

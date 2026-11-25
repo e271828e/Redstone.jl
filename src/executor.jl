@@ -7,8 +7,8 @@
 
 """
 Where in the compiled schedule execution is (§13.4): one plain mutable struct
-the executor owns, overwritten by one cheap store per user-code dispatch and
-one per phase transition, read only at the catch site (`_wrap_step`, model.jl).
+the executor owns, overwritten by cheap stores as execution moves and read at
+the catch site (`_wrap_step`, model.jl).
 No allocation and no exception frames — framing information does not need to
 be caught into existence. The cursor holds its dispatch fields alone: whether
 a frame was abandoned is `frame!`'s `Bool` return, never a field here (§13.5,

@@ -52,8 +52,7 @@ y_direct(c::StaticTerrain, _) = (; terrain = DeckField(c.datum, 0.0, c.grid))
 **A moving deck walks.** Replace the ground with a ship deck whose heave and
 pitch are continuous state of a sea-motion component. The pose parameters now
 carry partials, and the gear's contact force differentiates through them.
-Pinning here would silently zero the coupling between ship motion and
-touchdown. The author leaves the output unpinned and builds the handle at
+The author leaves the output unpinned and builds the handle at
 `T`, which is cheap because only the pose is `T`:
 
 ```julia
@@ -177,7 +176,9 @@ for a scalar just as for a handle. A `Dual` can never become a `Float64`
 without discarding its partials, and no lossy cast exists inside the
 framework ([§9.5][s9-5]). The framework does not do the discard at the wire, on
 purpose, because dropping partials is a modelling decision the design wants
-on the page. The `Freeze` component ([§13.7][s13-7]) is that page:
+on the page. The `Freeze` component ([§13.7][s13-7]) is that page for a scalar or
+an `SArray`. A handle takes a leaf of the author's own, tolerant in and pinned
+out as `Freeze` is, here the child `freeze`:
 
 ```julia
 local_wires(::Rig) = (

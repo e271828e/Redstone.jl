@@ -187,9 +187,9 @@ bumpless-transfer latch run hand-ordered *before* the same tick's
 *Scheduled gains are inputs.* A scheduler component owns the lookup tables as
 inert parameters, reads the scheduling variables as inputs, and publishes one
 gain bundle per compensator. Compensators consume gains as `u`. What mutation
-hid, ports expose. Gain trajectories become observable in log,
-trace and replay, where the `Ref` writes were
-invisible to all three. The feedthrough graph carries the
+hid, ports expose. Gain trajectories become observable in log
+and replay, where the `Ref` writes were
+invisible to both. The feedthrough graph carries the
 dependency. Linearization holds unseeded gain inputs constant with no special
 casing ([§14.10][s14-10]). One-shot design-time gains, such as `robot2d`'s
 controller synthesis at init, are construction-time parameters or stopped-sim
@@ -227,7 +227,7 @@ cross-component reset (`!wow` re-initializing the friction regulator every
 step) becomes an edge-triggered event owned by the regulator. That is a
 semantic tightening, recorded in the migration mapping (`migration_outline.md`). There the
 respelling is not a stylistic one. The continuous tier admits no
-input spelling at all, because only handlers write `x` ([§3.4][s3-4]). The
+input spelling at all, because only handlers reset `x` ([§3.4][s3-4]). The
 event is therefore necessity rather than taste, and the reimplemented
 `PIVector`'s optional reset face (`migration_outline.md`) is sugar over exactly
 that event. [Appendix A][sA] carries the continuous-reset contract too.

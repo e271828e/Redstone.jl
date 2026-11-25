@@ -58,18 +58,20 @@ ends. One entry per device:
 
 ```julia
 struct RosterEntry
-    id::DeviceId              # stable across runs — trace tag
-    cell::StagingCell         # this device's mailbox (§3)
-    claims::NTuple{N,String}  # face names this device owns
-    schema::Schema            # face name → position, compiled at attach (§3)
+    dev::AbstractDevice       # the device instance
+    id::Int                   # stable across runs — trace tag
+    drain::Function           # this device's compiled take-and-scatter (section 4)
+    should_abort::Bool        # whether the device's departure stops the run
+    account::WriterAccount    # the loop's diagnostic account
+    handle::Any               # the device's handle: binding, claims, schema, mailbox (section 3)
 end
 ```
 
-**Attaching** (`attach!(sim, device, binding)`) is: validate the binding's
-face names against the root contract (unknown face → `AttachUnknownFace`),
-admit through [§11.3][s11-3]'s two-part ordered check — **identity** (`AlreadyAttached`),
-**claims** (face exclusivity, `ClaimConflict`) — ordered so a failing later
-check always names two *distinct* devices, then compile the staging shape
+**Attaching** (`attach!(sim, device, binding)`) is: admit through [§11.3][s11-3]'s
+two-part ordered check — **identity** (`AlreadyAttached`), **claims** (face
+names against the root contract, unknown face → `AttachUnknownFace`, then face
+exclusivity, `ClaimConflict`) — ordered so a
+`ClaimConflict` always names two *distinct* devices, then compile the staging shape
 ([section 3](#3-batches-and-staging-cells-how-a-write-is-proposed)), add the entry.
 A **claim** is exclusive ownership of a face: one writer per root input at any
 time, and `detach!` releases the claims. The claim set comes from the
@@ -154,7 +156,8 @@ skipped — the mirror of [§11.2][s11-2]'s output gather), in attachment order
 
 ```julia
 for entry in roster                                    # frame top, loop task
-    batch = @atomicswap entry.cell.pending = nothing   # indivisible take
+    cell  = entry.handle.writer.cell                   # this device's mailbox
+    batch = @atomicswap cell.pending = nothing         # indivisible take
     batch === nothing && continue                      # nothing staged: fine
     scatter!(inputs, entry, batch)                     # no checks — see section 6
     record_in_trace!(frame, entry.id, batch)
@@ -163,9 +166,8 @@ end
 
 Note what is *absent*: the drain validates nothing. Every check ran at
 staging ([section 6](#6-the-write-surface-rule-d-044-d-106-and-d-174)), so the drain is pure application — and since the roster is a
-fixed value at `run!`, the whole thing is compilable: the cells and their
-scatters form a known tuple the frame function can specialize on, with no
-name resolved and no dynamic dispatch at frame top.
+fixed value at `run!`, the whole thing is compilable, with no name resolved at
+frame top.
 
 **Draining** is that swap-and-apply. It is the single point where the
 periphery's proposals become the frame's root-input constants, and everything after
@@ -258,8 +260,7 @@ its authority, unchanged, to every frame of the run.
 
 Joystick attached while stopped (claims `throttle`, `elevator`); GUI
 attached next under the greedy binding (claim computed at that instant:
-`flaps`, `brake`); `run!` reads the roster, bakes widget liveness
-([§11.7][s11-7]) and specializes the drain; root inputs as above.
+`flaps`, `brake`); `run!` reads the roster; root inputs as above.
 
 1. *Between frames*: the joystick task polls at its own rate, runs
    `map_input` (deadzone, expo — pure, on the device task), stages
