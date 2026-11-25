@@ -4003,12 +4003,12 @@ Publicity is never implicit ([§8.3][s8-3], [D-297][d-297]).
 ([D-046][d-046], [D-437][d-437]). The first is that a face name contains no `/`, which is
 reserved for structural paths. The second is uniqueness across the union of
 the two boundary declarations' face names ([D-170][d-170]). The third is that
-a face name is never empty. An empty contract key is refused like an empty
-face, `FaceNameIllegal`, because a bare port is spelled by omitting the name,
-never by an empty one. A bare port's face is `u` or `y` ([§8.2][s8-2]). Every other naming
-choice is author convention, not framework law. Separators and grouping
-prefixes like `"pilot.throttle_axis"` are such choices. The
-`input_passthrough` helper's defaults ([§8.8][s8-8]) document the house style
+a face name is never empty. A contract key that is empty or contains `/` is
+refused like such a face, `FaceNameIllegal`. A bare port is spelled by
+omitting the name, never by an empty one. A bare port's face is `u` or `y`
+([§8.2][s8-2]). Every other naming choice is author convention, not framework
+law. Separators and grouping prefixes like `"pilot.throttle_axis"` are such
+choices. The `input_passthrough` helper's defaults ([§8.8][s8-8]) document the house style
 without legislating it.
 
 The two-notation rule this rests on is directional. **It separates structure
@@ -15631,8 +15631,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   is reason `:no_manifold`.
 - **`FaceNameIllegal`** ([§8.6][s8-6]). Error · build · collected. Component
   path, face name, and the violated `invariant`, `:contains_slash` (the name
-  contains `/`) or `:empty` (the name is empty, a primitive's contract key
-  included, [D-437][d-437]).
+  contains `/`) or `:empty` (the name is empty), a primitive's contract key
+  included under both ([D-046][d-046], [D-437][d-437]).
 - **`FaceNameCollision`** ([§8.6][s8-6]). Error · build · collected. Assembly
   path, the colliding face names, the site. The site is `:assembly` for a
   name repeated among an assembly's input and output faces, and `:root` for

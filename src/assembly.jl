@@ -695,13 +695,18 @@ function check_store_form(path::String, @nospecialize(comp), diags::Vector{Diagn
     readable
 end
 
-# §8.6, D-437: a contract entry's name is a face name, never empty. A bare port
-# omits the name, and an empty one is refused.
+# §8.6, D-046, D-437: a contract entry's name is a face name, never empty and with
+# no `/`. A bare port omits the name, and an empty one is refused.
 function check_contract_names(path::String, @nospecialize(comp), diags::Vector{Diagnostic})
     for fn in (u_types, y_types)
         decl = invoke_declaration(fn, comp)
-        decl isa NamedTuple && any(name -> isempty(String(name)), keys(decl)) &&
-            push!(diags, FaceNameIllegal(path = path, face = "", invariant = :empty))
+        decl isa NamedTuple || continue
+        for name in map(String, keys(decl))
+            isempty(name) &&
+                push!(diags, FaceNameIllegal(path = path, face = name, invariant = :empty))
+            occursin('/', name) &&
+                push!(diags, FaceNameIllegal(path = path, face = name, invariant = :contains_slash))
+        end
     end
 end
 

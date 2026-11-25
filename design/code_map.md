@@ -59,8 +59,8 @@ in the `src/model.jl` entry.
   unspecialized (D-289).
 - `_contract`, a contract at nominal in the keyed form, a bare contract's one
   port under its default face `u` or `y`, read by `pairs` and `haskey` as any
-  contract (§8.6, D-437). `check_contract_names` refuses an empty contract key
-  as `FaceNameIllegal` `:empty`.
+  contract (§8.6, D-437). `check_contract_names` refuses a contract key that is
+  empty or holds `/` as `FaceNameIllegal` (D-046).
 - §13.3's `resolve`/`resolve_terminal`/face-list primitives `input_faces` and
   `output_faces`. `resolve_terminal` reads the child segment alone, a
   container element's included, as a child with no port, its name `nothing`,

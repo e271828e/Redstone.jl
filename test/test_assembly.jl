@@ -1554,6 +1554,12 @@ u_types(::EmptyKeyed) = (var"" = Float64,)
 y_types(::EmptyKeyed) = (y = Float64,)
 y_direct(::EmptyKeyed, (; u)) = (y = only(u),)
 
+struct SlashKeyed <: AbstractComponent end
+x_init(::SlashKeyed) = nothing
+u_types(::SlashKeyed) = (var"p/q" = Float64,)
+y_types(::SlashKeyed) = (var"r/s" = Float64,)
+y_direct(::SlashKeyed, (; u)) = (var"r/s" = only(u),)
+
 # A bare input beside an output its author named `u`: at a root the two collide.
 struct UNamedOut <: AbstractComponent end
 x_init(::UNamedOut) = nothing
@@ -1635,6 +1641,13 @@ function assembly_bare_contracts()
         d = only(diagnostics(failure(() -> build(Group((; s = BareScale()); input_wires = ("" => "s/u",),
                                                        output_wires = ("s/y" => "y",))))))
         @test d isa FaceNameIllegal && d.path == "" && d.invariant === :empty
+    end
+    @testset "a contract key holds no `/`, at the root and below it (§8.6, D-046)" begin
+        for (model, at_path) in ((SlashKeyed(), ""), (single(SlashKeyed()), "c"))
+            illegal = filter(d -> d isa FaceNameIllegal, diagnostics(failure(() -> build(model))))
+            @test [(d.path, d.face, d.invariant) for d in illegal] ==
+                  [(at_path, "p/q", :contains_slash), (at_path, "r/s", :contains_slash)]
+        end
     end
     @testset "the passthrough labels a bare face as any other (§8.8, D-437)" begin
         world = Group((; gain = BareScale(), loop = Group((; flow = BareFlow());
