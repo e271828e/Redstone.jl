@@ -407,20 +407,36 @@ end
     nothing
 end
 
-# §9.5: a discrete successor is the store's own type exactly — the assignment
-# that would convert is refused at generation instead (D-235). The declared
-# shape names the half that failed: a bare store's one type, a named store's
-# field set or return type.
+# §9.5: a discrete successor holds the store's fields at its own types exactly —
+# the assignment that would convert is refused at generation instead (D-235).
+# The names are the pairing, so a named store takes its fields in any order
+# (D-151). The declared shape names the half that failed: a bare store's one
+# type, a named store's return type, field set or field.
 @inline _store_successor!(sstore::Base.RefValue{S}, s⁺::S, path, what) where {S} =
     (sstore[] = s⁺; nothing)
-_store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S} =
-    throw(DiagnosticError(ConformanceFailure(path = path, what = String(what),
-                                             reason = !(S <: NamedTuple) ? :field_type :
-                                                      s⁺ isa NamedTuple ? :field_set : :return_type,
-                                             shape = :s_init, observed = typeof(s⁺),
-                                             declared = S,
-                                             field = S <: NamedTuple ? nothing :
-                                                     default_name(s_init))))
+@generated function _store_successor!(sstore::Base.RefValue{S}, s⁺, path, what) where {S}
+    S <: NamedTuple ||
+        return :(throw(DiagnosticError(ConformanceFailure(
+            path = path, what = String(what), reason = :field_type, shape = :s_init,
+            field = $(QuoteNode(default_name(s_init))), observed = $s⁺, declared = $S))))
+    s⁺ <: NamedTuple ||
+        return :(throw(DiagnosticError(ConformanceFailure(
+            path = path, what = String(what), reason = :return_type, shape = :s_init,
+            observed = $s⁺))))
+    Set(fieldnames(s⁺)) == Set(fieldnames(S)) ||
+        return :(throw(DiagnosticError(ConformanceFailure(
+            path = path, what = String(what), reason = :field_set, shape = :s_init,
+            observed_fields = $(collect(fieldnames(s⁺))),
+            declared_fields = $(collect(fieldnames(S)))))))
+    for field in fieldnames(S)
+        fieldtype(s⁺, field) === fieldtype(S, field) ||
+            return :(throw(DiagnosticError(ConformanceFailure(
+                path = path, what = String(what), reason = :field_type, shape = :s_init,
+                field = $(QuoteNode(field)), observed = $(fieldtype(s⁺, field)),
+                declared = $(fieldtype(S, field))))))
+    end
+    :(sstore[] = NamedTuple{$(fieldnames(S))}(s⁺); nothing)
+end
 
 # §9.5's `m` predicate at the write, decided at generation like the port write.
 # A named store takes a partial write: every written mode exists and keeps its

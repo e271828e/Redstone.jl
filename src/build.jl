@@ -1692,9 +1692,10 @@ function _check_derivative(path, ẋ, x, ::Type{T}) where {T}
 end
 
 # §7.3, §9.5: a discrete store is overwritten wholesale with what `s_update`
-# returns, so the successor must be the store's own type exactly. The discrete
-# world is pinned — no walk, no embedding — which makes the store assignment
-# type-stable and the ban on arithmetic over stores enforceable by construction.
+# returns, so the successor must hold the store's fields, at the store's own
+# types exactly and in any order (D-151). The discrete world is pinned — no
+# walk, no embedding — which makes the store assignment type-stable and the ban
+# on arithmetic over stores enforceable by construction.
 function _check_update(path, s⁺, s)
     is_bare(s) &&
         return typeof(s⁺) === typeof(s) ? Diagnostic[] :
@@ -1706,10 +1707,20 @@ function _check_update(path, s⁺, s)
         return Diagnostic[ConformanceFailure(path = path, what = "s_update",
                                              reason = :return_type,
                                              shape = :s_init, observed = typeof(s⁺))]
-    typeof(s⁺) === typeof(s) ||
+    Set(keys(s⁺)) == Set(keys(s)) ||
         return Diagnostic[ConformanceFailure(path = path, what = "s_update",
                                              reason = :field_set,
-                                             shape = :s_init, observed = typeof(s⁺),
-                                             declared = typeof(s))]
-    Diagnostic[]
+                                             shape = :s_init,
+                                             observed_fields = collect(keys(s⁺)),
+                                             declared_fields = collect(keys(s)))]
+    diags = Diagnostic[]
+    for field in keys(s)
+        typeof(s⁺[field]) === typeof(s[field]) ||
+            push!(diags, ConformanceFailure(path = path, what = "s_update",
+                                           reason = :field_type,
+                                           shape = :s_init, field = field,
+                                           observed = typeof(s⁺[field]),
+                                           declared = typeof(s[field])))
+    end
+    diags
 end

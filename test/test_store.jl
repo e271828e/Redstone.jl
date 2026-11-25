@@ -246,11 +246,40 @@ y_types(::WidenedUpdate) = (n = Int,)
 y_state(::WidenedUpdate, (; s)) = (n = s.n,)
 s_update(::WidenedUpdate, (; s)) = (n = s.n + 0.5,)
 
+# A `s_update` that drops a field, and one that spells them in another order on
+# the branch the probe does not take.
+struct ShortUpdate <: AbstractComponent end
+s_init(::ShortUpdate) = (n = 0, v = 0.0)
+y_types(::ShortUpdate) = (n = Int,)
+y_state(::ShortUpdate, (; s)) = (n = s.n,)
+s_update(::ShortUpdate, (; s)) = (n = s.n,)
+
+struct PermutedUpdate <: AbstractComponent end
+s_init(::PermutedUpdate) = (n = 0, v = 0.0)
+y_types(::PermutedUpdate) = (n = Int,)
+y_state(::PermutedUpdate, (; s)) = (n = s.n,)
+s_update(::PermutedUpdate, (; s)) =
+    iseven(s.n) ? (n = s.n + 1, v = s.v + 0.5) : (v = s.v + 0.5, n = s.n + 1)
+
 function store_successor_type()
-    @testset "a discrete successor is the store's own type (§9.5)" begin
+    @testset "a discrete successor holds the store's fields at its own types (§9.5)" begin
         d = only(diagnostics(failure(() -> build(single(WidenedUpdate())))))
+        @test d isa ConformanceFailure && d.what == "s_update" && d.reason === :field_type &&
+              d.shape === :s_init && d.field === :n && d.observed === Float64 &&
+              d.declared === Int
+        d = only(diagnostics(failure(() -> build(single(ShortUpdate())))))
         @test d isa ConformanceFailure && d.what == "s_update" && d.reason === :field_set &&
-              d.shape === :s_init && d.observed === @NamedTuple{n::Float64}
+              d.shape === :s_init && d.observed_fields == [:n] && d.declared_fields == [:n, :v]
+    end
+
+    @testset "a discrete successor's fields pair by name, in any order (§9.5, D-151)" begin
+        sim = Simulation(single(PermutedUpdate()); Δt_frame = 1//10)
+        init!(sim)
+        step!(sim; frames = 3)
+        @test state(sim, "c") === (n = 4, v = 2.0)
+        ticks = phase_bodies(sim).ticks
+        ticks(0)
+        @test @ballocated($ticks(0)) == 0
     end
 end
 

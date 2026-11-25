@@ -211,6 +211,19 @@ function test_executor()
         d = diagnostic(failure(() -> Redstone._store_successor!(Ref(0), 0.5, "p", :s_update)))
         @test d.reason === :field_type && d.shape === :s_init && d.field === :s &&
               d.observed === Float64 && d.declared === Int
+        # A named store's write, at run time as at the build (D-151).
+        named_store = Ref((a = 0.0, b = 0))
+        Redstone._store_successor!(named_store, (b = 2, a = 1.0), "p", :s_update)
+        @test named_store[] === (a = 1.0, b = 2)
+        d = diagnostic(failure(() -> Redstone._store_successor!(named_store, (b = 2, a = 1), "p",
+                                                                :s_update)))
+        @test d.reason === :field_type && d.shape === :s_init && d.field === :a &&
+              d.observed === Int && d.declared === Float64
+        d = diagnostic(failure(() -> Redstone._store_successor!(named_store, (a = 1.0,), "p",
+                                                                :s_update)))
+        @test d.reason === :field_set && d.observed_fields == [:a] && d.declared_fields == [:a, :b]
+        d = diagnostic(failure(() -> Redstone._store_successor!(named_store, 1.0, "p", :s_update)))
+        @test d.reason === :return_type && d.observed === Float64
         # Over bare stores, and a stateless leaf marked `nothing`, the phase
         # bodies allocate nothing, the always-on check folded away.
         sim = Simulation(bare_world(); Δt_frame = 1//100)

@@ -646,9 +646,9 @@ D-463, D-465.
   it.
 - `_merge_modes!`, one generated method, which replaces a bare `m` whole and
   merges a named one, a bare one's failure on the field `m` (§9.5, D-438).
-- `_store_successor!`, the update entry's runtime check that a discrete
-  successor is the store's own type exactly, raising `ConformanceFailure`
-  (§9.5, D-235).
+- `_store_successor!`, the update entry's write of a discrete successor, held
+  to the store's fields at their own types and paired by name, raising
+  `ConformanceFailure` (§9.5, D-151, D-235).
 - The bundles, from `_bundle_expr`: the stage, RHS and guard bundles gather
   their sides inline, the update entry's and the handler's
   (`make_handler_bundle`) through `gather_input_barrier`, since a body whose

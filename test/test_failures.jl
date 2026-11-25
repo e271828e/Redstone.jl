@@ -992,8 +992,8 @@ function failures_conformance()
         err = failure(() -> run!(sim; t_end = 0.2))
         @test err isa StepError{ConformanceFailure}
         @test err.cause.what == "s_update" && err.cause.shape === :s_init
-        @test err.cause.observed === typeof((n = 0,))
-        @test err.cause.declared === typeof((n = 0.0,))
+        @test err.cause.reason === :field_type && err.cause.field === :n
+        @test err.cause.observed === Int && err.cause.declared === Float64
         @test err.cursor.fn === :s_update
         @test lifecycle(sim) === :errored
     end

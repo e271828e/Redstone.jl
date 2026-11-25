@@ -728,14 +728,15 @@ component's ticks, once the [boundary](@ref g-boundary)'s outputs and
 `s`, `y`, `u`, `t`, `Δt` and `ws`, each only if the component has it. `Δt` is
 the component's own tick period.
 
-The return replaces the whole state, so it has exactly the type of the value
-[`s_init`](@ref) returns. For a [bare](@ref g-bare-store) state, the field `s`,
-it is that one leaf. A discrete primitive with a non-empty state must define it.
+The return replaces the whole state, so it has every field of the value
+[`s_init`](@ref) returns, in any order and each of exactly its type. For a
+[bare](@ref g-bare-store) state, the field `s`, it is that one leaf. A discrete primitive with a non-empty state must define it.
 
 The build refuses a non-empty `s_init` with no `s_update` as
-`StoreWithoutUpdate`, a return of another type as `ConformanceFailure`, and a
-read outside the bundle as `BundleFieldError`. A primitive that also defines
-[`x_deriv`](@ref) or [`x_init`](@ref) is refused as `DeclarationOnWrongTier`.
+`StoreWithoutUpdate`, a return of other fields or types as
+`ConformanceFailure`, and a read outside the bundle as `BundleFieldError`. A
+primitive that also defines [`x_deriv`](@ref) or [`x_init`](@ref) is refused as
+`DeclarationOnWrongTier`.
 """
 function s_update end
 
