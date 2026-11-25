@@ -9221,8 +9221,9 @@ conformance check over the pair (trait, method):
   detection runs once at a [stopped-sim](#g-stopped-sim) service point, not inside any frame.
 
 Every violation in that list reports `BindingContractMismatch` ([Appendix C][sC]). The
-report names the binding type, the trait, the method at fault and the direction
-(declared-but-missing, or defined-but-undeclared). `gather` against a binding
+report names the binding type and the trait. Where the case has them, it names
+the method at fault and the direction too (declared-but-missing, or
+defined-but-undeclared). `gather` against a binding
 with no output side reports `DeviceContractMismatch`, the device twin of
 `BindingContractMismatch` ([D-216][d-216]).
 
@@ -15822,15 +15823,15 @@ activation):
   greedy device's id and its binding. The computed complement was
   empty, every root-input face being claimed already.
 - **`BindingContractMismatch`** ([§11.6][s11-6]). Error · service ·
-  fail-fast. The binding type, the trait and the method at fault, and the
-  direction. The direction is either a declared side whose enumeration
-  method is missing (`is_input`/`is_output` true, the root's error fallback
+  fail-fast. The binding type, and a `reason` that fixes the trait, the
+  method at fault and the direction where the case has them. The direction is
+  either a declared side whose enumeration method is missing (`is_input`/`is_output` true, the root's error fallback
   reached), or a `claims`/`reads` method defined under a false trait
   (detected by `which` against the fallback). `is_greedy` without
   `is_input`, `claims` defined on a greedy binding, and a binding declaring
   neither side report here too. So does a `reads` enumeration that returns
   no NamedTuple, or holds an entry that is no read selector, the offending
-  type in hand. A `reason` tells the cases apart: `:claims_missing`,
+  type in hand. The reasons are `:claims_missing`,
   `:reads_missing`, `:claims_without_input`, `:reads_without_output`,
   `:greedy_without_input`, `:greedy_with_claims`, `:neither_side`,
   `:reads_not_namedtuple` and `:reads_not_selectors`.

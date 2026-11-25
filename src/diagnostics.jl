@@ -1803,18 +1803,18 @@ Base.@kwdef struct BindingContractMismatch <: Diagnostic
 end
 function message(d::BindingContractMismatch)
     d.reason === :claims_missing &&
-        return "$(d.binding) declares an input side and defines no `claims` enumeration — " *
+        return "$(d.binding) declares `is_input` and defines no `claims` enumeration — " *
                "the enumeration is the interface (§11.6)"
     d.reason === :reads_missing &&
-        return "$(d.binding) declares an output side and defines no `reads` enumeration — " *
+        return "$(d.binding) declares `is_output` and defines no `reads` enumeration — " *
                "the enumeration is the interface (§11.6)"
     d.reason === :greedy_without_input &&
         return "$(d.binding) declares `is_greedy` without `is_input` — greediness is a " *
                "claim source within the input side, and a source without its side is " *
                "meaningless (§11.6)"
     d.reason === :neither_side &&
-        return "$(d.binding) declares neither side — a binding that touches nothing is a " *
-               "configuration mistake, not a degenerate (§11.6)"
+        return "$(d.binding) declares neither `is_input` nor `is_output` — a binding that " *
+               "touches nothing is a configuration mistake, not a degenerate (§11.6)"
     d.reason === :greedy_with_claims &&
         return "$(d.binding) declares `is_greedy` and defines its own `claims` — the two " *
                "claim sources are alternatives, not layers (§11.6)"

@@ -1407,6 +1407,17 @@ function diagnostics_kind_set()
         @test startswith(rendered, "`checkpoint` on a model whose status is `:built` — a " *
                                    "model's state is read at `:consistent`")
 
+        # Every report names the trait at fault (§11.6).
+        for (reason, traits) in ((:claims_missing, ("is_input",)), (:reads_missing, ("is_output",)),
+                                 (:neither_side, ("is_input", "is_output")),
+                                 (:greedy_without_input, ("is_greedy", "is_input")),
+                                 (:greedy_with_claims, ("is_greedy",)),
+                                 (:claims_without_input, ("is_input",)),
+                                 (:reads_without_output, ("is_output",)))
+            rendered = message(BindingContractMismatch(binding = "NoEnum", reason = reason))
+            @test all(trait -> occursin("`$trait`", rendered), traits)
+        end
+
         # The remedy form: the shortfall, then the fix, with the list in hand.
         rendered = message(UninitializedInputs(op = :init!, faces = [:u, :e]))
         @test occursin("`init!`", rendered) && occursin("`u`, `e`", rendered)
