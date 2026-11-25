@@ -1080,7 +1080,6 @@ function test_devices()
         @test d.reason === :detached && d.device == "device 1 (Pad)"
         d = carried(@test_throws DiagnosticError{DeviceContractMismatch} report!(handle, MalformedDatum(ErrorException("x"))))
         @test d.reason === :detached
-        @test occursin("was detached", logline(d))
         @test latest(handle) === latest(sim)          # the reads touch shared state alone
         @test running(handle) === false
         # A fresh attachment is a fresh handle; the retired one stays refused.

@@ -903,7 +903,6 @@ function failures_conformance()
         @test err.cause.observed === Int64 && err.cause.declared === Float64
         @test err.cursor.fn === :y_state
         @test lifecycle(sim) === :errored
-        @test occursin("zero(", message(err.cause))    # §9.5's didactic hint
     end
 
     @testset "a mutable static array on a late branch is refused at the write (§9.5, D-238)" begin
@@ -1019,7 +1018,6 @@ function failures_conformance()
         @test err.cause.what == "handler" && err.cause.shape === :mode
         @test err.cause.event === :fire
         @test err.cause.reason === :return_type && err.cause.observed === Int
-        @test occursin("NamedTuple", message(err.cause))
         @test err.cursor.fn === :handler
         @test lifecycle(sim) === :errored
     end

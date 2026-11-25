@@ -1000,6 +1000,11 @@ function diagnostics_kind_set()
                                          declared = Float64)) ==
               "`g`: y_state returns `y`::Int64, declared Float64 — an integer " *
               "literal where a real was declared: return `zero(…)` of a value at the activation, not `0`"
+        @test message(ConformanceFailure(path = "c", what = "handler", reason = :return_type,
+                                         shape = :mode, observed = Int, event = :fire)) ==
+              "`c`: event `fire`'s handler must be a NamedTuple, got Int64 (§5.2)"
+        @test startswith(message(DeviceContractMismatch(device = "device 1 (Pad)", reason = :detached)),
+                         "device 1 (Pad) was detached — ")
         @test occursin("`m`'s `y` does not route `u`",
                        message(AlgebraicCycle(members = ["a", "m"], wires = ["a/y" => "m/u", "m/y" => "a/u"],
                                               classification = :artificial, dead = [("m", :u, :y)])))
