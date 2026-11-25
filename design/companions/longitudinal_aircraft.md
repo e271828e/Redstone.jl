@@ -142,7 +142,7 @@ and writing `α̇ = θ̇ − γ̇ = q − γ̇` gives the two-state system
     q̇ = −20.42 α − 3.675 q
 
 whose characteristic polynomial `s² + 6.14 s + 29.5` has `ωn = 5.43 rad/s`
-and `ζ = 0.566`, the exact values of the full matrix's fast pair. The
+and `ζ = 0.566`, the full matrix's fast pair to three figures. The
 `20.42` is `−Mα`, the static stiffness `−q̄ S c̄ Cmα / Iyy`, the `3.675`
 the pitch damping `−Mq` and the `2.469` the lift slope's `−Zα / V`, so the
 short period is a mass on a spring whose stiffness is the static margin and
@@ -391,8 +391,8 @@ within about 0.015 rad of the command once a maneuver's fast part is over,
 and within a few hundredths during it. The pitch-rate
 and attitude loops, whose references move with the measured state, sit a
 few hundredths of a radian off whatever `Tt` is. A controller in command
-back-calculates against its limits, and at one period it pulls a limited
-integrator back within a tick.
+back-calculates against its limits, and at one period each tick closes
+`1 − e⁻¹`, about two thirds, of a limited integrator's excess.
 
 **The LQR tracker**, `lqr_controller`. A `DiscreteLQRTracker` over the full
 state `x = (V, γ, θ, q, h)` commanding both controls, with the command vector
@@ -412,8 +412,9 @@ acceptable excursion per state and per input:
 half, and `K_fwd = M_22 + K_fbk M_12` with the two blocks read off the
 inverse of the full `[A B; C D]`; the Schur-complement form of section 2
 needs `A⁻¹`, which the zero altitude eigenvalue denies. The trim triple is
-the linearization's operating point. The tracker's own limits are the
-actuators' ranges, and its hold input reads a zero code.
+the linearization's operating point. The tracker's own limits are those of
+the cascade's innermost loops, ±0.5 rad on the elevator and 0 to 1 on the
+throttle, and its hold input reads a zero code.
 
 **Its selection and the bumpless switch.** A `Switch` per
 control selects the cascade's command while the root input `mode` holds, and
@@ -434,7 +435,8 @@ command slews fast. With the cascade in command, the
 standby tracker stays within about 0.034 rad of the elevator command over
 the climb after its first half second. It peaks at 0.43 rad right after
 the reference step, since the step moves the tracker's own law in one
-tick, is back under 0.1 rad within 55 ms, and sits within 0.015 rad after
+tick, is back under 0.1 rad within 60 ms, its third tick after the step,
+and sits within 0.015 rad after
 `t = 10 s`. At a switch to the tracker at 60 s, in steady flight, the
 elevator's largest frame-to-frame change is 3.45e-4, below the 5.05e-4 of
 jitter the altitude noise induces in steady cascade flight. At a switch at

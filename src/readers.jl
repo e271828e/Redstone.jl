@@ -35,7 +35,7 @@
 # snapshot. The resolver takes the source it resolves for, and under a table
 # source a store selector is refused as `ReadResolution`'s `:store_selector`,
 # by source rather than by client (D-406). The output face is the integration
-# read of §11.2. Only cells and stores are addressable (§5.2, §8.3).
+# read of §11.2. Only cells and stores are addressable (§4.2, §8.3).
 # The address is the component's path and a leaf address into its state. A bare
 # `Symbol` is the short form of a plain name.
 """

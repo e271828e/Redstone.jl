@@ -109,8 +109,8 @@ chk = checkpoint(sim)
 restore!(sim, chk); step!(sim)          # t_{k+1} publishes y = u_k, as the recording did
 
 s_copied = state(sim, "delay")          # = u_k
-init!(model, at("delay", set(s = s_copied)), t_k)
-step!(sim)                              # boundary zero publishes y = u_k,
+init!(sim, at("delay", set(s = s_copied)); t0 = t_k)
+                                        # boundary zero publishes y = u_k,
                                         # where the recording published u_{k-1} at t_k
 ```
 
@@ -192,12 +192,12 @@ restore; a condition is a fresh start.
 
 The instinct behind the skip is right about one thing. "Keep the stores as
 the next tick's state and run no update" is what a restore already does.
-The workflow that has no clean spelling today is the one in between: fly a
-while, stop, change a few states, continue. [D-273][d-273] spells an input what-if
-as a restore followed by `stage!`, but a *state* what-if has no door. A
-condition goes only through `init!`, and `restore!` takes no overlay. That
-gap is why a user reaches for `state` and a copied condition in the first
-place, and the hazard of section 2 is what they find there.
+The workflow that had no clean spelling before [D-429][d-429] is the one in
+between: fly a while, stop, change a few states, continue. [D-273][d-273] spells an
+input what-if as a restore followed by `stage!`, but a *state* what-if had
+no door. A condition went only through `init!`, and `restore!` takes no
+overlay. That gap was why a user reached for `state` and a copied condition
+in the first place, and the hazard of section 2 is what they found there.
 
 The door that closes the gap, `overlay!` on a stopped run, is designed in
 section 7. It does not close the hazard, since a store read at rest still
@@ -303,12 +303,13 @@ unchanged, was considered and rejected: consistency needs a boundary
 ### 7.2 Five choices, two bundles
 
 With the same `cond`, `init!` and `overlay!` differ in exactly five
-choices. Everything else is shared: the condition resolves against the
-build with the same diagnostics, the named stores and root-input cells are
-written, projection runs, the sweep iterates with guards and handlers to
-quiescence, the stepper is reset through its seam, one snapshot is
-published, and a fresh trajectory opens with the post-settling checkpoint
-as its header.
+choices. Everything else is shared but the stepper: the condition resolves
+against the build with the same diagnostics, the named stores and
+root-input cells are written, projection runs, the sweep iterates with
+guards and handlers to quiescence, one snapshot is published, and a fresh
+trajectory opens with the post-settling checkpoint as its header. `init!`
+resets the stepper through `reset_stepper!`, and `overlay!` raises its
+discontinuity notice.
 
 | | `init!(model, cond, t₀)` | `overlay!(sim, cond)` |
 |---|---|---|
@@ -328,26 +329,25 @@ reason, and re-anchoring the lattice while keeping the stores would shift
 every multi-rate component's phase under a continuing controller. So the
 implementation carries one flag, not five.
 
-The first two choices live in the doors' own bodies, before the boundary.
-The last three live inside the boundary, in the settling routine both
-doors call.
+The first three choices live in the doors' own bodies, before the boundary.
+The last two live inside the boundary, in the routine both doors call.
 
 ### 7.3 The settling routine
 
 The boundary macro-sequence ([§10.6][s10-6]) is integrate → project → [sweep →
 guards → handlers] to quiescence → due `s_update` calls → publication, and
 boundary zero is that sequence with an empty integrate ([D-067][d-067]). The
-settling routine is boundary zero's tail factored out, with one flag:
+settling is the boundary routine `run_boundary!(model, due)` over a chosen
+due set. Boundary zero's `ESTABLISH` admits every discrete output stage and
+the index-0 updates, and the overlay's empty set, `nothing`, admits none.
 
 ```julia
-# the macro-sequence with an empty integrate (§10.6, D-067); sketch
-function _settle!(model; fresh::Bool)
-    fresh && reset_priors!(model)                           # choice 3
+# the macro-sequence with an empty integrate (§10.6, D-067); simplified
+function run_boundary!(model, due)
     project!(model)
-    sweep_to_quiescence!(model; admit_discrete = fresh)     # choice 4
-    fresh && run_due_updates!(model)                        # choice 5
-    reset_stepper!(model)
-    publish!(model)
+    fired = event_phase!(model, due)    # sweep, guards, handlers; choice 4
+    run_ticks!(model, due)              # the due updates; choice 5
+    (fired || due !== nothing) && discontinuity!(model.exec.stepper)
 end
 ```
 
@@ -368,9 +368,12 @@ alone is not enough:
   the next tick's state by the rest reading, so its output is not
   republished now, and the held cell stays until the next due tick. Running
   the updates would consume a sample that no tick took.
-- **The stepper.** Today's steppers are fixed-step RK4 and Heun with no
-  carried state (`restore_stepper!` is a no-op). A backend with a cached
-  derivative would need its reset, and the seam already has the hook.
+- **The stepper.** Today's steppers are fixed-step RK4 and Heun, which
+  carry nothing, and BS3, which carries its next step's proposal and its
+  controller's memory (`restore_stepper!` is a no-op for RK4 and Heun and
+  puts BS3's proposal and memory back). The overlay raises the stepper's
+  discontinuity notice, and each backend decides what the notice clears.
+  BS3 clears its controller's memory.
 - **Publication.** One snapshot at the stopped run's `t`, a second at that
   time, which is already what `restore!` does at a trajectory's start.
 
@@ -397,19 +400,23 @@ follows the same split, so `overlay!` has two precedents.
    status to `:built`, publishes through `settled!(hooks)` and marks the
    model `:consistent`. `overlay!`'s skips the reset and the clock, keeps
    the priors, applies the plan with the same `apply!` machinery the
-   scratch sets use ([§14.8][s14-8], [D-213][d-213]), and calls `_settle!(fresh = false)`
-   inside the same catch with its own host tag.
+   scratch sets use ([§14.8][s14-8], [D-213][d-213]), and runs the boundary over the
+   empty due set, `run_boundary!(model, nothing)`, inside the same catch with
+   its own host tag, `:overlay`.
 3. **The simulation wrapper.** `init!`'s checks the lifecycle (refused
    while `running` or `errored`), checks the recording keywords, resolves
    before anything touches the run, resets the periphery, opens a fresh
    run, calls the model method with the loop's hooks, and takes the
    checkpoint as the trace header last, so a throw inside the boundary
    leaves no header ([D-274][d-274]). `overlay!`'s is `restore!`'s wrapper more than
-   `init!`'s: the same lifecycle gate, a fresh run, the periphery handled
+   `init!`'s: `checkpoint`'s lifecycle gate (legal while `initialized` or
+   `stopped`, its clock on a frame top), a fresh run, the periphery handled
    as `restore!` handles it, and the header taken after settling.
 
-The refactor is in layer 2: `boundary_zero!` becomes `_settle!` with the
-flag, and `init!`'s plan method calls it with `fresh = true`. The rest of
+The refactor is in layer 2: boundary zero and the overlay both run the one
+boundary routine, `run_boundary!`, boundary zero over `ESTABLISH` and the
+overlay over the empty due set. `init!`'s plan method calls it through
+`boundary_zero!`. The rest of
 `overlay!` is a copy of `init!` with lines removed. The increment therefore
 has three parts of unequal size: the factoring, which is the only part that
 touches existing behavior and must leave boundary zero bit-identical; the

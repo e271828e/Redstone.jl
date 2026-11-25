@@ -1132,8 +1132,9 @@ D-261.
   twelve methods over one `_lines` per artifact.
 - The `Outputs` and `Events` tables, with the `Build`'s `feedthrough:` line
   between them (D-261):
-  - each table prints each row's path, with no label function, and the
-    `Events` table holds only the components that declare an event;
+  - each table prints each row's path, the root's empty path as `root`
+    through `_path_label`, and the `Events` table holds only the components
+    that declare an event;
   - `_feedthrough` derives the line's edges from the structure's connections
     and the producers' stage-2 names;
   - every `(path, name)` pair, a feedthrough end or a route's hop, renders
@@ -1172,7 +1173,8 @@ D-261.
 - The `Deployment` prints no grid block (D-466). Its
   parameters line names `h_max` resolved and prints the three time
   quantities exact (D-454), `h_min` where one is set, and the long form
-  adds `attempt_budget` (D-460). `_steps_line` states the steps of
+  adds `firing_budget`, `localization_tol`, `localization_budget` and
+  `attempt_budget` (D-460). `_steps_line` states the steps of
   a frame no due instant falls inside, one `cld` over the bound's ratio to
   the unit, under a proposing method the range from it to
   `⌊Δt_frame / h_min⌋` (D-460), and names each schedule row whose ticks are

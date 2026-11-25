@@ -5383,7 +5383,9 @@ divisor is `D₀ = Dₐ·D₀(A₁)`, with
   per unsplit frame, which stays true when every frame holds a due instant.
   It costs one check per component, since a component's ticks all
   fall on frame tops exactly when the frame divides its period and its
-  offset.
+  offset. Under a proposing method the line states a range instead,
+  `N to M, as proposed`. `N` is the fixed-step count, and `M` is
+  `⌊Δt_frame / h_min⌋`, raised to `N` where it falls below ([D-460][d-460]).
 - **`show(::Deployment)` prints the three time quantities exact**, as the
   deployment holds and compares them ([D-454][d-454]). Two deployments that
   compare unequal never print alike.
@@ -13278,7 +13280,8 @@ wears on its component's boundary), followed by `.name` and `[k]` or `[k,l]`
 steps in any order, as in `"pose.q_eb[2]"`, `"ω_eb_b[1]"` or `"J[1,3]"`. **A bare
 `Symbol` is the short form of a plain name**, so `get_state("kin", :θ)` reads
 `get_state("kin", "θ")` ([D-276][d-276]). A [bare store](#g-bare-store) (a store declared as one leaf) has the field `x`,
-`s` or `m`, and a headless address may stand for it. **Where the addressed
+`s` or `m`, and a headless store-selector address may stand for a bare `x`
+or `s`, the stores the selectors read. **Where the addressed
 store is bare, an address that is empty or begins at its first step takes
 the store's letter as its head** ([D-438][d-438]), and is then resolved as any field.
 `get_state("integrator")` reads the one leaf, `get_state("integrator",
@@ -15013,8 +15016,8 @@ What a [component](#g-component) or [assembly](#g-assembly) defines ([§8.2][s8-
   `Group(g; …)`, the copy of `g` with the given keywords replaced
   ([§8.5][s8-5], [D-472][d-472], [D-473][d-473]).
 - Sample-time entries. `Relative(D, Φ = 0)` in scope ticks, its child's `Dₛ`
-  and `Φₛ`, and `Absolute(Δt, τ = 0)` in exact rational seconds, each an
-  integer or a `Rational` ([§8.7][s8-7], [D-185][d-185], [D-469][d-469], [D-478][d-478]). The `Φ = 0` is
+  and `Φₛ`, each an integer, and `Absolute(Δt, τ = 0)` in exact rational
+  seconds, each an integer or a `Rational` ([§8.7][s8-7], [D-185][d-185], [D-469][d-469], [D-478][d-478]). The `Φ = 0` is
   shorthand for `Relative(D)`, a method of its own.
 - Any component. `stop_reason` (optional, default `""`), the reason its
   [stop requests](#g-stop-request) report ([§8.2][s8-2], [D-316][d-316]).
@@ -15344,7 +15347,7 @@ Authoring list above carries it.
   `get_input(leaf = "")` and `get_face(leaf = "")`. The closed
   [read-selector](#g-selector) family, one
   address space for every reader that takes a selector ([§14.4][s14-4]). The
-  empty default stands for a bare store's letter, `x`, `s` or `m`, or a bare
+  empty default stands for a bare store's letter, `x` or `s`, or a bare
   contract's default face, `u` or `y` ([D-438][d-438], [D-437][d-437]).
 - `taps(; x = (;), u = (;), y = (;))`. Builds the tap set, three labeled
   selector lists with closed membership, every tap a
@@ -15958,8 +15961,10 @@ activation):
   position schema, the disagreeing face names, the target's root input-face
   list.
 - **`ReplayUnknownFace`** ([§12.7][s12-7]). Error · service · collected. Face
-  name, or the bare position where the writer's schema has no name for it;
-  frame ordinal, the trace's device tag, the root input-face list.
+  name, or the bare position where the writer's schema has no name for it
+  or the record's writer has no schema; frame ordinal; the trace's device
+  tag, or `writer #N` by the record's writer index where the `schemas` list
+  has no entry for it; the root input-face list.
 - **`ArgumentInvalid`** ([§8.7][s8-7], [§9.2][s9-2], [§11.6][s11-6], [§12.1][s12-1], [§12.4][s12-4],
   [§12.6][s12-6], [§12.7][s12-7], [§13.5][s13-5], [§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10]). Error · service, or build in a `sample_times`
   declaration · fail-fast, but collected over a `TableBinding`'s entry table,
@@ -16105,7 +16110,8 @@ with" clause wherever a neighboring term is genuinely close.*
 It states **structural substitutability**: any concrete producer [face](#g-face) below
 the bound wires to it. The [field handles](#g-field-handle) are the demonstrated client
 ([§4.4][s4-4]). It is never needed for eltype genericity, and it is illegal where
-the face surfaces as a [root input](#g-root-input) (`AbstractAtRoot`) ([§8.2][s8-2]).
+every consumer of a [root input](#g-root-input) declares one, since nothing then types
+the root input (`AbstractAtRoot`) ([§8.2][s8-2]).
 
 <a id="g-assembly"></a>**assembly** — a [component](#g-component) that holds child components and wires them
 together. It has no dynamics of its own. Its component-typed fields are its
@@ -16191,9 +16197,10 @@ it to the [root input](#g-root-input) and errors if the face never surfaces ([§
 
 <a id="g-function-family"></a>**function family** — which [bundle](#g-bundle) fields a given
 function may legally receive. The families are
-`y_state`/`y_direct`/`x_deriv`/`s_update`/[guard](#g-guard)/handler/`x_projection`, one
+`y_state`/`y_direct`/`x_deriv`/`s_update`/[guard](#g-guard)/handler, one
 closed set per name per [tier](#g-tier), the shared output stages taking one set on each
-([§5.2][s5-2], [D-220][d-220]). The comment block ([§5.2][s5-2]) states each
+([§5.2][s5-2], [D-220][d-220]). `x_projection` takes the state alone, not a bundle.
+The comment block ([§5.2][s5-2]) states each
 family's maximal legal set, and `BundleFieldError` classifies a read as illegal
 for the family ([§13.2][s13-2]). Not a diagnostic [kind](#g-kind).
 
@@ -16253,9 +16260,9 @@ evaluation only *checks* conformance against them, never the reverse. Types
 come by declaration, values by execution, conformance by comparison
 ([§8.1][s8-1]).
 
-<a id="g-stage-function"></a>**stage function / two-stage outputs** — every [primitive](#g-primitive) provides exactly two
+<a id="g-stage-function"></a>**stage function / two-stage outputs** — every [primitive](#g-primitive) has at most two
 output stages, `y_state` (no `u` in the [bundle](#g-bundle), hence structurally no
-[feedthrough](#g-feedthrough)) and `y_direct`. One pair of names serves both [tiers](#g-tier), and
+[feedthrough](#g-feedthrough)) and `y_direct`, and defines the ones it needs. One pair of names serves both [tiers](#g-tier), and
 each name's legal bundle set is tier-dependent ([D-220][d-220]). Feedthrough
 is thereby declared by signature, with no dependency annotations anywhere
 ([§5.2][s5-2]).
@@ -16323,7 +16330,7 @@ entry ([§11.3][s11-3]); and [condition](#g-condition) entry ([§14.3][s14-3]).
 
 <a id="g-face"></a>**face** — the name a [port](#g-port) wears on its [component's](#g-component) boundary.
 For a [primitive](#g-primitive) it is the port's own name, and a
-[bare contract's](#g-bare-contract) port has none. For an [assembly](#g-assembly) it is a name declared in
+[bare contract's](#g-bare-contract) port wears the default face, `u` or `y`. For an [assembly](#g-assembly) it is a name declared in
 `input_wires` or `output_wires`, aliasing an interior port. Face names are
 opaque tokens, and the [periphery's](#g-periphery) write side speaks only face names
 ([§8.6][s8-6], [§11.2][s11-2], [§14.4][s14-4]).
@@ -16752,7 +16759,8 @@ implementation's only representation freedom, and it converts compile cost
 from superlinear in body size to linear in entry count ([§9.7][s9-7]).
 
 <a id="g-deployment"></a>**`Deployment`** — the artifact the grid parameters fix: the [build](#g-build) plus
-`Δt_frame`, `Δt_base`, the step bound `h_max`, the algorithm and the three event parameters, carrying
+`Δt_frame`, `Δt_base`, the step bound `h_max`, the step [floor](#g-floor) `h_min`, the algorithm,
+the [attempt](#g-attempt) budget and the three event parameters, carrying
 the `Schedule` and its own `warnings`. It is
 scalar-free, it compares as a value, and a `Model` materializes it at a
 scalar type ([§9.2][s9-2], [D-254][d-254], [D-317][d-317]).
@@ -16765,7 +16773,7 @@ because a consumer of the [execution order](#g-execution-order) should not carry
 
 <a id="g-executable-set"></a>**executable set** — the function set an [activation](#g-activation) can actually run, hence
 exactly what it probes. A `Dual` activation sees only the continuous output
-stages and `x_deriv`, never the discrete stages, `s_update`,
+stages, `x_deriv` and `x_projection`, never the discrete stages, `s_update`,
 [guards](#g-guard) or handlers ([§9.4][s9-4]).
 
 <a id="g-executor"></a>**executor** — the compiled form of the stage [execution order](#g-execution-order): a concretely
@@ -16985,7 +16993,7 @@ monotonic press counters, and accumulators are model state ([§11.4][s11-4]).
 
 <a id="g-next-snapshot-wait"></a>**next-snapshot wait** — `wait_next_snapshot(handle)`: the [boundary counter](#g-boundary-counter)
 plus one `Threads.Condition` under the canonical predicate loop
-(`counter > last_seen && running`). Newest wins, with no queues and no
+(`counter > last_seen || !running`). Newest wins, with no queues and no
 per-[frame](#g-frame) reset ([§12.3][s12-3]).
 
 <a id="g-operator-interrupt"></a>**operator interrupt** — Ctrl-C in an
@@ -17094,7 +17102,7 @@ never trajectory-determining ([§11.2][s11-2]).
 
 <a id="g-fingerprint"></a>**fingerprint** — the structural layout a [checkpoint](#g-checkpoint)
 carries. It is the [store](#g-store) layout and root-input [faces](#g-face) the [`Build`](#g-build)
-fixes, with what a copy by position relies on, each [component's](#g-component) `x` type, every
+fixes, with what a copy by position relies on, each [component's](#g-component) `x`, `s` and `m` types, every
 [cell's](#g-cell) address and type, and the event list in the order of the [priors](#g-prior)
 ([§11.5][s11-5]). [Replay](#g-replay) and `restore!` check it against the target simulation
 ([§12.6][s12-6], [§12.7][s12-7]).
@@ -17126,8 +17134,8 @@ front. The default form restores the clock with the rest of the state
 ([§12.7][s12-7]).
 
 <a id="g-run-metadata"></a>**run metadata** — the [trace header's](#g-trace-header) `Deployment` and `t₀`, hence
-`Δt_frame`, `Δt_base`, `h_max`, the algorithm, `localization_tol`,
-`localization_budget` and `firing_budget`. It carries no stop policy; each
+`Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm, `localization_tol`,
+`localization_budget`, `firing_budget` and `attempt_budget`. It carries no stop policy; each
 advance declares its own ([§11.5][s11-5], [§13.5][s13-5]).
 
 <a id="g-trace"></a>**trace** — the primary record of a session: the sequence of drained,
@@ -17316,7 +17324,8 @@ they run as acceptance tests ([§13.2][s13-2]).
 <a id="g-execution-cursor"></a>**execution cursor** — the [executor's](#g-executor) plain mutable field recording where
 execution stands in the compiled order. It holds three facts, the [component](#g-component) by
 its index in the [structure's](#g-structure) component list, the function running, and the
-[boundary](#g-boundary) phase. It costs one cheap store per dispatch, so a runtime failure
+[boundary](#g-boundary) phase. Inside integration it also records the [attempt](#g-attempt)
+by its ordinal in the step ([D-452][d-452]). It costs one cheap store per dispatch, so a runtime failure
 gets its cursor frame without exception handlers in the hot path
 ([§13.4][s13-4]).
 
@@ -17362,7 +17371,8 @@ never on the [control plane](#g-control-plane) ([§12.6][s12-6], [§13.5][s13-5]
 <a id="g-artifact"></a>**artifact** — an immutable pure function of its inputs,
 such as `Structure`, `Outputs`, `Events`, an [activation](#g-activation), the `Build`, the
 `Deployment`, a trim report or the [trace header](#g-trace-header). A warning raised producing one
-lives on it ([§13.2][s13-2], [D-250][d-250]). It holds declared facts, and a
+lives on it, save a trim report's ([§13.2][s13-2], [D-250][d-250]). A trim report holds the
+facts its warnings report, and `trim!` logs the warnings themselves. An artifact holds declared facts, and a
 consumer compiles what it needs from them at one home ([§9.2][s9-2],
 [D-261][d-261]).
 
