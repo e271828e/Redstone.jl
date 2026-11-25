@@ -520,6 +520,7 @@ function test_descriptor()
         function_of(model) = only(descriptor(failure(() -> build(model))).failure.diagnostics).var"function"
         @test function_of(single(DeadStateStage())) == "y_state"
         @test function_of(single(BadDerivative())) == "x_deriv"
+        @test function_of(single(ReadsM())) == "y_state"
         err = failure(() -> build(single(Undeclared())))
         @test function_of(single(Undeclared())) == only(diagnostics(err)).stage
         marks_of(model) = only(descriptor(failure(() -> build(model))).failure.diagnostics).marks

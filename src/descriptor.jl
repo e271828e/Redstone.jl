@@ -122,6 +122,7 @@ _function(d::UserCodeFraming) = d.fn
 _function(d::ConformanceFailure) = d.what
 _function(d::DeadStage) = d.stage
 _function(d::UndeclaredReturnField) = d.stage
+_function(d::BundleFieldError) = d.family
 
 # The endpoints and wires a kind names beyond its path: the consumer's input as
 # a port, and the producer-to-consumer wire where the payload holds both ends.
