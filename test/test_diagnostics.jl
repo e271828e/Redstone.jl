@@ -625,6 +625,7 @@ function diagnostics_kind_set()
             ArgumentInvalid(call = :Absolute, reason = :range, value = big(1)//big(2)^70),
             ArgumentInvalid(call = :Relative, reason = :range, value = big(2)^70),
             ArgumentInvalid(call = :Relative, reason = :not_a_count, value = 0.5),
+            ArgumentInvalid(call = :BS3, reason = :range, argument = :abstol, value = Inf),
             ArgumentInvalid(call = :step!, reason = :both_given),
             ArgumentInvalid(call = :step!, reason = :range, argument = :frames, value = 0),
             ArgumentInvalid(call = :step!, reason = :range, argument = :t_plus, value = -1.0),
@@ -1393,6 +1394,10 @@ function diagnostics_kind_set()
                                            argument = :ignore_stop_requests, value = "nope"))
         @test startswith(rendered, "`ignore_stop_requests` must be `:all` or an iterable")
         @test occursin("got \"nope\"", rendered)
+        rendered = message(ArgumentInvalid(call = :BS3, reason = :range, argument = :reltol,
+                                           value = -1.0))
+        @test startswith(rendered, "`reltol` must be a positive finite real")
+        @test occursin("got -1.0", rendered)
         # A `t*` stop's refusal names the clock, the top it fell short of, the
         # frame, and the three ways to stop at a top.
         rendered = message(CheckpointMidFrame(t = 0.315, t_frame = 0.4, frame = 4))

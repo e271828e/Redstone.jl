@@ -2495,6 +2495,9 @@ function message(d::ArgumentInvalid)
         return "`t_end` must be a real ≥ 0 whose frame top from `t₀` the run may take — " *
                "the run's clock bound, taken to the nearest frame top, Inf the unbounded " *
                "default — got $(repr(d.value)) (§13.5)"
+    d.call === :BS3 &&
+        return "`$(d.argument)` must be a positive finite real, a tolerance of `BS3` — got " *
+               "$(repr(d.value)) (§10.2, D-461)"
     d.argument === :ignore_stop_requests &&
         return "`ignore_stop_requests` must be `:all` or an iterable of requester paths — " *
                "a bare string or another symbol is neither — got $(repr(d.value)) (§13.5)"
