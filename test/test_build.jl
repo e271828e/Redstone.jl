@@ -382,11 +382,12 @@ function build_algebraic_cycles()
         @test Bool(Tracer{false}(0.0, 0b1)) === false
     end
 
-    @testset "a conversion to `Float64` severs the set: sampled keeps the value, global refuses (§13.8)" begin
+    @testset "a conversion to `Float64` severs the set: sampled keeps the value, global refuses a tagged operand (§13.8)" begin
         @test Float64(Tracer{false}(1.5, 0b1)) === 1.5
-        # The global tracer refuses even an empty set: the value would leave the trace.
         @test_throws Undecidable Float64(Tracer{true}(1.5, 0b1))
-        @test_throws Undecidable Float64(Tracer{true}(1.5, UInt64(0)))
+        # An empty set has nothing to sever, so the global tracer converts it,
+        # as it converts one to `Int` and `Bool`.
+        @test Float64(Tracer{true}(1.5, UInt64(0))) === 1.5
     end
 
     @testset "the scalar's own identities keep the set they were handed (§13.8)" begin

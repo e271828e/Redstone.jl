@@ -44,9 +44,13 @@ Base.one(::Type{Tracer{S}}) where {S} = Tracer{S}(1.0, UInt64(0))
 Base.float(x::Tracer) = x
 
 # The documented blind spot (§13.8): a value-severing conversion drops the set,
-# which the local tracer accepts and the global one refuses.
-Base.Float64(x::Tracer{false}) = x.value
-Base.Float64(::Tracer{true}) = throw(Undecidable())
+# which the local tracer accepts and the global one refuses. An empty set has
+# nothing to drop, so an untagged operand converts in either mode, as it does
+# to `Int` and `Bool` below.
+function Base.Float64(x::Tracer{S}) where {S}
+    _decide(S, x.dependencies)
+    x.value
+end
 
 # Set union. `min`/`max` are here rather than on the deciders below because a
 # saturated `clamp` still reports its argument's set — may-depend semantics.
@@ -75,8 +79,9 @@ end
 # catch ships the cluster unclassified under either: a `MethodError` from the
 # member's evaluation, or — where Base routes a `Real` through `f(float(x))` —
 # a `StackOverflowError`, `float` being the identity here. That identity stays:
-# `AbstractFloat(x)` instead would route through `Float64(::Tracer)`, which throws
-# in global mode and silently severs the set in local mode, both worse.
+# `AbstractFloat(x)` instead would route through `Float64(::Tracer)`, which refuses
+# a tagged operand in global mode and silently severs the set in local mode, both
+# worse.
 
 # `hypot` beyond two arguments and `norm` scale by the largest operand, a
 # comparison the global tracer refuses; the union is that answer without the
