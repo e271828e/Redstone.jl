@@ -140,27 +140,34 @@ the tools.
 - **The defect and citation rows, taken on 2026-11-25.** The clear ones landed,
   the doc rows as `608662ac` and the code rows as `d6636cb0` to `8b8ab49f`, one
   commit each. `ledgers/user_rows.md` marks each.
-- **Next: the six rows left for discussion.** Four have their probe in
-  `probes/user_rows/`. S13c-031's is the audit's own, in its ledger row, and
-  S12b-236 was read and never reproduced. The rows carry no recommendation, at
-  the user's request of 2026-11-25, so the discussion starts fresh. The bullets
-  hold what was found.
-  - S9b-300, with CV9a-049. A `Model` at a `Dual` keeps a frozen cell at the
-    probe's value after `init!`, with no diagnostic. The lag's `ẋ` read 0 where
-    the nominal model's read 2. The rulings nearby are D-205, D-213 and D-317.
-  - S6c-001 and S6c-004, with K9b-041. `BigFloat` is immutable on 1.13, so the
-    `Real` exemption covers `BigInt` and a user's mutable `Real` alone, and the
-    latter changes under a reader.
-  - S10d-054. `sleep` overshoots by 1.4 ms at a 2 ms request and by 2.1 ms from
-    10 ms up, so the 2 ms margin rarely reaches the spin. The wait's 95th
-    percentile lands 879 µs late at 2 ms and 1.5 µs at 3 ms, on a 20 ms budget
-    and a lightly loaded machine, at 0.6% and 5.4% of a core. D-133 rules the
-    default.
-  - S13c-031. An `unblock!` that sleeps 3 s holds `run!` for 3 s under a 0.5 s
-    `join_timeout`. §12.4 and §13.6 are the text.
-  - S12b-236. The ledger row holds the reading. The 1.14 item of `pending.md`
-    replaces the mechanism.
-  - CV2-023. A test pins the refusal. The row carries a caution.
+- **The six rows, ruled on 2026-11-26.** The user accepted the session's
+  recommendation on each, and `ledgers/user_rows.md` holds each ruling with
+  its reason. Four move the code and two the doc. What the discussion found
+  beyond the rows:
+  - S9b-300 reproduces on master. Only `init!` has the hole. `restore!`
+    copies a same-scalar state's whole table, and `overlay!` runs an off-tick
+    boundary, which moves no discrete cell at `Float64` either.
+  - S10d-054. `sleep` overshoots by about 1.4 ms at a 2 ms request and by
+    about 2.1 ms from 10 ms up, so the calibration measured the wrong request.
+    The figures the spec takes come from a quiet machine,
+    `probes/user_rows/s10d054_quiet.out`.
+  - S12b-236 is reproduced. `_residue!` prints through `@warn` inside the
+    mask, so a logger that raises `InterruptException` stands in for the
+    forced throw. The mask's depth does not leak, since a `catch` restores it.
+  - CV2-023. The refusal's one effect beyond the sets is that it sends the
+    member to the sampled mode, which redraws the state. The probe's two
+    closed gates show the verdict that moves.
+  - Two readings were not probed and are checked before their text lands:
+    that an interrupt releases a hanging `unblock!`, and what D-441's
+    Position says of a forced throw in the bookkeeping.
+- **How the six rows are applied**, in five steps, each committed and none
+  pushed: this record; the doc rows as one commit (S13c-031, S6c-001,
+  K9b-041, and the log rows for D-237 and D-051); CV2-023, S6c-004 and
+  S12b-236 as one code commit each, the last with a cold review; S10d-054,
+  docs first; and S9b-300 as a small increment,
+  `design/increments/20261126_frozen_init/`. The routed runners run per
+  commit and the gate at the tip of the code commits and again for the
+  increment.
 
   The small sweep and the log clustering follow.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the

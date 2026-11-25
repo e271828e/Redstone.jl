@@ -21,7 +21,9 @@ the verifier's probe.
   `8b8ab49f`. `discard_reports` in test_trace.jl stays, since a discard past the
   final frame top reaches only the log.
 - **S13c-031, defect.** A hanging `unblock!` is not bounded by the join
-  timeout.
+  timeout. Ruled 2026-11-26: the doc moves. The join timeout bounds the
+  device's task alone. A hook on the calling task, `init!`, `unblock!` or a
+  direct-release `shutdown!`, is the author's to bound.
 - **S13d-133, defect.** The descriptor writes no `function` for
   `BundleFieldError`. Recommended: add the `_function` method and a test, after
   checking the schema allows it. Settled, `dc884b91`.
@@ -61,6 +63,13 @@ the verifier's probe.
   probe in `probes/user_rows/` shows only what the refusal costs, a member
   traced at sampled states. Before reversing the test, look for a value that
   reaches the conversion untagged and still depends on an in-cycle input.
+  Ruled 2026-11-26: the code moves, `Float64` refusing through `_decide` as
+  `Int` and `Bool` do. The search found no such value: every operation that
+  drops a set refuses a tagged operand, and an in-cluster face that takes no
+  tag keeps its hops alive. One verdict moves. A route gated on `Float64` of a
+  state value, closed at the probe state, reads artificial where the sampled
+  fallback read real, as a direct branch on state already reads
+  (`probes/user_rows/cv2023_verdicts.jl`).
 - **CV2-026, held.** A D-166 citation in tracer.jl, left to the CIT-D166
   finding.
 - **CV2-030, unmarked rule.** The fixer added §13.8's 64-face limit on
@@ -118,12 +127,17 @@ the verifier's probe.
   measurements. Settled, `479ceea1`.
 - **S9b-300, defect.** §9.3 says everything the probe writes is garbage
   after the build, but `init!` of a model at a non-nominal scalar leans on
-  it. CV9a-049 waits on it.
+  it. CV9a-049 waits on it. Ruled 2026-11-26: the code moves. `init!` at a
+  non-nominal scalar establishes the frozen cells as a service does (D-213).
+  The readings are in
+  `design/increments/20261126_frozen_init/notes_frozen_init.md`.
 - **S9d, a thin inventory.** Its mid-tier inventory missed 3 of 9 sampled
   rows. A high-tier re-inventory of §9.7 and §9.8 is in G4b's args as S9d2.
   Settled: S9d2 ran with G4b and missed none of its 10 sampled rows.
 - **CV9a-049, wording.** §9.3's probe-scoped values: `compile` seeds every
-  fresh table from the probe's values. Rule it with S9b-300.
+  fresh table from the probe's values. Rule it with S9b-300. Ruled
+  2026-11-26: one sentence in §9.3, that a fresh table holds the probe's
+  values until `init!` writes it, landing with S9b-300.
 - **CV9a-050, wording.** Appendix C and D-431 say a misshapen return throws
   alone; that holds for the port check only. Settled, `a991af00`.
 - **CV9b-049, wording.** The scalar refusal is not always alone and before
@@ -133,7 +147,10 @@ the verifier's probe.
   deck's output would also need a stripping stage; the grid copy is kept off
   by the shape rule, not D-263; `Freeze` cannot take a handle, its `V` being
   bounded at the type. Settled, `a991af00`, except K9b-041, which waits on
-  S6c-001 and S6c-004.
+  S6c-001 and S6c-004. K9b-041 ruled 2026-11-26: the doc moves. Nothing
+  refuses a `Matrix{T}` grid, so §8.2 loses the sentence that says the
+  mutable-parameter rule does, and the companion says the concrete
+  `Matrix{Float64}` keeps the copy off the table.
 
 ## G4, §10
 
@@ -142,7 +159,10 @@ the verifier's probe.
   Settled, `a991af00`.
 - **S10d-054, defect.** §10.7 says `margin = 2 ms` sleeps about 90% of a
   20 ms budget and lands within µs of the deadline. The coarse phase now
-  overshoots more.
+  overshoots more. Ruled 2026-11-26: the default becomes 3 ms, by an entry
+  amending D-133. `sleep`'s overshoot grows with the request, and D-133's
+  arithmetic took the figure of a 2 ms request where a 20 ms frame sleeps
+  18 ms (`probes/user_rows/s10d054_overshoot.jl`).
 - **CV10-221, wording.** The `ExecutionCursor` docstring's account of when
   the cursor is written and read misses one store. Settled, `a991af00`.
 - **CV10-263, wording.** A named discrete store whose `s_update` returns the
@@ -208,7 +228,13 @@ the verifier's probe.
   `a991af00`.
 - **S12b-236, defect.** §12.4 says a forced interrupt outside a frame is a
   stop like a deferred one. A raw interrupt in `_run_body!`'s or `step!`'s
-  masked bookkeeping can cut it short.
+  masked bookkeeping can cut it short. Ruled 2026-11-26: the code moves. The
+  run's-end sweep prints its residue through `@warn` inside the mask, and an
+  interrupt raised from there leaves the lifecycle `running` with no record
+  (`probes/user_rows/s12b236_masked_bookkeeping.jl`, a logger standing in for
+  the forced throw). The sweep collects under the mask and presents after it.
+  §12.4's sentence narrows to what then holds, and the 1.14 item of
+  `pending.md` takes the remainder.
 - **K11-001, gap.** The flat state vector's uses are owed by `pending.md`;
   no action.
 - **CV11a-004, wording.** `KindCounts` is named only as "the per-kind
@@ -227,7 +253,13 @@ the verifier's probe.
   `BigFloat`, which the comment in leaves.jl and the ledger rows name as the
   mutable one, is immutable on Julia 1.13. K9b-041 waits on it: the
   handle-walk companion and §8.2 say the mutable-parameter rule refuses a
-  `Matrix{Dual}` grid copy, and the probe built one without error.
+  `Matrix{Dual}` grid copy, and the probe built one without error. Ruled
+  2026-11-26, in two parts. The doc moves for "anywhere": a mutable type the
+  leaf walk meets is refused, and the walk does not enter an opaque leaf
+  (D-237's rejection of walking into references). The code moves for the
+  `Real` exemption: a mutable `Real` is refused like any mutable type, since
+  no entry backs the exemption and a user's mutable `Real` changed under a
+  published snapshot.
 - **K6c-064, K6c-072 to K6c-074, K6d-115, K6d-118, K6d-119, measured
   figures.** The verifiers re-measured the linear-systems and LQR
   companions' tables: the last-bit lag output (…266, not …265), the
