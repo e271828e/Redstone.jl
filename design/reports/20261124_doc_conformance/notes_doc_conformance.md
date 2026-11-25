@@ -128,6 +128,21 @@ the tools.
   if an argument depends on it, rounded and with the Julia version, and
   delete an estimate nobody can derive. The companions' measured figures
   followed, `df6f03f8`.
+- **Seen while the wording rows landed, not yet fixed.** §13.2's rule is
+  still named "strings, never instances", over a sentence that no longer says
+  strings, and §13.4 says names are strings. §11.6's task sketch shows a bare
+  `shutdown!(dev)` where the wrapper calls `_shutdown!`. Appendix C's
+  `OutOfClaimEntry` payload says "the writer's claim set", which for the
+  harness is the unclaimed complement. pid_anti_windup.md says the port sets
+  are identical in both PIDs, though `DiscretePID` adds its saturation code.
+  event_visibility_walkthrough.md's section 2 still says `u` gathers foreign
+  cells alone, which a self-wire breaks (K6a-013).
+- **Next, for a fresh session.** The rows of `ledgers/user_rows.md` with no
+  "Settled" or "Ruled" mark, less the gaps and the held rows. The user asked
+  for the treatment the doc-or-code rows had: read the rulings behind each,
+  probe it, and bring a recommendation, sorted by certainty. Start with
+  S11c-089, S9b-300 and S6c-001 with S6c-004, since each also settles a
+  waiting wording row. The small sweep and the log clustering follow.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five
