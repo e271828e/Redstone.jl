@@ -962,6 +962,12 @@ function diagnostics_kind_set()
                                       reason = :mutable, position = "")) ==
               "`a`: port `y` declares Vector{Float64}, which is mutable — a port value is " *
               "immutable, bulk data rides behind an immutable handle (§4.4)"
+        @test startswith(message(TransparentContainerUnknown(path = "a", field = :kids, component = "Duo",
+                                                             candidates = [:units])),
+                         "`a`: `transparent_container` returns `:kids`, which names no container field of `Duo`")
+        @test startswith(message(TransparentContainerUnknown(path = "a", field = (:b, :c), component = "Duo",
+                                                             candidates = [:b, :c])),
+                         "`a`: `transparent_container` returns `(:b, :c)`, which names no container field of `Duo`")
         @test message(FaceNameIllegal(path = "e", face = "", invariant = :empty)) ==
               "`e`: a face name is empty — a face name is never empty, and a bare port is spelled " *
               "by omitting the name, one type as the whole `u_types` or `y_types`, its face then " *

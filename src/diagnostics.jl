@@ -846,18 +846,18 @@ message(d::ChildNameCollision) =
     "$(_declaration(d, 2)); a child name is a path segment, and a path segment " *
     "addresses one component (§8.5, D-211)"
 
-"§8.5, D-211: `transparent_container` naming no container field of the type."
+"§8.5, D-211: `transparent_container` returning anything but `nothing` or the name of a container field."
 Base.@kwdef struct TransparentContainerUnknown <: Diagnostic
     path::String
-    field::Symbol
+    field::Any                               # what the declaration returns, a `Symbol` or not
     component::String                        # the declaring type, as a string
     candidates::Vector{Symbol}               # the type's container fields, the list-in-hand
 end
 path(d::TransparentContainerUnknown) = d.path
 message(d::TransparentContainerUnknown) =
-    "$(_at_path(d.path)): `transparent_container` returns `:$(d.field)`, which names no " *
+    "$(_at_path(d.path)): `transparent_container` returns `$(repr(d.field))`, which names no " *
     "container field of `$(d.component)` — its container fields are " *
-    "$(_namelist(d.candidates)); a name-transparent declaration names a `Tuple` " *
+    "$(_namelist(d.candidates)); a name-transparent declaration names one `Tuple` " *
     "or `NamedTuple` field whose elements are all components, the empty one included " *
     "(§8.5, D-211)"
 

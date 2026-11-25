@@ -267,6 +267,13 @@ end
 local_wires(::AbsentDeclared) = ()
 transparent_container(::AbsentDeclared) = :nope
 
+struct TwoDeclared{K <: NamedTuple} <: AbstractComponent    # ...and here, two container fields at once
+    kids::K
+    spares::K
+end
+local_wires(::TwoDeclared) = ()
+transparent_container(::TwoDeclared) = (:kids, :spares)
+
 function assembly_transparent_containers()
     @testset "a name-transparent container contributes bare keys (§8.5, D-211)" begin
         # Naming is the only thing the declaration changes: the same two children in
@@ -333,11 +340,13 @@ function assembly_transparent_containers()
         @test port(sim, "units", :out) === 6.0             # reads resolve `units` bare
         @test port(sim, "", :y) === 6.0                    # and so does wiring resolution
 
-        # And the declaration must name a container field of the type — a component
-        # field and an absent name are refused alike.
+        # And the declaration must name one container field of the type — a component
+        # field, an absent name and a tuple of names are refused alike.
         for (bad, field, candidates) in ((OpaqueDeclared(TickCounter()), :c, Symbol[]),
                                          (AbsentDeclared((; c = TickCounter())), :nope,
-                                          [:kids]))
+                                          [:kids]),
+                                         (TwoDeclared((; c = TickCounter()), (; c = TickCounter())),
+                                          (:kids, :spares), [:kids, :spares]))
             err = failure(() -> build(bad))
             @test err isa DiagnosticError
             d = only(diagnostics(err))

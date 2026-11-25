@@ -329,8 +329,8 @@ collection of pairs as `IllegalWireEntry`.
 output_wires(::Any) = ()
 
 # Design: §8.5, D-211.
-# "At most one" is unrepresentable otherwise here: the return is one `Symbol`
-# or `nothing`.
+# "At most one" is the return's shape: one `Symbol` or `nothing`, anything else
+# refused.
 """
     transparent_container(c) -> Symbol or nothing
 
@@ -347,11 +347,12 @@ Naming is the only thing it changes. The container still has no wires,
 The declaration is optional, and a component may name at most one field. The
 default, `nothing`, keeps every container's key segment.
 
-On an [assembly](@ref g-assembly), the build refuses a name that matches no
-container field as `TransparentContainerUnknown`. It refuses a bare key as
-`ChildNameCollision` when the key collides with a sibling child's name, equals
-its own field's name, or equals the name of a sibling container field that
-holds children. A [primitive](@ref g-primitive)'s is never read.
+On an [assembly](@ref g-assembly), the build refuses a return that is neither
+`nothing` nor the name of a container field as `TransparentContainerUnknown`. It
+refuses a bare key as `ChildNameCollision` when the key collides with a sibling
+child's name, equals its own field's name, or equals the name of a sibling
+container field that holds children. A [primitive](@ref g-primitive)'s is never
+read.
 """
 transparent_container(::Any) = nothing
 

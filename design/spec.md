@@ -3808,8 +3808,10 @@ The edges of the container form are fixed by rule.
   told from empty inert parameter data. The judgment is therefore
   per-instantiation, like every wiring judgment.
 - `transparent_container` must name a container field of the type, and a name
-  that matches none is `TransparentContainerUnknown` ([D-211][d-211]). Declaring two
-  transparent containers on one type is a declaration error ([D-211][d-211], [D-215][d-215]).
+  that matches none is `TransparentContainerUnknown` ([D-211][d-211]). A type
+  names at most one, since `transparent_container` returns one field name or
+  `nothing` ([D-211][d-211]). Any other return, such as a tuple of two names, is
+  refused the same way.
 
 #### `Group`: the on-the-fly assembly
 
@@ -15679,8 +15681,8 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   both children for two with one name, and the one element for a bare key,
   with the container field on the `sample_times` arm.
 - **`TransparentContainerUnknown`** ([§8.5][s8-5], [D-211][d-211]). Error ·
-  build · collected as `ContainerMixed` is. Assembly path, its type, the field
-  `transparent_container` names, the type's container fields (the
+  build · collected as `ContainerMixed` is. Assembly path, its type, what
+  `transparent_container` returns, the type's container fields (the
   list-in-hand).
 - **`TierUnreadable`** ([§8.2][s8-2]). Error · build ·
   collected. Component path, type, the primitive declarations found. A primitive
