@@ -55,7 +55,12 @@ the verifier's probe.
   operand. Recommended: decide through `_decide`, as `Int` and `Bool` do. Held:
   a test of test_build.jl, from `a5ecf7f5`, pins the refusal on an untagged
   operand, since the value would leave the trace, and no entry backs either
-  side.
+  side. Caution: do not take this row as a clear fix. The session of 2026-11-25
+  did, and found the test only when it failed. The case for the fix is an
+  argument, that an empty set has nothing to lose, and no probe has tried to
+  break it. The probe in `probes/user_rows/` shows only what the refusal costs,
+  a member traced at sampled states. Before reversing the test, look for a value
+  that reaches the conversion untagged and still depends on an in-cycle input.
 - **CV2-026, held.** A D-166 citation in tracer.jl, left to the CIT-D166
   finding.
 - **CV2-030, unmarked rule.** The fixer added §13.8's 64-face limit on
