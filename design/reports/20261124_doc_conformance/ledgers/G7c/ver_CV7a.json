@@ -1,0 +1,112 @@
+{
+ "judgments": [
+  {
+   "id": "CV7a-002",
+   "conforms": false,
+   "evidence": "src/show.jl:26 `_path_label(path) = isempty(path) ? \"root\" : path`, called on every row at src/show.jl:143 (Outputs) and :163 (Events). The probe prints `root       θ, ω     —` for build(Pendulum()).outputs. code_map.md:1135 still says \"with no label function\". The phrase dates from b16a8859, where it recorded the removal of the old `label(ci)` callback (`#ci` standalone, the path inside the Build). `_path_label` already existed then, so read today the phrase contradicts the code.",
+   "class": "drift",
+   "fix": "each table prints each row's path, the root's empty path as `root` through `_path_label`, and the `Events` table holds only the components that declare an event;",
+   "clear": true
+  },
+  {
+   "id": "CV7a-003",
+   "conforms": false,
+   "evidence": "The compact forms exist at src/show.jl:66, 137, 157, 179, 246, 297, 453, 531, 578, 592 and 635. The probe gives `Deployment(Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, RK4())`. spec.md:5353-5436 (§9.2 Rendering) names only the tables. spec.md:10544 cites \"the deployment's one-line form ([§9.2])\" and D-476 (log.md:21004) says the four values print a one-line form \"as an artifact does ([§9.2])\", but no §9.2 sentence states that form.",
+   "class": "deviation",
+   "fix": "Add to §9.2 Rendering: \"Each artifact has two `show` methods: a one-line form, its type name over its counts or parameters in parentheses, which a container or `repr` prints, and the REPL form under `MIME\"text/plain\"`, the tables. A `Deployment`'s one-line form gives its time quantities and its algorithm.\"",
+   "clear": false,
+   "backing_entry": "D-476"
+  },
+  {
+   "id": "CV7a-005",
+   "conforms": true,
+   "evidence": "src/show.jl:105-122: the component table, then `rate scopes:` when any keyed scope exists, then the anchor table whose first row is `A₀  Δt_base  0//1  —  —`. The probe on MultiRate confirms it. This matches spec.md:5358-5359 and the symbolic A₀ row with dashes at spec.md:5141-5143."
+  },
+  {
+   "id": "CV7a-016",
+   "conforms": false,
+   "evidence": "src/show.jl:312-318: under `proposes(algorithm)` the line is `$steps to $(max(steps, fld(Δt_frame/h_min))), as proposed`. The probe prints `steps per frame: 4 to 1000, as proposed` and, with h_min = 1//1000, `4 to 10, as proposed`. spec.md:5376 states the line only for a fixed-step method. notes_increment_97.md:113 ratified \"`show` prints the range of steps per frame, 'as proposed'\" (commit 4367fa55), but §9.2 was never updated.",
+   "class": "drift",
+   "fix": "Add after the §9.2 steps bullet: \"Under a proposing method the line states a range instead, `N to M, as proposed`: at least the fixed-step count `N` and at most `⌊Δt_frame / h_min⌋`, never less than `N` ([D-460][d-460]).\"",
+   "clear": true
+  },
+  {
+   "id": "CV7a-018",
+   "conforms": true,
+   "evidence": "src/show.jl:401 builds the Deployment's Δt and τ cells as `_seconds_label(D₀, Δt_base)` and `_seconds_label(Φ₀, Δt_base)`, exact rationals. src/show.jl:212 prints the Schedule's `repr(row.Δt)`, a float. The probe gives `g/a ... 12  6   3//50  3//100` in the Deployment against `0.06` in the Schedule, as spec.md:5401-5403 states."
+  },
+  {
+   "id": "CV7a-024",
+   "conforms": false,
+   "evidence": "src/show.jl:293 adds `h_min = …` where one is set. src/show.jl:424-428 appends `firing_budget`, `localization_tol`, `localization_budget` and `attempt_budget` to the REPL heading. The probe gives `…, h_min = 1//100000, RK4(); firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8, attempt_budget = 7`, so h_min prints under a fixed-step method too. spec.md:5353-5436 names only \"the three time quantities exact\" and \"a summary\". notes_increment_97.md ratified the printing of h_min and attempt_budget, but no spec or log text states it. The three other fields have been in the heading since 0aaea885.",
+   "class": "deviation",
+   "fix": "Extend the §9.2 bullet: \"`show(::Deployment)` prints the three time quantities exact, and `h_min` exact where one is set, then its algorithm; the REPL heading adds `firing_budget`, `localization_tol`, `localization_budget` and `attempt_budget`.\"",
+   "clear": false,
+   "backing_entry": "D-454 (the three time quantities only)"
+  },
+  {
+   "id": "CV7a-025",
+   "conforms": false,
+   "evidence": "src/show.jl:288-293: the one-line form ends at the algorithm. src/show.jl:424-428: the long form adds four fields, which the probe confirms: `; firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8, attempt_budget = 7`. code_map.md:1174-1175 says only that the long form \"adds `attempt_budget` (D-460)\".",
+   "class": "deviation",
+   "fix": "…, `h_min` where one is set, and the long form adds `firing_budget`, `localization_tol`, `localization_budget` and `attempt_budget` (D-460).",
+   "clear": true
+  },
+  {
+   "id": "CV7a-028",
+   "conforms": false,
+   "evidence": "The code prints the compact form (src/show.jl:453), the heading counts (:448-451), per writer the task state and raw heartbeat or `no occurrences` (:480-489), per kind a `Kind: N occurrences` line (:461-474), `N suppressed this boundary` (:472) and the pacer line (:491-495). The spec never names `FrameworkStatus` (rg finds 0 hits in spec.md). §11.8 Presentation (spec.md:9646-9653) states only the 25-occurrence cap, and its sample \"`MalformedDatum` from `UDPInput#3`: 1 482 occurrences\" matches no line the code prints: the kind line sits under the writer's heading, with no space in the number. Increment 52's brief designed this layout, and no spec or log entry records it.",
+   "class": "deviation",
+   "fix": "Add to §11.8 Presentation: \"`show(::FrameworkStatus)` is the framework's renderer. Its one-line form gives the writer count, the cumulative occurrences and the pace. Its REPL form prints one block per writer: a heading with its task state and raw heartbeat, or `no occurrences`, then per kind a count line (`MalformedDatum: 1482 occurrences`), the retained occurrences within the cap, and this boundary's suppressed count. The pacer's line comes last.\" Also replace the sample with the code's form.",
+   "clear": false
+  },
+  {
+   "id": "CV7a-033",
+   "conforms": true,
+   "evidence": "src/show.jl:588-590 and :612-614: the heading is `TrimReport: converged, committed` and the next line is `backend: status …, N iterations, M evaluations`. src/show.jl:507 (`:compact => true`, six significant digits) and :512-519 align on the point. The probe gives `level  0.0199302` and `big    1.23457e5`, headers right-aligned to the point. This matches spec.md:14071-14078 and D-476. The heading's commit clause follows from the verdict (trim.jl:157, \"The `converged` verdict alone decides the commit\")."
+  },
+  {
+   "id": "CV7a-037",
+   "conforms": false,
+   "evidence": "src/sim.jl:2021-2024: `frame_top!` runs `hooks.sim.run.frame += 1` and then `drain!`. src/sim.jl:2664 then advances `trc.frames += 1` before any thunk, and trace.jl:132 stamps `trc.frames`. The probe gives `run.frame = 1, batch.frame = 1, trace.frames = 1` after one step. The outcome `frame = k` holds, but the docstring at trace.jl:19 gives the wrong order. The order was changed in commit 697ff66d (the frame moved onto the model, D-317), and the site comment at sim.jl:2659-2662 cites D-317.",
+   "class": "drift",
+   "fix": "`frame` is the frame ordinal the batch was drained at the top of: the top hook advances the run's frame index to `k` before it runs the drain, and the drain advances the trace's own count to `k` before it records, so a batch drained at the top of frame `k` carries `frame = k` and replays there.",
+   "clear": true
+  },
+  {
+   "id": "CV7a-038",
+   "conforms": false,
+   "evidence": "trace.jl:22-37 defines `TraceBatch(frame, writer, entries)` with a field-wise `==` and `hash`. It is the element type of the public `Trace.batches` (trace.jl:81), and the suite imports it (test/imports.jl:43). rg finds no `TraceBatch` in spec.md, docs/src or code_map.md. Appendix B (spec.md:15438-15442) names `Trace` but not its record type, and the `Trace` docstring (trace.jl:72-73) describes a record without the type or field names. No pending bullet or API-audit roadmap item names it; the module exports nothing until the API audit (pending.md:42).",
+   "class": "deviation",
+   "fix": "Appendix B holder types: \"`Trace` what `trace` returns and `replay!` takes, its `batches` holding `TraceBatch` records, each with `frame`, `writer` and `entries`, compared as values.\" In the `Trace` docstring: \"Each `batches` record is a `TraceBatch` holding its `frame`, its `writer` index into `schemas` and its `entries` by position.\"",
+   "clear": false
+  },
+  {
+   "id": "CV7a-057",
+   "conforms": false,
+   "evidence": "code_map.md:1468-1489 names `Trace`, the header, `trace(sim)`, `_check_checkpoint!`, `_check_schemas!`, `_compile_records!` and `ReplayFeed`. It does not name `TraceBatch` (trace.jl:22), `_record!` (trace.jl:121, the drain-side conversion called from dataplane.jl:501), `ReplayRecord` (trace.jl:92), `_apply_thunk` (:168) or `_replay_writer` (:174). The map's own preamble (code_map.md:3-10) says an entry names the constructs that live in the file.",
+   "class": "deviation",
+   "fix": "In the trace.jl entry, name the record: \"one sparse `TraceBatch` per drained batch, compared as a value\". Add a bullet: \"`_record!`, the conversion at the drain, called from dataplane.jl's `_drain!` (§11.5, D-176).\" Extend the replay bullet: \"`_compile_records!` builds each writer's scatter through `_replay_writer` and `_apply_thunk` into `ReplayRecord`s.\"",
+   "clear": false
+  },
+  {
+   "id": "CV7a-046",
+   "conforms": true,
+   "evidence": "Probe: `_record!` with one touched position makes 3 allocations (96 bytes), and with three it makes 5. That is the entries vector, which Julia 1.13 allocates as two objects (Array plus Memory, matching a bare `Vector{Pair{Int,Any}}(undef,1)` = 2), plus one box per value. `Base.allocatedinline(TraceBatch)` is true, so the record costs no allocation of its own, and `push!` into a size-hinted `batches` allocates nothing (amortized growth). This matches spec.md:8784-8786's one vector plus boxed values, and the claim's \"two allocations, TraceBatch included\" is refuted. On 1.13 that one vector counts as two runtime allocations."
+  },
+  {
+   "id": "CV7a-048",
+   "conforms": true,
+   "evidence": "trace.jl:174-183 raises `ReplayUnknownFace` with the face name only when `layout.addr` lacks `(\"\", f)`. sim.jl:1196 builds `faces` from the same layout's root inputs, and sim.jl:1207-1208 runs `_check_schemas!` and throws before `_compile_records!`. The probe's schema `[:a, :zzz, :c]` yields only `ReplaySchemaMismatch`, so the guard is a backstop, as the comment at trace.jl:170-173 says."
+  },
+  {
+   "id": "CV7a-052",
+   "conforms": false,
+   "evidence": "trace.jl:217-226: a record whose writer index has no schema entry pushes one `ReplayUnknownFace` per entry, with the bare position and `writer = \"writer #N\"`. The probe gives `face=1 frame=1 writer=\"writer #9\"` and `face=3 …`, and test_trace.jl:380-381 asserts `(1, 2, \"writer #9\")`. Appendix C (spec.md:15960-15962) gives the bare position only \"where the writer's schema has no name for it\" and always \"the trace's device tag\". §12.7 (spec.md:10977-10986) does not cover the missing-schema case either.",
+   "class": "deviation",
+   "fix": "Face name, or the bare position where the writer's schema has no name for it or the record's writer has no schema; frame ordinal; the trace's device tag, or `writer #N` by the record's writer index where the `schemas` list has no entry for it; the root input-face list.",
+   "clear": true
+  }
+ ],
+ "notes": "I judged all 15 claims from scratch against W = 62551b06. The one probe is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV7a_v/probe.jl, run once. I edited no tracked file and committed nothing.\n\nResults: 4 claims conform (005, 018, 033, 048), one of them with a caveat (046). The other 10 do not: 3 drift (002, 016, 037) and 7 deviation (003, 024, 025, 028, 038, 057, 052).\n\nTwo things the claims did not ask for:\n- **Stale test comment.** test/test_trace.jl:51 still reads \\\"the drain precedes the frame increment\\\". It has the same staleness as CV7a-037.\n- **CV7a-046 caveat.** The spec's \\\"one small allocation\\\" matches a single entries vector. Julia 1.13's @allocations counts that vector as 2 runtime allocations (Array plus Memory), plus one box per value. The claim's other reason, that the TraceBatch record allocates, is wrong: it is stored inline in the batches array.\n\nClassification choices:\n- **CV7a-016** is drift because notes_increment_97.md:113 ratified the range and commit 4367fa55 built it.\n- **CV7a-024** is deviation because firing_budget and the localization fields have no record beyond the code. Only h_min and attempt_budget are ratified, in the same increment-97 notes.\n- **CV7a-003** cites D-476 as its backing entry. That entry says the four values print a one-line form \\\"as an artifact does (§9.2)\\\", which assumes a §9.2 statement that does not exist."
+}

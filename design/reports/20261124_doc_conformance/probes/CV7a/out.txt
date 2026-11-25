@@ -1,0 +1,143 @@
+┌ Info: Δt_base derived as 1//1500 s (§9.2)
+│   admissible: gcd(pool)/Q, coarsest 1//1500
+│   pool:
+│     `sample_times` at the root component, key `a`  period 1//500  ×10
+│     `sample_times` at the root component, key `b`  period 1//10   ×1
+│     `sample_times` at the root component, key `b`  offset 1//150  ×3   declaring 3//500 or 1//125 keeps 1//500
+│   primes: 1500 = 2²·3·5³
+│     2²  a period
+│     3   b offset
+└     5³  a period
+┌ Warning: GridUtilization: Δt_base derived as 1//1500 s: the grid is 3× finer than the fastest declared work (`a` at D₀ = 3) (§9.2)
+│   admissible: gcd(pool)/Q, coarsest 1//1500
+│   pool:
+│     `sample_times` at the root component, key `a`  period 1//500  ×10
+│     `sample_times` at the root component, key `b`  period 1//10   ×1
+│     `sample_times` at the root component, key `b`  offset 1//150  ×3   declaring 3//500 or 1//125 keeps 1//500
+│   primes: 1500 = 2²·3·5³
+│     2²  a period
+│     3   b offset
+│     5³  a period
+└ @ Redstone ~/.julia/dev/Redstone.jl-worktrees/doc_conformance/src/deployment.jl:605
+PROBE[Trace fields] ((:header, :schemas, :batches, :frames), (Union{Nothing, Checkpoint}, Vector{Pair{String, Vector{Symbol}}}, Vector{TraceBatch}, Int64), true)
+PROBE[TraceBatch fields] ((:frame, :writer, :entries), (Int64, Int64, Vector{Pair{Int64, Any}}), true)
+PROBE[ReplayFeed fields] ((:records, :next, :frames), (Vector{@NamedTuple{frame::Int64, thunk::Function, record::TraceBatch}}, Int64, Int64))
+PROBE[ReplayRecord] (:frame, :thunk, :record)
+PROBE[exported] (false, false, false)
+PROBE[header after init] (true, 0, 0)
+PROBE[t1 frames/batches] (1, Tuple{Int64, Int64, Vector{Pair{Int64, Any}}}[(1, 1, [2 => 1.0])], ["harness" => [:a, :b, :c]])
+PROBE[detached] (1, 2, 1)
+PROBE[schemas growth on attach] (1, 3, ["device 1 (Nudge)" => [:a], "harness" => [:b, :c]])
+PROBE[t1 schemas unchanged] 1
+PROBE[after device] (5, [(1, 1, 1), (3, 3, 1)])
+PROBE[status who] ["device 1 (Nudge)", "harness", "loop"]
+PROBE[schema tags] ["harness", "device 1 (Nudge)", "harness"]
+PROBE[order frames then writer] true
+PROBE[TraceBatch ==] (true, true)
+PROBE[restored] (5, 5, 5)
+PROBE[trace=false] ok
+PROBE[schema mismatch] (ReplaySchemaMismatch, ("harness", [:a, :zz, :yy], [:zz, :yy], [:a, :b, :c]))
+PROBE[position beyond schema x2] (ReplayUnknownFace, (7, 1, "harness", [:a, :b, :c]))
+PROBE[position beyond schema x2] (ReplayUnknownFace, (9, 1, "harness", [:a, :b, :c]))
+PROBE[writer index out of range] (ReplayUnknownFace, (1, 1, "writer #5", [:a, :b, :c]))
+PROBE[frame outside] (CheckpointMismatch, (:frame, :harness, 1:1, 0))
+PROBE[frame outside] (CheckpointMismatch, (:frame, :harness, 1:1, 3))
+PROBE[bad convert] (CheckpointMismatch, (:root_input, :a, Float64, "str"))
+PROBE[three bad collected] (CheckpointMismatch, (:root_input, :a, Float64, "x"))
+PROBE[three bad collected] (ReplayUnknownFace, (8, 1, "harness", [:a, :b, :c]))
+PROBE[three bad collected] (ReplayUnknownFace, (9, 1, "harness", [:a, :b, :c]))
+PROBE[feed] (1, 1, 1, (:frame, :thunk, :record))
+PROBE[Deployment compact] Deployment(Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, RK4())
+Deployment: Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, RK4(); firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8, attempt_budget = 7
+  steps per frame: 1
+  build: Build(4 components, activations: Float64)
+  schedule: 3 rows, 1 rate scope, hyperperiod 10 base ticks
+    Δt_base: 1//500, the coarsest admissible 1//50 divided by 10
+    anchors:
+      anchor  Δt      τ     D₀  Φ₀
+      A₀      1//500  0//1  1   0
+      A₁      1//50   0//1  10  0
+    components:
+      path       anchor  Dₐ  Φₐ  D₀  Φ₀  Δt      τ
+      fcs/inner  A₀      1   0   1   0   1//500  0//1
+      fcs/outer  A₀      5   2   5   2   1//100  1//250
+      gnss       A₁      1   0   10  0   1//50   0//1
+    rate scopes:
+      path  key  anchor  Dₐ  Φₐ  D₀  Φ₀  Δt      τ
+      fcs   fcs  A₀      1   0   1   0   1//500  0//1
+    chart, 10 columns of 1//500 s over 10 base ticks and 10 frames:
+                  0
+      frame tops  ││││││││││
+      fcs/inner   ●●●●●●●●●●
+      fcs/outer   ··●····●··
+      gnss        ●·········
+  warnings: none
+Build: 4 components (1 continuous, 3 discrete); activations: Float64; no warnings
+  Structure: 4 components, 1 anchor, 1 rate scope; root inputs: none
+    components:
+      path       tier        anchor  Dₐ  Φₐ  rates
+      src        continuous  A₀      1   0   —
+      fcs/inner  discrete    A₀      1   0   fcs = Relative(1, 0) → inner = Relative(1, 0)
+      fcs/outer  discrete    A₀      5   2   fcs = Relative(1, 0) → outer = Relative(5, 2)
+      gnss       discrete    A₁      1   0   gnss = Absolute(1//50, 0//1)
+    rate scopes:
+      path  key  anchor  Dₐ  Φₐ
+      fcs   fcs  A₀      1   0
+    anchors:
+      anchor  Δt       τ     scope  key
+      A₀      Δt_base  0//1  —      —
+      A₁      1//50    0//1  root   gnss
+    grid:
+      admissible: gcd(pool)/Q, coarsest 1//50
+      pool:
+        `sample_times` at the root component, key `gnss`  period 1//50  ×1
+      primes: 50 = 2·5²
+        2   gnss period
+        5²  gnss period
+    output routes:
+      inner → fcs/y_inner → fcs/inner/out
+      outer → fcs/y_outer → fcs/outer/out
+      gnss → gnss/out
+  Outputs: execution order over 4 components
+    component  stage 1  stage 2
+    src        out      —
+    fcs/inner  —        out
+    gnss       —        out
+    fcs/outer  —        out
+  feedthrough: gnss/out → fcs/outer/in
+  Events: no events over 4 components
+  warnings: none
+PROBE[Simulation built compact] Simulation(built)
+Simulation: built
+  input mode: live
+  deployment: Deployment(Δt_frame = 1//10, Δt_base = 1//10, h_max = 1//10, RK4())
+  log: no snapshots
+  devices: none
+  warnings: none
+Simulation: stopped, frame 3 at t = 0.3
+  input mode: live
+  deployment: Deployment(Δt_frame = 1//10, Δt_base = 1//10, h_max = 1//10, RK4())
+  termination: EndTimeReached at t = 0.3
+  log: 4 snapshots
+  devices: device 1 (Nudge)
+  warnings: none
+FrameworkStatus: 3 writers, no occurrences, unpaced
+  device 1 (Nudge): done, heartbeat 1.79558910754019e9, no occurrences
+  harness: no occurrences
+  loop: no occurrences
+  pacer: unpaced, debt 0.0 s, peak 0.0 s, no overruns, no reanchors, 0.0 s forgiven, no waits, 0.0 s waited
+PROBE[status compact] FrameworkStatus(3 writers, no occurrences, unpaced)
+PROBE[proposing compact] Deployment(Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, h_min = 1//5000, BS3(reltol = 0.001, abstol = 1.0e-6))
+PROBE[proposing steps] SubString{String}["Deployment: Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//500, h_min = 1//5000, BS3(reltol = 0.001, abstol = 1.0e-6); firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8, attempt_budget = 7", "  steps per frame: 1 to 10, as proposed", "  build: Build(4 components, activations: Float64)"]
+PROBE[split steps] SubString{String}["Deployment: Δt_frame = 1//250, Δt_base = 1//500, h_max = 1//250, RK4(); firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8, attempt_budget = 7", "  steps per unsplit frame: 1; due instants of fcs/inner, fcs/outer split frames", "  build: Build(4 components, activations: Float64)"]
+PROBE[h_max resolved] SubString{String}["Deployment: Δt_frame = 1//500, Δt_base = 1//500, h_max = 1//1000, RK4(); firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8, attempt_budget = 7", "  steps per frame: 2", "  build: Build(4 components, activations: Float64)"]
+PROBE[guard] SubString{String}["    chart omitted: 150 columns of 1//1500 s over 150 base ticks and 150 frames"]
+PROBE[Schedule guard] SubString{String}["  hyperperiod: 150 base ticks, chart omitted"]
+PROBE[no discrete] Deployment: Δt_frame = 1//100, Δt_base = 1//100, h_max = 1//100, RK4(); firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8, attempt_budget = 7
+  steps per frame: 1
+  build: Build(1 component, activations: Float64)
+  schedule: no rows
+  warnings: none
+PROBE[mutabletype] (true, false, true)
+PROBE[record allocations] (4, 128)
+PROBE[allocs 3 touched] 5

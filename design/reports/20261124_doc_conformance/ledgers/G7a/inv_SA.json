@@ -1,0 +1,780 @@
+{
+ "rows": [
+  {
+   "id": "SA-025",
+   "file": "design/spec.md",
+   "line": 14728,
+   "kind": "mech",
+   "claim": "A commanded continuous reset arrives as an ordinary `Bool` input; weight-on-wheels is the shipped instance.",
+   "evidence": "No weight-on-wheels component ships. rg for weight-on-wheels/wow/weight_on over src/, test/fixtures.jl and examples/ finds nothing. What ships is the reset form of Integrator and LimitedIntegrator (src/library.jl:444-454, :911-933): a Bool `reset` input and one non-localized event. spec.md:1547 and log.md:5300 present the gear's `strut.wow -> frc.reset` as the canonical use, a design example.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace \"(weight-on-wheels is the shipped instance)\" with \"(the `reset = true` form of `Integrator` and `LimitedIntegrator` is the shipped instance, and weight-on-wheels the canonical use)\".",
+   "note": "The reading 'shipped' meaning 'in the spec's case study' is possible, so a verifier should rule."
+  },
+  {
+   "id": "SA-051",
+   "file": "design/spec.md",
+   "line": 14816,
+   "kind": "mech",
+   "claim": "The build reads each contract declaration once, against the concrete instance, so a value-dependent contract does not announce itself.",
+   "evidence": "src/declare.jl:956-962 says some reads stay bare because the build already invoked the declaration through the framing accessor. Nothing in the code checks, or counts, that each declaration is read once.",
+   "verdict": "unverifiable",
+   "note": "The count of reads per declaration (once versus more) is not asserted in code or tests I could find, and a probe would need an instrumented component across the whole build. The consequence, that no check detects a value-dependent contract, matches the absence of any such check in src/declare.jl and src/assembly.jl."
+  }
+ ],
+ "ok": [
+  {
+   "id": "SA-001",
+   "file": "design/spec.md",
+   "line": 14665,
+   "kind": "law",
+   "claim": "Stage name at its tier fixes the maximal legal view set",
+   "evidence": "src/declare.jl:900"
+  },
+  {
+   "id": "SA-002",
+   "file": "design/spec.md",
+   "line": 14667,
+   "kind": "law",
+   "claim": "Declarations narrow the legal set to the bundle (iff rule)",
+   "evidence": "src/declare.jl:884"
+  },
+  {
+   "id": "SA-003",
+   "file": "design/spec.md",
+   "line": 14668,
+   "kind": "mech",
+   "claim": "Signature destructuring narrows the bundle to the actual reads",
+   "evidence": "src/declare.jl:607"
+  },
+  {
+   "id": "SA-004",
+   "file": "design/spec.md",
+   "line": 14669,
+   "kind": "law",
+   "claim": "No `direct` in the stage name is the no-feedthrough property",
+   "evidence": "src/declare.jl:614"
+  },
+  {
+   "id": "SA-005",
+   "file": "design/spec.md",
+   "line": 14671,
+   "kind": "law",
+   "claim": "Stage 1 bundle has no inputs, stage 2 adds them",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "SA-006",
+   "file": "design/spec.md",
+   "line": 14673,
+   "kind": "mech",
+   "claim": "Dynamics read their own published y in their bundle",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "SA-007",
+   "file": "design/spec.md",
+   "line": 14676,
+   "kind": "mech",
+   "claim": "Signal table holds produced signals only; wires resolve to the producer's cell",
+   "evidence": "src/devices.jl:517"
+  },
+  {
+   "id": "SA-008",
+   "file": "design/spec.md",
+   "line": 14677,
+   "kind": "mech",
+   "claim": "Buffer holds x, s and m stores hold s and m, handlers latch x and m",
+   "evidence": "src/executor.jl:393"
+  },
+  {
+   "id": "SA-009",
+   "file": "design/spec.md",
+   "line": 14687,
+   "kind": "law",
+   "claim": "Sampling at t_k is post-integration, post-projection, stage-1-fresh",
+   "evidence": "src/model.jl:652"
+  },
+  {
+   "id": "SA-010",
+   "file": "design/spec.md",
+   "line": 14689,
+   "kind": "mech",
+   "claim": "A due tick's gated stages run inside the boundary sweep",
+   "evidence": "src/model.jl:706"
+  },
+  {
+   "id": "SA-011",
+   "file": "design/spec.md",
+   "line": 14694,
+   "kind": "law",
+   "claim": "Offset component's first tick is at Phi0*dt_base after t0",
+   "evidence": "probe:18"
+  },
+  {
+   "id": "SA-012",
+   "file": "design/spec.md",
+   "line": 14696,
+   "kind": "law",
+   "claim": "Cells hold the boundary-zero publication until the first tick",
+   "evidence": "probe:16"
+  },
+  {
+   "id": "SA-013",
+   "file": "design/spec.md",
+   "line": 14698,
+   "kind": "law",
+   "claim": "Output stages run at t0 from the authored world",
+   "evidence": "probe:77"
+  },
+  {
+   "id": "SA-014",
+   "file": "design/spec.md",
+   "line": 14700,
+   "kind": "law",
+   "claim": "Framework withholds no publication at boundary zero",
+   "evidence": "src/model.jl:693"
+  },
+  {
+   "id": "SA-015",
+   "file": "design/spec.md",
+   "line": 14703,
+   "kind": "law",
+   "claim": "s_update at t_k consumes completed samples and produces s_{k+1}",
+   "evidence": "src/model.jl:646"
+  },
+  {
+   "id": "SA-016",
+   "file": "design/spec.md",
+   "line": 14706,
+   "kind": "law",
+   "claim": "s_update runs at boundary zero (Phi0=0)",
+   "evidence": "src/model.jl:703"
+  },
+  {
+   "id": "SA-017",
+   "file": "design/spec.md",
+   "line": 14708,
+   "kind": "law",
+   "claim": "After any boundary the store holds the next-tick state, the cell the last sample",
+   "evidence": "probe:25"
+  },
+  {
+   "id": "SA-018",
+   "file": "design/spec.md",
+   "line": 14711,
+   "kind": "law",
+   "claim": "Counter due at boundary zero, authored 0, holds 1 after init!",
+   "evidence": "probe:11"
+  },
+  {
+   "id": "SA-019",
+   "file": "design/spec.md",
+   "line": 14712,
+   "kind": "law",
+   "claim": "Discrete store copied into a condition then init! starts one tick ahead",
+   "evidence": "probe:33"
+  },
+  {
+   "id": "SA-020",
+   "file": "design/spec.md",
+   "line": 14714,
+   "kind": "mech",
+   "claim": "overlay! writes condition stores onto the stopped run's own and opens a fresh run",
+   "evidence": "src/sim.jl:964"
+  },
+  {
+   "id": "SA-021",
+   "file": "design/spec.md",
+   "line": 14715,
+   "kind": "law",
+   "claim": "An overlaid discrete store is the next tick's state",
+   "evidence": "probe:29"
+  },
+  {
+   "id": "SA-022",
+   "file": "design/spec.md",
+   "line": 14720,
+   "kind": "law",
+   "claim": "A reset honored only in s_update reaches outputs one tick late",
+   "evidence": "src/library.jl:577"
+  },
+  {
+   "id": "SA-023",
+   "file": "design/spec.md",
+   "line": 14727,
+   "kind": "law",
+   "claim": "Only handlers write x",
+   "evidence": "src/executor.jl:393"
+  },
+  {
+   "id": "SA-024",
+   "file": "design/spec.md",
+   "line": 14728,
+   "kind": "law",
+   "claim": "A commanded reset is a Bool input read by an event guard",
+   "evidence": "src/library.jl:454"
+  },
+  {
+   "id": "SA-026",
+   "file": "design/spec.md",
+   "line": 14736,
+   "kind": "law",
+   "claim": "Outputs are re-swept to quiescence after handlers, so edge reset is same-boundary",
+   "evidence": "src/model.jl:775"
+  },
+  {
+   "id": "SA-027",
+   "file": "design/spec.md",
+   "line": 14751,
+   "kind": "decl",
+   "claim": "Guard is a Bool or a sign value sigma holding at sigma>=0",
+   "evidence": "src/declare.jl:602"
+  },
+  {
+   "id": "SA-028",
+   "file": "design/spec.md",
+   "line": 14753,
+   "kind": "law",
+   "claim": "Bool guard is non-localized, sign guard localized",
+   "evidence": "src/build.jl:1288"
+  },
+  {
+   "id": "SA-029",
+   "file": "design/spec.md",
+   "line": 14758,
+   "kind": "law",
+   "claim": "Events fire on not-holding to holding edges only",
+   "evidence": "src/model.jl:748"
+  },
+  {
+   "id": "SA-030",
+   "file": "design/spec.md",
+   "line": 14759,
+   "kind": "mech",
+   "claim": "Prior is the previous boundary's quiescent sample",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "SA-031",
+   "file": "design/spec.md",
+   "line": 14760,
+   "kind": "law",
+   "claim": "A predicate that keeps holding fires once",
+   "evidence": "src/model.jl:748"
+  },
+  {
+   "id": "SA-032",
+   "file": "design/spec.md",
+   "line": 14761,
+   "kind": "law",
+   "claim": "Boundary zero sets priors not-holding; predicate holding at t0 fires",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "SA-033",
+   "file": "design/spec.md",
+   "line": 14763,
+   "kind": "law",
+   "claim": "Opposite direction needs a second event with negated guard",
+   "evidence": "src/model.jl:748"
+  },
+  {
+   "id": "SA-034",
+   "file": "design/spec.md",
+   "line": 14766,
+   "kind": "law",
+   "claim": "Sign form -u holds at u exactly zero",
+   "evidence": "probe:59"
+  },
+  {
+   "id": "SA-035",
+   "file": "design/spec.md",
+   "line": 14768,
+   "kind": "law",
+   "claim": "u<0 ? -u : -one(u) does not hold at zero",
+   "evidence": "probe:59"
+  },
+  {
+   "id": "SA-036",
+   "file": "design/spec.md",
+   "line": 14771,
+   "kind": "law",
+   "claim": "Chattering ends at the firing budget under a FiringBudget warning",
+   "evidence": "src/model.jl:759"
+  },
+  {
+   "id": "SA-037",
+   "file": "design/spec.md",
+   "line": 14775,
+   "kind": "law",
+   "claim": "Handler runs against the firing round's sweep",
+   "evidence": "src/executor.jl:385"
+  },
+  {
+   "id": "SA-038",
+   "file": "design/spec.md",
+   "line": 14777,
+   "kind": "law",
+   "claim": "A component fires at most one event per round",
+   "evidence": "src/model.jl:763"
+  },
+  {
+   "id": "SA-039",
+   "file": "design/spec.md",
+   "line": 14778,
+   "kind": "law",
+   "claim": "Later own events are re-decided in the next round",
+   "evidence": "src/model.jl:724"
+  },
+  {
+   "id": "SA-040",
+   "file": "design/spec.md",
+   "line": 14780,
+   "kind": "law",
+   "claim": "Only sweeps write the signal table",
+   "evidence": "src/executor.jl:393"
+  },
+  {
+   "id": "SA-041",
+   "file": "design/spec.md",
+   "line": 14783,
+   "kind": "law",
+   "claim": "Probe evaluates user functions at type-chosen values",
+   "evidence": "src/declare.jl:932"
+  },
+  {
+   "id": "SA-042",
+   "file": "design/spec.md",
+   "line": 14784,
+   "kind": "law",
+   "claim": "A value-level throw is a build failure at the probe",
+   "evidence": "src/declare.jl:969"
+  },
+  {
+   "id": "SA-043",
+   "file": "design/spec.md",
+   "line": 14784,
+   "kind": "law",
+   "claim": "A value-level throw at runtime is a StepError",
+   "evidence": "src/frame.jl:68"
+  },
+  {
+   "id": "SA-044",
+   "file": "design/spec.md",
+   "line": 14785,
+   "kind": "law",
+   "claim": "Plausibility is a published stop request",
+   "evidence": "src/library.jl:416"
+  },
+  {
+   "id": "SA-045",
+   "file": "design/spec.md",
+   "line": 14789,
+   "kind": "law",
+   "claim": "Stop requests are read from completed-boundary snapshots",
+   "evidence": "src/sim.jl:2027"
+  },
+  {
+   "id": "SA-046",
+   "file": "design/spec.md",
+   "line": 14791,
+   "kind": "law",
+   "claim": "Every request stops the run unless the advance ignores it",
+   "evidence": "src/sim.jl:1559"
+  },
+  {
+   "id": "SA-047",
+   "file": "design/spec.md",
+   "line": 14795,
+   "kind": "law",
+   "claim": "Discrete bundle carries Δt",
+   "evidence": "src/declare.jl:905"
+  },
+  {
+   "id": "SA-048",
+   "file": "design/spec.md",
+   "line": 14811,
+   "kind": "law",
+   "claim": "Contract declarations are u_types, y_types, state_events, store shapes",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "SA-049",
+   "file": "design/spec.md",
+   "line": 14814,
+   "kind": "mech",
+   "claim": "SumJunction{V,N} and Or{N} take the varying part as a type parameter",
+   "evidence": "src/library.jl:60"
+  },
+  {
+   "id": "SA-050",
+   "file": "design/spec.md",
+   "line": 14815,
+   "kind": "law",
+   "claim": "ws_init is the one declaration that takes the scalar and may read fields",
+   "evidence": "src/declare.jl:138"
+  },
+  {
+   "id": "SA-052",
+   "file": "design/spec.md",
+   "line": 14819,
+   "kind": "law",
+   "claim": "Freeze strips partials",
+   "evidence": "src/library.jl:409"
+  },
+  {
+   "id": "SA-053",
+   "file": "design/spec.md",
+   "line": 14819,
+   "kind": "law",
+   "claim": "Freeze wire declares a zero coupling in every Jacobian",
+   "evidence": "src/library.jl:401"
+  },
+  {
+   "id": "SA-054",
+   "file": "design/spec.md",
+   "line": 14826,
+   "kind": "law",
+   "claim": "Routing a scheduled gain through Freeze holds it at nominal",
+   "evidence": "src/library.jl:2858"
+  },
+  {
+   "id": "SA-055",
+   "file": "design/spec.md",
+   "line": 14831,
+   "kind": "law",
+   "claim": "UnitDelay moves a continuous-loop signal onto the discrete tier with a ZOH",
+   "evidence": "src/library.jl:366"
+  },
+  {
+   "id": "SA-056",
+   "file": "design/spec.md",
+   "line": 14834,
+   "kind": "law",
+   "claim": "Cycle diagnostic says the delay makes the signal discrete",
+   "evidence": "src/diagnostics.jl:1033"
+  },
+  {
+   "id": "SA-057",
+   "file": "design/spec.md",
+   "line": 14838,
+   "kind": "law",
+   "claim": "Counted but unwired contributor is an unconnected-input error",
+   "evidence": "probe:41"
+  },
+  {
+   "id": "SA-058",
+   "file": "design/spec.md",
+   "line": 14840,
+   "kind": "law",
+   "claim": "An unwired contributor output is legal and silent",
+   "evidence": "probe:44"
+  },
+  {
+   "id": "SA-059",
+   "file": "design/spec.md",
+   "line": 14843,
+   "kind": "law",
+   "claim": "Fold order is the positional order of the junction inputs",
+   "evidence": "src/library.jl:80"
+  },
+  {
+   "id": "SA-060",
+   "file": "design/spec.md",
+   "line": 14850,
+   "kind": "law",
+   "claim": "Staged levels coalesce newest-wins per face, so idempotent",
+   "evidence": "src/dataplane.jl:452"
+  },
+  {
+   "id": "SA-061",
+   "file": "design/spec.md",
+   "line": 14853,
+   "kind": "mech",
+   "claim": "map_input is pure; cross-datum state arrives inside the datum",
+   "evidence": "src/bindings.jl:119"
+  },
+  {
+   "id": "SA-062",
+   "file": "design/spec.md",
+   "line": 14856,
+   "kind": "decl",
+   "claim": "Loop on running(handle)",
+   "evidence": "src/devices.jl:229"
+  },
+  {
+   "id": "SA-063",
+   "file": "design/spec.md",
+   "line": 14857,
+   "kind": "law",
+   "claim": "unblock! override makes a blocking call return",
+   "evidence": "src/devices.jl:140"
+  },
+  {
+   "id": "SA-064",
+   "file": "design/spec.md",
+   "line": 14858,
+   "kind": "law",
+   "claim": "Voluntary exit is returning, then shutdown! runs",
+   "evidence": "src/devices.jl:641"
+  },
+  {
+   "id": "SA-065",
+   "file": "design/spec.md",
+   "line": 14860,
+   "kind": "law",
+   "claim": "Unchecked predicate surfaces as DeviceJoinTimeout naming the device",
+   "evidence": "src/sim.jl:1939"
+  },
+  {
+   "id": "SA-066",
+   "file": "design/spec.md",
+   "line": 14861,
+   "kind": "law",
+   "claim": "A stall surfaces as a stale heartbeat",
+   "evidence": "src/dataplane.jl:342"
+  },
+  {
+   "id": "SA-067",
+   "file": "design/spec.md",
+   "line": 14865,
+   "kind": "law",
+   "claim": "shutdown! runs on every exit path",
+   "evidence": "src/devices.jl:641"
+  },
+  {
+   "id": "SA-068",
+   "file": "design/spec.md",
+   "line": 14866,
+   "kind": "law",
+   "claim": "A throwing init! hands the half-built device to shutdown!",
+   "evidence": "src/sim.jl:1843"
+  },
+  {
+   "id": "SA-069",
+   "file": "design/spec.md",
+   "line": 14868,
+   "kind": "law",
+   "claim": "init! owes no cleanup",
+   "evidence": "src/devices.jl:106"
+  },
+  {
+   "id": "SA-070",
+   "file": "design/spec.md",
+   "line": 14869,
+   "kind": "law",
+   "claim": "An interrupt can repeat shutdown! or release a never-initialized device",
+   "evidence": "src/devices.jl:129"
+  },
+  {
+   "id": "SA-071",
+   "file": "design/spec.md",
+   "line": 14872,
+   "kind": "law",
+   "claim": "A repeated shutdown! is not reported",
+   "evidence": "src/devices.jl:619"
+  },
+  {
+   "id": "SA-072",
+   "file": "design/spec.md",
+   "line": 14879,
+   "kind": "law",
+   "claim": "Binding traits are read only during attach!",
+   "evidence": "src/sim.jl:2516"
+  },
+  {
+   "id": "SA-073",
+   "file": "design/spec.md",
+   "line": 14879,
+   "kind": "law",
+   "claim": "attach! cross-checks traits against claims/reads",
+   "evidence": "src/roster.jl:203"
+  },
+  {
+   "id": "SA-074",
+   "file": "design/spec.md",
+   "line": 14881,
+   "kind": "law",
+   "claim": "Framework never calls map_input or map_output",
+   "evidence": "src/bindings.jl:196"
+  },
+  {
+   "id": "SA-075",
+   "file": "design/spec.md",
+   "line": 14886,
+   "kind": "decl",
+   "claim": "report!(handle, MalformedDatum(cause)) reports a bad datum",
+   "evidence": "src/devices.jl:401"
+  },
+  {
+   "id": "SA-076",
+   "file": "design/spec.md",
+   "line": 14887,
+   "kind": "law",
+   "claim": "Other exceptions become DeviceCrash in the wrapper",
+   "evidence": "src/devices.jl:667"
+  },
+  {
+   "id": "SA-077",
+   "file": "design/spec.md",
+   "line": 14892,
+   "kind": "law",
+   "claim": "Widget live iff its terminal producer is a root input in the device's claim",
+   "evidence": "src/devices.jl:513"
+  },
+  {
+   "id": "SA-078",
+   "file": "design/spec.md",
+   "line": 14894,
+   "kind": "law",
+   "claim": "Unexported ports are unpokeable",
+   "evidence": "src/diagnostics.jl:1998"
+  },
+  {
+   "id": "SA-079",
+   "file": "design/spec.md",
+   "line": 14903,
+   "kind": "law",
+   "claim": "get_state/get_deriv read live stores, snapshot readers refuse them",
+   "evidence": "src/readers.jl:182"
+  },
+  {
+   "id": "SA-080",
+   "file": "design/spec.md",
+   "line": 14905,
+   "kind": "law",
+   "claim": "No check refuses a deep path past a generically held child",
+   "evidence": "test/test_conditions.jl:405"
+  },
+  {
+   "id": "SA-081",
+   "file": "design/spec.md",
+   "line": 14913,
+   "kind": "mech",
+   "claim": "Boundary counter increments once per published boundary",
+   "evidence": "src/sim.jl:2803"
+  },
+  {
+   "id": "SA-082",
+   "file": "design/spec.md",
+   "line": 14918,
+   "kind": "law",
+   "claim": "Snapshot carries the trajectory's published-boundary ordinal",
+   "evidence": "src/dataplane.jl:547"
+  },
+  {
+   "id": "SA-083",
+   "file": "design/spec.md",
+   "line": 14917,
+   "kind": "law",
+   "claim": "Slow consumer skips boundaries and gets the current world",
+   "evidence": "src/devices.jl:434"
+  },
+  {
+   "id": "SA-084",
+   "file": "design/spec.md",
+   "line": 14921,
+   "kind": "law",
+   "claim": "init! restarts the ordinal at zero",
+   "evidence": "probe:36"
+  },
+  {
+   "id": "SA-085",
+   "file": "design/spec.md",
+   "line": 14921,
+   "kind": "law",
+   "claim": "Boundary counter is never reset across trajectories",
+   "evidence": "probe:36"
+  },
+  {
+   "id": "SA-086",
+   "file": "design/spec.md",
+   "line": 14927,
+   "kind": "decl",
+   "claim": "Mapping is a table from channel to root input with deadzone and expo",
+   "evidence": "src/bindings.jl:30"
+  },
+  {
+   "id": "SA-087",
+   "file": "design/spec.md",
+   "line": 14943,
+   "kind": "law",
+   "claim": "Checks are reported once at the committed state, never solved",
+   "evidence": "src/trim.jl:81"
+  },
+  {
+   "id": "SA-088",
+   "file": "design/spec.md",
+   "line": 14947,
+   "kind": "law",
+   "claim": "The trim problem has no way to write the environment",
+   "evidence": "src/trim.jl:44"
+  },
+  {
+   "id": "SA-089",
+   "file": "design/spec.md",
+   "line": 14952,
+   "kind": "law",
+   "claim": "Trim and linearization hold the discrete tier",
+   "evidence": "src/trim.jl:505"
+  },
+  {
+   "id": "SA-090",
+   "file": "design/spec.md",
+   "line": 14954,
+   "kind": "law",
+   "claim": "Frozen discrete outputs are zero-partial constants",
+   "evidence": "src/trim.jl:477"
+  },
+  {
+   "id": "SA-091",
+   "file": "design/spec.md",
+   "line": 14959,
+   "kind": "law",
+   "claim": "Controller stores are not decisions (no discrete store in x)",
+   "evidence": "src/linearize.jl:198"
+  },
+  {
+   "id": "SA-092",
+   "file": "design/spec.md",
+   "line": 14964,
+   "kind": "decl",
+   "claim": "replay!(sim, trc; restore = false) after init! of the modified model",
+   "evidence": "src/sim.jl:1338"
+  },
+  {
+   "id": "SA-093",
+   "file": "design/spec.md",
+   "line": 14967,
+   "kind": "law",
+   "claim": "Trace checkpoint holds the recording model's state after boundary zero",
+   "evidence": "test/test_trace.jl:1114"
+  },
+  {
+   "id": "SA-094",
+   "file": "design/spec.md",
+   "line": 14969,
+   "kind": "law",
+   "claim": "Default replay restores the checkpoint state",
+   "evidence": "src/sim.jl:777"
+  },
+  {
+   "id": "SA-095",
+   "file": "design/spec.md",
+   "line": 14970,
+   "kind": "law",
+   "claim": "Structural mismatch errors, parametric difference does not",
+   "evidence": "test/test_trace.jl:1145"
+  }
+ ],
+ "counts": {
+  "law": 80,
+  "mech": 10,
+  "decl": 5,
+  "ptr": 14,
+  "why": 28,
+  "ex": 6
+ }
+}

@@ -1,0 +1,168 @@
+{
+ "judgments": [
+  {
+   "id": "SD4-001",
+   "conforms": true,
+   "evidence": "src/conditions.jl:207-209 `at(prefix, node::ConditionNode)` returns `Scoped(String(prefix), node)` and does no join; probe.jl:13 prints a Scoped holding (\"c\", the same Fragment)."
+  },
+  {
+   "id": "SD4-010",
+   "conforms": true,
+   "evidence": "src/trim.jl:560 `trim!(model::Model{Float64}, problem::TrimProblem; baseline, ...)` and src/sim.jl:1123 for the Simulation method. Both take a required `baseline` keyword and commit `override(baseline, problem.condition(solution))` (trim.jl:730)."
+  },
+  {
+   "id": "SD4-019",
+   "conforms": true,
+   "evidence": "src/conditions.jl:396-398 pushes DuplicateConditionLeaf with `origins = [seen[key].origin, entry.origin]`. probe.jl:26 shows two `at(\"c\", set(x=(θ=…)))` under combine giving DuplicateConditionLeaf with both origins. combine's bare-NamedTuple error methods are at conditions.jl:241-244."
+  },
+  {
+   "id": "SD4-022",
+   "conforms": true,
+   "evidence": "The rig is an idiom with no framework support (spec §13.7). test/fixtures.jl:1564-1572 TerrainRig builds it from ordinary wiring. probe.jl:36-38 builds a one-child Group whose `input_wires = g -> input_passthrough(g, \"c\")` without any rig machinery."
+  },
+  {
+   "id": "SD4-023",
+   "conforms": true,
+   "evidence": "src/assembly.jl:543-548: input_passthrough with no selector keeps every face `input_faces` lists. probe.jl:38 shows the one-child rig's root inputs [c.u] equal to Plant's whole face list [u]."
+  },
+  {
+   "id": "SD4-030",
+   "conforms": true,
+   "evidence": "src/conditions.jl:338-341 resolves a `u` entry, written against the authoring level's face, through the export chain to its root input (`_root_input`). The key is the resolved face (conditions.jl:323-324). probe.jl:41: `init!(m3, at(\"c\", set(x=…, u=(u=1.5,))))` on the rig sets root input c.u by the child's local face (power = 1.5*2.0 = 3.0)."
+  },
+  {
+   "id": "SD4-033",
+   "conforms": true,
+   "evidence": "rg over src/, test/ and examples/ finds no design_world, SimpleAtmosphere, NoWind or HorizontalTerrain. The glossary presents it as 'the rig this design records', which matches design/log.md:2455 (D-071 annotation, 'no source ships a design_world'). No code contradicts the recorded composition.",
+   "note": "Nothing in the code can confirm this. The claim is a design record and matches the D-071 annotation."
+  },
+  {
+   "id": "SD4-034",
+   "conforms": true,
+   "evidence": "No src/ or test/ definition exists, as for SD4-033. Spec §14.9 (spec.md:14294-14303) and log.md:2440/2455 record design_world as a design-time rig for trim and linearization. at() mounting, which it relies on, exists at src/trim.jl:122 and src/linearize.jl:84.",
+   "note": "Design record only. Nothing ships."
+  },
+  {
+   "id": "SD4-035",
+   "conforms": true,
+   "evidence": "Neither name appears anywhere in src/, test/ or examples/. They belong to the external FlightPhysics package, which this repo does not contain or depend on. Nothing at W contradicts the attribution.",
+   "note": "Cannot be checked against this repo's code."
+  },
+  {
+   "id": "SD4-042",
+   "conforms": true,
+   "evidence": "src/conditions.jl:209 stores `String(prefix)`, which is the identity on a String. probe.jl:17 `at(lit, frag).prefix === lit` is true. probe.jl:20 shows that rebuilding a combine/at/set tree per decision allocates 0 bytes. probe.jl:18 isbits(Fragment) is true."
+  },
+  {
+   "id": "SD4-052",
+   "conforms": true,
+   "evidence": "src/trim.jl:122-127 `at(prefix, ::TrimProblem)` wraps condition and prepends to the reads mount chain. src/linearize.jl:84-85 `at(prefix, ::Taps)`. probe.jl:56-57 both return relocated values."
+  },
+  {
+   "id": "SD4-061",
+   "conforms": true,
+   "evidence": "src/conditions.jl:276 `override(base::ConditionNode, patches::ConditionNode...) = Override((base, patches...))`. probe.jl:30-32 shows three layers, with the last patch winning (θ = 0.3)."
+  },
+  {
+   "id": "SD4-070",
+   "conforms": true,
+   "evidence": "src/conditions.jl:701-706 assert_total throws a collected UninitializedInputs in declaration order. It is called before any write by init! (src/model.jl:316, src/sim.jl:844), trim setup (src/trim.jl:599), the trim commit through init!, and linearize under about (src/linearize.jl:316). probe.jl:46 shows UninitializedInputs(:init!, [:in]) with the model still :built."
+  },
+  {
+   "id": "SD4-079",
+   "conforms": true,
+   "evidence": "src/readers.jl:30-37: the family splits by source. Store selectors resolve against live stores (an Executor) and table selectors against a table source (an executor's signal table or a published snapshot). A store selector under a table source is refused as ReadResolution."
+  },
+  {
+   "id": "SD4-088",
+   "conforms": true,
+   "evidence": "src/sim.jl:2508 and :2576: attach!/detach! call assert_configurable, which refuses only :running and :errored (sim.jl:628-634). The legal list is STOPPED_SIM_LEGAL = (:built, :initialized, :stopped) (src/diagnostics.jl:1282). probe.jl:51 shows attach! succeeding on a :built simulation."
+  },
+  {
+   "id": "SD4-097",
+   "conforms": true,
+   "evidence": "src/linearize.jl:84-85 `at(prefix, tap_set::Taps) = Taps(at(prefix, tap_set.x), at(prefix, tap_set.u), at(prefix, tap_set.y))`. probe.jl:56 returns a Taps."
+  },
+  {
+   "id": "SD4-101",
+   "conforms": true,
+   "evidence": "src/trim.jl:301-303: the LM backend solves the named residuals (packed in tolerances' order) for the decisions as a root-find, using an n_residuals x n_decisions Jacobian. trim.jl:724 sets convergence as every residual within its tolerance. The code does not enforce squareness, which matches spec.md:13789 ('non-squareness degrades gracefully')."
+  },
+  {
+   "id": "SD4-107",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:245 `struct StepError{C <: Union{Diagnostic, Exception}}` with `cause::C`. src/model.jl:1094-1095 `_species` unwraps a single-diagnostic DiagnosticError to its diagnostic as the cause, so the parameter is the cause's type."
+  },
+  {
+   "id": "SD4-116",
+   "conforms": true,
+   "evidence": "src/conditions.jl:681-684 `_report_violations` throws the full collected list as one DiagnosticError. The trim passes do the same (src/trim.jl:359-362). Build passes collect into Vector{Diagnostic} carriers (src/diagnostics.jl:116-117)."
+  },
+  {
+   "id": "SD4-122",
+   "conforms": true,
+   "evidence": "Each walkthrough's failure site is asserted on kind and payload. w1: test/test_assembly.jl:951-953 (WireTypo, UnknownPort :ot with :out among the candidates). w2: test/test_assembly.jl:896 (UnconnectedInput). w3: test/test_failures.jl:922-937 (a missing port on a late branch as a ConformanceFailure key-set failure). w4: test/test_descriptor.jl:539 (WireTypeMismatch). w5: test/test_build.jl:60 (UndeclaredReturnField with did-you-mean candidates).",
+   "note": "No testset is labeled as the §8.4 walkthroughs. The five cases are covered across several files."
+  },
+  {
+   "id": "SD4-125",
+   "conforms": false,
+   "evidence": "src/executor.jl:17-23: ExecutionCursor holds comp, fn, phase, index and attempt. probe.jl:62 prints (:comp, :fn, :phase, :index, :attempt). Spec §13.4 (spec.md:11541-11543) adds that inside integration the cursor also records the attempt, per D-452.",
+   "class": "drift",
+   "fix": "It holds three facts, the component by its index in the structure's component list, the function running, and the boundary phase, and inside integration it also records the attempt by its ordinal in the step ([§13.4][s13-4], [D-452][d-452]).",
+   "clear": true,
+   "note": "Drift recorded by D-452 (log.md:19122-19123, 'the execution cursor records the ordinal inside integration') and commit e7dacf9e, which added `attempt::Int` to the cursor."
+  },
+  {
+   "id": "SD4-127",
+   "conforms": true,
+   "evidence": "src/executor.jl:19 `fn::Symbol` (:y_state | :y_direct | :x_deriv | :s_update | :guard | :handler | :x_projection | :none). src/model.jl:1082-1083 copies it into the CursorFrame."
+  },
+  {
+   "id": "SD4-136",
+   "conforms": true,
+   "evidence": "spec.md:15457-15459 says each Appendix C entry names the kind, its owning sections, then severity · raised · policy, then the payload. Entries follow that form, for example spec.md:15531-15537. In the code, severity is a per-kind method (src/diagnostics.jl:59 defaults to :error and :755 sets EmptyFaceSelection to :warning)."
+  },
+  {
+   "id": "SD4-138",
+   "conforms": false,
+   "evidence": "Paths are Strings, but names are Symbols. src/diagnostics.jl:375-381 UnknownPort has `port::Union{Nothing,Symbol}` and `candidates::Vector{Symbol}`, and src/diagnostics.jl:402-404 UnconnectedInput has `face::Symbol`. probe.jl:66 lists these field types, and DuplicateConditionLeaf's field and face are Symbols too.",
+   "class": "deviation",
+   "fix": "paths as strings and names as symbols (never instances or component types), expected/observed port types, the list-in-hand",
+   "clear": false,
+   "backing_entry": "D-058",
+   "note": "This reads 'strings' literally. If 'strings' only means plain identifiers as opposed to instances, the claim holds. The fix would also reach §13.2's 'strings, never instances' rule (spec.md:11274) and the Appendix C lead (spec.md:15452)."
+  },
+  {
+   "id": "SD4-146",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:245 StepError{C}. src/model.jl:1094-1095 `_species(::Model, err::DiagnosticError{<:Diagnostic}) = err.carried`, so a single-diagnostic carrier thrown inside the sequence becomes StepError{Kind}. diagnostics.jl:257 `diagnostic(::StepError{<:Diagnostic})`."
+  },
+  {
+   "id": "SD4-155",
+   "conforms": true,
+   "evidence": "src/sim.jl:180-185 TerminationRecord(t::Float64, policy, source, residue). src/sim.jl:578 builds it with `latest(sim).t`, the final snapshot's boundary time. probe.jl:77 shows termination(s5).t == latest(s5).t == 0.3."
+  },
+  {
+   "id": "SD4-164",
+   "conforms": false,
+   "evidence": "src/trim.jl:737, 750 and 760: trim! logs TrimCommitEvents, TrimCommitResiduals and TrimCommitChecks with @warn. TrimReport (src/trim.jl:186-198) holds only the facts those warnings report (fired_events, committed_residuals, committed_checks), not the warnings. probe.jl:70-71 shows no warnings field and no warnings(::TrimReport) method (warnings is defined only on Build, Deployment, Model and Simulation).",
+   "class": "deviation",
+   "fix": "A warning raised producing one lives on it, save a trim report, which holds the facts its warnings report while `trim!` logs the warnings beside it ([§13.2][s13-2], [D-250][d-250]).",
+   "clear": true,
+   "backing_entry": "D-250",
+   "note": "§13.2 (spec.md:11343-11346) and Appendix C's logged policy (spec.md:15500-15502) already describe the code's behavior. Only the glossary's generalization is off."
+  },
+  {
+   "id": "SD4-165",
+   "conforms": true,
+   "evidence": "src/deployment.jl:67-69: per-component facts are compiled at `compile`, never stored beside them (D-261). src/build.jl:488: the activation's layout is the one home every `x` offset is read from. src/build.jl:794: Structure is complete at construction."
+  },
+  {
+   "id": "SD4-174",
+   "conforms": true,
+   "evidence": "src/model.jl:503-521 `phase_bodies(model) = model.exec.bodies`. probe.jl:80 shows (:sweep_1, :sweep_2, :rhs, :ticks, :events, :projections)."
+  }
+ ],
+ "notes": "Read-only run against W at 62551b06. The one probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/SD4_v/probe.jl, run three times (twice to fix probe bugs). Line 52 (a detach! call) has a probe bug: RosterEntry has no `device` field. I did not cite it. detach!'s legality rests on src/sim.jl:2576. No tracked file was changed.\n\nThree claims do not conform:\n- SD4-125: the cursor's `attempt` is missing from the glossary. This is drift, recorded by D-452 and commit e7dacf9e.\n- SD4-138: diagnostics carry names as Symbols, not Strings. I filed it as a deviation backed by D-058, but it depends on reading 'strings' literally.\n- SD4-164: the trim report holds the facts its warnings report while the warnings themselves are logged. The §13.2 body already says so; the glossary does not.\n\nThe design_world claims (SD4-033/034/035) concern a rig that nothing ships, so they are judged as consistent design records."
+}

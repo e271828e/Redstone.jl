@@ -1,0 +1,68 @@
+== README
+port 0.9654297795999609
+state (q = 0.9654297795999609, v = 0.012058421909455224)
+DiagnosticError: 1 diagnostics
+  AlgebraicCycle: algebraic loop among `plant`, `ctl`: plant/power → ctl/meas, ctl/y → plant/u — real: direct dependencies run all the way around it (`ctl` assumed from its declarations, the rest checked exactly from their code); break it with a state, a `y_state` port, or a `UnitDelay`, which makes the signal discrete, sampled every base tick and held in between (§5.5)
+exports: [:Redstone]
+== ch1
+DiagnosticError: 1 diagnostics
+  DeploymentInvalid: `Δt_frame` must be exact — an integer or a Rational (`Δt_frame = 1//100`): grid derivation is GCD arithmetic, ill-defined over floats (§9.2, §10.5)
+nothing
+Redstone.Series{@NamedTuple{V::Vector{Float64}, h::Vector{Float64}}} (:t, :frame, :boundary, :columns, :V, :h)
+(snapshots = 12001, V = (45.872032471976055, 55.0), h = (1000.0, 1046.016367216492), periods = [27.330000000000002, 27.33, 27.33])
+h rise over start: 46.01636721649197
+bit-equal: true
+fig Figure
+x_init of sim: 
+== ch2
+(status = :converged, iterations = 4, solution = (θ = 0.019930198715528237, δe = 0.025058167737049112, δt = 0.37233719527321874))
+(V̇ = 5.3319126891437915e-14, γ̇ = 4.591382829488566e-12, q̇ = 2.620169706202269e-13)
+(V = 50.0, γ = 0.0, θ = 0.019930198715528237, q = 0.0, h = 1000.0)
+(:converged, :solution, :residuals, :tolerances, :committed_residuals, :committed_checks, :status, :n_evaluations, :n_iterations, :saturated, :fired_events)
+(θ = 0.020081632653061232, δe = 0.024931972789115645, δt = 0.37256008163265303)
+(θ = -0.7540917621053578, δe = 0.5061570899377754, δt = -0.05982561482634763)
+(status = :stalled, saturated = [(:θ, :upper)], residuals = (V̇ = 0.13829176731887605, γ̇ = -0.12392012542197528, q̇ = 0.11761386889363899), lifecycle = :built)
+pkg trim eq: true
+UndefKeywordError: keyword argument `baseline` not assigned
+== ch3
+Linearization: 5 states, 2 inputs, no outputs
+  states:
+         x₀          ẋ₀
+    V    50.0        5.33191e-14
+    γ     0.0        4.59138e-12
+    θ     0.0199302  0.0
+    q     0.0        2.62017e-13
+    h  1000.0        0.0
+  inputs:
+        u₀
+    δe  0.0250582
+    δt  0.372337
+  A:
+        V             γ          θ         q      h
+    V  -0.0372263    -4.89572   -4.91428   0.0    0.0
+    γ   0.00783316   -2.46861    2.46861   0.0    0.0
+    θ   0.0           0.0        0.0       1.0    0.0
+    q   1.04807e-14  20.4167   -20.4167   -3.675  0.0
+    h   0.0          50.0        0.0       0.0    0.0
+  B:
+        δe    δt
+    V    0.0  2.4995
+    γ    0.0  0.000996444
+    θ    0.0  0.0
+    q  -24.5  0.0
+    h    0.0  0.0
+(50.0, 1.0, (V = 0.0, γ = 0.0, θ = 0.0, q = 0.0, h = 0.0))
+fd gap 1.5260639280034738e-10
+ComplexF64[-3.0749727695799973 - 4.478533236338285im, -3.0749727695799973 + 4.478533236338285im, -0.015446974107536022 - 0.23004560389731535im, -0.015446974107536022 + 0.23004560389731535im, 0.0 + 0.0im]
+(ωn = 0.23056363304207236, ζ = 0.06699657662280728, period = 27.31278146912205)
+(ωn = 5.432560858623228, ζ = 0.5660263823274106, period = 1.4029560518159316)
+ref steps 12000
+StepError: in `plant`, integration of the frame from boundary 3 (t = 4.0):
+  replay!(sim2, trc; to_boundary = 3) then step!(sim2) reproduces it
+  cause: NonfiniteState: `plant`: state leaf `V` is -Inf at t = 4.0, the end of a step in the frame from boundary 3 — the model diverged; replay to 3 and step! to inspect the frame
+(steps = 1200, error = 9.29570553864778e-7)
+DiagnosticError: 1 diagnostics
+  DeploymentInvalid: an adaptive algorithm needs the step floor: `Simulation(…; h_min = 1//10^6)` — a domain rate is not a framework default (§9.2, §10.2)
+(steps = 418, error = 0.0004291797108777473)
+(true, true)
+== done

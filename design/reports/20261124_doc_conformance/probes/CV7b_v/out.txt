@@ -1,0 +1,34 @@
+PROBE[methods get_state] DataType[Tuple{typeof(get_state), AbstractString}, Tuple{typeof(get_state), AbstractString, Union{AbstractString, Symbol}}]
+PROBE[methods get_deriv] DataType[Tuple{typeof(get_deriv), AbstractString}, Tuple{typeof(get_deriv), AbstractString, Union{AbstractString, Symbol}}]
+PROBE[methods get_output] DataType[Tuple{typeof(get_output), AbstractString}, Tuple{typeof(get_output), AbstractString, Union{AbstractString, Symbol}}]
+PROBE[methods get_input] DataType[Tuple{typeof(get_input)}, Tuple{typeof(get_input), Union{AbstractString, Symbol}}]
+PROBE[methods get_face] DataType[Tuple{typeof(get_face)}, Tuple{typeof(get_face), Union{AbstractString, Symbol}}]
+PROBE[defaults] (Redstone.GetState("a", ""), GetDeriv("a", ""), GetOutput("a", ""), Redstone.GetInput(""), Redstone.GetFace(""))
+PROBE[004 table get_state] [(:ReadResolution, :store_selector)]
+PROBE[004 table get_deriv] [(:ReadResolution, :store_selector)]
+PROBE[004 exec get_state ok] no_error
+PROBE[004 series get_state] [(:ReadResolution, :store_selector)]
+PROBE[004 series get_output ok] no_error
+PROBE[013 bare ports world paths] ["plant/loop/flow", "plant/loop/scale", "plant/loop/echo", "plant/spin", "plant/summer", "ramp"]
+PROBE[013 headless on bare-y port (acc, named y)] [(:ReadResolution, :port_shape)]
+PROBE[013 headless bare-y spin whole] no_error
+PROBE[013 headless bare-y spin [2]] no_error
+PROBE[013 bare-y spin :y] no_error
+PROBE[013 named y on bare (acc, :y)] no_error
+PROBE[013 assembly path] [(:ReadResolution, :assembly_path)]
+PROBE[013 undeclared port] [(:ReadResolution, :undeclared)]
+PROBE[013 bad step] [(:ReadResolution, :not_indexable)]
+PROBE[013 headless on named ports] [(:ReadResolution, :port_shape)]
+PROBE[013 snapshot ok + exec ok] (:no_error, :no_error)
+PROBE[022 type] Reads{@NamedTuple{a::Redstone.GetState}}
+PROBE[022 non-selector] [(:ReadSetMisuse, :not_a_selector)]
+PROBE[022 unknown path] [(:PathResolution, :unknown_child)]
+PROBE[022 other] [(:ReadResolution, :undeclared)]
+PROBE[022 series unknown path] [(:PathResolution, :unknown_child)]
+PROBE[028 latch get_state headless] no_error
+PROBE[028 latch get_state m] [(:ReadResolution, :undeclared)]
+PROBE[028 latch get_state x] no_error
+PROBE[028 src (mode only) get_state headless] [(:ReadResolution, :store_shape)]
+PROBE[028 src get_state :phase] [(:ReadResolution, :undeclared)]
+PROBE[028 tick get_state headless] no_error
+PROBE[028 acc get_deriv headless] no_error

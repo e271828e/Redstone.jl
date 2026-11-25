@@ -1,0 +1,37 @@
+{
+ "SD4": {
+  "spec": [
+   [
+    17157,
+    17427
+   ]
+  ]
+ },
+ "K7a": {
+  "files": [
+   "design/companions/longitudinal_aircraft.md"
+  ]
+ },
+ "K7b": {
+  "files": [
+   "design/companions/store_at_rest_walkthrough.md"
+  ]
+ },
+ "T7": {
+  "files": [
+   "README.md",
+   "docs/src/index.md",
+   "docs/src/tutorial/index.md",
+   "docs/src/tutorial/aircraft.md",
+   "docs/src/tutorial/trim.md",
+   "docs/src/tutorial/linearize.md"
+  ]
+ },
+ "L7": {
+  "log": [
+   "D-076",
+   "D-092",
+   "D-161"
+  ]
+ }
+}

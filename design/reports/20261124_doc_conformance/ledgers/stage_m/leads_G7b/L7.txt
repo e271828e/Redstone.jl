@@ -1,0 +1,15 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-076: 2624-2643
+D-092: 3107-3125
+D-161: 6263-6282
+
+# Stage M leads
+names missing: `_types` at log.md:2630 (D-076)
+names missing: `get_` at log.md:6272 (D-161)
+names missing: `init_` at log.md:2629 (D-076)
+names missing: `input_types` at log.md:2628 (D-076)
+names missing: `interactive` at log.md:6274 (D-161)
+names missing: `local_types` at log.md:2628 (D-076)
+names missing: `needs_calling_task` at log.md:6275 (D-161)
+names missing: `output_types` at log.md:2628 (D-076)
+names missing: `service` at log.md:3112 (D-092)

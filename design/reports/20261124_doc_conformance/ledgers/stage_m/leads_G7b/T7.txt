@@ -1,0 +1,7 @@
+names missing: `delta_e` at docs/src/tutorial/aircraft.md:20
+names missing: `delta_t` at docs/src/tutorial/aircraft.md:21
+names missing: `examples` at docs/src/tutorial/index.md:11
+names missing: `omega_n` at docs/src/tutorial/linearize.md:92
+names missing: `delta_e` at docs/src/tutorial/trim.md:27
+names missing: `delta_t` at docs/src/tutorial/trim.md:28
+names test-only: `julia` at docs/src/tutorial/index.md:22

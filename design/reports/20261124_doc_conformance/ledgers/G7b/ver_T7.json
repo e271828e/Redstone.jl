@@ -1,0 +1,144 @@
+{
+ "judgments": [
+  {
+   "id": "T7-001",
+   "conforms": true,
+   "evidence": "probe.jl:43-44 builds the README tree (Group of plant and ctl wired through local/input/output wires) and runs it to port y = 0.9654297795999609; directed wires \"from\" => \"to\" in Group (src/structure.jl)"
+  },
+  {
+   "id": "T7-012",
+   "conforms": true,
+   "evidence": "probe.jl:53 prints \"AlgebraicCycle: algebraic loop among `plant`, `ctl`: plant/power → ctl/meas, ctl/y → plant/u ...\", byte-for-byte the README transcript; message head built at src/diagnostics.jl:1037"
+  },
+  {
+   "id": "T7-021",
+   "conforms": true,
+   "evidence": "src/linearize.jl:305 seeds ForwardDiff.Dual{LinearizeTag,Float64,width}; src/trim.jl:620,660 reads the trim Jacobian off Dual partials; probe.jl:126 finite differences differ from linearize's A by 1.5e-10 only"
+  },
+  {
+   "id": "T7-030",
+   "conforms": true,
+   "evidence": "src/library.jl:377 struct UnitDelay, src/library.jl:536 struct Delay"
+  },
+  {
+   "id": "T7-044",
+   "conforms": true,
+   "evidence": "probe.jl:46: all 18 names (AbstractComponent ... build) are defined in Redstone as functions or types; probe.jl:17-37 adds methods to x_init, s_init, u_types, y_types, y_state, y_direct, x_deriv, s_update and the model builds and runs"
+  },
+  {
+   "id": "T7-053",
+   "conforms": true,
+   "evidence": "src/declare.jl:453 '`Δt` is the period and `τ` the offset, each in seconds'; probe.jl:45 Absolute(1//50) => Absolute(1//50, 0//1), a 1/50 s period"
+  },
+  {
+   "id": "T7-072",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:154 pitch_hold uses PID/DiscretePID; examples/src/longitudinal.jl:446,472 closed_loop builds a DiscreteLQRTracker on the longitudinal aircraft"
+  },
+  {
+   "id": "T7-089",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:51 x_init(::Longitudinal) = (V = 50.0, γ = 0.0, θ = 0.0, q = 0.0, h = 1000.0)"
+  },
+  {
+   "id": "T7-098",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:60 Cm = Cm0 + Cmα*α + Cmq*q*c̄/(2V) + Cmδe*δe and :63 moment = q̄*S*c̄*Cm"
+  },
+  {
+   "id": "T7-109",
+   "conforms": true,
+   "evidence": "src/declare.jl:154-157 u_types 'Return the types the component accepts on its inputs, as a NamedTuple by input name or as one type'; y_types declared alike in src/declare.jl"
+  },
+  {
+   "id": "T7-119",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:106 aircraft() = Group((; plant = Longitudinal()); ...); probe.jl:61 state(asim, \"plant\") reads it"
+  },
+  {
+   "id": "T7-121",
+   "conforms": true,
+   "evidence": "probe.jl:64-65: the log of a 1//100 frame run holds snapshots at t = 0.0, 0.01, 0.02, ..., 120.0, one per frame top; design/spec.md:17038 snapshot is the per-boundary publication of the signal table, and every frame top is a boundary (spec.md:309)",
+   "note": "Snapshots are also published at step ends and localized event times inside a frame. The sentence does not say 'only', so it holds."
+  },
+  {
+   "id": "T7-130",
+   "conforms": true,
+   "evidence": "probe.jl:61 after init! with a condition naming only V and θ: (V = 55.0, γ = 0.0, θ = 0.01993, q = 0.0, h = 1000.0); probe.jl:68 the same after a 120 s run and a second init!, so the unnamed states return to x_init, not the run's end values"
+  },
+  {
+   "id": "T7-138",
+   "conforms": true,
+   "evidence": "probe.jl:64 the log holds 12001 snapshots for 12000 frames of 1//100 s, matching the tutorial's 12 001",
+   "note": "True for this run only because one step is taken per frame. The log holds one snapshot per boundary: probe.jl:141 with Δt_frame = 1, h_max = 1//10 gives 1200 steps over 120 frames. linearize.md:134-136 depends on that. A sharper wording would be 'The log holds one snapshot per step, here one per frame'."
+  },
+  {
+   "id": "T7-149",
+   "conforms": true,
+   "evidence": "probe.jl:101: the tutorial's Longitudinal, typed verbatim, and RedstoneExamples.aircraft() flown from off_trim give (V, h) columns that compare == true; examples/src/longitudinal.jl:34-70,106-107 is the chapter's code verbatim"
+  },
+  {
+   "id": "T7-079",
+   "conforms": true,
+   "evidence": "examples/Project.toml:1 name = \"RedstoneExamples\" in the repository's examples subdirectory; Redstone is added first by URL, so the examples' Redstone dependency resolves",
+   "note": "Not run, since it needs network access. Checked against the package layout only."
+  },
+  {
+   "id": "T7-081",
+   "conforms": true,
+   "evidence": "Project.toml:7 workspace projects = [\"test\", \"examples\", \"docs\"]; docs/Project.toml lists Redstone, RedstoneExamples and CairoMakie; Manifest.toml:1637-1651 resolves Redstone at path \".\" and RedstoneExamples at path \"examples\"; the probe loaded Redstone, RedstoneExamples and ComponentArrays under --project=docs"
+  },
+  {
+   "id": "T7-194",
+   "conforms": true,
+   "evidence": "src/linearize.jl:47-50,70 taps(; x, u, y) 'built from three labeled selector lists'; probe.jl:111-113 builds them from get_state and get_input selectors"
+  },
+  {
+   "id": "T7-203",
+   "conforms": true,
+   "evidence": "probe.jl:117 linearize returns Matrix{Float64}; probe.jl:119-120 after `using ComponentArrays`, labeled gives a ComponentMatrix with axes (V, γ, θ, q, h) and A[:h, :γ] = 50.0; ext/RedstoneComponentArraysExt.jl:15"
+  },
+  {
+   "id": "T7-214",
+   "conforms": true,
+   "evidence": "probe.jl:123 x_deriv(Longitudinal(), (; x = x₀, u = u₀)) returns the derivative NamedTuple, which is near zero at trim; examples/src/longitudinal.jl:55 is a plain method"
+  },
+  {
+   "id": "T7-229",
+   "conforms": true,
+   "evidence": "src/deployment.jl:350-353 RK4 takes each span between mandatory instants in the fewest equal steps h_max allows; probe.jl:141 h_max = 1//10 gives 1200 steps at t = 0, 0.1, 0.2; probe.jl:143 h_max = 3//10 gives 4 steps of 0.25 per frame",
+   "note": "The general unit is the span between mandatory instants, which are frame tops and due instants (spec.md:299-301). For the tutorial's continuous-only aircraft the span is the frame, so the sentence holds here."
+  },
+  {
+   "id": "T7-230",
+   "conforms": true,
+   "evidence": "src/deployment.jl:352 'one step when the deployment sets no bound'; probe.jl:139 the default run of 120 s at 1//100 takes 12000 steps; probe.jl:144 default algorithm is RK4()"
+  },
+  {
+   "id": "T7-241",
+   "conforms": true,
+   "evidence": "src/model.jl:928-931 _check_finite! checks every state leaf after each accepted step and throws NonfiniteState on the first one; probe.jl:149 fly(Δt_frame = 1) throws StepError with cause 'NonfiniteState: `plant`: state leaf `V` is -Inf at t = 4.0'"
+  },
+  {
+   "id": "T7-253",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:136 longitudinal_taps(); probe.jl:128 its A and B equal the chapter's: (true, true)"
+  },
+  {
+   "id": "T7-160",
+   "conforms": true,
+   "evidence": "src/trim.jl:598 resolve_condition(override(baseline, problem.condition(guess)), ...): condition is called on the decisions and gives a condition"
+  },
+  {
+   "id": "T7-169",
+   "conforms": true,
+   "evidence": "src/trim.jl:730 commit!(override(baseline, problem.condition(solution))); src/trim.jl:520 docstring 'init!(model, override(baseline, problem.condition(solution)); t0)'"
+  },
+  {
+   "id": "T7-183",
+   "conforms": true,
+   "evidence": "probe.jl:108 level_flight(V = 20.0) gives status = :stalled, saturated = [(:θ, :upper)], lifecycle = :built, so nothing is committed; by hand CL = 9810/(0.5·1.225·400·16) = 2.50 needs α = 0.44 > θ upper bound 0.3 (examples/src/longitudinal.jl:122)"
+  }
+ ],
+ "notes": "All 27 claims match the code at W (62551b06). I changed no tracked file. I created only /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/T7_v/probe.jl and its output, probe.out, in the same folder. I ran the probe once successfully, with --project=docs instead of --project=test. The test project lacks RedstoneExamples, which the tutorial claims need. A first attempt was not run: I fixed one call in the script, a Deployment that needed build(...), before running it. Two claims hold only in context and are worth tightening. T7-138: the log holds one snapshot per boundary, not per frame; this run has one step per frame. T7-229: RK4 divides spans between mandatory instants, not frames; for the continuous-only aircraft the span is the frame. T7-079 was checked against the package layout only, without network access."
+}

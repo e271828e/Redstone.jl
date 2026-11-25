@@ -1,0 +1,1648 @@
+{
+ "rows": [
+  {
+   "id": "K7b-063",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 112,
+   "kind": "ex",
+   "claim": "sketch calls `init!(model, at(\"delay\", set(s = s_copied)), t_k)` with t_k positional on a model",
+   "evidence": "probe:44 MethodError for a positional t0; probe:50 a claimed model refuses init!; src/model.jl:317 and src/sim.jl:834 take `t0` as a keyword",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The sketch is labelled illustrative with approximate names, but `init!`, `at`, `set` and `t0` are real API. A Simulation owns its model, so the call goes through the sim. Spec §14.1 gives `t0` as the keyword.",
+   "fix": "`init!(sim, at(\"delay\", set(s = s_copied)); t0 = t_k)`"
+  },
+  {
+   "id": "K7b-064",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 113,
+   "kind": "ex",
+   "claim": "`step!(sim)` after `init!` is where boundary zero publishes y = u_k",
+   "evidence": "probe:34 port is already 4 straight after init!; src/model.jl:372 runs boundary zero inside init!",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Boundary zero runs and publishes inside `init!`. The following `step!` publishes frame k+1's boundary, where the copy reads one more than the recording.",
+   "fix": "Put the comment on the `init!` line: `init!` publishes y = u_k at boundary zero. Drop the `step!` line or say it publishes the next tick."
+  },
+  {
+   "id": "K7b-084",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 151,
+   "kind": "law",
+   "claim": "a checkpoint's stores are reachable only through `restore!` and the trace header",
+   "evidence": "probe:16 `chk.state.s` reads (n = 4,); src/checkpoint.jl:55-110 documents `ModelState` fields s and m, with `Checkpoint.state`",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "The spec/D-273 say no path-addressed reader and no condition conversion, which holds. Only the 'reachable only through' wording is false: the struct fields are readable. D-273's annotation says the view was never built.",
+   "fix": "Say a checkpoint has no path-addressed reader and no conversion to a condition; its `s` and `m` fields can be read as plain struct fields."
+  },
+  {
+   "id": "K7b-085",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 153,
+   "kind": "law",
+   "claim": "the one public way to read a discrete store is `state(model, path)` on a stopped run",
+   "evidence": "probe:16 `chk.state.s` is a second read; src/model.jl:1026 `state`; src/sim.jl:3041",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "Same cause as K7b-084. Nothing is exported (probe2 isexported false), so 'public' is documented API only.",
+   "fix": "Say `state(sim, path)` is the one path-addressed way to read a discrete store."
+  },
+  {
+   "id": "K7b-106",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 196,
+   "kind": "law",
+   "claim": "a state what-if has no door; there is no clean spelling today for fly, stop, change states, continue",
+   "evidence": "src/sim.jl:964 `overlay!(sim, condition)`; spec.md:10703; log D-429 (design/log.md:17414); test/test_discrete.jl:975",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-429 built the door the same day. Section 4 stayed in the present tense of before. The D-273 annotation (log.md:12310) records the amendment.",
+   "fix": "Rewrite as past tense: before D-429 a state what-if had no door; `overlay!` is now that door."
+  },
+  {
+   "id": "K7b-107",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 198,
+   "kind": "law",
+   "claim": "a condition goes only through `init!`",
+   "evidence": "src/sim.jl:964, src/model.jl:461 `overlay!` takes a condition; log.md:12310",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Same cause as K7b-106.",
+   "fix": "A condition went only through `init!` until D-429; `overlay!` now writes one onto a stopped run."
+  },
+  {
+   "id": "K7b-109",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 202,
+   "kind": "ptr",
+   "claim": "`overlay!` on a stopped run is designed in section 7",
+   "evidence": "src/sim.jl:964 and src/model.jl:461 implement it; spec.md:10703 specifies it",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Section 7 is a design record for an increment that landed. The sentence reads as unbuilt.",
+   "fix": "`overlay!` on a stopped run is built (D-429, spec §12.6); section 7 is its design record."
+  },
+  {
+   "id": "K7b-153",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 304,
+   "kind": "law",
+   "claim": "with the same cond, init! and overlay! differ in exactly five choices and everything else is shared",
+   "evidence": "src/model.jl:317 init! asserts totality, overlay! does not (src/model.jl:464); src/model.jl:365 vs 473 stepper reset vs discontinuity notice",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Section 7.4 itself says totality differs. D-429 log (log.md:17475) also says exactly five. The stepper difference is K7b-158.",
+   "fix": "Add totality and the stepper handling to the differences, or say five choices plus these two door-level differences."
+  },
+  {
+   "id": "K7b-158",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 309,
+   "kind": "law",
+   "claim": "both doors reset the stepper through its seam (reset_stepper!); the _settle! sketch calls reset_stepper!(model) for both flags",
+   "evidence": "src/model.jl:369 init! calls reset_stepper!; src/model.jl:473 overlay! calls discontinuity!(stepper) and never reset_stepper!",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-452 split the seam into a reset (init!) and a discontinuity notice (overlay!, handlers, ticks). The log D-429 text predates it. Spec.md:6636 says overlay! raises the notice.",
+   "fix": "init! resets the stepper's carried state through the seam; overlay! raises the discontinuity notice (D-452) and keeps the carried state."
+  },
+  {
+   "id": "K7b-175",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 328,
+   "kind": "mech",
+   "claim": "the implementation carries one flag, not five",
+   "evidence": "src/model.jl:702 boundary_zero!(model) = run_boundary!(model, ESTABLISH); src/model.jl:474 run_boundary!(model, nothing)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-445's due-set arity replaced the flag: ESTABLISH versus nothing. Priors and clock live in the doors. No Bool flag exists. Log D-429 (log.md:17481) also says one flag.",
+   "fix": "The implementation carries no flag: the settling is `run_boundary!` over the due set, `ESTABLISH` for init! and the empty set for overlay! (D-445)."
+  },
+  {
+   "id": "K7b-177",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 331,
+   "kind": "mech",
+   "claim": "the first two choices live in the doors' bodies; the last three live inside the boundary in the settling routine both doors call",
+   "evidence": "src/model.jl:365 `fill!(exec.events.prior, false)` sits in init!'s body; the stage and update choices sit in run_boundary!'s due-set arity (src/model.jl:670-690)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Priors (choice 3) are reset in init!'s body. Only choices 4 and 5 sit in the boundary. Log D-429 (log.md:17482) says first three in the doors, last two in the routine, which matches the code.",
+   "fix": "The first three choices live in the doors' own bodies, the last two inside the boundary routine both doors call."
+  },
+  {
+   "id": "K7b-180",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 339,
+   "kind": "mech",
+   "claim": "the settling routine `_settle!(model; fresh)` is boundary zero's tail factored out, with one flag",
+   "evidence": "rg finds no `_settle!` in src/; src/model.jl:702 boundary_zero! is a thin wrapper of run_boundary!; src/model.jl:474",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The labelled sketch (lines 342-352) names reset_priors!, sweep_to_quiescence!, run_due_updates!, publish!, none of which exist. The routine is run_boundary!(model, due) (D-445).",
+   "fix": "The settling is `run_boundary!` over the due set; boundary zero is `ESTABLISH`, an overlay's settling the empty set. Redraw or drop the sketch."
+  },
+  {
+   "id": "K7b-188",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 371,
+   "kind": "law",
+   "claim": "today's steppers are fixed-step RK4 and Heun with no carried state",
+   "evidence": "src/checkpoint.jl and code_map.md:189-224: ModelState.stepper holds BS3's proposal and memory; test/imports.jl BS3, BS3Stepper",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-452 and D-461 added the adaptive BS3 with carried state.",
+   "fix": "The fixed-step methods carry no state; BS3 carries a proposal and memory, which init! resets and overlay! flags with the discontinuity notice (D-452)."
+  },
+  {
+   "id": "K7b-189",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 372,
+   "kind": "mech",
+   "claim": "`restore_stepper!` is a no-op and a backend with a cached derivative would need its reset on overlay",
+   "evidence": "src/checkpoint.jl:112-117 hands the stepper's carried state back; src/model.jl:473 overlay! raises the notice instead of a reset",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "restore_stepper! returns carried state for BS3. The seam's reset hook is init!'s; overlay! uses the notice.",
+   "fix": "restore_stepper! hands the carried state back (BS3); an overlay raises the discontinuity notice and does not reset."
+  },
+  {
+   "id": "K7b-211",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 400,
+   "kind": "mech",
+   "claim": "overlay!'s plan method calls `_settle!(fresh = false)` inside the same catch with its own host tag",
+   "evidence": "src/model.jl:474 `run_boundary!(model, nothing)` inside the try; src/model.jl:476 `_wrap_step(model, k, :overlay, err)`",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The catch and host tag :overlay are right. Only the routine name is wrong; see K7b-180.",
+   "fix": "...and runs `run_boundary!` over the empty due set inside the same catch with host `:overlay`."
+  },
+  {
+   "id": "K7b-220",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 408,
+   "kind": "law",
+   "claim": "overlay!'s simulation wrapper has the same lifecycle gate as restore!'s",
+   "evidence": "src/sim.jl:906 overlay! legal only in initialized and stopped; src/sim.jl:1065-1070 restore! legal in built too (STOPPED_SIM_LEGAL, src/diagnostics.jl:1282); spec.md:12863",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The spec table has overlay! error at built, restore! legal at built. overlay! also needs a frame-top rest (CheckpointMidFrame).",
+   "fix": "the gate of `checkpoint`, not `restore!`'s: legal in `initialized` and `stopped` on a frame top, refused at `built`."
+  },
+  {
+   "id": "K7b-224",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 411,
+   "kind": "mech",
+   "claim": "the refactor makes `boundary_zero!` become `_settle!` with the flag",
+   "evidence": "src/model.jl:702 `boundary_zero!` still exists as run_boundary!(model, ESTABLISH); no `_settle!` in src/",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-445's due-set routine took the factoring. Same cause as K7b-180.",
+   "fix": "The refactor made `boundary_zero!` and `overlay!`'s settling thin wrappers over `run_boundary!` (D-445)."
+  },
+  {
+   "id": "K7b-225",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 412,
+   "kind": "mech",
+   "claim": "init!'s plan method calls the settling routine with fresh = true",
+   "evidence": "src/model.jl:372 init! calls boundary_zero!(model)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Same cause as K7b-224.",
+   "fix": "init!'s plan method calls `boundary_zero!`, which is `run_boundary!` over `ESTABLISH`."
+  },
+  {
+   "id": "K7b-258",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 483,
+   "kind": "law",
+   "claim": "init! is bit-identical before and after the factoring on the suite's existing boundary-zero pins",
+   "evidence": "no before-state at the pinned commit",
+   "verdict": "unverifiable",
+   "note": "Refers to a past refactor whose shape differs from section 7.4 (see K7b-224). No pre-refactor build to compare."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K7b-004",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 12,
+   "kind": "law",
+   "claim": "a store copied into a condition starts the new run's discrete side one tick ahead",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "K7b-005",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 16,
+   "kind": "law",
+   "claim": "the same value restored through a checkpoint continues the run exactly",
+   "evidence": "probe:24"
+  },
+  {
+   "id": "K7b-006",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 13,
+   "kind": "mech",
+   "claim": "`state(sim, path)` reads a discrete component's store",
+   "evidence": "src/model.jl:1026"
+  },
+  {
+   "id": "K7b-007",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 19,
+   "kind": "law",
+   "claim": "a restore places the executor after the update; the next sweep is frame k+1's",
+   "evidence": "probe:24"
+  },
+  {
+   "id": "K7b-008",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 21,
+   "kind": "law",
+   "claim": "a condition places it before frame k's sweep, decoding the store one frame early",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "K7b-009",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 22,
+   "kind": "law",
+   "claim": "the store is s_{k+1} after frame k, never s_k",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-010",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 23,
+   "kind": "law",
+   "claim": "s_k exists nowhere after frame k",
+   "evidence": "probe:16"
+  },
+  {
+   "id": "K7b-011",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 28,
+   "kind": "decl",
+   "claim": "a discrete component has a store s, output y=f(s) and update s+=g(s,u)",
+   "evidence": "test/fixtures.jl:314"
+  },
+  {
+   "id": "K7b-012",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 30,
+   "kind": "law",
+   "claim": "a due boundary runs the sweep first, then the due s_update calls",
+   "evidence": "src/model.jl:668"
+  },
+  {
+   "id": "K7b-013",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 33,
+   "kind": "law",
+   "claim": "the sweep publishes y_k = f(s_k) into the cell",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-014",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 34,
+   "kind": "law",
+   "claim": "the update writes s_{k+1} = g(s_k,u_k) into the store",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-016",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 37,
+   "kind": "law",
+   "claim": "the boundary's s_update consumes the completed boundary's samples and makes the next read",
+   "evidence": "src/model.jl:660"
+  },
+  {
+   "id": "K7b-017",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 38,
+   "kind": "law",
+   "claim": "the transition into t_k ran at t_{k-1}",
+   "evidence": "probe:12"
+  },
+  {
+   "id": "K7b-018",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 41,
+   "kind": "law",
+   "claim": "after any frame a store holds the state its next due tick decodes",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-019",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "the cell holds what the last due tick published",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7b-020",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 43,
+   "kind": "law",
+   "claim": "cell and store are one update apart",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-021",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 44,
+   "kind": "law",
+   "claim": "the pre-update s_k is in neither store nor cell",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-022",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 45,
+   "kind": "law",
+   "claim": "the snapshot carries no component stores",
+   "evidence": "src/dataplane.jl:544"
+  },
+  {
+   "id": "K7b-023",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 46,
+   "kind": "law",
+   "claim": "a checkpoint copies the store as it is, with no s_k",
+   "evidence": "probe:16"
+  },
+  {
+   "id": "K7b-027",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 54,
+   "kind": "mech",
+   "claim": "a checkpoint copies the store without interpreting it",
+   "evidence": "src/checkpoint.jl:118"
+  },
+  {
+   "id": "K7b-028",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 59,
+   "kind": "law",
+   "claim": "a period-two component's due tick publishes the cell from the pre-update store",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7b-029",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 60,
+   "kind": "law",
+   "claim": "the due tick's update writes the store ahead of the cell",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7b-030",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 61,
+   "kind": "law",
+   "claim": "a not-due frame touches neither cell nor store",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7b-031",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 61,
+   "kind": "law",
+   "claim": "after the not-due frame the cell holds the old y and the store the next state",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7b-032",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 62,
+   "kind": "law",
+   "claim": "the store does not change through a not-due frame",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7b-033",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 67,
+   "kind": "law",
+   "claim": "the gap stays one update, whether or not the stop frame is due",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7b-034",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 68,
+   "kind": "law",
+   "claim": "in frame indices the two values can be several frames apart",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7b-035",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 74,
+   "kind": "mech",
+   "claim": "a checkpoint copies the executor's state as one value",
+   "evidence": "src/checkpoint.jl:106"
+  },
+  {
+   "id": "K7b-036",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 75,
+   "kind": "mech",
+   "claim": "the checkpoint holds the flat x buffer",
+   "evidence": "src/checkpoint.jl:76"
+  },
+  {
+   "id": "K7b-037",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 75,
+   "kind": "mech",
+   "claim": "it holds every s and m store",
+   "evidence": "src/checkpoint.jl:77"
+  },
+  {
+   "id": "K7b-038",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 76,
+   "kind": "mech",
+   "claim": "it holds every published cell",
+   "evidence": "src/checkpoint.jl:79"
+  },
+  {
+   "id": "K7b-039",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 76,
+   "kind": "mech",
+   "claim": "it holds the guard priors",
+   "evidence": "src/checkpoint.jl:80"
+  },
+  {
+   "id": "K7b-040",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 76,
+   "kind": "mech",
+   "claim": "it holds the clock",
+   "evidence": "src/checkpoint.jl:82"
+  },
+  {
+   "id": "K7b-041",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 76,
+   "kind": "mech",
+   "claim": "restore! writes all of it back",
+   "evidence": "src/checkpoint.jl:118"
+  },
+  {
+   "id": "K7b-042",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 77,
+   "kind": "law",
+   "claim": "restore! runs no boundary",
+   "evidence": "src/model.jl:1331"
+  },
+  {
+   "id": "K7b-043",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 77,
+   "kind": "law",
+   "claim": "restore! publishes one snapshot at the checkpoint's t",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "K7b-044",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 78,
+   "kind": "law",
+   "claim": "after restore the executor holds x_k, s_{k+1}, y_k",
+   "evidence": "probe:22"
+  },
+  {
+   "id": "K7b-045",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 80,
+   "kind": "law",
+   "claim": "the next sweep publishes f(s_{k+1}), as the uninterrupted run did",
+   "evidence": "probe:24"
+  },
+  {
+   "id": "K7b-046",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 84,
+   "kind": "law",
+   "claim": "a condition is an initial condition and nothing else",
+   "evidence": "src/checkpoint.jl:68"
+  },
+  {
+   "id": "K7b-047",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 85,
+   "kind": "mech",
+   "claim": "init! applies a sparse overlay on the declared defaults",
+   "evidence": "src/model.jl:360"
+  },
+  {
+   "id": "K7b-048",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 86,
+   "kind": "law",
+   "claim": "boundary zero runs after the condition is applied",
+   "evidence": "src/model.jl:372"
+  },
+  {
+   "id": "K7b-049",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 86,
+   "kind": "law",
+   "claim": "boundary zero has no incoming transition on either tier",
+   "evidence": "src/model.jl:702"
+  },
+  {
+   "id": "K7b-050",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 88,
+   "kind": "law",
+   "claim": "boundary zero's sweep publishes f(s(0))",
+   "evidence": "probe:12"
+  },
+  {
+   "id": "K7b-051",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 89,
+   "kind": "law",
+   "claim": "every discrete output stage is admitted at boundary zero, due or not",
+   "evidence": "src/model.jl:690"
+  },
+  {
+   "id": "K7b-052",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 90,
+   "kind": "law",
+   "claim": "boundary zero's update then produces s(1)",
+   "evidence": "probe:12"
+  },
+  {
+   "id": "K7b-053",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 92,
+   "kind": "law",
+   "claim": "the pair read off the stopped run is (x_k, s_{k+1})",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-054",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 94,
+   "kind": "law",
+   "claim": "the authored pair at t_k publishes f(s_{k+1}) beside x_k",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "K7b-055",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 96,
+   "kind": "law",
+   "claim": "the recorded run had f(s_k) beside the same x_k",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-056",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 96,
+   "kind": "law",
+   "claim": "the continuous side is placed right: x_k starts the outgoing integration",
+   "evidence": "src/model.jl:361"
+  },
+  {
+   "id": "K7b-057",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 97,
+   "kind": "law",
+   "claim": "the discrete side is one update ahead",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "K7b-058",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 104,
+   "kind": "ex",
+   "claim": "unit delay at rest: cell holds u_{k-1}, store holds u_k",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-059",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 108,
+   "kind": "ex",
+   "claim": "`checkpoint(sim)` takes a checkpoint",
+   "evidence": "src/sim.jl:872"
+  },
+  {
+   "id": "K7b-060",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 109,
+   "kind": "ex",
+   "claim": "`restore!(sim, chk); step!(sim)` is the call form",
+   "evidence": "src/sim.jl:1063"
+  },
+  {
+   "id": "K7b-061",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 109,
+   "kind": "ex",
+   "claim": "after restore and one step, t_{k+1} publishes u_k as the recording did",
+   "evidence": "probe:24"
+  },
+  {
+   "id": "K7b-062",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 111,
+   "kind": "ex",
+   "claim": "`state(sim, \"delay\")` reads u_k",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-065",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 117,
+   "kind": "law",
+   "claim": "the copied delay has lost a tick at the start",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "K7b-066",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 117,
+   "kind": "law",
+   "claim": "a counter copied this way reads one higher than the recording at every tick",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "K7b-068",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 119,
+   "kind": "law",
+   "claim": "init! followed by a read already returns s(1)",
+   "evidence": "probe:12"
+  },
+  {
+   "id": "K7b-074",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 135,
+   "kind": "law",
+   "claim": "boundary zero resets every guard prior to not-holding",
+   "evidence": "src/model.jl:365"
+  },
+  {
+   "id": "K7b-075",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 136,
+   "kind": "law",
+   "claim": "a guard already holding in the authored state fires again at t0",
+   "evidence": "src/model.jl:365"
+  },
+  {
+   "id": "K7b-076",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 137,
+   "kind": "law",
+   "claim": "a condition re-anchors a multi-rate component's lattice at the new t0",
+   "evidence": "src/model.jl:364"
+  },
+  {
+   "id": "K7b-077",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 138,
+   "kind": "law",
+   "claim": "so the component is due at boundary zero whatever its old phase",
+   "evidence": "probe:76"
+  },
+  {
+   "id": "K7b-079",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 141,
+   "kind": "law",
+   "claim": "copied continuous state is exact",
+   "evidence": "src/model.jl:361"
+  },
+  {
+   "id": "K7b-080",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 142,
+   "kind": "law",
+   "claim": "copied discrete stores are one update early",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "K7b-081",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 143,
+   "kind": "law",
+   "claim": "a restore carries held cells, priors and clock, which a condition cannot",
+   "evidence": "src/checkpoint.jl:76-82"
+  },
+  {
+   "id": "K7b-082",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 149,
+   "kind": "law",
+   "claim": "there is no conversion between checkpoint and condition",
+   "evidence": "src/checkpoint.jl:66"
+  },
+  {
+   "id": "K7b-083",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 150,
+   "kind": "law",
+   "claim": "there is no path-addressed reader of a checkpoint",
+   "evidence": "src/checkpoint.jl:155"
+  },
+  {
+   "id": "K7b-092",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 165,
+   "kind": "law",
+   "claim": "held cells, priors and clock are not condition content",
+   "evidence": "src/checkpoint.jl:66"
+  },
+  {
+   "id": "K7b-101",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 183,
+   "kind": "law",
+   "claim": "boundary zero's s_update is the t0 sample's only chance",
+   "evidence": "src/model.jl:690"
+  },
+  {
+   "id": "K7b-102",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 186,
+   "kind": "law",
+   "claim": "a store read from a stopped run holds the next due tick's state, not the last published",
+   "evidence": "probe:14"
+  },
+  {
+   "id": "K7b-103",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 188,
+   "kind": "law",
+   "claim": "a continuation is a restore, a condition is a fresh start",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "K7b-104",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 193,
+   "kind": "law",
+   "claim": "a restore keeps the stores as the next tick's state and runs no update",
+   "evidence": "src/model.jl:1331"
+  },
+  {
+   "id": "K7b-105",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 196,
+   "kind": "law",
+   "claim": "an input what-if is a restore followed by stage!",
+   "evidence": "src/sim.jl:861"
+  },
+  {
+   "id": "K7b-108",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 198,
+   "kind": "law",
+   "claim": "restore! takes no overlay",
+   "evidence": "src/sim.jl:1063"
+  },
+  {
+   "id": "K7b-110",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 203,
+   "kind": "law",
+   "claim": "the door does not close the hazard: a store read at rest still shifts through init!",
+   "evidence": "test/test_discrete.jl:975"
+  },
+  {
+   "id": "K7b-129",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 258,
+   "kind": "law",
+   "claim": "D-273's closing bullet says a checkpoint's read-only view lets the author copy",
+   "evidence": "design/log.md:12240"
+  },
+  {
+   "id": "K7b-130",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 260,
+   "kind": "law",
+   "claim": "no checkpoint read-only view was built",
+   "evidence": "src/checkpoint.jl:155"
+  },
+  {
+   "id": "K7b-131",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 260,
+   "kind": "law",
+   "claim": "the spec never promised a checkpoint view",
+   "evidence": "design/spec.md:9482"
+  },
+  {
+   "id": "K7b-132",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 261,
+   "kind": "law",
+   "claim": "the copy is by `state` on the stopped run",
+   "evidence": "src/model.jl:1026"
+  },
+  {
+   "id": "K7b-135",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 274,
+   "kind": "decl",
+   "claim": "`overlay!(sim, cond)` is the signature",
+   "evidence": "src/sim.jl:964"
+  },
+  {
+   "id": "K7b-136",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 274,
+   "kind": "law",
+   "claim": "it writes a condition onto a stopped run and continues it",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K7b-137",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 275,
+   "kind": "law",
+   "claim": "the stores named in cond are overwritten",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K7b-138",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 275,
+   "kind": "law",
+   "claim": "every other store keeps its value",
+   "evidence": "test/test_events.jl:520"
+  },
+  {
+   "id": "K7b-139",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 276,
+   "kind": "law",
+   "claim": "the clock stays",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K7b-140",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 276,
+   "kind": "law",
+   "claim": "the sampling lattice stays",
+   "evidence": "test/test_discrete.jl:994"
+  },
+  {
+   "id": "K7b-141",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 277,
+   "kind": "law",
+   "claim": "the run resumes as a fresh trajectory",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K7b-142",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 278,
+   "kind": "law",
+   "claim": "it is the state what-if beside the input what-if",
+   "evidence": "src/sim.jl:861"
+  },
+  {
+   "id": "K7b-143",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 283,
+   "kind": "law",
+   "claim": "init! erases the run's history",
+   "evidence": "src/sim.jl:846"
+  },
+  {
+   "id": "K7b-144",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 284,
+   "kind": "law",
+   "claim": "init! decodes the condition's s at boundary zero",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "K7b-145",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 285,
+   "kind": "law",
+   "claim": "overlay! keeps the history and decodes an overlaid s at the next due tick",
+   "evidence": "test/test_discrete.jl:975"
+  },
+  {
+   "id": "K7b-146",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 288,
+   "kind": "law",
+   "claim": "the trace reproduces a run from its header checkpoint and input drain",
+   "evidence": "src/sim.jl:854"
+  },
+  {
+   "id": "K7b-148",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 290,
+   "kind": "law",
+   "claim": "overlay! opens a fresh trajectory with the post-settling checkpoint as header",
+   "evidence": "src/sim.jl:974"
+  },
+  {
+   "id": "K7b-149",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 292,
+   "kind": "law",
+   "claim": "replay needs no knowledge of overlays",
+   "evidence": "test/test_trace.jl:1828"
+  },
+  {
+   "id": "K7b-150",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 293,
+   "kind": "law",
+   "claim": "D-273's no-algebra sentence bars a checkpoint producing a condition, not the reverse",
+   "evidence": "src/checkpoint.jl:66"
+  },
+  {
+   "id": "K7b-151",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 295,
+   "kind": "law",
+   "claim": "priors, held cells and clock come from the rest state and stay",
+   "evidence": "src/model.jl:408"
+  },
+  {
+   "id": "K7b-154",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 306,
+   "kind": "law",
+   "claim": "the condition resolves against the build with init!'s diagnostics",
+   "evidence": "src/model.jl:465"
+  },
+  {
+   "id": "K7b-155",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 307,
+   "kind": "law",
+   "claim": "named stores and root-input cells are written",
+   "evidence": "test/test_events.jl:497"
+  },
+  {
+   "id": "K7b-156",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 308,
+   "kind": "law",
+   "claim": "projection runs in both doors",
+   "evidence": "src/model.jl:668"
+  },
+  {
+   "id": "K7b-157",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 308,
+   "kind": "law",
+   "claim": "the sweep iterates with guards and handlers to quiescence in both",
+   "evidence": "src/model.jl:669"
+  },
+  {
+   "id": "K7b-159",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 310,
+   "kind": "law",
+   "claim": "one snapshot is published",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K7b-160",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 310,
+   "kind": "law",
+   "claim": "a fresh trajectory opens with the post-settling checkpoint as header",
+   "evidence": "src/sim.jl:856"
+  },
+  {
+   "id": "K7b-161",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 315,
+   "kind": "law",
+   "claim": "init! bases unset fields on the declared defaults",
+   "evidence": "src/model.jl:360"
+  },
+  {
+   "id": "K7b-162",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 315,
+   "kind": "law",
+   "claim": "overlay! bases unset fields on the stopped run's stores",
+   "evidence": "src/model.jl:465"
+  },
+  {
+   "id": "K7b-163",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 316,
+   "kind": "law",
+   "claim": "init! sets the origin and re-anchors every component's phase",
+   "evidence": "src/model.jl:364"
+  },
+  {
+   "id": "K7b-164",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 316,
+   "kind": "law",
+   "claim": "overlay! keeps clock and lattice",
+   "evidence": "test/test_discrete.jl:994"
+  },
+  {
+   "id": "K7b-165",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 317,
+   "kind": "law",
+   "claim": "init! resets all priors so a holding guard fires at boundary zero",
+   "evidence": "src/model.jl:365"
+  },
+  {
+   "id": "K7b-166",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 317,
+   "kind": "law",
+   "claim": "overlay! keeps priors; only a guard moved into holding fires",
+   "evidence": "test/test_events.jl:520"
+  },
+  {
+   "id": "K7b-167",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 318,
+   "kind": "law",
+   "claim": "init! runs every discrete output stage, due or not",
+   "evidence": "src/model.jl:690"
+  },
+  {
+   "id": "K7b-168",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 318,
+   "kind": "law",
+   "claim": "overlay! runs no output stage; held cells stay",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K7b-169",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 319,
+   "kind": "law",
+   "claim": "init! runs the due updates at boundary zero",
+   "evidence": "probe:12"
+  },
+  {
+   "id": "K7b-170",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 319,
+   "kind": "law",
+   "claim": "overlay! runs no s_update",
+   "evidence": "test/test_discrete.jl:975"
+  },
+  {
+   "id": "K7b-171",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 321,
+   "kind": "law",
+   "claim": "the condition's s is decoded now under init! and at the next due tick under overlay!",
+   "evidence": "test/test_discrete.jl:975"
+  },
+  {
+   "id": "K7b-176",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 331,
+   "kind": "mech",
+   "claim": "the base and the clock choices live in the doors' bodies, before the boundary",
+   "evidence": "src/model.jl:360"
+  },
+  {
+   "id": "K7b-178",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 337,
+   "kind": "mech",
+   "claim": "the boundary sequence is integrate, project, sweep/guards/handlers to quiescence, due updates, publication",
+   "evidence": "src/model.jl:652"
+  },
+  {
+   "id": "K7b-179",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 339,
+   "kind": "mech",
+   "claim": "boundary zero is that sequence with an empty integrate",
+   "evidence": "src/model.jl:702"
+  },
+  {
+   "id": "K7b-181",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 357,
+   "kind": "law",
+   "claim": "an overlaid x off the manifold is put back by the projection step",
+   "evidence": "test/test_events.jl:526"
+  },
+  {
+   "id": "K7b-182",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 360,
+   "kind": "law",
+   "claim": "with priors kept, a guard moved into holding is a real edge and its handler runs now",
+   "evidence": "test/test_events.jl:497"
+  },
+  {
+   "id": "K7b-183",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 362,
+   "kind": "law",
+   "claim": "the handler fires at t_k, before the plant integrates",
+   "evidence": "test/test_events.jl:508"
+  },
+  {
+   "id": "K7b-185",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 365,
+   "kind": "mech",
+   "claim": "handler rounds write x and m and the sweep iterates with them",
+   "evidence": "src/model.jl:669"
+  },
+  {
+   "id": "K7b-186",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 367,
+   "kind": "law",
+   "claim": "no output stage is republished and no update runs; the held cell stays",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K7b-190",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 374,
+   "kind": "law",
+   "claim": "one snapshot is published at the stopped run's t, as restore! does",
+   "evidence": "probe:21"
+  },
+  {
+   "id": "K7b-193",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 384,
+   "kind": "mech",
+   "claim": "init! is layered in three, in model.jl and sim.jl",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "K7b-194",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 384,
+   "kind": "mech",
+   "claim": "restore! follows the same split",
+   "evidence": "src/sim.jl:1063"
+  },
+  {
+   "id": "K7b-195",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 387,
+   "kind": "law",
+   "claim": "the model door says the claim gate first",
+   "evidence": "src/model.jl:316"
+  },
+  {
+   "id": "K7b-196",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 388,
+   "kind": "law",
+   "claim": "it resolves the condition into a plan and hands it on",
+   "evidence": "src/model.jl:317"
+  },
+  {
+   "id": "K7b-197",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 389,
+   "kind": "law",
+   "claim": "init! asserts root-input totality at layer one",
+   "evidence": "src/model.jl:318"
+  },
+  {
+   "id": "K7b-198",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 390,
+   "kind": "law",
+   "claim": "overlay! resolves without asserting totality",
+   "evidence": "src/model.jl:464"
+  },
+  {
+   "id": "K7b-199",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 391,
+   "kind": "law",
+   "claim": "a partial overlay is total, since every root input holds a value",
+   "evidence": "test/test_lifecycle.jl:932"
+  },
+  {
+   "id": "K7b-200",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 393,
+   "kind": "law",
+   "claim": "init!'s plan method resets the stores to the defaults",
+   "evidence": "src/model.jl:360"
+  },
+  {
+   "id": "K7b-201",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 393,
+   "kind": "law",
+   "claim": "it applies the plan",
+   "evidence": "src/model.jl:363"
+  },
+  {
+   "id": "K7b-202",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 394,
+   "kind": "law",
+   "claim": "it writes the clock's t and t0",
+   "evidence": "src/model.jl:364"
+  },
+  {
+   "id": "K7b-203",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 395,
+   "kind": "law",
+   "claim": "it fills the priors with not-holding",
+   "evidence": "src/model.jl:365"
+  },
+  {
+   "id": "K7b-204",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 395,
+   "kind": "law",
+   "claim": "boundary zero runs in a catch that wraps a throw as StepError with host :boundary_zero",
+   "evidence": "src/model.jl:372"
+  },
+  {
+   "id": "K7b-205",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 397,
+   "kind": "law",
+   "claim": "a failure drops the status to :built",
+   "evidence": "src/model.jl:375"
+  },
+  {
+   "id": "K7b-206",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 397,
+   "kind": "law",
+   "claim": "it publishes through settled!(hooks)",
+   "evidence": "src/model.jl:378"
+  },
+  {
+   "id": "K7b-207",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 398,
+   "kind": "law",
+   "claim": "it marks the model :consistent",
+   "evidence": "src/model.jl:379"
+  },
+  {
+   "id": "K7b-208",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 398,
+   "kind": "law",
+   "claim": "overlay!'s method skips the reset and the clock",
+   "evidence": "src/model.jl:469"
+  },
+  {
+   "id": "K7b-209",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 399,
+   "kind": "law",
+   "claim": "it keeps the priors",
+   "evidence": "test/test_events.jl:520"
+  },
+  {
+   "id": "K7b-210",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 399,
+   "kind": "law",
+   "claim": "it applies the plan with the same apply! machinery trim uses",
+   "evidence": "src/trim.jl:647"
+  },
+  {
+   "id": "K7b-212",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 401,
+   "kind": "law",
+   "claim": "the settling's catch carries its own host tag :overlay",
+   "evidence": "src/model.jl:476"
+  },
+  {
+   "id": "K7b-213",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 402,
+   "kind": "law",
+   "claim": "init!'s wrapper refuses while running or errored",
+   "evidence": "src/sim.jl:836"
+  },
+  {
+   "id": "K7b-214",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 403,
+   "kind": "law",
+   "claim": "it checks the recording keywords",
+   "evidence": "src/sim.jl:841"
+  },
+  {
+   "id": "K7b-215",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 404,
+   "kind": "law",
+   "claim": "it resolves before anything touches the run",
+   "evidence": "src/sim.jl:843"
+  },
+  {
+   "id": "K7b-216",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 404,
+   "kind": "law",
+   "claim": "it resets the periphery",
+   "evidence": "src/sim.jl:845"
+  },
+  {
+   "id": "K7b-217",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 405,
+   "kind": "law",
+   "claim": "it opens a fresh run",
+   "evidence": "src/sim.jl:846"
+  },
+  {
+   "id": "K7b-218",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 405,
+   "kind": "law",
+   "claim": "it calls the model method with the loop's hooks",
+   "evidence": "src/sim.jl:851"
+  },
+  {
+   "id": "K7b-219",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 406,
+   "kind": "law",
+   "claim": "it takes the checkpoint as header last, so a throw leaves no header",
+   "evidence": "src/sim.jl:854"
+  },
+  {
+   "id": "K7b-221",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 409,
+   "kind": "law",
+   "claim": "overlay!'s wrapper opens a fresh run",
+   "evidence": "src/sim.jl:970"
+  },
+  {
+   "id": "K7b-222",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 409,
+   "kind": "law",
+   "claim": "it handles the periphery as restore! does",
+   "evidence": "src/sim.jl:969"
+  },
+  {
+   "id": "K7b-223",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 409,
+   "kind": "law",
+   "claim": "the header is taken after settling",
+   "evidence": "src/sim.jl:976"
+  },
+  {
+   "id": "K7b-230",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 427,
+   "kind": "law",
+   "claim": "D-063 rejected a current-stores overlay base for run-history dependence breaking the header",
+   "evidence": "design/log.md:2167"
+  },
+  {
+   "id": "K7b-231",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 429,
+   "kind": "law",
+   "claim": "overlay's base is a rest state and the header is taken after settling",
+   "evidence": "src/sim.jl:976"
+  },
+  {
+   "id": "K7b-233",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 433,
+   "kind": "law",
+   "claim": "a partial store entry merges onto the current store",
+   "evidence": "test/test_events.jl:520"
+  },
+  {
+   "id": "K7b-237",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 449,
+   "kind": "law",
+   "claim": "the name is `overlay!`",
+   "evidence": "src/model.jl:461"
+  },
+  {
+   "id": "K7b-238",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 449,
+   "kind": "law",
+   "claim": "`override` is §14.6's root-input combinator",
+   "evidence": "src/conditions.jl:275"
+  },
+  {
+   "id": "K7b-242",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 454,
+   "kind": "law",
+   "claim": "a failed overlay drops the status to :built",
+   "evidence": "test/test_lifecycle.jl:932"
+  },
+  {
+   "id": "K7b-243",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 455,
+   "kind": "law",
+   "claim": "after it only init!, restore! and replay! are legal doors",
+   "evidence": "design/spec.md:817"
+  },
+  {
+   "id": "K7b-244",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 456,
+   "kind": "law",
+   "claim": "a throw in settling leaves the stores partly written",
+   "evidence": "src/model.jl:445"
+  },
+  {
+   "id": "K7b-247",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 461,
+   "kind": "law",
+   "claim": "restore! takes no overlay; the what-if is restore! then overlay!",
+   "evidence": "src/sim.jl:1063"
+  },
+  {
+   "id": "K7b-248",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 463,
+   "kind": "law",
+   "claim": "a condition may name root inputs under overlay!",
+   "evidence": "test/test_events.jl:497"
+  },
+  {
+   "id": "K7b-249",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 464,
+   "kind": "law",
+   "claim": "they write the root-input cells through the plan machinery",
+   "evidence": "test/test_events.jl:498"
+  },
+  {
+   "id": "K7b-250",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 466,
+   "kind": "law",
+   "claim": "the periphery is handled as restore! handles it",
+   "evidence": "src/sim.jl:969"
+  },
+  {
+   "id": "K7b-251",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 467,
+   "kind": "law",
+   "claim": "attached devices see the fresh trajectory like a restore",
+   "evidence": "src/sim.jl:969"
+  },
+  {
+   "id": "K7b-252",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 472,
+   "kind": "law",
+   "claim": "an overlaid counter reads its value at the next due tick; the held cell stays",
+   "evidence": "test/test_discrete.jl:975"
+  },
+  {
+   "id": "K7b-253",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 475,
+   "kind": "law",
+   "claim": "an overlaid x moving a sign-form or Bool guard into holding fires it at the overlay boundary",
+   "evidence": "test/test_events.jl:497"
+  },
+  {
+   "id": "K7b-254",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 477,
+   "kind": "law",
+   "claim": "a guard already holding does not re-fire",
+   "evidence": "test/test_events.jl:520"
+  },
+  {
+   "id": "K7b-255",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 478,
+   "kind": "law",
+   "claim": "an overlaid x off unit norm is projected before publication",
+   "evidence": "test/test_events.jl:526"
+  },
+  {
+   "id": "K7b-256",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 479,
+   "kind": "law",
+   "claim": "the overlay publishes one snapshot at the stopped t, continuous refreshed, discrete held",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "K7b-257",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 481,
+   "kind": "law",
+   "claim": "replay of an overlaid trajectory reproduces it from the post-settling header",
+   "evidence": "test/test_trace.jl:1828"
+  },
+  {
+   "id": "K7b-259",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 485,
+   "kind": "law",
+   "claim": "the door is refused while running and on an errored run with ServiceLifecycle",
+   "evidence": "src/sim.jl:906"
+  },
+  {
+   "id": "K7b-260",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 487,
+   "kind": "law",
+   "claim": "a partial overlay needs no totality",
+   "evidence": "test/test_lifecycle.jl:932"
+  },
+  {
+   "id": "K7b-261",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 487,
+   "kind": "law",
+   "claim": "a throw in settling is a StepError with the door's host tag, status back at :built",
+   "evidence": "test/test_events.jl:490"
+  },
+  {
+   "id": "K7b-262",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 218,
+   "kind": "why",
+   "claim": "lead `ModelOperatingPoint` is Simulink prior art, not a Redstone name",
+   "evidence": "companion section 5 names it as Simulink's"
+  },
+  {
+   "id": "K7b-263",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 23,
+   "kind": "why",
+   "claim": "leads s_, s_k, t_k, u_k, x_k, y_k are math notation for frame values",
+   "evidence": "companion lines 23-178 define them inline"
+  },
+  {
+   "id": "K7b-264",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 248,
+   "kind": "why",
+   "claim": "lead `pre` is Modelica's pre() operator, prior art",
+   "evidence": "companion section 5 Modelica paragraph"
+  },
+  {
+   "id": "K7b-265",
+   "file": "design/companions/store_at_rest_walkthrough.md",
+   "line": 450,
+   "kind": "why",
+   "claim": "lead `override!` is the rejected name for overlay!",
+   "evidence": "companion 7.6 says it was rejected; src/model.jl:461"
+  }
+ ],
+ "counts": {
+  "ptr": 18,
+  "why": 57,
+  "decl": 2,
+  "ex": 7,
+  "mech": 23,
+  "law": 158
+ }
+}

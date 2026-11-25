@@ -1,0 +1,1897 @@
+{
+ "rows": [
+  {
+   "id": "T7-079",
+   "file": "docs/src/tutorial/index.md",
+   "line": 17,
+   "kind": "decl",
+   "claim": "`Pkg.add(url = ..., subdir = \"examples\")` adds RedstoneExamples beside Redstone",
+   "evidence": "examples/Project.toml:19-20 resolves Redstone through `[sources] path = \"..\"`; adding it by URL with a subdir needs network and a clone",
+   "verdict": "unverifiable",
+   "note": "Offline run; could not test that a URL add with subdir honours the [sources] path in the examples project."
+  },
+  {
+   "id": "T7-081",
+   "file": "docs/src/tutorial/index.md",
+   "line": 21,
+   "kind": "law",
+   "claim": "In a clone, `julia --project=docs` then `using Pkg; Pkg.instantiate()` once gives the environment holding Redstone, the examples and CairoMakie",
+   "evidence": "probe: a copy of docs/Project.toml, `Pkg.instantiate()` fails with `expected package RedstoneExamples [28cf5f55] to be registered`. docs/Project.toml has no [sources] and no tracked Manifest (.gitignore ignores Manifest.toml); .github/workflows/Documenter.yml:29-30 runs the same command",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Add `[sources]` to docs/Project.toml (`Redstone = {path = \"..\"}`, `RedstoneExamples = {path = \"../examples\"}`) so a clone instantiates; or change the page to say `Pkg.develop(path = \".\")` and `Pkg.develop(path = \"examples\")` in the docs environment first.",
+   "note": "Same command is in CI, so CI may carry a Manifest or fail the same way; the doc's claim is false for a fresh clone as W stands."
+  },
+  {
+   "id": "T7-121",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 133,
+   "kind": "mech",
+   "claim": "At each frame top the Simulation publishes a snapshot of every port",
+   "evidence": "probe2:27-31: with Δt_frame = 1 and h_max = 1//10, 5 s gives 51 snapshots, boundary 0 then one per step (t = 0.0, 0.1, 0.2 ...), not one per frame. design/spec.md:595-596 'Every completed boundary publishes one immutable snapshot'; src/sim.jl LoopHooks publishes 'at every settled boundary'. The page's own line 134-136 of linearize.md says 'Each step ends at a snapshot'.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "At each boundary, the end of each step, it publishes a snapshot of every port, and the log keeps them.",
+   "note": "The page's own run has one step per frame, so snapshots and frame ends coincide there; the sentence states a rule that is wrong in general."
+  },
+  {
+   "id": "T7-138",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 173,
+   "kind": "mech",
+   "claim": "The log holds one snapshot per frame",
+   "evidence": "probe:97 gives 12001 snapshots for 12000 frames (boundary zero adds one); probe2:31 shows one per step when steps are shorter than the frame; spec.md:595",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The log holds one snapshot per boundary, the initial one and then one per step.",
+   "note": "The page's own next paragraph says 12 001 snapshots for two minutes of 1/100 s frames, which is frames plus one."
+  },
+  {
+   "id": "T7-229",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 124,
+   "kind": "mech",
+   "claim": "The default method RK4 takes each frame in equal steps no longer than `h_max`",
+   "evidence": "src/deployment.jl:347-352 (RK4 docstring): 'It takes each span between two mandatory instants in the fewest equal steps the deployment's h_max allows'; a frame splits at ticks and events",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The default method, RK4, takes each span between two mandatory instants in equal steps no longer than `h_max`, and in one step when `h_max` is not set. With no tick or event inside, the span is the frame.",
+   "note": "True for this tutorial's models, which have no discrete component or event; false in general."
+  }
+ ],
+ "ok": [
+  {
+   "id": "T7-001",
+   "file": "README.md",
+   "line": 7,
+   "kind": "mech",
+   "claim": "A model is a tree of components exchanging values through directed ports",
+   "evidence": "probe:1-36 run of Group with wires"
+  },
+  {
+   "id": "T7-002",
+   "file": "README.md",
+   "line": 9,
+   "kind": "mech",
+   "claim": "Models mix continuous dynamics, multi-rate periodic discrete dynamics and events",
+   "evidence": "src/declare.jl:426,447 (Absolute), src/declare.jl:531"
+  },
+  {
+   "id": "T7-005",
+   "file": "README.md",
+   "line": 15,
+   "kind": "mech",
+   "claim": "Continuous dynamics run on fixed or adaptive steps",
+   "evidence": "src/deployment.jl:521 (RK4, Heun, BS3)"
+  },
+  {
+   "id": "T7-006",
+   "file": "README.md",
+   "line": 15,
+   "kind": "mech",
+   "claim": "Events are located by root-finding",
+   "evidence": "src/declare.jl:531-532 (Float64 guard is localized)"
+  },
+  {
+   "id": "T7-007",
+   "file": "README.md",
+   "line": 16,
+   "kind": "mech",
+   "claim": "Events are otherwise checked at step boundaries",
+   "evidence": "src/declare.jl:531 (Bool guard non-localized)"
+  },
+  {
+   "id": "T7-008",
+   "file": "README.md",
+   "line": 17,
+   "kind": "law",
+   "claim": "Discrete components are multi-rate and periodic",
+   "evidence": "src/declare.jl:426-447 (Relative, Absolute, sample_times); probe:35"
+  },
+  {
+   "id": "T7-009",
+   "file": "README.md",
+   "line": 17,
+   "kind": "law",
+   "claim": "Discrete outputs are held zero-order between ticks",
+   "evidence": "src/library.jl:372,508; probe:36 (PI at 50 Hz under 1 ms frames runs)"
+  },
+  {
+   "id": "T7-010",
+   "file": "README.md",
+   "line": 18,
+   "kind": "mech",
+   "claim": "The execution order is derived from declared feedthrough",
+   "evidence": "probe:37 (y_state vs y_direct decides the cycle)"
+  },
+  {
+   "id": "T7-011",
+   "file": "README.md",
+   "line": 18,
+   "kind": "law",
+   "claim": "An algebraic loop is a build error",
+   "evidence": "probe:37 AlgebraicCycle DiagnosticError from build"
+  },
+  {
+   "id": "T7-012",
+   "file": "README.md",
+   "line": 19,
+   "kind": "law",
+   "claim": "The loop error names the cycle",
+   "evidence": "probe:37 'plant/power → ctl/meas, ctl/y → plant/u'"
+  },
+  {
+   "id": "T7-013",
+   "file": "README.md",
+   "line": 20,
+   "kind": "law",
+   "claim": "Zero-allocation stepping is asserted by the test suite",
+   "evidence": "test/test_executor.jl:20-21,231 (@ballocated == 0)"
+  },
+  {
+   "id": "T7-014",
+   "file": "README.md",
+   "line": 20,
+   "kind": "law",
+   "claim": "Type stability is asserted by the test suite",
+   "evidence": "test/test_readers.jl:173, test/test_log.jl:281 (@inferred)"
+  },
+  {
+   "id": "T7-015",
+   "file": "README.md",
+   "line": 21,
+   "kind": "mech",
+   "claim": "A runtime data plane serves devices, GUIs and scripts",
+   "evidence": "src/devices.jl:285,340; src/sim.jl:2620,2857"
+  },
+  {
+   "id": "T7-016",
+   "file": "README.md",
+   "line": 22,
+   "kind": "mech",
+   "claim": "Writes through the plane are staged",
+   "evidence": "src/sim.jl:2620 stage!, src/devices.jl:340"
+  },
+  {
+   "id": "T7-017",
+   "file": "README.md",
+   "line": 22,
+   "kind": "mech",
+   "claim": "Reads through the plane are snapshots",
+   "evidence": "src/sim.jl:2857 latest returns the published snapshot"
+  },
+  {
+   "id": "T7-018",
+   "file": "README.md",
+   "line": 22,
+   "kind": "law",
+   "claim": "No mutable model is shared with the plane",
+   "evidence": "src/sim.jl:2857 (@atomic :acquire read of an immutable snapshot); code_map sim.jl entry"
+  },
+  {
+   "id": "T7-019",
+   "file": "README.md",
+   "line": 23,
+   "kind": "law",
+   "claim": "Replay from a recorded input trace is bit-identical",
+   "evidence": "src/sim.jl:1264,1282,1334"
+  },
+  {
+   "id": "T7-020",
+   "file": "README.md",
+   "line": 24,
+   "kind": "mech",
+   "claim": "The package offers initialization, trim and linearization",
+   "evidence": "src/sim.jl:834,1123,1159"
+  },
+  {
+   "id": "T7-021",
+   "file": "README.md",
+   "line": 24,
+   "law": "",
+   "kind": "law",
+   "claim": "Jacobians are exact automatic differentiation",
+   "evidence": "probe:169 AD vs central differences gap 1.5e-10; src/linearize.jl LinearizeDual"
+  },
+  {
+   "id": "T7-022",
+   "file": "README.md",
+   "line": 26,
+   "kind": "mech",
+   "claim": "A stopped simulation can be checkpointed and restored",
+   "evidence": "src/sim.jl:892,1063,1080"
+  },
+  {
+   "id": "T7-023",
+   "file": "README.md",
+   "line": 27,
+   "kind": "law",
+   "claim": "Restore checks the checkpoint against the deployment",
+   "evidence": "src/checkpoint.jl:55,83,154,178"
+  },
+  {
+   "id": "T7-024",
+   "file": "README.md",
+   "line": 28,
+   "kind": "mech",
+   "claim": "Real-time pacing against the wall clock exists",
+   "evidence": "src/sim.jl:1562 (pace keyword), 2396 pace!"
+  },
+  {
+   "id": "T7-025",
+   "file": "README.md",
+   "line": 28,
+   "kind": "mech",
+   "claim": "A paced run can be paused and resumed",
+   "evidence": "src/sim.jl:2345,2357"
+  },
+  {
+   "id": "T7-026",
+   "file": "README.md",
+   "line": 29,
+   "kind": "mech",
+   "claim": "The library has integrators and limited integrators",
+   "evidence": "src/library.jl:952,1830,1999"
+  },
+  {
+   "id": "T7-027",
+   "file": "README.md",
+   "line": 29,
+   "kind": "mech",
+   "claim": "The library has lags",
+   "evidence": "src/library.jl:1001 FirstOrderLag"
+  },
+  {
+   "id": "T7-028",
+   "file": "README.md",
+   "line": 30,
+   "kind": "mech",
+   "claim": "The library has linear systems in s and z",
+   "evidence": "src/library.jl:1111,1273,1385,1455"
+  },
+  {
+   "id": "T7-029",
+   "file": "README.md",
+   "line": 30,
+   "kind": "mech",
+   "claim": "The library has relays",
+   "evidence": "src/library.jl:2128"
+  },
+  {
+   "id": "T7-030",
+   "file": "README.md",
+   "line": 30,
+   "kind": "mech",
+   "claim": "The library has delays",
+   "evidence": "src/library.jl:377,536"
+  },
+  {
+   "id": "T7-031",
+   "file": "README.md",
+   "line": 30,
+   "kind": "mech",
+   "claim": "The library has noise",
+   "evidence": "src/library.jl:822 GaussianWhiteNoise"
+  },
+  {
+   "id": "T7-032",
+   "file": "README.md",
+   "line": 30,
+   "kind": "mech",
+   "claim": "The library has PID and LQR tracking controllers",
+   "evidence": "src/library.jl:2541,2677,2902,3028"
+  },
+  {
+   "id": "T7-033",
+   "file": "README.md",
+   "line": 31,
+   "kind": "mech",
+   "claim": "The controllers have anti-windup and hold axes",
+   "evidence": "src/library.jl:2301-2313"
+  },
+  {
+   "id": "T7-034",
+   "file": "README.md",
+   "line": 31,
+   "kind": "mech",
+   "claim": "The controllers engage bumplessly",
+   "evidence": "src/library.jl:2840"
+  },
+  {
+   "id": "T7-035",
+   "file": "README.md",
+   "line": 32,
+   "kind": "law",
+   "claim": "Diagnostics come from a closed set of kinds",
+   "evidence": "src/diagnostics.jl:17 (closed set KINDS)"
+  },
+  {
+   "id": "T7-036",
+   "file": "README.md",
+   "line": 33,
+   "kind": "mech",
+   "claim": "Each diagnostic is reported where the mistake was made",
+   "evidence": "probe:37, probe:85 (kind, component and wire named in the throw)"
+  },
+  {
+   "id": "T7-040",
+   "file": "README.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "The module exports nothing yet",
+   "evidence": "probe:38 names(Redstone) == [:Redstone]"
+  },
+  {
+   "id": "T7-041",
+   "file": "README.md",
+   "line": 43,
+   "kind": "decl",
+   "claim": "Redstone requires Julia 1.13 or later",
+   "evidence": "Project.toml:25 julia = \"1.13\""
+  },
+  {
+   "id": "T7-042",
+   "file": "README.md",
+   "line": 47,
+   "kind": "ex",
+   "claim": "Pkg.add(url = ...) installs the unregistered package",
+   "evidence": "standard Pkg form; package in Project.toml, not registered per README:41 (ptr)"
+  },
+  {
+   "id": "T7-043",
+   "file": "README.md",
+   "line": 56,
+   "kind": "ex",
+   "claim": "The quick-start sample runs whole",
+   "evidence": "probe:1-36 runs, no error"
+  },
+  {
+   "id": "T7-044",
+   "file": "README.md",
+   "line": 58,
+   "kind": "decl",
+   "claim": "The imported names exist in Redstone and are extendable",
+   "evidence": "probe:3-6 imports, methods defined at probe:12-28"
+  },
+  {
+   "id": "T7-045",
+   "file": "README.md",
+   "line": 68,
+   "kind": "decl",
+   "claim": "A bare `u_types(::Plant) = Float64` declares one input `u`",
+   "evidence": "probe:13,17-18 (x_deriv reads scalar u); run"
+  },
+  {
+   "id": "T7-046",
+   "file": "README.md",
+   "line": 69,
+   "kind": "decl",
+   "claim": "`y_types` as a NamedTuple declares outputs `y` and `power`",
+   "evidence": "probe:13; wires 'plant/power' at probe:25 resolve"
+  },
+  {
+   "id": "T7-047",
+   "file": "README.md",
+   "line": 71,
+   "kind": "law",
+   "claim": "`y_state` sees only the state `(; x)`",
+   "evidence": "probe:14; stage-1 port y breaks the loop, probe:35"
+  },
+  {
+   "id": "T7-048",
+   "file": "README.md",
+   "line": 72,
+   "kind": "law",
+   "claim": "`y_direct` sees the state and the inputs `(; x, u)`",
+   "evidence": "probe:15; probe:37 power is stage 2"
+  },
+  {
+   "id": "T7-049",
+   "file": "README.md",
+   "line": 81,
+   "kind": "decl",
+   "claim": "A bare `s_init` declares one state `s`",
+   "evidence": "probe:22,26 (c.s read as `s`)"
+  },
+  {
+   "id": "T7-050",
+   "file": "README.md",
+   "line": 83,
+   "kind": "decl",
+   "claim": "A bare `y_types(::PI) = Float64` declares one output `y`",
+   "evidence": "probe:24, wire 'ctl/y' probe:25"
+  },
+  {
+   "id": "T7-051",
+   "file": "README.md",
+   "line": 86,
+   "kind": "decl",
+   "claim": "`s_update` receives `(; s, u, Δt)`",
+   "evidence": "probe:27 runs, Δt used"
+  },
+  {
+   "id": "T7-052",
+   "file": "README.md",
+   "line": 88,
+   "kind": "decl",
+   "claim": "Group takes `local_wires`, `input_wires`, `output_wires` and `sample_times` keywords",
+   "evidence": "probe:29-33; src/declare.jl code_map entry"
+  },
+  {
+   "id": "T7-053",
+   "file": "README.md",
+   "line": 92,
+   "kind": "decl",
+   "claim": "`Absolute(1//50)` is the 50 Hz sample time",
+   "evidence": "src/declare.jl:447; probe:33"
+  },
+  {
+   "id": "T7-054",
+   "file": "README.md",
+   "line": 94,
+   "kind": "decl",
+   "claim": "`Simulation(model; Δt_frame = 1//1000)` sets frames of 1 ms",
+   "evidence": "src/sim.jl:318,397; probe:35"
+  },
+  {
+   "id": "T7-055",
+   "file": "README.md",
+   "line": 95,
+   "kind": "decl",
+   "claim": "`init!(sim, set(u = (ref = 1.0,)))` sets the root input",
+   "evidence": "src/sim.jl:834; probe:36"
+  },
+  {
+   "id": "T7-056",
+   "file": "README.md",
+   "line": 98,
+   "kind": "ex",
+   "claim": "port(sim, \"plant\", :y) prints 0.9654…",
+   "evidence": "probe:35 gives 0.9654297795999609"
+  },
+  {
+   "id": "T7-057",
+   "file": "README.md",
+   "line": 99,
+   "kind": "ex",
+   "claim": "state(sim, \"plant\") prints (q = 0.9654…, v = 0.0120…)",
+   "evidence": "probe:36 gives v = 0.012058421909455224"
+  },
+  {
+   "id": "T7-058",
+   "file": "README.md",
+   "line": 102,
+   "kind": "law",
+   "claim": "Julia accepts a new method only for an imported or qualified name",
+   "evidence": "Julia rule; probe:3-6 imports needed"
+  },
+  {
+   "id": "T7-059",
+   "file": "README.md",
+   "line": 104,
+   "kind": "law",
+   "claim": "`Redstone.x_init` is a valid qualified spelling",
+   "evidence": "Julia rule; names exist, probe:3"
+  },
+  {
+   "id": "T7-060",
+   "file": "README.md",
+   "line": 107,
+   "kind": "law",
+   "claim": "`y_state` sees only the state and `y_direct` also sees the inputs",
+   "evidence": "probe:14-15; cycle result probe:37"
+  },
+  {
+   "id": "T7-061",
+   "file": "README.md",
+   "line": 108,
+   "kind": "mech",
+   "claim": "The build derives the execution order from the stage split",
+   "evidence": "probe:37 cycle via power (stage 2) but not via y (stage 1), probe:35"
+  },
+  {
+   "id": "T7-062",
+   "file": "README.md",
+   "line": 109,
+   "kind": "law",
+   "claim": "Feeding back the stage-2 `power` port closes an algebraic loop",
+   "evidence": "probe:37"
+  },
+  {
+   "id": "T7-063",
+   "file": "README.md",
+   "line": 110,
+   "kind": "law",
+   "claim": "The build refuses the tree with the loop",
+   "evidence": "probe:37 DiagnosticError"
+  },
+  {
+   "id": "T7-064",
+   "file": "README.md",
+   "line": 113,
+   "kind": "ex",
+   "claim": "The printed AlgebraicCycle diagnostic",
+   "evidence": "probe:37 output is identical to README.md:115 after the ERROR: prefix (cmp)"
+  },
+  {
+   "id": "T7-072",
+   "file": "README.md",
+   "line": 135,
+   "kind": "mech",
+   "claim": "examples/ has a longitudinal aircraft under LQR and PID control",
+   "evidence": "examples/src/longitudinal.jl:143,446; imports PID, DiscreteLQRTracker at src/RedstoneExamples.jl"
+  },
+  {
+   "id": "T7-073",
+   "file": "docs/src/tutorial/index.md",
+   "line": 3,
+   "kind": "mech",
+   "claim": "The tutorial builds a light aircraft in its plane of symmetry",
+   "evidence": "examples/src/longitudinal.jl:9-33"
+  },
+  {
+   "id": "T7-077",
+   "file": "docs/src/tutorial/index.md",
+   "line": 9,
+   "kind": "mech",
+   "claim": "Each chapter ends at a function of RedstoneExamples (aircraft, level_flight, longitudinal_taps)",
+   "evidence": "examples/src/longitudinal.jl:106,119,136; probe:104,145,194"
+  },
+  {
+   "id": "T7-080",
+   "file": "docs/src/tutorial/index.md",
+   "line": 22,
+   "kind": "mech",
+   "claim": "The docs environment holds Redstone, the examples and CairoMakie",
+   "evidence": "docs/Project.toml deps (also ComponentArrays); `julia` and `examples` leads are a shell command and a folder, examples/ exists"
+  },
+  {
+   "id": "T7-083",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 7,
+   "kind": "mech",
+   "claim": "The aircraft is a rigid airplane in its plane of symmetry with five states and two controls",
+   "evidence": "examples/src/longitudinal.jl:51-52"
+  },
+  {
+   "id": "T7-084",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 9,
+   "kind": "decl",
+   "claim": "The aircraft is written as a component",
+   "evidence": "probe:42-80"
+  },
+  {
+   "id": "T7-085",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 10,
+   "kind": "ex",
+   "claim": "It is run two minutes from an airspeed above trim",
+   "evidence": "probe:88-91 V=55, t_end 120"
+  },
+  {
+   "id": "T7-086",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 11,
+   "kind": "mech",
+   "claim": "The phugoid trades speed for height every 27 seconds",
+   "evidence": "probe:97 periods 27.33"
+  },
+  {
+   "id": "T7-087",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 15,
+   "kind": "law",
+   "claim": "Three degrees of freedom: two translations and pitch",
+   "evidence": "examples/src/longitudinal.jl:65-69"
+  },
+  {
+   "id": "T7-088",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 16,
+   "kind": "law",
+   "claim": "Flat earth, still air, constant density",
+   "evidence": "examples/src/longitudinal.jl:7,58 (constant g and ρ, no wind input)"
+  },
+  {
+   "id": "T7-089",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 17,
+   "kind": "decl",
+   "claim": "The states are V, γ, θ, q, h",
+   "evidence": "examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "T7-090",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 19,
+   "kind": "law",
+   "claim": "α = θ − γ",
+   "evidence": "examples/src/longitudinal.jl:57"
+  },
+  {
+   "id": "T7-091",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 20,
+   "kind": "decl",
+   "claim": "Elevator δe is in radians, positive trailing edge down (lead delta_e is LaTeX)",
+   "evidence": "examples/src/longitudinal.jl:48 Cmδe < 0, :148 'positive elevator pitches down'"
+  },
+  {
+   "id": "T7-092",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 21,
+   "kind": "decl",
+   "claim": "Throttle δt runs from 0 to 1 (lead delta_t is LaTeX)",
+   "evidence": "examples/src/longitudinal.jl:64,121-122"
+  },
+  {
+   "id": "T7-093",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 24,
+   "kind": "mech",
+   "claim": "Lift and drag use a linear lift curve and a parabolic polar",
+   "evidence": "examples/src/longitudinal.jl:59,61-62"
+  },
+  {
+   "id": "T7-094",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 25,
+   "kind": "mech",
+   "claim": "The moment has a static, a damping and an elevator term",
+   "evidence": "examples/src/longitudinal.jl:60"
+  },
+  {
+   "id": "T7-095",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 26,
+   "kind": "mech",
+   "claim": "Thrust is a fraction of a fixed maximum along the body axis",
+   "evidence": "examples/src/longitudinal.jl:64-66"
+  },
+  {
+   "id": "T7-096",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 31,
+   "kind": "law",
+   "claim": "L = q̄ S (CL0 + CLα α)",
+   "evidence": "examples/src/longitudinal.jl:59,61"
+  },
+  {
+   "id": "T7-097",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 32,
+   "kind": "law",
+   "claim": "D = q̄ S (CD0 + k CL²)",
+   "evidence": "examples/src/longitudinal.jl:62"
+  },
+  {
+   "id": "T7-098",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 33,
+   "kind": "law",
+   "claim": "M = q̄ S c̄ (Cm0 + Cmα α + Cmq q c̄/2V + Cmδe δe)",
+   "evidence": "examples/src/longitudinal.jl:60,63"
+  },
+  {
+   "id": "T7-099",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 34,
+   "kind": "law",
+   "claim": "T = δt T_max",
+   "evidence": "examples/src/longitudinal.jl:64"
+  },
+  {
+   "id": "T7-100",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "V̇ = (T cos α − D)/m − g sin γ",
+   "evidence": "examples/src/longitudinal.jl:65"
+  },
+  {
+   "id": "T7-101",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 43,
+   "kind": "law",
+   "claim": "γ̇ = (L + T sin α)/(mV) − g cos γ / V",
+   "evidence": "examples/src/longitudinal.jl:66"
+  },
+  {
+   "id": "T7-102",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 44,
+   "kind": "law",
+   "claim": "θ̇ = q",
+   "evidence": "examples/src/longitudinal.jl:67"
+  },
+  {
+   "id": "T7-103",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 45,
+   "kind": "law",
+   "claim": "q̇ = M / Iyy",
+   "evidence": "examples/src/longitudinal.jl:68"
+  },
+  {
+   "id": "T7-104",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 46,
+   "kind": "law",
+   "claim": "ḣ = V sin γ",
+   "evidence": "examples/src/longitudinal.jl:69"
+  },
+  {
+   "id": "T7-107",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 56,
+   "kind": "decl",
+   "claim": "A component is a subtype of AbstractComponent that adds methods to the framework's functions",
+   "evidence": "probe:55-58,69"
+  },
+  {
+   "id": "T7-108",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 58,
+   "kind": "decl",
+   "claim": "`x_init` names the continuous state and its defaults",
+   "evidence": "probe:73; probe2:11 unnamed states keep x_init values"
+  },
+  {
+   "id": "T7-109",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 59,
+   "kind": "decl",
+   "claim": "`u_types` and `y_types` name the input and output ports and their types",
+   "evidence": "probe:74-75"
+  },
+  {
+   "id": "T7-110",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 61,
+   "kind": "decl",
+   "claim": "`y_state` computes the outputs from the state",
+   "evidence": "probe:76"
+  },
+  {
+   "id": "T7-111",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 62,
+   "kind": "decl",
+   "claim": "`x_deriv` computes the derivative from state and inputs",
+   "evidence": "probe:77-92"
+  },
+  {
+   "id": "T7-112",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 63,
+   "kind": "law",
+   "claim": "A component with continuous state and no children is a continuous primitive",
+   "evidence": "design/spec.md:16237-16239 (g-primitive)"
+  },
+  {
+   "id": "T7-113",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 64,
+   "kind": "law",
+   "claim": "With every output a function of the state, no other output function is needed",
+   "evidence": "probe:75-76 builds and runs with only y_state"
+  },
+  {
+   "id": "T7-114",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 67,
+   "kind": "ex",
+   "claim": "The component code block runs whole",
+   "evidence": "probe:41-80"
+  },
+  {
+   "id": "T7-115",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 112,
+   "kind": "mech",
+   "claim": "Each line of the returned value is one equation of motion",
+   "evidence": "examples/src/longitudinal.jl:65-69"
+  },
+  {
+   "id": "T7-116",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 116,
+   "kind": "mech",
+   "claim": "A model is a tree of components with one root",
+   "evidence": "probe:81-82"
+  },
+  {
+   "id": "T7-117",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 117,
+   "kind": "decl",
+   "claim": "`Group` names its children and wires them",
+   "evidence": "probe:81-82"
+  },
+  {
+   "id": "T7-118",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 119,
+   "kind": "decl",
+   "claim": "`input_wires` hands the group's `δe` and `δt` to the child",
+   "evidence": "probe:82; probe2:6-10"
+  },
+  {
+   "id": "T7-119",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 121,
+   "kind": "mech",
+   "claim": "The aircraft is addressed by the path \"plant\"",
+   "evidence": "probe:90,129 state(sim, \"plant\")"
+  },
+  {
+   "id": "T7-120",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 132,
+   "kind": "mech",
+   "claim": "A Simulation runs the model in frames",
+   "evidence": "probe2:31 frame column; src/sim.jl:1562"
+  },
+  {
+   "id": "T7-122",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 134,
+   "kind": "mech",
+   "claim": "The log keeps the published snapshots",
+   "evidence": "src/sim.jl:2937; probe:94"
+  },
+  {
+   "id": "T7-123",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 135,
+   "kind": "law",
+   "claim": "Δt_frame is required",
+   "evidence": "src/deployment.jl:515-517; probe2:34 DeploymentInvalid 'needs the frame period'"
+  },
+  {
+   "id": "T7-124",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 136,
+   "kind": "mech",
+   "claim": "By default the integrator takes one step per frame",
+   "evidence": "src/deployment.jl:352; probe:187 12000 steps for 12000 frames"
+  },
+  {
+   "id": "T7-125",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 137,
+   "kind": "law",
+   "claim": "The frame period is exact: a Rational such as 1//100",
+   "evidence": "src/deployment.jl:515-517"
+  },
+  {
+   "id": "T7-126",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 137,
+   "kind": "law",
+   "claim": "A float frame period is refused with the reason",
+   "evidence": "probe:85 DeploymentInvalid 'must be exact'"
+  },
+  {
+   "id": "T7-127",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 142,
+   "kind": "ex",
+   "claim": "The refusal call on a float Δt_frame",
+   "evidence": "probe:85"
+  },
+  {
+   "id": "T7-128",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 146,
+   "kind": "decl",
+   "claim": "`set` writes values, `at` places them under a path, `combine` joins conditions",
+   "evidence": "probe:89-90"
+  },
+  {
+   "id": "T7-129",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 148,
+   "kind": "law",
+   "claim": "A condition may write part of a state",
+   "evidence": "probe2:10-11 (V and θ only)"
+  },
+  {
+   "id": "T7-130",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 149,
+   "kind": "law",
+   "claim": "States a condition does not name keep their `x_init` values",
+   "evidence": "probe2:11 state (V = 55, γ = 0, θ = 0.02, q = 0, h = 1000)"
+  },
+  {
+   "id": "T7-131",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 149,
+   "kind": "ex",
+   "claim": "x_init is level flight at 50 m/s and 1000 m",
+   "evidence": "probe:73 / examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "T7-132",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 150,
+   "kind": "law",
+   "claim": "Root inputs have no default so the condition must give both",
+   "evidence": "probe2:7-9 UninitializedInputs for δe, δt and for δt alone"
+  },
+  {
+   "id": "T7-133",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 152,
+   "kind": "ex",
+   "claim": "Trim is θ 0.019930, δe 0.025058, δt 0.37234",
+   "evidence": "probe:127"
+  },
+  {
+   "id": "T7-134",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 154,
+   "kind": "ex",
+   "claim": "The aircraft starts at those controls and pitch but 5 m/s too fast",
+   "evidence": "probe:88-89 V = 55.0"
+  },
+  {
+   "id": "T7-135",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 155,
+   "kind": "decl",
+   "claim": "`init!` sets the condition and `run!` runs to `t_end`",
+   "evidence": "src/sim.jl:834,1562; probe:90-91"
+  },
+  {
+   "id": "T7-136",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 170,
+   "kind": "decl",
+   "claim": "`series` gathers the log into columns, one per read-set entry",
+   "evidence": "src/sim.jl:2937,2956; probe:94"
+  },
+  {
+   "id": "T7-137",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 171,
+   "kind": "decl",
+   "claim": "An entry is a selector, here `get_output` of a path and a name",
+   "evidence": "probe:93"
+  },
+  {
+   "id": "T7-139",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 173,
+   "kind": "mech",
+   "claim": "The result holds the times `t` and each column reads under its label",
+   "evidence": "src/sim.jl:2909-2921; probe:94 propertynames (:t, ..., :V, :h)"
+  },
+  {
+   "id": "T7-140",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 174,
+   "kind": "ex",
+   "claim": "`flight.V` is the airspeed at each snapshot",
+   "evidence": "probe:95-96"
+  },
+  {
+   "id": "T7-141",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 188,
+   "kind": "mech",
+   "claim": "The aircraft climbs as it slows and dives as it speeds up",
+   "evidence": "probe:97 h 1000 to 1046 while V falls from 55 to 45.9"
+  },
+  {
+   "id": "T7-142",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 189,
+   "kind": "law",
+   "claim": "The period is the time between two upward crossings of the trim airspeed",
+   "evidence": "probe:96-97 periods 27.33"
+  },
+  {
+   "id": "T7-143",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 197,
+   "kind": "ex",
+   "claim": "The log holds 12 001 snapshots",
+   "evidence": "probe:97 snapshots = 12001"
+  },
+  {
+   "id": "T7-144",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 198,
+   "kind": "ex",
+   "claim": "The airspeed swings between 46 and 55 m/s",
+   "evidence": "probe:97 (45.87, 55.0)"
+  },
+  {
+   "id": "T7-145",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 198,
+   "kind": "ex",
+   "claim": "The altitude rises 46 m above the start",
+   "evidence": "probe:98 46.016"
+  },
+  {
+   "id": "T7-146",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 199,
+   "kind": "ex",
+   "claim": "The period is 27.3 s",
+   "evidence": "probe:97 27.33"
+  },
+  {
+   "id": "T7-148",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 204,
+   "kind": "mech",
+   "claim": "RedstoneExamples ships this chapter's model",
+   "evidence": "examples/src/longitudinal.jl:34,106"
+  },
+  {
+   "id": "T7-149",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 205,
+   "kind": "law",
+   "claim": "The package's aircraft() flown from the same condition gives the same flight to the bit",
+   "evidence": "probe:104 bit-equal: true"
+  },
+  {
+   "id": "T7-150",
+   "file": "docs/src/tutorial/aircraft.md",
+   "line": 221,
+   "kind": "decl",
+   "claim": "`import RedstoneExamples: Longitudinal, aircraft` is valid",
+   "evidence": "probe2:3 imports; examples/src/longitudinal.jl:34,106"
+  },
+  {
+   "id": "T7-151",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 7,
+   "kind": "ex",
+   "claim": "The trim holds level flight at 50 m/s with pitch, elevator and throttle",
+   "evidence": "probe:127"
+  },
+  {
+   "id": "T7-152",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 9,
+   "kind": "decl",
+   "claim": "The question is a `TrimProblem` solved with `trim!`",
+   "evidence": "src/trim.jl:490; probe:112-127"
+  },
+  {
+   "id": "T7-153",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 10,
+   "kind": "ex",
+   "claim": "The answer lands within 1% of the hand estimate",
+   "evidence": "probe:139 (-0.75, 0.51, -0.06 percent)"
+  },
+  {
+   "id": "T7-154",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 21,
+   "kind": "law",
+   "claim": "Level flight fixes four of five states: γ, q zero, V and h given",
+   "evidence": "probe:112-118 condition writes V, γ, q, h"
+  },
+  {
+   "id": "T7-155",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 23,
+   "kind": "law",
+   "claim": "V̇, γ̇ and q̇ must vanish",
+   "evidence": "examples/src/longitudinal.jl:125-127"
+  },
+  {
+   "id": "T7-156",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 24,
+   "kind": "law",
+   "claim": "The other two rates follow since θ̇ = q and ḣ = V sin γ",
+   "evidence": "examples/src/longitudinal.jl:67,69"
+  },
+  {
+   "id": "T7-157",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 26,
+   "kind": "law",
+   "claim": "The unknowns are θ, δe, δt (leads delta_e and delta_t are LaTeX)",
+   "evidence": "examples/src/longitudinal.jl:120"
+  },
+  {
+   "id": "T7-158",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 27,
+   "kind": "law",
+   "claim": "θ equals the angle of attack when γ = 0",
+   "evidence": "examples/src/longitudinal.jl:57"
+  },
+  {
+   "id": "T7-159",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 32,
+   "kind": "decl",
+   "claim": "A trim problem names its decisions with a guess and bounds",
+   "evidence": "probe:113-115 guess, lower, upper"
+  },
+  {
+   "id": "T7-160",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 33,
+   "kind": "decl",
+   "claim": "`condition` is a function from the decisions to a condition",
+   "evidence": "probe:116-118"
+  },
+  {
+   "id": "T7-161",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 35,
+   "kind": "decl",
+   "claim": "The condition writes θ into the plant state beside held V, h, γ = 0, q = 0",
+   "evidence": "probe:117"
+  },
+  {
+   "id": "T7-162",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 36,
+   "kind": "decl",
+   "claim": "It writes the two controls into the root inputs",
+   "evidence": "probe:118"
+  },
+  {
+   "id": "T7-163",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 38,
+   "kind": "decl",
+   "claim": "`reads` is a read set built by `reads`",
+   "evidence": "probe:119"
+  },
+  {
+   "id": "T7-164",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 39,
+   "kind": "decl",
+   "claim": "The reads are three derivatives via `get_deriv`",
+   "evidence": "probe:119"
+  },
+  {
+   "id": "T7-165",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 40,
+   "kind": "decl",
+   "claim": "`residuals` turns the reads into the equations to zero",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "T7-166",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 41,
+   "kind": "decl",
+   "claim": "`tolerances` says how close to zero is enough",
+   "evidence": "probe:121; src/trim.jl:263 status rules"
+  },
+  {
+   "id": "T7-167",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 60,
+   "kind": "mech",
+   "claim": "`trim!` solves the problem on a simulation's model",
+   "evidence": "src/sim.jl:1123-1131"
+  },
+  {
+   "id": "T7-168",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 61,
+   "kind": "law",
+   "claim": "A converged solve commits through `init!`",
+   "evidence": "src/trim.jl:520; src/sim.jl:1131-1132; probe:129"
+  },
+  {
+   "id": "T7-169",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 62,
+   "kind": "mech",
+   "claim": "The commit lays the problem's condition over the baseline",
+   "evidence": "src/trim.jl:503,598,730"
+  },
+  {
+   "id": "T7-170",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 63,
+   "kind": "decl",
+   "claim": "`baseline` is a condition for whatever the problem leaves out",
+   "evidence": "src/trim.jl:550; spec.md:17166"
+  },
+  {
+   "id": "T7-171",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 64,
+   "kind": "law",
+   "claim": "The problem writes the whole state and both inputs, so an empty baseline suffices",
+   "evidence": "probe:126 converges with baseline = set()"
+  },
+  {
+   "id": "T7-172",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 75,
+   "kind": "ex",
+   "claim": "The solver converges in four iterations",
+   "evidence": "probe:127 iterations = 4"
+  },
+  {
+   "id": "T7-173",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 75,
+   "kind": "ex",
+   "claim": "The residuals at the answer are well inside tolerance",
+   "evidence": "probe:128 (5e-14, 5e-12, 3e-13 vs 1e-9)"
+  },
+  {
+   "id": "T7-174",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 82,
+   "kind": "mech",
+   "claim": "`state` reads the plant's committed state",
+   "evidence": "probe:129 (θ = 0.01993…)"
+  },
+  {
+   "id": "T7-175",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 92,
+   "kind": "mech",
+   "claim": "The hand estimate ignores the thrust tilt",
+   "evidence": "probe:131-137 uses no sin α term"
+  },
+  {
+   "id": "T7-176",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 93,
+   "kind": "law",
+   "claim": "Lift balances weight, giving CL and α",
+   "evidence": "probe:133-134"
+  },
+  {
+   "id": "T7-177",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 94,
+   "kind": "law",
+   "claim": "Zero moment gives the elevator",
+   "evidence": "probe:136"
+  },
+  {
+   "id": "T7-178",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 94,
+   "kind": "law",
+   "claim": "Thrust balancing drag gives the throttle",
+   "evidence": "probe:137"
+  },
+  {
+   "id": "T7-180",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 111,
+   "kind": "ex",
+   "claim": "The percentage differences between solution and estimate",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "T7-181",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 117,
+   "kind": "ex",
+   "claim": "All three are within 1%",
+   "evidence": "probe:139 max 0.75"
+  },
+  {
+   "id": "T7-182",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 117,
+   "kind": "mech",
+   "claim": "The largest gap is in the pitch angle, where thrust tilt adds lift",
+   "evidence": "probe:139 θ -0.75%; solved θ below estimate, sin α term adds lift (examples/src/longitudinal.jl:66)"
+  },
+  {
+   "id": "T7-183",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 122,
+   "kind": "law",
+   "claim": "At 20 m/s the aircraft needs more angle of attack than the θ upper bound allows",
+   "evidence": "probe:143: needs CL ≈ 2.5, α ≈ 0.44 > 0.3; saturated = [(:θ, :upper)]"
+  },
+  {
+   "id": "T7-184",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 123,
+   "kind": "law",
+   "claim": "The solver stops against the bound and says so",
+   "evidence": "probe:143 status :stalled, saturated [(:θ, :upper)]"
+  },
+  {
+   "id": "T7-185",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 124,
+   "kind": "law",
+   "claim": "A failed trim commits nothing and leaves the simulation as it was",
+   "evidence": "probe:143 lifecycle :built; probe2:38"
+  },
+  {
+   "id": "T7-186",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 136,
+   "kind": "mech",
+   "claim": "The examples package ships `level_flight()`",
+   "evidence": "examples/src/longitudinal.jl:119"
+  },
+  {
+   "id": "T7-187",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 137,
+   "kind": "law",
+   "claim": "It gives the same answer as the chapter's at 50 m/s",
+   "evidence": "probe:145 true"
+  },
+  {
+   "id": "T7-188",
+   "file": "docs/src/tutorial/trim.md",
+   "line": 149,
+   "kind": "decl",
+   "claim": "`import RedstoneExamples: Longitudinal, aircraft, level_flight` is valid",
+   "evidence": "probe2:3"
+  },
+  {
+   "id": "T7-189",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 7,
+   "kind": "mech",
+   "claim": "The trimmed aircraft is linearized and its two modes are read from the eigenvalues",
+   "evidence": "probe:162-174"
+  },
+  {
+   "id": "T7-190",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 8,
+   "kind": "ex",
+   "claim": "The short period is a pitch oscillation of about 1.4 s",
+   "evidence": "probe:174 1.403"
+  },
+  {
+   "id": "T7-191",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 9,
+   "kind": "ex",
+   "claim": "The phugoid period matches chapter 1's run",
+   "evidence": "probe:174 27.31 vs probe:97 27.33"
+  },
+  {
+   "id": "T7-192",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 11,
+   "kind": "law",
+   "claim": "The step must follow the fast mode even when only the slow one shows",
+   "evidence": "probe:188 frame 1 s diverges; probe:189 h_max 0.1 follows"
+  },
+  {
+   "id": "T7-193",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 27,
+   "kind": "mech",
+   "claim": "A linearization perturbs some quantities and watches others",
+   "evidence": "src/linearize.jl code_map entry; probe:162"
+  },
+  {
+   "id": "T7-194",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 28,
+   "kind": "decl",
+   "claim": "Taps name the quantities, each with a selector",
+   "evidence": "probe:157-160"
+  },
+  {
+   "id": "T7-195",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 29,
+   "kind": "decl",
+   "claim": "States to perturb go under `x` via `get_state`",
+   "evidence": "probe:157-158"
+  },
+  {
+   "id": "T7-196",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 30,
+   "kind": "decl",
+   "claim": "Root inputs go under `u` via `get_input`",
+   "evidence": "probe:159"
+  },
+  {
+   "id": "T7-197",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 31,
+   "kind": "decl",
+   "claim": "Outputs to watch go under `y`",
+   "evidence": "examples/src/longitudinal.jl:140"
+  },
+  {
+   "id": "T7-198",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 32,
+   "kind": "law",
+   "claim": "Each list's order fixes the rows and columns",
+   "evidence": "probe:162 A rows V γ θ q h"
+  },
+  {
+   "id": "T7-199",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 33,
+   "kind": "mech",
+   "claim": "`linearize` works at the simulation's current state, here the committed trim",
+   "evidence": "src/sim.jl:1159; code_map linearize default point checkpoint(sim); probe:162 x₀ = trim"
+  },
+  {
+   "id": "T7-200",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 34,
+   "kind": "law",
+   "claim": "It returns ẋ = A x + B u in deviations",
+   "evidence": "probe:162 A, B matrices; Linearization fields probe2:40"
+  },
+  {
+   "id": "T7-201",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 35,
+   "kind": "decl",
+   "claim": "A tap set without `y` has no outputs",
+   "evidence": "probe:162 'no outputs'"
+  },
+  {
+   "id": "T7-202",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 38,
+   "kind": "law",
+   "claim": "The matrices come back plain",
+   "evidence": "probe2:16-17 Matrix{Float64}"
+  },
+  {
+   "id": "T7-203",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 39,
+   "kind": "decl",
+   "claim": "With ComponentArrays loaded, `labeled` puts the tap labels on the matrices",
+   "evidence": "ext/RedstoneComponentArraysExt.jl labeled; probe2:19"
+  },
+  {
+   "id": "T7-204",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 40,
+   "kind": "law",
+   "claim": "An entry, row or column reads by labels",
+   "evidence": "probe:163 A[:h, :γ], A[:, :h]"
+  },
+  {
+   "id": "T7-205",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 41,
+   "kind": "law",
+   "claim": "Arithmetic on labeled arrays goes by position",
+   "evidence": "probe2:21-24 A1 + A2 with swapped axes adds entrywise"
+  },
+  {
+   "id": "T7-206",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "Arithmetic never checks that operands carry the same labels",
+   "evidence": "probe2:23-25 no error"
+  },
+  {
+   "id": "T7-207",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 42,
+   "kind": "mech",
+   "claim": "The linearization prints the operating point then each matrix under labels",
+   "evidence": "probe:162 output"
+  },
+  {
+   "id": "T7-208",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 58,
+   "kind": "mech",
+   "claim": "`linearize` differentiates the model's own code by automatic differentiation",
+   "evidence": "src/linearize.jl LinearizeDual (code_map 854-910)"
+  },
+  {
+   "id": "T7-209",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 59,
+   "kind": "law",
+   "claim": "It needs no perturbation size",
+   "evidence": "src/linearize.jl code_map; linearize signature src/sim.jl:1159"
+  },
+  {
+   "id": "T7-210",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 59,
+   "kind": "law",
+   "claim": "Each entry is exact up to rounding",
+   "evidence": "probe:169 gap 1.5e-10 from differences"
+  },
+  {
+   "id": "T7-211",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 61,
+   "kind": "ex",
+   "claim": "A[h, γ] = V cos γ = 50",
+   "evidence": "probe:163 50.0"
+  },
+  {
+   "id": "T7-212",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 62,
+   "kind": "ex",
+   "claim": "A[θ, q] = 1",
+   "evidence": "probe:163 1.0"
+  },
+  {
+   "id": "T7-213",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 63,
+   "kind": "law",
+   "claim": "The last column of A is zero",
+   "evidence": "probe:163 all 0.0"
+  },
+  {
+   "id": "T7-214",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 69,
+   "kind": "mech",
+   "claim": "`x_deriv` is an ordinary function that can be called directly",
+   "evidence": "probe:166"
+  },
+  {
+   "id": "T7-215",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 70,
+   "kind": "ex",
+   "claim": "The block compares central differences to the framework's A",
+   "evidence": "probe:164-169 runs"
+  },
+  {
+   "id": "T7-216",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 85,
+   "kind": "ex",
+   "claim": "The largest gap is about 1.5e-10",
+   "evidence": "probe:169 1.526e-10"
+  },
+  {
+   "id": "T7-218",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 86,
+   "kind": "law",
+   "claim": "The framework's derivative needs no ε",
+   "evidence": "probe:162; src/linearize.jl"
+  },
+  {
+   "id": "T7-219",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 91,
+   "kind": "law",
+   "claim": "Each complex pair of eigenvalues is an oscillating mode",
+   "evidence": "probe:171 two conjugate pairs"
+  },
+  {
+   "id": "T7-220",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 92,
+   "kind": "law",
+   "claim": "ωn = |λ| (lead omega_n is LaTeX/ a local name)",
+   "evidence": "probe:173 mode(λ) ωn = abs(λ)"
+  },
+  {
+   "id": "T7-221",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 94,
+   "kind": "law",
+   "claim": "ζ = −Re λ / |λ|",
+   "evidence": "probe:173"
+  },
+  {
+   "id": "T7-222",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 95,
+   "kind": "law",
+   "claim": "The observed oscillation has period 2π / Im λ",
+   "evidence": "probe:173,174 27.31 vs measured 27.33"
+  },
+  {
+   "id": "T7-223",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 97,
+   "kind": "law",
+   "claim": "The zero eigenvalue is the altitude",
+   "evidence": "probe:171 0+0im; column h zero, probe:163"
+  },
+  {
+   "id": "T7-224",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 112,
+   "kind": "ex",
+   "claim": "The short period is fast and well damped",
+   "evidence": "probe:174 ζ = 0.566, period 1.4 s"
+  },
+  {
+   "id": "T7-225",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 112,
+   "kind": "ex",
+   "claim": "The phugoid is slow and lightly damped",
+   "evidence": "probe:174 ζ = 0.067"
+  },
+  {
+   "id": "T7-226",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 114,
+   "kind": "ex",
+   "claim": "The phugoid period is 27.3 s, as measured on the run",
+   "evidence": "probe:174 27.31; probe:97 27.33"
+  },
+  {
+   "id": "T7-227",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 123,
+   "kind": "mech",
+   "claim": "The run integrates each frame in steps",
+   "evidence": "probe2:27-31"
+  },
+  {
+   "id": "T7-228",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 124,
+   "kind": "mech",
+   "claim": "The default method is RK4",
+   "evidence": "src/deployment.jl:467 algorithm = RK4()"
+  },
+  {
+   "id": "T7-230",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 125,
+   "kind": "mech",
+   "claim": "RK4 takes one step when `h_max` is not set",
+   "evidence": "src/deployment.jl:352; probe:187"
+  },
+  {
+   "id": "T7-231",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 126,
+   "kind": "decl",
+   "claim": "`h_max`, the method and the frame are Deployment keywords that Simulation passes on",
+   "evidence": "src/deployment.jl:466-467; src/sim.jl:318,397; probe2:33"
+  },
+  {
+   "id": "T7-232",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 127,
+   "kind": "law",
+   "claim": "An explicit method is stable only while the step is short against the fastest mode",
+   "evidence": "probe:188 diverges at step 1 s with |λ| 5.43"
+  },
+  {
+   "id": "T7-233",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 128,
+   "kind": "ex",
+   "claim": "The short period's |λ| is 5.43 rad/s",
+   "evidence": "probe:174 ωn = 5.4326"
+  },
+  {
+   "id": "T7-234",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 128,
+   "kind": "law",
+   "claim": "The RK4 stability limit is well under a second",
+   "evidence": "probe:188 diverges at 1 s; RK4 limit 2.83/5.43 = 0.52 s"
+  },
+  {
+   "id": "T7-235",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 129,
+   "kind": "mech",
+   "claim": "A two-minute run shows only the phugoid",
+   "evidence": "probe:97 flight shows 27 s oscillation, short period damps out"
+  },
+  {
+   "id": "T7-236",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 131,
+   "kind": "ex",
+   "claim": "`fly` flies chapter 1's flight under the deployment keywords given",
+   "evidence": "probe:176-181"
+  },
+  {
+   "id": "T7-237",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 133,
+   "kind": "mech",
+   "claim": "`compare` checks airspeed at each whole second against the 1/100 s run",
+   "evidence": "probe:183-186"
+  },
+  {
+   "id": "T7-238",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 134,
+   "kind": "law",
+   "claim": "Each step ends at a snapshot, so the log's length counts the steps",
+   "evidence": "probe2:31 (51 snapshots, 50 steps); probe:189 steps = 1200"
+  },
+  {
+   "id": "T7-239",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 157,
+   "kind": "law",
+   "claim": "A one-second frame with one step per frame is past the stability limit",
+   "evidence": "probe:188"
+  },
+  {
+   "id": "T7-240",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 158,
+   "kind": "law",
+   "claim": "The short period grows instead of decaying",
+   "evidence": "probe:188 state reaches -Inf at t = 4.0"
+  },
+  {
+   "id": "T7-241",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 159,
+   "kind": "law",
+   "claim": "The run stops on the first state that is no longer finite",
+   "evidence": "probe:188 NonfiniteState"
+  },
+  {
+   "id": "T7-242",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 161,
+   "kind": "ex",
+   "claim": "The @repl call fails with a StepError",
+   "evidence": "probe:188 StepError, cause NonfiniteState"
+  },
+  {
+   "id": "T7-243",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 165,
+   "kind": "law",
+   "claim": "`h_max` bounds the step inside each frame",
+   "evidence": "probe:189 steps = 1200 for h_max 1/10, frame 1"
+  },
+  {
+   "id": "T7-244",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 166,
+   "kind": "ex",
+   "claim": "A tenth of a second follows the short period closely",
+   "evidence": "probe:189 error 9.3e-7"
+  },
+  {
+   "id": "T7-245",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 172,
+   "kind": "mech",
+   "claim": "An adaptive method chooses each step from an error estimate",
+   "evidence": "src/deployment.jl:385-387"
+  },
+  {
+   "id": "T7-246",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 173,
+   "kind": "law",
+   "claim": "BS3 needs the floor `h_min`",
+   "evidence": "src/deployment.jl:231,507"
+  },
+  {
+   "id": "T7-247",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 173,
+   "kind": "law",
+   "claim": "BS3 refuses to run without `h_min`",
+   "evidence": "probe:191 DeploymentInvalid 'needs the step floor'"
+  },
+  {
+   "id": "T7-248",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 181,
+   "kind": "ex",
+   "claim": "With a 1 ms floor BS3 takes about a third as many steps as the fixed method",
+   "evidence": "probe:192 418 steps vs probe:189 1200"
+  },
+  {
+   "id": "T7-249",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 182,
+   "kind": "mech",
+   "claim": "BS3 runs at its default tolerances",
+   "evidence": "src/deployment.jl:413 BS3 token with default tolerances; probe:192 BS3() with no arguments"
+  },
+  {
+   "id": "T7-250",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 188,
+   "kind": "law",
+   "claim": "A fixed step costs the same on every run",
+   "evidence": "src/deployment.jl:347-352 fixed equal steps; probe:189"
+  },
+  {
+   "id": "T7-251",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 189,
+   "kind": "mech",
+   "claim": "The adaptive step finds its own length",
+   "evidence": "src/deployment.jl:385-391"
+  },
+  {
+   "id": "T7-252",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 190,
+   "kind": "law",
+   "claim": "The adaptive error follows the tolerances, not the step",
+   "evidence": "src/deployment.jl:387-388 (a step passes on error estimate vs tolerances); probe:192 error 4.3e-4"
+  },
+  {
+   "id": "T7-253",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 194,
+   "kind": "mech",
+   "claim": "The examples package ships `longitudinal_taps()`",
+   "evidence": "examples/src/longitudinal.jl:136"
+  },
+  {
+   "id": "T7-254",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 195,
+   "kind": "ex",
+   "claim": "Its A and B equal this chapter's",
+   "evidence": "probe:194 (true, true)"
+  },
+  {
+   "id": "T7-255",
+   "file": "docs/src/tutorial/linearize.md",
+   "line": 208,
+   "kind": "decl",
+   "claim": "`import RedstoneExamples: Longitudinal, aircraft, level_flight, longitudinal_taps` is valid",
+   "evidence": "probe2:3; examples/src/longitudinal.jl:136"
+  }
+ ],
+ "counts": {
+  "mech": 66,
+  "law": 83,
+  "decl": 46,
+  "ex": 38,
+  "ptr": 19,
+  "why": 3
+ }
+}

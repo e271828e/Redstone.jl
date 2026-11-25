@@ -1,0 +1,443 @@
+{
+ "rows": [
+  {
+   "id": "CV7b-003",
+   "file": "src/readers.jl",
+   "line": 38,
+   "kind": "cite",
+   "claim": "Comment cites '§5.2, §8.3' for 'Only cells and stores are addressable'. The same cite sits in the Design lines at :25 and :492. §5.2 is 'Two-stage outputs: signatures, bundles and the hand-off laws' and says nothing on addressability.",
+   "evidence": "design/spec.md:1138-1291 (§5.2, no passage on what a reader may address); design/spec.md:920-922 (§4.2: 'The port is the addressable unit'); design/spec.md:13338 (§14.4 itself cites §4.2 and §8.3 for 'only declared cells and stores are addressable'); design/spec.md:3540 (§8.3).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "In the comments at src/readers.jl:25, :38 and :492 replace '§5.2' with '§4.2'. §14.4 cites §4.2 and §8.3 for this rule."
+  },
+  {
+   "id": "CV7b-028",
+   "file": "src/readers.jl",
+   "line": 788,
+   "kind": "surface",
+   "claim": "Spec §14.4 says 'A bare store has the field `x`, `s` or `m`, and a headless address may stand for it'. Appendix B (design/spec.md:15343-15347) says the empty default of `get_state` stands for 'a bare store's letter, `x`, `s` or `m`'. No selector reads an `m` store: `get_state` takes the letter `x` on the continuous tier and `s` on the discrete tier, and `get_deriv` takes `x`.",
+   "evidence": "src/readers.jl:788-789 and :997-998 (letter = x or s by tier; state_decls = decl.x or decl.s, src/build.jl:33); probe: m store, `get_state(\"src\", :phase)` on ModedSource (an `m_init` field `phase`) gives `undeclared` with `declares=state_field` and no candidates, and `get_state(\"src\")` gives `store_shape` with no candidates. The docstring at src/readers.jl:171 says 'x or s'. D-438 (log.md:18252) names `m` for declarations in general, not for reads.",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The `m` letter holds for conditions and handlers (§14.3, D-438). It does not hold for the read selectors.",
+   "fix": "§14.4: 'A bare store (a store declared as one leaf) has the field `x` or `s` on the tiers a selector reads, and a headless address may stand for it.' Appendix B: 'The empty default stands for a bare store's letter, `x` or `s`, or a bare contract's default face, `u` or `y`.'"
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV7b-001",
+   "file": "src/readers.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "File header cites §14.4, §14.7, §11.2, §13.1, D-276 for the closed family, read set, gather twin and leaf address",
+   "evidence": "design/spec.md:13211,13597,7962,11125; log.md:12474"
+  },
+  {
+   "id": "CV7b-002",
+   "file": "src/readers.jl",
+   "line": 25,
+   "kind": "cite",
+   "claim": "Design line cites §8.3, §11.2, §14.4, Appendix B, D-276, D-406 for the family, the source rule, the get_ prefix",
+   "evidence": "design/spec.md:3540,7962,13211,15343; log.md:12474,16701 (the §5.2 cite is row CV7b-003)"
+  },
+  {
+   "id": "CV7b-004",
+   "file": "src/readers.jl",
+   "line": 41,
+   "kind": "docstring",
+   "claim": "GetState docstring: reads the live stores, so a snapshot reader refuses it as ReadResolution; GetDeriv is the other live-store selector",
+   "evidence": "src/readers.jl:696-698; probe: table-source run gives store_selector for get_state and get_deriv"
+  },
+  {
+   "id": "CV7b-005",
+   "file": "src/readers.jl",
+   "line": 65,
+   "kind": "docstring",
+   "claim": "GetDeriv docstring: reads a continuous component's derivative; live stores; snapshot readers refuse it",
+   "evidence": "src/readers.jl:1016-1038,696-698; probe: discrete_deriv and store_selector"
+  },
+  {
+   "id": "CV7b-006",
+   "file": "src/readers.jl",
+   "line": 87,
+   "kind": "docstring",
+   "claim": "GetOutput docstring: resolves against the signal table or a snapshot; an inspection read; the root's faces go to GetFace",
+   "evidence": "src/readers.jl:602-603,1040-1056; spec Appendix D g-inspection-read (design/spec.md:16969); probe: gather over executor"
+  },
+  {
+   "id": "CV7b-007",
+   "file": "src/readers.jl",
+   "line": 111,
+   "kind": "docstring",
+   "claim": "GetInput docstring: reads a root input back, resolves against signal table or snapshot",
+   "evidence": "src/readers.jl:812-837,1060-1066; probe: u = get_input(:u) gathers 1.5"
+  },
+  {
+   "id": "CV7b-008",
+   "file": "src/readers.jl",
+   "line": 131,
+   "kind": "docstring",
+   "claim": "GetFace docstring: reads an exported output face; integration read; table or snapshot source",
+   "evidence": "src/readers.jl:844-872; probe: f = get_face(:y) gathers 0.3"
+  },
+  {
+   "id": "CV7b-009",
+   "file": "src/readers.jl",
+   "line": 158,
+   "kind": "docstring",
+   "claim": "get_state signature (path::AbstractString, leaf::Union{Symbol,AbstractString} = \"\") -> GetState",
+   "evidence": "src/readers.jl:188-189; probe: get_state(\"p\") gives GetState(\"p\",\"\"); Symbol leaf kept as Symbol"
+  },
+  {
+   "id": "CV7b-010",
+   "file": "src/readers.jl",
+   "line": 158,
+   "kind": "docstring",
+   "claim": "get_state docstring: bare store has field x or s; get_state(\"i\") reads it whole, \"x\" does too, \"[2]\" indexes an SVector; field read from continuous or discrete state",
+   "evidence": "src/readers.jl:784-791,997-1014; probe: bare s read (:s, :sv in b3), named head against bare store gives undeclared with candidate [:x]"
+  },
+  {
+   "id": "CV7b-011",
+   "file": "src/readers.jl",
+   "line": 158,
+   "kind": "docstring",
+   "claim": "get_state docstring: assembly path, undeclared field, or unreachable step is ReadResolution at resolution",
+   "evidence": "src/readers.jl:925-930,1002-1005,1009; probe: assembly_path, undeclared, no_such_field, index_bounds, index_arity, leaf_syntax"
+  },
+  {
+   "id": "CV7b-012",
+   "file": "src/readers.jl",
+   "line": 192,
+   "kind": "docstring",
+   "claim": "get_deriv docstring: [k] or [k,l] steps only, may be headless for a bare state; discrete path is ReadResolution",
+   "evidence": "src/readers.jl:1021-1024; probe: get_deriv(\"c\",\"[2]\") on bare x resolves; discrete_deriv on ctl"
+  },
+  {
+   "id": "CV7b-013",
+   "file": "src/readers.jl",
+   "line": 217,
+   "kind": "docstring",
+   "claim": "get_output docstring: bare port is `y`, address may omit it; refusals for assembly, undeclared port, bad step, headless on named ports",
+   "evidence": "src/readers.jl:801-806,1040-1056; probe: get_output(\"c\") on bare SMatrix port, \"[1,2]\", port_shape on plant"
+  },
+  {
+   "id": "CV7b-014",
+   "file": "src/readers.jl",
+   "line": 247,
+   "kind": "docstring",
+   "claim": "get_input docstring: face at root, input face of mounted level reaching a root input; bare u may be omitted at a primitive; fed face refused",
+   "evidence": "src/readers.jl:812-837; probe: at(\"c\", get_input()/\".v[2]\") resolves; internally_wired with producer (\"plant\",:y); no_input_face at mount"
+  },
+  {
+   "id": "CV7b-015",
+   "file": "src/readers.jl",
+   "line": 272,
+   "kind": "docstring",
+   "claim": "get_face docstring: root-exported face, output face of mounted level, primitive root's own ports with bare y omissible; input face refused",
+   "evidence": "src/readers.jl:844-872; probe: get_face() and get_face(\"[2]\") at primitive root; input_face_not_output"
+  },
+  {
+   "id": "CV7b-016",
+   "file": "src/readers.jl",
+   "line": 318,
+   "kind": "docstring",
+   "claim": "LeafRefusal docstring: reason, step as spelled, type in hand, field names where a .name step missed; six reasons",
+   "evidence": "src/readers.jl:324-330; probe: resolve_leaf returns each of opaque_leaf, index_arity, index_bounds, not_indexable, no_such_field with candidates [:v,:m]"
+  },
+  {
+   "id": "CV7b-017",
+   "file": "src/readers.jl",
+   "line": 342,
+   "kind": "docstring",
+   "claim": "parse_leaf docstring: examples, headless forms, Symbol is its string, leaf_syntax otherwise",
+   "evidence": "probe: parse_leaf outputs for \"pose.q_eb[2,3]\", \"\", \"[2]\", \"[0]\", \"a b\", :abc"
+  },
+  {
+   "id": "CV7b-018",
+   "file": "src/readers.jl",
+   "line": 392,
+   "kind": "docstring",
+   "claim": "match_leaf docstring: longest face prefix followed by end, '.' or '['; Symbol names face whole; nothing on no match",
+   "evidence": "probe: match_leaf(\"a.b\",[:a,:a.b]) gives a.b; \"wind[1]\" gives wind with (1,); \"windx\" gives nothing"
+  },
+  {
+   "id": "CV7b-019",
+   "file": "src/readers.jl",
+   "line": 432,
+   "kind": "docstring",
+   "claim": "resolve_leaf docstring: .name needs a struct with the field, never enters opaque leaf; index needs SArray, one index or one per dimension, in size",
+   "evidence": "src/readers.jl:441-465; probe: resolve_leaf outputs"
+  },
+  {
+   "id": "CV7b-020",
+   "file": "src/readers.jl",
+   "line": 470,
+   "kind": "docstring",
+   "claim": "walk_steps docstring: getfield/getindex unrolled at generation; empty chain is the value; conditions.jl runs tree positions through it",
+   "evidence": "src/readers.jl:478-488; src/conditions.jl:766,963"
+  },
+  {
+   "id": "CV7b-021",
+   "file": "src/readers.jl",
+   "line": 499,
+   "kind": "docstring",
+   "claim": "Reads docstring: holds labeled selectors as NamedTuple plus mount chain; bare NamedTuple refused as ReadSetMisuse by series, TrimProblemInvalid by trim!, ConditionNodeMisuse by at",
+   "evidence": "src/readers.jl:522-525; src/sim.jl:2971-2975; src/trim.jl:440-441; src/conditions.jl:216; probe: at(\"p\", NamedTuple) gives ConditionNodeMisuse :not_a_node"
+  },
+  {
+   "id": "CV7b-022",
+   "file": "src/readers.jl",
+   "line": 530,
+   "kind": "docstring",
+   "claim": "reads(; selectors...) -> Reads; non-selector refused as ReadSetMisuse; PathResolution for unknown path, ReadResolution otherwise. Lead: slurped selectors takes prose, not a bullet (docstring_rules 5)",
+   "evidence": "src/readers.jl:551-561; probe: reads(a=1) gives ReadSetMisuse :not_a_selector; unknown path gives PathResolution :unknown_child; docstring_rules.md rule 5"
+  },
+  {
+   "id": "CV7b-023",
+   "file": "src/readers.jl",
+   "line": 606,
+   "kind": "docstring",
+   "claim": "Reader docstring: first type parameter T is the activation; gather allocation-free for scalar and SVector leaves; mismatch is the internal-invariant refusal",
+   "evidence": "src/readers.jl:621-630; src/build.jl:1446; probe: alloc 0 for gather over scalar and SVector"
+  },
+  {
+   "id": "CV7b-024",
+   "file": "src/readers.jl",
+   "line": 641,
+   "kind": "docstring",
+   "claim": "_compile_reads docstring: signature, source :executor or :table, store selector refused under :table, sites trim/linearize/attach/series",
+   "evidence": "src/readers.jl:665-670; src/trim.jl:444,630; src/linearize.jl:440-450; src/bindings.jl:176; src/sim.jl:2964; probe: table source gives store_selector"
+  },
+  {
+   "id": "CV7b-025",
+   "file": "src/readers.jl",
+   "line": 677,
+   "kind": "docstring",
+   "claim": "_resolve_reads docstring: returns (reader or nothing, violations), same source, mount step first",
+   "evidence": "src/readers.jl:684-704"
+  },
+  {
+   "id": "CV7b-026",
+   "file": "src/readers.jl",
+   "line": 713,
+   "kind": "docstring",
+   "claim": "MountedRead docstring: rebased selector, as authored, mount; fields label, authored, mount, selector, face, head, steps",
+   "evidence": "src/readers.jl:718-726"
+  },
+  {
+   "id": "CV7b-027",
+   "file": "src/readers.jl",
+   "line": 728,
+   "kind": "docstring",
+   "claim": "_mount docstring: walks the chain from the root, returns (mount, level) or nothing, failed chain reported once",
+   "evidence": "src/readers.jl:739-748; probe: at(\"inner\", at(\"nope\", ...)) gives one PathResolution :unknown_child"
+  },
+  {
+   "id": "CV7b-029",
+   "file": "src/readers.jl",
+   "line": 697,
+   "kind": "surface",
+   "claim": "Every ReadResolution reason raised in readers.jl is in Appendix C with its payload: store_selector, assembly_path, undeclared, discrete_deriv, unknown_root_input, no_input_face, internally_wired, unknown_output_face, input_face_not_output, port_shape, store_shape, six leaf reasons",
+   "evidence": "src/readers.jl:697,765,773,827,834,862,883,928,971,1003,1022,1048; design/spec.md:15848-15879; probe: each reason produced"
+  },
+  {
+   "id": "CV7b-030",
+   "file": "src/readers.jl",
+   "line": 555,
+   "kind": "surface",
+   "claim": "ReadSetMisuse raised as :not_a_selector (label, in_hand) and :not_a_read_set; Appendix C names both, plus :empty_prefix raised from `at`",
+   "evidence": "src/readers.jl:555,674; design/spec.md:16009-16018; probe: reads(a=1), _compile_reads(NamedTuple), at(\"\", reads(...))"
+  },
+  {
+   "id": "CV7b-031",
+   "file": "src/readers.jl",
+   "line": 743,
+   "kind": "surface",
+   "claim": "A mount chain or path that names no child raises PathResolution :unknown_child, covered in Appendix C and the reads docstring",
+   "evidence": "src/readers.jl:743,761; design/spec.md:15552,15558; probe: unknown_child"
+  },
+  {
+   "id": "CV7b-032",
+   "file": "src/readers.jl",
+   "line": 188,
+   "kind": "surface",
+   "claim": "Selector signatures get_state/get_deriv/get_output(path, leaf = \"\"), get_input/get_face(leaf = \"\") match Appendix B",
+   "evidence": "src/readers.jl:188,213,243,269,293; design/spec.md:15343-15344"
+  },
+  {
+   "id": "CV7b-033",
+   "file": "src/readers.jl",
+   "line": 522,
+   "kind": "surface",
+   "claim": "Holder types GetState..GetFace and Reads are covered as a group; Reads fields (prefixes, selectors) are not named by spec or docstring but are internal",
+   "evidence": "design/spec.md:15353-15356,14218; src/readers.jl:522-525; probe: fieldnames(Reads) = (:prefixes, :selectors)"
+  },
+  {
+   "id": "CV7b-034",
+   "file": "src/Redstone.jl",
+   "line": 1,
+   "kind": "surface",
+   "claim": "Redstone.jl has no export or public statement, so the exported-surface check is vacuous: Appendix B says the module exports nothing until the audit (D-226), and checkdocs = :exports checks nothing",
+   "evidence": "src/Redstone.jl:1-38; probe: names(Redstone) == [:Redstone]; design/spec.md:14985-14987; docs/make.jl checkdocs; design/rules/docstring_rules.md rule 1"
+  },
+  {
+   "id": "CV7b-035",
+   "file": "docs/src/api.md",
+   "line": 1,
+   "kind": "surface",
+   "claim": "Every name in api.md's @docs blocks (198) is bound and has a docstring; get_*, Get*, Reads, reads, series, at, taps sit in Appendix B's groups",
+   "evidence": "probe: 'in api.md without binding' and 'documented-at-all check' both empty; docs/src/api.md Stopped-sim services, Running, Condition algebra"
+  },
+  {
+   "id": "CV7b-036",
+   "file": "src/readers.jl",
+   "line": 151,
+   "kind": "map",
+   "claim": "code_map: closed family get_state/get_deriv/get_output/get_input/get_face, each taking `leaf`, a Symbol the short form (D-276)",
+   "evidence": "src/readers.jl:57-149,188-293"
+  },
+  {
+   "id": "CV7b-037",
+   "file": "src/readers.jl",
+   "line": 706,
+   "kind": "map",
+   "claim": "code_map: mount step (§14.9, D-277): prefixes chain, _mount, _rebase into MountedRead, get_input follows export chain, get_face becomes get_output of the port behind it, authored order kept",
+   "evidence": "src/readers.jl:739-748,757-872; 691-702"
+  },
+  {
+   "id": "CV7b-038",
+   "file": "src/readers.jl",
+   "line": 896,
+   "kind": "map",
+   "claim": "code_map: _input_faces_at and _face_producer shared by get_input's rebase and a condition's u entry, over terminal_producer",
+   "evidence": "src/readers.jl:903-916; src/conditions.jl:335,632,637"
+  },
+  {
+   "id": "CV7b-039",
+   "file": "src/readers.jl",
+   "line": 353,
+   "kind": "map",
+   "claim": "code_map: leaf address bullet (parse_leaf, _supplied_head, _read_shape, _face_leaf, store_shape/port_shape, match_leaf, StoreRead letter, resolve_leaf, _resolved_type, walk_steps, AccessStep)",
+   "evidence": "src/readers.jl:316,353-361,401-420,430,441,468,478,599,780-806,878-887; probe: store_shape and port_shape"
+  },
+  {
+   "id": "CV7b-040",
+   "file": "src/readers.jl",
+   "line": 522,
+   "kind": "map",
+   "claim": "code_map: `reads` and `Reads` entry",
+   "evidence": "src/readers.jl:522,551"
+  },
+  {
+   "id": "CV7b-041",
+   "file": "src/readers.jl",
+   "line": 665,
+   "kind": "map",
+   "claim": "code_map: _compile_reads yields Reader{T}, CellRead core shared, source argument, :table refuses store selector; _compile_reads/_resolve_reads/_mount take read set unspecialized",
+   "evidence": "src/readers.jl:584-604,665,684,739 (@nospecialize)"
+  },
+  {
+   "id": "CV7b-042",
+   "file": "src/readers.jl",
+   "line": 937,
+   "kind": "map",
+   "claim": "code_map: violations are ReadResolution values from _reader_violation and _leaf_violation, same at trim, linearization, attach, series",
+   "evidence": "src/readers.jl:937-956; src/trim.jl:444; src/linearize.jl:450; src/bindings.jl:176; src/sim.jl:2964"
+  },
+  {
+   "id": "CV7b-043",
+   "file": "src/readers.jl",
+   "line": 627,
+   "kind": "map",
+   "claim": "code_map: gather_reads over an executor via generated _read_entries shared with dataplane.jl's snapshot method",
+   "evidence": "src/readers.jl:627-637; src/dataplane.jl:588"
+  },
+  {
+   "id": "CV7b-044",
+   "file": "src/readers.jl",
+   "line": 1045,
+   "kind": "map",
+   "claim": "code_map: output-port candidates read off the Outputs",
+   "evidence": "src/readers.jl:805,849,1045 (_ports(build.outputs.components[ci]))"
+  },
+  {
+   "id": "CV7b-045",
+   "file": "src/readers.jl",
+   "line": 630,
+   "kind": "map",
+   "claim": "code_map: activation identity on readers checked as internal invariant; same check on plans in conditions.jl apply!",
+   "evidence": "src/readers.jl:630; src/conditions.jl:737,952; src/build.jl:1446"
+  },
+  {
+   "id": "CV7b-046",
+   "file": "src/Redstone.jl",
+   "line": 10,
+   "kind": "map",
+   "claim": "code_map: include order leaves ... precompile, 29 files in the order listed",
+   "evidence": "src/Redstone.jl:9-37"
+  },
+  {
+   "id": "CV7b-047",
+   "file": "src/Redstone.jl",
+   "line": 1,
+   "kind": "map",
+   "claim": "code_map: module __init__ stays in linearize.jl beside labeled",
+   "evidence": "src/linearize.jl:170-172"
+  },
+  {
+   "id": "CV7b-048",
+   "file": "src/readers.jl",
+   "line": 492,
+   "kind": "cite",
+   "claim": "Cites §14.2, §14.9, §14.7, D-277 for combine's refusal, mount chain, read set (the §5.2 part is CV7b-003)",
+   "evidence": "design/spec.md:12963,14192,13597; log.md:12605; src/conditions.jl:216"
+  },
+  {
+   "id": "CV7b-049",
+   "file": "src/readers.jl",
+   "line": 420,
+   "kind": "cite",
+   "claim": "D-437, D-438, D-277, D-315, D-207, D-253, D-406, D-407 comments point at entries on headless addresses, mount rebase, export chain, face routing, activation store, read resolver, series",
+   "evidence": "log.md:18128,18252,12605,14274,8290,10496,16701,16771"
+  },
+  {
+   "id": "CV7b-050",
+   "file": "src/readers.jl",
+   "line": 657,
+   "kind": "cite",
+   "claim": "§13.1, §13.2, §13.3, §14.8, §14.10, §11.2, §9.2, §9.5, §7.1, §8.6 comments point at sections on collecting form, diagnostics, resolve, trim service, linearization, outbound reads, Build, names-are-pairing, flat state, faces",
+   "evidence": "design/spec.md:11125,11205,11412,13811,14327,7962,5038,5815,2188,3917"
+  },
+  {
+   "id": "CV7b-051",
+   "file": "src/readers.jl",
+   "line": 225,
+   "kind": "docstring",
+   "claim": "Lead: `q_eb` in get_output's example \"pose.q_eb[2]\" is a placeholder",
+   "evidence": "src/readers.jl:225; test/test_readers.jl uses pose fixtures; ex claim, no API name"
+  },
+  {
+   "id": "CV7b-052",
+   "file": "src/readers.jl",
+   "line": 346,
+   "kind": "docstring",
+   "claim": "Lead: `q_eb` in parse_leaf's example is a placeholder; the parse result matches",
+   "evidence": "src/readers.jl:345-346; probe: parse_leaf(\"pose.q_eb[2,3]\") = (:pose, [:q_eb, (2,3)])"
+  },
+  {
+   "id": "CV7b-053",
+   "file": "src/readers.jl",
+   "line": 530,
+   "kind": "docstring",
+   "claim": "Lead: signature lists no `selectors` bullet since `selectors...` is a slurped keyword",
+   "evidence": "design/rules/docstring_rules.md rule 5; src/readers.jl:531"
+  }
+ ],
+ "counts": {
+  "cite": 6,
+  "docstring": 27,
+  "surface": 8,
+  "map": 12
+ }
+}

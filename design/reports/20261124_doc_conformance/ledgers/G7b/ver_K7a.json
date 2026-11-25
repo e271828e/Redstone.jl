@@ -1,0 +1,276 @@
+{
+ "judgments": [
+  {
+   "id": "K7a-001",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:51 x_init has five states (V, γ, θ, q, h); :65-69 has two translational and one pitch equation"
+  },
+  {
+   "id": "K7a-010",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:67 θ̇ = q and :60 uses q c̄/(2V), so q is a pitch rate in rad/s"
+  },
+  {
+   "id": "K7a-019",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:62 drag = q̄ S (CD0 + k CL²)"
+  },
+  {
+   "id": "K7a-028",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:48 Cmδe = -1.2 and :60 Cm includes Cmδe δe, so positive δe gives a nose-down moment"
+  },
+  {
+   "id": "K7a-037",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:54-55: only y_state and x_deriv; src/model.jl:1113 treats y_state as the stage-1 output family"
+  },
+  {
+   "id": "K7a-046",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:43-44 CD0 = 0.03, k = 0.05"
+  },
+  {
+   "id": "K7a-055",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:67 θ = q and :69 h = V sin γ, which are zero under the condition's q = 0, γ = 0 at :123"
+  },
+  {
+   "id": "K7a-064",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:123 at(\"plant\", set(x = (V = V, γ = 0.0, θ = d.θ, q = 0.0, h = h)))"
+  },
+  {
+   "id": "K7a-073",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:106-107 Group((; plant = Longitudinal()); input_wires = (\"δe\" => \"plant/δe\", \"δt\" => \"plant/δt\"))"
+  },
+  {
+   "id": "K7a-082",
+   "conforms": true,
+   "evidence": "probe.jl out.txt: A row 4 [1.0e-14, 20.42, -20.42, -3.675, 0.0], B row 4 [-24.5, 0.0]"
+  },
+  {
+   "id": "K7a-091",
+   "conforms": true,
+   "evidence": "probe: full fast pair ωn 5.43256, ζ 0.56603; test_longitudinal.jl:150-151 pins them"
+  },
+  {
+   "id": "K7a-092",
+   "conforms": false,
+   "evidence": "probe: the two-state matrix gives s² + 6.1436 s + 29.489, ωn 5.4304, ζ 0.5657, against the full fast pair's 5.4326 and 0.5660. They agree to the three figures quoted but are not exact.",
+   "class": "deviation",
+   "fix": "whose characteristic polynomial `s² + 6.14 s + 29.5` has `ωn = 5.43 rad/s` and `ζ = 0.566`, the full matrix's fast pair to three figures.",
+   "clear": true,
+   "note": "The two-state values are 5.4304 and 0.5657, the full ones 5.4326 and 0.5660."
+  },
+  {
+   "id": "K7a-101",
+   "conforms": true,
+   "evidence": "probe: full slow pair ωn 0.23056, ζ 0.066997; test_longitudinal.jl:152-153"
+  },
+  {
+   "id": "K7a-110",
+   "conforms": true,
+   "evidence": "probe: Lanchester ζ = 1/(√2 · 10.52) = 0.0672 against the full slow pair's 0.0670; with Cmq = 0 the slow pair's ζ is 0.0503, matching line 170's 0.050"
+  },
+  {
+   "id": "K7a-119",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:156 (PID/DiscretePID), :188 (GaussianWhiteNoise, Altimeter), :221-225 (DiscretePID, Constant), :247-248 (RateLimiter, FirstOrderLag), :311-312 (UnitDelay, Switch); Altimeter at :171 is the only non-library leaf besides the plant",
+   "note": "The plant Longitudinal is also the example's own leaf. The sentence reads as being about the loops' parts around the plant, so this is not flagged."
+  },
+  {
+   "id": "K7a-120",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:275-276 autopilot root: plant, sensing, cascade, actuators groups; :334-335 piloted root: plant beside four groups",
+   "note": "autopilot's root also holds the leaf `engaged = Constant(true)` beside the groups (:276), which line 286-287 mentions. approach (section 5) nests the plant under vehicle, as line 119 says."
+  },
+  {
+   "id": "K7a-129",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:157 input_wires (\"θ_ref\" => \"θ_ctl/r\", \"δt\" => \"plant/δt\")"
+  },
+  {
+   "id": "K7a-138",
+   "conforms": true,
+   "evidence": "examples/test/test_longitudinal.jl:321-322 taps x = plant V, γ, θ, q and ξ = θ_ctl's q"
+  },
+  {
+   "id": "K7a-147",
+   "conforms": true,
+   "evidence": "examples/test/test_longitudinal.jl:331-341: the discrete loop's linearize throws a DiagnosticError of two TapResolution, (:discrete_state, :x) and (:unseedable, :u)"
+  },
+  {
+   "id": "K7a-156",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:248 RateLimiter(rising = 0.5, …), FirstOrderLag(τ = 0.5, …)"
+  },
+  {
+   "id": "K7a-165",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:191 output_wires (\"altimeter/y\" => \"h_meas\",)"
+  },
+  {
+   "id": "K7a-174",
+   "conforms": true,
+   "evidence": "probe: autopilot with sensing at 50 Hz and the cascade at two rates gives late (t ≥ 75 s) altitude error 0.16459 m, airspeed 0.0392 m/s, peak 1050.152; rows 2 and 3 also reproduce (0.0641/0.0150/1050.064, 0.0775/0.0187/1050.061)"
+  },
+  {
+   "id": "K7a-183",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:217 pid(...) = DiscretePID(...; hold = true, ...), used for the four controllers at :221-224"
+  },
+  {
+   "id": "K7a-192",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:223 q_ctl Kp = -0.2, Ki = -0.4"
+  },
+  {
+   "id": "K7a-201",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:227-230 inputs h_ref, h_meas, θ, q, V_ref, V, engaged; :234 outputs δe, δt"
+  },
+  {
+   "id": "K7a-210",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:219 with standby θ also feeds h_ctl/v and q feeds θ_ctl/v"
+  },
+  {
+   "id": "K7a-219",
+   "conforms": true,
+   "evidence": "probe: autopilot at cruise(solution), noise off, first snapshot: h_ctl/u − θ = 0, θ_ctl/u = 0, q_ctl/u − δe = 0, V_ctl/u − δt = 0; test_longitudinal.jl:356-362"
+  },
+  {
+   "id": "K7a-228",
+   "conforms": true,
+   "evidence": "src/conditions.jl:472-481 bakes merge(base, overlay) with the declared defaults as base at init; :584 _store_overlay = merge(defaults, overlay)"
+  },
+  {
+   "id": "K7a-237",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:318 output_wires \"command_δt/y\" => \"δt_prev\""
+  },
+  {
+   "id": "K7a-246",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:311,319 the Switches carry no sample time, so they are continuous; examples/test/test_longitudinal.jl:426 the engage staged at 30 s first logs at snapshot 6002, t = 30.005"
+  },
+  {
+   "id": "K7a-255",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:336-338 root inputs h_ref, V_ref, δe_pilot, δt_pilot, engage"
+  },
+  {
+   "id": "K7a-264",
+   "conforms": true,
+   "evidence": "probe row3: after 75 s the largest altitude error is 0.0775 m and airspeed 0.0187 m/s; test_longitudinal.jl:376-381"
+  },
+  {
+   "id": "K7a-273",
+   "conforms": true,
+   "evidence": "src/library.jl:727 y = s + clamp(u - s, -falling Δt, rising Δt); examples/src/longitudinal.jl:248 rising = 0.5 and :252 δt_limiter at 1//50, so 0.01 per tick"
+  },
+  {
+   "id": "K7a-282",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:508-510 root inputs h_ref, V_ref, mode"
+  },
+  {
+   "id": "K7a-291",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:472-473 DiscreteLQRTracker(...; x_trim, u_trim, z_trim)"
+  },
+  {
+   "id": "K7a-296",
+   "conforms": false,
+   "evidence": "probe out.txt and out2.txt: at the step's own tick (t = 5.0) the standby gaps are 0.43 (tracker, δe), 0.24 (altitude loop vs θ) and 0.63 (airspeed loop, δt). From 5.1 s they are within a few hundredths: altitude 0.030, airspeed 0.0115, tracker 0.024 by 5.06 s and 0.034 over [5.5, 80). After the fast part: tracker 0.0151 over [10, 120), altitude 0.0119 over [10, 15), airspeed 0.002.",
+   "class": "deviation",
+   "fix": "so a short `Tt` keeps the tracker, the altitude loop and the airspeed loop within about 0.015 of the command once a maneuver's fast part is over, and within a few hundredths during it, apart from the first tenth of a second after a reference step, which moves each one's own law in one tick.",
+   "clear": false,
+   "note": "Lines 435-437 cover the tracker's 0.43 peak but not the altitude and airspeed loops'. The airspeed loop's gap is in throttle units, not rad."
+  },
+  {
+   "id": "K7a-297",
+   "conforms": false,
+   "evidence": "probe, standby cascade gaps over [15, 60) with every Tt set alike: pitch-rate loop 0.0185 / 0.0102 / 0.249 and attitude loop 0.054 / 0.037 / 0.269 at Tt = 0.005 / 0.02 / 0.1. A short Tt does not bring them below a few hundredths, but a longer Tt moves them well past it.",
+   "class": "deviation",
+   "fix": "The pitch-rate and attitude loops, whose references move with the measured state, sit a few hundredths of a radian off however short `Tt` is.",
+   "clear": false,
+   "note": "The doc's sentence holds as a floor, since a shorter Tt does not help. It fails read literally, since at Tt = 0.1 both gaps are about 0.25."
+  },
+  {
+   "id": "K7a-298",
+   "conforms": false,
+   "evidence": "src/library.jl:2704 (and :3058 for the tracker) β = -expm1(-Δt/Tt), so at Tt = Δt each tick closes 1 - e⁻¹ = 0.632 of the gap. probe: a DiscretePID at 50 Hz with Tt = 0.02, limit 1 and q = 2 gives u_raw 2.0, 1.368, 1.135, 1.050, 1.018, 1.007 over its ticks, so it is not back within a tick.",
+   "class": "drift",
+   "fix": "A controller in command back-calculates against its limits, and at one period each tick closes about two thirds of a limited integrator's excess, `β = 1 − e⁻¹`.",
+   "clear": true,
+   "note": "The exact step is recorded in pid_anti_windup.md lines 391-403 ('The correction's step is exact') and in the DiscretePID docstring, and it was settled in increment 65 (10364763) before this companion was written. The claim reads as if the Euler step Δt/Tt = 1 applied. The closed_loop docstring at examples/src/longitudinal.jl:435-436 repeats it."
+  },
+  {
+   "id": "K7a-303",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:479 Junction(mode -> SVector(!mode, !mode)) wired to tracker/engaged at :488"
+  },
+  {
+   "id": "K7a-312",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:397 K_ξ = K[:, n_x+1:end] and :401 K_int = K_ξ"
+  },
+  {
+   "id": "K7a-317",
+   "conforms": false,
+   "evidence": "examples/src/longitudinal.jl:474-475 tracker u_min (-0.5, 0.0), u_max (0.5, 1.0); :501-502 the actuators are a RateLimiter and a FirstOrderLag, neither of which clamps (src/library.jl:713-727 RateLimiter has only rising, falling, s0). The model's actuators have no ranges. The tracker's limits equal the cascade innermost loops' limits (:457-458).",
+   "class": "deviation",
+   "fix": "The tracker's own limits are those of the cascade's innermost loops, ±0.5 rad on the elevator and 0 to 1 on the throttle, and its hold input reads a zero code.",
+   "clear": true,
+   "note": "The throttle's 0 to 1 is §1's stated range. Neither the companion nor the model states an elevator range."
+  },
+  {
+   "id": "K7a-322",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:498-499 outputs select_δe/y => δe, select_δt/y => δt, command_δe/y => δe_prev, command_δt/y => δt_prev, with the UnitDelays at :493"
+  },
+  {
+   "id": "K7a-331",
+   "conforms": true,
+   "evidence": "probe: with the cascade in command, the standby tracker's elevator gap peaks at 0.4289 at t = 5.0, the step's tick"
+  },
+  {
+   "id": "K7a-333",
+   "conforms": false,
+   "evidence": "probe out2.txt: the gap is 0.4289 at 5.0-5.015, 0.3319 at 5.02-5.035 and 0.1103 at 5.04-5.055, then 0.0242 from 5.06. It first falls under 0.1 rad 60 ms after the step, at its third tick, not within 55 ms.",
+   "class": "deviation",
+   "fix": "is back under 0.1 rad within 60 ms, its third tick after the step,",
+   "clear": true
+  },
+  {
+   "id": "K7a-341",
+   "conforms": true,
+   "evidence": "probe: tracker in command, the standby cascade's elevator gap at the last snapshot before 7 s (6.995) is 0.1503 rad; a hand-back at 7 s jumps the command by 0.088, matching 'about 0.09'",
+   "note": "The same sentence's 'slewing at up to about 4 rad/s' was not part of the claim. The probe's largest frame-to-frame slew of the selected elevator over [5, 7) is 17 rad/s, but that includes the step tick."
+  },
+  {
+   "id": "K7a-350",
+   "conforms": true,
+   "evidence": "probe: closed_loop with the cascade in command, the largest airspeed excursion is 3.708 m/s at 8.675 s, and 1.22 m/s under the tracker"
+  },
+  {
+   "id": "K7a-359",
+   "conforms": true,
+   "evidence": "examples/test/test_longitudinal.jl:96-98 h_ref -= sink_rate/10 every 1//10 s with sink_rate 1.5, i.e. 1.5 m/s"
+  },
+  {
+   "id": "K7a-368",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:344 output_wires (\"plant/h\" => \"h\",)"
+  },
+  {
+   "id": "K7a-377",
+   "conforms": true,
+   "evidence": "examples/src/longitudinal.jl:368 StopRequest(reason = \"touchdown\"); examples/test/test_longitudinal.jl:494"
+  }
+ ],
+ "notes": "I checked all 49 claims against the worktree at 62551b06 and found 6 that do not match the code: K7a-092, -296, -297, -298, -317 and -333. All are in longitudinal_aircraft.md sections 3 and 4.\n\nHow I ran the probes: test/Project.toml in the worktree has no RedstoneExamples, so I ran them with --project=examples/test instead. The scripts check that both packages load from the worktree; out.txt shows they do. The files are probe.jl and probe2.jl in /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K7a_v/, with output in out.txt and out2.txt. probe.jl defines closed_loop_Tt, a copy of closed_loop with every Tt set from an argument, by evaluating edited source text inside RedstoneExamples. Nothing tracked was changed.\n\nThe most substantive finding is K7a-298. The DiscretePID correction uses the exact step β = 1 − e^(−Δt/Tt), so at Tt equal to one period it closes 63% of the gap per tick, not all of it. The closed_loop docstring at examples/src/longitudinal.jl:435-436 makes the same claim. I classed it drift because pid_anti_windup.md records the exact step. Strictly it was never a move: the exact step predates this companion.\n\nLeft open:\n- K7a-296 and -297 depend on how 'during it' and 'whatever Tt is' are read, so their fixes are marked not clear.\n- K7a-120: autopilot's root also holds a Constant `engaged` beside the groups. I left it as conforming.\n- The 'about 4 rad/s' slew in K7a-341's sentence was not probed with a window that excludes the step."
+}

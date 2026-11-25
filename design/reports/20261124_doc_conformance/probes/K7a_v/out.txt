@@ -1,0 +1,39 @@
+Redstone from /Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance/src/Redstone.jl
+RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance/examples/src/RedstoneExamples.jl
+== K7a-082 A row 4, B row 4
+PROBE A row 4: [1.048e-14, 20.42, -20.42, -3.675, 0.0]
+PROBE B row 4: [-24.5, 0.0]
+PROBE A row 2: [0.007833, -2.469, 2.469, 0.0, 0.0] | B[2,2] | 0.0009964
+== K7a-091/092/101/110 modes
+PROBE full fast ωn ζ: 5.432560858623229 | 0.5660263823274105
+PROBE full slow ωn ζ: 0.2305636330420722 | 0.06699657662280878
+PROBE two-state poly s² + b s + c: 6.1436 | 29.489 | ωn | 5.43036094920965 | ζ | 0.5656726339114269
+PROBE Lanchester ωn ζ L/D: 0.2774687009376013 | 0.06720911753226419 | 10.520994876135608
+PROBE Cmq=0 slow ωn ζ: 0.2773137343457786 | 0.05033005302914933
+== K7a-174/264 sensor table and the autopilot step
+PROBE row1 50 Hz sensor two rates: (h_err = 0.1645864934050678, V_err = 0.03919525431245319, peak = 1050.1518645359859, V_exc = 3.8724318164337674, t_V_exc = 3.725)
+PROBE row2 50 Hz sensor all 50 Hz: (h_err = 0.06405066646721025, V_err = 0.014961381516393146, peak = 1050.0640506664672, V_exc = 3.7176944417133697, t_V_exc = 3.685)
+PROBE row3 10 Hz altimeter (autopilot): (h_err = 0.07746350487514064, V_err = 0.018702179401707042, peak = 1050.0611301496415, V_exc = 3.901500980627304, t_V_exc = 3.73)
+== K7a-219 errors at the trim
+PROBE h_ctl/u − θ: 0.0 | θ_ctl/u | 0.0 | q_ctl/u − δe | 0.0 | V_ctl/u − δt | 0.0
+== K7a-298 one-period correction on a DiscretePID
+PROBE u_raw over ticks from q = 2, limit 1: [2.0, 1.3679, 1.1353, 1.0498, 1.0183, 1.0067]
+PROBE β = 1 - exp(-1): 0.6321205588285577
+== K7a-296/331/333/350 cascade in command
+PROBE tracker gap peak over [5,6): 0.4289358688530671 | at | 5.0
+PROBE first under 0.1 after peak: 5.06 | ms after 5 s | 59.99999999999961
+PROBE tracker gap [5.5,80): 0.033797206697911863 | [5,15) | 0.4289358688530671 | [10,120) | 0.015078648097529165
+PROBE tracker δt gap [5,15): 0.6282992695379033 | [5.5,15) | 0.022377168742534592
+PROBE cascade airspeed excursion: 3.707650405865735 | at | 8.675
+== K7a-296/297/341/350 tracker in command, standby cascade gaps by Tt
+PROBE Tt=0.02 [5,15) q, θ, h, V: 0.5734 | 0.4818 | 0.2401 | 0.6278
+PROBE Tt=0.02 [15,60) q, θ, h, V: 0.01015 | 0.03742 | 0.01342 | 0.00197
+PROBE gap at last snapshot before 7 s: 6.995 | 0.15030351344074946 | max [6,7) | 0.18786643567863864 | max [5,7) | 0.5734153751967502
+PROBE selected δe slew max over [5,7) rad/s: 17.145041829267306
+PROBE tracker airspeed excursion: 1.2248469898600618
+PROBE Tt=0.005 [5,15) q, θ, h, V: 0.7128 | 0.4909 | 0.2401 | 0.6278
+PROBE Tt=0.005 [15,60) q, θ, h, V: 0.01849 | 0.05357 | 0.01594 | 0.001492
+PROBE Tt=0.1 [5,15) q, θ, h, V: 0.4643 | 0.48 | 0.2401 | 0.6278
+PROBE Tt=0.1 [15,60) q, θ, h, V: 0.249 | 0.2691 | 0.02807 | 0.006134
+PROBE hand-back at 7 s: command jump over [6.9,7.1): 0.08798118449419232
+PROBE hand-back at 7 s: actuator jump over [6.9,7.1): 0.00562803598501318

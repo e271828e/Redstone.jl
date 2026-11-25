@@ -1,0 +1,194 @@
+{
+ "judgments": [
+  {
+   "id": "SD1-001",
+   "conforms": false,
+   "evidence": "probe.jl P6: D.2 has 'bare store' (spec.md:16277) before 'bare contract' (spec.md:16285); D.9 has 'kind marker' (17294) before 'collect the checks' (17300) and 'did-you-mean' (17307), and 'descriptor' (17288) before 'collect'. P6 also flags D.4 'Δt_unit' before 'due' and D.6 'StopPolicy' before 'stop word', but whether those break the order depends on how Δ and spaces sort",
+   "class": "defect",
+   "fix": "Doc-only reorder, no code change. In D.2 put bare contract before bare store. In D.9 order the entries carrier exception, collect the checks/fail the evaluations fast, descriptor, did-you-mean, error locality, execution cursor, feedthrough tracer, kind, kind marker, payload, and so on. Optionally fix one sorting convention for Δ-names and spaced names.",
+   "clear": true
+  },
+  {
+   "id": "SD1-002",
+   "conforms": true,
+   "evidence": "src/leaves.jl:380 _accepts_wire branches on isconcretetype(P) of the u_types entry. A non-concrete entry is judged on the whole declaration. src/build.jl:916 uses the same test at a root input"
+  },
+  {
+   "id": "SD1-005",
+   "conforms": false,
+   "evidence": "src/build.jl:916-933 raises AbstractAtRoot only when no consumer of the root input declares a concrete entry, and checks abstract co-consumers by the bound clause. probe.jl P1: _fv(VecReader(), SVecEntry()) builds with root input :in, the abstract AbstractVector{Float64} entry sitting beside a concrete one. test/test_build.jl:717-722 tests the same case",
+   "class": "drift",
+   "fix": "It is never needed for eltype genericity, and it is illegal where every consumer of a [root input](#g-root-input) declares one, since nothing then types the root input (`AbstractAtRoot`) ([§8.2][s8-2]).",
+   "clear": true,
+   "backing_entry": "D-236 (log.md:9667-9669: a root input whose entries are all abstract is AbstractAtRoot, abstract co-consumers checked by the bound clause); spec.md:3128-3129"
+  },
+  {
+   "id": "SD1-012",
+   "conforms": true,
+   "evidence": "src/structure.jl:226 Structure.components holds one entry per primitive. src/build.jl:618 Outputs.order is the execution order over those primitive indices"
+  },
+  {
+   "id": "SD1-021",
+   "conforms": true,
+   "evidence": "src/build.jl:895-903 checks the walk clause only for a CONTINUOUS consumer and raises WalkingFaceAtFrozenEntry when a walking producer meets a pinned entry"
+  },
+  {
+   "id": "SD1-030",
+   "conforms": true,
+   "evidence": "src/assembly.jl:57-71 classify returns ASSEMBLY (local_wires) or PRIMITIVE (any leaf declaration). Otherwise it raises ClassUnreadable, and both families give ClassMixed"
+  },
+  {
+   "id": "SD1-039",
+   "conforms": true,
+   "evidence": "src/declare.jl:646-650 and 677-680: stages return port values at their y_types types, and a returned name y_types lacks is UndeclaredReturnField. src/build.jl:200 takes the port list from the declared outs"
+  },
+  {
+   "id": "SD1-048",
+   "conforms": true,
+   "evidence": "probe.jl P4: GenHolder holds its child through an AbstractComponent field. With a BareRamp, which lacks face u, the build fails with UnknownPort naming the holder's entry 'input_wires at the root component, entry \"u\" => \"plant/u\"'. With Plant it builds. The referencing wire is the constraint, checked on the instance"
+  },
+  {
+   "id": "SD1-054",
+   "conforms": false,
+   "evidence": "src/declare.jl:899-908 LEGAL_BUNDLE holds sets only for y_state, y_direct, x_deriv, s_update, guard and handler. src/declare.jl:585 says x_projection takes the state alone, not a bundle. src/executor.jl:263 calls x_projection(comp, reconstruct(XT, xbuf, off)). spec.md:1163 agrees",
+   "class": "deviation",
+   "fix": "The families are `y_state`/`y_direct`/`x_deriv`/`s_update`/[guard](#g-guard)/handler, one closed set per name per [tier](#g-tier), the shared output stages taking one set on each ([§5.2][s5-2], [D-220][d-220]); `x_projection` takes the state alone, not a bundle.",
+   "clear": true
+  },
+  {
+   "id": "SD1-058",
+   "conforms": true,
+   "evidence": "probe.jl P4: the generic child is reached only through the faces the holder's wires name. A missing face fails as UnknownPort at the holder's entry. src/diagnostics.jl:532-537 refuses endpoints that reach past an immediate child's face"
+  },
+  {
+   "id": "SD1-067",
+   "conforms": true,
+   "evidence": "src/library.jl:3-5 and 10-12: Library reaches the parent only through a per-name import list, the same one a user module writes. Framework files (rg over src without library.jl) mention library types only in messages and docstrings, never in dispatch"
+  },
+  {
+   "id": "SD1-076",
+   "conforms": true,
+   "evidence": "src/assembly.jl:730 counts m_init as a CONTINUOUS vote. On a discrete primitive it gives DeclarationOnWrongTier (assembly.jl:756-762). src/conditions.jl:648 comments that m is continuous-only"
+  },
+  {
+   "id": "SD1-085",
+   "conforms": true,
+   "evidence": "src/structure.jl:309 notes that Absolute severs the chain and re-seeds a fresh anchor. structure.jl:409 and 933 create one anchor per Absolute entry"
+  },
+  {
+   "id": "SD1-088",
+   "conforms": false,
+   "evidence": "src/declare.jl:617-618 and 644: a component defines the stages it needs, and y_state is optional; y_direct is optional too (declare.jl:679). probe.jl P5: BareRamp, which defines y_state only, builds. spec.md:1140 now reads 'at most two output stages ... defines the ones it needs'",
+   "class": "drift",
+   "fix": "every [primitive](#g-primitive) has at most two output stages, `y_state` (no `u` in the [bundle](#g-bundle), hence structurally no [feedthrough](#g-feedthrough)) and `y_direct`, and defines the ones it needs.",
+   "clear": true,
+   "backing_entry": "commit a92cd48b brought §5.2 to 'at most two'; D-006"
+  },
+  {
+   "id": "SD1-095",
+   "conforms": true,
+   "evidence": "src/assembly.jl:733-737: neither x_init nor s_init gives TierUnreadable. Both give DeclarationOnWrongTier through the vote loop (assembly.jl:756-762). A store with no update law gives StoreWithoutUpdate (assembly.jl:742-745)"
+  },
+  {
+   "id": "SD1-104",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:74-84 ModelState holds x, s, m, table, prior and stepper, with no ws. src/conditions.jl:654-660 refuses a condition on a workspace field. src/declare.jl:145-147 says the framework never reads or writes ws"
+  },
+  {
+   "id": "SD1-114",
+   "conforms": true,
+   "evidence": "probe.jl P2: input_faces(BareScale()) == [\"u\"] and output_faces(BareScale()) == [\"y\"]. bare_loop, wired by \"flow/y\" => \"scale/u\", builds. src/structure.jl:780-781"
+  },
+  {
+   "id": "SD1-124",
+   "conforms": true,
+   "evidence": "src/stepper.jl:134-139 and 176-179: RK4Stepper and HeunStepper own x₀ and k₁..k₄ as Vector{T}, framework-owned buffers apart from any ws"
+  },
+  {
+   "id": "SD1-129",
+   "conforms": false,
+   "evidence": "probe.jl P3: bare_world's activation layout has 9 distinct cells for 7 output ports. The 2 extra are root-input cells at (\"\", :u) and (\"\", :p). src/structure.jl:773 says a root input places a cell of its own. spec.md:902 calls a root input a source cell",
+   "class": "deviation",
+   "fix": "one concretely typed entry of the [signal table](#g-signal-table), one per output [port](#g-port) of the flattened model, written by its producing stage, plus one per [root input](#g-root-input), a source cell the periphery feeds, read by every gatherer ([§4.1][s4-1]).",
+   "clear": false
+  },
+  {
+   "id": "SD1-134",
+   "conforms": true,
+   "evidence": "test/fixtures.jl:1561-1570 TerrainRig uses a Constant{HeightField} stub wired to TerrainGain's abstract terrain entry. test/test_library.jl:3787-3796 builds it and leaves only dut.k as a root input. src/library.jl:350-351"
+  },
+  {
+   "id": "SD1-138",
+   "conforms": false,
+   "evidence": "probe.jl P2: BareScale's port has the face u on input and y on output. src/structure.jl:780-781 says a bare contract takes its default face, u or y. log.md:18143-18148 (D-437) rules that the face is the declaration's letter",
+   "class": "drift",
+   "fix": "For a [primitive](#g-primitive) it is the port's own name, and a [bare contract's](#g-bare-contract) port wears the default face, `u` or `y`.",
+   "clear": true,
+   "backing_entry": "D-437 (supersedes D-436, whose commit 8a317a1c wrote 'a port with no face')"
+  },
+  {
+   "id": "SD1-144",
+   "conforms": true,
+   "evidence": "src/build.jl:206-216 adds an edge for every input face of a consumer that defines y_direct, unless the producer's port is stage 1. The tracer (src/tracer.jl:373) only classifies the cycle for the error message"
+  },
+  {
+   "id": "SD1-152",
+   "conforms": true,
+   "evidence": "probe.jl P3: the layout keys are only output ports and root inputs. Input faces place no cells, and src/structure.jl:209-212 says input faces alias their producers' cells. src/checkpoint.jl:75-78 keeps x, s, m and table separate"
+  },
+  {
+   "id": "SD1-154",
+   "conforms": true,
+   "evidence": "src/leaves.jl:18 _opaque: Symbol, or a concrete non-isbits immutable, is one leaf stored whole. src/readers.jl:451 refuses to step into an opaque leaf"
+  },
+  {
+   "id": "SD1-160",
+   "conforms": true,
+   "evidence": "src/roster.jl:141 and 360 claim per face, one port per face name. The liveness verdict itself is computed in RedstoneInspector.jl. src/ holds no per-port GUI marking (rg 'liveness' finds none)",
+   "note": "The GUI liveness verdict lives in the inspector repo, outside W. Only the per-port claim basis was checked here."
+  },
+  {
+   "id": "SD1-164",
+   "conforms": true,
+   "evidence": "probe.jl P3: build(bare_world()).structure.root_inputs == [:u, :p], the input_wires keys. build(Plant()).structure.root_inputs == [:u], the u_types key. src/structure.jl:560"
+  },
+  {
+   "id": "SD1-173",
+   "conforms": true,
+   "evidence": "src/store.jl:46 gather_cell reads a consumer's input from its producer's cell through CellAddr. src/structure.jl:209-212"
+  },
+  {
+   "id": "SD1-182",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:75-78: the x buffer, the s and m stores and the table (StoreBundle) are separate homes. Layout.addr (src/build.jl:358) addresses only ports and root inputs"
+  },
+  {
+   "id": "SD1-187",
+   "conforms": true,
+   "evidence": "test/fixtures.jl:1435-1439: Terrain's y_direct is a one-line call to the public height_field. src/library.jl has no field-emitting component, and the obligation is on authors, not checked by the build",
+   "note": "This is an authoring obligation with no build check. No shipped component breaks it."
+  },
+  {
+   "id": "SD1-192",
+   "conforms": true,
+   "evidence": "src/build.jl:234-236: a Kahn stall throws DiagnosticError carrying one AlgebraicCycle per strongly connected cluster (build.jl:276-283)"
+  },
+  {
+   "id": "SD1-201",
+   "conforms": true,
+   "evidence": "src/build.jl:616-619: struct Outputs has components and order, the execution order over ci"
+  },
+  {
+   "id": "SD1-210",
+   "conforms": true,
+   "evidence": "src/sim.jl:2202 and 2212-2220: step! advances frames, one by default or a count `frames`, and returns the frames advanced (sim.jl:2190-2191)"
+  },
+  {
+   "id": "SD1-219",
+   "conforms": true,
+   "evidence": "src/model.jl:653-654 run_boundary! runs _projects! first, after integration's write. src/executor.jl:394-395 runs _fire_project! right after each fired handler's _latch!",
+   "note": "The code projects after every fired handler of a component that defines x_projection, even one that returns only m. That is the same position, and spec.md:1430 says 'each firing is handler → x_projection'."
+  }
+ ],
+ "notes": "I judged all 33 SD1 claims. 26 conform and 7 do not: SD1-001, 005, 054, 088, 129 and 138. I edited no tracked file and committed nothing. My one file is the probe script at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/SD1_v/probe.jl, run twice from W with --project=test.\n\nWhat the probes showed:\n- P1: an abstract entry beside a concrete co-consumer builds (SD1-005).\n- P2: a bare contract's port has the face u or y (SD1-114, SD1-138).\n- P3: the table holds 9 cells for 7 output ports plus 2 root inputs (SD1-129, SD1-152, SD1-164).\n- P4: generic holding fails as UnknownPort at the holder's input_wires entry (SD1-048, SD1-058).\n- P5: a primitive with only y_state builds (SD1-088).\n- P6: an alphabetical-order scan of Appendix D (SD1-001).\n\nSD1-001 is about the spec's own ordering, not code. I classed it as a defect with a doc-only reorder as the fix. The definite breaks are bare store/bare contract in D.2 and kind marker/descriptor/collect in D.9. The D.4 Δ-names and D.6 StopPolicy/stop word pairs depend on how Δ and spaces sort.\n\nSD1-138 contradicts SD1-114 inside the glossary: the face entry still carries D-436's 'no face' after D-437 replaced it.\n\nSD1-160 rests on inspector code outside W, so I checked only the claims-per-face basis in src/."
+}

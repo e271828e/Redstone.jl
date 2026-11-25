@@ -1,0 +1,200 @@
+{
+ "judgments": [
+  {
+   "id": "SD2-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:473-478: struct Absolute holds Δt::Rational{Int} and τ::Rational{Int} through an exact door, and refuses inexact reals; probe P8 prints (1//50, 1//500, Rational{Int64})."
+  },
+  {
+   "id": "SD2-010",
+   "conforms": true,
+   "evidence": "src/model.jl:834-838: only when `accepted` does integrate_step! write the clock and copyto!(exec.xbuf, exec.xnext). A rejection puts back startpoint and the clock (model.jl:840-841)."
+  },
+  {
+   "id": "SD2-019",
+   "conforms": true,
+   "evidence": "src/frame.jl:162-167: every step the inner loop takes ends in run_boundary! then settled!. Probe P2 shows boundaries at 0.0233, 0.0467, 0.07 and 0.1 for h_max = 3/100 with a tick at 0.07."
+  },
+  {
+   "id": "SD2-028",
+   "conforms": true,
+   "evidence": "src/deployment.jl:557 `localization_budget = 8`; probe P1 prints (4, 8)."
+  },
+  {
+   "id": "SD2-037",
+   "conforms": true,
+   "evidence": "src/stepper.jl:86 `discontinuity!(::AbstractStepper) = nothing` is the default, and BS3 clears its controller memory instead (stepper.jl:288). The docstring at stepper.jl:78-85 says the backend's response is its own."
+  },
+  {
+   "id": "SD2-046",
+   "conforms": true,
+   "evidence": "src/deployment.jl:264-265: an explicit Δt_base keyword is one branch, beside :derive (253) and the Δt_frame default (267)."
+  },
+  {
+   "id": "SD2-055",
+   "conforms": true,
+   "evidence": "src/deployment.jl:214-332 (bind_schedule) checks no divisibility among Δt_frame, Δt_base and h_max. Probe P2b deploys and runs Δt_frame = 1/10, Δt_base = 3/100, h_max = 1/7."
+  },
+  {
+   "id": "SD2-064",
+   "conforms": true,
+   "evidence": "src/frame.jl:127-131: each span's target is min(frame top, next due instant), so a due instant ends the step reaching it. Probe P2 has a boundary at 0.07, where the counter ticks inside the frame."
+  },
+  {
+   "id": "SD2-073",
+   "conforms": true,
+   "evidence": "src/deployment.jl:556 `firing_budget = 4`, and 563 refuses anything but an integer ≥ 1 as DeploymentInvalid; probe P1."
+  },
+  {
+   "id": "SD2-083",
+   "conforms": true,
+   "evidence": "src/model.jl:832-838: when an attempt is rejected at the floor, `_at_floor` holds, `_report_floor!(..., :rejected)` returns true and the step is committed. StepFloor is filed at model.jl:897, at most once per frame (model.jl:893). test/test_adaptive.jl:296 asserts reason :rejected.",
+   "note": "The filing is deduplicated to one report per frame (model.jl:894). The glossary is silent on this, which the summary register tolerates."
+  },
+  {
+   "id": "SD2-094",
+   "conforms": true,
+   "evidence": "src/deployment.jl:247 builds `grid = _grid_report(anchors)` and passes `grid = grid` into the DeploymentInvalid refusals at 258 and 284, into GridUtilization at 579, and into the @info grid block at 572."
+  },
+  {
+   "id": "SD2-103",
+   "conforms": true,
+   "evidence": "src/frame.jl:132 writes a frame top with _grid_time(model, k) and a due instant with _tick_time(model, due). An interior end comes from _instant(clock, origin+position, i, units, steps) (frame.jl:142), from its count and never accumulated (comment frame.jl:104-107)."
+  },
+  {
+   "id": "SD2-112",
+   "conforms": true,
+   "evidence": "src/frame.jl:340-346: _trial! writes x̂(θ) with dense!(exec.stepper, ...) into the state buffer before the interior sweep and guards."
+  },
+  {
+   "id": "SD2-121",
+   "conforms": true,
+   "evidence": "src/frame.jl:127-131: the only span targets are lattice.frame (a frame top) and due_at (a due instant)."
+  },
+  {
+   "id": "SD2-131",
+   "conforms": true,
+   "evidence": "src/frame.jl:224: only localized events trigger between boundaries, so a Bool guard is read at boundaries alone (model.jl:734 event_phase!). Root inputs change only at frame-top drains, modes only in handlers, and discrete outputs only at ticks, all of them boundaries (frame.jl:162-167, model.jl:652-658)."
+  },
+  {
+   "id": "SD2-140",
+   "conforms": true,
+   "evidence": "src/declare.jl:449-450 and 473-478: Absolute(Δt, τ) carries the offset τ in seconds for the child it is keyed to, with ticks at t₀ + τ."
+  },
+  {
+   "id": "SD2-149",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:79 `prior::Vector{Bool}` on the model state; restore copies it back at checkpoint.jl:123-124."
+  },
+  {
+   "id": "SD2-158",
+   "conforms": true,
+   "evidence": "src/frame.jl:330 `h′ = t_to - exec.clock.t`, which derives the remainder from t* when it is used."
+  },
+  {
+   "id": "SD2-167",
+   "conforms": true,
+   "evidence": "src/deployment.jl:575-580: the GridUtilization advisory reads bound.schedule.rows for the minimum D and the fastest path."
+  },
+  {
+   "id": "SD2-176",
+   "conforms": true,
+   "evidence": "src/frame.jl:323 runs the t* boundary as run_boundary!(model, nothing), so run_ticks! is a no-op (model.jl:661). Probe P3 shows the t* boundary at 0.90909 with the counter unchanged at 13, then 14 at 0.91."
+  },
+  {
+   "id": "SD2-185",
+   "conforms": true,
+   "evidence": "src/frame.jl:162-163 passes the base-tick index `due` to run_boundary! only at a due span end, and the gate `(n − Φ₀) % D₀` reads it (executor.jl:482, 558). Every other boundary passes nothing."
+  },
+  {
+   "id": "SD2-194",
+   "conforms": true,
+   "evidence": "src/frame.jl:261-262: the θ = 0 validation copies x₀ from startpoint into the buffer, x̂(0) = xₙ, with no interpolant."
+  },
+  {
+   "id": "SD2-203",
+   "conforms": true,
+   "evidence": "src/build.jl:1030-1041: _activate re-runs probe_stage1 and probe_stage2 at T."
+  },
+  {
+   "id": "SD2-212",
+   "conforms": true,
+   "evidence": "src/build.jl:739 and 767: `build(root::AbstractComponent; activations) -> Build`. The struct Build is at build.jl:703."
+  },
+  {
+   "id": "SD2-221",
+   "conforms": true,
+   "evidence": "src/executor.jl:530-539: Chunk is mutable so a phase body holds it by reference behind @noinline barriers. EventChunk does the same for the projection, guard and handler walks (executor.jl:271, 360, 368, 387)."
+  },
+  {
+   "id": "SD2-077",
+   "conforms": false,
+   "evidence": "src/deployment.jl:541-553: struct Deployment also holds h_min (545) and attempt_budget (549) beside the build, Δt_frame, Δt_base, h_max, the algorithm, the three event parameters, the schedule, the lattice and the warnings.",
+   "class": "drift",
+   "fix": "the artifact the grid parameters fix: the build plus `Δt_frame`, `Δt_base`, the step bound `h_max`, the step floor `h_min`, the algorithm, the attempt budget and the three event parameters, carrying the `Schedule` and its own `warnings`.",
+   "clear": true,
+   "note": "h_min and attempt_budget came in with commit 4367fa55 under D-460, and spec line 644 already lists both."
+  },
+  {
+   "id": "SD2-230",
+   "conforms": true,
+   "evidence": "src/build.jl:558-561: an activation runs the probe chain 'over exactly the function set this activation can execute'. probe_stage2 skips frozen components (build.jl:1093-1095, 1124)."
+  },
+  {
+   "id": "SD2-084",
+   "conforms": false,
+   "evidence": "src/build.jl:1144-1166 probes x_projection at every activation, and build.jl:1606-1613 says projection lies 'inside every executable set'. Probe P4: at ProbeDual, y_state, x_deriv and x_projection see a Dual, and the guard and handler are never called.",
+   "class": "drift",
+   "fix": "A `Dual` activation sees only the continuous output stages, `x_deriv` and `x_projection`, never the discrete stages, `s_update`, [guards](#g-guard) or handlers ([§9.4][s9-4]).",
+   "clear": true,
+   "note": "§9.4 (spec.md:5713-5714) already names x_projection, a change made by commit 2255b3c6. The glossary entry lags it."
+  },
+  {
+   "id": "SD2-089",
+   "conforms": true,
+   "evidence": "src/leaves.jl:302 `retype_entry(::Type{T}, ::Type{Pinned{P}}) = P`; probe P6 returns Float64 at ProbeDual.",
+   "note": "The marker is read only at the top of a contract entry (D-265, leaves.jl:237-248). The spec calls that whole entry a leaf, as D-265 does ('a whole leaf is pinned with the marker')."
+  },
+  {
+   "id": "SD2-239",
+   "conforms": true,
+   "evidence": "src/build.jl:42: declarations at T take `retype_value(T, invoke_declaration(x_init, comp))`, the leaf walk over the x_init-derived type (leaves.jl:313-316)."
+  },
+  {
+   "id": "SD2-248",
+   "conforms": true,
+   "evidence": "src/build.jl:1619-1629: bodies holds sweep_1, sweep_2, rhs and ticks, plus `events` (guard and handler per (path, name)) and `projections` (x_projection per path). phase_bodies returns model.exec.bodies (model.jl:521)."
+  },
+  {
+   "id": "SD2-257",
+   "conforms": true,
+   "evidence": "src/leaves.jl:352-361: at T = Float64, _accepts admits only P === V, the Float64→T embedding being the identity there. Probe P5: a Float32 return at a Float64 declaration fails the build as ConformanceFailure."
+  },
+  {
+   "id": "SD2-266",
+   "conforms": true,
+   "evidence": "src/build.jl:1099 `for ci in order` probes stage 2 over Outputs' topological order, each consumer reading its producers' products (build.jl:1660-1663)."
+  },
+  {
+   "id": "SD2-275",
+   "conforms": true,
+   "evidence": "src/conditions.jl:697-707: the services path has no call to probe_value, and assert_total refuses an uncovered root input as UninitializedInputs. probe_value is called only from build and tracer code (build.jl:472, tracer.jl:251)."
+  },
+  {
+   "id": "SD2-284",
+   "conforms": true,
+   "evidence": "src/structure.jl:535-537 throws DiagnosticError(DeclarationShadowed(...)) on its own, before classify, naming the module and foreign names. The message gives the import (diagnostics.jl:574-578). Probe P7 carries one DeclarationShadowed."
+  },
+  {
+   "id": "SD2-293",
+   "conforms": true,
+   "evidence": "src/structure.jl:243-250: Structure's fields are components, anchors, scopes, root_inputs, root_types (the declared types the wire pass fixed) and levels. None is keyed by an activation scalar."
+  },
+  {
+   "id": "SD2-130",
+   "conforms": true,
+   "evidence": "src/leaves.jl:302 strips Pinned{P} at the top of a contract entry to P at every activation, and a nested marker is refused (leaves.jl:245-248, D-265). Probe P6."
+  }
+ ],
+ "notes": "I checked all 37 claims against W at 62551b06 and ran the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/SD2_v/probe.jl three times. The probes covered deployment defaults, lattices in no ratio, step-end and due-instant boundaries, no ticks at t*, the Dual executable set, exact type match at nominal, the Pinned retype, DeclarationShadowed and Absolute's exact fields. Two claims do not conform, and both are glossary drift. SD2-077: the Deployment entry omits h_min and the attempt budget (D-460, commit 4367fa55). SD2-084: the executable-set entry omits x_projection, which §9.4 has named since commit 2255b3c6, and probe P4 confirms x_projection sees a Dual. I edited no tracked file and changed no git state."
+}

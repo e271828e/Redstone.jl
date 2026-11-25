@@ -1,0 +1,26 @@
+README port => 0.9654297795999609
+README state => (q = 0.9654297795999609, v = 0.012058421909455224)
+T7-053 Absolute(1//50) => Absolute(1//50, 0//1)
+T7-044 names => Tuple{Symbol, Bool, Bool}[(:AbstractComponent, 1, 1), (:x_init, 1, 1), (:s_init, 1, 1), (:u_types, 1, 1), (:y_types, 1, 1), (:y_state, 1, 1), (:y_direct, 1, 1), (:x_deriv, 1, 1), (:s_update, 1, 1), (:Absolute, 1, 1), (:Group, 1, 1), (:Simulation, 1, 1), (:init!, 1, 1), (:run!, 1, 1), (:set, 1, 1), (:port, 1, 1), (:state, 1, 1), (:build, 1, 1)]
+T7-012 => DiagnosticError: 1 diagnostics
+  AlgebraicCycle: algebraic loop among `plant`, `ctl`: plant/power → ctl/meas, ctl/y → plant/u — real: direct dependencies run all the way around it (`ctl` assumed from its declarations, the rest checked exactly from their code); break it with a state, a `y_state` port, or a `UnitDelay`, which makes the signal discrete, sampled every base tick and held in between (§5.5)
+T7-130 state at init => (V = 55.0, γ = 0.0, θ = 0.01993, q = 0.0, h = 1000.0)
+T7-138 log length => 12001
+T7-138 t first/last => ([0.0, 0.01, 0.02], 120.0)
+T7-130 state at re-init => (V = 55.0, γ = 0.0, θ = 0.01993, q = 0.0, h = 1000.0)
+T7-149 bitwise => true
+trim 50 => (:converged, 4, (θ = 0.019930198715528237, δe = 0.025058167737049112, δt = 0.37233719527321874))
+T7-183 => (status = :stalled, saturated = [(:θ, :upper)], residuals = (V̇ = 0.13829176731887605, γ̇ = -0.12392012542197528, q̇ = 0.11761386889363899), lifecycle = :built)
+T7-203 plain A type => Matrix{Float64}
+T7-203 labeled A type => ComponentMatrix{Float64, Matrix{Float64}, Tuple{Axis{(V = 1, γ = 2, θ = 3, q = 4, h = 5)}, Axis{(V = 1, γ = 2, θ = 3, q = 4, h = 5)}}}
+T7-203 A[:h,:γ] => 50.0
+T7-214 x_deriv call => (V = 5.3319126891437915e-14, γ = 4.591382829488566e-12, θ = 0.0, q = 2.620169706202269e-13, h = 0.0)
+T7-214 fd gap => 1.5260639280034738e-10
+T7-253 => (true, true)
+T7-229 default steps => 12000
+T7-229 h_max=1/10 steps => (1200, [0.0, 0.1, 0.2, 0.3])
+T7-229 h_max=3/10 steps => (480, [0.0, 0.25, 0.5, 0.75, 1.0, 1.25])
+T7-230 default algorithm => RK4()
+T7-241 => StepError: in `plant`, integration of the frame from boundary 3 (t = 4.0):
+  replay!(sim2, trc; to_boundary = 3) then step!(sim2) reproduces it
+  cause: NonfiniteState: `plant`: state leaf `V` is -Inf at t = 4.0, the end of a step in the frame from boundary 3 — the model diverged; replay to 3 and step! to inspect the frame

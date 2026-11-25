@@ -1,0 +1,14 @@
+names missing: `δe_cmd` at design/companions/longitudinal_aircraft.md:227
+names missing: `δe_prev` at design/companions/longitudinal_aircraft.md:321
+names missing: `δe_prev` at design/companions/longitudinal_aircraft.md:424
+names missing: `δe_track` at design/companions/longitudinal_aircraft.md:283
+names missing: `δe_track` at design/companions/longitudinal_aircraft.md:322
+names missing: `δt_cmd` at design/companions/longitudinal_aircraft.md:227
+names missing: `δt_prev` at design/companions/longitudinal_aircraft.md:321
+names missing: `δt_prev` at design/companions/longitudinal_aircraft.md:424
+names missing: `δt_track` at design/companions/longitudinal_aircraft.md:283
+names missing: `δt_track` at design/companions/longitudinal_aircraft.md:322
+names test-only: `h_meas` at design/companions/longitudinal_aircraft.md:234
+names test-only: `θ_ref` at design/companions/longitudinal_aircraft.md:198
+names test-only: `θ_ref` at design/companions/longitudinal_aircraft.md:205
+names test-only: `θ_ref` at design/companions/longitudinal_aircraft.md:212

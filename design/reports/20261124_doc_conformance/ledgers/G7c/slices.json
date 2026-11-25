@@ -1,0 +1,14 @@
+{
+ "CV7a": {
+  "code": [
+   "src/show.jl",
+   "src/trace.jl"
+  ]
+ },
+ "CV7b": {
+  "code": [
+   "src/readers.jl",
+   "src/Redstone.jl"
+  ]
+ }
+}

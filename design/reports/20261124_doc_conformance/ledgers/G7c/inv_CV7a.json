@@ -1,0 +1,522 @@
+{
+ "rows": [
+  {
+   "id": "CV7a-002",
+   "file": "src/show.jl",
+   "line": 26,
+   "kind": "map",
+   "claim": "code_map 1135 says each table prints each row's path 'with no label function'; the code renders the root's empty path as `root` through `_path_label`, and the entry names none of the label and count helpers",
+   "evidence": "src/show.jl:26 `_path_label`, used at 108, 143, 163, 211; design/code_map.md:1135; probe: primitive root prints `root` (test/test_show.jl:173-175); rg 'label function' finds no log entry",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace 'with no label function' by 'with `_path_label`, which prints the root's empty path as `root`', and name `_anchor_name`, `_count` and `_indented` as the shared helpers.",
+   "note": "Low weight. The sentence was true of an older label function that no longer exists."
+  },
+  {
+   "id": "CV7a-003",
+   "file": "src/show.jl",
+   "line": 66,
+   "kind": "surface",
+   "claim": "The compact one-line forms of the eleven artifacts (Structure(...), Outputs(...), Events(...), Schedule(...), Build(...), Deployment(...), FrameworkStatus(...), Simulation(...), Series(...), TrimReport(...), Linearization(...)) are not described in spec §9.2 Rendering, which names only the REPL tables. spec.md:10544 and D-476 point at 'the deployment's one-line form (§9.2)', which §9.2 never states",
+   "evidence": "rg -n 'one-line form' design/spec.md gives only 10544; spec.md:5353-5412 (Rendering) names no compact form; probe:Deployment compact, probe:Simulation built compact, probe:status compact; src/show.jl:66,137,157,179,246,297,453,531,578,592,635",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to §9.2 Rendering: 'Each artifact also prints a one-line form, its name and counts, which a container or `repr` shows; `Deployment` prints its parameters there.'",
+   "note": "code_map.md:1128-1132 and D-257 (two methods apiece, via test_show.jl:140-160) cover it; the spec does not."
+  },
+  {
+   "id": "CV7a-016",
+   "file": "src/show.jl",
+   "line": 318,
+   "kind": "surface",
+   "claim": "Under a proposing method the steps line prints a range, `N to M, as proposed`, with M = max(N, ⌊Δt_frame/h_min⌋); spec §9.2 and the log state the line only for a fixed-step method, and only code_map.md:1175-1179 describes the range",
+   "evidence": "src/show.jl:315-318; probe:proposing steps ('steps per frame: 1 to 10, as proposed'); spec.md:5376-5386 says 'a fixed-step method'; spec.md:12675 mentions a range only for the descriptor; rg 'as proposed' finds nothing in spec or log",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Append to the §9.2 steps bullet: 'Under a proposing method the line gives the range instead, from the fixed count to `⌊Δt_frame / h_min⌋`, marked `as proposed` (D-460).'"
+  },
+  {
+   "id": "CV7a-024",
+   "file": "src/show.jl",
+   "line": 424,
+   "kind": "surface",
+   "claim": "The REPL heading of a Deployment also prints `firing_budget`, `localization_tol`, `localization_budget` and `attempt_budget` after the three time quantities, and `h_min` where one is set; spec §9.2 Rendering names none of these",
+   "evidence": "src/show.jl:291-295,424-428; probe:proposing steps and probe:h_max resolved (heading line); spec.md:5376-5412 lists only the steps line, the exact time quantities, the schedule block and the admissible line; rg 'localization_tol =' design/spec.md finds only the constructor at 15089",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the §9.2 bullet on exact time quantities: 'The long form's heading goes on to name `firing_budget`, `localization_tol`, `localization_budget` and `attempt_budget`; the compact form names `h_min` where one is set.'"
+  },
+  {
+   "id": "CV7a-025",
+   "file": "src/show.jl",
+   "line": 424,
+   "kind": "map",
+   "claim": "code_map 1174-1175 says the Deployment's long form 'adds `attempt_budget` (D-460)'; the long form adds four fields: firing_budget, localization_tol, localization_budget and attempt_budget",
+   "evidence": "src/show.jl:424-428; probe:h_max resolved ('; firing_budget = 4, localization_tol = 1.0e-6, localization_budget = 8, attempt_budget = 7'); design/code_map.md:1174-1175",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write 'and the long form adds `firing_budget`, `localization_tol`, `localization_budget` and `attempt_budget` (D-460)'."
+  },
+  {
+   "id": "CV7a-028",
+   "file": "src/show.jl",
+   "line": 453,
+   "kind": "surface",
+   "claim": "show(::FrameworkStatus) is covered only by §11.8's 25-occurrence cap. The spec does not state the heading counts, the per-writer block with task state and raw heartbeat, the per-kind count line, the 'suppressed this boundary' line or the pacer line, nor the compact form",
+   "evidence": "src/show.jl:445-501; probe:FrameworkStatus output; spec.md:9646-9654 (Presentation) names the cap only; spec.md:9608-9640 names the status value with no rendering; rg FrameworkStatus design/spec.md finds no rendering text; docs/src has no show text; only code_map.md:1181-1185 and the dataplane.jl:215 comment",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to §11.8 Presentation: 'The `MIME\"text/plain\"` form prints a heading with the writer count, the cumulative occurrences and the pace, then one block per writer, its task state and heartbeat where it has them, one count line per kind with a nonzero total, and the pacer line last.'"
+  },
+  {
+   "id": "CV7a-037",
+   "file": "src/trace.jl",
+   "line": 18,
+   "kind": "docstring",
+   "claim": "The `TraceBatch` docstring says the drain runs before the run's frame index increments, so a batch drained at the top of frame k carries frame = k. The loop increments the frame index first and then drains, and the drain adds one to the trace's own count",
+   "evidence": "src/sim.jl:2021-2024 (`hooks.sim.run.frame += 1` then `drain!`), src/sim.jl:2655-2664 comment 'The top hook advances the run's frame index to `k` before it runs the drain', src/sim.jl:2698-2700; probe:t1 frames/batches (first batch frame 1); src/trace.jl:18-20",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Replace the second half with: 'the loop advances the run's frame index at the top of the frame, just before the drain, so a batch drained at the top of frame `k` carries `frame = k` and replays there.'",
+   "note": "The consequence stated (frame = k) is true; the stated mechanism is the reverse of the code."
+  },
+  {
+   "id": "CV7a-038",
+   "file": "src/trace.jl",
+   "line": 22,
+   "kind": "surface",
+   "claim": "`TraceBatch`, the element type of `Trace.batches` with public fields `frame`, `writer` and `entries`, and its value `==` and `hash`, appear in neither Appendix B nor docs/src/api.md. The `Trace` docstring describes a record's contents without the type name or field names",
+   "evidence": "rg TraceBatch design/spec.md docs/src finds nothing; docs/src/api.md:192 lists `Trace` only; src/trace.jl:22-37,72-73; probe:TraceBatch ==; the tests read `batch.writer` and `batch.entries` (test/test_trace.jl:32-36)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Name `TraceBatch` and its fields `frame`, `writer` and `entries` in the `Trace` docstring's `batches` bullet and in spec §11.5's record-format paragraph, and note that records compare by value.",
+   "note": "Low weight. The type is unexported and no module exports anything; the field names are what a trace reader meets."
+  },
+  {
+   "id": "CV7a-046",
+   "file": "src/trace.jl",
+   "line": 121,
+   "kind": "surface",
+   "claim": "Spec §11.5 (spec.md:8785) says the recording is 'one small allocation per drained batch, plus the values boxed into that allocation'. `_record!` allocates the entries vector and the `TraceBatch` record, two allocations, plus one per touched entry, and the batches vector grows",
+   "evidence": "src/trace.jl:121-134; probe:record allocations (4 allocations for 2 touched entries) and probe:allocs 3 touched (5 for 3), so the base is 2 and each entry adds 1; the code comment at trace.jl:113-118 says 'that vector and the values boxed into it'",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write 'two small allocations per drained batch, the entries vector and the record, plus the values boxed into the vector'.",
+   "note": "Pedantic; the order-of-magnitude argument of §11.5 is unaffected."
+  },
+  {
+   "id": "CV7a-052",
+   "file": "src/trace.jl",
+   "line": 221,
+   "kind": "surface",
+   "claim": "A record whose writer index has no schema entry raises `ReplayUnknownFace` with the bare position and the writer spelled `writer #N`. Appendix C names the bare position only 'where the writer's schema has no name for it' and the 'trace's device tag'; the missing-schema case and its positional tag are not stated",
+   "evidence": "src/trace.jl:217-226; probe:writer index out of range (face 1, writer 'writer #5'); spec.md:15960-15962; test/test_trace.jl:408-411 asserts the sibling :frame arm",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Append to Appendix C's `ReplayUnknownFace`: 'A record whose writer index has no schema entry reports each of its positions, with the writer spelled `writer #N`.'"
+  },
+  {
+   "id": "CV7a-057",
+   "file": "src/trace.jl",
+   "line": 22,
+   "kind": "map",
+   "claim": "The code_map trace.jl entry names `Trace`, the header and the entry pass, but not `TraceBatch`, `_record!` (the drain-side conversion this file owns), `ReplayRecord`, `_apply_thunk` or `_replay_writer`",
+   "evidence": "design/code_map.md:1468-1490; rg '_record!|TraceBatch|ReplayRecord|_apply_thunk|_replay_writer' design/code_map.md finds no hit; src/trace.jl:22,92,121,168,174; src/dataplane.jl:501 calls `_record!`",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add a bullet: '`TraceBatch` is one sparse record, built by `_record!` at the drain (two scans of the mask, D-176) and compared by value; `ReplayRecord` pairs a record with its compiled thunk, `_apply_thunk` and `_replay_writer` build it.'"
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV7a-001",
+   "file": "src/show.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header cites §9.2, §13.7, D-257 for the artifacts' renderings",
+   "evidence": "spec.md:5353 (Rendering) and 12109-12135 (§13.7 routes); log.md:10787 D-257 'Each artifact renders itself'"
+  },
+  {
+   "id": "CV7a-004",
+   "file": "src/show.jl",
+   "line": 69,
+   "kind": "cite",
+   "claim": "Route comments cite §13.7, D-315 (wires), D-468 (pin marks), D-466 (grid), each treating that topic",
+   "evidence": "spec.md:12121 (pin marks), log.md:14274 D-315, 20470 D-468, 20197 D-466"
+  },
+  {
+   "id": "CV7a-005",
+   "file": "src/show.jl",
+   "line": 103,
+   "kind": "surface",
+   "claim": "Structure prints the component table, rate-scope rows and anchor table with a symbolic A₀ row, as §9.2 states",
+   "evidence": "src/show.jl:107-125; probe:Build output (structure block); spec.md:5358-5360"
+  },
+  {
+   "id": "CV7a-006",
+   "file": "src/show.jl",
+   "line": 126,
+   "kind": "surface",
+   "claim": "The grid report prints under `grid:` after the anchor table, and no block where no anchor exists",
+   "evidence": "src/show.jl:126-127; spec.md:5361-5365; test/test_show.jl:195-198"
+  },
+  {
+   "id": "CV7a-007",
+   "file": "src/show.jl",
+   "line": 129,
+   "kind": "surface",
+   "claim": "Root routes print one line per chain joined with →, input routes marked `pinned by tier` or `pinned by declaration`, a primitive root prints none",
+   "evidence": "src/show.jl:70-93,129-131; probe:Build output (output routes); spec.md:12111-12132; test/test_show.jl:204-216"
+  },
+  {
+   "id": "CV7a-008",
+   "file": "src/show.jl",
+   "line": 142,
+   "kind": "surface",
+   "claim": "Outputs prints the execution order with each component's stage-1 and stage-2 names ('port class')",
+   "evidence": "src/show.jl:142-149; probe:Build output (Outputs block); spec.md:5368, 4990"
+  },
+  {
+   "id": "CV7a-009",
+   "file": "src/show.jl",
+   "line": 162,
+   "kind": "surface",
+   "claim": "Events prints each declaring component's event names with policies and no table when none declare",
+   "evidence": "src/show.jl:162-170; probe:Build output ('Events: no events over 4 components'); spec.md:5369; code_map.md:1135-1137"
+  },
+  {
+   "id": "CV7a-010",
+   "file": "src/show.jl",
+   "line": 206,
+   "kind": "surface",
+   "claim": "Schedule prints rows, rate scopes and the hyperperiod chart, guarded binary at H > 100 with 'chart omitted'",
+   "evidence": "src/show.jl:206-234; probe:Schedule guard ('hyperperiod: 150 base ticks, chart omitted'); spec.md:5370, 5417-5421"
+  },
+  {
+   "id": "CV7a-011",
+   "file": "src/show.jl",
+   "line": 251,
+   "kind": "cite",
+   "claim": "§5.3 and D-261 treat the feedthrough edges derived rather than carried",
+   "evidence": "spec.md:5372-5375 cites D-261; log.md:11038 D-261; spec §5.3 at 1292"
+  },
+  {
+   "id": "CV7a-012",
+   "file": "src/show.jl",
+   "line": 254,
+   "kind": "map",
+   "claim": "code_map: `_feedthrough` derives edges from the connections and producers' stage-2 names, and the line sits between Outputs and Events",
+   "evidence": "src/show.jl:254-268,281; probe:Build output ('feedthrough: gnss/out → fcs/outer/in'); code_map.md:1136-1139"
+  },
+  {
+   "id": "CV7a-013",
+   "file": "src/show.jl",
+   "line": 272,
+   "kind": "surface",
+   "claim": "Build prints a summary and its parts: structure, outputs, feedthrough line, events, warnings",
+   "evidence": "src/show.jl:272-284; probe:Build output; spec.md:5371-5375"
+  },
+  {
+   "id": "CV7a-014",
+   "file": "src/show.jl",
+   "line": 288,
+   "kind": "cite",
+   "claim": "D-454, D-449, D-460, D-442 each treat exact times, resolved bound, floor and the algorithm token's show",
+   "evidence": "log.md:19293, 18891, 19727, 18528; spec.md:12674"
+  },
+  {
+   "id": "CV7a-015",
+   "file": "src/show.jl",
+   "line": 312,
+   "kind": "surface",
+   "claim": "The steps line gives `cld(frame·bound denominator, numerator)`, names rows whose ticks leave frame tops, relabels to 'per unsplit frame'",
+   "evidence": "src/show.jl:312-327; probe:split steps ('steps per unsplit frame: 1; due instants of fcs/inner, fcs/outer split frames'), probe:h_max resolved; spec.md:5376-5386"
+  },
+  {
+   "id": "CV7a-017",
+   "file": "src/show.jl",
+   "line": 324,
+   "kind": "map",
+   "claim": "code_map: `_steps_line` is one `cld` over the bound's ratio, a range to ⌊Δt_frame/h_min⌋ under a proposing method, one divisibility check per row",
+   "evidence": "src/show.jl:312-327; probe:proposing steps; code_map.md:1175-1179"
+  },
+  {
+   "id": "CV7a-018",
+   "file": "src/show.jl",
+   "line": 331,
+   "kind": "surface",
+   "claim": "Deployment prints each Δt and τ exact as D₀·Δt_base and Φ₀·Δt_base; Schedule prints the float row value",
+   "evidence": "src/show.jl:331,399-401,212; probe:Deployment output (components table, 1//500 and 1//250); spec.md:5400-5402"
+  },
+  {
+   "id": "CV7a-019",
+   "file": "src/show.jl",
+   "line": 341,
+   "kind": "surface",
+   "claim": "The Deployment chart has one column per Δt_unit over lcm(H·base, frame), a frame-tops row first, blanks off base ticks, and a binary guard at 100 columns",
+   "evidence": "src/show.jl:341-360; probe:Deployment output and probe:guard ('chart omitted: 150 columns of 1//1500 s over 150 base ticks and 150 frames'); spec.md:5423-5435; src/deployment.jl:158"
+  },
+  {
+   "id": "CV7a-020",
+   "file": "src/show.jl",
+   "line": 362,
+   "kind": "cite",
+   "claim": "D-471 and D-479 treat the admissible line and the whole factor Q",
+   "evidence": "log.md:20629 D-471, 21193 D-479 (gcd(pool)/Q)"
+  },
+  {
+   "id": "CV7a-021",
+   "file": "src/show.jl",
+   "line": 368,
+   "kind": "surface",
+   "claim": "The admissible line gives gcd(pool) and the whole factor, dropped at 1, and none when no anchors",
+   "evidence": "src/show.jl:368-374,389-390; probe:Deployment output ('Δt_base: 1//500, the coarsest admissible 1//50 divided by 10'); spec.md:5403-5410"
+  },
+  {
+   "id": "CV7a-022",
+   "file": "src/show.jl",
+   "line": 385,
+   "kind": "surface",
+   "claim": "The `schedule:` block has the anchor table (Δt, τ, D₀, Φ₀; A₀ at Δt_base), a component row per discrete component, rate-scope rows with the same columns after the key, Dₐ and Φₐ from the structure",
+   "evidence": "src/show.jl:385-418; probe:Deployment output; spec.md:5390-5399"
+  },
+  {
+   "id": "CV7a-023",
+   "file": "src/show.jl",
+   "line": 385,
+   "kind": "map",
+   "claim": "code_map: `_schedule_lines`, `_admissible_line`, `_seconds_label` (Int128), `_chart_lines`, shared `_schedule_counts` and `_chart_ruler` match the code",
+   "evidence": "src/show.jl:187,193,331,341,368,385; code_map.md:1150-1172"
+  },
+  {
+   "id": "CV7a-026",
+   "file": "src/show.jl",
+   "line": 437,
+   "kind": "docstring",
+   "claim": "STATUS_MAXLOG docstring: a writer × kind prints in full up to 25 cumulative occurrences, then a count alone; the channel bound is DIAG_RING and counts accumulate",
+   "evidence": "src/show.jl:443,461-474; src/dataplane.jl:93; spec.md:9648-9654"
+  },
+  {
+   "id": "CV7a-027",
+   "file": "src/show.jl",
+   "line": 443,
+   "kind": "surface",
+   "claim": "The 25-occurrence cap is §11.8's presentation policy (D-136, D-369), not channel policy",
+   "evidence": "src/show.jl:443,470; spec.md:9648-9654; log.md:15667"
+  },
+  {
+   "id": "CV7a-029",
+   "file": "src/show.jl",
+   "line": 497,
+   "kind": "map",
+   "claim": "code_map: one block per writer, the pacer's line last, full up to STATUS_MAXLOG then count-only",
+   "evidence": "src/show.jl:480-501; probe:FrameworkStatus output; code_map.md:1181-1185"
+  },
+  {
+   "id": "CV7a-030",
+   "file": "src/show.jl",
+   "line": 503,
+   "kind": "cite",
+   "claim": "Section header cites §11.2, §14.10, D-476, which treat Series and Linearization; it omits §12.6 and §14.8 for Simulation and TrimReport but nothing cited is wrong",
+   "evidence": "spec.md:8188, 14503, 10542, 14071; log.md:20999 D-476"
+  },
+  {
+   "id": "CV7a-031",
+   "file": "src/show.jl",
+   "line": 526,
+   "kind": "surface",
+   "claim": "Simulation prints state and clock, its input mode on its own line, the deployment's one-line form, termination, log count, devices and warnings",
+   "evidence": "src/show.jl:559-569; probe:Simulation output; spec.md:10542-10546"
+  },
+  {
+   "id": "CV7a-032",
+   "file": "src/show.jl",
+   "line": 572,
+   "kind": "surface",
+   "claim": "Series prints the snapshot count and t span, then each column's label and eltype, no values",
+   "evidence": "src/show.jl:572-586; test/test_show.jl:690-693; spec.md:8188-8190"
+  },
+  {
+   "id": "CV7a-033",
+   "file": "src/show.jl",
+   "line": 588,
+   "kind": "surface",
+   "claim": "TrimReport's heading states the verdict alone; the backend line follows; six-digit columns align on the decimal point",
+   "evidence": "src/show.jl:507,512-518,606-628; test/test_show.jl:707-738; spec.md:14071-14079"
+  },
+  {
+   "id": "CV7a-034",
+   "file": "src/show.jl",
+   "line": 630,
+   "kind": "surface",
+   "claim": "Linearization prints the operating point per tap list and each matrix under its labels, empty lists print no block",
+   "evidence": "src/show.jl:640-671; spec.md:14503-14507; log.md:20999"
+  },
+  {
+   "id": "CV7a-035",
+   "file": "src/show.jl",
+   "line": 675,
+   "kind": "map",
+   "claim": "code_map: each artifact has a compact form and a MIME text/plain form built over one `_lines`",
+   "evidence": "src/show.jl:675-679; probe:Deployment compact; code_map.md:1129-1132"
+  },
+  {
+   "id": "CV7a-036",
+   "file": "src/trace.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "Header cites §11.5, D-274, D-176, D-029, D-038, §12.7, each treating the topic",
+   "evidence": "spec.md:8762, 8900, 10758; log.md:12334 D-274, 6998 D-176, 1140 D-029, 1413 D-038"
+  },
+  {
+   "id": "CV7a-039",
+   "file": "src/trace.jl",
+   "line": 39,
+   "kind": "cite",
+   "claim": "Design line cites §11.5, §11.8, §12.7, App. B, D-255, D-260, D-274, D-317, D-319 for the header, writer tags and frame ordinal",
+   "evidence": "log.md:10633 D-255, 10947 D-260, 14517 D-317, 14778 D-319; spec.md:8871-8890"
+  },
+  {
+   "id": "CV7a-040",
+   "file": "src/trace.jl",
+   "line": 48,
+   "kind": "docstring",
+   "claim": "Trace docstring: fields header, schemas, batches, frames with the stated meanings, in the stated types",
+   "evidence": "src/trace.jl:78-83; probe:Trace fields; src/sim.jl:856,2664; src/roster.jl:414-418"
+  },
+  {
+   "id": "CV7a-041",
+   "file": "src/trace.jl",
+   "line": 67,
+   "kind": "docstring",
+   "claim": "Every roster change appends one schemas pair per current writer, the list only grows, writers are named as in WriterStatus and the harness is 'harness'",
+   "evidence": "src/roster.jl:414-418,446-447; probe:schemas growth on attach, probe:status who, probe:schema tags"
+  },
+  {
+   "id": "CV7a-042",
+   "file": "src/trace.jl",
+   "line": 75,
+   "kind": "docstring",
+   "claim": "frames starts at the header's frame index, so a restored trace keys records by the trajectory's frames",
+   "evidence": "src/sim.jl:699,999; probe:restored (5,5,5)"
+  },
+  {
+   "id": "CV7a-043",
+   "file": "src/trace.jl",
+   "line": 54,
+   "kind": "docstring",
+   "claim": "`trace` returns a detached copy that later frames never reach",
+   "evidence": "src/sim.jl:3022; probe:detached (t1.frames stays 1 while the live trace is 2)"
+  },
+  {
+   "id": "CV7a-044",
+   "file": "src/trace.jl",
+   "line": 85,
+   "kind": "docstring",
+   "claim": "ReplayRecord: frame, thunk, and the originating TraceBatch carried beside the thunk",
+   "evidence": "src/trace.jl:92; probe:ReplayRecord; src/sim.jl:2727-2733"
+  },
+  {
+   "id": "CV7a-045",
+   "file": "src/trace.jl",
+   "line": 94,
+   "kind": "docstring",
+   "claim": "ReplayFeed: compiled records in drain order with a cursor `next` and the recording's length `frames`, which caps every advance",
+   "evidence": "src/trace.jl:107-111; src/sim.jl:1211,1403,1587,2718; probe:feed (1, 1, 1)"
+  },
+  {
+   "id": "CV7a-047",
+   "file": "src/trace.jl",
+   "line": 153,
+   "kind": "surface",
+   "claim": "A recorded writer schema naming a face the target lacks raises `ReplaySchemaMismatch` (tag, schema, disagreeing names, root-input list), collected per writer",
+   "evidence": "src/trace.jl:153-162; probe:schema mismatch; spec.md:15956-15959"
+  },
+  {
+   "id": "CV7a-048",
+   "file": "src/trace.jl",
+   "line": 174,
+   "kind": "surface",
+   "claim": "`_replay_writer` raises `ReplayUnknownFace` with the face name only if the layout lacks it; it is guarded by the schema pass, so it is a backstop",
+   "evidence": "src/trace.jl:174-183; src/sim.jl:1207-1209; spec.md:15960-15962"
+  },
+  {
+   "id": "CV7a-049",
+   "file": "src/trace.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "_compile_records! docstring: positions resolved through the schema, values converted, `Batch` rebuilt, the recorded TraceBatch rides beside the thunk, a bad batch contributes no record, all faults collected",
+   "evidence": "src/trace.jl:197-266; probe:three bad collected (three diagnostics from one batch)"
+  },
+  {
+   "id": "CV7a-050",
+   "file": "src/trace.jl",
+   "line": 192,
+   "kind": "docstring",
+   "claim": "Lead: `collected` is the policy word of Appendix C's `Error · service · collected`, not a defined name",
+   "evidence": "spec.md:15960-15961; leads file CV7a.txt"
+  },
+  {
+   "id": "CV7a-051",
+   "file": "src/trace.jl",
+   "line": 209,
+   "kind": "surface",
+   "claim": "A record outside (header.frame+1):frames raises `CheckpointMismatch` what=:frame, name the writer's tag, expected the legal range, found the ordinal",
+   "evidence": "src/trace.jl:201-215; probe:frame outside; spec.md:15940-15944"
+  },
+  {
+   "id": "CV7a-053",
+   "file": "src/trace.jl",
+   "line": 238,
+   "kind": "surface",
+   "claim": "A record position beyond its schema raises `ReplayUnknownFace` with the bare position, frame, writer tag and the faces list",
+   "evidence": "src/trace.jl:237-242; probe:position beyond schema x2; spec.md:15960-15962"
+  },
+  {
+   "id": "CV7a-054",
+   "file": "src/trace.jl",
+   "line": 246,
+   "kind": "surface",
+   "claim": "A recorded value that does not convert to the face's type raises `CheckpointMismatch` what=:root_input",
+   "evidence": "src/trace.jl:243-252; probe:bad convert; spec.md:15930-15933"
+  },
+  {
+   "id": "CV7a-055",
+   "file": "src/trace.jl",
+   "line": 264,
+   "kind": "surface",
+   "claim": "Records are stably sorted by frame then writer index, the drain order the Trace docstring states",
+   "evidence": "src/trace.jl:264; probe:order frames then writer; spec.md:8890"
+  },
+  {
+   "id": "CV7a-056",
+   "file": "src/trace.jl",
+   "line": 78,
+   "kind": "map",
+   "claim": "code_map: Trace is mutable with header, two growing lists and the frame count the drain advances; the header is a Checkpoint, written once, nothing only before init!'s publication",
+   "evidence": "src/trace.jl:78-83; src/sim.jl:856,2664; probe:header after init, mutabletype; code_map.md:1470-1480"
+  },
+  {
+   "id": "CV7a-058",
+   "file": "src/trace.jl",
+   "line": 197,
+   "kind": "map",
+   "claim": "code_map: the entry pass is run by `_compile_feed`, both stages collect, and it builds the ReplayFeed",
+   "evidence": "src/sim.jl:1195-1211; src/trace.jl:153,197; log.md:8739 D-217 ('are collected'); code_map.md:1483-1487"
+  },
+  {
+   "id": "CV7a-059",
+   "file": "src/trace.jl",
+   "line": 48,
+   "kind": "map",
+   "claim": "code_map: `trace(sim)` is defined in sim.jl and hands back a detached value with the checkpoint copied",
+   "evidence": "src/sim.jl:3022; code_map.md:1481-1482"
+  }
+ ],
+ "counts": {
+  "surface": 30,
+  "docstring": 10,
+  "map": 11,
+  "cite": 8
+ }
+}

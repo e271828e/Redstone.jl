@@ -96,7 +96,24 @@ the tools.
   every primitive has two output stages. library_inventory.md, near line
   140, cites §7.1 where §8.2 holds the claim. pid_anti_windup.md section 9
   says "same ports", false since `DiscretePID` publishes `saturated`.
-- **Next.** G7, on its timer, from `probes/coord/g7.py` at a fresh pin.
+- **G7, the appendices and the user-facing docs, in three runs at
+  `62551b06`.** G7a (`wf_715ab5ce-39a`, 2.01M tokens), G7b
+  (`wf_d279e89e-662`, 1.33M) and G7c (`wf_f11a3cc5-bc2`, 0.57M), 24 agents.
+  README.md, docs/src/index.md and the tutorial pages came out clean: all 5
+  flags were overturned. One fixer took the 36 clear rows, which landed as
+  `80fa292d`.
+- **Seen by G7's fixer, not yet fixed.** §12.3 still writes the wait
+  predicate as `counter > last_seen && running`; the code has `||
+  !running`. §11.5 says the fingerprint holds each component's `x` type,
+  not `x`, `s` and `m`. store_at_rest_walkthrough.md still passes `t₀`
+  positionally near line 314 and names the gone `_settle!` flag near lines
+  330 and 381. The `closed_loop` docstring in examples/src/longitudinal.jl
+  repeats K7a-298's "within a tick".
+- **The sweep is done.** Every group from G1a to G7c has run and its clear
+  fixes have landed. Three things remain: the user's rulings on
+  `ledgers/user_rows.md`; a small sweep of the "seen, not yet fixed" items
+  above; and the clustering of `ledgers/log_findings.tsv` into superseding
+  entries for the user's approval, as the brief's Stage F step 4 says.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

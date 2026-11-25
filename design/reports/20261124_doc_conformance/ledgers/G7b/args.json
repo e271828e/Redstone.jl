@@ -1,0 +1,47 @@
+{
+ "group": "G7b",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "62551b06",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "SD4",
+   "kind": "spec",
+   "range": [
+    17157,
+    17427
+   ],
+   "desc": "Appendix D, D.8 to D.10",
+   "map": "225-251 (src/conditions.jl), 1505-1527 (src/trim.jl), 531-628 (src/diagnostics.jl)",
+   "extra": " The glossary is generated into docs/src/glossary.md by docs/glossary.jl, so check each entry's definition against the code, not its rendering."
+  },
+  {
+   "key": "K7a",
+   "kind": "companion",
+   "file": "design/companions/longitudinal_aircraft.md, whole",
+   "lines": 516,
+   "map": "761-853 (src/library.jl), 1505-1527 (src/trim.jl), 854-910 (src/linearize.jl)",
+   "extra": "It describes the examples package's aircraft (examples/ in W): check it against that code too."
+  },
+  {
+   "key": "K7b",
+   "kind": "companion",
+   "file": "design/companions/store_at_rest_walkthrough.md, whole",
+   "lines": 511,
+   "map": "1352-1392 (src/store.jl), 735-760 (src/leaves.jl), 911-1029 (src/model.jl), 189-224 (src/checkpoint.jl)"
+  },
+  {
+   "key": "T7",
+   "kind": "companion",
+   "file": "README.md, docs/src/index.md and the four pages in docs/src/tutorial/, all whole. These are user-facing docs, not companions: every code sample, name, keyword and printed result must match the code and the examples package (examples/ in W). Run each complete code sample in your probe script",
+   "lines": 882,
+   "map": "331-367 (src/declare.jl), 38-93 (src/assembly.jl), 107-188 (src/build.jl), 911-1029 (src/model.jl), 1209-1328 (src/sim.jl), 1505-1527 (src/trim.jl), 854-910 (src/linearize.jl)"
+  },
+  {
+   "key": "L7",
+   "kind": "log",
+   "n": 3,
+   "map": "331-367 (src/declare.jl), 38-93 (src/assembly.jl), 107-188 (src/build.jl), 911-1029 (src/model.jl), 1209-1328 (src/sim.jl)"
+  }
+ ]
+}

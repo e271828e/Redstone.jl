@@ -1,0 +1,265 @@
+{
+ "judgments": [
+  {
+   "id": "K7b-004",
+   "conforms": true,
+   "evidence": "probe.jl:31 P004: TickCounter stopped after frame 3 holds cell n=3, store n=4; init! of a fresh sim with s=(n=4,) at t0=3//10 publishes n=4 at boundary zero where the recording had 3 (also test/test_discrete.jl:984-986)"
+  },
+  {
+   "id": "K7b-013",
+   "conforms": true,
+   "evidence": "probe.jl:17 P013: after 3 frames the cell reads n=3 (y_k=f(s_k)) and the store n=4; src/model.jl:652-659 runs the event phase (sweep) before run_ticks! (updates)"
+  },
+  {
+   "id": "K7b-023",
+   "conforms": true,
+   "evidence": "probe.jl:19 P035: checkpoint(sim).state.s == [(n = 4,)], the post-update store s_{k+1}; src/model.jl:1180-1188 copies sstores[ci][] as it stands"
+  },
+  {
+   "id": "K7b-035",
+   "conforms": true,
+   "evidence": "src/model.jl:1180-1188 builds one ModelState from xbuf, s and m stores, the captured table, the priors, the stepper's carried state and the clock; src/checkpoint.jl:85-96"
+  },
+  {
+   "id": "K7b-044",
+   "conforms": true,
+   "evidence": "probe.jl:22-24 P044/P044b: after restore! the twin holds cell n=3, store n=4 at t=0.3, and its next step publishes n=4 as the recording did"
+  },
+  {
+   "id": "K7b-053",
+   "conforms": true,
+   "evidence": "probe.jl:17 P013 and probe.jl:19 P035: the stopped run holds store s_{k+1} (n=4) beside cell y_k (n=3)"
+  },
+  {
+   "id": "K7b-063",
+   "conforms": false,
+   "evidence": "src/model.jl:320 init!(model, plan; t0 = 0, hooks) takes t0 as a keyword; probe.jl:34-35 P063: init!(model, cond, 0.3) is a MethodError, no 3-positional method",
+   "class": "drift",
+   "fix": "init!(sim, at(\"delay\", set(s = s_copied)); t0 = t_k)",
+   "clear": true,
+   "note": "Not a move after the doc: t0 was already a keyword when the companion was written (spec Appendix B, design/spec.md:15129, init!(model, condition = set(); t0 = 0, hooks = NoHooks())). The sketch also inits a `model` and then steps `sim`; the sim's model is claimed (D-318), so the fix uses sim. The doc disclaims approximate names, but the call shape is wrong."
+  },
+  {
+   "id": "K7b-064",
+   "conforms": false,
+   "evidence": "src/model.jl:336-341 boundary zero runs and publishes inside init! via settled!(hooks); probe.jl:31-33 P004/P064: the t_k snapshot is logged (log length 1, cell 4) before step!, and step! then publishes t_{k+1} with cell 5",
+   "class": "drift",
+   "fix": "init!(sim, at(\"delay\", set(s = s_copied)); t0 = t_k)   # boundary zero publishes y = u_k, where the recording published u_{k-1} at t_k",
+   "clear": true,
+   "note": "D-274 (design/log.md:12334) already made init! the one door that runs boundary zero, before the companion was written; the doc erred at writing rather than going stale. The step!(sim) line should be dropped or moved after the comment."
+  },
+  {
+   "id": "K7b-075",
+   "conforms": true,
+   "evidence": "src/model.jl:332 fill!(exec.events.prior, false) before boundary zero; probe.jl:40 P075: a Trigger authored holding fires at t0 (count = 1); test/test_events.jl:266-274"
+  },
+  {
+   "id": "K7b-084",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:41-45 the ModelState docstring says 'Its fields hold the state' and documents `s` and `m` as public fields; probe.jl:19 P035 reads cp.state.s directly",
+   "class": "drift",
+   "fix": "There is no conversion from one to the other, and no path-addressed reader of a checkpoint; its stores are reachable by restoring it, from the trace header, or by component index through the state's `s` and `m` fields.",
+   "clear": false,
+   "note": "The field list became documented API in ff4b07ab (2026-10-27, after the companion's 2026-10-21 commit). No path-addressed reader exists, which keeps the doc's main point. Whether documented fields count as a public read is a judgement, so clear is false."
+  },
+  {
+   "id": "K7b-085",
+   "conforms": false,
+   "evidence": "src/model.jl:1026 state(model, path) is the path-addressed read, but src/checkpoint.jl:41-45 also documents ModelState's `s` field as public, and state works on a Simulation and on an initialized run as well",
+   "class": "drift",
+   "fix": "The one public path-addressed read of a discrete store is `state(model, path)` at rest.",
+   "clear": false,
+   "note": "Same move as K7b-084: ff4b07ab documented the ModelState fields."
+  },
+  {
+   "id": "K7b-101",
+   "conforms": true,
+   "evidence": "src/model.jl:702 boundary_zero! = run_boundary!(model, ESTABLISH) and src/model.jl:663 run_ticks! at ESTABLISH runs ticks(0); later boundaries run ticks(k ≥ 1), so no later update consumes the t0 sample"
+  },
+  {
+   "id": "K7b-106",
+   "conforms": false,
+   "evidence": "src/sim.jl:964-981 overlay!(sim, condition) exists, the state what-if; src/model.jl:469",
+   "class": "drift",
+   "fix": "The workflow that had no clean spelling before [D-429] is the one in between: fly a while, stop, change a few states, continue. [D-273] spells an input what-if as a restore followed by `stage!`, and until `overlay!` a *state* what-if had no door.",
+   "clear": true,
+   "note": "Recorded by D-429 (design/log.md:17414) and commit bc460431 (2026-10-20), which added overlay!."
+  },
+  {
+   "id": "K7b-107",
+   "conforms": false,
+   "evidence": "src/sim.jl:964-975 overlay! takes a condition and resolves it against the build",
+   "class": "drift",
+   "fix": "Before `overlay!`, a condition went only through `init!`, and `restore!` takes no overlay.",
+   "clear": true,
+   "note": "Recorded by D-429 and bc460431."
+  },
+  {
+   "id": "K7b-109",
+   "conforms": true,
+   "evidence": "design/companions/store_at_rest_walkthrough.md:265 section 7 designs overlay!; src/sim.jl:964 implements it",
+   "note": "Section 7 exists and designs the door. The door has also been built since then."
+  },
+  {
+   "id": "K7b-131",
+   "conforms": true,
+   "evidence": "rg finds no checkpoint view in design/spec.md, and git log -S'read-only view lets' over docs/spec.md and design/spec.md finds nothing; the spec's one 'read-only view' (design/spec.md:9482) is a device view. src/checkpoint.jl has no path-addressed reader"
+  },
+  {
+   "id": "K7b-142",
+   "conforms": true,
+   "evidence": "src/sim.jl:931-937 the overlay! docstring offers restore! followed by stage! for an input change; design/spec.md:10706-10708"
+  },
+  {
+   "id": "K7b-153",
+   "conforms": false,
+   "evidence": "src/model.jl:334 init! calls reset_stepper!(exec.stepper), while src/model.jl:474 overlay! calls discontinuity!(model.exec.stepper), so the stepper handling is not shared",
+   "class": "drift",
+   "fix": "Everything else is shared but the stepper: the condition resolves against the build with the same diagnostics, the named stores and root-input cells are written, projection runs, the sweep iterates with guards and handlers to quiescence, one snapshot is published, and a fresh trajectory opens with the post-settling checkpoint as its header. `init!` resets the stepper through `reset_stepper!`, and `overlay!` raises its discontinuity notice.",
+   "clear": true,
+   "note": "Recorded by D-452 (design/log.md:19091, the bullets on the notice when overlay! settles and on init! calling reset_stepper!) and spec §12.6 (design/spec.md:10714-10715). Root-input totality also differs (src/sim.jl:841 vs 969-970), but section 7.4 already says so."
+  },
+  {
+   "id": "K7b-154",
+   "conforms": true,
+   "evidence": "src/model.jl:461-466 and src/sim.jl:969-970 resolve through resolve_condition, as init! does; probe.jl:54-56 P154o/P154i: an unknown path is PathResolution under both doors"
+  },
+  {
+   "id": "K7b-158",
+   "conforms": false,
+   "evidence": "src/model.jl:474 overlay! raises discontinuity!(stepper) and never calls reset_stepper!; src/model.jl:334 only init! calls reset_stepper!",
+   "class": "drift",
+   "fix": "`init!` resets the stepper through its seam, `reset_stepper!`, and `overlay!` raises the stepper's discontinuity notice instead; in the sketch, `reset_stepper!(model)` becomes `fresh ? reset_stepper!(model) : discontinuity!(model)`.",
+   "clear": false,
+   "note": "Recorded by D-452 (design/log.md:19091) and commit 7706eb53. Section 7.3's whole sketch is also gone (see K7b-180), so the sketch fix depends on how that section is rewritten."
+  },
+  {
+   "id": "K7b-164",
+   "conforms": true,
+   "evidence": "probe.jl:49 P164: the clock's t and t0 are unchanged across overlay!; test/test_discrete.jl:990-1004 pins the lattice kept (moves == 8:4:40); src/model.jl:469-481 writes no clock"
+  },
+  {
+   "id": "K7b-175",
+   "conforms": false,
+   "evidence": "src/model.jl:320-344 and 469-481: init! and overlay! are separate bodies, and the settling is run_boundary!(model, ESTABLISH) vs run_boundary!(model, nothing) (src/model.jl:702, 476); no flag argument exists",
+   "class": "drift",
+   "fix": "So the implementation offers two bundles, not five knobs: each door sets its own base, clock and priors, and the boundary routine takes boundary zero's due set or the empty one.",
+   "clear": false,
+   "note": "_settle!(model; fresh) was added in bc460431 and removed in c3e7faeb (D-445, the due-set arity of run_boundary!). D-429's 'one flag' wording is stale in the same way."
+  },
+  {
+   "id": "K7b-177",
+   "conforms": false,
+   "evidence": "src/model.jl:326-332 init!'s body sets the base, the clock and the priors (fill!), and overlay!'s body (469-474) leaves all three; only the discrete stages and the updates differ inside the boundary, through the due set (src/model.jl:652-663)",
+   "class": "drift",
+   "fix": "The first three choices live in the doors' own bodies, before the boundary. The last two live inside the boundary, in the routine both doors call.",
+   "clear": true,
+   "note": "D-429's Rationale (design/log.md:17462-17463) already says 'The first three choices live in the doors' own bodies, the last two inside the settling routine'."
+  },
+  {
+   "id": "K7b-178",
+   "conforms": true,
+   "evidence": "src/model.jl:652-659 run_boundary! does project, event_phase! (sweep, guards, handlers to quiescence), then run_ticks! (the due updates); the frame integrates before it and settled!(hooks) publishes after it (src/model.jl:340, src/frame.jl:163-165)"
+  },
+  {
+   "id": "K7b-180",
+   "conforms": false,
+   "evidence": "no _settle! in src/ (rg); overlay! settles through run_boundary!(model, nothing) (src/model.jl:476) and boundary zero through run_boundary!(model, ESTABLISH) (src/model.jl:702)",
+   "class": "drift",
+   "fix": "The settling is the boundary routine `run_boundary!(model, due)` over a chosen due set: boundary zero's `ESTABLISH` admits every discrete output stage and the index-0 updates, and the overlay's empty set (`nothing`) admits none.",
+   "clear": true,
+   "note": "_settle! was added in bc460431 and replaced in c3e7faeb (2026-11-11, D-445). The model.jl comment at src/model.jl:440-442 cites D-445 for the empty due set."
+  },
+  {
+   "id": "K7b-188",
+   "conforms": false,
+   "evidence": "src/stepper.jl:267 BS3Stepper and src/stepper.jl:283-285 carry a proposal and a controller memory; src/checkpoint.jl:51-54",
+   "class": "drift",
+   "fix": "Today's steppers are fixed-step RK4 and Heun, which carry nothing, and BS3, which carries its next step's proposal and its controller's memory.",
+   "clear": true,
+   "note": "Recorded by D-461 (design/log.md:19839) and commit 4367fa55."
+  },
+  {
+   "id": "K7b-189",
+   "conforms": false,
+   "evidence": "src/stepper.jl:283 restore_stepper! for BS3 writes the proposal and the memory back, so it is no longer a no-op; src/model.jl:474 overlay! raises discontinuity!, not a reset",
+   "class": "drift",
+   "fix": "(`restore_stepper!` is a no-op for RK4 and Heun and puts BS3's proposal and memory back). The overlay raises the stepper's discontinuity notice, and what a backend does with it is its own.",
+   "clear": true,
+   "note": "Recorded by D-452 (overlay! raises the notice) and D-461 (BS3's carried state)."
+  },
+  {
+   "id": "K7b-194",
+   "conforms": true,
+   "evidence": "src/model.jl:1310 restore!(model, model_state; hooks) is the gated model door, src/model.jl:1331 _restore_state! the inner body under the :restore catch, and src/sim.jl:1062-1076 the simulation wrapper"
+  },
+  {
+   "id": "K7b-203",
+   "conforms": true,
+   "evidence": "src/model.jl:332 fill!(exec.events.prior, false) in init!'s plan method"
+  },
+  {
+   "id": "K7b-211",
+   "conforms": false,
+   "evidence": "src/model.jl:474-479 overlay!'s plan method calls discontinuity! and then run_boundary!(model, nothing) inside try/catch, wrapping as _wrap_step(model, k, :overlay, err)",
+   "class": "drift",
+   "fix": "and runs the boundary over the empty due set, `run_boundary!(model, nothing)`, inside the same catch with its own host tag, `:overlay`.",
+   "clear": true,
+   "note": "_settle!(fresh = false) existed from bc460431 until c3e7faeb (D-445)."
+  },
+  {
+   "id": "K7b-213",
+   "conforms": true,
+   "evidence": "src/sim.jl:835-840 init!(sim) throws ServiceLifecycle when lifecycle is :running or :errored"
+  },
+  {
+   "id": "K7b-220",
+   "conforms": false,
+   "evidence": "src/sim.jl:966-967 overlay! takes _assert_at_rest, legal only in initialized or stopped with the clock on a frame top, while restore! (src/sim.jl:1066-1069) refuses only running and errored; probe.jl:67-70 P220o/P220r: overlay! on a built sim is ServiceLifecycle (legal [:initialized, :stopped]), and restore! on a built sim succeeds",
+   "class": "drift",
+   "fix": "`overlay!`'s is `restore!`'s wrapper more than `init!`'s: `checkpoint`'s lifecycle gate (legal while `initialized` or `stopped`, its clock on a frame top), a fresh run, the periphery handled as `restore!` handles it, and the header taken after settling.",
+   "clear": true,
+   "note": "Recorded by D-429's Position (the model form is legal at :consistent on a frame top) and spec §12.6 (design/spec.md:10724-10726); pinned at test/test_lifecycle.jl:894-923."
+  },
+  {
+   "id": "K7b-223",
+   "conforms": true,
+   "evidence": "src/sim.jl:975-979 the trace header is set from checkpoint(sim.model) after overlay!(sim.model, plan; hooks) returns"
+  },
+  {
+   "id": "K7b-224",
+   "conforms": false,
+   "evidence": "src/model.jl:702 boundary_zero!(model) = run_boundary!(model, ESTABLISH); no _settle! exists",
+   "class": "drift",
+   "fix": "The refactor is in layer 2: boundary zero and the overlay both run the one boundary routine, `run_boundary!`, boundary zero over `ESTABLISH` and the overlay over the empty due set.",
+   "clear": true,
+   "note": "bc460431 made boundary_zero! call _settle!(fresh = true), and c3e7faeb (D-445) replaced that with run_boundary!(model, ESTABLISH)."
+  },
+  {
+   "id": "K7b-225",
+   "conforms": false,
+   "evidence": "src/model.jl:336 init!'s plan method calls boundary_zero!(model), which is run_boundary!(model, ESTABLISH) (src/model.jl:702)",
+   "class": "drift",
+   "fix": "and `init!`'s plan method calls `boundary_zero!`, the boundary routine over `ESTABLISH`.",
+   "clear": true,
+   "note": "Same move as K7b-224: bc460431, then c3e7faeb (D-445)."
+  },
+  {
+   "id": "K7b-247",
+   "conforms": true,
+   "evidence": "src/sim.jl:1062 and 1079 restore! takes a Checkpoint or a ModelState and recording keywords, no condition; probe.jl:59 P247: no 3-positional method; probe.jl:62 P247b: restore! then overlay! leaves cell n=3 held and store n=10"
+  },
+  {
+   "id": "K7b-256",
+   "conforms": true,
+   "evidence": "probe.jl:50 P256: after overlay! the new run's log holds 1 snapshot at t=0.03, the stopped t; ctl's cell is held (===), and plant/y moves from 2.1e-6 to 1.0; src/model.jl:476 runs the empty due set, so no discrete stage runs"
+  },
+  {
+   "id": "K7b-258",
+   "conforms": true,
+   "evidence": "src/model.jl:702 boundary_zero! = run_boundary!(model, ESTABLISH), the same projection, event phase and ticks(0) as before the factoring; the boundary-zero pins remain in the suite (e.g. test/test_events.jl:266-274, test/test_discrete.jl:984-986)",
+   "note": "The suite was not run, as the task forbids. The factoring the claim names (_settle!) was later replaced (c3e7faeb), so the claim is a historical test pin that the current code does not contradict."
+  }
+ ],
+ "notes": "I edited no tracked file. The one probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K7b_v/probe.jl. It runs from W with --project=test, and its last run completed with every tag printed. Main finding: section 7 of the companion records the overlay design as of bc460431 (2026-10-20). Commit c3e7faeb (D-445) replaced _settle!(model; fresh) with run_boundary!(model, due), using ESTABLISH or nothing as the due set. D-452 then gave overlay! a discontinuity notice instead of reset_stepper!, and D-461 added BS3, which carries state. Together these make K7b-158/175/177/180/188/189/211/224/225 drift. On K7b-177, D-429's Rationale already says three choices sit in the doors and two in the routine, which matches the code. K7b-063 and K7b-064 were wrong when written, not stale: t0 was already a keyword, and init! already ran boundary zero (D-274). No pending.md bullet covers this companion."
+}

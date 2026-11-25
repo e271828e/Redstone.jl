@@ -1,0 +1,1468 @@
+{
+ "rows": [
+  {
+   "id": "SD4-022",
+   "file": "design/spec.md",
+   "line": 17183,
+   "kind": "mech",
+   "claim": "A component test rig is a one-child assembly",
+   "evidence": "test/fixtures.jl:1560-1568 (TerrainRig holds dut and stub); spec §13.7 sketch StrutRig holds strut and stub",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The rig that satisfies an abstract entry has two children, the component and the stub, which the same entry says is wired inside the rig.",
+   "fix": "a rig is an assembly of the child under test and any stub child, exporting the child's input face set"
+  },
+  {
+   "id": "SD4-023",
+   "file": "design/spec.md",
+   "line": 17183,
+   "kind": "mech",
+   "claim": "The rig exports the child's entire input face set",
+   "evidence": "test/fixtures.jl:1569-1570 (input_passthrough(rig, \"dut\"; except = (\"terrain\",)))",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The rig that wires a stub leaves the stubbed face out with `except`, so it exports the child's input faces less the stubbed ones.",
+   "fix": "exporting the child's input face set, less the faces a stub child satisfies"
+  },
+  {
+   "id": "SD4-033",
+   "file": "design/spec.md",
+   "line": 17196,
+   "kind": "mech",
+   "claim": "design_world is aircraft + SimpleAtmosphere(wind = NoWind()) + HorizontalTerrain",
+   "evidence": "no src or test defines design_world; spec 14324 and companions/trim_environment_walkthrough.md:147 say no source ships it",
+   "verdict": "unverifiable",
+   "note": "The entry says 'this design records', so it is design-only. No code to check the composition against."
+  },
+  {
+   "id": "SD4-034",
+   "file": "design/spec.md",
+   "line": 17197,
+   "kind": "mech",
+   "claim": "design_world mounts an aircraft for trim and linearization",
+   "evidence": "no code",
+   "verdict": "unverifiable",
+   "note": "Not built; same reason as SD4-033."
+  },
+  {
+   "id": "SD4-035",
+   "file": "design/spec.md",
+   "line": 17198,
+   "kind": "mech",
+   "claim": "SimpleAtmosphere and NoWind are FlightPhysics' atmosphere types",
+   "evidence": "external package, not in this repo",
+   "verdict": "unverifiable",
+   "note": "FlightPhysics is outside the worktree."
+  },
+  {
+   "id": "SD4-101",
+   "file": "design/spec.md",
+   "line": 17275,
+   "kind": "mech",
+   "claim": "A TrimProblem is solved as a square root-find over named residuals",
+   "evidence": "src/trim.jl:301-304 (J is n_residuals x n_decisions, no squareness check); spec 13789 'Non-squareness degrades gracefully' (D-069)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The default backend is nonlinear least squares, and no check requires as many residuals as decisions.",
+   "fix": "solved as a root-find over named residuals, by default nonlinear least squares, so a non-square problem degrades to least squares ([§14.7][s14-7])"
+  },
+  {
+   "id": "SD4-122",
+   "file": "design/spec.md",
+   "line": 17313,
+   "kind": "mech",
+   "claim": "The five failure walkthroughs run as acceptance tests",
+   "evidence": "no test names §8.4 or its walkthroughs (rg over test/)",
+   "verdict": "unverifiable",
+   "note": "Tests cover wire typos, unconnected inputs and probe errors, but none is labeled as a walkthrough, so the mapping cannot be confirmed."
+  },
+  {
+   "id": "SD4-125",
+   "file": "design/spec.md",
+   "line": 17317,
+   "kind": "law",
+   "claim": "The execution cursor holds three facts",
+   "evidence": "src/executor.jl:17-23 (comp, fn, phase, index, attempt); probe:cursor-fields",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The cursor has five fields. The index (RK stage, event round or trial ordinal) and the attempt ordinal came with D-452 and the phase list.",
+   "fix": "It holds five facts, the component by its index in the structure's component list, the function running, the phase, the index within the phase (RK stage, event round or trial) and the step's attempt ordinal"
+  },
+  {
+   "id": "SD4-138",
+   "file": "design/spec.md",
+   "line": 17335,
+   "kind": "law",
+   "claim": "A payload carries paths and names as strings",
+   "evidence": "src/diagnostics.jl:6-9 ('strings and symbols'); src/diagnostics.jl:2062-2064 (reason::Symbol, payload::Symbol); src/diagnostics.jl:2059-2060 (observed = typeof(value))",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Paths are strings but names are mostly Symbols (field, port, face, label), and some payloads hold the observed value's type, so a user type can ride in observed.",
+   "fix": "paths as strings, names as strings or symbols (never instances), expected/observed port types, the list-in-hand"
+  },
+  {
+   "id": "SD4-164",
+   "file": "design/spec.md",
+   "line": 17364,
+   "kind": "law",
+   "claim": "A warning raised producing an artifact lives on it, a trim report included",
+   "evidence": "src/trim.jl:735-749 (TrimCommit* are @warn'd, TrimReport has no warnings field, src/trim.jl:188); spec 15502 'trim! differs. Its TrimReport holds the facts, and the warnings are logged beside it'",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Build and Deployment carry warnings. A trim report lists among the artifacts but holds none, and §13.2 and Appendix C record trim as the exception.",
+   "fix": "A warning raised producing one lives on it, except a trim report, which holds the facts while its commit warnings are logged beside it ([§13.2][s13-2], [D-250][d-250])"
+  }
+ ],
+ "ok": [
+  {
+   "id": "SD4-001",
+   "file": "design/spec.md",
+   "line": 17159,
+   "kind": "mech",
+   "claim": "at stores the prefix beside a condition node",
+   "evidence": "src/conditions.jl:207-209"
+  },
+  {
+   "id": "SD4-002",
+   "file": "design/spec.md",
+   "line": 17160,
+   "kind": "law",
+   "claim": "at applies nothing, paths join at resolution",
+   "evidence": "src/conditions.jl:197-201; probe:at-scoped"
+  },
+  {
+   "id": "SD4-003",
+   "file": "design/spec.md",
+   "line": 17161,
+   "kind": "mech",
+   "claim": "at lifts whole TrimProblems",
+   "evidence": "src/trim.jl:125-130; probe:at-trimproblem"
+  },
+  {
+   "id": "SD4-004",
+   "file": "design/spec.md",
+   "line": 17161,
+   "kind": "mech",
+   "claim": "at lifts linearization tap sets",
+   "evidence": "src/linearize.jl:80-82; probe:at-taps"
+  },
+  {
+   "id": "SD4-005",
+   "file": "design/spec.md",
+   "line": 17162,
+   "kind": "mech",
+   "claim": "A read set keeps its prefixes as a chain",
+   "evidence": "src/conditions.jl:212-215; probe:at-reads-chain"
+  },
+  {
+   "id": "SD4-006",
+   "file": "design/spec.md",
+   "line": 17162,
+   "kind": "law",
+   "claim": "A read set is not a condition node",
+   "evidence": "src/conditions.jl:211-212 (Reads absent from ConditionNode union); probe:reads-not-node"
+  },
+  {
+   "id": "SD4-007",
+   "file": "design/spec.md",
+   "line": 17164,
+   "kind": "law",
+   "claim": "An empty prefix is refused when at is called",
+   "evidence": "src/conditions.jl:207-211; probe:at-empty-node, at-empty-reads, at-taps-empty"
+  },
+  {
+   "id": "SD4-008",
+   "file": "design/spec.md",
+   "line": 17166,
+   "kind": "law",
+   "claim": "A baseline is a full-coverage condition",
+   "evidence": "src/trim.jl:598-599 (assert_total on override(baseline, condition(guess)))"
+  },
+  {
+   "id": "SD4-009",
+   "file": "design/spec.md",
+   "line": 17167,
+   "kind": "mech",
+   "claim": "The baseline is layered under tweaks by override",
+   "evidence": "src/trim.jl:598,730"
+  },
+  {
+   "id": "SD4-010",
+   "file": "design/spec.md",
+   "line": 17168,
+   "kind": "decl",
+   "claim": "trim! takes a baseline keyword",
+   "evidence": "src/trim.jl:560; probe:trim-baseline-required (UndefKeywordError)"
+  },
+  {
+   "id": "SD4-011",
+   "file": "design/spec.md",
+   "line": 17172,
+   "kind": "mech",
+   "claim": "Boundary zero is the ordinary macro-sequence with an empty integrate",
+   "evidence": "src/model.jl:652-660,702"
+  },
+  {
+   "id": "SD4-012",
+   "file": "design/spec.md",
+   "line": 17173,
+   "kind": "mech",
+   "claim": "It runs at t0 once apply! has established the stores",
+   "evidence": "src/model.jl:327-336"
+  },
+  {
+   "id": "SD4-013",
+   "file": "design/spec.md",
+   "line": 17174,
+   "kind": "mech",
+   "claim": "The sequence starts with project",
+   "evidence": "src/model.jl:653-654"
+  },
+  {
+   "id": "SD4-014",
+   "file": "design/spec.md",
+   "line": 17174,
+   "kind": "mech",
+   "claim": "Then [sweep, guards, handlers] iterate",
+   "evidence": "src/model.jl:655 event_phase!"
+  },
+  {
+   "id": "SD4-015",
+   "file": "design/spec.md",
+   "line": 17175,
+   "kind": "mech",
+   "claim": "Then the due s_update calls",
+   "evidence": "src/model.jl:656,663-664"
+  },
+  {
+   "id": "SD4-016",
+   "file": "design/spec.md",
+   "line": 17175,
+   "kind": "mech",
+   "claim": "Then the first snapshot",
+   "evidence": "src/model.jl:341 settled!(hooks)"
+  },
+  {
+   "id": "SD4-017",
+   "file": "design/spec.md",
+   "line": 17176,
+   "kind": "mech",
+   "claim": "init! takes the trace header after boundary zero",
+   "evidence": "src/sim.jl:853-857"
+  },
+  {
+   "id": "SD4-018",
+   "file": "design/spec.md",
+   "line": 17178,
+   "kind": "mech",
+   "claim": "combine is the symmetric combinator",
+   "evidence": "src/conditions.jl:236-238"
+  },
+  {
+   "id": "SD4-019",
+   "file": "design/spec.md",
+   "line": 17178,
+   "kind": "law",
+   "claim": "A duplicate leaf is an error",
+   "evidence": "probe:combine-dup (DuplicateConditionLeaf)"
+  },
+  {
+   "id": "SD4-020",
+   "file": "design/spec.md",
+   "line": 17179,
+   "kind": "law",
+   "claim": "The error names both origins",
+   "evidence": "probe:combine-dup (two origins); src/diagnostics.jl:2049"
+  },
+  {
+   "id": "SD4-021",
+   "file": "design/spec.md",
+   "line": 17180,
+   "kind": "law",
+   "claim": "Blending a node with a bare NamedTuple is a directive error method",
+   "evidence": "src/conditions.jl:245-248; probe:combine-nt"
+  },
+  {
+   "id": "SD4-024",
+   "file": "design/spec.md",
+   "line": 17185,
+   "kind": "mech",
+   "claim": "An abstract entry is satisfied inside the rig",
+   "evidence": "test/fixtures.jl:1560-1570"
+  },
+  {
+   "id": "SD4-025",
+   "file": "design/spec.md",
+   "line": 17186,
+   "kind": "mech",
+   "claim": "By a concrete stub child wired to that face",
+   "evidence": "test/fixtures.jl:1568 local_wires stub/y => dut/terrain"
+  },
+  {
+   "id": "SD4-026",
+   "file": "design/spec.md",
+   "line": 17188,
+   "kind": "mech",
+   "claim": "A condition is a path-addressed sparse overlay",
+   "evidence": "src/conditions.jl:169-172,207"
+  },
+  {
+   "id": "SD4-027",
+   "file": "design/spec.md",
+   "line": 17189,
+   "kind": "law",
+   "claim": "It applies on the declared defaults under init!",
+   "evidence": "src/model.jl:324-326 establish_defaults!; probe:init-resets-default-q"
+  },
+  {
+   "id": "SD4-028",
+   "file": "design/spec.md",
+   "line": 17190,
+   "kind": "law",
+   "claim": "It applies on a stopped run's stores under overlay!",
+   "evidence": "src/model.jl:452-455; probe:overlay-keeps-acc"
+  },
+  {
+   "id": "SD4-029",
+   "file": "design/spec.md",
+   "line": 17190,
+   "kind": "law",
+   "claim": "It covers x, s and m fields",
+   "evidence": "src/conditions.jl:169; probe:init-q"
+  },
+  {
+   "id": "SD4-030",
+   "file": "design/spec.md",
+   "line": 17191,
+   "kind": "law",
+   "claim": "It covers root inputs by face",
+   "evidence": "src/conditions.jl:169 (u payload); probe:override-wins"
+  },
+  {
+   "id": "SD4-031",
+   "file": "design/spec.md",
+   "line": 17191,
+   "kind": "law",
+   "claim": "It never sets outputs",
+   "evidence": "probe:set-y-kw (set has no y keyword), probe:set-output-as-u (:unexported_face)"
+  },
+  {
+   "id": "SD4-032",
+   "file": "design/spec.md",
+   "line": 17191,
+   "kind": "law",
+   "claim": "It never sets workspace",
+   "evidence": "src/conditions.jl:169 (set has x, s, m, u only)"
+  },
+  {
+   "id": "SD4-036",
+   "file": "design/spec.md",
+   "line": 17202,
+   "kind": "mech",
+   "claim": "A fragment is the leaf node of the algebra",
+   "evidence": "src/conditions.jl:32-37,169-172"
+  },
+  {
+   "id": "SD4-037",
+   "file": "design/spec.md",
+   "line": 17202,
+   "kind": "decl",
+   "claim": "Built by set(; x, s, m, u)",
+   "evidence": "src/conditions.jl:169"
+  },
+  {
+   "id": "SD4-038",
+   "file": "design/spec.md",
+   "line": 17203,
+   "kind": "law",
+   "claim": "Payloads speak only about the component at the authoring point",
+   "evidence": "src/conditions.jl:146-148; probe:set-undeclared-x"
+  },
+  {
+   "id": "SD4-039",
+   "file": "design/spec.md",
+   "line": 17204,
+   "kind": "law",
+   "claim": "Addressing is left entirely to at",
+   "evidence": "src/conditions.jl:32-37 (Fragment has no path)"
+  },
+  {
+   "id": "SD4-040",
+   "file": "design/spec.md",
+   "line": 17207,
+   "kind": "mech",
+   "claim": "The fragment tree is an inert lazy composition of the node types",
+   "evidence": "src/conditions.jl:32-99; test/test_conditions.jl:34-48"
+  },
+  {
+   "id": "SD4-041",
+   "file": "design/spec.md",
+   "line": 17208,
+   "kind": "law",
+   "claim": "It is isbits but for the prefix strings",
+   "evidence": "probe:isbits-tree (Fragment isbits, tree with Scoped not)"
+  },
+  {
+   "id": "SD4-042",
+   "file": "design/spec.md",
+   "line": 17209,
+   "kind": "mech",
+   "claim": "Prefix strings are references to the author's literals",
+   "evidence": "src/conditions.jl:208 (String(prefix) keeps a String)"
+  },
+  {
+   "id": "SD4-043",
+   "file": "design/spec.md",
+   "line": 17209,
+   "kind": "law",
+   "claim": "Rebuilding it allocates nothing",
+   "evidence": "probe:alloc-tree (0 bytes)"
+  },
+  {
+   "id": "SD4-044",
+   "file": "design/spec.md",
+   "line": 17210,
+   "kind": "law",
+   "claim": "It does no path work",
+   "evidence": "src/conditions.jl:195-196 comment; src/conditions.jl:208"
+  },
+  {
+   "id": "SD4-045",
+   "file": "design/spec.md",
+   "line": 17212,
+   "kind": "decl",
+   "claim": "The leaf address is the leaf argument of a selector",
+   "evidence": "src/readers.jl:55-58,142-145"
+  },
+  {
+   "id": "SD4-046",
+   "file": "design/spec.md",
+   "line": 17213,
+   "kind": "mech",
+   "claim": "It names one leaf of a port value or one component of a state leaf",
+   "evidence": "src/readers.jl:276-290"
+  },
+  {
+   "id": "SD4-047",
+   "file": "design/spec.md",
+   "line": 17214,
+   "kind": "law",
+   "claim": "Address is a name then .name and [k]/[k,l] steps in any order",
+   "evidence": "src/diagnostics.jl:2134-2139; test/test_readers.jl:586-588"
+  },
+  {
+   "id": "SD4-048",
+   "file": "design/spec.md",
+   "line": 17215,
+   "kind": "ex",
+   "claim": "Examples \"pose.q_eb[2]\" and \"J[1,3]\"",
+   "evidence": "src/readers.jl:270 (same example); address form per SD4-047"
+  },
+  {
+   "id": "SD4-049",
+   "file": "design/spec.md",
+   "line": 17216,
+   "kind": "law",
+   "claim": "A bare Symbol is the short form of a plain name",
+   "evidence": "src/readers.jl:136-137"
+  },
+  {
+   "id": "SD4-050",
+   "file": "design/spec.md",
+   "line": 17217,
+   "kind": "law",
+   "claim": "On a bare store the address may be headless, empty or start at its first step",
+   "evidence": "test/test_readers.jl:585-597"
+  },
+  {
+   "id": "SD4-051",
+   "file": "design/spec.md",
+   "line": 17218,
+   "kind": "law",
+   "claim": "The store's letter is supplied",
+   "evidence": "test/test_readers.jl:594-597 (get_state(\"acc\") equals get_state(\"acc\",\"x\"))"
+  },
+  {
+   "id": "SD4-052",
+   "file": "design/spec.md",
+   "line": 17220,
+   "kind": "mech",
+   "claim": "Mounting relocates a problem or tap set with at",
+   "evidence": "src/trim.jl:125-130; src/linearize.jl:80-82"
+  },
+  {
+   "id": "SD4-053",
+   "file": "design/spec.md",
+   "line": 17221,
+   "kind": "mech",
+   "claim": "A field is condition-producing, path-relative and post-composed",
+   "evidence": "src/trim.jl:127"
+  },
+  {
+   "id": "SD4-054",
+   "file": "design/spec.md",
+   "line": 17222,
+   "kind": "mech",
+   "claim": "Or a read set carrying its mount chain, or path-free",
+   "evidence": "src/trim.jl:128-130"
+  },
+  {
+   "id": "SD4-055",
+   "file": "design/spec.md",
+   "line": 17224,
+   "kind": "law",
+   "claim": "The mount chain is the prefixes it is mounted under, root first",
+   "evidence": "src/conditions.jl:214; probe:at-reads-chain"
+  },
+  {
+   "id": "SD4-056",
+   "file": "design/spec.md",
+   "line": 17225,
+   "kind": "mech",
+   "claim": "The read side rebases every selector to the root at resolution",
+   "evidence": "src/conditions.jl:196-198 comment, src/readers.jl:540-560"
+  },
+  {
+   "id": "SD4-057",
+   "file": "design/spec.md",
+   "line": 17228,
+   "kind": "mech",
+   "claim": "override is the ordered asymmetric layering combinator",
+   "evidence": "src/conditions.jl:93-96,266"
+  },
+  {
+   "id": "SD4-058",
+   "file": "design/spec.md",
+   "line": 17229,
+   "kind": "law",
+   "claim": "On a shared leaf the patch wins",
+   "evidence": "probe:override-wins (2.0)"
+  },
+  {
+   "id": "SD4-059",
+   "file": "design/spec.md",
+   "line": 17229,
+   "kind": "law",
+   "claim": "The origin records both layers",
+   "evidence": "src/conditions.jl:89-91 comment"
+  },
+  {
+   "id": "SD4-060",
+   "file": "design/spec.md",
+   "line": 17230,
+   "kind": "law",
+   "claim": "Collisions within a layer remain errors",
+   "evidence": "probe:override-within-layer"
+  },
+  {
+   "id": "SD4-061",
+   "file": "design/spec.md",
+   "line": 17230,
+   "decl": "",
+   "kind": "decl",
+   "claim": "override is variadic",
+   "evidence": "src/conditions.jl:266; probe:override-variadic"
+  },
+  {
+   "id": "SD4-062",
+   "file": "design/spec.md",
+   "line": 17232,
+   "kind": "decl",
+   "claim": "A read set is a Reads value built by reads(name = selector, ...)",
+   "evidence": "src/readers.jl:522-525,553"
+  },
+  {
+   "id": "SD4-063",
+   "file": "design/spec.md",
+   "line": 17233,
+   "kind": "mech",
+   "claim": "It names each selector it reads",
+   "evidence": "src/readers.jl:555-562"
+  },
+  {
+   "id": "SD4-064",
+   "file": "design/spec.md",
+   "line": 17234,
+   "kind": "decl",
+   "claim": "It is trim's reads field",
+   "evidence": "src/trim.jl:91; src/readers.jl:511-512"
+  },
+  {
+   "id": "SD4-065",
+   "file": "design/spec.md",
+   "line": 17234,
+   "kind": "decl",
+   "claim": "It is what series takes post-run",
+   "evidence": "src/readers.jl:511; probe:series-state-refused"
+  },
+  {
+   "id": "SD4-066",
+   "file": "design/spec.md",
+   "line": 17235,
+   "kind": "mech",
+   "claim": "It carries its mount chain as data",
+   "evidence": "src/readers.jl:522-525 (prefixes field)"
+  },
+  {
+   "id": "SD4-067",
+   "file": "design/spec.md",
+   "line": 17236,
+   "kind": "mech",
+   "claim": "at prepends to that chain",
+   "evidence": "src/conditions.jl:214"
+  },
+  {
+   "id": "SD4-068",
+   "file": "design/spec.md",
+   "line": 17236,
+   "kind": "law",
+   "claim": "at does not make a read set a condition node",
+   "evidence": "src/conditions.jl:212-215; probe:reads-not-node"
+  },
+  {
+   "id": "SD4-069",
+   "file": "design/spec.md",
+   "line": 17237,
+   "kind": "mech",
+   "claim": "An output binding's read set is the labeled NamedTuple its reads returns",
+   "evidence": "src/bindings.jl:158-176; src/roster.jl:167"
+  },
+  {
+   "id": "SD4-070",
+   "file": "design/spec.md",
+   "line": 17239,
+   "kind": "law",
+   "claim": "Totality is a pre-write requirement",
+   "evidence": "src/model.jl:316-317; src/sim.jl:844"
+  },
+  {
+   "id": "SD4-071",
+   "file": "design/spec.md",
+   "line": 17240,
+   "kind": "law",
+   "claim": "It applies to init!, trim setup, trim commit and linearize about",
+   "evidence": "src/model.jl:316; src/trim.jl:599; src/linearize.jl:316"
+  },
+  {
+   "id": "SD4-072",
+   "file": "design/spec.md",
+   "line": 17242,
+   "kind": "law",
+   "claim": "Conditions themselves are legitimately partial",
+   "evidence": "probe:overlay-empty-ok"
+  },
+  {
+   "id": "SD4-073",
+   "file": "design/spec.md",
+   "line": 17242,
+   "kind": "law",
+   "claim": "A shortfall is UninitializedInputs",
+   "evidence": "probe:init-partial; src/diagnostics.jl:2080"
+  },
+  {
+   "id": "SD4-074",
+   "file": "design/spec.md",
+   "line": 17243,
+   "kind": "law",
+   "claim": "It is collected",
+   "evidence": "probe:init-empty (faces [:u, :e])"
+  },
+  {
+   "id": "SD4-075",
+   "file": "design/spec.md",
+   "line": 17243,
+   "kind": "law",
+   "claim": "It is declaration-ordered",
+   "evidence": "probe:init-empty; src/diagnostics.jl:2082"
+  },
+  {
+   "id": "SD4-076",
+   "file": "design/spec.md",
+   "line": 17244,
+   "kind": "law",
+   "claim": "The simulation is left untouched",
+   "evidence": "test/test_conditions.jl:274-278"
+  },
+  {
+   "id": "SD4-077",
+   "file": "design/spec.md",
+   "line": 17246,
+   "kind": "mech",
+   "claim": "The selector family is a closed set of five",
+   "evidence": "src/readers.jl:173; probe:selector-types"
+  },
+  {
+   "id": "SD4-078",
+   "file": "design/spec.md",
+   "line": 17247,
+   "kind": "mech",
+   "claim": "Each names one leaf by its leaf address",
+   "evidence": "src/readers.jl:55-95"
+  },
+  {
+   "id": "SD4-079",
+   "file": "design/spec.md",
+   "line": 17248,
+   "kind": "mech",
+   "claim": "Each resolves against a source",
+   "evidence": "src/readers.jl:29-37"
+  },
+  {
+   "id": "SD4-080",
+   "file": "design/spec.md",
+   "line": 17248,
+   "kind": "mech",
+   "claim": "Table sources are a snapshot or a service evaluation's scratch tables",
+   "evidence": "src/readers.jl:32-35; src/bindings.jl:176"
+  },
+  {
+   "id": "SD4-081",
+   "file": "design/spec.md",
+   "line": 17250,
+   "kind": "mech",
+   "claim": "The other source is the live stores",
+   "evidence": "src/readers.jl:31-33; probe:series-state-refused"
+  },
+  {
+   "id": "SD4-082",
+   "file": "design/spec.md",
+   "line": 17253,
+   "kind": "law",
+   "claim": "Simulation states are built, initialized, running, stopped, errored",
+   "evidence": "src/sim.jl:511-517,524-525"
+  },
+  {
+   "id": "SD4-083",
+   "file": "design/spec.md",
+   "line": 17254,
+   "kind": "mech",
+   "claim": "Each service has a legality against the states",
+   "evidence": "src/diagnostics.jl:1280-1282; src/sim.jl:838,905,1168"
+  },
+  {
+   "id": "SD4-084",
+   "file": "design/spec.md",
+   "line": 17255,
+   "kind": "law",
+   "claim": "A Model's service forms gate on :built, :consistent, :inconsistent",
+   "evidence": "src/model.jl:64-65,1195-1198; probe:model-overlay-built"
+  },
+  {
+   "id": "SD4-085",
+   "file": "design/spec.md",
+   "line": 17256,
+   "kind": "law",
+   "claim": "A violation is ServiceLifecycle",
+   "evidence": "probe:overlay-built, checkpoint-built"
+  },
+  {
+   "id": "SD4-086",
+   "file": "design/spec.md",
+   "line": 17257,
+   "kind": "law",
+   "claim": "No service accepts an errored simulation",
+   "evidence": "probe:errored-init!, errored-overlay!, errored-trim!, errored-linearize, errored-restore!"
+  },
+  {
+   "id": "SD4-087",
+   "file": "design/spec.md",
+   "line": 17260,
+   "kind": "law",
+   "claim": "Stopped-sim is an operation legal only on a non-running simulation",
+   "evidence": "src/sim.jl:620-626; src/diagnostics.jl:1282"
+  },
+  {
+   "id": "SD4-088",
+   "file": "design/spec.md",
+   "line": 17261,
+   "kind": "law",
+   "claim": "attach! and detach! are legal while built, initialized or stopped",
+   "evidence": "src/sim.jl:620-626 (assert_configurable); probe:configurable"
+  },
+  {
+   "id": "SD4-089",
+   "file": "design/spec.md",
+   "line": 17263,
+   "kind": "mech",
+   "claim": "The services are init!, overlay!, trim!, linearize, checkpoint, restore!",
+   "evidence": "src/sim.jl:812,905,1119-1128,1168,1049"
+  },
+  {
+   "id": "SD4-090",
+   "file": "design/spec.md",
+   "line": 17264,
+   "kind": "law",
+   "claim": "Each one's inputs decide its legality among those states",
+   "evidence": "src/sim.jl:1161-1169 (linearize default vs about)"
+  },
+  {
+   "id": "SD4-091",
+   "file": "design/spec.md",
+   "line": 17265,
+   "kind": "law",
+   "claim": "An errored simulation refuses them all",
+   "evidence": "probe:errored-init! through errored-restore!"
+  },
+  {
+   "id": "SD4-092",
+   "file": "design/spec.md",
+   "line": 17267,
+   "kind": "decl",
+   "claim": "Taps are three lists x, u, y built by taps",
+   "evidence": "src/linearize.jl:37-41,97"
+  },
+  {
+   "id": "SD4-093",
+   "file": "design/spec.md",
+   "line": 17268,
+   "kind": "mech",
+   "claim": "They declare what linearization seeds and reports",
+   "evidence": "src/linearize.jl:22-34"
+  },
+  {
+   "id": "SD4-094",
+   "file": "design/spec.md",
+   "line": 17269,
+   "kind": "law",
+   "claim": "Every tap names one scalar leaf",
+   "evidence": "probe:tap-nonscalar (:vector_tap)"
+  },
+  {
+   "id": "SD4-095",
+   "file": "design/spec.md",
+   "line": 17270,
+   "kind": "law",
+   "claim": "Selectors are checked as ReadResolution",
+   "evidence": "src/linearize.jl:59-60; test/test_linearize.jl:436-437"
+  },
+  {
+   "id": "SD4-096",
+   "file": "design/spec.md",
+   "line": 17271,
+   "kind": "law",
+   "claim": "Tap set constraints are checked as TapResolution",
+   "evidence": "test/test_linearize.jl:440-445; probe:tap-wrong-selector"
+  },
+  {
+   "id": "SD4-097",
+   "file": "design/spec.md",
+   "line": 17271,
+   "kind": "mech",
+   "claim": "A tap set relocates via at",
+   "evidence": "src/linearize.jl:80-82; probe:at-taps"
+  },
+  {
+   "id": "SD4-098",
+   "file": "design/spec.md",
+   "line": 17273,
+   "kind": "decl",
+   "claim": "TrimProblem is a closed nine-field value",
+   "evidence": "src/trim.jl:86-96; probe:trimproblem-fields"
+  },
+  {
+   "id": "SD4-099",
+   "file": "design/spec.md",
+   "line": 17274,
+   "kind": "decl",
+   "claim": "Fields guess/lower/upper/condition/reads/residuals/tolerances/checks/check_tolerances",
+   "evidence": "src/trim.jl:86-96"
+  },
+  {
+   "id": "SD4-100",
+   "file": "design/spec.md",
+   "line": 17275,
+   "kind": "law",
+   "claim": "It is not a condition node",
+   "evidence": "probe:trimproblem-isnode (false)"
+  },
+  {
+   "id": "SD4-102",
+   "file": "design/spec.md",
+   "line": 17277,
+   "kind": "mech",
+   "claim": "Its commit is an init! of override(baseline, condition(d*))",
+   "evidence": "src/trim.jl:730"
+  },
+  {
+   "id": "SD4-103",
+   "file": "design/spec.md",
+   "line": 17281,
+   "kind": "mech",
+   "claim": "DiagnosticError is the single exception diagnostics travel in",
+   "evidence": "src/diagnostics.jl:93-111"
+  },
+  {
+   "id": "SD4-104",
+   "file": "design/spec.md",
+   "line": 17282,
+   "kind": "law",
+   "claim": "It holds one diagnostic at a fail-fast site",
+   "evidence": "probe:carrier-type (DiagnosticError{UninitializedInputs})"
+  },
+  {
+   "id": "SD4-105",
+   "file": "design/spec.md",
+   "line": 17282,
+   "kind": "law",
+   "claim": "Or the collection at a step barrier",
+   "evidence": "probe:carrier-collected (Vector{Diagnostic})"
+  },
+  {
+   "id": "SD4-106",
+   "file": "design/spec.md",
+   "line": 17283,
+   "kind": "mech",
+   "claim": "Its type parameter tells which",
+   "evidence": "src/diagnostics.jl:109,113-118"
+  },
+  {
+   "id": "SD4-107",
+   "file": "design/spec.md",
+   "line": 17283,
+   "kind": "mech",
+   "claim": "StepError takes a single diagnostic over as its cause",
+   "evidence": "src/model.jl:1093-1094"
+  },
+  {
+   "id": "SD4-108",
+   "file": "design/spec.md",
+   "line": 17284,
+   "kind": "mech",
+   "claim": "It carries the cause's type as its parameter",
+   "evidence": "src/diagnostics.jl:245; probe:run-threw (StepError{Exploded})"
+  },
+  {
+   "id": "SD4-109",
+   "file": "design/spec.md",
+   "line": 17285,
+   "kind": "law",
+   "claim": "Diagnostics themselves are plain values",
+   "evidence": "src/diagnostics.jl:4-5"
+  },
+  {
+   "id": "SD4-110",
+   "file": "design/spec.md",
+   "line": 17288,
+   "kind": "mech",
+   "claim": "A descriptor projects a Build, a Deployment or a failed build",
+   "evidence": "src/descriptor.jl:44-46; probe:descriptor-keys, descriptor-fail"
+  },
+  {
+   "id": "SD4-111",
+   "file": "design/spec.md",
+   "line": 17289,
+   "kind": "mech",
+   "claim": "Under a published, versioned format",
+   "evidence": "src/descriptor.jl:9-10; probe:descriptor-fv"
+  },
+  {
+   "id": "SD4-112",
+   "file": "design/spec.md",
+   "line": 17290,
+   "kind": "mech",
+   "claim": "descriptor renders plain data beside show's text",
+   "evidence": "src/descriptor.jl:26-33"
+  },
+  {
+   "id": "SD4-113",
+   "file": "design/spec.md",
+   "line": 17294,
+   "kind": "mech",
+   "claim": "A kind marker sits beside a face's printed type in a descriptor",
+   "evidence": "src/descriptor.jl:299"
+  },
+  {
+   "id": "SD4-114",
+   "file": "design/spec.md",
+   "line": 17295,
+   "kind": "law",
+   "claim": "The nine kinds are boolean, enum, symbol, integer, float, number, vector, struct, opaque",
+   "evidence": "probe:kind-markers"
+  },
+  {
+   "id": "SD4-115",
+   "file": "design/spec.md",
+   "line": 17296,
+   "kind": "mech",
+   "claim": "Each carries the fields it needs",
+   "evidence": "src/descriptor.jl:310,318,322"
+  },
+  {
+   "id": "SD4-116",
+   "file": "design/spec.md",
+   "line": 17300,
+   "kind": "law",
+   "claim": "Declarative passes return their full violation list",
+   "evidence": "src/diagnostics.jl:92-96; probe:carrier-collected"
+  },
+  {
+   "id": "SD4-117",
+   "file": "design/spec.md",
+   "line": 17301,
+   "kind": "law",
+   "claim": "The first user-code exception aborts the phase",
+   "evidence": "spec 15481-15484 (Appendix C fail-fast); src/build.jl:774-810"
+  },
+  {
+   "id": "SD4-118",
+   "file": "design/spec.md",
+   "line": 17302,
+   "kind": "mech",
+   "claim": "The build's steps are barriers",
+   "evidence": "src/build.jl:774-810"
+  },
+  {
+   "id": "SD4-119",
+   "file": "design/spec.md",
+   "line": 17303,
+   "decl": "",
+   "kind": "decl",
+   "claim": "The policy field spells the collecting case collected",
+   "evidence": "design/spec.md:15477 (Appendix C policies)"
+  },
+  {
+   "id": "SD4-120",
+   "file": "design/spec.md",
+   "line": 17307,
+   "kind": "law",
+   "claim": "A name-shaped failure carries the offending name and the list-in-hand",
+   "evidence": "src/diagnostics.jl:1962-1963 (candidates); src/diagnostics.jl:8-9"
+  },
+  {
+   "id": "SD4-121",
+   "file": "design/spec.md",
+   "line": 17308,
+   "kind": "law",
+   "claim": "Carried as payload rather than baked into message text",
+   "evidence": "src/diagnostics.jl:14-16"
+  },
+  {
+   "id": "SD4-123",
+   "file": "design/spec.md",
+   "line": 17316,
+   "kind": "mech",
+   "claim": "The cursor is the executor's plain mutable field",
+   "evidence": "src/executor.jl:17; src/build.jl:1424"
+  },
+  {
+   "id": "SD4-124",
+   "file": "design/spec.md",
+   "line": 17316,
+   "kind": "mech",
+   "claim": "It records where execution stands in the compiled order",
+   "evidence": "src/executor.jl:9-12"
+  },
+  {
+   "id": "SD4-126",
+   "file": "design/spec.md",
+   "line": 17317,
+   "kind": "mech",
+   "claim": "The component is held by its index in the structure's component list",
+   "evidence": "src/executor.jl:18; src/model.jl:1083"
+  },
+  {
+   "id": "SD4-127",
+   "file": "design/spec.md",
+   "line": 17318,
+   "kind": "mech",
+   "claim": "The function running is recorded",
+   "evidence": "src/executor.jl:19-20"
+  },
+  {
+   "id": "SD4-128",
+   "file": "design/spec.md",
+   "line": 17318,
+   "kind": "mech",
+   "claim": "The phase is recorded",
+   "evidence": "src/executor.jl:21,32-37"
+  },
+  {
+   "id": "SD4-129",
+   "file": "design/spec.md",
+   "line": 17319,
+   "kind": "mech",
+   "claim": "It costs one cheap store per dispatch",
+   "evidence": "src/executor.jl:168,174,185"
+  },
+  {
+   "id": "SD4-130",
+   "file": "design/spec.md",
+   "line": 17320,
+   "kind": "mech",
+   "claim": "No exception handlers in the hot path",
+   "evidence": "src/executor.jl:9-12; src/model.jl:1077-1085 (read at catch site)"
+  },
+  {
+   "id": "SD4-131",
+   "file": "design/spec.md",
+   "line": 17323,
+   "kind": "mech",
+   "claim": "The tracer is a set-propagation instrument",
+   "evidence": "src/tracer.jl:19-27"
+  },
+  {
+   "id": "SD4-132",
+   "file": "design/spec.md",
+   "line": 17323,
+   "kind": "mech",
+   "claim": "Global value-blind or sampled primal-carrying",
+   "evidence": "src/tracer.jl:21-27"
+  },
+  {
+   "id": "SD4-133",
+   "file": "design/spec.md",
+   "line": 17324,
+   "kind": "mech",
+   "claim": "It classifies a rejected cycle as real or artificial",
+   "evidence": "src/build.jl:282; src/tracer.jl:1-5"
+  },
+  {
+   "id": "SD4-134",
+   "file": "design/spec.md",
+   "line": 17325,
+   "kind": "law",
+   "claim": "Diagnostic only, never an input to the ordering",
+   "evidence": "src/tracer.jl:3-4"
+  },
+  {
+   "id": "SD4-135",
+   "file": "design/spec.md",
+   "line": 17328,
+   "kind": "law",
+   "claim": "A kind is an identity in a closed enumerated set",
+   "evidence": "src/diagnostics.jl:1-3; design/spec.md:15448"
+  },
+  {
+   "id": "SD4-136",
+   "file": "design/spec.md",
+   "line": 17329,
+   "kind": "mech",
+   "claim": "Appendix C gives each kind payload, owning section, severity, raised and policy",
+   "evidence": "design/spec.md:15460-15463"
+  },
+  {
+   "id": "SD4-137",
+   "file": "design/spec.md",
+   "line": 17334,
+   "kind": "mech",
+   "claim": "A payload is the structured data a diagnostic carries beside its kind",
+   "evidence": "src/diagnostics.jl:4-7"
+  },
+  {
+   "id": "SD4-139",
+   "file": "design/spec.md",
+   "line": 17335,
+   "kind": "law",
+   "claim": "Never instances or component types",
+   "evidence": "src/diagnostics.jl:5-7 (observed holds typeof of the offending value, see SD4-138)"
+  },
+  {
+   "id": "SD4-140",
+   "file": "design/spec.md",
+   "line": 17336,
+   "kind": "law",
+   "claim": "Expected and observed port types ride the payload",
+   "evidence": "src/diagnostics.jl:6-7"
+  },
+  {
+   "id": "SD4-141",
+   "file": "design/spec.md",
+   "line": 17336,
+   "kind": "law",
+   "claim": "The list-in-hand rides the payload",
+   "evidence": "src/diagnostics.jl:1963 (candidates)"
+  },
+  {
+   "id": "SD4-142",
+   "file": "design/spec.md",
+   "line": 17337,
+   "kind": "law",
+   "claim": "Severity is the kind's, not the payload's",
+   "evidence": "src/diagnostics.jl:57-59"
+  },
+  {
+   "id": "SD4-143",
+   "file": "design/spec.md",
+   "line": 17339,
+   "kind": "mech",
+   "claim": "The roster is the build's list of stop requests",
+   "evidence": "src/build.jl:362 (Layout.requesters)"
+  },
+  {
+   "id": "SD4-144",
+   "file": "design/spec.md",
+   "line": 17340,
+   "kind": "mech",
+   "claim": "One Requester(path, port, reason) per StopFlag output port",
+   "evidence": "src/build.jl:351-355,498-508; probe:requesters"
+  },
+  {
+   "id": "SD4-145",
+   "file": "design/spec.md",
+   "line": 17340,
+   "kind": "law",
+   "claim": "In build order",
+   "evidence": "src/build.jl:362,504"
+  },
+  {
+   "id": "SD4-146",
+   "file": "design/spec.md",
+   "line": 17343,
+   "kind": "mech",
+   "claim": "A species is a StepError whose cause is a diagnostic, StepError{Kind}",
+   "evidence": "src/diagnostics.jl:237-246"
+  },
+  {
+   "id": "SD4-147",
+   "file": "design/spec.md",
+   "line": 17344,
+   "kind": "mech",
+   "claim": "The catch site makes it of a single-diagnostic DiagnosticError thrown inside the sequence",
+   "evidence": "src/model.jl:1088-1094"
+  },
+  {
+   "id": "SD4-148",
+   "file": "design/spec.md",
+   "line": 17348,
+   "kind": "law",
+   "claim": "Graceful termination is model state, never an exception",
+   "evidence": "src/leaves.jl:270; src/library.jl:441; probe:termination"
+  },
+  {
+   "id": "SD4-149",
+   "file": "design/spec.md",
+   "line": 17349,
+   "kind": "decl",
+   "claim": "A model publishes a stop request as an output port of the enum StopFlag",
+   "evidence": "src/leaves.jl:270; src/library.jl:440"
+  },
+  {
+   "id": "SD4-150",
+   "file": "design/spec.md",
+   "line": 17349,
+   "kind": "law",
+   "claim": "Anywhere in the tree",
+   "evidence": "src/build.jl:498-508 (requesters over all entries)"
+  },
+  {
+   "id": "SD4-151",
+   "file": "design/spec.md",
+   "line": 17350,
+   "kind": "law",
+   "claim": "One reading STOP_REQUESTED ends the run",
+   "evidence": "probe:termination (ModelRequestedStop, t = 0.1)"
+  },
+  {
+   "id": "SD4-152",
+   "file": "design/spec.md",
+   "line": 17350,
+   "kind": "law",
+   "claim": "Unless the advance ignores it",
+   "evidence": "probe:stop-ignore (EndTimeReached); src/sim.jl:433-450"
+  },
+  {
+   "id": "SD4-153",
+   "file": "design/spec.md",
+   "line": 17351,
+   "kind": "decl",
+   "claim": "StopRequest is the library spelling",
+   "evidence": "src/library.jl:434-442"
+  },
+  {
+   "id": "SD4-154",
+   "file": "design/spec.md",
+   "line": 17354,
+   "kind": "mech",
+   "claim": "The termination record names how the run ended",
+   "evidence": "src/sim.jl:180-185"
+  },
+  {
+   "id": "SD4-155",
+   "file": "design/spec.md",
+   "line": 17355,
+   "kind": "mech",
+   "claim": "It holds the final boundary time",
+   "evidence": "src/sim.jl:181"
+  },
+  {
+   "id": "SD4-156",
+   "file": "design/spec.md",
+   "line": 17355,
+   "kind": "mech",
+   "claim": "It holds the StopPolicy of the terminating advance",
+   "evidence": "src/sim.jl:182"
+  },
+  {
+   "id": "SD4-157",
+   "file": "design/spec.md",
+   "line": 17356,
+   "kind": "mech",
+   "claim": "It holds a typed source with its payload",
+   "evidence": "src/sim.jl:183"
+  },
+  {
+   "id": "SD4-158",
+   "file": "design/spec.md",
+   "line": 17356,
+   "kind": "mech",
+   "claim": "It holds the tail residue",
+   "evidence": "src/sim.jl:184"
+  },
+  {
+   "id": "SD4-159",
+   "file": "design/spec.md",
+   "line": 17357,
+   "kind": "mech",
+   "claim": "A model-requested stop's payload is requester path, port and reason",
+   "evidence": "src/sim.jl:76-80; probe:termination"
+  },
+  {
+   "id": "SD4-160",
+   "file": "design/spec.md",
+   "line": 17358,
+   "kind": "law",
+   "claim": "It lives on the Run",
+   "evidence": "src/sim.jl:232; probe:term-on-run"
+  },
+  {
+   "id": "SD4-161",
+   "file": "design/spec.md",
+   "line": 17358,
+   "kind": "law",
+   "claim": "Never on the control plane",
+   "evidence": "probe:term-on-control (false)"
+  },
+  {
+   "id": "SD4-162",
+   "file": "design/spec.md",
+   "line": 17362,
+   "kind": "law",
+   "claim": "An artifact is an immutable pure function of its inputs",
+   "evidence": "src/build.jl:958-967 (activation cache invisible)"
+  },
+  {
+   "id": "SD4-163",
+   "file": "design/spec.md",
+   "line": 17363,
+   "kind": "mech",
+   "claim": "Examples are Structure, Outputs, Events, activation, Build, Deployment, trim report, trace header",
+   "evidence": "src/build.jl:709; src/trim.jl:188; src/sim.jl:853-857"
+  },
+  {
+   "id": "SD4-165",
+   "file": "design/spec.md",
+   "line": 17366,
+   "kind": "mech",
+   "claim": "It holds declared facts and a consumer compiles what it needs at one home",
+   "evidence": "src/build.jl:969 (activation)"
+  },
+  {
+   "id": "SD4-166",
+   "file": "design/spec.md",
+   "line": 17380,
+   "kind": "mech",
+   "claim": "The freeze is the roster freeze",
+   "evidence": "src/sim.jl:615-626"
+  },
+  {
+   "id": "SD4-167",
+   "file": "design/spec.md",
+   "line": 17381,
+   "kind": "law",
+   "claim": "Roster, claims and write-surface partition are static facts of each run",
+   "evidence": "src/sim.jl:620-626 (attach!/detach! refused while running)"
+  },
+  {
+   "id": "SD4-168",
+   "file": "design/spec.md",
+   "line": 17399,
+   "kind": "mech",
+   "claim": "The closed-loop trim is not built",
+   "evidence": "rg over src/ finds none"
+  },
+  {
+   "id": "SD4-169",
+   "file": "design/spec.md",
+   "line": 17400,
+   "kind": "mech",
+   "claim": "The sampled-data Dual activation is not built",
+   "evidence": "src/tracer.jl:7-8; src/diagnostics.jl:2169"
+  },
+  {
+   "id": "SD4-170",
+   "file": "design/spec.md",
+   "line": 17401,
+   "kind": "mech",
+   "claim": "Tooling over declared non-participation is not built",
+   "evidence": "rg over src/ finds none"
+  },
+  {
+   "id": "SD4-171",
+   "file": "design/spec.md",
+   "line": 17405,
+   "kind": "mech",
+   "claim": "The stepper seam exists",
+   "evidence": "test/imports.jl (AbstractStepper, bind_stepper, propose)"
+  },
+  {
+   "id": "SD4-172",
+   "file": "design/spec.md",
+   "line": 17406,
+   "kind": "mech",
+   "claim": "The backend seam exists",
+   "evidence": "src/trim.jl:300 solve(backend, ...)"
+  },
+  {
+   "id": "SD4-173",
+   "file": "design/spec.md",
+   "line": 17407,
+   "kind": "mech",
+   "claim": "The measurement seam exists",
+   "evidence": "src/model.jl:~495 phase_bodies"
+  },
+  {
+   "id": "SD4-174",
+   "file": "design/spec.md",
+   "line": 17408,
+   "kind": "mech",
+   "claim": "Phase-body seams of the compiled executor exist",
+   "evidence": "src/model.jl phase_bodies docstring"
+  },
+  {
+   "id": "SD4-175",
+   "file": "design/spec.md",
+   "line": 17409,
+   "kind": "mech",
+   "claim": "Generic seams of an assembly tree exist",
+   "evidence": "src/assembly.jl (generic wiring hooks)"
+  },
+  {
+   "id": "SD4-176",
+   "file": "design/spec.md",
+   "line": 17411,
+   "kind": "mech",
+   "claim": "Executor buffers, roster, diagnostic cells, log, trace and Run are state",
+   "evidence": "src/sim.jl:228-235; src/diagnostics.jl:1546"
+  },
+  {
+   "id": "SD4-177",
+   "file": "design/spec.md",
+   "line": 17413,
+   "kind": "law",
+   "claim": "A warning raised mutating state lives in its status",
+   "evidence": "src/diagnostics.jl:1546 EmptyGreedyClaim; log D-250"
+  }
+ ],
+ "counts": {
+  "law": 73,
+  "mech": 91,
+  "decl": 13,
+  "ex": 1,
+  "ptr": 14,
+  "why": 14,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

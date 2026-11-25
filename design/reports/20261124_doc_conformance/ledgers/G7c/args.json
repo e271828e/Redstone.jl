@@ -1,0 +1,22 @@
+{
+ "group": "G7c",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "62551b06",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "CV7a",
+   "kind": "coverage",
+   "files": "src/show.jl and src/trace.jl whole",
+   "docs": "design/spec.md §9.2 Rendering (rg -n '^#### Rendering' design/spec.md), §11.5 and §12.7",
+   "map": "1126-1208 (src/show.jl), 1468-1490 (src/trace.jl)"
+  },
+  {
+   "key": "CV7b",
+   "kind": "coverage",
+   "files": "src/readers.jl whole; and the exported surface, every name in src/Redstone.jl's export lists, against docs/src/api.md (each exported name has an @docs entry or is deliberately absent)",
+   "docs": "design/spec.md Appendix B and §14 (readers), docs/src/api.md",
+   "map": "1041-1098 (src/readers.jl), 27-37 (src/Redstone.jl)"
+  }
+ ]
+}

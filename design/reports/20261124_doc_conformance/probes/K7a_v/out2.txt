@@ -1,0 +1,34 @@
+Redstone from /Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance/src/Redstone.jl
+RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance/examples/src/RedstoneExamples.jl
+== K7a-333 gap per tick after the step
+PROBE t gap: 4.99 | 4.82e-5
+PROBE t gap: 4.995 | 4.82e-5
+PROBE t gap: 5.0 | 0.4289
+PROBE t gap: 5.005 | 0.4289
+PROBE t gap: 5.01 | 0.4289
+PROBE t gap: 5.015 | 0.4289
+PROBE t gap: 5.02 | 0.3319
+PROBE t gap: 5.025 | 0.3319
+PROBE t gap: 5.03 | 0.3319
+PROBE t gap: 5.035 | 0.3319
+PROBE t gap: 5.04 | 0.1103
+PROBE t gap: 5.045 | 0.1103
+PROBE t gap: 5.05 | 0.1103
+PROBE t gap: 5.055 | 0.1103
+PROBE t gap: 5.06 | 0.02419
+PROBE t gap: 5.065 | 0.02419
+PROBE t gap: 5.07 | 0.02419
+PROBE t gap: 5.075 | 0.02419
+== K7a-296 standby gaps during the maneuver, tracker in command
+PROBE altitude max [5,15) at: 0.2401 | 5.0
+PROBE altitude max [5.1,15): 0.02969
+PROBE altitude max [5.5,15): 0.02284
+PROBE altitude max [6.0,15): 0.02284
+PROBE altitude max [8.0,15): 0.01887
+PROBE altitude max [10.0,15): 0.0119
+PROBE airspeed max [5,15) at: 0.6278 | 5.0
+PROBE airspeed max [5.1,15): 0.01153
+PROBE airspeed max [5.5,15): 0.002136
+PROBE airspeed max [6.0,15): 0.002136
+PROBE airspeed max [8.0,15): 0.002136
+PROBE airspeed max [10.0,15): 0.002136

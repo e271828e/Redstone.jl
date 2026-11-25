@@ -1,0 +1,1885 @@
+{
+ "rows": [
+  {
+   "id": "SD3-071",
+   "file": "design/spec.md",
+   "line": 16949,
+   "kind": "mech",
+   "claim": "The standard GUI binding is an instance of the greedy claim",
+   "evidence": "The GUI binding lives in RedstoneInspector.jl, outside W",
+   "verdict": "unverifiable",
+   "note": "Inspector repo, not readable in W. The framework half (is_greedy, EmptyGreedyClaim) is checked at SD3-067 to SD3-070."
+  },
+  {
+   "id": "SD3-111",
+   "file": "design/spec.md",
+   "line": 17001,
+   "kind": "mech",
+   "claim": "The GUI renders the orphan fact in the widget's source label",
+   "evidence": "Widget rendering lives in RedstoneInspector.jl",
+   "verdict": "unverifiable",
+   "note": "Inspector repo, not readable in W. The framework half (orphaned, incumbent_status) is checked at SD3-108."
+  },
+  {
+   "id": "SD3-118",
+   "file": "design/spec.md",
+   "line": 17014,
+   "kind": "mech",
+   "claim": "The roster is a plain immutable value",
+   "evidence": "src/roster.jl:326; src/sim.jl:1645; src/roster.jl:453",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "It is a vector of immutable entries, edited only by the stopped-sim `attach!` and `detach!`. The loop copies it once at `run!`.",
+   "note": "plane.roster is a mutable Vector{RosterEntry}, and _install_writers! replaces entries in place. The loop reads a copy. D-087 records the immutable-value position."
+  },
+  {
+   "id": "SD3-143",
+   "file": "design/spec.md",
+   "line": 17046,
+   "kind": "law",
+   "claim": "Value widgets stage the new level on edit and edge widgets on activation, as a level computed from the peek",
+   "evidence": "GUI widgets live in RedstoneInspector.jl",
+   "verdict": "unverifiable",
+   "note": "Inspector repo, not readable in W."
+  },
+  {
+   "id": "SD3-144",
+   "file": "design/spec.md",
+   "line": 17047,
+   "kind": "law",
+   "claim": "Held buttons do not re-stage and no widget stages per render pass",
+   "evidence": "GUI widgets live in RedstoneInspector.jl",
+   "verdict": "unverifiable",
+   "note": "Inspector repo, not readable in W."
+  },
+  {
+   "id": "SD3-166",
+   "file": "design/spec.md",
+   "line": 17077,
+   "kind": "law",
+   "claim": "Enforcement raises OutOfClaimEntry for a device and ClaimedFaceEntry for the harness",
+   "evidence": "src/dataplane.jl:405; probe:writer harness => ClaimedFaceEntry, OutOfClaimEntry, EntryTypeMismatch",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`OutOfClaimEntry` for a device. For the harness, `ClaimedFaceEntry` on a claimed face and `OutOfClaimEntry` on a name no root input has.",
+   "note": "Probe: stage!(sim, \"zz\" => 1.0) gives OutOfClaimEntry on the harness. The stage!(sim, ...) docstring in src/sim.jl states both cases."
+  },
+  {
+   "id": "SD3-181",
+   "file": "design/spec.md",
+   "line": 17097,
+   "kind": "mech",
+   "claim": "The fingerprint holds each component's x type, every cell's address and type, and the event list",
+   "evidence": "src/checkpoint.jl:18; probe:Fingerprint fields => sizes, root_faces, paths, xtypes, stypes, mtypes, addrs, events",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "It is the store layout and root-input faces the `Build` fixes, with what a copy by position relies on, each component's `x`, `s` and `m` store types, every cell's address and type, and the event list in the order of the priors.",
+   "note": "The Fingerprint also holds sizes, paths, stypes and mtypes. Its docstring lists the s and m types. Spec 11.5 repeats the glossary wording."
+  },
+  {
+   "id": "SD3-211",
+   "file": "design/spec.md",
+   "line": 17129,
+   "kind": "mech",
+   "claim": "Run metadata names Δt_frame, Δt_base, h_max, the algorithm, localization_tol, localization_budget and firing_budget",
+   "evidence": "src/deployment.jl:539; src/checkpoint.jl:195; probe:Deployment fields",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm, `attempt_budget`, `localization_tol`, `localization_budget` and `firing_budget`.",
+   "note": "Deployment also holds h_min and attempt_budget (D-460) and the restore check compares both. Spec 11.5 names them."
+  }
+ ],
+ "ok": [
+  {
+   "id": "SD3-001",
+   "file": "design/spec.md",
+   "line": 16865,
+   "kind": "law",
+   "claim": "A bad datum is tolerated in the loop body: catch, stage nothing, report, continue",
+   "evidence": "src/devices.jl:401"
+  },
+  {
+   "id": "SD3-002",
+   "file": "design/spec.md",
+   "line": 16866,
+   "kind": "decl",
+   "claim": "The report is report!(handle, MalformedDatum(cause))",
+   "evidence": "src/devices.jl:401"
+  },
+  {
+   "id": "SD3-003",
+   "file": "design/spec.md",
+   "line": 16867,
+   "kind": "law",
+   "claim": "Any other exception propagates and becomes DeviceCrash",
+   "evidence": "src/devices.jl:667"
+  },
+  {
+   "id": "SD3-004",
+   "file": "design/spec.md",
+   "line": 16868,
+   "kind": "why",
+   "claim": "The classification is the device author's",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-005",
+   "file": "design/spec.md",
+   "line": 16871,
+   "kind": "mech",
+   "claim": "A batch is a device's staged face => value writes, coalesced in its staging cell",
+   "evidence": "src/dataplane.jl:465"
+  },
+  {
+   "id": "SD3-006",
+   "file": "design/spec.md",
+   "line": 16872,
+   "kind": "law",
+   "claim": "A batch is applied whole at the next drain",
+   "evidence": "src/dataplane.jl:496"
+  },
+  {
+   "id": "SD3-007",
+   "file": "design/spec.md",
+   "line": 16873,
+   "kind": "ptr",
+   "claim": "The word means only this, and the link to error collection",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-008",
+   "file": "design/spec.md",
+   "line": 16874,
+   "kind": "law",
+   "claim": "Staging errors collect; the rest of the batch stands",
+   "evidence": "src/dataplane.jl:421"
+  },
+  {
+   "id": "SD3-009",
+   "file": "design/spec.md",
+   "line": 16876,
+   "kind": "decl",
+   "claim": "A binding is the value passed at attach!",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "SD3-010",
+   "file": "design/spec.md",
+   "line": 16877,
+   "kind": "decl",
+   "claim": "A binding subtypes AbstractBinding",
+   "evidence": "src/roster.jl:70"
+  },
+  {
+   "id": "SD3-011",
+   "file": "design/spec.md",
+   "line": 16877,
+   "kind": "decl",
+   "claim": "Sides are declared by Bool traits is_input and is_output",
+   "evidence": "src/roster.jl:93"
+  },
+  {
+   "id": "SD3-012",
+   "file": "design/spec.md",
+   "line": 16878,
+   "kind": "law",
+   "claim": "is_input and is_output are false by default on the root",
+   "evidence": "probe:is_input/is_output/is_greedy defaults => (false, false, false)"
+  },
+  {
+   "id": "SD3-013",
+   "file": "design/spec.md",
+   "line": 16879,
+   "kind": "law",
+   "claim": "Attach checks claims and reads against the traits",
+   "evidence": "src/roster.jl:201"
+  },
+  {
+   "id": "SD3-014",
+   "file": "design/spec.md",
+   "line": 16880,
+   "kind": "law",
+   "claim": "Every input-side binding stakes a claim, returned or greedy",
+   "evidence": "src/sim.jl:2509"
+  },
+  {
+   "id": "SD3-015",
+   "file": "design/spec.md",
+   "line": 16883,
+   "kind": "mech",
+   "claim": "The boundary counter is the loop's count of published boundaries",
+   "evidence": "src/sim.jl:2803"
+  },
+  {
+   "id": "SD3-016",
+   "file": "design/spec.md",
+   "line": 16883,
+   "kind": "law",
+   "claim": "The wait predicate tests the counter",
+   "evidence": "src/devices.jl:439"
+  },
+  {
+   "id": "SD3-017",
+   "file": "design/spec.md",
+   "line": 16884,
+   "kind": "law",
+   "claim": "The counter is never reset across trajectories",
+   "evidence": "probe:counter after reinit => (4, 5, 3, 0)"
+  },
+  {
+   "id": "SD3-018",
+   "file": "design/spec.md",
+   "line": 16885,
+   "kind": "law",
+   "claim": "The counter increments after the latest release-store",
+   "evidence": "src/sim.jl:2803"
+  },
+  {
+   "id": "SD3-019",
+   "file": "design/spec.md",
+   "line": 16886,
+   "kind": "law",
+   "claim": "A waking waiter can never see a stale snapshot",
+   "evidence": "src/sim.jl:2803"
+  },
+  {
+   "id": "SD3-020",
+   "file": "design/spec.md",
+   "line": 16887,
+   "kind": "mech",
+   "claim": "The snapshot ordinal counts a trajectory's publications from 0 at boundary zero",
+   "evidence": "probe:snapshot frame/boundary/t => (0, 0, 0.0)"
+  },
+  {
+   "id": "SD3-021",
+   "file": "design/spec.md",
+   "line": 16890,
+   "kind": "mech",
+   "claim": "The calling task is the one that invoked run! or replay!",
+   "evidence": "src/sim.jl:1628"
+  },
+  {
+   "id": "SD3-022",
+   "file": "design/spec.md",
+   "line": 16890,
+   "kind": "law",
+   "claim": "The calling task runs the loop itself",
+   "evidence": "src/sim.jl:1654"
+  },
+  {
+   "id": "SD3-023",
+   "file": "design/spec.md",
+   "line": 16891,
+   "kind": "law",
+   "claim": "Every device runs on a spawned task",
+   "evidence": "src/devices.jl:682"
+  },
+  {
+   "id": "SD3-024",
+   "file": "design/spec.md",
+   "line": 16893,
+   "kind": "mech",
+   "claim": "A claim is the set of faces a device may write",
+   "evidence": "src/sim.jl:2546"
+  },
+  {
+   "id": "SD3-025",
+   "file": "design/spec.md",
+   "line": 16894,
+   "kind": "mech",
+   "claim": "The claim is registered at attach",
+   "evidence": "src/sim.jl:2517"
+  },
+  {
+   "id": "SD3-026",
+   "file": "design/spec.md",
+   "line": 16894,
+   "kind": "mech",
+   "claim": "The claim is returned by the binding's claims",
+   "evidence": "src/roster.jl:356"
+  },
+  {
+   "id": "SD3-027",
+   "file": "design/spec.md",
+   "line": 16895,
+   "kind": "mech",
+   "claim": "Under is_greedy the claim is the unclaimed complement",
+   "evidence": "probe:greedy claim => [:b]"
+  },
+  {
+   "id": "SD3-028",
+   "file": "design/spec.md",
+   "line": 16895,
+   "kind": "mech",
+   "claim": "The claim is released at detach",
+   "evidence": "probe:claimedby after detach d1 => empty"
+  },
+  {
+   "id": "SD3-029",
+   "file": "design/spec.md",
+   "line": 16896,
+   "kind": "law",
+   "claim": "Claiming an already-claimed face is an attach-time ClaimConflict",
+   "evidence": "probe:claim conflict => ClaimConflict"
+  },
+  {
+   "id": "SD3-030",
+   "file": "design/spec.md",
+   "line": 16897,
+   "kind": "why",
+   "claim": "A broad claim costs GUI liveness (D-378)",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-031",
+   "file": "design/spec.md",
+   "line": 16899,
+   "kind": "mech",
+   "claim": "Coalescing is the CAS merge keeping one pending batch per device",
+   "evidence": "src/dataplane.jl:465"
+  },
+  {
+   "id": "SD3-032",
+   "file": "design/spec.md",
+   "line": 16900,
+   "kind": "law",
+   "claim": "Untouched faces survive a merge",
+   "evidence": "src/dataplane.jl:457"
+  },
+  {
+   "id": "SD3-033",
+   "file": "design/spec.md",
+   "line": 16900,
+   "kind": "law",
+   "claim": "Re-staged faces take the newest level",
+   "evidence": "probe:pending slot1 => Some(4.0)"
+  },
+  {
+   "id": "SD3-034",
+   "file": "design/spec.md",
+   "line": 16901,
+   "kind": "mech",
+   "claim": "The outbound mirror is newest-wins snapshot delivery",
+   "evidence": "src/devices.jl:434"
+  },
+  {
+   "id": "SD3-035",
+   "file": "design/spec.md",
+   "line": 16904,
+   "kind": "mech",
+   "claim": "The control plane is a separate few-word atomic surface",
+   "evidence": "src/control.jl:62"
+  },
+  {
+   "id": "SD3-036",
+   "file": "design/spec.md",
+   "line": 16905,
+   "kind": "mech",
+   "claim": "It carries pause, pace, margin, stop and the other Control fields",
+   "evidence": "probe:Control fields"
+  },
+  {
+   "id": "SD3-037",
+   "file": "design/spec.md",
+   "line": 16906,
+   "kind": "law",
+   "claim": "The loop consults it at frame top",
+   "evidence": "src/sim.jl:2103"
+  },
+  {
+   "id": "SD3-038",
+   "file": "design/spec.md",
+   "line": 16907,
+   "kind": "law",
+   "claim": "A change during a wait lands at the next frame top",
+   "evidence": "src/control.jl:162"
+  },
+  {
+   "id": "SD3-039",
+   "file": "design/spec.md",
+   "line": 16907,
+   "kind": "law",
+   "claim": "A run's outcome belongs to the Run, not the control plane",
+   "evidence": "src/sim.jl:228"
+  },
+  {
+   "id": "SD3-040",
+   "file": "design/spec.md",
+   "line": 16908,
+   "kind": "law",
+   "claim": "A paused loop drains nothing",
+   "evidence": "src/sim.jl:2100"
+  },
+  {
+   "id": "SD3-041",
+   "file": "design/spec.md",
+   "line": 16910,
+   "kind": "law",
+   "claim": "A widget is live iff its port's feed chain ends in a root input inside the device's claim",
+   "evidence": "src/devices.jl:518"
+  },
+  {
+   "id": "SD3-042",
+   "file": "design/spec.md",
+   "line": 16911,
+   "kind": "mech",
+   "claim": "Liveness is baked once, by the port_views call after the roster freeze",
+   "evidence": "src/devices.jl:518"
+  },
+  {
+   "id": "SD3-043",
+   "file": "design/spec.md",
+   "line": 16912,
+   "kind": "law",
+   "claim": "No per-port GUI-controlled marking exists",
+   "evidence": "src/devices.jl:518"
+  },
+  {
+   "id": "SD3-044",
+   "file": "design/spec.md",
+   "line": 16915,
+   "kind": "decl",
+   "claim": "A device is a subtype of AbstractDevice",
+   "evidence": "src/roster.jl:40"
+  },
+  {
+   "id": "SD3-045",
+   "file": "design/spec.md",
+   "line": 16916,
+   "kind": "decl",
+   "claim": "One authoring contract: mandatory loop, optional init!, shutdown! and unblock!",
+   "evidence": "src/devices.jl:136"
+  },
+  {
+   "id": "SD3-046",
+   "file": "design/spec.md",
+   "line": 16917,
+   "kind": "decl",
+   "claim": "One handle serves every device",
+   "evidence": "src/devices.jl:63"
+  },
+  {
+   "id": "SD3-047",
+   "file": "design/spec.md",
+   "line": 16918,
+   "kind": "ptr",
+   "claim": "Input-only and output-only are degenerate uses; the GUI is an ordinary device",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-048",
+   "file": "design/spec.md",
+   "line": 16921,
+   "kind": "mech",
+   "claim": "Each rostered device, the harness writer, the loop and the Model own a diagnostic cell",
+   "evidence": "src/roster.jl:330"
+  },
+  {
+   "id": "SD3-049",
+   "file": "design/spec.md",
+   "line": 16923,
+   "kind": "law",
+   "claim": "The ring has capacity 16",
+   "evidence": "probe:DIAG_RING => 16"
+  },
+  {
+   "id": "SD3-050",
+   "file": "design/spec.md",
+   "line": 16923,
+   "kind": "mech",
+   "claim": "The cell holds per-kind suppressed counts",
+   "evidence": "probe:spam ring => (16, 4, 20)"
+  },
+  {
+   "id": "SD3-051",
+   "file": "design/spec.md",
+   "line": 16924,
+   "kind": "mech",
+   "claim": "The cell holds an atomic heartbeat timestamp",
+   "evidence": "src/dataplane.jl:132"
+  },
+  {
+   "id": "SD3-052",
+   "file": "design/spec.md",
+   "line": 16925,
+   "kind": "mech",
+   "claim": "The loop takes the cell at the frame-top drain",
+   "evidence": "src/sim.jl:2677"
+  },
+  {
+   "id": "SD3-053",
+   "file": "design/spec.md",
+   "line": 16926,
+   "kind": "mech",
+   "claim": "The loop freezes it into the published framework status",
+   "evidence": "src/sim.jl:2829"
+  },
+  {
+   "id": "SD3-054",
+   "file": "design/spec.md",
+   "line": 16929,
+   "kind": "law",
+   "claim": "There are four doors: init!, overlay!, restore!, replay!",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "SD3-055",
+   "file": "design/spec.md",
+   "line": 16932,
+   "kind": "mech",
+   "claim": "The drain takes each staging cell by atomicswap",
+   "evidence": "src/dataplane.jl:497"
+  },
+  {
+   "id": "SD3-056",
+   "file": "design/spec.md",
+   "line": 16933,
+   "kind": "mech",
+   "claim": "It applies the batch through the attach-compiled scatter",
+   "evidence": "src/dataplane.jl:500"
+  },
+  {
+   "id": "SD3-057",
+   "file": "design/spec.md",
+   "line": 16934,
+   "kind": "law",
+   "claim": "It applies in attachment order",
+   "evidence": "src/sim.jl:2672"
+  },
+  {
+   "id": "SD3-058",
+   "file": "design/spec.md",
+   "line": 16935,
+   "kind": "law",
+   "claim": "It never runs at a t* boundary",
+   "evidence": "src/sim.jl:2021"
+  },
+  {
+   "id": "SD3-059",
+   "file": "design/spec.md",
+   "line": 16936,
+   "kind": "law",
+   "claim": "Under the roster freeze it performs no checks",
+   "evidence": "src/dataplane.jl:496"
+  },
+  {
+   "id": "SD3-060",
+   "file": "design/spec.md",
+   "line": 16937,
+   "kind": "mech",
+   "claim": "The diagnostic cells are taken at the same point",
+   "evidence": "src/sim.jl:2673"
+  },
+  {
+   "id": "SD3-061",
+   "file": "design/spec.md",
+   "line": 16939,
+   "kind": "mech",
+   "claim": "The framework status is a concrete frozen value in each snapshot",
+   "evidence": "src/dataplane.jl:307"
+  },
+  {
+   "id": "SD3-062",
+   "file": "design/spec.md",
+   "line": 16940,
+   "kind": "mech",
+   "claim": "It holds the pacer diagnostics",
+   "evidence": "src/dataplane.jl:286"
+  },
+  {
+   "id": "SD3-063",
+   "file": "design/spec.md",
+   "line": 16941,
+   "kind": "mech",
+   "claim": "Per writer, recent holds the diagnostics the frame's drain took",
+   "evidence": "src/sim.jl:2815"
+  },
+  {
+   "id": "SD3-064",
+   "file": "design/spec.md",
+   "line": 16942,
+   "kind": "mech",
+   "claim": "Per writer, suppressed holds the counts the ring refused",
+   "evidence": "src/sim.jl:2815"
+  },
+  {
+   "id": "SD3-065",
+   "file": "design/spec.md",
+   "line": 16942,
+   "kind": "mech",
+   "claim": "Per writer, totals holds the loop's cumulative per-kind counters copied in",
+   "evidence": "src/dataplane.jl:177"
+  },
+  {
+   "id": "SD3-066",
+   "file": "design/spec.md",
+   "line": 16943,
+   "kind": "mech",
+   "claim": "The status carries the liveness timestamp",
+   "evidence": "src/dataplane.jl:254"
+  },
+  {
+   "id": "SD3-067",
+   "file": "design/spec.md",
+   "line": 16946,
+   "kind": "mech",
+   "claim": "A greedy claim goes to a binding declaring is_greedy",
+   "evidence": "src/roster.jl:358"
+  },
+  {
+   "id": "SD3-068",
+   "file": "design/spec.md",
+   "line": 16947,
+   "kind": "mech",
+   "claim": "It is the unclaimed complement computed at attach, not returned by claims",
+   "evidence": "src/roster.jl:358"
+  },
+  {
+   "id": "SD3-069",
+   "file": "design/spec.md",
+   "line": 16948,
+   "kind": "law",
+   "claim": "It is ordinary in every respect afterwards",
+   "evidence": "src/sim.jl:2509"
+  },
+  {
+   "id": "SD3-070",
+   "file": "design/spec.md",
+   "line": 16948,
+   "kind": "law",
+   "claim": "An empty remainder is legal and reported as EmptyGreedyClaim",
+   "evidence": "probe:empty greedy => [EmptyGreedyClaim]"
+  },
+  {
+   "id": "SD3-072",
+   "file": "design/spec.md",
+   "line": 16952,
+   "kind": "mech",
+   "claim": "The harness cell is the always-present staging cell of the harness writer",
+   "evidence": "src/roster.jl:330"
+  },
+  {
+   "id": "SD3-073",
+   "file": "design/spec.md",
+   "line": 16953,
+   "kind": "decl",
+   "claim": "It is written by stage!(sim, \"face\" => value, ...)",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "SD3-074",
+   "file": "design/spec.md",
+   "line": 16953,
+   "kind": "law",
+   "claim": "Any task may write it, the calling task included",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "SD3-075",
+   "file": "design/spec.md",
+   "line": 16954,
+   "kind": "law",
+   "claim": "Its batches are traced",
+   "evidence": "probe:trace schemas => [\"harness\" => [:a, :b, :c]]"
+  },
+  {
+   "id": "SD3-076",
+   "file": "design/spec.md",
+   "line": 16954,
+   "kind": "law",
+   "claim": "Its batches are surface-checked",
+   "evidence": "probe:writer harness => ClaimedFaceEntry, OutOfClaimEntry, EntryTypeMismatch"
+  },
+  {
+   "id": "SD3-077",
+   "file": "design/spec.md",
+   "line": 16955,
+   "kind": "law",
+   "claim": "It is drained last by convention",
+   "evidence": "src/sim.jl:2675"
+  },
+  {
+   "id": "SD3-078",
+   "file": "design/spec.md",
+   "line": 16957,
+   "kind": "mech",
+   "claim": "The harness writer is the write path stage!(sim, ...) with its cell",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "SD3-079",
+   "file": "design/spec.md",
+   "line": 16958,
+   "kind": "law",
+   "claim": "Its surface is the unclaimed complement",
+   "evidence": "probe:harness faces after claim => [:b]"
+  },
+  {
+   "id": "SD3-080",
+   "file": "design/spec.md",
+   "line": 16959,
+   "kind": "law",
+   "claim": "It is recomputed at every stopped-sim roster change",
+   "evidence": "src/roster.jl:390"
+  },
+  {
+   "id": "SD3-081",
+   "file": "design/spec.md",
+   "line": 16960,
+   "kind": "law",
+   "claim": "A write to a claimed face is ClaimedFaceEntry",
+   "evidence": "probe:writer harness => ClaimedFaceEntry"
+  },
+  {
+   "id": "SD3-082",
+   "file": "design/spec.md",
+   "line": 16960,
+   "kind": "ptr",
+   "claim": "The harness surface is the design's sole derived surface",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-083",
+   "file": "design/spec.md",
+   "line": 16963,
+   "kind": "mech",
+   "claim": "The heartbeat is an atomic timestamp field of the diagnostic cell",
+   "evidence": "src/dataplane.jl:132"
+  },
+  {
+   "id": "SD3-084",
+   "file": "design/spec.md",
+   "line": 16964,
+   "kind": "mech",
+   "claim": "It is stored on every loop pass from inside the handle primitives",
+   "evidence": "src/devices.jl:229"
+  },
+  {
+   "id": "SD3-085",
+   "file": "design/spec.md",
+   "line": 16965,
+   "kind": "mech",
+   "claim": "The loop acquire-loads it at publication",
+   "evidence": "src/dataplane.jl:161"
+  },
+  {
+   "id": "SD3-086",
+   "file": "design/spec.md",
+   "line": 16965,
+   "kind": "law",
+   "claim": "A device is stale when the heartbeat is older than 2 s",
+   "evidence": "src/dataplane.jl:313"
+  },
+  {
+   "id": "SD3-087",
+   "file": "design/spec.md",
+   "line": 16967,
+   "kind": "law",
+   "claim": "The heartbeat is a field, not a diagnostic kind",
+   "evidence": "src/dataplane.jl:36"
+  },
+  {
+   "id": "SD3-088",
+   "file": "design/spec.md",
+   "line": 16969,
+   "kind": "ptr",
+   "claim": "Inspection read and integration read, the two reads a binding chooses between",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-089",
+   "file": "design/spec.md",
+   "line": 16970,
+   "kind": "law",
+   "claim": "A deep path is an inspection read with zero promises",
+   "evidence": "src/readers.jl:218"
+  },
+  {
+   "id": "SD3-090",
+   "file": "design/spec.md",
+   "line": 16972,
+   "kind": "decl",
+   "claim": "An exported output face is read with get_face",
+   "evidence": "src/readers.jl:293"
+  },
+  {
+   "id": "SD3-091",
+   "file": "design/spec.md",
+   "line": 16973,
+   "kind": "why",
+   "claim": "An integration read is meaning-stable under substitution",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-092",
+   "file": "design/spec.md",
+   "line": 16976,
+   "kind": "mech",
+   "claim": "latest is an @atomic reference released at publication",
+   "evidence": "src/dataplane.jl:599"
+  },
+  {
+   "id": "SD3-093",
+   "file": "design/spec.md",
+   "line": 16977,
+   "kind": "mech",
+   "claim": "Readers acquire-load it",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "SD3-094",
+   "file": "design/spec.md",
+   "line": 16977,
+   "kind": "law",
+   "claim": "latest(sim) returns the same immutable value a handle gets",
+   "evidence": "src/devices.jl:285"
+  },
+  {
+   "id": "SD3-095",
+   "file": "design/spec.md",
+   "line": 16981,
+   "kind": "law",
+   "claim": "Staged values are levels, not deltas",
+   "evidence": "src/dataplane.jl:457"
+  },
+  {
+   "id": "SD3-096",
+   "file": "design/spec.md",
+   "line": 16982,
+   "kind": "law",
+   "claim": "Levels survive coalescing",
+   "evidence": "src/dataplane.jl:457"
+  },
+  {
+   "id": "SD3-097",
+   "file": "design/spec.md",
+   "line": 16983,
+   "kind": "ptr",
+   "claim": "Button edges ride as monotonic counters; accumulators are model state",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-098",
+   "file": "design/spec.md",
+   "line": 16986,
+   "kind": "decl",
+   "claim": "The next-snapshot wait is wait_next_snapshot(handle)",
+   "evidence": "src/devices.jl:434"
+  },
+  {
+   "id": "SD3-099",
+   "file": "design/spec.md",
+   "line": 16986,
+   "kind": "mech",
+   "claim": "It is the boundary counter plus one Threads.Condition",
+   "evidence": "src/control.jl:68"
+  },
+  {
+   "id": "SD3-100",
+   "file": "design/spec.md",
+   "line": 16987,
+   "kind": "law",
+   "claim": "It uses the predicate loop counter > last_seen && running",
+   "evidence": "src/devices.jl:439"
+  },
+  {
+   "id": "SD3-101",
+   "file": "design/spec.md",
+   "line": 16988,
+   "kind": "law",
+   "claim": "Newest wins, no queues, no per-frame reset",
+   "evidence": "src/devices.jl:434"
+  },
+  {
+   "id": "SD3-102",
+   "file": "design/spec.md",
+   "line": 16991,
+   "kind": "mech",
+   "claim": "An operator interrupt is Ctrl-C read as a control-plane stop",
+   "evidence": "src/sim.jl:2152"
+  },
+  {
+   "id": "SD3-103",
+   "file": "design/spec.md",
+   "line": 16992,
+   "kind": "law",
+   "claim": "Delivery is masked across the boundary macro-sequence",
+   "evidence": "src/sim.jl:2110"
+  },
+  {
+   "id": "SD3-104",
+   "file": "design/spec.md",
+   "line": 16993,
+   "kind": "law",
+   "claim": "It is raised at a frame-top, wait or pause-block unmask point",
+   "evidence": "src/sim.jl:2088"
+  },
+  {
+   "id": "SD3-105",
+   "file": "design/spec.md",
+   "line": 16994,
+   "kind": "law",
+   "claim": "The run takes the ordinary graceful tail and ends stopped",
+   "evidence": "src/sim.jl:2152"
+  },
+  {
+   "id": "SD3-106",
+   "file": "design/spec.md",
+   "line": 16995,
+   "kind": "law",
+   "claim": "The throw Julia forces after repeated Ctrl-C can cut a frame, which is a failure",
+   "evidence": "src/sim.jl:2130"
+  },
+  {
+   "id": "SD3-107",
+   "file": "design/spec.md",
+   "line": 16997,
+   "kind": "law",
+   "claim": "Outside the REPL, SIGINT still kills the process",
+   "evidence": "test/test_failures.jl:87"
+  },
+  {
+   "id": "SD3-108",
+   "file": "design/spec.md",
+   "line": 16999,
+   "kind": "mech",
+   "claim": "Orphaned claims are the claims of a device whose task died mid-run",
+   "evidence": "src/devices.jl:611"
+  },
+  {
+   "id": "SD3-109",
+   "file": "design/spec.md",
+   "line": 17000,
+   "kind": "law",
+   "claim": "Death is not detach: the roster entry and claims persist to run end",
+   "evidence": "probe:claimedby after run => device 1 (Crasher) still claims :a"
+  },
+  {
+   "id": "SD3-110",
+   "file": "design/spec.md",
+   "line": 17001,
+   "kind": "law",
+   "claim": "Root inputs hold their last-drained values",
+   "evidence": "src/sim.jl:2574"
+  },
+  {
+   "id": "SD3-112",
+   "file": "design/spec.md",
+   "line": 17002,
+   "kind": "law",
+   "claim": "Recovery is between runs",
+   "evidence": "src/sim.jl:2574"
+  },
+  {
+   "id": "SD3-113",
+   "file": "design/spec.md",
+   "line": 17004,
+   "kind": "law",
+   "claim": "A widget shows its own pending write if any, else the snapshot value",
+   "evidence": "src/devices.jl:569"
+  },
+  {
+   "id": "SD3-114",
+   "file": "design/spec.md",
+   "line": 17005,
+   "kind": "law",
+   "claim": "Peek reads the device's own cell only",
+   "evidence": "src/devices.jl:569"
+  },
+  {
+   "id": "SD3-115",
+   "file": "design/spec.md",
+   "line": 17008,
+   "kind": "ptr",
+   "claim": "Periphery is everything outside the loop that exchanges data with it",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-116",
+   "file": "design/spec.md",
+   "line": 17011,
+   "kind": "ptr",
+   "claim": "The concurrency model: staged writes inbound, snapshot reads outbound, control on its own surface",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-117",
+   "file": "design/spec.md",
+   "line": 17013,
+   "kind": "mech",
+   "claim": "The roster lists the attached device entries in attachment order with stable ids",
+   "evidence": "src/roster.jl:254"
+  },
+  {
+   "id": "SD3-119",
+   "file": "design/spec.md",
+   "line": 17015,
+   "kind": "law",
+   "claim": "The loop reads the roster once at run!",
+   "evidence": "src/sim.jl:1645"
+  },
+  {
+   "id": "SD3-120",
+   "file": "design/spec.md",
+   "line": 17015,
+   "kind": "law",
+   "claim": "attach!/detach! are stopped-sim operations",
+   "evidence": "src/sim.jl:2509"
+  },
+  {
+   "id": "SD3-121",
+   "file": "design/spec.md",
+   "line": 17018,
+   "kind": "mech",
+   "claim": "Run is the state one run owns, a Simulation field beside the control plane",
+   "evidence": "src/sim.jl:285"
+  },
+  {
+   "id": "SD3-122",
+   "file": "design/spec.md",
+   "line": 17019,
+   "kind": "decl",
+   "claim": "Run has two const fields, the log and the trace",
+   "evidence": "probe:Run const fields => log, trace const"
+  },
+  {
+   "id": "SD3-123",
+   "file": "design/spec.md",
+   "line": 17020,
+   "kind": "decl",
+   "claim": "Run has four writable fields: feed, termination, frame, boundary",
+   "evidence": "probe:Run const fields => the rest non-const"
+  },
+  {
+   "id": "SD3-124",
+   "file": "design/spec.md",
+   "line": 17021,
+   "kind": "law",
+   "claim": "The four doors construct a Run",
+   "evidence": "src/sim.jl:697"
+  },
+  {
+   "id": "SD3-125",
+   "file": "design/spec.md",
+   "line": 17022,
+   "kind": "decl",
+   "claim": "closed(run) is termination !== nothing",
+   "evidence": "src/sim.jl:250"
+  },
+  {
+   "id": "SD3-126",
+   "file": "design/spec.md",
+   "line": 17025,
+   "kind": "mech",
+   "claim": "A scenario component is an ordinary periodic discrete component",
+   "evidence": "src/sim.jl:2088"
+  },
+  {
+   "id": "SD3-127",
+   "file": "design/spec.md",
+   "line": 17026,
+   "kind": "law",
+   "claim": "It executes synchronously in the loop, deterministic paced or unpaced",
+   "evidence": "src/control.jl:162"
+  },
+  {
+   "id": "SD3-128",
+   "file": "design/spec.md",
+   "line": 17026,
+   "kind": "law",
+   "claim": "It is replayed by recomputation",
+   "evidence": "src/sim.jl:2706"
+  },
+  {
+   "id": "SD3-129",
+   "file": "design/spec.md",
+   "line": 17027,
+   "kind": "ptr",
+   "claim": "The clock is the criterion; wall-clock interactions are devices",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-130",
+   "file": "design/spec.md",
+   "line": 17031,
+   "kind": "decl",
+   "claim": "should_abort is an attach! keyword",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "SD3-131",
+   "file": "design/spec.md",
+   "line": 17032,
+   "kind": "law",
+   "claim": "It defaults to false",
+   "evidence": "probe:attach d1 should_abort => false"
+  },
+  {
+   "id": "SD3-132",
+   "file": "design/spec.md",
+   "line": 17033,
+   "kind": "law",
+   "claim": "Set, a loop returning, a crash or a failed init! requests a stop",
+   "evidence": "src/devices.jl:671"
+  },
+  {
+   "id": "SD3-133",
+   "file": "design/spec.md",
+   "line": 17034,
+   "kind": "law",
+   "claim": "Clear, the run continues with the device absent and its claims held to run end",
+   "evidence": "probe:Pad abort=false => EndTimeReached, claim kept"
+  },
+  {
+   "id": "SD3-134",
+   "file": "design/spec.md",
+   "line": 17036,
+   "kind": "law",
+   "claim": "It is never a device property",
+   "evidence": "src/roster.jl:254"
+  },
+  {
+   "id": "SD3-135",
+   "file": "design/spec.md",
+   "line": 17038,
+   "kind": "mech",
+   "claim": "A snapshot is the immutable per-boundary publication",
+   "evidence": "src/dataplane.jl:544"
+  },
+  {
+   "id": "SD3-136",
+   "file": "design/spec.md",
+   "line": 17039,
+   "kind": "mech",
+   "claim": "It holds the boundary-consistent signal table, root inputs included",
+   "evidence": "src/dataplane.jl:544"
+  },
+  {
+   "id": "SD3-137",
+   "file": "design/spec.md",
+   "line": 17040,
+   "kind": "mech",
+   "claim": "It holds t, frame index, boundary index and the framework status",
+   "evidence": "probe:Snapshot fields"
+  },
+  {
+   "id": "SD3-138",
+   "file": "design/spec.md",
+   "line": 17040,
+   "kind": "law",
+   "claim": "It carries no state stores",
+   "evidence": "src/dataplane.jl:544"
+  },
+  {
+   "id": "SD3-139",
+   "file": "design/spec.md",
+   "line": 17041,
+   "kind": "ptr",
+   "claim": "The state trajectory is derived data",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-140",
+   "file": "design/spec.md",
+   "line": 17042,
+   "kind": "mech",
+   "claim": "The terminal snapshot is the run's final one",
+   "evidence": "src/sim.jl:1761"
+  },
+  {
+   "id": "SD3-141",
+   "file": "design/spec.md",
+   "line": 17042,
+   "kind": "law",
+   "claim": "Its status carries the run's final cumulative counters, complete at its own frame top",
+   "evidence": "src/sim.jl:1955"
+  },
+  {
+   "id": "SD3-142",
+   "file": "design/spec.md",
+   "line": 17045,
+   "kind": "ptr",
+   "claim": "Stage-on-interaction is the GUI staging contract",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-145",
+   "file": "design/spec.md",
+   "line": 17050,
+   "kind": "mech",
+   "claim": "StopPolicy is an immutable value of one advance",
+   "evidence": "src/sim.jl:141"
+  },
+  {
+   "id": "SD3-146",
+   "file": "design/spec.md",
+   "line": 17050,
+   "kind": "decl",
+   "claim": "It holds t_end and the ignored requester paths",
+   "evidence": "probe:StopPolicy fields => t_end, ignored"
+  },
+  {
+   "id": "SD3-147",
+   "file": "design/spec.md",
+   "line": 17051,
+   "kind": "law",
+   "claim": "run!, replay! and step! build and validate it per call and pass it to the loop",
+   "evidence": "src/sim.jl:474"
+  },
+  {
+   "id": "SD3-148",
+   "file": "design/spec.md",
+   "line": 17052,
+   "kind": "law",
+   "claim": "Afterwards only the termination record keeps it",
+   "evidence": "src/sim.jl:180"
+  },
+  {
+   "id": "SD3-149",
+   "file": "design/spec.md",
+   "line": 17053,
+   "kind": "law",
+   "claim": "A stop through the stop word sits outside it",
+   "evidence": "src/sim.jl:141"
+  },
+  {
+   "id": "SD3-150",
+   "file": "design/spec.md",
+   "line": 17057,
+   "kind": "mech",
+   "claim": "The stop word is the control plane's stop command, one atomic word holding its issuer",
+   "evidence": "src/control.jl:62"
+  },
+  {
+   "id": "SD3-151",
+   "file": "design/spec.md",
+   "line": 17058,
+   "kind": "ptr",
+   "claim": "A stop word is not a stop request, which the model publishes",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-152",
+   "file": "design/spec.md",
+   "line": 17061,
+   "kind": "mech",
+   "claim": "The tail is the ordered shutdown sequence every stop takes",
+   "evidence": "src/sim.jl:1667"
+  },
+  {
+   "id": "SD3-153",
+   "file": "design/spec.md",
+   "line": 17062,
+   "kind": "law",
+   "claim": "After the final snapshot it sets the sticky stopped status",
+   "evidence": "src/sim.jl:1865"
+  },
+  {
+   "id": "SD3-154",
+   "file": "design/spec.md",
+   "line": 17062,
+   "kind": "law",
+   "claim": "It wakes the framework's waits",
+   "evidence": "src/sim.jl:1868"
+  },
+  {
+   "id": "SD3-155",
+   "file": "design/spec.md",
+   "line": 17063,
+   "kind": "law",
+   "claim": "It calls unblock!, and shutdown! runs from each device wrapper it joins",
+   "evidence": "src/sim.jl:1900; src/devices.jl:650"
+  },
+  {
+   "id": "SD3-156",
+   "file": "design/spec.md",
+   "line": 17063,
+   "kind": "law",
+   "claim": "It joins device tasks under join_timeout",
+   "evidence": "src/sim.jl:1912"
+  },
+  {
+   "id": "SD3-157",
+   "file": "design/spec.md",
+   "line": 17064,
+   "kind": "law",
+   "claim": "Graceful entry follows a completed final boundary",
+   "evidence": "src/sim.jl:1667"
+  },
+  {
+   "id": "SD3-158",
+   "file": "design/spec.md",
+   "line": 17065,
+   "kind": "law",
+   "claim": "Abnormal entry follows a discarded boundary and promotes the previous snapshot",
+   "evidence": "src/sim.jl:1761"
+  },
+  {
+   "id": "SD3-159",
+   "file": "design/spec.md",
+   "line": 17068,
+   "kind": "mech",
+   "claim": "An unattended run is the same loop, fully synchronous on the calling task",
+   "evidence": "src/sim.jl:1654"
+  },
+  {
+   "id": "SD3-160",
+   "file": "design/spec.md",
+   "line": 17069,
+   "kind": "law",
+   "claim": "It rethrows after the shutdown tail",
+   "evidence": "src/sim.jl:1736"
+  },
+  {
+   "id": "SD3-161",
+   "file": "design/spec.md",
+   "line": 17072,
+   "kind": "mech",
+   "claim": "The write surface is the set of faces a writer's batch entries may reach",
+   "evidence": "src/dataplane.jl:421"
+  },
+  {
+   "id": "SD3-162",
+   "file": "design/spec.md",
+   "line": 17073,
+   "kind": "law",
+   "claim": "For a device it is the claim set, returned or computed",
+   "evidence": "src/sim.jl:2509"
+  },
+  {
+   "id": "SD3-163",
+   "file": "design/spec.md",
+   "line": 17074,
+   "kind": "law",
+   "claim": "For the harness writer it is the derived unclaimed complement",
+   "evidence": "src/roster.jl:390"
+  },
+  {
+   "id": "SD3-164",
+   "file": "design/spec.md",
+   "line": 17075,
+   "kind": "law",
+   "claim": "The surface is static per run",
+   "evidence": "src/sim.jl:2509"
+  },
+  {
+   "id": "SD3-165",
+   "file": "design/spec.md",
+   "line": 17075,
+   "kind": "law",
+   "claim": "It is enforced entirely at staging",
+   "evidence": "src/dataplane.jl:421"
+  },
+  {
+   "id": "SD3-167",
+   "file": "design/spec.md",
+   "line": 17081,
+   "kind": "mech",
+   "claim": "A checkpoint is the Model's state at a frame top as one ModelState",
+   "evidence": "src/checkpoint.jl:74"
+  },
+  {
+   "id": "SD3-168",
+   "file": "design/spec.md",
+   "line": 17082,
+   "kind": "mech",
+   "claim": "A Checkpoint holds the state beside the run's frame index and boundary ordinal",
+   "evidence": "probe:Checkpoint fields => state, frame, boundary"
+  },
+  {
+   "id": "SD3-169",
+   "file": "design/spec.md",
+   "line": 17083,
+   "kind": "decl",
+   "claim": "checkpoint(model) reads the state alone",
+   "evidence": "src/model.jl:1180"
+  },
+  {
+   "id": "SD3-170",
+   "file": "design/spec.md",
+   "line": 17083,
+   "kind": "decl",
+   "claim": "checkpoint(sim) returns the whole Checkpoint",
+   "evidence": "src/sim.jl:892"
+  },
+  {
+   "id": "SD3-171",
+   "file": "design/spec.md",
+   "line": 17084,
+   "kind": "law",
+   "claim": "restore! puts either back",
+   "evidence": "probe:restore ModelState and restore Checkpoint both reach :initialized"
+  },
+  {
+   "id": "SD3-172",
+   "file": "design/spec.md",
+   "line": 17084,
+   "kind": "law",
+   "claim": "restore! runs no boundary zero",
+   "evidence": "src/sim.jl:1002"
+  },
+  {
+   "id": "SD3-173",
+   "file": "design/spec.md",
+   "line": 17085,
+   "kind": "law",
+   "claim": "A checkpoint is not a condition and has no algebra",
+   "evidence": "src/checkpoint.jl:67"
+  },
+  {
+   "id": "SD3-174",
+   "file": "design/spec.md",
+   "line": 17088,
+   "kind": "decl",
+   "claim": "Decimation is the log's keep-every-kth policy, log_every",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "SD3-175",
+   "file": "design/spec.md",
+   "line": 17089,
+   "kind": "law",
+   "claim": "It is admissible on the log alone because the log is derived data",
+   "evidence": "src/dataplane.jl:662"
+  },
+  {
+   "id": "SD3-176",
+   "file": "design/spec.md",
+   "line": 17090,
+   "kind": "law",
+   "claim": "Every boundary still runs and publishes to live readers",
+   "evidence": "src/sim.jl:2803"
+  },
+  {
+   "id": "SD3-177",
+   "file": "design/spec.md",
+   "line": 17090,
+   "kind": "law",
+   "claim": "The trace still records every frame's inputs",
+   "evidence": "src/dataplane.jl:496"
+  },
+  {
+   "id": "SD3-178",
+   "file": "design/spec.md",
+   "line": 17091,
+   "kind": "law",
+   "claim": "When the log fills its log_max bound, the stride doubles",
+   "evidence": "probe:log_every=1 log_max=4 => stride 16"
+  },
+  {
+   "id": "SD3-179",
+   "file": "design/spec.md",
+   "line": 17092,
+   "kind": "law",
+   "claim": "Re-decimation keeps coverage global",
+   "evidence": "probe:log_every=1 log_max=4 => [0, 8, 16, 24, 32, 40]"
+  },
+  {
+   "id": "SD3-180",
+   "file": "design/spec.md",
+   "line": 17093,
+   "kind": "law",
+   "claim": "Decimation is a view policy and never trajectory-determining",
+   "evidence": "src/dataplane.jl:662"
+  },
+  {
+   "id": "SD3-182",
+   "file": "design/spec.md",
+   "line": 17096,
+   "kind": "mech",
+   "claim": "The fingerprint carries the store layout and root-input faces the Build fixes",
+   "evidence": "probe:Fingerprint fields => sizes, root_faces"
+  },
+  {
+   "id": "SD3-183",
+   "file": "design/spec.md",
+   "line": 17098,
+   "kind": "mech",
+   "claim": "The fingerprint holds the event list in the order of the priors",
+   "evidence": "src/checkpoint.jl:26"
+  },
+  {
+   "id": "SD3-184",
+   "file": "design/spec.md",
+   "line": 17099,
+   "kind": "law",
+   "claim": "Replay checks the fingerprint against the target simulation",
+   "evidence": "src/sim.jl:1198"
+  },
+  {
+   "id": "SD3-185",
+   "file": "design/spec.md",
+   "line": 17099,
+   "kind": "law",
+   "claim": "restore! checks the fingerprint against the target simulation",
+   "evidence": "src/sim.jl:1072"
+  },
+  {
+   "id": "SD3-186",
+   "file": "design/spec.md",
+   "line": 17102,
+   "kind": "mech",
+   "claim": "The frame ordinal is the trace's key",
+   "evidence": "src/trace.jl:22"
+  },
+  {
+   "id": "SD3-187",
+   "file": "design/spec.md",
+   "line": 17102,
+   "kind": "law",
+   "claim": "Replay applies the recording's batches for frame k at frame k",
+   "evidence": "src/sim.jl:2724"
+  },
+  {
+   "id": "SD3-188",
+   "file": "design/spec.md",
+   "line": 17104,
+   "kind": "why",
+   "claim": "The match is exact because the frame sequence is deterministic under replay",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-189",
+   "file": "design/spec.md",
+   "line": 17106,
+   "kind": "mech",
+   "claim": "The input mode says where the drain takes its batches from",
+   "evidence": "src/sim.jl:548"
+  },
+  {
+   "id": "SD3-190",
+   "file": "design/spec.md",
+   "line": 17107,
+   "kind": "decl",
+   "claim": "The mode is mode(sim), read off the run's feed",
+   "evidence": "src/sim.jl:548"
+  },
+  {
+   "id": "SD3-191",
+   "file": "design/spec.md",
+   "line": 17107,
+   "kind": "law",
+   "claim": ":live takes from the staging cells, :replay from the attached recording",
+   "evidence": "src/sim.jl:2666"
+  },
+  {
+   "id": "SD3-192",
+   "file": "design/spec.md",
+   "line": 17109,
+   "kind": "law",
+   "claim": "A replaying advance is bounded by the recording",
+   "evidence": "src/sim.jl:1585"
+  },
+  {
+   "id": "SD3-193",
+   "file": "design/spec.md",
+   "line": 17110,
+   "kind": "law",
+   "claim": "The mode returns to :live when the recording's last frame is consumed",
+   "evidence": "src/sim.jl:1597"
+  },
+  {
+   "id": "SD3-194",
+   "file": "design/spec.md",
+   "line": 17111,
+   "kind": "law",
+   "claim": "live! drops the remainder by hand",
+   "evidence": "src/sim.jl:1443"
+  },
+  {
+   "id": "SD3-195",
+   "file": "design/spec.md",
+   "line": 17113,
+   "kind": "mech",
+   "claim": "The log is the retained sequence of published snapshots",
+   "evidence": "src/dataplane.jl:662"
+  },
+  {
+   "id": "SD3-196",
+   "file": "design/spec.md",
+   "line": 17113,
+   "kind": "law",
+   "claim": "The log keeps the same objects, no copies",
+   "evidence": "src/sim.jl:2799"
+  },
+  {
+   "id": "SD3-197",
+   "file": "design/spec.md",
+   "line": 17114,
+   "kind": "mech",
+   "claim": "The log has a plain kill switch and log_every decimation",
+   "evidence": "probe:log off => 0 retained"
+  },
+  {
+   "id": "SD3-198",
+   "file": "design/spec.md",
+   "line": 17115,
+   "kind": "law",
+   "claim": "The log is derived data, recomputable from the trace by replay",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "SD3-199",
+   "file": "design/spec.md",
+   "line": 17117,
+   "kind": "mech",
+   "claim": "Recorders are the trace and the log jointly",
+   "evidence": "src/sim.jl:228"
+  },
+  {
+   "id": "SD3-200",
+   "file": "design/spec.md",
+   "line": 17117,
+   "kind": "law",
+   "claim": "The four doors and a trim commit build them anew together",
+   "evidence": "src/sim.jl:697; src/sim.jl:1123"
+  },
+  {
+   "id": "SD3-201",
+   "file": "design/spec.md",
+   "line": 17119,
+   "kind": "law",
+   "claim": "They restart with the run they record",
+   "evidence": "probe:restore! new run => true"
+  },
+  {
+   "id": "SD3-202",
+   "file": "design/spec.md",
+   "line": 17121,
+   "kind": "mech",
+   "claim": "Replay is the ordinary loop with one substitution in the drain",
+   "evidence": "src/sim.jl:2666"
+  },
+  {
+   "id": "SD3-203",
+   "file": "design/spec.md",
+   "line": 17121,
+   "kind": "law",
+   "claim": "The drain reads the trace by frame ordinal",
+   "evidence": "src/sim.jl:2724"
+  },
+  {
+   "id": "SD3-204",
+   "file": "design/spec.md",
+   "line": 17122,
+   "kind": "law",
+   "claim": "The trace's checkpoint is restored first under the default form",
+   "evidence": "src/sim.jl:1396"
+  },
+  {
+   "id": "SD3-205",
+   "file": "design/spec.md",
+   "line": 17123,
+   "kind": "law",
+   "claim": "Replay re-records",
+   "evidence": "src/sim.jl:2731"
+  },
+  {
+   "id": "SD3-206",
+   "file": "design/spec.md",
+   "line": 17123,
+   "kind": "law",
+   "claim": "Replay ends initialized",
+   "evidence": "probe:replay ends initialized => initialized"
+  },
+  {
+   "id": "SD3-207",
+   "file": "design/spec.md",
+   "line": 17124,
+   "kind": "law",
+   "claim": "Replay validates the checkpoint's fingerprint up front",
+   "evidence": "src/sim.jl:1195"
+  },
+  {
+   "id": "SD3-208",
+   "file": "design/spec.md",
+   "line": 17125,
+   "kind": "law",
+   "claim": "Replay validates the Deployment up front",
+   "evidence": "src/checkpoint.jl:195"
+  },
+  {
+   "id": "SD3-209",
+   "file": "design/spec.md",
+   "line": 17126,
+   "kind": "law",
+   "claim": "The default form restores the clock with the rest of the state",
+   "evidence": "src/checkpoint.jl:106"
+  },
+  {
+   "id": "SD3-210",
+   "file": "design/spec.md",
+   "line": 17128,
+   "kind": "mech",
+   "claim": "Run metadata is the trace header's Deployment and t0",
+   "evidence": "probe:ModelState fields => deployment, t₀"
+  },
+  {
+   "id": "SD3-212",
+   "file": "design/spec.md",
+   "line": 17131,
+   "kind": "law",
+   "claim": "Run metadata carries no stop policy; each advance declares its own",
+   "evidence": "src/sim.jl:141"
+  },
+  {
+   "id": "SD3-213",
+   "file": "design/spec.md",
+   "line": 17133,
+   "kind": "mech",
+   "claim": "The trace is the drained, writer-tagged batches per frame, plus its header",
+   "evidence": "src/trace.jl:78"
+  },
+  {
+   "id": "SD3-214",
+   "file": "design/spec.md",
+   "line": 17134,
+   "kind": "law",
+   "claim": "The trace is on by default",
+   "evidence": "probe:trace on after init => true"
+  },
+  {
+   "id": "SD3-215",
+   "file": "design/spec.md",
+   "line": 17135,
+   "kind": "why",
+   "claim": "The log is recomputable from the trace and never the reverse",
+   "evidence": "n/a"
+  },
+  {
+   "id": "SD3-216",
+   "file": "design/spec.md",
+   "line": 17138,
+   "kind": "mech",
+   "claim": "The trace header is the trace's fixed preamble, a checkpoint",
+   "evidence": "src/trace.jl:78"
+  },
+  {
+   "id": "SD3-217",
+   "file": "design/spec.md",
+   "line": 17139,
+   "kind": "law",
+   "claim": "The door that builds the run writes it once",
+   "evidence": "src/sim.jl:856"
+  },
+  {
+   "id": "SD3-218",
+   "file": "design/spec.md",
+   "line": 17139,
+   "kind": "law",
+   "claim": "init! takes it at the end of boundary zero",
+   "evidence": "src/sim.jl:856"
+  },
+  {
+   "id": "SD3-219",
+   "file": "design/spec.md",
+   "line": 17140,
+   "kind": "law",
+   "claim": "overlay! takes it after the overlaid state settles",
+   "evidence": "src/sim.jl:980"
+  },
+  {
+   "id": "SD3-220",
+   "file": "design/spec.md",
+   "line": 17141,
+   "kind": "law",
+   "claim": "It carries the run's Deployment and t0 with the rest of the state",
+   "evidence": "probe:ModelState fields"
+  },
+  {
+   "id": "SD3-221",
+   "file": "design/spec.md",
+   "line": 17142,
+   "kind": "law",
+   "claim": "It holds no stop policy",
+   "evidence": "src/checkpoint.jl:106"
+  },
+  {
+   "id": "SD3-222",
+   "file": "design/spec.md",
+   "line": 17142,
+   "kind": "law",
+   "claim": "It holds no schema list",
+   "evidence": "probe:Checkpoint fields => state, frame, boundary"
+  },
+  {
+   "id": "SD3-223",
+   "file": "design/spec.md",
+   "line": 17145,
+   "kind": "mech",
+   "claim": "A trace record is the retained form of a drained batch, uniform for every writer",
+   "evidence": "src/trace.jl:121"
+  },
+  {
+   "id": "SD3-224",
+   "file": "design/spec.md",
+   "line": 17146,
+   "kind": "decl",
+   "claim": "A record is (position => value) pairs for the masked entries",
+   "evidence": "probe:batches => (1, 1, [2 => 1.0])"
+  },
+  {
+   "id": "SD3-225",
+   "file": "design/spec.md",
+   "line": 17147,
+   "kind": "mech",
+   "claim": "Conversion happens at the drain against the trace's schemas list",
+   "evidence": "src/dataplane.jl:496"
+  },
+  {
+   "id": "SD3-226",
+   "file": "design/spec.md",
+   "line": 17148,
+   "kind": "law",
+   "claim": "Trace size tracks information, not surface width",
+   "evidence": "src/trace.jl:121"
+  },
+  {
+   "id": "SD3-227",
+   "file": "design/spec.md",
+   "line": 17149,
+   "kind": "law",
+   "claim": "Consumers meet one format and one replay path",
+   "evidence": "src/sim.jl:2706"
+  },
+  {
+   "id": "SD3-228",
+   "file": "design/spec.md",
+   "line": 17151,
+   "kind": "mech",
+   "claim": "What-if replay replays a trace against the same structure with changed parameters",
+   "evidence": "src/sim.jl:1195"
+  },
+  {
+   "id": "SD3-229",
+   "file": "design/spec.md",
+   "line": 17152,
+   "kind": "mech",
+   "claim": "The model is initialized by init! under the authored condition",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "SD3-230",
+   "file": "design/spec.md",
+   "line": 17153,
+   "kind": "decl",
+   "claim": "replay! takes restore = false",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "SD3-231",
+   "file": "design/spec.md",
+   "line": 17154,
+   "kind": "law",
+   "claim": "It promises determinism but never bit-identical reproduction",
+   "evidence": "src/sim.jl:1334"
+  }
+ ],
+ "counts": {
+  "law": 120,
+  "decl": 21,
+  "why": 5,
+  "mech": 74,
+  "ptr": 11
+ }
+}

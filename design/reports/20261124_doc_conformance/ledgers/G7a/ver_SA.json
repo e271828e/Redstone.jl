@@ -1,0 +1,78 @@
+{
+ "judgments": [
+  {
+   "id": "SA-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:900-908: LEGAL_BUNDLE is keyed by (family, tier) and gives each stage's maximal legal field set. bundle_names (src/declare.jl:855-877) narrows that set to the declared stores and ports, and classify_bundle_field (:920) refuses names outside it."
+  },
+  {
+   "id": "SA-010",
+   "conforms": true,
+   "evidence": "src/executor.jl:513-521: the boundary walk runs each Gated discrete entry when (tick - Φ) % D == 0. src/executor.jl:556-560: discrete entries are absent from the interior walk and present only in the boundary variant. src/model.jl:706-707: _round! runs sweep_1(tick) and sweep_2(tick) inside the boundary's event phase."
+  },
+  {
+   "id": "SA-019",
+   "conforms": true,
+   "evidence": "Probe SA-019a: after init! alone DiscreteCounter holds state (n = 1,) and publishes 0. SA-019b: a run stopped at t = 0.3 holds state n = 4 and publishes 3. SA-019c: copying that s into a condition and calling init!(...; t0 = 3//10) publishes 4 at t = 0.3. SA-019d: one frame later the copy publishes 5 and the original 4, so the copy runs one tick ahead."
+  },
+  {
+   "id": "SA-025",
+   "conforms": false,
+   "evidence": "The mechanism matches: src/library.jl:454 reset_guard(_, (; u)) = u.reset, and src/library.jl:965 Integrator{V, true} declares state_events (reset = StateEvent(reset_guard, reset_handler),), so the reset arrives as a Bool input and fires through an event guard. But nothing in src/, test/ or examples/ ships weight-on-wheels (rg -i 'weight.on|wheels|wow|strut' finds nothing). The shipped instances are Integrator(; reset = true) and LimitedIntegrator (src/library.jl:1878). The gear and PIVector belong to the planned Flight.jl migration (design/companions/migration_outline.md:71-90), and no pending.md bullet owes them.",
+   "class": "deviation",
+   "fix": "where the reset command arrives as an ordinary `Bool` input (weight-on-wheels is the canonical case, and the `reset` input of `Integrator(; reset = true)` the shipped instance)",
+   "clear": false,
+   "backing_entry": "D-141 (design/log.md:5300: \"weight-on-wheels being the shipped instance\")"
+  },
+  {
+   "id": "SA-029",
+   "conforms": true,
+   "evidence": "src/model.jl:752: edge = !events.last[i] && events.now[i], and only an edge is eligible to fire. src/model.jl:775 sets the priors from the settled samples. src/sim.jl:724: boundary zero sets every prior to not-holding. Probe SA-029a-d: a Trigger holding at t0 fires once at boundary zero (count 1), keeps count 1 while it holds for 3 frames, stays at 1 after the falling edge, and reaches 2 at the next rising edge."
+  },
+  {
+   "id": "SA-038",
+   "conforms": true,
+   "evidence": "src/model.jl:760-763: firing = eligible && !events.comp_fired[owner], and comp_fired is cleared once per round (:747). Probe SA-038: a component with two always-holding events ends boundary zero with modes (a = 1, b = 10). So the second event fired in a later round and saw a = 1."
+  },
+  {
+   "id": "SA-047",
+   "conforms": true,
+   "evidence": "src/declare.jl:876: tier === DISCRETE && push!(bundle_fields, :Δt). src/declare.jl:903-905: every discrete family's legal set carries :Δt. src/executor.jl:139 fills the field from entry.Δt."
+  },
+  {
+   "id": "SA-051",
+   "conforms": false,
+   "evidence": "Probe SA-051a: building one model with two instances of one type VD, whose u_types depends on a field value, succeeds silently, as the doc says. But during that build the build calls u_types 19 times. Probe SA-051b: Simulation plus init! call it twice more. The build reads a declaration many times, at each pass that needs it, for example src/declare.jl:860-871, src/build.jl:545 and :879, src/assembly.jl:409 and :776. What holds is that every read is against the concrete instance and no read compares instances of one type. \"Once\" is literally false.",
+   "class": "deviation",
+   "fix": "The build reads each declaration against the concrete instance alone and never compares instances of one type, so a value-dependent contract does not announce itself.",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "SA-057",
+   "conforms": true,
+   "evidence": "Probe SA-057: a SumJunction{Float64,3} with only in1 and in2 wired is refused at build with one UnconnectedInput at path \"s\" (src/diagnostics.jl:402)."
+  },
+  {
+   "id": "SA-066",
+   "conforms": true,
+   "evidence": "src/devices.jl:230 and :285, :308, :342, :368, :402, :435: every handle primitive beats the heartbeat. src/dataplane.jl:342-343: stale(record) is true when now - heartbeat > STALE_S (2.0 s). So a device that stops calling its handle reads stale."
+  },
+  {
+   "id": "SA-075",
+   "conforms": true,
+   "evidence": "src/devices.jl:402-404: report!(handle::DeviceHandle, occurrence::MalformedDatum) asserts attachment, beats and files the report in the device's cell. src/diagnostics.jl:1597: struct MalformedDatum, whose one field is cause, so the constructor is MalformedDatum(cause)."
+  },
+  {
+   "id": "SA-084",
+   "conforms": true,
+   "evidence": "src/sim.jl:846: init! opens the run with frame 0 and boundary 0. Probe SA-084a: latest(sim).boundary == 0 after init!. SA-084b: 3 after three frames. SA-084c: 0 again after a second init!. When restore! continues the ordinal from a checkpoint, the spec treats it as the same trajectory (spec:10686), so it does not contradict this claim."
+  },
+  {
+   "id": "SA-093",
+   "conforms": true,
+   "evidence": "src/sim.jl:853-856: init! writes trc.header = Checkpoint(checkpoint(sim.model), ...) after init!(sim.model, ...) has run boundary zero. Probe SA-093: the header holds t = 0.0 and s = (n = 1,), the counter's state after boundary zero's s_update, and it equals the checkpoint taken right after init!."
+  }
+ ],
+ "notes": "The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/SA_v/probe.jl. It ran once from W at 62551b06. It re-imports SumJunction and Constant, which produces harmless import warnings. No tracked file was changed. Two claims do not conform. In SA-025 the mechanism matches through Integrator(; reset = true), but nothing in the package ships weight-on-wheels. D-141 is the entry behind the doc's wording. Earlier audit rounds (G2a, G6c overturned.tsv) marked the related PIVector claims unverifiable. In SA-051 the probe counted 19 u_types calls in one build. The no-announcement consequence holds, but \"once\" does not. The same sentence appears at design/spec.md:2572 in §8.1, the owning section, so a fix should reach both lines."
+}

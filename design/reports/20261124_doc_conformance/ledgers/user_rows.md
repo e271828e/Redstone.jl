@@ -220,3 +220,36 @@ the verifier's probe.
   two. The code requires neither stage. D-006 backs the old text and is in
   the log ledger. §2's roadmap (line 137) and §8.1 (line 2491) still say
   "two output stages per primitive".
+
+## G7, the appendices and the user-facing docs
+
+- **SA-025 and SA-051, wording.** Appendix A: the shipped instance of a
+  commanded reset is `Integrator(; reset = true)`, not weight-on-wheels
+  (D-141 backs the doc); and the build never compares instances of a type,
+  so a value-dependent contract goes unnoticed for that reason.
+- **SB-289, wording.** Appendix B says `LevenbergMarquardt()` takes no
+  keywords; it takes `maxiter` and `λ₀`.
+- **SD1-129 and SD3-166, wording.** The glossary's cell entry omits the root
+  inputs' cells; its claim-enforcement entry omits the harness's
+  `OutOfClaimEntry` on an unknown face.
+- **SD1-001, defect.** Appendix D says its entries are alphabetical within
+  each group; several groups are not. Proposed: reorder them, or drop the
+  claim.
+- **SD3-071, SD3-111, SD3-143 and SD3-144, gap.** The glossary states GUI
+  behaviour the inspector's cockpit still owes; `pending.md` records it. The
+  verifier proposes marking each as owed.
+- **K7a-296 and K7a-297, measured figures.** The longitudinal aircraft
+  companion's loop errors during the maneuver: about 0.015 once the fast
+  part is over, and a few hundredths of a radian however short `Tt` is.
+- **K7b-084, K7b-085, K7b-158 and K7b-175, wording.** The store-at-rest
+  walkthrough: a checkpoint's stores are also reachable component by
+  component; `state(model, path)` is the one path-addressed read at rest;
+  `overlay!` raises the discontinuity notice where `init!` resets the
+  stepper; the implementation offers two bundles, not one flag.
+- **SD4-138, wording.** The glossary says a payload carries paths and names
+  as strings; names are symbols. D-058 backs the doc's text.
+- **CV7a-003, CV7a-024, CV7a-028, CV7a-038 and CV7a-057, undocumented
+  surface.** The artifacts' one-line `show` forms, the `Deployment` REPL
+  heading's extra fields, `show(::FrameworkStatus)`, the public `TraceBatch`
+  record and its `code_map.md` entry have no doc text. Each needs new text,
+  more than one wording of which would do. D-476 and D-454 back parts.

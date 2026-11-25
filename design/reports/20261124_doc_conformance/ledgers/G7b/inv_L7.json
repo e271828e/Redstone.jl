@@ -1,0 +1,251 @@
+{
+ "rows": [
+  {
+   "id": "L7-001",
+   "file": "design/log.md",
+   "line": 2628,
+   "kind": "decl",
+   "claim": "The input declaration is named `input_types`.",
+   "evidence": "probe:8 (isdefined input_types = false); src/declare.jl:748 lists `u_types`; src/library.jl:116",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Renamed `u_types` by D-267 (log.md:11633). The entry's own annotation of 2026-09-25 (log.md:2635) already records this, so the lead closes as recorded drift.",
+   "fix": "None beyond the existing annotation, which already reads `input_types` as `u_types` (D-267)."
+  },
+  {
+   "id": "L7-002",
+   "file": "design/log.md",
+   "line": 2628,
+   "kind": "decl",
+   "claim": "The output declaration is named `output_types`.",
+   "evidence": "probe:8 (isdefined output_types = false); src/declare.jl:748 lists `y_types`; src/library.jl:118",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Renamed `y_types` by D-267 (log.md:11633-11634). The entry's annotation (log.md:2635) already records it.",
+   "fix": "None beyond the existing annotation, which already reads `output_types` as `y_types` (D-267)."
+  },
+  {
+   "id": "L7-003",
+   "file": "design/log.md",
+   "line": 2628,
+   "kind": "decl",
+   "claim": "A third declaration named `local_types` exists in the family.",
+   "evidence": "probe:8 (isdefined local_types = false); src/declare.jl:747-751 DECLARATION_FAMILY has no local-types entry",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-165 deleted `local_types` (log.md:6438). D-165 is superseded by D-194, which is ratified and keeps intermediates as declared ports. The D-076 annotation names only the input/output renames, so nothing in the entry marks the deletion.",
+   "fix": "Extend the annotation: `local_types` is deleted by D-165, a deletion that stands under D-194, where intermediates are declared ports."
+  },
+  {
+   "id": "L7-005",
+   "file": "design/log.md",
+   "line": 2629,
+   "kind": "law",
+   "claim": "The by-value declarations are named `init_*`.",
+   "evidence": "probe:8 (init_x/init_s/init_m undefined; x_init/s_init/m_init defined); src/declare.jl:75,103,127",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-267 (log.md:11632-11633) renamed `init_x`/`init_s`/`init_m` to `x_init`/`s_init`/`m_init`. The D-076 annotation does not mention this rename.",
+   "fix": "Annotate: since D-267 the by-value declarations are `*_init` (`x_init`, `s_init`, `m_init`)."
+  },
+  {
+   "id": "L7-007",
+   "file": "design/log.md",
+   "line": 2630,
+   "kind": "law",
+   "claim": "The by-allocation declaration is named `workspace`.",
+   "evidence": "probe:8 (workspace and init_workspace undefined, ws_init defined); src/declare.jl:150",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-220 renamed `workspace` to `init_workspace` (log.md:8921), and D-267 renamed that to `ws_init` (log.md:11633). Both are ratified. Since then the allocation declaration shares the `_init` suffix with the by-value ones and is told apart by its `ws` prefix.",
+   "fix": "Annotate: the allocation declaration is `ws_init` (D-220, then D-267)."
+  },
+  {
+   "id": "L7-009",
+   "file": "design/log.md",
+   "line": 3113,
+   "kind": "law",
+   "claim": "A diagnostic kind's severity takes one of five values.",
+   "evidence": "src/diagnostics.jl:55-59 (`:error` default, `:warning` overrides); probe:27 (only :error and :warning returned)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-214 (log.md:8581, ratified) made severity `error` or `warning`, nothing else. It split the old column into severity, raised and policy.",
+   "fix": "Annotate: since D-214 severity is `error` or `warning` only. Stage and reporting moved to the raised and policy fields."
+  },
+  {
+   "id": "L7-010",
+   "file": "design/log.md",
+   "line": 3113,
+   "kind": "law",
+   "claim": "`service` is a severity value, used for post-build validation against the `Build`.",
+   "evidence": "src/diagnostics.jl:59 and the 20 `severity` methods (probe:28) return only :error or :warning; spec.md Appendix C lists `service` under raised",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-214 moved `service` from the severity column to the raised field. It is now a stage an occurrence surfaces in, not a severity.",
+   "fix": "Annotate: since D-214 `service` is a raised stage, not a severity."
+  },
+  {
+   "id": "L7-011",
+   "file": "design/log.md",
+   "line": 3114,
+   "kind": "law",
+   "claim": "Since D-159 there are six severity values.",
+   "evidence": "probe:27 (severity values {:error, :warning}); src/diagnostics.jl:55-59",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-159's sixth severity, `warning (service)`, became severity `warning` raised at `service` under D-214.",
+   "fix": "Annotate: D-214 reduces the six to two, `error` and `warning`."
+  },
+  {
+   "id": "L7-023",
+   "file": "design/log.md",
+   "line": 6274,
+   "kind": "decl",
+   "claim": "`interactive` is a binding marker method, flagged for a class-(1) exemption.",
+   "evidence": "probe:31 (isdefined interactive = false); rg finds no `interactive` definition in src/",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-174 (log.md:6937, ratified) retired the `interactive(b)` marker and `InteractiveConflict`. The audit question about it is moot.",
+   "fix": "Annotate: the `interactive` marker was retired by D-174."
+  },
+  {
+   "id": "L7-024",
+   "file": "design/log.md",
+   "line": 6275,
+   "kind": "decl",
+   "claim": "`needs_calling_task` is a predicate trait, flagged for a class-(1) exemption.",
+   "evidence": "probe:31 (isdefined needs_calling_task = false); rg finds no definition in src/",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-310 (log.md:13964, ratified) withdrew `needs_calling_task` and `CallerTaskConflict`. Every device now runs on a spawned task.",
+   "fix": "Annotate: `needs_calling_task` was withdrawn by D-310."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L7-004",
+   "file": "design/log.md",
+   "line": 2629,
+   "kind": "law",
+   "claim": "The declaration inventory classifies itself by naming convention",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "L7-006",
+   "file": "design/log.md",
+   "line": 2630,
+   "kind": "law",
+   "claim": "By-type declarations take the `*_types` suffix (u_types, y_types); `_types` lead",
+   "evidence": "src/declare.jl:748"
+  },
+  {
+   "id": "L7-008",
+   "file": "design/log.md",
+   "line": 3111,
+   "kind": "cite",
+   "claim": "[sC] resolves to spec Appendix C, the diagnostic kind set",
+   "evidence": "log.md:21806 -> spec.md:15446"
+  },
+  {
+   "id": "L7-012",
+   "file": "design/log.md",
+   "line": 3113,
+   "kind": "cite",
+   "claim": "[D-159] resolves to a ratified entry",
+   "evidence": "log.md:21418, log.md:186"
+  },
+  {
+   "id": "L7-013",
+   "file": "design/log.md",
+   "line": 6267,
+   "kind": "decl",
+   "claim": "`loop` is the device's task body, a bare noun beside the verb-! device contract",
+   "evidence": "src/devices.jl:202"
+  },
+  {
+   "id": "L7-014",
+   "file": "design/log.md",
+   "line": 6268,
+   "kind": "decl",
+   "claim": "`run!` is already taken by the simulation's run",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "L7-015",
+   "file": "design/log.md",
+   "line": 6270,
+   "kind": "decl",
+   "claim": "`trace(sim)` is a bare-noun accessor",
+   "evidence": "src/sim.jl:3015"
+  },
+  {
+   "id": "L7-016",
+   "file": "design/log.md",
+   "line": 6270,
+   "kind": "decl",
+   "claim": "`latest(sim)` is a bare-noun accessor",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "L7-017",
+   "file": "design/log.md",
+   "line": 6270,
+   "kind": "decl",
+   "claim": "`binding(handle)` is a bare-noun accessor",
+   "evidence": "src/devices.jl:270"
+  },
+  {
+   "id": "L7-018",
+   "file": "design/log.md",
+   "line": 6270,
+   "kind": "decl",
+   "claim": "`phase_bodies(sim)` is a bare-noun accessor",
+   "evidence": "src/sim.jl:638"
+  },
+  {
+   "id": "L7-019",
+   "file": "design/log.md",
+   "line": 6272,
+   "kind": "decl",
+   "claim": "Class (2) accessors use the `get_` prefix (get_state, get_output...); `get_` lead",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "L7-020",
+   "file": "design/log.md",
+   "line": 6272,
+   "kind": "decl",
+   "claim": "`trace` is both the kill-switch keyword and an accessor",
+   "evidence": "src/sim.jl:754 (trace = true kwarg), src/sim.jl:3015"
+  },
+  {
+   "id": "L7-021",
+   "file": "design/log.md",
+   "line": 6273,
+   "kind": "cite",
+   "claim": "[D-122] resolves to a ratified entry",
+   "evidence": "log.md:21381, log.md:149"
+  },
+  {
+   "id": "L7-022",
+   "file": "design/log.md",
+   "line": 6273,
+   "kind": "cite",
+   "claim": "[D-144] resolves to a ratified entry",
+   "evidence": "log.md:21403, log.md:171"
+  }
+ ],
+ "counts": {
+  "decl": 13,
+  "law": 7,
+  "mech": 0,
+  "cite": 4,
+  "ptr": 3,
+  "why": 2,
+  "ex": 0,
+  "map": 0,
+  "docstring": 0,
+  "surface": 0
+ },
+ "notes": "Slice L7 covers D-076 (log.md:2624-2643), D-092 (3107-3125) and D-161 (6263-6282). All three are ratified, so there is no superseded chain to follow. The chains I did follow end at ratified entries: D-165 is superseded by D-194, which is ratified; D-220 and D-267 are ratified, and so are D-214, D-174 and D-310. Every D-nnn and § link in the three Positions resolves. D-076's Position cites nothing.\n\nAll ten findings are drift, and each names the later ratified entry that records the move. D-267's renames left the D-076 Position stale for `init_*` and `workspace`. D-165 and D-194 deleted `local_types`. D-214 cut the six severity values down to two, `error` and `warning`, and turned `service` into a raised stage. D-174 retired the `interactive` marker and D-310 withdrew `needs_calling_task`. Because the log is never rewritten, every fix is an annotation. For `input_types` and `output_types` the entry's own 2026-09-25 annotation already records the rename. I kept them as rows only because the lead rule requires a row for each lead.\n\nThe leads all end in rows. `_types` and `get_` are suffix and prefix patterns, both ok. `input_types`, `output_types`, `local_types`, `init_`, `service`, `interactive` and `needs_calling_task` are findings.\n\nD-161 rejects \"renaming any of them now\", and the code does not do that: `loop`, `trace`, `latest`, `binding` and `phase_bodies` all still exist.\n\nThere are three ptr claims, none false. Two are in D-092: the kind set is a normative table in Appendix C, and the table's columns are kind name, payload, owning section and severity. Since D-214 the table also has raised and policy columns. The third is D-161's sentence that the audit list grows.\n\nI ran the probe once: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L7/probe.jl. I changed no tracked files."
+}

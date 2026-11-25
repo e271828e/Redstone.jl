@@ -1,0 +1,3110 @@
+{
+ "rows": [
+  {
+   "id": "K7a-092",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 145,
+   "kind": "law",
+   "claim": "The two-state polynomial gives the exact values of the full matrix's fast pair",
+   "evidence": "probe:62,67",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "whose characteristic polynomial s² + 6.14 s + 29.5 has ωn = 5.43 rad/s and ζ = 0.566, the values of the full matrix's fast pair to the figures given (5.4326 and 0.5660 in full)",
+   "note": "The reduced pair is 5.4304 and 0.5657 (probe:66-67), the full pair 5.4326 and 0.5660 (probe:62). The V coupling (A[2,1] = 0.0078) makes the reduction approximate, not exact."
+  },
+  {
+   "id": "K7a-119",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 185,
+   "kind": "decl",
+   "claim": "All three loops are built from library components and one leaf of the example's own, Altimeter",
+   "evidence": "examples/src/longitudinal.jl:154-160,274,333",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The three loops are built from the plant, library components and, from `autopilot` on, one more leaf of the example's own, `Altimeter`.",
+   "note": "pitch_hold has no Altimeter, and the plant Longitudinal is itself a leaf of the example."
+  },
+  {
+   "id": "K7a-296",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 390,
+   "kind": "law",
+   "claim": "The tracker, altitude loop and airspeed loop stay within a few hundredths during the maneuver",
+   "evidence": "examples/src/longitudinal.jl:449",
+   "verdict": "unverifiable",
+   "note": "The standby tracker gap is 0.034 rad after 0.5 s but peaks at 0.43 rad at the step (probe2:208; companion line 435 says so itself). The outer loops' gaps during the climb were not probed, and the sentence does not say where the fast part ends."
+  },
+  {
+   "id": "K7a-297",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 392,
+   "kind": "law",
+   "claim": "The pitch-rate and attitude loops sit a few hundredths of a radian off whatever Tt is",
+   "evidence": "examples/test/test_longitudinal.jl:280-298",
+   "verdict": "unverifiable",
+   "note": "Gaps after 15 s are 0.010 for the pitch-rate loop (probe:277) and 0.037 for the attitude loop (test comment at line 281). The claim that Tt does not matter needs a Tt sweep, and closed_loop hard-codes Tt = 0.02."
+  },
+  {
+   "id": "K7a-298",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 394,
+   "kind": "law",
+   "claim": "A controller in command at Tt = one period pulls a limited integrator back within a tick",
+   "evidence": "src/library.jl:2702-2708",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "A controller in command back-calculates against its limits, and at one period it pulls a limited integrator back by the fraction 1 − e⁻¹ of its excess in each tick.",
+   "note": "The correction step is β = −expm1(−Δt/Tt), 0.632 at Tt = Δt, so the excess falls to 0.37 of its size per tick and does not vanish. Only Tt = 0 is instant (pid_anti_windup.md section 9). The closed_loop docstring (examples/src/longitudinal.jl:435) repeats the sentence."
+  },
+  {
+   "id": "K7a-317",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 415,
+   "kind": "law",
+   "claim": "The tracker's own limits are the actuators' ranges",
+   "evidence": "examples/src/longitudinal.jl:474-475,501-506",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The tracker's own limits are the cascade's innermost limits, ±0.5 rad on the elevator and 0 to 1 on the throttle.",
+   "note": "The actuators group has rate limiters and lags and no range. The tracker's u_min and u_max repeat the q_ctl and V_ctl limits."
+  },
+  {
+   "id": "K7a-333",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 437,
+   "kind": "law",
+   "claim": "The standby tracker gap is back under 0.1 rad within 55 ms of the step",
+   "evidence": "probe2:208",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "is back under 0.1 rad within 60 ms",
+   "note": "Gap series at the 5 ms snapshots: 0.4289 at 5.0 s, 0.3319 at 5.02, 0.1103 at 5.04 to 5.055, 0.0242 at 5.06. It first falls under 0.1 at 5.06 s, 60 ms after the step."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K7a-001",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 16,
+   "kind": "mech",
+   "claim": "Plant has three degrees of freedom, five states V,γ,θ,q,h",
+   "evidence": "examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "K7a-002",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 17,
+   "kind": "law",
+   "claim": "Gravity is constant g = 9.81 m/s²",
+   "evidence": "examples/src/longitudinal.jl:7"
+  },
+  {
+   "id": "K7a-003",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 17,
+   "kind": "law",
+   "claim": "Air density is constant",
+   "evidence": "examples/src/longitudinal.jl:58"
+  },
+  {
+   "id": "K7a-004",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 18,
+   "kind": "law",
+   "claim": "Air is still, no wind terms",
+   "evidence": "examples/src/longitudinal.jl:65"
+  },
+  {
+   "id": "K7a-005",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 18,
+   "kind": "law",
+   "claim": "Thrust acts along the body axis and produces no moment",
+   "evidence": "examples/src/longitudinal.jl:60-63"
+  },
+  {
+   "id": "K7a-006",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 20,
+   "kind": "law",
+   "claim": "The plant has no landing gear, ground effect or atmosphere model",
+   "evidence": "examples/src/longitudinal.jl:55-70"
+  },
+  {
+   "id": "K7a-007",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 27,
+   "kind": "decl",
+   "claim": "State V airspeed m/s",
+   "evidence": "examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "K7a-008",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 28,
+   "kind": "decl",
+   "claim": "State γ flight path angle rad",
+   "evidence": "examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "K7a-009",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 29,
+   "kind": "decl",
+   "claim": "State θ pitch angle rad",
+   "evidence": "examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "K7a-010",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 30,
+   "kind": "decl",
+   "claim": "State q pitch rate rad/s",
+   "evidence": "examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "K7a-011",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 31,
+   "kind": "decl",
+   "claim": "State h altitude m",
+   "evidence": "examples/src/longitudinal.jl:51"
+  },
+  {
+   "id": "K7a-012",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 33,
+   "kind": "law",
+   "claim": "Angle of attack is α = θ − γ",
+   "evidence": "examples/src/longitudinal.jl:57"
+  },
+  {
+   "id": "K7a-013",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 35,
+   "kind": "decl",
+   "claim": "Inputs are elevator δe and throttle δt",
+   "evidence": "examples/src/longitudinal.jl:52"
+  },
+  {
+   "id": "K7a-014",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 35,
+   "kind": "law",
+   "claim": "Elevator positive trailing edge down (Cmδe<0 pitches nose down)",
+   "evidence": "examples/src/longitudinal.jl:60"
+  },
+  {
+   "id": "K7a-015",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 36,
+   "kind": "law",
+   "claim": "Throttle δt ranges 0 to 1",
+   "evidence": "examples/src/longitudinal.jl:121-122"
+  },
+  {
+   "id": "K7a-016",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 38,
+   "kind": "law",
+   "claim": "Dynamic pressure q̄ = ½ρV²",
+   "evidence": "examples/src/longitudinal.jl:58"
+  },
+  {
+   "id": "K7a-017",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 41,
+   "kind": "law",
+   "claim": "L = q̄ S CL",
+   "evidence": "examples/src/longitudinal.jl:61"
+  },
+  {
+   "id": "K7a-018",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 41,
+   "kind": "law",
+   "claim": "CL = CL0 + CLα α",
+   "evidence": "examples/src/longitudinal.jl:59"
+  },
+  {
+   "id": "K7a-019",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "D = q̄ S CD",
+   "evidence": "examples/src/longitudinal.jl:62"
+  },
+  {
+   "id": "K7a-020",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 42,
+   "kind": "law",
+   "claim": "CD = CD0 + k CL²",
+   "evidence": "examples/src/longitudinal.jl:62"
+  },
+  {
+   "id": "K7a-021",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 43,
+   "kind": "law",
+   "claim": "M = q̄ S c̄ Cm",
+   "evidence": "examples/src/longitudinal.jl:63"
+  },
+  {
+   "id": "K7a-022",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 43,
+   "kind": "law",
+   "claim": "Cm = Cm0 + Cmα α + Cmq q c̄/(2V) + Cmδe δe",
+   "evidence": "examples/src/longitudinal.jl:60"
+  },
+  {
+   "id": "K7a-023",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 44,
+   "kind": "law",
+   "claim": "T = δt T_max",
+   "evidence": "examples/src/longitudinal.jl:64"
+  },
+  {
+   "id": "K7a-024",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 46,
+   "kind": "law",
+   "claim": "Lift is linear in α",
+   "evidence": "examples/src/longitudinal.jl:59"
+  },
+  {
+   "id": "K7a-025",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 47,
+   "kind": "law",
+   "claim": "Drag polar is parabolic with k = 1/(π e AR)",
+   "evidence": "examples/src/longitudinal.jl:62; probe:41"
+  },
+  {
+   "id": "K7a-026",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 49,
+   "kind": "law",
+   "claim": "Cmα < 0 pitches the nose back toward trim",
+   "evidence": "examples/src/longitudinal.jl:46,60"
+  },
+  {
+   "id": "K7a-027",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 50,
+   "kind": "law",
+   "claim": "Cmq < 0 damps through q c̄/2V",
+   "evidence": "examples/src/longitudinal.jl:47,60"
+  },
+  {
+   "id": "K7a-028",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 51,
+   "kind": "law",
+   "claim": "Cmδe < 0, a positive deflection pitches the nose down",
+   "evidence": "examples/src/longitudinal.jl:48,60"
+  },
+  {
+   "id": "K7a-029",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 52,
+   "kind": "law",
+   "claim": "Thrust is a fraction of a fixed maximum",
+   "evidence": "examples/src/longitudinal.jl:64"
+  },
+  {
+   "id": "K7a-030",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 59,
+   "kind": "law",
+   "claim": "EOM V̇ = (T cos α − D)/m − g sin γ",
+   "evidence": "examples/src/longitudinal.jl:65"
+  },
+  {
+   "id": "K7a-031",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 60,
+   "kind": "law",
+   "claim": "EOM γ̇ = (L + T sin α)/(m V) − g cos γ/V",
+   "evidence": "examples/src/longitudinal.jl:66"
+  },
+  {
+   "id": "K7a-032",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 61,
+   "kind": "law",
+   "claim": "EOM θ̇ = q",
+   "evidence": "examples/src/longitudinal.jl:67"
+  },
+  {
+   "id": "K7a-033",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 62,
+   "kind": "law",
+   "claim": "EOM q̇ = M/Iyy",
+   "evidence": "examples/src/longitudinal.jl:68"
+  },
+  {
+   "id": "K7a-034",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 63,
+   "kind": "law",
+   "claim": "EOM ḣ = V sin γ",
+   "evidence": "examples/src/longitudinal.jl:69"
+  },
+  {
+   "id": "K7a-035",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 65,
+   "kind": "law",
+   "claim": "Outputs are functions of the state alone, no feedthrough",
+   "evidence": "examples/src/longitudinal.jl:54"
+  },
+  {
+   "id": "K7a-036",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 66,
+   "kind": "mech",
+   "claim": "All outputs come from y_state; inputs are read by x_deriv only",
+   "evidence": "examples/src/longitudinal.jl:54-55"
+  },
+  {
+   "id": "K7a-037",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 67,
+   "kind": "mech",
+   "claim": "Plant has one stage-1 output set and one derivative",
+   "evidence": "examples/src/longitudinal.jl:54-55"
+  },
+  {
+   "id": "K7a-038",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 75,
+   "kind": "decl",
+   "claim": "Default m 1000 kg",
+   "evidence": "examples/src/longitudinal.jl:35"
+  },
+  {
+   "id": "K7a-039",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 76,
+   "kind": "decl",
+   "claim": "Default S 16 m²",
+   "evidence": "examples/src/longitudinal.jl:36"
+  },
+  {
+   "id": "K7a-040",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 77,
+   "kind": "decl",
+   "claim": "Default c̄ 1.5 m",
+   "evidence": "examples/src/longitudinal.jl:37"
+  },
+  {
+   "id": "K7a-041",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 78,
+   "kind": "decl",
+   "claim": "Default Iyy 1800 kg m²",
+   "evidence": "examples/src/longitudinal.jl:38"
+  },
+  {
+   "id": "K7a-042",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 79,
+   "kind": "decl",
+   "claim": "Default T_max 2500 N",
+   "evidence": "examples/src/longitudinal.jl:39"
+  },
+  {
+   "id": "K7a-043",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 79,
+   "kind": "law",
+   "claim": "T_max is about a quarter of the weight (0.255)",
+   "evidence": "probe:40"
+  },
+  {
+   "id": "K7a-044",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 80,
+   "kind": "decl",
+   "claim": "Default ρ 1.225 kg/m³",
+   "evidence": "examples/src/longitudinal.jl:40"
+  },
+  {
+   "id": "K7a-045",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 81,
+   "kind": "decl",
+   "claim": "Default CL0 0.3, CLα 5.0",
+   "evidence": "examples/src/longitudinal.jl:41-42"
+  },
+  {
+   "id": "K7a-046",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 82,
+   "kind": "decl",
+   "claim": "Default CD0 0.03, k 0.05",
+   "evidence": "examples/src/longitudinal.jl:43-44"
+  },
+  {
+   "id": "K7a-047",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 82,
+   "kind": "law",
+   "claim": "k = 0.05 matches AR≈7.5, e≈0.85 (0.0499)",
+   "evidence": "probe:41"
+  },
+  {
+   "id": "K7a-048",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 83,
+   "kind": "decl",
+   "claim": "Default Cm0 0.05, Cmα −1.0",
+   "evidence": "examples/src/longitudinal.jl:45-46"
+  },
+  {
+   "id": "K7a-049",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 83,
+   "kind": "law",
+   "claim": "Static margin −Cmα/CLα = 0.2",
+   "evidence": "probe:42"
+  },
+  {
+   "id": "K7a-050",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 84,
+   "kind": "decl",
+   "claim": "Default Cmq −12",
+   "evidence": "examples/src/longitudinal.jl:47"
+  },
+  {
+   "id": "K7a-051",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 85,
+   "kind": "decl",
+   "claim": "Default Cmδe −1.2",
+   "evidence": "examples/src/longitudinal.jl:48"
+  },
+  {
+   "id": "K7a-052",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 87,
+   "kind": "decl",
+   "claim": "Nominal state V=50 m/s, γ=0, h=1000 m",
+   "evidence": "examples/src/longitudinal.jl:51; probe:47"
+  },
+  {
+   "id": "K7a-053",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 91,
+   "kind": "law",
+   "claim": "Level flight means γ = 0 and q = 0",
+   "evidence": "examples/src/longitudinal.jl:123"
+  },
+  {
+   "id": "K7a-054",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 92,
+   "kind": "law",
+   "claim": "Level flight needs V̇ = γ̇ = q̇ = 0",
+   "evidence": "examples/src/longitudinal.jl:125-127"
+  },
+  {
+   "id": "K7a-055",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 92,
+   "kind": "law",
+   "claim": "θ̇ = q = 0 and ḣ = 0 follow",
+   "evidence": "examples/src/longitudinal.jl:67,69"
+  },
+  {
+   "id": "K7a-056",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 93,
+   "kind": "mech",
+   "claim": "Three unknowns θ, δe, δt balance the three rates",
+   "evidence": "examples/src/longitudinal.jl:120-127"
+  },
+  {
+   "id": "K7a-057",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 94,
+   "kind": "law",
+   "claim": "In level flight θ is the angle of attack",
+   "evidence": "examples/src/longitudinal.jl:57"
+  },
+  {
+   "id": "K7a-058",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 94,
+   "kind": "mech",
+   "claim": "Hand estimate ignores the thrust's tilt",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "K7a-059",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 97,
+   "kind": "law",
+   "claim": "Hand estimate CL = m g/(q̄ S) = 0.400",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "K7a-060",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 97,
+   "kind": "law",
+   "claim": "Hand estimate α = 0.0201 rad",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "K7a-061",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 98,
+   "kind": "law",
+   "claim": "Hand estimate δe = 0.0249 rad",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "K7a-062",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 99,
+   "kind": "law",
+   "claim": "Hand estimate δt = D/T_max = 0.373",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "K7a-063",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 101,
+   "kind": "decl",
+   "claim": "Trim decisions are (θ, δe, δt)",
+   "evidence": "examples/src/longitudinal.jl:120"
+  },
+  {
+   "id": "K7a-064",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 102,
+   "kind": "mech",
+   "claim": "Condition writes θ beside held V, γ=0, q=0, h into the plant state",
+   "evidence": "examples/src/longitudinal.jl:123"
+  },
+  {
+   "id": "K7a-065",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 103,
+   "kind": "mech",
+   "claim": "Condition writes δe, δt into the root inputs",
+   "evidence": "examples/src/longitudinal.jl:124"
+  },
+  {
+   "id": "K7a-066",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 104,
+   "kind": "decl",
+   "claim": "Reads are the three derivatives V̇, γ̇, q̇",
+   "evidence": "examples/src/longitudinal.jl:125"
+  },
+  {
+   "id": "K7a-067",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 104,
+   "kind": "decl",
+   "claim": "Residuals are the reads themselves",
+   "evidence": "examples/src/longitudinal.jl:126"
+  },
+  {
+   "id": "K7a-068",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 105,
+   "kind": "law",
+   "claim": "Trim converges in four iterations",
+   "evidence": "probe:43"
+  },
+  {
+   "id": "K7a-069",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 107,
+   "kind": "law",
+   "claim": "Trim θ = 0.019930 rad",
+   "evidence": "probe:43"
+  },
+  {
+   "id": "K7a-070",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 107,
+   "kind": "law",
+   "claim": "Trim δe = 0.025058 rad",
+   "evidence": "probe:43"
+  },
+  {
+   "id": "K7a-071",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 107,
+   "kind": "law",
+   "claim": "Trim δt = 0.37234",
+   "evidence": "probe:43"
+  },
+  {
+   "id": "K7a-072",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 109,
+   "kind": "law",
+   "claim": "Trim is within one percent of the hand estimate",
+   "evidence": "probe:45"
+  },
+  {
+   "id": "K7a-073",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 112,
+   "kind": "mech",
+   "claim": "aircraft() holds the plant as child `plant` of a Group with input_wires to the root inputs",
+   "evidence": "examples/src/longitudinal.jl:106-107"
+  },
+  {
+   "id": "K7a-074",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 114,
+   "kind": "law",
+   "claim": "A leaf may be the root, its u_types the root inputs, empty path its address",
+   "evidence": "design/log.md:8349 (D-208)"
+  },
+  {
+   "id": "K7a-075",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 117,
+   "kind": "law",
+   "claim": "In the closed loops the plant sits under a group at \"plant\"",
+   "evidence": "examples/src/longitudinal.jl:156,275,334,507"
+  },
+  {
+   "id": "K7a-076",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 119,
+   "kind": "law",
+   "claim": "`approach` alone moves the plant to \"vehicle/plant\"",
+   "evidence": "examples/src/longitudinal.jl:368"
+  },
+  {
+   "id": "K7a-077",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 123,
+   "kind": "decl",
+   "claim": "Linearization state order (V,γ,θ,q,h), input order (δe,δt)",
+   "evidence": "probe:51"
+  },
+  {
+   "id": "K7a-078",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 126,
+   "kind": "law",
+   "claim": "A row 1 numbers match",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "K7a-079",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 126,
+   "kind": "law",
+   "claim": "B matrix entries (−24.5, 2.500, 0.001) match",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "K7a-080",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 127,
+   "kind": "law",
+   "claim": "A row 2 numbers match",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "K7a-081",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 128,
+   "kind": "law",
+   "claim": "A row 3 numbers match",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "K7a-082",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 129,
+   "kind": "law",
+   "claim": "A row 4 numbers match",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "K7a-083",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 130,
+   "kind": "law",
+   "claim": "A row 5 numbers match",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "K7a-084",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 132,
+   "kind": "law",
+   "claim": "Last column of A is zero",
+   "evidence": "probe:55"
+  },
+  {
+   "id": "K7a-085",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 133,
+   "kind": "law",
+   "claim": "h is a pure integrator, one eigenvalue is exactly zero",
+   "evidence": "probe:54-55"
+  },
+  {
+   "id": "K7a-086",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 134,
+   "kind": "law",
+   "claim": "The other four eigenvalues form two complex pairs",
+   "evidence": "probe:54"
+  },
+  {
+   "id": "K7a-087",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 137,
+   "kind": "law",
+   "claim": "γ and q rows have equal and opposite γ and θ entries",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K7a-088",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 141,
+   "kind": "law",
+   "claim": "Short period α̇ = q − 2.469 α",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K7a-089",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 142,
+   "kind": "law",
+   "claim": "Short period q̇ = −20.42 α − 3.675 q",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K7a-090",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 144,
+   "kind": "law",
+   "claim": "Short period characteristic polynomial s² + 6.14 s + 29.5",
+   "evidence": "probe:66"
+  },
+  {
+   "id": "K7a-091",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 144,
+   "kind": "law",
+   "claim": "Short period ωn = 5.43 rad/s, ζ = 0.566",
+   "evidence": "probe:67"
+  },
+  {
+   "id": "K7a-093",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 146,
+   "kind": "law",
+   "claim": "20.42 is −Mα = −q̄ S c̄ Cmα/Iyy",
+   "evidence": "probe:70"
+  },
+  {
+   "id": "K7a-094",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 147,
+   "kind": "law",
+   "claim": "3.675 is the pitch damping −Mq",
+   "evidence": "probe:70"
+  },
+  {
+   "id": "K7a-095",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 147,
+   "kind": "law",
+   "claim": "2.469 is the lift slope's −Zα/V (2.45 lift plus 0.019 thrust)",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "K7a-096",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 153,
+   "kind": "law",
+   "claim": "Lanchester ωn = √2 g/V = 0.277 rad/s",
+   "evidence": "probe:73"
+  },
+  {
+   "id": "K7a-097",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 154,
+   "kind": "law",
+   "claim": "L/D = CL/CD = 10.5",
+   "evidence": "probe:73"
+  },
+  {
+   "id": "K7a-098",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 154,
+   "kind": "law",
+   "claim": "Lanchester ζ = 1/(√2 L/D) = 0.067",
+   "evidence": "probe:73"
+  },
+  {
+   "id": "K7a-099",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 155,
+   "kind": "law",
+   "claim": "Full slow pair ωn = 0.231 rad/s",
+   "evidence": "probe:62"
+  },
+  {
+   "id": "K7a-100",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 155,
+   "kind": "law",
+   "claim": "Full slow pair period 27.3 s",
+   "evidence": "probe:62"
+  },
+  {
+   "id": "K7a-101",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 155,
+   "kind": "law",
+   "claim": "Full slow pair ζ = 0.067",
+   "evidence": "probe:62"
+  },
+  {
+   "id": "K7a-102",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 157,
+   "kind": "law",
+   "claim": "Frequency estimate is 20% high",
+   "evidence": "probe:74"
+  },
+  {
+   "id": "K7a-103",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 161,
+   "kind": "law",
+   "claim": "Δα = −(Mq/Mα) γ̇ = −0.180 γ̇",
+   "evidence": "probe:75"
+  },
+  {
+   "id": "K7a-104",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 162,
+   "kind": "law",
+   "claim": "Lift loss slows the path by 1 + 2.469×0.180 = 1.444",
+   "evidence": "probe:75"
+  },
+  {
+   "id": "K7a-105",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 163,
+   "kind": "law",
+   "claim": "The factor equals 29.5/20.42",
+   "evidence": "probe:75"
+  },
+  {
+   "id": "K7a-106",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 164,
+   "kind": "law",
+   "claim": "Frequency falls to 0.277/1.202 = 0.231 rad/s",
+   "evidence": "probe:75"
+  },
+  {
+   "id": "K7a-107",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 165,
+   "kind": "law",
+   "claim": "With Cmq = 0 the slow pair sits at 0.277 rad/s",
+   "evidence": "probe:79"
+  },
+  {
+   "id": "K7a-108",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 167,
+   "kind": "law",
+   "claim": "Drag's speed dependence gives the phugoid its damping and leaves its frequency alone",
+   "evidence": "probe3:35-44"
+  },
+  {
+   "id": "K7a-109",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 168,
+   "kind": "law",
+   "claim": "Thrust of this model does not vary with speed",
+   "evidence": "examples/src/longitudinal.jl:64"
+  },
+  {
+   "id": "K7a-110",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 169,
+   "kind": "law",
+   "claim": "The damping estimate agrees to two figures (0.067 vs 0.067)",
+   "evidence": "probe:62,73"
+  },
+  {
+   "id": "K7a-111",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 170,
+   "kind": "law",
+   "claim": "With Cmq = 0 the model's ζ is 0.050",
+   "evidence": "probe:79"
+  },
+  {
+   "id": "K7a-112",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 174,
+   "kind": "law",
+   "claim": "Open loop from 55 m/s swings between 46 and 55 m/s",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "K7a-113",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 175,
+   "kind": "law",
+   "claim": "It crosses the trim airspeed every 13.6 s, half the period",
+   "evidence": "probe:89"
+  },
+  {
+   "id": "K7a-114",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 177,
+   "kind": "law",
+   "claim": "Altitude rises 46 m above the start",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "K7a-115",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 181,
+   "kind": "decl",
+   "claim": "pitch_hold, autopilot, piloted are functions of the example's file",
+   "evidence": "examples/src/longitudinal.jl:154,274,333"
+  },
+  {
+   "id": "K7a-116",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 182,
+   "kind": "mech",
+   "claim": "pitch_hold is one PID on the pitch angle",
+   "evidence": "examples/src/longitudinal.jl:154-160"
+  },
+  {
+   "id": "K7a-117",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 183,
+   "kind": "mech",
+   "claim": "autopilot is the cascade with actuators and sensing",
+   "evidence": "examples/src/longitudinal.jl:274-279"
+  },
+  {
+   "id": "K7a-118",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 184,
+   "kind": "mech",
+   "claim": "piloted puts an engage switch between cascade and actuators",
+   "evidence": "examples/src/longitudinal.jl:333-343"
+  },
+  {
+   "id": "K7a-120",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 186,
+   "kind": "mech",
+   "claim": "From autopilot on the model is a Group of groups beside the plant",
+   "evidence": "examples/src/longitudinal.jl:274-279,333"
+  },
+  {
+   "id": "K7a-121",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 187,
+   "kind": "mech",
+   "claim": "Each group exports crossing signals as faces and keeps the rest inside",
+   "evidence": "examples/src/longitudinal.jl:187-192,215-236"
+  },
+  {
+   "id": "K7a-122",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 190,
+   "kind": "mech",
+   "claim": "The testset runs the loops with a 5 ms frame",
+   "evidence": "examples/test/test_longitudinal.jl:58,67,415"
+  },
+  {
+   "id": "K7a-123",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 190,
+   "kind": "law",
+   "claim": "Pitch loops run at 50 Hz",
+   "evidence": "examples/src/longitudinal.jl:216,235"
+  },
+  {
+   "id": "K7a-124",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 191,
+   "kind": "law",
+   "claim": "Actuators' limiters run at 50 Hz",
+   "evidence": "examples/src/longitudinal.jl:252"
+  },
+  {
+   "id": "K7a-125",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 191,
+   "kind": "law",
+   "claim": "Altitude loop, airspeed loop and altimeter run at 10 Hz",
+   "evidence": "examples/src/longitudinal.jl:192,235"
+  },
+  {
+   "id": "K7a-126",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 192,
+   "kind": "mech",
+   "claim": "Each group declares its own rates (sample_times)",
+   "evidence": "examples/src/longitudinal.jl:192,235,252,319"
+  },
+  {
+   "id": "K7a-127",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 196,
+   "kind": "mech",
+   "claim": "One PID reads θ and commands the elevator",
+   "evidence": "examples/src/longitudinal.jl:156-158"
+  },
+  {
+   "id": "K7a-128",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 197,
+   "kind": "decl",
+   "claim": "pitch_hold gains Kp = −2.0, Ki = −1.0",
+   "evidence": "examples/src/longitudinal.jl:155"
+  },
+  {
+   "id": "K7a-129",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 198,
+   "kind": "decl",
+   "claim": "pitch_hold root inputs are θ_ref and δt",
+   "evidence": "examples/src/longitudinal.jl:157"
+  },
+  {
+   "id": "K7a-130",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 198,
+   "kind": "law",
+   "claim": "Gains are negative because a positive elevator pitches the nose down",
+   "evidence": "examples/src/longitudinal.jl:48,60"
+  },
+  {
+   "id": "K7a-131",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 198,
+   "kind": "decl",
+   "claim": "Lead `θ_ref` is the pitch_hold root input",
+   "evidence": "examples/src/longitudinal.jl:157"
+  },
+  {
+   "id": "K7a-132",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 199,
+   "kind": "decl",
+   "claim": "Controller is the continuous PID, or with discrete = true the DiscretePID at 50 Hz",
+   "evidence": "examples/src/longitudinal.jl:156,159"
+  },
+  {
+   "id": "K7a-133",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 200,
+   "kind": "law",
+   "claim": "The discrete controller is the same law on the discrete tier",
+   "evidence": "src/library.jl:2696-2701"
+  },
+  {
+   "id": "K7a-134",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 201,
+   "kind": "law",
+   "claim": "At trim the error is zero and the integral term alone carries the elevator",
+   "evidence": "src/library.jl:2699"
+  },
+  {
+   "id": "K7a-135",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 203,
+   "kind": "law",
+   "claim": "Integral term is state x.q of PID and store s.q of DiscretePID",
+   "evidence": "src/library.jl:2557,2693"
+  },
+  {
+   "id": "K7a-136",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 205,
+   "kind": "law",
+   "claim": "Continuous loop linearizes from θ_ref at trim",
+   "evidence": "probe:104-106"
+  },
+  {
+   "id": "K7a-137",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 205,
+   "kind": "decl",
+   "claim": "Lead `θ_ref` is the pitch_hold root input",
+   "evidence": "examples/src/longitudinal.jl:157"
+  },
+  {
+   "id": "K7a-138",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 206,
+   "kind": "decl",
+   "claim": "Taps are plant V, γ, θ, q and the integral term",
+   "evidence": "examples/test/test_longitudinal.jl:321-323"
+  },
+  {
+   "id": "K7a-139",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 207,
+   "kind": "law",
+   "claim": "Altitude is left out since its pure integrator makes A singular",
+   "evidence": "probe:55"
+  },
+  {
+   "id": "K7a-140",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 210,
+   "kind": "law",
+   "claim": "Pitch-hold eigenvalues −2.047 ± 8.064i",
+   "evidence": "probe:104"
+  },
+  {
+   "id": "K7a-141",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 210,
+   "kind": "law",
+   "claim": "Pitch-hold eigenvalue −1.392",
+   "evidence": "probe:104"
+  },
+  {
+   "id": "K7a-142",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 210,
+   "kind": "law",
+   "claim": "Pitch-hold eigenvalue −0.642",
+   "evidence": "probe:104"
+  },
+  {
+   "id": "K7a-143",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 210,
+   "kind": "law",
+   "claim": "Pitch-hold eigenvalue −0.052",
+   "evidence": "probe:104"
+  },
+  {
+   "id": "K7a-144",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 212,
+   "kind": "law",
+   "claim": "DC gain from θ_ref to θ is 1",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "K7a-145",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 212,
+   "kind": "decl",
+   "claim": "Lead `θ_ref` is the pitch_hold root input",
+   "evidence": "examples/src/longitudinal.jl:157"
+  },
+  {
+   "id": "K7a-146",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 213,
+   "kind": "law",
+   "claim": "Fast pair moves to ωn = 8.32 rad/s, ζ = 0.246",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "K7a-147",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 214,
+   "kind": "law",
+   "claim": "The discrete loop refuses the same linearize call",
+   "evidence": "probe:108"
+  },
+  {
+   "id": "K7a-148",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 215,
+   "kind": "law",
+   "claim": "Each of the two taps comes back as a TapResolution",
+   "evidence": "probe:108"
+  },
+  {
+   "id": "K7a-149",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 216,
+   "kind": "law",
+   "claim": "Discrete tier holds the integral term and the reference the controller reads",
+   "evidence": "probe:108"
+  },
+  {
+   "id": "K7a-150",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 219,
+   "kind": "law",
+   "claim": "Reference 0.05 rad above trim is 0.0699 rad",
+   "evidence": "probe:109"
+  },
+  {
+   "id": "K7a-151",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 220,
+   "kind": "law",
+   "claim": "Continuous pitch peak is 0.0799 rad",
+   "evidence": "probe:111"
+  },
+  {
+   "id": "K7a-152",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 220,
+   "kind": "law",
+   "claim": "Discrete pitch peak is 0.0820 rad",
+   "evidence": "probe:111"
+  },
+  {
+   "id": "K7a-153",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 222,
+   "kind": "law",
+   "claim": "The two responses stay within 0.0021 rad",
+   "evidence": "probe:111"
+  },
+  {
+   "id": "K7a-154",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 224,
+   "kind": "mech",
+   "claim": "Each control passes through a discrete RateLimiter then a continuous FirstOrderLag",
+   "evidence": "examples/src/longitudinal.jl:247-252"
+  },
+  {
+   "id": "K7a-155",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 225,
+   "kind": "decl",
+   "claim": "Elevator limiter 1 rad/s, lag 50 ms",
+   "evidence": "examples/src/longitudinal.jl:247"
+  },
+  {
+   "id": "K7a-156",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 226,
+   "kind": "decl",
+   "claim": "Throttle limiter 0.5 /s, lag 0.5 s",
+   "evidence": "examples/src/longitudinal.jl:248"
+  },
+  {
+   "id": "K7a-157",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 226,
+   "kind": "law",
+   "claim": "Actuator initial values are the trim's",
+   "evidence": "examples/src/longitudinal.jl:247-248"
+  },
+  {
+   "id": "K7a-158",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 227,
+   "kind": "decl",
+   "claim": "actuators takes δe_cmd, δt_cmd and publishes δe, δt",
+   "evidence": "examples/src/longitudinal.jl:249,251"
+  },
+  {
+   "id": "K7a-159",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 227,
+   "kind": "decl",
+   "claim": "Lead `δe_cmd` is an actuators input face",
+   "evidence": "examples/src/longitudinal.jl:249"
+  },
+  {
+   "id": "K7a-160",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 227,
+   "kind": "decl",
+   "claim": "Lead `δt_cmd` is an actuators input face",
+   "evidence": "examples/src/longitudinal.jl:249"
+  },
+  {
+   "id": "K7a-161",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 230,
+   "kind": "mech",
+   "claim": "The measurement is altitude plus Gaussian white noise",
+   "evidence": "examples/src/longitudinal.jl:176,188"
+  },
+  {
+   "id": "K7a-162",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 231,
+   "kind": "mech",
+   "claim": "The sensor is configured to the rate of the loop it feeds",
+   "evidence": "examples/src/longitudinal.jl:192"
+  },
+  {
+   "id": "K7a-163",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 232,
+   "kind": "mech",
+   "claim": "Altimeter is a stateless discrete leaf at 10 Hz",
+   "evidence": "examples/src/longitudinal.jl:171-176,192"
+  },
+  {
+   "id": "K7a-164",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 233,
+   "kind": "mech",
+   "claim": "Altimeter adds noise to altitude and holds the sum between ticks",
+   "evidence": "examples/test/test_longitudinal.jl:386-390"
+  },
+  {
+   "id": "K7a-165",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 234,
+   "kind": "decl",
+   "claim": "The group publishes the measurement as h_meas",
+   "evidence": "examples/src/longitudinal.jl:191"
+  },
+  {
+   "id": "K7a-166",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 234,
+   "kind": "mech",
+   "claim": "GaussianWhiteNoise ticks at 10 Hz",
+   "evidence": "examples/src/longitudinal.jl:192"
+  },
+  {
+   "id": "K7a-167",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 234,
+   "kind": "decl",
+   "claim": "Lead `h_meas` is the sensing output face",
+   "evidence": "examples/src/longitudinal.jl:191"
+  },
+  {
+   "id": "K7a-168",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 235,
+   "kind": "decl",
+   "claim": "Strength is a two-sided density noise_psd = 1.8e-3 m² s",
+   "evidence": "examples/src/longitudinal.jl:187; src/library.jl:819"
+  },
+  {
+   "id": "K7a-169",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 236,
+   "kind": "law",
+   "claim": "The density gives 0.134 m per sample at 10 Hz",
+   "evidence": "probe:162"
+  },
+  {
+   "id": "K7a-170",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 236,
+   "kind": "law",
+   "claim": "The same density is 0.3 m per sample at 50 Hz",
+   "evidence": "probe:162"
+  },
+  {
+   "id": "K7a-171",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 238,
+   "kind": "mech",
+   "claim": "A 50 Hz sensor read by the 10 Hz loop is decimated without anti-aliasing",
+   "evidence": "probe:163-166"
+  },
+  {
+   "id": "K7a-172",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 239,
+   "kind": "law",
+   "claim": "The loop holds one 0.3 m sample for five sensor periods",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "K7a-173",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 240,
+   "kind": "law",
+   "claim": "Late altitude error more than doubles (0.0775 to 0.1646)",
+   "evidence": "probe:163,165"
+  },
+  {
+   "id": "K7a-174",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 245,
+   "kind": "law",
+   "claim": "Row 1 late altitude error 0.1646 m",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "K7a-175",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 245,
+   "kind": "law",
+   "claim": "Row 1 late airspeed error 0.0392 m/s",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "K7a-176",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 245,
+   "kind": "law",
+   "claim": "Row 1 peak 1050.152 m",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "K7a-177",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 246,
+   "kind": "law",
+   "claim": "Row 2 late altitude error 0.0641 m",
+   "evidence": "probe:166"
+  },
+  {
+   "id": "K7a-178",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 246,
+   "kind": "law",
+   "claim": "Row 2 late airspeed error 0.0150 m/s",
+   "evidence": "probe:166"
+  },
+  {
+   "id": "K7a-179",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 246,
+   "kind": "law",
+   "claim": "Row 2 peak 1050.064 m",
+   "evidence": "probe:166"
+  },
+  {
+   "id": "K7a-180",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 247,
+   "kind": "law",
+   "claim": "Row 3 late altitude error 0.0775 m",
+   "evidence": "probe:163"
+  },
+  {
+   "id": "K7a-181",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 247,
+   "kind": "law",
+   "claim": "Row 3 late airspeed error 0.0187 m/s",
+   "evidence": "probe:163"
+  },
+  {
+   "id": "K7a-182",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 247,
+   "kind": "law",
+   "claim": "Row 3 peak 1050.061 m",
+   "evidence": "probe:163"
+  },
+  {
+   "id": "K7a-183",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 249,
+   "kind": "mech",
+   "claim": "The cascade is four DiscretePIDs, each with the hold axis",
+   "evidence": "examples/src/longitudinal.jl:217,221-224"
+  },
+  {
+   "id": "K7a-184",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 254,
+   "kind": "decl",
+   "claim": "Pitch-rate loop 50 Hz reads q commands elevator",
+   "evidence": "examples/src/longitudinal.jl:223,235"
+  },
+  {
+   "id": "K7a-185",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 254,
+   "kind": "decl",
+   "claim": "Pitch-rate loop Kp −0.2, Ki −0.4, limits ±0.5 rad",
+   "evidence": "examples/src/longitudinal.jl:223"
+  },
+  {
+   "id": "K7a-186",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 255,
+   "kind": "decl",
+   "claim": "Attitude loop 50 Hz reads θ commands pitch rate",
+   "evidence": "examples/src/longitudinal.jl:222,231,235"
+  },
+  {
+   "id": "K7a-187",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 255,
+   "kind": "decl",
+   "claim": "Attitude loop Kp 2.0, Ki 0.5, limits ±0.5 rad/s",
+   "evidence": "examples/src/longitudinal.jl:222"
+  },
+  {
+   "id": "K7a-188",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 256,
+   "kind": "decl",
+   "claim": "Altitude loop 10 Hz reads noisy h commands pitch attitude",
+   "evidence": "examples/src/longitudinal.jl:221,227,231,235"
+  },
+  {
+   "id": "K7a-189",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 256,
+   "kind": "decl",
+   "claim": "Altitude loop Kp 0.01, Ki 0.001, limits ±0.26 rad",
+   "evidence": "examples/src/longitudinal.jl:221"
+  },
+  {
+   "id": "K7a-190",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 257,
+   "kind": "decl",
+   "claim": "Airspeed loop 10 Hz reads V commands throttle",
+   "evidence": "examples/src/longitudinal.jl:224,228,234,235"
+  },
+  {
+   "id": "K7a-191",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 257,
+   "kind": "decl",
+   "claim": "Airspeed loop Kp 0.2, Ki 0.05, limits 0 to 1",
+   "evidence": "examples/src/longitudinal.jl:224"
+  },
+  {
+   "id": "K7a-192",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 259,
+   "kind": "law",
+   "claim": "Innermost gains are negative because Cmδe < 0",
+   "evidence": "examples/src/longitudinal.jl:48,223"
+  },
+  {
+   "id": "K7a-193",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 261,
+   "kind": "law",
+   "claim": "|24.5 Kp| ≈ 5 rad/s (4.9) near the short period",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "K7a-194",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 264,
+   "kind": "law",
+   "claim": "Altitude loop gain gives 0.01 rad of pitch per metre of error",
+   "evidence": "examples/src/longitudinal.jl:221"
+  },
+  {
+   "id": "K7a-195",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 265,
+   "kind": "law",
+   "claim": "Altitude loop bandwidth is about 0.5 rad/s (Kp V)",
+   "evidence": "examples/src/longitudinal.jl:221"
+  },
+  {
+   "id": "K7a-196",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 267,
+   "kind": "decl",
+   "claim": "Attitude loop holds on the rate loop's saturated code",
+   "evidence": "examples/src/longitudinal.jl:232"
+  },
+  {
+   "id": "K7a-197",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 268,
+   "kind": "decl",
+   "claim": "Altitude loop holds on the attitude loop's saturated code",
+   "evidence": "examples/src/longitudinal.jl:232"
+  },
+  {
+   "id": "K7a-198",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 269,
+   "kind": "law",
+   "claim": "An outer integrator stops winding when the inner command is on its limit",
+   "evidence": "probe:180"
+  },
+  {
+   "id": "K7a-199",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 270,
+   "kind": "decl",
+   "claim": "The two innermost PIDs read a constant zero code",
+   "evidence": "examples/src/longitudinal.jl:233"
+  },
+  {
+   "id": "K7a-200",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 271,
+   "kind": "law",
+   "claim": "The two innermost back-calculate against their own limits",
+   "evidence": "src/library.jl:2702-2708"
+  },
+  {
+   "id": "K7a-201",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 272,
+   "kind": "decl",
+   "claim": "Boundary carries references, measurements, engaged and two commands δe, δt",
+   "evidence": "examples/src/longitudinal.jl:227-234"
+  },
+  {
+   "id": "K7a-202",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 275,
+   "kind": "law",
+   "claim": "On the 50 m step the attitude loop never reaches its limits (max 0.488 of 0.5)",
+   "evidence": "probe:171"
+  },
+  {
+   "id": "K7a-203",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 277,
+   "kind": "law",
+   "claim": "Limits ±0.05 rad/s: limited 1.84 s at two rates",
+   "evidence": "probe:180"
+  },
+  {
+   "id": "K7a-204",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 277,
+   "kind": "law",
+   "claim": "Limits ±0.05 rad/s: limited 2.02 s with every loop at 50 Hz",
+   "evidence": "probe:180"
+  },
+  {
+   "id": "K7a-205",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 278,
+   "kind": "law",
+   "claim": "With no hold the attitude loop is limited 2.68 s",
+   "evidence": "probe:180"
+  },
+  {
+   "id": "K7a-206",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 280,
+   "kind": "mech",
+   "claim": "cascade(standby = true) adds the tracking axis",
+   "evidence": "examples/src/longitudinal.jl:217"
+  },
+  {
+   "id": "K7a-207",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 282,
+   "kind": "mech",
+   "claim": "The two innermost track δe_track and δt_track, which the group takes",
+   "evidence": "examples/src/longitudinal.jl:220"
+  },
+  {
+   "id": "K7a-208",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 283,
+   "kind": "decl",
+   "claim": "Lead `δe_track` is a cascade(standby) input face",
+   "evidence": "examples/src/longitudinal.jl:220"
+  },
+  {
+   "id": "K7a-209",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 283,
+   "kind": "decl",
+   "claim": "Lead `δt_track` is a cascade(standby) input face",
+   "evidence": "examples/src/longitudinal.jl:220"
+  },
+  {
+   "id": "K7a-210",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 284,
+   "kind": "mech",
+   "claim": "Outer controllers track the measured variable of the loop inside",
+   "evidence": "examples/src/longitudinal.jl:219"
+  },
+  {
+   "id": "K7a-211",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 286,
+   "kind": "law",
+   "claim": "Every Tt is 0.02 s",
+   "evidence": "examples/src/longitudinal.jl:217"
+  },
+  {
+   "id": "K7a-212",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 286,
+   "kind": "mech",
+   "claim": "autopilot builds the cascade without standby",
+   "evidence": "examples/src/longitudinal.jl:275"
+  },
+  {
+   "id": "K7a-213",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 287,
+   "kind": "mech",
+   "claim": "autopilot holds engaged true through a Constant",
+   "evidence": "examples/src/longitudinal.jl:276,278"
+  },
+  {
+   "id": "K7a-214",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 289,
+   "kind": "mech",
+   "claim": "cruise(solution) is autopilot's initial condition",
+   "evidence": "examples/src/longitudinal.jl:291-295"
+  },
+  {
+   "id": "K7a-215",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 290,
+   "kind": "mech",
+   "claim": "cruise writes the plant's trim θ beside its level state",
+   "evidence": "examples/src/longitudinal.jl:292"
+  },
+  {
+   "id": "K7a-216",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 291,
+   "kind": "mech",
+   "claim": "cruise writes root inputs at 1000 m and 50 m/s",
+   "evidence": "examples/src/longitudinal.jl:291"
+  },
+  {
+   "id": "K7a-217",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 292,
+   "kind": "mech",
+   "claim": "cruise seeds three of the four PIDs through at and set(s = …)",
+   "evidence": "examples/src/longitudinal.jl:293-295"
+  },
+  {
+   "id": "K7a-218",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 294,
+   "kind": "decl",
+   "claim": "A DiscretePID store is (q, yf, saturated), all zero by default",
+   "evidence": "src/library.jl:2693; probe:195"
+  },
+  {
+   "id": "K7a-219",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 297,
+   "kind": "law",
+   "claim": "At trim every loop's error is zero",
+   "evidence": "examples/src/longitudinal.jl:291-295; probe:194"
+  },
+  {
+   "id": "K7a-220",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 298,
+   "kind": "law",
+   "claim": "Law u = Kp (b r − y) + q − Kd d with b = 1, Kd = 0 reduces to u = q",
+   "evidence": "src/library.jl:2699"
+  },
+  {
+   "id": "K7a-221",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 300,
+   "kind": "law",
+   "claim": "Altitude loop's integral term is seeded at θ",
+   "evidence": "examples/src/longitudinal.jl:293"
+  },
+  {
+   "id": "K7a-222",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 301,
+   "kind": "law",
+   "claim": "Pitch-rate loop's integral term is seeded at δe",
+   "evidence": "examples/src/longitudinal.jl:294"
+  },
+  {
+   "id": "K7a-223",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 301,
+   "kind": "law",
+   "claim": "Airspeed loop's is seeded at δt",
+   "evidence": "examples/src/longitudinal.jl:295"
+  },
+  {
+   "id": "K7a-224",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 301,
+   "kind": "law",
+   "claim": "Attitude loop keeps its default seed",
+   "evidence": "examples/src/longitudinal.jl:291-295"
+  },
+  {
+   "id": "K7a-225",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 303,
+   "kind": "law",
+   "claim": "Without the seeds a transient of many seconds follows (27 s)",
+   "evidence": "probe:190"
+  },
+  {
+   "id": "K7a-226",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 306,
+   "kind": "law",
+   "claim": "yf is set to 1000, 0 and 50, the measurement each PID reads",
+   "evidence": "examples/src/longitudinal.jl:293-295"
+  },
+  {
+   "id": "K7a-227",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 307,
+   "kind": "law",
+   "claim": "With Kd = 0 yf never reaches the output",
+   "evidence": "src/library.jl:2699"
+  },
+  {
+   "id": "K7a-228",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 309,
+   "kind": "mech",
+   "claim": "A store overlay merges onto s_init",
+   "evidence": "probe:195; examples/src/longitudinal.jl:293"
+  },
+  {
+   "id": "K7a-229",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 310,
+   "kind": "mech",
+   "claim": "cruise names q and yf and leaves saturated at its default",
+   "evidence": "examples/src/longitudinal.jl:293-295"
+  },
+  {
+   "id": "K7a-230",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 311,
+   "kind": "law",
+   "claim": "With noise off the altitude drifts less than 3e-10 m over 60 s",
+   "evidence": "probe:194"
+  },
+  {
+   "id": "K7a-231",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 312,
+   "kind": "mech",
+   "claim": "hand_flown is cruise's with pilot commands at trim and engage false",
+   "evidence": "examples/src/longitudinal.jl:352-353"
+  },
+  {
+   "id": "K7a-232",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 316,
+   "kind": "mech",
+   "claim": "A Switch per control selects the cascade while engaged, the pilot's otherwise",
+   "evidence": "examples/src/longitudinal.jl:311,315,340"
+  },
+  {
+   "id": "K7a-233",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 318,
+   "kind": "decl",
+   "claim": "δe_pilot, δt_pilot and engage are root inputs of piloted",
+   "evidence": "examples/src/longitudinal.jl:336-338"
+  },
+  {
+   "id": "K7a-234",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 320,
+   "kind": "mech",
+   "claim": "Selected commands leave the group as they are for the actuators",
+   "evidence": "examples/src/longitudinal.jl:317,341"
+  },
+  {
+   "id": "K7a-235",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 320,
+   "kind": "mech",
+   "claim": "They also leave one tick old through a 50 Hz UnitDelay as δe_prev, δt_prev",
+   "evidence": "examples/src/longitudinal.jl:312,318-319"
+  },
+  {
+   "id": "K7a-236",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 321,
+   "kind": "decl",
+   "claim": "Lead `δe_prev` is a selection output face",
+   "evidence": "examples/src/longitudinal.jl:318"
+  },
+  {
+   "id": "K7a-237",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 321,
+   "kind": "decl",
+   "claim": "Lead `δt_prev` is a selection output face",
+   "evidence": "examples/src/longitudinal.jl:318"
+  },
+  {
+   "id": "K7a-238",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 322,
+   "kind": "mech",
+   "claim": "The cascade's δe_track and δt_track read δe_prev and δt_prev",
+   "evidence": "examples/src/longitudinal.jl:342"
+  },
+  {
+   "id": "K7a-239",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 322,
+   "kind": "mech",
+   "claim": "The cascade runs all the time and tracks the pilot's commands",
+   "evidence": "examples/src/longitudinal.jl:333-334; examples/test/test_longitudinal.jl:433-445"
+  },
+  {
+   "id": "K7a-240",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 322,
+   "kind": "decl",
+   "claim": "Lead `δe_track` is the piloted wire target",
+   "evidence": "examples/src/longitudinal.jl:342"
+  },
+  {
+   "id": "K7a-241",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 322,
+   "kind": "decl",
+   "claim": "Lead `δt_track` is the piloted wire target",
+   "evidence": "examples/src/longitudinal.jl:342"
+  },
+  {
+   "id": "K7a-242",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 323,
+   "kind": "law",
+   "claim": "At engage every integrator holds nearly the value reproducing the command",
+   "evidence": "probe:211-214"
+  },
+  {
+   "id": "K7a-243",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 325,
+   "kind": "law",
+   "claim": "Without the delays the build is refused with two AlgebraicCycle diagnostics",
+   "evidence": "probe:229"
+  },
+  {
+   "id": "K7a-244",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 326,
+   "kind": "law",
+   "claim": "Both cycles are classified real",
+   "evidence": "probe:229"
+  },
+  {
+   "id": "K7a-245",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 327,
+   "kind": "law",
+   "claim": "Cycles are pitch-rate loop with elevator switch, airspeed loop with throttle's",
+   "evidence": "probe:229"
+  },
+  {
+   "id": "K7a-246",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 331,
+   "kind": "law",
+   "claim": "Staged engage reaches the continuous switches at the next frame, 30.005 s",
+   "evidence": "probe:221"
+  },
+  {
+   "id": "K7a-247",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 332,
+   "kind": "law",
+   "claim": "Pitch loops would read it at their next 50 Hz tick, 30.02 s",
+   "evidence": "examples/src/longitudinal.jl:216; probe:221"
+  },
+  {
+   "id": "K7a-248",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 332,
+   "kind": "law",
+   "claim": "Outer loops would read it at their next 10 Hz tick, 30.1 s",
+   "evidence": "examples/src/longitudinal.jl:216; probe:221"
+  },
+  {
+   "id": "K7a-249",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 334,
+   "kind": "mech",
+   "claim": "selection holds engage in a 10 Hz UnitDelay",
+   "evidence": "examples/src/longitudinal.jl:311,319"
+  },
+  {
+   "id": "K7a-250",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 335,
+   "kind": "mech",
+   "claim": "The switches read the latch",
+   "evidence": "examples/src/longitudinal.jl:315"
+  },
+  {
+   "id": "K7a-251",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 335,
+   "kind": "decl",
+   "claim": "The latch leaves the group as the face engaged for the cascade",
+   "evidence": "examples/src/longitudinal.jl:318,343"
+  },
+  {
+   "id": "K7a-252",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 336,
+   "kind": "law",
+   "claim": "Switches and all four controllers act at the same tick",
+   "evidence": "examples/test/test_longitudinal.jl:433-470; probe:213"
+  },
+  {
+   "id": "K7a-253",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 337,
+   "kind": "law",
+   "claim": "Delay is up to two ticks of the slowest rate",
+   "evidence": "probe:213,221"
+  },
+  {
+   "id": "K7a-254",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 338,
+   "kind": "law",
+   "claim": "An engage staged at 30 s acts at 30.2 s",
+   "evidence": "probe:213"
+  },
+  {
+   "id": "K7a-255",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 340,
+   "kind": "decl",
+   "claim": "References, pilot's commands and flag are root inputs",
+   "evidence": "examples/src/longitudinal.jl:336-338"
+  },
+  {
+   "id": "K7a-256",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 342,
+   "kind": "mech",
+   "claim": "The testset stages each write while stopped at the nominal time",
+   "evidence": "examples/test/test_longitudinal.jl:79-90"
+  },
+  {
+   "id": "K7a-257",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 343,
+   "kind": "law",
+   "claim": "A staged batch applies at the top of the next frame",
+   "evidence": "probe:221"
+  },
+  {
+   "id": "K7a-258",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 344,
+   "kind": "law",
+   "claim": "A discrete component reads a staged write at its next tick",
+   "evidence": "probe:213,221"
+  },
+  {
+   "id": "K7a-259",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 347,
+   "kind": "mech",
+   "claim": "The 50 m step is written in the initial condition",
+   "evidence": "examples/test/test_longitudinal.jl:66-70"
+  },
+  {
+   "id": "K7a-260",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 348,
+   "kind": "law",
+   "claim": "Autopilot step is within 1 m by 24.4 s",
+   "evidence": "probe:168"
+  },
+  {
+   "id": "K7a-261",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 348,
+   "kind": "law",
+   "claim": "Autopilot step peaks at 1050.06 m",
+   "evidence": "probe:163"
+  },
+  {
+   "id": "K7a-262",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 349,
+   "kind": "law",
+   "claim": "Airspeed strays up to 3.90 m/s",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "K7a-263",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 349,
+   "kind": "law",
+   "claim": "The largest airspeed excursion falls at 3.73 s",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "K7a-264",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 349,
+   "kind": "law",
+   "claim": "After 75 s altitude stays within 0.078 m",
+   "evidence": "probe:163"
+  },
+  {
+   "id": "K7a-265",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 350,
+   "kind": "law",
+   "claim": "After 75 s airspeed stays within 0.019 m/s",
+   "evidence": "probe:163"
+  },
+  {
+   "id": "K7a-266",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 352,
+   "kind": "mech",
+   "claim": "Pilot holds trim, pulls elevator 0.02 rad over [5,7) s, engages at 30 s",
+   "evidence": "examples/test/test_longitudinal.jl:79-90"
+  },
+  {
+   "id": "K7a-267",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 354,
+   "kind": "law",
+   "claim": "By hand the altitude runs between 988.0 and 1016.7 m",
+   "evidence": "probe:209"
+  },
+  {
+   "id": "K7a-268",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 355,
+   "kind": "law",
+   "claim": "Standby cascade within 0.0043 rad of pilot's elevator over [8,30)",
+   "evidence": "probe:211"
+  },
+  {
+   "id": "K7a-269",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 356,
+   "kind": "law",
+   "claim": "Standby within 0.0156 of the throttle over [5,30)",
+   "evidence": "probe:212"
+  },
+  {
+   "id": "K7a-270",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 356,
+   "kind": "mech",
+   "claim": "The throttle loop ticks at 10 Hz",
+   "evidence": "examples/src/longitudinal.jl:235"
+  },
+  {
+   "id": "K7a-271",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 358,
+   "kind": "law",
+   "claim": "Selected elevator command jumps 0.0011 rad at 30.2 s",
+   "evidence": "probe:214"
+  },
+  {
+   "id": "K7a-272",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 358,
+   "kind": "law",
+   "claim": "Selected throttle command jumps 0.0086 at 30.2 s",
+   "evidence": "probe:214"
+  },
+  {
+   "id": "K7a-273",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 359,
+   "kind": "law",
+   "claim": "The throttle rate limiter passes 0.01 per tick (0.5 × 0.02)",
+   "evidence": "probe:216"
+  },
+  {
+   "id": "K7a-274",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 360,
+   "kind": "law",
+   "claim": "Behind its actuator the elevator jumps 1.0e-4 rad",
+   "evidence": "probe:216"
+  },
+  {
+   "id": "K7a-275",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 361,
+   "kind": "law",
+   "claim": "Elevator command's largest frame change over [80,90) s is 0.0017 rad",
+   "evidence": "probe:217"
+  },
+  {
+   "id": "K7a-276",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 362,
+   "kind": "law",
+   "claim": "Autopilot holds 1000 m within 0.057 m over [80,90) s",
+   "evidence": "probe:218"
+  },
+  {
+   "id": "K7a-277",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 364,
+   "kind": "mech",
+   "claim": "The testset pins eigenvalues, DC gain, refusal and step of the pitch hold",
+   "evidence": "examples/test/test_longitudinal.jl:320-355"
+  },
+  {
+   "id": "K7a-278",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 365,
+   "kind": "mech",
+   "claim": "Under autopilot it pins rest, rates, hold, peak, airspeed excursion, noise",
+   "evidence": "examples/test/test_longitudinal.jl:356-392"
+  },
+  {
+   "id": "K7a-279",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 367,
+   "kind": "mech",
+   "claim": "Under piloted it pins refusal, staged writes, standby gaps, latch, jumps, recapture",
+   "evidence": "examples/test/test_longitudinal.jl:394-483"
+  },
+  {
+   "id": "K7a-280",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 371,
+   "kind": "mech",
+   "claim": "closed_loop flies the cascade beside an LQR tracker with a switch between",
+   "evidence": "examples/src/longitudinal.jl:446-522"
+  },
+  {
+   "id": "K7a-281",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 374,
+   "kind": "decl",
+   "claim": "closed_loop groups: sensing, pid_controller, lqr_controller, selection, actuators",
+   "evidence": "examples/src/longitudinal.jl:507"
+  },
+  {
+   "id": "K7a-282",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 375,
+   "kind": "decl",
+   "claim": "closed_loop root inputs are h_ref, V_ref and mode",
+   "evidence": "examples/src/longitudinal.jl:508-510; probe:283"
+  },
+  {
+   "id": "K7a-283",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 376,
+   "kind": "law",
+   "claim": "Everything discrete in closed_loop runs at 50 Hz",
+   "evidence": "examples/src/longitudinal.jl:448,454,471,491,500,506"
+  },
+  {
+   "id": "K7a-284",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 377,
+   "kind": "mech",
+   "claim": "pid_controller is the cascade above with its standby",
+   "evidence": "examples/src/longitudinal.jl:449,455-471"
+  },
+  {
+   "id": "K7a-285",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 378,
+   "kind": "decl",
+   "claim": "Its boundary carries references, measurements, mode, delayed commands, two commands",
+   "evidence": "examples/src/longitudinal.jl:461-470"
+  },
+  {
+   "id": "K7a-286",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 379,
+   "kind": "mech",
+   "claim": "sensing is a 50 Hz sensor with 0.3 m noise per sample",
+   "evidence": "examples/src/longitudinal.jl:446,450,454"
+  },
+  {
+   "id": "K7a-287",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 380,
+   "kind": "mech",
+   "claim": "Noise is summed by the `altimeter` junction",
+   "evidence": "examples/src/longitudinal.jl:450-452"
+  },
+  {
+   "id": "K7a-288",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 380,
+   "kind": "mech",
+   "claim": "trimmed(solution) is closed_loop's initial condition",
+   "evidence": "examples/src/longitudinal.jl:542-546"
+  },
+  {
+   "id": "K7a-289",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 381,
+   "kind": "mech",
+   "claim": "trimmed is cruise's seeds with the full stores written",
+   "evidence": "examples/src/longitudinal.jl:544-546"
+  },
+  {
+   "id": "K7a-290",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 382,
+   "kind": "law",
+   "claim": "trimmed puts the cascade in command (mode true)",
+   "evidence": "examples/src/longitudinal.jl:542"
+  },
+  {
+   "id": "K7a-291",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 383,
+   "kind": "law",
+   "claim": "The tracker carries x_trim, u_trim, z_trim as parameters",
+   "evidence": "examples/src/longitudinal.jl:472-473"
+  },
+  {
+   "id": "K7a-292",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 384,
+   "kind": "law",
+   "claim": "So the tracker's integral state is zero at trim",
+   "evidence": "src/library.jl:3046-3047; probe:281"
+  },
+  {
+   "id": "K7a-293",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 386,
+   "kind": "law",
+   "claim": "Every tracking Tt is 0.02 s, the tracker's included",
+   "evidence": "examples/src/longitudinal.jl:449,474"
+  },
+  {
+   "id": "K7a-294",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 387,
+   "kind": "law",
+   "claim": "A controller not in command follows the command with a lag growing with Tt",
+   "evidence": "src/library.jl:2470-2476"
+  },
+  {
+   "id": "K7a-295",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 389,
+   "kind": "law",
+   "claim": "Tracker, altitude loop, airspeed loop within about 0.015 rad once the fast part is over",
+   "evidence": "examples/test/test_longitudinal.jl:280-298; probe:260"
+  },
+  {
+   "id": "K7a-299",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 397,
+   "kind": "decl",
+   "claim": "lqr_controller is a DiscreteLQRTracker over the full state (V,γ,θ,q,h)",
+   "evidence": "examples/src/longitudinal.jl:472,476"
+  },
+  {
+   "id": "K7a-300",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 398,
+   "kind": "decl",
+   "claim": "It commands both controls with command vector z = (h, V)",
+   "evidence": "examples/src/longitudinal.jl:472-478,476"
+  },
+  {
+   "id": "K7a-301",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 400,
+   "kind": "mech",
+   "claim": "The group packs state, measurement and reference vectors from scalar faces",
+   "evidence": "examples/src/longitudinal.jl:476-485"
+  },
+  {
+   "id": "K7a-302",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 401,
+   "kind": "mech",
+   "claim": "It unpacks the command into δe and δt",
+   "evidence": "examples/src/longitudinal.jl:489-490"
+  },
+  {
+   "id": "K7a-303",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 402,
+   "kind": "mech",
+   "claim": "It negates mode into the tracker's engaged vector",
+   "evidence": "examples/src/longitudinal.jl:479"
+  },
+  {
+   "id": "K7a-304",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 403,
+   "kind": "law",
+   "claim": "The tracker's vector shape never crosses a boundary",
+   "evidence": "examples/src/longitudinal.jl:480-490"
+  },
+  {
+   "id": "K7a-305",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 404,
+   "kind": "mech",
+   "claim": "The state is augmented with the integrals of both command errors",
+   "evidence": "examples/src/longitudinal.jl:394-395"
+  },
+  {
+   "id": "K7a-306",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 405,
+   "kind": "mech",
+   "claim": "The gain comes from ControlSystemsBase's lqr",
+   "evidence": "examples/src/longitudinal.jl:396"
+  },
+  {
+   "id": "K7a-307",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 406,
+   "kind": "decl",
+   "claim": "Diagonal weights follow Bryson's rule",
+   "evidence": "examples/src/longitudinal.jl:390-391,396"
+  },
+  {
+   "id": "K7a-308",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 408,
+   "kind": "decl",
+   "claim": "State weights V 5 m/s, γ,θ 0.05 rad, q 0.2 rad/s, h 20 m",
+   "evidence": "examples/src/longitudinal.jl:390"
+  },
+  {
+   "id": "K7a-309",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 409,
+   "kind": "decl",
+   "claim": "Integral weights ∫h 100 m s, ∫V 25 m",
+   "evidence": "examples/src/longitudinal.jl:391"
+  },
+  {
+   "id": "K7a-310",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 409,
+   "kind": "decl",
+   "claim": "Input weights δe 0.2 rad, δt 0.3",
+   "evidence": "examples/src/longitudinal.jl:391"
+  },
+  {
+   "id": "K7a-311",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 411,
+   "kind": "mech",
+   "claim": "K_fbk is the state half of the augmented gain",
+   "evidence": "examples/src/longitudinal.jl:397,400"
+  },
+  {
+   "id": "K7a-312",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 411,
+   "kind": "mech",
+   "claim": "K_int is the integral half",
+   "evidence": "examples/src/longitudinal.jl:397,401"
+  },
+  {
+   "id": "K7a-313",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 412,
+   "kind": "law",
+   "claim": "K_fwd = M_22 + K_fbk M_12",
+   "evidence": "examples/src/longitudinal.jl:399-400"
+  },
+  {
+   "id": "K7a-314",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 413,
+   "kind": "mech",
+   "claim": "The blocks are read off the inverse of the full [A B; C D]",
+   "evidence": "examples/src/longitudinal.jl:398-399"
+  },
+  {
+   "id": "K7a-315",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 414,
+   "kind": "law",
+   "claim": "The Schur form needs A⁻¹, which the zero altitude eigenvalue denies",
+   "evidence": "probe:55"
+  },
+  {
+   "id": "K7a-316",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 415,
+   "kind": "law",
+   "claim": "The trim triple is the linearization's operating point",
+   "evidence": "examples/src/longitudinal.jl:472-473"
+  },
+  {
+   "id": "K7a-318",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 416,
+   "kind": "decl",
+   "claim": "The tracker's hold input reads a zero code",
+   "evidence": "examples/src/longitudinal.jl:478,488"
+  },
+  {
+   "id": "K7a-319",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 419,
+   "kind": "mech",
+   "claim": "A Switch per control selects the cascade while mode holds, the tracker otherwise",
+   "evidence": "examples/src/longitudinal.jl:492-497"
+  },
+  {
+   "id": "K7a-320",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 420,
+   "kind": "mech",
+   "claim": "Both controllers run all the time and the one not in command tracks",
+   "evidence": "examples/src/longitudinal.jl:449,474-475"
+  },
+  {
+   "id": "K7a-321",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 422,
+   "kind": "decl",
+   "claim": "mode is the cascade's engaged input and, negated, the tracker's",
+   "evidence": "examples/src/longitudinal.jl:465,479"
+  },
+  {
+   "id": "K7a-322",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 423,
+   "kind": "mech",
+   "claim": "Selected commands leave as they are and one tick old as δe_prev, δt_prev",
+   "evidence": "examples/src/longitudinal.jl:498-499"
+  },
+  {
+   "id": "K7a-323",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 424,
+   "kind": "mech",
+   "claim": "Each innermost PID and the tracker read the delayed command as tracking input",
+   "evidence": "examples/src/longitudinal.jl:463-464,484"
+  },
+  {
+   "id": "K7a-324",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 424,
+   "kind": "decl",
+   "claim": "Lead `δe_prev` is a closed_loop selection output face",
+   "evidence": "examples/src/longitudinal.jl:499"
+  },
+  {
+   "id": "K7a-325",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 424,
+   "kind": "decl",
+   "claim": "Lead `δt_prev` is a closed_loop selection output face",
+   "evidence": "examples/src/longitudinal.jl:499"
+  },
+  {
+   "id": "K7a-326",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 426,
+   "kind": "mech",
+   "claim": "The two outer cascade loops track the measured variable of the loop inside",
+   "evidence": "examples/src/longitudinal.jl:462"
+  },
+  {
+   "id": "K7a-327",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 428,
+   "kind": "law",
+   "claim": "On re-engage every integrator holds nearly the value reproducing the command",
+   "evidence": "examples/test/test_longitudinal.jl:300-312"
+  },
+  {
+   "id": "K7a-328",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 431,
+   "kind": "law",
+   "claim": "The switch is bumpless in steady flight",
+   "evidence": "probe:267"
+  },
+  {
+   "id": "K7a-329",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 432,
+   "kind": "law",
+   "claim": "During a maneuver the standby lags by a few hundredths of a radian",
+   "evidence": "probe:260"
+  },
+  {
+   "id": "K7a-330",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 434,
+   "kind": "law",
+   "claim": "Standby tracker stays within about 0.034 rad after the first half second",
+   "evidence": "probe:260"
+  },
+  {
+   "id": "K7a-331",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 435,
+   "kind": "law",
+   "claim": "The gap peaks at 0.43 rad right after the step",
+   "evidence": "probe:263"
+  },
+  {
+   "id": "K7a-332",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 436,
+   "kind": "mech",
+   "claim": "The step moves the tracker's own law in one tick",
+   "evidence": "probe2:208"
+  },
+  {
+   "id": "K7a-334",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 437,
+   "kind": "law",
+   "claim": "The gap sits within 0.015 rad after t = 10 s",
+   "evidence": "probe:260"
+  },
+  {
+   "id": "K7a-335",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 439,
+   "kind": "law",
+   "claim": "Steady switch at 60 s: elevator's largest change 3.45e-4",
+   "evidence": "probe:267"
+  },
+  {
+   "id": "K7a-336",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 440,
+   "kind": "law",
+   "claim": "Cascade steady jitter is 5.05e-4",
+   "evidence": "probe:267"
+  },
+  {
+   "id": "K7a-337",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 441,
+   "kind": "law",
+   "claim": "Switch at 10 s: command jumps by 1.1e-2",
+   "evidence": "probe:270"
+  },
+  {
+   "id": "K7a-338",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 442,
+   "kind": "law",
+   "claim": "Switch at 10 s: actuator jumps by 1.5e-3",
+   "evidence": "probe:270"
+  },
+  {
+   "id": "K7a-339",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 443,
+   "kind": "law",
+   "claim": "Hand-back at 10 s jumps the command by 2.3e-3",
+   "evidence": "probe:271"
+  },
+  {
+   "id": "K7a-340",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 444,
+   "kind": "law",
+   "claim": "Hand-back at 7 s would jump the command by about 0.09 rad",
+   "evidence": "probe2:212"
+  },
+  {
+   "id": "K7a-341",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 445,
+   "kind": "law",
+   "claim": "The standby sat 0.15 rad behind at 7 s",
+   "evidence": "probe2:212"
+  },
+  {
+   "id": "K7a-342",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 446,
+   "kind": "law",
+   "claim": "The command slews up to about 4 rad/s (0.0775 per 20 ms tick)",
+   "evidence": "probe2:215"
+  },
+  {
+   "id": "K7a-343",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 447,
+   "kind": "law",
+   "claim": "The actuator's rate limit takes about a tenth of a second to catch up",
+   "evidence": "probe2:212-215"
+  },
+  {
+   "id": "K7a-344",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 450,
+   "kind": "mech",
+   "claim": "The helper steps to one frame before 5 s and stages h_ref at 1050 m",
+   "evidence": "examples/test/test_longitudinal.jl:22-38"
+  },
+  {
+   "id": "K7a-345",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 452,
+   "kind": "mech",
+   "claim": "It stages mode one frame before the switch time and runs to 120 s",
+   "evidence": "examples/test/test_longitudinal.jl:22-38"
+  },
+  {
+   "id": "K7a-346",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 453,
+   "kind": "law",
+   "claim": "A staged batch applies at the top of the next frame; boundary ticks settle in that frame",
+   "evidence": "examples/test/test_longitudinal.jl:19-21; probe:221"
+  },
+  {
+   "id": "K7a-347",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 457,
+   "kind": "law",
+   "claim": "A 50 m step at t = 5 s is held within 0.1 m by t = 80 s by either controller",
+   "evidence": "probe:254"
+  },
+  {
+   "id": "K7a-348",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 458,
+   "kind": "law",
+   "claim": "The cascade has no overshoot beyond its 0.064 m late jitter",
+   "evidence": "probe:254"
+  },
+  {
+   "id": "K7a-349",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 458,
+   "kind": "law",
+   "claim": "The tracker overshoots about 2 m (2.31 m)",
+   "evidence": "probe:254"
+  },
+  {
+   "id": "K7a-350",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 459,
+   "kind": "law",
+   "claim": "Airspeed strays up to about 4 m/s under the cascade (3.71)",
+   "evidence": "probe:254"
+  },
+  {
+   "id": "K7a-351",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 460,
+   "kind": "law",
+   "claim": "Airspeed strays about 1 m/s under the tracker (1.22)",
+   "evidence": "probe:254"
+  },
+  {
+   "id": "K7a-352",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 461,
+   "kind": "law",
+   "claim": "After t = 80 s airspeed stays within 0.02 m/s",
+   "evidence": "probe:254"
+  },
+  {
+   "id": "K7a-353",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 462,
+   "kind": "mech",
+   "claim": "The testset pins the closed-loop figures listed",
+   "evidence": "examples/test/test_longitudinal.jl:239-318"
+  },
+  {
+   "id": "K7a-354",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 467,
+   "kind": "mech",
+   "claim": "approach nests piloted whole as child vehicle",
+   "evidence": "examples/src/longitudinal.jl:368"
+  },
+  {
+   "id": "K7a-355",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 468,
+   "kind": "mech",
+   "claim": "approach adds the ground and a stop request",
+   "evidence": "examples/src/longitudinal.jl:368"
+  },
+  {
+   "id": "K7a-356",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 468,
+   "kind": "decl",
+   "claim": "approach has the same five root inputs",
+   "evidence": "examples/src/longitudinal.jl:369; examples/test/test_longitudinal.jl:485-500"
+  },
+  {
+   "id": "K7a-357",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 470,
+   "kind": "law",
+   "claim": "The flight is the same to the bit over the first 60 s",
+   "evidence": "examples/test/test_longitudinal.jl:485-500"
+  },
+  {
+   "id": "K7a-358",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 471,
+   "kind": "mech",
+   "claim": "The run lowers h_ref by 0.15 m every 0.1 s, one write per altitude-loop tick",
+   "evidence": "examples/test/test_longitudinal.jl:92-102"
+  },
+  {
+   "id": "K7a-359",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 473,
+   "kind": "law",
+   "claim": "Sink rate is 1.5 m/s at 50 m/s",
+   "evidence": "examples/test/test_longitudinal.jl:92-102"
+  },
+  {
+   "id": "K7a-360",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 473,
+   "kind": "law",
+   "claim": "Glide angle sin γ = −1.5/50 = −0.03",
+   "evidence": "probe:310"
+  },
+  {
+   "id": "K7a-361",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 474,
+   "kind": "mech",
+   "claim": "The run stages the descent and the model carries no ramp",
+   "evidence": "examples/src/longitudinal.jl:367-370"
+  },
+  {
+   "id": "K7a-362",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 475,
+   "kind": "law",
+   "claim": "The cascade follows the descent within 0.26 m from 160 s to the last second",
+   "evidence": "probe:313"
+  },
+  {
+   "id": "K7a-363",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 476,
+   "kind": "law",
+   "claim": "Airspeed stays between 49.978 and 50.022 m/s over the span",
+   "evidence": "probe:314"
+  },
+  {
+   "id": "K7a-364",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 477,
+   "kind": "law",
+   "claim": "No loop saturates",
+   "evidence": "probe:316"
+  },
+  {
+   "id": "K7a-365",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 478,
+   "kind": "law",
+   "claim": "There is no flare; touchdown at γ = −0.0303",
+   "evidence": "probe:310"
+  },
+  {
+   "id": "K7a-366",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 478,
+   "kind": "law",
+   "claim": "Touchdown occurs after 726.6 s",
+   "evidence": "probe:309"
+  },
+  {
+   "id": "K7a-367",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 480,
+   "kind": "mech",
+   "claim": "GroundContact is wired from the vehicle's altitude",
+   "evidence": "examples/src/longitudinal.jl:370"
+  },
+  {
+   "id": "K7a-368",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 481,
+   "kind": "decl",
+   "claim": "piloted exports the altitude as face h",
+   "evidence": "examples/src/longitudinal.jl:344"
+  },
+  {
+   "id": "K7a-369",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 482,
+   "kind": "law",
+   "claim": "GroundContact's one event is a localized state event",
+   "evidence": "examples/src/longitudinal.jl:95"
+  },
+  {
+   "id": "K7a-370",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 483,
+   "kind": "law",
+   "claim": "The guard returns the sign-form value h_ground − h",
+   "evidence": "examples/src/longitudinal.jl:93"
+  },
+  {
+   "id": "K7a-371",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 483,
+   "kind": "law",
+   "claim": "The step containing the crossing ends at the crossing",
+   "evidence": "probe:348"
+  },
+  {
+   "id": "K7a-372",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 485,
+   "kind": "mech",
+   "claim": "The handler sets the mode contact",
+   "evidence": "examples/src/longitudinal.jl:94"
+  },
+  {
+   "id": "K7a-373",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 485,
+   "kind": "mech",
+   "claim": "The leaf publishes the mode as a Bool",
+   "evidence": "examples/src/longitudinal.jl:91-92"
+  },
+  {
+   "id": "K7a-374",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 486,
+   "kind": "mech",
+   "claim": "A StopRequest turns the Bool into a stop request",
+   "evidence": "examples/src/longitudinal.jl:368,370"
+  },
+  {
+   "id": "K7a-375",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 487,
+   "kind": "law",
+   "claim": "The run ends at the touchdown boundary",
+   "evidence": "probe:309"
+  },
+  {
+   "id": "K7a-376",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 488,
+   "kind": "law",
+   "claim": "The termination record names the requester's path and port",
+   "evidence": "probe:309"
+  },
+  {
+   "id": "K7a-377",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 488,
+   "kind": "law",
+   "claim": "The termination reason is \"touchdown\"",
+   "evidence": "probe:309"
+  },
+  {
+   "id": "K7a-378",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 489,
+   "kind": "law",
+   "claim": "The final state has h = 0 within the localization tolerance",
+   "evidence": "probe:310"
+  },
+  {
+   "id": "K7a-379",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 490,
+   "kind": "law",
+   "claim": "A Junction computing h ≤ 0 stops one step late, at the next frame top",
+   "evidence": "probe:348"
+  },
+  {
+   "id": "K7a-380",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 494,
+   "kind": "law",
+   "claim": "Replay from the trace comes back to the bit and stops at the same instant",
+   "evidence": "probe2:236"
+  },
+  {
+   "id": "K7a-381",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 496,
+   "kind": "mech",
+   "claim": "A checkpoint at 60 s restores into a fresh simulation",
+   "evidence": "examples/test/test_longitudinal.jl:515-530"
+  },
+  {
+   "id": "K7a-382",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 497,
+   "kind": "law",
+   "claim": "Flown from there at 2 m/s it touches down at 560.0 s",
+   "evidence": "probe:328"
+  },
+  {
+   "id": "K7a-383",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 498,
+   "kind": "law",
+   "claim": "Flown at 1.5 m/s again it gives the first touchdown to the bit",
+   "evidence": "probe:329"
+  },
+  {
+   "id": "K7a-384",
+   "file": "design/companions/longitudinal_aircraft.md",
+   "line": 499,
+   "kind": "law",
+   "claim": "A checkpoint taken on piloted alone is refused as CheckpointMismatch",
+   "evidence": "probe:234"
+  }
+ ],
+ "counts": {
+  "law": 226,
+  "mech": 82,
+  "decl": 76,
+  "ptr": 16,
+  "why": 40,
+  "ex": 0
+ }
+}

@@ -1,0 +1,263 @@
+{
+ "judgments": [
+  {
+   "id": "SB-001",
+   "conforms": true,
+   "evidence": "src/Redstone.jl:1-39 has no export or public statement (rg '^\\s*(export|public)' src finds none); probe.jl:22 names(Redstone) => [:Redstone]"
+  },
+  {
+   "id": "SB-010",
+   "conforms": true,
+   "evidence": "src/declare.jl:836 update_of(CONTINUOUS) = x_deriv; src/declare.jl:903 LEGAL_BUNDLE (:x_deriv, CONTINUOUS)"
+  },
+  {
+   "id": "SB-019",
+   "conforms": true,
+   "evidence": "src/declare.jl:355 transparent_container(::Any) = nothing; src/assembly.jl:121 reads it as an assembly declaration; probe.jl:24 => nothing"
+  },
+  {
+   "id": "SB-028",
+   "conforms": false,
+   "evidence": "src/declare.jl:438-441: Relative takes only Integer counts and throws ArgumentInvalid :not_a_count for any other Real; probe.jl:28-29 Relative(2//1) and Relative(1//2) both throw :not_a_count, while probe.jl:30-31 show Absolute taking Rationals of any integer type. The spec body (design/spec.md:4415-4417) and the D-459 annotation (design/log.md:19655-19663) say Relative refuses a rational.",
+   "class": "drift",
+   "fix": "Sample-time entries. `Relative(D, Φ = 0)` in scope ticks, its child's `Dₛ` and `Φₛ`, each an integer, and `Absolute(Δt, τ = 0)` in exact rational seconds, each an integer or a `Rational` ([§8.7][s8-7], [D-185][d-185], [D-469][d-469], [D-478][d-478]).",
+   "clear": true,
+   "note": "The ruling (commit 2797c742, 2026-11-14, D-459 annotation, §8.7) came before this Appendix B sentence was rewritten in 5ed966f6 (D-469, 2026-11-20). That rewrite let 'each an integer or a Rational' cover Relative too. The code follows the ruling."
+  },
+  {
+   "id": "SB-029",
+   "conforms": true,
+   "evidence": "src/declare.jl:480-485 throws ArgumentInvalid reason :inexact; probe.jl:32 Absolute(0.02) and probe.jl:33 Absolute(1//50, 0.001) => ArgumentInvalid :inexact"
+  },
+  {
+   "id": "SB-038",
+   "conforms": true,
+   "evidence": "src/declare.jl:900 LEGAL_BUNDLE (:y_state, CONTINUOUS) => (:x, :m, :t, :ws); bundle_names at src/declare.jl:856-877 adds no u or y_x for y_state"
+  },
+  {
+   "id": "SB-047",
+   "conforms": true,
+   "evidence": "src/library.jl:1 module Library, included in src/Redstone.jl:35; probe.jl:23 => true"
+  },
+  {
+   "id": "SB-056",
+   "conforms": true,
+   "evidence": "src/descriptor.jl:44-46 descriptor(::Build), descriptor(::Deployment), descriptor(::DiagnosticError); DiagnosticError is the carrier exception (src/diagnostics.jl:109)"
+  },
+  {
+   "id": "SB-065",
+   "conforms": true,
+   "evidence": "src/assembly.jl:355-387 resolve docstring and body: one level only, container element key segment ('units/1') accepted, a path past the child refused as PathResolution"
+  },
+  {
+   "id": "SB-074",
+   "conforms": true,
+   "evidence": "src/deployment.jl:539-553 struct Deployment has no type parameter and no scalar field; probe.jl:36 => (true, true)"
+  },
+  {
+   "id": "SB-083",
+   "conforms": true,
+   "evidence": "src/deployment.jl:15-21 _exact takes Union{Integer,Rational{<:Integer}} and holds Rational{Int}; src/deployment.jl:541 the field is Rational{Int}; probe.jl:37-39 Int8 and BigInt rationals and Int 1 accepted"
+  },
+  {
+   "id": "SB-092",
+   "conforms": true,
+   "evidence": "src/deployment.jl:223-226 h_max is checked as positive and finite, then min'd with Δt_frame, and no divisibility check exists; probe.jl:40 h_max = 3//70 under Δt_frame = 1//10 accepted; probe.jl:41 h_max = 1//7 with Δt_base = 1//30 accepted"
+  },
+  {
+   "id": "SB-101",
+   "conforms": true,
+   "evidence": "src/deployment.jl:569-570 attempt_budget isa Integer && ≥ 1 else DeploymentInvalid :range; probe.jl:42-43 0 and 1.0 refused"
+  },
+  {
+   "id": "SB-110",
+   "conforms": true,
+   "evidence": "src/model.jl:751-758 reports FiringBudget into frame_diag when an edge passes the budget; src/diagnostics.jl:1731 severity(::FiringBudget) = :warning; test/test_events.jl:369-386"
+  },
+  {
+   "id": "SB-121",
+   "conforms": true,
+   "evidence": "src/model.jl:124 chunk_size only reaches compile's unroll width; probe.jl:54 30 frames at chunk_size 1, 3 and 16 give identical (===) states and ports"
+  },
+  {
+   "id": "SB-119",
+   "conforms": true,
+   "evidence": "src/model.jl:119-121 chunk_size isa Integer && ≥ 1 else ArgumentInvalid(call = :Model, reason = :range); probe.jl:44-45 0 and 2.0 refused :range"
+  },
+  {
+   "id": "SB-129",
+   "conforms": true,
+   "evidence": "src/model.jl:313 init!(model, condition = set(); kw...) and src/model.jl:320 t0 = 0, hooks::FrameHooks = NoHooks(); probe.jl:57 => :consistent"
+  },
+  {
+   "id": "SB-138",
+   "conforms": true,
+   "evidence": "src/model.jl:239 frame_top!(::NoHooks) = false; src/sim.jl:2021-2024 the LoopHooks method returns the drain's Bool (src/sim.jl:2656-2680)"
+  },
+  {
+   "id": "SB-147",
+   "conforms": true,
+   "evidence": "src/model.jl:239 and src/model.jl:255 both return false; probe.jl:58 => (false, false)"
+  },
+  {
+   "id": "SB-156",
+   "conforms": true,
+   "evidence": "src/model.jl:1006 port(model, path, name = nothing); probe.jl:59 (named contract plant) and probe.jl:60 (assembly root) throw ArgumentError 'name the port'; probe.jl:126 a bare output reads with no name"
+  },
+  {
+   "id": "SB-165",
+   "conforms": true,
+   "evidence": "src/model.jl:973 warnings(model) = vcat of the build's and deployment's lists; probe.jl:62 => Vector{Diagnostic}"
+  },
+  {
+   "id": "SB-174",
+   "conforms": true,
+   "evidence": "src/model.jl:1336-1342 writes status :built inside the catch and rethrows _wrap_step(model, k, :restore, err), a StepError with host :restore"
+  },
+  {
+   "id": "SB-183",
+   "conforms": true,
+   "evidence": "src/trim.jl:560-566 trim!(model::Model{Float64}, problem; baseline, t0 = 0, backend = LevenbergMarquardt()) returns _verdict!'s TrimReport (src/trim.jl:721-728)"
+  },
+  {
+   "id": "SB-192",
+   "conforms": true,
+   "evidence": "src/sim.jl:358 Simulation(model::Model{Float64,E}; join_timeout = 5.0); src/sim.jl:369-376 refuses :not_built and :claimed as ArgumentInvalid"
+  },
+  {
+   "id": "SB-201",
+   "conforms": true,
+   "evidence": "src/sim.jl:393-397: the deployment form takes join_timeout and chunk_size, the build form those plus the deployment kw..., and the root form forwards kw... to it"
+  },
+  {
+   "id": "SB-210",
+   "conforms": true,
+   "evidence": "src/sim.jl:2505 attach!(sim::Simulation, dev::AbstractDevice, new_binding::AbstractBinding; should_abort::Bool = false)"
+  },
+  {
+   "id": "SB-219",
+   "conforms": true,
+   "evidence": "src/roster.jl:356-368 _claim: a non-greedy claim is exactly the deduplicated claims(b) enumeration, each face validated; src/sim.jl:2515-2522 checks exclusivity over that set"
+  },
+  {
+   "id": "SB-228",
+   "conforms": true,
+   "evidence": "src/sim.jl:2574-2585 detach! deletes the roster entry and calls reclaim!, which rebuilds claimedby from the remaining roster (src/roster.jl:390-394)"
+  },
+  {
+   "id": "SB-237",
+   "conforms": true,
+   "evidence": "src/devices.jl:229 running(handle::DeviceHandle); src/devices.jl:340 stage!(handle::DeviceHandle, writes::Pair...)"
+  },
+  {
+   "id": "SB-246",
+   "conforms": true,
+   "evidence": "src/devices.jl:611 orphaned(record::WriterStatus); src/dataplane.jl:342 stale(record::WriterStatus; now::Float64 = time())"
+  },
+  {
+   "id": "SB-255",
+   "conforms": true,
+   "evidence": "src/conditions.jl:207 at(prefix::AbstractString, node::ConditionNode); further methods for Reads (src/conditions.jl:212), Taps (src/linearize.jl:84) and TrimProblem (src/trim.jl:122)"
+  },
+  {
+   "id": "SB-264",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:2044-2056 DuplicateConditionLeaf carries origins, both chains; probe.jl:66-72 origins => [\"combine[1] → set(u).u\", \"combine[2] → set(u).u\"]"
+  },
+  {
+   "id": "SB-273",
+   "conforms": true,
+   "evidence": "src/sim.jl:843-845 resolve_condition and assert_total run before _reset_periphery! and _open_run!; probe.jl:77-78 a missing root input throws UninitializedInputs and leaves the sim :built"
+  },
+  {
+   "id": "SB-282",
+   "conforms": true,
+   "evidence": "src/sim.jl:964, src/sim.jl:1063, src/sim.jl:1080, src/sim.jl:1334-1337; probe.jl:82-84 overlay! and restore! take [:trace, :log, :log_every, :log_max], and replay! includes them"
+  },
+  {
+   "id": "SB-289",
+   "conforms": false,
+   "evidence": "src/trim.jl:282 LevenbergMarquardt(; maxiter::Integer = 100, λ₀::Real = 1e-3), documented as keywords in its docstring (src/trim.jl:270-274); probe.jl:86 => ([:maxiter, :λ₀], LevenbergMarquardt(5, 1.0)). Neither keyword appears anywhere in design/spec.md, design/log.md or design/pending.md.",
+   "class": "deviation",
+   "fix": "`LevenbergMarquardt(; maxiter = 100, λ₀ = 1e-3)`, the default backend, is an in-house dense Levenberg–Marquardt, `maxiter` its iteration cap and `λ₀` its starting damping ([§14.8][s14-8], [D-070][d-070]).",
+   "clear": false,
+   "note": "Appendix B lists other constructors' keywords (BS3, Deployment), so leaving these two out reads as 'no keywords'. Whether they are public is a §14.8 ruling, not only an Appendix B edit. λ₀ ≤ 0 is also refused as a raw ArgumentError (src/trim.jl:283), not as ArgumentInvalid."
+  },
+  {
+   "id": "SB-292",
+   "conforms": true,
+   "evidence": "src/trim.jl:730 commit!(override(baseline, problem.condition(solution))); the spec writes the problem's condition function as condition(d*) throughout (design/spec.md:13594, 14005)"
+  },
+  {
+   "id": "SB-293",
+   "conforms": true,
+   "evidence": "src/trim.jl:725-730: converged = _within(r, tol), and a non-converged result returns TrimReport(false, …) before commit!"
+  },
+  {
+   "id": "SB-302",
+   "conforms": true,
+   "evidence": "src/sim.jl:1065-1070 restore!(sim, cp) has the same running/errored ServiceLifecycle gate as init! (src/sim.jl:836-840); probe.jl:102 restore! on a fresh :built sim => :initialized"
+  },
+  {
+   "id": "SB-311",
+   "conforms": true,
+   "evidence": "src/sim.jl:1091-1094 enters Checkpoint(model_state, k, 1) at the state's frame k; probe.jl:94 after a state at frame 7 the snapshot reads frame 7, boundary 0, t 0.7, with a one-snapshot log; probe.jl:95 the next step publishes frame 8, boundary 1"
+  },
+  {
+   "id": "SB-320",
+   "conforms": true,
+   "evidence": "src/linearize.jl:294-295 refuses t0 without about; src/linearize.jl:313 origin = something(t0, 0) beside about"
+  },
+  {
+   "id": "SB-329",
+   "conforms": true,
+   "evidence": "src/readers.jl:684-700 _resolve_reads (_mount, _rebase, _resolve_selector) serves series (src/sim.jl:2964), bindings (src/bindings.jl:176) and trim (src/trim.jl:444, 630); linearize uses the same _mount/_rebase/_resolve_selector (src/linearize.jl:441-450)"
+  },
+  {
+   "id": "SB-338",
+   "conforms": true,
+   "evidence": "src/sim.jl:1562-1563 run!(sim; pace = Inf, margin = 0.002, t_end = Inf, ignore_stop_requests = ()); probe.jl:85"
+  },
+  {
+   "id": "SB-347",
+   "conforms": true,
+   "evidence": "src/sim.jl:1563 ignore_stop_requests = (); src/sim.jl:2221 the same default on step!"
+  },
+  {
+   "id": "SB-356",
+   "conforms": true,
+   "evidence": "src/sim.jl:2044-2048 one frame loop shared by both advances; probe.jl:105-110 run! to t_end = 2 and step! in three calls (5 frames, 7 frames, t_plus 8//10) give === states, modes, log times and per-snapshot ports"
+  },
+  {
+   "id": "SB-365",
+   "conforms": true,
+   "evidence": "src/model.jl:521 phase_bodies(model::Model); src/sim.jl:638 phase_bodies(sim) = phase_bodies(sim.model); probe.jl:123"
+  },
+  {
+   "id": "SB-374",
+   "conforms": true,
+   "evidence": "src/sim.jl:567 termination(sim) = sim.run.termination; probe.jl:117 => (TerminationRecord, nothing) for an ended run and an open one"
+  },
+  {
+   "id": "SB-383",
+   "conforms": true,
+   "evidence": "src/sim.jl:2956-2969 series compiles the read set and builds one column per label over logged(sim) beside t, frame and boundary; probe.jl:121 => 21 rows, Float64 columns, properties include the labels"
+  },
+  {
+   "id": "SB-392",
+   "conforms": true,
+   "evidence": "src/sim.jl:1334-1337 replay! takes trace = true, log = true, log_every = 1, log_max = 65536; probe.jl:84"
+  },
+  {
+   "id": "SB-401",
+   "conforms": true,
+   "evidence": "src/sim.jl:548 mode(sim) = sim.run.feed === nothing ? :live : :replay; src/sim.jl:2665-2666 the drain takes the replay feed when feed is set, else the staging cells; probe.jl:119 => (:live, :replay)"
+  },
+  {
+   "id": "SB-410",
+   "conforms": true,
+   "evidence": "src/build.jl:709 and src/deployment.jl:552 hold warnings::Vector{Diagnostic}; src/sim.jl:399 warnings(sim) = warnings(sim.model); probe.jl:63 eltypes => (Diagnostic, Diagnostic, Diagnostic)"
+  }
+ ],
+ "notes": "Verified all 50 SB claims at W (62551b06). Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/SB_v/probe.jl, run twice. Probe line numbers refer to that file. No tracked file was edited, and no git command that changes the worktree was run. Two claims do not conform. SB-028: Appendix B's 'each an integer or a Rational' also covers Relative, but Relative refuses rationals with :not_a_count, per §8.7 and the D-459 annotation. Classed as drift, with a clear one-sentence fix. SB-289: the code's LevenbergMarquardt takes the keywords maxiter and λ₀, which no design record names. Classed as a deviation; the fix is not clear because §14.8 would have to rule them public. Side observation, not a claim: LevenbergMarquardt refuses λ₀ ≤ 0 as a raw ArgumentError, not as ArgumentInvalid (src/trim.jl:283). The remaining 48 claims conform, and the behavioural ones were probed: chunk_size invariance, step!/run! bit-identity, restore! of a model state at frame 7 publishing boundary 0, totality before write, the duplicate-leaf origins, and the port name-less ArgumentError."
+}

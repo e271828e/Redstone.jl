@@ -1,0 +1,3306 @@
+{
+ "rows": [
+  {
+   "id": "SB-028",
+   "file": "design/spec.md",
+   "line": 15016,
+   "kind": "law",
+   "claim": "Relative and Absolute arguments are each an integer or a Rational",
+   "evidence": "probe:54",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "`Relative(D, Φ = 0)` in scope ticks, each an integer, its child's `Dₛ` and `Φₛ`, and `Absolute(Δt, τ = 0)` in exact rational seconds, each an integer or a `Rational`.",
+   "note": "Relative(1//2) and Relative(1, 1//2) are refused as ArgumentInvalid :not_a_count (src/declare.jl:440). Only Absolute takes a Rational."
+  },
+  {
+   "id": "SB-121",
+   "file": "design/spec.md",
+   "line": 15117,
+   "kind": "law",
+   "claim": "chunk_size never moves the trajectory",
+   "evidence": "src/model.jl:123",
+   "verdict": "unverifiable",
+   "note": "No probe or test compares trajectories across chunk sizes. The code only regroups entries (src/executor.jl compile), so it is likely true."
+  },
+  {
+   "id": "SB-289",
+   "file": "design/spec.md",
+   "line": 15308,
+   "kind": "decl",
+   "claim": "LevenbergMarquardt() takes no keywords (leads: maxiter and λ₀ are code-only)",
+   "evidence": "src/trim.jl:282",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`LevenbergMarquardt(; maxiter = 100, λ₀ = 1e-3)`, the default backend, is an in-house dense Levenberg–Marquardt; a `λ₀` that is not positive is `ArgumentError`.",
+   "note": "Covers both leads. The constructor takes keywords maxiter::Integer = 100 and λ₀::Real = 1e-3. The spec names neither (rg finds no maxiter or λ₀ in spec.md)."
+  },
+  {
+   "id": "SB-292",
+   "file": "design/spec.md",
+   "line": 15310,
+   "kind": "mech",
+   "claim": "the committed condition is condition(solution)",
+   "evidence": "src/trim.jl:730",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`override(baseline, problem.condition(solution))`",
+   "note": "The code applies the problem's own condition field. The bare name condition(solution) reads as a call of the framework condition generic, which takes a component."
+  }
+ ],
+ "ok": [
+  {
+   "id": "SB-001",
+   "file": "design/spec.md",
+   "line": 14982,
+   "kind": "law",
+   "claim": "module exports nothing",
+   "evidence": "probe:39"
+  },
+  {
+   "id": "SB-002",
+   "file": "design/spec.md",
+   "line": 14994,
+   "kind": "decl",
+   "claim": "AbstractComponent is the one root of primitives and assemblies",
+   "evidence": "src/declare.jl:38"
+  },
+  {
+   "id": "SB-003",
+   "file": "design/spec.md",
+   "line": 14994,
+   "kind": "law",
+   "claim": "no AbstractAssembly type exists",
+   "evidence": "src/declare.jl:8"
+  },
+  {
+   "id": "SB-004",
+   "file": "design/spec.md",
+   "line": 14997,
+   "kind": "decl",
+   "claim": "x_init and m_init declare state by value, a NamedTuple or a bare store",
+   "evidence": "src/declare.jl:75"
+  },
+  {
+   "id": "SB-005",
+   "file": "design/spec.md",
+   "line": 14998,
+   "kind": "decl",
+   "claim": "ws_init(c, ::Type{T}) declares a workspace by allocation",
+   "evidence": "src/declare.jl:150"
+  },
+  {
+   "id": "SB-006",
+   "file": "design/spec.md",
+   "line": 14999,
+   "kind": "decl",
+   "claim": "u_types and y_types declare by type, a NamedTuple or one bare type",
+   "evidence": "src/declare.jl:185"
+  },
+  {
+   "id": "SB-007",
+   "file": "design/spec.md",
+   "line": 15000,
+   "kind": "decl",
+   "claim": "Pinned{P} marks a frozen leaf",
+   "evidence": "src/leaves.jl:241"
+  },
+  {
+   "id": "SB-008",
+   "file": "design/spec.md",
+   "line": 15001,
+   "kind": "decl",
+   "claim": "state_events is a continuous primitive declaration",
+   "evidence": "src/declare.jl:557"
+  },
+  {
+   "id": "SB-009",
+   "file": "design/spec.md",
+   "line": 15001,
+   "kind": "decl",
+   "claim": "continuous stages are y_state and y_direct",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "SB-010",
+   "file": "design/spec.md",
+   "line": 15002,
+   "kind": "decl",
+   "claim": "continuous update law is x_deriv",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "SB-011",
+   "file": "design/spec.md",
+   "line": 15003,
+   "kind": "decl",
+   "claim": "event functions are guard/handler pairs StateEvent(guard, handler)",
+   "evidence": "src/declare.jl:545"
+  },
+  {
+   "id": "SB-012",
+   "file": "design/spec.md",
+   "line": 15004,
+   "kind": "decl",
+   "claim": "x_projection is a continuous event function",
+   "evidence": "src/declare.jl:599"
+  },
+  {
+   "id": "SB-013",
+   "file": "design/spec.md",
+   "line": 15005,
+   "kind": "decl",
+   "claim": "discrete primitive declares s_init by value",
+   "evidence": "src/declare.jl:103"
+  },
+  {
+   "id": "SB-014",
+   "file": "design/spec.md",
+   "line": 15005,
+   "kind": "decl",
+   "claim": "discrete primitive declares ws_init and u_types/y_types",
+   "evidence": "src/declare.jl:150"
+  },
+  {
+   "id": "SB-015",
+   "file": "design/spec.md",
+   "line": 15006,
+   "kind": "decl",
+   "claim": "discrete stages are y_state and y_direct",
+   "evidence": "src/declare.jl:904"
+  },
+  {
+   "id": "SB-016",
+   "file": "design/spec.md",
+   "line": 15007,
+   "kind": "decl",
+   "claim": "discrete update law is s_update",
+   "evidence": "src/declare.jl:906"
+  },
+  {
+   "id": "SB-017",
+   "file": "design/spec.md",
+   "line": 15008,
+   "kind": "decl",
+   "claim": "local_wires is the assembly class marker",
+   "evidence": "src/assembly.jl:60"
+  },
+  {
+   "id": "SB-018",
+   "file": "design/spec.md",
+   "line": 15009,
+   "kind": "decl",
+   "claim": "assembly declares input_wires, output_wires and sample_times",
+   "evidence": "src/declare.jl:308"
+  },
+  {
+   "id": "SB-019",
+   "file": "design/spec.md",
+   "line": 15010,
+   "kind": "decl",
+   "claim": "transparent_container is an optional assembly declaration",
+   "evidence": "src/declare.jl:355"
+  },
+  {
+   "id": "SB-020",
+   "file": "design/spec.md",
+   "line": 15010,
+   "kind": "law",
+   "claim": "transparent_container defaults to nothing",
+   "evidence": "src/declare.jl:355"
+  },
+  {
+   "id": "SB-021",
+   "file": "design/spec.md",
+   "line": 15011,
+   "kind": "decl",
+   "claim": "Group(children; local_wires, input_wires, output_wires, sample_times) with the stated defaults",
+   "evidence": "src/assembly.jl:952"
+  },
+  {
+   "id": "SB-022",
+   "file": "design/spec.md",
+   "line": 15011,
+   "kind": "decl",
+   "claim": "lead: keyword children belongs to the copy form Group(g; children = g.children, ...)",
+   "evidence": "src/assembly.jl:961"
+  },
+  {
+   "id": "SB-023",
+   "file": "design/spec.md",
+   "line": 15012,
+   "kind": "mech",
+   "claim": "Group is a type of the core",
+   "evidence": "src/assembly.jl:872"
+  },
+  {
+   "id": "SB-024",
+   "file": "design/spec.md",
+   "line": 15013,
+   "kind": "decl",
+   "claim": "Group(g; ...) copies g with the given keywords replaced",
+   "evidence": "probe:46"
+  },
+  {
+   "id": "SB-025",
+   "file": "design/spec.md",
+   "line": 15015,
+   "kind": "decl",
+   "claim": "Relative(D, Φ = 0) counts scope ticks",
+   "evidence": "src/declare.jl:438"
+  },
+  {
+   "id": "SB-026",
+   "file": "design/spec.md",
+   "line": 15015,
+   "kind": "mech",
+   "claim": "Relative holds the child Dₛ and Φₛ",
+   "evidence": "src/declare.jl:435"
+  },
+  {
+   "id": "SB-027",
+   "file": "design/spec.md",
+   "line": 15016,
+   "kind": "decl",
+   "claim": "Absolute(Δt, τ = 0) in exact rational seconds",
+   "evidence": "src/declare.jl:476"
+  },
+  {
+   "id": "SB-029",
+   "file": "design/spec.md",
+   "line": 15017,
+   "kind": "law",
+   "claim": "Absolute refuses a float as ArgumentInvalid :inexact",
+   "evidence": "probe:59"
+  },
+  {
+   "id": "SB-030",
+   "file": "design/spec.md",
+   "line": 15017,
+   "kind": "decl",
+   "claim": "Φ = 0 default is shorthand for Relative(D)",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "SB-031",
+   "file": "design/spec.md",
+   "line": 15018,
+   "kind": "mech",
+   "claim": "Relative(D) is its own method",
+   "evidence": "src/declare.jl:438"
+  },
+  {
+   "id": "SB-032",
+   "file": "design/spec.md",
+   "line": 15019,
+   "kind": "decl",
+   "claim": "stop_reason is optional",
+   "evidence": "src/declare.jl:370"
+  },
+  {
+   "id": "SB-033",
+   "file": "design/spec.md",
+   "line": 15019,
+   "kind": "law",
+   "claim": "stop_reason defaults to \"\"",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "SB-034",
+   "file": "design/spec.md",
+   "line": 15020,
+   "kind": "mech",
+   "claim": "stop_reason is the reason the component's stop requests report",
+   "evidence": "src/library.jl:442"
+  },
+  {
+   "id": "SB-035",
+   "file": "design/spec.md",
+   "line": 15021,
+   "kind": "decl",
+   "claim": "condition(::C; kw) methods extend the framework condition generic",
+   "evidence": "src/conditions.jl:134"
+  },
+  {
+   "id": "SB-036",
+   "file": "design/spec.md",
+   "line": 15021,
+   "kind": "decl",
+   "claim": "lead: kw is a placeholder for a component's own keywords",
+   "evidence": "src/conditions.jl:134"
+  },
+  {
+   "id": "SB-037",
+   "file": "design/spec.md",
+   "line": 15022,
+   "kind": "law",
+   "claim": "a shipped condition method returns a fragment",
+   "evidence": "probe:281"
+  },
+  {
+   "id": "SB-038",
+   "file": "design/spec.md",
+   "line": 15030,
+   "kind": "decl",
+   "claim": "bundle row y_state continuous x, m, t [, ws]",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "SB-039",
+   "file": "design/spec.md",
+   "line": 15031,
+   "kind": "decl",
+   "claim": "bundle row y_direct continuous x, m, u, y_x, t [, ws]",
+   "evidence": "src/declare.jl:902"
+  },
+  {
+   "id": "SB-040",
+   "file": "design/spec.md",
+   "line": 15032,
+   "kind": "decl",
+   "claim": "bundle row x_deriv continuous x, m, y, u, t [, ws]",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "SB-041",
+   "file": "design/spec.md",
+   "line": 15033,
+   "kind": "decl",
+   "claim": "bundle row y_state discrete s, t, Δt [, ws]",
+   "evidence": "src/declare.jl:904"
+  },
+  {
+   "id": "SB-042",
+   "file": "design/spec.md",
+   "line": 15034,
+   "kind": "decl",
+   "claim": "bundle row y_direct discrete s, u, y_s, t, Δt [, ws]",
+   "evidence": "src/declare.jl:905"
+  },
+  {
+   "id": "SB-043",
+   "file": "design/spec.md",
+   "line": 15035,
+   "kind": "decl",
+   "claim": "bundle row s_update discrete s, y, u, t, Δt [, ws]",
+   "evidence": "src/declare.jl:906"
+  },
+  {
+   "id": "SB-044",
+   "file": "design/spec.md",
+   "line": 15036,
+   "kind": "decl",
+   "claim": "bundle row guard and handler continuous x, m, y, u, t [, ws]",
+   "evidence": "src/declare.jl:907"
+  },
+  {
+   "id": "SB-045",
+   "file": "design/spec.md",
+   "line": 15037,
+   "kind": "decl",
+   "claim": "bundle row x_projection takes positional (comp, x) with no bundle",
+   "evidence": "src/declare.jl:580"
+  },
+  {
+   "id": "SB-046",
+   "file": "design/spec.md",
+   "line": 15039,
+   "kind": "law",
+   "claim": "a bundle field is present only if it exists for the component",
+   "evidence": "src/declare.jl:921"
+  },
+  {
+   "id": "SB-047",
+   "file": "design/spec.md",
+   "line": 15046,
+   "kind": "decl",
+   "claim": "the standard library is the submodule Redstone.Library",
+   "evidence": "probe:40"
+  },
+  {
+   "id": "SB-048",
+   "file": "design/spec.md",
+   "line": 15047,
+   "kind": "mech",
+   "claim": "inventory components live in the Library submodule",
+   "evidence": "src/library.jl:1"
+  },
+  {
+   "id": "SB-049",
+   "file": "design/spec.md",
+   "line": 15052,
+   "kind": "law",
+   "claim": "Group is not a Library member",
+   "evidence": "src/assembly.jl:872"
+  },
+  {
+   "id": "SB-050",
+   "file": "design/spec.md",
+   "line": 15057,
+   "kind": "decl",
+   "claim": "build(root; activations = ()) signature",
+   "evidence": "src/build.jl:767"
+  },
+  {
+   "id": "SB-051",
+   "file": "design/spec.md",
+   "line": 15057,
+   "kind": "law",
+   "claim": "build returns a Build",
+   "evidence": "src/build.jl:703"
+  },
+  {
+   "id": "SB-052",
+   "file": "design/spec.md",
+   "line": 15058,
+   "kind": "mech",
+   "claim": "Build holds Structure, Outputs and Events",
+   "evidence": "src/build.jl:704"
+  },
+  {
+   "id": "SB-053",
+   "file": "design/spec.md",
+   "line": 15060,
+   "kind": "mech",
+   "claim": "Build holds the activations and warnings",
+   "evidence": "src/build.jl:707"
+  },
+  {
+   "id": "SB-054",
+   "file": "design/spec.md",
+   "line": 15061,
+   "kind": "mech",
+   "claim": "activations = (Float64, ProbeDual) materializes both activations at build",
+   "evidence": "probe:71"
+  },
+  {
+   "id": "SB-055",
+   "file": "design/spec.md",
+   "line": 15062,
+   "kind": "mech",
+   "claim": "pre-materialized activations serve a parallel sweep without a first-request re-run",
+   "evidence": "src/build.jl:906"
+  },
+  {
+   "id": "SB-056",
+   "file": "design/spec.md",
+   "line": 15064,
+   "kind": "decl",
+   "claim": "descriptor has methods for Build, Deployment and a carrier exception",
+   "evidence": "src/descriptor.jl:44"
+  },
+  {
+   "id": "SB-057",
+   "file": "design/spec.md",
+   "line": 15064,
+   "kind": "law",
+   "claim": "descriptor returns a NamedTuple",
+   "evidence": "probe:102"
+  },
+  {
+   "id": "SB-058",
+   "file": "design/spec.md",
+   "line": 15066,
+   "kind": "law",
+   "claim": "descriptor is a tree of NamedTuples and vectors",
+   "evidence": "probe:102"
+  },
+  {
+   "id": "SB-059",
+   "file": "design/spec.md",
+   "line": 15067,
+   "kind": "mech",
+   "claim": "the deployment descriptor body embeds the build's",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "SB-060",
+   "file": "design/spec.md",
+   "line": 15068,
+   "kind": "decl",
+   "claim": "the third method takes a DiagnosticError carrier",
+   "evidence": "src/descriptor.jl:46"
+  },
+  {
+   "id": "SB-061",
+   "file": "design/spec.md",
+   "line": 15069,
+   "kind": "mech",
+   "claim": "the failure descriptor renders diagnostics and warnings",
+   "evidence": "probe:116"
+  },
+  {
+   "id": "SB-062",
+   "file": "design/spec.md",
+   "line": 15069,
+   "kind": "law",
+   "claim": "the failure descriptor carries structure only when the throw left the door past the structure step",
+   "evidence": "probe:526"
+  },
+  {
+   "id": "SB-063",
+   "file": "design/spec.md",
+   "line": 15071,
+   "kind": "decl",
+   "claim": "ProbeDual is a public concrete probe scalar",
+   "evidence": "probe:73"
+  },
+  {
+   "id": "SB-064",
+   "file": "design/spec.md",
+   "line": 15073,
+   "kind": "decl",
+   "claim": "resolve(assembly, path) returns the component",
+   "evidence": "src/assembly.jl:374"
+  },
+  {
+   "id": "SB-065",
+   "file": "design/spec.md",
+   "line": 15074,
+   "kind": "law",
+   "claim": "resolve walks one level and accepts a container element key segment",
+   "evidence": "src/assembly.jl:374"
+  },
+  {
+   "id": "SB-066",
+   "file": "design/spec.md",
+   "line": 15075,
+   "kind": "decl",
+   "claim": "input_faces and output_faces return Vector{String}",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "SB-067",
+   "file": "design/spec.md",
+   "line": 15075,
+   "kind": "law",
+   "claim": "face names are in declaration order",
+   "evidence": "src/assembly.jl:435"
+  },
+  {
+   "id": "SB-068",
+   "file": "design/spec.md",
+   "line": 15076,
+   "kind": "law",
+   "claim": "a bare contract lists as u or y",
+   "evidence": "probe:77"
+  },
+  {
+   "id": "SB-069",
+   "file": "design/spec.md",
+   "line": 15077,
+   "kind": "decl",
+   "claim": "input_passthrough signature, keywords and defaults",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "SB-070",
+   "file": "design/spec.md",
+   "line": 15079,
+   "kind": "decl",
+   "claim": "output_passthrough takes the same arguments",
+   "evidence": "src/assembly.jl:594"
+  },
+  {
+   "id": "SB-071",
+   "file": "design/spec.md",
+   "line": 15081,
+   "kind": "law",
+   "claim": "more than one selector is UnknownFaceSelection :multiple_selectors",
+   "evidence": "probe:91"
+  },
+  {
+   "id": "SB-072",
+   "file": "design/spec.md",
+   "line": 15082,
+   "kind": "law",
+   "claim": "a selector that keeps nothing warns EmptyFaceSelection",
+   "evidence": "probe:98"
+  },
+  {
+   "id": "SB-073",
+   "file": "design/spec.md",
+   "line": 15087,
+   "kind": "decl",
+   "claim": "Deployment signature, keywords and defaults",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "SB-074",
+   "file": "design/spec.md",
+   "line": 15090,
+   "kind": "law",
+   "claim": "a Deployment carries no scalar type",
+   "evidence": "src/deployment.jl:539"
+  },
+  {
+   "id": "SB-075",
+   "file": "design/spec.md",
+   "line": 15091,
+   "kind": "mech",
+   "claim": "a Deployment carries the Schedule",
+   "evidence": "src/deployment.jl:550"
+  },
+  {
+   "id": "SB-076",
+   "file": "design/spec.md",
+   "line": 15092,
+   "kind": "mech",
+   "claim": "the Schedule holds per-component (D₀, Φ₀, Δt) rows",
+   "evidence": "src/deployment.jl:36"
+  },
+  {
+   "id": "SB-077",
+   "file": "design/spec.md",
+   "line": 15092,
+   "kind": "mech",
+   "claim": "a Deployment carries its warnings",
+   "evidence": "probe:154"
+  },
+  {
+   "id": "SB-078",
+   "file": "design/spec.md",
+   "line": 15096,
+   "kind": "law",
+   "claim": "algorithm defaults to RK4()",
+   "evidence": "probe:123"
+  },
+  {
+   "id": "SB-079",
+   "file": "design/spec.md",
+   "line": 15096,
+   "kind": "law",
+   "claim": "algorithm takes RK4, Heun or BS3 and refuses other values",
+   "evidence": "probe:145"
+  },
+  {
+   "id": "SB-080",
+   "file": "design/spec.md",
+   "line": 15096,
+   "kind": "mech",
+   "claim": "the algorithm is bound against the state buffer at Model construction",
+   "evidence": "src/model.jl:123"
+  },
+  {
+   "id": "SB-081",
+   "file": "design/spec.md",
+   "line": 15097,
+   "kind": "law",
+   "claim": "Δt_frame has no default",
+   "evidence": "probe:128"
+  },
+  {
+   "id": "SB-082",
+   "file": "design/spec.md",
+   "line": 15097,
+   "kind": "law",
+   "claim": "absent Δt_frame is DeploymentInvalid",
+   "evidence": "probe:128"
+  },
+  {
+   "id": "SB-083",
+   "file": "design/spec.md",
+   "line": 15097,
+   "kind": "law",
+   "claim": "Δt_frame takes an integer or a Rational of any integer type",
+   "evidence": "probe:126"
+  },
+  {
+   "id": "SB-084",
+   "file": "design/spec.md",
+   "line": 15097,
+   "kind": "law",
+   "claim": "Δt_frame is held as Rational{Int}",
+   "evidence": "probe:125"
+  },
+  {
+   "id": "SB-085",
+   "file": "design/spec.md",
+   "line": 15098,
+   "kind": "law",
+   "claim": "Δt_base defaults to nothing",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "SB-086",
+   "file": "design/spec.md",
+   "line": 15098,
+   "kind": "law",
+   "claim": "Δt_base must be positive and finite",
+   "evidence": "probe:130"
+  },
+  {
+   "id": "SB-087",
+   "file": "design/spec.md",
+   "line": 15098,
+   "kind": "law",
+   "claim": "Δt_base stands in no required ratio to Δt_frame or h_max",
+   "evidence": "probe:132"
+  },
+  {
+   "id": "SB-088",
+   "file": "design/spec.md",
+   "line": 15098,
+   "kind": "law",
+   "claim": "absent Δt_base is Δt_frame",
+   "evidence": "probe:122"
+  },
+  {
+   "id": "SB-089",
+   "file": "design/spec.md",
+   "line": 15098,
+   "kind": "law",
+   "claim": "Δt_base accepts :derive",
+   "evidence": "src/deployment.jl:253"
+  },
+  {
+   "id": "SB-090",
+   "file": "design/spec.md",
+   "line": 15099,
+   "kind": "law",
+   "claim": "h_max defaults to nothing",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "SB-091",
+   "file": "design/spec.md",
+   "line": 15099,
+   "kind": "law",
+   "claim": "h_max must be positive and finite",
+   "evidence": "probe:134"
+  },
+  {
+   "id": "SB-092",
+   "file": "design/spec.md",
+   "line": 15099,
+   "kind": "law",
+   "claim": "h_max stands in no required ratio to either period",
+   "evidence": "probe:133"
+  },
+  {
+   "id": "SB-093",
+   "file": "design/spec.md",
+   "line": 15099,
+   "kind": "law",
+   "claim": "h_max is recorded as the lesser of itself and Δt_frame",
+   "evidence": "probe:121"
+  },
+  {
+   "id": "SB-094",
+   "file": "design/spec.md",
+   "line": 15099,
+   "kind": "law",
+   "claim": "absent h_max records Δt_frame",
+   "evidence": "probe:119"
+  },
+  {
+   "id": "SB-095",
+   "file": "design/spec.md",
+   "line": 15100,
+   "kind": "law",
+   "claim": "h_min defaults to nothing",
+   "evidence": "src/deployment.jl:555"
+  },
+  {
+   "id": "SB-096",
+   "file": "design/spec.md",
+   "line": 15100,
+   "kind": "law",
+   "claim": "h_min takes the values h_max takes",
+   "evidence": "src/deployment.jl:232"
+  },
+  {
+   "id": "SB-097",
+   "file": "design/spec.md",
+   "line": 15100,
+   "kind": "law",
+   "claim": "a proposing method requires h_min",
+   "evidence": "probe:135"
+  },
+  {
+   "id": "SB-098",
+   "file": "design/spec.md",
+   "line": 15100,
+   "kind": "law",
+   "claim": "a fixed-step method leaves h_min unused",
+   "evidence": "src/deployment.jl:320"
+  },
+  {
+   "id": "SB-099",
+   "file": "design/spec.md",
+   "line": 15100,
+   "kind": "law",
+   "claim": "h_min above half the resolved h_max is refused",
+   "evidence": "probe:136"
+  },
+  {
+   "id": "SB-100",
+   "file": "design/spec.md",
+   "line": 15101,
+   "kind": "law",
+   "claim": "attempt_budget defaults to 7",
+   "evidence": "probe:124"
+  },
+  {
+   "id": "SB-101",
+   "file": "design/spec.md",
+   "line": 15101,
+   "kind": "law",
+   "claim": "attempt_budget must be an integer ≥ 1",
+   "evidence": "probe:141"
+  },
+  {
+   "id": "SB-102",
+   "file": "design/spec.md",
+   "line": 15101,
+   "kind": "mech",
+   "claim": "attempt_budget bounds a proposing step's attempts before the floor",
+   "evidence": "src/model.jl:897"
+  },
+  {
+   "id": "SB-103",
+   "file": "design/spec.md",
+   "line": 15101,
+   "kind": "law",
+   "claim": "the floor warns StepFloor",
+   "evidence": "src/model.jl:897"
+  },
+  {
+   "id": "SB-104",
+   "file": "design/spec.md",
+   "line": 15102,
+   "kind": "law",
+   "claim": "localization_tol defaults to 1e-6",
+   "evidence": "probe:124"
+  },
+  {
+   "id": "SB-105",
+   "file": "design/spec.md",
+   "line": 15102,
+   "kind": "mech",
+   "claim": "the root-finder stops on bracket width localization_tol · Δt_frame",
+   "evidence": "src/frame.jl:367"
+  },
+  {
+   "id": "SB-106",
+   "file": "design/spec.md",
+   "line": 15103,
+   "kind": "law",
+   "claim": "localization_budget defaults to 8",
+   "evidence": "probe:124"
+  },
+  {
+   "id": "SB-107",
+   "file": "design/spec.md",
+   "line": 15103,
+   "kind": "mech",
+   "claim": "localization_budget is a per-frame allowance",
+   "evidence": "src/frame.jl:124"
+  },
+  {
+   "id": "SB-108",
+   "file": "design/spec.md",
+   "line": 15104,
+   "kind": "law",
+   "claim": "firing_budget defaults to 4",
+   "evidence": "probe:124"
+  },
+  {
+   "id": "SB-109",
+   "file": "design/spec.md",
+   "line": 15104,
+   "kind": "law",
+   "claim": "firing_budget must be an integer ≥ 1",
+   "evidence": "probe:142"
+  },
+  {
+   "id": "SB-110",
+   "file": "design/spec.md",
+   "line": 15104,
+   "kind": "law",
+   "claim": "exhausting firing_budget warns FiringBudget",
+   "evidence": "src/model.jl:757"
+  },
+  {
+   "id": "SB-111",
+   "file": "design/spec.md",
+   "line": 15106,
+   "kind": "decl",
+   "claim": "RK4() and Heun() are accepted algorithm instances",
+   "evidence": "src/deployment.jl:357"
+  },
+  {
+   "id": "SB-112",
+   "file": "design/spec.md",
+   "line": 15107,
+   "kind": "law",
+   "claim": "RK4 and Heun are tokens carrying no step",
+   "evidence": "probe:149"
+  },
+  {
+   "id": "SB-113",
+   "file": "design/spec.md",
+   "line": 15109,
+   "kind": "decl",
+   "claim": "BS3(; reltol = 1e-3, abstol = 1e-6) returns a BS3",
+   "evidence": "src/deployment.jl:427"
+  },
+  {
+   "id": "SB-114",
+   "file": "design/spec.md",
+   "line": 15110,
+   "kind": "mech",
+   "claim": "BS3 carries its two tolerances",
+   "evidence": "src/deployment.jl:413"
+  },
+  {
+   "id": "SB-115",
+   "file": "design/spec.md",
+   "line": 15110,
+   "kind": "law",
+   "claim": "each BS3 tolerance is ArgumentInvalid unless positive and finite",
+   "evidence": "probe:150"
+  },
+  {
+   "id": "SB-116",
+   "file": "design/spec.md",
+   "line": 15112,
+   "kind": "decl",
+   "claim": "Model(deployment, T = Float64; chunk_size = 16) returns Model{T}",
+   "evidence": "src/model.jl:113"
+  },
+  {
+   "id": "SB-117",
+   "file": "design/spec.md",
+   "line": 15112,
+   "kind": "mech",
+   "claim": "Model materializes the deployment at T and allocates the buffers",
+   "evidence": "src/model.jl:123"
+  },
+  {
+   "id": "SB-118",
+   "file": "design/spec.md",
+   "line": 15117,
+   "kind": "law",
+   "claim": "chunk_size defaults to 16",
+   "evidence": "src/model.jl:113"
+  },
+  {
+   "id": "SB-119",
+   "file": "design/spec.md",
+   "line": 15117,
+   "kind": "law",
+   "claim": "chunk_size must be an integer ≥ 1, else ArgumentInvalid :range",
+   "evidence": "probe:159"
+  },
+  {
+   "id": "SB-120",
+   "file": "design/spec.md",
+   "line": 15117,
+   "kind": "mech",
+   "claim": "chunk_size is the executor unroll width",
+   "evidence": "src/model.jl:123"
+  },
+  {
+   "id": "SB-122",
+   "file": "design/spec.md",
+   "line": 15119,
+   "kind": "decl",
+   "claim": "Model(build, T = Float64; kw...) form",
+   "evidence": "src/model.jl:130"
+  },
+  {
+   "id": "SB-123",
+   "file": "design/spec.md",
+   "line": 15119,
+   "kind": "decl",
+   "claim": "Model(root, T = Float64; kw...) form",
+   "evidence": "src/model.jl:132"
+  },
+  {
+   "id": "SB-124",
+   "file": "design/spec.md",
+   "line": 15120,
+   "kind": "mech",
+   "claim": "the build form composes Deployment with the materialization",
+   "evidence": "src/model.jl:131"
+  },
+  {
+   "id": "SB-125",
+   "file": "design/spec.md",
+   "line": 15121,
+   "kind": "mech",
+   "claim": "the root form calls build first",
+   "evidence": "src/model.jl:133"
+  },
+  {
+   "id": "SB-126",
+   "file": "design/spec.md",
+   "line": 15124,
+   "kind": "mech",
+   "claim": "init!, frame!, restore!, overlay! and trim! write to the model",
+   "evidence": "src/model.jl:313"
+  },
+  {
+   "id": "SB-127",
+   "file": "design/spec.md",
+   "line": 15125,
+   "kind": "law",
+   "claim": "each of the five is refused on a claimed model",
+   "evidence": "probe:223"
+  },
+  {
+   "id": "SB-128",
+   "file": "design/spec.md",
+   "line": 15126,
+   "kind": "law",
+   "claim": "the refusal is ArgumentInvalid :claimed",
+   "evidence": "probe:223"
+  },
+  {
+   "id": "SB-129",
+   "file": "design/spec.md",
+   "line": 15129,
+   "kind": "decl",
+   "claim": "init!(model, condition = set(); t0 = 0, hooks = NoHooks())",
+   "evidence": "src/model.jl:313"
+  },
+  {
+   "id": "SB-130",
+   "file": "design/spec.md",
+   "line": 15131,
+   "kind": "mech",
+   "claim": "model init! enters :consistent",
+   "evidence": "probe:177"
+  },
+  {
+   "id": "SB-131",
+   "file": "design/spec.md",
+   "line": 15132,
+   "kind": "mech",
+   "claim": "init! runs boundary zero at t0",
+   "evidence": "src/model.jl:336"
+  },
+  {
+   "id": "SB-132",
+   "file": "design/spec.md",
+   "line": 15132,
+   "kind": "mech",
+   "claim": "boundary zero settles through the hooks",
+   "evidence": "src/model.jl:341"
+  },
+  {
+   "id": "SB-133",
+   "file": "design/spec.md",
+   "line": 15134,
+   "kind": "decl",
+   "claim": "frame!(model, k, hooks = NoHooks()) returns Bool",
+   "evidence": "src/frame.jl:71"
+  },
+  {
+   "id": "SB-134",
+   "file": "design/spec.md",
+   "line": 15135,
+   "kind": "mech",
+   "claim": "frame! advances through frame k and settles each boundary, frame top last",
+   "evidence": "src/frame.jl:81"
+  },
+  {
+   "id": "SB-135",
+   "file": "design/spec.md",
+   "line": 15137,
+   "kind": "law",
+   "claim": "frame! returns true when a hook abandoned the remainder",
+   "evidence": "src/frame.jl:324"
+  },
+  {
+   "id": "SB-136",
+   "file": "design/spec.md",
+   "line": 15138,
+   "kind": "law",
+   "claim": "a k off the Int lattices is ArgumentInvalid :range",
+   "evidence": "probe:182"
+  },
+  {
+   "id": "SB-137",
+   "file": "design/spec.md",
+   "line": 15139,
+   "kind": "decl",
+   "claim": "FrameHooks is the hooks' type",
+   "evidence": "probe:185"
+  },
+  {
+   "id": "SB-138",
+   "file": "design/spec.md",
+   "line": 15139,
+   "kind": "decl",
+   "claim": "frame_top!(hooks) returns Bool",
+   "evidence": "src/model.jl:239"
+  },
+  {
+   "id": "SB-139",
+   "file": "design/spec.md",
+   "line": 15140,
+   "kind": "mech",
+   "claim": "frame_top! runs before the frame touches any state",
+   "evidence": "src/frame.jl:91"
+  },
+  {
+   "id": "SB-140",
+   "file": "design/spec.md",
+   "line": 15140,
+   "kind": "law",
+   "claim": "frame_top! returns whether it wrote a value",
+   "evidence": "src/frame.jl:91"
+  },
+  {
+   "id": "SB-141",
+   "file": "design/spec.md",
+   "line": 15141,
+   "kind": "mech",
+   "claim": "a written value raises the stepper discontinuity notice",
+   "evidence": "src/frame.jl:92"
+  },
+  {
+   "id": "SB-142",
+   "file": "design/spec.md",
+   "line": 15143,
+   "kind": "mech",
+   "claim": "the frame's first step then runs its sweep",
+   "evidence": "src/frame.jl:93"
+  },
+  {
+   "id": "SB-143",
+   "file": "design/spec.md",
+   "line": 15145,
+   "kind": "decl",
+   "claim": "settled!(hooks) returns Bool",
+   "evidence": "src/model.jl:255"
+  },
+  {
+   "id": "SB-144",
+   "file": "design/spec.md",
+   "line": 15145,
+   "kind": "mech",
+   "claim": "settled! runs at every settled boundary",
+   "evidence": "src/frame.jl:170"
+  },
+  {
+   "id": "SB-145",
+   "file": "design/spec.md",
+   "line": 15146,
+   "kind": "law",
+   "claim": "settled! writes nothing into the model",
+   "evidence": "src/model.jl:201"
+  },
+  {
+   "id": "SB-146",
+   "file": "design/spec.md",
+   "line": 15146,
+   "kind": "decl",
+   "claim": "NoHooks() is the no-op hooks value",
+   "evidence": "probe:184"
+  },
+  {
+   "id": "SB-147",
+   "file": "design/spec.md",
+   "line": 15147,
+   "kind": "law",
+   "claim": "NoHooks frame_top! and settled! return false",
+   "evidence": "probe:184"
+  },
+  {
+   "id": "SB-148",
+   "file": "design/spec.md",
+   "line": 15148,
+   "kind": "law",
+   "claim": "frame! never reads its top's table as fresh",
+   "evidence": "src/frame.jl:71"
+  },
+  {
+   "id": "SB-149",
+   "file": "design/spec.md",
+   "line": 15151,
+   "kind": "decl",
+   "claim": "port(model, path, name)",
+   "evidence": "src/model.jl:1006"
+  },
+  {
+   "id": "SB-150",
+   "file": "design/spec.md",
+   "line": 15151,
+   "kind": "decl",
+   "claim": "state(model, path) and modes(model, path)",
+   "evidence": "src/model.jl:1026"
+  },
+  {
+   "id": "SB-151",
+   "file": "design/spec.md",
+   "line": 15152,
+   "kind": "decl",
+   "claim": "Simulation forms of port, state and modes",
+   "evidence": "src/sim.jl:3039"
+  },
+  {
+   "id": "SB-152",
+   "file": "design/spec.md",
+   "line": 15153,
+   "kind": "mech",
+   "claim": "port reads a port's current value",
+   "evidence": "probe:186"
+  },
+  {
+   "id": "SB-153",
+   "file": "design/spec.md",
+   "line": 15154,
+   "kind": "mech",
+   "claim": "state reads from whichever store owns it",
+   "evidence": "src/model.jl:1026"
+  },
+  {
+   "id": "SB-154",
+   "file": "design/spec.md",
+   "line": 15154,
+   "kind": "mech",
+   "claim": "modes reads the m store",
+   "evidence": "src/model.jl:1055"
+  },
+  {
+   "id": "SB-155",
+   "file": "design/spec.md",
+   "line": 15155,
+   "kind": "law",
+   "claim": "an omitted name reads a bare output's face y",
+   "evidence": "src/build.jl:370"
+  },
+  {
+   "id": "SB-156",
+   "file": "design/spec.md",
+   "line": 15156,
+   "kind": "law",
+   "claim": "omitted name at a named-contract component throws ArgumentError",
+   "evidence": "probe:187"
+  },
+  {
+   "id": "SB-157",
+   "file": "design/spec.md",
+   "line": 15157,
+   "kind": "law",
+   "claim": "omitted name at an assembly throws ArgumentError",
+   "evidence": "probe:190"
+  },
+  {
+   "id": "SB-158",
+   "file": "design/spec.md",
+   "line": 15157,
+   "kind": "law",
+   "claim": "a path naming no component is PathResolution",
+   "evidence": "probe:188"
+  },
+  {
+   "id": "SB-159",
+   "file": "design/spec.md",
+   "line": 15158,
+   "kind": "mech",
+   "claim": "PathResolution lists the children of the level it stopped at",
+   "evidence": "src/build.jl:393"
+  },
+  {
+   "id": "SB-160",
+   "file": "design/spec.md",
+   "line": 15159,
+   "kind": "law",
+   "claim": "a name with no port is ArgumentError listing the ports",
+   "evidence": "src/build.jl:382"
+  },
+  {
+   "id": "SB-161",
+   "file": "design/spec.md",
+   "line": 15160,
+   "kind": "law",
+   "claim": "state returns nothing at a component with no state store",
+   "evidence": "probe:194"
+  },
+  {
+   "id": "SB-162",
+   "file": "design/spec.md",
+   "line": 15161,
+   "kind": "law",
+   "claim": "modes returns nothing at a component with no mode store",
+   "evidence": "probe:195"
+  },
+  {
+   "id": "SB-163",
+   "file": "design/spec.md",
+   "line": 15162,
+   "kind": "decl",
+   "claim": "port(snapshot, path, name)",
+   "evidence": "src/dataplane.jl:581"
+  },
+  {
+   "id": "SB-164",
+   "file": "design/spec.md",
+   "line": 15163,
+   "kind": "law",
+   "claim": "a snapshot port is addressed as the live table, default included",
+   "evidence": "src/dataplane.jl:582"
+  },
+  {
+   "id": "SB-165",
+   "file": "design/spec.md",
+   "line": 15165,
+   "kind": "decl",
+   "claim": "warnings(model) returns a Vector",
+   "evidence": "src/model.jl:973"
+  },
+  {
+   "id": "SB-166",
+   "file": "design/spec.md",
+   "line": 15165,
+   "kind": "mech",
+   "claim": "warnings(model) concatenates the build's list and the deployment's",
+   "evidence": "src/model.jl:973"
+  },
+  {
+   "id": "SB-167",
+   "file": "design/spec.md",
+   "line": 15167,
+   "kind": "decl",
+   "claim": "checkpoint(model) returns ModelState",
+   "evidence": "src/model.jl:1180"
+  },
+  {
+   "id": "SB-168",
+   "file": "design/spec.md",
+   "line": 15167,
+   "kind": "mech",
+   "claim": "a model checkpoint holds the model state alone",
+   "evidence": "src/model.jl:1185"
+  },
+  {
+   "id": "SB-169",
+   "file": "design/spec.md",
+   "line": 15168,
+   "kind": "law",
+   "claim": "checkpoint at a status other than :consistent is ServiceLifecycle",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "SB-170",
+   "file": "design/spec.md",
+   "line": 15169,
+   "kind": "law",
+   "claim": "a clock off the grid is CheckpointMidFrame",
+   "evidence": "src/model.jl:1202"
+  },
+  {
+   "id": "SB-171",
+   "file": "design/spec.md",
+   "line": 15171,
+   "kind": "decl",
+   "claim": "restore!(model, model_state; hooks = NoHooks())",
+   "evidence": "src/model.jl:1310"
+  },
+  {
+   "id": "SB-172",
+   "file": "design/spec.md",
+   "line": 15171,
+   "kind": "mech",
+   "claim": "restore! copies the state back and settles through the hooks",
+   "evidence": "src/model.jl:1338"
+  },
+  {
+   "id": "SB-173",
+   "file": "design/spec.md",
+   "line": 15172,
+   "kind": "mech",
+   "claim": "restore! writes :consistent last",
+   "evidence": "src/model.jl:1343"
+  },
+  {
+   "id": "SB-174",
+   "file": "design/spec.md",
+   "line": 15173,
+   "kind": "law",
+   "claim": "a throw inside restore! writes :built",
+   "evidence": "src/model.jl:1340"
+  },
+  {
+   "id": "SB-175",
+   "file": "design/spec.md",
+   "line": 15173,
+   "kind": "law",
+   "claim": "the throw arrives as a StepError with host :restore",
+   "evidence": "src/model.jl:1341"
+  },
+  {
+   "id": "SB-176",
+   "file": "design/spec.md",
+   "line": 15175,
+   "kind": "law",
+   "claim": "a fingerprint mismatch is CheckpointMismatch",
+   "evidence": "probe:217"
+  },
+  {
+   "id": "SB-177",
+   "file": "design/spec.md",
+   "line": 15176,
+   "kind": "law",
+   "claim": "a deployment mismatch is CheckpointMismatch",
+   "evidence": "probe:218"
+  },
+  {
+   "id": "SB-178",
+   "file": "design/spec.md",
+   "line": 15177,
+   "kind": "decl",
+   "claim": "overlay!(model, condition = set(); hooks = NoHooks())",
+   "evidence": "src/model.jl:461"
+  },
+  {
+   "id": "SB-179",
+   "file": "design/spec.md",
+   "line": 15178,
+   "kind": "mech",
+   "claim": "overlay! writes the condition onto the model at rest",
+   "evidence": "src/model.jl:471"
+  },
+  {
+   "id": "SB-180",
+   "file": "design/spec.md",
+   "line": 15178,
+   "kind": "law",
+   "claim": "overlay! settles with no discrete output stage and no update",
+   "evidence": "src/model.jl:476"
+  },
+  {
+   "id": "SB-181",
+   "file": "design/spec.md",
+   "line": 15180,
+   "kind": "decl",
+   "claim": "trim!(model, problem; baseline, t0 = 0, backend = LevenbergMarquardt())",
+   "evidence": "src/trim.jl:560"
+  },
+  {
+   "id": "SB-182",
+   "file": "design/spec.md",
+   "line": 15180,
+   "kind": "law",
+   "claim": "baseline is required",
+   "evidence": "probe:240"
+  },
+  {
+   "id": "SB-183",
+   "file": "design/spec.md",
+   "line": 15181,
+   "kind": "decl",
+   "claim": "trim! returns a TrimReport",
+   "evidence": "probe:242"
+  },
+  {
+   "id": "SB-184",
+   "file": "design/spec.md",
+   "line": 15182,
+   "kind": "law",
+   "claim": "model trim! takes Model{Float64} only",
+   "evidence": "src/trim.jl:574"
+  },
+  {
+   "id": "SB-185",
+   "file": "design/spec.md",
+   "line": 15182,
+   "kind": "mech",
+   "claim": "trim! commits through the model init!",
+   "evidence": "src/trim.jl:730"
+  },
+  {
+   "id": "SB-186",
+   "file": "design/spec.md",
+   "line": 15184,
+   "kind": "decl",
+   "claim": "linearize(model, taps; about = nothing, t0 = nothing, width = 8)",
+   "evidence": "src/linearize.jl:266"
+  },
+  {
+   "id": "SB-187",
+   "file": "design/spec.md",
+   "line": 15185,
+   "kind": "decl",
+   "claim": "linearize returns Linearization",
+   "evidence": "probe:254"
+  },
+  {
+   "id": "SB-188",
+   "file": "design/spec.md",
+   "line": 15185,
+   "kind": "law",
+   "claim": "model linearize takes Model{Float64} only",
+   "evidence": "src/linearize.jl:287"
+  },
+  {
+   "id": "SB-189",
+   "file": "design/spec.md",
+   "line": 15185,
+   "kind": "law",
+   "claim": "the default operating point is checkpoint(model)",
+   "evidence": "src/linearize.jl:273"
+  },
+  {
+   "id": "SB-190",
+   "file": "design/spec.md",
+   "line": 15188,
+   "kind": "law",
+   "claim": "the five stepping primitives are internals outside the claim gate",
+   "evidence": "src/model.jl:674"
+  },
+  {
+   "id": "SB-191",
+   "file": "design/spec.md",
+   "line": 15190,
+   "kind": "law",
+   "claim": "apply! is gated and refuses a claimed model",
+   "evidence": "src/model.jl:494"
+  },
+  {
+   "id": "SB-192",
+   "file": "design/spec.md",
+   "line": 15196,
+   "kind": "decl",
+   "claim": "Simulation(model::Model{Float64}; join_timeout = 5.0)",
+   "evidence": "src/sim.jl:358"
+  },
+  {
+   "id": "SB-193",
+   "file": "design/spec.md",
+   "line": 15197,
+   "kind": "mech",
+   "claim": "Simulation runs the model beside the data plane, control plane and run",
+   "evidence": "src/sim.jl:383"
+  },
+  {
+   "id": "SB-194",
+   "file": "design/spec.md",
+   "line": 15199,
+   "kind": "law",
+   "claim": "a claimed Model is ArgumentInvalid :claimed",
+   "evidence": "probe:227"
+  },
+  {
+   "id": "SB-195",
+   "file": "design/spec.md",
+   "line": 15200,
+   "kind": "law",
+   "claim": "a Model not at :built is ArgumentInvalid :not_built",
+   "evidence": "probe:229"
+  },
+  {
+   "id": "SB-196",
+   "file": "design/spec.md",
+   "line": 15205,
+   "kind": "law",
+   "claim": "join_timeout defaults to 5.0",
+   "evidence": "probe:334"
+  },
+  {
+   "id": "SB-197",
+   "file": "design/spec.md",
+   "line": 15205,
+   "kind": "mech",
+   "claim": "join_timeout caps the shutdown tail's join in wall-clock seconds",
+   "evidence": "src/sim.jl:385"
+  },
+  {
+   "id": "SB-198",
+   "file": "design/spec.md",
+   "line": 15207,
+   "kind": "law",
+   "claim": "init!, overlay!, restore! and replay! take the four recording keywords",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "SB-199",
+   "file": "design/spec.md",
+   "line": 15209,
+   "kind": "decl",
+   "claim": "Simulation(deployment), Simulation(build) and Simulation(root) forms",
+   "evidence": "src/sim.jl:393"
+  },
+  {
+   "id": "SB-200",
+   "file": "design/spec.md",
+   "line": 15211,
+   "kind": "law",
+   "claim": "the forms take the Model keyword chunk_size and the Simulation keyword join_timeout",
+   "evidence": "src/sim.jl:393"
+  },
+  {
+   "id": "SB-201",
+   "file": "design/spec.md",
+   "line": 15211,
+   "kind": "decl",
+   "claim": "lead: chunk_size is the Model keyword the three convenience forms take",
+   "evidence": "probe:329"
+  },
+  {
+   "id": "SB-202",
+   "file": "design/spec.md",
+   "line": 15212,
+   "kind": "law",
+   "claim": "the build and root forms take the deployment keywords as well",
+   "evidence": "src/sim.jl:395"
+  },
+  {
+   "id": "SB-203",
+   "file": "design/spec.md",
+   "line": 15213,
+   "kind": "decl",
+   "claim": "attach!(sim, dev::AbstractDevice, new_binding::AbstractBinding; should_abort = false)",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "SB-204",
+   "file": "design/spec.md",
+   "line": 15214,
+   "kind": "law",
+   "claim": "attach! returns the DeviceHandle",
+   "evidence": "probe:459"
+  },
+  {
+   "id": "SB-205",
+   "file": "design/spec.md",
+   "line": 15214,
+   "kind": "mech",
+   "claim": "attach! is a stopped-sim operation",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "SB-206",
+   "file": "design/spec.md",
+   "line": 15215,
+   "kind": "mech",
+   "claim": "attach! adds the device and binding to the roster",
+   "evidence": "src/sim.jl:2536"
+  },
+  {
+   "id": "SB-207",
+   "file": "design/spec.md",
+   "line": 15217,
+   "kind": "law",
+   "claim": "attach! is ServiceLifecycle while running and on an errored simulation",
+   "evidence": "src/sim.jl:628"
+  },
+  {
+   "id": "SB-208",
+   "file": "design/spec.md",
+   "line": 15218,
+   "kind": "law",
+   "claim": "a second entry for one instance is AlreadyAttached",
+   "evidence": "probe:461"
+  },
+  {
+   "id": "SB-209",
+   "file": "design/spec.md",
+   "line": 15219,
+   "kind": "law",
+   "claim": "an overlapping claim is ClaimConflict",
+   "evidence": "probe:462"
+  },
+  {
+   "id": "SB-210",
+   "file": "design/spec.md",
+   "line": 15224,
+   "kind": "decl",
+   "claim": "dev must be an AbstractDevice",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "SB-211",
+   "file": "design/spec.md",
+   "line": 15225,
+   "kind": "decl",
+   "claim": "new_binding must be an AbstractBinding",
+   "evidence": "src/sim.jl:2505"
+  },
+  {
+   "id": "SB-212",
+   "file": "design/spec.md",
+   "line": 15226,
+   "kind": "law",
+   "claim": "should_abort defaults to false",
+   "evidence": "src/sim.jl:2506"
+  },
+  {
+   "id": "SB-213",
+   "file": "design/spec.md",
+   "line": 15226,
+   "kind": "mech",
+   "claim": "with should_abort set, a departure also requests a sim stop",
+   "evidence": "src/sim.jl:1850"
+  },
+  {
+   "id": "SB-214",
+   "file": "design/spec.md",
+   "line": 15228,
+   "kind": "law",
+   "claim": "sides are declared by Bool traits",
+   "evidence": "src/roster.jl:93"
+  },
+  {
+   "id": "SB-215",
+   "file": "design/spec.md",
+   "line": 15233,
+   "kind": "law",
+   "claim": "is_input defaults to false on AbstractBinding",
+   "evidence": "src/roster.jl:93"
+  },
+  {
+   "id": "SB-216",
+   "file": "design/spec.md",
+   "line": 15234,
+   "kind": "law",
+   "claim": "is_output defaults to false on AbstractBinding",
+   "evidence": "src/roster.jl:112"
+  },
+  {
+   "id": "SB-217",
+   "file": "design/spec.md",
+   "line": 15235,
+   "kind": "law",
+   "claim": "is_greedy defaults to false on AbstractBinding",
+   "evidence": "src/roster.jl:132"
+  },
+  {
+   "id": "SB-218",
+   "file": "design/spec.md",
+   "line": 15235,
+   "kind": "mech",
+   "claim": "is_greedy switches the claim source to the unclaimed complement",
+   "evidence": "src/sim.jl:2541"
+  },
+  {
+   "id": "SB-219",
+   "file": "design/spec.md",
+   "line": 15236,
+   "kind": "mech",
+   "claim": "the enumerated claims(b) set is the claim",
+   "evidence": "src/roster.jl:356"
+  },
+  {
+   "id": "SB-220",
+   "file": "design/spec.md",
+   "line": 15236,
+   "kind": "decl",
+   "claim": "map_input(datum, b) is the input-side method",
+   "evidence": "src/bindings.jl:102"
+  },
+  {
+   "id": "SB-221",
+   "file": "design/spec.md",
+   "line": 15237,
+   "kind": "decl",
+   "claim": "reads(b) and map_output(nt, b) are the output-side methods",
+   "evidence": "src/roster.jl:188"
+  },
+  {
+   "id": "SB-222",
+   "file": "design/spec.md",
+   "line": 15239,
+   "kind": "law",
+   "claim": "a declared side without its method is BindingContractMismatch",
+   "evidence": "probe:483"
+  },
+  {
+   "id": "SB-223",
+   "file": "design/spec.md",
+   "line": 15239,
+   "kind": "law",
+   "claim": "a method under a false trait is BindingContractMismatch",
+   "evidence": "probe:482"
+  },
+  {
+   "id": "SB-224",
+   "file": "design/spec.md",
+   "line": 15240,
+   "kind": "law",
+   "claim": "an empty greedy remainder is legal",
+   "evidence": "probe:466"
+  },
+  {
+   "id": "SB-225",
+   "file": "design/spec.md",
+   "line": 15240,
+   "kind": "law",
+   "claim": "an empty greedy remainder is reported as EmptyGreedyClaim",
+   "evidence": "src/sim.jl:2546"
+  },
+  {
+   "id": "SB-226",
+   "file": "design/spec.md",
+   "line": 15243,
+   "kind": "decl",
+   "claim": "TableBinding is the shipped data-driven binding",
+   "evidence": "src/bindings.jl:55"
+  },
+  {
+   "id": "SB-227",
+   "file": "design/spec.md",
+   "line": 15244,
+   "kind": "decl",
+   "claim": "detach!(sim, dev)",
+   "evidence": "src/sim.jl:2574"
+  },
+  {
+   "id": "SB-228",
+   "file": "design/spec.md",
+   "line": 15244,
+   "kind": "mech",
+   "claim": "detach! removes the roster entry and releases the claims",
+   "evidence": "src/sim.jl:2582"
+  },
+  {
+   "id": "SB-229",
+   "file": "design/spec.md",
+   "line": 15245,
+   "kind": "law",
+   "claim": "detach! is stopped-sim only",
+   "evidence": "src/sim.jl:2576"
+  },
+  {
+   "id": "SB-230",
+   "file": "design/spec.md",
+   "line": 15246,
+   "kind": "decl",
+   "claim": "a device is a subtype of AbstractDevice",
+   "evidence": "src/roster.jl:40"
+  },
+  {
+   "id": "SB-231",
+   "file": "design/spec.md",
+   "line": 15247,
+   "kind": "law",
+   "claim": "loop(dev, handle) is mandatory",
+   "evidence": "src/roster.jl:236"
+  },
+  {
+   "id": "SB-232",
+   "file": "design/spec.md",
+   "line": 15247,
+   "kind": "decl",
+   "claim": "init!(dev), shutdown!(dev) and unblock!(dev) are optional hooks",
+   "evidence": "src/devices.jl:113"
+  },
+  {
+   "id": "SB-233",
+   "file": "design/spec.md",
+   "line": 15249,
+   "kind": "mech",
+   "claim": "a throw in the per-run init!(dev) calls shutdown!",
+   "evidence": "src/sim.jl:1844"
+  },
+  {
+   "id": "SB-234",
+   "file": "design/spec.md",
+   "line": 15249,
+   "kind": "mech",
+   "claim": "a throw in the per-run init!(dev) reports DeviceCrash",
+   "evidence": "src/sim.jl:1849"
+  },
+  {
+   "id": "SB-235",
+   "file": "design/spec.md",
+   "line": 15251,
+   "kind": "decl",
+   "claim": "DeviceHandle is one type",
+   "evidence": "src/devices.jl:63"
+  },
+  {
+   "id": "SB-236",
+   "file": "design/spec.md",
+   "line": 15252,
+   "kind": "decl",
+   "claim": "latest(handle) and wait_next_snapshot(handle)",
+   "evidence": "src/devices.jl:285"
+  },
+  {
+   "id": "SB-237",
+   "file": "design/spec.md",
+   "line": 15253,
+   "kind": "decl",
+   "claim": "running(handle) and stage!(handle, writes::Pair...)",
+   "evidence": "src/devices.jl:229"
+  },
+  {
+   "id": "SB-238",
+   "file": "design/spec.md",
+   "line": 15254,
+   "kind": "decl",
+   "claim": "binding(handle), gather(handle, snapshot), report!(handle, occurrence)",
+   "evidence": "src/devices.jl:270"
+  },
+  {
+   "id": "SB-239",
+   "file": "design/spec.md",
+   "line": 15255,
+   "kind": "decl",
+   "claim": "stop!(handle) requests a stop",
+   "evidence": "src/devices.jl:253"
+  },
+  {
+   "id": "SB-240",
+   "file": "design/spec.md",
+   "line": 15256,
+   "kind": "law",
+   "claim": "latest(handle) returns nothing before the first publication",
+   "evidence": "probe:460"
+  },
+  {
+   "id": "SB-241",
+   "file": "design/spec.md",
+   "line": 15257,
+   "kind": "law",
+   "claim": "wait_next_snapshot returns nothing before the first publication",
+   "evidence": "src/devices.jl:434"
+  },
+  {
+   "id": "SB-242",
+   "file": "design/spec.md",
+   "line": 15258,
+   "kind": "decl",
+   "claim": "port_views(handle) returns the baked table of port views",
+   "evidence": "probe:498"
+  },
+  {
+   "id": "SB-243",
+   "file": "design/spec.md",
+   "line": 15259,
+   "kind": "decl",
+   "claim": "pending(handle, slot)",
+   "evidence": "src/devices.jl:307"
+  },
+  {
+   "id": "SB-244",
+   "file": "design/spec.md",
+   "line": 15259,
+   "kind": "decl",
+   "claim": "peek(view, handle, snapshot)",
+   "evidence": "src/devices.jl:569"
+  },
+  {
+   "id": "SB-245",
+   "file": "design/spec.md",
+   "line": 15259,
+   "kind": "decl",
+   "claim": "incumbent_status(view, snapshot)",
+   "evidence": "src/devices.jl:590"
+  },
+  {
+   "id": "SB-246",
+   "file": "design/spec.md",
+   "line": 15260,
+   "kind": "decl",
+   "claim": "orphaned(record) and stale(record; now = time())",
+   "evidence": "src/dataplane.jl:342"
+  },
+  {
+   "id": "SB-247",
+   "file": "design/spec.md",
+   "line": 15261,
+   "kind": "mech",
+   "claim": "orphaned and stale read the WriterStatus incumbent_status returns",
+   "evidence": "probe:501"
+  },
+  {
+   "id": "SB-248",
+   "file": "design/spec.md",
+   "line": 15262,
+   "kind": "mech",
+   "claim": "PortView is an entry of the port_views table",
+   "evidence": "probe:498"
+  },
+  {
+   "id": "SB-249",
+   "file": "design/spec.md",
+   "line": 15263,
+   "kind": "mech",
+   "claim": "peek and incumbent_status take a PortView",
+   "evidence": "src/devices.jl:569"
+  },
+  {
+   "id": "SB-250",
+   "file": "design/spec.md",
+   "line": 15264,
+   "kind": "mech",
+   "claim": "report! takes a MalformedDatum",
+   "evidence": "src/devices.jl:401"
+  },
+  {
+   "id": "SB-251",
+   "file": "design/spec.md",
+   "line": 15265,
+   "kind": "decl",
+   "claim": "MalformedDatum(cause)",
+   "evidence": "probe:319"
+  },
+  {
+   "id": "SB-252",
+   "file": "design/spec.md",
+   "line": 15269,
+   "kind": "decl",
+   "claim": "set(; x = (;), s = (;), m = (;), u = (;))",
+   "evidence": "src/conditions.jl:169"
+  },
+  {
+   "id": "SB-253",
+   "file": "design/spec.md",
+   "line": 15269,
+   "kind": "mech",
+   "claim": "set returns a Fragment",
+   "evidence": "probe:278"
+  },
+  {
+   "id": "SB-254",
+   "file": "design/spec.md",
+   "line": 15270,
+   "kind": "law",
+   "claim": "set refuses a nothing payload",
+   "evidence": "probe:277"
+  },
+  {
+   "id": "SB-255",
+   "file": "design/spec.md",
+   "line": 15271,
+   "kind": "decl",
+   "claim": "at(prefix, node)",
+   "evidence": "src/conditions.jl:207"
+  },
+  {
+   "id": "SB-256",
+   "file": "design/spec.md",
+   "line": 15271,
+   "kind": "mech",
+   "claim": "at stores the prefix and applies nothing",
+   "evidence": "src/conditions.jl:207"
+  },
+  {
+   "id": "SB-257",
+   "file": "design/spec.md",
+   "line": 15272,
+   "kind": "mech",
+   "claim": "at lifts a TrimProblem",
+   "evidence": "probe:268"
+  },
+  {
+   "id": "SB-258",
+   "file": "design/spec.md",
+   "line": 15272,
+   "kind": "law",
+   "claim": "TrimProblem has nine fields",
+   "evidence": "probe:239"
+  },
+  {
+   "id": "SB-259",
+   "file": "design/spec.md",
+   "line": 15273,
+   "kind": "mech",
+   "claim": "at lifts a read set",
+   "evidence": "probe:269"
+  },
+  {
+   "id": "SB-260",
+   "file": "design/spec.md",
+   "line": 15273,
+   "kind": "mech",
+   "claim": "at lifts a tap set",
+   "evidence": "probe:270"
+  },
+  {
+   "id": "SB-261",
+   "file": "design/spec.md",
+   "line": 15275,
+   "kind": "decl",
+   "claim": "combine(nodes...)",
+   "evidence": "src/conditions.jl:239"
+  },
+  {
+   "id": "SB-262",
+   "file": "design/spec.md",
+   "line": 15275,
+   "kind": "law",
+   "claim": "combine is symmetric collection",
+   "evidence": "src/conditions.jl:239"
+  },
+  {
+   "id": "SB-263",
+   "file": "design/spec.md",
+   "line": 15275,
+   "kind": "law",
+   "claim": "duplicate leaves are an error",
+   "evidence": "probe:279"
+  },
+  {
+   "id": "SB-264",
+   "file": "design/spec.md",
+   "line": 15276,
+   "kind": "law",
+   "claim": "the duplicate error names both origins",
+   "evidence": "src/conditions.jl:232"
+  },
+  {
+   "id": "SB-265",
+   "file": "design/spec.md",
+   "line": 15277,
+   "kind": "decl",
+   "claim": "override(base, patches...)",
+   "evidence": "src/conditions.jl:275"
+  },
+  {
+   "id": "SB-266",
+   "file": "design/spec.md",
+   "line": 15277,
+   "kind": "law",
+   "claim": "override layers in order and the patch wins",
+   "evidence": "src/conditions.jl:275"
+  },
+  {
+   "id": "SB-267",
+   "file": "design/spec.md",
+   "line": 15278,
+   "kind": "law",
+   "claim": "the diagnostics keep both origins",
+   "evidence": "src/conditions.jl:263"
+  },
+  {
+   "id": "SB-268",
+   "file": "design/spec.md",
+   "line": 15279,
+   "kind": "decl",
+   "claim": "condition(comp; kw) is the shipped condition-method idiom",
+   "evidence": "src/conditions.jl:134"
+  },
+  {
+   "id": "SB-269",
+   "file": "design/spec.md",
+   "line": 15280,
+   "kind": "mech",
+   "claim": "set, at, combine and override return Fragment, Scoped, Combined and Override",
+   "evidence": "probe:274"
+  },
+  {
+   "id": "SB-270",
+   "file": "design/spec.md",
+   "line": 15281,
+   "kind": "decl",
+   "claim": "ConditionNode is the union of the four holder types",
+   "evidence": "src/conditions.jl:110"
+  },
+  {
+   "id": "SB-271",
+   "file": "design/spec.md",
+   "line": 15282,
+   "kind": "mech",
+   "claim": "each combinator takes a ConditionNode",
+   "evidence": "src/conditions.jl:239"
+  },
+  {
+   "id": "SB-272",
+   "file": "design/spec.md",
+   "line": 15286,
+   "kind": "decl",
+   "claim": "sim init!(sim, condition = set(); t0 = 0, trace, log, log_every, log_max) with the stated defaults",
+   "evidence": "src/sim.jl:834"
+  },
+  {
+   "id": "SB-273",
+   "file": "design/spec.md",
+   "line": 15288,
+   "kind": "law",
+   "claim": "root-input totality is checked before any write",
+   "evidence": "probe:355"
+  },
+  {
+   "id": "SB-274",
+   "file": "design/spec.md",
+   "line": 15289,
+   "kind": "mech",
+   "claim": "boundary zero runs at t0",
+   "evidence": "src/sim.jl:849"
+  },
+  {
+   "id": "SB-275",
+   "file": "design/spec.md",
+   "line": 15289,
+   "kind": "law",
+   "claim": "t0 is held as an exact origin",
+   "evidence": "src/sim.jl:842"
+  },
+  {
+   "id": "SB-276",
+   "file": "design/spec.md",
+   "line": 15290,
+   "kind": "mech",
+   "claim": "the checkpoint after boundary zero is the trace header",
+   "evidence": "src/sim.jl:856"
+  },
+  {
+   "id": "SB-277",
+   "file": "design/spec.md",
+   "line": 15296,
+   "kind": "law",
+   "claim": "trace = false is a plain kill switch for the input trace",
+   "evidence": "probe:399"
+  },
+  {
+   "id": "SB-278",
+   "file": "design/spec.md",
+   "line": 15297,
+   "kind": "law",
+   "claim": "log = false switches the snapshot log off",
+   "evidence": "src/sim.jl:674"
+  },
+  {
+   "id": "SB-279",
+   "file": "design/spec.md",
+   "line": 15298,
+   "kind": "law",
+   "claim": "log_every keeps every kth snapshot, an integer ≥ 1",
+   "evidence": "src/sim.jl:675"
+  },
+  {
+   "id": "SB-280",
+   "file": "design/spec.md",
+   "line": 15299,
+   "kind": "law",
+   "claim": "log_max bounds retained snapshots and Inf opts out",
+   "evidence": "probe:351"
+  },
+  {
+   "id": "SB-281",
+   "file": "design/spec.md",
+   "line": 15301,
+   "kind": "mech",
+   "claim": "the four keywords configure the run this call builds",
+   "evidence": "src/sim.jl:846"
+  },
+  {
+   "id": "SB-282",
+   "file": "design/spec.md",
+   "line": 15302,
+   "kind": "law",
+   "claim": "overlay!, restore! and replay! take the same four keywords",
+   "evidence": "src/sim.jl:964"
+  },
+  {
+   "id": "SB-283",
+   "file": "design/spec.md",
+   "line": 15304,
+   "kind": "decl",
+   "claim": "trim!(sim, problem; baseline, t0 = 0, backend = LevenbergMarquardt())",
+   "evidence": "src/sim.jl:1123"
+  },
+  {
+   "id": "SB-284",
+   "file": "design/spec.md",
+   "line": 15304,
+   "kind": "decl",
+   "claim": "sim trim! returns TrimReport",
+   "evidence": "probe:511"
+  },
+  {
+   "id": "SB-285",
+   "file": "design/spec.md",
+   "line": 15305,
+   "kind": "mech",
+   "claim": "the solve runs against the problem's own tolerances",
+   "evidence": "src/trim.jl:723"
+  },
+  {
+   "id": "SB-286",
+   "file": "design/spec.md",
+   "line": 15306,
+   "kind": "mech",
+   "claim": "the default backend is nonlinear least squares on packed residuals",
+   "evidence": "src/trim.jl:300"
+  },
+  {
+   "id": "SB-287",
+   "file": "design/spec.md",
+   "line": 15307,
+   "kind": "mech",
+   "claim": "Jacobians are exact Dual Jacobians",
+   "evidence": "src/trim.jl:629"
+  },
+  {
+   "id": "SB-288",
+   "file": "design/spec.md",
+   "line": 15308,
+   "kind": "decl",
+   "claim": "LevenbergMarquardt() is the default backend",
+   "evidence": "src/trim.jl:561"
+  },
+  {
+   "id": "SB-290",
+   "file": "design/spec.md",
+   "line": 15309,
+   "kind": "mech",
+   "claim": "the backend is an in-house dense Levenberg–Marquardt",
+   "evidence": "src/trim.jl:277"
+  },
+  {
+   "id": "SB-291",
+   "file": "design/spec.md",
+   "line": 15309,
+   "kind": "mech",
+   "claim": "the commit is init! over override(baseline, ...)",
+   "evidence": "src/trim.jl:730"
+  },
+  {
+   "id": "SB-293",
+   "file": "design/spec.md",
+   "line": 15310,
+   "kind": "law",
+   "claim": "the commit is gated on the report's converged",
+   "evidence": "src/trim.jl:721"
+  },
+  {
+   "id": "SB-294",
+   "file": "design/spec.md",
+   "line": 15312,
+   "kind": "decl",
+   "claim": "solve(backend, eval!, d0, lower, upper, tol)",
+   "evidence": "src/trim.jl:300"
+  },
+  {
+   "id": "SB-295",
+   "file": "design/spec.md",
+   "line": 15312,
+   "kind": "law",
+   "claim": "solve returns (; d, status, n_evaluations, n_iterations)",
+   "evidence": "probe:251"
+  },
+  {
+   "id": "SB-296",
+   "file": "design/spec.md",
+   "line": 15313,
+   "kind": "mech",
+   "claim": "solve is the backend seam with a pinned signature",
+   "evidence": "src/trim.jl:300"
+  },
+  {
+   "id": "SB-297",
+   "file": "design/spec.md",
+   "line": 15315,
+   "kind": "decl",
+   "claim": "checkpoint(sim) returns Checkpoint",
+   "evidence": "src/sim.jl:892"
+  },
+  {
+   "id": "SB-298",
+   "file": "design/spec.md",
+   "line": 15315,
+   "kind": "mech",
+   "claim": "a checkpoint holds the Model's state at a frame top",
+   "evidence": "src/sim.jl:894"
+  },
+  {
+   "id": "SB-299",
+   "file": "design/spec.md",
+   "line": 15316,
+   "kind": "mech",
+   "claim": "a checkpoint carries t₀, the fingerprint and the deployment",
+   "evidence": "probe:201"
+  },
+  {
+   "id": "SB-300",
+   "file": "design/spec.md",
+   "line": 15317,
+   "kind": "mech",
+   "claim": "a checkpoint carries the run's frame index and boundary ordinal",
+   "evidence": "probe:372"
+  },
+  {
+   "id": "SB-301",
+   "file": "design/spec.md",
+   "line": 15318,
+   "kind": "decl",
+   "claim": "restore!(sim, cp; trace, log, log_every, log_max)",
+   "evidence": "src/sim.jl:1063"
+  },
+  {
+   "id": "SB-302",
+   "file": "design/spec.md",
+   "line": 15319,
+   "kind": "law",
+   "claim": "restore! is a door beside init!, overlay! and replay!",
+   "evidence": "src/sim.jl:1063"
+  },
+  {
+   "id": "SB-303",
+   "file": "design/spec.md",
+   "line": 15319,
+   "kind": "law",
+   "claim": "restore! is legal where init! is",
+   "evidence": "src/sim.jl:1065"
+  },
+  {
+   "id": "SB-304",
+   "file": "design/spec.md",
+   "line": 15320,
+   "kind": "law",
+   "claim": "restore! checks fingerprint and deployment as CheckpointMismatch",
+   "evidence": "src/sim.jl:1072"
+  },
+  {
+   "id": "SB-305",
+   "file": "design/spec.md",
+   "line": 15321,
+   "kind": "law",
+   "claim": "restore! checks t against the grid as CheckpointMidFrame",
+   "evidence": "src/sim.jl:1073"
+  },
+  {
+   "id": "SB-306",
+   "file": "design/spec.md",
+   "line": 15322,
+   "kind": "mech",
+   "claim": "warm restart is checkpoint, restore!, run!",
+   "evidence": "probe:397"
+  },
+  {
+   "id": "SB-307",
+   "file": "design/spec.md",
+   "line": 15324,
+   "kind": "decl",
+   "claim": "restore!(sim, model_state; trace, log, log_every, log_max)",
+   "evidence": "src/sim.jl:1080"
+  },
+  {
+   "id": "SB-308",
+   "file": "design/spec.md",
+   "line": 15325,
+   "kind": "mech",
+   "claim": "it takes a ModelState prepared on a standalone model",
+   "evidence": "src/sim.jl:1080"
+  },
+  {
+   "id": "SB-309",
+   "file": "design/spec.md",
+   "line": 15326,
+   "kind": "law",
+   "claim": "it checks fingerprint and deployment as CheckpointMismatch",
+   "evidence": "src/sim.jl:1089"
+  },
+  {
+   "id": "SB-310",
+   "file": "design/spec.md",
+   "line": 15327,
+   "kind": "law",
+   "claim": "a state off the grid is CheckpointMidFrame",
+   "evidence": "src/sim.jl:1090"
+  },
+  {
+   "id": "SB-311",
+   "file": "design/spec.md",
+   "line": 15327,
+   "kind": "mech",
+   "claim": "it opens a fresh trajectory at the state's frame",
+   "evidence": "src/sim.jl:1093"
+  },
+  {
+   "id": "SB-312",
+   "file": "design/spec.md",
+   "line": 15328,
+   "kind": "law",
+   "claim": "the restored boundary publishes under ordinal 0",
+   "evidence": "probe:410"
+  },
+  {
+   "id": "SB-313",
+   "file": "design/spec.md",
+   "line": 15329,
+   "kind": "decl",
+   "claim": "overlay!(sim, condition = set(); trace, log, log_every, log_max)",
+   "evidence": "src/sim.jl:964"
+  },
+  {
+   "id": "SB-314",
+   "file": "design/spec.md",
+   "line": 15330,
+   "kind": "mech",
+   "claim": "the condition's stores are written onto the stopped run",
+   "evidence": "src/sim.jl:974"
+  },
+  {
+   "id": "SB-315",
+   "file": "design/spec.md",
+   "line": 15331,
+   "kind": "mech",
+   "claim": "a fresh run opens with the post-settling checkpoint as header",
+   "evidence": "src/sim.jl:980"
+  },
+  {
+   "id": "SB-316",
+   "file": "design/spec.md",
+   "line": 15334,
+   "kind": "decl",
+   "claim": "linearize(sim, taps; about = nothing, t0 = nothing, width = 8)",
+   "evidence": "src/sim.jl:1159"
+  },
+  {
+   "id": "SB-317",
+   "file": "design/spec.md",
+   "line": 15335,
+   "kind": "law",
+   "claim": "sim linearize is a pure query",
+   "evidence": "src/sim.jl:1170"
+  },
+  {
+   "id": "SB-318",
+   "file": "design/spec.md",
+   "line": 15335,
+   "kind": "law",
+   "claim": "the default operating point is the simulation checkpoint",
+   "evidence": "src/sim.jl:1170"
+  },
+  {
+   "id": "SB-319",
+   "file": "design/spec.md",
+   "line": 15336,
+   "kind": "mech",
+   "claim": "about with t0 places the operating point elsewhere",
+   "evidence": "src/linearize.jl:313"
+  },
+  {
+   "id": "SB-320",
+   "file": "design/spec.md",
+   "line": 15336,
+   "kind": "law",
+   "claim": "t0 defaults to 0 beside about",
+   "evidence": "src/linearize.jl:313"
+  },
+  {
+   "id": "SB-321",
+   "file": "design/spec.md",
+   "line": 15339,
+   "kind": "decl",
+   "claim": "labeled(linearization) returns a Linearization",
+   "evidence": "ext/RedstoneComponentArraysExt.jl:15"
+  },
+  {
+   "id": "SB-322",
+   "file": "design/spec.md",
+   "line": 15340,
+   "kind": "mech",
+   "claim": "labeled returns component arrays under the tap labels",
+   "evidence": "probe:261"
+  },
+  {
+   "id": "SB-323",
+   "file": "design/spec.md",
+   "line": 15340,
+   "kind": "law",
+   "claim": "an array whose tap lists are all empty stays plain",
+   "evidence": "probe:265"
+  },
+  {
+   "id": "SB-324",
+   "file": "design/spec.md",
+   "line": 15341,
+   "kind": "mech",
+   "claim": "the ComponentArrays extension provides the method",
+   "evidence": "ext/RedstoneComponentArraysExt.jl:15"
+  },
+  {
+   "id": "SB-325",
+   "file": "design/spec.md",
+   "line": 15343,
+   "kind": "decl",
+   "claim": "get_state(path, leaf = \"\") and get_deriv(path, leaf = \"\")",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "SB-326",
+   "file": "design/spec.md",
+   "line": 15343,
+   "kind": "decl",
+   "claim": "get_output(path, leaf = \"\")",
+   "evidence": "src/readers.jl:243"
+  },
+  {
+   "id": "SB-327",
+   "file": "design/spec.md",
+   "line": 15344,
+   "kind": "decl",
+   "claim": "get_input(leaf = \"\") and get_face(leaf = \"\")",
+   "evidence": "src/readers.jl:269"
+  },
+  {
+   "id": "SB-328",
+   "file": "design/spec.md",
+   "line": 15344,
+   "kind": "law",
+   "claim": "the five selectors are the closed read-selector family",
+   "evidence": "src/readers.jl:493"
+  },
+  {
+   "id": "SB-329",
+   "file": "design/spec.md",
+   "line": 15345,
+   "kind": "mech",
+   "claim": "one resolver serves every reader that takes a selector",
+   "evidence": "src/readers.jl:665"
+  },
+  {
+   "id": "SB-330",
+   "file": "design/spec.md",
+   "line": 15347,
+   "kind": "law",
+   "claim": "the empty default stands for the bare store letter or default face",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "SB-331",
+   "file": "design/spec.md",
+   "line": 15349,
+   "kind": "decl",
+   "claim": "taps(; x = (;), u = (;), y = (;))",
+   "evidence": "src/linearize.jl:70"
+  },
+  {
+   "id": "SB-332",
+   "file": "design/spec.md",
+   "line": 15350,
+   "kind": "law",
+   "claim": "a tap set is three labeled selector lists",
+   "evidence": "src/linearize.jl:70"
+  },
+  {
+   "id": "SB-333",
+   "file": "design/spec.md",
+   "line": 15350,
+   "kind": "law",
+   "claim": "list membership is closed",
+   "evidence": "src/linearize.jl:415"
+  },
+  {
+   "id": "SB-334",
+   "file": "design/spec.md",
+   "line": 15351,
+   "kind": "law",
+   "claim": "every tap is a leaf address resolving to one scalar",
+   "evidence": "src/linearize.jl:54"
+  },
+  {
+   "id": "SB-335",
+   "file": "design/spec.md",
+   "line": 15353,
+   "kind": "mech",
+   "claim": "the five selectors return GetState, GetDeriv, GetOutput, GetInput and GetFace",
+   "evidence": "probe:283"
+  },
+  {
+   "id": "SB-336",
+   "file": "design/spec.md",
+   "line": 15354,
+   "kind": "mech",
+   "claim": "taps returns Taps and linearize takes it",
+   "evidence": "probe:255"
+  },
+  {
+   "id": "SB-337",
+   "file": "design/spec.md",
+   "line": 15355,
+   "kind": "mech",
+   "claim": "reads returns Reads and series takes it",
+   "evidence": "probe:292"
+  },
+  {
+   "id": "SB-338",
+   "file": "design/spec.md",
+   "line": 15360,
+   "kind": "decl",
+   "claim": "run!(sim; pace = Inf, margin = 0.002, t_end = Inf, ignore_stop_requests = ())",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "SB-339",
+   "file": "design/spec.md",
+   "line": 15361,
+   "kind": "law",
+   "claim": "run! blocks until the run ends",
+   "evidence": "probe:387"
+  },
+  {
+   "id": "SB-340",
+   "file": "design/spec.md",
+   "line": 15361,
+   "kind": "law",
+   "claim": "a deviceless run! is synchronous on the calling task",
+   "evidence": "src/sim.jl:1469"
+  },
+  {
+   "id": "SB-341",
+   "file": "design/spec.md",
+   "line": 15366,
+   "kind": "law",
+   "claim": "pace defaults to Inf and Inf is pacer-off",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "SB-342",
+   "file": "design/spec.md",
+   "line": 15366,
+   "kind": "mech",
+   "claim": "pace is the simulated seconds per wall second, 1 real time",
+   "evidence": "src/sim.jl:2396"
+  },
+  {
+   "id": "SB-343",
+   "file": "design/spec.md",
+   "line": 15367,
+   "kind": "law",
+   "claim": "margin defaults to 0.002 seconds",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "SB-344",
+   "file": "design/spec.md",
+   "line": 15367,
+   "kind": "mech",
+   "claim": "margin is the single pacing knob",
+   "evidence": "src/sim.jl:2412"
+  },
+  {
+   "id": "SB-345",
+   "file": "design/spec.md",
+   "line": 15368,
+   "kind": "law",
+   "claim": "t_end defaults to Inf",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "SB-346",
+   "file": "design/spec.md",
+   "line": 15368,
+   "kind": "mech",
+   "claim": "t_end is declared for this advance and validated per call",
+   "evidence": "src/sim.jl:1565"
+  },
+  {
+   "id": "SB-347",
+   "file": "design/spec.md",
+   "line": 15369,
+   "kind": "law",
+   "claim": "ignore_stop_requests defaults to ()",
+   "evidence": "src/sim.jl:1562"
+  },
+  {
+   "id": "SB-348",
+   "file": "design/spec.md",
+   "line": 15369,
+   "kind": "law",
+   "claim": "ignore_stop_requests takes :all or requester paths and refuses unknown ones",
+   "evidence": "probe:427"
+  },
+  {
+   "id": "SB-349",
+   "file": "design/spec.md",
+   "line": 15371,
+   "kind": "mech",
+   "claim": "each advance builds a StopPolicy from t_end and ignore_stop_requests",
+   "evidence": "src/sim.jl:141"
+  },
+  {
+   "id": "SB-350",
+   "file": "design/spec.md",
+   "line": 15372,
+   "kind": "law",
+   "claim": "t_end = Inf with no honoured request is an allowed unbounded run",
+   "evidence": "src/sim.jl:1534"
+  },
+  {
+   "id": "SB-351",
+   "file": "design/spec.md",
+   "line": 15373,
+   "kind": "mech",
+   "claim": "UnboundedRun is raised into the loop's diagnostic cell",
+   "evidence": "src/sim.jl:1572"
+  },
+  {
+   "id": "SB-352",
+   "file": "design/spec.md",
+   "line": 15374,
+   "kind": "law",
+   "claim": "UnboundedRun is raised in :live only",
+   "evidence": "src/sim.jl:1567"
+  },
+  {
+   "id": "SB-353",
+   "file": "design/spec.md",
+   "line": 15376,
+   "kind": "decl",
+   "claim": "step!(sim; frames, t_plus, t_end, ignore_stop_requests)",
+   "evidence": "src/sim.jl:2220"
+  },
+  {
+   "id": "SB-354",
+   "file": "design/spec.md",
+   "line": 15377,
+   "kind": "law",
+   "claim": "step! returns the frames advanced",
+   "evidence": "probe:359"
+  },
+  {
+   "id": "SB-355",
+   "file": "design/spec.md",
+   "line": 15377,
+   "kind": "mech",
+   "claim": "step! is a synchronous partial advance through the ordinary frame sequence",
+   "evidence": "src/sim.jl:2220"
+  },
+  {
+   "id": "SB-356",
+   "file": "design/spec.md",
+   "line": 15378,
+   "kind": "law",
+   "claim": "stepped frames are bit-identical to the same frames under run!",
+   "evidence": "test/test_lifecycle.jl:716"
+  },
+  {
+   "id": "SB-357",
+   "file": "design/spec.md",
+   "line": 15379,
+   "kind": "law",
+   "claim": "t_plus and frames are mutually exclusive",
+   "evidence": "probe:358"
+  },
+  {
+   "id": "SB-358",
+   "file": "design/spec.md",
+   "line": 15380,
+   "kind": "law",
+   "claim": "neither given advances one frame",
+   "evidence": "probe:359"
+  },
+  {
+   "id": "SB-359",
+   "file": "design/spec.md",
+   "line": 15381,
+   "kind": "decl",
+   "claim": "stage!(sim, \"face\" => value, ...)",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "SB-360",
+   "file": "design/spec.md",
+   "line": 15381,
+   "kind": "mech",
+   "claim": "staging works from any task into the harness writer",
+   "evidence": "src/sim.jl:2620"
+  },
+  {
+   "id": "SB-361",
+   "file": "design/spec.md",
+   "line": 15382,
+   "kind": "law",
+   "claim": "the harness surface is the currently unclaimed faces",
+   "evidence": "src/roster.jl:390"
+  },
+  {
+   "id": "SB-362",
+   "file": "design/spec.md",
+   "line": 15384,
+   "kind": "decl",
+   "claim": "latest(sim) returns the current snapshot",
+   "evidence": "src/sim.jl:2857"
+  },
+  {
+   "id": "SB-363",
+   "file": "design/spec.md",
+   "line": 15384,
+   "kind": "mech",
+   "claim": "it is the same immutable value device handles read",
+   "evidence": "src/devices.jl:285"
+  },
+  {
+   "id": "SB-364",
+   "file": "design/spec.md",
+   "line": 15385,
+   "kind": "law",
+   "claim": "latest returns nothing before the first publication",
+   "evidence": "probe:341"
+  },
+  {
+   "id": "SB-365",
+   "file": "design/spec.md",
+   "line": 15387,
+   "kind": "decl",
+   "claim": "phase_bodies(model) and phase_bodies(sim)",
+   "evidence": "src/model.jl:521"
+  },
+  {
+   "id": "SB-366",
+   "file": "design/spec.md",
+   "line": 15388,
+   "kind": "mech",
+   "claim": "the bodies are bound over the model's own buffers",
+   "evidence": "src/model.jl:521"
+  },
+  {
+   "id": "SB-367",
+   "file": "design/spec.md",
+   "line": 15389,
+   "kind": "mech",
+   "claim": "a simulation's phase bodies are its model's",
+   "evidence": "probe:415"
+  },
+  {
+   "id": "SB-368",
+   "file": "design/spec.md",
+   "line": 15391,
+   "kind": "decl",
+   "claim": "pause!, resume!, stop! and paused take a sim",
+   "evidence": "src/sim.jl:2345"
+  },
+  {
+   "id": "SB-369",
+   "file": "design/spec.md",
+   "line": 15393,
+   "kind": "decl",
+   "claim": "pace!, margin!, pace and margin take a sim",
+   "evidence": "src/sim.jl:2396"
+  },
+  {
+   "id": "SB-370",
+   "file": "design/spec.md",
+   "line": 15394,
+   "kind": "mech",
+   "claim": "a device stops through stop!(handle)",
+   "evidence": "src/devices.jl:253"
+  },
+  {
+   "id": "SB-371",
+   "file": "design/spec.md",
+   "line": 15396,
+   "kind": "mech",
+   "claim": "StopFlag ports carry model stop requests",
+   "evidence": "src/sim.jl:580"
+  },
+  {
+   "id": "SB-372",
+   "file": "design/spec.md",
+   "line": 15397,
+   "kind": "mech",
+   "claim": "stop requests are read at every published boundary",
+   "evidence": "src/sim.jl:2037"
+  },
+  {
+   "id": "SB-373",
+   "file": "design/spec.md",
+   "line": 15397,
+   "kind": "law",
+   "claim": "an advance can ignore stop requests",
+   "evidence": "probe:427"
+  },
+  {
+   "id": "SB-374",
+   "file": "design/spec.md",
+   "line": 15399,
+   "kind": "decl",
+   "claim": "termination(sim) returns the termination record",
+   "evidence": "src/sim.jl:567"
+  },
+  {
+   "id": "SB-375",
+   "file": "design/spec.md",
+   "line": 15400,
+   "kind": "law",
+   "claim": "the record source is one of EndTimeReached, ModelRequestedStop, ControlRequestedStop, LoopError",
+   "evidence": "probe:313"
+  },
+  {
+   "id": "SB-376",
+   "file": "design/spec.md",
+   "line": 15403,
+   "kind": "law",
+   "claim": "TerminationSource is the four sources' abstract parent",
+   "evidence": "src/sim.jl:44"
+  },
+  {
+   "id": "SB-377",
+   "file": "design/spec.md",
+   "line": 15404,
+   "kind": "law",
+   "claim": "the record is nothing until the run ends",
+   "evidence": "probe:342"
+  },
+  {
+   "id": "SB-378",
+   "file": "design/spec.md",
+   "line": 15405,
+   "kind": "decl",
+   "claim": "logged(sim)",
+   "evidence": "src/sim.jl:2879"
+  },
+  {
+   "id": "SB-379",
+   "file": "design/spec.md",
+   "line": 15405,
+   "kind": "mech",
+   "claim": "logged returns the retained snapshots",
+   "evidence": "probe:377"
+  },
+  {
+   "id": "SB-380",
+   "file": "design/spec.md",
+   "line": 15407,
+   "kind": "decl",
+   "claim": "reads(; selectors...) builds a read set",
+   "evidence": "src/readers.jl:551"
+  },
+  {
+   "id": "SB-381",
+   "file": "design/spec.md",
+   "line": 15408,
+   "kind": "mech",
+   "claim": "series takes a read set and at mounts one",
+   "evidence": "probe:269"
+  },
+  {
+   "id": "SB-382",
+   "file": "design/spec.md",
+   "line": 15409,
+   "kind": "decl",
+   "claim": "series(sim, read_set) returns a Series",
+   "evidence": "src/sim.jl:2956"
+  },
+  {
+   "id": "SB-383",
+   "file": "design/spec.md",
+   "line": 15410,
+   "kind": "mech",
+   "claim": "series gathers retained snapshots into labeled columns",
+   "evidence": "probe:380"
+  },
+  {
+   "id": "SB-384",
+   "file": "design/spec.md",
+   "line": 15410,
+   "kind": "mech",
+   "claim": "one typed vector per labeled entry",
+   "evidence": "probe:379"
+  },
+  {
+   "id": "SB-385",
+   "file": "design/spec.md",
+   "line": 15411,
+   "kind": "mech",
+   "claim": "columns come beside t, frame and boundary",
+   "evidence": "probe:380"
+  },
+  {
+   "id": "SB-386",
+   "file": "design/spec.md",
+   "line": 15411,
+   "kind": "mech",
+   "claim": "a column reads as a Series property under its label",
+   "evidence": "src/sim.jl:2924"
+  },
+  {
+   "id": "SB-387",
+   "file": "design/spec.md",
+   "line": 15412,
+   "kind": "law",
+   "claim": "the labels t, frame, boundary and columns are refused",
+   "evidence": "probe:381"
+  },
+  {
+   "id": "SB-388",
+   "file": "design/spec.md",
+   "line": 15414,
+   "kind": "decl",
+   "claim": "trace(sim) returns the input trace",
+   "evidence": "src/sim.jl:3015"
+  },
+  {
+   "id": "SB-389",
+   "file": "design/spec.md",
+   "line": 15414,
+   "kind": "law",
+   "claim": "the trace is on by default",
+   "evidence": "probe:386"
+  },
+  {
+   "id": "SB-390",
+   "file": "design/spec.md",
+   "line": 15416,
+   "kind": "decl",
+   "claim": "replay!(sim2, trc; ...) signature and defaults",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "SB-391",
+   "file": "design/spec.md",
+   "line": 15418,
+   "kind": "mech",
+   "claim": "replay! re-drives bit-identically through the ordinary loop",
+   "evidence": "test/test_trace.jl:467"
+  },
+  {
+   "id": "SB-392",
+   "file": "design/spec.md",
+   "line": 15420,
+   "kind": "law",
+   "claim": "replay! takes init!'s four recording keywords",
+   "evidence": "src/sim.jl:1337"
+  },
+  {
+   "id": "SB-393",
+   "file": "design/spec.md",
+   "line": 15423,
+   "kind": "decl",
+   "claim": "warnings(x) on Build, Deployment and Simulation",
+   "evidence": "src/sim.jl:399"
+  },
+  {
+   "id": "SB-394",
+   "file": "design/spec.md",
+   "line": 15424,
+   "kind": "mech",
+   "claim": "a Simulation's warnings concatenate its artifacts' lists",
+   "evidence": "src/model.jl:973"
+  },
+  {
+   "id": "SB-395",
+   "file": "design/spec.md",
+   "line": 15426,
+   "kind": "decl",
+   "claim": "closed(run) returns Bool",
+   "evidence": "src/sim.jl:250"
+  },
+  {
+   "id": "SB-396",
+   "file": "design/spec.md",
+   "line": 15426,
+   "kind": "law",
+   "claim": "closed is true once the termination record is written",
+   "evidence": "src/sim.jl:250"
+  },
+  {
+   "id": "SB-397",
+   "file": "design/spec.md",
+   "line": 15428,
+   "kind": "decl",
+   "claim": "lifecycle(sim) returns a Symbol",
+   "evidence": "src/sim.jl:511"
+  },
+  {
+   "id": "SB-398",
+   "file": "design/spec.md",
+   "line": 15428,
+   "kind": "law",
+   "claim": "the states are :built, :initialized, :running, :stopped, :errored",
+   "evidence": "src/sim.jl:511"
+  },
+  {
+   "id": "SB-399",
+   "file": "design/spec.md",
+   "line": 15429,
+   "kind": "mech",
+   "claim": "lifecycle is derived at each read and never stored",
+   "evidence": "src/sim.jl:511"
+  },
+  {
+   "id": "SB-400",
+   "file": "design/spec.md",
+   "line": 15431,
+   "kind": "decl",
+   "claim": "mode(sim) returns :live or :replay",
+   "evidence": "src/sim.jl:548"
+  },
+  {
+   "id": "SB-401",
+   "file": "design/spec.md",
+   "line": 15432,
+   "kind": "mech",
+   "claim": "mode says where the next drain takes its batches from",
+   "evidence": "src/sim.jl:548"
+  },
+  {
+   "id": "SB-402",
+   "file": "design/spec.md",
+   "line": 15435,
+   "kind": "decl",
+   "claim": "live!(sim)",
+   "evidence": "src/sim.jl:1443"
+  },
+  {
+   "id": "SB-403",
+   "file": "design/spec.md",
+   "line": 15435,
+   "kind": "mech",
+   "claim": "live! detaches the attached recording and sets :live",
+   "evidence": "src/sim.jl:1450"
+  },
+  {
+   "id": "SB-404",
+   "file": "design/spec.md",
+   "line": 15436,
+   "kind": "law",
+   "claim": "live! touches neither trajectory nor trace",
+   "evidence": "src/sim.jl:1450"
+  },
+  {
+   "id": "SB-405",
+   "file": "design/spec.md",
+   "line": 15438,
+   "kind": "mech",
+   "claim": "Snapshot is what latest returns and port(snapshot, ...) and gather read",
+   "evidence": "src/dataplane.jl:544"
+  },
+  {
+   "id": "SB-406",
+   "file": "design/spec.md",
+   "line": 15439,
+   "kind": "mech",
+   "claim": "Run is sim.run",
+   "evidence": "probe:530"
+  },
+  {
+   "id": "SB-407",
+   "file": "design/spec.md",
+   "line": 15440,
+   "kind": "mech",
+   "claim": "TerminationRecord is what termination returns",
+   "evidence": "probe:389"
+  },
+  {
+   "id": "SB-408",
+   "file": "design/spec.md",
+   "line": 15440,
+   "kind": "mech",
+   "claim": "Trace is what trace returns and replay! takes",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "SB-409",
+   "file": "design/spec.md",
+   "line": 15441,
+   "kind": "mech",
+   "claim": "Series is what series returns",
+   "evidence": "probe:379"
+  },
+  {
+   "id": "SB-410",
+   "file": "design/spec.md",
+   "line": 15442,
+   "kind": "mech",
+   "claim": "Diagnostic is the element type of the warnings list",
+   "evidence": "probe:347"
+  }
+ ],
+ "counts": {
+  "law": 162,
+  "decl": 130,
+  "mech": 118,
+  "ptr": 8
+ }
+}

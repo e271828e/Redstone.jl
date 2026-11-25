@@ -1,0 +1,2407 @@
+{
+ "rows": [
+  {
+   "id": "SD2-077",
+   "file": "design/spec.md",
+   "line": 16756,
+   "kind": "mech",
+   "claim": "A Deployment is the build plus Δt_frame, Δt_base, the step bound h_max, the algorithm and the three event parameters.",
+   "evidence": "src/deployment.jl:540-553 lists h_min (the step floor) and attempt_budget as further fields; src/deployment.jl:623-624 compares them; log D-460 and D-463 add them",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The entry names three event parameters (firing_budget, localization_tol, localization_budget) and omits h_min and attempt_budget, both fields of the artifact and both compared by ==.",
+   "fix": "the artifact the grid parameters fix: the [build](#g-build) plus `Δt_frame`, `Δt_base`, the step bound `h_max`, the step floor `h_min` of an adaptive method, the algorithm, the three event parameters and the attempt budget, carrying the `Schedule` and its own `warnings`."
+  },
+  {
+   "id": "SD2-084",
+   "file": "design/spec.md",
+   "line": 16767,
+   "kind": "law",
+   "claim": "A Dual activation sees only the continuous output stages and x_deriv, never the discrete stages, s_update, guards or handlers.",
+   "evidence": "src/build.jl:1149-1171 probes x_projection at every activation it runs at, a Dual one included; design/spec.md:5700-5702 (§9.4) lists y_state/y_direct, x_deriv and x_projection",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "The entry omits x_projection from the set a Dual activation executes and probes; §9.4 names it.",
+   "fix": "A `Dual` activation sees only the continuous output stages, `x_deriv` and `x_projection`, never the discrete stages, `s_update`, [guards](#g-guard) or handlers ([§9.4][s9-4])."
+  },
+  {
+   "id": "SD2-089",
+   "file": "design/spec.md",
+   "line": 16777,
+   "kind": "law",
+   "claim": "A Pinned{P} leaf yields P in the leaf walk.",
+   "evidence": "src/leaves.jl:296-303 retype_entry strips Pinned only at the top of a contract entry; src/declare.jl:231-248 and src/assembly.jl:769-771 refuse a marker below the top as IllegalPortType (D-265)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Pinned wraps a whole u_types or y_types entry, never a leaf inside one; a nested marker is refused. The spec uses 'leaf' loosely elsewhere (spec.md:2780).",
+   "fix": "a `Pinned{P}` contract entry yields `P`, and everything else pins"
+  },
+  {
+   "id": "SD2-130",
+   "file": "design/spec.md",
+   "line": 16859,
+   "kind": "law",
+   "claim": "A contract leaf opts out of walking with the Pinned{P} marker.",
+   "evidence": "src/declare.jl:231-248: Pinned wraps a whole entry of u_types or y_types; a marker in a type parameter is IllegalPortType (src/assembly.jl:769-771)",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Same imprecision as the leaf-walk entry: the marker opts a whole contract entry out, not a leaf of it.",
+   "fix": "A contract entry opts out of walking with the `Pinned{P}` marker ([§8.2][s8-2])."
+  }
+ ],
+ "ok": [
+  {
+   "id": "SD2-001",
+   "file": "design/spec.md",
+   "line": 16470,
+   "kind": "law",
+   "claim": "An anchor is the exact (Δt(a), τ(a)) pair an Absolute entry establishes",
+   "evidence": "src/structure.jl:145-150"
+  },
+  {
+   "id": "SD2-002",
+   "file": "design/spec.md",
+   "line": 16471,
+   "kind": "decl",
+   "claim": "Δt(a) and τ(a) are the anchor's period and offset in rational seconds",
+   "evidence": "src/structure.jl:145-150, src/declare.jl:473-476"
+  },
+  {
+   "id": "SD2-003",
+   "file": "design/spec.md",
+   "line": 16472,
+   "kind": "law",
+   "claim": "An anchor severs its subtree from the enclosing scope's grid",
+   "evidence": "src/structure.jl:309, src/declare.jl:491-493"
+  },
+  {
+   "id": "SD2-004",
+   "file": "design/spec.md",
+   "line": 16472,
+   "kind": "law",
+   "claim": "The base grid is anchor A₀ with Δt(A₀) = Δt_base",
+   "evidence": "src/structure.jl:141-143, src/deployment.jl:275"
+  },
+  {
+   "id": "SD2-005",
+   "file": "design/spec.md",
+   "line": 16473,
+   "kind": "mech",
+   "claim": "A discrete component's timing is the triple (a, Dₐ, Φₐ) counted in ticks of its anchor",
+   "evidence": "src/structure.jl:135"
+  },
+  {
+   "id": "SD2-006",
+   "file": "design/spec.md",
+   "line": 16475,
+   "kind": "mech",
+   "claim": "Anchors join the deployment's constraint pool",
+   "evidence": "src/structure.jl:847-858, src/deployment.jl:247"
+  },
+  {
+   "id": "SD2-007",
+   "file": "design/spec.md",
+   "line": 16476,
+   "kind": "law",
+   "claim": "Relative declarations below an anchor compose against it as against the root grid",
+   "evidence": "src/structure.jl:913-918"
+  },
+  {
+   "id": "SD2-008",
+   "file": "design/spec.md",
+   "line": 16479,
+   "kind": "mech",
+   "claim": "An attempt is one try at a step of given length, accepted or rejected by the backend",
+   "evidence": "src/stepper.jl:64-74, src/model.jl:825-829"
+  },
+  {
+   "id": "SD2-009",
+   "file": "design/spec.md",
+   "line": 16480,
+   "kind": "mech",
+   "claim": "The backend writes the step's end into a trial buffer",
+   "evidence": "src/stepper.jl:151-165 (exec.xnext)"
+  },
+  {
+   "id": "SD2-010",
+   "file": "design/spec.md",
+   "line": 16480,
+   "kind": "mech",
+   "claim": "The Model commits the trial only on acceptance",
+   "evidence": "src/model.jl:834-839"
+  },
+  {
+   "id": "SD2-011",
+   "file": "design/spec.md",
+   "line": 16481,
+   "kind": "mech",
+   "claim": "After a rejection the Model puts the step's start back",
+   "evidence": "src/model.jl:841-842"
+  },
+  {
+   "id": "SD2-012",
+   "file": "design/spec.md",
+   "line": 16481,
+   "kind": "mech",
+   "claim": "After a rejection the Model offers the backend's proposal as the next length",
+   "evidence": "src/model.jl:847"
+  },
+  {
+   "id": "SD2-013",
+   "file": "design/spec.md",
+   "line": 16482,
+   "kind": "law",
+   "claim": "The proposal is clamped into [h_min, h_max]",
+   "evidence": "src/model.jl:879"
+  },
+  {
+   "id": "SD2-014",
+   "file": "design/spec.md",
+   "line": 16483,
+   "kind": "law",
+   "claim": "The offered length is shaped by equal division over the distance to the span's end",
+   "evidence": "src/model.jl:864-870, probe:B4"
+  },
+  {
+   "id": "SD2-015",
+   "file": "design/spec.md",
+   "line": 16485,
+   "kind": "law",
+   "claim": "When the backend rejects the shortest allowed step, the Model commits it",
+   "evidence": "src/model.jl:831-833"
+  },
+  {
+   "id": "SD2-016",
+   "file": "design/spec.md",
+   "line": 16486,
+   "kind": "mech",
+   "claim": "A cursor frame names the attempt by its ordinal in the step",
+   "evidence": "src/model.jl:827, src/model.jl:1084"
+  },
+  {
+   "id": "SD2-017",
+   "file": "design/spec.md",
+   "line": 16489,
+   "kind": "mech",
+   "claim": "A boundary is a published consistency point where the macro-sequence completes and a snapshot goes out",
+   "evidence": "src/frame.jl:162-170, src/sim.jl:2041"
+  },
+  {
+   "id": "SD2-018",
+   "file": "design/spec.md",
+   "line": 16491,
+   "kind": "law",
+   "claim": "Every frame top is a boundary",
+   "evidence": "src/frame.jl:162-171"
+  },
+  {
+   "id": "SD2-019",
+   "file": "design/spec.md",
+   "line": 16491,
+   "kind": "law",
+   "claim": "Every end of an integration step is a boundary",
+   "evidence": "src/frame.jl:162-170"
+  },
+  {
+   "id": "SD2-020",
+   "file": "design/spec.md",
+   "line": 16492,
+   "kind": "law",
+   "claim": "Step ends inside a frame, t* and boundary zero are boundaries but not frame tops",
+   "evidence": "src/frame.jl:165,318; src/model.jl:699"
+  },
+  {
+   "id": "SD2-021",
+   "file": "design/spec.md",
+   "line": 16497,
+   "kind": "mech",
+   "claim": "The boundary sequence projects at each boundary",
+   "evidence": "src/model.jl:652-655"
+  },
+  {
+   "id": "SD2-022",
+   "file": "design/spec.md",
+   "line": 16498,
+   "kind": "mech",
+   "claim": "It iterates sweep, guards and handlers to quiescence under the firing budget",
+   "evidence": "src/model.jl:734-779"
+  },
+  {
+   "id": "SD2-023",
+   "file": "design/spec.md",
+   "line": 16499,
+   "kind": "mech",
+   "claim": "It then runs all due s_update calls",
+   "evidence": "src/model.jl:656,660-662"
+  },
+  {
+   "id": "SD2-024",
+   "file": "design/spec.md",
+   "line": 16499,
+   "kind": "mech",
+   "claim": "Logging and I/O staging follow in the settled! hook",
+   "evidence": "src/frame.jl:170, src/sim.jl:2041"
+  },
+  {
+   "id": "SD2-025",
+   "file": "design/spec.md",
+   "line": 16501,
+   "kind": "law",
+   "claim": "Boundary zero is the same sequence with an empty integrate",
+   "evidence": "src/model.jl:699"
+  },
+  {
+   "id": "SD2-026",
+   "file": "design/spec.md",
+   "line": 16504,
+   "kind": "decl",
+   "claim": "The localization budget is the deployment keyword localization_budget",
+   "evidence": "src/deployment.jl:466-468"
+  },
+  {
+   "id": "SD2-027",
+   "file": "design/spec.md",
+   "line": 16505,
+   "kind": "law",
+   "claim": "localization_budget is a per-frame allowance",
+   "evidence": "src/frame.jl:124,234"
+  },
+  {
+   "id": "SD2-028",
+   "file": "design/spec.md",
+   "line": 16505,
+   "kind": "law",
+   "claim": "localization_budget defaults to 8",
+   "evidence": "probe:A1"
+  },
+  {
+   "id": "SD2-029",
+   "file": "design/spec.md",
+   "line": 16506,
+   "kind": "law",
+   "claim": "Exhaustion degrades rather than throws",
+   "evidence": "src/frame.jl:234-246"
+  },
+  {
+   "id": "SD2-030",
+   "file": "design/spec.md",
+   "line": 16507,
+   "kind": "law",
+   "claim": "Localization stops for the rest of the frame",
+   "evidence": "src/frame.jl:124,234"
+  },
+  {
+   "id": "SD2-031",
+   "file": "design/spec.md",
+   "line": 16507,
+   "kind": "law",
+   "claim": "Further crossings fire at the next boundary",
+   "evidence": "src/frame.jl:230-233,245"
+  },
+  {
+   "id": "SD2-032",
+   "file": "design/spec.md",
+   "line": 16508,
+   "kind": "law",
+   "claim": "A ChatteringBudget warning names the event",
+   "evidence": "src/frame.jl:238-243, src/diagnostics.jl:1625,1730"
+  },
+  {
+   "id": "SD2-033",
+   "file": "design/spec.md",
+   "line": 16511,
+   "kind": "mech",
+   "claim": "The discontinuity notice is the Model's word to the backend that the next step starts at a discontinuity",
+   "evidence": "src/stepper.jl:77-87"
+  },
+  {
+   "id": "SD2-034",
+   "file": "design/spec.md",
+   "line": 16513,
+   "kind": "law",
+   "claim": "It is raised at a boundary where a handler fired or a tick ran",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "SD2-035",
+   "file": "design/spec.md",
+   "line": 16514,
+   "kind": "law",
+   "claim": "It is raised at a frame top whose drain wrote a value",
+   "evidence": "src/frame.jl:91-92"
+  },
+  {
+   "id": "SD2-036",
+   "file": "design/spec.md",
+   "line": 16514,
+   "kind": "law",
+   "claim": "It is raised when overlay! settles",
+   "evidence": "src/model.jl:474"
+  },
+  {
+   "id": "SD2-037",
+   "file": "design/spec.md",
+   "line": 16515,
+   "kind": "law",
+   "claim": "What the backend does with it is its own",
+   "evidence": "src/stepper.jl:84-85,87,288"
+  },
+  {
+   "id": "SD2-038",
+   "file": "design/spec.md",
+   "line": 16516,
+   "kind": "law",
+   "claim": "A restore raises no notice",
+   "evidence": "src/model.jl:1328-1343, src/stepper.jl:108-109"
+  },
+  {
+   "id": "SD2-039",
+   "file": "design/spec.md",
+   "line": 16519,
+   "kind": "mech",
+   "claim": "The divisor D is a discrete component's period in ticks",
+   "evidence": "src/deployment.jl:36-43"
+  },
+  {
+   "id": "SD2-040",
+   "file": "design/spec.md",
+   "line": 16521,
+   "kind": "decl",
+   "claim": "Subscripts Dₛ, Dₐ, D₀ name the lattice counted in",
+   "evidence": "src/structure.jl:135, src/structure.jl:913-914"
+  },
+  {
+   "id": "SD2-041",
+   "file": "design/spec.md",
+   "line": 16523,
+   "kind": "law",
+   "claim": "D ≥ 1 holds in every lattice",
+   "evidence": "src/declare.jl:420-421 (build refuses D < 1), src/structure.jl:900-902"
+  },
+  {
+   "id": "SD2-042",
+   "file": "design/spec.md",
+   "line": 16524,
+   "kind": "law",
+   "claim": "Dₖ(i) = Dⱼ(i)·Dₖ(j) composes the counts",
+   "evidence": "src/structure.jl:909-916"
+  },
+  {
+   "id": "SD2-043",
+   "file": "design/spec.md",
+   "line": 16525,
+   "kind": "law",
+   "claim": "The period in seconds is Δt(i) = D₀(i)·Δt_base",
+   "evidence": "src/deployment.jl:293"
+  },
+  {
+   "id": "SD2-044",
+   "file": "design/spec.md",
+   "line": 16528,
+   "kind": "law",
+   "claim": "Δt_base is in no required ratio to Δt_frame or h_max",
+   "evidence": "probe:A3, src/deployment.jl:226-229"
+  },
+  {
+   "id": "SD2-045",
+   "file": "design/spec.md",
+   "line": 16529,
+   "kind": "mech",
+   "claim": "Δt_base is bound at the Deployment constructor",
+   "evidence": "src/deployment.jl:214,573"
+  },
+  {
+   "id": "SD2-046",
+   "file": "design/spec.md",
+   "line": 16529,
+   "kind": "decl",
+   "claim": "One source is an explicit keyword",
+   "evidence": "src/deployment.jl:264-265"
+  },
+  {
+   "id": "SD2-047",
+   "file": "design/spec.md",
+   "line": 16530,
+   "kind": "decl",
+   "claim": "Another source is Δt_frame, the default",
+   "evidence": "src/deployment.jl:266-267, probe:A3"
+  },
+  {
+   "id": "SD2-048",
+   "file": "design/spec.md",
+   "line": 16530,
+   "kind": "decl",
+   "claim": "The third source is derivation from the constraint pool",
+   "evidence": "src/deployment.jl:253-263, probe:A1"
+  },
+  {
+   "id": "SD2-049",
+   "file": "design/spec.md",
+   "line": 16530,
+   "kind": "law",
+   "claim": "Derivation serves fully anchored models only",
+   "evidence": "src/deployment.jl:254-258, probe:A7"
+  },
+  {
+   "id": "SD2-050",
+   "file": "design/spec.md",
+   "line": 16531,
+   "kind": "law",
+   "claim": "Every discrete component's period is an integer multiple of Δt_base",
+   "evidence": "src/deployment.jl:293, src/structure.jl:913-916"
+  },
+  {
+   "id": "SD2-051",
+   "file": "design/spec.md",
+   "line": 16534,
+   "kind": "mech",
+   "claim": "Δt_frame is the frame period, the spacing of frame tops",
+   "evidence": "src/model.jl:530-531"
+  },
+  {
+   "id": "SD2-052",
+   "file": "design/spec.md",
+   "line": 16535,
+   "kind": "decl",
+   "claim": "Δt_frame is a required deployment keyword",
+   "evidence": "src/deployment.jl:216-217, probe:A9"
+  },
+  {
+   "id": "SD2-053",
+   "file": "design/spec.md",
+   "line": 16536,
+   "kind": "mech",
+   "claim": "Root inputs land and the drain runs at frame tops",
+   "evidence": "src/sim.jl:2021-2024, src/frame.jl:91"
+  },
+  {
+   "id": "SD2-054",
+   "file": "design/spec.md",
+   "line": 16536,
+   "kind": "mech",
+   "claim": "The pacer waits at frame tops",
+   "evidence": "src/sim.jl:2107-2109"
+  },
+  {
+   "id": "SD2-055",
+   "file": "design/spec.md",
+   "line": 16537,
+   "kind": "law",
+   "claim": "Δt_frame stands in no required ratio to Δt_base or h_max",
+   "evidence": "src/deployment.jl:226-229, probe:A3"
+  },
+  {
+   "id": "SD2-056",
+   "file": "design/spec.md",
+   "line": 16540,
+   "kind": "law",
+   "claim": "Δt_unit is gcd(Δt_frame, Δt_base)",
+   "evidence": "src/deployment.jl:153, probe:A2"
+  },
+  {
+   "id": "SD2-057",
+   "file": "design/spec.md",
+   "line": 16541,
+   "kind": "law",
+   "claim": "Δt_unit is Δt_frame when no discrete component exists",
+   "evidence": "src/deployment.jl:153, probe:A5"
+  },
+  {
+   "id": "SD2-058",
+   "file": "design/spec.md",
+   "line": 16542,
+   "kind": "law",
+   "claim": "No deployment keyword sets Δt_unit",
+   "evidence": "src/deployment.jl:466-469"
+  },
+  {
+   "id": "SD2-059",
+   "file": "design/spec.md",
+   "line": 16541,
+   "kind": "mech",
+   "claim": "The loop counts every mandatory instant in units",
+   "evidence": "src/frame.jl:127-132"
+  },
+  {
+   "id": "SD2-060",
+   "file": "design/spec.md",
+   "line": 16543,
+   "kind": "law",
+   "claim": "Frame tops and base ticks are whole multiples of Δt_unit",
+   "evidence": "src/deployment.jl:154-155, probe:A2"
+  },
+  {
+   "id": "SD2-061",
+   "file": "design/spec.md",
+   "line": 16544,
+   "kind": "law",
+   "claim": "The least gap between two mandatory instants is one Δt_unit",
+   "evidence": "src/deployment.jl:169-173"
+  },
+  {
+   "id": "SD2-062",
+   "file": "design/spec.md",
+   "line": 16548,
+   "kind": "law",
+   "claim": "A component is due when (n − Φ₀) % D₀ == 0",
+   "evidence": "src/executor.jl:519"
+  },
+  {
+   "id": "SD2-063",
+   "file": "design/spec.md",
+   "line": 16551,
+   "kind": "law",
+   "claim": "A due instant is a base tick at which some component is due",
+   "evidence": "src/model.jl:544-553"
+  },
+  {
+   "id": "SD2-064",
+   "file": "design/spec.md",
+   "line": 16551,
+   "kind": "law",
+   "claim": "Every due instant is a mandatory instant that ends the step reaching it",
+   "evidence": "src/frame.jl:127-131,162"
+  },
+  {
+   "id": "SD2-065",
+   "file": "design/spec.md",
+   "line": 16553,
+   "kind": "mech",
+   "claim": "A due component runs its stages in the boundary sweep",
+   "evidence": "src/executor.jl:515-519"
+  },
+  {
+   "id": "SD2-066",
+   "file": "design/spec.md",
+   "line": 16553,
+   "kind": "mech",
+   "claim": "A due component runs its s_update after quiescence",
+   "evidence": "src/model.jl:656"
+  },
+  {
+   "id": "SD2-067",
+   "file": "design/spec.md",
+   "line": 16554,
+   "kind": "law",
+   "claim": "The due set is fixed for the boundary's event iteration",
+   "evidence": "src/model.jl:734-779, 706-717"
+  },
+  {
+   "id": "SD2-068",
+   "file": "design/spec.md",
+   "line": 16555,
+   "kind": "law",
+   "claim": "The due set is given per kind of boundary",
+   "evidence": "src/model.jl:662-664,709-717"
+  },
+  {
+   "id": "SD2-069",
+   "file": "design/spec.md",
+   "line": 16558,
+   "kind": "law",
+   "claim": "An event fires on a not-holding to holding transition",
+   "evidence": "src/model.jl:748"
+  },
+  {
+   "id": "SD2-070",
+   "file": "design/spec.md",
+   "line": 16559,
+   "kind": "law",
+   "claim": "An event never fires on a bare sign change",
+   "evidence": "src/model.jl:748"
+  },
+  {
+   "id": "SD2-071",
+   "file": "design/spec.md",
+   "line": 16560,
+   "kind": "decl",
+   "claim": "The opposite direction is a second event with the negated guard",
+   "evidence": "src/declare.jl:545-548 (StateEvent has no direction keyword)"
+  },
+  {
+   "id": "SD2-072",
+   "file": "design/spec.md",
+   "line": 16563,
+   "kind": "law",
+   "claim": "Each declared event fires at most firing_budget times per boundary",
+   "evidence": "src/model.jl:744-749"
+  },
+  {
+   "id": "SD2-073",
+   "file": "design/spec.md",
+   "line": 16565,
+   "kind": "decl",
+   "claim": "firing_budget is a deployment keyword",
+   "evidence": "src/deployment.jl:466-467"
+  },
+  {
+   "id": "SD2-074",
+   "file": "design/spec.md",
+   "line": 16565,
+   "kind": "law",
+   "claim": "firing_budget is an integer of at least 1",
+   "evidence": "src/deployment.jl:563-564"
+  },
+  {
+   "id": "SD2-075",
+   "file": "design/spec.md",
+   "line": 16565,
+   "kind": "law",
+   "claim": "firing_budget defaults to 4",
+   "evidence": "probe:A1"
+  },
+  {
+   "id": "SD2-076",
+   "file": "design/spec.md",
+   "line": 16567,
+   "kind": "law",
+   "claim": "Exhaustion drops the event's further edges there",
+   "evidence": "src/model.jl:749-757,771"
+  },
+  {
+   "id": "SD2-078",
+   "file": "design/spec.md",
+   "line": 16568,
+   "kind": "law",
+   "claim": "Exhaustion reports a FiringBudget warning",
+   "evidence": "src/model.jl:750-757, src/diagnostics.jl:1634,1731"
+  },
+  {
+   "id": "SD2-079",
+   "file": "design/spec.md",
+   "line": 16570,
+   "kind": "law",
+   "claim": "The floor is the shortest step the shaping rule allows",
+   "evidence": "src/model.jl:875-885"
+  },
+  {
+   "id": "SD2-080",
+   "file": "design/spec.md",
+   "line": 16571,
+   "kind": "decl",
+   "claim": "The floor is set by the deployment's h_min",
+   "evidence": "src/model.jl:877"
+  },
+  {
+   "id": "SD2-081",
+   "file": "design/spec.md",
+   "line": 16572,
+   "kind": "law",
+   "claim": "Over a distance r the floor's step is r / ⌊r / h_min⌋",
+   "evidence": "src/model.jl:880-883, probe:B1"
+  },
+  {
+   "id": "SD2-082",
+   "file": "design/spec.md",
+   "line": 16573,
+   "kind": "law",
+   "claim": "The floor's step is r itself when r is shorter than h_min",
+   "evidence": "src/model.jl:881-882, probe:B2"
+  },
+  {
+   "id": "SD2-083",
+   "file": "design/spec.md",
+   "line": 16574,
+   "kind": "law",
+   "claim": "When the backend rejects the floor's attempt the Model commits it and files StepFloor",
+   "evidence": "src/model.jl:831-833,894-899"
+  },
+  {
+   "id": "SD2-085",
+   "file": "design/spec.md",
+   "line": 16575,
+   "kind": "law",
+   "claim": "A step that spent its attempt budget takes its next attempt at the floor",
+   "evidence": "src/model.jl:843-846"
+  },
+  {
+   "id": "SD2-086",
+   "file": "design/spec.md",
+   "line": 16578,
+   "kind": "mech",
+   "claim": "The grid report is what a tree's anchors admit as a base tick",
+   "evidence": "src/structure.jl:847-898"
+  },
+  {
+   "id": "SD2-087",
+   "file": "design/spec.md",
+   "line": 16580,
+   "kind": "mech",
+   "claim": "It holds the pool: every anchor's period and nonzero offset",
+   "evidence": "src/structure.jl:848-857"
+  },
+  {
+   "id": "SD2-088",
+   "file": "design/spec.md",
+   "line": 16581,
+   "kind": "mech",
+   "claim": "It holds the coarsest admissible Δt_base",
+   "evidence": "src/structure.jl:859, src/diagnostics.jl:1365"
+  },
+  {
+   "id": "SD2-090",
+   "file": "design/spec.md",
+   "line": 16581,
+   "kind": "mech",
+   "claim": "Each pool entry carries its refinement factor",
+   "evidence": "src/structure.jl:861-868, src/diagnostics.jl:1348"
+  },
+  {
+   "id": "SD2-091",
+   "file": "design/spec.md",
+   "line": 16582,
+   "kind": "mech",
+   "claim": "It holds the prime attribution of the grid's denominator",
+   "evidence": "src/structure.jl:896-898"
+  },
+  {
+   "id": "SD2-092",
+   "file": "design/spec.md",
+   "line": 16583,
+   "kind": "law",
+   "claim": "It is a function of the anchors, held by no artifact",
+   "evidence": "src/structure.jl:847, src/diagnostics.jl:1330-1331"
+  },
+  {
+   "id": "SD2-093",
+   "file": "design/spec.md",
+   "line": 16584,
+   "kind": "mech",
+   "claim": "show(::Structure) prints it",
+   "evidence": "src/show.jl:126"
+  },
+  {
+   "id": "SD2-094",
+   "file": "design/spec.md",
+   "line": 16584,
+   "kind": "mech",
+   "claim": "The Deployment constructor's grid diagnostics carry it",
+   "evidence": "src/deployment.jl:247,257-258; src/diagnostics.jl:1331-1332"
+  },
+  {
+   "id": "SD2-095",
+   "file": "design/spec.md",
+   "line": 16585,
+   "kind": "mech",
+   "claim": "The descriptor carries it as data",
+   "evidence": "src/descriptor.jl:188-210"
+  },
+  {
+   "id": "SD2-096",
+   "file": "design/spec.md",
+   "line": 16590,
+   "kind": "decl",
+   "claim": "A guard is the declared function that defines an event's predicate",
+   "evidence": "src/declare.jl:520-528"
+  },
+  {
+   "id": "SD2-097",
+   "file": "design/spec.md",
+   "line": 16591,
+   "kind": "decl",
+   "claim": "A guard pairs with a handler in the ordered, named state_events collection",
+   "evidence": "src/declare.jl:545-550,558-565"
+  },
+  {
+   "id": "SD2-098",
+   "file": "design/spec.md",
+   "line": 16592,
+   "kind": "law",
+   "claim": "A guard's return type declares its detection policy",
+   "evidence": "src/build.jl:1256-1257,1287-1288"
+  },
+  {
+   "id": "SD2-099",
+   "file": "design/spec.md",
+   "line": 16592,
+   "kind": "law",
+   "claim": "A Bool guard is non-localized",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "SD2-100",
+   "file": "design/spec.md",
+   "line": 16593,
+   "kind": "law",
+   "claim": "A guard returning the nominal scalar is localized",
+   "evidence": "src/build.jl:1288"
+  },
+  {
+   "id": "SD2-101",
+   "file": "design/spec.md",
+   "line": 16596,
+   "kind": "law",
+   "claim": "Every discrete period is an integer multiple of Δt_base",
+   "evidence": "src/deployment.jl:293"
+  },
+  {
+   "id": "SD2-102",
+   "file": "design/spec.md",
+   "line": 16597,
+   "kind": "law",
+   "claim": "Ticks land only on boundaries",
+   "evidence": "src/frame.jl:127-131,162-166"
+  },
+  {
+   "id": "SD2-103",
+   "file": "design/spec.md",
+   "line": 16598,
+   "kind": "mech",
+   "claim": "Each instant is indexed on its own lattice, never accumulated",
+   "evidence": "src/model.jl:524-537"
+  },
+  {
+   "id": "SD2-104",
+   "file": "design/spec.md",
+   "line": 16599,
+   "kind": "law",
+   "claim": "Every anchor period and offset must be an integer multiple of Δt_base",
+   "evidence": "src/deployment.jl:277-287, probe:A4"
+  },
+  {
+   "id": "SD2-105",
+   "file": "design/spec.md",
+   "line": 16603,
+   "kind": "mech",
+   "claim": "An input epoch is a span of constant root inputs delimited by frame-top drains",
+   "evidence": "src/sim.jl:2021-2024, src/frame.jl:90-91"
+  },
+  {
+   "id": "SD2-106",
+   "file": "design/spec.md",
+   "line": 16605,
+   "kind": "law",
+   "claim": "Within an epoch a guard changes only through the trajectory",
+   "evidence": "src/frame.jl:251-258"
+  },
+  {
+   "id": "SD2-107",
+   "file": "design/spec.md",
+   "line": 16605,
+   "kind": "law",
+   "claim": "At a seam a guard can jump without crossing",
+   "evidence": "src/frame.jl:253-257"
+  },
+  {
+   "id": "SD2-108",
+   "file": "design/spec.md",
+   "line": 16606,
+   "kind": "mech",
+   "claim": "The θ = 0 validation is a trial evaluation at xₙ under the frame's own u",
+   "evidence": "src/frame.jl:259-264"
+  },
+  {
+   "id": "SD2-109",
+   "file": "design/spec.md",
+   "line": 16607,
+   "kind": "mech",
+   "claim": "It tells a trajectory-caused edge from an epoch-caused one",
+   "evidence": "src/frame.jl:264-274"
+  },
+  {
+   "id": "SD2-110",
+   "file": "design/spec.md",
+   "line": 16610,
+   "kind": "mech",
+   "claim": "The interpolant is a cubic Hermite extension",
+   "evidence": "src/stepper.jl:362-372"
+  },
+  {
+   "id": "SD2-111",
+   "file": "design/spec.md",
+   "line": 16610,
+   "kind": "mech",
+   "claim": "It spans the last completed step",
+   "evidence": "src/stepper.jl:353-355"
+  },
+  {
+   "id": "SD2-112",
+   "file": "design/spec.md",
+   "line": 16611,
+   "kind": "mech",
+   "claim": "Localization trial evaluations read their states from it",
+   "evidence": "src/frame.jl:340-343"
+  },
+  {
+   "id": "SD2-113",
+   "file": "design/spec.md",
+   "line": 16612,
+   "kind": "law",
+   "claim": "It is built lazily, only after θ = 0 validation confirms a crossing",
+   "evidence": "src/frame.jl:270-282"
+  },
+  {
+   "id": "SD2-114",
+   "file": "design/spec.md",
+   "line": 16613,
+   "kind": "law",
+   "claim": "It is invalidated at t*",
+   "evidence": "src/frame.jl:314-318"
+  },
+  {
+   "id": "SD2-115",
+   "file": "design/spec.md",
+   "line": 16616,
+   "kind": "law",
+   "claim": "Localized is the policy a sign-form guard declares",
+   "evidence": "src/build.jl:1288"
+  },
+  {
+   "id": "SD2-116",
+   "file": "design/spec.md",
+   "line": 16617,
+   "kind": "mech",
+   "claim": "The crossing is bracketed by derivative-free root-finding over trial sweeps of interpolated states",
+   "evidence": "src/frame.jl:340-393"
+  },
+  {
+   "id": "SD2-117",
+   "file": "design/spec.md",
+   "line": 16618,
+   "kind": "law",
+   "claim": "The bracket narrows to localization_tol · Δt_frame",
+   "evidence": "src/frame.jl:361-376"
+  },
+  {
+   "id": "SD2-118",
+   "file": "design/spec.md",
+   "line": 16619,
+   "kind": "decl",
+   "claim": "localization_tol is a deployment keyword defaulting to 1e-6",
+   "evidence": "src/deployment.jl:468, probe:A1"
+  },
+  {
+   "id": "SD2-119",
+   "file": "design/spec.md",
+   "line": 16619,
+   "kind": "law",
+   "claim": "Only the sign form can declare it",
+   "evidence": "src/build.jl:1287-1290"
+  },
+  {
+   "id": "SD2-120",
+   "file": "design/spec.md",
+   "line": 16620,
+   "kind": "law",
+   "claim": "Localization runs identically paced or unpaced",
+   "evidence": "src/frame.jl:117-178 reads no pacer; src/sim.jl:2107-2109 waits outside the frame"
+  },
+  {
+   "id": "SD2-121",
+   "file": "design/spec.md",
+   "line": 16623,
+   "kind": "law",
+   "claim": "A mandatory instant is a frame top or a due instant",
+   "evidence": "src/frame.jl:127-129"
+  },
+  {
+   "id": "SD2-122",
+   "file": "design/spec.md",
+   "line": 16624,
+   "kind": "law",
+   "claim": "No integration step crosses a mandatory instant",
+   "evidence": "src/frame.jl:131-146"
+  },
+  {
+   "id": "SD2-123",
+   "file": "design/spec.md",
+   "line": 16624,
+   "kind": "mech",
+   "claim": "A span runs from one mandatory instant to the next",
+   "evidence": "src/frame.jl:127-131,176"
+  },
+  {
+   "id": "SD2-124",
+   "file": "design/spec.md",
+   "line": 16625,
+   "kind": "law",
+   "claim": "A fixed-step method takes a span in the fewest equal steps no longer than h_max",
+   "evidence": "src/frame.jl:132,141, src/deployment.jl:162-163"
+  },
+  {
+   "id": "SD2-125",
+   "file": "design/spec.md",
+   "line": 16626,
+   "kind": "law",
+   "claim": "With no bound set it takes a span in one step",
+   "evidence": "src/deployment.jl:226-229 (h_max resolves to Δt_frame)"
+  },
+  {
+   "id": "SD2-126",
+   "file": "design/spec.md",
+   "line": 16629,
+   "kind": "law",
+   "claim": "Non-localized is the policy a Bool-returning guard declares",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "SD2-127",
+   "file": "design/spec.md",
+   "line": 16630,
+   "kind": "law",
+   "claim": "Both policies detect at boundaries",
+   "evidence": "src/model.jl:748, src/frame.jl:224-228"
+  },
+  {
+   "id": "SD2-128",
+   "file": "design/spec.md",
+   "line": 16631,
+   "kind": "law",
+   "claim": "Non-localized does not locate the crossing instant",
+   "evidence": "src/frame.jl:224 (only localized events trigger)"
+  },
+  {
+   "id": "SD2-129",
+   "file": "design/spec.md",
+   "line": 16632,
+   "kind": "law",
+   "claim": "It checks for the edge at boundaries only and never root-finds",
+   "evidence": "src/frame.jl:224, src/model.jl:748"
+  },
+  {
+   "id": "SD2-131",
+   "file": "design/spec.md",
+   "line": 16633,
+   "kind": "law",
+   "claim": "The policy is exact for guards over modes, root inputs and held discrete outputs alone",
+   "evidence": "src/executor.jl:399-402 (modes change in handlers), src/frame.jl:251-258 (inputs change at drains)"
+  },
+  {
+   "id": "SD2-132",
+   "file": "design/spec.md",
+   "line": 16634,
+   "kind": "law",
+   "claim": "Such predicates cannot cross between boundaries",
+   "evidence": "src/executor.jl:399-402, src/executor.jl:515-519"
+  },
+  {
+   "id": "SD2-133",
+   "file": "design/spec.md",
+   "line": 16637,
+   "kind": "mech",
+   "claim": "The pacer inserts waits between completed frames",
+   "evidence": "src/sim.jl:2107-2109"
+  },
+  {
+   "id": "SD2-134",
+   "file": "design/spec.md",
+   "line": 16637,
+   "kind": "law",
+   "claim": "The pacer never alters the boundary sequence",
+   "evidence": "src/control.jl:162-188 touches no model state"
+  },
+  {
+   "id": "SD2-135",
+   "file": "design/spec.md",
+   "line": 16638,
+   "kind": "law",
+   "claim": "A frame over its wall budget leaves debt that later frames repay",
+   "evidence": "src/control.jl:171-178,183"
+  },
+  {
+   "id": "SD2-136",
+   "file": "design/spec.md",
+   "line": 16640,
+   "kind": "law",
+   "claim": "Excess debt is forgiven by re-anchor plus warning",
+   "evidence": "src/control.jl:178-183, src/diagnostics.jl:1658,1733"
+  },
+  {
+   "id": "SD2-137",
+   "file": "design/spec.md",
+   "line": 16642,
+   "kind": "mech",
+   "claim": "Φ is a schedule's offset in ticks",
+   "evidence": "src/declare.jl:405-418"
+  },
+  {
+   "id": "SD2-138",
+   "file": "design/spec.md",
+   "line": 16644,
+   "kind": "decl",
+   "claim": "Subscripts Φₛ, Φₐ, Φ₀ name the lattice counted in",
+   "evidence": "src/structure.jl:135, src/structure.jl:909-916"
+  },
+  {
+   "id": "SD2-139",
+   "file": "design/spec.md",
+   "line": 16645,
+   "kind": "decl",
+   "claim": "Φₛ counts scope ticks, as Relative(D, Φ) declares it",
+   "evidence": "src/declare.jl:405-418"
+  },
+  {
+   "id": "SD2-140",
+   "file": "design/spec.md",
+   "line": 16646,
+   "kind": "decl",
+   "claim": "An Absolute(Δt, τ) entry declares its anchor's τ, which is its child's",
+   "evidence": "src/declare.jl:473-476, src/structure.jl:141-143"
+  },
+  {
+   "id": "SD2-141",
+   "file": "design/spec.md",
+   "line": 16648,
+   "kind": "law",
+   "claim": "0 ≤ Φ < D holds in every lattice by construction",
+   "evidence": "src/declare.jl:421-422 (RatesViolation), src/structure.jl:900-902"
+  },
+  {
+   "id": "SD2-142",
+   "file": "design/spec.md",
+   "line": 16649,
+   "kind": "law",
+   "claim": "The boundary gate is (n − Φ₀) % D₀ == 0",
+   "evidence": "src/executor.jl:519"
+  },
+  {
+   "id": "SD2-143",
+   "file": "design/spec.md",
+   "line": 16649,
+   "kind": "law",
+   "claim": "A phase shifts firing instants, never the period",
+   "evidence": "src/structure.jl:913-916"
+  },
+  {
+   "id": "SD2-144",
+   "file": "design/spec.md",
+   "line": 16652,
+   "kind": "mech",
+   "claim": "A predicate is what a guard defines, Bool-valued or the sign of a continuous function",
+   "evidence": "src/build.jl:1287-1288"
+  },
+  {
+   "id": "SD2-145",
+   "file": "design/spec.md",
+   "line": 16654,
+   "kind": "law",
+   "claim": "A sign-form predicate holds when σ ≥ 0",
+   "evidence": "src/frame.jl:224-225, src/declare.jl:530-531"
+  },
+  {
+   "id": "SD2-146",
+   "file": "design/spec.md",
+   "line": 16659,
+   "kind": "mech",
+   "claim": "The prior is each event's sample of its predicate at the previous boundary's quiescence",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "SD2-147",
+   "file": "design/spec.md",
+   "line": 16660,
+   "kind": "law",
+   "claim": "The prior is always an honest observation",
+   "evidence": "src/model.jl:729-731,777"
+  },
+  {
+   "id": "SD2-148",
+   "file": "design/spec.md",
+   "line": 16661,
+   "kind": "law",
+   "claim": "The prior is absent from every state store",
+   "evidence": "src/executor.jl:303-310 (EventSet register)"
+  },
+  {
+   "id": "SD2-149",
+   "file": "design/spec.md",
+   "line": 16662,
+   "kind": "law",
+   "claim": "A checkpoint carries the prior",
+   "evidence": "src/checkpoint.jl:79, src/model.jl:1186"
+  },
+  {
+   "id": "SD2-150",
+   "file": "design/spec.md",
+   "line": 16662,
+   "kind": "law",
+   "claim": "A boundary's first round tests edges against the prior",
+   "evidence": "src/model.jl:741,748"
+  },
+  {
+   "id": "SD2-151",
+   "file": "design/spec.md",
+   "line": 16663,
+   "kind": "law",
+   "claim": "Boundary zero sets every prior to not-holding",
+   "evidence": "src/model.jl:332"
+  },
+  {
+   "id": "SD2-152",
+   "file": "design/spec.md",
+   "line": 16665,
+   "kind": "law",
+   "claim": "Quiescence is the fixed point of the boundary event phase",
+   "evidence": "src/model.jl:734-779"
+  },
+  {
+   "id": "SD2-153",
+   "file": "design/spec.md",
+   "line": 16666,
+   "kind": "mech",
+   "claim": "Each event round is a pass of sweep, guard checks and handlers",
+   "evidence": "src/model.jl:742-775"
+  },
+  {
+   "id": "SD2-154",
+   "file": "design/spec.md",
+   "line": 16667,
+   "kind": "law",
+   "claim": "Rounds iterate until a round fires nothing",
+   "evidence": "src/model.jl:772"
+  },
+  {
+   "id": "SD2-155",
+   "file": "design/spec.md",
+   "line": 16667,
+   "kind": "mech",
+   "claim": "After quiescence the priors are updated and due s_update calls run",
+   "evidence": "src/model.jl:777,656"
+  },
+  {
+   "id": "SD2-156",
+   "file": "design/spec.md",
+   "line": 16668,
+   "kind": "law",
+   "claim": "No round before the last is published",
+   "evidence": "src/frame.jl:162-170 (settled! after run_boundary!)"
+  },
+  {
+   "id": "SD2-157",
+   "file": "design/spec.md",
+   "line": 16671,
+   "kind": "mech",
+   "claim": "The remainder step integrates from t* to the end of the interrupted step",
+   "evidence": "src/frame.jl:324-331"
+  },
+  {
+   "id": "SD2-158",
+   "file": "design/spec.md",
+   "line": 16671,
+   "kind": "mech",
+   "claim": "h′ is derived at use",
+   "evidence": "src/frame.jl:330"
+  },
+  {
+   "id": "SD2-159",
+   "file": "design/spec.md",
+   "line": 16672,
+   "kind": "law",
+   "claim": "Guards are re-checked on the remainder under the localization budget",
+   "evidence": "src/frame.jl:204-246"
+  },
+  {
+   "id": "SD2-160",
+   "file": "design/spec.md",
+   "line": 16673,
+   "kind": "law",
+   "claim": "Only a fixed-step method runs a remainder step",
+   "evidence": "src/frame.jl:328"
+  },
+  {
+   "id": "SD2-161",
+   "file": "design/spec.md",
+   "line": 16674,
+   "kind": "law",
+   "claim": "Under a proposing method a t* ends its step",
+   "evidence": "src/frame.jl:326-328, src/frame.jl:154"
+  },
+  {
+   "id": "SD2-162",
+   "file": "design/spec.md",
+   "line": 16676,
+   "kind": "decl",
+   "claim": "The Schedule is the typed tick timing the Deployment carries",
+   "evidence": "src/deployment.jl:84-87,548"
+  },
+  {
+   "id": "SD2-163",
+   "file": "design/spec.md",
+   "line": 16677,
+   "kind": "mech",
+   "claim": "The Deployment constructor builds the Schedule",
+   "evidence": "src/deployment.jl:311-317"
+  },
+  {
+   "id": "SD2-164",
+   "file": "design/spec.md",
+   "line": 16677,
+   "kind": "mech",
+   "claim": "It has one row per discrete component carrying (D₀, Φ₀, Δt)",
+   "evidence": "src/deployment.jl:36-43,305-309"
+  },
+  {
+   "id": "SD2-165",
+   "file": "design/spec.md",
+   "line": 16678,
+   "kind": "mech",
+   "claim": "It also holds the rate-scope rows",
+   "evidence": "src/deployment.jl:59-65,311-315"
+  },
+  {
+   "id": "SD2-166",
+   "file": "design/spec.md",
+   "line": 16679,
+   "kind": "law",
+   "claim": "It is the single source of truth for Δt",
+   "evidence": "src/deployment.jl:84-87,96-104"
+  },
+  {
+   "id": "SD2-167",
+   "file": "design/spec.md",
+   "line": 16679,
+   "kind": "mech",
+   "claim": "It is the substrate of the GridUtilization advisory",
+   "evidence": "src/deployment.jl:587-596"
+  },
+  {
+   "id": "SD2-168",
+   "file": "design/spec.md",
+   "line": 16680,
+   "kind": "mech",
+   "claim": "It is the substrate of the hyperperiod chart",
+   "evidence": "src/show.jl:174-224"
+  },
+  {
+   "id": "SD2-169",
+   "file": "design/spec.md",
+   "line": 16683,
+   "kind": "law",
+   "claim": "A state event's instant is unknown in advance and is detected",
+   "evidence": "src/frame.jl:217-228, src/model.jl:748"
+  },
+  {
+   "id": "SD2-170",
+   "file": "design/spec.md",
+   "line": 16684,
+   "kind": "decl",
+   "claim": "It is declared as StateEvent(guard, handler) under state_events",
+   "evidence": "src/declare.jl:522,545-565"
+  },
+  {
+   "id": "SD2-171",
+   "file": "design/spec.md",
+   "line": 16685,
+   "kind": "law",
+   "claim": "A guard over an input is a state event too",
+   "evidence": "src/build.jl:1287-1288 (policy follows the return type, not the fields read)"
+  },
+  {
+   "id": "SD2-172",
+   "file": "design/spec.md",
+   "line": 16687,
+   "kind": "law",
+   "claim": "A state event is either non-localized or localized",
+   "evidence": "src/build.jl:1287-1290"
+  },
+  {
+   "id": "SD2-173",
+   "file": "design/spec.md",
+   "line": 16689,
+   "kind": "law",
+   "claim": "t* is the holding endpoint of the root-finder's final bracket",
+   "evidence": "src/frame.jl:355-358,394"
+  },
+  {
+   "id": "SD2-174",
+   "file": "design/spec.md",
+   "line": 16690,
+   "kind": "law",
+   "claim": "t* is strictly later than tₙ",
+   "evidence": "src/frame.jl:293-295"
+  },
+  {
+   "id": "SD2-175",
+   "file": "design/spec.md",
+   "line": 16691,
+   "kind": "mech",
+   "claim": "A full boundary runs at t*",
+   "evidence": "src/frame.jl:316-318"
+  },
+  {
+   "id": "SD2-176",
+   "file": "design/spec.md",
+   "line": 16691,
+   "kind": "law",
+   "claim": "No ticks are due at t*",
+   "evidence": "src/frame.jl:318 (run_boundary!(model, nothing))"
+  },
+  {
+   "id": "SD2-177",
+   "file": "design/spec.md",
+   "line": 16692,
+   "kind": "law",
+   "claim": "No staged inputs are drained at t*",
+   "evidence": "src/frame.jl:318, src/frame.jl:90-91 (drain only at frame top)"
+  },
+  {
+   "id": "SD2-178",
+   "file": "design/spec.md",
+   "line": 16694,
+   "kind": "mech",
+   "claim": "A tick is an instant at which a discrete component's stages and update run",
+   "evidence": "src/executor.jl:515-519, src/model.jl:656"
+  },
+  {
+   "id": "SD2-179",
+   "file": "design/spec.md",
+   "line": 16695,
+   "kind": "mech",
+   "claim": "Ticks are gated by counter modulo inside the boundary sweep",
+   "evidence": "src/executor.jl:515-519"
+  },
+  {
+   "id": "SD2-180",
+   "file": "design/spec.md",
+   "line": 16696,
+   "kind": "law",
+   "claim": "Different boundaries run different subsets of the execution order",
+   "evidence": "src/executor.jl:515-519"
+  },
+  {
+   "id": "SD2-181",
+   "file": "design/spec.md",
+   "line": 16697,
+   "kind": "law",
+   "claim": "A base tick is t₀ + n·Δt_base wherever it falls in its frame",
+   "evidence": "src/model.jl:537"
+  },
+  {
+   "id": "SD2-182",
+   "file": "design/spec.md",
+   "line": 16698,
+   "kind": "law",
+   "claim": "A base tick is a boundary only where some component is due",
+   "evidence": "src/frame.jl:127-131,162-166"
+  },
+  {
+   "id": "SD2-183",
+   "file": "design/spec.md",
+   "line": 16701,
+   "kind": "mech",
+   "claim": "The tick index n counts base ticks from t₀",
+   "evidence": "src/model.jl:537,544-553"
+  },
+  {
+   "id": "SD2-184",
+   "file": "design/spec.md",
+   "line": 16702,
+   "kind": "law",
+   "claim": "The tick index is independent of the frame index",
+   "evidence": "src/model.jl:544-553"
+  },
+  {
+   "id": "SD2-185",
+   "file": "design/spec.md",
+   "line": 16703,
+   "kind": "mech",
+   "claim": "It is the n the gate (n − Φ₀) % D₀ == 0 reads at a due instant",
+   "evidence": "src/executor.jl:519, src/frame.jl:163"
+  },
+  {
+   "id": "SD2-186",
+   "file": "design/spec.md",
+   "line": 16704,
+   "kind": "law",
+   "claim": "A boundary with nothing due and a t* boundary have no tick index",
+   "evidence": "src/frame.jl:165,318 (empty due set)"
+  },
+  {
+   "id": "SD2-187",
+   "file": "design/spec.md",
+   "line": 16707,
+   "kind": "mech",
+   "claim": "A tier is the continuous or discrete side of the hybrid formalism",
+   "evidence": "src/declare.jl:782-783"
+  },
+  {
+   "id": "SD2-188",
+   "file": "design/spec.md",
+   "line": 16708,
+   "kind": "mech",
+   "claim": "The tier is read off x_init or s_init, nothing when stateless",
+   "evidence": "src/assembly.jl:731-742"
+  },
+  {
+   "id": "SD2-189",
+   "file": "design/spec.md",
+   "line": 16709,
+   "kind": "law",
+   "claim": "DeclarationOnWrongTier names a tier violation",
+   "evidence": "src/assembly.jl:773-777"
+  },
+  {
+   "id": "SD2-190",
+   "file": "design/spec.md",
+   "line": 16714,
+   "kind": "mech",
+   "claim": "A time event is the discrete tier's tick, scheduled in advance",
+   "evidence": "src/executor.jl:515-519"
+  },
+  {
+   "id": "SD2-191",
+   "file": "design/spec.md",
+   "line": 16715,
+   "kind": "decl",
+   "claim": "Time events are declared by sample_times",
+   "evidence": "src/declare.jl:480-496"
+  },
+  {
+   "id": "SD2-192",
+   "file": "design/spec.md",
+   "line": 16715,
+   "kind": "law",
+   "claim": "Time events are gated by the harmonic grid",
+   "evidence": "src/executor.jl:515-519"
+  },
+  {
+   "id": "SD2-193",
+   "file": "design/spec.md",
+   "line": 16719,
+   "kind": "mech",
+   "claim": "A trial evaluation is a guard's value at an instant θ inside the step",
+   "evidence": "src/frame.jl:334-347"
+  },
+  {
+   "id": "SD2-194",
+   "file": "design/spec.md",
+   "line": 16720,
+   "kind": "law",
+   "claim": "At θ = 0 its state is xₙ",
+   "evidence": "src/frame.jl:259-264"
+  },
+  {
+   "id": "SD2-195",
+   "file": "design/spec.md",
+   "line": 16720,
+   "kind": "law",
+   "claim": "Elsewhere its state is a point on the interpolant",
+   "evidence": "src/frame.jl:340-343"
+  },
+  {
+   "id": "SD2-196",
+   "file": "design/spec.md",
+   "line": 16721,
+   "kind": "mech",
+   "claim": "It writes the state into the buffer",
+   "evidence": "src/frame.jl:342"
+  },
+  {
+   "id": "SD2-197",
+   "file": "design/spec.md",
+   "line": 16721,
+   "kind": "mech",
+   "claim": "It runs the interior sweep",
+   "evidence": "src/frame.jl:344"
+  },
+  {
+   "id": "SD2-198",
+   "file": "design/spec.md",
+   "line": 16722,
+   "kind": "law",
+   "claim": "Discrete cells hold their tick values through it",
+   "evidence": "src/frame.jl:334-339"
+  },
+  {
+   "id": "SD2-199",
+   "file": "design/spec.md",
+   "line": 16726,
+   "kind": "mech",
+   "claim": "An activation is the build's typed products at scalar T",
+   "evidence": "src/build.jl:558-570"
+  },
+  {
+   "id": "SD2-200",
+   "file": "design/spec.md",
+   "line": 16727,
+   "kind": "mech",
+   "claim": "It re-types the cells and the state type by the leaf walk",
+   "evidence": "src/build.jl:40-48"
+  },
+  {
+   "id": "SD2-201",
+   "file": "design/spec.md",
+   "line": 16727,
+   "kind": "mech",
+   "claim": "It lays out the buffers",
+   "evidence": "src/build.jl:1038,1041"
+  },
+  {
+   "id": "SD2-202",
+   "file": "design/spec.md",
+   "line": 16728,
+   "kind": "mech",
+   "claim": "It re-invokes the workspace allocators",
+   "evidence": "src/build.jl:1034-1036,1050-1052"
+  },
+  {
+   "id": "SD2-203",
+   "file": "design/spec.md",
+   "line": 16728,
+   "kind": "mech",
+   "claim": "It re-runs the probe chain",
+   "evidence": "src/build.jl:1038-1041"
+  },
+  {
+   "id": "SD2-204",
+   "file": "design/spec.md",
+   "line": 16729,
+   "kind": "law",
+   "claim": "The nominal Float64 activation is the nominal evaluation's product",
+   "evidence": "src/build.jl:1001-1015"
+  },
+  {
+   "id": "SD2-205",
+   "file": "design/spec.md",
+   "line": 16730,
+   "kind": "mech",
+   "claim": "Any other activation is derived from it on request",
+   "evidence": "src/build.jl:969-977,1030-1042"
+  },
+  {
+   "id": "SD2-206",
+   "file": "design/spec.md",
+   "line": 16733,
+   "kind": "mech",
+   "claim": "The always-on check is the probe's comparison left permanently in place",
+   "evidence": "src/store.jl:102-107"
+  },
+  {
+   "id": "SD2-207",
+   "file": "design/spec.md",
+   "line": 16734,
+   "kind": "law",
+   "claim": "It holds each probed function's return to that function's predicate",
+   "evidence": "src/build.jl:1672-1725, src/leaves.jl:401-452"
+  },
+  {
+   "id": "SD2-208",
+   "file": "design/spec.md",
+   "line": 16734,
+   "kind": "law",
+   "claim": "A stage's return is held to its cells' types",
+   "evidence": "src/store.jl:109-140"
+  },
+  {
+   "id": "SD2-209",
+   "file": "design/spec.md",
+   "line": 16735,
+   "kind": "law",
+   "claim": "Fields are paired by name",
+   "evidence": "src/store.jl:109-120"
+  },
+  {
+   "id": "SD2-210",
+   "file": "design/spec.md",
+   "line": 16735,
+   "kind": "mech",
+   "claim": "For a stage it is decided when the table write's method is generated over both types",
+   "evidence": "src/store.jl:102-107 (@generated)"
+  },
+  {
+   "id": "SD2-211",
+   "file": "design/spec.md",
+   "line": 16737,
+   "kind": "law",
+   "claim": "A conformant return generates no check instruction",
+   "evidence": "src/store.jl:104-106,124-128"
+  },
+  {
+   "id": "SD2-212",
+   "file": "design/spec.md",
+   "line": 16740,
+   "kind": "mech",
+   "claim": "Build is the artifact build(world) produces",
+   "evidence": "src/build.jl:703, src/build.jl:751-755"
+  },
+  {
+   "id": "SD2-213",
+   "file": "design/spec.md",
+   "line": 16740,
+   "kind": "mech",
+   "claim": "It bundles the three steps' products",
+   "evidence": "src/build.jl:703-710"
+  },
+  {
+   "id": "SD2-214",
+   "file": "design/spec.md",
+   "line": 16741,
+   "kind": "decl",
+   "claim": "Its fields are Structure, Outputs, Events, activations keyed by scalar type, warnings",
+   "evidence": "src/build.jl:703-710"
+  },
+  {
+   "id": "SD2-215",
+   "file": "design/spec.md",
+   "line": 16743,
+   "kind": "mech",
+   "claim": "attach! validates against the Build",
+   "evidence": "src/sim.jl:2505-2530"
+  },
+  {
+   "id": "SD2-216",
+   "file": "design/spec.md",
+   "line": 16743,
+   "kind": "mech",
+   "claim": "Replay's fingerprint check reads the Build",
+   "evidence": "src/model.jl:1133-1148"
+  },
+  {
+   "id": "SD2-217",
+   "file": "design/spec.md",
+   "line": 16744,
+   "kind": "mech",
+   "claim": "The ignore list reads the Build",
+   "evidence": "src/sim.jl:429-436,476"
+  },
+  {
+   "id": "SD2-218",
+   "file": "design/spec.md",
+   "line": 16745,
+   "kind": "mech",
+   "claim": "Condition resolution reads the Build",
+   "evidence": "src/conditions.jl:511-520"
+  },
+  {
+   "id": "SD2-219",
+   "file": "design/spec.md",
+   "line": 16747,
+   "kind": "mech",
+   "claim": "Chunking splits a phase body's entry tuple into statically typed chunks",
+   "evidence": "src/executor.jl:591-598"
+  },
+  {
+   "id": "SD2-220",
+   "file": "design/spec.md",
+   "line": 16747,
+   "kind": "mech",
+   "claim": "The chunks sit behind non-inlined function barriers",
+   "evidence": "src/executor.jl:538-539"
+  },
+  {
+   "id": "SD2-221",
+   "file": "design/spec.md",
+   "line": 16748,
+   "kind": "mech",
+   "claim": "Each barrier takes its chunk by reference",
+   "evidence": "src/executor.jl:529-536"
+  },
+  {
+   "id": "SD2-222",
+   "file": "design/spec.md",
+   "line": 16749,
+   "kind": "mech",
+   "claim": "The event set's projection, guard and handler walks chunk the same way",
+   "evidence": "src/executor.jl:269-279,357-388"
+  },
+  {
+   "id": "SD2-223",
+   "file": "design/spec.md",
+   "line": 16754,
+   "kind": "mech",
+   "claim": "A Deployment carries the Schedule and its own warnings",
+   "evidence": "src/deployment.jl:548-555"
+  },
+  {
+   "id": "SD2-224",
+   "file": "design/spec.md",
+   "line": 16756,
+   "kind": "law",
+   "claim": "A Deployment is scalar-free",
+   "evidence": "src/deployment.jl:541-555 (no scalar parameter)"
+  },
+  {
+   "id": "SD2-225",
+   "file": "design/spec.md",
+   "line": 16756,
+   "kind": "law",
+   "claim": "A Deployment compares as a value",
+   "evidence": "src/deployment.jl:619-625"
+  },
+  {
+   "id": "SD2-226",
+   "file": "design/spec.md",
+   "line": 16757,
+   "kind": "mech",
+   "claim": "A Model materializes the Deployment at a scalar type",
+   "evidence": "src/model.jl:123-129"
+  },
+  {
+   "id": "SD2-227",
+   "file": "design/spec.md",
+   "line": 16760,
+   "kind": "mech",
+   "claim": "Events is a product of the nominal evaluation",
+   "evidence": "src/build.jl:1013-1015"
+  },
+  {
+   "id": "SD2-228",
+   "file": "design/spec.md",
+   "line": 16760,
+   "kind": "mech",
+   "claim": "Events is built last, after the nominal stage probes",
+   "evidence": "src/build.jl:1008-1015, src/build.jl:1263"
+  },
+  {
+   "id": "SD2-229",
+   "file": "design/spec.md",
+   "line": 16761,
+   "kind": "mech",
+   "claim": "It holds per component the event names, detection policies and bundle names",
+   "evidence": "src/build.jl:626-630,662-664"
+  },
+  {
+   "id": "SD2-230",
+   "file": "design/spec.md",
+   "line": 16766,
+   "kind": "mech",
+   "claim": "The executable set is the function set an activation can run, hence what it probes",
+   "evidence": "src/build.jl:1077-1086"
+  },
+  {
+   "id": "SD2-231",
+   "file": "design/spec.md",
+   "line": 16768,
+   "kind": "law",
+   "claim": "A Dual activation never sees discrete stages, s_update, guards or handlers",
+   "evidence": "src/build.jl:1084-1086,1132-1137; probe:C1"
+  },
+  {
+   "id": "SD2-232",
+   "file": "design/spec.md",
+   "line": 16771,
+   "kind": "mech",
+   "claim": "The executor is the compiled form of the stage execution order",
+   "evidence": "src/build.jl:1414, src/executor.jl:575-598"
+  },
+  {
+   "id": "SD2-233",
+   "file": "design/spec.md",
+   "line": 16771,
+   "kind": "mech",
+   "claim": "It is a concretely typed tuple of entries over statically typed cell storage",
+   "evidence": "src/executor.jl:544-547,591-598"
+  },
+  {
+   "id": "SD2-234",
+   "file": "design/spec.md",
+   "line": 16772,
+   "kind": "mech",
+   "claim": "It is traversed by a compile-time-unrolled walk",
+   "evidence": "src/executor.jl:541-545"
+  },
+  {
+   "id": "SD2-235",
+   "file": "design/spec.md",
+   "line": 16773,
+   "kind": "mech",
+   "claim": "Code-selecting facts sit in type parameters and plain data in fields",
+   "evidence": "src/executor.jl:487-491"
+  },
+  {
+   "id": "SD2-236",
+   "file": "design/spec.md",
+   "line": 16776,
+   "kind": "mech",
+   "claim": "The leaf walk derives per-activation types from a declared nominal type",
+   "evidence": "src/leaves.jl:231-238,281-303"
+  },
+  {
+   "id": "SD2-237",
+   "file": "design/spec.md",
+   "line": 16777,
+   "kind": "law",
+   "claim": "Float64 leaves and Float64 type parameters follow the activation scalar",
+   "evidence": "src/leaves.jl:281-293"
+  },
+  {
+   "id": "SD2-238",
+   "file": "design/spec.md",
+   "line": 16778,
+   "kind": "law",
+   "claim": "Everything else pins",
+   "evidence": "src/leaves.jl:282-284 (non-Float64 positions pass through), 235-236"
+  },
+  {
+   "id": "SD2-239",
+   "file": "design/spec.md",
+   "line": 16779,
+   "kind": "law",
+   "claim": "The walk applies to the type derived from x_init",
+   "evidence": "src/build.jl:41-43"
+  },
+  {
+   "id": "SD2-240",
+   "file": "design/spec.md",
+   "line": 16779,
+   "kind": "law",
+   "claim": "The walk applies to a continuous primitive's contracts",
+   "evidence": "src/build.jl:43, src/declare.jl:795-799"
+  },
+  {
+   "id": "SD2-241",
+   "file": "design/spec.md",
+   "line": 16780,
+   "kind": "law",
+   "claim": "m_init, s_init and the discrete tier's contracts pin wholesale",
+   "evidence": "src/build.jl:44-47, src/declare.jl:797"
+  },
+  {
+   "id": "SD2-242",
+   "file": "design/spec.md",
+   "line": 16784,
+   "kind": "mech",
+   "claim": "A lens is the compiled navigation step of a condition entry",
+   "evidence": "src/conditions.jl:752-754"
+  },
+  {
+   "id": "SD2-243",
+   "file": "design/spec.md",
+   "line": 16785,
+   "kind": "mech",
+   "claim": "Its tree position tuple is lifted to a type parameter",
+   "evidence": "src/conditions.jl:299-301,752-754"
+  },
+  {
+   "id": "SD2-244",
+   "file": "design/spec.md",
+   "line": 16786,
+   "kind": "law",
+   "claim": "It gives type-stable access to the authored value at apply time",
+   "evidence": "src/conditions.jl:760"
+  },
+  {
+   "id": "SD2-245",
+   "file": "design/spec.md",
+   "line": 16788,
+   "kind": "mech",
+   "claim": "phase_bodies(sim) returns the compiled bodies of the nominal activation",
+   "evidence": "src/sim.jl:638, src/model.jl:520"
+  },
+  {
+   "id": "SD2-246",
+   "file": "design/spec.md",
+   "line": 16789,
+   "kind": "mech",
+   "claim": "The bodies are bound over the simulation's own buffers",
+   "evidence": "src/model.jl:505-519"
+  },
+  {
+   "id": "SD2-247",
+   "file": "design/spec.md",
+   "line": 16790,
+   "kind": "decl",
+   "claim": "The bodies are rhs, sweep_1, sweep_2 and ticks",
+   "evidence": "src/build.jl:1625-1629"
+  },
+  {
+   "id": "SD2-248",
+   "file": "design/spec.md",
+   "line": 16791,
+   "kind": "decl",
+   "claim": "Per-event guards and handlers and per-component x_projection come with them",
+   "evidence": "src/build.jl:1619-1629"
+  },
+  {
+   "id": "SD2-249",
+   "file": "design/spec.md",
+   "line": 16792,
+   "kind": "law",
+   "claim": "The bodies are identical to what the loop runs",
+   "evidence": "src/model.jl:520, src/model.jl:508-509"
+  },
+  {
+   "id": "SD2-250",
+   "file": "design/spec.md",
+   "line": 16795,
+   "kind": "mech",
+   "claim": "A Model is a deployment materialized at one scalar type",
+   "evidence": "src/model.jl:123-129"
+  },
+  {
+   "id": "SD2-251",
+   "file": "design/spec.md",
+   "line": 16796,
+   "kind": "mech",
+   "claim": "It holds the deployment, its executor, its status and its diagnostic cell",
+   "evidence": "src/model.jl:86-92"
+  },
+  {
+   "id": "SD2-252",
+   "file": "design/spec.md",
+   "line": 16797,
+   "kind": "law",
+   "claim": "A Simulation runs only a Model{Float64}",
+   "evidence": "src/sim.jl:310,323"
+  },
+  {
+   "id": "SD2-253",
+   "file": "design/spec.md",
+   "line": 16797,
+   "kind": "mech",
+   "claim": "A Simulation claims its Model at construction",
+   "evidence": "src/sim.jl:374-378"
+  },
+  {
+   "id": "SD2-254",
+   "file": "design/spec.md",
+   "line": 16799,
+   "kind": "mech",
+   "claim": "A Model at another scalar serves as a service's scratch",
+   "evidence": "src/linearize.jl:304-305,317-323 (scratch model at the seeded Dual)"
+  },
+  {
+   "id": "SD2-255",
+   "file": "design/spec.md",
+   "line": 16802,
+   "kind": "law",
+   "claim": "Nominal is the Float64 activation",
+   "evidence": "src/build.jl:1001-1015"
+  },
+  {
+   "id": "SD2-256",
+   "file": "design/spec.md",
+   "line": 16804,
+   "kind": "law",
+   "claim": "The nominal activation is the only one that runs in real time",
+   "evidence": "src/sim.jl:310,1189"
+  },
+  {
+   "id": "SD2-257",
+   "file": "design/spec.md",
+   "line": 16805,
+   "kind": "law",
+   "claim": "The conformance check demands exact type match at nominal",
+   "evidence": "src/leaves.jl:352-354"
+  },
+  {
+   "id": "SD2-258",
+   "file": "design/spec.md",
+   "line": 16806,
+   "kind": "mech",
+   "claim": "The nominal evaluation probes every user function",
+   "evidence": "src/build.jl:1001-1015"
+  },
+  {
+   "id": "SD2-259",
+   "file": "design/spec.md",
+   "line": 16807,
+   "kind": "mech",
+   "claim": "It returns Outputs, Events and the nominal activation",
+   "evidence": "src/build.jl:1015"
+  },
+  {
+   "id": "SD2-260",
+   "file": "design/spec.md",
+   "line": 16809,
+   "kind": "mech",
+   "claim": "Outputs is the nominal evaluation's product",
+   "evidence": "src/build.jl:1010,1015"
+  },
+  {
+   "id": "SD2-261",
+   "file": "design/spec.md",
+   "line": 16809,
+   "kind": "mech",
+   "claim": "It holds per component the output port names each stage produces",
+   "evidence": "src/build.jl:576-583,616-619"
+  },
+  {
+   "id": "SD2-262",
+   "file": "design/spec.md",
+   "line": 16810,
+   "kind": "mech",
+   "claim": "It holds the execution order over the components",
+   "evidence": "src/build.jl:616-619"
+  },
+  {
+   "id": "SD2-263",
+   "file": "design/spec.md",
+   "line": 16811,
+   "kind": "law",
+   "claim": "The feedthrough graph is derived where shown and never carried",
+   "evidence": "src/build.jl:586-588, src/show.jl:250-275"
+  },
+  {
+   "id": "SD2-264",
+   "file": "design/spec.md",
+   "line": 16815,
+   "kind": "mech",
+   "claim": "A probe evaluates a user function with real values, checking shape and type",
+   "evidence": "src/build.jl:1077-1086,1130-1160"
+  },
+  {
+   "id": "SD2-265",
+   "file": "design/spec.md",
+   "line": 16816,
+   "kind": "mech",
+   "claim": "The nominal evaluation probes every user function once at the initial state",
+   "evidence": "src/build.jl:1001-1015"
+  },
+  {
+   "id": "SD2-266",
+   "file": "design/spec.md",
+   "line": 16818,
+   "kind": "mech",
+   "claim": "The probe chain runs probes in topological order",
+   "evidence": "src/build.jl:1108-1111"
+  },
+  {
+   "id": "SD2-267",
+   "file": "design/spec.md",
+   "line": 16819,
+   "kind": "mech",
+   "claim": "Each consumer is probed on its producers' returns",
+   "evidence": "src/build.jl:1099-1111"
+  },
+  {
+   "id": "SD2-268",
+   "file": "design/spec.md",
+   "line": 16819,
+   "kind": "mech",
+   "claim": "Other activations re-run the chain over their executable sets",
+   "evidence": "src/build.jl:1030-1042"
+  },
+  {
+   "id": "SD2-269",
+   "file": "design/spec.md",
+   "line": 16822,
+   "kind": "mech",
+   "claim": "Probe values are the fabricated values a build-time probe runs on",
+   "evidence": "src/build.jl:470-474"
+  },
+  {
+   "id": "SD2-270",
+   "file": "design/spec.md",
+   "line": 16823,
+   "kind": "decl",
+   "claim": "probe_value(::Type) synthesizes them at root inputs",
+   "evidence": "src/declare.jl:932-936, src/build.jl:472"
+  },
+  {
+   "id": "SD2-271",
+   "file": "design/spec.md",
+   "line": 16824,
+   "kind": "law",
+   "claim": "Synthesis is zero(T), false, first enum or T()",
+   "evidence": "src/declare.jl:932-936"
+  },
+  {
+   "id": "SD2-272",
+   "file": "design/spec.md",
+   "line": 16824,
+   "kind": "decl",
+   "claim": "The synthesis is overridable",
+   "evidence": "src/declare.jl:927-929,938-942"
+  },
+  {
+   "id": "SD2-273",
+   "file": "design/spec.md",
+   "line": 16825,
+   "kind": "mech",
+   "claim": "From root inputs the values flow the probe chain as the stages' own returns",
+   "evidence": "src/build.jl:1099-1111"
+  },
+  {
+   "id": "SD2-274",
+   "file": "design/spec.md",
+   "line": 16826,
+   "kind": "law",
+   "claim": "Probe values are never an initial root-input value",
+   "evidence": "src/conditions.jl:697-699"
+  },
+  {
+   "id": "SD2-275",
+   "file": "design/spec.md",
+   "line": 16827,
+   "kind": "mech",
+   "claim": "A structural barrier keeps the two apart",
+   "evidence": "src/conditions.jl:687-705 (assert_total)"
+  },
+  {
+   "id": "SD2-276",
+   "file": "design/spec.md",
+   "line": 16830,
+   "kind": "decl",
+   "claim": "ProbeDual is ForwardDiff.Dual{ProbeTag, Float64, 1}",
+   "evidence": "src/build.jl:733, probe:C2"
+  },
+  {
+   "id": "SD2-277",
+   "file": "design/spec.md",
+   "line": 16830,
+   "kind": "decl",
+   "claim": "ProbeDual is public and concrete",
+   "evidence": "src/build.jl:719-733"
+  },
+  {
+   "id": "SD2-278",
+   "file": "design/spec.md",
+   "line": 16831,
+   "kind": "mech",
+   "claim": "ProbeDual keys the CI activation that pins walked-leaf genericity",
+   "evidence": "src/build.jl:723-726, src/build.jl:745-748"
+  },
+  {
+   "id": "SD2-279",
+   "file": "design/spec.md",
+   "line": 16835,
+   "kind": "mech",
+   "claim": "The Build supplies schema and layout lookups to condition resolution",
+   "evidence": "src/conditions.jl:446,511-520"
+  },
+  {
+   "id": "SD2-280",
+   "file": "design/spec.md",
+   "line": 16836,
+   "kind": "mech",
+   "claim": "Schema is the evaluated declarations, the authority on whether a field may be written and at what leaf type",
+   "evidence": "src/conditions.jl:445-447"
+  },
+  {
+   "id": "SD2-281",
+   "file": "design/spec.md",
+   "line": 16838,
+   "kind": "mech",
+   "claim": "Layout is where a value physically lives (buffer ranges, store and root-input indices)",
+   "evidence": "src/conditions.jl:520,549"
+  },
+  {
+   "id": "SD2-282",
+   "file": "design/spec.md",
+   "line": 16841,
+   "kind": "mech",
+   "claim": "The structural walk runs the shadowing check on every component before its class is read",
+   "evidence": "src/structure.jl:529-536"
+  },
+  {
+   "id": "SD2-283",
+   "file": "design/spec.md",
+   "line": 16842,
+   "kind": "mech",
+   "claim": "It looks in the component's parent module for a binding of a declaration name",
+   "evidence": "src/structure.jl:533-536"
+  },
+  {
+   "id": "SD2-284",
+   "file": "design/spec.md",
+   "line": 16843,
+   "kind": "law",
+   "claim": "A binding distinct from the framework's function throws DeclarationShadowed alone",
+   "evidence": "src/structure.jl:529-536"
+  },
+  {
+   "id": "SD2-285",
+   "file": "design/spec.md",
+   "line": 16844,
+   "kind": "law",
+   "claim": "The diagnostic names the module, the foreign names and the missing import",
+   "evidence": "src/diagnostics.jl:568-578"
+  },
+  {
+   "id": "SD2-286",
+   "file": "design/spec.md",
+   "line": 16847,
+   "kind": "mech",
+   "claim": "Structure is the structure step's product, everything the instance alone fixes",
+   "evidence": "src/structure.jl:210-216,243-250"
+  },
+  {
+   "id": "SD2-287",
+   "file": "design/spec.md",
+   "line": 16848,
+   "kind": "mech",
+   "claim": "It holds the components and their tiers",
+   "evidence": "src/structure.jl:243-244, src/structure.jl:165-171"
+  },
+  {
+   "id": "SD2-288",
+   "file": "design/spec.md",
+   "line": 16848,
+   "kind": "mech",
+   "claim": "It holds one row per assembly with its children and wires",
+   "evidence": "src/structure.jl:197-201,248"
+  },
+  {
+   "id": "SD2-289",
+   "file": "design/spec.md",
+   "line": 16849,
+   "kind": "mech",
+   "claim": "It holds the root inputs with their types",
+   "evidence": "src/structure.jl:246-247"
+  },
+  {
+   "id": "SD2-290",
+   "file": "design/spec.md",
+   "line": 16849,
+   "kind": "mech",
+   "claim": "It holds the rate chains and the scope triples",
+   "evidence": "src/structure.jl:165-171,137-139,245"
+  },
+  {
+   "id": "SD2-291",
+   "file": "design/spec.md",
+   "line": 16850,
+   "kind": "mech",
+   "claim": "The face table and each face's routing chain are functions over its wires",
+   "evidence": "src/structure.jl:1051,1082"
+  },
+  {
+   "id": "SD2-292",
+   "file": "design/spec.md",
+   "line": 16851,
+   "kind": "mech",
+   "claim": "The grid report is a function over its anchors",
+   "evidence": "src/structure.jl:847"
+  },
+  {
+   "id": "SD2-293",
+   "file": "design/spec.md",
+   "line": 16852,
+   "kind": "law",
+   "claim": "Nothing in a Structure depends on a scalar type",
+   "evidence": "src/structure.jl:243-250"
+  },
+  {
+   "id": "SD2-294",
+   "file": "design/spec.md",
+   "line": 16856,
+   "kind": "law",
+   "claim": "Walked payload and value types follow the activation scalar",
+   "evidence": "src/leaves.jl:281-293"
+  },
+  {
+   "id": "SD2-295",
+   "file": "design/spec.md",
+   "line": 16857,
+   "kind": "law",
+   "claim": "A pinned entry keeps its declared type under every activation",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "SD2-296",
+   "file": "design/spec.md",
+   "line": 16858,
+   "kind": "law",
+   "claim": "The discrete side is exempt",
+   "evidence": "src/build.jl:44-47"
+  },
+  {
+   "id": "SD2-297",
+   "file": "design/spec.md",
+   "line": 16858,
+   "kind": "mech",
+   "claim": "One leaf walk reads a continuous primitive's state and contracts alike",
+   "evidence": "src/build.jl:40-43"
+  }
+ ],
+ "counts": {
+  "law": 148,
+  "mech": 105,
+  "decl": 24,
+  "ptr": 14,
+  "why": 9,
+  "ex": 0,
+  "cite": 70
+ }
+}

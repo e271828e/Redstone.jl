@@ -1,0 +1,1828 @@
+{
+ "rows": [
+  {
+   "id": "SD1-001",
+   "file": "design/spec.md",
+   "line": 16097,
+   "kind": "law",
+   "claim": "entries are alphabetical within each group",
+   "evidence": "design/spec.md:16277-16285 lists bare store before bare contract",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "Swap the two D.2 entries so bare contract precedes bare store.",
+   "note": "D.1 and D.3 are in order; only D.2 breaks it."
+  },
+  {
+   "id": "SD1-005",
+   "file": "design/spec.md",
+   "line": 16108,
+   "kind": "law",
+   "claim": "an abstract entry is illegal where the face surfaces as a root input (AbstractAtRoot)",
+   "evidence": "src/build.jl:913-918; probe:118-119",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "It is illegal where every consumer of a root input declares an abstract entry (`AbstractAtRoot`); one concrete co-consumer fixes the type.",
+   "note": "probe:119 builds with an abstract and a concrete consumer on one root input (D-236 arm)."
+  },
+  {
+   "id": "SD1-054",
+   "file": "design/spec.md",
+   "line": 16193,
+   "kind": "decl",
+   "claim": "the families are y_state/y_direct/x_deriv/s_update/guard/handler/x_projection",
+   "evidence": "src/declare.jl:900-907; src/diagnostics.jl:1195-1202",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The families are `y_state`/`y_direct`/`x_deriv`/`s_update`/guard/handler. `x_projection` takes the state positionally and has no bundle family.",
+   "note": "LEGAL_BUNDLE and BundleFieldError.family list six families; x_projection (x, no bundle) appears in neither."
+  },
+  {
+   "id": "SD1-088",
+   "file": "design/spec.md",
+   "line": 16256,
+   "kind": "law",
+   "claim": "every primitive provides exactly two output stages",
+   "evidence": "src/declare.jl:632-633,661-662; design/spec.md:1140",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "every primitive may define two output stages, `y_state` and `y_direct`, each optional",
+   "note": "Docstrings: a component with no stage-1 ports defines no method. Spec line 1140 says \"at most two\"."
+  },
+  {
+   "id": "SD1-129",
+   "file": "design/spec.md",
+   "line": 16306,
+   "kind": "mech",
+   "claim": "a cell is one per output port of the flattened model",
+   "evidence": "src/build.jl:1509-1511; test/utils.jl:21-24",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "one per output port of the flattened model and one per root input, written by its producing stage or, for a root input, by the drain",
+   "note": "Root inputs own cells (\"\", face), written by the drain; spec line 902 calls a root input a source cell."
+  },
+  {
+   "id": "SD1-138",
+   "file": "design/spec.md",
+   "line": 16326,
+   "kind": "law",
+   "claim": "a bare contract port has no face",
+   "evidence": "src/assembly.jl:460; src/declare.jl:815-816; src/diagnostics.jl:669-672",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "and a bare contract port wears the default face `u` or `y`.",
+   "note": "D-437. The bare contract entry at line 16285 says the face is u or y, and the face lists list a bare contract that way."
+  },
+  {
+   "id": "SD1-152",
+   "file": "design/spec.md",
+   "line": 16347,
+   "kind": "law",
+   "claim": "no store mirrors another and the table never holds transported data",
+   "evidence": "none found",
+   "verdict": "unverifiable",
+   "note": "A negative design claim with no single code site to check."
+  },
+  {
+   "id": "SD1-160",
+   "file": "design/spec.md",
+   "line": 16358,
+   "kind": "law",
+   "claim": "a port is one GUI liveness verdict",
+   "evidence": "inspector repo",
+   "verdict": "unverifiable",
+   "note": "The GUI lives in RedstoneInspector.jl, outside W."
+  },
+  {
+   "id": "SD1-187",
+   "file": "design/spec.md",
+   "line": 16396,
+   "kind": "law",
+   "claim": "every field-emitting component must provide a value-level constructor",
+   "evidence": "none found",
+   "verdict": "unverifiable",
+   "note": "A convention for authors. No field-emitting component ships in src/, and nothing enforces it."
+  }
+ ],
+ "ok": [
+  {
+   "id": "SD1-002",
+   "file": "design/spec.md",
+   "line": 16104,
+   "kind": "decl",
+   "claim": "abstract entry is a u_types entry whose declared type is abstract",
+   "evidence": "src/build.jl:913"
+  },
+  {
+   "id": "SD1-003",
+   "file": "design/spec.md",
+   "line": 16105,
+   "kind": "law",
+   "claim": "any concrete producer face below the bound wires to an abstract entry",
+   "evidence": "src/leaves.jl:381; probe:120"
+  },
+  {
+   "id": "SD1-004",
+   "file": "design/spec.md",
+   "line": 16106,
+   "kind": "law",
+   "claim": "an abstract entry is never needed for eltype genericity",
+   "evidence": "src/leaves.jl:356"
+  },
+  {
+   "id": "SD1-006",
+   "file": "design/spec.md",
+   "line": 16110,
+   "kind": "mech",
+   "claim": "an assembly holds child components and wires them together",
+   "evidence": "src/assembly.jl:120-146"
+  },
+  {
+   "id": "SD1-007",
+   "file": "design/spec.md",
+   "line": 16111,
+   "kind": "law",
+   "claim": "an assembly has no dynamics of its own",
+   "evidence": "src/assembly.jl:58-62"
+  },
+  {
+   "id": "SD1-008",
+   "file": "design/spec.md",
+   "line": 16111,
+   "kind": "mech",
+   "claim": "its component-typed fields are its children",
+   "evidence": "src/assembly.jl:146-149"
+  },
+  {
+   "id": "SD1-009",
+   "file": "design/spec.md",
+   "line": 16112,
+   "kind": "decl",
+   "claim": "local_wires is mandatory and is the class marker",
+   "evidence": "src/assembly.jl:60; probe:45"
+  },
+  {
+   "id": "SD1-010",
+   "file": "design/spec.md",
+   "line": 16112,
+   "kind": "decl",
+   "claim": "it declares input_wires, output_wires and sample_times",
+   "evidence": "src/declare.jl:308,328,514"
+  },
+  {
+   "id": "SD1-011",
+   "file": "design/spec.md",
+   "line": 16113,
+   "kind": "decl",
+   "claim": "transparent_container is optional",
+   "evidence": "src/declare.jl:355"
+  },
+  {
+   "id": "SD1-012",
+   "file": "design/spec.md",
+   "line": 16113,
+   "kind": "mech",
+   "claim": "an assembly is flattened away for ordering",
+   "evidence": "src/build.jl:196-202"
+  },
+  {
+   "id": "SD1-013",
+   "file": "design/spec.md",
+   "line": 16114,
+   "kind": "mech",
+   "claim": "it is retained as the navigation hierarchy",
+   "evidence": "src/structure.jl:246"
+  },
+  {
+   "id": "SD1-014",
+   "file": "design/spec.md",
+   "line": 16114,
+   "kind": "mech",
+   "claim": "it is retained as declaration-level rate scopes",
+   "evidence": "src/structure.jl:138,245"
+  },
+  {
+   "id": "SD1-015",
+   "file": "design/spec.md",
+   "line": 16119,
+   "kind": "law",
+   "claim": "the framework never promotes an unconnected input to a root input",
+   "evidence": "probe:91"
+  },
+  {
+   "id": "SD1-016",
+   "file": "design/spec.md",
+   "line": 16120,
+   "kind": "law",
+   "claim": "an unconnected input port is a build error",
+   "evidence": "src/diagnostics.jl:402; probe:91"
+  },
+  {
+   "id": "SD1-017",
+   "file": "design/spec.md",
+   "line": 16124,
+   "kind": "mech",
+   "claim": "two clauses, bound law and walk clause, type-check a wire",
+   "evidence": "src/build.jl:890-905"
+  },
+  {
+   "id": "SD1-018",
+   "file": "design/spec.md",
+   "line": 16125,
+   "kind": "law",
+   "claim": "bound law: producer type at nominal is a subtype of the consumer entry",
+   "evidence": "src/leaves.jl:381; src/build.jl:890"
+  },
+  {
+   "id": "SD1-019",
+   "file": "design/spec.md",
+   "line": 16126,
+   "kind": "law",
+   "claim": "bound law: equal to the entry where the entry is concrete",
+   "evidence": "src/leaves.jl:358,381"
+  },
+  {
+   "id": "SD1-020",
+   "file": "design/spec.md",
+   "line": 16127,
+   "kind": "law",
+   "claim": "the walk clause applies to a continuous consumer only",
+   "evidence": "src/build.jl:897"
+  },
+  {
+   "id": "SD1-021",
+   "file": "design/spec.md",
+   "line": 16128,
+   "kind": "law",
+   "claim": "walk clause: a walking producer needs an unpinned entry",
+   "evidence": "src/build.jl:898-905"
+  },
+  {
+   "id": "SD1-022",
+   "file": "design/spec.md",
+   "line": 16131,
+   "kind": "law",
+   "claim": "a stage return has the same NamedTuple shape on every branch",
+   "evidence": "src/leaves.jl:415; probe:84"
+  },
+  {
+   "id": "SD1-023",
+   "file": "design/spec.md",
+   "line": 16132,
+   "kind": "law",
+   "claim": "the rule bans return types that depend on input values",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "SD1-024",
+   "file": "design/spec.md",
+   "line": 16133,
+   "kind": "law",
+   "claim": "a port missing from an untaken branch fails at that branch first execution",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "SD1-025",
+   "file": "design/spec.md",
+   "line": 16134,
+   "kind": "mech",
+   "claim": "that failure comes from the always-on return check",
+   "evidence": "src/leaves.jl:415-452; probe:84"
+  },
+  {
+   "id": "SD1-026",
+   "file": "design/spec.md",
+   "line": 16137,
+   "kind": "mech",
+   "claim": "class is read off which well-known declarations the type defines",
+   "evidence": "src/assembly.jl:58-67"
+  },
+  {
+   "id": "SD1-027",
+   "file": "design/spec.md",
+   "line": 16139,
+   "kind": "law",
+   "claim": "local_wires makes an assembly",
+   "evidence": "src/assembly.jl:60-63"
+  },
+  {
+   "id": "SD1-028",
+   "file": "design/spec.md",
+   "line": 16139,
+   "kind": "law",
+   "claim": "any primitive declaration makes a primitive",
+   "evidence": "src/assembly.jl:65"
+  },
+  {
+   "id": "SD1-029",
+   "file": "design/spec.md",
+   "line": 16140,
+   "kind": "law",
+   "claim": "a type defining neither is ClassUnreadable",
+   "evidence": "src/assembly.jl:66; probe:44"
+  },
+  {
+   "id": "SD1-030",
+   "file": "design/spec.md",
+   "line": 16144,
+   "kind": "law",
+   "claim": "a component is a primitive or an assembly of components",
+   "evidence": "src/assembly.jl:58-67"
+  },
+  {
+   "id": "SD1-031",
+   "file": "design/spec.md",
+   "line": 16148,
+   "kind": "decl",
+   "claim": "a container is a Tuple/NamedTuple field whose elements are all components",
+   "evidence": "src/assembly.jl:214-215"
+  },
+  {
+   "id": "SD1-032",
+   "file": "design/spec.md",
+   "line": 16149,
+   "kind": "law",
+   "claim": "it contributes children path-named \"field/1\" or \"field/key\"",
+   "evidence": "src/assembly.jl:179; probe:65"
+  },
+  {
+   "id": "SD1-033",
+   "file": "design/spec.md",
+   "line": 16150,
+   "kind": "law",
+   "claim": "under transparent_container the children go by bare key",
+   "evidence": "src/assembly.jl:179; probe:73"
+  },
+  {
+   "id": "SD1-034",
+   "file": "design/spec.md",
+   "line": 16151,
+   "kind": "law",
+   "claim": "a container has no contract, no local_wires and no rate scope",
+   "evidence": "src/assembly.jl:94-103; probe:74"
+  },
+  {
+   "id": "SD1-035",
+   "file": "design/spec.md",
+   "line": 16155,
+   "kind": "decl",
+   "claim": "facets: x, m, x_deriv flow, two output stages, events, optional x_projection",
+   "evidence": "src/declare.jl:747-751"
+  },
+  {
+   "id": "SD1-036",
+   "file": "design/spec.md",
+   "line": 16158,
+   "kind": "law",
+   "claim": "any facet may be empty",
+   "evidence": "probe:107; src/library.jl:349"
+  },
+  {
+   "id": "SD1-037",
+   "file": "design/spec.md",
+   "line": 16158,
+   "kind": "law",
+   "claim": "a component with modes and events but no x is a finite-state machine",
+   "evidence": "probe:107"
+  },
+  {
+   "id": "SD1-038",
+   "file": "design/spec.md",
+   "line": 16161,
+   "kind": "mech",
+   "claim": "u_types states requirements, what each entry allows to arrive",
+   "evidence": "src/build.jl:890"
+  },
+  {
+   "id": "SD1-039",
+   "file": "design/spec.md",
+   "line": 16162,
+   "kind": "mech",
+   "claim": "y_types states public ports, what each cell carries",
+   "evidence": "src/build.jl:197"
+  },
+  {
+   "id": "SD1-040",
+   "file": "design/spec.md",
+   "line": 16164,
+   "kind": "decl",
+   "claim": "either contract may be bare, one type for one port",
+   "evidence": "src/declare.jl:826-830"
+  },
+  {
+   "id": "SD1-041",
+   "file": "design/spec.md",
+   "line": 16165,
+   "kind": "law",
+   "claim": "a name returned in y and declared nowhere is a build error",
+   "evidence": "src/build.jl:131; probe:94"
+  },
+  {
+   "id": "SD1-042",
+   "file": "design/spec.md",
+   "line": 16169,
+   "kind": "law",
+   "claim": "the declaration inventory is a closed set of well-known functions",
+   "evidence": "src/declare.jl:747-751"
+  },
+  {
+   "id": "SD1-043",
+   "file": "design/spec.md",
+   "line": 16170,
+   "kind": "mech",
+   "claim": "each is declared by value, by type or by allocation",
+   "evidence": "src/declare.jl:75,185,150"
+  },
+  {
+   "id": "SD1-044",
+   "file": "design/spec.md",
+   "line": 16171,
+   "kind": "law",
+   "claim": "the set is the per-name import list a component module writes",
+   "evidence": "src/declare.jl:757-762; src/diagnostics.jl:568-579"
+  },
+  {
+   "id": "SD1-045",
+   "file": "design/spec.md",
+   "line": 16172,
+   "kind": "decl",
+   "claim": "the inventory holds the 18 listed names",
+   "evidence": "src/declare.jl:747-751"
+  },
+  {
+   "id": "SD1-046",
+   "file": "design/spec.md",
+   "line": 16179,
+   "kind": "mech",
+   "claim": "an assembly derived contract is its face list",
+   "evidence": "src/assembly.jl:435,460"
+  },
+  {
+   "id": "SD1-047",
+   "file": "design/spec.md",
+   "line": 16181,
+   "kind": "mech",
+   "claim": "the Build derived contract is wires, root inputs, execution order, face table",
+   "evidence": "src/structure.jl:243-250; src/build.jl:616-619"
+  },
+  {
+   "id": "SD1-048",
+   "file": "design/spec.md",
+   "line": 16183,
+   "kind": "mech",
+   "claim": "under generic holding it is the constraint the referencing wires impose",
+   "evidence": "src/assembly.jl:136-137"
+  },
+  {
+   "id": "SD1-049",
+   "file": "design/spec.md",
+   "line": 16186,
+   "kind": "mech",
+   "claim": "the export chain is the faces under which assemblies above surface a port",
+   "evidence": "src/readers.jl:896-899"
+  },
+  {
+   "id": "SD1-050",
+   "file": "design/spec.md",
+   "line": 16188,
+   "kind": "mech",
+   "claim": "condition resolution walks it to the root input",
+   "evidence": "src/conditions.jl:285-290; probe:162"
+  },
+  {
+   "id": "SD1-051",
+   "file": "design/spec.md",
+   "line": 16188,
+   "kind": "law",
+   "claim": "it errors if the face never surfaces",
+   "evidence": "src/diagnostics.jl:1988; probe:164"
+  },
+  {
+   "id": "SD1-052",
+   "file": "design/spec.md",
+   "line": 16190,
+   "kind": "mech",
+   "claim": "get_face and mounting resolve through it",
+   "evidence": "src/readers.jl:896-899"
+  },
+  {
+   "id": "SD1-053",
+   "file": "design/spec.md",
+   "line": 16192,
+   "kind": "mech",
+   "claim": "a function family is which bundle fields a function may legally receive",
+   "evidence": "src/declare.jl:899-908"
+  },
+  {
+   "id": "SD1-055",
+   "file": "design/spec.md",
+   "line": 16194,
+   "kind": "law",
+   "claim": "each name has one closed set per tier",
+   "evidence": "src/declare.jl:900-908"
+  },
+  {
+   "id": "SD1-056",
+   "file": "design/spec.md",
+   "line": 16195,
+   "kind": "law",
+   "claim": "the shared output stages take one set on each tier",
+   "evidence": "src/declare.jl:900-906"
+  },
+  {
+   "id": "SD1-057",
+   "file": "design/spec.md",
+   "line": 16197,
+   "kind": "law",
+   "claim": "BundleFieldError classifies a read as illegal for the family",
+   "evidence": "src/declare.jl:919-925; probe:152"
+  },
+  {
+   "id": "SD1-058",
+   "file": "design/spec.md",
+   "line": 16200,
+   "kind": "law",
+   "claim": "under generic holding the child is opaque below its faces",
+   "evidence": "src/assembly.jl:146-149"
+  },
+  {
+   "id": "SD1-059",
+   "file": "design/spec.md",
+   "line": 16202,
+   "kind": "mech",
+   "claim": "wires referencing the faces are checked per instantiation",
+   "evidence": "src/assembly.jl:136-137"
+  },
+  {
+   "id": "SD1-060",
+   "file": "design/spec.md",
+   "line": 16205,
+   "kind": "mech",
+   "claim": "the system combines continuous flow with algebraic outputs",
+   "evidence": "src/build.jl:1529-1561"
+  },
+  {
+   "id": "SD1-061",
+   "file": "design/spec.md",
+   "line": 16206,
+   "kind": "mech",
+   "claim": "it supports multi-rate periodic discrete dynamics",
+   "evidence": "src/deployment.jl:84-87"
+  },
+  {
+   "id": "SD1-062",
+   "file": "design/spec.md",
+   "line": 16207,
+   "kind": "law",
+   "claim": "state events run under two detection policies",
+   "evidence": "src/build.jl:662-680"
+  },
+  {
+   "id": "SD1-063",
+   "file": "design/spec.md",
+   "line": 16207,
+   "kind": "mech",
+   "claim": "post-step manifold projection exists",
+   "evidence": "src/model.jl:653-654"
+  },
+  {
+   "id": "SD1-064",
+   "file": "design/spec.md",
+   "line": 16208,
+   "kind": "mech",
+   "claim": "inputs are injected externally",
+   "evidence": "src/build.jl:886-887"
+  },
+  {
+   "id": "SD1-065",
+   "file": "design/spec.md",
+   "line": 16214,
+   "kind": "decl",
+   "claim": "h_max is the deployment bound on the integration step",
+   "evidence": "src/deployment.jl:543"
+  },
+  {
+   "id": "SD1-066",
+   "file": "design/spec.md",
+   "line": 16217,
+   "kind": "decl",
+   "claim": "a library component is one the standard library ships",
+   "evidence": "src/library.jl:1-9"
+  },
+  {
+   "id": "SD1-067",
+   "file": "design/spec.md",
+   "line": 16218,
+   "kind": "law",
+   "claim": "a library component has no privilege a user component lacks",
+   "evidence": "src/library.jl:3-9"
+  },
+  {
+   "id": "SD1-068",
+   "file": "design/spec.md",
+   "line": 16221,
+   "kind": "decl",
+   "claim": "a local wire is an entry of local_wires",
+   "evidence": "src/declare.jl:286"
+  },
+  {
+   "id": "SD1-069",
+   "file": "design/spec.md",
+   "line": 16222,
+   "kind": "law",
+   "claim": "a local wire runs between two child faces inside the boundary",
+   "evidence": "src/declare.jl:266-272"
+  },
+  {
+   "id": "SD1-070",
+   "file": "design/spec.md",
+   "line": 16223,
+   "kind": "law",
+   "claim": "an input or output wire has one end on the boundary",
+   "evidence": "src/declare.jl:292,314"
+  },
+  {
+   "id": "SD1-071",
+   "file": "design/spec.md",
+   "line": 16226,
+   "kind": "law",
+   "claim": "one-level rule: every endpoint names an immediate child and one face",
+   "evidence": "src/assembly.jl:259-264"
+  },
+  {
+   "id": "SD1-072",
+   "file": "design/spec.md",
+   "line": 16228,
+   "kind": "law",
+   "claim": "routing across levels is declared level by level",
+   "evidence": "src/assembly.jl:264-268"
+  },
+  {
+   "id": "SD1-073",
+   "file": "design/spec.md",
+   "line": 16230,
+   "kind": "law",
+   "claim": "condition fragments follow the locality law as unchecked guidance",
+   "evidence": "probe:161"
+  },
+  {
+   "id": "SD1-074",
+   "file": "design/spec.md",
+   "line": 16232,
+   "kind": "decl",
+   "claim": "a periodic discrete component has state s, update s_update, a declared rate",
+   "evidence": "src/declare.jl:740; src/declare.jl:514"
+  },
+  {
+   "id": "SD1-075",
+   "file": "design/spec.md",
+   "line": 16233,
+   "kind": "mech",
+   "claim": "its output cells hold zero-order between ticks",
+   "evidence": "src/declare.jl:646; src/executor.jl:481-490"
+  },
+  {
+   "id": "SD1-076",
+   "file": "design/spec.md",
+   "line": 16234,
+   "kind": "law",
+   "claim": "it has no m store",
+   "evidence": "src/assembly.jl:735-737; probe:53"
+  },
+  {
+   "id": "SD1-077",
+   "file": "design/spec.md",
+   "line": 16235,
+   "kind": "law",
+   "claim": "its s reaches others only through signals",
+   "evidence": "src/declare.jl:849-870"
+  },
+  {
+   "id": "SD1-078",
+   "file": "design/spec.md",
+   "line": 16237,
+   "kind": "law",
+   "claim": "a primitive has dynamics of its own and no children",
+   "evidence": "src/assembly.jl:58-67"
+  },
+  {
+   "id": "SD1-079",
+   "file": "design/spec.md",
+   "line": 16238,
+   "kind": "mech",
+   "claim": "a primitive is continuous or discrete, one per tier",
+   "evidence": "src/declare.jl:821"
+  },
+  {
+   "id": "SD1-080",
+   "file": "design/spec.md",
+   "line": 16239,
+   "kind": "law",
+   "claim": "it makes the primitive declarations, x_init or s_init among them",
+   "evidence": "src/assembly.jl:731-735"
+  },
+  {
+   "id": "SD1-081",
+   "file": "design/spec.md",
+   "line": 16240,
+   "kind": "mech",
+   "claim": "its faces are its own ports",
+   "evidence": "src/assembly.jl:435-438"
+  },
+  {
+   "id": "SD1-082",
+   "file": "design/spec.md",
+   "line": 16243,
+   "kind": "decl",
+   "claim": "a rate scope is an assembly sample_times declaration",
+   "evidence": "src/declare.jl:497-514"
+  },
+  {
+   "id": "SD1-083",
+   "file": "design/spec.md",
+   "line": 16244,
+   "kind": "decl",
+   "claim": "it maps an immediate child name to Relative or Absolute",
+   "evidence": "src/declare.jl:497-512"
+  },
+  {
+   "id": "SD1-084",
+   "file": "design/spec.md",
+   "line": 16245,
+   "kind": "mech",
+   "claim": "Relative entries compose affinely down the tree",
+   "evidence": "src/declare.jl:416; src/structure.jl:377"
+  },
+  {
+   "id": "SD1-085",
+   "file": "design/spec.md",
+   "line": 16246,
+   "kind": "mech",
+   "claim": "Absolute entries anchor",
+   "evidence": "src/structure.jl:145-150"
+  },
+  {
+   "id": "SD1-086",
+   "file": "design/spec.md",
+   "line": 16246,
+   "kind": "mech",
+   "claim": "the build compiles one anchor and one (Da, Pa) pair per discrete component",
+   "evidence": "src/structure.jl:111-112,158-164"
+  },
+  {
+   "id": "SD1-087",
+   "file": "design/spec.md",
+   "line": 16248,
+   "kind": "mech",
+   "claim": "the deployment binds that to one (D0, Phi0) pair in base ticks",
+   "evidence": "src/deployment.jl:36-40,293"
+  },
+  {
+   "id": "SD1-089",
+   "file": "design/spec.md",
+   "line": 16257,
+   "kind": "law",
+   "claim": "y_state has no u in its bundle",
+   "evidence": "src/declare.jl:854-868; probe:152"
+  },
+  {
+   "id": "SD1-090",
+   "file": "design/spec.md",
+   "line": 16257,
+   "kind": "law",
+   "claim": "so y_state has structurally no feedthrough",
+   "evidence": "src/build.jl:207-217"
+  },
+  {
+   "id": "SD1-091",
+   "file": "design/spec.md",
+   "line": 16259,
+   "kind": "law",
+   "claim": "one pair of stage names serves both tiers",
+   "evidence": "src/declare.jl:900-906"
+  },
+  {
+   "id": "SD1-092",
+   "file": "design/spec.md",
+   "line": 16259,
+   "kind": "law",
+   "claim": "each name legal bundle set is tier-dependent",
+   "evidence": "src/declare.jl:900-908"
+  },
+  {
+   "id": "SD1-093",
+   "file": "design/spec.md",
+   "line": 16260,
+   "kind": "law",
+   "claim": "feedthrough is declared by signature, with no dependency annotations",
+   "evidence": "src/build.jl:196-217"
+  },
+  {
+   "id": "SD1-094",
+   "file": "design/spec.md",
+   "line": 16263,
+   "kind": "decl",
+   "claim": "x_init or s_init declares state by initial value",
+   "evidence": "src/declare.jl:60-110"
+  },
+  {
+   "id": "SD1-095",
+   "file": "design/spec.md",
+   "line": 16264,
+   "kind": "law",
+   "claim": "every primitive makes exactly one state declaration",
+   "evidence": "src/assembly.jl:742-770; probe:49"
+  },
+  {
+   "id": "SD1-096",
+   "file": "design/spec.md",
+   "line": 16264,
+   "kind": "decl",
+   "claim": "a stateless primitive declares nothing, spelled nothing",
+   "evidence": "src/declare.jl:63-65"
+  },
+  {
+   "id": "SD1-097",
+   "file": "design/spec.md",
+   "line": 16265,
+   "kind": "law",
+   "claim": "the state declaration marks the tier",
+   "evidence": "src/assembly.jl:748-754"
+  },
+  {
+   "id": "SD1-098",
+   "file": "design/spec.md",
+   "line": 16266,
+   "kind": "law",
+   "claim": "a primitive holding a store owes its update law",
+   "evidence": "src/assembly.jl:742-746"
+  },
+  {
+   "id": "SD1-099",
+   "file": "design/spec.md",
+   "line": 16267,
+   "kind": "mech",
+   "claim": "it seeds the x or s store",
+   "evidence": "src/build.jl:1482-1484; src/declare.jl:60-62"
+  },
+  {
+   "id": "SD1-100",
+   "file": "design/spec.md",
+   "line": 16269,
+   "kind": "decl",
+   "claim": "a workspace is declared by allocation, ws_init(::C, ::Type{T})",
+   "evidence": "src/declare.jl:128-150"
+  },
+  {
+   "id": "SD1-101",
+   "file": "design/spec.md",
+   "line": 16270,
+   "kind": "decl",
+   "claim": "ws_init exists on both tiers",
+   "evidence": "src/declare.jl:141-145; probe:142"
+  },
+  {
+   "id": "SD1-102",
+   "file": "design/spec.md",
+   "line": 16270,
+   "kind": "law",
+   "claim": "a discrete allocator is always called at Float64",
+   "evidence": "src/build.jl:1059; src/conditions.jl:665; probe:142"
+  },
+  {
+   "id": "SD1-103",
+   "file": "design/spec.md",
+   "line": 16271,
+   "kind": "mech",
+   "claim": "the workspace arrives as the ws bundle field",
+   "evidence": "src/declare.jl:876"
+  },
+  {
+   "id": "SD1-104",
+   "file": "design/spec.md",
+   "line": 16272,
+   "kind": "law",
+   "claim": "a workspace is excluded from state semantics",
+   "evidence": "src/checkpoint.jl:74,151"
+  },
+  {
+   "id": "SD1-105",
+   "file": "design/spec.md",
+   "line": 16273,
+   "kind": "law",
+   "claim": "it is never a condition target",
+   "evidence": "src/conditions.jl:654-660; src/conditions.jl:169"
+  },
+  {
+   "id": "SD1-106",
+   "file": "design/spec.md",
+   "line": 16274,
+   "kind": "mech",
+   "claim": "the framework never inspects or mutates a workspace",
+   "evidence": "src/declare.jl:144-145"
+  },
+  {
+   "id": "SD1-107",
+   "file": "design/spec.md",
+   "line": 16275,
+   "kind": "law",
+   "claim": "its contents at call entry are unspecified",
+   "evidence": "src/declare.jl:144-145"
+  },
+  {
+   "id": "SD1-108",
+   "file": "design/spec.md",
+   "line": 16277,
+   "kind": "decl",
+   "claim": "a bare store is declared as one leaf instead of a NamedTuple",
+   "evidence": "src/declare.jl:60-62"
+  },
+  {
+   "id": "SD1-109",
+   "file": "design/spec.md",
+   "line": 16278,
+   "kind": "law",
+   "claim": "its field is the declaration letter x, s or m",
+   "evidence": "src/declare.jl:812-814; test/test_readers.jl:584"
+  },
+  {
+   "id": "SD1-110",
+   "file": "design/spec.md",
+   "line": 16279,
+   "kind": "law",
+   "claim": "a leaf address into it may be headless, empty or start at its first step",
+   "evidence": "test/test_readers.jl:584-590"
+  },
+  {
+   "id": "SD1-111",
+   "file": "design/spec.md",
+   "line": 16281,
+   "kind": "law",
+   "claim": "a condition may set it with a bare payload, the letter supplied",
+   "evidence": "test/test_conditions.jl:656-667"
+  },
+  {
+   "id": "SD1-112",
+   "file": "design/spec.md",
+   "line": 16278,
+   "kind": "ex",
+   "claim": "x_init(c::Integrator) = c.x0 as the bare form",
+   "evidence": "src/declare.jl:60-62"
+  },
+  {
+   "id": "SD1-113",
+   "file": "design/spec.md",
+   "line": 16285,
+   "kind": "decl",
+   "claim": "a bare contract is u_types or y_types declared as one type",
+   "evidence": "src/declare.jl:826-830"
+  },
+  {
+   "id": "SD1-114",
+   "file": "design/spec.md",
+   "line": 16286,
+   "kind": "law",
+   "claim": "its port face is the default u or y",
+   "evidence": "src/declare.jl:815-816; test/test_readers.jl:632"
+  },
+  {
+   "id": "SD1-115",
+   "file": "design/spec.md",
+   "line": 16287,
+   "kind": "law",
+   "claim": "a wire addresses it as any face",
+   "evidence": "test/fixtures.jl:135-143"
+  },
+  {
+   "id": "SD1-116",
+   "file": "design/spec.md",
+   "line": 16288,
+   "kind": "law",
+   "claim": "the bundle carries its value itself",
+   "evidence": "src/declare.jl:689-700"
+  },
+  {
+   "id": "SD1-117",
+   "file": "design/spec.md",
+   "line": 16289,
+   "kind": "law",
+   "claim": "a reader may address it headless, the default face supplied",
+   "evidence": "test/test_readers.jl:632-640"
+  },
+  {
+   "id": "SD1-118",
+   "file": "design/spec.md",
+   "line": 16285,
+   "kind": "ex",
+   "claim": "y_types(::Integrator{V}) where {V} = V as the bare form",
+   "evidence": "src/library.jl:380"
+  },
+  {
+   "id": "SD1-119",
+   "file": "design/spec.md",
+   "line": 16292,
+   "kind": "mech",
+   "claim": "the buffer is a framework-owned contiguous Vector{T}",
+   "evidence": "src/build.jl:1482"
+  },
+  {
+   "id": "SD1-120",
+   "file": "design/spec.md",
+   "line": 16292,
+   "kind": "mech",
+   "claim": "it is laid out at build time",
+   "evidence": "src/build.jl:1521-1529"
+  },
+  {
+   "id": "SD1-121",
+   "file": "design/spec.md",
+   "line": 16293,
+   "kind": "mech",
+   "claim": "it includes the xdot vectors the integrator fills",
+   "evidence": "src/build.jl:1484"
+  },
+  {
+   "id": "SD1-122",
+   "file": "design/spec.md",
+   "line": 16294,
+   "kind": "mech",
+   "claim": "a component x store is its range of the buffer",
+   "evidence": "src/build.jl:1529"
+  },
+  {
+   "id": "SD1-123",
+   "file": "design/spec.md",
+   "line": 16295,
+   "kind": "law",
+   "claim": "the buffer is authoritative and state values are ephemeral reconstructions",
+   "evidence": "src/leaves.jl:223"
+  },
+  {
+   "id": "SD1-124",
+   "file": "design/spec.md",
+   "line": 16297,
+   "kind": "law",
+   "claim": "integration intermediates live in integrator buffers, not in a workspace",
+   "evidence": "src/stepper.jl:151"
+  },
+  {
+   "id": "SD1-125",
+   "file": "design/spec.md",
+   "line": 16300,
+   "kind": "mech",
+   "claim": "a bundle is one NamedTuple of zero-copy views beside the component",
+   "evidence": "src/declare.jl:556-559"
+  },
+  {
+   "id": "SD1-126",
+   "file": "design/spec.md",
+   "line": 16301,
+   "kind": "law",
+   "claim": "a bundle name is present iff the store or fact exists",
+   "evidence": "src/declare.jl:849-870; probe:152"
+  },
+  {
+   "id": "SD1-127",
+   "file": "design/spec.md",
+   "line": 16302,
+   "kind": "law",
+   "claim": "undeclared stores are absent, never nothing-filled",
+   "evidence": "src/declare.jl:849-852; probe:152"
+  },
+  {
+   "id": "SD1-128",
+   "file": "design/spec.md",
+   "line": 16305,
+   "kind": "mech",
+   "claim": "a cell is one concretely typed entry of the signal table",
+   "evidence": "src/build.jl:1495-1510"
+  },
+  {
+   "id": "SD1-130",
+   "file": "design/spec.md",
+   "line": 16306,
+   "kind": "mech",
+   "claim": "a cell is written by its producing stage and read by every gatherer",
+   "evidence": "src/executor.jl:55-72"
+  },
+  {
+   "id": "SD1-131",
+   "file": "design/spec.md",
+   "line": 16307,
+   "kind": "law",
+   "claim": "every cell is public and private intermediates are never cells",
+   "evidence": "src/build.jl:197-202"
+  },
+  {
+   "id": "SD1-132",
+   "file": "design/spec.md",
+   "line": 16311,
+   "kind": "law",
+   "claim": "a constant source has no inputs and no state",
+   "evidence": "src/library.jl:346-352; probe:169"
+  },
+  {
+   "id": "SD1-133",
+   "file": "design/spec.md",
+   "line": 16312,
+   "kind": "decl",
+   "claim": "it publishes a value its instance holds, Constant{V}",
+   "evidence": "src/library.jl:346-352"
+  },
+  {
+   "id": "SD1-134",
+   "file": "design/spec.md",
+   "line": 16313,
+   "kind": "mech",
+   "claim": "it serves as the rig stub feeding an abstract face",
+   "evidence": "probe:120"
+  },
+  {
+   "id": "SD1-135",
+   "file": "design/spec.md",
+   "line": 16314,
+   "kind": "law",
+   "claim": "its value is instance data, never a default",
+   "evidence": "src/library.jl:343-344"
+  },
+  {
+   "id": "SD1-136",
+   "file": "design/spec.md",
+   "line": 16324,
+   "kind": "mech",
+   "claim": "a face is the name a port wears on its component boundary",
+   "evidence": "src/assembly.jl:435-460"
+  },
+  {
+   "id": "SD1-137",
+   "file": "design/spec.md",
+   "line": 16325,
+   "kind": "law",
+   "claim": "for a primitive the face is the port own name",
+   "evidence": "src/assembly.jl:435-438"
+  },
+  {
+   "id": "SD1-139",
+   "file": "design/spec.md",
+   "line": 16327,
+   "kind": "law",
+   "claim": "an assembly face is a name declared in input_wires or output_wires",
+   "evidence": "src/assembly.jl:440-465"
+  },
+  {
+   "id": "SD1-140",
+   "file": "design/spec.md",
+   "line": 16327,
+   "kind": "mech",
+   "claim": "an assembly face aliases an interior port",
+   "evidence": "src/structure.jl:245-250"
+  },
+  {
+   "id": "SD1-141",
+   "file": "design/spec.md",
+   "line": 16328,
+   "kind": "law",
+   "claim": "face names are opaque tokens",
+   "evidence": "src/diagnostics.jl:659-672"
+  },
+  {
+   "id": "SD1-142",
+   "file": "design/spec.md",
+   "line": 16329,
+   "kind": "law",
+   "claim": "the periphery write side speaks only face names",
+   "evidence": "src/roster.jl:84-90; src/diagnostics.jl:1511"
+  },
+  {
+   "id": "SD1-143",
+   "file": "design/spec.md",
+   "line": 16331,
+   "kind": "law",
+   "claim": "structural feedthrough is fixed by which stage produces a port",
+   "evidence": "src/build.jl:196-217"
+  },
+  {
+   "id": "SD1-144",
+   "file": "design/spec.md",
+   "line": 16333,
+   "kind": "law",
+   "claim": "every stage-2 output is presumed dependent on every wired input",
+   "evidence": "src/build.jl:207-217; src/declare.jl:673"
+  },
+  {
+   "id": "SD1-145",
+   "file": "design/spec.md",
+   "line": 16336,
+   "kind": "law",
+   "claim": "a field handle is an immutable query object on an ordinary port",
+   "evidence": "src/diagnostics.jl:925-926; src/leaves.jl:10-15"
+  },
+  {
+   "id": "SD1-146",
+   "file": "design/spec.md",
+   "line": 16338,
+   "kind": "law",
+   "claim": "bulk data rides as frozen references, never mutable caches",
+   "evidence": "src/diagnostics.jl:925-926"
+  },
+  {
+   "id": "SD1-147",
+   "file": "design/spec.md",
+   "line": 16341,
+   "kind": "law",
+   "claim": "the signal rule is immutability plus frozen references",
+   "evidence": "src/leaves.jl:10-18"
+  },
+  {
+   "id": "SD1-148",
+   "file": "design/spec.md",
+   "line": 16342,
+   "kind": "law",
+   "claim": "isbits is the common case, not the rule",
+   "evidence": "src/leaves.jl:17-18"
+  },
+  {
+   "id": "SD1-149",
+   "file": "design/spec.md",
+   "line": 16346,
+   "kind": "mech",
+   "claim": "the buffer holds x",
+   "evidence": "src/build.jl:1482"
+  },
+  {
+   "id": "SD1-150",
+   "file": "design/spec.md",
+   "line": 16346,
+   "kind": "mech",
+   "claim": "the s and m stores hold s and m",
+   "evidence": "src/executor.jl:55-72; src/executor.jl:402-407"
+  },
+  {
+   "id": "SD1-151",
+   "file": "design/spec.md",
+   "line": 16347,
+   "kind": "mech",
+   "claim": "the table holds produced signals",
+   "evidence": "src/build.jl:1495-1510"
+  },
+  {
+   "id": "SD1-153",
+   "file": "design/spec.md",
+   "line": 16350,
+   "kind": "law",
+   "claim": "an opaque leaf is an immutable non-isbits type where the leaf walk stops",
+   "evidence": "src/leaves.jl:17-18; probe:132"
+  },
+  {
+   "id": "SD1-154",
+   "file": "design/spec.md",
+   "line": 16352,
+   "kind": "mech",
+   "claim": "the table stores it whole, references included",
+   "evidence": "src/leaves.jl:5-8; src/build.jl:1505-1507"
+  },
+  {
+   "id": "SD1-155",
+   "file": "design/spec.md",
+   "line": 16353,
+   "kind": "law",
+   "claim": "a field handle and a Symbol are opaque leaves",
+   "evidence": "src/leaves.jl:17-18; probe:132"
+  },
+  {
+   "id": "SD1-156",
+   "file": "design/spec.md",
+   "line": 16354,
+   "kind": "law",
+   "claim": "an opaque leaf may not surface as a root input",
+   "evidence": "src/build.jl:455; probe:128,131"
+  },
+  {
+   "id": "SD1-157",
+   "file": "design/spec.md",
+   "line": 16356,
+   "kind": "mech",
+   "claim": "a port is one declared name and one cell",
+   "evidence": "src/build.jl:197-202"
+  },
+  {
+   "id": "SD1-158",
+   "file": "design/spec.md",
+   "line": 16357,
+   "kind": "mech",
+   "claim": "a port is one root input and one staged write",
+   "evidence": "src/dataplane.jl:16-27; src/build.jl:1509-1511"
+  },
+  {
+   "id": "SD1-159",
+   "file": "design/spec.md",
+   "line": 16358,
+   "kind": "mech",
+   "claim": "a port is one device claim and one trace address",
+   "evidence": "src/diagnostics.jl:1530-1538; src/trace.jl:22-24"
+  },
+  {
+   "id": "SD1-161",
+   "file": "design/spec.md",
+   "line": 16359,
+   "kind": "law",
+   "claim": "wiring is port-granular",
+   "evidence": "src/assembly.jl:259-264"
+  },
+  {
+   "id": "SD1-162",
+   "file": "design/spec.md",
+   "line": 16360,
+   "kind": "law",
+   "claim": "which stage computes a port is invisible outside the component",
+   "evidence": "src/assembly.jl:435-465"
+  },
+  {
+   "id": "SD1-163",
+   "file": "design/spec.md",
+   "line": 16361,
+   "kind": "decl",
+   "claim": "a root input is the root component own input face",
+   "evidence": "src/structure.jl:246"
+  },
+  {
+   "id": "SD1-164",
+   "file": "design/spec.md",
+   "line": 16362,
+   "kind": "law",
+   "claim": "it is an assembly input_wires key or a primitive u_types key",
+   "evidence": "src/assembly.jl:435-438; src/diagnostics.jl:684-686"
+  },
+  {
+   "id": "SD1-165",
+   "file": "design/spec.md",
+   "line": 16363,
+   "kind": "law",
+   "claim": "a root input is produced by no component",
+   "evidence": "src/build.jl:886"
+  },
+  {
+   "id": "SD1-166",
+   "file": "design/spec.md",
+   "line": 16363,
+   "kind": "law",
+   "claim": "it is constant within a frame",
+   "evidence": "src/frame.jl:43-44,91"
+  },
+  {
+   "id": "SD1-167",
+   "file": "design/spec.md",
+   "line": 16364,
+   "kind": "law",
+   "claim": "it is the only thing the periphery may write",
+   "evidence": "src/diagnostics.jl:1511-1538"
+  },
+  {
+   "id": "SD1-168",
+   "file": "design/spec.md",
+   "line": 16368,
+   "kind": "mech",
+   "claim": "one kind of scratch is a component workspace",
+   "evidence": "src/declare.jl:128-150"
+  },
+  {
+   "id": "SD1-169",
+   "file": "design/spec.md",
+   "line": 16369,
+   "kind": "mech",
+   "claim": "another is the integrator buffers and the mid-step table",
+   "evidence": "src/stepper.jl:151; src/model.jl:71-76"
+  },
+  {
+   "id": "SD1-170",
+   "file": "design/spec.md",
+   "line": 16371,
+   "kind": "mech",
+   "claim": "a service invocation instantiates a store set and discards it with the call",
+   "evidence": "src/model.jl:145"
+  },
+  {
+   "id": "SD1-171",
+   "file": "design/spec.md",
+   "line": 16372,
+   "kind": "law",
+   "claim": "the simulation own buffer set is the authoritative one",
+   "evidence": "src/model.jl:145"
+  },
+  {
+   "id": "SD1-172",
+   "file": "design/spec.md",
+   "line": 16374,
+   "kind": "mech",
+   "claim": "the signal table is a framework-owned collection of cells",
+   "evidence": "src/build.jl:1495-1510"
+  },
+  {
+   "id": "SD1-173",
+   "file": "design/spec.md",
+   "line": 16375,
+   "kind": "mech",
+   "claim": "consumers gather views from it",
+   "evidence": "src/executor.jl:55-72"
+  },
+  {
+   "id": "SD1-174",
+   "file": "design/spec.md",
+   "line": 16376,
+   "kind": "law",
+   "claim": "its consistency is a boundary property, transient scratch within a step",
+   "evidence": "src/model.jl:625-632"
+  },
+  {
+   "id": "SD1-175",
+   "file": "design/spec.md",
+   "line": 16379,
+   "kind": "mech",
+   "claim": "a staging cell is per device",
+   "evidence": "src/dataplane.jl:382"
+  },
+  {
+   "id": "SD1-176",
+   "file": "design/spec.md",
+   "line": 16379,
+   "kind": "mech",
+   "claim": "it atomically holds a pending write batch between drains",
+   "evidence": "src/dataplane.jl:16-27"
+  },
+  {
+   "id": "SD1-177",
+   "file": "design/spec.md",
+   "line": 16382,
+   "kind": "law",
+   "claim": "a staging cell is not a table cell",
+   "evidence": "src/dataplane.jl:25-27"
+  },
+  {
+   "id": "SD1-178",
+   "file": "design/spec.md",
+   "line": 16384,
+   "kind": "mech",
+   "claim": "a store is the framework-owned home of x, s or m",
+   "evidence": "src/executor.jl:55-72"
+  },
+  {
+   "id": "SD1-179",
+   "file": "design/spec.md",
+   "line": 16385,
+   "kind": "mech",
+   "claim": "an x store is a range of the buffer",
+   "evidence": "src/build.jl:1529"
+  },
+  {
+   "id": "SD1-180",
+   "file": "design/spec.md",
+   "line": 16386,
+   "kind": "law",
+   "claim": "an s or m store is isbits or Symbol, field by field or bare",
+   "evidence": "src/assembly.jl:710-717"
+  },
+  {
+   "id": "SD1-181",
+   "file": "design/spec.md",
+   "line": 16388,
+   "kind": "mech",
+   "claim": "the framework overwrites it when a handler or update returns a new value",
+   "evidence": "src/executor.jl:402-407,430"
+  },
+  {
+   "id": "SD1-182",
+   "file": "design/spec.md",
+   "line": 16389,
+   "kind": "law",
+   "claim": "a store is never a cell",
+   "evidence": "src/build.jl:1495-1510"
+  },
+  {
+   "id": "SD1-183",
+   "file": "design/spec.md",
+   "line": 16390,
+   "kind": "mech",
+   "claim": "a summing junction is an ordinary library component doing N-to-1 aggregation",
+   "evidence": "src/library.jl:36-60"
+  },
+  {
+   "id": "SD1-184",
+   "file": "design/spec.md",
+   "line": 16392,
+   "kind": "decl",
+   "claim": "it is SumJunction{V,N}, the Junction at +",
+   "evidence": "src/library.jl:60,110"
+  },
+  {
+   "id": "SD1-185",
+   "file": "design/spec.md",
+   "line": 16393,
+   "kind": "law",
+   "claim": "there is no framework aggregation mechanism",
+   "evidence": "src/diagnostics.jl:420-428"
+  },
+  {
+   "id": "SD1-186",
+   "file": "design/spec.md",
+   "line": 16394,
+   "kind": "law",
+   "claim": "fold order is the positional input order",
+   "evidence": "src/library.jl:119"
+  },
+  {
+   "id": "SD1-188",
+   "file": "design/spec.md",
+   "line": 16402,
+   "kind": "mech",
+   "claim": "a view is a named zero-copy value received through the bundle",
+   "evidence": "src/declare.jl:556-559"
+  },
+  {
+   "id": "SD1-189",
+   "file": "design/spec.md",
+   "line": 16404,
+   "kind": "mech",
+   "claim": "a state view is a reconstruction of a store",
+   "evidence": "src/leaves.jl:223"
+  },
+  {
+   "id": "SD1-190",
+   "file": "design/spec.md",
+   "line": 16405,
+   "kind": "law",
+   "claim": "an isbits state view is value-identical on re-materialization within a sweep",
+   "evidence": "src/leaves.jl:223-236"
+  },
+  {
+   "id": "SD1-191",
+   "file": "design/spec.md",
+   "line": 16411,
+   "kind": "law",
+   "claim": "an algebraic loop is a genuine cycle in the instantaneous dependency graph",
+   "evidence": "src/build.jl:222-232"
+  },
+  {
+   "id": "SD1-192",
+   "file": "design/spec.md",
+   "line": 16412,
+   "kind": "law",
+   "claim": "it is a build error",
+   "evidence": "probe:97"
+  },
+  {
+   "id": "SD1-193",
+   "file": "design/spec.md",
+   "line": 16412,
+   "kind": "law",
+   "claim": "its diagnostic names the loop in slash form",
+   "evidence": "src/build.jl:276-280; probe:97"
+  },
+  {
+   "id": "SD1-194",
+   "file": "design/spec.md",
+   "line": 16413,
+   "kind": "law",
+   "claim": "a UnitDelay breaks the loop",
+   "evidence": "probe:98"
+  },
+  {
+   "id": "SD1-195",
+   "file": "design/spec.md",
+   "line": 16414,
+   "kind": "mech",
+   "claim": "UnitDelay samples the signal on the discrete tier",
+   "evidence": "src/library.jl:377-387"
+  },
+  {
+   "id": "SD1-196",
+   "file": "design/spec.md",
+   "line": 16415,
+   "kind": "law",
+   "claim": "an artificial loop is port-level acyclic but stage-level cyclic",
+   "evidence": "src/tracer.jl:340-374"
+  },
+  {
+   "id": "SD1-197",
+   "file": "design/spec.md",
+   "line": 16418,
+   "kind": "mech",
+   "claim": "execution order is the order the stage functions run",
+   "evidence": "src/build.jl:216-232"
+  },
+  {
+   "id": "SD1-198",
+   "file": "design/spec.md",
+   "line": 16418,
+   "kind": "law",
+   "claim": "it is fixed once at build time",
+   "evidence": "src/build.jl:228-237"
+  },
+  {
+   "id": "SD1-199",
+   "file": "design/spec.md",
+   "line": 16419,
+   "kind": "mech",
+   "claim": "it comes from wiring edges plus intra-component feedthrough",
+   "evidence": "src/build.jl:207-218"
+  },
+  {
+   "id": "SD1-200",
+   "file": "design/spec.md",
+   "line": 16420,
+   "kind": "law",
+   "claim": "stage 1 runs in any order, then stage 2 topologically, then x_deriv",
+   "evidence": "src/model.jl:619-620; src/build.jl:1625-1628"
+  },
+  {
+   "id": "SD1-201",
+   "file": "design/spec.md",
+   "line": 16422,
+   "kind": "mech",
+   "claim": "Outputs carries the execution order",
+   "evidence": "src/build.jl:616-619"
+  },
+  {
+   "id": "SD1-202",
+   "file": "design/spec.md",
+   "line": 16423,
+   "kind": "mech",
+   "claim": "the loop runs it as a flat list of (component, stage) entries",
+   "evidence": "src/executor.jl:55-90"
+  },
+  {
+   "id": "SD1-203",
+   "file": "design/spec.md",
+   "line": 16425,
+   "kind": "decl",
+   "claim": "flow is x_deriv",
+   "evidence": "src/declare.jl:715"
+  },
+  {
+   "id": "SD1-204",
+   "file": "design/spec.md",
+   "line": 16426,
+   "kind": "mech",
+   "claim": "evaluating the RHS runs the whole sweep",
+   "evidence": "src/model.jl:614-632"
+  },
+  {
+   "id": "SD1-205",
+   "file": "design/spec.md",
+   "line": 16428,
+   "kind": "law",
+   "claim": "there is no incremental x_deriv-only re-evaluation",
+   "evidence": "src/model.jl:625-632"
+  },
+  {
+   "id": "SD1-206",
+   "file": "design/spec.md",
+   "line": 16428,
+   "kind": "mech",
+   "claim": "a first evaluation over a fresh table runs x_deriv alone",
+   "evidence": "src/model.jl:625-632"
+  },
+  {
+   "id": "SD1-207",
+   "file": "design/spec.md",
+   "line": 16432,
+   "kind": "mech",
+   "claim": "a frame is one iteration of the loop, one period of Dt_frame",
+   "evidence": "src/frame.jl:29-31"
+  },
+  {
+   "id": "SD1-208",
+   "file": "design/spec.md",
+   "line": 16432,
+   "kind": "mech",
+   "claim": "it is the drain, then the integration steps that fill the period",
+   "evidence": "src/frame.jl:43-50,91"
+  },
+  {
+   "id": "SD1-209",
+   "file": "design/spec.md",
+   "line": 16433,
+   "kind": "mech",
+   "claim": "each step ends in a boundary sequence and its publication",
+   "evidence": "src/frame.jl:57-62; src/sim.jl:2021"
+  },
+  {
+   "id": "SD1-210",
+   "file": "design/spec.md",
+   "line": 16435,
+   "kind": "law",
+   "claim": "the frame is the unit step! counts",
+   "evidence": "src/sim.jl:2167"
+  },
+  {
+   "id": "SD1-211",
+   "file": "design/spec.md",
+   "line": 16435,
+   "kind": "law",
+   "claim": "the frame is the trace ordinal key",
+   "evidence": "src/trace.jl:18-20"
+  },
+  {
+   "id": "SD1-212",
+   "file": "design/spec.md",
+   "line": 16436,
+   "kind": "law",
+   "claim": "the drain runs at the frame top",
+   "evidence": "src/trace.jl:19-20; src/frame.jl:43-44"
+  },
+  {
+   "id": "SD1-213",
+   "file": "design/spec.md",
+   "line": 16437,
+   "kind": "law",
+   "claim": "a frame is distinct from a boundary",
+   "evidence": "src/frame.jl:14-16"
+  },
+  {
+   "id": "SD1-214",
+   "file": "design/spec.md",
+   "line": 16445,
+   "kind": "law",
+   "claim": "y_direct receives the own stage-1 ports as y_x, or y_s on the discrete tier",
+   "evidence": "src/declare.jl:866; probe:148"
+  },
+  {
+   "id": "SD1-215",
+   "file": "design/spec.md",
+   "line": 16450,
+   "kind": "mech",
+   "claim": "a hop runs from the face one wire enters to the port the next wire leaves",
+   "evidence": "src/tracer.jl:302-316"
+  },
+  {
+   "id": "SD1-216",
+   "file": "design/spec.md",
+   "line": 16451,
+   "kind": "law",
+   "claim": "a hop holds iff the member stage-2 function routes the face to the port",
+   "evidence": "src/tracer.jl:337-347"
+  },
+  {
+   "id": "SD1-217",
+   "file": "design/spec.md",
+   "line": 16452,
+   "kind": "law",
+   "claim": "a loop is artificial iff every cycle crosses a dead hop",
+   "evidence": "src/tracer.jl:357-374"
+  },
+  {
+   "id": "SD1-218",
+   "file": "design/spec.md",
+   "line": 16456,
+   "kind": "decl",
+   "claim": "projection is the optional hook x <- x_projection(x)",
+   "evidence": "src/declare.jl:581-599"
+  },
+  {
+   "id": "SD1-219",
+   "file": "design/spec.md",
+   "line": 16456,
+   "kind": "law",
+   "claim": "it runs after integration and after a handler x-reset",
+   "evidence": "src/model.jl:653-654; src/executor.jl:402-407"
+  },
+  {
+   "id": "SD1-220",
+   "file": "design/spec.md",
+   "line": 16461,
+   "kind": "mech",
+   "claim": "a sweep is one pass in two variants compiled from one list",
+   "evidence": "src/executor.jl:548-560"
+  },
+  {
+   "id": "SD1-221",
+   "file": "design/spec.md",
+   "line": 16462,
+   "kind": "mech",
+   "claim": "the interior sweep, run by RK stages and trial evaluations, walks continuous entries only",
+   "evidence": "src/executor.jl:548-552"
+  },
+  {
+   "id": "SD1-222",
+   "file": "design/spec.md",
+   "line": 16463,
+   "kind": "mech",
+   "claim": "the boundary sweep walks the full list and gates in due discrete entries",
+   "evidence": "src/executor.jl:481-483,557-559"
+  },
+  {
+   "id": "SD1-223",
+   "file": "design/spec.md",
+   "line": 16464,
+   "kind": "law",
+   "claim": "the arrival sweep closes a step before the boundary sweep refreshes discrete cells",
+   "evidence": "src/frame.jl:212-216"
+  }
+ ],
+ "counts": {
+  "law": 117,
+  "decl": 26,
+  "mech": 78,
+  "ex": 3,
+  "ptr": 10,
+  "why": 18
+ }
+}

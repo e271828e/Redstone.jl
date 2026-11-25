@@ -1,0 +1,194 @@
+{
+ "judgments": [
+  {
+   "id": "SD3-001",
+   "conforms": true,
+   "evidence": "src/devices.jl:387-403 (report! docstring: 'catch, stage nothing, report, continue'; MalformedDatum the one kind); src/devices.jl:667 (any other throw becomes DeviceCrash); probe.jl:45 prints malformed total 1"
+  },
+  {
+   "id": "SD3-012",
+   "conforms": true,
+   "evidence": "src/roster.jl:93 is_input(::AbstractBinding) = false; src/roster.jl:112 is_output(::AbstractBinding) = false; probe.jl:8 prints (false, false)"
+  },
+  {
+   "id": "SD3-021",
+   "conforms": true,
+   "evidence": "src/sim.jl:1652 and 1469 (the loop runs on the calling task, devices spawned by _spawn!, src/devices.jl:682); run! and replay! both enter _run_body!"
+  },
+  {
+   "id": "SD3-031",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:457-473 (_merge newest-wins per face, stage_batch! CAS loop over one StagingCell per writer)"
+  },
+  {
+   "id": "SD3-040",
+   "conforms": true,
+   "evidence": "src/sim.jl:2100 (the pause block wait_resume! parks at frame top before run_frame!, so frame_top!/drain! never runs while paused)"
+  },
+  {
+   "id": "SD3-050",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:105-108 (DiagBatch ring plus suppressed::KindCounts), src/dataplane.jl:132-135 (DiagCell holds the batch and the heartbeat)"
+  },
+  {
+   "id": "SD3-059",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:496-502 (_drain! is atomicswap then _apply!, no checks); src/sim.jl:2656-2681 drain!; every check sits in _normalize at staging, src/dataplane.jl:421-450"
+  },
+  {
+   "id": "SD3-068",
+   "conforms": true,
+   "evidence": "src/roster.jl:358 (is_greedy(b) returns the unclaimed faces at attach without calling claims); src/roster.jl:201-219 refuses a greedy binding that defines claims"
+  },
+  {
+   "id": "SD3-071",
+   "conforms": false,
+   "evidence": "No standard GUI binding exists: rg 'is_greedy\\(::' finds only test bindings (test/fixtures.jl:1727 Greedy, test/test_roster.jl:16,20); no GUI device in src/ or in RedstoneInspector.jl/src",
+   "class": "gap",
+   "fix": "Keep the sentence as the design's intent, marked owed: \"and the standard GUI binding, owed with the inspector's cockpit, is to be its instance\".",
+   "clear": false,
+   "note": "design/pending.md:70 'The inspector, stages 2 to 4' owes the cockpit, panels over the bridge, and the GUI package's half of D-270's convention."
+  },
+  {
+   "id": "SD3-078",
+   "conforms": true,
+   "evidence": "src/sim.jl:2620-2626 stage!(sim, ...) through plane.harness with plane.harness_diag; src/roster.jl:390-410 reclaim! recomputes the complement at attach!/detach! (src/sim.jl:2540, 2582); src/dataplane.jl:434 ClaimedFaceEntry on a claimed face"
+  },
+  {
+   "id": "SD3-089",
+   "conforms": true,
+   "evidence": "src/readers.jl:286 (get_face documented as the integration read over exported output faces); get_output/get_input are the deep-path selectors beside it (readers.jl:291)"
+  },
+  {
+   "id": "SD3-100",
+   "conforms": false,
+   "evidence": "src/devices.jl:439 waits while `counter <= last_seen && !stopped`, so it returns when `counter > last_seen || stopped`; probe.jl:25 returns at once with stopped set and no new boundary. The doc's `counter > last_seen && running` as the predicate would never release at a stop.",
+   "class": "deviation",
+   "fix": "plus one `Threads.Condition` under the canonical predicate loop (`counter > last_seen || !running`).",
+   "clear": true,
+   "backing_entry": "D-028 (states the same literal predicate `counter > last_seen && running`, while its own text says shutdown routes the waiter out through the predicate); §12.3 at spec.md:9947 carries the same wording"
+  },
+  {
+   "id": "SD3-109",
+   "conforms": true,
+   "evidence": "src/devices.jl:650-674 (_wrap reports DeviceCrash and touches neither roster nor claims); probe.jl:55 after a crash the roster holds 2 entries and claimedby still maps :a to the crashed device, run ended EndTimeReached at t_end"
+  },
+  {
+   "id": "SD3-111",
+   "conforms": false,
+   "evidence": "No GUI renders anything in this repo or in RedstoneInspector.jl/src; the framework half exists: src/devices.jl:590-611 incumbent_status and orphaned",
+   "class": "gap",
+   "fix": "\"and the GUI is to render the fact in the widget's source label, read through `incumbent_status` and `orphaned`\"",
+   "clear": false,
+   "note": "Owed by design/pending.md:70 'The inspector, stages 2 to 4' (the cockpit)."
+  },
+  {
+   "id": "SD3-118",
+   "conforms": true,
+   "evidence": "src/sim.jl:1645 append!(roster, plane.roster) copies the roster once at the freeze; attach!/detach! are refused while running (src/sim.jl:2508 assert_configurable); RosterEntry is an immutable struct, src/roster.jl:254",
+   "note": "The plane's own roster is a Vector rewritten at stopped-sim roster changes; the loop's copy is never written during the run, which is what 'plain immutable value' asks."
+  },
+  {
+   "id": "SD3-122",
+   "conforms": true,
+   "evidence": "src/sim.jl:228-235 Run with const log and trace, writable feed, termination, frame, boundary; probe.jl:10 prints [:log, :trace]"
+  },
+  {
+   "id": "SD3-132",
+   "conforms": true,
+   "evidence": "src/devices.jl:671 finally entry.should_abort && stop!(...) on return or crash; src/sim.jl:1850 on a failed init!; probe.jl:62 a returning Pad under should_abort ends the run ControlRequestedStop(\"device 1 (Pad)\")"
+  },
+  {
+   "id": "SD3-143",
+   "conforms": false,
+   "evidence": "No GUI widgets exist in src/ or RedstoneInspector.jl/src; rg 'widget' finds only docstrings at src/devices.jl:55,559; only peek (src/devices.jl:569) is the framework half",
+   "class": "gap",
+   "fix": "State the contract as the GUI package's, owed: \"the GUI staging contract the cockpit is to follow. Value widgets stage the new level on edit, and edge widgets on activation, as a level computed from the peek.\"",
+   "clear": false,
+   "note": "design/pending.md:70 'The inspector, stages 2 to 4' owes the cockpit and the GUI package's half of D-270's convention."
+  },
+  {
+   "id": "SD3-144",
+   "conforms": false,
+   "evidence": "No GUI widgets exist in src/ or RedstoneInspector.jl/src; nothing in the code stages per render pass or handles held buttons",
+   "class": "gap",
+   "fix": "Keep as the owed GUI package's contract: \"Held buttons are not to re-stage, and no widget stages per render pass.\"",
+   "clear": false,
+   "note": "Owed by design/pending.md:70 'The inspector, stages 2 to 4'."
+  },
+  {
+   "id": "SD3-145",
+   "conforms": true,
+   "evidence": "src/sim.jl:141-144 immutable struct StopPolicy(t_end, ignored); src/sim.jl:474-478 _bind_policy, called per call by replay! (1386), run! (1566), step! (2252); probe.jl:13 ismutabletype false"
+  },
+  {
+   "id": "SD3-155",
+   "conforms": true,
+   "evidence": "src/sim.jl:1895-1935 _tail! calls unblock! (1900) then joins under join_timeout; shutdown! runs in each wrapper's finally, src/devices.jl:670, as step (4) of §12.4 says",
+   "note": "The glossary's 'calls unblock! and shutdown!' names the sequence; the tail calls unblock! itself and shutdown! runs from the wrapper it joins."
+  },
+  {
+   "id": "SD3-164",
+   "conforms": true,
+   "evidence": "src/roster.jl:390-410 reclaim! is the one recompute, reached only from attach!/detach! (src/sim.jl:2540, 2582), both refused while running (src/sim.jl:2508)"
+  },
+  {
+   "id": "SD3-166",
+   "conforms": false,
+   "evidence": "src/dataplane.jl:429-437: a harness entry naming no root input is reported as OutOfClaimEntry, not ClaimedFaceEntry; probe.jl:37 prints [ClaimedFaceEntry, OutOfClaimEntry] for stage!(sim, \"a\") on a claimed face and stage!(sim, \"flaps\")",
+   "class": "deviation",
+   "fix": "It is static per run and enforced entirely at staging, `OutOfClaimEntry` for a device, and for the harness `ClaimedFaceEntry` on a claimed face and `OutOfClaimEntry` on a name that is no root input ([§11.3][s11-3]).",
+   "clear": false,
+   "note": "The branch dates from aa4cd380 (increment 10); no log entry records it. Appendix C's OutOfClaimEntry row (spec.md:11383) and §11.3 also describe only the device case, so the fix reaches them."
+  },
+  {
+   "id": "SD3-174",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:673 keep-every-stride retention, src/dataplane.jl:690 stride doubles at log_max; SnapshotLog built from log_every, src/dataplane.jl:651-655"
+  },
+  {
+   "id": "SD3-181",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:18-27 Fingerprint also holds component paths and each component's s and m store types (stypes, mtypes), and src/model.jl:1212-1240 compares them as CheckpointMismatch; probe.jl:15 prints the eight fields",
+   "class": "deviation",
+   "fix": "It is the store layout and root-input faces the `Build` fixes, with what a copy by position relies on, each component's `x`, `s` and `m` types, every cell's address and type, and the event list in the order of the priors.",
+   "clear": true,
+   "note": "§11.5 at spec.md:8851-8854 carries the same list and needs the same edit. stypes/mtypes date from eb863b3f; no log entry names them."
+  },
+  {
+   "id": "SD3-184",
+   "conforms": true,
+   "evidence": "src/sim.jl:1198 _compile_feed calls _check_checkpoint! on trc.header.state against sim.model before any write; src/model.jl:1212"
+  },
+  {
+   "id": "SD3-194",
+   "conforms": true,
+   "evidence": "src/sim.jl:1443-1451 live! sets run.feed = nothing; probe.jl:76-78 mode :replay after a partial replay, :live after live!"
+  },
+  {
+   "id": "SD3-203",
+   "conforms": true,
+   "evidence": "src/sim.jl:2724 _replay_drain! applies the records whose frame equals the run's frame index; src/sim.jl:2668 the drain branches to it when a feed is attached"
+  },
+  {
+   "id": "SD3-211",
+   "conforms": false,
+   "evidence": "src/deployment.jl:539-553 Deployment also carries h_min (544) and attempt_budget (549); probe.jl:16 prints them",
+   "class": "drift",
+   "fix": "the trace header's `Deployment` and `t₀`, hence `Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm, `localization_tol`, `localization_budget`, `firing_budget` and `attempt_budget`.",
+   "clear": true,
+   "note": "Recorded by D-460 and commit 4367fa55 (h_min and the attempt budget on the Deployment); §11.5 at spec.md:8848-8851 already lists both."
+  },
+  {
+   "id": "SD3-213",
+   "conforms": true,
+   "evidence": "src/trace.jl:79-84 Trace(header, schemas, batches, frames), TraceBatch tagged by writer index (trace.jl:22-26); probe.jl:72-73 schemas [\"harness\" => [:a,:b]] and one record per drained batch per frame"
+  },
+  {
+   "id": "SD3-223",
+   "conforms": true,
+   "evidence": "src/trace.jl:121-134 _record! converts the masked entries to position => value pairs at the drain, one format for every writer; called from _drain!, src/dataplane.jl:501; probe.jl:73"
+  }
+ ],
+ "notes": "I verified all 31 claims against the worktree at 62551b06 and probed the behavioural ones in one script, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/SD3_v/probe.jl, run once. I changed no tracked file. 23 claims conform and 8 do not.\n\nThe 8 that do not:\n- **Four gaps (SD3-071, 111, 143, 144):** the GUI side (the standard greedy GUI binding, the orphan source label, the widget staging rules) does not exist in either repo. design/pending.md:70 ('The inspector, stages 2 to 4') still owes it.\n- **SD3-100 (deviation):** the code's wait predicate is `counter > last_seen || !running`, not the doc's `&&` form. D-028 and §12.3 carry the same wrong wording.\n- **SD3-166 (deviation):** a harness write to a name that is no root input gets OutOfClaimEntry, which the doc leaves out. No log entry records it.\n- **SD3-181 (deviation):** the fingerprint also holds the s and m store types and the component paths.\n- **SD3-211 (drift):** run metadata leaves out h_min and attempt_budget, both added to Deployment by D-460 and commit 4367fa55.\n\nSD3-118 and SD3-155 conform, but their notes explain the reading I took."
+}
