@@ -27,8 +27,8 @@ item changes what the spec says, the spec edit is part of the item.
   `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
   brief is `00_brief.md` beside it, and the rows that wait on the user are
   in its `ledgers/user_rows.md`. Left, in order:
-  - The six rows for the user, each with a recommendation in the notes and
-    a probe or a ledger row behind it: S9b-300 with CV9a-049; S6c-001 and
+  - The six rows for the user, discussed from scratch, what was found on
+    each in the notes: S9b-300 with CV9a-049; S6c-001 and
     S6c-004 with K9b-041; S10d-054; S13c-031; S12b-236; and CV2-023, whose
     row carries a caution.
   - A ruling on the four SD3 rows, whether the glossary marks the GUI

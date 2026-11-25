@@ -142,25 +142,25 @@ the tools.
   commit each. `ledgers/user_rows.md` marks each.
 - **Next: the six rows left for discussion.** Four have their probe in
   `probes/user_rows/`. S13c-031's is the audit's own, in its ledger row, and
-  S12b-236 was read and never reproduced.
+  S12b-236 was read and never reproduced. The rows carry no recommendation, at
+  the user's request of 2026-11-25, so the discussion starts fresh. The bullets
+  hold what was found.
   - S9b-300, with CV9a-049. A `Model` at a `Dual` keeps a frozen cell at the
     probe's value after `init!`, with no diagnostic. The lag's `ẋ` read 0 where
-    the nominal model's read 2. Recommended: `init!` runs a nominal round and
-    copies the frozen cells, as D-205 and D-213 rule for the published world and
-    the services.
+    the nominal model's read 2. The rulings nearby are D-205, D-213 and D-317.
   - S6c-001 and S6c-004, with K9b-041. `BigFloat` is immutable on 1.13, so the
     `Real` exemption covers `BigInt` and a user's mutable `Real` alone, and the
-    latter changes under a reader. Recommended: test mutability before `Real`,
-    and write "a mutable type the walk meets" in §4.3.
+    latter changes under a reader.
   - S10d-054. `sleep` overshoots by 1.4 ms at a 2 ms request and by 2.1 ms from
     10 ms up, so the 2 ms margin rarely reaches the spin. The wait's 95th
-    percentile lands 879 µs late at 2 ms and 1.5 µs at 3 ms. Recommended: 3 ms,
-    or 4 ms against load, with an entry amending D-133.
-  - S13c-031. Recommended, with less certainty: each `unblock!` on its own task
-    within the deadline.
-  - S12b-236. Recommended: the row's second text, in the doc.
-  - CV2-023. The fix is sound by the argument that an empty set loses nothing,
-    but a test pins the refusal.
+    percentile lands 879 µs late at 2 ms and 1.5 µs at 3 ms, on a 20 ms budget
+    and a lightly loaded machine, at 0.6% and 5.4% of a core. D-133 rules the
+    default.
+  - S13c-031. An `unblock!` that sleeps 3 s holds `run!` for 3 s under a 0.5 s
+    `join_timeout`. §12.4 and §13.6 are the text.
+  - S12b-236. The ledger row holds the reading. The 1.14 item of `pending.md`
+    replaces the mechanism.
+  - CV2-023. A test pins the refusal. The row carries a caution.
 
   The small sweep and the log clustering follow.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the

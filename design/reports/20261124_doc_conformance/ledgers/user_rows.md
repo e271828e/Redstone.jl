@@ -21,7 +21,7 @@ the verifier's probe.
   `8b8ab49f`. `discard_reports` in test_trace.jl stays, since a discard past the
   final frame top reaches only the log.
 - **S13c-031, defect.** A hanging `unblock!` is not bounded by the join
-  timeout. Recommended: run each `unblock!` on its own task within the deadline.
+  timeout.
 - **S13d-133, defect.** The descriptor writes no `function` for
   `BundleFieldError`. Recommended: add the `_function` method and a test, after
   checking the schema allows it. Settled, `dc884b91`.
@@ -52,15 +52,15 @@ the verifier's probe.
   Settled, `fddc0c70`.
 - **CV2-023, defect.** The global tracer's `Float64` conversion throws
   `Undecidable` on any tracer, though the docstring says only on a tagged
-  operand. Recommended: decide through `_decide`, as `Int` and `Bool` do. Held:
-  a test of test_build.jl, from `a5ecf7f5`, pins the refusal on an untagged
-  operand, since the value would leave the trace, and no entry backs either
-  side. Caution: do not take this row as a clear fix. The session of 2026-11-25
-  did, and found the test only when it failed. The case for the fix is an
-  argument, that an empty set has nothing to lose, and no probe has tried to
-  break it. The probe in `probes/user_rows/` shows only what the refusal costs,
-  a member traced at sampled states. Before reversing the test, look for a value
-  that reaches the conversion untagged and still depends on an in-cycle input.
+  operand. `Int` and `Bool` accept an untagged one. Held: a test of
+  test_build.jl, from `a5ecf7f5`, pins the refusal on an untagged operand, since
+  the value would leave the trace, and no entry backs either side. Caution: do
+  not take this row as a clear fix. The session of 2026-11-25 did, and found the
+  test only when it failed. The case for accepting an untagged operand, that an
+  empty set has nothing to lose, is an argument no probe has tried to break. The
+  probe in `probes/user_rows/` shows only what the refusal costs, a member
+  traced at sampled states. Before reversing the test, look for a value that
+  reaches the conversion untagged and still depends on an in-cycle input.
 - **CV2-026, held.** A D-166 citation in tracer.jl, left to the CIT-D166
   finding.
 - **CV2-030, unmarked rule.** The fixer added §13.8's 64-face limit on
@@ -118,8 +118,7 @@ the verifier's probe.
   measurements. Settled, `479ceea1`.
 - **S9b-300, defect.** §9.3 says everything the probe writes is garbage
   after the build, but `init!` of a model at a non-nominal scalar leans on
-  it. Proposed: establish the frozen discrete cells from a nominal round, as
-  the services' seeded half does. CV9a-049 waits on it.
+  it. CV9a-049 waits on it.
 - **S9d, a thin inventory.** Its mid-tier inventory missed 3 of 9 sampled
   rows. A high-tier re-inventory of §9.7 and §9.8 is in G4b's args as S9d2.
   Settled: S9d2 ran with G4b and missed none of its 10 sampled rows.
@@ -143,8 +142,7 @@ the verifier's probe.
   Settled, `a991af00`.
 - **S10d-054, defect.** §10.7 says `margin = 2 ms` sleeps about 90% of a
   20 ms budget and lands within µs of the deadline. The coarse phase now
-  overshoots more. Proposed: recalibrate the default to about 3 ms, after a
-  measurement on the dev machine.
+  overshoots more.
 - **CV10-221, wording.** The `ExecutionCursor` docstring's account of when
   the cursor is written and read misses one store. Settled, `a991af00`.
 - **CV10-263, wording.** A named discrete store whose `s_update` returns the
@@ -210,8 +208,7 @@ the verifier's probe.
   `a991af00`.
 - **S12b-236, defect.** §12.4 says a forced interrupt outside a frame is a
   stop like a deferred one. A raw interrupt in `_run_body!`'s or `step!`'s
-  masked bookkeeping can cut it short. Proposed: make that bookkeeping
-  resumable, rerunning its remaining steps before the raise propagates.
+  masked bookkeeping can cut it short.
 - **K11-001, gap.** The flat state vector's uses are owed by `pending.md`;
   no action.
 - **CV11a-004, wording.** `KindCounts` is named only as "the per-kind
@@ -226,8 +223,7 @@ the verifier's probe.
   D-141 backs the doc's text. Settled, `a991af00`.
 - **S6c-001 and S6c-004, code or doc.** §4.3 and D-237 refuse a mutable type
   anywhere in a port value. The leaf walk exempts a mutable `Real` such as
-  `BigFloat`, and never enters an opaque leaf. Either the code drops the
-  `Real` exemption, or §4.3 names both exemptions. K9b-041 waits on it: the
+  `BigFloat`, and never enters an opaque leaf. K9b-041 waits on it: the
   handle-walk companion and §8.2 say the mutable-parameter rule refuses a
   `Matrix{Dual}` grid copy, and the probe built one without error.
 - **K6c-064, K6c-072 to K6c-074, K6d-115, K6d-118, K6d-119, measured
