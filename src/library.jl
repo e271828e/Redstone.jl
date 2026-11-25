@@ -465,7 +465,7 @@ const STATIC_WARN_LENGTH = 512
 function as_static(v::AbstractArray)
     length(v) > STATIC_WARN_LENGTH && @warn "an array keyword of $(length(v)) elements becomes an " *
         "`SArray`, which compiles slowly past $STATIC_WARN_LENGTH and runs no faster than a plain array " *
-        "(§7.1)" maxlog = 1
+        "(§8.2)" maxlog = 1
     SArray{Tuple{size(v)...}}(v)
 end
 as_static(v) = v
