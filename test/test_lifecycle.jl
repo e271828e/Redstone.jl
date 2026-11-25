@@ -497,6 +497,29 @@ function test_lifecycle()
         @test sim.run.frame == 0             # zero frames: the check precedes the first step
     end
 
+    @testset "a request outranks a `t_end` or a control stop met at its boundary (§13.5, D-268)" begin
+        sim = Simulation(monitored(); Δt_frame = 1//10)
+        init!(sim)
+        run!(sim; t_end = 0.4)                           # the request first holds at 0.4
+        @test termination(sim).source === ModelRequestedStop("stop", :y, "ramp at level")
+        sim = Simulation(monitored(); Δt_frame = 1//10)
+        init!(sim)
+        run!(sim; t_end = 0.4, ignore_stop_requests = :all)
+        @test termination(sim).source === EndTimeReached()
+
+        # An advance's entry reads the snapshot before the frame top reads the stop word.
+        sim = Simulation(armed(); Δt_frame = 1//10)
+        init!(sim, set(u = (in = 1.0,)))
+        stop!(sim)
+        step!(sim)
+        @test termination(sim).source === ModelRequestedStop("stop", :y, "input at level")
+        sim = Simulation(armed(); Δt_frame = 1//10)
+        init!(sim, set(u = (in = 1.0,)))
+        stop!(sim)
+        step!(sim; ignore_stop_requests = :all)
+        @test termination(sim).source === ControlRequestedStop(:code)
+    end
+
     @testset "a localized stop ends the run at t*, the crossing state final (§13.5, §10.4)" begin
         sim = Simulation(overloaded(); Δt_frame = 1//10)
         init!(sim)
