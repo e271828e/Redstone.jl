@@ -140,8 +140,9 @@ the tools.
 - **The defect and citation rows, taken on 2026-11-25.** The clear ones landed,
   the doc rows as `608662ac` and the code rows as `d6636cb0` to `8b8ab49f`, one
   commit each. `ledgers/user_rows.md` marks each.
-- **Next: the six rows left for discussion**, each with its probe in
-  `probes/user_rows/`.
+- **Next: the six rows left for discussion.** Four have their probe in
+  `probes/user_rows/`. S13c-031's is the audit's own, in its ledger row, and
+  S12b-236 was read and never reproduced.
   - S9b-300, with CV9a-049. A `Model` at a `Dual` keeps a frozen cell at the
     probe's value after `init!`, with no diagnostic. The lag's `ẋ` read 0 where
     the nominal model's read 2. Recommended: `init!` runs a nominal round and
