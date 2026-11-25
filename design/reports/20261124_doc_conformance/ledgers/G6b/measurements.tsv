@@ -1,0 +1,6 @@
+slice	counted	listed	flagged	ok	sampled	confirmed	overturned	missed	rerun	unjudged
+K6a	121	86	3	83	9	2	1	1		0
+K6b	201	141	6	135	13	6	0	0		0
+K6c	166	115	11	104	11	7	4	0		0
+K6d	214	136	9	127	13	4	5	1		0
+S6f	166	115	2	113	12	2	0	0		0

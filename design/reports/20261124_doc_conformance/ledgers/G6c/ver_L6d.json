@@ -1,0 +1,359 @@
+{
+ "judgments": [
+  {
+   "id": "L6d-001",
+   "conforms": true,
+   "evidence": "src/library.jl:60 (SumJunction, the Junction at +, an ordinary component); probe 'fan-in' line: two wires into k/a refused as TwoProducers, so nothing sums implicitly"
+  },
+  {
+   "id": "L6d-007",
+   "conforms": false,
+   "evidence": "src/assembly.jl:543 and :594 define input_passthrough/output_passthrough(assembly, child_path; sep, prefix, except, only, select); probe: isdefined(Redstone, :faces) = false",
+   "class": "drift",
+   "fix": "Computed exports as ordinary code + `input_passthrough(asm, path; prefix, sep, except, only, select)` and its sibling `output_passthrough`",
+   "clear": false,
+   "note": "Renamed faces -> passthrough by D-144, split into input_/output_passthrough with `select` by D-251 (annotation at log.md:2126). Fix not unique: two helpers and a grown keyword set."
+  },
+  {
+   "id": "L6d-011",
+   "conforms": true,
+   "evidence": "src/declare.jl:932-936: Real -> zero(T), Bool -> false, Enum -> first(instances), StaticArray -> zero(P), fallback P(); probe line 'probe_value chain' prints 0.0 false PRED [0.0,0.0] PMade(7)"
+  },
+  {
+   "id": "L6d-015",
+   "conforms": false,
+   "evidence": "src/conditions.jl:32 Fragment, :53 Scoped, :71 Combined, :91 Override, :106 ConditionNode = Union{Fragment,Scoped,Combined,Override}; probe isdefined(Redstone, :Merged) = false",
+   "class": "drift",
+   "fix": "Fragments form a lazy inert tree (`Fragment`/`Scoped`/`Combined`, with `Override` as the layering node)",
+   "clear": false,
+   "note": "D-204 renamed merge/Merged to combine/Combined and says the log keeps its day's vocabulary for D-065, so the fix may be an annotation instead of an edit; Override (§14.6) is a fourth node."
+  },
+  {
+   "id": "L6d-017",
+   "conforms": false,
+   "evidence": "src/conditions.jl:207-209 (at stores a Scoped), :245 combine(nodes...) = Combined(nodes); Base.merge is not extended (comment at conditions.jl:220-224)",
+   "class": "drift",
+   "fix": "`at`/`combine` store, never apply",
+   "clear": true,
+   "note": "D-204 rename; `override` also stores."
+  },
+  {
+   "id": "L6d-022",
+   "conforms": true,
+   "evidence": "src/conditions.jl:622-640 (_root_input walks the export chain, :internally_wired otherwise); probe: at(\"k\", set(u=(a=3.0,))) on an internally wired face is ConditionResolution 'unexported stays unpokeable', on an exported face it sets root input ext = 3.0"
+  },
+  {
+   "id": "L6d-024",
+   "conforms": false,
+   "evidence": "src/conditions.jl:207 (at accepts any non-empty prefix); rg past_generic src finds nothing; probe 'deep at' resolves at(\"inner/t\", ...)",
+   "class": "drift",
+   "fix": "locality law = §6.1's, third instance (own fields, declared children, own faces), followed as unchecked authoring guidance; a deep `at` resolves wherever the structure has it",
+   "clear": true,
+   "note": "D-414 retired the past-generic refusal; spec §14.2 (spec.md:13063-13066) states it."
+  },
+  {
+   "id": "L6d-027",
+   "conforms": false,
+   "evidence": "src/declare.jl:223 y_types(::Any) = NamedTuple(); declare.jl:216-219 an undeclared returned port is UndeclaredReturnField; probe isdefined(Redstone, :output_types) = false",
+   "class": "drift",
+   "fix": "under mandatory `y_types` models carry many observation-oriented ports no wire consumes",
+   "clear": true,
+   "note": "D-267 renamed output_types to y_types."
+  },
+  {
+   "id": "L6d-033",
+   "conforms": false,
+   "evidence": "src/declare.jl:342-343 'The container still has no wires, faces or rate of its own'; probe isdefined(Redstone, :child_connections/:input_connections/:output_connections) = false",
+   "class": "drift",
+   "fix": "containers are transparent grouping — no contract, no wires, no rate scope",
+   "clear": true,
+   "note": "The substance holds; the name `connections` was split by D-170 and renamed by D-279, D-303 and D-314."
+  },
+  {
+   "id": "L6d-034",
+   "conforms": true,
+   "evidence": "src/declare.jl:342-343 (no rate of its own); src/structure.jl:355-357 a container's bare field key in the parent's sample_times applies one entry to every element, under the parent's scope"
+  },
+  {
+   "id": "L6d-039",
+   "conforms": false,
+   "evidence": "src/library.jl:350 y_types(::Constant{V}) where {V} = Pinned{V}; probe y_types(Constant(1.0)) = Pinned{Float64}",
+   "class": "drift",
+   "fix": "`y_types(::Constant{V}) = Pinned{V}`, one bare pinned port with face `y`",
+   "clear": true,
+   "note": "D-267 (y_types), D-312 (Pinned), D-437 (library single-port blocks declare bare). The annotation at log.md:5504 still says (out = Pinned{V},)."
+  },
+  {
+   "id": "L6d-045",
+   "conforms": false,
+   "evidence": "src/library.jl:349-351 Constant is stateless and publishes from y_state; src/declare.jl stage names are y_state/y_direct (no h_xu); executor.jl:573 interior walks run every RHS evaluation",
+   "class": "drift",
+   "fix": "a stateless output stage (`y_direct`, or `y_state` for a source such as `Constant`) recomputes every sweep",
+   "clear": false,
+   "note": "h_xu -> output_direct (D-220) -> y_direct (D-267); the D-143 annotation names y_direct, but Constant's own stage is y_state, so the wording is open."
+  },
+  {
+   "id": "L6d-046",
+   "conforms": true,
+   "evidence": "src/library.jl:346 is the only constant source; no discrete Constant type in the library's struct list"
+  },
+  {
+   "id": "L6d-055",
+   "conforms": false,
+   "evidence": "src/executor.jl:595 the interior tuple keeps only entries with no gate; src/build.jl:1625 sweep_1 = body(stage1_entries, stage1_gates)",
+   "class": "drift",
+   "fix": "discrete `y_state` entries are as absent from the interior `sweep_1` walk",
+   "clear": true,
+   "note": "The behaviour holds. Names: h_z/h_x -> output_state (D-220) -> y_state (D-267); sweep_hx -> sweep_1 (D-196)."
+  },
+  {
+   "id": "L6d-056",
+   "conforms": false,
+   "evidence": "src/executor.jl:595; src/build.jl:1626 sweep_2 = body(stage2_entries, stage2_gates)",
+   "class": "drift",
+   "fix": "as discrete `y_direct` entries are from the interior `sweep_2` walk",
+   "clear": true,
+   "note": "The behaviour holds. h_zu/h_xu -> y_direct (D-220, D-267); sweep_hxu -> sweep_2 (D-196)."
+  },
+  {
+   "id": "L6d-057",
+   "conforms": false,
+   "evidence": "src/executor.jl:573 (body)() walks the interior tuple; src/build.jl:1625-1626; probe phase body names (:sweep_1, :sweep_2, :rhs, :ticks, :events, :projections)",
+   "class": "drift",
+   "fix": "zero-arg `sweep_1()`/`sweep_2()` are the interior variants",
+   "clear": true,
+   "note": "D-196, recorded in the D-147 annotation at log.md:5752-5754."
+  },
+  {
+   "id": "L6d-058",
+   "conforms": false,
+   "evidence": "test/test_discrete.jl:958-962 @ballocated($body()) == 0 over bodies[:sweep_2] etc.; src/executor.jl:573",
+   "class": "drift",
+   "fix": "which is what makes `@ballocated(sweep_2()) == 0` a well-defined measurement of the interior path",
+   "clear": true,
+   "note": "D-196 rename."
+  },
+  {
+   "id": "L6d-059",
+   "conforms": false,
+   "evidence": "src/executor.jl:574 (body)(tick) walks the boundary tuple; :513-519 the gate (tick - Φ) % D == 0",
+   "class": "drift",
+   "fix": "`sweep_1(tick)`/`sweep_2(tick)` are the boundary variants gating by modulo against the passed index",
+   "clear": true,
+   "note": "D-196 rename."
+  },
+  {
+   "id": "L6d-060",
+   "conforms": true,
+   "evidence": "src/model.jl:663 bodies.ticks(tick) and src/model.jl:707 sweep_1(tick)/sweep_2(tick): one-arg boundary calls on both"
+  },
+  {
+   "id": "L6d-064",
+   "conforms": false,
+   "evidence": "src/frame.jl:121-165 the due set is the gate's image of the base-tick index `due` from _next_due, and nothing at a frame top or step end where nothing is due; executor.jl:513-519",
+   "class": "drift",
+   "fix": "the due set is the gate's image of the base-tick index at a due instant, and empty at every other boundary, a frame top where nothing is due included",
+   "clear": true,
+   "note": "D-445 amends this, recorded in the D-147 annotation at log.md:5756-5758."
+  },
+  {
+   "id": "L6d-066",
+   "conforms": false,
+   "evidence": "src/model.jl:665 run_ticks!(::Establish) runs ticks(0), gated; src/executor.jl:525 Establish admits every output stage; probe: after init!, Φ=1 child p1 publishes n=0 but its state stays n=0 (update not run), Φ=0 child p0 updates to n=1",
+   "class": "drift",
+   "fix": "and at boundary zero every discrete output stage runs, due or not, while the updates keep the ordinary gate at index 0",
+   "clear": true,
+   "note": "Amended by D-185, D-205 and D-291, per the D-147 annotation at log.md:5751."
+  },
+  {
+   "id": "L6d-069",
+   "conforms": false,
+   "evidence": "src/build.jl:924 RootInputTypeConflict; src/diagnostics.jl:497; probe isdefined(Redstone, :RootSlotTypeConflict) = false",
+   "class": "drift",
+   "fix": "(`RootInputTypeConflict` unchanged — a tolerance difference is not a type conflict ...)",
+   "clear": true,
+   "note": "D-206 renamed the kind (log.md:8270)."
+  },
+  {
+   "id": "L6d-072",
+   "conforms": true,
+   "evidence": "src/build.jl:522-531 _root_input_cell: walked type iff every consumer entry accepts it, else the nominal type; src/build.jl:543-554 pinning_consumers"
+  },
+  {
+   "id": "L6d-079",
+   "conforms": false,
+   "evidence": "src/declare.jl:473-487 Absolute(Δt::Union{Integer,Rational}, τ = 0) held as Rational{Int}; probe isdefined(Redstone, :Period) = isdefined(Redstone, :Hz) = false",
+   "class": "drift",
+   "fix": "`Absolute(Δt, τ = 0)` in exact rational seconds (`Δt > 0`, `0 ≤ τ < Δt`, each an integer or a `Rational` held as `Rational{Int}`; float arguments throw a teaching error naming the exact spelling)",
+   "clear": true,
+   "note": "D-469 retired Period and Hz."
+  },
+  {
+   "id": "L6d-082",
+   "conforms": true,
+   "evidence": "src/declare.jl:498-499 docstring; src/structure.jl:354 `nothing` for the Relative(1) default; probe g91 children read on scope ticks"
+  },
+  {
+   "id": "L6d-091",
+   "conforms": true,
+   "evidence": "src/model.jl:665 ticks(0) at boundary zero; src/executor.jl:513-519 gate; probe: Φ=1 child's state stays n=0 after init!, Φ=0 child's advances to 1"
+  },
+  {
+   "id": "L6d-095",
+   "conforms": false,
+   "evidence": "src/declare.jl local_wires declaration; test/fixtures.jl:129 local_wires = (\"flow/y\" => \"scale/u\", ...); probe isdefined(Redstone, :child_connections) = false",
+   "class": "drift",
+   "fix": "`local_wires` wires sibling faces",
+   "clear": true,
+   "note": "child_connections -> inner_connections (D-279) -> inner_wires (D-303) -> local_wires (D-314)."
+  },
+  {
+   "id": "L6d-096",
+   "conforms": false,
+   "evidence": "src/declare.jl:295-308 input_wires: each input name is a face routed to an input of an immediate child; probe isdefined(Redstone, :input_connections) = false",
+   "class": "drift",
+   "fix": "`input_wires` routes each face to immediate children's faces",
+   "clear": true,
+   "note": "input_connections -> u_connections (D-279) -> input_wires (D-303)."
+  },
+  {
+   "id": "L6d-097",
+   "conforms": false,
+   "evidence": "src/declare.jl:311-328 output_wires: each output face exposes an output of an immediate child, source first",
+   "class": "drift",
+   "fix": "`output_wires` sources each face from an immediate child's face",
+   "clear": true,
+   "note": "output_connections -> y_connections (D-279) -> output_wires (D-303)."
+  },
+  {
+   "id": "L6d-103",
+   "conforms": true,
+   "evidence": "test/test_assembly.jl:76-80 build(Plant()) is a one-leaf model at path \"\"; probe build(PSink()).structure.root_inputs = [:a]"
+  },
+  {
+   "id": "L6d-105",
+   "conforms": false,
+   "evidence": "probe build(Group((; k = PSink()); input_wires = (\"ext\" => \"k/a\",))).structure.root_inputs = [:ext]; src/declare.jl:300",
+   "class": "drift",
+   "fix": "For an assembly they are its `input_wires` keys",
+   "clear": true,
+   "note": "D-279 and D-303 renames."
+  },
+  {
+   "id": "L6d-107",
+   "conforms": false,
+   "evidence": "test/test_assembly.jl:77-80 'its `u_types` keys the root inputs'; probe root_inputs = [:a] for u_types (a = Float64,)",
+   "class": "drift",
+   "fix": "for a primitive, its `u_types` keys directly",
+   "clear": true,
+   "note": "D-267 renamed input_types to u_types."
+  },
+  {
+   "id": "L6d-114",
+   "conforms": true,
+   "evidence": "src/tracer.jl:344-351 a traced hop is alive iff routes[port] has the face's bit; untraceable faces/ports and structural members keep every hop (tracer.jl:316-321), which D-245's Rationale states ('a structural map can never kill a hop')"
+  },
+  {
+   "id": "L6d-119",
+   "conforms": false,
+   "evidence": "src/library.jl:383 y_state(::UnitDelay, (; s)) = s; probe isdefined(Redstone, :output_state) = false",
+   "class": "drift",
+   "fix": "A component exposes a state or mode field by returning it from `y_state`.",
+   "clear": true,
+   "note": "D-267 renamed output_state to y_state."
+  },
+  {
+   "id": "L6d-124",
+   "conforms": false,
+   "evidence": "src/build.jl:616-619 struct Outputs with `order`, the execution order; probe isdefined(Redstone, :Dataflow) = false",
+   "class": "drift",
+   "fix": "carried by the `Outputs` artifact",
+   "clear": true,
+   "note": "D-261 renamed Dataflow to Outputs (log.md:11059, 11106)."
+  },
+  {
+   "id": "L6d-125",
+   "conforms": false,
+   "evidence": "src/build.jl:82-88 and 1195-1201 the NamedTuple check runs only when !is_bare(decl.outs); probe: named y_types returning 1.0 is ConformanceFailure, bare y_types returning 2.0 builds",
+   "class": "drift",
+   "fix": "A stage under a named `y_types` returning anything other than a `NamedTuple` fails at the probe; under a bare one it returns the port's value.",
+   "clear": true,
+   "note": "D-437 'the declared shape decides the law a return is held to'."
+  },
+  {
+   "id": "L6d-126",
+   "conforms": false,
+   "evidence": "src/build.jl:87 DeadStage only inside the !is_bare branch; probe: named y_types returning (;) is DeadStage, bare y_types returning (;) is ConformanceFailure 'returns `y`::@NamedTuple{}, declared Float64'",
+   "class": "drift",
+   "fix": "A stage under a named `y_types` returning bare `(;)` produces no ports and is `DeadStage`, fail-fast.",
+   "clear": true,
+   "note": "Holds for named contracts; D-437 narrows it."
+  },
+  {
+   "id": "L6d-130",
+   "conforms": false,
+   "evidence": "probe isdefined(Redstone, :stop_on) = false, StopFlag = true; src/declare.jl stop_reason docstring: a stop request is an output port of type StopFlag",
+   "class": "drift",
+   "fix": "A plausibility check meaning \"stop the run\" is a published `StopFlag` output port, a stop request that ends the run unless the advance ignores it.",
+   "clear": true,
+   "note": "D-316 retired stop_on and the Bool face."
+  },
+  {
+   "id": "L6d-136",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1109-1121 ConformanceFailure fields carry no branch"
+  },
+  {
+   "id": "L6d-145",
+   "conforms": true,
+   "evidence": "src/frame.jl:318 run_boundary!(model, nothing) at t*; src/model.jl:661 run_ticks!(::Model, ::Nothing) and :709 _round!(exec, ::Nothing) call the zero-arg sweeps"
+  },
+  {
+   "id": "L6d-147",
+   "conforms": true,
+   "evidence": "src/model.jl:512-525 phase_bodies returns the loop's own bodies; probe: ticks(0) in isolation moves state n 1 -> 2 with the clock still 0.0, and step! continues from it unrefused (no guard; continuing is guidance)"
+  },
+  {
+   "id": "L6d-155",
+   "conforms": true,
+   "evidence": "src/build.jl:1576-1601 event entries pushed in executor component order, then keys(policies) in declaration order; src/executor.jl:196"
+  },
+  {
+   "id": "L6d-164",
+   "conforms": true,
+   "evidence": "src/leaves.jl:241 struct Pinned{P} end; src/declare.jl:229-240 Pinned docstring"
+  },
+  {
+   "id": "L6d-173",
+   "conforms": true,
+   "evidence": "src/declare.jl:873 and :893 push :ws iff _declares_workspace; probe bundle_names: PWs (:ws, :t), PNoWs (:t,)"
+  },
+  {
+   "id": "L6d-182",
+   "conforms": true,
+   "evidence": "src/declare.jl:768 has_stage needs a positional (comp, bundle) method; src/declare.jl:984 calls fn(comp, bundle); probe: a y_state(c; kw...) stage is absent (has_stage false) and the build refuses DeclaredNotProduced"
+  },
+  {
+   "id": "L6d-185",
+   "conforms": true,
+   "evidence": "src/build.jl:1311-1326 _check_handler checks each return key against the declared stores {x, m}, HandlerReturnKey carrying the stores in hand, then per key; it mirrors declare.jl:984-989's FieldError check",
+   "note": "It is a parallel check, not shared code: no FieldError is raised on the return side. I read 'run in both directions' (D-090's Rationale) as the same name-against-legal-set law."
+  },
+  {
+   "id": "L6d-192",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:1022-1030 _cycle_hint offers 'split' or 'narrow' per dead member; dead hops come only from traced continuous members (src/tracer.jl:316-321, 344-351)"
+  },
+  {
+   "id": "L6d-202",
+   "conforms": true,
+   "evidence": "src/frame.jl:172 fresh = true after every boundary in the frame, :329 after t*; src/frame.jl:93 frame top passes continued && !wrote; src/model.jl:631"
+  },
+  {
+   "id": "L6d-212",
+   "conforms": true,
+   "evidence": "src/library.jl:1 module Library; probe isdefined(Redstone, :Blocks) = false and Library LinearSystem/AntiWindupController/PIDController = false, AbstractLinearSystem = true; no @deprecate in src"
+  }
+ ],
+ "notes": "I judged all 49 claims against worktree W at cb398676. 21 conform. 28 do not, and every one of those is drift: a later log entry records the move. Most are renames: faces->passthrough (D-144, D-251); Merged/merge->Combined/combine (D-204, which also says the log keeps its day's vocabulary); the *_connections names->local_wires/input_wires/output_wires (D-279, D-303, D-314); input_types/output_types/output_state->u_types/y_types/y_state (D-267); sweep_hx/sweep_hxu->sweep_1/sweep_2 (D-196); RootSlotTypeConflict->RootInputTypeConflict (D-206); Dataflow->Outputs (D-261); Period/Hz retired (D-469); stop_on->StopFlag (D-316). The rest change what the code does: D-414 dropped the deep-`at` locality check; D-445 rewrote how the due set is computed; D-205 changed boundary zero, where updates stay gated; D-437 made return shapes follow bare contracts, which affects Constant, the NamedTuple check and DeadStage. I found no deviation, defect or gap. L6d-185 is the closest call: I passed it because the handler-return key check mirrors the FieldError law, though it shares no code with it. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6d_v/probe.jl, run once. I edited no tracked file and committed nothing."
+}

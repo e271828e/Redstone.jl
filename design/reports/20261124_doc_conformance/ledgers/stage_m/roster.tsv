@@ -27,10 +27,10 @@ conditions.jl	138	set	231	15
 conditions.jl	186	at	160	17
 conditions.jl	223	combine	104	16
 conditions.jl	254	override	142	19
-dataplane.jl	217	WriterStatus	232	11
-dataplane.jl	316	stale	126	16
-dataplane.jl	510	Snapshot	192	16
-dataplane.jl	549	port	180	14
+dataplane.jl	217	WriterStatus	255	11
+dataplane.jl	320	stale	132	16
+dataplane.jl	515	Snapshot	192	16
+dataplane.jl	554	port	180	14
 declare.jl	13	AbstractComponent	158	10
 declare.jl	46	x_init	204	17
 declare.jl	81	s_init	171	17
@@ -184,7 +184,7 @@ sim.jl	554	termination	72	13
 sim.jl	753	init!	632	16
 sim.jl	871	checkpoint	119	17
 sim.jl	917	overlay!	338	17
-sim.jl	1017	restore!	306	13
+sim.jl	1017	restore!	312	13
 sim.jl	1105	trim!	119	14
 sim.jl	1139	linearize	149	11
 sim.jl	1246	replay!	716	15
@@ -204,7 +204,7 @@ sim.jl	2557	detach!	113	10
 sim.jl	2593	stage!	218	16
 sim.jl	2846	latest	62	12
 sim.jl	2863	logged	109	7
-sim.jl	2893	Series	110	16
+sim.jl	2893	Series	115	16
 sim.jl	2936	series	161	15
 sim.jl	2998	trace	108	13
 structure.jl	214	Structure	195	15

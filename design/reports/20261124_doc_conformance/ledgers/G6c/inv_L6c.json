@@ -1,0 +1,1779 @@
+{
+ "rows": [
+  {
+   "id": "L6c-023",
+   "file": "design/log.md",
+   "line": 1326,
+   "kind": "law",
+   "claim": "Declared state/mode fields are selectively auto-published",
+   "evidence": "src/build.jl:200",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: auto-publication was removed by D-252; a component exposes a state or mode field by returning it from y_state.",
+   "note": "D-252 (log.md:10447) removed auto-publishing. D-035's own rationale (log.md:1334) already says a field is exposed by returning it from y_state. _outputs takes a component's ports from keyed_outs alone. Failure: a component that declares a mode field gets no port for it unless its y_state returns it as a declared port."
+  },
+  {
+   "id": "L6c-026",
+   "file": "design/log.md",
+   "line": 1711,
+   "kind": "law",
+   "claim": "Deployment binding happens at Simulation construction only",
+   "evidence": "src/deployment.jl:573",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: deployment binding produces a Deployment artifact (D-254), which a Model materializes (D-317); Simulation(build; kw...) is sugar that composes the two.",
+   "note": "D-254 (log.md:10569) moved binding into the Deployment artifact, and D-317 split the Model out. bind_schedule runs in the Deployment constructor (deployment.jl:573), and Simulation(build; kw...) composes Deployment and Model (sim.jl:394-396). Failure: Deployment(build; Δt_frame) binds the schedule without any Simulation being constructed."
+  },
+  {
+   "id": "L6c-041",
+   "file": "design/log.md",
+   "line": 3389,
+   "kind": "mech",
+   "claim": "Handler-phase u gathers materialize at round start, after guards, before any handler",
+   "evidence": "src/executor.jl:394",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "None beyond the 2026-10-02 annotation (log.md:3404): D-154 retired the materialization, and round-start u holds by construction.",
+   "note": "D-154 (log.md:6045) removed the mechanism. Only sweeps write the table, and a handler's bundle is gathered when it fires (executor.jl:394). The entry's own annotation records this. Failure: no round-start u buffer exists; make_handler_bundle gathers u from the live store at each firing."
+  },
+  {
+   "id": "L6c-042",
+   "file": "design/log.md",
+   "line": 3390,
+   "kind": "mech",
+   "claim": "The per-event re-decode reuses the round-start u",
+   "evidence": "src/model.jl:773",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "None beyond the 2026-10-02 annotation (log.md:3404): the per-event re-decode is gone (D-154).",
+   "note": "D-154 (log.md:6049) removed the per-event re-decode. The fire walk runs handlers and projections only, and the re-sweep is the next round's _round! (model.jl:773-775). Failure: after a handler fires, no stage re-decodes y before the next handler."
+  },
+  {
+   "id": "L6c-044",
+   "file": "design/log.md",
+   "line": 3392,
+   "kind": "law",
+   "claim": "Same-component successors see refreshed own ports; handler returns latch per event",
+   "evidence": "src/model.jl:760",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: a component fires at most one event per round (D-154), so no same-component successor runs within the round.",
+   "note": "D-154 serializes a component's events across rounds (model.jl:760-763, comp_fired). The 2026-10-02 annotation at log.md:3404 covers the mechanism but not this visibility clause. Failure: two events of one component that are eligible at once fire in successive rounds, the second after a re-sweep, never as a successor within one round."
+  },
+  {
+   "id": "L6c-052",
+   "file": "design/log.md",
+   "line": 4958,
+   "kind": "decl",
+   "claim": "log_max is a new Simulation keyword beside log/log_every",
+   "evidence": "probe:151",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "None beyond the 2026-10-13 annotation (log.md:5009): log_max is a keyword of init!, overlay!, restore! and replay! (D-261).",
+   "note": "D-261 moved the recording keywords to the calls that open a run, and the entry's annotation at log.md:5009 records it. Simulation(...; log_max) is refused (probe:151) and init!(...; log_max) is accepted (probe:152); see sim.jl:349-351. Failure: Simulation(Plant(); Δt_frame = 1//10, log_max = 10) throws a MethodError from Deployment."
+  },
+  {
+   "id": "L6c-053",
+   "file": "design/log.md",
+   "line": 5137,
+   "kind": "decl",
+   "claim": "A field-emitting component exposes a plain, pure, exported value-level constructor",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "This is an authoring obligation on shipped components. No component in src/ or examples/ emits a field handle, so nothing in the code can meet or break it. atmospheric_field and SimpleAtmosphere are absent from src, test and examples."
+  },
+  {
+   "id": "L6c-055",
+   "file": "design/log.md",
+   "line": 5140,
+   "kind": "law",
+   "claim": "The component's swept output stage is a one-line call to the constructor, never the reverse",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Same obligation as L6c-053. No shipped component emits a field handle, so there is nothing to check this against."
+  },
+  {
+   "id": "L6c-057",
+   "file": "design/log.md",
+   "line": 7739,
+   "kind": "law",
+   "claim": "Every output stage returns its port NamedTuple alone",
+   "evidence": "src/build.jl:80",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: under a bare y_types a stage returns the one port's value, not a NamedTuple (D-437).",
+   "note": "D-436/D-437 (log.md:17996, 18128) added the bare contract. build.jl:80-88 holds a named return to a NamedTuple and a bare return to the port's type. Failure: BareScale's y_direct returns -2.0 * u, a Float64, and the model builds (test/fixtures.jl:90, test_build.jl:1855)."
+  },
+  {
+   "id": "L6c-082",
+   "file": "design/log.md",
+   "line": 9720,
+   "kind": "law",
+   "claim": "An opaque leaf is accepted by identity alone",
+   "evidence": "src/leaves.jl:355",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "None beyond the 2026-09-25 annotation (log.md:9755): identity governs a store and the producer's own check, and at a wire a frozen opaque arrival is admitted at an unpinned entry (D-264).",
+   "note": "D-264 narrowed the rule. _accepts applies identity only when !at_wire (leaves.jl:355), and _accepts_wire admits the producer's cell (leaves.jl:370-375). Failure: a Pinned{Handle{Float64}} producer feeding an unpinned Handle{T} entry passes the wire relation by lift, not by identity."
+  },
+  {
+   "id": "L6c-083",
+   "file": "design/log.md",
+   "line": 9721,
+   "kind": "law",
+   "claim": "The embedding lift never enters an opaque leaf",
+   "evidence": "src/leaves.jl:349",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: at a wire the lift enters an opaque leaf (D-264); at a store it never does.",
+   "note": "D-264 narrowed the rule to stores. The docstring at leaves.jl:349-350 says at_wire lets the lift enter. Failure: _accepts(P, V, T, true) on an opaque P walks its parameters with the lift."
+  },
+  {
+   "id": "L6c-144",
+   "file": "design/log.md",
+   "line": 14413,
+   "kind": "decl",
+   "claim": "StopRequest has a Bool input `request` and a StopFlag output `flag`",
+   "evidence": "src/library.jl:440",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotation: StopRequest's contracts are bare since D-436/D-437, its Bool input the face u and its StopFlag output the face y.",
+   "note": "D-436 (log.md:18050) made the single-port blocks bare, and D-437 (log.md:18188) names a bare StopFlag requester's port y. The 2026-11-12 annotation (log.md:14492) says the spelling and the rest stand, which is wrong for the port names. Leads: request, flag (test-only). Failure: u_types(StopRequest()) is Bool and y_types is StopFlag (probe:111), and the roster entry is Requester(\"r\", :y, \"why\") (probe:109)."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L6c-001",
+   "file": "design/log.md",
+   "line": 551,
+   "kind": "law",
+   "claim": "Algebraic loops are rejected at build as AlgebraicCycle",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "L6c-002",
+   "file": "design/log.md",
+   "line": 551,
+   "kind": "law",
+   "claim": "A loop broken through a stage-1 (state-derived) port builds",
+   "evidence": "probe:81"
+  },
+  {
+   "id": "L6c-003",
+   "file": "design/log.md",
+   "line": 567,
+   "kind": "decl",
+   "claim": "Two output stages, state decoder h_x and all-inputs h_xu (now y_state/y_direct, D-220/D-267)",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6c-004",
+   "file": "design/log.md",
+   "line": 567,
+   "kind": "law",
+   "claim": "Feedthrough is structural: every input of a y_direct component is an edge",
+   "evidence": "src/build.jl:206"
+  },
+  {
+   "id": "L6c-005",
+   "file": "design/log.md",
+   "line": 671,
+   "kind": "mech",
+   "claim": "Tracers are set-propagation, global with a sampled-local fallback",
+   "evidence": "src/tracer.jl:333"
+  },
+  {
+   "id": "L6c-006",
+   "file": "design/log.md",
+   "line": 672,
+   "kind": "law",
+   "claim": "Tracers are diagnostic-only; scheduling rests on the two-stage split",
+   "evidence": "src/tracer.jl:3"
+  },
+  {
+   "id": "L6c-007",
+   "file": "design/log.md",
+   "line": 672,
+   "kind": "mech",
+   "claim": "Cycle diagnostics come from SCC decomposition of Kahn's stall",
+   "evidence": "src/build.jl:270"
+  },
+  {
+   "id": "L6c-008",
+   "file": "design/log.md",
+   "line": 673,
+   "kind": "law",
+   "claim": "One nontrivial SCC is one AlgebraicCycle",
+   "evidence": "src/build.jl:271"
+  },
+  {
+   "id": "L6c-009",
+   "file": "design/log.md",
+   "line": 674,
+   "kind": "mech",
+   "claim": "Classification is a schedule-free per-member trace at the probe point",
+   "evidence": "src/tracer.jl:285"
+  },
+  {
+   "id": "L6c-010",
+   "file": "design/log.md",
+   "line": 674,
+   "kind": "mech",
+   "claim": "Each member is traced in isolation",
+   "evidence": "src/tracer.jl:302"
+  },
+  {
+   "id": "L6c-011",
+   "file": "design/log.md",
+   "line": 675,
+   "kind": "mech",
+   "claim": "In-cycle cells come from probe_value under tracer tags",
+   "evidence": "src/tracer.jl:251"
+  },
+  {
+   "id": "L6c-012",
+   "file": "design/log.md",
+   "line": 676,
+   "kind": "law",
+   "claim": "Verdict per D-245, as the entry notes: real iff a traced cycle survives",
+   "evidence": "src/tracer.jl:372"
+  },
+  {
+   "id": "L6c-013",
+   "file": "design/log.md",
+   "line": 677,
+   "kind": "law",
+   "claim": "Discrete members are taken structurally, all hops alive (conservative)",
+   "evidence": "src/tracer.jl:313"
+  },
+  {
+   "id": "L6c-014",
+   "file": "design/log.md",
+   "line": 678,
+   "kind": "law",
+   "claim": "Classification is optional on the AlgebraicCycle (nothing by default)",
+   "evidence": "src/diagnostics.jl:998"
+  },
+  {
+   "id": "L6c-015",
+   "file": "design/log.md",
+   "line": 741,
+   "kind": "law",
+   "claim": "f (x_deriv) reads the fresh table, own y included",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "L6c-016",
+   "file": "design/log.md",
+   "line": 741,
+   "kind": "law",
+   "claim": "h (y_direct) reads the fresh table through u",
+   "evidence": "src/declare.jl:902"
+  },
+  {
+   "id": "L6c-017",
+   "file": "design/log.md",
+   "line": 742,
+   "kind": "decl",
+   "claim": "f and h also receive the state views",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6c-018",
+   "file": "design/log.md",
+   "line": 1322,
+   "kind": "mech",
+   "claim": "Component functions receive zero-copy views (reconstructions) of the stores they read",
+   "evidence": "src/executor.jl:130"
+  },
+  {
+   "id": "L6c-019",
+   "file": "design/log.md",
+   "line": 1323,
+   "kind": "decl",
+   "claim": "Output stages, flow, update, guards and handlers all take the bundle",
+   "evidence": "src/executor.jl:236"
+  },
+  {
+   "id": "L6c-020",
+   "file": "design/log.md",
+   "line": 1324,
+   "kind": "decl",
+   "claim": "The views arrive as one named bundle destructured in the signature",
+   "evidence": "src/executor.jl:142"
+  },
+  {
+   "id": "L6c-021",
+   "file": "design/log.md",
+   "line": 1325,
+   "kind": "law",
+   "claim": "The table holds produced signals only, never transported ones",
+   "evidence": "src/build.jl:442"
+  },
+  {
+   "id": "L6c-022",
+   "file": "design/log.md",
+   "line": 1325,
+   "kind": "law",
+   "claim": "One home per datum: an assembly face aliases its producer's cell",
+   "evidence": "src/build.jl:484"
+  },
+  {
+   "id": "L6c-024",
+   "file": "design/log.md",
+   "line": 1327,
+   "kind": "decl",
+   "claim": "h_x/h_z (now y_state) is the no-feedthrough stage: its ports add no edge",
+   "evidence": "src/build.jl:213"
+  },
+  {
+   "id": "L6c-025",
+   "file": "design/log.md",
+   "line": 1710,
+   "kind": "mech",
+   "claim": "The build runs three strata: structure, schedule, activation",
+   "evidence": "src/build.jl:781"
+  },
+  {
+   "id": "L6c-027",
+   "file": "design/log.md",
+   "line": 1713,
+   "kind": "mech",
+   "claim": "Stratum A: declaration reading, faces, wiring and obligations, rate checks, then the barrier",
+   "evidence": "src/build.jl:781"
+  },
+  {
+   "id": "L6c-028",
+   "file": "design/log.md",
+   "line": 1715,
+   "kind": "mech",
+   "claim": "Stratum B: stage-1 probe, port classification, feedthrough graph, Kahn order or cycle",
+   "evidence": "src/build.jl:197"
+  },
+  {
+   "id": "L6c-029",
+   "file": "design/log.md",
+   "line": 1717,
+   "kind": "mech",
+   "claim": "Stratum C: per-T typing, probe chain and cell layouts",
+   "evidence": "src/build.jl:405"
+  },
+  {
+   "id": "L6c-030",
+   "file": "design/log.md",
+   "line": 2554,
+   "kind": "decl",
+   "claim": "Every component function is fn(comp, args) with one NamedTuple bundle",
+   "evidence": "src/executor.jl:162"
+  },
+  {
+   "id": "L6c-031",
+   "file": "design/log.md",
+   "line": 2555,
+   "kind": "mech",
+   "claim": "The bundle's fields are zero-copy views (reconstructed values)",
+   "evidence": "src/executor.jl:130"
+  },
+  {
+   "id": "L6c-032",
+   "file": "design/log.md",
+   "line": 2555,
+   "kind": "decl",
+   "claim": "The bundle is destructured by name in the signature",
+   "evidence": "test/fixtures.jl:27"
+  },
+  {
+   "id": "L6c-033",
+   "file": "design/log.md",
+   "line": 2556,
+   "kind": "decl",
+   "claim": "project(comp, x), now x_projection, stays positional",
+   "evidence": "src/executor.jl:263"
+  },
+  {
+   "id": "L6c-034",
+   "file": "design/log.md",
+   "line": 2591,
+   "kind": "decl",
+   "claim": "f = continuous flow, g = discrete update (now x_deriv, s_update)",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "L6c-035",
+   "file": "design/log.md",
+   "line": 2592,
+   "kind": "decl",
+   "claim": "Output stages h_x/h_xu, h_z/h_zu (now one pair y_state/y_direct on both tiers, D-220)",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6c-036",
+   "file": "design/log.md",
+   "line": 2593,
+   "kind": "decl",
+   "claim": "Stage products y_x/y_z (now bundle fields y_x, y_s; y_xu/y_zu old notation)",
+   "evidence": "src/declare.jl:902"
+  },
+  {
+   "id": "L6c-037",
+   "file": "design/log.md",
+   "line": 2946,
+   "kind": "mech",
+   "claim": "Schedule compiled per activation into a concretely typed entry tuple",
+   "evidence": "src/executor.jl:543"
+  },
+  {
+   "id": "L6c-038",
+   "file": "design/log.md",
+   "line": 2947,
+   "kind": "mech",
+   "claim": "Over statically typed storage, a CellStore{T} per eltype",
+   "evidence": "src/store.jl:15"
+  },
+  {
+   "id": "L6c-039",
+   "file": "design/log.md",
+   "line": 2948,
+   "kind": "mech",
+   "claim": "Entry tuples walked by compile-time unrolling",
+   "evidence": "src/executor.jl:348"
+  },
+  {
+   "id": "L6c-040",
+   "file": "design/log.md",
+   "line": 3048,
+   "kind": "mech",
+   "claim": "Linearization seeds only the listed taps; other inputs stay at nominal",
+   "evidence": "src/linearize.jl:515"
+  },
+  {
+   "id": "L6c-043",
+   "file": "design/log.md",
+   "line": 3391,
+   "kind": "mech",
+   "claim": "y binds live, own cells only, in the handler bundle",
+   "evidence": "src/executor.jl:394"
+  },
+  {
+   "id": "L6c-045",
+   "file": "design/log.md",
+   "line": 3393,
+   "kind": "law",
+   "claim": "Foreign transitions arrive only through the next round's re-sweep",
+   "evidence": "src/model.jl:775"
+  },
+  {
+   "id": "L6c-046",
+   "file": "design/log.md",
+   "line": 4132,
+   "kind": "decl",
+   "claim": "An abstract-entry component is rigged with a concrete stub child (SampleTerrainField placeholder)",
+   "evidence": "src/build.jl:915"
+  },
+  {
+   "id": "L6c-047",
+   "file": "design/log.md",
+   "line": 4134,
+   "kind": "decl",
+   "claim": "The remainder is exported by faces(rig, child; except), now input_passthrough with except",
+   "evidence": "src/assembly.jl:495"
+  },
+  {
+   "id": "L6c-048",
+   "file": "design/log.md",
+   "line": 4308,
+   "kind": "law",
+   "claim": "get_face is admitted to the service read set",
+   "evidence": "src/readers.jl:151"
+  },
+  {
+   "id": "L6c-049",
+   "file": "design/log.md",
+   "line": 4309,
+   "kind": "mech",
+   "claim": "get_face resolves through export chains as mounting does",
+   "evidence": "src/readers.jl:869"
+  },
+  {
+   "id": "L6c-050",
+   "file": "design/log.md",
+   "line": 4310,
+   "kind": "law",
+   "claim": "A read crossing a generic seam binds the level's exported face",
+   "evidence": "src/readers.jl:848"
+  },
+  {
+   "id": "L6c-051",
+   "file": "design/log.md",
+   "line": 4957,
+   "kind": "law",
+   "claim": "log_max bounds the retained snapshot references",
+   "evidence": "src/dataplane.jl:633"
+  },
+  {
+   "id": "L6c-054",
+   "file": "design/log.md",
+   "line": 5139,
+   "kind": "ex",
+   "claim": "atmospheric_field(atm; T_sl, p_sl, wind) for SimpleAtmosphere is an illustration",
+   "evidence": "placeholder: absent from src/test/examples"
+  },
+  {
+   "id": "L6c-056",
+   "file": "design/log.md",
+   "line": 7738,
+   "kind": "law",
+   "claim": "The private w channel is gone on both tiers",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6c-058",
+   "file": "design/log.md",
+   "line": 7739,
+   "kind": "decl",
+   "claim": "A cross-stage intermediate is an ordinary declared port",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6c-059",
+   "file": "design/log.md",
+   "line": 7742,
+   "kind": "law",
+   "claim": "The (y, w) return form is refused",
+   "evidence": "probe:86"
+  },
+  {
+   "id": "L6c-060",
+   "file": "design/log.md",
+   "line": 7742,
+   "kind": "law",
+   "claim": "The one-hop law and re-return idiom are gone: no channel beside ports",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6c-061",
+   "file": "design/log.md",
+   "line": 7743,
+   "kind": "law",
+   "claim": "No w bundle field: :w is illegal for every family",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "L6c-062",
+   "file": "design/log.md",
+   "line": 7744,
+   "kind": "decl",
+   "claim": "The intermediate is declared in output_types (now y_types, D-267)",
+   "evidence": "src/build.jl:200"
+  },
+  {
+   "id": "L6c-063",
+   "file": "design/log.md",
+   "line": 7745,
+   "kind": "decl",
+   "claim": "Stage-1 products reach y_direct through y_x",
+   "evidence": "src/declare.jl:902"
+  },
+  {
+   "id": "L6c-064",
+   "file": "design/log.md",
+   "line": 7746,
+   "kind": "decl",
+   "claim": "Everything reaches f, g, guards and handlers through y",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "L6c-065",
+   "file": "design/log.md",
+   "line": 7748,
+   "kind": "mech",
+   "claim": "Passes communicate only through the table and the stores",
+   "evidence": "src/executor.jl:162"
+  },
+  {
+   "id": "L6c-066",
+   "file": "design/log.md",
+   "line": 7749,
+   "kind": "mech",
+   "claim": "No value crosses a phase-body or chunk seam",
+   "evidence": "src/executor.jl:540"
+  },
+  {
+   "id": "L6c-067",
+   "file": "design/log.md",
+   "line": 7749,
+   "kind": "mech",
+   "claim": "Phase-body arities carry the tick index alone",
+   "evidence": "src/executor.jl:574"
+  },
+  {
+   "id": "L6c-068",
+   "file": "design/log.md",
+   "line": 7752,
+   "kind": "law",
+   "claim": "Promoted intermediates carry declared types, checked at the scatter",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "L6c-069",
+   "file": "design/log.md",
+   "line": 7753,
+   "kind": "law",
+   "claim": "Embed-accept keeps the constant-branch idiom legal",
+   "evidence": "src/leaves.jl:336"
+  },
+  {
+   "id": "L6c-070",
+   "file": "design/log.md",
+   "line": 7753,
+   "kind": "law",
+   "claim": "The §9.5 check covers them at every activation",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "L6c-071",
+   "file": "design/log.md",
+   "line": 7755,
+   "kind": "law",
+   "claim": "A stage returning (;) is DeadStage",
+   "evidence": "probe:87"
+  },
+  {
+   "id": "L6c-072",
+   "file": "design/log.md",
+   "line": 7757,
+   "kind": "law",
+   "claim": "No Private visibility level exists (lead Private)",
+   "evidence": "probe:89"
+  },
+  {
+   "id": "L6c-073",
+   "file": "design/log.md",
+   "line": 7761,
+   "kind": "decl",
+   "claim": "ws is the mutable-scratch channel",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6c-074",
+   "file": "design/log.md",
+   "line": 7762,
+   "kind": "law",
+   "claim": "Handlers return stores",
+   "evidence": "src/executor.jl:400"
+  },
+  {
+   "id": "L6c-075",
+   "file": "design/log.md",
+   "line": 8266,
+   "kind": "decl",
+   "claim": "Condition keyword slots -> inputs (now set's u, log.md:12703; leads fragment, slots)",
+   "evidence": "src/conditions.jl:169"
+  },
+  {
+   "id": "L6c-076",
+   "file": "design/log.md",
+   "line": 8268,
+   "kind": "decl",
+   "claim": "get_slot -> get_input (lead get_slot)",
+   "evidence": "src/readers.jl:269"
+  },
+  {
+   "id": "L6c-077",
+   "file": "design/log.md",
+   "line": 8269,
+   "kind": "law",
+   "claim": "UninitializedSlots -> UninitializedInputs (lead)",
+   "evidence": "probe:147"
+  },
+  {
+   "id": "L6c-078",
+   "file": "design/log.md",
+   "line": 8270,
+   "kind": "law",
+   "claim": "RootSlotTypeConflict -> RootInputTypeConflict (lead)",
+   "evidence": "src/build.jl:924"
+  },
+  {
+   "id": "L6c-079",
+   "file": "design/log.md",
+   "line": 9717,
+   "kind": "mech",
+   "claim": "The leaf walk descends Reals, static arrays and isbits structs",
+   "evidence": "src/leaves.jl:48"
+  },
+  {
+   "id": "L6c-080",
+   "file": "design/log.md",
+   "line": 9718,
+   "kind": "law",
+   "claim": "It stops at an immutable non-isbits type as one opaque leaf",
+   "evidence": "src/leaves.jl:18"
+  },
+  {
+   "id": "L6c-081",
+   "file": "design/log.md",
+   "line": 9719,
+   "kind": "mech",
+   "claim": "An opaque cell holds the value itself, reference fields included",
+   "evidence": "probe:98"
+  },
+  {
+   "id": "L6c-084",
+   "file": "design/log.md",
+   "line": 9721,
+   "kind": "law",
+   "claim": "A mutable type in a walked port position is IllegalPortType :mutable",
+   "evidence": "probe:92"
+  },
+  {
+   "id": "L6c-085",
+   "file": "design/log.md",
+   "line": 9722,
+   "kind": "law",
+   "claim": "A handle-typed face surfacing as a root input is refused",
+   "evidence": "probe:99"
+  },
+  {
+   "id": "L6c-086",
+   "file": "design/log.md",
+   "line": 9978,
+   "kind": "law",
+   "claim": "A Symbol is one opaque leaf",
+   "evidence": "src/leaves.jl:19"
+  },
+  {
+   "id": "L6c-087",
+   "file": "design/log.md",
+   "line": 9979,
+   "kind": "mech",
+   "claim": "A Symbol is stored whole in a cell of its own eltype",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "L6c-088",
+   "file": "design/log.md",
+   "line": 9979,
+   "kind": "law",
+   "claim": "A Symbol is accepted by identity",
+   "evidence": "src/leaves.jl:355"
+  },
+  {
+   "id": "L6c-089",
+   "file": "design/log.md",
+   "line": 9979,
+   "kind": "law",
+   "claim": "A step never descends into a Symbol",
+   "evidence": "probe:102"
+  },
+  {
+   "id": "L6c-090",
+   "file": "design/log.md",
+   "line": 9980,
+   "kind": "law",
+   "claim": "ismutabletype(Symbol) does not make it refused as mutable",
+   "evidence": "probe:93"
+  },
+  {
+   "id": "L6c-091",
+   "file": "design/log.md",
+   "line": 9981,
+   "kind": "law",
+   "claim": "A Symbol root input is refused like a handle",
+   "evidence": "probe:101"
+  },
+  {
+   "id": "L6c-092",
+   "file": "design/log.md",
+   "line": 12478,
+   "kind": "decl",
+   "claim": "The second argument of every read selector is a leaf address",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "L6c-093",
+   "file": "design/log.md",
+   "line": 12479,
+   "kind": "decl",
+   "claim": "Head name then .name, [k], [k,l] steps in any order",
+   "evidence": "src/readers.jl:365"
+  },
+  {
+   "id": "L6c-094",
+   "file": "design/log.md",
+   "line": 12481,
+   "kind": "ex",
+   "claim": "get_output/get_state take (path, leaf), get_input(leaf) alone (q_eb, ω_eb_b placeholders)",
+   "evidence": "src/readers.jl:269"
+  },
+  {
+   "id": "L6c-095",
+   "file": "design/log.md",
+   "line": 12482,
+   "kind": "law",
+   "claim": "D-271's trailing component index is retired",
+   "evidence": "probe:133"
+  },
+  {
+   "id": "L6c-096",
+   "file": "design/log.md",
+   "line": 12485,
+   "kind": "decl",
+   "claim": "A bare Symbol is short for the plain field or face name",
+   "evidence": "probe:132"
+  },
+  {
+   "id": "L6c-097",
+   "file": "design/log.md",
+   "line": 12489,
+   "kind": "mech",
+   "claim": "get_input/get_face/binding reads take the longest face followed by end, . or [ as head",
+   "evidence": "src/readers.jl:411"
+  },
+  {
+   "id": "L6c-098",
+   "file": "design/log.md",
+   "line": 12492,
+   "kind": "law",
+   "claim": "A Symbol leaf names a face whole",
+   "evidence": "src/readers.jl:405"
+  },
+  {
+   "id": "L6c-099",
+   "file": "design/log.md",
+   "line": 12493,
+   "kind": "mech",
+   "claim": "Path selectors parse the head as an identifier",
+   "evidence": "src/readers.jl:355"
+  },
+  {
+   "id": "L6c-100",
+   "file": "design/log.md",
+   "line": 12512,
+   "kind": "decl",
+   "claim": "Headless form for a bare store: empty or starting at the first step",
+   "evidence": "src/readers.jl:425"
+  },
+  {
+   "id": "L6c-101",
+   "file": "design/log.md",
+   "line": 12514,
+   "kind": "decl",
+   "claim": "The store selectors' leaf argument defaults to the headless address",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "L6c-102",
+   "file": "design/log.md",
+   "line": 12517,
+   "kind": "mech",
+   "claim": "Each step is checked at resolution against the type in hand",
+   "evidence": "src/readers.jl:441"
+  },
+  {
+   "id": "L6c-103",
+   "file": "design/log.md",
+   "line": 12518,
+   "kind": "law",
+   "claim": "A .name step needs an isbits struct with that field",
+   "evidence": "src/readers.jl:445"
+  },
+  {
+   "id": "L6c-104",
+   "file": "design/log.md",
+   "line": 12519,
+   "kind": "law",
+   "claim": "An index step needs an SArray, one index or one per dimension",
+   "evidence": "src/readers.jl:455"
+  },
+  {
+   "id": "L6c-105",
+   "file": "design/log.md",
+   "line": 12520,
+   "kind": "law",
+   "claim": "A step never enters an opaque leaf",
+   "evidence": "probe:102"
+  },
+  {
+   "id": "L6c-106",
+   "file": "design/log.md",
+   "line": 12522,
+   "kind": "mech",
+   "claim": "The address is a field of the selector value, never a type parameter",
+   "evidence": "src/readers.jl:57"
+  },
+  {
+   "id": "L6c-107",
+   "file": "design/log.md",
+   "line": 12523,
+   "kind": "mech",
+   "claim": "The baked read carries the chain as a type parameter, unrolled getfield/getindex",
+   "evidence": "src/readers.jl:478"
+  },
+  {
+   "id": "L6c-108",
+   "file": "design/log.md",
+   "line": 12525,
+   "kind": "law",
+   "claim": "Continuous store selector: field plus at most an index step; discrete s takes the full address",
+   "evidence": "src/readers.jl:1006"
+  },
+  {
+   "id": "L6c-109",
+   "file": "design/log.md",
+   "line": 12533,
+   "kind": "law",
+   "claim": "A binding read admits the leaf address",
+   "evidence": "src/bindings.jl:176"
+  },
+  {
+   "id": "L6c-110",
+   "file": "design/log.md",
+   "line": 12534,
+   "kind": "mech",
+   "claim": "The binding gather is the family's baked read",
+   "evidence": "src/bindings.jl:176"
+  },
+  {
+   "id": "L6c-111",
+   "file": "design/log.md",
+   "line": 12535,
+   "kind": "law",
+   "claim": "Binding reads no longer refuse index steps",
+   "evidence": "src/bindings.jl:170"
+  },
+  {
+   "id": "L6c-112",
+   "file": "design/log.md",
+   "line": 12536,
+   "kind": "law",
+   "claim": "Diagnostics spell a matrix leaf m[i,j]",
+   "evidence": "probe:135"
+  },
+  {
+   "id": "L6c-113",
+   "file": "design/log.md",
+   "line": 12538,
+   "kind": "law",
+   "claim": "Wiring stays port-granular: a field endpoint is UnknownPort",
+   "evidence": "probe:143"
+  },
+  {
+   "id": "L6c-114",
+   "file": "design/log.md",
+   "line": 13512,
+   "kind": "law",
+   "claim": "Only a concrete consumer entry fixes a root input's type; none is AbstractAtRoot",
+   "evidence": "src/build.jl:915"
+  },
+  {
+   "id": "L6c-115",
+   "file": "design/log.md",
+   "line": 13514,
+   "kind": "law",
+   "claim": "A tap on a root input a consumer pins is refused at tap resolution",
+   "evidence": "src/linearize.jl:541"
+  },
+  {
+   "id": "L6c-116",
+   "file": "design/log.md",
+   "line": 13515,
+   "kind": "law",
+   "claim": "The refusal names the pinning consumer and its entry",
+   "evidence": "src/linearize.jl:529"
+  },
+  {
+   "id": "L6c-117",
+   "file": "design/log.md",
+   "line": 13707,
+   "kind": "decl",
+   "claim": "A store is the framework-owned home of x, s or m",
+   "evidence": "src/executor.jl:130"
+  },
+  {
+   "id": "L6c-118",
+   "file": "design/log.md",
+   "line": 13708,
+   "kind": "mech",
+   "claim": "The buffer is the flat x vector and the ẋ vectors",
+   "evidence": "src/readers.jl:589"
+  },
+  {
+   "id": "L6c-119",
+   "file": "design/log.md",
+   "line": 13710,
+   "kind": "mech",
+   "claim": "An x store is a range of the buffer",
+   "evidence": "src/build.jl:487"
+  },
+  {
+   "id": "L6c-120",
+   "file": "design/log.md",
+   "line": 13711,
+   "kind": "law",
+   "claim": "Stores are not cells: s and m live in their own Refs",
+   "evidence": "src/executor.jl:131"
+  },
+  {
+   "id": "L6c-121",
+   "file": "design/log.md",
+   "line": 14386,
+   "kind": "law",
+   "claim": "A model requests a stop by publishing a StopFlag port",
+   "evidence": "probe:118"
+  },
+  {
+   "id": "L6c-122",
+   "file": "design/log.md",
+   "line": 14387,
+   "kind": "law",
+   "claim": "A request ends the run at the first publication where it holds, unless ignored",
+   "evidence": "probe:118"
+  },
+  {
+   "id": "L6c-123",
+   "file": "design/log.md",
+   "line": 14390,
+   "kind": "decl",
+   "claim": "@enum StopFlag NO_STOP STOP_REQUESTED",
+   "evidence": "src/leaves.jl:270"
+  },
+  {
+   "id": "L6c-124",
+   "file": "design/log.md",
+   "line": 14390,
+   "kind": "mech",
+   "claim": "StopFlag is defined beside Pinned",
+   "evidence": "src/leaves.jl:241"
+  },
+  {
+   "id": "L6c-125",
+   "file": "design/log.md",
+   "line": 14391,
+   "kind": "mech",
+   "claim": "An enum is one leaf of its own eltype",
+   "evidence": "src/leaves.jl:45"
+  },
+  {
+   "id": "L6c-126",
+   "file": "design/log.md",
+   "line": 14391,
+   "kind": "law",
+   "claim": "An enum leaf is pinned at every activation",
+   "evidence": "src/leaves.jl:311"
+  },
+  {
+   "id": "L6c-127",
+   "file": "design/log.md",
+   "line": 14392,
+   "kind": "mech",
+   "claim": "Every StopFlag port lands in one per-eltype cell block",
+   "evidence": "src/store.jl:44"
+  },
+  {
+   "id": "L6c-128",
+   "file": "design/log.md",
+   "line": 14393,
+   "kind": "law",
+   "claim": "An output port typed exactly StopFlag is a request, whoever publishes it",
+   "evidence": "src/build.jl:500"
+  },
+  {
+   "id": "L6c-129",
+   "file": "design/log.md",
+   "line": 14395,
+   "kind": "law",
+   "claim": "A nested StopFlag is IllegalPortType :stop_flag_nested",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "L6c-130",
+   "file": "design/log.md",
+   "line": 14397,
+   "kind": "law",
+   "claim": "A root input carrying StopFlag is IllegalPortType :stop_flag_at_root",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "L6c-131",
+   "file": "design/log.md",
+   "line": 14400,
+   "kind": "law",
+   "claim": "A StopFlag input port below the root is left alone",
+   "evidence": "probe:107"
+  },
+  {
+   "id": "L6c-132",
+   "file": "design/log.md",
+   "line": 14401,
+   "kind": "decl",
+   "claim": "stop_reason(c) is optional with default \"\"",
+   "evidence": "src/declare.jl:370"
+  },
+  {
+   "id": "L6c-133",
+   "file": "design/log.md",
+   "line": 14402,
+   "kind": "mech",
+   "claim": "The build reads stop_reason for every StopFlag publisher",
+   "evidence": "src/build.jl:502"
+  },
+  {
+   "id": "L6c-134",
+   "file": "design/log.md",
+   "line": 14403,
+   "kind": "law",
+   "claim": "One reason serves all of a component's StopFlag ports",
+   "evidence": "probe:109"
+  },
+  {
+   "id": "L6c-135",
+   "file": "design/log.md",
+   "line": 14403,
+   "kind": "decl",
+   "claim": "The reason is instance data, never a port value",
+   "evidence": "src/library.jl:435"
+  },
+  {
+   "id": "L6c-136",
+   "file": "design/log.md",
+   "line": 14405,
+   "kind": "law",
+   "claim": "stop_reason is a family name the D-246 shadowing check covers",
+   "evidence": "src/declare.jl:751"
+  },
+  {
+   "id": "L6c-137",
+   "file": "design/log.md",
+   "line": 14407,
+   "kind": "decl",
+   "claim": "The layout carries requesters::Vector{Requester}",
+   "evidence": "src/build.jl:362"
+  },
+  {
+   "id": "L6c-138",
+   "file": "design/log.md",
+   "line": 14408,
+   "kind": "decl",
+   "claim": "Requester(path, port, reason), one per StopFlag output port",
+   "evidence": "src/build.jl:351"
+  },
+  {
+   "id": "L6c-139",
+   "file": "design/log.md",
+   "line": 14409,
+   "kind": "law",
+   "claim": "Entry i owns offset i - 1 of the StopFlag block",
+   "evidence": "src/build.jl:504"
+  },
+  {
+   "id": "L6c-140",
+   "file": "design/log.md",
+   "line": 14410,
+   "kind": "mech",
+   "claim": "The roster is written by address after placement",
+   "evidence": "src/build.jl:498"
+  },
+  {
+   "id": "L6c-141",
+   "file": "design/log.md",
+   "line": 14411,
+   "kind": "law",
+   "claim": "Roster order is build order",
+   "evidence": "probe:109"
+  },
+  {
+   "id": "L6c-142",
+   "file": "design/log.md",
+   "line": 14412,
+   "kind": "decl",
+   "claim": "StopRequest(; reason = \"\") is the library spelling (Redstone.Blocks now Redstone.Library)",
+   "evidence": "src/library.jl:438"
+  },
+  {
+   "id": "L6c-143",
+   "file": "design/log.md",
+   "line": 14413,
+   "kind": "decl",
+   "claim": "StopRequest is a stateless continuous leaf",
+   "evidence": "src/library.jl:439"
+  },
+  {
+   "id": "L6c-145",
+   "file": "design/log.md",
+   "line": 14415,
+   "kind": "decl",
+   "claim": "Its reason is its stop_reason",
+   "evidence": "src/library.jl:443"
+  },
+  {
+   "id": "L6c-146",
+   "file": "design/log.md",
+   "line": 14415,
+   "kind": "law",
+   "claim": "Continuous, it refreshes at every boundary, t* included",
+   "evidence": "test/test_events.jl:483"
+  },
+  {
+   "id": "L6c-147",
+   "file": "design/log.md",
+   "line": 14416,
+   "kind": "law",
+   "claim": "One StopRequest leaf sits anywhere in the tree",
+   "evidence": "src/assembly.jl:739"
+  },
+  {
+   "id": "L6c-148",
+   "file": "design/log.md",
+   "line": 14416,
+   "kind": "law",
+   "claim": "Fed by a discrete detector it publishes at the tick's own boundary",
+   "evidence": "test/test_lifecycle.jl:590"
+  },
+  {
+   "id": "L6c-149",
+   "file": "design/log.md",
+   "line": 14418,
+   "kind": "decl",
+   "claim": "StopPolicy is t_end plus ignored",
+   "evidence": "src/sim.jl:141"
+  },
+  {
+   "id": "L6c-150",
+   "file": "design/log.md",
+   "line": 14419,
+   "kind": "decl",
+   "claim": "run!, replay! and step! take ignore_stop_requests = ()",
+   "evidence": "src/sim.jl:1563"
+  },
+  {
+   "id": "L6c-151",
+   "file": "design/log.md",
+   "line": 14420,
+   "kind": "law",
+   "claim": "() ignores none",
+   "evidence": "probe:118"
+  },
+  {
+   "id": "L6c-152",
+   "file": "design/log.md",
+   "line": 14421,
+   "kind": "law",
+   "claim": ":all ignores every roster path",
+   "evidence": "src/sim.jl:437"
+  },
+  {
+   "id": "L6c-153",
+   "file": "design/log.md",
+   "line": 14421,
+   "kind": "law",
+   "claim": "An iterable of strings is validated path by path against the roster",
+   "evidence": "probe:116"
+  },
+  {
+   "id": "L6c-154",
+   "file": "design/log.md",
+   "line": 14422,
+   "kind": "law",
+   "claim": "Duplicates collapse, in the order given",
+   "evidence": "probe:126"
+  },
+  {
+   "id": "L6c-155",
+   "file": "design/log.md",
+   "line": 14423,
+   "kind": "law",
+   "claim": "Unknown path: StopRequestInvalid(path, site, candidates), collected, candidates in roster order",
+   "evidence": "probe:116"
+  },
+  {
+   "id": "L6c-156",
+   "file": "design/log.md",
+   "line": 14426,
+   "kind": "mech",
+   "claim": "The binder returns the policy and a Bool mask, true where ignored",
+   "evidence": "src/sim.jl:450"
+  },
+  {
+   "id": "L6c-157",
+   "file": "design/log.md",
+   "line": 14427,
+   "kind": "mech",
+   "claim": "The mask is the loop's argument",
+   "evidence": "src/sim.jl:2083"
+  },
+  {
+   "id": "L6c-158",
+   "file": "design/log.md",
+   "line": 14430,
+   "kind": "mech",
+   "claim": "After each publication the loop scans the latest snapshot's StopFlag block",
+   "evidence": "src/sim.jl:589"
+  },
+  {
+   "id": "L6c-159",
+   "file": "design/log.md",
+   "line": 14431,
+   "kind": "law",
+   "claim": "First honoured STOP_REQUESTED in roster order wins, as ModelRequestedStop(path, port, reason)",
+   "evidence": "src/sim.jl:590"
+  },
+  {
+   "id": "L6c-160",
+   "file": "design/log.md",
+   "line": 14433,
+   "kind": "law",
+   "claim": "Source order: control stop at frame top, then t_end, then requests",
+   "evidence": "src/sim.jl:2104"
+  },
+  {
+   "id": "L6c-161",
+   "file": "design/log.md",
+   "line": 14436,
+   "kind": "law",
+   "claim": "UnboundedRun fires at run! in :live when t_end is Inf and no request is honoured",
+   "evidence": "src/sim.jl:1571"
+  },
+  {
+   "id": "L6c-162",
+   "file": "design/log.md",
+   "line": 14438,
+   "kind": "decl",
+   "claim": "UnboundedRun's payload is t_end and ignored",
+   "evidence": "src/diagnostics.jl:1671"
+  },
+  {
+   "id": "L6c-163",
+   "file": "design/log.md",
+   "line": 14438,
+   "kind": "law",
+   "claim": "Its message says which case holds",
+   "evidence": "src/diagnostics.jl:1773"
+  },
+  {
+   "id": "L6c-164",
+   "file": "design/log.md",
+   "line": 14440,
+   "kind": "law",
+   "claim": "stop_on and StopFaceInvalid are retired (leads stop_on, StopFaceInvalid)",
+   "evidence": "probe:117"
+  },
+  {
+   "id": "L6c-165",
+   "file": "design/log.md",
+   "line": 14441,
+   "kind": "law",
+   "claim": "A root-exported Bool face is legal and stops nothing",
+   "evidence": "probe:125"
+  },
+  {
+   "id": "L6c-166",
+   "file": "design/log.md",
+   "line": 15194,
+   "kind": "law",
+   "claim": "A port value is immutable",
+   "evidence": "probe:92"
+  },
+  {
+   "id": "L6c-167",
+   "file": "design/log.md",
+   "line": 15194,
+   "kind": "law",
+   "claim": "Referenced data stays frozen: the author's obligation, no deep check",
+   "evidence": "src/leaves.jl:105"
+  },
+  {
+   "id": "L6c-168",
+   "file": "design/log.md",
+   "line": 15195,
+   "kind": "law",
+   "claim": "isbits is the common case, not the rule",
+   "evidence": "probe:98"
+  },
+  {
+   "id": "L6c-169",
+   "file": "design/log.md",
+   "line": 15196,
+   "kind": "law",
+   "claim": "A handle holds no mutable cache: the author's obligation",
+   "evidence": "src/leaves.jl:105"
+  },
+  {
+   "id": "L6c-170",
+   "file": "design/log.md",
+   "line": 15197,
+   "kind": "mech",
+   "claim": "The build does not look inside a handle",
+   "evidence": "probe:93"
+  },
+  {
+   "id": "L6c-171",
+   "file": "design/log.md",
+   "line": 15268,
+   "kind": "law",
+   "claim": "Different external writers do not share a port: claims are exclusive per face",
+   "evidence": "src/devices.jl:67"
+  },
+  {
+   "id": "L6c-172",
+   "file": "design/log.md",
+   "line": 15270,
+   "kind": "law",
+   "claim": "Field-addressed staging is unbuilt: staging writes whole faces",
+   "evidence": "src/devices.jl:340"
+  },
+  {
+   "id": "L6c-173",
+   "file": "design/log.md",
+   "line": 15463,
+   "kind": "mech",
+   "claim": "A cell's freshness follows its producer's place in the execution order",
+   "evidence": "src/build.jl:206"
+  },
+  {
+   "id": "L6c-174",
+   "file": "design/log.md",
+   "line": 15464,
+   "kind": "law",
+   "claim": "No monolithic per-component y struct: one cell per port",
+   "evidence": "src/build.jl:442"
+  },
+  {
+   "id": "L6c-175",
+   "file": "design/log.md",
+   "line": 15466,
+   "kind": "law",
+   "claim": "No `unlisted` visibility flag exists (lead unlisted)",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "L6c-176",
+   "file": "design/log.md",
+   "line": 15468,
+   "kind": "law",
+   "claim": "Bare-struct returns are not splatted: a non-NamedTuple return to named ports is refused",
+   "evidence": "src/build.jl:83"
+  },
+  {
+   "id": "L6c-177",
+   "file": "design/log.md",
+   "line": 15470,
+   "kind": "law",
+   "claim": "The field-projection connector is unbuilt",
+   "evidence": "probe:143"
+  },
+  {
+   "id": "L6c-178",
+   "file": "design/log.md",
+   "line": 15497,
+   "kind": "law",
+   "claim": "A non-isbits handle cannot be a root input",
+   "evidence": "probe:99"
+  },
+  {
+   "id": "L6c-179",
+   "file": "design/log.md",
+   "line": 15498,
+   "kind": "decl",
+   "claim": "A bulk-data handle enters a rig through a constant source",
+   "evidence": "src/library.jl:346"
+  },
+  {
+   "id": "L6c-180",
+   "file": "design/log.md",
+   "line": 18132,
+   "kind": "law",
+   "claim": "A bare contract declares one port with face u or y",
+   "evidence": "test/test_build.jl:1817"
+  },
+  {
+   "id": "L6c-181",
+   "file": "design/log.md",
+   "line": 18135,
+   "kind": "mech",
+   "claim": "The bundle carries a bare port's value itself",
+   "evidence": "test/test_executor.jl:228"
+  },
+  {
+   "id": "L6c-182",
+   "file": "design/log.md",
+   "line": 18135,
+   "kind": "law",
+   "claim": "Every surface addressing a port by name sees an ordinary face",
+   "evidence": "test/test_show.jl:796"
+  },
+  {
+   "id": "L6c-183",
+   "file": "design/log.md",
+   "line": 18138,
+   "kind": "law",
+   "claim": "Under a bare u_types the stage's u is the one input's value",
+   "evidence": "test/fixtures.jl:90"
+  },
+  {
+   "id": "L6c-184",
+   "file": "design/log.md",
+   "line": 18139,
+   "kind": "law",
+   "claim": "Under a bare y_types the stage returns the value, one cell, never a splat",
+   "evidence": "test/test_build.jl:1855"
+  },
+  {
+   "id": "L6c-185",
+   "file": "design/log.md",
+   "line": 18141,
+   "kind": "law",
+   "claim": "The declared shape decides the return law, per declaration",
+   "evidence": "test/test_build.jl:1865"
+  },
+  {
+   "id": "L6c-186",
+   "file": "design/log.md",
+   "line": 18143,
+   "kind": "law",
+   "claim": "Bare u_types has input face u, bare y_types output face y",
+   "evidence": "test/test_assembly.jl:1585"
+  },
+  {
+   "id": "L6c-187",
+   "file": "design/log.md",
+   "line": 18144,
+   "kind": "mech",
+   "claim": "input_faces and output_faces list the default face",
+   "evidence": "test/test_assembly.jl:1585"
+  },
+  {
+   "id": "L6c-188",
+   "file": "design/log.md",
+   "line": 18146,
+   "kind": "law",
+   "claim": "The default applies to bare declarations only; a named u or y key is the author's",
+   "evidence": "test/test_build.jl:1865"
+  },
+  {
+   "id": "L6c-189",
+   "file": "design/log.md",
+   "line": 18147,
+   "kind": "law",
+   "claim": "A face name is never empty",
+   "evidence": "test/test_assembly.jl:1630"
+  },
+  {
+   "id": "L6c-190",
+   "file": "design/log.md",
+   "line": 18149,
+   "kind": "decl",
+   "claim": "Every wire endpoint is path/face",
+   "evidence": "test/test_assembly.jl:1579"
+  },
+  {
+   "id": "L6c-191",
+   "file": "design/log.md",
+   "line": 18150,
+   "kind": "law",
+   "claim": "A one-segment endpoint is UnknownPort with the child's faces and port nothing",
+   "evidence": "test/test_assembly.jl:1597"
+  },
+  {
+   "id": "L6c-192",
+   "file": "design/log.md",
+   "line": 18153,
+   "kind": "law",
+   "claim": "Passthrough default label over child integrator is integrator.u / integrator.y (local name)",
+   "evidence": "test/test_assembly.jl:1641"
+  },
+  {
+   "id": "L6c-193",
+   "file": "design/log.md",
+   "line": 18154,
+   "kind": "law",
+   "claim": "Both helpers over a child bare on both sides collide on nothing",
+   "evidence": "test/test_assembly.jl:1647"
+  },
+  {
+   "id": "L6c-194",
+   "file": "design/log.md",
+   "line": 18155,
+   "kind": "law",
+   "claim": "prefix = \"\" labels the face u or y",
+   "evidence": "test/test_assembly.jl:1644"
+  },
+  {
+   "id": "L6c-195",
+   "file": "design/log.md",
+   "line": 18157,
+   "kind": "law",
+   "claim": "A bare u_types at a primitive root is the root input u",
+   "evidence": "test/test_assembly.jl:1659"
+  },
+  {
+   "id": "L6c-196",
+   "file": "design/log.md",
+   "line": 18158,
+   "kind": "law",
+   "claim": "That root input is set and read by the name u",
+   "evidence": "test/test_assembly.jl:1662"
+  },
+  {
+   "id": "L6c-197",
+   "file": "design/log.md",
+   "line": 18159,
+   "kind": "law",
+   "claim": "IllegalPortType's :bare_at_root is retired (lead)",
+   "evidence": "src/diagnostics.jl:898"
+  },
+  {
+   "id": "L6c-198",
+   "file": "design/log.md",
+   "line": 18159,
+   "kind": "law",
+   "claim": "Both contracts bare at a primitive root are faces u and y, no collision",
+   "evidence": "test/test_assembly.jl:1661"
+  },
+  {
+   "id": "L6c-199",
+   "file": "design/log.md",
+   "line": 18160,
+   "kind": "law",
+   "claim": "A shared key collides as D-210 rules",
+   "evidence": "test/test_assembly.jl:1665"
+  },
+  {
+   "id": "L6c-200",
+   "file": "design/log.md",
+   "line": 18162,
+   "kind": "law",
+   "claim": "A headless leaf at a bare contract takes the default face as head",
+   "evidence": "src/readers.jl:878"
+  },
+  {
+   "id": "L6c-201",
+   "file": "design/log.md",
+   "line": 18165,
+   "kind": "decl",
+   "claim": "get_output(\"integrator\") and get_output(\"integrator\", \"[2]\")",
+   "evidence": "test/test_readers.jl:634"
+  },
+  {
+   "id": "L6c-202",
+   "file": "design/log.md",
+   "line": 18166,
+   "kind": "decl",
+   "claim": "port(model, path) with the name defaulted, sim and snapshot forms",
+   "evidence": "test/test_readers.jl:643"
+  },
+  {
+   "id": "L6c-203",
+   "file": "design/log.md",
+   "line": 18167,
+   "kind": "decl",
+   "claim": "get_input() and get_face() default leaf to the empty address",
+   "evidence": "src/readers.jl:269"
+  },
+  {
+   "id": "L6c-204",
+   "file": "design/log.md",
+   "line": 18168,
+   "kind": "decl",
+   "claim": "get_face(\"[1,2]\") and get_input(\".field\") reach into the port",
+   "evidence": "test/test_readers.jl:672"
+  },
+  {
+   "id": "L6c-205",
+   "file": "design/log.md",
+   "line": 18170,
+   "kind": "law",
+   "claim": "Headless at a named level or assembly: ReadResolution :port_shape, assembly as :assembly_face",
+   "evidence": "test/test_readers.jl:700"
+  },
+  {
+   "id": "L6c-206",
+   "file": "design/log.md",
+   "line": 18173,
+   "kind": "law",
+   "claim": "A named head against a bare port is the ordinary miss, candidates u or y",
+   "evidence": "test/test_readers.jl:653"
+  },
+  {
+   "id": "L6c-207",
+   "file": "design/log.md",
+   "line": 18174,
+   "kind": "law",
+   "claim": "port with no name at a named output contract throws ArgumentError, snapshot forms too",
+   "evidence": "test/test_readers.jl:665"
+  },
+  {
+   "id": "L6c-208",
+   "file": "design/log.md",
+   "line": 18178,
+   "kind": "law",
+   "claim": "set(; u = 1.0) at a bare level names face u and follows its export chain",
+   "evidence": "test/test_conditions.jl:714"
+  },
+  {
+   "id": "L6c-209",
+   "file": "design/log.md",
+   "line": 18179,
+   "kind": "law",
+   "claim": "set admits a bare u payload and refuses nothing alone",
+   "evidence": "test/test_conditions.jl:745"
+  },
+  {
+   "id": "L6c-210",
+   "file": "design/log.md",
+   "line": 18180,
+   "kind": "law",
+   "claim": "Bare u payload at a named level or assembly: ConditionResolution :port_shape, candidates",
+   "evidence": "test/test_conditions.jl:729"
+  },
+  {
+   "id": "L6c-211",
+   "file": "design/log.md",
+   "line": 18182,
+   "kind": "law",
+   "claim": "A named payload against a bare input is :no_input_face with candidate u",
+   "evidence": "test/test_conditions.jl:729"
+  },
+  {
+   "id": "L6c-212",
+   "file": "design/log.md",
+   "line": 18184,
+   "kind": "law",
+   "claim": "The descriptor spells the face u or y, format version one",
+   "evidence": "test/test_descriptor.jl:702"
+  },
+  {
+   "id": "L6c-213",
+   "file": "design/log.md",
+   "line": 18187,
+   "kind": "mech",
+   "claim": "The renderers print plant/integrator/y",
+   "evidence": "test/test_show.jl:796"
+  },
+  {
+   "id": "L6c-214",
+   "file": "design/log.md",
+   "line": 18188,
+   "kind": "law",
+   "claim": "A bare StopFlag port's requester carries the port name y",
+   "evidence": "test/test_lifecycle.jl:597"
+  },
+  {
+   "id": "L6c-215",
+   "file": "design/log.md",
+   "line": 18189,
+   "kind": "decl",
+   "claim": "The library's single-port blocks keep their bare contracts",
+   "evidence": "src/library.jl:437"
+  }
+ ],
+ "counts": {
+  "law": 120,
+  "decl": 47,
+  "mech": 46,
+  "ex": 2,
+  "ptr": 12,
+  "why": 27
+ },
+ "notes": "Probe: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6c/probe.jl. It ran twice against W and its line numbers are the probe:N evidence. I changed no tracked file. All 30 entries carry Status ratified. Every D-nnn cited in a Position resolves to an entry with a link definition. The chains run D-166 -> D-263, D-271 -> D-276, D-435 -> D-438 and D-436 -> D-437, and each ends at a ratified entry. D-012's in-Position supersession by D-245 is ratified, and so are D-316's superseded entries D-060, D-255 and D-261. Every § link anchor used in log.md resolves to a spec.md heading slug. Policy on renamed identifiers: per log_rules.md rule 2, a renamed spelling with a recorded rename entry is old vocabulary, marked ok with the current name. This covers h_x/h_xu/h_z/h_zu, y_xu/y_z/y_zu and f/g (renamed by D-173/D-195/D-220/D-267), output_types (D-267), fragment's inputs keyword (set's u, log.md:12703), faces(...) (input_passthrough, D-144/D-171), project (x_projection) and Redstone.Blocks (Redstone.Library, D-453). Rules that the code contradicts and a later entry moved are findings of class drift. Four of them are already annotated inside their own entry, and their fix says so: D-100 (log.md:3404), D-137 (log.md:5009), D-237 (log.md:9755) and the D-035 rationale (log.md:1334). The StopRequest port-name finding (L6c-144) contradicts that entry's own 2026-11-12 annotation, which says the rest stands. D-237's 'a mutable type anywhere in a port value' was read as 'anywhere the walk reaches'. A Vector inside an opaque handle is not refused (probe:93), as D-344 and D-237's own rejected alternative intend. Leads: Private, slots, get_slot, UninitializedSlots, RootSlotTypeConflict, stop_on, StopFaceInvalid and bare_at_root are names the entries themselves retire or rule out, and all are ok. SampleTerrainField, SimpleAtmosphere, atmospheric_field, T_sl, p_sl, q_eb and ω_eb_b are placeholders. integrator is a local example name, and unlisted is a rejected alternative absent from src. flag and request are finding L6c-144. Uncounted ptr/why items: the D-131 sweep, the D-140 ladder pointers (spec.md:1558 confirms the ladder) and the D-139 §8.2 pointer (spec.md:3397 confirms it). D-437's statement about the inspector's label is in another repository; I counted it as ptr and did not check it."
+}

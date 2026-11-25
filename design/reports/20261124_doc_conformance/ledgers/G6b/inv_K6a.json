@@ -1,0 +1,720 @@
+{
+ "rows": [
+  {
+   "id": "K6a-011",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 44,
+   "kind": "law",
+   "claim": "`y` gathers the component's own cells, its published ports and locals",
+   "evidence": "src/executor.jl:81 and src/build.jl:1559 give `y` the component's `_ports`, declared ports only. D-034 (design/log.md:1288) makes visibility binary, so no local cell exists.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace \"(its published ports and locals)\" with \"(its declared ports)\".",
+   "note": "spec §8.3 says every cell is a declared port, so the spec agrees with the code."
+  },
+  {
+   "id": "K6a-013",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 48,
+   "kind": "law",
+   "claim": "No cell is in both the `y` and the `u` set",
+   "evidence": "probe:83-85 builds Group((; f = Follower()); local_wires = (\"f/on\" => \"f/go\",)), a stage-1 port wired back to its own input. The build succeeds, so cell f/on is in f's own `y` and in f's `u`.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Replace \"No cell is in both sets.\" with \"A cell is in both sets only when a component's stage-1 port is wired back to its own input; the two gathers then read the same table value.\"",
+   "note": "The conclusion that y and u carry no freshness distinction still holds. Only the absolute claim fails. I found no spec line that forbids a stage-1 self-wire."
+  },
+  {
+   "id": "K6a-069",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 182,
+   "kind": "mech",
+   "claim": "The executor builds each handler's bundle exactly as it builds every other bundle",
+   "evidence": "src/executor.jl:236-242 builds the handler bundle with `gather_input_barrier`, a @noinline wrapper (src/store.jl:100). The stage, RHS and guard bundles gather inline (executor.jl:128-146). Only the update entry shares the handler's barrier.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace \"exactly as it builds every other bundle\" with \"as it builds every other bundle, the update entry's included, with the gather behind a function barrier\".",
+   "note": "Semantics are the same: the gather reads the live table and allocates nothing (probe:80 gives 0). The barrier is an escape-analysis device, recorded in design/reports/20261106_update_entry_escape_analysis/report.md."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K6a-001",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 5,
+   "kind": "law",
+   "claim": "The signal table is written only by sweeps",
+   "evidence": "src/executor.jl:393-396"
+  },
+  {
+   "id": "K6a-002",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 6,
+   "kind": "law",
+   "claim": "A component fires at most one event per round",
+   "evidence": "src/model.jl:759-763"
+  },
+  {
+   "id": "K6a-003",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 12,
+   "kind": "law",
+   "claim": "A handler runs against the world its guard fired on",
+   "evidence": "src/model.jl:746-775"
+  },
+  {
+   "id": "K6a-004",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 13,
+   "kind": "law",
+   "claim": "A transition reaches everyone, itself included, through the next sweep",
+   "evidence": "src/model.jl:773-775"
+  },
+  {
+   "id": "K6a-005",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 19,
+   "kind": "law",
+   "claim": "A cell holds an immutable value; writing replaces it",
+   "evidence": "src/store.jl:88"
+  },
+  {
+   "id": "K6a-006",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 29,
+   "kind": "mech",
+   "claim": "A gather loads the value itself, so a later overwrite cannot reach it",
+   "evidence": "src/store.jl:88-89"
+  },
+  {
+   "id": "K6a-007",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 38,
+   "kind": "mech",
+   "claim": "Every user function is called fn(comp, args) with a NamedTuple bundle",
+   "evidence": "src/executor.jl:128-146"
+  },
+  {
+   "id": "K6a-008",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 39,
+   "kind": "mech",
+   "claim": "Two bundle fields, u and y, are gathers",
+   "evidence": "src/executor.jl:136-138"
+  },
+  {
+   "id": "K6a-009",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 40,
+   "kind": "mech",
+   "claim": "Gathers are compiled loads of cell values into a NamedTuple",
+   "evidence": "src/store.jl:77-86"
+  },
+  {
+   "id": "K6a-010",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 43,
+   "kind": "law",
+   "claim": "`y` gathers the component's own ports",
+   "evidence": "src/executor.jl:80-81"
+  },
+  {
+   "id": "K6a-012",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 45,
+   "kind": "law",
+   "claim": "`u` gathers foreign cells routed through the wiring",
+   "evidence": "src/executor.jl:136"
+  },
+  {
+   "id": "K6a-014",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 49,
+   "kind": "law",
+   "claim": "A component can never see another's state",
+   "evidence": "src/executor.jl:136; `u` holds port cells only"
+  },
+  {
+   "id": "K6a-015",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 50,
+   "kind": "law",
+   "claim": "Within a round y and u read the same table, the round's sweep",
+   "evidence": "src/model.jl:746-775"
+  },
+  {
+   "id": "K6a-016",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 55,
+   "mech": "",
+   "kind": "mech",
+   "claim": "A round re-runs the boundary sweep first",
+   "evidence": "src/model.jl:735,775"
+  },
+  {
+   "id": "K6a-017",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 57,
+   "kind": "mech",
+   "claim": "All guards are evaluated once per round",
+   "evidence": "src/model.jl:746"
+  },
+  {
+   "id": "K6a-018",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 58,
+   "kind": "law",
+   "claim": "Fire the eligible events, at most one per component",
+   "evidence": "src/model.jl:759-763"
+  },
+  {
+   "id": "K6a-019",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 59,
+   "kind": "law",
+   "claim": "Rounds repeat until a round fires nothing",
+   "evidence": "src/model.jl:771"
+  },
+  {
+   "id": "K6a-020",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 61,
+   "kind": "law",
+   "claim": "Each event fires at most firing_budget times per boundary",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "K6a-021",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 62,
+   "kind": "law",
+   "claim": "firing_budget defaults to 4",
+   "evidence": "src/deployment.jl:467; probe:64"
+  },
+  {
+   "id": "K6a-022",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 62,
+   "kind": "law",
+   "claim": "Eligibility is read against the last-observed sample",
+   "evidence": "src/model.jl:748"
+  },
+  {
+   "id": "K6a-023",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 63,
+   "kind": "law",
+   "claim": "Declaration order picks among a component's eligible events",
+   "evidence": "src/build.jl:1594; src/model.jl:759-763; probe:68"
+  },
+  {
+   "id": "K6a-024",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 64,
+   "kind": "mech",
+   "claim": "Firing an event is handler then x_projection",
+   "evidence": "src/executor.jl:393-395"
+  },
+  {
+   "id": "K6a-025",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 66,
+   "kind": "law",
+   "claim": "The table has a single writer, the sweep",
+   "evidence": "src/model.jl:746-775"
+  },
+  {
+   "id": "K6a-026",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 68,
+   "kind": "law",
+   "claim": "A handler returns (; x, m) as immutable values",
+   "evidence": "src/executor.jl:400-406"
+  },
+  {
+   "id": "K6a-027",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 69,
+   "kind": "mech",
+   "claim": "The framework latches the return right after the handler returns",
+   "evidence": "src/executor.jl:394"
+  },
+  {
+   "id": "K6a-028",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 70,
+   "kind": "mech",
+   "claim": "The latch precedes x_projection",
+   "evidence": "src/executor.jl:394-395"
+  },
+  {
+   "id": "K6a-029",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 70,
+   "kind": "law",
+   "claim": "Latching writes stores, not cells",
+   "evidence": "src/executor.jl:402-406"
+  },
+  {
+   "id": "K6a-030",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 71,
+   "kind": "mech",
+   "claim": "x_projection normalizes the latched stores",
+   "evidence": "src/executor.jl:457-463"
+  },
+  {
+   "id": "K6a-031",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 72,
+   "kind": "mech",
+   "claim": "The next sweep's y_state reads the latched stores",
+   "evidence": "probe:61 (bus 0.0 after the trip)"
+  },
+  {
+   "id": "K6a-032",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 73,
+   "kind": "law",
+   "claim": "Nothing writes the table between a round's sweep and the next",
+   "evidence": "src/model.jl:746-775"
+  },
+  {
+   "id": "K6a-033",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 77,
+   "kind": "law",
+   "claim": "The set of cells that can change within a round is empty",
+   "evidence": "probe:61 (v_at_capture 24.0)"
+  },
+  {
+   "id": "K6a-034",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 85,
+   "kind": "law",
+   "claim": "Declaration order orders events only within one component",
+   "evidence": "src/model.jl:759-763"
+  },
+  {
+   "id": "K6a-035",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 86,
+   "kind": "mech",
+   "claim": "Cross-component order falls to the executor's component order",
+   "evidence": "src/build.jl:1575-1577"
+  },
+  {
+   "id": "K6a-036",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 93,
+   "kind": "law",
+   "claim": "No freezing, pre-materialization or copy exists mid-round",
+   "evidence": "src/model.jl:746-775"
+  },
+  {
+   "id": "K6a-037",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 95,
+   "kind": "law",
+   "claim": "Swapping A and B's execution order changes nothing observable",
+   "evidence": "probe:61 (orders ba and ab give equal modes)"
+  },
+  {
+   "id": "K6a-038",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 96,
+   "kind": "mech",
+   "claim": "Canonical order is executor component order, then declaration order",
+   "evidence": "src/build.jl:1575-1577,1594"
+  },
+  {
+   "id": "K6a-039",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 98,
+   "kind": "mech",
+   "claim": "The execution cursor names the event round and the component",
+   "evidence": "src/model.jl:736,774; src/executor.jl:393"
+  },
+  {
+   "id": "K6a-040",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 108,
+   "kind": "ex",
+   "claim": "y_state(b::Battery, (; m)) returns (; bus_voltage = ...)",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "K6a-041",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 109,
+   "kind": "ex",
+   "claim": "A guard reads the wired load current through u",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "K6a-042",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 110,
+   "kind": "ex",
+   "claim": "A handler returns (; m = (; m..., tripped = true))",
+   "evidence": "probe:35-38"
+  },
+  {
+   "id": "K6a-043",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 113,
+   "kind": "law",
+   "claim": "A Bool guard is non-localized",
+   "evidence": "src/build.jl:1287; probe:76"
+  },
+  {
+   "id": "K6a-044",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 114,
+   "kind": "ex",
+   "claim": "handler_cap(a, (; m, u)) latches v_at_capture",
+   "evidence": "probe:47-50"
+  },
+  {
+   "id": "K6a-045",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 118,
+   "kind": "mech",
+   "claim": "avionics u.bus_voltage is wired from the battery's port",
+   "evidence": "probe:52"
+  },
+  {
+   "id": "K6a-046",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 125,
+   "kind": "law",
+   "claim": "Round 1 sweep leaves bus_voltage at 24.0",
+   "evidence": "probe:61"
+  },
+  {
+   "id": "K6a-047",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 127,
+   "kind": "law",
+   "claim": "Both guards holding with priors not holding fire both events",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6a-048",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 128,
+   "kind": "law",
+   "claim": "Events of different components both fire in one round",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6a-049",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 130,
+   "kind": "law",
+   "claim": "Which of the two fires first does not matter",
+   "evidence": "probe:61"
+  },
+  {
+   "id": "K6a-050",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 131,
+   "kind": "mech",
+   "claim": "The framework latches the mode store, then x_projection normalizes",
+   "evidence": "src/executor.jl:393-395"
+  },
+  {
+   "id": "K6a-051",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 132,
+   "kind": "law",
+   "claim": "The table is untouched; bus_voltage still holds 24.0",
+   "evidence": "probe:61"
+  },
+  {
+   "id": "K6a-052",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 134,
+   "kind": "mech",
+   "claim": "handler_cap reads 24.0 from the round-1 table",
+   "evidence": "probe:61"
+  },
+  {
+   "id": "K6a-053",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 139,
+   "kind": "mech",
+   "claim": "Round 2 is a full re-sweep",
+   "evidence": "src/model.jl:775"
+  },
+  {
+   "id": "K6a-054",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 140,
+   "kind": "mech",
+   "claim": "y_state sees tripped = true and bus_voltage 0.0 propagates",
+   "evidence": "probe:61"
+  },
+  {
+   "id": "K6a-055",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 141,
+   "kind": "law",
+   "claim": "A newly enabled low-voltage guard fires in round 2 seeing 0.0",
+   "evidence": "probe:61 (v_low = 0.0)"
+  },
+  {
+   "id": "K6a-056",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 143,
+   "kind": "law",
+   "claim": "A cascade takes one round per causal link",
+   "evidence": "test/test_events.jl:306-309"
+  },
+  {
+   "id": "K6a-057",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 146,
+   "kind": "law",
+   "claim": "Round 3 re-sweeps, fires nothing and reaches quiescence",
+   "evidence": "probe:60 (three runtime guard calls)"
+  },
+  {
+   "id": "K6a-058",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 146,
+   "kind": "mech",
+   "claim": "Due s_update calls then publication follow quiescence",
+   "evidence": "src/model.jl:655-657"
+  },
+  {
+   "id": "K6a-059",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 154,
+   "kind": "law",
+   "claim": "With both guards holding only A1 fires in round 1",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K6a-060",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 155,
+   "kind": "law",
+   "claim": "A2 is blocked, not lost, and is re-decided next round",
+   "evidence": "src/model.jl:767-768"
+  },
+  {
+   "id": "K6a-061",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 156,
+   "kind": "law",
+   "claim": "A2 fires in round 2 if its premise still holds",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K6a-062",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 158,
+   "kind": "law",
+   "claim": "A falsified premise means A2 does not fire",
+   "evidence": "probe:70"
+  },
+  {
+   "id": "K6a-063",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 160,
+   "kind": "law",
+   "claim": "Declaration order is a priority with re-decision",
+   "evidence": "src/model.jl:723-724"
+  },
+  {
+   "id": "K6a-064",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 166,
+   "kind": "law",
+   "claim": "Own y, foreign u, x and m all come from the firing round's sweep",
+   "evidence": "src/executor.jl:393-395; src/model.jl:746"
+  },
+  {
+   "id": "K6a-065",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 168,
+   "kind": "law",
+   "claim": "y = h(x) holds at every handler entry",
+   "evidence": "src/model.jl:773-775"
+  },
+  {
+   "id": "K6a-066",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 171,
+   "kind": "law",
+   "claim": "State stores are written only by the component's own handlers in a round",
+   "evidence": "src/executor.jl:393-395"
+  },
+  {
+   "id": "K6a-067",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 180,
+   "kind": "mech",
+   "claim": "Nothing is materialized, staged, carried or copied early",
+   "evidence": "src/model.jl:746-775"
+  },
+  {
+   "id": "K6a-068",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 181,
+   "kind": "mech",
+   "claim": "The handler's bundle is built at dispatch from the live table",
+   "evidence": "src/executor.jl:394"
+  },
+  {
+   "id": "K6a-070",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 183,
+   "kind": "law",
+   "claim": "No shadow table, no allocation",
+   "evidence": "probe:80 (boundary! allocates 0)"
+  },
+  {
+   "id": "K6a-071",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 184,
+   "kind": "law",
+   "claim": "A serialized same-component event costs one extra round",
+   "evidence": "src/model.jl:759-775"
+  },
+  {
+   "id": "K6a-072",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 204,
+   "kind": "law",
+   "claim": "A handler cannot see a same-round foreign transition",
+   "evidence": "src/model.jl:746-775"
+  },
+  {
+   "id": "K6a-073",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 205,
+   "kind": "law",
+   "claim": "Same-instant coupling is a cascade, one round per link",
+   "evidence": "test/test_events.jl:306-309"
+  },
+  {
+   "id": "K6a-074",
+   "file": "design/companions/event_visibility_walkthrough.md",
+   "line": 208,
+   "kind": "law",
+   "claim": "Two FSMs in one component run as priority with re-decision across rounds",
+   "evidence": "probe:68-70"
+  },
+  {
+   "id": "K6a-075",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 19,
+   "kind": "law",
+   "claim": "Exactly two output stages remain",
+   "evidence": "src/build.jl:1531-1545"
+  },
+  {
+   "id": "K6a-076",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 21,
+   "kind": "mech",
+   "claim": "x_deriv receives the fresh signal table, own outputs included",
+   "evidence": "src/executor.jl:80-81; src/model.jl:617-621"
+  },
+  {
+   "id": "K6a-077",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 22,
+   "kind": "mech",
+   "claim": "s_update receives the fresh signal table",
+   "evidence": "src/executor.jl:88-91"
+  },
+  {
+   "id": "K6a-078",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 28,
+   "kind": "law",
+   "claim": "A port's publicity is a declaration",
+   "evidence": "src/build.jl:131"
+  },
+  {
+   "id": "K6a-079",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 31,
+   "kind": "law",
+   "claim": "A function receives zero-copy views of the stores it reads",
+   "evidence": "src/executor.jl:128-146; probe:76"
+  },
+  {
+   "id": "K6a-080",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 33,
+   "kind": "mech",
+   "claim": "The stage-1 decoder is now y_state",
+   "evidence": "test/fixtures.jl:410"
+  },
+  {
+   "id": "K6a-081",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 34,
+   "kind": "law",
+   "claim": "The decoder is no longer the sole state gate",
+   "evidence": "src/executor.jl:133"
+  },
+  {
+   "id": "K6a-082",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 34,
+   "kind": "law",
+   "claim": "y_state is the no-feedthrough stage",
+   "evidence": "src/build.jl:1531"
+  },
+  {
+   "id": "K6a-083",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 46,
+   "kind": "mech",
+   "claim": "A fused sweep feeds the signal-consuming x_deriv",
+   "evidence": "src/model.jl:617-621"
+  },
+  {
+   "id": "K6a-084",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 47,
+   "kind": "law",
+   "claim": "The formulation is cache-free",
+   "evidence": "src/executor.jl:80-81"
+  },
+  {
+   "id": "K6a-085",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 49,
+   "kind": "mech",
+   "claim": "The design adds checked ordering",
+   "evidence": "src/build.jl:1531-1545"
+  },
+  {
+   "id": "K6a-086",
+   "file": "design/companions/fused_evaluation_lineage.md",
+   "line": 54,
+   "kind": "law",
+   "claim": "The computer/integrator split is expressible without framework support",
+   "evidence": "test/fixtures.jl:41-46"
+  }
+ ],
+ "counts": {
+  "law": 54,
+  "mech": 28,
+  "decl": 0,
+  "ex": 5,
+  "ptr": 8,
+  "why": 26,
+  "cite": 0,
+  "surface": 0,
+  "docstring": 0,
+  "map": 0,
+  "decl_": 0
+ }
+}

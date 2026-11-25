@@ -1,0 +1,56 @@
+[defined local_types] false
+[defined localize] false
+[defined init_x] false
+[defined init_s] false
+[defined init_m] false
+[defined init_workspace] false
+[defined input_types] false
+[defined output_types] false
+[defined state_derivative] false
+[defined state_update] false
+[defined state_projection] false
+[defined output_state] false
+[defined output_direct] false
+[defined h_x] false
+[defined h_s] false
+[defined h_xu] false
+[defined h_su] false
+[defined TierSignatureMismatch] false
+[defined StopFaceInvalid] false
+[defined inner_wires] false
+[defined u_connections] false
+[defined y_connections] false
+[defined input_connections] false
+[defined output_connections] false
+[defined child_connections] false
+[defined inner_connections] false
+[defined s_init] true
+[defined x_init] true
+[defined sample_times] true
+[defined input_passthrough] true
+[defined output_passthrough] true
+[defined local_wires] true
+[defined input_wires] true
+[defined output_wires] true
+[defined EmptyStore] true
+[defined DeclarationOnWrongTier] true
+[default names] (:x, :s, :m)
+[DOWT arms] (:path, :declaration, :reason, :found, :announced, :entry)
+[wrapper leaf] Tuple{DataType, Symbol}[(IllegalStateLeaf, :wrapper)]
+[(;) store] Tuple{DataType, Symbol}[(EmptyStore, :x_init)]
+[nothing store builds] true
+[Pinned on discrete] Tuple{DataType, Symbol, Symbol, Symbol}[(DeclarationOnWrongTier, :pinned_entry, :u_types, :u)]
+[discrete + x_init] Tuple{DataType, Symbol, Symbol}[(DeclarationOnWrongTier, :x_init, :tier_form)]
+[discrete ws_init scalars] Any[Float64]
+[face collision] Tuple{DataType, Vector{String}, Symbol}[(FaceNameCollision, ["q"], :assembly)]
+[branch shape] (StepError{ConformanceFailure}, (:field_set, [:a], 0.05, 4))
+[bare return port] 3.0
+[headless get_state on bare store] [0.0;;]
+[x_init(Integrator()) typeof] Float64
+[bare Int x_init] Tuple{DataType, Symbol, Symbol}[(IllegalStateLeaf, :x, :mode_value)]
+[named head vs bare] Tuple{DataType, ReadResolution}[(ReadResolution, ReadResolution(:q, "get_state(\"c\", \"foo\")", "", :undeclared, "c", :foo, "foo", "", :state_field, nothing, [:x], nothing))]
+[shaped p=0.03 r=0.1] (4.0, 4.0, 10.0)
+[shaped p=0.001 r=0.1] (10.0, 100.0, 10.0)
+[shaped p=0.001 r=0.035] (3.0, 35.0, 3.0)
+[shaped p=1.0 r=0.1] (2.0, 2.0, 10.0)
+[shaped p=0.02 r=0.07] (4.0, 4.0, 7.0)

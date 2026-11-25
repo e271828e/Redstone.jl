@@ -1,0 +1,57 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-001: 482-498
+D-002: 499-513
+D-018: 833-860
+D-019: 861-906
+D-020: 907-933
+D-022: 960-980
+D-053: 1809-1840
+D-080: 2759-2777
+D-082: 2813-2854
+D-101: 3420-3473
+D-121: 4155-4191
+D-141: 5292-5385
+D-179: 7149-7182
+D-180: 7183-7206
+D-220: 8908-9015
+D-231: 9449-9508
+D-361: 15399-15420
+D-365: 15541-15576
+D-444: 18657-18708
+D-445: 18709-18779
+D-446: 18780-18815
+D-448: 18869-18890
+D-449: 18891-18981
+D-450: 18982-19044
+D-454: 19293-19342
+D-455: 19343-19392
+D-456: 19393-19439
+D-457: 19440-19495
+D-458: 19496-19560
+D-460: 19727-19838
+
+# Stage M leads
+names missing: `PIVector` at log.md:5303 (D-141)
+names missing: `downward` at log.md:7187 (D-180)
+names missing: `h_s` at log.md:8917 (D-220)
+names missing: `h_su` at log.md:8917 (D-220)
+names missing: `h_x` at log.md:8917 (D-220)
+names missing: `h_xu` at log.md:8917 (D-220)
+names missing: `init_m` at log.md:8927 (D-220)
+names missing: `init_m` at log.md:9455 (D-231)
+names missing: `init_s` at log.md:8926 (D-220)
+names missing: `init_s` at log.md:9455 (D-231)
+names missing: `init_workspace` at log.md:8921 (D-220)
+names missing: `init_x` at log.md:5305 (D-141)
+names missing: `init_x` at log.md:8926 (D-220)
+names missing: `input_types` at log.md:8927 (D-220)
+names missing: `localize` at log.md:7155 (D-179)
+names missing: `output_direct` at log.md:8917 (D-220)
+names missing: `output_state` at log.md:8917 (D-220)
+names missing: `output_types` at log.md:8927 (D-220)
+names missing: `state_derivative` at log.md:8916 (D-220)
+names missing: `state_projection` at log.md:8919 (D-220)
+names missing: `state_update` at log.md:8916 (D-220)
+names missing: `strut.wow` at log.md:5307 (D-141)
+names test-only: `both` at log.md:7187 (D-180)
+names test-only: `upward` at log.md:7187 (D-180)

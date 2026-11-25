@@ -1,0 +1,974 @@
+{
+ "rows": [
+  {
+   "id": "K6c-019",
+   "file": "design/companions/linear_systems.md",
+   "line": 113,
+   "kind": "decl",
+   "claim": "The two arms are `y_state(c::AbstractLinearSystem{false}, (; x)) = C x` and `y_direct(c::AbstractLinearSystem{true}, (; x, u)) = C x + D u`",
+   "evidence": "src/library.jl:1054-1058 reads `as_port(realization(c).C * x)` and `as_port(C * x + D * as_vector(u))`; a scalar `u` is a Float64 and `D * u` on a 1x1 SMatrix would not return the scalar port",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Write the arms as `y_state(c::AbstractLinearSystem{false}, (; x)) = as_port(C * x)` and `y_direct(c::AbstractLinearSystem{true}, (; x, u)) = as_port(C * x + D * as_vector(u))`, or say the listing leaves out the edge conversions of section 4.",
+   "note": "Section 4 of the same companion (lines 130-133) states the as_vector/as_port edges, so the listing is a sketch that disagrees with it."
+  },
+  {
+   "id": "K6c-022",
+   "file": "design/companions/linear_systems.md",
+   "line": 125,
+   "kind": "law",
+   "claim": "When NU and NY are both one the ports are scalars, otherwise they are `SVector{NU}` and `SVector{NY}`",
+   "evidence": "src/library.jl:1041,1048-1049: each port is typed by its own width through `port_type`, so NU=2, NY=1 gives `u` an SVector{2} and `y` a Float64; probe:39 printed (Float64, SVector{2}, SVector{2}, Float64, Float64, SVector{2}), last item the NU=2, NY=1 case u SVector{2}, y Float64; test/test_library.jl:1798-1799",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Say each port is a scalar when its width is one and an `SVector` of its width otherwise, decided per port from the matrix shapes at construction.",
+   "note": "The companion's own list at line 199-200 says only `scalar or SVector for state space`."
+  },
+  {
+   "id": "K6c-045",
+   "file": "design/companions/linear_systems.md",
+   "line": 221,
+   "kind": "decl",
+   "claim": "The supertype arms read `x_deriv ... s.A * x + s.B * u`, `realization(c).C * x`, `s.C * x + s.D * u`",
+   "evidence": "src/library.jl:1050-1058 destructure `(; A, B) = realization(c)` and use `B * as_vector(u)`, `as_port(...)` on both outputs",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace the three bodies by the code's: `A * x + B * as_vector(u)`, `as_port(realization(c).C * x)`, `as_port(C * x + D * as_vector(u))`, or mark the listing as a sketch.",
+   "note": "Same defect as K6c-019. The accessor lines 218-219 match src/library.jl:1142 and 1296."
+  },
+  {
+   "id": "K6c-064",
+   "file": "design/companions/linear_systems.md",
+   "line": 298,
+   "kind": "law",
+   "claim": "Transfer function and FirstOrderLag outputs at t = 1 are equal to the last bit, `0.8646647163964265`",
+   "evidence": "probe:61 prints both outputs as 0.8646647163964266 (equal to each other, state 0.4323323581982133 is half the lag's 0.8646647163964266)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Print `0.8646647163964266`, or drop the digits and keep 'equal to the last bit'.",
+   "note": "Equality and the half state hold. Only the printed last digit differs, probably from the stepper or Julia version (probe ran 1.13.3)."
+  },
+  {
+   "id": "K6c-072",
+   "file": "design/companions/linear_systems.md",
+   "line": 306,
+   "kind": "mech",
+   "claim": "`step!` over 0.1 s with abstract `SMatrix{N, N, Float64}` fields allocates 19,088 B scalar and 25,328 B two-by-two",
+   "evidence": "Not reproducible: src/library.jl:1111-1116 and 1273-1277 carry the length parameters, so the abstract-field prototype no longer exists",
+   "verdict": "unverifiable",
+   "note": "Historical prototype figures from the tree at 0571605. Nothing in W builds the abstract-field variant."
+  },
+  {
+   "id": "K6c-073",
+   "file": "design/companions/linear_systems.md",
+   "line": 307,
+   "kind": "mech",
+   "claim": "With length parameters, `step!` over 0.1 s allocates scalar 8,208 B and two-by-two 8,368 B, equal to the scalar and vector lags",
+   "evidence": "probe:96-101 measured, same call: scalar FirstOrderLag 52,032 B, vector lag 52,992 B, scalar StateSpace 52,032 B, two-by-two StateSpace 52,992 B",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "State the equality (the linear systems match the lags byte for byte at each shape) and either drop the absolute byte counts or restate them as 52,032 B scalar and 52,992 B two-by-two for the current tree.",
+   "note": "The relation in the claim holds, the absolute figures do not."
+  },
+  {
+   "id": "K6c-074",
+   "file": "design/companions/linear_systems.md",
+   "line": 308,
+   "kind": "mech",
+   "claim": "`step!` over 0.1 s, the transfer functions through `AbstractLinearSystem{FT}`: lag form and lead-lag 8,208 B, equal to the scalar lag",
+   "evidence": "probe:96,98,99 measured scalar lag, lag form and lead-lag all at 52,032 B",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Say lag form and lead-lag equal the scalar lag, and drop or restate the 8,208 B figure as 52,032 B.",
+   "note": "Equality holds, the figure is stale."
+  },
+  {
+   "id": "K6c-088",
+   "file": "design/companions/linear_systems.md",
+   "line": 362,
+   "kind": "law",
+   "claim": "A declared period would need a hook that `sample_times` deliberately denies instances (D-042)",
+   "evidence": "design/log.md D-042 is `rates` declaration on immediate children only and rejects instance wrappers; spec.md:3835 `sample_times(g::Group)` is an instance-level accessor and spec.md:3883 (D-473) says `sample_times` takes no function",
+   "verdict": "unverifiable",
+   "note": "Cannot tell what 'denies instances' maps to. D-042 rejects per-instance ratio wrappers, not an instance hook. A verifier should rule whether the citation should be D-473 or the wording narrowed."
+  },
+  {
+   "id": "K6c-103",
+   "file": "design/companions/linear_systems.md",
+   "line": 400,
+   "kind": "ptr",
+   "claim": "The IMU sampler of [§8.7][s8-7] divides by `Δt` every tick",
+   "evidence": "spec.md:4232-4237 is `y_direct(smp::IMUSampler, (; s, u, Δt))` with `ϑ_c / Δt`, inside §8.6 (heading at spec.md:3912, §8.7 starts at spec.md:4333)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Cite [§8.6][s8-6] for the IMU sampler, or cite both with §8.7 for how `Δt` reaches the stages; re-run linkify.jl so the s8-6 definition is generated.",
+   "note": "The IMU assembly is worked in §8.6 (spec.md:868 says so). §8.7 only refers back."
+  },
+  {
+   "id": "K6c-105",
+   "file": "design/companions/linear_systems.md",
+   "line": 402,
+   "kind": "mech",
+   "claim": "A static `exp` takes about 41 ns at 4x4 and 125 ns at 5x5 on Julia 1.13.1",
+   "evidence": "probe:159 measured about 99 ns at 4x4 and 141 ns at 5x5 on Julia 1.13.3, 0 bytes at every size 2 to 5",
+   "verdict": "unverifiable",
+   "note": "Timing is machine and version dependent. The zero allocation half is ok at K6c-104. The 4x4 figure differs by 2.4x on this machine."
+  },
+  {
+   "id": "K6c-106",
+   "file": "design/companions/linear_systems.md",
+   "line": 403,
+   "kind": "mech",
+   "claim": "A tick's publication already allocates hundreds of bytes",
+   "evidence": "No probe isolates a discrete tick's publication allocation. probe:96 measures a continuous 0.1 s step only",
+   "verdict": "unverifiable",
+   "note": "The discrete publication cost was not measured."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K6c-001",
+   "file": "design/companions/linear_systems.md",
+   "line": 8,
+   "kind": "ptr",
+   "claim": "Lead `LinearSystem`: historical inventory row name, split into two components",
+   "evidence": "no `LinearSystem` in src/library.jl; StateSpace at src/library.jl:1111 and TransferFunction at 1273"
+  },
+  {
+   "id": "K6c-002",
+   "file": "design/companions/linear_systems.md",
+   "line": 14,
+   "kind": "ptr",
+   "claim": "Lead `LinearSystem`: the inventory's candidate name, past tense",
+   "evidence": "historical, same as K6c-001"
+  },
+  {
+   "id": "K6c-003",
+   "file": "design/companions/linear_systems.md",
+   "line": 52,
+   "kind": "law",
+   "claim": "A transfer function is realizable only when numerator degree is at most the denominator's",
+   "evidence": "src/library.jl:1286-1287; probe:51 (ArgumentError for num longer than den)"
+  },
+  {
+   "id": "K6c-004",
+   "file": "design/companions/linear_systems.md",
+   "line": 54,
+   "kind": "mech",
+   "claim": "Equal degrees split off D = b_n and the rest numerator becomes b_i - b_n a_i",
+   "evidence": "src/library.jl:1155-1157; probe:26 (num (2,1,3), den (4,2,7) gives D=0.5, C=[-0.125 0])"
+  },
+  {
+   "id": "K6c-005",
+   "file": "design/companions/linear_systems.md",
+   "line": 55,
+   "kind": "ex",
+   "claim": "Leads `b_n`, `a_i`, `b_i`, `_i`: math symbols of the coefficient formulas, no code names",
+   "evidence": "placeholders; the code names are den_tail, num_tail, direct at src/library.jl:1155-1157"
+  },
+  {
+   "id": "K6c-006",
+   "file": "design/companions/linear_systems.md",
+   "line": 56,
+   "kind": "mech",
+   "claim": "The realization is the controllable canonical form, states in a chain",
+   "evidence": "src/library.jl:1163-1166; probe:25 (A has ones on the superdiagonal, last row -a)"
+  },
+  {
+   "id": "K6c-007",
+   "file": "design/companions/linear_systems.md",
+   "line": 60,
+   "kind": "decl",
+   "claim": "A last row -a_0..-a_{n-1}, B = e_n, C = [b~_0 ... b~_{n-1}], D = b_n",
+   "evidence": "probe:25 (n=3: A last row [-4 -3 -2], B=[0 0 1], C=[1.5 1 0.5]); src/library.jl:1163-1166"
+  },
+  {
+   "id": "K6c-008",
+   "file": "design/companions/linear_systems.md",
+   "line": 67,
+   "kind": "mech",
+   "claim": "Coefficients are given highest power first, and the helper is a dozen lines",
+   "evidence": "src/library.jl:1152-1167 `realize(num, den)`, docstring 1145-1150"
+  },
+  {
+   "id": "K6c-009",
+   "file": "design/companions/linear_systems.md",
+   "line": 70,
+   "kind": "ex",
+   "claim": "The `realize` listing pads, makes den monic, splits d, builds A, B, C, D as SMatrix and returns a NamedTuple",
+   "evidence": "src/library.jl:1152-1167 (same steps; Float64 element type added)"
+  },
+  {
+   "id": "K6c-010",
+   "file": "design/companions/linear_systems.md",
+   "line": 85,
+   "kind": "ex",
+   "claim": "The lag 1/(tau s + 1) realizes to A = -1/tau, B = 1, C = 1/tau, D = 0",
+   "evidence": "probe:21 (tau = 0.5 gives A=-2, B=1, C=2, D=0)"
+  },
+  {
+   "id": "K6c-011",
+   "file": "design/companions/linear_systems.md",
+   "line": 86,
+   "kind": "mech",
+   "claim": "That realization is FirstOrderLag with its state scaled by tau",
+   "evidence": "probe:61 (tf state 0.4323323581982133 = 0.5 * lag state 0.8646647163964266)"
+  },
+  {
+   "id": "K6c-012",
+   "file": "design/companions/linear_systems.md",
+   "line": 87,
+   "kind": "ex",
+   "claim": "The lead-lag (s+2)/(s+5) realizes to A=-5, B=1, C=-3, D=1",
+   "evidence": "probe:21; test/test_library.jl:1827"
+  },
+  {
+   "id": "K6c-013",
+   "file": "design/companions/linear_systems.md",
+   "line": 89,
+   "kind": "ex",
+   "claim": "w^2/(s^2 + 2 zeta w s + w^2) realizes to A=[0 1; -w^2 -2 zeta w], B=[0;1], C=[w^2 0], D=0",
+   "evidence": "probe:24 (w=3, zeta=0.4: A=[0 1; -9 -2.4], C=[9 0])"
+  },
+  {
+   "id": "K6c-014",
+   "file": "design/companions/linear_systems.md",
+   "line": 100,
+   "kind": "law",
+   "claim": "An output computed as h(x) comes from y_state, h(x,u) from y_direct, and the stage's name is the feedthrough declaration",
+   "evidence": "spec.md:1318-1322"
+  },
+  {
+   "id": "K6c-015",
+   "file": "design/companions/linear_systems.md",
+   "line": 103,
+   "kind": "law",
+   "claim": "D = 0 publishes y from stage 1 and breaks algebraic loops as the lag does",
+   "evidence": "probe:35 (y_state present, y_direct absent), probe:30 and probe:32 (loops build)"
+  },
+  {
+   "id": "K6c-016",
+   "file": "design/companions/linear_systems.md",
+   "line": 104,
+   "kind": "law",
+   "claim": "D nonzero publishes from stage 2 and cannot close a loop on itself through a memoryless path",
+   "evidence": "probe:35, probe:31 and probe:33 (AlgebraicCycle real)"
+  },
+  {
+   "id": "K6c-017",
+   "file": "design/companions/linear_systems.md",
+   "line": 107,
+   "kind": "mech",
+   "claim": "Stage methods dispatch on the type and the build detects a stage by the methods on the type",
+   "evidence": "src/build.jl:72,207 (`has_stage`); src/library.jl:1054-1055"
+  },
+  {
+   "id": "K6c-018",
+   "file": "design/companions/linear_systems.md",
+   "line": 109,
+   "kind": "mech",
+   "claim": "The constructor sets FT from iszero(D) for matrices and from the degrees for a transfer function",
+   "evidence": "src/library.jl:1117-1119 (`!iszero(D)`), 1293-1294; test/test_library.jl:1837 (leading zero in num is strictly proper)"
+  },
+  {
+   "id": "K6c-020",
+   "file": "design/companions/linear_systems.md",
+   "line": 117,
+   "kind": "mech",
+   "claim": "x_deriv is one method over both component types",
+   "evidence": "src/library.jl:1050; probe:37 (one x_deriv method on AbstractLinearSystem)"
+  },
+  {
+   "id": "K6c-021",
+   "file": "design/companions/linear_systems.md",
+   "line": 118,
+   "kind": "law",
+   "claim": "Scalar D=0 in a unit-feedback loop through a difference junction builds, D=1 is AlgebraicCycle classified :real",
+   "evidence": "probe:30,31; test/test_library.jl:1803-1806"
+  },
+  {
+   "id": "K6c-023",
+   "file": "design/companions/linear_systems.md",
+   "line": 127,
+   "kind": "mech",
+   "claim": "Port widths are decided from the matrix shapes at construction",
+   "evidence": "src/library.jl:1048-1049"
+  },
+  {
+   "id": "K6c-024",
+   "file": "design/companions/linear_systems.md",
+   "line": 128,
+   "kind": "mech",
+   "claim": "Matrices are stored at full shape and the bodies always do matrix products",
+   "evidence": "src/library.jl:1112-1115, 1050-1058; probe:40"
+  },
+  {
+   "id": "K6c-025",
+   "file": "design/companions/linear_systems.md",
+   "line": 130,
+   "kind": "mech",
+   "claim": "A scalar input is lifted by as_vector, a one-element result read by as_port, port_type names the port per width",
+   "evidence": "src/library.jl:1041-1045"
+  },
+  {
+   "id": "K6c-026",
+   "file": "design/companions/linear_systems.md",
+   "line": 133,
+   "kind": "mech",
+   "claim": "The state is an SVector at every size, a one-state component's state is a one-element vector",
+   "evidence": "src/library.jl:1116; probe:41 (x_init is a vector of length 1)"
+  },
+  {
+   "id": "K6c-027",
+   "file": "design/companions/linear_systems.md",
+   "line": 135,
+   "kind": "mech",
+   "claim": "A one-state component's state is tapped as \"[1]\", the headless spelling of its field x",
+   "evidence": "probe:71 (lead-lag linearizes with get_state(\"c\", \"[1]\")); test/test_library.jl:1858; spec.md:2809"
+  },
+  {
+   "id": "K6c-028",
+   "file": "design/companions/linear_systems.md",
+   "line": 136,
+   "kind": "mech",
+   "claim": "The scalar linearization's tap `:q` is refused",
+   "evidence": "probe:72 (ReadResolution)"
+  },
+  {
+   "id": "K6c-029",
+   "file": "design/companions/linear_systems.md",
+   "line": 140,
+   "kind": "decl",
+   "claim": "Matrix fields carry a length parameter, so every field is concretely typed",
+   "evidence": "src/library.jl:1111-1116 (`SMatrix{NX, NX, Float64, LA}`); probe:42 (all four types concrete)"
+  },
+  {
+   "id": "K6c-030",
+   "file": "design/companions/linear_systems.md",
+   "line": 146,
+   "kind": "mech",
+   "claim": "The linear systems' steps match the lag's byte for byte at every shape probed",
+   "evidence": "probe:96-101 (scalar 52,032 = 52,032, two-by-two 52,992 = vector lag 52,992)"
+  },
+  {
+   "id": "K6c-031",
+   "file": "design/companions/linear_systems.md",
+   "line": 154,
+   "kind": "decl",
+   "claim": "StateSpace takes x0 in the user's coordinates",
+   "evidence": "src/library.jl:1109-1110, 1136; probe:65 (x0 = 1 gives output 2 = C x0)"
+  },
+  {
+   "id": "K6c-032",
+   "file": "design/companions/linear_systems.md",
+   "line": 155,
+   "kind": "decl",
+   "claim": "TransferFunction takes no x0",
+   "evidence": "src/library.jl:1279-1280; probe:43 (MethodError)"
+  },
+  {
+   "id": "K6c-033",
+   "file": "design/companions/linear_systems.md",
+   "line": 159,
+   "kind": "ex",
+   "claim": "FirstOrderLag(x0=1) starts at output one, the realized 1/(tau s+1) with x0 = 1 at 1/tau",
+   "evidence": "probe:65 (lag 1.0; StateSpace A=-2, C=2, x0=1 gives 2.0)"
+  },
+  {
+   "id": "K6c-034",
+   "file": "design/companions/linear_systems.md",
+   "line": 162,
+   "kind": "law",
+   "claim": "Rest (zero state) is the default start",
+   "evidence": "src/library.jl:1279-1280, 1293 (u0 = 0.0 gives zero state)"
+  },
+  {
+   "id": "K6c-035",
+   "file": "design/companions/linear_systems.md",
+   "line": 167,
+   "kind": "law",
+   "claim": "With u0, q0 = -A^-1 B u0 and the output starts at G(0) u0",
+   "evidence": "src/library.jl:1292-1293; probe:47 (G=(2s+1)/(s^2+3s+2), u0=2 gives y=1.0=G(0)u0); probe:68 (3.0)"
+  },
+  {
+   "id": "K6c-036",
+   "file": "design/companions/linear_systems.md",
+   "line": 169,
+   "kind": "mech",
+   "claim": "The component takes u0, solves once at construction, and offers no x0",
+   "evidence": "src/library.jl:1279-1294; probe:43"
+  },
+  {
+   "id": "K6c-037",
+   "file": "design/companions/linear_systems.md",
+   "line": 170,
+   "kind": "mech",
+   "claim": "The solved state is visible only inside the held realization, which the default show prints with the coefficients",
+   "evidence": "src/library.jl:1273-1277 (fields num, den, realization), no custom show method for it in src/ (rg)"
+  },
+  {
+   "id": "K6c-038",
+   "file": "design/companions/linear_systems.md",
+   "line": 174,
+   "kind": "law",
+   "claim": "The solve needs A invertible and a nonzero u0 over a pole at the origin is refused explicitly",
+   "evidence": "src/library.jl:1289-1290; probe:49,52 (ArgumentError)"
+  },
+  {
+   "id": "K6c-039",
+   "file": "design/companions/linear_systems.md",
+   "line": 175,
+   "kind": "mech",
+   "claim": "A static `\\` on a singular matrix does not throw: -Inf for the integrator, [-Inf, NaN] for the double integrator",
+   "evidence": "probe:185-186 (integrator A=[-0.0] gives A\\1 = -Inf; double integrator [-Inf, NaN])"
+  },
+  {
+   "id": "K6c-040",
+   "file": "design/companions/linear_systems.md",
+   "line": 177,
+   "kind": "law",
+   "claim": "The exact test is the denominator's constant coefficient being zero",
+   "evidence": "src/library.jl:1289 (`iszero(last(den))`)"
+  },
+  {
+   "id": "K6c-041",
+   "file": "design/companions/linear_systems.md",
+   "line": 178,
+   "kind": "law",
+   "claim": "An integrator with u0 = 0 builds",
+   "evidence": "probe:50; test/test_library.jl:1878-1879"
+  },
+  {
+   "id": "K6c-042",
+   "file": "design/companions/linear_systems.md",
+   "line": 210,
+   "kind": "mech",
+   "claim": "The transfer function keeps its coefficients as instance data and holds the realized StateSpace beside them",
+   "evidence": "src/library.jl:1273-1277; probe:40"
+  },
+  {
+   "id": "K6c-043",
+   "file": "design/companions/linear_systems.md",
+   "line": 213,
+   "kind": "decl",
+   "claim": "Both components subtype one abstract AbstractLinearSystem{FT}",
+   "evidence": "src/library.jl:1037,1111,1273; probe:36"
+  },
+  {
+   "id": "K6c-044",
+   "file": "design/companions/linear_systems.md",
+   "line": 213,
+   "kind": "mech",
+   "claim": "Each stage arm is defined once on the supertype over an accessor `realization`",
+   "evidence": "src/library.jl:1047-1058, 1142, 1296; probe:37"
+  },
+  {
+   "id": "K6c-046",
+   "file": "design/companions/linear_systems.md",
+   "line": 226,
+   "kind": "mech",
+   "claim": "Nothing is forwarded and no Group wraps a leaf",
+   "evidence": "src/library.jl:1273-1277, 1296 (TransferFunction is a leaf holding a StateSpace); no stage defined on it"
+  },
+  {
+   "id": "K6c-047",
+   "file": "design/companions/linear_systems.md",
+   "line": 233,
+   "kind": "law",
+   "claim": "A generic forwarding pair for both stages builds nothing, the missing arm surfaces as UserCodeFraming around a MethodError",
+   "evidence": "probe:109,110,118 (UserCodeFraming, cause MethodError)"
+  },
+  {
+   "id": "K6c-048",
+   "file": "design/companions/linear_systems.md",
+   "line": 240,
+   "kind": "law",
+   "claim": "An inner y_direct for every class is refused as ProducedByTwoStages on the bare port",
+   "evidence": "probe:116,120; spec.md:3570-3571"
+  },
+  {
+   "id": "K6c-049",
+   "file": "design/companions/linear_systems.md",
+   "line": 242,
+   "kind": "law",
+   "claim": "Dropping y_state so y_direct is the only producer builds, and the loop test then refuses it",
+   "evidence": "probe:126 (builds), probe:127 (AlgebraicCycle, classified artificial)"
+  },
+  {
+   "id": "K6c-050",
+   "file": "design/companions/linear_systems.md",
+   "line": 245,
+   "kind": "law",
+   "claim": "has_stage(y_direct) is false on a strictly proper transfer function and has_stage(y_state) false on a proper one",
+   "evidence": "probe:35 (false, true, true, false)"
+  },
+  {
+   "id": "K6c-051",
+   "file": "design/companions/linear_systems.md",
+   "line": 247,
+   "kind": "law",
+   "claim": "The loop pair of section 3 holds for the transfer functions",
+   "evidence": "probe:32,33"
+  },
+  {
+   "id": "K6c-052",
+   "file": "design/companions/linear_systems.md",
+   "line": 248,
+   "kind": "law",
+   "claim": "The lag match and the Dual build hold",
+   "evidence": "probe:61,85"
+  },
+  {
+   "id": "K6c-053",
+   "file": "design/companions/linear_systems.md",
+   "line": 262,
+   "kind": "ptr",
+   "claim": "Lead `LinearSystem` named the mathematical object both components are",
+   "evidence": "historical name, absent from src"
+  },
+  {
+   "id": "K6c-054",
+   "file": "design/companions/linear_systems.md",
+   "line": 263,
+   "kind": "ptr",
+   "claim": "Lead `LinearSystem`: the rejected pairing TransferFunction/LinearSystem",
+   "evidence": "historical name, absent from src"
+  },
+  {
+   "id": "K6c-055",
+   "file": "design/companions/linear_systems.md",
+   "line": 272,
+   "kind": "law",
+   "claim": "Redstone.Library exports nothing",
+   "evidence": "probe:129 (names(Redstone.Library) = [:Library]); log.md D-226"
+  },
+  {
+   "id": "K6c-056",
+   "file": "design/companions/linear_systems.md",
+   "line": 273,
+   "kind": "mech",
+   "claim": "Components reach a file qualified or by explicit import",
+   "evidence": "test/imports.jl:82 (`import Redstone.Library: ...`); probe:129"
+  },
+  {
+   "id": "K6c-057",
+   "file": "design/companions/linear_systems.md",
+   "line": 275,
+   "kind": "law",
+   "claim": "An explicit import wins over a `using` in every order and without a warning",
+   "evidence": "probe:181 (import before using, after using, after prior use: all return the imported name's value); probe ran Julia 1.13.3, doc says 1.13.1"
+  },
+  {
+   "id": "K6c-058",
+   "file": "design/companions/linear_systems.md",
+   "line": 279,
+   "kind": "law",
+   "claim": "The positional StateSpace(A, B, C, D) does not match the keyword constructor",
+   "evidence": "probe:57 (MethodError); src/library.jl:1120-1128"
+  },
+  {
+   "id": "K6c-059",
+   "file": "design/companions/linear_systems.md",
+   "line": 288,
+   "kind": "decl",
+   "claim": "The decision is two components, StateSpace and TransferFunction",
+   "evidence": "src/library.jl:1111,1273"
+  },
+  {
+   "id": "K6c-060",
+   "file": "design/companions/linear_systems.md",
+   "line": 294,
+   "kind": "law",
+   "claim": "A two-state, two-input, two-output StateSpace linearized at t = 0.3 recovers A, B, C, D",
+   "evidence": "probe:84 (all four match)"
+  },
+  {
+   "id": "K6c-061",
+   "file": "design/companions/linear_systems.md",
+   "line": 295,
+   "kind": "law",
+   "claim": "The same system builds under (Float64, LinearizeDual)",
+   "evidence": "probe:85"
+  },
+  {
+   "id": "K6c-062",
+   "file": "design/companions/linear_systems.md",
+   "line": 296,
+   "kind": "law",
+   "claim": "Scalar StateSpace D=0 in a unit-feedback loop builds",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "K6c-063",
+   "file": "design/companions/linear_systems.md",
+   "line": 297,
+   "kind": "law",
+   "claim": "The same loop with D=1 is AlgebraicCycle, classification :real",
+   "evidence": "probe:31"
+  },
+  {
+   "id": "K6c-065",
+   "file": "design/companions/linear_systems.md",
+   "line": 299,
+   "kind": "law",
+   "claim": "Strictly proper TF in the loop builds, the lead-lag is AlgebraicCycle :real",
+   "evidence": "probe:32,33"
+  },
+  {
+   "id": "K6c-066",
+   "file": "design/companions/linear_systems.md",
+   "line": 300,
+   "kind": "law",
+   "claim": "Generic forwarding gives UserCodeFraming, inner y_direct gives ProducedByTwoStages, y_direct as only producer builds and the loop is refused",
+   "evidence": "probe:109,116,126,127"
+  },
+  {
+   "id": "K6c-067",
+   "file": "design/companions/linear_systems.md",
+   "line": 301,
+   "kind": "law",
+   "claim": "TransferFunction(num=(1,2), den=(1,5)) has type {1, true, ...} and linearizes to A=-5, B=1, C=-3, D=1",
+   "evidence": "probe:21 (TransferFunction{1, true, 2, 2, 1}); probe:71 (Linearization 1 state)"
+  },
+  {
+   "id": "K6c-068",
+   "file": "design/companions/linear_systems.md",
+   "line": 302,
+   "kind": "law",
+   "claim": "C (sI - A)^-1 B + D matches G(s) at s = 0, i, 2i, 1+3i to 2.3e-16 or better; lead `sI` is a math symbol",
+   "evidence": "probe:77 (max error 2.29e-16)"
+  },
+  {
+   "id": "K6c-069",
+   "file": "design/companions/linear_systems.md",
+   "line": 303,
+   "kind": "law",
+   "claim": "TF with u0 = 3 fed 3 outputs 3.0 at start and after one second",
+   "evidence": "probe:68 (3.0, 3.0)"
+  },
+  {
+   "id": "K6c-070",
+   "file": "design/companions/linear_systems.md",
+   "line": 304,
+   "kind": "law",
+   "claim": "den = (1,0) with u0 = 1 is refused at construction, with u0 = 0 it builds",
+   "evidence": "probe:49,50"
+  },
+  {
+   "id": "K6c-071",
+   "file": "design/companions/linear_systems.md",
+   "line": 305,
+   "kind": "law",
+   "claim": "num longer than den is refused at construction",
+   "evidence": "probe:51"
+  },
+  {
+   "id": "K6c-075",
+   "file": "design/companions/linear_systems.md",
+   "line": 315,
+   "kind": "decl",
+   "claim": "The four discrete components share one abstract AbstractDiscreteLinearSystem{FT}",
+   "evidence": "src/library.jl:1326,1385,1455,1525,1575; probe:140"
+  },
+  {
+   "id": "K6c-076",
+   "file": "design/companions/linear_systems.md",
+   "line": 317,
+   "kind": "decl",
+   "claim": "Two accessors: held(c) returns the stored system, realization(c, dt) the discrete update matrices",
+   "evidence": "src/library.jl:1402-1403, 1476-1477, 1529-1537, 1584-1585"
+  },
+  {
+   "id": "K6c-077",
+   "file": "design/companions/linear_systems.md",
+   "line": 319,
+   "kind": "mech",
+   "claim": "Declarations and output arms read held(c), only the update discretizes, C and D untouched",
+   "evidence": "src/library.jl:1328-1338, 1532-1537 (C, D passed through)"
+  },
+  {
+   "id": "K6c-078",
+   "file": "design/companions/linear_systems.md",
+   "line": 322,
+   "kind": "ex",
+   "claim": "The discrete supertype listing matches the code",
+   "evidence": "src/library.jl:1326-1338 (identical bodies)"
+  },
+  {
+   "id": "K6c-079",
+   "file": "design/companions/linear_systems.md",
+   "line": 339,
+   "kind": "law",
+   "claim": "Every leaf declares exactly one of x_init and s_init, and the store is the tier marker",
+   "evidence": "spec.md:2816, 2824"
+  },
+  {
+   "id": "K6c-080",
+   "file": "design/companions/linear_systems.md",
+   "line": 341,
+   "kind": "mech",
+   "claim": "A leaf holding another component instance as a field has TransferFunction as precedent, tiers read from declarations",
+   "evidence": "src/library.jl:1273-1277, 1047"
+  },
+  {
+   "id": "K6c-081",
+   "file": "design/companions/linear_systems.md",
+   "line": 347,
+   "kind": "decl",
+   "claim": "DiscreteStateSpace holds A, B, C, D and its initial state as s0",
+   "evidence": "src/library.jl:1385-1391; probe:137; probe:139 (x0 keyword is a MethodError)"
+  },
+  {
+   "id": "K6c-082",
+   "file": "design/companions/linear_systems.md",
+   "line": 349,
+   "kind": "mech",
+   "claim": "FT comes from iszero(D)",
+   "evidence": "src/library.jl:1394; probe:138"
+  },
+  {
+   "id": "K6c-083",
+   "file": "design/companions/linear_systems.md",
+   "line": 349,
+   "kind": "mech",
+   "claim": "DiscreteStateSpace is its own held and realization",
+   "evidence": "src/library.jl:1402-1403"
+  },
+  {
+   "id": "K6c-084",
+   "file": "design/companions/linear_systems.md",
+   "line": 350,
+   "kind": "decl",
+   "claim": "DiscreteTransferFunction takes coefficients highest power of z first",
+   "evidence": "src/library.jl:1457-1475 (same realize call), docstring 1420-1423"
+  },
+  {
+   "id": "K6c-085",
+   "file": "design/companions/linear_systems.md",
+   "line": 352,
+   "kind": "mech",
+   "claim": "It holds the DiscreteStateSpace that realize produces, unchanged",
+   "evidence": "src/library.jl:1473-1475; probe:136 (A equals the continuous realization)"
+  },
+  {
+   "id": "K6c-086",
+   "file": "design/companions/linear_systems.md",
+   "line": 354,
+   "kind": "mech",
+   "claim": "The docstring says the DSP z^-1 convention agrees only when the degrees are equal",
+   "evidence": "src/library.jl:1428-1430 (docstring of DiscreteTransferFunction)"
+  },
+  {
+   "id": "K6c-087",
+   "file": "design/companions/linear_systems.md",
+   "line": 357,
+   "kind": "mech",
+   "claim": "The docstring states the period dependence, neither constructor nor structure step compares the period",
+   "evidence": "src/library.jl:1372-1376, 1438-1439; no period field in src/library.jl:1385-1391"
+  },
+  {
+   "id": "K6c-089",
+   "file": "design/companions/linear_systems.md",
+   "line": 365,
+   "kind": "law",
+   "claim": "The steady state for u0 is (I - A) q0 = B u0 and y starts at G(1) u0",
+   "evidence": "src/library.jl:1472-1473; probe:135 (num 0.5, den (1,-0.5), u0 2: s0 = 4, y = 0.5*4 = 2 = G(1) u0)"
+  },
+  {
+   "id": "K6c-090",
+   "file": "design/companions/linear_systems.md",
+   "line": 366,
+   "kind": "law",
+   "claim": "The pole with no steady state is z = 1, the test is the denominator summing to zero, floating",
+   "evidence": "src/library.jl:1468-1470"
+  },
+  {
+   "id": "K6c-091",
+   "file": "design/companions/linear_systems.md",
+   "line": 368,
+   "kind": "law",
+   "claim": "(1, -0.7, -0.3) sums to about 5.6e-17 and the refusal takes a tolerance",
+   "evidence": "probe:133 (5.55e-17); probe:132 (ArgumentError); src/library.jl:1469 (1e-12 relative)"
+  },
+  {
+   "id": "K6c-092",
+   "file": "design/companions/linear_systems.md",
+   "line": 374,
+   "kind": "decl",
+   "claim": "DiscretizedStateSpace holds a continuous StateSpace and discretizes in realization(c, dt)",
+   "evidence": "src/library.jl:1525-1527, 1532-1537; probe:143"
+  },
+  {
+   "id": "K6c-093",
+   "file": "design/companions/linear_systems.md",
+   "line": 378,
+   "kind": "law",
+   "claim": "Zero-order hold A_d = e^{A dt}, B_d = (int e^{A tau}) B, C_d = C, D_d = D",
+   "evidence": "probe:150 (A_d, B_d match exp and (A_d - I) A^-1 B, C and D equal); probe:146 (lag A_d = e^{-dt/tau})"
+  },
+  {
+   "id": "K6c-094",
+   "file": "design/companions/linear_systems.md",
+   "line": 383,
+   "kind": "mech",
+   "claim": "Both read off the top row of one exponential of [A B; 0 0] dt; leads `A_d`, `B_d` are math symbols",
+   "evidence": "src/library.jl:1534-1537 (the code names are `exponential` slices)"
+  },
+  {
+   "id": "K6c-095",
+   "file": "design/companions/linear_systems.md",
+   "line": 384,
+   "kind": "mech",
+   "claim": "The matrix is assembled with vcat and hcat, the bracket spelling allocates",
+   "evidence": "src/library.jl:1531-1535; probe:164 (vcat/hcat 0 B, bracket 6624 B), probe:191 (bracket 272 to 6720 B by shape; the doc's 'about 1 KB' sits in that range)"
+  },
+  {
+   "id": "K6c-096",
+   "file": "design/companions/linear_systems.md",
+   "line": 386,
+   "kind": "law",
+   "claim": "The concatenations, the exponential and the static slices allocate nothing",
+   "evidence": "probe:159 (exp 0 B at 2 to 5), probe:166 (realization 0 B)"
+  },
+  {
+   "id": "K6c-097",
+   "file": "design/companions/linear_systems.md",
+   "line": 387,
+   "kind": "law",
+   "claim": "The class of DiscretizedStateSpace is iszero(D) as for the continuous component",
+   "evidence": "src/library.jl:1525 (FT taken from the continuous StateSpace)"
+  },
+  {
+   "id": "K6c-098",
+   "file": "design/companions/linear_systems.md",
+   "line": 389,
+   "kind": "law",
+   "claim": "x0 in the user's coordinates is exact for the hold",
+   "evidence": "src/library.jl:1525-1527, held(c) = c.continuous at 1529; probe:154"
+  },
+  {
+   "id": "K6c-099",
+   "file": "design/companions/linear_systems.md",
+   "line": 390,
+   "kind": "mech",
+   "claim": "DiscretizedTransferFunction takes coefficients in s, realizes as the continuous one does, holds the DiscretizedStateSpace",
+   "evidence": "src/library.jl:1575-1585; probe:143"
+  },
+  {
+   "id": "K6c-100",
+   "file": "design/companions/linear_systems.md",
+   "line": 395,
+   "kind": "mech",
+   "claim": "The workspace allocator receives no dt",
+   "evidence": "src/declare.jl:131 (`ws_init(c, ::Type{T})`)"
+  },
+  {
+   "id": "K6c-101",
+   "file": "design/companions/linear_systems.md",
+   "line": 396,
+   "kind": "law",
+   "claim": "A workspace may carry nothing between calls",
+   "evidence": "spec.md:2398"
+  },
+  {
+   "id": "K6c-102",
+   "file": "design/companions/linear_systems.md",
+   "line": 398,
+   "kind": "law",
+   "claim": "No arithmetic is done on a store (§7.3)",
+   "evidence": "spec.md:2363"
+  },
+  {
+   "id": "K6c-104",
+   "file": "design/companions/linear_systems.md",
+   "line": 401,
+   "kind": "mech",
+   "claim": "A static exp allocates nothing at every size probed",
+   "evidence": "probe:159 (0 B for 2x2 to 5x5)"
+  },
+  {
+   "id": "K6c-107",
+   "file": "design/companions/linear_systems.md",
+   "line": 404,
+   "kind": "law",
+   "claim": "The probe's placeholder dt raises no singularity",
+   "evidence": "spec.md:5605 (placeholder period 1.0); probe:166 (finite realization)"
+  },
+  {
+   "id": "K6c-108",
+   "file": "design/companions/linear_systems.md",
+   "line": 407,
+   "kind": "law",
+   "claim": "The discrete steady state for u0 is the continuous q0 = -A^-1 B u0 and y starts at G(0) u0; lead `A_d` is a math symbol",
+   "evidence": "probe:174 ((I - A_d)\\B_d = -A\\B); probe:154 (output 3.0 for u0 = 3)"
+  },
+  {
+   "id": "K6c-109",
+   "file": "design/companions/linear_systems.md",
+   "line": 410,
+   "kind": "law",
+   "claim": "The refusal is the continuous one, a zero constant coefficient",
+   "evidence": "probe:155 (pole at origin with u0 = 1 refused); src/library.jl:1584 forwards to TransferFunction"
+  },
+  {
+   "id": "K6c-110",
+   "file": "design/companions/linear_systems.md",
+   "line": 411,
+   "kind": "mech",
+   "claim": "The solve runs once at construction from the continuous matrices",
+   "evidence": "src/library.jl:1583-1584, 1291-1293"
+  },
+  {
+   "id": "K6c-111",
+   "file": "design/companions/linear_systems.md",
+   "line": 414,
+   "kind": "mech",
+   "claim": "No Tustin method on the components, the hold only",
+   "evidence": "src/library.jl:1532-1537 (zero-order hold only)"
+  },
+  {
+   "id": "K6c-112",
+   "file": "design/companions/linear_systems.md",
+   "line": 418,
+   "kind": "law",
+   "claim": "The hold of the lag is (1-a)/(z-a), strictly proper; Tustin gives (dt/(2tau+dt))(z+1)/(z-(2tau-dt)/(2tau+dt))",
+   "evidence": "probe:146 (A_d=0.98020, B_d C=0.0198=1-a); probe:171 (Tustin form matches the substitution to 1.2e-16)"
+  },
+  {
+   "id": "K6c-113",
+   "file": "design/companions/linear_systems.md",
+   "line": 426,
+   "kind": "mech",
+   "claim": "The docstring states the caveat and points at external discretization with DiscreteTransferFunction",
+   "evidence": "src/library.jl:1566-1569"
+  },
+  {
+   "id": "K6c-114",
+   "file": "design/companions/linear_systems.md",
+   "line": 433,
+   "kind": "ptr",
+   "claim": "Lead `c2d`: the name of ControlSystemsBase's external discretization function",
+   "evidence": "external prior art, no code name"
+  },
+  {
+   "id": "K6c-115",
+   "file": "design/companions/linear_systems.md",
+   "line": 433,
+   "kind": "mech",
+   "claim": "Leads `Discrete` and `Discretized` are name prefixes that match DiscreteIntegrator and the four new names",
+   "evidence": "src/library.jl:598 (DiscreteIntegrator), 1385, 1455, 1525, 1575; probe:183"
+  }
+ ],
+ "counts": {
+  "law": 42,
+  "mech": 52,
+  "decl": 12,
+  "ex": 8,
+  "ptr": 8,
+  "why": 44,
+  "cite": 0,
+  "map": 0,
+  "docstring": 0,
+  "surface": 0
+ }
+}

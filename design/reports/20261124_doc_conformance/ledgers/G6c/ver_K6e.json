@@ -1,0 +1,167 @@
+{
+ "judgments": [
+  {
+   "id": "K6e-001",
+   "conforms": true,
+   "evidence": "src/library.jl:1830-1843: LimitedIntegrator{V, L, R} takes only its input `u` (and a reset with R) and bounds its state between its own `lower` and `upper`; nothing reads the path downstream."
+  },
+  {
+   "id": "K6e-003",
+   "conforms": false,
+   "evidence": "src/library.jl:2566 q̇ = Ki·gate(e) + (ref - u_raw)/Tt, so q̇ = 0 gives u_raw = u + Tt·Ki·e. Probe '003' (PID Kp=1, Ki=0.5, Tt=1, limits ±1, r=3, y=0.5, run 40 s): u_raw = 2.25 = u + Tt·Ki·e, against u + Tt·e = 3.5. The same doc's section 11 and lqr_tracker.md section 7 write `v + Tt Ki e`.",
+   "class": "deviation",
+   "fix": "Saturated, it drives `q` so that `u_raw` settles at `u + Tt·Ki·e`, just past the limit, and the output comes off the limit the moment the error reverses.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6e-010",
+   "conforms": false,
+   "evidence": "src/library.jl:2566; the probe '003' line shows the saturated equilibrium u_raw - u = Tt·Ki·e (1.25 at Tt=1, Ki=0.5, e=2.5), not Tt·e (2.5). The excess the integrator holds over the reference scales with Ki.",
+   "class": "deviation",
+   "fix": "Raising `Tt` weakens the coupling, but during a saturation episode the excess the integrator accumulates is `Tt·Ki·e`, and an episode shorter than `Tt` winds up almost freely.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6e-013",
+   "conforms": true,
+   "evidence": "src/library.jl:2338-2339 and 2379-2380 (axis_ports adds saturation = saturation_type(V), engaged = channel_type(V, Bool)); test/test_library.jl:2832 and 2836 (scalar Int8/Bool, SVector{2, Bool} over a vector, as the doc's preceding sentence says)."
+  },
+  {
+   "id": "K6e-022",
+   "conforms": true,
+   "evidence": "src/library.jl:2342-2352. Probe '022' lines: Hold=true with engaged=false gives ε = 0 for code 1 and code 0 alike and ref = v (or u without tracking); engaged with code 0 gives ε = e and ref = u; engaged with a nonzero code gives gate(e) and ref = v."
+  },
+  {
+   "id": "K6e-031",
+   "conforms": true,
+   "evidence": "src/library.jl:2558-2566: u_raw = Kp .* (b .* r - y) + x.q - Kd .* (w - yf) ./ τd and q̇ = Ki .* gated_error(...) + ..., so q is the integral term in output units."
+  },
+  {
+   "id": "K6e-040",
+   "conforms": true,
+   "evidence": "src/library.jl:2545: PID(; Kp, Ki = 0.0, Kd = 0.0, τd = 0.1, Tt = Inf, u_min = -Inf, u_max = Inf, b = 1.0, c = 0.0, ...)."
+  },
+  {
+   "id": "K6e-058",
+   "conforms": false,
+   "evidence": "Probe '058' lines reproduce the table at W: hold (6.10, 32.5 s), ungated tracking Tt=2 (6.13, 25.8 s), Tt=0.5 (7.27, 55.2 s), hold and tracking Tt=2 (5.20, 26.9 s), Tt=0.5 (5.09, 22.0 s). The hold beats ungated tracking at Tt=2 on the peak only and settles 6.7 s later; at Tt=2 the pair settles later than ungated tracking (26.9 against 25.8 s). test/test_library.jl:3126-3129 checks peaks alone.",
+   "class": "deviation",
+   "fix": "The hold alone beats ungated tracking's peak at its better `Tt`, though it settles later, and the two together at `Tt = 0.5` beat both on peak and settling time.",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6e-061",
+   "conforms": true,
+   "evidence": "Probe '061/062' lines: Hold=true, Track=false and Hold=true, Track=true at a free point give A=[0 0;0 -10], B=[0.5 -0.5;0 10] (plus a zero v column), C=[1 2], D=[1 -3] (plus a zero), which is the stated A, B, C, D at Kp=1, Ki=0.5, Kd=0.2, τd=0.1; test/test_library.jl:2912-2931."
+  },
+  {
+   "id": "K6e-062",
+   "conforms": false,
+   "evidence": "Probe '061/062' Hold=false, Track=true: A = [-1 -2; 0 -10], B = [-0.5 2.5 1.0; 0 10 0]. A11 = -1/Tt and ∂q̇/∂v = 1/Tt hold, but the q̇ row changes elsewhere too: A12 = -Kd/(τd·Tt) and B's first row becomes [Ki - Kp/Tt, -Ki + (Kp + Kd/τd)/Tt]; test/test_library.jl:2913-2914 pins the same matrices. The doc's sentence, after listing the plain matrices in full, reads as if only A11 and the v column differ.",
+   "class": "deviation",
+   "fix": "the ungated tracking variant adds the tracking pole, `A₁₁ = -1/Tt`, with `∂q̇/∂v = 1/Tt`, and the correction's `-u_raw/Tt` also sets `A₁₂ = -Kd/(τd Tt)` and the first row of `B` to `[Ki - Kp/Tt, -Ki + (Kp + Kd/τd)/Tt]`.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6e-065",
+   "conforms": false,
+   "evidence": "src/library.jl:2693 s_init(::DiscretePID{V}) = (q = zero(V), yf = zero(V), saturated = zero(saturation_type(V))); probe '085' line prints (q = 0.0, yf = 0.0, saturated = 0). The store field was added by commit 4478f1af (increment 73 stage 1) and D-384, which section 11 of the same doc records.",
+   "class": "drift",
+   "fix": "`DiscretePID{V, Hold, Track, Fixed}` is the PID of section 7 with `s = (q, yf, saturated)` in place of `x`, the code `saturated` being section 11's addition.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6e-073",
+   "conforms": true,
+   "evidence": "src/library.jl:2696-2706: at τd = 0, deriv = (w - yf)/Δt and yf⁺ = w. Probe '073' lines: u_raw = -(y_k - y_{k-1})/Δt at every tick of DiscretePID(Kp = 0, Kd = 1, τd = 0), with y_0 = 0 the start-up value."
+  },
+  {
+   "id": "K6e-081",
+   "conforms": false,
+   "evidence": "Probe '081' lines: signal_ports is one method on AbstractPID (src/library.jl:2379-2380) built from axis_ports on AbstractAntiWindupController (2338-2339), not four arms; the two gated_error arms and the three correction_reference arms sit on AbstractAntiWindupController{Hold, Track} (2342-2352), shared with the LQR trackers, not on AbstractPID. Moved by commit 4478f1af (\"the standby axis over ControllerBlock\") and renamed by a12a8e86 (D-453).",
+   "class": "drift",
+   "fix": "The port sets, the gate and the reference rule are identical in both PIDs. The axis ports (`axis_ports`), the two `gated_error` arms and the three `correction_reference` arms read the axes alone and sit on `AbstractAntiWindupController{Hold, Track}`, which the LQR trackers share. With `parameters`, which fetches the nine parameters, `signal_ports`, `u_types` and `y_types` earn a supertype in the `AbstractLinearSystem` style, `AbstractPID{V, Hold, Track, Fixed}`, which carries them (section 10).",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6e-084",
+   "conforms": true,
+   "evidence": "src/library.jl:669-670 y_state(c::DiscreteLimitedIntegrator, (; s)) = (out = s, saturation = saturation_code.(s, c.lower, c.upper)); probe '084' line gives (out = 1.0, saturation = 1)."
+  },
+  {
+   "id": "K6e-085",
+   "conforms": false,
+   "evidence": "src/library.jl:2693 s_init(::DiscretePID{V}) = (q = zero(V), yf = zero(V), saturated = zero(saturation_type(V))); probe '085' line. Added by commit 4478f1af and D-384; section 11 of the same doc records the store field.",
+   "class": "drift",
+   "fix": "And `s_init` is `(q = zero(V), yf = zero(V), saturated = zero(saturation_type(V)))` with no keywords, as the continuous PID's `x_init` is `(q = zero(V), yf = zero(V))`;",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6e-087",
+   "conforms": false,
+   "evidence": "src/library.jl: structs over V <: Union{Float64, SArray{<:Tuple, Float64}} also include Freeze (405), Delay (536), DiscreteIntegrator (598), Backlash (767), GaussianWhiteNoise (822), Step (1630), Sequence (1703), LimitedDoubleIntegrator (1999), Comparator (2229), PID (2541), DiscretePID (2677); probe '087' lines build four of them over SVector{2, Float64}. Added after the section's date, e.g. commit 1590a08f for LimitedDoubleIntegrator.",
+   "class": "drift",
+   "fix": "The library's vector components, among them `Integrator`, `FirstOrderLag`, `LimitedIntegrator`, `Relay`, `DiscreteLimitedIntegrator` and `RateLimiter`, are one struct each over `V <: Union{Float64, SArray{<:Tuple, Float64}}`, with the law in broadcast form.",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6e-090",
+   "conforms": true,
+   "evidence": "src/library.jl:1731-1733 saturation_type(V) = channel_type(V, Int8), Int8 over a Real and similar_type(V, Int8) over a StaticArray; used by DiscreteLimitedIntegrator (668), LimitedIntegrator (1843) and the PIDs (2380, 2694). Probe '090' gives (Int8, SVector{3, Int8}). LimitedDoubleIntegrator (2013) shares it too, which the sentence does not deny."
+  },
+  {
+   "id": "K6e-096",
+   "conforms": true,
+   "evidence": "src/library.jl:2295 const PID_PARAMETERS = (:Kp, :Ki, :Kd, :τd, :Tt, :u_min, :u_max, :b, :c)."
+  },
+  {
+   "id": "K6e-098",
+   "conforms": true,
+   "evidence": "src/library.jl:2392-2403: shape_type uses shape_zero (476-477), the sum of the keywords' zeros as Float64, and fixed_parameters stores V(value .+ zero(V)). Probe '098' line: for Kp = [1, 2], Ki = 1, the stored fixed equals Float64.(as_static(value) .+ shape) in value and type."
+  },
+  {
+   "id": "K6e-106",
+   "conforms": true,
+   "evidence": "src/library.jl:2388 parameters(c::AbstractPID, u) = NamedTuple{PID_PARAMETERS}(merge(c.fixed, u)); probe '106' lines show the merged order (:Kp, :Kd, :τd, :Tt, :u_max, :b, :c, :r, :y, :Ki, :u_min) and the selection in roster order."
+  },
+  {
+   "id": "K6e-112",
+   "conforms": true,
+   "evidence": "src/library.jl:2342-2352 dispatch on the Hold and Track type parameters; probe '022' lines reproduce section 4's table row by row for all four (Hold, Track) arms."
+  },
+  {
+   "id": "K6e-116",
+   "conforms": true,
+   "evidence": "Probe '116' line: PID(Kp = AsPort(), ...) with Kp wired from an Integrator integrating the PID's own u builds (Build returned), since the Integrator publishes from state."
+  },
+  {
+   "id": "K6e-125",
+   "conforms": true,
+   "evidence": "Standby: the engaged input comes from AbstractAntiWindupController (src/library.jl:2338-2352), parent of AbstractPID (2374) and AbstractLQRTracker (2735). The saturation output sits on the discrete members only, DiscretePID (2693-2706) and DiscreteLQRTracker (3046-3060); PID publishes none (comment at 2572, y_types 2385). The doc names that addition 'the discrete saturation output', so the sentence reads per tier."
+  },
+  {
+   "id": "K6e-128",
+   "conforms": true,
+   "evidence": "The figures match lqr_tracker.md section 7's table (rows 'tracking always, Tt = 1', bump 1.92, and 'Ki zero while not in command, Tt = 0.1', bump 0.002). Probe '128' lines rerun that emulation at W: 1.919 and 0.0029 (and 0.65 for the Tt = 1 gated row the doc does not quote). The shipped standby gives 0.0042 (test/test_library.jl:3265)."
+  },
+  {
+   "id": "K6e-132",
+   "conforms": true,
+   "evidence": "src/library.jl:2380 types engaged as channel_type(V, Bool). Probe '132' lines: a scalar Constant(true) into a 2-channel PID's engaged is refused, WireTypeMismatch(\"controller\", :engaged, SVector{2, Bool}, \"flag\", :y, Bool); the same flag broadcast by an Fn to SVector{2, Bool} builds."
+  },
+  {
+   "id": "K6e-137",
+   "conforms": true,
+   "evidence": "src/library.jl:2693-2695 and 2706: the store field saturated, y_types saturated = saturation_type(V) (Int8 over a scalar), y_state(::DiscretePID, (; s)) = (saturated = s.saturated,) from stage 1, written by s_update with saturation_code. Probe '137' lines."
+  }
+ ],
+ "notes": "I checked all 26 claims against W at cb398676. Probe: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K6e_v/probe.jl. I ran it twice in full, then once more with ONLY128=1 for the switchover section, after defining poke! inline. I edited no tracked file.\n\n8 of the 26 do not conform: 003, 010, 058, 062, 065, 081, 085, 087.\n\nDoc lines I cite may be about 3 lines off the ones given. For example, 'Both additions apply' sits at line 524, not 527. I judged each claim from its nearby text.\n\nThings I saw outside the listed claims:\n(1) The table at about doc line 305 gives 'tracking the velocity, Tt = 2' a peak of 6.14. W gives 6.13, and the test comment at test/test_library.jl:3128 also says 6.13.\n(2) Section 10's 'The ports are section 4's four arms, now `signal_ports`' (about line 474) is stale in the same way as K6e-081. signal_ports is now one method built through axis_ports.\n(3) Section 9's 'Same seven fields' and the `{Hold, Track}` type parameters are explicitly superseded by section 10's header.\n(4) K6e-090: LimitedDoubleIntegrator and the trackers also share saturation_type. The sentence still holds.\n(5) K6e-125: the sentence would be sharper as 'standby applies to all four controllers, the saturation output to DiscretePID and DiscreteLQRTracker'.\n(6) K6e-128: rerunning the emulation at W gives 0.0029, where the cited figure is 0.002. The 1.92 reproduces."
+}

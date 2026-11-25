@@ -1,0 +1,4 @@
+names missing: `inN` at design/companions/library_inventory.md:123
+names missing: `outN` at design/companions/library_inventory.md:123
+names test-only: `Pose` at design/companions/library_inventory.md:157
+names test-only: `out1` at design/companions/library_inventory.md:123

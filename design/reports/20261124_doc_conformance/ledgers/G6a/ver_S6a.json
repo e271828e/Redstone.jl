@@ -1,0 +1,65 @@
+{
+ "judgments": [
+  {
+   "id": "S6a-001",
+   "conforms": true,
+   "evidence": "src/model.jl:97 `mutable struct Model{T,E}`, and the src/model.jl:113 constructor materializes a deployment (the built tree) at one scalar T. Its docstring at src/model.jl:41 reads 'A deployment materialized at one scalar type, ready to be written, evaluated and stepped'. Probe P001 gives Model{Float64} and Model{D8} and refuses Float32 as ArgumentInvalid."
+  },
+  {
+   "id": "S6a-007",
+   "conforms": true,
+   "evidence": "test/test_trace.jl:543 asserts that replay reproduces the recorded trajectory bitwise. The probe recorded a staged, localized-event run and replayed it on a twin whose condition differed. P007 gives bit-identical true at RK4, and true under an adaptive BS3 deployment."
+  },
+  {
+   "id": "S6a-011",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:581 `port(snapshot, path, name)` reads any port of a published snapshot by path. Snapshots come from latest(sim) and logged(sim). Probe P011 read ports by path from latest() on the main task while run! was paced on another thread (10 distinct t seen). It also read them after the run from latest and logged."
+  },
+  {
+   "id": "S6a-025",
+   "conforms": true,
+   "evidence": "src/build.jl:1287 sets the policy to :non_localized for a Bool guard and :localized for a Float64 guard. No other form exists, and any other return is refused as GuardForm. Probe P025 gives Sawtooth wrap => :localized and Follower engage => :non_localized."
+  },
+  {
+   "id": "S6a-034",
+   "conforms": true,
+   "evidence": "src/store.jl:167 holds `t₀::Rational{Int}`, the exact origin. src/store.jl:202 `_instant` is _nearest(...), the float nearest t₀ + position·unit, computed from integers (src/store.jl:187 at boundary zero). Probe P034 gives t₀ -3//10 as a Rational, and frame clocks [-0.2,-0.1,0.0,0.1,0.2] equal to Float64 of the exact BigFloat instants. The non-exact t0=1e-4 is refused."
+  },
+  {
+   "id": "S6a-043",
+   "conforms": true,
+   "evidence": "In the step loop of src/frame.jl, every step end runs run_boundary! (src/frame.jl:165) and then settled!(hooks) (src/frame.jl:170). Probe P043 gives 15 steps and 15 settled boundaries over 3 frames with h_max=1//40 and a due instant at 0.07 s."
+  },
+  {
+   "id": "S6a-053",
+   "conforms": true,
+   "evidence": "src/frame.jl:84 refuses k > _last_frame(model). src/model.jl:590 `_last_frame` bounds frames by the lattice's reach, 2^50·δ (src/deployment.jl:170), so clocks stay apart. init! refuses an origin with no frame to take (src/model.jl:351). Probe P053 shows strictly increasing clocks under fixed and adaptive steps. t0=2^60 is refused, and frame! past the last frame from 2^45 is refused as ArgumentInvalid :range ('two of its boundaries could take clocks out of order')."
+  },
+  {
+   "id": "S6a-062",
+   "conforms": true,
+   "evidence": "src/checkpoint.jl:127-128 restores the state's own origin with _set_origin!(clock, model_state.t₀, …) and then sets clock.t = model_state.t. Probe P062 restored into a fresh model: t 0.55 == 0.55 and t₀ 1//4 == 1//4, and the clocks stay equal after two more frames."
+  },
+  {
+   "id": "S6a-071",
+   "conforms": true,
+   "evidence": "src/build.jl:1066 `_frozen(tier, T) = tier === DISCRETE && T !== Float64` drops discrete stages from non-Float64 activations. The schedule rows the frame loop reads are T-independent. Probe P071 gives a TickCounter at 5 under Float64 and 0 under D8, with identical step lengths."
+  },
+  {
+   "id": "S6a-080",
+   "conforms": true,
+   "evidence": "src/model.jl:654 projects at every boundary before the event phase. src/executor.jl:395 projects again after each handler's latch. The next step's attempt starts from xbuf. Probe P080 recorded each attempt's start state: every boundary's post-reset x (Bouncer, 2 resets) is the start of a following step, and every Rotor step starts on the unit circle although its x_init lies off it."
+  },
+  {
+   "id": "S6a-089",
+   "conforms": true,
+   "evidence": "src/sim.jl:2620 stage!(sim, …) and src/devices.jl:340 stage!(handle, …) perform a CAS merge into the staging cell with no lifecycle gate. Their docstrings say 'from any task at any moment'. Probe P089 shows stage! before init! does not throw, and 40 stage! calls from the main task while run! ran on another thread did not throw."
+  },
+  {
+   "id": "S6a-098",
+   "conforms": true,
+   "evidence": "src/sim.jl:2100 (pause block) and src/sim.jl:2109 (pacer wait) sit at the frame top before run_frame!. A control stop is read only there. Probe P098 gives paced == unpaced, paused/resumed == unpaced and step!-chunked == run!, all bit-identical. A run stopped mid-way matches the unstopped run over its whole prefix."
+  }
+ ],
+ "notes": "All 12 S6a claims conform. Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S6a_v/probe.jl. It ran once in full after one fixture fix: a bare Plant needed a root-input wire. It was run with --threads=4 so that the during-run reads, staging and pause checks have a second thread. All doc text was read at W, detached at cb398676. No tracked file was touched."
+}

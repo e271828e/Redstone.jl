@@ -1,0 +1,273 @@
+{
+ "judgments": [
+  {
+   "id": "L6b-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:784 `@enum Tier CONTINUOUS DISCRETE` and src/assembly.jl:13 `@enum Class PRIMITIVE ASSEMBLY`. src/assembly.jl:724-731: the continuous tier alone carries modes and state_events. src/declare.jl:490-500: every discrete child is periodic, defaulting to Relative(1)."
+  },
+  {
+   "id": "L6b-008",
+   "conforms": false,
+   "evidence": "src/declare.jl:212-219: every declared port must be returned by a stage, and a port no stage returns is DeclaredNotProduced. Nothing publishes state or mode fields automatically. src/library.jl:383: UnitDelay publishes its s by returning it from y_state.",
+   "class": "drift",
+   "fix": "Uniform component interfaces via the no-feedthrough state decoder `h_x`, a state or mode field published only by returning it from the no-feedthrough stage (D-252)",
+   "clear": true,
+   "note": "The D-016 annotation at log.md:768-770 records that D-252 removes selective auto-publication."
+  },
+  {
+   "id": "L6b-010",
+   "conforms": false,
+   "evidence": "src/model.jl:715-770 (event_phase!): each round evaluates every guard, fires at most one event per component (comp_fired), runs all the round's handlers (_fire!), and then re-sweeps the whole schedule (_round!). No decode runs after each handler.",
+   "class": "drift",
+   "fix": "guards and handlers read the boundary table the round's sweep wrote; the table is written only by sweeps, a component fires at most one event per round, and the next round re-sweeps the whole schedule (D-154)",
+   "clear": true,
+   "note": "The D-016 annotation at log.md:768-769 and D-154 (log.md:6046-6049) record that the per-event re-decode was removed."
+  },
+  {
+   "id": "L6b-013",
+   "conforms": false,
+   "evidence": "src/declare.jl:154-160: u_types returns a NamedTuple or one type, written at Float64. src/library.jl:381 is a bare entry, `u_types(::UnitDelay{V}) = V`. src/declare.jl:240-248: a Pinned marker is allowed at the top of an entry.",
+   "class": "drift",
+   "fix": "`input_types(::C)` a NamedTuple of types, or one bare type for a bare contract (D-436), at `Float64` faces",
+   "clear": true,
+   "note": "D-436 (log.md:17996) admits the bare contract. D-033's own annotation (log.md:1264) records only D-165 and D-179. The rename to u_types (D-267) is the vocabulary of the entry's day under log_rules rule 2, so the fix keeps `input_types`."
+  },
+  {
+   "id": "L6b-016",
+   "conforms": false,
+   "evidence": "Probe out.txt [defined local_types] false. src/declare.jl:189-195: y_types is written at Float64 and walked to the activation scalar on the continuous tier. src/assembly.jl:406-407: the walk at Float64 strips Pinned. A discrete leaf pins wholesale (D-263, log.md:11278-11284).",
+   "class": "drift",
+   "fix": "`output_types(::C)` a concrete nominal declaration on both tiers, walked to the activation scalar on the continuous tier and pinned wholesale on the discrete (D-263); `local_types` is deleted (D-165)",
+   "clear": false,
+   "note": "The D-033 annotation (log.md:1264) records the deletion of local_types. It does not record D-263's walk of the contracts on the continuous tier."
+  },
+  {
+   "id": "L6b-020",
+   "conforms": false,
+   "evidence": "src/build.jl:1256-1288: the detection policy is the guard's return type, Bool for non-localized and Float64 for localized. src/declare.jl:545-548: StateEvent holds only guard and handler. Probe out.txt [defined localize] false.",
+   "class": "drift",
+   "fix": "`events(::C)` ordered, each event's detection policy declared by its guard's return type (`Bool` boundary-detected, `Float64` localized; D-179)",
+   "clear": true,
+   "note": "The D-033 annotation at log.md:1264-1266 records that an event carries no localize flag since D-179."
+  },
+  {
+   "id": "L6b-025",
+   "conforms": false,
+   "evidence": "Probe out.txt [defined local_types] false. src/declare.jl:212-219: every returned field is a declared y_types port, and an undeclared one is UndeclaredReturnField.",
+   "class": "drift",
+   "fix": "intermediates are ordinary declared ports (D-194)",
+   "clear": true,
+   "note": "The D-034 annotation at log.md:1300-1303 records that D-194 retired the strict local_types clause."
+  },
+  {
+   "id": "L6b-026",
+   "conforms": true,
+   "evidence": "Probe out.txt [branch shape]: a y_state that drops port b after t = 0.05 raises StepError{ConformanceFailure} with reason :field_set and observed [:a]. The always-on port write check is the same as in test/test_failures.jl:922-937."
+  },
+  {
+   "id": "L6b-028",
+   "conforms": false,
+   "evidence": "Probe out.txt [bare return port]: a leaf with `y_types = Float64` whose y_state returns 3.0 publishes port y = 3.0. src/declare.jl:623 documents `y_state(c, bundle) -> NamedTuple or value`. src/library.jl:383: UnitDelay's y_state returns s bare.",
+   "class": "drift",
+   "fix": "stage returns are NamedTuples of port values, or the one port's value for a bare contract (D-436)",
+   "clear": true,
+   "note": "The D-036 annotation at log.md:1374-1376 records D-436."
+  },
+  {
+   "id": "L6b-035",
+   "conforms": false,
+   "evidence": "src/roster.jl:356-358: a writer's claim is its enumerated claims(b), or for an is_greedy binding the unclaimed complement at attach. src/diagnostics.jl:1602: a staged face outside the writer's claim is OutOfClaimEntry. The GUI is an ordinary writer with no liveness rule of its own.",
+   "class": "drift",
+   "fix": "GUI liveness is fully derived: transitive root-slot resolution ∧ slot inside the GUI's own claim (D-174)",
+   "clear": false,
+   "note": "The annotation at log.md:1623-1625 records D-174's reading. A greedy binding (src/roster.jl:116-132) can make that claim the unclaimed complement again, so the new text can be written in more than one way."
+  },
+  {
+   "id": "L6b-038",
+   "conforms": true,
+   "evidence": "src/bindings.jl:117-120: the device struct holds press counters and edge detection and stages them as levels. src/bindings.jl:200-209: a press counter passes through conditioning untouched. Nothing in a mapping accumulates, so accumulators stay model state (spec.md:8536-8538)."
+  },
+  {
+   "id": "L6b-049",
+   "conforms": true,
+   "evidence": "Probe out.txt [wrapper leaf]: an x_init field holding a Meters struct is refused as IllegalStateLeaf with reason :wrapper. src/assembly.jl:673-682."
+  },
+  {
+   "id": "L6b-053",
+   "conforms": false,
+   "evidence": "src/assembly.jl:724-731: the tier votes are x_deriv, s_update, x_init, s_init, m_init and state_events, with no ws_init vote. src/declare.jl:142-144: ws_init takes T on both tiers. Probe out.txt [discrete ws_init scalars]: a discrete allocator gets Float64. The output stages are also shared since D-220 (src/library.jl:351 continuous, :383 discrete).",
+   "class": "drift",
+   "fix": "`events` joins the tier markers: the tier-consistency rule enumerates the update laws, the stores and (when declared) `events`, a continuous-tier marker since the event system is continuous-side only",
+   "clear": false,
+   "note": "D-263 (log.md:11294-11296) gives init_workspace its scalar on both tiers, and D-220 (log.md:8958-8962) retires the stage-name marker. D-112 carries no annotation for either."
+  },
+  {
+   "id": "L6b-060",
+   "conforms": false,
+   "evidence": "src/model.jl:744-764: an event fires again within a boundary while `count[i] < firing_budget`. src/deployment.jl:528 and :546 make firing_budget the per-event firings per boundary, 4 by default.",
+   "class": "drift",
+   "fix": "budgeted re-firing (`firing_budget` firings per event per boundary, D-181) and the quiescence iteration unchanged",
+   "clear": true,
+   "note": "The D-154 annotation at log.md:6074-6075 records that D-181 replaced once-per-event-per-boundary with firing_budget."
+  },
+  {
+   "id": "L6b-061",
+   "conforms": true,
+   "evidence": "src/model.jl:715-770: sweep, guards and handlers are iterated until a round fires nothing (`any_fired || break`)."
+  },
+  {
+   "id": "L6b-071",
+   "conforms": true,
+   "evidence": "Probe out.txt [face collision]: input face q in input_wires and output face q in output_wires raise FaceNameCollision([\"q\"], :assembly). src/structure.jl:756-768 concatenates the two declarations' names before the allunique check."
+  },
+  {
+   "id": "L6b-081",
+   "conforms": true,
+   "evidence": "src/library.jl:383-384: the discrete UnitDelay reads `(; s)` in y_state, and s_update returns its successor. Probe out.txt [default names] gives (:x, :s, :m)."
+  },
+  {
+   "id": "L6b-085",
+   "conforms": false,
+   "evidence": "src/library.jl:351 (Constant, continuous) and src/library.jl:383 (UnitDelay, discrete) both define y_state, so the output stage names are shared by the two tiers. Only the stores and update laws differ (src/assembly.jl:724-729).",
+   "class": "drift",
+   "fix": "The per-function-per-tier closed bundle-name sets become per-function closed sets again: the two tiers' store and update-law names are disjoint by construction, and one pair of output-stage names serves both tiers (D-220).",
+   "clear": false,
+   "note": "D-220 (log.md:8917-8918, 8958-8962) and the D-195 annotation at log.md:7853-7855 record the move."
+  },
+  {
+   "id": "L6b-086",
+   "conforms": false,
+   "evidence": "Probe out.txt [defined h_x]/[defined h_s] false. Probe out.txt [discrete + x_init]: a discrete leaf declaring x_init is DeclarationOnWrongTier(:x_init, :tier_form). src/assembly.jl:759-765. The output stages are shared, so no output-stage name is wrong on either tier.",
+   "class": "drift",
+   "fix": "The wrong-letter error class D-173 retired rejoins `DeclarationOnWrongTier`'s member set: a discrete leaf declaring `f` or `init_x`, or a continuous one declaring `g` or `init_s`, is statically diagnosable again; the output-stage member retires with D-220.",
+   "clear": false,
+   "note": "The D-195 annotation at log.md:7853-7855 records that D-220 retired the output-stage member of DeclarationOnWrongTier."
+  },
+  {
+   "id": "L6b-087",
+   "conforms": false,
+   "evidence": "Probe out.txt [defined TierSignatureMismatch] false. src/diagnostics.jl:636-643 lists DeclarationOnWrongTier's arms, and no signature-arity kind exists.",
+   "class": "drift",
+   "fix": "`TierSignatureMismatch` retires with the contract arities (D-263).",
+   "clear": true,
+   "note": "The annotation at log.md:10315-10317 and D-263 (log.md:11302) record the retirement."
+  },
+  {
+   "id": "L6b-093",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:639: the reason arms are :tier_form | :pinned_entry | :continuous_only | :no_manifold, with no arity arm. src/declare.jl:142-144: ws_init takes T on both tiers. Probe out.txt [Pinned on discrete] gives the :pinned_entry arm.",
+   "class": "drift",
+   "fix": "`DeclarationOnWrongTier` keeps the update laws, the stores, `state_events`, `init_m`, `state_projection` and a `Pinned` entry on a discrete leaf (D-263).",
+   "clear": true,
+   "note": "The annotation at log.md:10315-10317 records that the init_workspace arity left the member set and the Pinned entry joined it."
+  },
+  {
+   "id": "L6b-095",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:245-254: StepError carries t and boundary, the frame-entry index for replay!(…; to_boundary). src/diagnostics.jl:1109-1121: ConformanceFailure has no time field. Probe out.txt [branch shape] gives t = 0.05 and boundary = 4.",
+   "note": "t is the clock at the catch: the boundary time in a boundary phase, and the stage or trial time mid-integration (src/diagnostics.jl:247-248). The doc's 'boundary time' covers only the first case."
+  },
+  {
+   "id": "L6b-098",
+   "conforms": false,
+   "evidence": "Probe out.txt [defined StopFaceInvalid] false. A stop request is a StopFlag port (src/diagnostics.jl:926-931).",
+   "class": "drift",
+   "fix": "`StopFaceInvalid` retires with the `stop_on` keyword; a stop request is a `StopFlag` port (D-316).",
+   "clear": true,
+   "note": "The annotation at log.md:10319-10320 calls the bullet historical, and D-316 (log.md:14440) retires StopFaceInvalid."
+  },
+  {
+   "id": "L6b-106",
+   "conforms": true,
+   "evidence": "Probe out.txt [Pinned on discrete]: DeclarationOnWrongTier with reason :pinned_entry, declaration :u_types and entry :u. src/assembly.jl:789-792."
+  },
+  {
+   "id": "L6b-116",
+   "conforms": true,
+   "evidence": "src/build.jl:1059 and src/conditions.jl:665 call ws_init at Float64 off the continuous tier. Probe out.txt [discrete ws_init scalars] gives Any[Float64]."
+  },
+  {
+   "id": "L6b-118",
+   "conforms": false,
+   "evidence": "Probe out.txt [(;) store]: `x_init = (;)` is refused as EmptyStore(:x_init), and [nothing store builds] true. src/assembly.jl:686-696. The message names `nothing` (src/diagnostics.jl:941-945).",
+   "class": "drift",
+   "fix": "a stateless leaf declares it empty, `init_x(::C) = nothing` or `init_s(::C) = nothing`",
+   "clear": true,
+   "note": "The D-263 annotation at log.md:11391-11396 records D-435's `nothing` spelling. D-438 (log.md:18270-18272) refuses (;)."
+  },
+  {
+   "id": "L6b-127",
+   "conforms": true,
+   "evidence": "src/declare.jl:82 defines s_init. Probe out.txt: [defined s_init] true, [defined init_s] false."
+  },
+  {
+   "id": "L6b-137",
+   "conforms": true,
+   "evidence": "src/declare.jl:47-719: x_init(c), s_init(c), m_init(c), ws_init(c, ::Type{T}), u_types(c), y_types(c), x_deriv(c, bundle), s_update(c, bundle), x_projection(c, x), y_state(c, bundle) and y_direct(c, bundle) keep D-263's forms under the new names. The bundle fields are unchanged (x, s, m, u, ws, t)."
+  },
+  {
+   "id": "L6b-147",
+   "conforms": true,
+   "evidence": "Probe out.txt: init_x, init_s, init_m, init_workspace, input_types, output_types, state_derivative, state_update, state_projection, output_state and output_direct are all undefined in Redstone."
+  },
+  {
+   "id": "L6b-155",
+   "conforms": false,
+   "evidence": "src/declare.jl:290 and :312: the boundary declarations are input_wires and output_wires. Probe out.txt: u_connections and y_connections are undefined.",
+   "class": "drift",
+   "fix": "An assembly has no bundle, and its boundary declarations are named for the wires they return, `input_wires` and `output_wires` (D-303).",
+   "clear": true,
+   "note": "The D-279 annotation at log.md:12758-12762 records that D-303 supersedes the widening behind the u_/y_ connection names."
+  },
+  {
+   "id": "L6b-158",
+   "conforms": true,
+   "evidence": "src/declare.jl:490 defines sample_times(c). src/assembly.jl:877 gives Group its sample_times field. Probe out.txt [defined sample_times] true."
+  },
+  {
+   "id": "L6b-168",
+   "conforms": true,
+   "evidence": "src/declare.jl:261, :290 and :312: local_wires(c), input_wires(c) and output_wires(c) take the component alone and return collections of Pairs, the same signatures and entry spellings as before."
+  },
+  {
+   "id": "L6b-178",
+   "conforms": true,
+   "evidence": "src/assembly.jl:495 and :559 define input_passthrough and output_passthrough. Probe out.txt: both are defined."
+  },
+  {
+   "id": "L6b-188",
+   "conforms": true,
+   "evidence": "src/assembly.jl:874 names Group's field local_wires, and src/assembly.jl:884 names its keyword local_wires."
+  },
+  {
+   "id": "L6b-198",
+   "conforms": true,
+   "evidence": "Probe out.txt [bare Int x_init]: a bare x_init leaf is reported as IllegalStateLeaf on field :x. Probe out.txt [named head vs bare]: a named head against the bare store is ReadResolution :undeclared with candidates [:x]. Probe out.txt [default names] gives (:x, :s, :m)."
+  },
+  {
+   "id": "L6b-208",
+   "conforms": true,
+   "evidence": "Probe out.txt [(;) store]: EmptyStore with store :x_init. src/assembly.jl:686-696. src/diagnostics.jl:941-945: the message names `nothing`."
+  },
+  {
+   "id": "L6b-220",
+   "conforms": true,
+   "evidence": "src/readers.jl:159 `get_state(path, leaf = \"\")`. Probe out.txt [headless get_state on bare store]: linearizing with get_state(\"c\") on a bare Integrator gives A = [0.0;;]."
+  },
+  {
+   "id": "L6b-230",
+   "conforms": true,
+   "evidence": "src/executor.jl:519: `(tick - entry.Φ) % entry.D == 0 && run_entry!(...)`. The comment at src/executor.jl:482 spells the gate as `(n − Φ₀) % D₀ == 0`."
+  },
+  {
+   "id": "L6b-234",
+   "conforms": false,
+   "evidence": "src/model.jl:875-883: cap = max(min(p, h_max), h_min), and N = max(1, min(⌈r/cap⌉, ⌊r/h_min⌋)). Probe out.txt [shaped p=0.001 r=0.1] at h_max = 1/20 and h_min = 1/100 gives N = 10, where the doc's formula gives 100.",
+   "class": "drift",
+   "fix": "Under a proposal `p`, a step over the distance `r` takes `r / N`, with `N = ⌈r / min(p, h_max)⌉` capped at `⌊r / h_min⌋` and at least 1.",
+   "clear": true,
+   "note": "The doc is a notation restatement that drops the floor cap. D-460 (log.md:19744) and spec.md:7294-7296 record the cap, and D-463 (log.md:20043) rejects the uncapped rule. The code shipped the cap before D-479 (commit 4367fa55), so 'drift' is the closest class, though the text is lossy rather than stale."
+  }
+ ],
+ "notes": "L6b slice: I checked all 40 claims. 22 conform and 18 do not, all classed drift. Most of the 18 are clauses an entry annotation or a later entry already supersedes: D-252, D-154, D-436, D-165/D-194, D-179, D-174, D-181, D-220, D-263, D-435/D-438, D-316 and D-303. I filed them as drift the way the G5 verifiers did. Three moves are recorded by later entries and not by the entry's own annotation: L6b-013 (bare contract, D-436), L6b-016 (contracts walked on the continuous tier, D-263) and L6b-053 (D-112's workspace-arity and stage-name markers, retired by D-263 and D-220). Under log_rules rule 2, names that are only renames (input_types, init_x, h_x and similar) count as the vocabulary of their day. The fixes keep them and change only the substance. L6b-234 is a notation restatement (D-479) that drops D-460's floor cap. The probe shows N = 10 where the stated formula gives 100. On L6b-095 the StepError's t is the stage or trial time mid-integration, not always the boundary time. I filed it as conforming with a note. The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6b_v/probe.jl and its output is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6b_v/out.txt. It ran in three Julia processes, two of which failed at load, which leaves the last run's output. I edited no tracked file."
+}

@@ -1,0 +1,177 @@
+{
+ "judgments": [
+  {
+   "id": "S6b-001",
+   "conforms": true,
+   "evidence": "src/build.jl:1287-1290 sets each event's policy from the guard's return type: Bool gives :non_localized, Float64 gives :localized, and anything else throws GuardForm. These are the only two policies."
+  },
+  {
+   "id": "S6b-010",
+   "conforms": true,
+   "evidence": "src/declare.jl:522 has `StateEvent(guard, handler)` with no direction keyword, and rg finds no `direction` option in src. The localized trigger in src/frame.jl:224 (`!prior && σ1 ≥ 0`) and the edge in src/model.jl:748 (`!last && now`) fire only on not-holding to holding, so the opposite direction needs a second event with the negated guard."
+  },
+  {
+   "id": "S6b-019",
+   "conforms": true,
+   "evidence": "src/frame.jl:361-395: `_crossing` runs bracketed ITP root-finding on θ ∈ [0,1] over trial evaluations of the interpolant. src/frame.jl:290-302 takes the earliest θ★ as t*."
+  },
+  {
+   "id": "S6b-028",
+   "conforms": true,
+   "evidence": "src/deployment.jl:307 builds the schedule's ScheduleEntry rows (D, Φ) when the deployment binds. src/frame.jl:121 and :175 compute the next due instant from those rows with `_next_due` (src/model.jl:544) before integrating, and each span ends at that instant."
+  },
+  {
+   "id": "S6b-037",
+   "conforms": true,
+   "evidence": "src/frame.jl:368: `tol = localization_tol * Float64(Δt_frame) / _seconds(h′)`, so the stopping width in time is localization_tol·Δt_frame. src/deployment.jl:530-531 documents it as a fraction of Δt_frame."
+  },
+  {
+   "id": "S6b-046",
+   "conforms": true,
+   "evidence": "src/frame.jl:340-347: `_trial!` evaluates guards on the raw interpolated state with no projection. Projection runs only in `run_boundary!` (src/model.jl:652-654, `_projects!` first), which the t* boundary calls at src/frame.jl:316."
+  },
+  {
+   "id": "S6b-055",
+   "conforms": true,
+   "evidence": "src/frame.jl:316 runs the t* boundary as `run_boundary!(model, nothing)`, which runs no ticks. Root inputs are written only by the drain in `frame_top!` (src/sim.jl:2021-2024), which runs once per frame at src/frame.jl:91. `settled!` (src/sim.jl:2041-2043) only publishes and reads stop flags."
+  },
+  {
+   "id": "S6b-064",
+   "conforms": true,
+   "evidence": "src/frame.jl:124 sets `localizations = 0` once per frame, threads it through every step's `_localized_step!` call (src/frame.jl:148-150), and checks it against localization_budget at src/frame.jl:234."
+  },
+  {
+   "id": "S6b-073",
+   "conforms": true,
+   "evidence": "src/conditions.jl:582-584: a store's write is `merge(defaults, overlay)`, field by field for a named store, so a condition overrides the declared initial values leaf by leaf. src/model.jl:420-422 has the same rule for a partial entry."
+  },
+  {
+   "id": "S6b-082",
+   "conforms": true,
+   "evidence": "src/model.jl:703: `boundary_zero!(model) = run_boundary!(model, ESTABLISH)` is the ordinary boundary routine. `init!` calls it at src/model.jl:336 with no integrate before it. The ESTABLISH arity only admits every output stage (D-205), which §14.5 states."
+  },
+  {
+   "id": "S6b-091",
+   "conforms": true,
+   "evidence": "src/sim.jl:2793-2795: Snapshot(clock.t, frame, boundary, capture_stores(exec.store), layout, status) captures the whole signal table with the boundary's time. Probe P4: a snapshot at t=0.3 carries root input `in`=2.5, and c.y and c.power match the live table bitwise."
+  },
+  {
+   "id": "S6b-100",
+   "conforms": true,
+   "evidence": "`publish!` is called only from `settled!` (src/sim.jl:2041-2043), and that runs only at settled boundaries (src/frame.jl:170 and :324). `integrate_step!` and the trial and validation sweeps (src/frame.jl:206, 259-262, 340-347) never publish."
+  },
+  {
+   "id": "S6b-109",
+   "conforms": true,
+   "evidence": "src/build.jl:495-500 makes one requester for each output port of exactly type StopFlag. src/sim.jl:585-592 `_stop_hit` reads `STOP_REQUESTED` in the snapshot's StopFlag buffer."
+  },
+  {
+   "id": "S6b-118",
+   "conforms": true,
+   "evidence": "src/sim.jl:13-16 and :91-93 list the stop issuers: `:code` from `stop!(sim)`, a device's name from `stop!(handle)` (src/devices.jl:233-246), and `:interrupt`, the operator's Ctrl-C (src/sim.jl:1846). §12.1 (spec:9735-9738) counts a front end's button among the operator's channels.",
+   "note": "The code tags a front end's stop as `:code`. The four sources the doc names map onto three issuer tags, which is consistent."
+  },
+  {
+   "id": "S6b-127",
+   "conforms": true,
+   "evidence": "src/deployment.jl:544: `h_min::Union{Nothing,Rational{Int}}   # the step floor`, a Deployment field. It is required for a proposing method (src/deployment.jl:231-232)."
+  },
+  {
+   "id": "S6b-136",
+   "conforms": true,
+   "evidence": "Probe P3, a localized Bouncer run to t=2: the final q bits and the mode count are `===` across the default log, `log=false`, `log_every=7, log_max=3`, and a run that reads `latest(sim)` and `port` after every frame. test/test_log.jl:128-145 asserts the same for the log policies."
+  },
+  {
+   "id": "S6b-140",
+   "conforms": true,
+   "evidence": "Replay re-runs the ordinary loop (src/sim.jl:1281-1283: the replayed prefix is bit-identical). The header checks (CheckpointMismatch and ReplaySchemaMismatch, src/sim.jl:1310-1313 in the docstring) refuse a mismatched model but cannot certify the compiled code. Nothing in the code extends the promise beyond identical code, so the limit the doc states holds."
+  },
+  {
+   "id": "S6b-141",
+   "conforms": true,
+   "evidence": "Probe P3, run at -O2 and at -O0 (P1 prints opt_level 2 and 0): the Bouncer final q bits agree on this small model. That does not contradict the claim, which only bounds agreement at round-off. No src code promises bit identity across optimization levels, and spec §9.7 (spec:6302-6305) states the same bound.",
+   "note": "Bit identity on one small model is consistent with the claim, which allows round-off differences but does not require them."
+  },
+  {
+   "id": "S6b-147",
+   "conforms": true,
+   "evidence": "src/library.jl:822-863: GaussianWhiteNoise is an ordinary discrete primitive (s_init, s_update, y_state). Its generator is counter-based: the state `s` is the tick count and SplitMix64 runs on (seed, k), with no ambient global RNG."
+  },
+  {
+   "id": "S6b-156",
+   "conforms": true,
+   "evidence": "src/declare.jl:784 `@enum Tier CONTINUOUS DISCRETE` gives the two primitive tiers. The assembly is the third category: Group at src/assembly.jl:872, classed ASSEMBLY (imported in test/imports.jl)."
+  },
+  {
+   "id": "S6b-158",
+   "conforms": true,
+   "evidence": "src/assembly.jl:672-682 `check_state_leaves` admits each x_init field, or a bare value, only when it is a Float64 or an SArray of Float64, and refuses anything else as IllegalStateLeaf.",
+   "note": "The code also requires the common eltype (Float64 at declaration), which §7.1 states and this summary line leaves out. A Float32 scalar is refused as :eltype. The line is consistent with §7.1's 'plain real scalars and SArrays of a common eltype'."
+  },
+  {
+   "id": "S6b-166",
+   "conforms": true,
+   "evidence": "src/declare.jl:545: `struct StateEvent{G,H}` holds a guard and a handler. state_events returns a NamedTuple of them (src/declare.jl:555-558)."
+  },
+  {
+   "id": "S6b-175",
+   "conforms": true,
+   "evidence": "The code has no path for one component to write another's modes. Modes change only by a handler's `m` return (src/model.jl:765 `_fire!`, test/fixtures.jl:169-170). A supervisor's command therefore reaches a component only as an input port value that its own guard reads."
+  },
+  {
+   "id": "S6b-184",
+   "conforms": true,
+   "evidence": "src/structure.jl:305-309 and :391-418 fold each discrete child's declared Relative or Absolute rate into one timing. src/deployment.jl:307 turns that into a schedule row (D, Φ, Δt), and run_ticks! runs the updates only at due instants (src/model.jl:658-663)."
+  },
+  {
+   "id": "S6b-193",
+   "conforms": true,
+   "evidence": "src/deployment.jl:200 (bind_schedule docstring) says 'Nothing relates the three quantities'. No check ties h_max to Δt_base. src/frame.jl:126-129 ends a span at each due instant, so a tick inside a step splits it."
+  },
+  {
+   "id": "S6b-202",
+   "conforms": true,
+   "evidence": "src/model.jl:652-656: run_boundary! runs event_phase! to quiescence and then run_ticks!, so the due s_update calls read the settled table of that boundary (comment at src/model.jl:643-647)."
+  },
+  {
+   "id": "S6b-211",
+   "conforms": true,
+   "evidence": "Probe P5: TickCounter at Relative(4) with Δt_base=1/40 and h_max=1/80 publishes n=0 at every interior step end from 0.0125 to 0.0875, then n=1 at 0.1 and n=2 at 0.2. src/frame.jl:338: the interior sweep has no discrete entries, so discrete cells stay held."
+  },
+  {
+   "id": "S6b-220",
+   "conforms": true,
+   "evidence": "src/assembly.jl:872-878: Group holds children, local_wires, input_wires and output_wires (the boundary faces), plus sample_times (its rate scope, which §3.3 covers in its next sentences). It has no x_init, s_update or x_deriv."
+  },
+  {
+   "id": "S6b-229",
+   "conforms": true,
+   "evidence": "src/structure.jl:393-397 and the fold comment at src/structure.jl:305-309: each Relative entry composes with its enclosing scope's timing down the tree. Probe P2: nested Relative(2,1) under Relative(2,1) yields one row, g/a with D=4."
+  },
+  {
+   "id": "S6b-231",
+   "conforms": false,
+   "evidence": "src/structure.jl:397-399: `Timing((scope.anchor, D·scope.D, scope.Φ + rate.Φ·scope.D))`, so a child's phase is scaled by its scope's period before it is added. Probe P2: Relative(2,1) nested under Relative(2,1) gives D=4, Φ=3, not Φ=1+1=2. §6.3 (spec:2033-2037) and D-478 state the affine law.",
+   "class": "drift",
+   "fix": "Relative entries compose down the tree, periods multiplying and phases composing affinely: a child's phase, scaled by its scope's period, adds to the scope's phase.",
+   "clear": true,
+   "note": "The phrase 'phases adding' dates from the move in e7468964. The log has said 'phases affine' since D-185 (log.md:7381), and D-478 (log.md:21129-21131) gives the law the code implements."
+  },
+  {
+   "id": "S6b-239",
+   "conforms": false,
+   "evidence": "src/executor.jl:260-265 `run_project!` writes x back from `x_projection(comp, x)` at every boundary (src/model.jl:653), and the fire walk runs `handler → x_projection` (src/executor.jl:339-341). Integration also writes x. Handlers are the only construct that resets x, but they are not the only writers.",
+   "class": "deviation",
+   "fix": "An update writes only its own `s`, and guard-driven handlers are the sole construct that resets continuous state ([D-141][d-141], [D-362][d-362]).",
+   "clear": false,
+   "backing_entry": "D-141",
+   "note": "This is a wording precision issue. The sentence means resets, and projection (§2.5, D-111) cannot express a periodic reset because it sees only x. Read literally, 'sole writers' wrongly excludes projection and integration."
+  },
+  {
+   "id": "S6b-240",
+   "conforms": true,
+   "evidence": "The only event constructor is StateEvent (src/declare.jl:522-545), which is detected. Scheduled instants exist only as discrete ticks (src/frame.jl:121, src/deployment.jl:307). A continuous component has no tick-triggered handler, so a periodic reset has no event spelling, which matches D-362's ruling."
+  }
+ ],
+ "notes": "I judged all 32 claims against W at cb398676. Two do not conform: S6b-231 (drift, clear) and S6b-239 (deviation, a wording precision issue, not clear). The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S6b_v/probe.jl. It ran four times: twice while I fixed a scoping error and a reader that never ran (it used the single-threaded run!), then once at -O2 and once at -O0 for S6b-141. Probe items: P2 is phase composition, P3 is bit identity under the log policies, a between-frame reader and -O0, P4 is snapshot contents, P5 is the zero-order hold across interior step ends. The probe is the only file I created, and I edited no tracked file. S6b-158 conforms with a note: the code also requires the common eltype Float64, which §7.1 states. S6b-141 conforms because the bit identity seen at -O0 on one small model does not contradict a round-off bound."
+}

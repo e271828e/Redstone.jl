@@ -1,0 +1,1076 @@
+{
+ "rows": [
+  {
+   "id": "S6c-001",
+   "file": "design/spec.md",
+   "line": 1003,
+   "kind": "law",
+   "claim": "A mutable type anywhere in a port value is refused (also D-237's position).",
+   "evidence": "probe: B.mutable_nested builds with no diagnostic (struct HoldsMut; m::MutS end, MutS mutable, as a port type). src/leaves.jl:99-110 and src/leaves.jl:18 show the walk stops at any concrete immutable non-isbits type as an opaque leaf and never looks inside. probe: B.mutable_port (Vector{Float64} as the port type itself) is refused as IllegalPortType/:mutable. Spec line 1093 itself says the build does not look inside a field handle.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A mutable type the leaf walk reaches is refused, so a port type that is itself mutable, or a static array of one; a mutable reference held inside an opaque leaf is stored whole and is not looked at.",
+   "note": "Same sentence is in D-237's Position. The code is consistent with the opaque-leaf rule at lines 997-1000 and 1090-1094, so the over-broad word is 'anywhere'. A verifier may rule defect if the intent is to refuse mutable fields inside handles; D-237 'Rejected' (walking into references) argues against that."
+  },
+  {
+   "id": "S6c-002",
+   "file": "design/spec.md",
+   "line": 1139,
+   "kind": "law",
+   "claim": "Every primitive provides exactly two output stages, y_state and y_direct (also line 889 'the two output stages every primitive provides' and line 1118 'two output stages per primitive').",
+   "evidence": "probe: C.Negator y_direct and test/fixtures.jl:67-70 (Negator has y_direct only), test/fixtures.jl:49-54 (BareTicker has y_state only); src/declare.jl:768 has_stage asks by method presence; src/build.jl:66 and :1184 skip an absent stage; the spec's own lines 1226-1227 and 1258-1259 admit a component with no stage-1 ports and a stage that may not exist.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Every primitive has two output stage slots, `y_state` (stage 1) and `y_direct` (stage 2), and provides whichever it needs; at least one port is produced by each stage that exists.",
+   "note": "Wording problem, not a code fault. D-006's own text says only 'strict two-stage structural feedthrough'."
+  },
+  {
+   "id": "S6c-003",
+   "file": "design/spec.md",
+   "line": 1096,
+   "kind": "law",
+   "claim": "Each field-emitting component also exposes a value-level constructor, a plain public function from its input values to its handle.",
+   "evidence": "No field-emitting environment component exists in src/. src/library.jl has no handle emitter (rg Field/handle hits only Fields{V}, a struct splitter). The environment components live in the external FlightPhysics package, which is not in W.",
+   "verdict": "unverifiable",
+   "note": "A convention on library authors (D-139), not enforced by any code in this repo. Nothing to check against."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S6c-004",
+   "file": "design/spec.md",
+   "line": 886,
+   "kind": "law",
+   "claim": "Ports exchange immutable values; a mutable port type is refused",
+   "evidence": "probe:B.mutable_port; src/leaves.jl:99"
+  },
+  {
+   "id": "S6c-005",
+   "file": "design/spec.md",
+   "line": 888,
+   "kind": "mech",
+   "claim": "The signal table has one concretely typed cell per output port in the flattened model",
+   "evidence": "src/build.jl:439-441"
+  },
+  {
+   "id": "S6c-006",
+   "file": "design/spec.md",
+   "line": 889,
+   "kind": "mech",
+   "claim": "A stage function returns a NamedTuple of fresh values on either tier",
+   "evidence": "src/build.jl:75-86"
+  },
+  {
+   "id": "S6c-007",
+   "file": "design/spec.md",
+   "line": 891,
+   "kind": "mech",
+   "claim": "The framework writes each returned value into its cell; consumers read cells",
+   "evidence": "src/store.jl:107; src/store.jl:51"
+  },
+  {
+   "id": "S6c-008",
+   "file": "design/spec.md",
+   "line": 897,
+   "kind": "mech",
+   "claim": "A store is the framework-owned home of a state letter x, s or m",
+   "evidence": "src/build.jl:171"
+  },
+  {
+   "id": "S6c-009",
+   "file": "design/spec.md",
+   "line": 899,
+   "kind": "mech",
+   "claim": "An x store is a range of the flat buffer",
+   "evidence": "src/executor.jl:128"
+  },
+  {
+   "id": "S6c-010",
+   "file": "design/spec.md",
+   "line": 901,
+   "kind": "mech",
+   "claim": "A root input is a source cell with no producer",
+   "evidence": "src/build.jl:241"
+  },
+  {
+   "id": "S6c-011",
+   "file": "design/spec.md",
+   "line": 905,
+   "kind": "law",
+   "claim": "Signals may reference bulk data (frozen references); isbits is not the rule",
+   "evidence": "probe:B.handle_port"
+  },
+  {
+   "id": "S6c-012",
+   "file": "design/spec.md",
+   "line": 914,
+   "kind": "law",
+   "claim": "Isbits payloads allocate nothing",
+   "evidence": "probe:F.alloc"
+  },
+  {
+   "id": "S6c-013",
+   "file": "design/spec.md",
+   "line": 915,
+   "kind": "mech",
+   "claim": "A cell's freshness follows its producer's place in the execution order",
+   "evidence": "src/build.jl:228-250"
+  },
+  {
+   "id": "S6c-014",
+   "file": "design/spec.md",
+   "line": 921,
+   "kind": "mech",
+   "claim": "Outputs appear as one flat namespace of paths and port names",
+   "evidence": "src/build.jl:370; probe:A.port_kin_pose"
+  },
+  {
+   "id": "S6c-015",
+   "file": "design/spec.md",
+   "line": 924,
+   "kind": "mech",
+   "claim": "A reader can reach any leaf inside a port value",
+   "evidence": "probe:A.leaf_read; probe:A.leaf_read_sub"
+  },
+  {
+   "id": "S6c-016",
+   "file": "design/spec.md",
+   "line": 925,
+   "kind": "law",
+   "claim": "Which stage computes a port is invisible outside the component",
+   "evidence": "src/build.jl:221-226"
+  },
+  {
+   "id": "S6c-017",
+   "file": "design/spec.md",
+   "line": 927,
+   "kind": "mech",
+   "claim": "Stage membership changes the feedthrough graph; stage-1 consumption adds no edge",
+   "evidence": "src/build.jl:237-243"
+  },
+  {
+   "id": "S6c-018",
+   "file": "design/spec.md",
+   "line": 931,
+   "kind": "law",
+   "claim": "The y_types contract is the public interface; no private intermediates",
+   "evidence": "probe:D.extra_key; probe:D.y_keys"
+  },
+  {
+   "id": "S6c-019",
+   "file": "design/spec.md",
+   "line": 947,
+   "kind": "law",
+   "claim": "A port is one cell and one producer",
+   "evidence": "probe:D.two_stages_same_port; src/build.jl:1203"
+  },
+  {
+   "id": "S6c-020",
+   "file": "design/spec.md",
+   "line": 949,
+   "kind": "law",
+   "claim": "For a primitive faces and ports coincide",
+   "evidence": "probe:A.port_kin_pose"
+  },
+  {
+   "id": "S6c-021",
+   "file": "design/spec.md",
+   "line": 950,
+   "kind": "mech",
+   "claim": "An assembly face aliases an interior port and creates no endpoint",
+   "evidence": "probe:A.port_face_pose; probe:A.ports"
+  },
+  {
+   "id": "S6c-022",
+   "file": "design/spec.md",
+   "line": 954,
+   "kind": "decl",
+   "claim": "A bare contract is one port whose face is u or y",
+   "evidence": "probe:C.bare_port_read; test/fixtures.jl:87-90"
+  },
+  {
+   "id": "S6c-023",
+   "file": "design/spec.md",
+   "line": 955,
+   "kind": "law",
+   "claim": "The face/port distinction is class-blind; a child's faces are addressed alike",
+   "evidence": "probe:A.port_face_pose; test/test_readers.jl:106"
+  },
+  {
+   "id": "S6c-024",
+   "file": "design/spec.md",
+   "line": 966,
+   "kind": "mech",
+   "claim": "The framework scatters each returned field into the port's cell; readers gather",
+   "evidence": "src/store.jl:107; src/store.jl:51"
+  },
+  {
+   "id": "S6c-025",
+   "file": "design/spec.md",
+   "line": 967,
+   "kind": "mech",
+   "claim": "Readers are the update stage, guards, wired consumers and snapshot capture",
+   "evidence": "src/executor.jl:131; src/store.jl:1348"
+  },
+  {
+   "id": "S6c-026",
+   "file": "design/spec.md",
+   "line": 974,
+   "kind": "law",
+   "claim": "The aggregate y carries declared ports only, both stages merged",
+   "evidence": "probe:D.y_keys"
+  },
+  {
+   "id": "S6c-027",
+   "file": "design/spec.md",
+   "line": 975,
+   "kind": "mech",
+   "claim": "y exists as no stored object (gathered from cells)",
+   "evidence": "src/executor.jl:135"
+  },
+  {
+   "id": "S6c-028",
+   "file": "design/spec.md",
+   "line": 980,
+   "kind": "law",
+   "claim": "A stage return is a NamedTuple of port values",
+   "evidence": "probe:D.return_not_nt; src/build.jl:80"
+  },
+  {
+   "id": "S6c-029",
+   "file": "design/spec.md",
+   "line": 980,
+   "kind": "law",
+   "claim": "Under a bare contract the stage returns the one port's value",
+   "evidence": "probe:D.bare_returns_value; src/build.jl:117"
+  },
+  {
+   "id": "S6c-030",
+   "file": "design/spec.md",
+   "line": 981,
+   "kind": "law",
+   "claim": "A custom struct is a first-class port value, one declared port, one cell",
+   "evidence": "probe:A.port_kin_pose; probe:A.ports"
+  },
+  {
+   "id": "S6c-031",
+   "file": "design/spec.md",
+   "line": 983,
+   "kind": "ex",
+   "claim": "KinPose is an illustrative struct (lead: names missing)",
+   "evidence": "probe:A.build (defined in the probe)"
+  },
+  {
+   "id": "S6c-032",
+   "file": "design/spec.md",
+   "line": 984,
+   "kind": "law",
+   "claim": "Nested fields get no cells of their own",
+   "evidence": "probe:A.ports; src/build.jl:416-432"
+  },
+  {
+   "id": "S6c-033",
+   "file": "design/spec.md",
+   "line": 985,
+   "kind": "mech",
+   "claim": "A reader reaches a nested field by leaf address such as pose.q_eb",
+   "evidence": "probe:A.leaf_read"
+  },
+  {
+   "id": "S6c-034",
+   "file": "design/spec.md",
+   "line": 986,
+   "kind": "law",
+   "claim": "A wired consumer takes the struct-valued port whole",
+   "evidence": "probe:A.whole_wire"
+  },
+  {
+   "id": "S6c-035",
+   "file": "design/spec.md",
+   "line": 987,
+   "kind": "law",
+   "claim": "A bare-struct return for a named contract is rejected",
+   "evidence": "probe:B.bare_struct_return"
+  },
+  {
+   "id": "S6c-036",
+   "file": "design/spec.md",
+   "line": 987,
+   "kind": "law",
+   "claim": "A bare contract's return is one cell, never a splat",
+   "evidence": "probe:D.bare_returns_nt; src/build.jl:117"
+  },
+  {
+   "id": "S6c-037",
+   "file": "design/spec.md",
+   "line": 990,
+   "kind": "mech",
+   "claim": "The leaf walk reaches through Reals, static arrays and isbits structs",
+   "evidence": "src/leaves.jl:47-52"
+  },
+  {
+   "id": "S6c-038",
+   "file": "design/spec.md",
+   "line": 992,
+   "kind": "law",
+   "claim": "An enum is one pinned leaf",
+   "evidence": "probe:G.enum_port; src/leaves.jl:311"
+  },
+  {
+   "id": "S6c-039",
+   "file": "design/spec.md",
+   "line": 993,
+   "kind": "law",
+   "claim": "StopFlag is the one enum with a framework meaning",
+   "evidence": "src/leaves.jl:270; rg @enum src/"
+  },
+  {
+   "id": "S6c-040",
+   "file": "design/spec.md",
+   "line": 993,
+   "kind": "law",
+   "claim": "An output port of type StopFlag is a stop request that ends the run",
+   "evidence": "probe:B.stop_request_run"
+  },
+  {
+   "id": "S6c-041",
+   "file": "design/spec.md",
+   "line": 997,
+   "kind": "mech",
+   "claim": "The walk stops at an immutable non-isbits type as one opaque leaf",
+   "evidence": "src/leaves.jl:18; src/leaves.jl:48"
+  },
+  {
+   "id": "S6c-042",
+   "file": "design/spec.md",
+   "line": 998,
+   "kind": "law",
+   "claim": "The table stores an opaque leaf whole, references included",
+   "evidence": "src/leaves.jl:355; probe:B.handle_port"
+  },
+  {
+   "id": "S6c-043",
+   "file": "design/spec.md",
+   "line": 999,
+   "kind": "mech",
+   "claim": "A field handle is an opaque leaf",
+   "evidence": "probe:B.handle_port; probe:B.nleaves_handle"
+  },
+  {
+   "id": "S6c-044",
+   "file": "design/spec.md",
+   "line": 1001,
+   "kind": "law",
+   "claim": "A Symbol is an opaque leaf",
+   "evidence": "src/leaves.jl:19; probe:B.nleaves_handle"
+  },
+  {
+   "id": "S6c-045",
+   "file": "design/spec.md",
+   "line": 1002,
+   "kind": "law",
+   "claim": "A Symbol mode publishes like any other port",
+   "evidence": "probe:B.symbol_enum_port; probe:B.symbol_wired"
+  },
+  {
+   "id": "S6c-046",
+   "file": "design/spec.md",
+   "line": 1003,
+   "kind": "law",
+   "claim": "An opaque leaf surfacing as a root input is refused",
+   "evidence": "probe:B.symbol_root_input; probe:B.handle_root_input; src/build.jl:460"
+  },
+  {
+   "id": "S6c-047",
+   "file": "design/spec.md",
+   "line": 1009,
+   "kind": "law",
+   "claim": "Wiring is port-granular; no sub-field connections",
+   "evidence": "probe:A.subfield_wire"
+  },
+  {
+   "id": "S6c-048",
+   "file": "design/spec.md",
+   "line": 1011,
+   "kind": "mech",
+   "claim": "An ordinary component can publish a bundle's fields as loose ports",
+   "evidence": "src/library.jl:221-232"
+  },
+  {
+   "id": "S6c-049",
+   "file": "design/spec.md",
+   "line": 1015,
+   "kind": "law",
+   "claim": "A field-projection connector is not built",
+   "evidence": "probe:A.subfield_wire; src/linearize.jl:479"
+  },
+  {
+   "id": "S6c-050",
+   "file": "design/spec.md",
+   "line": 1019,
+   "kind": "law",
+   "claim": "Each port has exactly one producing function",
+   "evidence": "probe:D.two_stages_same_port; src/build.jl:1203"
+  },
+  {
+   "id": "S6c-051",
+   "file": "design/spec.md",
+   "line": 1025,
+   "kind": "law",
+   "claim": "Fan-out is free; a bundle and a loose field can both be published",
+   "evidence": "probe:F.fanout; probe:A.ports"
+  },
+  {
+   "id": "S6c-052",
+   "file": "design/spec.md",
+   "line": 1026,
+   "kind": "mech",
+   "claim": "The loose hot field costs one extra isbits cell",
+   "evidence": "probe:A.ports"
+  },
+  {
+   "id": "S6c-053",
+   "file": "design/spec.md",
+   "line": 1026,
+   "kind": "ex",
+   "claim": "q_eb is the loose hot field's local name (lead: names missing)",
+   "evidence": "probe:A.ports"
+  },
+  {
+   "id": "S6c-054",
+   "file": "design/spec.md",
+   "line": 1029,
+   "kind": "ex",
+   "claim": "Kinematics and Vehicle are illustrative names (leads: missing, test-only)",
+   "evidence": "probe:A.build"
+  },
+  {
+   "id": "S6c-055",
+   "file": "design/spec.md",
+   "line": 1030,
+   "kind": "mech",
+   "claim": "An output_wires entry sources a face from a child's face",
+   "evidence": "probe:A.port_face_pose"
+  },
+  {
+   "id": "S6c-056",
+   "file": "design/spec.md",
+   "line": 1031,
+   "kind": "ex",
+   "claim": "RQuat is a rotation-quaternion type (lead: names missing)",
+   "evidence": "probe:A.build (defined in the probe)"
+  },
+  {
+   "id": "S6c-057",
+   "file": "design/spec.md",
+   "line": 1036,
+   "kind": "ex",
+   "claim": "y_types block: bundle port and loose hot field give two cells",
+   "evidence": "probe:A.ports"
+  },
+  {
+   "id": "S6c-058",
+   "file": "design/spec.md",
+   "line": 1039,
+   "kind": "ex",
+   "claim": "output_wires block: faces alias interior ports, no endpoint",
+   "evidence": "probe:A.port_face_pose"
+  },
+  {
+   "id": "S6c-059",
+   "file": "design/spec.md",
+   "line": 1056,
+   "kind": "law",
+   "claim": "Field-addressed staging is unbuilt",
+   "evidence": "rg staging/lens src/ finds no struct-slot staging (src/linearize.jl:479)"
+  },
+  {
+   "id": "S6c-060",
+   "file": "design/spec.md",
+   "line": 1064,
+   "kind": "mech",
+   "claim": "Ordinary ports carry field handles as immutable query objects",
+   "evidence": "probe:B.handle_port; probe:B.handle_wired"
+  },
+  {
+   "id": "S6c-061",
+   "file": "design/spec.md",
+   "line": 1068,
+   "kind": "mech",
+   "claim": "An environment component emits a handle consumers receive on input ports",
+   "evidence": "probe:B.handle_wired"
+  },
+  {
+   "id": "S6c-062",
+   "file": "design/spec.md",
+   "line": 1070,
+   "kind": "ex",
+   "claim": "ISAField, T_sl, p_sl, TerrainField are illustrative (leads: names missing)",
+   "evidence": "no src/ definition; marked illustrative in the text"
+  },
+  {
+   "id": "S6c-063",
+   "file": "design/spec.md",
+   "line": 1073,
+   "kind": "ex",
+   "claim": "airdata and ray_intersect are illustrative (leads: names missing)",
+   "evidence": "no src/ definition; marked illustrative in the text"
+  },
+  {
+   "id": "S6c-064",
+   "file": "design/spec.md",
+   "line": 1075,
+   "kind": "law",
+   "claim": "A parametric environment model is isbits",
+   "evidence": "probe:B.isbits_handle_root"
+  },
+  {
+   "id": "S6c-065",
+   "file": "design/spec.md",
+   "line": 1077,
+   "kind": "decl",
+   "claim": "A bulk-data handle is an immutable struct with isbits params and references",
+   "evidence": "src/leaves.jl:13-19; probe:B.handle_port"
+  },
+  {
+   "id": "S6c-066",
+   "file": "design/spec.md",
+   "line": 1081,
+   "kind": "law",
+   "claim": "Bulk data never enters through a root input",
+   "evidence": "probe:B.handle_root_input; src/build.jl:460"
+  },
+  {
+   "id": "S6c-067",
+   "file": "design/spec.md",
+   "line": 1087,
+   "kind": "law",
+   "claim": "An isbits handle may be a root input like any other value",
+   "evidence": "probe:B.isbits_handle_root (with a probe_value, as for any struct)"
+  },
+  {
+   "id": "S6c-068",
+   "file": "design/spec.md",
+   "line": 1093,
+   "kind": "mech",
+   "claim": "The build does not look inside a field handle",
+   "evidence": "src/leaves.jl:105; probe:B.mutable_nested"
+  },
+  {
+   "id": "S6c-069",
+   "file": "design/spec.md",
+   "line": 1106,
+   "kind": "ex",
+   "claim": "Airflow and AirData are illustrative / external FlightPhysics (leads: names missing)",
+   "evidence": "no src/ definition; AirData listed in design/companions/migration_outline.md:39"
+  },
+  {
+   "id": "S6c-070",
+   "file": "design/spec.md",
+   "line": 1109,
+   "kind": "mech",
+   "claim": "A consumer may accept any handle type below a declared bound",
+   "evidence": "src/leaves.jl:372; src/build.jl:918"
+  },
+  {
+   "id": "S6c-071",
+   "file": "design/spec.md",
+   "line": 1129,
+   "kind": "law",
+   "claim": "Every consumer reads values already produced at that instant",
+   "evidence": "src/build.jl:228-250"
+  },
+  {
+   "id": "S6c-072",
+   "file": "design/spec.md",
+   "line": 1130,
+   "kind": "mech",
+   "claim": "The build forms a graph of wiring edges and feedthrough relations",
+   "evidence": "src/build.jl:235-243"
+  },
+  {
+   "id": "S6c-073",
+   "file": "design/spec.md",
+   "line": 1131,
+   "kind": "mech",
+   "claim": "An acyclic graph is topologically sorted into a static order",
+   "evidence": "src/build.jl:246-258; probe:F.outputs_order"
+  },
+  {
+   "id": "S6c-074",
+   "file": "design/spec.md",
+   "line": 1133,
+   "kind": "mech",
+   "claim": "The order is computed once, at build time",
+   "evidence": "src/build.jl:262; probe:F.outputs_order"
+  },
+  {
+   "id": "S6c-075",
+   "file": "design/spec.md",
+   "line": 1134,
+   "kind": "law",
+   "claim": "A cyclic graph is refused naming the cycle",
+   "evidence": "probe:F.algebraic_loop"
+  },
+  {
+   "id": "S6c-076",
+   "file": "design/spec.md",
+   "line": 1140,
+   "kind": "law",
+   "claim": "Feedthrough is declared by function signature, no annotations",
+   "evidence": "src/build.jl:221-226; src/assembly.jl:17"
+  },
+  {
+   "id": "S6c-077",
+   "file": "design/spec.md",
+   "line": 1142,
+   "kind": "decl",
+   "claim": "y_state is stage 1 and y_direct is stage 2",
+   "evidence": "src/build.jl:226-227; probe:F.stage12"
+  },
+  {
+   "id": "S6c-078",
+   "file": "design/spec.md",
+   "line": 1146,
+   "kind": "decl",
+   "claim": "Continuous y_state set is x, m, t [, ws]",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "S6c-079",
+   "file": "design/spec.md",
+   "line": 1147,
+   "kind": "decl",
+   "claim": "Continuous y_direct set is x, m, u, y_x, t [, ws]",
+   "evidence": "src/declare.jl:902"
+  },
+  {
+   "id": "S6c-080",
+   "file": "design/spec.md",
+   "line": 1148,
+   "kind": "decl",
+   "claim": "x_deriv set is x, m, y, u, t [, ws]",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "S6c-081",
+   "file": "design/spec.md",
+   "line": 1151,
+   "kind": "decl",
+   "claim": "Discrete y_state set is s, t, Δt [, ws]",
+   "evidence": "src/declare.jl:904"
+  },
+  {
+   "id": "S6c-082",
+   "file": "design/spec.md",
+   "line": 1152,
+   "kind": "decl",
+   "claim": "Discrete y_direct set is s, u, y_s, t, Δt [, ws]",
+   "evidence": "src/declare.jl:905; probe:C.LEGAL"
+  },
+  {
+   "id": "S6c-083",
+   "file": "design/spec.md",
+   "line": 1153,
+   "kind": "decl",
+   "claim": "s_update set is s, y, u, t, Δt [, ws]",
+   "evidence": "src/declare.jl:906"
+  },
+  {
+   "id": "S6c-084",
+   "file": "design/spec.md",
+   "line": 1147,
+   "kind": "ex",
+   "claim": "y_xu, y_su are local names in the pseudo-signature (lead: names missing)",
+   "evidence": "pseudo-code; no code name"
+  },
+  {
+   "id": "S6c-085",
+   "file": "design/spec.md",
+   "line": 1158,
+   "kind": "law",
+   "claim": "The event system is continuous side only",
+   "evidence": "src/assembly.jl:731; src/declare.jl:567"
+  },
+  {
+   "id": "S6c-086",
+   "file": "design/spec.md",
+   "line": 1159,
+   "kind": "decl",
+   "claim": "guard set is x, m, y, u, t [, ws]; returns Bool or scalar",
+   "evidence": "src/declare.jl:907; src/build.jl:1294-1297; probe:E.guard_int"
+  },
+  {
+   "id": "S6c-087",
+   "file": "design/spec.md",
+   "line": 1160,
+   "kind": "decl",
+   "claim": "handler set is x, m, y, u, t [, ws]",
+   "evidence": "src/declare.jl:908; probe:C.Motor events"
+  },
+  {
+   "id": "S6c-088",
+   "file": "design/spec.md",
+   "line": 1161,
+   "kind": "decl",
+   "claim": "x_projection(comp, x) takes the state alone",
+   "evidence": "src/build.jl:1164; probe:F.projection"
+  },
+  {
+   "id": "S6c-089",
+   "file": "design/spec.md",
+   "line": 1170,
+   "kind": "law",
+   "claim": "Each function receives its component and one bundle",
+   "evidence": "src/build.jl:76; src/executor.jl:131"
+  },
+  {
+   "id": "S6c-090",
+   "file": "design/spec.md",
+   "line": 1171,
+   "kind": "mech",
+   "claim": "A bundle is a NamedTuple of allocation-free reconstructed views",
+   "evidence": "src/store.jl:51; src/executor.jl:141; probe:F.alloc"
+  },
+  {
+   "id": "S6c-091",
+   "file": "design/spec.md",
+   "line": 1173,
+   "kind": "law",
+   "claim": "The projection receives no bundle, only the state",
+   "evidence": "probe:F.projection"
+  },
+  {
+   "id": "S6c-092",
+   "file": "design/spec.md",
+   "line": 1180,
+   "kind": "mech",
+   "claim": "x from the flat buffer, m from mode stores, s from its store",
+   "evidence": "src/executor.jl:129-131"
+  },
+  {
+   "id": "S6c-093",
+   "file": "design/spec.md",
+   "line": 1183,
+   "kind": "mech",
+   "claim": "y is gathered from the component's own cells",
+   "evidence": "src/executor.jl:135"
+  },
+  {
+   "id": "S6c-094",
+   "file": "design/spec.md",
+   "line": 1186,
+   "kind": "mech",
+   "claim": "u is gathered from foreign cells through the wiring",
+   "evidence": "src/executor.jl:132"
+  },
+  {
+   "id": "S6c-095",
+   "file": "design/spec.md",
+   "line": 1187,
+   "kind": "law",
+   "claim": "t always present; Δt only on the discrete tier",
+   "evidence": "src/declare.jl:874-875; probe:C.TickCounter y_state"
+  },
+  {
+   "id": "S6c-096",
+   "file": "design/spec.md",
+   "line": 1188,
+   "kind": "law",
+   "claim": "Δt is the same in both output stages and the update",
+   "evidence": "probe:C.dt_probe; src/executor.jl:139"
+  },
+  {
+   "id": "S6c-097",
+   "file": "design/spec.md",
+   "line": 1191,
+   "kind": "decl",
+   "claim": "ws is the scratch view",
+   "evidence": "src/declare.jl:873; probe:C.WorkGain y_direct"
+  },
+  {
+   "id": "S6c-098",
+   "file": "design/spec.md",
+   "line": 1193,
+   "kind": "law",
+   "claim": "The signal table holds produced signals only (output ports and root inputs)",
+   "evidence": "src/build.jl:439-443"
+  },
+  {
+   "id": "S6c-099",
+   "file": "design/spec.md",
+   "line": 1207,
+   "kind": "law",
+   "claim": "x present iff x_init declared and not nothing (continuous)",
+   "evidence": "src/declare.jl:860; probe:C.Plant y_state; probe:C.Negator y_direct"
+  },
+  {
+   "id": "S6c-100",
+   "file": "design/spec.md",
+   "line": 1208,
+   "kind": "law",
+   "claim": "s present iff s_init declared and not nothing (discrete)",
+   "evidence": "src/declare.jl:863; probe:C.TickCounter; probe:C.DiscreteMap s_update"
+  },
+  {
+   "id": "S6c-101",
+   "file": "design/spec.md",
+   "line": 1209,
+   "kind": "law",
+   "claim": "m present iff m_init declared and not nothing (continuous only)",
+   "evidence": "src/declare.jl:861; probe:C.Motor y_direct; probe:C.discrete_with_m"
+  },
+  {
+   "id": "S6c-102",
+   "file": "design/spec.md",
+   "line": 1210,
+   "kind": "law",
+   "claim": "ws present iff ws_init declared",
+   "evidence": "src/declare.jl:873; probe:F.ws_decl"
+  },
+  {
+   "id": "S6c-103",
+   "file": "design/spec.md",
+   "line": 1211,
+   "kind": "law",
+   "claim": "u present iff the family sees inputs and u_types is declared",
+   "evidence": "src/declare.jl:865-867; probe:C.Plant y_state vs x_deriv"
+  },
+  {
+   "id": "S6c-104",
+   "file": "design/spec.md",
+   "line": 1212,
+   "kind": "law",
+   "claim": "y present iff y_types is declared (update laws)",
+   "evidence": "src/declare.jl:870-872; probe:C.Plant x_deriv"
+  },
+  {
+   "id": "S6c-105",
+   "file": "design/spec.md",
+   "line": 1213,
+   "kind": "law",
+   "claim": "y_x/y_s present iff stage-1 ports exist",
+   "evidence": "src/declare.jl:868-869; probe:C.Plant y_direct no s1"
+  },
+  {
+   "id": "S6c-106",
+   "file": "design/spec.md",
+   "line": 1217,
+   "kind": "law",
+   "claim": "Undeclared stores are absent; a nothing store is undeclared",
+   "evidence": "probe:C.undeclared_store_read; probe:G.stateless"
+  },
+  {
+   "id": "S6c-107",
+   "file": "design/spec.md",
+   "line": 1220,
+   "kind": "law",
+   "claim": "Under a bare contract u, y, y_x carry the value itself",
+   "evidence": "src/build.jl:104-107; probe:C.bare_port_read"
+  },
+  {
+   "id": "S6c-108",
+   "file": "design/spec.md",
+   "line": 1224,
+   "kind": "law",
+   "claim": "y_x/y_s is what stage 1 returned in the same evaluation",
+   "evidence": "src/executor.jl:136; src/build.jl:1192"
+  },
+  {
+   "id": "S6c-109",
+   "file": "design/spec.md",
+   "line": 1226,
+   "kind": "law",
+   "claim": "A component with no stage-1 ports has no y_x/y_s",
+   "evidence": "probe:G.nou; probe:C.Plant y_direct no s1"
+  },
+  {
+   "id": "S6c-110",
+   "file": "design/spec.md",
+   "line": 1229,
+   "kind": "law",
+   "claim": "Reading an undeclared store, other-tier name or illegal name is an error",
+   "evidence": "probe:C.undeclared_store_read; probe:C.wrong_tier_read; probe:G.illegal_for_family"
+  },
+  {
+   "id": "S6c-111",
+   "file": "design/spec.md",
+   "line": 1234,
+   "kind": "law",
+   "claim": "Per-function name sets are closed, one per function per tier",
+   "evidence": "src/declare.jl:900-908; src/declare.jl:921"
+  },
+  {
+   "id": "S6c-112",
+   "file": "design/spec.md",
+   "line": 1235,
+   "kind": "mech",
+   "claim": "x_deriv and s_update have one set each; output stages one per tier",
+   "evidence": "src/declare.jl:901-906"
+  },
+  {
+   "id": "S6c-113",
+   "file": "design/spec.md",
+   "line": 1238,
+   "kind": "decl",
+   "claim": "Continuous and discrete y_state/y_direct sets as listed",
+   "evidence": "src/declare.jl:901-905"
+  },
+  {
+   "id": "S6c-114",
+   "file": "design/spec.md",
+   "line": 1246,
+   "kind": "mech",
+   "claim": "A stateless component writes y_direct owning neither x nor m",
+   "evidence": "probe:G.stateless"
+  },
+  {
+   "id": "S6c-115",
+   "file": "design/spec.md",
+   "line": 1252,
+   "kind": "law",
+   "claim": "An output stage returns its port NamedTuple and nothing else",
+   "evidence": "probe:D.extra_key; src/build.jl:128-133"
+  },
+  {
+   "id": "S6c-116",
+   "file": "design/spec.md",
+   "line": 1253,
+   "kind": "mech",
+   "claim": "y scatters into the component's declared cells",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "S6c-117",
+   "file": "design/spec.md",
+   "line": 1255,
+   "kind": "law",
+   "claim": "Under bare y_types the stage returns the value; the declared shape picks the law",
+   "evidence": "src/build.jl:80-92; probe:D.bare_returns_nt"
+  },
+  {
+   "id": "S6c-118",
+   "file": "design/spec.md",
+   "line": 1258,
+   "kind": "law",
+   "claim": "The stages' products partition the declared ports",
+   "evidence": "probe:D.two_stages_same_port; probe:D.declared_not_produced"
+  },
+  {
+   "id": "S6c-119",
+   "file": "design/spec.md",
+   "line": 1259,
+   "kind": "law",
+   "claim": "A stage that exists produces at least one port",
+   "evidence": "probe:D.dead_state; src/build.jl:87; src/build.jl:1200"
+  },
+  {
+   "id": "S6c-120",
+   "file": "design/spec.md",
+   "line": 1261,
+   "kind": "law",
+   "claim": "Each returned value has exactly its port's declared type at Float64",
+   "evidence": "probe:D.no_conversion; probe:G.float32_return; src/leaves.jl:358"
+  },
+  {
+   "id": "S6c-121",
+   "file": "design/spec.md",
+   "line": 1263,
+   "kind": "law",
+   "claim": "No conversion on write",
+   "evidence": "probe:D.no_conversion; src/store.jl:96-106"
+  },
+  {
+   "id": "S6c-122",
+   "file": "design/spec.md",
+   "line": 1263,
+   "kind": "law",
+   "claim": "A return pairs with ports by name; field order means nothing",
+   "evidence": "probe:D.field_order; src/build.jl:128-133"
+  },
+  {
+   "id": "S6c-123",
+   "file": "design/spec.md",
+   "line": 1265,
+   "kind": "law",
+   "claim": "Every branch of a stage returns the same ports at the same types",
+   "evidence": "src/store.jl:96-106 (always-on checked scatter)"
+  },
+  {
+   "id": "S6c-124",
+   "file": "design/spec.md",
+   "line": 1270,
+   "kind": "law",
+   "claim": "A handler returns a NamedTuple of the stores it writes",
+   "evidence": "src/build.jl:1314-1318"
+  },
+  {
+   "id": "S6c-125",
+   "file": "design/spec.md",
+   "line": 1271,
+   "kind": "law",
+   "claim": "A handler key is present iff its store exists; others are errors",
+   "evidence": "probe:E.key_no_store; src/build.jl:1323-1325"
+  },
+  {
+   "id": "S6c-126",
+   "file": "design/spec.md",
+   "line": 1276,
+   "kind": "ex",
+   "claim": "Pure-FSM handler returns (; m = ...) and x-only reset returns (; x = (; x..., ω = 0.0))",
+   "evidence": "probe:E.merge_m; probe:E.x_reset"
+  },
+  {
+   "id": "S6c-127",
+   "file": "design/spec.md",
+   "line": 1279,
+   "kind": "law",
+   "claim": "A present x is complete against the state field set",
+   "evidence": "probe:E.x_partial; src/build.jl:1229-1235"
+  },
+  {
+   "id": "S6c-128",
+   "file": "design/spec.md",
+   "line": 1280,
+   "kind": "law",
+   "claim": "A present m names a subset of mode fields at declared types",
+   "evidence": "probe:E.m_wrong_type; probe:E.m_unknown_field; src/build.jl:1346-1361"
+  },
+  {
+   "id": "S6c-129",
+   "file": "design/spec.md",
+   "line": 1283,
+   "kind": "law",
+   "claim": "A present x replaces the whole continuous state",
+   "evidence": "probe:E.x_reset"
+  },
+  {
+   "id": "S6c-130",
+   "file": "design/spec.md",
+   "line": 1284,
+   "kind": "law",
+   "claim": "A present m merges; omitted mode fields keep their values",
+   "evidence": "probe:E.merge_m"
+  },
+  {
+   "id": "S6c-131",
+   "file": "design/spec.md",
+   "line": 1286,
+   "kind": "law",
+   "claim": "A bare store has one field; a present key carries the leaf; a bare m is replaced whole",
+   "evidence": "probe:E.bare_latch_run; src/build.jl:1337-1345"
+  }
+ ],
+ "counts": {
+  "law": 72,
+  "mech": 42,
+  "decl": 14,
+  "ex": 14,
+  "ptr": 22,
+  "why": 36,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

@@ -1,0 +1,722 @@
+{
+ "rows": [
+  {
+   "id": "CV6c-006",
+   "file": "src/library.jl",
+   "line": 1589,
+   "kind": "map",
+   "claim": "code_map.md:848 gives the Spec line of the src/library.jl entry as §2.3, §5.4, §5.5, §6.2, §6.3, §8.1, §8.7, §10.4, §13.5, §13.7 and D-entries up to D-438. Code comments in this range cite §3.1, §5.3, §10.6, §13.8 and D-362, which the line omits.",
+   "evidence": "src/library.jl:1589 (§10.6), 2074 (§5.3), 2165 (§3.1), 2570 and 2931 (§13.8), 1648 (D-362); design/code_map.md:848. The map header says an entry's citations change with the code's.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Spec: §2.3, §3.1, §5.3, §5.4, §5.5, §6.2, §6.3, §8.1, §8.7, §10.4, §10.6, §13.5, §13.7, §13.8, D-141, D-179, D-231, D-311, D-312, D-313, D-316, D-362, D-383, D-384, D-385, D-437, D-438.",
+   "note": "Other cites of §3.1 and §5.3 outside my range (src/library.jl:444, 904) support the same omission."
+  },
+  {
+   "id": "CV6c-043",
+   "file": "src/library.jl",
+   "line": 2392,
+   "kind": "map",
+   "claim": "code_map.md:814-823 lists `shape_type` among the helpers 'shared with the trackers and FirstOrderLag'. `shape_type` serves only the two PIDs, and `FirstOrderLag` shares only `check_time_constant`. The tracker entry lists the helpers shared with the PID and omits `check_time_constant`, which both trackers call.",
+   "evidence": "src/library.jl:2551 and 2687 are the only calls of shape_type. The trackers size by tracker_sizes (2917, 3043). FirstOrderLag calls check_time_constant at 1006. LQRTracker calls it at 2910 and DiscreteLQRTracker at 3036. design/code_map.md:814-823.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Split the PID bullet: 'the helpers `shape_type` and `fixed_parameters`, `check_tracking`, `check_output_limits`, `check_time_constant`, the last four shared with the trackers, and `check_time_constant` with `FirstOrderLag`'. In the tracker bullet add `check_time_constant` to 'shared with the PID'.",
+   "note": "Low severity. The sentence is ambiguous rather than flatly false."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV6c-001",
+   "file": "src/library.jl",
+   "line": 1543,
+   "kind": "docstring",
+   "claim": "DiscretizedTransferFunction shows both keyword forms of TransferFunction, with defaults",
+   "evidence": "src/library.jl:1220-1221, 1281; probe: dtf num den, dtf zpk, dtf zeros complex, dtf u0"
+  },
+  {
+   "id": "CV6c-002",
+   "file": "src/library.jl",
+   "line": 1550,
+   "kind": "docstring",
+   "claim": "Refusals are TransferFunction's: mixed spelling and improper degrees give ArgumentError",
+   "evidence": "probe: dtf mixed, dtf improper; src/library.jl:1281-1287"
+  },
+  {
+   "id": "CV6c-003",
+   "file": "src/library.jl",
+   "line": 1557,
+   "kind": "docstring",
+   "claim": "Degrees pick the feedthrough class of AbstractDiscreteLinearSystem as for TransferFunction",
+   "evidence": "probe: dtf biproper FT (true), dtf strict FT (false), tf biproper FT"
+  },
+  {
+   "id": "CV6c-004",
+   "file": "src/library.jl",
+   "line": 1587,
+   "kind": "cite",
+   "claim": "Header cites §2.3, §10.4, D-313 for Step",
+   "evidence": "spec.md:443 (events), 6808 (localization), log.md:14148 (D-313 admits library blocks)"
+  },
+  {
+   "id": "CV6c-005",
+   "file": "src/library.jl",
+   "line": 1589,
+   "kind": "cite",
+   "claim": "Step cites §2.3, §10.6, D-179, D-312, D-437, D-438",
+   "evidence": "spec.md:443, 7403; log.md:7149 (policy from return type), 14072 (pinned leaf), 18128 (bare y), 18252 (bare m)"
+  },
+  {
+   "id": "CV6c-007",
+   "file": "src/library.jl",
+   "line": 1597,
+   "kind": "docstring",
+   "claim": "Step signature and defaults match the constructor",
+   "evidence": "src/library.jl:1635; probe: step nonloc"
+  },
+  {
+   "id": "CV6c-008",
+   "file": "src/library.jl",
+   "line": 1608,
+   "kind": "docstring",
+   "claim": "before/after broadcast to V, Float64 or SArray; integers qualify; output pinned at V",
+   "evidence": "probe: step int (Step{Float64,true}), step vec, step y_types (Pinned{Float64})"
+  },
+  {
+   "id": "CV6c-009",
+   "file": "src/library.jl",
+   "line": 1603,
+   "kind": "docstring",
+   "claim": "Step has no inputs, no continuous state, one mode m and one event fire",
+   "evidence": "probe: step u_types (empty), step events (:fire); src/library.jl:1639-1646"
+  },
+  {
+   "id": "CV6c-010",
+   "file": "src/library.jl",
+   "line": 1620,
+   "kind": "docstring",
+   "claim": "A t_step at or before t0 fires at boundary zero and publishes after from the start",
+   "evidence": "test/test_library.jl:2115"
+  },
+  {
+   "id": "CV6c-011",
+   "file": "src/library.jl",
+   "line": 1648,
+   "kind": "cite",
+   "claim": "Sequence cites §2.3, §10.4, §10.6, D-179, D-312, D-362, D-437, D-438",
+   "evidence": "spec.md:443, 6808, 7403; log.md:15421 (D-362 treats time-guard versus periodic, which library_inventory.md:225 pairs with Sequence)"
+  },
+  {
+   "id": "CV6c-012",
+   "file": "src/library.jl",
+   "line": 1662,
+   "kind": "docstring",
+   "claim": "Sequence signature and defaults match the constructor",
+   "evidence": "src/library.jl:1709; probe: seq ok, seq vec, seq empty"
+  },
+  {
+   "id": "CV6c-013",
+   "file": "src/library.jl",
+   "line": 1693,
+   "kind": "docstring",
+   "claim": "Non-ascending times and a values count other than N+1 are ArgumentError",
+   "evidence": "probe: seq nonasc, seq equal, seq count; src/library.jl:1711-1714"
+  },
+  {
+   "id": "CV6c-014",
+   "file": "src/library.jl",
+   "line": 1673,
+   "kind": "docstring",
+   "claim": "Sequence mode m counts breakpoints passed; one event advance sets it to all breakpoints at or before t",
+   "evidence": "probe: seq events (:advance); src/library.jl:1724; test/test_library.jl:2175"
+  },
+  {
+   "id": "CV6c-015",
+   "file": "src/library.jl",
+   "line": 1744,
+   "kind": "cite",
+   "claim": "LimitedIntegrator cites §2.3, §10.4, §10.6, D-179, D-437, D-438",
+   "evidence": "spec.md:443, 6808, 7403; log.md:7149, 18128, 18252"
+  },
+  {
+   "id": "CV6c-016",
+   "file": "src/library.jl",
+   "line": 1856,
+   "kind": "cite",
+   "claim": "'§10.4's argument that gates stay fixed through a localization' is in §10.4",
+   "evidence": "spec.md:6884-6900 (gate form, gates constant over the bracket, strict-comparison gate)"
+  },
+  {
+   "id": "CV6c-017",
+   "file": "src/library.jl",
+   "line": 1757,
+   "kind": "docstring",
+   "claim": "LimitedIntegrator signature, defaults and x0 = zero(lower)",
+   "evidence": "src/library.jl:1835; probe: li x0 default, li vec x0 default"
+  },
+  {
+   "id": "CV6c-018",
+   "file": "src/library.jl",
+   "line": 1816,
+   "kind": "docstring",
+   "claim": "lower not below upper (also equal, componentwise) is an ArgumentError",
+   "evidence": "probe: li equal, li inv, li vec inv"
+  },
+  {
+   "id": "CV6c-019",
+   "file": "src/library.jl",
+   "line": 1768,
+   "kind": "docstring",
+   "claim": "Four events hit_upper, hit_lower, leave_upper, leave_lower; reset adds a fifth, one however wide",
+   "evidence": "probe: li events, li events reset, li vec events reset"
+  },
+  {
+   "id": "CV6c-020",
+   "file": "src/library.jl",
+   "line": 1797,
+   "kind": "docstring",
+   "claim": "Per-component events named hit_upper_1..N then hit_lower_i, leave_upper_i, leave_lower_i",
+   "evidence": "probe: li vec events; src/library.jl:1911-1913"
+  },
+  {
+   "id": "CV6c-021",
+   "file": "src/library.jl",
+   "line": 1805,
+   "kind": "docstring",
+   "claim": "reset=true adds Bool input reset beside u; outputs out and saturation (SArray of Int8)",
+   "evidence": "probe: li u_types reset, li vec u_types reset, li vec y_types"
+  },
+  {
+   "id": "CV6c-022",
+   "file": "src/library.jl",
+   "line": 1782,
+   "kind": "docstring",
+   "claim": "Saturation is published from stage 1 with no feedthrough; reset lands x0 clamped with its code",
+   "evidence": "src/library.jl:1844, 1875-1876; test/test_library.jl:1660"
+  },
+  {
+   "id": "CV6c-023",
+   "file": "src/library.jl",
+   "line": 1916,
+   "kind": "cite",
+   "claim": "LimitedDoubleIntegrator cites §2.3, §10.4, §10.6, D-179, D-437, D-438",
+   "evidence": "spec.md:443, 6808, 7403; log.md:7149, 18128, 18252"
+  },
+  {
+   "id": "CV6c-024",
+   "file": "src/library.jl",
+   "line": 1930,
+   "kind": "docstring",
+   "claim": "LimitedDoubleIntegrator signature and defaults q0, v0 = zero(lower)",
+   "evidence": "src/library.jl:2005; probe: ldi x_init"
+  },
+  {
+   "id": "CV6c-025",
+   "file": "src/library.jl",
+   "line": 1936,
+   "kind": "docstring",
+   "claim": "Named state (q, v); outputs out, velocity, saturation; input u over V",
+   "evidence": "probe: ldi x_init, ldi y_types, ldi u_types"
+  },
+  {
+   "id": "CV6c-026",
+   "file": "src/library.jl",
+   "line": 1985,
+   "kind": "docstring",
+   "claim": "lower not below upper refused as ArgumentError; per-component event names",
+   "evidence": "probe: ldi inv, ldi vec events"
+  },
+  {
+   "id": "CV6c-027",
+   "file": "src/library.jl",
+   "line": 1953,
+   "kind": "docstring",
+   "claim": "A hit while u points inward saturates and frees at one boundary; q0 on a limit follows v0, u",
+   "evidence": "test/test_library.jl:2512, 2546"
+  },
+  {
+   "id": "CV6c-028",
+   "file": "src/library.jl",
+   "line": 2074,
+   "kind": "cite",
+   "claim": "Relay cites §5.3, §10.4, §10.6, D-312, D-437, D-438",
+   "evidence": "spec.md:1290 (stage roles), 6808, 7403; log.md:14072, 18128, 18252"
+  },
+  {
+   "id": "CV6c-029",
+   "file": "src/library.jl",
+   "line": 2084,
+   "kind": "docstring",
+   "claim": "Relay signature; defaults off = zero(lower), on = one.(lower)",
+   "evidence": "src/library.jl:2134; probe: relay defaults, relay vec defaults"
+  },
+  {
+   "id": "CV6c-030",
+   "file": "src/library.jl",
+   "line": 2118,
+   "kind": "docstring",
+   "claim": "Only lower above upper is refused as ArgumentError; lower == upper is admitted",
+   "evidence": "probe: relay inv, relay eq, relay vec inv"
+  },
+  {
+   "id": "CV6c-031",
+   "file": "src/library.jl",
+   "line": 2094,
+   "kind": "docstring",
+   "claim": "Events switch_on, switch_off; per-component names switch_on_1..N then switch_off_i; y pinned",
+   "evidence": "probe: relay events, relay vec events, relay y_types; src/library.jl:2144-2145"
+  },
+  {
+   "id": "CV6c-032",
+   "file": "src/library.jl",
+   "line": 2165,
+   "kind": "cite",
+   "claim": "Comparator cites §2.3, §3.1, §10.4, §10.6, D-179, D-312, D-437, D-438",
+   "evidence": "spec.md:443, 705 (modes and events), 6808, 7403; log.md:7149, 14072, 18128, 18252"
+  },
+  {
+   "id": "CV6c-033",
+   "file": "src/library.jl",
+   "line": 2209,
+   "kind": "docstring",
+   "claim": "Comparator takes threshold alone or lower with upper; other combinations and lower > upper give ArgumentError",
+   "evidence": "probe: cmp thr, cmp hyst, cmp none, cmp thr+lower, cmp thr+upper, cmp thr+both, cmp lower only, cmp upper only, cmp inv, cmp vec inv"
+  },
+  {
+   "id": "CV6c-034",
+   "file": "src/library.jl",
+   "line": 2181,
+   "kind": "docstring",
+   "claim": "y is a Bool (SArray of Bool over a vector), pinned; events switch_on, switch_off with per-component names",
+   "evidence": "probe: cmp y_types, cmp vec y_types, cmp events, cmp vec events"
+  },
+  {
+   "id": "CV6c-035",
+   "file": "src/library.jl",
+   "line": 2175,
+   "kind": "docstring",
+   "claim": "Comparator signature and defaults threshold, lower, upper = nothing, localized = true",
+   "evidence": "src/library.jl:2233"
+  },
+  {
+   "id": "CV6c-036",
+   "file": "src/library.jl",
+   "line": 2277,
+   "kind": "cite",
+   "claim": "Controller section header cites §13.7, §5.4, D-313",
+   "evidence": "spec.md:12081, 1550; log.md:14148"
+  },
+  {
+   "id": "CV6c-037",
+   "file": "src/library.jl",
+   "line": 2279,
+   "kind": "docstring",
+   "claim": "AsPort() as a keyword value makes the parameter an input port, outside the shape",
+   "evidence": "probe: pid u_types port (Kp port), pid Kp port V, pid all ports V (V = Float64)"
+  },
+  {
+   "id": "CV6c-038",
+   "file": "src/library.jl",
+   "line": 2315,
+   "kind": "docstring",
+   "claim": "The ε and ref table matches gated_error and correction_reference by case",
+   "evidence": "src/library.jl:2342-2352"
+  },
+  {
+   "id": "CV6c-039",
+   "file": "src/library.jl",
+   "line": 2312,
+   "kind": "docstring",
+   "claim": "Hold adds saturation and engaged, Track adds v, each at the output shape",
+   "evidence": "src/library.jl:2334-2335; probe: pid u_types hold track, pid u_types vec hold"
+  },
+  {
+   "id": "CV6c-040",
+   "file": "src/library.jl",
+   "line": 2359,
+   "kind": "docstring",
+   "claim": "AbstractPID parameters V, Fixed and the order Kp..c; subtype of the anti-windup parent",
+   "evidence": "src/library.jl:2295, 2374; probe: pid fixed order, supertypes"
+  },
+  {
+   "id": "CV6c-041",
+   "file": "src/library.jl",
+   "line": 2432,
+   "kind": "cite",
+   "claim": "PID cites §5.4 and pid_anti_windup.md sections 4 and 11",
+   "evidence": "spec.md:1550; pid_anti_windup.md:130 (two axes), 520 (standby)"
+  },
+  {
+   "id": "CV6c-042",
+   "file": "src/library.jl",
+   "line": 2440,
+   "kind": "docstring",
+   "claim": "PID signature, defaults and keyword list match the constructor",
+   "evidence": "src/library.jl:2545-2546"
+  },
+  {
+   "id": "CV6c-044",
+   "file": "src/library.jl",
+   "line": 2477,
+   "kind": "docstring",
+   "claim": "Tracking with Tt infinite as a value is refused; AsPort Tt passes; u_min > u_max refused",
+   "evidence": "probe: pid track Tt Inf, pid track Tt port, pid track Tt vec inf, pid umin>umax, pid umin port"
+  },
+  {
+   "id": "CV6c-045",
+   "file": "src/library.jl",
+   "line": 2482,
+   "kind": "docstring",
+   "claim": "tau_d or Tt given as a value and not positive is refused; Tt = Inf passes",
+   "evidence": "probe: pid τd 0, pid τd neg, pid Tt 0, pid Tt neg, pid τd vec zero, pid τd Inf"
+  },
+  {
+   "id": "CV6c-046",
+   "file": "src/library.jl",
+   "line": 2453,
+   "kind": "docstring",
+   "claim": "PID holds states q and yf; outputs u_raw and u from stage 2; law formulas",
+   "evidence": "probe: pid x_init, pid y_types; src/library.jl:2558-2567"
+  },
+  {
+   "id": "CV6c-047",
+   "file": "src/library.jl",
+   "line": 2516,
+   "kind": "docstring",
+   "claim": "Own-u tracking loop is an artificial AlgebraicCycle; Ki and Tt ports artificial, others real",
+   "evidence": "test/test_library.jl:2944-2951, 2970-2977"
+  },
+  {
+   "id": "CV6c-048",
+   "file": "src/library.jl",
+   "line": 2507,
+   "kind": "docstring",
+   "claim": "A parameter port carries partials under Dual and freezes through Freeze",
+   "evidence": "test/test_library.jl:2960-2965"
+  },
+  {
+   "id": "CV6c-049",
+   "file": "src/library.jl",
+   "line": 2570,
+   "kind": "cite",
+   "claim": "DiscretePID cites §6.3, §8.7, §13.8 and pid_anti_windup.md sections 9 to 11",
+   "evidence": "spec.md:1883, 4333, 12387; pid_anti_windup.md:345, 422, 520"
+  },
+  {
+   "id": "CV6c-050",
+   "file": "src/library.jl",
+   "line": 2580,
+   "kind": "docstring",
+   "claim": "DiscretePID signature, defaults and keywords match the constructor",
+   "evidence": "src/library.jl:2681-2682"
+  },
+  {
+   "id": "CV6c-051",
+   "file": "src/library.jl",
+   "line": 2614,
+   "kind": "docstring",
+   "claim": "DiscretePID: zero tau_d and Tt legal, negative refused, infinite Tt with tracking refused",
+   "evidence": "probe: dpid τd 0, dpid Tt 0, dpid τd neg, dpid Tt neg, dpid track Inf, dpid umin>umax"
+  },
+  {
+   "id": "CV6c-052",
+   "file": "src/library.jl",
+   "line": 2597,
+   "kind": "docstring",
+   "claim": "Law formulas: backward Euler lag, forward Euler integral, beta = 1 - exp(-Δt/Tt)",
+   "evidence": "src/library.jl:2696-2708"
+  },
+  {
+   "id": "CV6c-053",
+   "file": "src/library.jl",
+   "line": 2643,
+   "kind": "docstring",
+   "claim": "Third output saturated, Int8 code (SArray over a vector), from u_raw one tick stale",
+   "evidence": "probe: dpid y_types, dpid s_init; src/library.jl:665, 2693-2695, 2707"
+  },
+  {
+   "id": "CV6c-054",
+   "file": "src/library.jl",
+   "line": 2626,
+   "kind": "docstring",
+   "claim": "Under Dual the discrete tier holds Float64 values, so a port shows no coupling",
+   "evidence": "probe:176-190 (DiscretePID port tap refused as unseedable, discrete tier held); test/test_library.jl:2960"
+  },
+  {
+   "id": "CV6c-055",
+   "file": "src/library.jl",
+   "line": 2655,
+   "kind": "docstring",
+   "claim": "DiscretePID own-u tracking loop is a real AlgebraicCycle",
+   "evidence": "test/test_library.jl:3235-3243"
+  },
+  {
+   "id": "CV6c-056",
+   "file": "src/library.jl",
+   "line": 2710,
+   "kind": "cite",
+   "claim": "LQR section header cites §13.7, §5.4, D-383",
+   "evidence": "spec.md:12081, 1550; log.md:16012"
+  },
+  {
+   "id": "CV6c-057",
+   "file": "src/library.jl",
+   "line": 2720,
+   "kind": "docstring",
+   "claim": "AbstractLQRTracker parameters NX, NU, NZ, Fixed and the parameter order",
+   "evidence": "src/library.jl:2713, 2735"
+  },
+  {
+   "id": "CV6c-058",
+   "file": "src/library.jl",
+   "line": 2792,
+   "kind": "cite",
+   "claim": "LQRTracker cites D-438 and lqr_tracker.md",
+   "evidence": "log.md:18252 (bare x store); lqr_tracker.md:192"
+  },
+  {
+   "id": "CV6c-059",
+   "file": "src/library.jl",
+   "line": 2803,
+   "kind": "docstring",
+   "claim": "LQRTracker has a sizeless and a sized form with the same keywords and defaults",
+   "evidence": "src/library.jl:2905-2918; probe: lqr infer, lqr explicit"
+  },
+  {
+   "id": "CV6c-060",
+   "file": "src/library.jl",
+   "line": 2860,
+   "kind": "docstring",
+   "claim": "Sizes are read from the values; a misfit or a size no value carries is an ArgumentError",
+   "evidence": "probe: lqr misfit, lqr ports sizeless, lqr only default carriers, lqr ports sizeless trims; message names the explicit spelling"
+  },
+  {
+   "id": "CV6c-061",
+   "file": "src/library.jl",
+   "line": 2880,
+   "kind": "docstring",
+   "claim": "Tt, u_min, u_max take a real or a length-NU vector; integer entries qualify",
+   "evidence": "probe: lqr int entries, lqr vec Tt len"
+  },
+  {
+   "id": "CV6c-062",
+   "file": "src/library.jl",
+   "line": 2843,
+   "kind": "docstring",
+   "claim": "LQRTracker refuses tracking with infinite Tt, u_min > u_max, and a non-positive Tt",
+   "evidence": "probe: lqr track Inf, lqr umin>umax, lqr Tt 0, lqr Tt neg"
+  },
+  {
+   "id": "CV6c-063",
+   "file": "src/library.jl",
+   "line": 2848,
+   "kind": "docstring",
+   "claim": "Ports are SVectors: x NX, z and z_ref NZ, u, u_raw, v NU, saturation Int8, engaged Bool",
+   "evidence": "probe: lqr infer types, lqr y_types; src/library.jl:2748-2755"
+  },
+  {
+   "id": "CV6c-064",
+   "file": "src/library.jl",
+   "line": 2867,
+   "kind": "docstring",
+   "claim": "z_ref from own u is a real cycle; tracking is artificial; K_int and Tt ports artificial",
+   "evidence": "test/test_library.jl:3461-3475"
+  },
+  {
+   "id": "CV6c-065",
+   "file": "src/library.jl",
+   "line": 2931,
+   "kind": "cite",
+   "claim": "DiscreteLQRTracker cites §6.3, §13.8 and lqr_tracker.md sections 4, 6, 7",
+   "evidence": "spec.md:1883, 12387; lqr_tracker.md:192, 271, 331"
+  },
+  {
+   "id": "CV6c-066",
+   "file": "src/library.jl",
+   "line": 2941,
+   "kind": "docstring",
+   "claim": "DiscreteLQRTracker keeps LQRTracker's forms; Tt = 0 legal, negative refused",
+   "evidence": "src/library.jl:3031-3044; probe: dlqr Tt 0, dlqr Tt neg, dlqr no sizes"
+  },
+  {
+   "id": "CV6c-067",
+   "file": "src/library.jl",
+   "line": 2992,
+   "kind": "docstring",
+   "claim": "Third output saturated is SVector{NU, Int8}; the store holds q and saturated",
+   "evidence": "probe: dlqr y_types, dlqr s_init; src/library.jl:3046-3050"
+  },
+  {
+   "id": "CV6c-068",
+   "file": "src/library.jl",
+   "line": 3001,
+   "kind": "docstring",
+   "claim": "Unpack{Int8, NU} is the scalar-consumer route for the code vector",
+   "evidence": "src/library.jl:190, 192 (Unpack{V, N} over SVector{N, V})"
+  },
+  {
+   "id": "CV6c-069",
+   "file": "src/library.jl",
+   "line": 1532,
+   "kind": "surface",
+   "claim": "All fifteen author-facing names in the range appear in api.md and carry docstrings",
+   "evidence": "docs/src/api.md lists DiscretizedTransferFunction, Step, Sequence, LimitedIntegrator, LimitedDoubleIntegrator, Relay, Comparator and the Controllers group; docstrings at 1543, 1597, 1662, 1757, 1930, 2084, 2174, 2279, 2300, 2359, 2440, 2579, 2720, 2802, 2940"
+  },
+  {
+   "id": "CV6c-070",
+   "file": "src/library.jl",
+   "line": 1709,
+   "kind": "surface",
+   "claim": "Mismatched vector lengths raise DimensionMismatch, which the docstrings leave to the inventory",
+   "evidence": "probe: pid vec mismatch; design/companions/library_inventory.md:143; test/test_library.jl:3597-3599"
+  },
+  {
+   "id": "CV6c-071",
+   "file": "src/library.jl",
+   "line": 1757,
+   "kind": "surface",
+   "claim": "Per-component event names and the saturation output are stated in each docstring and in the inventory",
+   "evidence": "src/library.jl:1797-1800, 1974-1976, 2110-2112, 2202-2204; library_inventory.md:238, 296"
+  },
+  {
+   "id": "CV6c-072",
+   "file": "src/library.jl",
+   "line": 2440,
+   "kind": "surface",
+   "claim": "Raise sites ArgumentError (check_*, tracker_sizes, check_shapes) and AlgebraicCycle are each stated in docstrings; no Redstone diagnostic kind is raised here",
+   "evidence": "src/library.jl:2409-2430, 2762-2790; rg DiagnosticError over the range finds none"
+  },
+  {
+   "id": "CV6c-073",
+   "file": "src/library.jl",
+   "line": 1798,
+   "kind": "map",
+   "claim": "Map: LimitedIntegrator, LimitedDoubleIntegrator, Relay, Comparator are over Float64 and SVector with Int8 modes and per-component events",
+   "evidence": "design/code_map.md:~788-800 against probe: li vec events, ldi vec events, relay vec events, cmp vec events, relay m_init vec"
+  },
+  {
+   "id": "CV6c-074",
+   "file": "src/library.jl",
+   "line": 1635,
+   "kind": "map",
+   "claim": "Map: Step, Sequence, LimitedIntegrator, LimitedDoubleIntegrator, Comparator take policy L; Relay takes none",
+   "evidence": "src/library.jl:1630, 1703, 1830, 1999, 2229 carry L; 2128 does not"
+  },
+  {
+   "id": "CV6c-075",
+   "file": "src/library.jl",
+   "line": 2330,
+   "kind": "map",
+   "claim": "Map: the anti-windup parent carries axis_ports, gated_error, correction_reference; AbstractPID and AbstractLQRTracker carry signal_ports, u_types, y_types, parameters",
+   "evidence": "src/library.jl:2334-2352, 2379-2388, 2748-2758"
+  },
+  {
+   "id": "CV6c-076",
+   "file": "src/library.jl",
+   "line": 2295,
+   "kind": "map",
+   "claim": "Map: roster PID_PARAMETERS, LQR_PARAMETERS and helpers parameter_types, tracker_sizes, check_shapes exist",
+   "evidence": "src/library.jl:2295, 2713, 2739, 2762, 2781"
+  },
+  {
+   "id": "CV6c-077",
+   "file": "src/library.jl",
+   "line": 1741,
+   "kind": "map",
+   "claim": "Map: limit checks run through check_limits and the hit guards over first_nonzero; saturation_type shared with the PID",
+   "evidence": "src/library.jl:1737, 1741, 1733, 2380; check_limits also at 662"
+  },
+  {
+   "id": "CV6c-078",
+   "file": "src/library.jl",
+   "line": 1584,
+   "kind": "map",
+   "claim": "Map: DiscretizedTransferFunction has the accessors held and realization(c, Δt), and forwards its keywords",
+   "evidence": "src/library.jl:1580-1585"
+  },
+  {
+   "id": "CV6c-079",
+   "file": "src/library.jl",
+   "line": 1640,
+   "kind": "map",
+   "claim": "Map: single state or mode is declared bare and a stateless component declares nothing",
+   "evidence": "src/library.jl:1639-1640, 1718-1719, 1840-1841, 2920; PID and the two-leaf stores stay named (2557, 2693)"
+  },
+  {
+   "id": "CV6c-080",
+   "file": "src/library.jl",
+   "line": 1799,
+   "kind": "surface",
+   "claim": "Lead: `hit_lower_i`, `leave_lower_i`, `leave_upper_i` are placeholders for the generated per-component names",
+   "evidence": "src/library.jl:1911-1912 builds hit_upper_i, hit_lower_i, leave_upper_i, leave_lower_i"
+  },
+  {
+   "id": "CV6c-081",
+   "file": "src/library.jl",
+   "line": 1798,
+   "kind": "surface",
+   "claim": "Lead: `hit_upper_N` placeholder and `hit_upper_1` are generated names",
+   "evidence": "src/library.jl:1911; probe: li vec events lists hit_upper_1"
+  },
+  {
+   "id": "CV6c-082",
+   "file": "src/library.jl",
+   "line": 1975,
+   "kind": "surface",
+   "claim": "Lead: `hit_lower_i`, `hit_upper_N`, `leave_upper_i`, `hit_upper_1` in the double integrator docstring are the generated names",
+   "evidence": "src/library.jl:2069-2070; probe: ldi vec events"
+  },
+  {
+   "id": "CV6c-083",
+   "file": "src/library.jl",
+   "line": 1976,
+   "kind": "surface",
+   "claim": "Lead: `leave_lower_i` placeholder for the generated per-component name",
+   "evidence": "src/library.jl:2069-2070; probe: ldi vec events"
+  },
+  {
+   "id": "CV6c-084",
+   "file": "src/library.jl",
+   "line": 2111,
+   "kind": "surface",
+   "claim": "Lead: `switch_on_N`, `switch_off_i`, `switch_on_1` in the Relay docstring are generated names",
+   "evidence": "src/library.jl:2161; probe: relay vec events"
+  },
+  {
+   "id": "CV6c-085",
+   "file": "src/library.jl",
+   "line": 2203,
+   "kind": "surface",
+   "claim": "Lead: `switch_on_N`, `switch_on_1` in the Comparator docstring are generated names",
+   "evidence": "src/library.jl:2273; probe: cmp vec events"
+  },
+  {
+   "id": "CV6c-086",
+   "file": "src/library.jl",
+   "line": 2204,
+   "kind": "surface",
+   "claim": "Lead: `switch_off_i` in the Comparator docstring is a generated placeholder name",
+   "evidence": "src/library.jl:2273; probe: cmp vec events"
+  },
+  {
+   "id": "CV6c-087",
+   "file": "src/library.jl",
+   "line": 25,
+   "kind": "surface",
+   "claim": "Leads `inN`, `outN`, `outi`, `out1` (lines 25-186, outside my range) are placeholders for numbered port names",
+   "evidence": "src/library.jl:25-26, 57, 69, 84, 103, 185-186; each reads as a port-name pattern in the Junction and Unpack docstrings"
+  }
+ ],
+ "counts": {
+  "surface": 10,
+  "docstring": 52,
+  "map": 8,
+  "cite": 17,
+  "law": 0,
+  "mech": 0,
+  "decl": 0,
+  "ex": 1,
+  "ptr": 0,
+  "why": 0
+ }
+}

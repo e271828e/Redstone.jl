@@ -1,0 +1,1166 @@
+{
+ "rows": [
+  {
+   "id": "K6b-012",
+   "file": "design/companions/library_inventory.md",
+   "line": 75,
+   "kind": "law",
+   "claim": "Every library component walks under Dual for linearization and trim.",
+   "evidence": "src/library.jl:582, :1367, :1509 (discrete components never follow the scalar of an activation and hold their last value); spec.md:3063 (discrete stages never run in a Dual activation)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Every continuous library component walks under `Dual` for linearization and trim; the discrete ones hold their `Float64` values there.",
+   "note": "The spec (spec.md:3063) agrees with the code, so the companion is the one to change. A continuous component that pins its output (Constant, Source, Step, Relay, Comparator) still walks but carries zero partials."
+  },
+  {
+   "id": "K6b-019",
+   "file": "design/companions/library_inventory.md",
+   "line": 116,
+   "kind": "law",
+   "claim": "Status is one of shipped, candidate, or example first.",
+   "evidence": "Every table row in section 3 reads `shipped` or `not admitted` (lines 213 to 354); no row is a candidate or example first, and line 460 says the additions closed the list.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Status is one of *shipped* or *not admitted*. *Candidate* (listed, built when wanted) and *example first* (built as an example model, promoted only if one form proves standard) were the statuses before the 2026-11 increments, and no row carries them now.",
+   "note": "The spec's §13.7 paragraph (spec.md:12139 to 12147) says a listed component is built whenever wanted and does not use the status vocabulary, so no spec line disagrees."
+  },
+  {
+   "id": "K6b-022",
+   "file": "design/companions/library_inventory.md",
+   "line": 123,
+   "kind": "law",
+   "claim": "A side with several ports names them in1…inN (and out1…outN where a component splits one port into N alike).",
+   "evidence": "src/library.jl:263 and :263 (Switch inputs in1, in2, select), :2385 and src/library.jl:2380 (PID inputs r, y, saturation, engaged, v), :309-320 (Select names the inputs after the enum), probe:73-75. Only Junction (src/library.jl:100) and Unpack (:193) use the numbered names.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A junction names its N inputs `in1…inN`, and `Unpack` names its outputs `out1…outN`; any other side with several ports names them by role, as `Switch` (`in1`, `in2`, `select`), the PID (`r`, `y`) and `Select` (the enum's instances) do.",
+   "note": "The sentence reads as a rule for every multi-port side. Low severity if it is meant only for the N-ary junction and the splitter."
+  },
+  {
+   "id": "K6b-039",
+   "file": "design/companions/library_inventory.md",
+   "line": 149,
+   "kind": "decl",
+   "claim": "A component with one required parameter such as Constant(value) takes it positionally. Its docstring shows the keyword form, and its tests call it.",
+   "evidence": "src/library.jl:346 (Constant docstring shows `Constant(value) -> Constant`); test/test_library.jl:16 and :21 call `Constant(a)` positionally; design/rules/docstring_rules.md:80-82 (the keyword form is shown only for a component with a keyword constructor).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Move the sentence ahead of the Constant sentence, so it reads: `The struct keeps its positional constructor. Its docstring shows the keyword form, and its tests call it. A component with one required parameter, such as Constant(value), takes it positionally.` Or, if the sentence is about Constant, write `Its docstring shows that form`.",
+   "note": "The antecedent of `Its` is Constant, whose docstring shows the positional form. The rule in docstring_rules.md rule 10 refers to components with keyword constructors."
+  },
+  {
+   "id": "K6b-100",
+   "file": "design/companions/library_inventory.md",
+   "line": 440,
+   "kind": "mech",
+   "claim": "Zero-Pole: roots real or complex; a product whose imaginary part is not zero to rounding is refused, which conjugate pairs pass, and the real coefficients then meet the existing refusals.",
+   "evidence": "src/library.jl:1166-1183 (coefficients_from_roots pairs each complex root with a conjugate by a tolerance 1e-12 relative to the root and refuses an unpaired root; the comment says a check on the expanded coefficients' imaginary parts misreads rounding), probe:78-85 (a conjugate pair passes, an unpaired root is refused as `not real or in conjugate pairs`, ten pairs pass).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Roots real or complex; a root with no conjugate partner within `1e-12` of its magnitude is refused, which conjugate pairs pass, and the real coefficients then meet the existing refusals.",
+   "note": "The refusal exists and the roots are exclusive with num and den; only the mechanism differs. The check on the product's imaginary part was replaced by pairing, since the product check refused exact conjugate sets of ten pairs."
+  },
+  {
+   "id": "K6b-101",
+   "file": "design/companions/library_inventory.md",
+   "line": 449,
+   "kind": "ptr",
+   "claim": "The shipped rows are the first two tranches. The candidate rows follow in any order, each when wanted.",
+   "evidence": "Section 3 has no candidate row, and the next lines of section 4 (lines 460-461) say increments 86 to 89 shipped the rest and closed the list.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Every row is shipped or not admitted. The first two tranches shipped first, the candidate rows of the 2026-10-30 sweep followed as increments 86 to 89, and the list is closed.",
+   "note": "Stale beside lines 455-461 of the same section."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K6b-001",
+   "file": "design/companions/library_inventory.md",
+   "line": 17,
+   "kind": "mech",
+   "claim": "A leaf's stage body is Julia, so 2u + 3 is one line of y_direct.",
+   "evidence": "src/library.jl:170 (Fn applies f in y_direct), :144"
+  },
+  {
+   "id": "K6b-002",
+   "file": "design/companions/library_inventory.md",
+   "line": 19,
+   "kind": "mech",
+   "claim": "A separate component for 2u + 3 costs a build entry, a cell, a gather and a scatter.",
+   "evidence": "src/library.jl:144-146 (Fn docstring)"
+  },
+  {
+   "id": "K6b-003",
+   "file": "design/companions/library_inventory.md",
+   "line": 28,
+   "kind": "law",
+   "claim": "Terminator is unnecessary because only inputs must be wired.",
+   "evidence": "spec.md:1745 (unconnected inputs are a build error) and :1752 (unconnected outputs are legal); src/library.jl:434 (StopRequest consumed by nobody)"
+  },
+  {
+   "id": "K6b-004",
+   "file": "design/companions/library_inventory.md",
+   "line": 29,
+   "kind": "law",
+   "claim": "A stop request is any StopFlag port, and StopRequest holds no privilege.",
+   "evidence": "src/library.jl:438-441 (y_types StopFlag, y_direct), :431 comment"
+  },
+  {
+   "id": "K6b-005",
+   "file": "design/companions/library_inventory.md",
+   "line": 39,
+   "kind": "mech",
+   "claim": "Clock is the bundle's t; a Source reads t from the bundle.",
+   "evidence": "src/library.jl:900"
+  },
+  {
+   "id": "K6b-006",
+   "file": "design/companions/library_inventory.md",
+   "line": 42,
+   "kind": "decl",
+   "claim": "Derivative is the filtered form TransferFunction(num = (1, 0), den = (τ, 1)).",
+   "evidence": "probe:13-21 (constructs, feedthrough class true, frequency response equals s/(τ s + 1) to 1e-15 at three frequencies)"
+  },
+  {
+   "id": "K6b-007",
+   "file": "design/companions/library_inventory.md",
+   "line": 47,
+   "kind": "mech",
+   "claim": "PID 2DOF is the b and c weights of PID.",
+   "evidence": "src/library.jl:2545, :2558-2561"
+  },
+  {
+   "id": "K6b-008",
+   "file": "design/companions/library_inventory.md",
+   "line": 51,
+   "kind": "mech",
+   "claim": "A counter is a discrete one-liner s⁺ = mod(s + 1, N); a Detect is a UnitDelay with a Junction fold.",
+   "evidence": "src/library.jl:384 (UnitDelay s_update), :42-60 (Junction fold)"
+  },
+  {
+   "id": "K6b-009",
+   "file": "design/companions/library_inventory.md",
+   "line": 68,
+   "kind": "mech",
+   "claim": "A limited integrator is a mode with events for hitting and leaving each limit, and a derivative that reads the mode.",
+   "evidence": "src/library.jl:1846-1848, :1851-1867, :1881-1888"
+  },
+  {
+   "id": "K6b-010",
+   "file": "design/companions/library_inventory.md",
+   "line": 70,
+   "kind": "mech",
+   "claim": "A relay with hysteresis is a mode plus a pair of sign-form guards.",
+   "evidence": "src/library.jl:2140, :2144-2145"
+  },
+  {
+   "id": "K6b-011",
+   "file": "design/companions/library_inventory.md",
+   "line": 72,
+   "kind": "law",
+   "claim": "UnitDelay moves a signal onto the discrete tier, a modelling decision per §5.5.",
+   "evidence": "src/library.jl:360-376 (UnitDelay docstring), :384"
+  },
+  {
+   "id": "K6b-013",
+   "file": "design/companions/library_inventory.md",
+   "line": 78,
+   "kind": "law",
+   "claim": "Wires name whole ports, so one component of an SVector port reaches a scalar consumer through a library component.",
+   "evidence": "src/library.jl:190-194 (Unpack), probe:99"
+  },
+  {
+   "id": "K6b-014",
+   "file": "design/companions/library_inventory.md",
+   "line": 98,
+   "kind": "mech",
+   "claim": "Step is a component with a guard on t, localized or non-localized by the guard's form.",
+   "evidence": "src/library.jl:1643-1646"
+  },
+  {
+   "id": "K6b-015",
+   "file": "design/companions/library_inventory.md",
+   "line": 101,
+   "kind": "mech",
+   "claim": "A ramp is Source{V}(f) and needs no component.",
+   "evidence": "src/library.jl:893-900"
+  },
+  {
+   "id": "K6b-016",
+   "file": "design/companions/library_inventory.md",
+   "line": 110,
+   "kind": "mech",
+   "claim": "A handler that sets the mode from the time, not m + 1, survives two crossings at one boundary.",
+   "evidence": "src/library.jl:1724, probe:100 (handler at t = 2.5 gives m = 2)"
+  },
+  {
+   "id": "K6b-017",
+   "file": "design/companions/library_inventory.md",
+   "line": 111,
+   "kind": "law",
+   "claim": "A threshold with non-strict guards on both sides chatters at lower == upper, so the fall is strict.",
+   "evidence": "src/library.jl:2145, :2253-2255 (prevfloat(lower) - u)"
+  },
+  {
+   "id": "K6b-018",
+   "file": "design/companions/library_inventory.md",
+   "line": 119,
+   "kind": "law",
+   "claim": "A component is generic over V unless its ports are fixed: the Bool gates and the linear systems.",
+   "evidence": "src/library.jl:75, :89 (Bool gates), :1037-1046 (port_type by matrix shape)"
+  },
+  {
+   "id": "K6b-020",
+   "file": "design/companions/library_inventory.md",
+   "line": 121,
+   "kind": "decl",
+   "claim": "A one-input or one-output component has a bare contract with default face u or y, addressed as child/u or child/y.",
+   "evidence": "src/library.jl:169-170 (Fn), :193 (Unpack input), :350 (Constant output), probe:96-98"
+  },
+  {
+   "id": "K6b-021",
+   "file": "design/companions/library_inventory.md",
+   "line": 126,
+   "kind": "mech",
+   "claim": "The bundle reads a bare side as u or y, the value itself.",
+   "evidence": "src/library.jl:170 (y_direct(c::Fn, (; u)) = c.f(u)), :963 (signal(u)), :1014"
+  },
+  {
+   "id": "K6b-023",
+   "file": "design/companions/library_inventory.md",
+   "line": 123,
+   "kind": "ex",
+   "claim": "A junction's inputs are named in1…inN (lead: inN).",
+   "evidence": "src/library.jl:100; probe:98 prints (in1, in2, in3)"
+  },
+  {
+   "id": "K6b-024",
+   "file": "design/companions/library_inventory.md",
+   "line": 123,
+   "kind": "ex",
+   "claim": "Unpack's outputs are out1…outN (lead: outN).",
+   "evidence": "src/library.jl:187-193; probe:99 prints (out1, out2, out3)"
+  },
+  {
+   "id": "K6b-025",
+   "file": "design/companions/library_inventory.md",
+   "line": 123,
+   "kind": "ex",
+   "claim": "out1 is the first output name of the splitter (lead: out1).",
+   "evidence": "src/library.jl:187; probe:99"
+  },
+  {
+   "id": "K6b-026",
+   "file": "design/companions/library_inventory.md",
+   "line": 129,
+   "kind": "decl",
+   "claim": "The keyword constructors are Integrator(; x0 = 0.0) and Relay(; lower, upper, off = zero(lower), on = one.(lower)).",
+   "evidence": "src/library.jl:955, :2134"
+  },
+  {
+   "id": "K6b-027",
+   "file": "design/companions/library_inventory.md",
+   "line": 132,
+   "kind": "law",
+   "claim": "A parameter with no sensible default is a required keyword.",
+   "evidence": "src/library.jl:2134 (Relay lower, upper), :1005 (τ), :771 (width)"
+  },
+  {
+   "id": "K6b-028",
+   "file": "design/companions/library_inventory.md",
+   "line": 134,
+   "kind": "law",
+   "claim": "Keywords sharing a type parameter broadcast to one shape, Float64 or an SArray of Float64, so the constructor is hand-written, not @kwdef.",
+   "evidence": "src/library.jl:481-484 (broadcast_keywords)"
+  },
+  {
+   "id": "K6b-029",
+   "file": "design/companions/library_inventory.md",
+   "line": 135,
+   "kind": "law",
+   "claim": "A scalar pairs with a vector, and integer and Float32 keywords convert, a lone keyword too.",
+   "evidence": "probe:41-42 (Integrator(x0 = 1), x0 = 1.5f0 give Float64), src/library.jl:955-958; test/test_library.jl:3683"
+  },
+  {
+   "id": "K6b-030",
+   "file": "design/companions/library_inventory.md",
+   "line": 136,
+   "kind": "law",
+   "claim": "An array keyword of any kind, a Vector or an MVector, becomes the SArray of its size.",
+   "evidence": "src/library.jl:465-471, probe:43-44"
+  },
+  {
+   "id": "K6b-031",
+   "file": "design/companions/library_inventory.md",
+   "line": 138,
+   "kind": "law",
+   "claim": "Past STATIC_WARN_LENGTH = 512 elements the conversion warns once.",
+   "evidence": "src/library.jl:461, :466-469 (maxlog = 1), probe:52 (one warning for three calls of 513, 600, 512)"
+  },
+  {
+   "id": "K6b-032",
+   "file": "design/companions/library_inventory.md",
+   "line": 141,
+   "kind": "ex",
+   "claim": "Kp = @SVector fill(2.0, 3) spells a uniform vector gain.",
+   "evidence": "probe:53 (PID builds as PID{SVector{3, Float64}})"
+  },
+  {
+   "id": "K6b-033",
+   "file": "design/companions/library_inventory.md",
+   "line": 142,
+   "kind": "law",
+   "claim": "A scalar limit serves every component of a vector integrator.",
+   "evidence": "src/library.jl:1835-1837, test/test_library.jl:3683"
+  },
+  {
+   "id": "K6b-034",
+   "file": "design/companions/library_inventory.md",
+   "line": 143,
+   "kind": "law",
+   "claim": "Two lengths are Julia's DimensionMismatch.",
+   "evidence": "probe:46, test/test_library.jl:3597"
+  },
+  {
+   "id": "K6b-035",
+   "file": "design/companions/library_inventory.md",
+   "line": 144,
+   "kind": "mech",
+   "claim": "Only broadcasting pairs the PID's scalar defaults with a vector Kp; promotion throws.",
+   "evidence": "src/library.jl:473-477 (comment and shape_zero), probe:54 (scalar Kp with vector Ki builds)"
+  },
+  {
+   "id": "K6b-036",
+   "file": "design/companions/library_inventory.md",
+   "line": 146,
+   "kind": "law",
+   "claim": "A keyword given as AsPort() is a port, not a field, and takes no part in the shape.",
+   "evidence": "src/library.jl:2392-2406, probe:55-56 (the Fixed tuple lacks Kp; V is Float64)"
+  },
+  {
+   "id": "K6b-037",
+   "file": "design/companions/library_inventory.md",
+   "line": 147,
+   "kind": "law",
+   "claim": "The struct keeps its positional constructor.",
+   "evidence": "probe:45 (Integrator{Float64, false}(0.0) builds)"
+  },
+  {
+   "id": "K6b-038",
+   "file": "design/companions/library_inventory.md",
+   "line": 152,
+   "kind": "law",
+   "claim": "The walk substitutes type parameters and never fields.",
+   "evidence": "spec.md:3225"
+  },
+  {
+   "id": "K6b-040",
+   "file": "design/companions/library_inventory.md",
+   "line": 154,
+   "kind": "mech",
+   "claim": "A continuous stage that builds a struct with Float64 fields from Duals fails the build's Dual probe.",
+   "evidence": "test/test_library.jl:990-1000 (an f that keeps partials is refused as ConformanceFailure reason :field_type)"
+  },
+  {
+   "id": "K6b-041",
+   "file": "design/companions/library_inventory.md",
+   "line": 157,
+   "kind": "ex",
+   "claim": "Pose{T} is an illustrative signal type (lead: Pose, test-only).",
+   "evidence": "a placeholder name; the tests use Course{T} (test/test_library.jl:976)"
+  },
+  {
+   "id": "K6b-042",
+   "file": "design/companions/library_inventory.md",
+   "line": 165,
+   "kind": "decl",
+   "claim": "Junction{In, Out, N}(f) with SumJunction{V, N}, Or{N}, And{N}.",
+   "evidence": "src/library.jl:42-52, :60, :75, :89"
+  },
+  {
+   "id": "K6b-043",
+   "file": "design/companions/library_inventory.md",
+   "line": 166,
+   "kind": "decl",
+   "claim": "Pack{V, N} is a Junction alias at a named fold, and Unpack{V, N} splits the SVector{N, V} port.",
+   "evidence": "src/library.jl:108, :190-194"
+  },
+  {
+   "id": "K6b-044",
+   "file": "design/companions/library_inventory.md",
+   "line": 167,
+   "kind": "decl",
+   "claim": "StopRequest takes a Bool, publishes a StopFlag, carries reason as instance data.",
+   "evidence": "src/library.jl:434-442, probe:112"
+  },
+  {
+   "id": "K6b-045",
+   "file": "design/companions/library_inventory.md",
+   "line": 168,
+   "kind": "mech",
+   "claim": "Fields{V} publishes the fields of a struct-valued input as loose outputs, one level deep.",
+   "evidence": "src/library.jl:221-236"
+  },
+  {
+   "id": "K6b-046",
+   "file": "design/companions/library_inventory.md",
+   "line": 169,
+   "kind": "decl",
+   "claim": "Switch{V} selects between two inputs on a Bool.",
+   "evidence": "src/library.jl:259-263"
+  },
+  {
+   "id": "K6b-047",
+   "file": "design/companions/library_inventory.md",
+   "line": 170,
+   "kind": "decl",
+   "claim": "Select{V, K} chooses among inputs on an enum K keyed on instances(K), so a wire reads sel/CRUISE.",
+   "evidence": "src/library.jl:308-322, probe:31-38"
+  },
+  {
+   "id": "K6b-048",
+   "file": "design/companions/library_inventory.md",
+   "line": 171,
+   "kind": "decl",
+   "claim": "Fn{U, Y}(f) has one input of U and one output of Y; Fn{U}(f) is Y = U.",
+   "evidence": "src/library.jl:159-170, probe:97"
+  },
+  {
+   "id": "K6b-049",
+   "file": "design/companions/library_inventory.md",
+   "line": 173,
+   "kind": "mech",
+   "claim": "stop_reason names the request in the termination record.",
+   "evidence": "src/library.jl:442"
+  },
+  {
+   "id": "K6b-050",
+   "file": "design/companions/library_inventory.md",
+   "line": 175,
+   "kind": "law",
+   "claim": "Switch declares no event, so the jump lands where the selector flips.",
+   "evidence": "src/library.jl:259-263 (no state_events), :239-257 (docstring)"
+  },
+  {
+   "id": "K6b-051",
+   "file": "design/companions/library_inventory.md",
+   "line": 180,
+   "kind": "mech",
+   "claim": "Select's y_direct is a generated chain over instances(K) passed as a Val.",
+   "evidence": "src/library.jl:268-274, :322"
+  },
+  {
+   "id": "K6b-052",
+   "file": "design/companions/library_inventory.md",
+   "line": 182,
+   "kind": "law",
+   "claim": "No Symbol and no string is formed in the Select body; the value set is closed so no out-of-range case exists.",
+   "evidence": "src/library.jl:264-274, :322"
+  },
+  {
+   "id": "K6b-053",
+   "file": "design/companions/library_inventory.md",
+   "line": 184,
+   "kind": "mech",
+   "claim": "Select is type-stable because every data input is a V.",
+   "evidence": "src/library.jl:316-320"
+  },
+  {
+   "id": "K6b-054",
+   "file": "design/companions/library_inventory.md",
+   "line": 185,
+   "kind": "law",
+   "claim": "The selector is select, as Switch spells it; an enum with an instance named select, or an abstract K, is refused at construction.",
+   "evidence": "src/library.jl:308-316, probe:34-36"
+  },
+  {
+   "id": "K6b-055",
+   "file": "design/companions/library_inventory.md",
+   "line": 187,
+   "kind": "law",
+   "claim": "There is no integer-keyed form; Switch{V} stays since Bool is no Enum.",
+   "evidence": "src/library.jl:308 (K <: Enum), :259"
+  },
+  {
+   "id": "K6b-056",
+   "file": "design/companions/library_inventory.md",
+   "line": 193,
+   "kind": "law",
+   "claim": "The Fn port types are type parameters, never read off f; a closure's output type is declared.",
+   "evidence": "src/library.jl:123, :169; test/test_library.jl:970-972"
+  },
+  {
+   "id": "K6b-057",
+   "file": "design/companions/library_inventory.md",
+   "line": 194,
+   "kind": "mech",
+   "claim": "f is applied in y_direct, so Fn is a stage 2 leaf, and f walks under Dual, which the probe checks.",
+   "evidence": "src/library.jl:170, test/test_library.jl:978-985"
+  },
+  {
+   "id": "K6b-058",
+   "file": "design/companions/library_inventory.md",
+   "line": 197,
+   "kind": "mech",
+   "claim": "Fn is the one-input Junction with its input bare, a struct of its own.",
+   "evidence": "src/library.jl:141, :159-170"
+  },
+  {
+   "id": "K6b-059",
+   "file": "design/companions/library_inventory.md",
+   "line": 198,
+   "kind": "law",
+   "claim": "Fn{V, Pinned{V}}(strip) is Freeze's spelling for a struct; an f that keeps partials is refused as ConformanceFailure at the first Dual build or linearization.",
+   "evidence": "test/test_library.jl:975-1000"
+  },
+  {
+   "id": "K6b-060",
+   "file": "design/companions/library_inventory.md",
+   "line": 203,
+   "kind": "mech",
+   "claim": "Fields outputs take the field names and types of V, one level deep.",
+   "evidence": "src/library.jl:234-236"
+  },
+  {
+   "id": "K6b-061",
+   "file": "design/companions/library_inventory.md",
+   "line": 204,
+   "kind": "law",
+   "claim": "A NamedTuple qualifies for Fields by its names.",
+   "evidence": "probe:27-29 (Fields{@NamedTuple{a, b}} builds)"
+  },
+  {
+   "id": "K6b-062",
+   "file": "design/companions/library_inventory.md",
+   "line": 205,
+   "kind": "law",
+   "claim": "A Real, a StaticArray, a Tuple, an empty NamedTuple or a UnionAll is refused at construction as ArgumentError.",
+   "evidence": "probe:26-29 (all five throw ArgumentError), src/library.jl:224-228"
+  },
+  {
+   "id": "K6b-063",
+   "file": "design/companions/library_inventory.md",
+   "line": 207,
+   "kind": "mech",
+   "claim": "Unpack splits the static array.",
+   "evidence": "src/library.jl:190-194"
+  },
+  {
+   "id": "K6b-064",
+   "file": "design/companions/library_inventory.md",
+   "line": 213,
+   "kind": "decl",
+   "claim": "Constant(value) is the pinned source.",
+   "evidence": "src/library.jl:346-351"
+  },
+  {
+   "id": "K6b-065",
+   "file": "design/companions/library_inventory.md",
+   "line": 214,
+   "kind": "decl",
+   "claim": "Step(; t_step, before = 0.0, after = 1.0, localized = true) with a guard on t in either form.",
+   "evidence": "src/library.jl:1635-1646"
+  },
+  {
+   "id": "K6b-066",
+   "file": "design/companions/library_inventory.md",
+   "line": 215,
+   "kind": "decl",
+   "claim": "Sequence(; times, values, localized = true): N strictly ascending breakpoints, N + 1 values, Step at N = 1.",
+   "evidence": "src/library.jl:1709-1716, probe:100"
+  },
+  {
+   "id": "K6b-067",
+   "file": "design/companions/library_inventory.md",
+   "line": 216,
+   "kind": "decl",
+   "claim": "Source{V}(f) is pinned: t is the activation scalar, stripped before f.",
+   "evidence": "src/library.jl:893-900"
+  },
+  {
+   "id": "K6b-068",
+   "file": "design/companions/library_inventory.md",
+   "line": 217,
+   "kind": "decl",
+   "claim": "GaussianWhiteNoise(; seed, μ, σ, psd), counter-based draw, σ per sample or σ² = psd/Δt.",
+   "evidence": "src/library.jl:828-837, :859-862, probe:108-110 (ratio 2.0 as expected)"
+  },
+  {
+   "id": "K6b-069",
+   "file": "design/companions/library_inventory.md",
+   "line": 219,
+   "kind": "mech",
+   "claim": "Sequence's mode counts breakpoints passed, read by y_state.",
+   "evidence": "src/library.jl:1719-1720"
+  },
+  {
+   "id": "K6b-070",
+   "file": "design/companions/library_inventory.md",
+   "line": 220,
+   "kind": "mech",
+   "claim": "The guard is t - times[m + 1] until the last, so it re-arms after each firing.",
+   "evidence": "src/library.jl:1722"
+  },
+  {
+   "id": "K6b-071",
+   "file": "design/companions/library_inventory.md",
+   "line": 221,
+   "kind": "law",
+   "claim": "The handler sets the mode to the count of breakpoints at or before t, never m + 1.",
+   "evidence": "src/library.jl:1724, probe:100"
+  },
+  {
+   "id": "K6b-072",
+   "file": "design/companions/library_inventory.md",
+   "line": 224,
+   "kind": "mech",
+   "claim": "Sequence is not periodic.",
+   "evidence": "src/library.jl:1722 (guard ends at the last breakpoint)"
+  },
+  {
+   "id": "K6b-073",
+   "file": "design/companions/library_inventory.md",
+   "line": 229,
+   "kind": "mech",
+   "claim": "The noise sample is a pure function of the seed and a tick counter, the store's one field; no generator or workspace.",
+   "evidence": "src/library.jl:846-862, :865 (s_init UInt64(0), s_update s + 1)"
+  },
+  {
+   "id": "K6b-074",
+   "file": "design/companions/library_inventory.md",
+   "line": 237,
+   "kind": "decl",
+   "claim": "Integrator(; x0 = 0.0, reset = false), reset = true a type parameter adding the Bool input reset.",
+   "evidence": "src/library.jl:952-961"
+  },
+  {
+   "id": "K6b-075",
+   "file": "design/companions/library_inventory.md",
+   "line": 237,
+   "kind": "mech",
+   "claim": "The Integrator walks under Dual; the reset is an event.",
+   "evidence": "src/library.jl:963-965 (Float64 state); docstring :912-915"
+  },
+  {
+   "id": "K6b-076",
+   "file": "design/companions/library_inventory.md",
+   "line": 238,
+   "kind": "decl",
+   "claim": "LimitedIntegrator{V, L, R}: a mode the derivative reads, four events, departures by L, saturation published.",
+   "evidence": "src/library.jl:1830-1848, :1851-1867, :1889-1920"
+  },
+  {
+   "id": "K6b-077",
+   "file": "design/companions/library_inventory.md",
+   "line": 239,
+   "kind": "decl",
+   "claim": "LimitedDoubleIntegrator(; lower, upper, q0, v0, localized = true).",
+   "evidence": "src/library.jl:2005-2008"
+  },
+  {
+   "id": "K6b-078",
+   "file": "design/companions/library_inventory.md",
+   "line": 240,
+   "kind": "decl",
+   "claim": "FirstOrderLag{V}, time constant as instance data.",
+   "evidence": "src/library.jl:1001-1014"
+  },
+  {
+   "id": "K6b-079",
+   "file": "design/companions/library_inventory.md",
+   "line": 242,
+   "kind": "decl",
+   "claim": "StateSpace(; A, B, C, D, x0) stored as static matrices, D picks the stage, x0 in the user's coordinates.",
+   "evidence": "src/library.jl:1111-1126, :1055-1058"
+  },
+  {
+   "id": "K6b-080",
+   "file": "design/companions/library_inventory.md",
+   "line": 243,
+   "kind": "decl",
+   "claim": "TransferFunction(; num, den, u0), one input and one output, realized to a StateSpace, started at rest or at the steady state for u0, no x0.",
+   "evidence": "src/library.jl:1273-1308, probe:23-25 (u0 = 2 gives y0 = 2)"
+  },
+  {
+   "id": "K6b-081",
+   "file": "design/companions/library_inventory.md",
+   "line": 246,
+   "kind": "mech",
+   "claim": "The Integrator reset is one non-localized event whose guard reads reset and whose handler writes x0.",
+   "evidence": "src/library.jl:964-965, :450 (reset_guard)"
+  },
+  {
+   "id": "K6b-082",
+   "file": "design/companions/library_inventory.md",
+   "line": 249,
+   "kind": "law",
+   "claim": "The reset acts on the rising edge only, with no level reset and no initial-condition port.",
+   "evidence": "src/library.jl:960-965"
+  },
+  {
+   "id": "K6b-083",
+   "file": "design/companions/library_inventory.md",
+   "line": 250,
+   "kind": "law",
+   "claim": "The data port keeps the face u in both forms.",
+   "evidence": "src/library.jl:447-452, :960"
+  },
+  {
+   "id": "K6b-084",
+   "file": "design/companions/library_inventory.md",
+   "line": 251,
+   "kind": "mech",
+   "claim": "A reset driven by a continuous quantity arrives through a Comparator, where it is localized.",
+   "evidence": "src/library.jl:2229-2255 (localized sign-form guards), docstring :930-932"
+  },
+  {
+   "id": "K6b-085",
+   "file": "design/companions/library_inventory.md",
+   "line": 252,
+   "kind": "law",
+   "claim": "A Bool input is held, never tapped, so the linearization has no reset column.",
+   "evidence": "test/test_library.jl:1649-1656"
+  },
+  {
+   "id": "K6b-086",
+   "file": "design/companions/library_inventory.md",
+   "line": 253,
+   "kind": "mech",
+   "claim": "On the discrete tier the same reset is the level form, one ifelse in s_update, on DiscreteIntegrator and DiscreteLimitedIntegrator.",
+   "evidence": "src/library.jl:610, :672"
+  },
+  {
+   "id": "K6b-087",
+   "file": "design/companions/library_inventory.md",
+   "line": 257,
+   "kind": "mech",
+   "claim": "The LimitedIntegrator hit guards read x - limit and, on the limit, u.",
+   "evidence": "src/library.jl:1851-1852"
+  },
+  {
+   "id": "K6b-088",
+   "file": "design/companions/library_inventory.md",
+   "line": 259,
+   "kind": "mech",
+   "claim": "The leave pair is gated by the mode and a strictly inward input.",
+   "evidence": "src/library.jl:1860-1867"
+  },
+  {
+   "id": "K6b-089",
+   "file": "design/companions/library_inventory.md",
+   "line": 260,
+   "kind": "law",
+   "claim": "Modes are Int8 codes, with 4N per-component events over a vector.",
+   "evidence": "src/library.jl:1846, :1889-1920, probe:92 (8 events for N = 2)"
+  },
+  {
+   "id": "K6b-090",
+   "file": "design/companions/library_inventory.md",
+   "line": 261,
+   "kind": "mech",
+   "claim": "reset = true adds a fifth event on the flag's rising edge whose handler writes x0 clamped and the code it earns.",
+   "evidence": "src/library.jl:1875-1883, probe:92 (9 events with reset)"
+  },
+  {
+   "id": "K6b-091",
+   "file": "design/companions/library_inventory.md",
+   "line": 263,
+   "kind": "law",
+   "claim": "A reset onto a limit lands saturated until an inward input frees it; one inside lands free.",
+   "evidence": "src/library.jl:1875-1877, test/test_library.jl:1660-1670"
+  },
+  {
+   "id": "K6b-092",
+   "file": "design/companions/library_inventory.md",
+   "line": 266,
+   "kind": "decl",
+   "claim": "LimitedDoubleIntegrator's named state is (q, v), each keyword naming its leaf.",
+   "evidence": "src/library.jl:2009-2012"
+  },
+  {
+   "id": "K6b-093",
+   "file": "design/companions/library_inventory.md",
+   "line": 267,
+   "kind": "mech",
+   "claim": "It has LimitedIntegrator's mode and four events, hit pair on q, leave pair on the input's sign, hit handlers write the limit and zero v.",
+   "evidence": "src/library.jl:2025-2040"
+  },
+  {
+   "id": "K6b-094",
+   "file": "design/companions/library_inventory.md",
+   "line": 272,
+   "kind": "mech",
+   "claim": "A hit guard reads the first nonzero of q - limit, v and u.",
+   "evidence": "src/library.jl:2025-2026"
+  },
+  {
+   "id": "K6b-095",
+   "file": "design/companions/library_inventory.md",
+   "line": 277,
+   "kind": "law",
+   "claim": "Under the non-localized leave v carries an offset of at most a h²/2, and q one that grows until the next limit.",
+   "evidence": "docstring src/library.jl:1957-1963"
+  },
+  {
+   "id": "K6b-096",
+   "file": "design/companions/library_inventory.md",
+   "line": 278,
+   "kind": "mech",
+   "claim": "The outputs are out, velocity and saturation, with 4N events over a vector; it has no reset form.",
+   "evidence": "src/library.jl:2013, probe:94-95, :2005"
+  },
+  {
+   "id": "K6b-097",
+   "file": "design/companions/library_inventory.md",
+   "line": 285,
+   "kind": "mech",
+   "claim": "For a scalar signal FirstOrderLag is the lag form of TransferFunction, kept for static arrays and x0 in the signal's coordinates.",
+   "evidence": "src/library.jl:1012-1014, probe:23-25 (TF state is scaled by τ)"
+  },
+  {
+   "id": "K6b-098",
+   "file": "design/companions/library_inventory.md",
+   "line": 289,
+   "kind": "mech",
+   "claim": "The linear stage arms are shared through AbstractLinearSystem{FT}, and the class comes from the numerator's degree.",
+   "evidence": "src/library.jl:1037-1058, probe:118 (equal degree true, lower false)"
+  },
+  {
+   "id": "K6b-099",
+   "file": "design/companions/library_inventory.md",
+   "line": 296,
+   "kind": "decl",
+   "claim": "Relay{V} over Float64 or an SArray; Int8 mode codes, 2N events over a vector.",
+   "evidence": "src/library.jl:2128, :2140, probe:91 (4 events for N = 2)"
+  },
+  {
+   "id": "K6b-102",
+   "file": "design/companions/library_inventory.md",
+   "line": 297,
+   "kind": "decl",
+   "claim": "Comparator(; threshold, lower, upper, localized = true), threshold alone or both limits, a Bool output.",
+   "evidence": "src/library.jl:2233-2247, probe:88"
+  },
+  {
+   "id": "K6b-103",
+   "file": "design/companions/library_inventory.md",
+   "line": 301,
+   "kind": "law",
+   "claim": "The Relay fall is strict as the Comparator's, so lower == upper is a plain threshold.",
+   "evidence": "src/library.jl:2145, :2253"
+  },
+  {
+   "id": "K6b-104",
+   "file": "design/companions/library_inventory.md",
+   "line": 304,
+   "kind": "mech",
+   "claim": "Comparator is Relay's latch and guard pair publishing Pinned{Bool}, policy by L.",
+   "evidence": "src/library.jl:2229, :2246, :2253-2256"
+  },
+  {
+   "id": "K6b-105",
+   "file": "design/companions/library_inventory.md",
+   "line": 306,
+   "kind": "law",
+   "claim": "The fall is strict, u < lower, spelled prevfloat(lower) - u in sign form, since non-strict guards re-enable each other.",
+   "evidence": "src/library.jl:2249-2253"
+  },
+  {
+   "id": "K6b-106",
+   "file": "design/companions/library_inventory.md",
+   "line": 308,
+   "kind": "law",
+   "claim": "lower > upper is refused.",
+   "evidence": "probe:89-90, src/library.jl:2243"
+  },
+  {
+   "id": "K6b-107",
+   "file": "design/companions/library_inventory.md",
+   "line": 309,
+   "kind": "mech",
+   "claim": "The Comparator produces Switch's select from a continuous quantity.",
+   "evidence": "src/library.jl:2246 (Bool output), :263"
+  },
+  {
+   "id": "K6b-108",
+   "file": "design/companions/library_inventory.md",
+   "line": 323,
+   "kind": "decl",
+   "claim": "UnitDelay{V} is the discrete z⁻¹.",
+   "evidence": "src/library.jl:377-387"
+  },
+  {
+   "id": "K6b-109",
+   "file": "design/companions/library_inventory.md",
+   "line": 324,
+   "kind": "decl",
+   "claim": "DiscreteIntegrator{V, R}: forward Euler, bare output the state from s0, so it breaks a loop; no gain and no limits.",
+   "evidence": "src/library.jl:598-611"
+  },
+  {
+   "id": "K6b-110",
+   "file": "design/companions/library_inventory.md",
+   "line": 325,
+   "kind": "decl",
+   "claim": "RateLimiter{V}: feedthrough, follows its input within rising Δt up and falling Δt down from s0; s_update stores y.",
+   "evidence": "src/library.jl:713-728, probe:102"
+  },
+  {
+   "id": "K6b-111",
+   "file": "design/companions/library_inventory.md",
+   "line": 326,
+   "kind": "decl",
+   "claim": "Backlash{V}: y = clamp(s, u - w/2, u + w/2), s_update stores y.",
+   "evidence": "src/library.jl:767-781, probe:102"
+  },
+  {
+   "id": "K6b-112",
+   "file": "design/companions/library_inventory.md",
+   "line": 327,
+   "kind": "decl",
+   "claim": "The discrete pair in z mirrors the continuous pair over AbstractDiscreteLinearSystem{FT}, s_update for x_deriv; the component cannot check the period.",
+   "evidence": "src/library.jl:1326-1339, :1385-1388, :1455-1458"
+  },
+  {
+   "id": "K6b-113",
+   "file": "design/companions/library_inventory.md",
+   "line": 328,
+   "kind": "decl",
+   "claim": "The discretized pair takes the zero-order hold per tick at Δt; class and initial condition are the continuous ones.",
+   "evidence": "src/library.jl:1525-1541, :1575-1585"
+  },
+  {
+   "id": "K6b-114",
+   "file": "design/companions/library_inventory.md",
+   "line": 329,
+   "kind": "decl",
+   "claim": "DiscreteLimitedIntegrator{V, R}: one clamp in s_update, no mode store, no localization.",
+   "evidence": "src/library.jl:655-672"
+  },
+  {
+   "id": "K6b-115",
+   "file": "design/companions/library_inventory.md",
+   "line": 330,
+   "kind": "decl",
+   "claim": "Delay(; K, v0): z⁻ᴷ in a ring store, one output, K = 1 the UnitDelay in keyword spelling.",
+   "evidence": "src/library.jl:536-553, probe:57-65 (default form has one output)"
+  },
+  {
+   "id": "K6b-116",
+   "file": "design/companions/library_inventory.md",
+   "line": 333,
+   "kind": "mech",
+   "claim": "The discrete reset writes s0 while the flag reads true, so the state lands at the next tick and the output at the reset tick is the stale integral.",
+   "evidence": "src/library.jl:610, :606 (y_state publishes s), probe:104"
+  },
+  {
+   "id": "K6b-117",
+   "file": "design/companions/library_inventory.md",
+   "line": 336,
+   "kind": "law",
+   "claim": "A same-tick reset would make every input a feedthrough edge, so it is not offered.",
+   "evidence": "src/library.jl:594-596 (comment)"
+  },
+  {
+   "id": "K6b-118",
+   "file": "design/companions/library_inventory.md",
+   "line": 339,
+   "kind": "mech",
+   "claim": "Backlash holds inside a deadband of width about itself and follows the input at half a width's offset outside it.",
+   "evidence": "src/library.jl:779, probe:102 (u = 3, w = 2 gives 2.0)"
+  },
+  {
+   "id": "K6b-119",
+   "file": "design/companions/library_inventory.md",
+   "line": 344,
+   "kind": "mech",
+   "claim": "DiscreteLimitedIntegrator has lower, upper, s0, reset and the Int8 saturation code read off the state from stage 1; the reset is the level form with s0 clamped.",
+   "evidence": "src/library.jl:660-672, probe:103"
+  },
+  {
+   "id": "K6b-120",
+   "file": "design/companions/library_inventory.md",
+   "line": 353,
+   "kind": "decl",
+   "claim": "Freeze{V} over Float64 and SArray is the declared stop-gradient; a struct V is not admitted.",
+   "evidence": "src/library.jl:405-410, probe:120 (Freeze{Int} is a TypeError)"
+  },
+  {
+   "id": "K6b-121",
+   "file": "design/companions/library_inventory.md",
+   "line": 360,
+   "kind": "decl",
+   "claim": "PID is one law q̇ = Ki ε + (ref - u_raw)/Tt, componentwise, with two independent axes hold and tracking.",
+   "evidence": "src/library.jl:2545-2570, :2342-2352"
+  },
+  {
+   "id": "K6b-122",
+   "file": "design/companions/library_inventory.md",
+   "line": 361,
+   "kind": "decl",
+   "claim": "DiscretePID shares ports, gate, reference rule and parameters through AbstractPID{V, Hold, Track, Fixed}.",
+   "evidence": "src/library.jl:2374-2403, :2677-2711"
+  },
+  {
+   "id": "K6b-123",
+   "file": "design/companions/library_inventory.md",
+   "line": 362,
+   "kind": "decl",
+   "claim": "LQRTracker has inputs x, z, z_ref as static vectors, outputs u and u_raw from stage 2, no saturation output.",
+   "evidence": "src/library.jl:2744-2754, :2921-2924, probe:113-114"
+  },
+  {
+   "id": "K6b-124",
+   "file": "design/companions/library_inventory.md",
+   "line": 363,
+   "kind": "decl",
+   "claim": "DiscreteLQRTracker is over AbstractLQRTracker, forward Euler on the integrator and the correction's exact step.",
+   "evidence": "src/library.jl:3028-3060"
+  },
+  {
+   "id": "K6b-125",
+   "file": "design/companions/library_inventory.md",
+   "line": 365,
+   "kind": "mech",
+   "claim": "The hold adds the saturation code that gates the integrator by sign and the flag engaged, with not engaged taking precedence.",
+   "evidence": "src/library.jl:2342-2345, probe:73-74"
+  },
+  {
+   "id": "K6b-126",
+   "file": "design/companions/library_inventory.md",
+   "line": 367,
+   "kind": "mech",
+   "claim": "v is the reference while limited or not engaged, with the own u as fallback while free.",
+   "evidence": "src/library.jl:2349-2352"
+  },
+  {
+   "id": "K6b-127",
+   "file": "design/companions/library_inventory.md",
+   "line": 370,
+   "kind": "mech",
+   "claim": "The three axis ports sit at the output's shape and Ki sits inside the integral.",
+   "evidence": "src/library.jl:2336-2338, :2380-2382, :2564-2567"
+  },
+  {
+   "id": "K6b-128",
+   "file": "design/companions/library_inventory.md",
+   "line": 371,
+   "kind": "law",
+   "claim": "Every parameter is a V, and any of them a port by AsPort().",
+   "evidence": "src/library.jl:2392-2406, :2381-2384, probe:55"
+  },
+  {
+   "id": "K6b-129",
+   "file": "design/companions/library_inventory.md",
+   "line": 372,
+   "kind": "law",
+   "claim": "The weights default to b = 1 and c = 0, so the derivative acts on the measurement.",
+   "evidence": "src/library.jl:2545-2546, :2558-2561"
+  },
+  {
+   "id": "K6b-130",
+   "file": "design/companions/library_inventory.md",
+   "line": 374,
+   "kind": "law",
+   "claim": "A fixed infinite Tt is refused with tracking; PID has no saturation output.",
+   "evidence": "src/library.jl:2417-2423, :2385, probe:70-72, :75"
+  },
+  {
+   "id": "K6b-131",
+   "file": "design/companions/library_inventory.md",
+   "line": 378,
+   "kind": "mech",
+   "claim": "DiscretePID is forward Euler on the integral, backward Euler on the derivative filter (τd = 0 is the backward difference), and step 1 - e^{-Δt/Tt}, with Tt = 0 instant.",
+   "evidence": "src/library.jl:2696-2711, probe:67, :69 (Tt = 0 and τd = 0 build)"
+  },
+  {
+   "id": "K6b-132",
+   "file": "design/companions/library_inventory.md",
+   "line": 383,
+   "kind": "mech",
+   "claim": "A second output saturated, the own clamp's Int8 code, is written to the store at the tick and published from stage 1 at the next, one tick stale.",
+   "evidence": "src/library.jl:2694-2695, :2702-2711, probe:75"
+  },
+  {
+   "id": "K6b-133",
+   "file": "design/companions/library_inventory.md",
+   "line": 388,
+   "kind": "mech",
+   "claim": "The LQR law is u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q, q̇ = ε + (ref - u_raw)/Tt, ε the gated K_int (z_ref - z).",
+   "evidence": "src/library.jl:2921-2930"
+  },
+  {
+   "id": "K6b-134",
+   "file": "design/companions/library_inventory.md",
+   "line": 392,
+   "kind": "law",
+   "claim": "It has the PID's two axes channel by channel, engaged per channel; the nine parameters are three gains, the trim triple, Tt, u_min, u_max, any a port by AsPort().",
+   "evidence": "src/library.jl:2713, :2744-2749, probe:114"
+  },
+  {
+   "id": "K6b-135",
+   "file": "design/companions/library_inventory.md",
+   "line": 398,
+   "kind": "mech",
+   "claim": "The tracker's Int8 code vector is the output saturated, from stage 1 off the store, one tick stale.",
+   "evidence": "src/library.jl:3048-3052, :3056-3060, probe:115"
+  },
+  {
+   "id": "K6b-136",
+   "file": "design/companions/library_inventory.md",
+   "line": 410,
+   "kind": "law",
+   "claim": "A tracking leaf wired from a memoryless clamp of its own output is refused as an artificial cycle.",
+   "evidence": "docstring src/library.jl:2516-2519"
+  },
+  {
+   "id": "K6b-137",
+   "file": "design/companions/library_inventory.md",
+   "line": 419,
+   "kind": "law",
+   "claim": "AsPort() on the limits of RateLimiter, LimitedIntegrator and DiscreteLimitedIntegrator is not admitted.",
+   "evidence": "src/library.jl:718-722, :1835-1837, :660-663 (limits are values, `.>` and check_limits run on them)"
+  },
+  {
+   "id": "K6b-138",
+   "file": "design/companions/library_inventory.md",
+   "line": 430,
+   "kind": "mech",
+   "claim": "Tapped Delay: taps = true is a type parameter naming the output side (y, taps), newest first, y == taps[end], published from stage 1 as a ring rotation.",
+   "evidence": "src/library.jl:536-553, probe:57-65 (y == taps[end] on five ticks), :66"
+  },
+  {
+   "id": "K6b-139",
+   "file": "design/companions/library_inventory.md",
+   "line": 440,
+   "kind": "decl",
+   "claim": "Zero-Pole is a zeros, poles, gain keyword path into the three transfer functions, exclusive with num and den.",
+   "evidence": "src/library.jl:1195-1205, :1281, :1460, :1580; probe:81, :85 (mixed spellings refused)"
+  },
+  {
+   "id": "K6b-140",
+   "file": "design/companions/library_inventory.md",
+   "line": 466,
+   "kind": "law",
+   "claim": "The components are unexported from Redstone.Library.",
+   "evidence": "probe:87 (names(Library) is [:Library])"
+  },
+  {
+   "id": "K6b-141",
+   "file": "design/companions/library_inventory.md",
+   "line": 467,
+   "kind": "mech",
+   "claim": "A file that also loads ControlSystems qualifies StateSpace and TransferFunction, the names they share.",
+   "evidence": "src/library.jl:1064 (the name is the one ControlSystemsBase exports); the package is not in test/Project.toml, so the collision itself is not probed"
+  }
+ ],
+ "counts": {
+  "law": 42,
+  "mech": 63,
+  "decl": 27,
+  "ex": 5,
+  "ptr": 34,
+  "why": 30
+ }
+}

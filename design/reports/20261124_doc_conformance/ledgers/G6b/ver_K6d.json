@@ -1,0 +1,137 @@
+{
+ "judgments": [
+  {
+   "id": "K6d-002",
+   "conforms": true,
+   "evidence": "Textbook fact the code doesn't compute: the tracker takes K_fbk from outside (src/library.jl:2905, docstring 'The gains are designed outside'). Probe K6d_v/probe.jl:201-206 solves the CARE for tracker_plant with Q = R = I by the Hamiltonian method. The residual is 3.1e-16 and the eigenvalues of A - BK are -1.98 +/- 0.66i, so the closed loop is stable (out.txt:38)."
+  },
+  {
+   "id": "K6d-011",
+   "conforms": true,
+   "evidence": "src/library.jl:2923 implements u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q. Probe out.txt:33 computes M22 + K M12 for tracker_plant and gets [1 -1; 2 4], which equals the fixture's K_fwd. With these gains the plain loop settles on the target [1.0, 0.5] (out.txt:34)."
+  },
+  {
+   "id": "K6d-026",
+   "conforms": true,
+   "evidence": "Probe out.txt:37 shows the linearized closed-loop A (plant and q taps) is the same with and without the disturbance [0.2, -0.1]. At t = 200, out.txt:35 has the plant at z = z_ref and q at [-0.2, 0.1], which balances w. The test test/test_library.jl:3434 agrees."
+  },
+  {
+   "id": "K6d-036",
+   "conforms": true,
+   "evidence": "src/library.jl:2923 and 3053 add q directly, and only the integrator input carries K_int (2928, 3059). Probe out.txt:32 steps a scheduled K_int tenfold at t = 1. The per-tick change of u_raw at frames 98 to 101 is 0.0079, 0.0079, 0.0135, 0.0128: the accumulation rate changes and the command does not jump."
+  },
+  {
+   "id": "K6d-045",
+   "conforms": true,
+   "evidence": "src/library.jl:2928 and 3059 feed gated_error the vector K_int (z_ref - z), at NU width. gated_error (2343-2344) and correction_reference (2351-2352) select per channel with broadcast ifelse. Probe out.txt:20-24: channel 1 limited and channel 2 free give different per-channel results."
+  },
+  {
+   "id": "K6d-051",
+   "conforms": false,
+   "evidence": "src/library.jl:2350 makes v the reference at every code when there is no hold: correction_reference(::AbstractAntiWindupController{false, true}) = u.v. Only with the hold does a free channel fall back to its own u (2351-2352). Probe out.txt:22: with hold = false and tracking = true, channel 2's derivative reads (v - u_raw)/Tt = 8.85, not (u - u_raw)/Tt. The companion's bullet states the hold-and-tracking rule as tracking's general rule.",
+   "class": "drift",
+   "fix": "- **tracking** adds the input `v`, an `SVector{NU, Float64}`, as the correction's reference: without the hold in every channel, and with it while a channel is limited or not engaged, with the fallback to the own `u` while it is free.",
+   "clear": true,
+   "note": "D-385's second ruling records the no-hold row ('Without the hold inputs the error passes and the reference is v where the block tracks'). Commit 17ad42da added the same qualifier to section 7's wiring sentence ('since without one v is the reference at every code') but missed this bullet."
+  },
+  {
+   "id": "K6d-055",
+   "conforms": true,
+   "evidence": "src/library.jl:2928 divides by Tt, and 3058 sets beta = -expm1(-dt/Tt) = 0 at Tt = Inf. Probe out.txt:25-26: with u_raw = 26.8 clamped to 1.0, the continuous derivative equals K_int e exactly, and the discrete q step equals dt K_int e exactly."
+  },
+  {
+   "id": "K6d-064",
+   "conforms": true,
+   "evidence": "src/library.jl:2751-2754 adds each AsPort() parameter as an input port typed by parameter_types, and the PID does the same at 2381-2384. Probe out.txt:27-28: K_int becomes SMatrix{2,2,Float64,4} and Tt becomes SVector{2,Float64}, just as the PID's Ki port is typed Float64."
+  },
+  {
+   "id": "K6d-074",
+   "conforms": true,
+   "evidence": "src/library.jl:409: Freeze's y_direct is ForwardDiff.value.(u). Probe out.txt:39-40 schedules K_fbk on plant/y[1] with x_trim nonzero. Linearizing the loop gives A[1,1] = -0.9 without Freeze, which includes the schedule's coupling, and -1.0 through Freeze, which drops it."
+  },
+  {
+   "id": "K6d-080",
+   "conforms": true,
+   "evidence": "Probe out.txt:50-55 reproduces pid_anti_windup.md's cascade table at W: none 8.33/38.5, hold 6.10/32.5, tracking Tt=2 6.13/25.8, tracking Tt=0.5 7.27/55.2, both Tt=2 5.20/26.9, both Tt=0.5 5.09/22.0. That companion ranks them in the prose under its table at lines 310-314 ('The hold alone beats ungated tracking at its better Tt, and the two together beat both'), and D-383's Rejected list says the same.",
+   "note": "The ranking is by peak. On settling time alone, tracking at Tt = 2 (25.8 s) beats the hold (32.5 s)."
+  },
+  {
+   "id": "K6d-084",
+   "conforms": true,
+   "evidence": "src/library.jl:3046-3047 declares the store field saturated, 3060 has s_update write it from saturation_code over u_raw, and 3050 has y_state publish it. Probe out.txt:29-31 confirms the store, the output type and the published code."
+  },
+  {
+   "id": "K6d-093",
+   "conforms": true,
+   "evidence": "src/library.jl:3051-3061: y_direct reads only s.q, and s_update writes saturated without reading s.saturated. Probe out.txt:31: changing s.saturated from (0, 0) to (1, -1) leaves both y_direct and the new q unchanged."
+  },
+  {
+   "id": "K6d-107",
+   "conforms": true,
+   "evidence": "src/library.jl:263: the Switch's y_direct reads in1, in2 and select. Probe out.txt:1 and 3: without the delay, the sibling wiring is refused as AlgebraicCycle with the wires a/u => sel/in1, sel/y => a/v, ... (classified :real on the discrete tier, :artificial on the continuous one). Both build with the UnitDelay (out.txt:2, 4)."
+  },
+  {
+   "id": "K6d-115",
+   "conforms": false,
+   "evidence": "Probe probe.jl:95-113 and 224-249 rebuild the row's setup at W: sibling wiring from test/test_library.jl:690-706 with Kp=1, Ki=0.5, Kd=0.2, taud=0.1 and a in command for 4 s. The 4.76 and 1.92 rows reproduce on this wiring. The engaged sibling tracking its own one-tick-old output differs from a plain PID by 0.0171 at Tt = 1 and by 0.159 at Tt = 0.1 (out.txt:14-17), on a peak of 6.14. The gap scales as 1/Tt (out.txt:45-49), so 0.021 would need Tt of about 0.8, a value the row does not state.",
+   "class": "deviation",
+   "fix": "| the engaged sibling tracking its own one-tick-old output, against a plain PID, over 4 s, `Tt = 1` | plant outputs within `0.017` on a response of about `6` |",
+   "clear": false,
+   "note": "The row names no Tt, and the probe of 2026-10-14 is not kept, so its exact setup cannot be confirmed. The law for tracking without a hold is the same at 53f35d0 and at W (git show 53f35d0:src/blocks.jl 1064-1072, 1227-1231)."
+  },
+  {
+   "id": "K6d-116",
+   "conforms": true,
+   "evidence": "Probe out.txt:5: plain DiscretePID siblings through the UnitDelay give a switchover bump of 4.7604. The test test/test_library.jl:3266 comments '# 4.76'."
+  },
+  {
+   "id": "K6d-117",
+   "conforms": true,
+   "evidence": "Probe out.txt:6: siblings with DiscretePID tracking = true, Tt = 1 (both siblings tracking always) give a bump of 1.9191, which rounds to 1.92."
+  },
+  {
+   "id": "K6d-118",
+   "conforms": false,
+   "evidence": "Probe probe.jl:72-80 emulates the row as the companion describes it: tracking = true, Ki = AsPort() fed 0.5 in command and 0 otherwise from mode, Tt = 1. The bump is 0.6516 (out.txt:7). Feeding Ki one tick late gives the same (out.txt:41). The shipped hold with tracking gives 0.6566 (out.txt:10). None of these gives 0.70, while the 4.76 and 1.92 rows reproduce on the same wiring.",
+   "class": "deviation",
+   "fix": "| the same, `Ki` zero while not in command, `Tt = 1` | bump `0.65` |",
+   "clear": false,
+   "note": "This is a historical probe at 53f35d0 whose wiring is not kept, and the PID law for this variant is unchanged since then. D-383's rationale cites only 4.76, 1.92 and 0.002, and the brief of increment 73 (line 131) repeats 0.70."
+  },
+  {
+   "id": "K6d-119",
+   "conforms": false,
+   "evidence": "Probe out.txt:8: the same emulation at Tt = 0.1 gives a bump of 0.0029, which rounds to 0.003, not 0.002. The shipped hold with tracking gives 0.0042 (out.txt:11), and test/test_library.jl:3265 comments '# 0.0042'.",
+   "class": "deviation",
+   "fix": "| the same, `Ki` zero while not in command, `Tt = 0.1` | bump `0.003` |",
+   "clear": false,
+   "note": "D-383's rationale and pid_anti_windup.md:552-553 also quote 0.002, so a change would have to carry to them as well, the log through an annotation. The probe's original wiring is not kept."
+  },
+  {
+   "id": "K6d-121",
+   "conforms": true,
+   "evidence": "Probe out.txt:13: after 2 s in standby with tracking always and Tt = 1, a's u_raw - v = 1.923, which is the 1.92 bump, and Tt Ki e = 1.438. The bias accounts for about three quarters of the bump, and the rest is lag behind the moving target. The discrete fixed point dt Ki e / beta gives about 1.445."
+  },
+  {
+   "id": "K6d-122",
+   "conforms": false,
+   "evidence": "src/library.jl:2704: with Tt = 0, beta = 1, and the correction lands in s_update after the output. u_raw at the next tick is therefore v plus that tick's change in the direct terms. The DiscretePID docstring (src/library.jl ~2970-2982) and DiscreteLQRTracker's (2981-2983) state 'exact for a constant v while the direct terms hold'. Probe out.txt:18: hold-and-tracking siblings in standby at Tt = 0 show u_raw - v of about -0.006 per tick, 4.99 at the reference step and 0.0006 at the end. That is close following, not exact.",
+   "class": "deviation",
+   "fix": "On the discrete tier `Tt = 0` lands `u_raw` on the tick's `v` one tick later, exact while `v` and the direct terms hold, the FlightPhysics reset applied every tick,",
+   "clear": false,
+   "note": "pid_anti_windup.md:555-557 makes the same claim and would need the same fix. At W the Tt = 0 hold-and-tracking switchover bump is 0.00066 (out.txt:12)."
+  },
+  {
+   "id": "K6d-130",
+   "conforms": true,
+   "evidence": "K_fwd = M22 + K M12 (lqr_tracker.md:112) needs only the linearization's inverse plus K, and K is already the tracker's K_fbk. Probe out.txt:33 computes it from the inverse and K alone. src/library.jl:2905 takes K_fwd as a designed keyword, consistent with keeping it outside.",
+   "note": "Read as 'needs no Riccati solve beyond K, which the tracker already has', the claim holds, and D-383's Rejected list uses the same wording ('the feedforward needs only an inverse'). Read literally, K_fwd also needs K."
+  },
+  {
+   "id": "K6d-132",
+   "conforms": true,
+   "evidence": "test/test_library.jl:3436-3437 asserts linearization.A == [-1 1; -2 -4] = A - B K_fbk on the plant taps. Probe out.txt:36 reproduces it at W."
+  }
+ ],
+ "notes": "I changed no tracked file. I wrote only the probe at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K6d_v/probe.jl and its output at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K6d_v/out.txt (55 PROBE lines; three runs, each pass appended to the script). The probe copies the sibling, cascade and tracker-loop fixtures from test/test_library.jl at W.\n\nWhat I checked: the 4.76 and 1.92 switchover bumps and the full pid_anti_windup.md cascade table reproduce exactly at W. The three emulation rows (0.021, 0.70, 0.002) do not reproduce from the wiring the companion and brief describe: they come out as 0.017 at Tt=1, 0.65 and 0.003. The PID law for tracking without a hold is identical at 53f35d0 and W (I read it with git show, which leaves the worktree untouched), so the gap is in the unrecorded probe setup or in the recorded numbers. I filed these three as deviations with clear=false.\n\nWhat I left open: whoever rules on these rows should decide between updating the historical table (along with pid_anti_windup.md:552 and D-383's rationale, which also quote 0.002) and marking the rows as the 53f35d0 record. K6d-051 omits the no-hold case that D-385 and commit 17ad42da record elsewhere. K6d-122 overstates Tt = 0 as exact, and pid_anti_windup.md:555-557 repeats the same overstatement."
+}

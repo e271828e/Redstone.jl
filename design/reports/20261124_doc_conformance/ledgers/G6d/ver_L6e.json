@@ -1,0 +1,197 @@
+{
+ "judgments": [
+  {
+   "id": "L6e-001",
+   "conforms": true,
+   "evidence": "src/executor.jl:130 builds each stage's `x` as `reconstruct(XT, xbuf, entry.x_off)`, an immutable value of the declared state type read from the framework-owned flat `xbuf`. src/executor.jl:262 writes projections back with `flatten_state!`."
+  },
+  {
+   "id": "L6e-010",
+   "conforms": true,
+   "evidence": "Declarations are read as plain values (src/build.jl:1020 `_declarations`). The probe evaluation checks each return against them and throws `ConformanceFailure` (src/build.jl:84, src/build.jl:136, src/build.jl:1197)."
+  },
+  {
+   "id": "L6e-019",
+   "conforms": true,
+   "evidence": "`rg '_ss\\b|_ss!|get_.*_ss|assign_.*_ss'` over src and test at W finds nothing. No `get_*_ss` or `assign_*_ss!` function exists."
+  },
+  {
+   "id": "L6e-025",
+   "conforms": false,
+   "evidence": "src/linearize.jl:275 sets `operating_point = checkpoint(model)`. Probe P1 shows `isdefined(Redstone, :capture) == false`, and commit d9d22d6c retired capture.",
+   "class": "drift",
+   "fix": "Already recorded: D-072's Annotation (2026-10-20) says the default operating point is the checkpoint of the simulation as it stands (D-274). log_rules rule 1 bars rewriting the Position, so no edit is needed. In current terms: its default operating point is `checkpoint(sim)`.",
+   "clear": true
+  },
+  {
+   "id": "L6e-026",
+   "conforms": false,
+   "evidence": "Probe P1 shows `capture` is not defined. src/sim.jl:892 `checkpoint(sim)` returns a `Checkpoint` (probe P5), not a `(condition, t)` pair. src/model.jl:1180 builds a `ModelState`. Commit d9d22d6c retired capture.",
+   "class": "drift",
+   "fix": "Extend D-072's 2026-10-20 annotation so it says `capture` is gone, not only that it 'no longer produces a condition'. Suggested text: \"`capture` retires; `checkpoint` is the full-store gather, returning a `Checkpoint` with no condition algebra (D-273, D-274).\"",
+   "clear": true
+  },
+  {
+   "id": "L6e-027",
+   "conforms": false,
+   "evidence": "Probe P5 shows `linearize` returns a `Linearization` whose `A` is a plain `Matrix{Float64}`. src/linearize.jl:115-117 says plain arrays come from `linearize` and component arrays from `labeled`.",
+   "class": "drift",
+   "fix": "Already recorded: D-072's Annotation (2026-11-21) says `linearize` returns plain arrays in the order of the taps, and label-indexed slicing needs `labeled` (D-475). No edit is needed under rule 1.",
+   "clear": true
+  },
+  {
+   "id": "L6e-031",
+   "conforms": false,
+   "evidence": "src/declare.jl:131 has `ws_init(c, ::Type{T})`. src/declare.jl:142-144 says the allocator takes `T` on both tiers and a discrete one always receives `Float64`. src/build.jl:1059 calls `invoke_declaration(ws_init, comp, entry.tier === CONTINUOUS ? T : Float64)`.",
+   "class": "drift",
+   "fix": "Already recorded: D-077's Annotation (2026-09-24) says the allocator takes the scalar on both tiers and the discrete side always receives `Float64` (D-263). The rename to `ws_init` is D-267's and applies forward only (rule 2). No edit is needed.",
+   "clear": true
+  },
+  {
+   "id": "L6e-032",
+   "conforms": true,
+   "evidence": "src/build.jl:1052-1059: `_workspaces` calls the declared allocator once for each component. It runs for every probe (src/build.jl:1008, src/build.jl:1034, src/build.jl:1266) and for every `Model` materialization (src/build.jl:1474), so it runs per activation and per store set."
+  },
+  {
+   "id": "L6e-037",
+   "conforms": false,
+   "evidence": "Probe P1 shows `isdefined(Redstone, :local_types) == false`. `rg local_types src` finds nothing. D-165 (design/log.md:6438) deleted `local_types`, and D-079 carries no annotation for that.",
+   "class": "drift",
+   "fix": "Add an annotation to D-079: \"Annotation: amended by D-165. `local_types` is deleted, and `output_types` (`y_types` since D-267) is the one plain contract declaration on both tiers.\"",
+   "clear": true
+  },
+  {
+   "id": "L6e-040",
+   "conforms": false,
+   "evidence": "src/leaves.jl:281-293: `retype` replaces only `Float64` positions. Probe P2: `retype(ProbeDual, RP{Float64})` gives `RP{Dual}`, but `RP{Float32}` stays `RP{Float32}`. A type parameter at any `Real` other than `Float64`, `Int` included, pins. D-263 (design/log.md, its 'substitutes `Float64` in type-parameter positions' bullet) records the narrower rule.",
+   "class": "drift",
+   "fix": "Add an annotation to D-079: \"Annotation: the walk substitutes `Float64` in type-parameter positions, so a type parameter at another `Real` type, `Int` included, pins (D-263).\"",
+   "clear": false
+  },
+  {
+   "id": "L6e-043",
+   "conforms": true,
+   "evidence": "src/leaves.jl:293 `_retype_parameter(::Type{T}, p) where {T} = p` leaves value parameters as they are. Probe P2: `retype(ProbeDual, VP{Float64,3})` gives `VP{Dual,3}`, so the value parameter 3 pins."
+  },
+  {
+   "id": "L6e-052",
+   "conforms": true,
+   "evidence": "src/store.jl:11-13 `struct CellAddr{P,K}; offsets::NTuple{K,Int}; end`. The port type is the address's type parameter `P`, and the build-time offsets are a field."
+  },
+  {
+   "id": "L6e-054",
+   "conforms": true,
+   "evidence": "src/declare.jl:146-147 says the framework never reads or writes the workspace. `rg -i poison src` finds nothing. The workspace is only passed as the bundle's `ws` (src/build.jl:77, src/build.jl:1532).",
+   "note": "src/conditions.jl:659-665 calls `ws_init` on a fresh allocation and checks `haskey` to label an undeclared condition field as `:workspace`. That reads the structure the allocator set up, not a live workspace's contents, which D-183's contract allows."
+  },
+  {
+   "id": "L6e-062",
+   "conforms": true,
+   "evidence": "src/declare.jl:355 `transparent_container(::Any) = nothing`."
+  },
+  {
+   "id": "L6e-071",
+   "conforms": true,
+   "evidence": "src/store.jl:107-118: `@generated scatter_group!` decides `_accepts(declared, observed, T)` over the cell type and the return type when the method is generated. It emits either the stores or a `ConformanceFailure` throw. The same holds for state writes at src/leaves.jl:409-452."
+  },
+  {
+   "id": "L6e-080",
+   "conforms": true,
+   "evidence": "src/build.jl:1001-1016: `_nominal(structure)` returns `outputs, probe_events(structure, nominal), nominal`, that is the `Outputs`, the `Events` and the nominal `Activation{Float64}`."
+  },
+  {
+   "id": "L6e-088",
+   "conforms": true,
+   "evidence": "src/build.jl:723-733 defines `ProbeDual` for this policy. test/test_library.jl builds Dual activations of the library components, for example test/test_library.jl:1314, test/test_library.jl:2171 and test/test_library.jl:3026 (`activations = (Float64, LinearizeDual[, ProbeDual])`), and test/test_build.jl:1818 does the same.",
+   "note": "Spot-checked across the library testsets, not proved exhaustive for every component. Most tests list `LinearizeDual` rather than the entry's spelling `(Float64, ProbeDual)`. Both are `Dual` activations."
+  },
+  {
+   "id": "L6e-090",
+   "conforms": true,
+   "evidence": "src/structure.jl:135 `Timing = @NamedTuple{anchor::Int, D::Int, Φ::Int}`. The fold at src/structure.jl:305-418 compiles each rate into one anchor-relative triple."
+  },
+  {
+   "id": "L6e-099",
+   "conforms": true,
+   "evidence": "src/structure.jl:310-312 says anchor 0 is symbolic until deployment binds `Δt_base`. src/deployment.jl:276-306 resolves the anchors against `Δt_r` and derives each component's `D, Φ` only at binding."
+  },
+  {
+   "id": "L6e-101",
+   "conforms": false,
+   "evidence": "src/deployment.jl:15-27: `_exact` accepts an `Integer` or `Rational` and refuses anything else as `:not_a_quantity`. src/deployment.jl:517 says 'a `Rational` or an integer'. Probe P1 shows `isdefined(Redstone, :Hz) == false`.",
+   "class": "drift",
+   "fix": "Already recorded: D-283's Annotation (2026-11-20) says the explicit keyword is an integer or a `Rational`, and `Period` and `Hz` retire (D-469). No edit is needed under rule 1.",
+   "clear": true
+  },
+  {
+   "id": "L6e-102",
+   "conforms": false,
+   "evidence": "src/deployment.jl:264-265 takes the explicit `Δt_base` with no count derived. Probe P4: `Deployment` has no `N_base` field, and the `N_base` keyword is a `MethodError`.",
+   "class": "drift",
+   "fix": "Already recorded: D-283's Annotation (2026-11-10) says the explicit keyword derives no count (D-443). No edit is needed.",
+   "clear": true
+  },
+  {
+   "id": "L6e-103",
+   "conforms": false,
+   "evidence": "src/deployment.jl:266-267: with no keyword, `Δt_r = Δt_frame_r`, the default path. Probe P4: `Deployment(b; Δt_frame = 1//10)` gives `Δt_base == 1//10`.",
+   "class": "drift",
+   "fix": "Already recorded: D-283's Annotation (2026-11-10) says the second source is `Δt_frame`, the default when the keyword is absent, in place of the `N_base·h` product (D-443). No edit is needed.",
+   "clear": true
+  },
+  {
+   "id": "L6e-105",
+   "conforms": true,
+   "evidence": "src/deployment.jl:253-258: `:derive` with any unanchored discrete component is refused as `DeploymentInvalid :unanchored` with the paths and the grid. Probe P4 message: '`ctl` is/are unanchored ... Declare the base tick period instead: `Δt_base = …` (§9.1)'.",
+   "note": "Since D-443, leaving the keyword out takes `Δt_frame`, which counts as declaring it. Only derivation is refused."
+  },
+  {
+   "id": "L6e-112",
+   "conforms": true,
+   "evidence": "src/deployment.jl:303-306 resolves each discrete component to one `(D, Φ)` row. The fold at src/structure.jl:398 composes `D·Dₛ` and `Φₛ + Φ·Dₛ`, and src/structure.jl:913-916 applies the same law against the anchor."
+  },
+  {
+   "id": "L6e-121",
+   "conforms": true,
+   "evidence": "src/declare.jl:875 `tier === DISCRETE && push!(bundle_fields, :Δt)` puts `Δt` in the discrete bundle. It comes from the schedule row's `D * Δtb` (src/deployment.jl:306), and nothing caches it on the component."
+  },
+  {
+   "id": "L6e-130",
+   "conforms": true,
+   "evidence": "src/build.jl:522-529 `_root_input_cell`: the cell type is `retype(T, P_F)` when every consumer's entry at `T` accepts it, and `P_F` otherwise. A `Pinned` consumer keeps the root input unseedable, and test/test_linearize.jl:414 tests the `:unseedable` refusal."
+  },
+  {
+   "id": "L6e-139",
+   "conforms": true,
+   "evidence": "src/assembly.jl:709-717 `check_stores`: `isbits(value) || value isa Symbol` is one predicate per field, with no recursion. Probe P3: `isbits(SymBox(:a)) == false`, and a store field holding it is refused as `IllegalStoreField`."
+  },
+  {
+   "id": "L6e-148",
+   "conforms": true,
+   "evidence": "No lookup exists in src. The rule holds by construction: the component instance is the same at every activation (src/build.jl:1057), so table data held in its fields never walks. Only declared types are retyped (src/leaves.jl:281-293), so a query coordinate arriving through `u` or `x` walks.",
+   "note": "This is an authoring rule with no framework code site. The verdict rests on the mechanism, not on a lookup implementation."
+  },
+  {
+   "id": "L6e-157",
+   "conforms": true,
+   "evidence": "There are no fold-op, identity-element or multi-connection types in src. A second producer is refused as `TwoProducers` (src/structure.jl:663, src/structure.jl:712), and an unwired input as `UnconnectedInput` (src/structure.jl:456), so there is no implicit zero-contributor total."
+  },
+  {
+   "id": "L6e-166",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:513 lists `PathResolution` reasons as `:not_a_terminal|:unknown_child|:reaches_past|:empty_path`. `rg past_generic src test` finds nothing."
+  },
+  {
+   "id": "L6e-175",
+   "conforms": true,
+   "evidence": "src/build.jl:391-402 `refuse_path`: the longest known prefix goes in `owner` and its children are the candidates. Probe P7: `port(nsim, \"a/zz/out\")` gives `:unknown_child` with segment `zz` and candidates `[\"g\",\"h\"]`. Probe P6 gives the same for `state`.",
+   "note": "The prefix sits in the `owner` field. The field named `level` stays empty here, as it does in the services walk (src/structure.jl:1140), where 'level' is the concept and not the field."
+  },
+  {
+   "id": "L6e-184",
+   "conforms": true,
+   "evidence": "src/structure.jl:913-916 `_timing_counts`: `D = timing.D * D_anchor` and `Φ = Φ_anchor + timing.Φ * D_anchor`. The fold step at src/structure.jl:398 uses the same law."
+  }
+ ],
+ "notes": "I checked all 31 claims of slice L6e against the pinned worktree at cb398676. 22 agree with the code and 9 do not. All 9 mismatches are drift. Six of them, L6e-025, -027, -031, -101, -102 and -103, sit in log entries that already carry an annotation recording the move. log_rules rule 1 forbids rewriting a Position, so those six need no edit. Their fix field gives the current wording. Three need an edit. L6e-026: D-072's annotation should say that `capture` is gone, not only that it 'no longer produces a condition'. L6e-037: D-079 has no annotation for D-165's deletion of `local_types`. L6e-040: D-079 has no annotation for D-263's narrowing of the walk to `Float64` positions. The probe confirms a `Float32` or `Int` type parameter pins. I made no tracked edits. My only files are the probe script at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6e_v/probe.jl and its output at /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6e_v/out.txt. The script ran three times. Two runs stopped on probe-script errors and the third ran clean. Two points are still open. The Dates `Period` probe was skipped because Dates is not in the test project, so L6e-101 rests on the static reading of src/deployment.jl:15-27 and on `Hz` being undefined. L6e-088's 'every component' was spot-checked across the library testsets, not proved exhaustive."
+}

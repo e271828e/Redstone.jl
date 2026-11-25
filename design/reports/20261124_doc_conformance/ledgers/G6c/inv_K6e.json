@@ -1,0 +1,1201 @@
+{
+ "rows": [
+  {
+   "id": "K6e-003",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 69,
+   "kind": "law",
+   "claim": "Saturated, back-calculation drives q so that u_raw settles at u + Tt·e",
+   "evidence": "probe:backcalc settles at 1.25 = u + Tt·Ki·e, not u + Tt·e = 1.5; q̇ = Ki e + (u - u_raw)/Tt at src/library.jl:2566",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Saturated, it drives `q` so that `u_raw` settles at `u + Tt·Ki·e`, just past the limit.",
+   "note": "Line 549 of the same companion already writes `v + Tt Ki e`; the spec states no settling value."
+  },
+  {
+   "id": "K6e-010",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 124,
+   "kind": "law",
+   "claim": "during a saturation episode the excess the integrator accumulates is Tt·e",
+   "evidence": "probe:backcalc, excess of u_raw over u settles at Tt·Ki·e (0.25 for e=5, Tt=0.1, Ki=0.5)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "the excess the integrator accumulates is `Tt·Ki·e`, and an episode shorter than `Tt` winds up almost freely.",
+   "note": "Same factor Ki as the line 69 row. The spec carries no such claim."
+  },
+  {
+   "id": "K6e-058",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 313,
+   "kind": "law",
+   "claim": "The hold alone beats ungated tracking at its better Tt, and the two together beat both",
+   "evidence": "probe:table hold peak 6.103 settled 32.5; tracking Tt=2 peak 6.135 settled 25.8; hold+tracking Tt=2 peak 5.202 settled 26.9; Tt=0.5 peak 5.088 settled 22.0",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The hold alone beats ungated tracking at its better `Tt` on the peak (6.10 against 6.14) and not on settling (32.5 s against 25.8 s), and the two together, at `Tt = 0.5`, beat both on both.",
+   "note": "At Tt = 2 the combination also settles later (26.9 s) than ungated tracking (25.8 s). The spec is silent."
+  },
+  {
+   "id": "K6e-062",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 322,
+   "kind": "law",
+   "claim": "the ungated tracking variant adds the tracking pole A11 = -1/Tt, with dq̇/dv = 1/Tt, to the plain PID's matrices",
+   "evidence": "probe:lin hold=false trk=true gives A=[-1 -2; 0 -10], B=[-0.5 2.5 1; 0 10 0] at Kp=1,Ki=0.5,Kd=0.2,τd=0.1,Tt=1, against the plain A=[0 0; 0 -10], B=[0.5 -0.5; 0 10]",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "the ungated tracking variant adds the tracking pole, `A₁₁ = -1/Tt`, with `∂q̇/∂v = 1/Tt`, and the correction also reaches `yf` and the inputs: `A₁₂ = -Kd/(τd Tt)`, `∂q̇/∂r = Ki - Kp/Tt`, `∂q̇/∂y = -Ki + (Kp + Kd/τd)/Tt`.",
+   "note": "The stated entries are right; the sentence implies they are the only change. Hold variants (rows with the gate) match the plain matrices exactly (probe:lin)."
+  },
+  {
+   "id": "K6e-065",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 347,
+   "kind": "decl",
+   "claim": "DiscretePID is the PID of section 7 with s = (q, yf) in place of x",
+   "evidence": "src/library.jl:2693 s_init = (q, yf, saturated); probe:disc s_init",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`DiscretePID{Hold, Track}` is the PID of section 7 with `s = (q, yf, saturated)` in place of `x`, the third field added in section 11.",
+   "note": "D-384 records `saturated`; section 11 of the companion carries it."
+  },
+  {
+   "id": "K6e-081",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 404,
+   "kind": "mech",
+   "claim": "port sets, gate and reference rule are eleven methods, the four signal_ports arms among them, which AbstractPID carries",
+   "evidence": "probe:methods signal_ports 1, u_types 1, y_types 1, gated_error 2, correction_reference 3; src/library.jl:2362-2388 and 2349-2362 (gate and reference on AbstractAntiWindupController)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "The port sets, the gate and the reference rule are identical in both PIDs: one `signal_ports` method over the axis ports, `u_types`, `y_types`, the two `gated_error` arms and the three `correction_reference` arms. The gate and the reference sit on `AbstractAntiWindupController{Hold, Track}`, which the trackers share (D-385); `AbstractPID{V, Hold, Track, Fixed}` carries the ports, outputs and `parameters`.",
+   "note": "code_map.md:837-846 records the parent split. The spec does not name the methods."
+  },
+  {
+   "id": "K6e-085",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 417,
+   "kind": "decl",
+   "claim": "s_init is (q = zero(V), yf = zero(V)) with no keywords",
+   "evidence": "src/library.jl:2693 s_init(::DiscretePID{V}) = (q, yf, saturated = zero(saturation_type(V))); probe:disc s_init",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`s_init` is `(q = zero(V), yf = zero(V), saturated = zero(saturation_type(V)))` with no keywords; the continuous PID's `x_init` is `(q, yf)`.",
+   "note": "Section 11 of the companion records the added field (D-384)."
+  },
+  {
+   "id": "K6e-087",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 429,
+   "kind": "decl",
+   "claim": "the library's vector components are Integrator, FirstOrderLag, LimitedIntegrator, Relay, DiscreteLimitedIntegrator and RateLimiter",
+   "evidence": "src/library.jl:1999 LimitedDoubleIntegrator{V}, :2229 Comparator{V, L} are also over Union{Float64, SArray}; code_map.md:786-793",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "add `LimitedDoubleIntegrator` and `Comparator` to the list (or say 'among them').",
+   "note": "Both are in code_map.md as over Float64 and static vectors. The spec is silent."
+  },
+  {
+   "id": "K6e-090",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 435,
+   "kind": "mech",
+   "claim": "the saturation code's port type becomes one helper shared with the two limited integrators, saturation_type(V)",
+   "evidence": "src/library.jl:1843, 2013, 668, 2380: LimitedIntegrator, LimitedDoubleIntegrator, DiscreteLimitedIntegrator and the PIDs all use saturation_type",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "the port type becomes one helper, `saturation_type(V)`, shared with the limited integrators, the double one and the PIDs.",
+   "note": "code_map.md:794-796 lists DiscreteLimitedIntegrator and the PID as sharers."
+  },
+  {
+   "id": "K6e-098",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 449,
+   "kind": "mech",
+   "claim": "each value is Float64.(value .+ shape), by GaussianWhiteNoise's idiom",
+   "evidence": "src/library.jl:2397-2400 fixed_parameters builds types[name](given[name] .+ zero(types[name])) with V = shape type; broadcast_keywords (src/library.jl:481) is the Float64.(…) idiom GaussianWhiteNoise uses",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "each value is `V(value .+ zero(V))`, with `V` the type of the shape (the `Float64.(value .+ shape)` form is `broadcast_keywords`, which `GaussianWhiteNoise` uses).",
+   "note": "The result is the same; the PID reaches it through `shape_type` and `fixed_parameters`. Low severity."
+  },
+  {
+   "id": "K6e-112",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 481,
+   "kind": "mech",
+   "claim": "Hold and Track pick the gate and the reference, and their four arms read as section 4's table",
+   "evidence": "src/library.jl:2366-2371 gated_error has 2 arms, correction_reference 3 arms (probe:gated methods 2 corr 3)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "They pick the gate (two arms) and the reference (three arms), which together read as section 4's table.",
+   "note": "The table has four rows; the methods number five."
+  },
+  {
+   "id": "K6e-128",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 551,
+   "kind": "ex",
+   "claim": "the probe measured a bump of 1.92 with the error left in against 0.002 with it gated off and Tt = 0.1",
+   "evidence": "design/companions/lqr_tracker.md:365-367: 1.92 is at Tt = 1 with tracking always; 0.70 at Ki gated, Tt = 1; 0.002 at Ki gated, Tt = 0.1",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "a bump of `1.92` with the error left in at `Tt = 1` against `0.70` with it gated off at the same `Tt` and `0.002` at `Tt = 0.1`.",
+   "note": "The two numbers sit at different Tt in lqr_tracker.md; the sentence reads as one Tt."
+  },
+  {
+   "id": "K6e-132",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 577,
+   "kind": "mech",
+   "claim": "a model whose mode is one flag broadcasts it to the per-channel engaged input",
+   "evidence": "src/library.jl:2380 types engaged as channel_type(V, Bool), an SVector for a vector PID; the comment at src/library.jl:2368 says gated_error selects over a scalar flag or a vector one",
+   "verdict": "unverifiable",
+   "note": "Unclear whether 'broadcasts' means a wire from a scalar Bool is accepted at an SVector{N, Bool} port (the port type says no) or a model-side junction does it. Not probed."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K6e-001",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 46,
+   "kind": "mech",
+   "claim": "LimitedIntegrator holds a bounded integral with no knowledge of the path",
+   "evidence": "src/library.jl:1830"
+  },
+  {
+   "id": "K6e-002",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 62,
+   "kind": "ex",
+   "claim": "Back-calculation law q̇ = Ki e + (u - u_raw)/Tt",
+   "evidence": "src/library.jl:2566"
+  },
+  {
+   "id": "K6e-004",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 75,
+   "kind": "mech",
+   "claim": "Tracking replaces the own clamp with an external v in the correction",
+   "evidence": "src/library.jl:2366-2371, 2566"
+  },
+  {
+   "id": "K6e-005",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 91,
+   "kind": "law",
+   "claim": "Every input is a feedthrough edge when u is a stage-2 output",
+   "evidence": "test/test_library.jl:2944; probe:cycle cont"
+  },
+  {
+   "id": "K6e-006",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 96,
+   "kind": "law",
+   "claim": "v wired from a clamp of u is AlgebraicCycle :artificial, dead hop v",
+   "evidence": "test/test_library.jl:2951-2955"
+  },
+  {
+   "id": "K6e-007",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 98,
+   "kind": "mech",
+   "claim": "Limits live inside the PID and the correction reads the own fresh u",
+   "evidence": "src/library.jl:2362, 2566"
+  },
+  {
+   "id": "K6e-008",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 111,
+   "kind": "mech",
+   "claim": "LimitedIntegrator publishes the Int8 code -1, 0, +1",
+   "evidence": "src/library.jl:1843, 1876; probe:li"
+  },
+  {
+   "id": "K6e-009",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 112,
+   "kind": "mech",
+   "claim": "The gate switches on a boundary and the PID has no events",
+   "evidence": "src/library.jl:2558-2570 (no state_events for PID)"
+  },
+  {
+   "id": "K6e-011",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 132,
+   "kind": "decl",
+   "claim": "Keywords hold and tracking select the two axes",
+   "evidence": "src/library.jl:2545"
+  },
+  {
+   "id": "K6e-012",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 134,
+   "kind": "mech",
+   "claim": "A vector PID takes static vectors of its width at the new ports",
+   "evidence": "probe:vec ports"
+  },
+  {
+   "id": "K6e-013",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 136,
+   "kind": "decl",
+   "claim": "hold adds saturation::Int8 and engaged::Bool",
+   "evidence": "src/library.jl:2380; probe:vec ports"
+  },
+  {
+   "id": "K6e-014",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 139,
+   "kind": "law",
+   "claim": "gate(e) = saturation == sign(e) ? 0 : e",
+   "evidence": "src/library.jl:2368-2369"
+  },
+  {
+   "id": "K6e-015",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 140,
+   "kind": "law",
+   "claim": "Not engaged, the error is gated to zero whatever the code",
+   "evidence": "src/library.jl:2368-2369"
+  },
+  {
+   "id": "K6e-016",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 142,
+   "kind": "decl",
+   "claim": "tracking adds the input v at the output's shape",
+   "evidence": "src/library.jl:2380; probe:vec ports"
+  },
+  {
+   "id": "K6e-017",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 145,
+   "law": "x",
+   "kind": "law",
+   "claim": "Derivative q̇ = Ki ε + (ref - u_raw)/Tt",
+   "evidence": "src/library.jl:2566"
+  },
+  {
+   "id": "K6e-018",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 150,
+   "kind": "law",
+   "claim": "Table row no hold inputs: ε = e, ref = u or v",
+   "evidence": "src/library.jl:2366-2371"
+  },
+  {
+   "id": "K6e-019",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 151,
+   "kind": "law",
+   "claim": "Table row free: ε = e, ref = u in both columns",
+   "evidence": "src/library.jl:2371-2373"
+  },
+  {
+   "id": "K6e-020",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 152,
+   "kind": "law",
+   "claim": "Table row limited: ε = gate(e), ref = u or v",
+   "evidence": "src/library.jl:2368-2373"
+  },
+  {
+   "id": "K6e-021",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 153,
+   "kind": "law",
+   "claim": "Table row not engaged: ε = 0, ref = u or v",
+   "evidence": "src/library.jl:2368-2373; test/test_library.jl:3162-3170"
+  },
+  {
+   "id": "K6e-022",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 155,
+   "kind": "law",
+   "claim": "Free is zero code engaged; not engaged takes precedence over the code",
+   "evidence": "src/library.jl:2368-2373"
+  },
+  {
+   "id": "K6e-023",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 159,
+   "kind": "law",
+   "claim": "Without the hold, the tracking variant tracks v always",
+   "evidence": "src/library.jl:2371"
+  },
+  {
+   "id": "K6e-024",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 161,
+   "kind": "law",
+   "claim": "Not engaged without v freezes q, back-calculating against own clamp",
+   "evidence": "src/library.jl:2370, 2371; test/test_library.jl:3162"
+  },
+  {
+   "id": "K6e-025",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 163,
+   "kind": "law",
+   "claim": "With v not engaged, u_raw converges to v at rate 1/Tt",
+   "evidence": "probe:standby gated 0.5 (v = 0.5)"
+  },
+  {
+   "id": "K6e-026",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 171,
+   "kind": "law",
+   "claim": "Own u with no limits makes the correction zero; default Tt = Inf",
+   "evidence": "src/library.jl:2545, 2566; clamp identity"
+  },
+  {
+   "id": "K6e-027",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 173,
+   "kind": "law",
+   "claim": "Own limits with Tt = Inf are allowed and wind up",
+   "evidence": "src/library.jl:2416-2420; probe:table own Inf peak 8.184"
+  },
+  {
+   "id": "K6e-028",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 175,
+   "kind": "law",
+   "claim": "tracking = true with fixed infinite Tt is refused at construction",
+   "evidence": "src/library.jl:2409-2413; probe:refuse1 ArgumentError"
+  },
+  {
+   "id": "K6e-029",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 177,
+   "kind": "mech",
+   "claim": "A scheduled Tt is not checked for finiteness",
+   "evidence": "src/library.jl:2409-2413"
+  },
+  {
+   "id": "K6e-030",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 183,
+   "kind": "mech",
+   "claim": "The code is an input from downstream, blind to the own clamp",
+   "evidence": "src/library.jl:2560-2563"
+  },
+  {
+   "id": "K6e-031",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 192,
+   "kind": "mech",
+   "claim": "q is the integral term in output units; u_raw = Kp(b r - y) + q + ...",
+   "evidence": "src/library.jl:2560-2561"
+  },
+  {
+   "id": "K6e-032",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 196,
+   "kind": "mech",
+   "claim": "Derivative on w = y - c r through a lag, ẏf = (w - yf)/τd",
+   "evidence": "src/library.jl:2561, 2567"
+  },
+  {
+   "id": "K6e-033",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 198,
+   "kind": "decl",
+   "claim": "b and c multiply r alone, defaults b = 1 and c = 0",
+   "evidence": "src/library.jl:2545, 2559-2561"
+  },
+  {
+   "id": "K6e-034",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 200,
+   "kind": "law",
+   "claim": "The integral's error stays the unweighted e = r - y",
+   "evidence": "src/library.jl:2566"
+  },
+  {
+   "id": "K6e-035",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 201,
+   "kind": "law",
+   "claim": "At c = 1 a setpoint step gives a spike of height Kd Δr/τd",
+   "evidence": "probe:spike u_raw=60 = 2·3/0.1; c=0 gives 0"
+  },
+  {
+   "id": "K6e-036",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 205,
+   "kind": "law",
+   "claim": "c = 1 restores the derivative on the error",
+   "evidence": "probe:spike; src/library.jl:2560-2561"
+  },
+  {
+   "id": "K6e-037",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 254,
+   "kind": "mech",
+   "claim": "LimitedIntegrator has four events",
+   "evidence": "probe:li events (hit_upper, hit_lower, leave_upper, leave_lower)"
+  },
+  {
+   "id": "K6e-038",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 258,
+   "kind": "decl",
+   "claim": "No uff input exists; named as the alternative wiring not carried",
+   "evidence": "src/library.jl:2380, 2295 (no uff port or parameter); leads file: placeholder"
+  },
+  {
+   "id": "K6e-039",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 260,
+   "kind": "mech",
+   "claim": "No hold::Bool port; saturation is the hold rule with sign built in",
+   "evidence": "src/library.jl:2368-2369, 2380"
+  },
+  {
+   "id": "K6e-040",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 277,
+   "kind": "decl",
+   "claim": "Defaults Ki = Kd = 0, τd = 0.1, Tt = Inf, infinite limits",
+   "evidence": "src/library.jl:2545"
+  },
+  {
+   "id": "K6e-041",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 279,
+   "kind": "decl",
+   "claim": "Inputs r, y, plus saturation and engaged with hold and v with tracking",
+   "evidence": "src/library.jl:2380; probe:u_types"
+  },
+  {
+   "id": "K6e-042",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 281,
+   "kind": "decl",
+   "claim": "Outputs u (clamped) and u_raw; states q and yf",
+   "evidence": "src/library.jl:2385, 2557"
+  },
+  {
+   "id": "K6e-043",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 282,
+   "kind": "mech",
+   "claim": "One x_deriv with two helpers, the gate and the reference",
+   "evidence": "src/library.jl:2564-2567"
+  },
+  {
+   "id": "K6e-044",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 284,
+   "kind": "mech",
+   "claim": "The first-cell Group assembly stays in the tests as pid_assembly",
+   "evidence": "test/test_library.jl:602"
+  },
+  {
+   "id": "K6e-045",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 291,
+   "kind": "ex",
+   "claim": "Loop fixtures: servo at ±1, cascade LimitedIntegrator at ±1.2",
+   "evidence": "test/test_library.jl:620-690"
+  },
+  {
+   "id": "K6e-046",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 294,
+   "kind": "mech",
+   "claim": "Settling is the first instant after which output stays within 0.05 of 5",
+   "evidence": "test/test_library.jl:740"
+  },
+  {
+   "id": "K6e-047",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 299,
+   "kind": "ex",
+   "claim": "Own limits, single, Tt Inf: peak 8.18, settled 18.7",
+   "evidence": "probe:table own Inf 8.184 18.7"
+  },
+  {
+   "id": "K6e-048",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 300,
+   "kind": "ex",
+   "claim": "Own limits, single, Tt 1: peak 5.33, settled 11.3",
+   "evidence": "probe:table own 1 5.327 11.3"
+  },
+  {
+   "id": "K6e-049",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 301,
+   "kind": "ex",
+   "claim": "Tracking servo, Tt Inf: peak 8.71, settled 29.4",
+   "evidence": "probe:table servo Inf 8.707 29.4 (untracked PID, Tt=Inf tracking is refused)"
+  },
+  {
+   "id": "K6e-050",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 302,
+   "kind": "ex",
+   "claim": "Tracking servo, Tt 1: peak 5.96, settled 22.7",
+   "evidence": "probe:table servo 1 5.958 22.7"
+  },
+  {
+   "id": "K6e-051",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 303,
+   "kind": "ex",
+   "claim": "Cascade none: peak 8.33, settled 38.5",
+   "evidence": "probe:table cascade none 8.33 38.5"
+  },
+  {
+   "id": "K6e-052",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 304,
+   "kind": "ex",
+   "claim": "Cascade hold: peak 6.10, settled 32.5",
+   "evidence": "probe:table cascade hold 6.103 32.5"
+  },
+  {
+   "id": "K6e-053",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 305,
+   "kind": "ex",
+   "claim": "Cascade tracking Tt 2: peak 6.14, settled 25.8",
+   "evidence": "probe:table 6.135 25.8"
+  },
+  {
+   "id": "K6e-054",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 306,
+   "kind": "ex",
+   "claim": "Cascade tracking Tt 0.5: peak 7.27, settled 55.2",
+   "evidence": "probe:table 7.273 55.2"
+  },
+  {
+   "id": "K6e-055",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 307,
+   "kind": "ex",
+   "claim": "Cascade hold+tracking Tt 2: peak 5.20, settled 26.9",
+   "evidence": "probe:table 5.202 26.9"
+  },
+  {
+   "id": "K6e-056",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 308,
+   "kind": "ex",
+   "claim": "Cascade hold+tracking Tt 0.5: peak 5.09, settled 22.0",
+   "evidence": "probe:table 5.088 22.0"
+  },
+  {
+   "id": "K6e-057",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 312,
+   "kind": "law",
+   "claim": "Shortening Tt degrades ungated tracking and improves gated",
+   "evidence": "probe:table 6.14->7.27, 25.8->55.2; 5.20->5.09, 26.9->22.0"
+  },
+  {
+   "id": "K6e-059",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 316,
+   "kind": "law",
+   "claim": "Clamp-wired tracking refused: AlgebraicCycle :artificial, dead hop (controller, :v, :u)",
+   "evidence": "test/test_library.jl:2951-2955"
+  },
+  {
+   "id": "K6e-060",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 318,
+   "kind": "law",
+   "claim": "All four variants build under (Float64, LinearizeDual)",
+   "evidence": "probe:builddual all true"
+  },
+  {
+   "id": "K6e-061",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 319,
+   "kind": "law",
+   "claim": "Hold variants linearize as the plain PID with the stated A, B, C, D",
+   "evidence": "probe:lin hold=true: A=[0 0;0 -10], B=[0.5 -0.5;0 10], C=[1 2], D=[1 -3]"
+  },
+  {
+   "id": "K6e-063",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 328,
+   "kind": "law",
+   "claim": "A stage-2 leaf cannot take a memoryless function of its output as input",
+   "evidence": "test/test_library.jl:2951; probe:cycle"
+  },
+  {
+   "id": "K6e-064",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 333,
+   "kind": "law",
+   "claim": "An assembly of stateless folds and one integrator never meets the cycle",
+   "evidence": "test/test_library.jl:3070"
+  },
+  {
+   "id": "K6e-066",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 348,
+   "kind": "law",
+   "claim": "Same ports, two axes and law on the discrete tier",
+   "evidence": "src/library.jl:2696-2709; test/test_library.jl:3185-3194"
+  },
+  {
+   "id": "K6e-067",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 355,
+   "kind": "mech",
+   "claim": "y_direct over s, s_update reading y, the own u and u_raw",
+   "evidence": "src/library.jl:2696, 2702"
+  },
+  {
+   "id": "K6e-068",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 357,
+   "kind": "law",
+   "claim": "Both outputs come from stage 2, so the discrete PID is feedthrough",
+   "evidence": "src/library.jl:2696; probe:has_stage y_direct true"
+  },
+  {
+   "id": "K6e-069",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 361,
+   "kind": "law",
+   "claim": "Discrete clamp-wired cycle is :real with no dead hop",
+   "evidence": "test/test_library.jl:3236-3243"
+  },
+  {
+   "id": "K6e-070",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 366,
+   "kind": "ex",
+   "claim": "y_direct/s_update sketch, signatures and helper names",
+   "evidence": "src/library.jl:2696-2709; sketch superseded by section 10 (line 424) in field access"
+  },
+  {
+   "id": "K6e-071",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 380,
+   "kind": "law",
+   "claim": "Forward Euler on the filter is unstable for Δt > 2τd",
+   "evidence": "1 - Δt/τd < -1 iff Δt > 2τd; src/library.jl:2708 uses backward Euler"
+  },
+  {
+   "id": "K6e-072",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 382,
+   "kind": "law",
+   "claim": "Backward Euler on the filter admits τd = 0",
+   "evidence": "src/library.jl:2697, 2682; probe:discτd0 ok"
+  },
+  {
+   "id": "K6e-073",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 384,
+   "kind": "law",
+   "claim": "At τd = 0 the D term is the backward difference",
+   "evidence": "test/test_library.jl:3201-3203 (u_raw -2.5)"
+  },
+  {
+   "id": "K6e-074",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 384,
+   "kind": "why",
+   "claim": "y_ and y_k are math notation for the filtered and current measurement",
+   "evidence": "lead: placeholder notation, no code name"
+  },
+  {
+   "id": "K6e-075",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 386,
+   "kind": "mech",
+   "claim": "The integral keeps forward Euler",
+   "evidence": "src/library.jl:2705"
+  },
+  {
+   "id": "K6e-076",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 387,
+   "kind": "decl",
+   "claim": "Default τd stays 0.1 on both PIDs",
+   "evidence": "src/library.jl:2545, 2681"
+  },
+  {
+   "id": "K6e-077",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 393,
+   "kind": "mech",
+   "claim": "β = 1 - e^{-Δt/Tt} spelled -expm1",
+   "evidence": "src/library.jl:2704"
+  },
+  {
+   "id": "K6e-078",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 395,
+   "kind": "law",
+   "claim": "Tt = Inf gives β exactly zero",
+   "evidence": "probe:beta 0.0; test/test_library.jl:3194"
+  },
+  {
+   "id": "K6e-079",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 397,
+   "kind": "law",
+   "claim": "Tt = 0 is legal on the discrete tier and gives β = 1",
+   "evidence": "src/library.jl:2684; probe:discTt0 ok, beta 1.0; continuous Tt=0 refused"
+  },
+  {
+   "id": "K6e-080",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 399,
+   "kind": "mech",
+   "claim": "The β factor applies to the correction alone, the integral drive uses plain Δt",
+   "evidence": "src/library.jl:2705"
+  },
+  {
+   "id": "K6e-082",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 411,
+   "kind": "mech",
+   "claim": "The field fixed repeats in the discrete struct",
+   "evidence": "src/library.jl:2677-2680"
+  },
+  {
+   "id": "K6e-083",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 414,
+   "kind": "mech",
+   "claim": "The hold wires from a continuous or a discrete limited integrator",
+   "evidence": "test/test_library.jl:3229-3232, 3711"
+  },
+  {
+   "id": "K6e-084",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 416,
+   "kind": "mech",
+   "claim": "DiscreteLimitedIntegrator publishes saturation from stage 1",
+   "evidence": "src/library.jl:668-670"
+  },
+  {
+   "id": "K6e-086",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 418,
+   "kind": "mech",
+   "claim": "yf starts at zero, not the first measurement, on both tiers",
+   "evidence": "src/library.jl:2557, 2693"
+  },
+  {
+   "id": "K6e-088",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 432,
+   "kind": "mech",
+   "claim": "Only state_events and the saturation port type fork on scalar vs vector",
+   "evidence": "src/library.jl:1880-1889, 2148-2151, 1733"
+  },
+  {
+   "id": "K6e-089",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 434,
+   "kind": "mech",
+   "claim": "The PID has no events",
+   "evidence": "src/library.jl:2541-2570 (no state_events method)"
+  },
+  {
+   "id": "K6e-091",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 436,
+   "kind": "decl",
+   "claim": "saturation_type is Int8 over a Real, similar_type(V, Int8) over a static array",
+   "evidence": "src/library.jl:1731-1733; probe:satt"
+  },
+  {
+   "id": "K6e-092",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 438,
+   "kind": "mech",
+   "claim": "Gate and reference are broadcast ifelses",
+   "evidence": "src/library.jl:2369-2373"
+  },
+  {
+   "id": "K6e-093",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 440,
+   "kind": "law",
+   "claim": "A free channel at zero error never consults sign of a Dual",
+   "evidence": "src/library.jl:2369 (.!= 0 .&&); probe:gate"
+  },
+  {
+   "id": "K6e-094",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 441,
+   "kind": "mech",
+   "claim": "Products with and divisions by a parameter are dotted",
+   "evidence": "src/library.jl:2560-2567"
+  },
+  {
+   "id": "K6e-095",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 443,
+   "kind": "decl",
+   "claim": "Components are PID and DiscretePID{V,Hold,Track,Fixed} over AbstractPID, V first",
+   "evidence": "src/library.jl:2541, 2677, 2374"
+  },
+  {
+   "id": "K6e-096",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 446,
+   "kind": "decl",
+   "claim": "PID_PARAMETERS = (:Kp,:Ki,:Kd,:τd,:Tt,:u_min,:u_max,:b,:c)",
+   "evidence": "src/library.jl:2295"
+  },
+  {
+   "id": "K6e-097",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 447,
+   "kind": "mech",
+   "claim": "The stores start at zero(V)",
+   "evidence": "src/library.jl:2557, 2693"
+  },
+  {
+   "id": "K6e-099",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 449,
+   "kind": "mech",
+   "claim": "The shape is the sum of the keywords' zeros",
+   "evidence": "src/library.jl:478"
+  },
+  {
+   "id": "K6e-100",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 450,
+   "kind": "law",
+   "claim": "promote(1.0, SVector(1.0, 2.0)) throws",
+   "evidence": "probe:promote ErrorException"
+  },
+  {
+   "id": "K6e-101",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 451,
+   "kind": "law",
+   "claim": "A scalar pairs with a vector, integer keywords qualify",
+   "evidence": "probe:V SVector{2,Float64}, Ki=[1.0,1.0]"
+  },
+  {
+   "id": "K6e-102",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 452,
+   "kind": "law",
+   "claim": "A vector PID needs at least one keyword spelled as a vector",
+   "evidence": "src/library.jl:2397-2400 (V from shape_zero of the given)"
+  },
+  {
+   "id": "K6e-103",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 455,
+   "kind": "decl",
+   "claim": "Any of the nine may be a port, spelled Kp = AsPort()",
+   "evidence": "src/library.jl:2286, 2395"
+  },
+  {
+   "id": "K6e-104",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 457,
+   "kind": "law",
+   "claim": "AsPort takes no part in the shape; all scheduled gives V = Float64",
+   "evidence": "probe:allport V=Float64"
+  },
+  {
+   "id": "K6e-105",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 458,
+   "kind": "decl",
+   "claim": "The struct stores the fixed parameters alone",
+   "evidence": "src/library.jl:2541-2543; probe:allport fixed=NamedTuple()"
+  },
+  {
+   "id": "K6e-106",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 459,
+   "kind": "decl",
+   "claim": "parameters(c, u) = NamedTuple{PID_PARAMETERS}(merge(c.fixed, u))",
+   "evidence": "src/library.jl:2388"
+  },
+  {
+   "id": "K6e-107",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 467,
+   "kind": "mech",
+   "claim": "merge resolves at compile time",
+   "evidence": "probe:inferred ok"
+  },
+  {
+   "id": "K6e-108",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 469,
+   "kind": "law",
+   "claim": "With Ki and u_min scheduled the merged keys read (Kp,Kd,τd,Tt,u_max,b,c,r,y,Ki,u_min)",
+   "evidence": "probe:order; probe:params returns roster order"
+  },
+  {
+   "id": "K6e-109",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 473,
+   "kind": "law",
+   "claim": "No port name collides with a parameter name",
+   "evidence": "src/library.jl:2386-2387; probe:vec ports"
+  },
+  {
+   "id": "K6e-110",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 474,
+   "kind": "mech",
+   "claim": "u_types merges signal_ports with one V port per scheduled name",
+   "evidence": "src/library.jl:2381-2384; probe:u_types"
+  },
+  {
+   "id": "K6e-111",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 477,
+   "kind": "mech",
+   "claim": "Nothing dispatches on the scheduled set; 2^9 = 512 sets share methods",
+   "evidence": "src/library.jl:2374-2388"
+  },
+  {
+   "id": "K6e-113",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 483,
+   "kind": "law",
+   "claim": "A schedule from the own output closes an AlgebraicCycle",
+   "evidence": "probe:cycle cont Kp real"
+  },
+  {
+   "id": "K6e-114",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 485,
+   "kind": "law",
+   "claim": "Real when the parameter enters the direct law, all but Ki and Tt",
+   "evidence": "probe:cycle cont Kp, Kd, u_max real; src/library.jl:2558-2562"
+  },
+  {
+   "id": "K6e-115",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 487,
+   "kind": "law",
+   "claim": "Scheduled Ki or Tt: artificial on the continuous tier, real on the discrete",
+   "evidence": "probe:cycle cont Ki,Tt artificial; probe:cycle disc Ki,Tt real"
+  },
+  {
+   "id": "K6e-116",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 490,
+   "kind": "law",
+   "claim": "A schedule read from a state closes no cycle",
+   "evidence": "test/test_library.jl:2975-2977 (scheduled_pid_loop builds, runs)"
+  },
+  {
+   "id": "K6e-117",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 491,
+   "kind": "law",
+   "claim": "Under a Dual a scheduled gain carries partials",
+   "evidence": "test/test_library.jl:2958-2962"
+  },
+  {
+   "id": "K6e-118",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 492,
+   "kind": "mech",
+   "claim": "Freeze routes a gain at its nominal value",
+   "evidence": "test/test_library.jl:2963-2964"
+  },
+  {
+   "id": "K6e-119",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 495,
+   "kind": "decl",
+   "claim": "b weights r in P, c in D, defaults 1 and 0",
+   "evidence": "src/library.jl:2545, 2559-2561"
+  },
+  {
+   "id": "K6e-120",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 497,
+   "kind": "mech",
+   "claim": "yf keeps its name and filters w = y - c r",
+   "evidence": "src/library.jl:2567"
+  },
+  {
+   "id": "K6e-121",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 500,
+   "kind": "law",
+   "claim": "Over a vector each channel weights its own reference",
+   "evidence": "src/library.jl:2559-2561 (dotted)"
+  },
+  {
+   "id": "K6e-122",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 502,
+   "kind": "law",
+   "claim": "Continuous equations for w, u_raw, q̇, ẏf",
+   "evidence": "src/library.jl:2559-2567"
+  },
+  {
+   "id": "K6e-123",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 511,
+   "kind": "law",
+   "claim": "Discrete equations for deriv, u_raw, q+, yf+",
+   "evidence": "src/library.jl:2696-2708"
+  },
+  {
+   "id": "K6e-124",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 518,
+   "kind": "law",
+   "claim": "u = clamp(u_raw, u_min, u_max) on both tiers",
+   "evidence": "src/library.jl:2562, 2699"
+  },
+  {
+   "id": "K6e-125",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 527,
+   "kind": "mech",
+   "claim": "engaged and the saturated output apply to PID and DiscretePID",
+   "evidence": "src/library.jl:2380, 2693-2695"
+  },
+  {
+   "id": "K6e-126",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 543,
+   "kind": "decl",
+   "claim": "engaged::Bool: not engaged gates error to zero, reference v where tracking, else own u",
+   "evidence": "src/library.jl:2368-2373"
+  },
+  {
+   "id": "K6e-127",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 547,
+   "kind": "law",
+   "claim": "Error gated off gives u_raw -> v at rate 1/Tt",
+   "evidence": "probe:standby gated 0.5"
+  },
+  {
+   "id": "K6e-129",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 549,
+   "kind": "law",
+   "claim": "With the error left in, u_raw settles at v + Tt Ki e",
+   "evidence": "probe:standby ungated 0.55"
+  },
+  {
+   "id": "K6e-130",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 555,
+   "kind": "law",
+   "claim": "Discrete Tt = 0 follows exactly (β = 1)",
+   "evidence": "probe:beta 1.0; src/library.jl:2704"
+  },
+  {
+   "id": "K6e-131",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 557,
+   "kind": "law",
+   "claim": "Tt = Inf follows nothing and tracking with fixed infinite Tt is refused",
+   "evidence": "probe:beta 0.0; probe:refuse1, probe:discTrkInf ArgumentError"
+  },
+  {
+   "id": "K6e-133",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 575,
+   "kind": "mech",
+   "claim": "engaged is at the output's shape, one flag per channel",
+   "evidence": "src/library.jl:2380; probe:vec ports"
+  },
+  {
+   "id": "K6e-134",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 580,
+   "kind": "mech",
+   "claim": "The fold changes the law only through the gate and the reference",
+   "evidence": "src/library.jl:2368-2373"
+  },
+  {
+   "id": "K6e-135",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 582,
+   "kind": "mech",
+   "claim": "engaged is an ordinary input and a feedthrough edge",
+   "evidence": "src/library.jl:2380; stage-2 u"
+  },
+  {
+   "id": "K6e-136",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 588,
+   "kind": "why",
+   "claim": "AUTO, CAS, MAN are Foundation Fieldbus modes, prior art",
+   "evidence": "lead: prior art, cites lqr_tracker.md:316"
+  },
+  {
+   "id": "K6e-137",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 591,
+   "kind": "decl",
+   "claim": "DiscretePID publishes saturated, Int8, from stage 1 off a store field",
+   "evidence": "src/library.jl:2693-2695"
+  },
+  {
+   "id": "K6e-138",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 593,
+   "kind": "mech",
+   "claim": "s_update writes the code from u_raw against u_min and u_max with saturation_code",
+   "evidence": "src/library.jl:2707"
+  },
+  {
+   "id": "K6e-139",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 599,
+   "kind": "law",
+   "claim": "The store flips only on a tick boundary; the code is one tick stale",
+   "evidence": "src/library.jl:2695, 2707"
+  },
+  {
+   "id": "K6e-140",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 603,
+   "kind": "law",
+   "claim": "The PID never reads its own code",
+   "evidence": "src/library.jl:2696-2709"
+  },
+  {
+   "id": "K6e-141",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 603,
+   "kind": "law",
+   "claim": "PID publishes no saturation code",
+   "evidence": "src/library.jl:2572, 2385; probe:cont y_types"
+  },
+  {
+   "id": "K6e-142",
+   "file": "design/companions/pid_anti_windup.md",
+   "line": 3,
+   "kind": "why",
+   "claim": "AUTO, CAS and MAN also as mode names at line 588 are placeholders (duplicate lead id)",
+   "evidence": "lead: prior art only"
+  }
+ ],
+ "counts": {
+  "law": 62,
+  "mech": 50,
+  "decl": 22,
+  "ex": 14,
+  "ptr": 28,
+  "why": 30
+ }
+}

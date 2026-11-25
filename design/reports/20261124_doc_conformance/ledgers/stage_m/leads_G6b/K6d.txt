@@ -1,0 +1,16 @@
+names missing: `AC_PID` at design/companions/lqr_tracker.md:323
+names missing: `BKCAL_IN` at design/companions/lqr_tracker.md:318
+names missing: `BKCAL_OUT` at design/companions/lqr_tracker.md:317
+names missing: `C_i` at design/companions/lqr_tracker.md:131
+names missing: `D_i` at design/companions/lqr_tracker.md:131
+names missing: `LQR` at design/companions/lqr_tracker.md:12
+names missing: `LQR` at design/companions/lqr_tracker.md:246
+names missing: `_i` at design/companions/lqr_tracker.md:132
+names missing: `int8` at design/companions/lqr_tracker.md:320
+names missing: `z_i` at design/companions/lqr_tracker.md:124
+names missing: `z_i` at design/companions/lqr_tracker.md:131
+names missing: `z_i` at design/companions/lqr_tracker.md:132
+names missing: `z_i` at design/companions/lqr_tracker.md:152
+names missing: `z_i` at design/companions/lqr_tracker.md:184
+names missing: `ż_ref` at design/companions/lqr_tracker.md:117
+names missing: `Δz_i` at design/companions/lqr_tracker.md:143

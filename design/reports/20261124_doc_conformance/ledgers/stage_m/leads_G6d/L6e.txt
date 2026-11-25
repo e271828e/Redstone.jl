@@ -1,0 +1,53 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-211: 8443-8498
+D-238: 9776-9815
+D-259: 10890-10946
+D-264: 11434-11498
+D-283: 12863-12936
+D-291: 13345-13383
+D-295: 13464-13501
+D-321: 14947-14977
+D-322: 14978-15001
+D-323: 15002-15035
+D-324: 15036-15068
+D-414: 16972-17051
+D-478: 21111-21192
+D-010: 637-652
+D-011: 653-666
+D-013: 698-715
+D-032: 1208-1240
+D-072: 2466-2509
+D-077: 2644-2689
+D-079: 2720-2758
+D-111: 3830-3854
+D-162: 6283-6320
+D-183: 7282-7308
+D-190: 7617-7636
+D-235: 9595-9651
+D-280: 12786-12807
+D-304: 13802-13840
+D-306: 13865-13889
+D-307: 13890-13915
+D-440: 18390-18434
+
+# Stage M leads
+names missing: `Dataflow` at log.md:10898 (D-259)
+names missing: `Dataflow` at log.md:10900 (D-259)
+names missing: `LinearizedSS` at log.md:2484 (D-072)
+names missing: `MyType` at log.md:8449 (D-211)
+names missing: `N_base` at log.md:12880 (D-283)
+names missing: `N_base` at log.md:12881 (D-283)
+names missing: `SomeType` at log.md:13896 (D-307)
+names missing: `_ss` at log.md:2475 (D-072)
+names missing: `_ss!` at log.md:2475 (D-072)
+names missing: `assign_` at log.md:2475 (D-072)
+names missing: `capture` at log.md:2480 (D-072)
+names missing: `delete_vars` at log.md:2482 (D-072)
+names missing: `derivative_type` at log.md:7621 (D-190)
+names missing: `get_` at log.md:2475 (D-072)
+names missing: `local_types` at log.md:2725 (D-079)
+names missing: `output_types` at log.md:2725 (D-079)
+names missing: `past_generic` at log.md:16982 (D-414)
+names missing: `state_derivative` at log.md:9604 (D-235)
+names missing: `state_projection` at log.md:9605 (D-235)
+names missing: `subsystem` at log.md:2482 (D-072)

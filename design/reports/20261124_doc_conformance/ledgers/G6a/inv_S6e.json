@@ -1,0 +1,725 @@
+{
+ "rows": [
+  {
+   "id": "S6e-005",
+   "file": "design/spec.md",
+   "line": 1773,
+   "kind": "decl",
+   "claim": "A junction has one output, `out`.",
+   "evidence": "src/library.jl:111 y_types(::Junction)=Out is bare, so the face is the default `y` (D-437); library.jl:23 docstring 'The one output, `y`'; probe: wire to s/out gives UnknownPort with candidates [:in1,:in2,:y]",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "and one output, `y`. (D-437 addresses a bare contract's port by its default face `y`.)"
+  },
+  {
+   "id": "S6e-011",
+   "file": "design/spec.md",
+   "line": 1793,
+   "kind": "decl",
+   "claim": "The wire `\"wr_sum/out\" => \"dynamics/wr_ext\"` takes the junction's output.",
+   "evidence": "probe: build with a wire from `s/out` is refused UnknownPort (candidates in1, in2, y); `s/y` builds",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "\"wr_sum/y\"  => \"dynamics/wr_ext\","
+  },
+  {
+   "id": "S6e-014",
+   "file": "design/spec.md",
+   "line": 1802,
+   "kind": "law",
+   "claim": "A stale arity surfaces as an unconnected input or a double-wired slot.",
+   "evidence": "probe: N too large gives UnconnectedInput (in4); N too small (SumJunction{Float64,2} with `c/y => s/in3`) gives UnknownPort on `in3` with candidates [:in1,:in2,:y], neither of the two named",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "A stale arity surfaces as an unconnected input when it is too large and as an unknown-port error naming the wired slot when it is too small."
+  },
+  {
+   "id": "S6e-016",
+   "file": "design/spec.md",
+   "line": 1805,
+   "kind": "decl",
+   "claim": "`\"wr_sum/out\"` is an ordinary port.",
+   "evidence": "probe: the port is `y`; `wr_sum/out` is refused UnknownPort (src/library.jl:111)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`\"wr_sum/y\"` is an ordinary port."
+  },
+  {
+   "id": "S6e-022",
+   "file": "design/spec.md",
+   "line": 1822,
+   "kind": "decl",
+   "claim": "The assembly exports its junction's `out` port.",
+   "evidence": "src/library.jl:111, probe: the junction's output face is `y`; the probe assembly exports it as `output_wires = (\"sum/y\" => \"wrench\",)`",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "and the assembly exports its `y` port ([§8.6][s8-6])."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S6e-001",
+   "file": "design/spec.md",
+   "line": 1768,
+   "kind": "law",
+   "claim": "No multi-connection ports or framework aggregation mechanism exist.",
+   "evidence": "src/diagnostics.jl:420 TwoProducers; probe double-wire"
+  },
+  {
+   "id": "S6e-002",
+   "file": "design/spec.md",
+   "line": 1771,
+   "kind": "law",
+   "claim": "Every input port takes exactly one connection.",
+   "evidence": "src/diagnostics.jl:429; probe: TwoProducers on s/in2"
+  },
+  {
+   "id": "S6e-003",
+   "file": "design/spec.md",
+   "line": 1771,
+   "kind": "mech",
+   "claim": "A junction is an ordinary stateless component.",
+   "evidence": "src/library.jl:107 x_init(::Junction)=nothing"
+  },
+  {
+   "id": "S6e-004",
+   "file": "design/spec.md",
+   "line": 1772,
+   "kind": "decl",
+   "claim": "N inputs of one type, `in1` to `inN`.",
+   "evidence": "src/library.jl:108-109 u_types; probe:A"
+  },
+  {
+   "id": "S6e-006",
+   "file": "design/spec.md",
+   "line": 1773,
+   "kind": "mech",
+   "claim": "It computes a fold its instance holds.",
+   "evidence": "src/library.jl:42-44 field f; y_direct j.f(u...)"
+  },
+  {
+   "id": "S6e-007",
+   "file": "design/spec.md",
+   "line": 1774,
+   "kind": "law",
+   "claim": "Arity and port types are type parameters, the fold is instance data.",
+   "evidence": "src/library.jl:42 Junction{In,Out,N,F}"
+  },
+  {
+   "id": "S6e-008",
+   "file": "design/spec.md",
+   "line": 1775,
+   "kind": "decl",
+   "claim": "A summing junction folds with `+`.",
+   "evidence": "src/library.jl:60"
+  },
+  {
+   "id": "S6e-009",
+   "file": "design/spec.md",
+   "line": 1776,
+   "kind": "mech",
+   "claim": "The library supplies the junction, its summing form and the Bool gates.",
+   "evidence": "src/library.jl:60,75,89"
+  },
+  {
+   "id": "S6e-010",
+   "file": "design/spec.md",
+   "line": 1784,
+   "kind": "decl",
+   "claim": "`wr_sum::SumJunction{V,3}` is a field of the assembly like any child.",
+   "evidence": "probe: Sys with a SumJunction field builds"
+  },
+  {
+   "id": "S6e-012",
+   "file": "design/spec.md",
+   "line": 1800,
+   "kind": "law",
+   "claim": "A counted but unwired contributor is an unconnected-input error naming `in4`.",
+   "evidence": "probe: UnconnectedInput face :in4"
+  },
+  {
+   "id": "S6e-013",
+   "file": "design/spec.md",
+   "line": 1801,
+   "kind": "law",
+   "claim": "A double-wired slot violates single-connection.",
+   "evidence": "probe: TwoProducers port :in2"
+  },
+  {
+   "id": "S6e-015",
+   "file": "design/spec.md",
+   "line": 1803,
+   "kind": "law",
+   "claim": "A contributor's unwired output is legal and silent.",
+   "evidence": "probe2: builds, warnings empty"
+  },
+  {
+   "id": "S6e-017",
+   "file": "design/spec.md",
+   "line": 1806,
+   "kind": "mech",
+   "claim": "The aggregate is loggable and GUI-visible like any port.",
+   "evidence": "src/descriptor.jl:361 descriptor carries the junction alias"
+  },
+  {
+   "id": "S6e-018",
+   "file": "design/spec.md",
+   "line": 1806,
+   "kind": "law",
+   "claim": "The aggregate fans out to a second consumer for one wire.",
+   "evidence": "probe2: s/y feeds t1/u and t2/u"
+  },
+  {
+   "id": "S6e-019",
+   "file": "design/spec.md",
+   "line": 1808,
+   "kind": "mech",
+   "claim": "Aggregation logic is arbitrary stage-2 code, not a fixed binary op.",
+   "evidence": "src/library.jl:111 y_direct; library.jl:36-37 custom fold"
+  },
+  {
+   "id": "S6e-020",
+   "file": "design/spec.md",
+   "line": 1811,
+   "kind": "law",
+   "claim": "Fold order is the positional order of the inputs.",
+   "evidence": "src/library.jl:111 f(u...); probe fold order"
+  },
+  {
+   "id": "S6e-021",
+   "file": "design/spec.md",
+   "line": 1812,
+   "kind": "law",
+   "claim": "Reassigning slots changes the summation bits.",
+   "evidence": "probe: 0.0 vs 1.0 for permuted inputs"
+  },
+  {
+   "id": "S6e-023",
+   "file": "design/spec.md",
+   "line": 1825,
+   "kind": "law",
+   "claim": "A child is opaque to wiring at every boundary.",
+   "evidence": "probe: wire `ldg/sum/y` is PathResolution :reaches_past"
+  },
+  {
+   "id": "S6e-024",
+   "file": "design/spec.md",
+   "line": 1828,
+   "kind": "ex",
+   "claim": "Ldg sums its legs and exports `wrench`; the systems assembly sums on top.",
+   "evidence": "probe: Ldg/Sys two-level assembly builds"
+  },
+  {
+   "id": "S6e-025",
+   "file": "design/spec.md",
+   "line": 1851,
+   "kind": "law",
+   "claim": "A zero-arity junction is not a usable spelling.",
+   "evidence": "probe3: SumJunction{Float64,0} refused BundleFieldError"
+  },
+  {
+   "id": "S6e-026",
+   "file": "design/spec.md",
+   "line": 1852,
+   "kind": "law",
+   "claim": "§6.1 bans unconnected inputs and silent defaults.",
+   "evidence": "src/diagnostics.jl:402 UnconnectedInput"
+  },
+  {
+   "id": "S6e-027",
+   "file": "design/spec.md",
+   "line": 1858,
+   "kind": "decl",
+   "claim": "A `Constant` source wired to the consumer's input is the zero-contributor spelling.",
+   "evidence": "probe: k/y => t/u builds"
+  },
+  {
+   "id": "S6e-028",
+   "file": "design/spec.md",
+   "line": 1860,
+   "kind": "mech",
+   "claim": "A constant has no inputs and no state and publishes a held value.",
+   "evidence": "src/library.jl:346-351; probe: u_types ()"
+  },
+  {
+   "id": "S6e-029",
+   "file": "design/spec.md",
+   "line": 1888,
+   "kind": "mech",
+   "claim": "The integrator steps at most `h_max` inside frames of `Δt_frame`.",
+   "evidence": "src/deployment.jl:555 Deployment(; Δt_frame, h_max)"
+  },
+  {
+   "id": "S6e-030",
+   "file": "design/spec.md",
+   "line": 1892,
+   "kind": "law",
+   "claim": "A discrete component holds its outputs between its own firings.",
+   "evidence": "probe:n=7 outer holds; src/executor.jl:519"
+  },
+  {
+   "id": "S6e-031",
+   "file": "design/spec.md",
+   "line": 1904,
+   "kind": "law",
+   "claim": "Every discrete period is an integer multiple of Δt_base.",
+   "evidence": "src/deployment.jl:36-39 D::Int rows"
+  },
+  {
+   "id": "S6e-032",
+   "file": "design/spec.md",
+   "line": 1909,
+   "kind": "mech",
+   "claim": "Frame index k and tick index n count independently.",
+   "evidence": "test/test_lattices.jl:1-5"
+  },
+  {
+   "id": "S6e-033",
+   "file": "design/spec.md",
+   "line": 1913,
+   "kind": "law",
+   "claim": "Every due instant is a boundary and no other base tick is.",
+   "evidence": "test/test_lattices.jl:2-5"
+  },
+  {
+   "id": "S6e-034",
+   "file": "design/spec.md",
+   "line": 1915,
+   "kind": "law",
+   "claim": "A non-due frame top, step end or t* boundary has no tick index.",
+   "evidence": "src/executor.jl:483-487 interior walk takes no index"
+  },
+  {
+   "id": "S6e-035",
+   "file": "design/spec.md",
+   "line": 1920,
+   "kind": "law",
+   "claim": "A declared rate reduces to the integers (D₀, Φ₀) per discrete component.",
+   "evidence": "src/deployment.jl:36-39; probe worked example"
+  },
+  {
+   "id": "S6e-036",
+   "file": "design/spec.md",
+   "line": 1922,
+   "kind": "law",
+   "claim": "The pair is kept in the canonical residue 0 ≤ Φ₀ < D₀.",
+   "evidence": "src/deployment.jl:293; probe composition"
+  },
+  {
+   "id": "S6e-037",
+   "file": "design/spec.md",
+   "line": 1924,
+   "kind": "mech",
+   "claim": "Ticks fall at Φ₀, Φ₀+D₀, Φ₀+2D₀.",
+   "evidence": "src/executor.jl:519; probe2 outer at n=2"
+  },
+  {
+   "id": "S6e-038",
+   "file": "design/spec.md",
+   "line": 1925,
+   "kind": "mech",
+   "claim": "The build compiles each declaration and the deployment binds its pair.",
+   "evidence": "src/deployment.jl:214 bind_schedule; src/build.jl:1465"
+  },
+  {
+   "id": "S6e-039",
+   "file": "design/spec.md",
+   "line": 1929,
+   "kind": "law",
+   "claim": "A component is due when (n − Φ₀) % D₀ == 0, the whole admission test.",
+   "evidence": "src/executor.jl:514-519"
+  },
+  {
+   "id": "S6e-040",
+   "file": "design/spec.md",
+   "line": 1935,
+   "kind": "law",
+   "claim": "y_state/y_direct of a discrete component run only at its ticks, cells holding between.",
+   "evidence": "src/executor.jl:519; probe:n=7"
+  },
+  {
+   "id": "S6e-041",
+   "file": "design/spec.md",
+   "line": 1941,
+   "kind": "mech",
+   "claim": "Two sweep variants, interior and boundary, deliver the hold.",
+   "evidence": "src/executor.jl:549-558"
+  },
+  {
+   "id": "S6e-042",
+   "file": "design/spec.md",
+   "line": 1946,
+   "kind": "law",
+   "claim": "At a due instant the due set is the components whose gate admits the index.",
+   "evidence": "src/executor.jl:517-519"
+  },
+  {
+   "id": "S6e-043",
+   "file": "design/spec.md",
+   "line": 1950,
+   "kind": "law",
+   "claim": "At a non-due frame top or step end the due set is empty.",
+   "evidence": "src/executor.jl:483-487; probe2 g holds after 1 frame"
+  },
+  {
+   "id": "S6e-044",
+   "file": "design/spec.md",
+   "line": 1952,
+   "kind": "law",
+   "claim": "At a t* boundary the due set is empty.",
+   "evidence": "src/executor.jl:483-487"
+  },
+  {
+   "id": "S6e-045",
+   "file": "design/spec.md",
+   "line": 1953,
+   "kind": "law",
+   "claim": "At boundary zero the updates due are those with Φ₀ = 0.",
+   "evidence": "src/model.jl:691-695; probe2: c updated at init, o not"
+  },
+  {
+   "id": "S6e-046",
+   "file": "design/spec.md",
+   "line": 1957,
+   "kind": "law",
+   "claim": "No rule beyond the ordinary gate gives the boundary-zero due set.",
+   "evidence": "src/executor.jl:514-517"
+  },
+  {
+   "id": "S6e-047",
+   "file": "design/spec.md",
+   "line": 1958,
+   "kind": "law",
+   "claim": "Every output stage publishes at boundary zero, due or not.",
+   "evidence": "src/executor.jl:523-525; src/model.jl:684-687"
+  },
+  {
+   "id": "S6e-048",
+   "file": "design/spec.md",
+   "line": 1961,
+   "kind": "law",
+   "claim": "An offset component's first tick is Φ₀·Δt_base after t₀.",
+   "evidence": "probe2: o ticks at n=2"
+  },
+  {
+   "id": "S6e-049",
+   "file": "design/spec.md",
+   "line": 1962,
+   "kind": "law",
+   "claim": "Until then its cells hold its boundary-zero publication.",
+   "evidence": "probe2: o.n port 0 through n=1"
+  },
+  {
+   "id": "S6e-050",
+   "file": "design/spec.md",
+   "line": 1963,
+   "kind": "mech",
+   "claim": "Its output stages run at t₀ from the authored world.",
+   "evidence": "src/model.jl:684-687"
+  },
+  {
+   "id": "S6e-051",
+   "file": "design/spec.md",
+   "line": 1965,
+   "kind": "law",
+   "claim": "The probe's synthesized values reach no published cell.",
+   "evidence": "src/model.jl:684-690"
+  },
+  {
+   "id": "S6e-052",
+   "file": "design/spec.md",
+   "line": 1966,
+   "kind": "mech",
+   "claim": "The probe is the build's evaluation of a user function with real values.",
+   "evidence": "src/build.jl:1-9"
+  },
+  {
+   "id": "S6e-053",
+   "file": "design/spec.md",
+   "line": 1968,
+   "kind": "law",
+   "claim": "In a phase-free model every Φ₀ is 0, so all is due at boundary zero.",
+   "evidence": "src/executor.jl:514-517; probe2 c"
+  },
+  {
+   "id": "S6e-054",
+   "file": "design/spec.md",
+   "line": 1972,
+   "kind": "law",
+   "claim": "The framework withholds no publication by default.",
+   "evidence": "src/model.jl:684-687"
+  },
+  {
+   "id": "S6e-055",
+   "file": "design/spec.md",
+   "line": 1976,
+   "kind": "mech",
+   "claim": "Due components' output stages sit in the sweep's topological order.",
+   "evidence": "src/build.jl:5-8"
+  },
+  {
+   "id": "S6e-056",
+   "file": "design/spec.md",
+   "line": 1977,
+   "kind": "mech",
+   "claim": "Their updates run after quiescence, in any order.",
+   "evidence": "src/model.jl:645-646; src/executor.jl:182"
+  },
+  {
+   "id": "S6e-057",
+   "file": "design/spec.md",
+   "line": 1984,
+   "kind": "law",
+   "claim": "An assembly is virtual for execution; children are scheduled individually.",
+   "evidence": "src/build.jl:19-20"
+  },
+  {
+   "id": "S6e-058",
+   "file": "design/spec.md",
+   "line": 1985,
+   "kind": "decl",
+   "claim": "A rate scope is an assembly's `sample_times` declaration.",
+   "evidence": "src/declare.jl:520-540 sample_times"
+  },
+  {
+   "id": "S6e-059",
+   "file": "design/spec.md",
+   "line": 1987,
+   "kind": "law",
+   "claim": "There are no atomic assemblies and no opt-in variant.",
+   "evidence": "src/declare.jl sample_times docstring; no such API"
+  },
+  {
+   "id": "S6e-060",
+   "file": "design/spec.md",
+   "line": 1993,
+   "kind": "decl",
+   "claim": "An entry declares one (period, phase) pair as Relative or Absolute.",
+   "evidence": "src/declare.jl:435,473"
+  },
+  {
+   "id": "S6e-061",
+   "file": "design/spec.md",
+   "line": 2001,
+   "kind": "law",
+   "claim": "Relative(D,Φ) requires Dₛ ≥ 1 and 0 ≤ Φₛ < Dₛ.",
+   "evidence": "src/diagnostics.jl:788-789; probe Rel cases"
+  },
+  {
+   "id": "S6e-062",
+   "file": "design/spec.md",
+   "line": 2002,
+   "kind": "law",
+   "claim": "Absolute(Δt,τ) requires Δt > 0 and 0 ≤ τ < Δt, ticks at t₀+τ then every Δt.",
+   "evidence": "src/diagnostics.jl:790-791; probe Abs cases"
+  },
+  {
+   "id": "S6e-063",
+   "file": "design/spec.md",
+   "line": 2005,
+   "kind": "law",
+   "claim": "An Absolute entry detaches its child from the scope's ticks.",
+   "evidence": "src/declare.jl Absolute docstring; probe anch"
+  },
+  {
+   "id": "S6e-064",
+   "file": "design/spec.md",
+   "line": 2012,
+   "kind": "law",
+   "claim": "The base grid is the root's lattice at (1,0).",
+   "evidence": "probe: root-level Relative(1) gives (1,0)"
+  },
+  {
+   "id": "S6e-065",
+   "file": "design/spec.md",
+   "line": 2037,
+   "kind": "law",
+   "claim": "Counts compose as Dₖ(i)=Dⱼ(i)Dₖ(j), Φₖ(i)=Φₖ(j)+Φⱼ(i)Dₖ(j).",
+   "evidence": "probe: Relative(3,1) under Relative(5,2) gives (15,7); test/test_discrete.jl:296-299"
+  },
+  {
+   "id": "S6e-066",
+   "file": "design/spec.md",
+   "line": 2039,
+   "kind": "law",
+   "claim": "In seconds Δt(i)=Dⱼ(i)Δt(j), τ(i)=τ(j)+Φⱼ(i)Δt(j), and Δt=D₀·Δt_base.",
+   "evidence": "probe: Δt 0.15 for (15,7) at 10 ms; schedule rows Δt"
+  },
+  {
+   "id": "S6e-067",
+   "file": "design/spec.md",
+   "line": 2048,
+   "kind": "law",
+   "claim": "Composition preserves the canonical residue in every lattice.",
+   "evidence": "probe composition; induction algebra checked"
+  },
+  {
+   "id": "S6e-068",
+   "file": "design/spec.md",
+   "line": 2057,
+   "kind": "law",
+   "claim": "A phase changes no period; the bundle's Δt is D₀·Δt_base.",
+   "evidence": "probe: Relative(5,2) at 10 ms sees Δt 0.05"
+  },
+  {
+   "id": "S6e-069",
+   "file": "design/spec.md",
+   "line": 2063,
+   "kind": "law",
+   "claim": "An Absolute entry may appear in any scope, and its child hangs from that anchor.",
+   "evidence": "probe anch; test/test_assembly.jl:843"
+  },
+  {
+   "id": "S6e-070",
+   "file": "design/spec.md",
+   "line": 2070,
+   "kind": "mech",
+   "claim": "The base grid is anchor A₀ with Δt_base, τ=0, D₀=1, Φ₀=0.",
+   "evidence": "src/structure.jl:145 Anchor; probe"
+  },
+  {
+   "id": "S6e-071",
+   "file": "design/spec.md",
+   "line": 2077,
+   "kind": "law",
+   "claim": "An anchored child may tick faster than its scope.",
+   "evidence": "probe anch: scope Relative(4), child (1,0)"
+  },
+  {
+   "id": "S6e-072",
+   "file": "design/spec.md",
+   "line": 2081,
+   "kind": "mech",
+   "claim": "The Schedule is the per-component (D₀,Φ₀,Δt) table the Deployment carries.",
+   "evidence": "src/deployment.jl:36-43,84-87"
+  },
+  {
+   "id": "S6e-073",
+   "file": "design/spec.md",
+   "line": 2088,
+   "kind": "law",
+   "claim": "Relative children of an anchored subtree compose against the anchor.",
+   "evidence": "probe: Relative(3) under Absolute(1//50) gives D=6"
+  },
+  {
+   "id": "S6e-074",
+   "file": "design/spec.md",
+   "line": 2089,
+   "kind": "law",
+   "claim": "A nested anchor severs again.",
+   "evidence": "probe: nested Absolute gives (1,0)"
+  },
+  {
+   "id": "S6e-075",
+   "file": "design/spec.md",
+   "line": 2091,
+   "kind": "law",
+   "claim": "Absolute periods and nonzero offsets jointly constrain the base grid.",
+   "evidence": "probe grid cost; DeploymentInvalid :anchor_offset"
+  },
+  {
+   "id": "S6e-076",
+   "file": "design/spec.md",
+   "line": 2093,
+   "kind": "law",
+   "claim": "An offset of Δt/2 costs a 2× finer grid, Δt/1000 a 1000× one.",
+   "evidence": "probe: Δt_base 1//20 and 1//10000 against 1//10"
+  },
+  {
+   "id": "S6e-077",
+   "file": "design/spec.md",
+   "line": 2097,
+   "kind": "ex",
+   "claim": "Δt_base = 2 ms deployment of the worked example.",
+   "evidence": "probe: Δt_base 1//500"
+  },
+  {
+   "id": "S6e-078",
+   "file": "design/spec.md",
+   "line": 2107,
+   "kind": "ex",
+   "claim": "Code block declares fcs (1,0), gnss (10,0), inner (1,0), outer (5,2).",
+   "evidence": "probe: rows fcs/inner (1,0), fcs/outer (5,2), gnss (10,0); test/fixtures.jl:1374,1398"
+  },
+  {
+   "id": "S6e-079",
+   "file": "design/spec.md",
+   "line": 2112,
+   "kind": "ex",
+   "claim": "H = lcm D₀(i) = 10 base ticks.",
+   "evidence": "probe: H=10; src/show.jl:177"
+  },
+  {
+   "id": "S6e-080",
+   "file": "design/spec.md",
+   "line": 2117,
+   "kind": "ex",
+   "claim": "The tick chart: inner every tick, outer at 2 and 7, gnss at 0.",
+   "evidence": "probe worked example; test/test_discrete.jl:240-258"
+  },
+  {
+   "id": "S6e-081",
+   "file": "design/spec.md",
+   "line": 2122,
+   "kind": "ex",
+   "claim": "outer is due at (n−2)%5==0, gnss at n%10==0, reads aged 2 and 7 ticks.",
+   "evidence": "test/test_discrete.jl:247-254; probe n=2,7"
+  },
+  {
+   "id": "S6e-082",
+   "file": "design/spec.md",
+   "line": 2131,
+   "kind": "law",
+   "claim": "Coincident ticks give fresh reads, a stagger gives aged, pipelined reads.",
+   "evidence": "test/test_discrete.jl:247-254"
+  },
+  {
+   "id": "S6e-083",
+   "file": "design/spec.md",
+   "line": 2138,
+   "kind": "law",
+   "claim": "Dₛ = 1 admits no stagger.",
+   "evidence": "probe: Relative(1,1) RatesViolation :phase"
+  },
+  {
+   "id": "S6e-084",
+   "file": "design/spec.md",
+   "line": 2139,
+   "kind": "ex",
+   "claim": "Same-rate siblings stagger as Relative(2,0) and Relative(2,1) one level down.",
+   "evidence": "probe: s/a (2,0), s/b (2,1)"
+  },
+  {
+   "id": "S6e-085",
+   "file": "design/spec.md",
+   "line": 2143,
+   "kind": "law",
+   "claim": "A relative phase never refines the base grid.",
+   "evidence": "probe: Relative(5,2) leaves Δt_base 1//10"
+  },
+  {
+   "id": "S6e-086",
+   "file": "design/spec.md",
+   "line": 2145,
+   "kind": "law",
+   "claim": "A relative phase cannot place a tick between scope ticks.",
+   "evidence": "src/deployment.jl:293; integer Φ in scope ticks"
+  },
+  {
+   "id": "S6e-087",
+   "file": "design/spec.md",
+   "line": 2159,
+   "kind": "mech",
+   "claim": "The Schedule and its hyperperiod chart show which pattern a model has.",
+   "evidence": "src/show.jl:174-190,203-231"
+  }
+ ],
+ "counts": {
+  "law": 58,
+  "mech": 22,
+  "decl": 13,
+  "ex": 8,
+  "ptr": 40,
+  "why": 22
+ }
+}

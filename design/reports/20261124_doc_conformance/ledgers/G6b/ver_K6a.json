@@ -1,0 +1,78 @@
+{
+ "judgments": [
+  {
+   "id": "K6a-001",
+   "conforms": true,
+   "evidence": "src/executor.jl:432-440: _fire_entry! latches the handler's return into xbuf and the mode store (_latch!, executor.jl:442-450) and runs _fire_project! on xbuf, with no scatter into the store. src/model.jl:768-771: the only table writes in event_phase! are the _round! sweeps. Probe K6a_v/probe.jl §5 block: no bat y_state call falls between the ovld and cap handlers in round 1."
+  },
+  {
+   "id": "K6a-010",
+   "conforms": true,
+   "evidence": "src/build.jl:1597 builds the event entry's y from entry_addrs(decl, path, _ports(outputs.components[ci])), and src/build.jl:583 defines _ports as stage1 ∪ stage2, so y holds every own port (executor.jl:214 says the same)."
+  },
+  {
+   "id": "K6a-011",
+   "conforms": false,
+   "evidence": "src/build.jl:1597 and src/build.jl:583: y gathers the component's declared ports (both stages) and nothing else. No local or private cells exist. design/log.md:2876 records it in an annotation: 'no local cells remain (D-165, D-194)'. D-194 (log.md:7734) retired the w channel, and intermediates became declared ports.",
+   "class": "drift",
+   "fix": "**`y` gathers the component's *own* cells** (its ports, of both stages);",
+   "clear": true
+  },
+  {
+   "id": "K6a-013",
+   "conforms": false,
+   "evidence": "Probe K6a_v/probe.jl self-wire block: Group((; c = SelfFed()); local_wires = (\"c/y\" => \"c/u\",)) builds and runs. Its event entry has u = (u = CellAddr((0,)),) and y = (y = CellAddr((0,)),), the same cell, and the handler saw seen_u = seen_y = 0.3. A stage-1 port wired to its own input is legal, since only an algebraic self-wire is refused (test/test_build.jl:185-191 refuses a stage-2 self-wire as a loop). So one cell can be in both sets.",
+   "class": "deviation",
+   "fix": "No cell is in both sets, except where a component wires its own stage-1 port to its own input.",
+   "clear": false,
+   "backing_entry": "",
+   "note": "The spec's §5.2 wording (spec.md:1186, 'u is gathered from foreign cells through the wiring') makes the same overstatement. The fix may belong there too, or the design may want to forbid a self-wire. That choice is the user's."
+  },
+  {
+   "id": "K6a-021",
+   "conforms": true,
+   "evidence": "src/deployment.jl:556 (firing_budget = 4 in the Deployment constructor), also deployment.jl:467, model.jl:31, sim.jl:314. Probe output: 'default firing_budget = 4'."
+  },
+  {
+   "id": "K6a-030",
+   "conforms": false,
+   "evidence": "src/executor.jl:456-463: _fire_project! calls entry.projection(entry.comp, reconstruct(XT, xbuf, entry.x_off)) and writes the flat state buffer back. It never touches the mode store that _latch! also wrote (executor.jl:446-447). src/declare.jl:585: 'x_projection takes the state alone'. The walkthrough's 'normalizes those stores' covers both latched stores, but x_projection projects the continuous state x only.",
+   "class": "drift",
+   "fix": "Latching writes *stores*, not cells; `x_projection` normalizes the continuous state store;",
+   "clear": true,
+   "backing_entry": "",
+   "note": "The spec and D-074 (log.md:2550, 'x_projection alone stays positional', it takes one store) agree with the code, so only the companion is off. The record of the move is weak because this phrase may always have been loose. Read it as minor imprecision."
+  },
+  {
+   "id": "K6a-039",
+   "conforms": true,
+   "evidence": "src/executor.jl:16-24: ExecutionCursor holds comp, fn, phase and index, with index being the event round. src/model.jl:736 sets phase :round, index 1, and model.jl:772 increments it per round. src/diagnostics.jl:273 renders 'event round $(cursor.index)'. Probe: the ovld handler logs (:round, 1, comp 2) and the low handler logs (:round, 2, comp 3)."
+  },
+  {
+   "id": "K6a-052",
+   "conforms": true,
+   "evidence": "Probe K6a_v/probe.jl §5 block: after the boundary, av modes = (captured = true, v_at_capture = 24.0, low = true, v_at_low = 0.0). handler_cap ran in round 1 after handler_ovld with no sweep in between, so it read 24.0. In round 2 the low-voltage handler read 0.0, as the walkthrough's round 2 says."
+  },
+  {
+   "id": "K6a-061",
+   "conforms": true,
+   "evidence": "src/model.jl:758-767: at most one event fires per component per round, and a blocked eligible edge keeps its last sample (D-191). Probe twin block: A1 fires in round 1 and A2 in round 2, with modes (n1 = 1, n2 = 1, saw_n1_m = 1, saw_n1_y = 1), so A2 read A1's transition. In the falsified variant A2 never fires (n2 = 0)."
+  },
+  {
+   "id": "K6a-069",
+   "conforms": true,
+   "evidence": "src/executor.jl:237-242: make_handler_bundle expands the same _bundle_expr(BN, XT, ...) that every entry uses (executor.jl:128-143), at dispatch, from the live store. The one difference is the gather_input_barrier function barrier (store.jl:100), which the update entry also uses (executor.jl:160-164). It is a compile-cost device with the same values, so the bundle's content and source are the same as every other bundle's."
+  },
+  {
+   "id": "K6a-071",
+   "conforms": true,
+   "evidence": "Probe: the twin component (A1 and A2 on one component) sweeps rounds 1, 2 and 3 at the crossing boundary. Two Solo components, one event each, sweep rounds 1 and 2. The serialized same-component event costs exactly one extra round (src/model.jl:762-772)."
+  },
+  {
+   "id": "K6a-080",
+   "conforms": true,
+   "evidence": "src/declare.jl:623-632: y_state 'Return the component's stage-1 outputs', with a bundle that carries no inputs. It is the stage-1, no-feedthrough stage."
+  }
+ ],
+ "notes": "The probe is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K6a_v/probe.jl. It ran twice: the first run failed in a logging helper during build, which I fixed, and the second run gave all the results above. Its blocks rebuild the walkthrough's §5 Battery/Avionics boundary, the same-component twin (normal and falsified), a two-component baseline, and a stage-1 self-wire. No tracked file was edited and no git command changed the worktree. Three claims fail. K6a-011 is drift: locals are gone (D-165, D-194). K6a-030 is minor drift: x_projection projects x only. K6a-013 is a deviation: a stage-1 self-wire puts one cell in both y and u, and the spec line spec.md:1186 that calls u's cells foreign has the same gap."
+}

@@ -1,0 +1,112 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-479: 21193-21812
+D-003: 514-529
+D-056: 1891-1925
+D-090: 3067-3086
+D-094: 3179-3221
+D-112: 3855-3880
+D-123: 4246-4277
+D-154: 6045-6095
+D-170: 6746-6796
+D-172: 6825-6857
+D-195: 7811-7870
+D-249: 10268-10336
+D-263: 11272-11433
+D-267: 11624-11737
+D-279: 12693-12785
+D-303: 13731-13801
+D-308: 13916-13937
+D-314: 14214-14273
+D-345: 15224-15261
+D-362: 15421-15455
+D-438: 18252-18354
+D-004: 530-546
+D-008: 610-623
+D-016: 759-793
+D-033: 1241-1287
+D-034: 1288-1317
+D-036: 1351-1377
+D-040: 1472-1496
+D-045: 1603-1650
+D-078: 2690-2719
+
+# Stage M leads
+names missing: `StopFaceInvalid` at log.md:10286 (D-249)
+names missing: `StoreNotNamedTuple` at log.md:18267 (D-438)
+names missing: `TierSignatureMismatch` at log.md:10276 (D-249)
+names missing: `TierSignatureMismatch` at log.md:11302 (D-263)
+names missing: `child_connections` at log.md:6751 (D-170)
+names missing: `child_connections` at log.md:11299 (D-263)
+names missing: `child_connections` at log.md:11638 (D-267)
+names missing: `child_connections` at log.md:12702 (D-279)
+names missing: `connections` at log.md:6750 (D-170)
+names missing: `exports` at log.md:6752 (D-170)
+names missing: `fragment` at log.md:12703 (D-279)
+names missing: `fragment` at log.md:13746 (D-303)
+names missing: `get_` at log.md:11640 (D-267)
+names missing: `get_` at log.md:12710 (D-279)
+names missing: `h_s` at log.md:7819 (D-195)
+names missing: `h_s` at log.md:7827 (D-195)
+names missing: `h_su` at log.md:7819 (D-195)
+names missing: `h_x` at log.md:764 (D-016)
+names missing: `h_x` at log.md:766 (D-016)
+names missing: `h_x` at log.md:1252 (D-033)
+names missing: `h_x` at log.md:7819 (D-195)
+names missing: `h_x` at log.md:7826 (D-195)
+names missing: `h_xu` at log.md:766 (D-016)
+names missing: `h_xu` at log.md:7819 (D-195)
+names missing: `init_` at log.md:1245 (D-033)
+names missing: `init_` at log.md:3860 (D-112)
+names missing: `init_m` at log.md:10278 (D-249)
+names missing: `init_m` at log.md:11632 (D-267)
+names missing: `init_s` at log.md:7820 (D-195)
+names missing: `init_s` at log.md:11297 (D-263)
+names missing: `init_s` at log.md:11298 (D-263)
+names missing: `init_s` at log.md:11632 (D-267)
+names missing: `init_workspace` at log.md:10279 (D-249)
+names missing: `init_workspace` at log.md:11294 (D-263)
+names missing: `init_workspace` at log.md:11633 (D-267)
+names missing: `init_x` at log.md:3183 (D-094)
+names missing: `init_x` at log.md:7819 (D-195)
+names missing: `init_x` at log.md:11281 (D-263)
+names missing: `init_x` at log.md:11297 (D-263)
+names missing: `init_x` at log.md:11298 (D-263)
+names missing: `init_x` at log.md:11632 (D-267)
+names missing: `inner_connections` at log.md:12702 (D-279)
+names missing: `inner_connections` at log.md:13739 (D-303)
+names missing: `inner_wires` at log.md:13739 (D-303)
+names missing: `inner_wires` at log.md:13742 (D-303)
+names missing: `input_connections` at log.md:6753 (D-170)
+names missing: `input_connections` at log.md:11639 (D-267)
+names missing: `input_connections` at log.md:12701 (D-279)
+names missing: `input_types` at log.md:1246 (D-033)
+names missing: `input_types` at log.md:11280 (D-263)
+names missing: `input_types` at log.md:11286 (D-263)
+names missing: `input_types` at log.md:11633 (D-267)
+names missing: `local_types` at log.md:1248 (D-033)
+names missing: `local_types` at log.md:1293 (D-034)
+names missing: `localize` at log.md:1251 (D-033)
+names missing: `output_connections` at log.md:6754 (D-170)
+names missing: `output_connections` at log.md:11639 (D-267)
+names missing: `output_connections` at log.md:12701 (D-279)
+names missing: `output_direct` at log.md:11636 (D-267)
+names missing: `output_state` at log.md:11635 (D-267)
+names missing: `output_types` at log.md:1248 (D-033)
+names missing: `output_types` at log.md:1292 (D-034)
+names missing: `output_types` at log.md:11280 (D-263)
+names missing: `output_types` at log.md:11304 (D-263)
+names missing: `output_types` at log.md:11633 (D-267)
+names missing: `producer_face` at log.md:1247 (D-033)
+names missing: `producer_face` at log.md:2694 (D-078)
+names missing: `state_derivative` at log.md:11634 (D-267)
+names missing: `state_projection` at log.md:10278 (D-249)
+names missing: `state_projection` at log.md:11635 (D-267)
+names missing: `state_update` at log.md:11634 (D-267)
+names missing: `u_connections` at log.md:12701 (D-279)
+names missing: `u_connections` at log.md:13739 (D-303)
+names missing: `u_connections` at log.md:13749 (D-303)
+names missing: `x_derivative` at log.md:11634 (D-267)
+names missing: `x_derivative` at log.md:12702 (D-279)
+names missing: `y_connections` at log.md:12702 (D-279)
+names missing: `y_connections` at log.md:13740 (D-303)
+names missing: `Δt_unit` at log.md:21211 (D-479)

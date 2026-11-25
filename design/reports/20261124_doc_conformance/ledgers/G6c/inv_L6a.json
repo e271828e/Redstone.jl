@@ -1,0 +1,1953 @@
+{
+ "rows": [
+  {
+   "id": "L6a-030",
+   "file": "design/log.md",
+   "line": 868,
+   "kind": "mech",
+   "claim": "Rate scopes compile to absolute divisors.",
+   "evidence": "src/deployment.jl:36 (ScheduleEntry carries its anchor; per-anchor (D, Φ) resolved at bind, deployment.jl:255-270)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:875 already records that rates compile to anchor-relative triples (D-185, D-186, D-283).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-035",
+   "file": "design/log.md",
+   "line": 912,
+   "kind": "mech",
+   "claim": "Each boundary round re-decodes per event.",
+   "evidence": "src/model.jl:745-776 (guards, then one _fire! walk per round; no per-event re-decode)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:921 records that D-154 removed the per-event re-decode.",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-036",
+   "file": "design/log.md",
+   "line": 913,
+   "kind": "law",
+   "claim": "Each event fires at most once per boundary.",
+   "evidence": "src/model.jl:751 (eligible while count < firing_budget); src/deployment.jl:556 (firing_budget = 4 by default); probe:39",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:921 records that once-per-boundary firing gave way to the per-event firing_budget (D-181).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-058",
+   "file": "design/log.md",
+   "line": 1819,
+   "kind": "law",
+   "claim": "A conformance failure carries the simulation time t.",
+   "evidence": "src/diagnostics.jl:1109-1121 (ConformanceFailure has no t field)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:1830 records D-249 (the StepError carrier's frame holds the boundary time).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-068",
+   "file": "design/log.md",
+   "line": 2821,
+   "kind": "law",
+   "claim": "The guard baseline is not captured by a checkpoint.",
+   "evidence": "src/checkpoint.jl:79 (ModelState.prior); probe:31",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:2834 records D-274 (every checkpoint, the trace header included, carries the prior).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-069",
+   "file": "design/log.md",
+   "line": 2822,
+   "kind": "law",
+   "claim": "The baseline is reconstructed on warm restart.",
+   "evidence": "src/checkpoint.jl:123-124 (restore copies the priors back)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:2834 records that restore! copies the prior back (D-274).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-071",
+   "file": "design/log.md",
+   "line": 3424,
+   "kind": "mech",
+   "claim": "Replay has two substitutions, one being boundary zero initialized from the trace header.",
+   "evidence": "src/sim.jl:1396-1397 (the header is a Checkpoint, restored through _enter_checkpoint!; no boundary zero runs)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:3449 records that since D-274 the two substitutions became one, the drain fed by the recording.",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-080",
+   "file": "design/log.md",
+   "line": 5302,
+   "kind": "decl",
+   "claim": "Continuous reset ownership settles on the reimplemented PIVector.",
+   "evidence": "probe:35 (PIVector not defined in Redstone)",
+   "verdict": "unverifiable",
+   "note": "PIVector is a FlightPhysics component (spec.md:209), outside this repo. Redstone's own analog is Integrator(; reset) at src/library.jl:911-965. Lead: names missing PIVector at log.md:5303."
+  },
+  {
+   "id": "L6a-081",
+   "file": "design/log.md",
+   "line": 5303,
+   "kind": "decl",
+   "claim": "PIVector(; reset = true) adds a Bool input face plus the event.",
+   "evidence": "src/library.jl:965 (Integrator{V,true} declares the reset StateEvent; reset_ports adds a Bool input, library.jl:451)",
+   "verdict": "unverifiable",
+   "note": "PIVector lives in FlightPhysics, not in this repo; the same shape holds for Redstone's Integrator(; reset = true)."
+  },
+  {
+   "id": "L6a-082",
+   "file": "design/log.md",
+   "line": 5304,
+   "kind": "law",
+   "claim": "PIVector's default omits both the reset input and the event.",
+   "evidence": "src/library.jl:450 (reset_ports(V, Val(false)) = V for Integrator)",
+   "verdict": "unverifiable",
+   "note": "PIVector is outside this repo; Redstone's Integrator default omits both."
+  },
+  {
+   "id": "L6a-083",
+   "file": "design/log.md",
+   "line": 5305,
+   "kind": "law",
+   "claim": "The rising edge resets to the declared `init_x` values.",
+   "evidence": "src/declare.jl:747 (the declaration is x_init; no init_x exists)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation: \"`init_x` is `x_init` since D-267.\"",
+   "note": "Renamed by D-267 (log.md:11632); D-141 carries no annotation recording it. Lead: names missing init_x at log.md:5305."
+  },
+  {
+   "id": "L6a-084",
+   "file": "design/log.md",
+   "line": 5306,
+   "kind": "mech",
+   "claim": "PIVector's reset is implemented internally as an ordinary guard/handler event.",
+   "evidence": "src/library.jl:454,965 (Integrator's reset is reset_guard/reset_handler)",
+   "verdict": "unverifiable",
+   "note": "PIVector is outside this repo; Redstone's Integrator analog matches."
+  },
+  {
+   "id": "L6a-085",
+   "file": "design/log.md",
+   "line": 5307,
+   "kind": "ex",
+   "claim": "The gear wires strut.wow → frc.reset.",
+   "evidence": "rg 'wow' over src, test, examples finds nothing",
+   "verdict": "unverifiable",
+   "note": "The gear model is FlightPhysics', outside this repo. Lead: names missing strut.wow at log.md:5307."
+  },
+  {
+   "id": "L6a-090",
+   "file": "design/log.md",
+   "line": 8916,
+   "kind": "decl",
+   "claim": "`f` is renamed `state_derivative`.",
+   "evidence": "src/declare.jl:749 (x_deriv); probe:34 (state_derivative and x_derivative undefined)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Extend the annotation at log.md:8991: \"and `x_derivative` is `x_deriv` since D-279.\"",
+   "note": "D-267 renamed it x_derivative and D-279 shortened it to x_deriv. The annotation at 8991 names x_derivative only. Lead: names missing state_derivative at log.md:8916."
+  },
+  {
+   "id": "L6a-091",
+   "file": "design/log.md",
+   "line": 8916,
+   "kind": "decl",
+   "claim": "`g` is renamed `state_update`.",
+   "evidence": "src/declare.jl:749 (s_update)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:8991 records the D-267 rename to s_update.",
+   "note": "Lead: names missing state_update at log.md:8916."
+  },
+  {
+   "id": "L6a-092",
+   "file": "design/log.md",
+   "line": 8917,
+   "kind": "decl",
+   "claim": "`h_x`/`h_s` become `output_state` and `h_xu`/`h_su` become `output_direct`.",
+   "evidence": "src/declare.jl:748 (y_state, y_direct)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:8991 records the D-267 rename to y_state and y_direct.",
+   "note": "Leads: names missing output_state, output_direct, h_x, h_s, h_xu, h_su at log.md:8917. The h_ names are the retired source spellings, absent as intended."
+  },
+  {
+   "id": "L6a-094",
+   "file": "design/log.md",
+   "line": 8919,
+   "kind": "decl",
+   "claim": "`project` is renamed `state_projection`, positional shape unchanged.",
+   "evidence": "src/declare.jl:580 (x_projection(c, x), positional)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:8991 records the D-267 rename to x_projection.",
+   "note": "The positional shape holds. Lead: names missing state_projection at log.md:8919."
+  },
+  {
+   "id": "L6a-097",
+   "file": "design/log.md",
+   "line": 8921,
+   "kind": "decl",
+   "claim": "`workspace` becomes `init_workspace`, arity (::C, ::Type{T}) continuous and (::C) discrete.",
+   "evidence": "src/declare.jl:131 (ws_init(c, ::Type{T}) on both tiers)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotations at log.md:8987 (D-263, scalar on both tiers) and 8991 (D-267, ws_init) record both moves.",
+   "note": "Lead: names missing init_workspace at log.md:8921."
+  },
+  {
+   "id": "L6a-100",
+   "file": "design/log.md",
+   "line": 8926,
+   "kind": "decl",
+   "claim": "`init_x`, `init_s`, `init_m`, `input_types`, `output_types` and the connection declarations keep their names.",
+   "evidence": "src/declare.jl:747-750 (x_init, s_init, m_init, u_types, y_types, local_wires, input_wires, output_wires)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation: \"`init_x`, `init_s`, `init_m`, `input_types` and `output_types` are `x_init`, `s_init`, `m_init`, `u_types` and `y_types` (D-267), and the connection declarations are `local_wires`, `input_wires` and `output_wires` (D-279, D-314).\"",
+   "note": "The 8991 annotation lists only the renamed stage family, not these. Leads: names missing init_x, init_s, init_m, input_types, output_types at log.md:8926-8927."
+  },
+  {
+   "id": "L6a-107",
+   "file": "design/log.md",
+   "line": 9454,
+   "kind": "law",
+   "claim": "Stratum A checks every `init_s`/`init_m` field, reporting IllegalStoreField.",
+   "evidence": "src/assembly.jl:710-716 (check_stores over s_init and m_init, IllegalStoreField)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:9488 records that `init_s`/`init_m` are `s_init`/`m_init` (D-267) and Stratum A is the structure step (D-259).",
+   "note": "The check and its kind match. Leads: names missing init_s, init_m at log.md:9455."
+  },
+  {
+   "id": "L6a-114",
+   "file": "design/log.md",
+   "line": 18661,
+   "kind": "law",
+   "claim": "A fixed step `h` divides `Δt_frame` and nothing else.",
+   "evidence": "src/frame.jl:132 (each span taken in cld(units·q, p) equal steps; no step divides the frame)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:18690 records D-449 (a fixed step no longer divides Δt_frame).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-116",
+   "file": "design/log.md",
+   "line": 18665,
+   "kind": "mech",
+   "claim": "Step points lie at j·h after the frame top; the loop advances to the nearest step point, due instant or frame top.",
+   "evidence": "src/frame.jl:127-141 (spans between mandatory instants, equal steps within; no step points)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:18690 records that the step points are gone (D-449).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-120",
+   "file": "design/log.md",
+   "line": 18713,
+   "kind": "law",
+   "claim": "Frame tops, base ticks and step points are three lattices.",
+   "evidence": "src/frame.jl:3-6 (two lattices; interior step ends lie on neither)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:18755 records the two lattices (D-449).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-123",
+   "file": "design/log.md",
+   "line": 18719,
+   "kind": "mech",
+   "claim": "A step point on neither lattice comes from its frame's index and `j`.",
+   "evidence": "src/frame.jl:141; src/store.jl:202-206 (float nearest the span's exact start plus i of steps equal steps)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotations at log.md:18755 and 18762 record D-449 and D-456.",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-128",
+   "file": "design/log.md",
+   "line": 18724,
+   "kind": "law",
+   "claim": "Two instants closer than a few clock resolutions take clock values equal or out of order by an ulp.",
+   "evidence": "src/model.jl:590-593 (_last_frame bounds the run); src/frame.jl:83-86 (frame! refuses past it)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:18755 records that such a run is refused (D-450).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-160",
+   "file": "design/log.md",
+   "line": 18912,
+   "kind": "mech",
+   "claim": "An interior step end's clock is the span's start clock plus `i` times the span's exact step.",
+   "evidence": "src/frame.jl:141; src/store.jl:202-206 (the float nearest the exact start plus i exact steps)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:18943 records D-456 (the float nearest the span's exact start plus i exact steps).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-177",
+   "file": "design/log.md",
+   "line": 19306,
+   "kind": "law",
+   "claim": "No recorded format changes; the descriptor carries no time quantity.",
+   "evidence": "src/descriptor.jl:65-67 (dt_frame, dt_base, h_max, h_min in the deployment body); probe:24",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add an annotation: \"Amended by D-467. The deployment descriptor carries `dt_frame`, `dt_base`, the resolved `h_max` and `h_min` when set, exact.\"",
+   "note": "D-467 (log.md:20271) gave the descriptor a deployment body. D-454 carries no annotation recording it."
+  },
+  {
+   "id": "L6a-189",
+   "file": "design/log.md",
+   "line": 19406,
+   "kind": "law",
+   "claim": "The clock is exactly the nearest float below 2^53 and within two ulps of it beyond.",
+   "evidence": "src/store.jl:209-231 (_nearest: one rounded division past 2^53, nearest at every magnitude)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:19426 records D-458 (nearest at every magnitude; the two-ulp clause falls).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-192",
+   "file": "design/log.md",
+   "line": 19447,
+   "kind": "law",
+   "claim": "`t0` at init!, trim! and linearize's about form accepts a Rational, an integer, a Period or an exact float.",
+   "evidence": "src/model.jl:364-370 (_exact_origin: Integer, Rational, AbstractFloat only; no Period in src)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:19478 records D-469 (`Period` retires; t0 takes a Rational, an integer or an exact float).",
+   "note": "Annotated in the entry."
+  },
+  {
+   "id": "L6a-212",
+   "file": "design/log.md",
+   "line": 19736,
+   "kind": "law",
+   "claim": "A floor above the resolved `h_max` is refused as DeploymentInvalid :range with h_max related.",
+   "evidence": "src/deployment.jl:236-238 (refused above half the resolved h_max); probe:13",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No edit: the annotation at log.md:19805 records D-463 (refused above half the resolved h_max).",
+   "note": "Kind, reason and related value match. Only the threshold moved."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L6a-001",
+   "file": "design/log.md",
+   "line": 486,
+   "kind": "law",
+   "claim": "Events have two tiers, boundary-detected and localized",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "L6a-002",
+   "file": "design/log.md",
+   "line": 486,
+   "kind": "mech",
+   "claim": "Projection runs at boundaries",
+   "evidence": "src/model.jl:653-654"
+  },
+  {
+   "id": "L6a-003",
+   "file": "design/log.md",
+   "line": 486,
+   "kind": "law",
+   "claim": "No DAE or SDE: only explicit ODE methods",
+   "evidence": "src/deployment.jl:357,368,413"
+  },
+  {
+   "id": "L6a-004",
+   "file": "design/log.md",
+   "line": 487,
+   "kind": "law",
+   "claim": "No per-step hook; hooks run only at frame top and settled boundaries",
+   "evidence": "src/sim.jl:2041"
+  },
+  {
+   "id": "L6a-005",
+   "file": "design/log.md",
+   "line": 487,
+   "kind": "law",
+   "claim": "Tier-2 detection is pace-independent",
+   "evidence": "src/sim.jl:2108-2116"
+  },
+  {
+   "id": "L6a-006",
+   "file": "design/log.md",
+   "line": 488,
+   "kind": "law",
+   "claim": "Guard value positive (≥ 0) means holding",
+   "evidence": "src/declare.jl:603"
+  },
+  {
+   "id": "L6a-007",
+   "file": "design/log.md",
+   "line": 488,
+   "kind": "law",
+   "claim": "Events fire on edges",
+   "evidence": "src/model.jl:750"
+  },
+  {
+   "id": "L6a-008",
+   "file": "design/log.md",
+   "line": 503,
+   "kind": "law",
+   "claim": "Causal port-based paradigm (u inputs, y outputs)",
+   "evidence": "src/declare.jl:747-748"
+  },
+  {
+   "id": "L6a-009",
+   "file": "design/log.md",
+   "line": 837,
+   "kind": "mech",
+   "claim": "Localization uses cubic Hermite dense output",
+   "evidence": "src/stepper.jl:356-362"
+  },
+  {
+   "id": "L6a-010",
+   "file": "design/log.md",
+   "line": 837,
+   "kind": "mech",
+   "claim": "Dense output is lazy: end derivative paid only past a validated trigger",
+   "evidence": "src/frame.jl:276"
+  },
+  {
+   "id": "L6a-011",
+   "file": "design/log.md",
+   "line": 838,
+   "kind": "mech",
+   "claim": "Bracketed derivative-free root-finding (ITP)",
+   "evidence": "src/frame.jl:361-390"
+  },
+  {
+   "id": "L6a-012",
+   "file": "design/log.md",
+   "line": 838,
+   "kind": "mech",
+   "claim": "Guard probes run the sweep",
+   "evidence": "src/frame.jl:340-346"
+  },
+  {
+   "id": "L6a-013",
+   "file": "design/log.md",
+   "line": 839,
+   "kind": "mech",
+   "claim": "Interpolant invalidated after the event",
+   "evidence": "src/frame.jl:314"
+  },
+  {
+   "id": "L6a-014",
+   "file": "design/log.md",
+   "line": 839,
+   "kind": "mech",
+   "claim": "A remainder step follows t*",
+   "evidence": "src/frame.jl:330"
+  },
+  {
+   "id": "L6a-015",
+   "file": "design/log.md",
+   "line": 839,
+   "kind": "law",
+   "claim": "The localization budget is bounded",
+   "evidence": "src/frame.jl:234"
+  },
+  {
+   "id": "L6a-016",
+   "file": "design/log.md",
+   "line": 840,
+   "kind": "law",
+   "claim": "Budget exhaustion turns localization off for the rest of the frame",
+   "evidence": "src/frame.jl:124,234"
+  },
+  {
+   "id": "L6a-017",
+   "file": "design/log.md",
+   "line": 841,
+   "kind": "law",
+   "claim": "Further crossings fire in the next boundary's iteration",
+   "evidence": "src/frame.jl:245,165"
+  },
+  {
+   "id": "L6a-018",
+   "file": "design/log.md",
+   "line": 842,
+   "kind": "law",
+   "claim": "Exhaustion raises a chattering warning",
+   "evidence": "src/frame.jl:241"
+  },
+  {
+   "id": "L6a-019",
+   "file": "design/log.md",
+   "line": 842,
+   "kind": "law",
+   "claim": "Budget is trajectory-determined, never wall-clock",
+   "evidence": "src/frame.jl:234"
+  },
+  {
+   "id": "L6a-020",
+   "file": "design/log.md",
+   "line": 843,
+   "kind": "law",
+   "claim": "Exhaustion is never a StepError",
+   "evidence": "src/frame.jl:245"
+  },
+  {
+   "id": "L6a-021",
+   "file": "design/log.md",
+   "line": 844,
+   "kind": "mech",
+   "claim": "Probes evaluate the raw interpolated state",
+   "evidence": "src/frame.jl:336-338"
+  },
+  {
+   "id": "L6a-022",
+   "file": "design/log.md",
+   "line": 844,
+   "kind": "mech",
+   "claim": "Projection runs at the t* boundary",
+   "evidence": "src/frame.jl:318; src/model.jl:653"
+  },
+  {
+   "id": "L6a-023",
+   "file": "design/log.md",
+   "line": 865,
+   "kind": "law",
+   "claim": "Ticks fall on step boundaries (a due instant ends a span)",
+   "evidence": "src/frame.jl:127-129"
+  },
+  {
+   "id": "L6a-024",
+   "file": "design/log.md",
+   "line": 865,
+   "kind": "law",
+   "claim": "Discrete stages gated to their own tick instants",
+   "evidence": "src/executor.jl:482-491"
+  },
+  {
+   "id": "L6a-025",
+   "file": "design/log.md",
+   "line": 866,
+   "kind": "law",
+   "claim": "Discrete cells are ZOH by construction",
+   "evidence": "src/frame.jl:337"
+  },
+  {
+   "id": "L6a-026",
+   "file": "design/log.md",
+   "line": 866,
+   "kind": "law",
+   "claim": "Assemblies are virtual for execution; only leaves run",
+   "evidence": "src/structure.jl:244"
+  },
+  {
+   "id": "L6a-027",
+   "file": "design/log.md",
+   "line": 867,
+   "kind": "decl",
+   "claim": "Rate scopes are a declaration construct",
+   "evidence": "src/declare.jl:412-418"
+  },
+  {
+   "id": "L6a-028",
+   "file": "design/log.md",
+   "line": 867,
+   "kind": "law",
+   "claim": "Rate multipliers are integers ≥ 1",
+   "evidence": "src/declare.jl:427-428"
+  },
+  {
+   "id": "L6a-029",
+   "file": "design/log.md",
+   "line": 867,
+   "kind": "law",
+   "claim": "Multipliers compose down the tree",
+   "evidence": "src/declare.jl:415-418"
+  },
+  {
+   "id": "L6a-031",
+   "file": "design/log.md",
+   "line": 868,
+   "kind": "decl",
+   "claim": "Δt arrives as a discrete-bundle field",
+   "evidence": "src/library.jl:610"
+  },
+  {
+   "id": "L6a-032",
+   "file": "design/log.md",
+   "line": 911,
+   "kind": "law",
+   "claim": "The boundary event phase iterates to quiescence",
+   "evidence": "src/model.jl:734-779"
+  },
+  {
+   "id": "L6a-033",
+   "file": "design/log.md",
+   "line": 912,
+   "kind": "mech",
+   "claim": "Rounds run re-sweep → guards → handlers",
+   "evidence": "src/model.jl:746-775"
+  },
+  {
+   "id": "L6a-034",
+   "file": "design/log.md",
+   "line": 912,
+   "kind": "law",
+   "claim": "Handlers fire in declaration order",
+   "evidence": "src/model.jl:749-756"
+  },
+  {
+   "id": "L6a-037",
+   "file": "design/log.md",
+   "line": 914,
+   "kind": "mech",
+   "claim": "Newly fired is decided against per-event baselines in loop state",
+   "evidence": "src/model.jl:741,750"
+  },
+  {
+   "id": "L6a-038",
+   "file": "design/log.md",
+   "line": 914,
+   "kind": "law",
+   "claim": "Due g updates run after quiescence, outside the iteration",
+   "evidence": "src/model.jl:655-656"
+  },
+  {
+   "id": "L6a-039",
+   "file": "design/log.md",
+   "line": 964,
+   "kind": "law",
+   "claim": "No shared mutable model between periphery and loop",
+   "evidence": "src/sim.jl:2746"
+  },
+  {
+   "id": "L6a-040",
+   "file": "design/log.md",
+   "line": 964,
+   "kind": "law",
+   "claim": "Staged inputs drained at frame top",
+   "evidence": "src/sim.jl:2021-2023"
+  },
+  {
+   "id": "L6a-041",
+   "file": "design/log.md",
+   "line": 965,
+   "kind": "law",
+   "claim": "An immutable snapshot is published per boundary",
+   "evidence": "src/sim.jl:2041-2042,2793"
+  },
+  {
+   "id": "L6a-042",
+   "file": "design/log.md",
+   "line": 965,
+   "kind": "mech",
+   "claim": "Each handoff is one atomic reference op",
+   "evidence": "src/sim.jl:2746"
+  },
+  {
+   "id": "L6a-043",
+   "file": "design/log.md",
+   "line": 966,
+   "kind": "mech",
+   "claim": "GC reclaims snapshots; one is built fresh per publication",
+   "evidence": "src/sim.jl:2793"
+  },
+  {
+   "id": "L6a-044",
+   "file": "design/log.md",
+   "line": 966,
+   "kind": "law",
+   "claim": "No user code in framework critical sections; src holds no locks",
+   "evidence": "src/control.jl:63-67"
+  },
+  {
+   "id": "L6a-045",
+   "file": "design/log.md",
+   "line": 967,
+   "kind": "mech",
+   "claim": "Control lives on a separate atomic surface",
+   "evidence": "src/control.jl:63-67"
+  },
+  {
+   "id": "L6a-046",
+   "file": "design/log.md",
+   "line": 967,
+   "kind": "law",
+   "claim": "Staging cannot un-pause a loop; the pause block reads control only",
+   "evidence": "src/sim.jl:2100"
+  },
+  {
+   "id": "L6a-047",
+   "file": "design/log.md",
+   "line": 968,
+   "kind": "law",
+   "claim": "Interactive use is batch plus devices",
+   "evidence": "src/devices.jl:46"
+  },
+  {
+   "id": "L6a-048",
+   "file": "design/log.md",
+   "line": 1813,
+   "kind": "mech",
+   "claim": "Conformance is one type test at the table write point",
+   "evidence": "src/executor.jl:413-420"
+  },
+  {
+   "id": "L6a-049",
+   "file": "design/log.md",
+   "line": 1814,
+   "kind": "law",
+   "claim": "No convert-on-write",
+   "evidence": "src/executor.jl:410-411"
+  },
+  {
+   "id": "L6a-050",
+   "file": "design/log.md",
+   "line": 1814,
+   "kind": "mech",
+   "claim": "The check folds away when inferrable (decided at generation)",
+   "evidence": "src/executor.jl:424-430"
+  },
+  {
+   "id": "L6a-051",
+   "file": "design/log.md",
+   "line": 1815,
+   "kind": "law",
+   "claim": "f is held to state-field completeness",
+   "evidence": "src/build.jl:1676-1686"
+  },
+  {
+   "id": "L6a-052",
+   "file": "design/log.md",
+   "line": 1815,
+   "kind": "law",
+   "claim": "Guards are Bool predicates or the nominal scalar",
+   "evidence": "src/build.jl:1287-1288"
+  },
+  {
+   "id": "L6a-053",
+   "file": "design/log.md",
+   "line": 1817,
+   "kind": "law",
+   "claim": "Any other guard return is a build error naming both forms",
+   "evidence": "src/build.jl:1289; src/diagnostics.jl:1189"
+  },
+  {
+   "id": "L6a-054",
+   "file": "design/log.md",
+   "line": 1817,
+   "kind": "law",
+   "claim": "A Tier-2 guard cannot probe Bool (vacuous since policy is the return type)",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "L6a-055",
+   "file": "design/log.md",
+   "line": 1818,
+   "kind": "law",
+   "claim": "Output stages are held to their declared ports",
+   "evidence": "src/build.jl:127-140"
+  },
+  {
+   "id": "L6a-056",
+   "file": "design/log.md",
+   "line": 1818,
+   "kind": "law",
+   "claim": "Handlers' m is a partial subset predicate",
+   "evidence": "src/executor.jl:438-452"
+  },
+  {
+   "id": "L6a-057",
+   "file": "design/log.md",
+   "line": 1819,
+   "kind": "law",
+   "claim": "A failure carries path, stage and field diff",
+   "evidence": "src/diagnostics.jl:1109-1121"
+  },
+  {
+   "id": "L6a-059",
+   "file": "design/log.md",
+   "line": 1819,
+   "kind": "law",
+   "claim": "Exact match scoped to the nominal activation",
+   "evidence": "src/build.jl:135"
+  },
+  {
+   "id": "L6a-060",
+   "file": "design/log.md",
+   "line": 1820,
+   "kind": "law",
+   "claim": "Non-nominal activations accept Float64 with zero-partial embedding",
+   "evidence": "src/build.jl:146-150"
+  },
+  {
+   "id": "L6a-061",
+   "file": "design/log.md",
+   "line": 2763,
+   "kind": "law",
+   "claim": "Localization runs identically in every execution mode",
+   "evidence": "src/sim.jl:2045-2047"
+  },
+  {
+   "id": "L6a-062",
+   "file": "design/log.md",
+   "line": 2764,
+   "kind": "mech",
+   "claim": "Sweep cost is absorbed as pacer debt",
+   "evidence": "src/sim.jl:2108-2109"
+  },
+  {
+   "id": "L6a-063",
+   "file": "design/log.md",
+   "line": 2817,
+   "kind": "law",
+   "claim": "A guard is a Bool predicate or continuous with σ ≥ 0 holding",
+   "evidence": "src/declare.jl:601-603"
+  },
+  {
+   "id": "L6a-064",
+   "file": "design/log.md",
+   "line": 2818,
+   "kind": "law",
+   "claim": "Events fire on not-holding → holding edges",
+   "evidence": "src/model.jl:750"
+  },
+  {
+   "id": "L6a-065",
+   "file": "design/log.md",
+   "line": 2819,
+   "kind": "mech",
+   "claim": "The per-event baseline lives in loop state",
+   "evidence": "src/model.jl:741"
+  },
+  {
+   "id": "L6a-066",
+   "file": "design/log.md",
+   "line": 2820,
+   "kind": "mech",
+   "claim": "Baseline is the last quiescent sample, updated at quiescence",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "L6a-067",
+   "file": "design/log.md",
+   "line": 2821,
+   "kind": "law",
+   "claim": "The baseline is not in the discrete state store",
+   "evidence": "src/checkpoint.jl:76-79"
+  },
+  {
+   "id": "L6a-070",
+   "file": "design/log.md",
+   "line": 3424,
+   "kind": "decl",
+   "claim": "replay!(sim, trace; to_boundary)",
+   "evidence": "src/sim.jl:1334"
+  },
+  {
+   "id": "L6a-072",
+   "file": "design/log.md",
+   "line": 3426,
+   "kind": "mech",
+   "claim": "The frame-top drain is fed by recorded batches keyed by frame ordinal",
+   "evidence": "src/sim.jl:2724"
+  },
+  {
+   "id": "L6a-073",
+   "file": "design/log.md",
+   "line": 3427,
+   "kind": "law",
+   "claim": "Recorded batches apply verbatim, no surface re-check",
+   "evidence": "src/sim.jl:2726"
+  },
+  {
+   "id": "L6a-074",
+   "file": "design/log.md",
+   "line": 4159,
+   "kind": "mech",
+   "claim": "Discrete state and modes live in stores, not cells",
+   "evidence": "src/checkpoint.jl:76-78"
+  },
+  {
+   "id": "L6a-075",
+   "file": "design/log.md",
+   "line": 4160,
+   "kind": "mech",
+   "claim": "The staging cell is a per-writer inbound register taken per frame",
+   "evidence": "src/sim.jl:2746"
+  },
+  {
+   "id": "L6a-076",
+   "file": "design/log.md",
+   "line": 4161,
+   "kind": "law",
+   "claim": "Staging lies outside the table's publish-once discipline",
+   "evidence": "src/sim.jl:2706-2746"
+  },
+  {
+   "id": "L6a-077",
+   "file": "design/log.md",
+   "line": 5296,
+   "kind": "law",
+   "claim": "A continuous state reset is an event",
+   "evidence": "src/library.jl:965"
+  },
+  {
+   "id": "L6a-078",
+   "file": "design/log.md",
+   "line": 5299,
+   "kind": "law",
+   "claim": "A commanded continuous reset is an event whose guard reads the Bool input",
+   "evidence": "src/library.jl:454"
+  },
+  {
+   "id": "L6a-079",
+   "file": "design/log.md",
+   "line": 5302,
+   "kind": "law",
+   "claim": "The discrete tier's input answer does not transfer",
+   "evidence": "src/library.jl:610"
+  },
+  {
+   "id": "L6a-086",
+   "file": "design/log.md",
+   "line": 7153,
+   "kind": "law",
+   "claim": "Guard return type declares policy: Bool boundary, scalar localized",
+   "evidence": "src/build.jl:1287-1288"
+  },
+  {
+   "id": "L6a-087",
+   "file": "design/log.md",
+   "line": 7154,
+   "kind": "decl",
+   "claim": "The event pair has no localize keyword (lead: localize, removed name)",
+   "evidence": "probe:33; src/declare.jl:545"
+  },
+  {
+   "id": "L6a-088",
+   "file": "design/log.md",
+   "line": 7155,
+   "kind": "law",
+   "claim": "De-localization is casting the guard to σ ≥ 0",
+   "evidence": "src/declare.jl:601-603"
+  },
+  {
+   "id": "L6a-089",
+   "file": "design/log.md",
+   "line": 7187,
+   "kind": "law",
+   "claim": "Per-event direction is unbuilt (leads: upward, downward, both are its notation)",
+   "evidence": "probe:32"
+  },
+  {
+   "id": "L6a-093",
+   "file": "design/log.md",
+   "line": 8917,
+   "kind": "law",
+   "claim": "One output-stage pair serves both tiers",
+   "evidence": "test/fixtures.jl:26,52"
+  },
+  {
+   "id": "L6a-095",
+   "file": "design/log.md",
+   "line": 8920,
+   "kind": "decl",
+   "claim": "events → state_events",
+   "evidence": "src/declare.jl:552"
+  },
+  {
+   "id": "L6a-096",
+   "file": "design/log.md",
+   "line": 8920,
+   "kind": "decl",
+   "claim": "Event → StateEvent",
+   "evidence": "src/declare.jl:545"
+  },
+  {
+   "id": "L6a-098",
+   "file": "design/log.md",
+   "line": 8925,
+   "kind": "decl",
+   "claim": "Bundle fields x, s, m, u, y, y_x, y_s, t, Δt, ws stay",
+   "evidence": "src/build.jl:98-112"
+  },
+  {
+   "id": "L6a-099",
+   "file": "design/log.md",
+   "line": 8925,
+   "kind": "decl",
+   "claim": "The guard/handler halves keep their names",
+   "evidence": "src/declare.jl:545-548"
+  },
+  {
+   "id": "L6a-101",
+   "file": "design/log.md",
+   "line": 8927,
+   "kind": "decl",
+   "claim": "sample_times keeps its name",
+   "evidence": "src/declare.jl:750"
+  },
+  {
+   "id": "L6a-102",
+   "file": "design/log.md",
+   "line": 8928,
+   "kind": "decl",
+   "claim": "Stage-numbered sweep names stay",
+   "evidence": "src/frame.jl:216"
+  },
+  {
+   "id": "L6a-103",
+   "file": "design/log.md",
+   "line": 8928,
+   "kind": "decl",
+   "claim": "Executor phase symbol :project stays",
+   "evidence": "src/model.jl:653"
+  },
+  {
+   "id": "L6a-104",
+   "file": "design/log.md",
+   "line": 8929,
+   "kind": "decl",
+   "claim": "Diagnostic kind names stay, EventHalfMissing included",
+   "evidence": "src/declare.jl:542"
+  },
+  {
+   "id": "L6a-105",
+   "file": "design/log.md",
+   "line": 8930,
+   "kind": "law",
+   "claim": "No aliases or deprecation shims",
+   "evidence": "probe:34"
+  },
+  {
+   "id": "L6a-106",
+   "file": "design/log.md",
+   "line": 9453,
+   "kind": "law",
+   "claim": "Every store field is isbits or a Symbol",
+   "evidence": "src/assembly.jl:713"
+  },
+  {
+   "id": "L6a-108",
+   "file": "design/log.md",
+   "line": 9455,
+   "kind": "law",
+   "claim": "Frozen-reference latitude stays with signals",
+   "evidence": "src/leaves.jl:18-19"
+  },
+  {
+   "id": "L6a-109",
+   "file": "design/log.md",
+   "line": 15405,
+   "kind": "law",
+   "claim": "sample_times ticks are time events, scheduled in advance",
+   "evidence": "src/model.jl:544"
+  },
+  {
+   "id": "L6a-110",
+   "file": "design/log.md",
+   "line": 15406,
+   "kind": "law",
+   "claim": "StateEvent declarations are state events, detected",
+   "evidence": "src/frame.jl:224; src/model.jl:750"
+  },
+  {
+   "id": "L6a-111",
+   "file": "design/log.md",
+   "line": 15410,
+   "kind": "law",
+   "claim": "Opposite direction is a second event with the negated guard",
+   "evidence": "probe:32"
+  },
+  {
+   "id": "L6a-112",
+   "file": "design/log.md",
+   "line": 15545,
+   "kind": "law",
+   "claim": "Boundary detection exact over modes, root inputs, held discrete outputs",
+   "evidence": "src/sim.jl:2021-2023; src/model.jl:653"
+  },
+  {
+   "id": "L6a-113",
+   "file": "design/log.md",
+   "line": 15546,
+   "kind": "law",
+   "claim": "Guards over continuous-fed inputs observe crossings at grid resolution",
+   "evidence": "src/frame.jl:224"
+  },
+  {
+   "id": "L6a-115",
+   "file": "design/log.md",
+   "line": 18661,
+   "kind": "law",
+   "claim": "A due instant inside a step ends the step there",
+   "evidence": "src/frame.jl:127"
+  },
+  {
+   "id": "L6a-117",
+   "file": "design/log.md",
+   "line": 18667,
+   "kind": "mech",
+   "claim": "The seam integrates by whatever length the step is",
+   "evidence": "src/frame.jl:142"
+  },
+  {
+   "id": "L6a-118",
+   "file": "design/log.md",
+   "line": 18669,
+   "kind": "law",
+   "claim": "Nothing relates h to Δt_base; no schedule refused for it",
+   "evidence": "src/deployment.jl:225-226"
+  },
+  {
+   "id": "L6a-119",
+   "file": "design/log.md",
+   "line": 18671,
+   "kind": "law",
+   "claim": "Steps follow the schedule; a Dual model takes the Float64 steps",
+   "evidence": "src/frame.jl:127-132"
+  },
+  {
+   "id": "L6a-121",
+   "file": "design/log.md",
+   "line": 18714,
+   "kind": "law",
+   "claim": "Every integration step end is a boundary",
+   "evidence": "src/frame.jl:162-166"
+  },
+  {
+   "id": "L6a-122",
+   "file": "design/log.md",
+   "line": 18717,
+   "kind": "law",
+   "claim": "Each instant computed from its own index, never accumulated",
+   "evidence": "src/model.jl:532,537; src/frame.jl:141"
+  },
+  {
+   "id": "L6a-124",
+   "file": "design/log.md",
+   "line": 18720,
+   "kind": "law",
+   "claim": "The clock is written once per boundary",
+   "evidence": "src/frame.jl:161"
+  },
+  {
+   "id": "L6a-125",
+   "file": "design/log.md",
+   "line": 18721,
+   "kind": "law",
+   "claim": "Coincidence decided on exact periods, not computed times",
+   "evidence": "src/frame.jl:127-129"
+  },
+  {
+   "id": "L6a-126",
+   "file": "design/log.md",
+   "line": 18722,
+   "kind": "law",
+   "claim": "Coinciding instants are one boundary",
+   "evidence": "src/frame.jl:128-129"
+  },
+  {
+   "id": "L6a-127",
+   "file": "design/log.md",
+   "line": 18723,
+   "kind": "law",
+   "claim": "A short exact gap is taken as the step it is",
+   "evidence": "src/frame.jl:131"
+  },
+  {
+   "id": "L6a-129",
+   "file": "design/log.md",
+   "line": 18727,
+   "kind": "law",
+   "claim": "Steps land on due instants; a base tick with nothing due is no boundary",
+   "evidence": "src/model.jl:544"
+  },
+  {
+   "id": "L6a-130",
+   "file": "design/log.md",
+   "line": 18728,
+   "kind": "law",
+   "claim": "Nothing due takes the empty due set by arity",
+   "evidence": "src/model.jl:659"
+  },
+  {
+   "id": "L6a-131",
+   "file": "design/log.md",
+   "line": 18730,
+   "kind": "law",
+   "claim": "Every step end runs projection, events, due updates, publication, stop scan",
+   "evidence": "src/model.jl:652-657; src/sim.jl:2041-2043"
+  },
+  {
+   "id": "L6a-132",
+   "file": "design/log.md",
+   "line": 18732,
+   "kind": "law",
+   "claim": "Frame top alone adds drain, control read, pacer deadline, trace ordinal",
+   "evidence": "src/sim.jl:2021-2023,2100-2109"
+  },
+  {
+   "id": "L6a-133",
+   "file": "design/log.md",
+   "line": 18733,
+   "kind": "law",
+   "claim": "The frame sets the coarsest snapshot and non-localized detection spacing",
+   "evidence": "src/frame.jl:165"
+  },
+  {
+   "id": "L6a-134",
+   "file": "design/log.md",
+   "line": 18736,
+   "kind": "law",
+   "claim": "Δt_base refused unless positive and finite, own premise",
+   "evidence": "src/deployment.jl:178-183"
+  },
+  {
+   "id": "L6a-135",
+   "file": "design/log.md",
+   "line": 18784,
+   "kind": "mech",
+   "claim": "Localization runs inside each integration step",
+   "evidence": "src/frame.jl:150-152"
+  },
+  {
+   "id": "L6a-136",
+   "file": "design/log.md",
+   "line": 18784,
+   "kind": "law",
+   "claim": "Tolerance and budget stay frame quantities",
+   "evidence": "src/frame.jl:124,367"
+  },
+  {
+   "id": "L6a-137",
+   "file": "design/log.md",
+   "line": 18787,
+   "kind": "mech",
+   "claim": "The trigger reads the arrival sweep at the step's end",
+   "evidence": "src/frame.jl:216-225"
+  },
+  {
+   "id": "L6a-138",
+   "file": "design/log.md",
+   "line": 18787,
+   "kind": "mech",
+   "claim": "The remainder targets the end of the crossing's step",
+   "evidence": "src/frame.jl:330"
+  },
+  {
+   "id": "L6a-139",
+   "file": "design/log.md",
+   "line": 18788,
+   "kind": "law",
+   "claim": "A crossing at the step's end degenerates to its boundary",
+   "evidence": "src/frame.jl:296"
+  },
+  {
+   "id": "L6a-140",
+   "file": "design/log.md",
+   "line": 18790,
+   "kind": "law",
+   "claim": "Stops once the bracket is narrower than localization_tol·Δt_frame",
+   "evidence": "src/frame.jl:367,376"
+  },
+  {
+   "id": "L6a-141",
+   "file": "design/log.md",
+   "line": 18792,
+   "kind": "law",
+   "claim": "localization_budget counts the frame's localizations across steps",
+   "evidence": "src/frame.jl:124,234"
+  },
+  {
+   "id": "L6a-142",
+   "file": "design/log.md",
+   "line": 18873,
+   "kind": "law",
+   "claim": "A Bool guard's policy is named non-localized",
+   "evidence": "src/build.jl:1287"
+  },
+  {
+   "id": "L6a-143",
+   "file": "design/log.md",
+   "line": 18875,
+   "kind": "law",
+   "claim": "A Bool guard is edge-checked at boundaries only, never root-found",
+   "evidence": "src/frame.jl:224"
+  },
+  {
+   "id": "L6a-144",
+   "file": "design/log.md",
+   "line": 18895,
+   "kind": "decl",
+   "claim": "h_max is an optional Deployment keyword",
+   "evidence": "src/deployment.jl:556"
+  },
+  {
+   "id": "L6a-145",
+   "file": "design/log.md",
+   "line": 18895,
+   "kind": "law",
+   "claim": "h_max is an exact positive time",
+   "evidence": "src/deployment.jl:222-224"
+  },
+  {
+   "id": "L6a-146",
+   "file": "design/log.md",
+   "line": 18896,
+   "kind": "law",
+   "claim": "h_max bounds every step under every method",
+   "evidence": "src/frame.jl:132; src/model.jl:879"
+  },
+  {
+   "id": "L6a-147",
+   "file": "design/log.md",
+   "line": 18896,
+   "kind": "law",
+   "claim": "h_max need divide nothing",
+   "evidence": "src/deployment.jl:225-226"
+  },
+  {
+   "id": "L6a-148",
+   "file": "design/log.md",
+   "line": 18899,
+   "kind": "law",
+   "claim": "Mandatory instants are frame tops and due instants; spans run between",
+   "evidence": "src/frame.jl:127-129"
+  },
+  {
+   "id": "L6a-149",
+   "file": "design/log.md",
+   "line": 18900,
+   "kind": "law",
+   "claim": "Fixed step takes a span in ⌈g/h_max⌉ equal steps",
+   "evidence": "src/frame.jl:132,141"
+  },
+  {
+   "id": "L6a-150",
+   "file": "design/log.md",
+   "line": 18901,
+   "kind": "law",
+   "claim": "Without h_max, n is 1",
+   "evidence": "src/deployment.jl:225; probe:20"
+  },
+  {
+   "id": "L6a-151",
+   "file": "design/log.md",
+   "line": 18902,
+   "kind": "decl",
+   "claim": "RK4() and Heun() carry no step",
+   "evidence": "src/deployment.jl:357,368"
+  },
+  {
+   "id": "L6a-152",
+   "file": "design/log.md",
+   "line": 18902,
+   "kind": "decl",
+   "claim": "A token carries only what the deployment fixes for its method",
+   "evidence": "src/deployment.jl:413-415"
+  },
+  {
+   "id": "L6a-153",
+   "file": "design/log.md",
+   "line": 18904,
+   "kind": "law",
+   "claim": "Bound recorded resolved: min(h_max, Δt_frame), Δt_frame when absent",
+   "evidence": "src/deployment.jl:225-226; probe:20"
+  },
+  {
+   "id": "L6a-154",
+   "file": "design/log.md",
+   "line": 18905,
+   "kind": "law",
+   "claim": "==, hash and replay's check compare the resolved bound",
+   "evidence": "src/deployment.jl:619-628; probe:21"
+  },
+  {
+   "id": "L6a-155",
+   "file": "design/log.md",
+   "line": 18907,
+   "kind": "law",
+   "claim": "h_max takes the values Δt_frame takes",
+   "evidence": "src/deployment.jl:219-224"
+  },
+  {
+   "id": "L6a-156",
+   "file": "design/log.md",
+   "line": 18907,
+   "kind": "law",
+   "claim": "A float h_max is refused as :inexact",
+   "evidence": "src/deployment.jl:22-24; probe:17"
+  },
+  {
+   "id": "L6a-157",
+   "file": "design/log.md",
+   "line": 18908,
+   "kind": "law",
+   "claim": "Non-positive or non-finite h_max is :range, collected",
+   "evidence": "src/deployment.jl:178-183"
+  },
+  {
+   "id": "L6a-158",
+   "file": "design/log.md",
+   "line": 18909,
+   "kind": "law",
+   "claim": "Too fine a bound is :range with Δt_frame related",
+   "evidence": "src/deployment.jl:326-327"
+  },
+  {
+   "id": "L6a-159",
+   "file": "design/log.md",
+   "line": 18911,
+   "kind": "law",
+   "claim": "Mandatory instants are integer unit positions; bound an exact ratio",
+   "evidence": "src/deployment.jl:159"
+  },
+  {
+   "id": "L6a-161",
+   "file": "design/log.md",
+   "line": 18916,
+   "kind": "law",
+   "claim": "show(deployment) states steps per unsplit frame, names splitting rows",
+   "evidence": "src/show.jl:312-331"
+  },
+  {
+   "id": "L6a-162",
+   "file": "design/log.md",
+   "line": 18918,
+   "kind": "law",
+   "claim": "No warning when a due instant splits a step",
+   "evidence": "src/deployment.jl:578-596"
+  },
+  {
+   "id": "L6a-163",
+   "file": "design/log.md",
+   "line": 18986,
+   "kind": "law",
+   "claim": "A run whose clocks could not order its boundaries is refused",
+   "evidence": "src/frame.jl:83-86; probe:37"
+  },
+  {
+   "id": "L6a-164",
+   "file": "design/log.md",
+   "line": 18989,
+   "kind": "law",
+   "claim": "δ is the unit, or min(unit, h_max/2) when the bound splits",
+   "evidence": "src/deployment.jl:170-171"
+  },
+  {
+   "id": "L6a-165",
+   "file": "design/log.md",
+   "line": 18991,
+   "kind": "law",
+   "claim": "Run reaches t only while |t₀| + 2(t − t₀) < 2^50·δ",
+   "evidence": "src/model.jl:590-593; src/deployment.jl:173"
+  },
+  {
+   "id": "L6a-166",
+   "file": "design/log.md",
+   "line": 18993,
+   "kind": "law",
+   "claim": "Last frame is the lesser of the clock bound and the Int range",
+   "evidence": "src/model.jl:593"
+  },
+  {
+   "id": "L6a-167",
+   "file": "design/log.md",
+   "line": 18994,
+   "kind": "law",
+   "claim": "frame!, step!, t_end and replay's to_time refuse past the last frame",
+   "evidence": "src/frame.jl:83; src/sim.jl:410,1378,2233,2244"
+  },
+  {
+   "id": "L6a-168",
+   "file": "design/log.md",
+   "line": 18996,
+   "kind": "law",
+   "claim": "init! and trim! refuse an origin whose first frame is past it",
+   "evidence": "src/model.jl:351; src/trim.jl:563"
+  },
+  {
+   "id": "L6a-169",
+   "file": "design/log.md",
+   "line": 18998,
+   "kind": "mech",
+   "claim": "Last frame computed where read, never stored",
+   "evidence": "src/model.jl:590-595"
+  },
+  {
+   "id": "L6a-170",
+   "file": "design/log.md",
+   "line": 19000,
+   "kind": "law",
+   "claim": "An unbounded run ends on frame!'s refusal at the last frame",
+   "evidence": "src/frame.jl:83-86"
+  },
+  {
+   "id": "L6a-171",
+   "file": "design/log.md",
+   "line": 19002,
+   "kind": "law",
+   "claim": "The refusal does not cover t* boundaries",
+   "evidence": "src/frame.jl:295"
+  },
+  {
+   "id": "L6a-172",
+   "file": "design/log.md",
+   "line": 19297,
+   "kind": "law",
+   "claim": "Deployment stores Δt_frame, Δt_base, resolved h_max as Rational{Int}",
+   "evidence": "src/deployment.jl:541-543; probe:20"
+  },
+  {
+   "id": "L6a-173",
+   "file": "design/log.md",
+   "line": 19298,
+   "kind": "law",
+   "claim": "==, hash and replay's check compare the exact values",
+   "evidence": "src/deployment.jl:619-628"
+  },
+  {
+   "id": "L6a-174",
+   "file": "design/log.md",
+   "line": 19301,
+   "kind": "law",
+   "claim": "Quantities rounding to one Float64 are two deployments",
+   "evidence": "src/deployment.jl:619-620"
+  },
+  {
+   "id": "L6a-175",
+   "file": "design/log.md",
+   "line": 19302,
+   "kind": "law",
+   "claim": "Each reader converts the exact time at its site",
+   "evidence": "src/model.jl:592"
+  },
+  {
+   "id": "L6a-176",
+   "file": "design/log.md",
+   "line": 19304,
+   "kind": "law",
+   "claim": "show and CheckpointMismatch print the exact values",
+   "evidence": "src/show.jl:291; src/diagnostics.jl:2592; probe:23"
+  },
+  {
+   "id": "L6a-178",
+   "file": "design/log.md",
+   "line": 19307,
+   "kind": "law",
+   "claim": "Checkpoint and trace header hold the Deployment as a value",
+   "evidence": "src/checkpoint.jl:83"
+  },
+  {
+   "id": "L6a-179",
+   "file": "design/log.md",
+   "line": 19349,
+   "kind": "law",
+   "claim": "Known end clock: integrate by end clock minus start clock",
+   "evidence": "src/frame.jl:141-142"
+  },
+  {
+   "id": "L6a-180",
+   "file": "design/log.md",
+   "line": 19352,
+   "kind": "law",
+   "claim": "Proposed length: integrate by it, end clock = start + length",
+   "evidence": "src/frame.jl:145-146"
+  },
+  {
+   "id": "L6a-181",
+   "file": "design/log.md",
+   "line": 19355,
+   "kind": "law",
+   "claim": "Localization's first segment takes the step's offered length",
+   "evidence": "src/frame.jl:203,206"
+  },
+  {
+   "id": "L6a-182",
+   "file": "design/log.md",
+   "line": 19356,
+   "kind": "law",
+   "claim": "A remainder from t* integrates by the distance to the step's end",
+   "evidence": "src/frame.jl:330"
+  },
+  {
+   "id": "L6a-183",
+   "file": "design/log.md",
+   "line": 19358,
+   "kind": "decl",
+   "claim": "integrate!(model, h) integrates by the caller's h",
+   "evidence": "src/model.jl:795-796"
+  },
+  {
+   "id": "L6a-184",
+   "file": "design/log.md",
+   "line": 19397,
+   "kind": "law",
+   "claim": "Each exactly known instant takes the nearest Float64",
+   "evidence": "src/store.jl:202-206"
+  },
+  {
+   "id": "L6a-185",
+   "file": "design/log.md",
+   "line": 19398,
+   "kind": "law",
+   "claim": "Frame top, due instant, interior end from exact positions",
+   "evidence": "src/model.jl:532,537; src/frame.jl:141"
+  },
+  {
+   "id": "L6a-186",
+   "file": "design/log.md",
+   "line": 19402,
+   "kind": "law",
+   "claim": "A proposing step end is start clock plus length",
+   "evidence": "src/frame.jl:146"
+  },
+  {
+   "id": "L6a-187",
+   "file": "design/log.md",
+   "line": 19403,
+   "kind": "law",
+   "claim": "t* is the root-finder's return",
+   "evidence": "src/frame.jl:291-295"
+  },
+  {
+   "id": "L6a-188",
+   "file": "design/log.md",
+   "line": 19404,
+   "kind": "mech",
+   "claim": "Clock is one Int128 multiply-add and division over one denominator",
+   "evidence": "src/store.jl:177-181,202-206"
+  },
+  {
+   "id": "L6a-190",
+   "file": "design/log.md",
+   "line": 19407,
+   "kind": "law",
+   "claim": "Loop integer arithmetic unchecked; door refuses uncarried runs",
+   "evidence": "src/store.jl:197-206; src/model.jl:392-400"
+  },
+  {
+   "id": "L6a-191",
+   "file": "design/log.md",
+   "line": 19444,
+   "kind": "law",
+   "claim": "Origin t₀ held exact as Rational{Int}",
+   "evidence": "src/store.jl:166; probe:29"
+  },
+  {
+   "id": "L6a-193",
+   "file": "design/log.md",
+   "line": 19449,
+   "kind": "law",
+   "claim": "Any other t0, an irrational among them, is refused",
+   "evidence": "src/model.jl:370; probe:27"
+  },
+  {
+   "id": "L6a-194",
+   "file": "design/log.md",
+   "line": 19451,
+   "kind": "law",
+   "claim": "Inexact (1e-4), non-finite or uncarried origin: ArgumentInvalid :range on t0",
+   "evidence": "src/model.jl:371-378; probe:26"
+  },
+  {
+   "id": "L6a-195",
+   "file": "design/log.md",
+   "line": 19454,
+   "kind": "law",
+   "claim": "Beside D-450's refusal of an origin with no frame",
+   "evidence": "src/model.jl:351-353"
+  },
+  {
+   "id": "L6a-196",
+   "file": "design/log.md",
+   "line": 19455,
+   "kind": "mech",
+   "claim": "Door checks clock formula at both run ends, largest step count",
+   "evidence": "src/model.jl:392-400"
+  },
+  {
+   "id": "L6a-197",
+   "file": "design/log.md",
+   "line": 19458,
+   "kind": "law",
+   "claim": "The loop's arithmetic runs unchecked",
+   "evidence": "src/store.jl:197-201"
+  },
+  {
+   "id": "L6a-198",
+   "file": "design/log.md",
+   "line": 19459,
+   "kind": "law",
+   "claim": "A restore checks a state's origin the same way",
+   "evidence": "src/model.jl:1262-1266"
+  },
+  {
+   "id": "L6a-199",
+   "file": "design/log.md",
+   "line": 19461,
+   "kind": "law",
+   "claim": "ModelState and trace header hold the origin exact",
+   "evidence": "src/checkpoint.jl:82; src/sim.jl:1396"
+  },
+  {
+   "id": "L6a-200",
+   "file": "design/log.md",
+   "line": 19462,
+   "kind": "law",
+   "claim": "Float readers of the origin convert at their site",
+   "evidence": "src/store.jl:194"
+  },
+  {
+   "id": "L6a-201",
+   "file": "design/log.md",
+   "line": 19500,
+   "kind": "law",
+   "claim": "Clocks are the nearest Float64 at any integer magnitude",
+   "evidence": "src/store.jl:209-214"
+  },
+  {
+   "id": "L6a-202",
+   "file": "design/log.md",
+   "line": 19504,
+   "kind": "mech",
+   "claim": "Past 2^53 the division is exact and rounds once",
+   "evidence": "src/store.jl:216-231"
+  },
+  {
+   "id": "L6a-203",
+   "file": "design/log.md",
+   "line": 19505,
+   "kind": "mech",
+   "claim": "A magnitude branch keeps the float division below 2^53",
+   "evidence": "src/store.jl:212-214"
+  },
+  {
+   "id": "L6a-204",
+   "file": "design/log.md",
+   "line": 19507,
+   "kind": "law",
+   "claim": "Boundary zero's clock from the same formula, not Float64(t₀)",
+   "evidence": "src/store.jl:187"
+  },
+  {
+   "id": "L6a-205",
+   "file": "design/log.md",
+   "line": 19509,
+   "kind": "law",
+   "claim": "Each clock within half an ulp; 2^50·δ bound rests on it",
+   "evidence": "src/model.jl:580-589"
+  },
+  {
+   "id": "L6a-206",
+   "file": "design/log.md",
+   "line": 19731,
+   "kind": "law",
+   "claim": "The Model owns both bounds of a proposed step",
+   "evidence": "src/model.jl:875-882"
+  },
+  {
+   "id": "L6a-207",
+   "file": "design/log.md",
+   "line": 19731,
+   "kind": "law",
+   "claim": "The Model shapes a proposed step by one rule",
+   "evidence": "src/model.jl:864-870"
+  },
+  {
+   "id": "L6a-208",
+   "file": "design/log.md",
+   "line": 19732,
+   "kind": "law",
+   "claim": "It degrades at the floor rather than refuse",
+   "evidence": "src/model.jl:832-833"
+  },
+  {
+   "id": "L6a-209",
+   "file": "design/log.md",
+   "line": 19734,
+   "kind": "decl",
+   "claim": "h_min is an optional Deployment keyword through h_max's door",
+   "evidence": "src/deployment.jl:233-234"
+  },
+  {
+   "id": "L6a-210",
+   "file": "design/log.md",
+   "line": 19735,
+   "kind": "law",
+   "claim": "A proposing method requires h_min",
+   "evidence": "src/deployment.jl:231-232; probe:18"
+  },
+  {
+   "id": "L6a-211",
+   "file": "design/log.md",
+   "line": 19736,
+   "kind": "law",
+   "claim": "A fixed-step method leaves h_min unused",
+   "evidence": "src/deployment.jl:318"
+  },
+  {
+   "id": "L6a-213",
+   "file": "design/log.md",
+   "line": 19738,
+   "kind": "decl",
+   "claim": "The token states whether it proposes: proposes(algorithm)",
+   "evidence": "src/deployment.jl:434-436"
+  },
+  {
+   "id": "L6a-214",
+   "file": "design/log.md",
+   "line": 19739,
+   "kind": "law",
+   "claim": "The constructor reads the trait; the trait has no default",
+   "evidence": "src/deployment.jl:572"
+  },
+  {
+   "id": "L6a-215",
+   "file": "design/log.md",
+   "line": 19740,
+   "kind": "law",
+   "claim": "Proposing: least gap is min(unit, h_min); D-450 bound holds",
+   "evidence": "src/deployment.jl:170"
+  },
+  {
+   "id": "L6a-216",
+   "file": "design/log.md",
+   "line": 19742,
+   "kind": "law",
+   "claim": "Proposals clamped into [h_min, h_max]; no backend reads h_min",
+   "evidence": "src/model.jl:879; src/stepper.jl:54-55"
+  },
+  {
+   "id": "L6a-217",
+   "file": "design/log.md",
+   "line": 19743,
+   "kind": "law",
+   "claim": "r/n, n = ⌈r/min(p,h_max)⌉ capped at ⌊r/h_min⌋, at least 1",
+   "evidence": "src/model.jl:879-882"
+  },
+  {
+   "id": "L6a-218",
+   "file": "design/log.md",
+   "line": 19745,
+   "kind": "law",
+   "claim": "Fixed-step is the same rule under an infinite proposal",
+   "evidence": "src/frame.jl:132"
+  },
+  {
+   "id": "L6a-219",
+   "file": "design/log.md",
+   "line": 19747,
+   "kind": "law",
+   "claim": "Proposing: t* ends its step, notice raised, next step shaped",
+   "evidence": "src/frame.jl:328; src/model.jl:657"
+  },
+  {
+   "id": "L6a-220",
+   "file": "design/log.md",
+   "line": 19749,
+   "kind": "law",
+   "claim": "Fixed-step keeps its remainder, offered whole",
+   "evidence": "src/frame.jl:330"
+  },
+  {
+   "id": "L6a-221",
+   "file": "design/log.md",
+   "line": 19751,
+   "kind": "law",
+   "claim": "A rejected shortest step is committed and files StepFloor",
+   "evidence": "src/model.jl:832-833"
+  },
+  {
+   "id": "L6a-222",
+   "file": "design/log.md",
+   "line": 19753,
+   "kind": "law",
+   "claim": "The floor is read by the count ⌊r/h_min⌋",
+   "evidence": "src/model.jl:881,890"
+  },
+  {
+   "id": "L6a-223",
+   "file": "design/log.md",
+   "line": 19754,
+   "kind": "law",
+   "claim": "Past the attempt budget the next attempt is at the floor",
+   "evidence": "src/model.jl:843-845"
+  },
+  {
+   "id": "L6a-224",
+   "file": "design/log.md",
+   "line": 19755,
+   "kind": "law",
+   "claim": "attempt_budget: per step, integer ≥ 1, default 7",
+   "evidence": "src/deployment.jl:557,569; probe:12"
+  },
+  {
+   "id": "L6a-225",
+   "file": "design/log.md",
+   "line": 19757,
+   "kind": "law",
+   "claim": "One StepFloor report per frame at most",
+   "evidence": "src/model.jl:895-896; src/frame.jl:123"
+  },
+  {
+   "id": "L6a-226",
+   "file": "design/log.md",
+   "line": 19758,
+   "kind": "law",
+   "claim": "Projection raises no discontinuity notice",
+   "evidence": "src/model.jl:657"
+  },
+  {
+   "id": "L6a-227",
+   "file": "design/log.md",
+   "line": 19759,
+   "kind": "law",
+   "claim": "A non-number proposal is refused as an internal invariant",
+   "evidence": "src/model.jl:868"
+  },
+  {
+   "id": "L6a-228",
+   "file": "design/log.md",
+   "line": 19760,
+   "kind": "law",
+   "claim": "No shaped length fails to advance the clock",
+   "evidence": "src/model.jl:879; src/deployment.jl:170"
+  }
+ ],
+ "counts": {
+  "law": 163,
+  "mech": 38,
+  "decl": 26,
+  "ex": 1,
+  "ptr": 6,
+  "why": 10,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ },
+ "notes": "I checked the Status and Position sections of all 30 entries against the tree at cb398676 (228 claims: 198 ok, 25 findings, 5 unverifiable). I changed no tracked file. My only file is the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6a/probe.jl, which I ran three times; the first two runs failed on a bug in my own helper. I also ran design/tools/check_refs.jl from W/design. It is read-only, it found every citation and anchor resolved, and the worktree stayed clean afterwards. Every entry is ratified and none carries a superseded → chain.\n\nOf the 25 findings, 21 are drifts that an annotation inside the same entry already records, at log.md:875, 921, 1830, 2834, 3449, 8987, 8991, 9488, 18690, 18755, 18762, 18943, 19426, 19478 and 19805. Under log rule 1 they need no edit, and the verifier may want to dismiss them as already annotated.\n\nFour drifts have no annotation, and each fix proposes one:\n- L6a-083: D-141 says `init_x`, which D-267 renamed `x_init`.\n- L6a-090: D-220's 8991 annotation names `x_derivative`, but D-279 later shortened it to `x_deriv`.\n- L6a-100: D-220's 'what stays' list (`init_x`, `init_s`, `init_m`, `input_types`, `output_types` and the connection declarations) was renamed by D-267, D-279 and D-314, and no annotation records it.\n- L6a-177: D-454 says the descriptor carries no time quantity. Since D-467 the deployment descriptor carries `dt_frame`, `dt_base`, `h_max` and `h_min` (src/descriptor.jl:65-67).\n\nThe 5 unverifiable claims are about PIVector and the gear's strut.wow wiring. These are FlightPhysics names outside this repo. Redstone's own analog, Integrator(; reset = true) at src/library.jl:911-965, matches the policy D-141 describes.\n\nHow the leads ended:\n- In finding rows: the D-220 rename names (rows 090, 091, 092, 094, 097, 100), init_s and init_m (row 107), and init_x (row 083).\n- In ok rows: localize (087) and upward/downward/both (089), as the names of a removed keyword and an unbuilt feature.\n- Unverifiable: PIVector and strut.wow (080, 085).\n\nThe ptr and why counts are estimates and are not listed one by one: D-141's four spec-pointer sentences, D-001's two entry pointers, and the vocabulary and rationale sentences of D-001, D-019, D-053, D-121, D-220, D-231 and D-361."
+}

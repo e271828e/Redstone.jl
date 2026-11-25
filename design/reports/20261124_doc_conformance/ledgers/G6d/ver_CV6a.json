@@ -1,0 +1,87 @@
+{
+ "judgments": [
+  {
+   "id": "CV6a-043",
+   "conforms": true,
+   "evidence": "src/bindings.jl:59-90 checks the vocabulary {face, deadzone, expo}, face as String or Symbol, deadzone 0<=d<1, expo 0<=e<=1, and collects every diagnostic into one DiagnosticError. src/bindings.jl:213-220 clamps and conditions only when deadzone or expo is declared. Probe probe.jl:10 gives one throw carrying 7 diagnostics across entries a..e. probe.jl:13 shows a string deadzone raising MethodError (isless(Int64, String))."
+  },
+  {
+   "id": "CV6a-051",
+   "conforms": false,
+   "evidence": "design/code_map.md:96-104 names TableBinding, map_input/_map_channel, _condition, the reads' contract checks and _compile_binding_reads. It never names map_output, which src/bindings.jl:182-199 declares as the output side's convention function (`function map_output end`). The bindings.jl header at lines 1-6 counts it in the runtime half. rg finds no map_output anywhere in code_map.md. The entry has never listed it: implementation.md at 68fd586d and code_map.md since 54d4230a and a630deaa omit it too.",
+   "class": "deviation",
+   "fix": "Add to the src/bindings.jl entry: \"- The output side's convention name `map_output`, declared for the loop idiom with no method.\"",
+   "clear": true
+  },
+  {
+   "id": "CV6a-052",
+   "conforms": true,
+   "evidence": "src/bindings.jl:209-220 matches the comment at 201-208. Probe probe.jl:22 maps deadzone 0.2 at 0.6 to 0.5 (rescaled, endpoints fixed). probe.jl:26 gives expo 0.5 after deadzone 0.5 at 0.75 as 0.3125 = (1-e)m + e m^3. Clamping gives 2.0->1.0 and -3->-1.0. probe.jl:28 passes a raw entry's 7 through unchanged, and a Float32 stays Float32."
+  },
+  {
+   "id": "CV6a-017",
+   "conforms": false,
+   "evidence": "src/leaves.jl:9-11 still speaks of 'both candidates' C1/C2. D-162 (design/log.md:6283-6290, ratified) adopted C2, the per-eltype homogeneous cell stores, and src/store.jl:1-9 and :46-71 reuse the leaf walk (_mreconstruct_expr/_mflatten_expr) for cells. No C1 path exists. The comment dates from a9f52a4c, the bench-era skeleton, and f672fc5e settled the choice.",
+   "class": "drift",
+   "fix": "# The continuous state buffer is flat by decision (§7.1), and the per-eltype cell stores (D-162) reuse the same flatten/reconstruct machinery for cells.",
+   "clear": true
+  },
+  {
+   "id": "CV6a-019",
+   "conforms": false,
+   "evidence": "src/leaves.jl:31-34 counts one leaf per Real, enum or opaque leaf, whatever its eltype. Probe probe.jl:36 gives nleaves(Tuple{Int,Bool,Float64}) = 3, (Int, enum) gives 2, and an opaque HasSym or a Symbol gives 1. None of those are activation-scalar leaves. The enum arm came in 88ee89ce and the opaque arm in 85ba3bd6 (D-237), after the docstring was written in a9f52a4c.",
+   "class": "drift",
+   "fix": "Number of leaves a value of type `P` occupies in a flat buffer, one per real, enum or opaque leaf, whatever its eltype. Layout-time only — never on an evaluation path.",
+   "clear": true
+  },
+  {
+   "id": "CV6a-020",
+   "conforms": false,
+   "evidence": "design/code_map.md:733-751 names mutable_position, flatten!/_mflatten_expr, reconstruct/_mreconstruct_expr, Pinned, retype_entry/retype, _holds_marker, StopFlag, leaf_names, _accepts, _accepts_wire and flatten_state!. It omits the shape walk nleaves (src/leaves.jl:31-34), leaf_types (:44-49) and leaf_eltypes (:59). store.jl:47/60 and build.jl:433 depend on leaf_eltypes. It also omits retype_value (:314) and _leaf_values (:319-327). Nothing records the omission.",
+   "class": "deviation",
+   "fix": "Add to the src/leaves.jl entry: \"- The shape walk `nleaves`, `leaf_types` and `leaf_eltypes`, the last fixing the order of a cell's per-eltype offsets.\" and, under the activation retype, \"- `retype_value`, the value counterpart of `retype`, over `_leaf_values`.\"",
+   "clear": false
+  },
+  {
+   "id": "CV6a-022",
+   "conforms": true,
+   "evidence": "src/leaves.jl:59 is unique(leaf_types(P)), so the order is first appearance and the result depends on P alone. Probe probe.jl:44 gives Mix = [Int64, Float64, Bool] from the leaves [Int, Float64, Float64, Bool, Int]. Layout allocates one cursor per entry at src/build.jl:433-437 (CellAddr{P,length(eltypes)}). The bundle's gather/scatter bind one buffer per entry at src/store.jl:47-49 and :60-62."
+  },
+  {
+   "id": "CV6a-032",
+   "conforms": true,
+   "evidence": "src/leaves.jl:314-316 converts a leaf only when `l isa Float64`. test/test_leaves.jl:286 shows (h = 1.0, n = 3, g = down) at D8 becoming (h = D8(1.0), n = 3, g = down). Probe probe.jl:50 passes an Int, Bool, enum and an opaque value through. One edge exists: a struct with a hardcoded Float64 field (probe.jl:54) throws MethodError at a Dual. Nothing reaches that, because the one caller, src/build.jl:42, feeds x_init values, and src/assembly.jl:673-681 restricts those leaves to Float64 and SArrays of Float64."
+  },
+  {
+   "id": "CV6a-033",
+   "conforms": false,
+   "evidence": "src/leaves.jl:329 and design/code_map.md:749/756 cite D-166 for embed-accept. design/log.md:6486 marks D-166 superseded by D-263. Its annotation (log.md:6557-6561) says the relation survives, but the ratified entries that state it are D-053 (Position, {T, Float64} with zero-partial embedding) and D-238 (decided on the type). The spec's embed-accept section (spec.md:5883-5910) cites D-053, D-237, D-238 and D-264, never D-166. The docstring at leaves.jl:346-351 cites D-238/D-237/D-264 correctly. D-263's commit c5c6986f swept one D-166 comment in leaves.jl and left this one.",
+   "class": "drift",
+   "fix": "leaves.jl:329 '# --- embed-accept (D-053, decided on the type per D-238) ---'; code_map.md:749 'Embed-accept's relation `_accepts` (D-053). The relation is decided on the type (D-238).'; and D-166 replaced by D-053 in the Spec line at code_map.md:756.",
+   "clear": false,
+   "note": "Whether code comments and code_map may cite a superseded entry whose relation its annotation says survives is a rule question. spec_rules.md:111 forbids it only for the spec."
+  },
+  {
+   "id": "CV6a-003",
+   "conforms": true,
+   "evidence": "src/build.jl:1476-1478 builds one CellStore per layout.sizes eltype, keyed by _cell_key(L) (src/store.jl:40), so the bundle has one concrete NamedTuple type per model. gather_cell/scatter_cell! (src/store.jl:46-71) bind statically, from leaf_eltypes(P), exactly the buffers P's leaves live in. Each offset is relative to its own eltype's buffer (src/build.jl:433-437)."
+  },
+  {
+   "id": "CV6a-011",
+   "conforms": false,
+   "evidence": "src/store.jl:149 copies every eltype buffer. Probe probe.jl:64-66 measures capture_stores at 2 allocations with one eltype, 4 with two and 6 with three (a Vector copy is 2 allocations on Julia 1.13.3). test/test_diagnostics.jl:111 compares publish! against @allocations(capture_stores(...)) rather than a fixed 1. The wording came in bccd9a56 (2026-08-25), after the per-eltype split 3f167a06 (2026-08-18), and nothing records the gap.",
+   "class": "deviation",
+   "fix": "code_map.md:1353 '`capture_stores`, one boundary's fresh copy of a bundle, a fresh buffer per eltype store (§9.8).' and store.jl:147 '# One boundary's capture: a fresh buffer per eltype store — the framework side of §9.8's scope, which carved publication and logging out.'",
+   "clear": true
+  },
+  {
+   "id": "CV6a-015",
+   "conforms": false,
+   "evidence": "src/store.jl:236-237 defines activation_scalar(::Clock{T}) = T, which executor.jl:170, 176, 264, 403 and 462 use for every conformance check's activation. rg finds no activation_scalar in design/code_map.md, whose src/store.jl entry (1348-1386) lists the Clock and its helpers but not this one. Probe probe.jl:70 returns Float32 for a Clock{Float32}.",
+   "class": "deviation",
+   "fix": "Add to the Clock bullet's sub-list in the src/store.jl entry: '- `activation_scalar`, the scalar an executor runs at, read off its clock (§9.4);'",
+   "clear": true
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV6a_v/probe.jl, run twice at W (cb398676). It edits no tracked file. One finding falls outside the slice: the comment at src/tracer.jl:136 says '`_embed` and `retype_value` convert *every* leaf through `T`'. retype_value now converts only Float64 leaves (src/leaves.jl:316), so that comment looks stale too. CV6a-032 has an edge that no caller reaches: retype_value on a struct with a hardcoded Float64 field throws MethodError at a Dual, and at Float32 the leaf converts back to Float64. That holds only while check_state_leaves keeps such values out of x_init."
+}

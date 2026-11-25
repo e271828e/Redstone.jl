@@ -1,0 +1,1807 @@
+{
+ "rows": [
+  {
+   "id": "L6d-007",
+   "file": "design/log.md",
+   "line": 1549,
+   "kind": "decl",
+   "claim": "D-043: computed exports use the helper `faces(asm, path; prefix, except, only)`.",
+   "evidence": "src/assembly.jl:495-496, 543, 559, 594: the helpers are `input_passthrough(assembly, child_path; sep, prefix, except, only, select)` and `output_passthrough`. Probe probe:192: isdefined(Redstone, :faces) and (:passthrough) are false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Computed exports as ordinary code + `input_passthrough(asm, path; sep, prefix, except, only, select)` and its output twin `output_passthrough`;",
+   "note": "D-144 renamed `faces` to `passthrough`, D-171 to `input_passthrough`, and D-251 settled the three exclusive selectors. The behaviour, a helper over ordinary code, conforms."
+  },
+  {
+   "id": "L6d-015",
+   "file": "design/log.md",
+   "line": 2198,
+   "kind": "decl",
+   "claim": "D-065: the lazy tree's node types are `Fragment`/`Scoped`/`Merged`.",
+   "evidence": "src/conditions.jl:32, 53, 73, 93, 110: the node types are Fragment, Scoped, Combined and Override, joined as ConditionNode. Probe probe:187: isdefined(Redstone, :Merged) is false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Fragments form a lazy inert tree (`Fragment`/`Scoped`/`Combined`/`Override`;",
+   "note": "Stage M lead `Merged`. D-204 (log.md:8179-8183) renamed the symmetric combinator's node to `Combined` and says the log keeps its day's vocabulary. `Override` is §14.6's layering node."
+  },
+  {
+   "id": "L6d-017",
+   "file": "design/log.md",
+   "line": 2199,
+   "kind": "decl",
+   "claim": "D-065: the combinators that store and never apply are `at` and `merge`.",
+   "evidence": "src/conditions.jl:239: the symmetric combinator is `combine(nodes::ConditionNode...)`. `merge` is not extended for nodes.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`at`/`combine` store, never apply",
+   "note": "D-204 renames `merge` to `combine`."
+  },
+  {
+   "id": "L6d-024",
+   "file": "design/log.md",
+   "line": 2204,
+   "kind": "law",
+   "claim": "D-065: deep `at` addressing is legal only within owned concrete subtrees (locality law).",
+   "evidence": "src/structure.jl:1105-1110: resolve_authored resolves a deep path wherever the structure has it, whatever the declared field types along it, refusing no traversal past a generically held child. src/conditions.jl:22-24: a fragment's `u` payload names its level's own input faces.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "locality law = §6.1's, third instance (own fields, declared children, own faces); an `at` prefix stops at the faces of any child, owned or not, and deep structural `at` paths resolve wherever the structure has them, the locality being authoring guidance",
+   "note": "D-207 (log.md:8304-8307) amends the clause: a prefix stops at faces on every child. D-414 retires `:past_generic`, so the concrete half is no longer checked either. The D-065 annotations at log.md:2212-2226 record both."
+  },
+  {
+   "id": "L6d-027",
+   "file": "design/log.md",
+   "line": 2892,
+   "kind": "decl",
+   "claim": "D-084: models carry ports under mandatory `output_types`.",
+   "evidence": "src/declare.jl:223: the output contract is `y_types`. No `output_types` exists in src/.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "No unconnected-output warning: under mandatory `y_types` models carry many observation-oriented ports no wire consumes",
+   "note": "Stage M lead `output_types`. D-267 renamed the leaf declarations to the bundle-letter forms."
+  },
+  {
+   "id": "L6d-033",
+   "file": "design/log.md",
+   "line": 2918,
+   "kind": "decl",
+   "claim": "D-085: a container has no `connections` declaration.",
+   "evidence": "src/declare.jl:286, 308, 328: the wire declarations are `local_wires`, `input_wires` and `output_wires`. src/declare.jl:349-350: the container has no wires, faces or rate of its own. Probe probe:192: isdefined(Redstone, :connections) is false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "containers are transparent grouping — no contract, no wires, no rate scope.",
+   "note": "Stage M lead `connections`. D-170 split `connections` into three declarations, D-303 named them `*_wires`, D-314 renamed `inner_wires` to `local_wires`. The rule holds."
+  },
+  {
+   "id": "L6d-039",
+   "file": "design/log.md",
+   "line": 5468,
+   "kind": "decl",
+   "claim": "D-143: `output_types(::Constant{V}) = (out = V,)`.",
+   "evidence": "src/library.jl:350: `y_types(::Constant{V}) where {V} = Pinned{V}`, a bare pinned contract whose port is `y`. Probe probe:210: y_types(Constant(2.0)) is Pinned{Float64}.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`y_types(::Constant{V}) = Pinned{V}`, a bare pinned port `y`, with the value type from the type parameter",
+   "note": "Stage M lead `output_types`. D-267 renamed the declaration, D-312 (log.md:14078) pinned the port as `(out = Pinned{V},)`, and D-437 made a one-port contract bare under `y`."
+  },
+  {
+   "id": "L6d-045",
+   "file": "design/log.md",
+   "line": 5479,
+   "kind": "decl",
+   "claim": "D-143: the tier argument rests on a stateless `h_xu` that recomputes every sweep.",
+   "evidence": "src/declare.jl:653, 685: the stages are `y_state` and `y_direct`. src/library.jl:351: Constant's body is the stage-1 `y_state`. No `h_xu` exists in src/.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "(a stateless stage recomputes every sweep, so fed ZOH-held signals its output changes only at ticks)",
+   "note": "Stage M lead `h_xu`. D-220 and D-267 renamed `h_x`/`h_xu` to `y_state`/`y_direct`. The argument still holds, since a stateless `y_state` or `y_direct` reruns every sweep."
+  },
+  {
+   "id": "L6d-055",
+   "file": "design/log.md",
+   "line": 5726,
+   "kind": "law",
+   "claim": "D-147: discrete `h_z` entries are absent from the interior `h_x` walk.",
+   "evidence": "src/build.jl:1523-1534 and src/executor.jl:595: stage-1 entries of both tiers are `y_state` entries in `sweep_1`, and the interior tuple keeps continuous entries only. Probe probe:131: a two-discrete-component model's sweep_1 interior holds 0 entries, its boundary 2.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "discrete `y_state` entries are as absent from the interior `sweep_1` walk",
+   "note": "Stage M leads `h_z` (5726) and `h_x` (5727). D-220 and D-267 renamed the stages, and D-196 the bodies. The rule conforms."
+  },
+  {
+   "id": "L6d-056",
+   "file": "design/log.md",
+   "line": 5727,
+   "kind": "law",
+   "claim": "D-147: discrete `h_zu` entries are absent from the interior `h_xu` walk.",
+   "evidence": "src/build.jl:1536-1546 and src/executor.jl:595: stage-2 entries are `y_direct` entries in `sweep_2`, whose interior tuple keeps continuous entries only.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "as discrete `y_direct` entries are from the interior `sweep_2` walk",
+   "note": "Stage M leads `h_zu` (5727) and `h_xu` (5728). Renames by D-220, D-267 and D-196. The rule conforms."
+  },
+  {
+   "id": "L6d-057",
+   "file": "design/log.md",
+   "line": 5729,
+   "kind": "decl",
+   "claim": "D-147: zero-arg `sweep_hx()`/`sweep_hxu()` are the interior variants.",
+   "evidence": "src/model.jl:512 and src/build.jl:1608-1609: the bodies are `sweep_1` and `sweep_2`. src/executor.jl:574: the zero-arg call walks the interior. Probe probe:137-138: both arities apply, and isdefined(Redstone, :sweep_hx) is false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "zero-arg `sweep_1()`/`sweep_2()` are the interior variants",
+   "note": "Stage M lead `sweep_hx`/`sweep_hxu` at 5729. D-196 (log.md:7875-7877) renames them, as the D-147 annotation at log.md:5752-5754 records."
+  },
+  {
+   "id": "L6d-058",
+   "file": "design/log.md",
+   "line": 5730,
+   "kind": "law",
+   "claim": "D-147: `@ballocated(sweep_hxu()) == 0` measures the interior path.",
+   "evidence": "test/test_discrete.jl:959-963: the CI seam asserts `@ballocated($body()) == 0` and `@ballocated($body(2)) == 0` for each of `sweep_1`, `sweep_2`, `rhs` and `ticks`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "which is what makes `@ballocated(sweep_2()) == 0` a well-defined measurement of the interior path",
+   "note": "Stage M leads `sweep_hxu` and `ballocated` at 5730. `@ballocated` is BenchmarkTools' macro, used in the tests only, so that lead is ok. The body name is the D-196 rename."
+  },
+  {
+   "id": "L6d-059",
+   "file": "design/log.md",
+   "line": 5732,
+   "kind": "decl",
+   "claim": "D-147: `sweep_hx(tick)`/`sweep_hxu(tick)` are the boundary variants, gating by modulo.",
+   "evidence": "src/executor.jl:575, 516-523: the one-arg call walks the boundary tuple, gating discrete entries by `(tick - Φ) % D == 0`. src/model.jl:707: `sweep_1(tick); sweep_2(tick)`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "while `sweep_1(tick)`/`sweep_2(tick)` are the boundary variants gating by modulo against the passed index",
+   "note": "Stage M leads `sweep_hx`/`sweep_hxu` at 5732. D-196 rename."
+  },
+  {
+   "id": "L6d-064",
+   "file": "design/log.md",
+   "line": 5738,
+   "kind": "law",
+   "claim": "D-147: at a frame top the due set is the counter-modulo image of the frame index.",
+   "evidence": "src/frame.jl:160-164: a step end runs the boundary with its tick index only when it is a due instant, and with `nothing` otherwise. src/model.jl:536-544: `_next_due` finds the next base-tick index some row admits.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "the gate's image of the base-tick index at a due instant, and empty at every other boundary, a frame top or step end where nothing is due and `t*`",
+   "note": "D-445 amends it, recorded in the D-147 annotation at log.md:5756-5758."
+  },
+  {
+   "id": "L6d-066",
+   "file": "design/log.md",
+   "line": 5741,
+   "kind": "law",
+   "claim": "D-147: at boundary zero the due set is everything.",
+   "evidence": "src/model.jl:663-665 and 686-704: boundary zero's sweep admits every discrete output stage (`ESTABLISH`), and its `s_update` calls keep the ordinary gate at index 0. Probe probe:125: a `Relative(2, 1)` counter publishes 0 and keeps state 0 after init!, and a `Relative(2, 0)` one advances to 1.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "and at boundary zero every discrete output stage, due or not, while the `s_update` calls keep the gate at index 0 (§14.5)",
+   "note": "D-205 amends boundary zero; the D-147 annotation at log.md:5752-5754 cites D-185, D-205 and D-291."
+  },
+  {
+   "id": "L6d-069",
+   "file": "design/log.md",
+   "line": 6666,
+   "kind": "decl",
+   "claim": "D-168: the type refusal stays `RootSlotTypeConflict`.",
+   "evidence": "src/diagnostics.jl:497: the kind is `RootInputTypeConflict`. Probe probe:170: isdefined(Redstone, :RootSlotTypeConflict) is false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "(`RootInputTypeConflict` unchanged — a tolerance difference is not a type conflict, …)",
+   "note": "Stage M lead `RootSlotTypeConflict`. D-206 renamed root slots to root inputs."
+  },
+  {
+   "id": "L6d-079",
+   "file": "design/log.md",
+   "line": 7373,
+   "kind": "decl",
+   "claim": "D-185: `Absolute`'s `q` is a `Period`/`Hz` quantity normalized to its rational period.",
+   "evidence": "src/declare.jl:473-485: `Absolute(Δt::Union{Integer,Rational{<:Integer}}, τ = 0)` stores `Rational{Int}` fields `Δt` and `τ`. Probe probe:109-110: fields (:Δt, :τ), and isdefined of :Period and :Hz are both false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`Absolute(Δt, τ = 0)` in exact rational seconds (`Δt > 0`, `0 ≤ τ < Δt`, `Δt` an integer or a `Rational`;",
+   "note": "D-469 retires `Period` and `Hz`, and D-464 names the first argument `Δt`. The D-185 annotations at log.md:7414-7421 record both."
+  },
+  {
+   "id": "L6d-095",
+   "file": "design/log.md",
+   "line": 8298,
+   "kind": "decl",
+   "claim": "D-207: `child_connections` wires sibling faces.",
+   "evidence": "src/declare.jl:286: the sibling-wire declaration is `local_wires`. Probe probe:192: isdefined(Redstone, :child_connections) is false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`local_wires` wires sibling faces",
+   "note": "Stage M lead `child_connections`. D-303 named the declarations for wires, and D-314 renamed `inner_wires` to `local_wires`."
+  },
+  {
+   "id": "L6d-096",
+   "file": "design/log.md",
+   "line": 8298,
+   "kind": "decl",
+   "claim": "D-207: `input_connections` routes each face to immediate children's faces.",
+   "evidence": "src/declare.jl:290-308: the inward boundary is `input_wires`. Probe probe:192: isdefined(Redstone, :input_connections) is false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`input_wires` routes each face to immediate children's faces",
+   "note": "Stage M lead `input_connections`. D-303 rename."
+  },
+  {
+   "id": "L6d-097",
+   "file": "design/log.md",
+   "line": 8299,
+   "kind": "decl",
+   "claim": "D-207: `output_connections` sources each face from an immediate child's face.",
+   "evidence": "src/declare.jl:310-328: the outward boundary is `output_wires`. Probe probe:192: isdefined(Redstone, :output_connections) is false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`output_wires` sources each face from an immediate child's face",
+   "note": "Stage M lead `output_connections`. D-303 rename."
+  },
+  {
+   "id": "L6d-105",
+   "file": "design/log.md",
+   "line": 8356,
+   "kind": "decl",
+   "claim": "D-208: an assembly root's inputs are its `input_connections` keys.",
+   "evidence": "src/declare.jl:298-299: at the root of a build the `input_wires` faces are the root inputs.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "For an assembly they are its `input_wires` keys, each traced through the total face chain",
+   "note": "Stage M lead `input_connections` at 8356. D-303 rename."
+  },
+  {
+   "id": "L6d-107",
+   "file": "design/log.md",
+   "line": 8358,
+   "kind": "decl",
+   "claim": "D-208: a primitive root's inputs are its `input_types` keys.",
+   "evidence": "src/declare.jl:185: the input contract is `u_types`. Probe probe:160: build(Plant()) has root inputs [:u], the keys of Plant's `u_types`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "for a primitive, its `u_types` keys directly",
+   "note": "Stage M lead `input_types`. D-267 rename. The rule conforms."
+  },
+  {
+   "id": "L6d-119",
+   "file": "design/log.md",
+   "line": 10453,
+   "kind": "decl",
+   "claim": "D-252: a component exposes a state or mode field by returning it from `output_state`.",
+   "evidence": "src/declare.jl:653: the stage-1 function is `y_state`. Probe probe:151: isdefined(Redstone, :output_state) is false.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A component exposes a state or mode field by returning it from `y_state`.",
+   "note": "Stage M lead `output_state`. D-267 renamed `output_state` to `y_state`."
+  },
+  {
+   "id": "L6d-124",
+   "file": "design/log.md",
+   "line": 10864,
+   "kind": "decl",
+   "claim": "D-258: the execution order is carried by the `Dataflow` artifact.",
+   "evidence": "src/build.jl:616-620: the order lives in `Outputs`, beside its per-component rows. rg finds no `Dataflow` in src/.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "and \"execution order\" for the order in which the stage functions run, carried by the `Outputs` artifact",
+   "note": "Stage M lead `Dataflow`. D-261 renamed `Dataflow` to `Outputs`."
+  },
+  {
+   "id": "L6d-125",
+   "file": "design/log.md",
+   "line": 12977,
+   "kind": "law",
+   "claim": "D-285: a stage returning anything other than a `NamedTuple` fails at the probe.",
+   "evidence": "src/build.jl:79-91 and 1194-1201: only a named contract's return must be a NamedTuple. A bare contract's stage returns the port's value, checked by the port check alone. Probe probe:141: NotNT's named contract returning 1.0 is ConformanceFailure :return_type. Probe probe:143: Library.Constant's y_state returns 2.0 bare and builds.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A stage of a named contract returning anything other than a `NamedTuple` fails at the probe; a bare contract's stage returns its port's value.",
+   "note": "D-437 made a one-port contract bare, its stage returning the value. No D-285 annotation records the narrowing."
+  },
+  {
+   "id": "L6d-130",
+   "file": "design/log.md",
+   "line": 12984,
+   "kind": "decl",
+   "claim": "D-285: a 'stop the run' check is a published `Bool` output face plus `stop_on`.",
+   "evidence": "src/leaves.jl:232-251: a stop request is an output port declared exactly `StopFlag`, honoured unless the advance's `ignore_stop_requests` keyword names it. src/sim.jl:2045-2047: settled! reads the StopFlag requests.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "A plausibility check meaning \"stop the run\" is a published `StopFlag` output port, a stop request the run honours unless the advance ignores it.",
+   "note": "Stage M lead `stop_on`. D-316 replaced `stop_on` and its `Bool` faces with `StopFlag` ports (commit a682407c)."
+  },
+  {
+   "id": "L6d-147",
+   "file": "design/log.md",
+   "line": 13133,
+   "kind": "law",
+   "claim": "D-288: phase bodies invoked in isolation leave buffers valid but off-trajectory; continuing takes init!",
+   "evidence": "src/model.jl:508-521: phase_bodies returns the loop's own bodies over the model's buffers. No code marks or checks the off-trajectory state.",
+   "verdict": "unverifiable",
+   "note": "A usage contract with no code behind it. Nothing records that a body was run outside the loop, so there is no check to probe."
+  },
+  {
+   "id": "L6d-185",
+   "file": "design/log.md",
+   "line": 15092,
+   "kind": "mech",
+   "claim": "D-341: the handler-return check is the argument side's `FieldError` machinery run in both directions.",
+   "evidence": "src/build.jl:1312-1350: _check_handler compares keys(returned) against the declared stores, raising HandlerReturnKey, then checks `x` and `m` per key. It uses no FieldError. FieldError matching is the argument side only (src/declare.jl:985-990).",
+   "verdict": "unverifiable",
+   "note": "The per-key check exists and conforms. Whether 'the FieldError machinery run in both directions' means that per-key classification or a literal reuse of FieldError cannot be settled from the text. D-287's Rationale (log.md:13095) uses the same phrase."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L6d-001",
+   "file": "design/log.md",
+   "line": 1382,
+   "kind": "law",
+   "claim": "D-037: aggregation is by explicit summing junctions",
+   "evidence": "src/library.jl:42, 60"
+  },
+  {
+   "id": "L6d-002",
+   "file": "design/log.md",
+   "line": 1382,
+   "kind": "decl",
+   "claim": "D-037: a generic junction takes positional inputs",
+   "evidence": "src/library.jl:116-117 (in1…inN)"
+  },
+  {
+   "id": "L6d-003",
+   "file": "design/log.md",
+   "line": 1383,
+   "kind": "law",
+   "claim": "D-037: junctions are plain components",
+   "evidence": "src/library.jl:10-12"
+  },
+  {
+   "id": "L6d-004",
+   "file": "design/log.md",
+   "line": 1384,
+   "kind": "law",
+   "claim": "D-037: the fold order is author-visible",
+   "evidence": "src/library.jl:119, 26-27 (positional order)"
+  },
+  {
+   "id": "L6d-005",
+   "file": "design/log.md",
+   "line": 1385,
+   "kind": "law",
+   "claim": "D-037: helper/macro sugar is guarded (none ships)",
+   "evidence": "src/library.jl:10-12; no macro defined in src/"
+  },
+  {
+   "id": "L6d-006",
+   "file": "design/log.md",
+   "line": 1549,
+   "kind": "mech",
+   "claim": "D-043: computed exports are ordinary code",
+   "evidence": "src/assembly.jl:495-514"
+  },
+  {
+   "id": "L6d-008",
+   "file": "design/log.md",
+   "line": 1550,
+   "kind": "law",
+   "claim": "D-043: root slots are the root's exported input faces",
+   "evidence": "src/declare.jl:298-299; probe:160"
+  },
+  {
+   "id": "L6d-009",
+   "file": "design/log.md",
+   "line": 1550,
+   "kind": "law",
+   "claim": "D-043: a generic holding's contract is checked per instantiation",
+   "evidence": "src/assembly.jl:134-136"
+  },
+  {
+   "id": "L6d-010",
+   "file": "design/log.md",
+   "line": 1769,
+   "kind": "decl",
+   "claim": "D-051: probe inputs come from `probe_value(::Type)`",
+   "evidence": "src/declare.jl:932-936"
+  },
+  {
+   "id": "L6d-011",
+   "file": "design/log.md",
+   "line": 1770,
+   "kind": "mech",
+   "claim": "D-051: chain is zero(T), false, first enum instance, T()",
+   "evidence": "src/declare.jl:932-936; probe:221"
+  },
+  {
+   "id": "L6d-012",
+   "file": "design/log.md",
+   "line": 1771,
+   "kind": "law",
+   "claim": "D-051: the chain is overridable",
+   "evidence": "src/declare.jl:929-931, 941-942"
+  },
+  {
+   "id": "L6d-013",
+   "file": "design/log.md",
+   "line": 1771,
+   "kind": "law",
+   "claim": "D-051: a missing method names the face and the type",
+   "evidence": "src/diagnostics.jl:811-820; probe:219"
+  },
+  {
+   "id": "L6d-014",
+   "file": "design/log.md",
+   "line": 1771,
+   "kind": "law",
+   "claim": "D-051: probe values are probe-scoped, never initial values",
+   "evidence": "src/conditions.jl:701; src/build.jl:1514-1516"
+  },
+  {
+   "id": "L6d-016",
+   "file": "design/log.md",
+   "line": 2199,
+   "kind": "mech",
+   "claim": "D-065: `at` stores its prefix and never applies it",
+   "evidence": "src/conditions.jl:46-56, 207"
+  },
+  {
+   "id": "L6d-018",
+   "file": "design/log.md",
+   "line": 2199,
+   "kind": "law",
+   "claim": "D-065: rebuilding a node tree is stack-only",
+   "evidence": "probe:185 (0 bytes)"
+  },
+  {
+   "id": "L6d-019",
+   "file": "design/log.md",
+   "line": 2200,
+   "kind": "mech",
+   "claim": "D-065: flattening, validation, addressing at resolution against the Build",
+   "evidence": "src/conditions.jl:451, 508"
+  },
+  {
+   "id": "L6d-020",
+   "file": "design/log.md",
+   "line": 2201,
+   "kind": "law",
+   "claim": "D-065: a duplicate leaf is an error naming both origins",
+   "evidence": "src/conditions.jl:390-403; probe:189"
+  },
+  {
+   "id": "L6d-021",
+   "file": "design/log.md",
+   "line": 2201,
+   "kind": "mech",
+   "claim": "D-065: converters and store overlay bases are baked at compile",
+   "evidence": "src/conditions.jl:410-417, 573"
+  },
+  {
+   "id": "L6d-022",
+   "file": "design/log.md",
+   "line": 2202,
+   "kind": "mech",
+   "claim": "D-065: slots resolve through export chains",
+   "evidence": "src/conditions.jl:625-640"
+  },
+  {
+   "id": "L6d-023",
+   "file": "design/log.md",
+   "line": 2202,
+   "kind": "law",
+   "claim": "D-065: an unexported input is unwritable, init included",
+   "evidence": "src/conditions.jl:633-636 (:unexported_face)"
+  },
+  {
+   "id": "L6d-025",
+   "file": "design/log.md",
+   "line": 2205,
+   "kind": "mech",
+   "claim": "D-065: absolute paths are compiled derivatives",
+   "evidence": "src/conditions.jl:46-56, 349"
+  },
+  {
+   "id": "L6d-026",
+   "file": "design/log.md",
+   "line": 2892,
+   "kind": "law",
+   "claim": "D-084: no unconnected-output warning",
+   "evidence": "probe:225 (no warnings, two outputs unconsumed)"
+  },
+  {
+   "id": "L6d-028",
+   "file": "design/log.md",
+   "line": 2894,
+   "kind": "mech",
+   "claim": "D-084: path-bound readers attach after the build",
+   "evidence": "src/readers.jl:665"
+  },
+  {
+   "id": "L6d-029",
+   "file": "design/log.md",
+   "line": 2915,
+   "kind": "law",
+   "claim": "D-085: Tuple/NamedTuple fields of components unpack as children",
+   "evidence": "src/assembly.jl:153-185; probe:203"
+  },
+  {
+   "id": "L6d-030",
+   "file": "design/log.md",
+   "line": 2916,
+   "kind": "law",
+   "claim": "D-085: path segments are field/1 and field/key",
+   "evidence": "src/assembly.jl:182; probe:203"
+  },
+  {
+   "id": "L6d-031",
+   "file": "design/log.md",
+   "line": 2917,
+   "kind": "law",
+   "claim": "D-085: children lay out in declaration order",
+   "evidence": "src/assembly.jl:110, 145; probe:203"
+  },
+  {
+   "id": "L6d-032",
+   "file": "design/log.md",
+   "line": 2917,
+   "kind": "law",
+   "claim": "D-085: a container has no contract",
+   "evidence": "src/declare.jl:349-350"
+  },
+  {
+   "id": "L6d-034",
+   "file": "design/log.md",
+   "line": 2918,
+   "kind": "law",
+   "claim": "D-085: a container has no rate scope",
+   "evidence": "src/declare.jl:349-350; src/structure.jl:353-358"
+  },
+  {
+   "id": "L6d-035",
+   "file": "design/log.md",
+   "line": 5465,
+   "kind": "decl",
+   "claim": "D-143: the library ships `Constant{V}`",
+   "evidence": "src/library.jl:346"
+  },
+  {
+   "id": "L6d-036",
+   "file": "design/log.md",
+   "line": 5467,
+   "kind": "law",
+   "claim": "D-143: Constant is an ordinary component",
+   "evidence": "src/library.jl:10-12"
+  },
+  {
+   "id": "L6d-037",
+   "file": "design/log.md",
+   "line": 5467,
+   "kind": "law",
+   "claim": "D-143: Constant has no inputs",
+   "evidence": "src/library.jl:346-351"
+  },
+  {
+   "id": "L6d-038",
+   "file": "design/log.md",
+   "line": 5467,
+   "kind": "law",
+   "claim": "D-143: Constant has no state",
+   "evidence": "src/library.jl:349"
+  },
+  {
+   "id": "L6d-040",
+   "file": "design/log.md",
+   "line": 5469,
+   "kind": "mech",
+   "claim": "D-143: value type from the parameter, value held by the instance",
+   "evidence": "src/library.jl:346-348"
+  },
+  {
+   "id": "L6d-041",
+   "file": "design/log.md",
+   "line": 5469,
+   "kind": "mech",
+   "claim": "D-143: a stage-1 body returns the value",
+   "evidence": "src/library.jl:351; probe:143"
+  },
+  {
+   "id": "L6d-042",
+   "file": "design/log.md",
+   "line": 5470,
+   "kind": "ex",
+   "claim": "D-143: `Constant(Wrench()) → dynamics/wr_ext` (placeholder names)",
+   "evidence": "src/library.jl:346 (Constant(v)); `wr_ext` is a placeholder"
+  },
+  {
+   "id": "L6d-043",
+   "file": "design/log.md",
+   "line": 5475,
+   "kind": "law",
+   "claim": "D-143: the value is instance data; an external source is a root input",
+   "evidence": "src/library.jl:341-342"
+  },
+  {
+   "id": "L6d-044",
+   "file": "design/log.md",
+   "line": 5478,
+   "kind": "law",
+   "claim": "D-143: Constant's tier is stateless continuous",
+   "evidence": "src/library.jl:349"
+  },
+  {
+   "id": "L6d-046",
+   "file": "design/log.md",
+   "line": 5480,
+   "kind": "law",
+   "claim": "D-143: no discrete Constant variant",
+   "evidence": "src/library.jl:346 (the one Constant)"
+  },
+  {
+   "id": "L6d-047",
+   "file": "design/log.md",
+   "line": 5715,
+   "kind": "mech",
+   "claim": "D-147: two sweep variants compiled from one entry list",
+   "evidence": "src/executor.jl:568-571, 589-598"
+  },
+  {
+   "id": "L6d-048",
+   "file": "design/log.md",
+   "line": 5716,
+   "kind": "mech",
+   "claim": "D-147: the split by discreteness is static",
+   "evidence": "src/executor.jl:584-598"
+  },
+  {
+   "id": "L6d-049",
+   "file": "design/log.md",
+   "line": 5717,
+   "kind": "law",
+   "claim": "D-147: the interior sweep walks continuous entries only",
+   "evidence": "src/executor.jl:595; probe:131"
+  },
+  {
+   "id": "L6d-050",
+   "file": "design/log.md",
+   "line": 5718,
+   "kind": "mech",
+   "claim": "D-147: RK stage evaluations run the interior sweep",
+   "evidence": "src/model.jl:617-623"
+  },
+  {
+   "id": "L6d-051",
+   "file": "design/log.md",
+   "line": 5718,
+   "kind": "mech",
+   "claim": "D-147: localization guard probes run the interior sweep",
+   "evidence": "src/frame.jl:216, 262"
+  },
+  {
+   "id": "L6d-052",
+   "file": "design/log.md",
+   "line": 5721,
+   "kind": "law",
+   "claim": "D-147: the hot path carries no gating test",
+   "evidence": "src/executor.jl:574, 583; test/test_discrete.jl:51-54"
+  },
+  {
+   "id": "L6d-053",
+   "file": "design/log.md",
+   "line": 5722,
+   "kind": "mech",
+   "claim": "D-147: boundary sweep gates discrete entries by counter modulo",
+   "evidence": "src/executor.jl:516-523, 596-597"
+  },
+  {
+   "id": "L6d-054",
+   "file": "design/log.md",
+   "line": 5725,
+   "kind": "mech",
+   "claim": "D-147: the macro-sequence is the boundary sweep's sole caller",
+   "evidence": "src/model.jl:706-712, 735, 773"
+  },
+  {
+   "id": "L6d-060",
+   "file": "design/log.md",
+   "line": 5733,
+   "kind": "decl",
+   "claim": "D-147: the boundary arity is symmetric with `ticks(tick)`",
+   "evidence": "src/model.jl:663"
+  },
+  {
+   "id": "L6d-061",
+   "file": "design/log.md",
+   "line": 5734,
+   "kind": "mech",
+   "claim": "D-147: `rhs` is unchanged, zero-arg",
+   "evidence": "src/model.jl:621"
+  },
+  {
+   "id": "L6d-062",
+   "file": "design/log.md",
+   "line": 5734,
+   "kind": "law",
+   "claim": "D-147: each arity is asserted at the CI seam",
+   "evidence": "test/test_discrete.jl:959-963"
+  },
+  {
+   "id": "L6d-063",
+   "file": "design/log.md",
+   "line": 5735,
+   "kind": "mech",
+   "claim": "D-147: the due set is fixed once per boundary for every re-sweep",
+   "evidence": "src/model.jl:651-655, 735, 773"
+  },
+  {
+   "id": "L6d-065",
+   "file": "design/log.md",
+   "line": 5739,
+   "kind": "law",
+   "claim": "D-147: the due set is empty at t*",
+   "evidence": "src/frame.jl:307-317"
+  },
+  {
+   "id": "L6d-067",
+   "file": "design/log.md",
+   "line": 6325,
+   "kind": "law",
+   "claim": "D-163: separately compiled float outputs compare with a tolerance",
+   "evidence": "test/test_continuous.jl:16"
+  },
+  {
+   "id": "L6d-068",
+   "file": "design/log.md",
+   "line": 6665,
+   "kind": "law",
+   "claim": "D-168: root input type is the unique concrete consumer entry at nominal",
+   "evidence": "src/diagnostics.jl:486-496"
+  },
+  {
+   "id": "L6d-070",
+   "file": "design/log.md",
+   "line": 6667,
+   "kind": "law",
+   "claim": "D-168: a tolerance difference is no type conflict",
+   "evidence": "src/diagnostics.jl:489-492"
+  },
+  {
+   "id": "L6d-071",
+   "file": "design/log.md",
+   "line": 6669,
+   "kind": "law",
+   "claim": "D-168: cells pin at every activation if any consumer pins",
+   "evidence": "src/build.jl:521-532; probe:167"
+  },
+  {
+   "id": "L6d-072",
+   "file": "design/log.md",
+   "line": 6670,
+   "kind": "law",
+   "claim": "D-168: cells follow the scalar only when every consumer tolerates",
+   "evidence": "src/build.jl:531; probe:169"
+  },
+  {
+   "id": "L6d-073",
+   "file": "design/log.md",
+   "line": 7369,
+   "kind": "decl",
+   "claim": "D-185: the declaration method is `sample_times`",
+   "evidence": "src/declare.jl:514"
+  },
+  {
+   "id": "L6d-074",
+   "file": "design/log.md",
+   "line": 7370,
+   "kind": "decl",
+   "claim": "D-185: an entry is one (period, phase) pair as a wrapper type",
+   "evidence": "src/declare.jl:435-439, 473-476"
+  },
+  {
+   "id": "L6d-075",
+   "file": "design/log.md",
+   "line": 7371,
+   "kind": "decl",
+   "claim": "D-185: `Relative(K, Φ = 0)` in scope ticks",
+   "evidence": "src/declare.jl:439-441; probe:107"
+  },
+  {
+   "id": "L6d-076",
+   "file": "design/log.md",
+   "line": 7371,
+   "kind": "law",
+   "claim": "D-185: K ≥ 1 and 0 ≤ Φ < K",
+   "evidence": "src/structure.jl:331-333; probe:111"
+  },
+  {
+   "id": "L6d-077",
+   "file": "design/log.md",
+   "line": 7372,
+   "kind": "decl",
+   "claim": "D-185: `Absolute(·, τ = 0)` in exact rational seconds",
+   "evidence": "src/declare.jl:473-478; probe:108"
+  },
+  {
+   "id": "L6d-078",
+   "file": "design/log.md",
+   "line": 7372,
+   "kind": "law",
+   "claim": "D-185: period > 0 and 0 ≤ τ < period",
+   "evidence": "src/structure.jl:335-337"
+  },
+  {
+   "id": "L6d-080",
+   "file": "design/log.md",
+   "line": 7374,
+   "kind": "law",
+   "claim": "D-185: a float argument throws a teaching error naming the exact spelling",
+   "evidence": "src/declare.jl:479-484; probe:105"
+  },
+  {
+   "id": "L6d-081",
+   "file": "design/log.md",
+   "line": 7375,
+   "kind": "law",
+   "claim": "D-185: the wrappers are the whole value vocabulary",
+   "evidence": "src/structure.jl:326-329"
+  },
+  {
+   "id": "L6d-082",
+   "file": "design/log.md",
+   "line": 7376,
+   "kind": "law",
+   "claim": "D-185: an unlisted discrete child defaults to Relative(1)",
+   "evidence": "src/structure.jl:375-380; probe:115"
+  },
+  {
+   "id": "L6d-083",
+   "file": "design/log.md",
+   "line": 7376,
+   "kind": "law",
+   "claim": "D-185: validation is Stratum A's, with path attribution",
+   "evidence": "src/structure.jl:315-319; probe:111"
+  },
+  {
+   "id": "L6d-084",
+   "file": "design/log.md",
+   "line": 7377,
+   "kind": "law",
+   "claim": "D-185: the constructors are plain data carriers",
+   "evidence": "src/declare.jl:374-376; probe:106"
+  },
+  {
+   "id": "L6d-085",
+   "file": "design/log.md",
+   "line": 7450,
+   "kind": "law",
+   "claim": "D-186: Absolute declarations are legal in any scope",
+   "evidence": "src/structure.jl:322-345; probe:119"
+  },
+  {
+   "id": "L6d-086",
+   "file": "design/log.md",
+   "line": 7451,
+   "kind": "mech",
+   "claim": "D-186: an Absolute entry is an anchor severing its child from the grid",
+   "evidence": "src/structure.jl:409-418"
+  },
+  {
+   "id": "L6d-087",
+   "file": "design/log.md",
+   "line": 7453,
+   "kind": "law",
+   "claim": "D-186: an anchored child may outpace its scope",
+   "evidence": "src/declare.jl:452-454; src/structure.jl:418"
+  },
+  {
+   "id": "L6d-088",
+   "file": "design/log.md",
+   "line": 7457,
+   "kind": "mech",
+   "claim": "D-186: the bound schedule is printable",
+   "evidence": "src/show.jl:179-182"
+  },
+  {
+   "id": "L6d-089",
+   "file": "design/log.md",
+   "line": 8213,
+   "kind": "law",
+   "claim": "D-205: at boundary zero every discrete output stage runs",
+   "evidence": "src/executor.jl:524-526; src/model.jl:711-712; probe:125"
+  },
+  {
+   "id": "L6d-090",
+   "file": "design/log.md",
+   "line": 8214,
+   "kind": "law",
+   "claim": "D-205: it publishes from the authored s and the t₀ table",
+   "evidence": "src/model.jl:686-690"
+  },
+  {
+   "id": "L6d-091",
+   "file": "design/log.md",
+   "line": 8215,
+   "kind": "law",
+   "claim": "D-205: s_update stays gated by Φ at boundary zero",
+   "evidence": "src/model.jl:665; probe:125"
+  },
+  {
+   "id": "L6d-092",
+   "file": "design/log.md",
+   "line": 8215,
+   "kind": "law",
+   "claim": "D-205: an offset component's first consumed sample is its Φ tick's",
+   "evidence": "src/model.jl:692-695"
+  },
+  {
+   "id": "L6d-093",
+   "file": "design/log.md",
+   "line": 8216,
+   "kind": "law",
+   "claim": "D-205: no published cell holds the probe's values",
+   "evidence": "src/executor.jl:487-493"
+  },
+  {
+   "id": "L6d-094",
+   "file": "design/log.md",
+   "line": 8294,
+   "kind": "law",
+   "claim": "D-207: every endpoint names an immediate child and one face",
+   "evidence": "src/assembly.jl:283-298; probe:195"
+  },
+  {
+   "id": "L6d-098",
+   "file": "design/log.md",
+   "line": 8300,
+   "kind": "law",
+   "claim": "D-207: the generic-seam stop is the universal rule",
+   "evidence": "src/assembly.jl:286-290"
+  },
+  {
+   "id": "L6d-099",
+   "file": "design/log.md",
+   "line": 8302,
+   "kind": "law",
+   "claim": "D-207: the face graph is total",
+   "evidence": "src/assembly.jl:290-293; src/conditions.jl:625-629"
+  },
+  {
+   "id": "L6d-100",
+   "file": "design/log.md",
+   "line": 8303,
+   "kind": "mech",
+   "claim": "D-207: the Build retains the face graph, input side included",
+   "evidence": "src/structure.jl:197-201, 1082"
+  },
+  {
+   "id": "L6d-101",
+   "file": "design/log.md",
+   "line": 8304,
+   "kind": "law",
+   "claim": "D-207: an `at` prefix's `inputs` payload resolves at its level's faces",
+   "evidence": "src/conditions.jl:22-24"
+  },
+  {
+   "id": "L6d-102",
+   "file": "design/log.md",
+   "line": 8308,
+   "kind": "law",
+   "claim": "D-207: deep structural paths survive on the read side",
+   "evidence": "src/assembly.jl:274-277"
+  },
+  {
+   "id": "L6d-103",
+   "file": "design/log.md",
+   "line": 8353,
+   "kind": "law",
+   "claim": "D-208: the build accepts any component as root",
+   "evidence": "probe:160"
+  },
+  {
+   "id": "L6d-104",
+   "file": "design/log.md",
+   "line": 8353,
+   "kind": "law",
+   "claim": "D-208: root inputs are the root's input faces",
+   "evidence": "src/declare.jl:298-299; probe:160"
+  },
+  {
+   "id": "L6d-106",
+   "file": "design/log.md",
+   "line": 8356,
+   "kind": "mech",
+   "claim": "D-208: each root face traces through the face chain to leaf entries",
+   "evidence": "src/build.jl:527-531"
+  },
+  {
+   "id": "L6d-108",
+   "file": "design/log.md",
+   "line": 8360,
+   "kind": "law",
+   "claim": "D-208: root type is the consuming entry at the activation scalar",
+   "evidence": "src/build.jl:517-532"
+  },
+  {
+   "id": "L6d-109",
+   "file": "design/log.md",
+   "line": 8361,
+   "kind": "law",
+   "claim": "D-208: a primitive root's face is its own consuming entry",
+   "evidence": "probe:161 (paths [\"\"])"
+  },
+  {
+   "id": "L6d-110",
+   "file": "design/log.md",
+   "line": 8362,
+   "kind": "law",
+   "claim": "D-208: the primitive-root refusal is retired",
+   "evidence": "probe:160"
+  },
+  {
+   "id": "L6d-111",
+   "file": "design/log.md",
+   "line": 8363,
+   "kind": "law",
+   "claim": "D-208: an abstract input still cannot be built bare",
+   "evidence": "probe:161 (AbstractAtRoot)"
+  },
+  {
+   "id": "L6d-112",
+   "file": "design/log.md",
+   "line": 10048,
+   "kind": "mech",
+   "claim": "D-245: the classifier decides a cluster as one graph question",
+   "evidence": "src/tracer.jl:354-377"
+  },
+  {
+   "id": "L6d-113",
+   "file": "design/log.md",
+   "line": 10050,
+   "kind": "law",
+   "claim": "D-245: every wire holds",
+   "evidence": "src/tracer.jl:364-368"
+  },
+  {
+   "id": "L6d-114",
+   "file": "design/log.md",
+   "line": 10050,
+   "kind": "law",
+   "claim": "D-245: a hop holds iff the traced map routes face to port",
+   "evidence": "src/tracer.jl:344-352"
+  },
+  {
+   "id": "L6d-115",
+   "file": "design/log.md",
+   "line": 10051,
+   "kind": "law",
+   "claim": "D-245: real iff a cycle survives, artificial otherwise",
+   "evidence": "src/tracer.jl:373"
+  },
+  {
+   "id": "L6d-116",
+   "file": "design/log.md",
+   "line": 10053,
+   "kind": "law",
+   "claim": "D-245: every dead hop is listed under either verdict",
+   "evidence": "src/diagnostics.jl:1040-1052"
+  },
+  {
+   "id": "L6d-117",
+   "file": "design/log.md",
+   "line": 10054,
+   "kind": "law",
+   "claim": "D-245: each member records global, sampled or structural",
+   "evidence": "src/tracer.jl:324, 335, 339, 376"
+  },
+  {
+   "id": "L6d-118",
+   "file": "design/log.md",
+   "line": 10451,
+   "kind": "law",
+   "claim": "D-252: a declared output is produced by stage 1 or 2 only",
+   "evidence": "src/build.jl:162-165; probe:148"
+  },
+  {
+   "id": "L6d-120",
+   "file": "design/log.md",
+   "line": 10454,
+   "kind": "law",
+   "claim": "D-252: an unproduced declared output is DeclaredNotProduced on both tiers",
+   "evidence": "probe:148-149"
+  },
+  {
+   "id": "L6d-121",
+   "file": "design/log.md",
+   "line": 10455,
+   "kind": "law",
+   "claim": "D-252: ProducedByTwoStages carries the path and port",
+   "evidence": "src/diagnostics.jl:1055-1058; probe:150"
+  },
+  {
+   "id": "L6d-122",
+   "file": "design/log.md",
+   "line": 10456,
+   "kind": "mech",
+   "claim": "D-252: the producer column is gone",
+   "evidence": "src/diagnostics.jl:1055-1058"
+  },
+  {
+   "id": "L6d-123",
+   "file": "design/log.md",
+   "line": 10862,
+   "kind": "decl",
+   "claim": "D-258: the tick timing is `Schedule`",
+   "evidence": "src/deployment.jl:84"
+  },
+  {
+   "id": "L6d-126",
+   "file": "design/log.md",
+   "line": 12978,
+   "kind": "law",
+   "claim": "D-285: a bare `(;)` return is DeadStage, fail-fast",
+   "evidence": "src/build.jl:87, 1200; probe:142"
+  },
+  {
+   "id": "L6d-127",
+   "file": "design/log.md",
+   "line": 12980,
+   "kind": "mech",
+   "claim": "D-285: the stage-1 hand-down comes from the stage-1 probes",
+   "evidence": "src/build.jl:1185-1192"
+  },
+  {
+   "id": "L6d-128",
+   "file": "design/log.md",
+   "line": 12982,
+   "kind": "law",
+   "claim": "D-285: discrete probes carry the placeholder period 1.0",
+   "evidence": "src/build.jl:76; probe:145"
+  },
+  {
+   "id": "L6d-129",
+   "file": "design/log.md",
+   "line": 12983,
+   "kind": "law",
+   "claim": "D-285: the period is fabricated and probe-scoped like t",
+   "evidence": "src/build.jl:58-61, 109"
+  },
+  {
+   "id": "L6d-131",
+   "file": "design/log.md",
+   "line": 13082,
+   "kind": "law",
+   "claim": "D-287: a handler return's key set is checked first",
+   "evidence": "src/build.jl:1321-1331"
+  },
+  {
+   "id": "L6d-132",
+   "file": "design/log.md",
+   "line": 13082,
+   "kind": "law",
+   "claim": "D-287: an undeclared store key is a build error naming the stores",
+   "evidence": "src/build.jl:1317-1326; probe:154"
+  },
+  {
+   "id": "L6d-133",
+   "file": "design/log.md",
+   "line": 13085,
+   "kind": "law",
+   "claim": "D-287: a present x is complete against the state field set",
+   "evidence": "src/build.jl:1332-1334"
+  },
+  {
+   "id": "L6d-134",
+   "file": "design/log.md",
+   "line": 13086,
+   "kind": "mech",
+   "claim": "D-287: a struct port embeds by its cross-eltype constructor",
+   "evidence": "src/build.jl:154-157; src/leaves.jl:131-140"
+  },
+  {
+   "id": "L6d-135",
+   "file": "design/log.md",
+   "line": 13087,
+   "kind": "law",
+   "claim": "D-287: a missing constructor fails loudly with both types",
+   "evidence": "probe:155 (MethodError Pos{Dual}, Dual)"
+  },
+  {
+   "id": "L6d-136",
+   "file": "design/log.md",
+   "line": 13088,
+   "kind": "law",
+   "claim": "D-287: the conformance payload carries no branch",
+   "evidence": "src/diagnostics.jl:1109-1121"
+  },
+  {
+   "id": "L6d-137",
+   "file": "design/log.md",
+   "line": 13119,
+   "kind": "mech",
+   "claim": "D-288: phase bodies are stage-1, stage-2, x_deriv, s_update, events",
+   "evidence": "src/build.jl:1521-1612"
+  },
+  {
+   "id": "L6d-138",
+   "file": "design/log.md",
+   "line": 13122,
+   "kind": "mech",
+   "claim": "D-288: views are rebuilt per call",
+   "evidence": "src/executor.jl:116-128"
+  },
+  {
+   "id": "L6d-139",
+   "file": "design/log.md",
+   "line": 13122,
+   "kind": "mech",
+   "claim": "D-288: the framework maintains no hoisting",
+   "evidence": "src/executor.jl:116-128"
+  },
+  {
+   "id": "L6d-140",
+   "file": "design/log.md",
+   "line": 13124,
+   "kind": "mech",
+   "claim": "D-288: construction is type-opaque, from untyped buffers",
+   "evidence": "src/executor.jl:584-598; src/build.jl:1521"
+  },
+  {
+   "id": "L6d-141",
+   "file": "design/log.md",
+   "line": 13125,
+   "kind": "mech",
+   "claim": "D-288: the compiled tuple's one consumer is the unrolled walk",
+   "evidence": "src/executor.jl:584-585"
+  },
+  {
+   "id": "L6d-142",
+   "file": "design/log.md",
+   "line": 13128,
+   "kind": "mech",
+   "claim": "D-288: a discrete edit touches the boundary body, not the RHS body",
+   "evidence": "src/build.jl:1557-1569"
+  },
+  {
+   "id": "L6d-143",
+   "file": "design/log.md",
+   "line": 13130,
+   "kind": "mech",
+   "claim": "D-288: one gate serves the three tick-sensitive blocks",
+   "evidence": "src/build.jl:1519, 1533, 1545, 1568"
+  },
+  {
+   "id": "L6d-144",
+   "file": "design/log.md",
+   "line": 13130,
+   "kind": "law",
+   "claim": "D-288: due-ness is per component, per boundary, never per stage",
+   "evidence": "src/build.jl:1519"
+  },
+  {
+   "id": "L6d-145",
+   "file": "design/log.md",
+   "line": 13131,
+   "kind": "mech",
+   "claim": "D-288: at t* the empty due set is arity selection",
+   "evidence": "src/model.jl:709; src/frame.jl:317"
+  },
+  {
+   "id": "L6d-146",
+   "file": "design/log.md",
+   "line": 13133,
+   "kind": "mech",
+   "claim": "D-288: publication is not a phase body",
+   "evidence": "src/model.jl:512-516; probe:130"
+  },
+  {
+   "id": "L6d-148",
+   "file": "design/log.md",
+   "line": 13390,
+   "kind": "mech",
+   "claim": "D-292: registers are prior, last-observed sample, firing count",
+   "evidence": "src/executor.jl:302-321"
+  },
+  {
+   "id": "L6d-149",
+   "file": "design/log.md",
+   "line": 13391,
+   "kind": "law",
+   "claim": "D-292: boundary zero sets every prior to not-holding",
+   "evidence": "src/model.jl:332"
+  },
+  {
+   "id": "L6d-150",
+   "file": "design/log.md",
+   "line": 13392,
+   "kind": "law",
+   "claim": "D-292: a guard holding at t₀ fires there",
+   "evidence": "probe:175"
+  },
+  {
+   "id": "L6d-151",
+   "file": "design/log.md",
+   "line": 13393,
+   "kind": "law",
+   "claim": "D-292: budget exhaustion loses edges under FiringBudget naming it",
+   "evidence": "src/model.jl:750-760; src/diagnostics.jl:1634-1640"
+  },
+  {
+   "id": "L6d-152",
+   "file": "design/log.md",
+   "line": 13395,
+   "kind": "law",
+   "claim": "D-292: exhaustion degrades and never errors",
+   "evidence": "src/model.jl:755-758"
+  },
+  {
+   "id": "L6d-153",
+   "file": "design/log.md",
+   "line": 13395,
+   "kind": "law",
+   "claim": "D-292: termination is bounded by firing_budget · E",
+   "evidence": "src/model.jl:751, 765"
+  },
+  {
+   "id": "L6d-154",
+   "file": "design/log.md",
+   "line": 13398,
+   "kind": "law",
+   "claim": "D-292: no opt-in for same-round foreign visibility",
+   "evidence": "src/model.jl:744-771; src/deployment.jl:555-557"
+  },
+  {
+   "id": "L6d-155",
+   "file": "design/log.md",
+   "line": 13401,
+   "kind": "law",
+   "claim": "D-292: handler order is component order, then declaration order",
+   "evidence": "src/executor.jl:196-197; src/build.jl:1575-1590"
+  },
+  {
+   "id": "L6d-156",
+   "file": "design/log.md",
+   "line": 13403,
+   "kind": "mech",
+   "claim": "D-292: single-pass executor, no shadow table, no allocation",
+   "evidence": "src/executor.jl:383-394; test/test_executor.jl:197"
+  },
+  {
+   "id": "L6d-157",
+   "file": "design/log.md",
+   "line": 13405,
+   "kind": "law",
+   "claim": "D-292: no event/tick fixed point; ticks run after quiescence",
+   "evidence": "src/model.jl:645-655"
+  },
+  {
+   "id": "L6d-158",
+   "file": "design/log.md",
+   "line": 13535,
+   "kind": "law",
+   "claim": "D-297: contracts are functions of the type, an unchecked author rule",
+   "evidence": "src/declare.jl:850-855"
+  },
+  {
+   "id": "L6d-159",
+   "file": "design/log.md",
+   "line": 13537,
+   "kind": "law",
+   "claim": "D-297: ws_init is exempt, being by allocation",
+   "evidence": "src/declare.jl:132-140"
+  },
+  {
+   "id": "L6d-160",
+   "file": "design/log.md",
+   "line": 13539,
+   "kind": "law",
+   "claim": "D-297: partials enter through per-invocation seeding",
+   "evidence": "src/linearize.jl:191, 325"
+  },
+  {
+   "id": "L6d-161",
+   "file": "design/log.md",
+   "line": 13541,
+   "kind": "law",
+   "claim": "D-297: discrete producers pin wholesale",
+   "evidence": "src/declare.jl:795-810"
+  },
+  {
+   "id": "L6d-162",
+   "file": "design/log.md",
+   "line": 13542,
+   "kind": "law",
+   "claim": "D-297: Float64 initial values embed as zero-partial constants",
+   "evidence": "src/leaves.jl:314-317; src/conditions.jl:760"
+  },
+  {
+   "id": "L6d-163",
+   "file": "design/log.md",
+   "line": 13547,
+   "kind": "law",
+   "claim": "D-297: one walk rule; a Float64 at a participating leaf walks",
+   "evidence": "src/leaves.jl:281-286"
+  },
+  {
+   "id": "L6d-164",
+   "file": "design/log.md",
+   "line": 13548,
+   "kind": "decl",
+   "claim": "D-297: a pin is written as `Pinned`",
+   "evidence": "src/leaves.jl:250, 302"
+  },
+  {
+   "id": "L6d-165",
+   "file": "design/log.md",
+   "line": 13549,
+   "kind": "law",
+   "claim": "D-297: a store's letter is in the bundle only when non-empty",
+   "evidence": "src/declare.jl:858-864; probe:178"
+  },
+  {
+   "id": "L6d-166",
+   "file": "design/log.md",
+   "line": 13550,
+   "kind": "law",
+   "claim": "D-297: a concretely typed field is frozen without a contract entry",
+   "evidence": "src/leaves.jl:284"
+  },
+  {
+   "id": "L6d-167",
+   "file": "design/log.md",
+   "line": 13553,
+   "kind": "law",
+   "claim": "D-297: a leaf's port is public only by declaration",
+   "evidence": "src/build.jl:127-133"
+  },
+  {
+   "id": "L6d-168",
+   "file": "design/log.md",
+   "line": 13554,
+   "kind": "law",
+   "claim": "D-297: an assembly's face is public only by declaration",
+   "evidence": "src/declare.jl:290-299, 312-318"
+  },
+  {
+   "id": "L6d-169",
+   "file": "design/log.md",
+   "line": 15076,
+   "kind": "law",
+   "claim": "D-341: a bundle field is present iff its store or fact exists",
+   "evidence": "src/declare.jl:856-877; probe:178-180"
+  },
+  {
+   "id": "L6d-170",
+   "file": "design/log.md",
+   "line": 15077,
+   "kind": "law",
+   "claim": "D-341: an undeclared store is absent, never nothing-filled",
+   "evidence": "src/declare.jl:840-844; probe:178"
+  },
+  {
+   "id": "L6d-171",
+   "file": "design/log.md",
+   "line": 15077,
+   "kind": "law",
+   "claim": "D-341: `t` is always present",
+   "evidence": "src/declare.jl:875"
+  },
+  {
+   "id": "L6d-172",
+   "file": "design/log.md",
+   "line": 15078,
+   "kind": "law",
+   "claim": "D-341: `Δt` only on the discrete tier",
+   "evidence": "src/declare.jl:876; probe:178-179"
+  },
+  {
+   "id": "L6d-173",
+   "file": "design/log.md",
+   "line": 15078,
+   "kind": "law",
+   "claim": "D-341: `ws` iff ws_init is declared",
+   "evidence": "src/declare.jl:874, 879"
+  },
+  {
+   "id": "L6d-174",
+   "file": "design/log.md",
+   "line": 15080,
+   "kind": "law",
+   "claim": "D-341: one closed name set per function per tier",
+   "evidence": "src/declare.jl:900-908"
+  },
+  {
+   "id": "L6d-175",
+   "file": "design/log.md",
+   "line": 15082,
+   "kind": "mech",
+   "claim": "D-341: FieldError matched against the bundle's own type",
+   "evidence": "src/declare.jl:985-990"
+  },
+  {
+   "id": "L6d-176",
+   "file": "design/log.md",
+   "line": 15083,
+   "kind": "law",
+   "claim": "D-341: the diagnostic offers the legal names",
+   "evidence": "src/declare.jl:988; src/diagnostics.jl:1213-1214"
+  },
+  {
+   "id": "L6d-177",
+   "file": "design/log.md",
+   "line": 15084,
+   "kind": "mech",
+   "claim": "D-341: no message text is scraped",
+   "evidence": "src/declare.jl:985"
+  },
+  {
+   "id": "L6d-178",
+   "file": "design/log.md",
+   "line": 15084,
+   "kind": "law",
+   "claim": "D-341: the bundle stays a bare NamedTuple",
+   "evidence": "src/build.jl:117"
+  },
+  {
+   "id": "L6d-179",
+   "file": "design/log.md",
+   "line": 15086,
+   "kind": "law",
+   "claim": "D-341: the legal set narrows in three levels",
+   "evidence": "src/declare.jl:898-899"
+  },
+  {
+   "id": "L6d-180",
+   "file": "design/log.md",
+   "line": 15088,
+   "kind": "law",
+   "claim": "D-341: positional stage signatures are closed",
+   "evidence": "src/declare.jl:768, 979-983"
+  },
+  {
+   "id": "L6d-181",
+   "file": "design/log.md",
+   "line": 15088,
+   "kind": "law",
+   "claim": "D-341: keyword arguments read by reflection are closed",
+   "evidence": "src/declare.jl:979-983; no kwarg_decl in src/"
+  },
+  {
+   "id": "L6d-182",
+   "file": "design/log.md",
+   "line": 15089,
+   "kind": "law",
+   "claim": "D-341: keyword slurping is closed",
+   "evidence": "src/declare.jl:979-983"
+  },
+  {
+   "id": "L6d-183",
+   "file": "design/log.md",
+   "line": 15089,
+   "kind": "law",
+   "claim": "D-341: padding an undeclared store is closed in args and returns",
+   "evidence": "src/declare.jl:858-864; src/build.jl:1321-1326"
+  },
+  {
+   "id": "L6d-184",
+   "file": "design/log.md",
+   "line": 15092,
+   "kind": "law",
+   "claim": "D-341: a handler return is checked per key",
+   "evidence": "src/build.jl:1312-1350"
+  },
+  {
+   "id": "L6d-186",
+   "file": "design/log.md",
+   "line": 15093,
+   "kind": "law",
+   "claim": "D-341: a present m passes the names-subset predicate",
+   "evidence": "src/build.jl:1346-1360; src/executor.jl:425-447"
+  },
+  {
+   "id": "L6d-187",
+   "file": "design/log.md",
+   "line": 15095,
+   "kind": "law",
+   "claim": "D-341: no per-output dependency declarations",
+   "evidence": "src/declare.jl:747-750"
+  },
+  {
+   "id": "L6d-188",
+   "file": "design/log.md",
+   "line": 15117,
+   "kind": "law",
+   "claim": "D-342: the stage name states its dependence class",
+   "evidence": "src/declare.jl:901-902"
+  },
+  {
+   "id": "L6d-189",
+   "file": "design/log.md",
+   "line": 15120,
+   "kind": "law",
+   "claim": "D-342: output stages are pure; no framework cache to outputs",
+   "evidence": "src/declare.jl:145-146"
+  },
+  {
+   "id": "L6d-190",
+   "file": "design/log.md",
+   "line": 15129,
+   "kind": "law",
+   "claim": "D-342: a reset honored only in s_update is one tick late",
+   "evidence": "src/library.jl:575-578, 609"
+  },
+  {
+   "id": "L6d-191",
+   "file": "design/log.md",
+   "line": 15132,
+   "kind": "law",
+   "claim": "D-342: the update law does not republish from s⁺",
+   "evidence": "src/model.jl:645-655"
+  },
+  {
+   "id": "L6d-192",
+   "file": "design/log.md",
+   "line": 15164,
+   "kind": "law",
+   "claim": "D-343: the hint offers both exits, for traced continuous members",
+   "evidence": "src/diagnostics.jl:1027-1035; src/tracer.jl:316-326"
+  },
+  {
+   "id": "L6d-193",
+   "file": "design/log.md",
+   "line": 15168,
+   "kind": "law",
+   "claim": "D-343: implicit delays and per-step loop solving are closed",
+   "evidence": "src/build.jl:277; src/diagnostics.jl:1037-1038"
+  },
+  {
+   "id": "L6d-194",
+   "file": "design/log.md",
+   "line": 15169,
+   "kind": "law",
+   "claim": "D-343: the trace speaks only for the branch taken",
+   "evidence": "src/diagnostics.jl:1048-1050; src/tracer.jl:331-333"
+  },
+  {
+   "id": "L6d-195",
+   "file": "design/log.md",
+   "line": 15170,
+   "kind": "law",
+   "claim": "D-343: the framework neither splits nor narrows",
+   "evidence": "src/tracer.jl:268-272"
+  },
+  {
+   "id": "L6d-196",
+   "file": "design/log.md",
+   "line": 15172,
+   "kind": "law",
+   "claim": "D-343: a face with no walking leaf traces structurally",
+   "evidence": "src/tracer.jl:313-326"
+  },
+  {
+   "id": "L6d-197",
+   "file": "design/log.md",
+   "line": 15295,
+   "kind": "mech",
+   "claim": "D-347: evaluating the RHS runs the sweep, then the flow",
+   "evidence": "src/model.jl:617-623"
+  },
+  {
+   "id": "L6d-199",
+   "file": "design/log.md",
+   "line": 15322,
+   "kind": "law",
+   "claim": "D-348: a unit delay moves the signal to the discrete tier with a ZOH",
+   "evidence": "src/library.jl:369-372"
+  },
+  {
+   "id": "L6d-200",
+   "file": "design/log.md",
+   "line": 15324,
+   "kind": "law",
+   "claim": "D-348: the cycle diagnostic states the caveat",
+   "evidence": "src/diagnostics.jl:1037-1038"
+  },
+  {
+   "id": "L6d-201",
+   "file": "design/log.md",
+   "line": 18820,
+   "kind": "mech",
+   "claim": "D-447: a fresh table's first RHS evaluation runs x_deriv alone",
+   "evidence": "src/model.jl:625-632"
+  },
+  {
+   "id": "L6d-202",
+   "file": "design/log.md",
+   "line": 18824,
+   "kind": "law",
+   "claim": "D-447: the table is fresh after every boundary inside a frame",
+   "evidence": "src/frame.jl:154, 172, 329"
+  },
+  {
+   "id": "L6d-203",
+   "file": "design/log.md",
+   "line": 18825,
+   "kind": "law",
+   "claim": "D-447: at a frame top fresh iff the drain wrote nothing",
+   "evidence": "src/frame.jl:91-93; src/sim.jl:2021-2024"
+  },
+  {
+   "id": "L6d-204",
+   "file": "design/log.md",
+   "line": 18826,
+   "kind": "law",
+   "claim": "D-447: an advance's first frame counts as written",
+   "evidence": "src/frame.jl:74-77, 93"
+  },
+  {
+   "id": "L6d-205",
+   "file": "design/log.md",
+   "line": 18827,
+   "kind": "mech",
+   "claim": "D-447: freshness lives on the framework side of the seam",
+   "evidence": "src/model.jl:625-632"
+  },
+  {
+   "id": "L6d-207",
+   "file": "design/log.md",
+   "line": 18830,
+   "kind": "law",
+   "claim": "D-447: settled! writes nothing into the model (unenforced)",
+   "evidence": "src/model.jl:174-176, 194-202; src/sim.jl:2045-2047"
+  },
+  {
+   "id": "L6d-208",
+   "file": "design/log.md",
+   "line": 18831,
+   "kind": "law",
+   "claim": "D-447: a writing hook writes at the frame top and reports it",
+   "evidence": "src/model.jl:200-204; src/sim.jl:2021-2024"
+  },
+  {
+   "id": "L6d-209",
+   "file": "design/log.md",
+   "line": 19251,
+   "kind": "law",
+   "claim": "D-453: the term block retires from the library",
+   "evidence": "probe:207"
+  },
+  {
+   "id": "L6d-210",
+   "file": "design/log.md",
+   "line": 19256,
+   "kind": "decl",
+   "claim": "D-453: the library is Redstone.Library in src/library.jl",
+   "evidence": "src/library.jl:1; src/Redstone.jl:36"
+  },
+  {
+   "id": "L6d-211",
+   "file": "design/log.md",
+   "line": 19257,
+   "kind": "decl",
+   "claim": "D-453: five abstract parents take the `Abstract` prefix",
+   "evidence": "src/library.jl:1037, 1326, 2330, 2374, 2735; probe:208"
+  },
+  {
+   "id": "L6d-212",
+   "file": "design/log.md",
+   "line": 19260,
+   "kind": "law",
+   "claim": "D-453: no aliases and no deprecation shims",
+   "evidence": "probe:207"
+  }
+ ],
+ "counts": {
+  "law": 137,
+  "mech": 43,
+  "decl": 31,
+  "ex": 1,
+  "ptr": 15,
+  "why": 24,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ },
+ "notes": "The slice is the 30 ratified entries of L6d.txt. I read each Status line and Position section in W at cb398676. I ran one probe script three times, the last two after fixing parentheses. The script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6d/probe.jl, and every probe:N cites a line of it. It includes W's test/imports.jl and test/fixtures.jl. I edited no tracked file.\n\nResults: 212 listed claims. 28 are findings, 2 are unverifiable, the rest ok. Every finding is drift except none: no deviation or defect turned up.\n- 20 are renamed identifiers whose rename a later entry records: faces, Merged/merge, output_types (x2), connections, h_x/h_xu/h_z/h_zu, sweep_hx/sweep_hxu (x3), RootSlotTypeConflict, Period/Hz, the three *_connections, input_connections keys, input_types, output_state, Dataflow, stop_on.\n- 8 are rules a later entry moved:\n  - D-065's locality clause, moved by D-207 and D-414.\n  - D-143's `(out = V,)`, now bare `Pinned{V}` under D-312 and D-437.\n  - D-147's due set at a frame top (D-445) and at boundary zero (D-205).\n  - D-285's 'non-NamedTuple fails at the probe', narrowed by D-437 to named contracts. No D-285 annotation records this.\n  - D-347's 'never x_deriv-only', amended by D-447.\n  - D-447's 'a hook that does not report counts as written', superseded by D-452 per the annotation at log.md:18851.\n\nLeads: `Abstract` (19257) is the prefix itself, ok in L6d-211. `wr_ext` (5470) is a placeholder, ok in L6d-042. `ballocated` (5730) is test-only BenchmarkTools, ok, and is noted in L6d-058. Every other lead is one of the findings above.\n\nCitations: every D-nnn and § cited in the slice's Positions resolves. The supersession chains end at ratified entries: D-009 → D-207, D-169 → D-252, and D-152 → D-154 for D-252's sequence clause.\n\nTwo points for the verifier:\n- L6d-135: a struct port with no cross-eltype constructor fails at a Dual activation as a raw MethodError(Pos{Dual}, (Dual,)) from `activation()`, not as a framed diagnostic. I marked it ok, since the failure is loud and names both types.\n- L6d-190: the library's DiscreteIntegrator and DiscreteLimitedIntegrator honour `reset` in s_update only, one tick late. Their docstrings state this. D-342 calls that legal where meant but never the idiom, so it is not a finding."
+}

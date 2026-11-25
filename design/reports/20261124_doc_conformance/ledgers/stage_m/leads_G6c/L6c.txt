@@ -1,0 +1,73 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-120: 4128-4154
+D-137: 4953-5036
+D-139: 5133-5230
+D-140: 5231-5291
+D-194: 7734-7810
+D-206: 8257-8289
+D-237: 9713-9775
+D-243: 9974-10009
+D-276: 12474-12604
+D-296: 13502-13527
+D-302: 13703-13730
+D-316: 14382-14516
+D-344: 15187-15223
+D-346: 15262-15290
+D-363: 15456-15492
+D-364: 15493-15540
+D-437: 18128-18251
+D-005: 547-562
+D-006: 563-587
+D-012: 667-697
+D-015: 737-758
+D-035: 1318-1350
+D-048: 1706-1731
+D-074: 2550-2586
+D-075: 2587-2623
+D-086: 2942-2979
+D-089: 3041-3066
+D-100: 3385-3419
+D-125: 4304-4346
+D-131: 4520-4571
+
+# Stage M leads
+names missing: `Private` at log.md:7757 (D-194)
+names missing: `Private` at log.md:7760 (D-194)
+names missing: `RootSlotTypeConflict` at log.md:8270 (D-206)
+names missing: `SampleTerrainField` at log.md:4133 (D-120)
+names missing: `SimpleAtmosphere` at log.md:5139 (D-139)
+names missing: `StopFaceInvalid` at log.md:14440 (D-316)
+names missing: `T_sl` at log.md:5139 (D-139)
+names missing: `UninitializedSlots` at log.md:8269 (D-206)
+names missing: `atmospheric_field` at log.md:5139 (D-139)
+names missing: `bare_at_root` at log.md:18159 (D-437)
+names missing: `fragment` at log.md:8267 (D-206)
+names missing: `get_slot` at log.md:8268 (D-206)
+names missing: `h_x` at log.md:567 (D-006)
+names missing: `h_x` at log.md:1327 (D-035)
+names missing: `h_x` at log.md:1715 (D-048)
+names missing: `h_x` at log.md:2592 (D-075)
+names missing: `h_xu` at log.md:568 (D-006)
+names missing: `h_xu` at log.md:1323 (D-035)
+names missing: `h_xu` at log.md:2592 (D-075)
+names missing: `h_z` at log.md:1327 (D-035)
+names missing: `h_z` at log.md:2592 (D-075)
+names missing: `h_zu` at log.md:1323 (D-035)
+names missing: `h_zu` at log.md:2592 (D-075)
+names missing: `output_types` at log.md:7744 (D-194)
+names missing: `p_sl` at log.md:5139 (D-139)
+names missing: `q_eb` at log.md:12481 (D-276)
+names missing: `slots` at log.md:8266 (D-206)
+names missing: `stop_on` at log.md:14420 (D-316)
+names missing: `stop_on` at log.md:14440 (D-316)
+names missing: `stop_on` at log.md:14444 (D-316)
+names missing: `stop_on` at log.md:14445 (D-316)
+names missing: `unlisted` at log.md:15466 (D-363)
+names missing: `y_xu` at log.md:2593 (D-075)
+names missing: `y_z` at log.md:2593 (D-075)
+names missing: `y_zu` at log.md:2593 (D-075)
+names missing: `ω_eb_b` at log.md:12481 (D-276)
+names no_binding: `Redstone.Blocks` at log.md:14412 (D-316)
+names test-only: `flag` at log.md:14414 (D-316)
+names test-only: `integrator` at log.md:18153 (D-437)
+names test-only: `request` at log.md:14414 (D-316)

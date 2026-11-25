@@ -87,6 +87,16 @@ the tools.
   still says "device-tagged drained batches". src/model.jl's `port`,
   `state` and `modes` cite §7.3 where Appendix B treats them. §11.5's frame
   gloss and §11.1's drain gloss are looser than S11a-005 and S11c-001.
+- **G6, §1 to §7, in four runs at `cb398676`.** G6a (`wf_b7024282-284`,
+  1.42M tokens), G6b (`wf_00c39d21-47c`, 1.33M), G6c (`wf_e46d127c-5eb`,
+  1.81M) and G6d (`wf_564bfed9-e06`, 1.19M), 38 agents in all. One fixer
+  took the 33 clear rows, which landed as `a92cd48b`. Many of the user's
+  rows from G6b are figures the verifiers re-measured in the companions.
+- **Seen by G6's fixer, not yet fixed.** §2's roadmap and §8.1 still say
+  every primitive has two output stages. library_inventory.md, near line
+  140, cites §7.1 where §8.2 holds the claim. pid_anti_windup.md section 9
+  says "same ports", false since `DiscretePID` publishes `saturated`.
+- **Next.** G7, on its timer, from `probes/coord/g7.py` at a fresh pin.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

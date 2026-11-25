@@ -1,0 +1,347 @@
+{
+ "judgments": [
+  {
+   "id": "L6a-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:531-534: StateEvent's guard return type picks one of two detection policies, a Bool guard non-localized and a Float64 guard localized. Probe P12: events.localized == [1, 0] for a Float64 guard and a Bool guard. The doc's 'two-tier events' matches; D-448 renamed the first tier from 'boundary-detected' to 'non-localized', which does not change the claim."
+  },
+  {
+   "id": "L6a-010",
+   "conforms": true,
+   "evidence": "src/frame.jl:291-297: ẋₙ₊₁ is evaluated only after the θ = 0 validation leaves a trigger standing (lines 266-289). dense! is called only for trials and t* (src/frame.jl:316, :342), and an epoch-caused trigger returns before the derivative is paid (src/frame.jl:284-289)."
+  },
+  {
+   "id": "L6a-019",
+   "conforms": true,
+   "evidence": "src/frame.jl:212-227: the budget counts localizations (t* boundaries) in the frame against deployment.localization_budget, and exhaustion degrades with a ChatteringBudget report and no throw. No wall-clock quantity enters the loop."
+  },
+  {
+   "id": "L6a-028",
+   "conforms": true,
+   "evidence": "src/declare.jl:426-428 and :435-443: Relative(D, Φ) takes integers only, and the build refuses D < 1. Probe P3: Relative(0) under sample_times is refused at build as RatesViolation :multiplier."
+  },
+  {
+   "id": "L6a-030",
+   "conforms": true,
+   "evidence": "src/structure.jl:913-917 (_timing_counts) and src/deployment.jl:296-305: the composed multipliers become one absolute base-tick divisor D per schedule row. Probe P3: Relative(2) inside Relative(3) yields the row (\"inner/a\", 6, 0)."
+  },
+  {
+   "id": "L6a-035",
+   "conforms": false,
+   "evidence": "src/model.jl:738-779 (event_phase!): each round evaluates every guard once (_guards!, :749), fires handlers in declaration order with at most one per component per round, then re-sweeps (_round!, :777). No per-event re-decode happens. The D-020 annotation at design/log.md:920-922 records the removal (D-154).",
+   "class": "drift",
+   "fix": "Boundary event phase iterates to quiescence: rounds of full re-sweep → guards → handlers (declaration order, at most one firing per component per round).",
+   "clear": false,
+   "note": "D-154 removed the per-event re-decode. Under log_rules.md rule 2 the fix may belong in the existing annotation rather than the Position."
+  },
+  {
+   "id": "L6a-036",
+   "conforms": false,
+   "evidence": "src/model.jl:752-766: an event may fire again in a later round while events.count[i] < firing_budget (default 4). Probe P2: the two toggling events of a Chatterer fire 8 times at boundary zero. The D-020 annotation at design/log.md:920-922 records the change (D-181).",
+   "class": "drift",
+   "fix": "each event firing at most `firing_budget` times per boundary, with further edges lost under a `FiringBudget` warning",
+   "clear": true
+  },
+  {
+   "id": "L6a-040",
+   "conforms": true,
+   "evidence": "src/sim.jl:2021-2023: the frame_top! hook advances the frame and runs drain!. src/frame.jl:84-86: the drain runs at the frame top, before the model touches any state. src/sim.jl:2656-2681: each staged cell is taken by one swap and applied."
+  },
+  {
+   "id": "L6a-049",
+   "conforms": true,
+   "evidence": "src/store.jl:105-129 (scatter_group!): the write is a generated type test against the cell type, which either emits straight stores or a ConformanceFailure throw. src/leaves.jl:352-361 (_accepts): nothing converts, and the only lift is Float64 to T where the cell has T."
+  },
+  {
+   "id": "L6a-058",
+   "conforms": false,
+   "evidence": "src/diagnostics.jl:1101-1121: the ConformanceFailure payload has no time field, and its docstring says the simulation time rides the StepError carrier (src/diagnostics.jl:245-248, field t). The D-053 annotation at design/log.md:1830-1831 records the move (D-249).",
+   "class": "drift",
+   "fix": "failure = path + stage + field diff, with the boundary time on the `StepError` carrier, reproducible by trace replay",
+   "clear": true
+  },
+  {
+   "id": "L6a-059",
+   "conforms": true,
+   "evidence": "src/leaves.jl:352-354: at the nominal activation T = Float64, a Float64 cell accepts only a Float64 value, so the test is an exact match. At a non-nominal T, a Float64 value is accepted where the cell has T, as a zero-partial embedding (comment at src/leaves.jl:333-338)."
+  },
+  {
+   "id": "L6a-068",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:49 and :79: ModelState carries `prior`, and restore copies it back (src/checkpoint.jl:123-124). Probe P9: the ModelState fields include :prior, and checkpoint(sim.model).prior == Bool[1, 0]. The D-082 annotation at design/log.md:2834-2837 records the change (D-274).",
+   "class": "drift",
+   "fix": "detection bookkeeping, not model memory: not in `z`, carried by every checkpoint, the trace header included, and copied back by `restore!`",
+   "clear": true
+  },
+  {
+   "id": "L6a-069",
+   "conforms": false,
+   "evidence": "src/sim.jl:1007-1011: the warm restart (restore!) runs no boundary zero and resets no prior, because the prior is copied back from the checkpoint (src/checkpoint.jl:123-124). Spec §12.6 (design/spec.md:10616-10617) defines the warm restart as checkpoint → restore! → run!. The D-082 annotation at design/log.md:2834-2837 records the change (D-274).",
+   "class": "drift",
+   "fix": "restored from the checkpoint on warm restart, and rebuilt at boundary zero on a re-run from a condition",
+   "clear": true
+  },
+  {
+   "id": "L6a-071",
+   "conforms": false,
+   "evidence": "src/sim.jl:1216-1221: replay is the ordinary loop with exactly one substitution. It restores the trace header as restore! does, and no boundary zero runs. src/sim.jl:2647-2651 and :2666: the drain fed by the recording is the one substitution. The D-101 annotation at design/log.md:3449-3452 records the change (D-274).",
+   "class": "drift",
+   "fix": "Replay: `replay!(sim, trace(sim0); to_boundary)` is the ordinary loop with exactly one substitution, the frame-top drain fed by the recording's batches keyed by frame ordinal; it starts from the trace header as `restore!` does, and no boundary zero runs.",
+   "clear": true
+  },
+  {
+   "id": "L6a-070",
+   "conforms": true,
+   "evidence": "src/sim.jl:1334-1337: replay!(sim::Simulation, trc::Trace; to_boundary = nothing, ...). src/sim.jl:3015: trace(sim) returns the recording. The extra keywords do not contradict the doc's call."
+  },
+  {
+   "id": "L6a-080",
+   "conforms": true,
+   "evidence": "PIVector is not in W (probe P1: isdefined(Redstone, :PIVector) is false). It is a Flight.jl block that the migration will reimplement (design/companions/migration_outline.md:71-78). No pending.md bullet owes it, and nothing in W contradicts the plan. The shipped pattern matches it: src/library.jl:956-965, where Integrator(; reset) owns its reset as a state event.",
+   "note": "Unverifiable in W. Earlier rounds ruled the same way: G2a K8-050 and G5b K11-003 were overturned as conforming."
+  },
+  {
+   "id": "L6a-081",
+   "conforms": true,
+   "evidence": "PIVector is absent from W. The same shape ships at src/library.jl:450-451 and :956-965: with reset = true, Integrator adds the Bool input `reset` (reset_ports) and one StateEvent :reset.",
+   "note": "Unverifiable for PIVector itself. Nothing contradicts it."
+  },
+  {
+   "id": "L6a-082",
+   "conforms": true,
+   "evidence": "src/library.jl:450 and :965: the default form has u_types V and no state_events method (the declare.jl:571 default is (;)). This is the Integrator analogue, since PIVector is not in W.",
+   "note": "Unverifiable for PIVector itself."
+  },
+  {
+   "id": "L6a-083",
+   "conforms": false,
+   "evidence": "The declaration the doc names is `x_init` in W (src/declare.jl:75). Probe P1: isdefined(Redstone, :init_x) is false. The analogue's handler writes the declared initial value (src/library.jl:964, reset_handler returns (x = c.x0,), and x_init(c) = c.x0 at :958). D-267 (design/log.md:11631) records the rename `init_x` → `x_init`.",
+   "class": "drift",
+   "fix": "rising edge → reset to the declared `x_init` values",
+   "clear": true,
+   "note": "PIVector is not in W, so only the name drifts. The reset-to-declared-initial-values policy matches the shipped Integrator. Under log_rules.md rule 2 the log keeps the vocabulary of its day, so this may be closed as a by-design historical spelling."
+  },
+  {
+   "id": "L6a-084",
+   "conforms": true,
+   "evidence": "src/library.jl:454 and :964-965: the analogue's reset is StateEvent(reset_guard, reset_handler), an ordinary non-localized guard/handler event. PIVector is not in W.",
+   "note": "Unverifiable for PIVector itself."
+  },
+  {
+   "id": "L6a-085",
+   "conforms": true,
+   "evidence": "No strut or frc exists in src/, test/ or examples/ (rg). The gear is the future Flight.jl migration, and spec §5.3 (design/spec.md:1546-1548) states the same wiring. Nothing in W contradicts it.",
+   "note": "Unverifiable in W."
+  },
+  {
+   "id": "L6a-086",
+   "conforms": true,
+   "evidence": "src/declare.jl:530-534: there is no detection keyword, and the guard's return type declares the policy (Bool non-localized, Float64 localized). Probe P12: localized == [1, 0]."
+  },
+  {
+   "id": "L6a-090",
+   "conforms": false,
+   "evidence": "src/declare.jl:715: the declaration is `x_deriv`. Probe P1: isdefined(Redstone, :state_derivative) is false. D-267 (design/log.md:11634) records the rename to `x_derivative`, and its 2026-10-01 annotation (design/log.md:11708) shortens it to `x_deriv` (D-279).",
+   "class": "drift",
+   "fix": "`f` → `x_deriv`",
+   "clear": true,
+   "note": "log_rules.md rule 2 keeps the vocabulary of the day in old entries, and the D-220 annotation at log.md:8991 already points forward."
+  },
+  {
+   "id": "L6a-091",
+   "conforms": false,
+   "evidence": "src/declare.jl:740: the declaration is `s_update`. Probe P1: isdefined(Redstone, :state_update) is false. D-267 (design/log.md:11634-11635) records the rename.",
+   "class": "drift",
+   "fix": "`g` → `s_update`",
+   "clear": true
+  },
+  {
+   "id": "L6a-092",
+   "conforms": false,
+   "evidence": "src/declare.jl:653 and :685: the stages are `y_state` and `y_direct`. Probe P1: output_state and output_direct are undefined. D-267 (design/log.md:11635-11636) records the rename.",
+   "class": "drift",
+   "fix": "`h_x` and `h_s` → `y_state`; `h_xu` and `h_su` → `y_direct`",
+   "clear": true
+  },
+  {
+   "id": "L6a-094",
+   "conforms": false,
+   "evidence": "src/declare.jl:580 and :599: the declaration is x_projection(c, x), with the state passed positionally. Probe P1: state_projection is undefined. D-267 (design/log.md:11634) records the rename.",
+   "class": "drift",
+   "fix": "`project` → `x_projection`, positional shape unchanged",
+   "clear": true
+  },
+  {
+   "id": "L6a-097",
+   "conforms": false,
+   "evidence": "src/declare.jl:131-150: the declaration is ws_init(c, ::Type{T}) on both tiers, and a discrete allocator receives Float64. Probe P1: init_workspace is undefined. The D-220 annotations at design/log.md:8986-8991 record both the dropped arity split (D-263) and the rename (D-267).",
+   "class": "drift",
+   "fix": "`workspace` → `ws_init`, taking the scalar on both tiers: `(::C, ::Type{T})`",
+   "clear": true
+  },
+  {
+   "id": "L6a-100",
+   "conforms": false,
+   "evidence": "src/declare.jl:75, :103, :127, :185, :223, :308, :328: the declarations are x_init, s_init, m_init, u_types, y_types, input_wires and output_wires, plus local_wires (src/declare.jl:261). Probe P1: init_x, init_s, init_m, input_types and output_types are undefined. D-267 (design/log.md:11631-11633) records the first renames, and D-303 and D-314 (log.md:11713) record the connection declarations.",
+   "class": "drift",
+   "fix": "What stays: every bundle field; the `guard`/`handler` halves; `sample_times`; ... (`init_x`, `init_s`, `init_m`, `input_types`, `output_types` became `x_init`, `s_init`, `m_init`, `u_types`, `y_types` under D-267, and the connection declarations are `local_wires`, `input_wires` and `output_wires`)",
+   "clear": false
+  },
+  {
+   "id": "L6a-101",
+   "conforms": true,
+   "evidence": "src/declare.jl:514: sample_times(::Any) = (;). Probe P1: isdefined(Redstone, :sample_times) is true."
+  },
+  {
+   "id": "L6a-107",
+   "conforms": false,
+   "evidence": "src/assembly.jl:708-718 (check_stores, called from the structural walk at src/structure.jl:553): every field of s_init and m_init is checked, and a failure is reported as IllegalStoreField with store :s_init or :m_init (src/diagnostics.jl:970-974). The behaviour conforms. Only the declaration names drift, and D-267 (design/log.md:11631) records the rename.",
+   "class": "drift",
+   "fix": "Stratum A checks every `s_init`/`m_init` field, reporting `IllegalStoreField`.",
+   "clear": true,
+   "note": "The behaviour matches. Under log_rules.md rule 2 the old spelling may be by design."
+  },
+  {
+   "id": "L6a-111",
+   "conforms": true,
+   "evidence": "src/declare.jl:545-548: StateEvent holds only guard and handler, with no direction keyword. src/model.jl:753: an event fires only on a not-holding → holding edge, so the opposite crossing needs a second event with the negated guard."
+  },
+  {
+   "id": "L6a-114",
+   "conforms": false,
+   "evidence": "src/frame.jl:127-142: a fixed-step method takes each span between mandatory instants in steps = ⌈units / h_max⌉ equal steps, and nothing requires h to divide Δt_frame. src/deployment.jl:357 and :368: RK4() and Heun() carry no step. The D-444 annotation at design/log.md:18690-18695 records the change (D-449).",
+   "class": "drift",
+   "fix": "A fixed-step method takes each span between two mandatory instants in the fewest equal steps `h_max` allows, and a due instant that falls inside a step ends the step there.",
+   "clear": true
+  },
+  {
+   "id": "L6a-116",
+   "conforms": false,
+   "evidence": "src/frame.jl:127-142: the loop advances span by span to the next mandatory instant, the frame top or the next due instant, and an interior step end's clock comes from the span's exact start (_instant). There are no step points j·h. The D-444 annotation at design/log.md:18690-18695 records the change (D-449).",
+   "class": "drift",
+   "fix": "The frame tops and the due instants are the mandatory instants; the loop takes each span from one to the next in `⌈l / h_max⌉` equal steps, and every step end is a boundary.",
+   "clear": true
+  },
+  {
+   "id": "L6a-120",
+   "conforms": false,
+   "evidence": "src/frame.jl:1-6: the frame tops and the due instants are on two lattices, and an interior step end has no position (src/frame.jl:106-107). The D-445 annotation at design/log.md:18755-18757 records the change (D-449).",
+   "class": "drift",
+   "fix": "The frame tops and the base ticks are two lattices in no required ratio, and every end of an integration step is a boundary.",
+   "clear": true
+  },
+  {
+   "id": "L6a-123",
+   "conforms": false,
+   "evidence": "src/frame.jl:139-141 and src/store.jl:197-206: an interior step end's clock is _instant(clock, origin + position, i, units, steps), the float nearest the span's exact start plus i·units/steps. There is no step-point index j. The D-445 annotations at design/log.md:18755-18764 record the change (D-449, D-456).",
+   "class": "drift",
+   "fix": "a step end inside a span comes from the span's exact start and its count `i` in the span, as the float nearest that instant",
+   "clear": true
+  },
+  {
+   "id": "L6a-124",
+   "conforms": true,
+   "evidence": "src/frame.jl:160: exec.clock.t = t_end, once per step-end boundary, from the boundary's own formula (_grid_time, _tick_time or _instant at :130 and :141). src/frame.jl:341: a t* is set once. Trial and stage writes inside a step are not boundary clocks."
+  },
+  {
+   "id": "L6a-128",
+   "conforms": false,
+   "evidence": "src/model.jl:580-584: every clock is the float nearest its instant, and rounding to nearest keeps order, so two boundaries never swap. A run whose clock cannot resolve its least gap is refused (frame! at src/frame.jl:87-90, via _last_frame). The D-445 annotation at design/log.md:18758-18760 records the change (D-450, then D-456 and D-458).",
+   "class": "drift",
+   "fix": "The positions stay ordered; every clock is the float nearest its instant, so no two boundaries swap, and a run whose clock cannot resolve two instants is refused ([D-450]).",
+   "clear": false
+  },
+  {
+   "id": "L6a-134",
+   "conforms": true,
+   "evidence": "src/deployment.jl:261-262: an explicit Δt_base goes through _positive_finite on its own branch, independent of Δt_frame. Probe P5: Δt_base = 0 and -1//10 are both refused as DeploymentInvalid :range on :Δt_base."
+  },
+  {
+   "id": "L6a-143",
+   "conforms": true,
+   "evidence": "src/frame.jl:206-209: the trigger that starts localization requires events.localized[i], so a Bool guard is never bracketed or root-found. It is edge-checked only in event_phase! at boundaries (src/model.jl:749-753). Probe P12: the Bool guard's localized flag is false."
+  },
+  {
+   "id": "L6a-152",
+   "conforms": true,
+   "evidence": "src/deployment.jl:336-341, :357, :368 and :413-415: RK4 and Heun have no fields, and BS3 holds only reltol and abstol. Probe P6: the fieldnames are (), () and (:reltol, :abstol)."
+  },
+  {
+   "id": "L6a-160",
+   "conforms": false,
+   "evidence": "src/frame.jl:105-108 and :141, src/store.jl:196-206: the clock is _instant, the float nearest the span's exact start plus i·l/N, computed in Int128. It is not the start clock plus i float steps. The D-449 annotation at design/log.md:18943-18949 records the change (D-456).",
+   "class": "drift",
+   "fix": "Its clock is the float nearest the span's exact start plus `i` times the span's exact step, from its count `i` in the span, never accumulated.",
+   "clear": true
+  },
+  {
+   "id": "L6a-162",
+   "conforms": true,
+   "evidence": "src/show.jl:312-327 (_steps_line) names the splitting rows in show, and the Deployment constructor raises only grid advisories (src/deployment.jl:586-596, 603-606). Probe P11: a deployment whose 1//30 s ticks split 1//10 s frames has warnings == [], and its show says 'due instants of f/a split frames'."
+  },
+  {
+   "id": "L6a-171",
+   "conforms": true,
+   "evidence": "src/frame.jl:86-90: the refusal is frame!'s check that k ≤ _last_frame. A t* is set at src/frame.jl:341 with no lattice check."
+  },
+  {
+   "id": "L6a-177",
+   "conforms": false,
+   "evidence": "src/descriptor.jl:57-74: the deployment body carries dt_frame, dt_base, h_max and h_min as exact rationals. Probe P10: the descriptor keys include :dt_frame, :dt_base and :h_max, and dt_frame = (num = 1, den = 10). D-467 (design/log.md:20271-20290) records the move. D-454 carries no annotation for it.",
+   "class": "drift",
+   "fix": "The checkpoint and the trace header hold the `Deployment` as a value in memory, and the descriptor's deployment body carries `dt_frame`, `dt_base` and `h_max` exact ([D-467]).",
+   "clear": false,
+   "note": "D-454 itself has no annotation pointing to D-467."
+  },
+  {
+   "id": "L6a-181",
+   "conforms": true,
+   "evidence": "src/frame.jl:145-148 and :198-201: _localized_step! receives h_step, the length the bare path would take, and integrates its first segment by h′ = h."
+  },
+  {
+   "id": "L6a-189",
+   "conforms": false,
+   "evidence": "src/store.jl:208-231: past 2^53, _nearest switches to _rounded_quotient, a long division that rounds once to nearest. Probe P7: 0 mismatches against the correctly rounded BigInt quotient in 1005 cases past 2^53. The D-456 annotation at design/log.md:19426-19430 records the change (D-458).",
+   "class": "drift",
+   "fix": "It is exactly the nearest float at every magnitude, its division exact past `2^53`.",
+   "clear": true
+  },
+  {
+   "id": "L6a-191",
+   "conforms": true,
+   "evidence": "src/store.jl:166: Clock.t₀::Rational{Int}. Probe P8: init! with t0 = 1//2 holds t₀ = 1//2 exactly."
+  },
+  {
+   "id": "L6a-192",
+   "conforms": false,
+   "evidence": "src/model.jl:364-370: _exact_origin accepts an Integer, a Rational or a float at its exact value. Probe P1: isdefined(Redstone, :Period) is false. Probe P8: 1//2, 1, 0.25 and 0.1 (at its exact binary value) are accepted. The D-457 annotation at design/log.md:19479-19480 records the change (D-469).",
+   "class": "drift",
+   "fix": "`t0` at every door that takes one, `init!`, `trim!` and `linearize`'s `about` form, accepts a `Rational`, an integer, or a float at its exact value.",
+   "clear": true
+  },
+  {
+   "id": "L6a-201",
+   "conforms": true,
+   "evidence": "src/store.jl:208-231: below 2^53 one float division, and past it _rounded_quotient, round to nearest. Probe P7: 0 mismatches in 1005 cases past 2^53. src/store.jl:187: boundary zero uses the same formula."
+  },
+  {
+   "id": "L6a-210",
+   "conforms": true,
+   "evidence": "src/deployment.jl:231-232: a proposing method with no h_min is refused as DeploymentInvalid :missing. Probe P4: BS3() without h_min gives (DeploymentInvalid, :missing, :h_min), and RK4 without h_min deploys."
+  },
+  {
+   "id": "L6a-212",
+   "conforms": false,
+   "evidence": "src/deployment.jl:235-238: the refusal threshold is half the resolved h_max. Probe P4: h_min = 3/4·h_max is refused as :range with related = 1//100, and h_min = 1/2·h_max deploys. D-463 (design/log.md:20020-20051) records the move and lists D-460's refusal above the bound as a superseded position.",
+   "class": "drift",
+   "fix": "A floor above half the resolved `h_max` is refused as `DeploymentInvalid` `:range`, with `h_max` as its related value.",
+   "clear": true
+  },
+  {
+   "id": "L6a-220",
+   "conforms": true,
+   "evidence": "src/frame.jl:335-340: for a non-proposing method, after a t* the loop continues with h′ = t_to - clock.t, the whole remainder to the step's end in one segment. Under a proposal it returns at t* instead (:338)."
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6a_v/probe.jl. It ran once against W at cb398676. I edited no tracked file.\n\nContext the coordinator may need:\n- The PIVector claims (080-085) cannot be checked in W. PIVector is a Flight.jl block that the migration will reimplement, and it does not exist in Redstone (isdefined is false). No pending.md bullet owes it. I judged them conforming, as G2a K8-050 and G5b K11-003 were overturned. The shipped Integrator(; reset) in src/library.jl:956-965 has the same shape. 083 is marked drift only because it names `init_x`.\n- Many drift rows are old log Positions whose later annotations already record the move: D-020, D-053, D-082, D-101, D-220, D-444, D-445, D-449, D-456 and D-457. Under log_rules.md rule 2 (entries keep the vocabulary of their day), the rename rows (083, 090-100, 107) may be by design rather than defects. Their fixes are given in current names in case the coordinator wants them.\n- D-454 (log.md:19306) has no annotation pointing to D-467, although the descriptor now carries the time quantities. This is the one drift here with no annotation on the entry itself."
+}

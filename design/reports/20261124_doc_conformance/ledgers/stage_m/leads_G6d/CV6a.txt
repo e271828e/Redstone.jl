@@ -1,0 +1,2 @@
+citation superseded: D-166 at src/leaves.jl:329 (superseded → [D-263][d-263])
+signature: bindings.jl:25 TableBinding: on a signature, not listed: [:entries]

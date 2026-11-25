@@ -180,3 +180,43 @@ the verifier's probe.
 - **CV11a-004, wording.** `KindCounts` is named only as "the per-kind
   counter record" in §11.8 and the `WriterStatus` docstring; its fields and
   their order go undescribed.
+
+## G6, §1 to §7
+
+- **S6b-239, wording.** §2 says guard-driven handlers are the sole writers
+  of continuous state; `x_projection` writes `x` back at every boundary too.
+  D-141 backs the doc's text.
+- **S6c-001 and S6c-004, code or doc.** §4.3 and D-237 refuse a mutable type
+  anywhere in a port value. The leaf walk exempts a mutable `Real` such as
+  `BigFloat`, and never enters an opaque leaf. Either the code drops the
+  `Real` exemption, or §4.3 names both exemptions.
+- **K6c-064, K6c-072 to K6c-074, K6d-115, K6d-118, K6d-119, measured
+  figures.** The verifiers re-measured the linear-systems and LQR
+  companions' tables: the last-bit lag output (…266, not …265), the
+  allocation bytes of `step!` over 0.1 s (8,800 B where the doc says 8,208),
+  and the tracker's switchover bumps (0.65 and 0.003, not 0.70 and 0.002).
+  The figures depend on the machine and on how the setup is rebuilt.
+  Proposed: take the re-measured values, noting the Julia version.
+- **K6d-122, wording.** The LQR companion says `Tt = 0` follows exactly on
+  the discrete tier; `u_raw` lands on the tick's `v` one tick later.
+- **K6a-013, wording.** The event-visibility walkthrough says no cell is in
+  both the `y` and the `u` set; a component wiring its own stage-1 port to
+  its own input has one.
+- **K6b-012, K6b-019, K6b-022 and K6b-101, wording.** The library inventory:
+  what walks under `Dual` (pinned and discrete entries do not follow the
+  scalar), a fourth status "not admitted", port names beyond `in1…inN`, and
+  shipped rows beyond the first two tranches.
+- **K6e-058, K6e-081 and K6e-087, wording.** The PID companion: the hold
+  beats ungated tracking on peak but settles later; the shared methods are
+  not "eleven"; the list of vector components is incomplete.
+- **CV6a-020, CV6c-006 and CV6c-043, code_map.md.** The leaves.jl entry
+  omits the shape walk; the library.jl entry's Spec line and its PID helper
+  list are off. Internal, but the new text is not fixed one way.
+- **CV6b-019, a runtime string.** A user-visible `@warn` in library.jl cites
+  §7.1 for a claim §7.1 does not make. Changing it changes a message.
+- **CV6a-033, held.** A D-166 citation in leaves.jl, left to CIT-D166.
+- **S6c-002, a bold ruling reworded.** §5.2's ruling now reads "a primitive
+  has at most two output stages", where it said every primitive provides
+  two. The code requires neither stage. D-006 backs the old text and is in
+  the log ledger. §2's roadmap (line 137) and §8.1 (line 2491) still say
+  "two output stages per primitive".

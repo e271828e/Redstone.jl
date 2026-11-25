@@ -1,0 +1,2007 @@
+{
+ "rows": [
+  {
+   "id": "L6b-008",
+   "file": "design/log.md",
+   "line": 764,
+   "kind": "law",
+   "claim": "D-016: declared state/mode fields are selectively auto-published (D-035)",
+   "evidence": "src/declare.jl:653 (y_state docstring: a component exposes a state or mode field by returning it from stage 1); log.md:10447 D-252 removes auto-publishing and supersedes D-016's publication rule",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-016: its auto-publication clause is superseded by D-252; a component exposes a state or mode field by returning it from `output_state` (now `y_state`).",
+   "note": "Moved by D-252 (log.md:10447), which names D-016's publication rule explicitly. D-016 status stays ratified with no annotation."
+  },
+  {
+   "id": "L6b-010",
+   "file": "design/log.md",
+   "line": 765,
+   "kind": "mech",
+   "claim": "D-016: per-event re-decode (handler → project → h_x → h_xu) after each handler",
+   "evidence": "src/model.jl:773-775 (handlers fire via _fire!, then the next round's full _round! sweep re-decodes; no per-event decode); src/executor.jl:391",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-016: the per-event re-decode is removed by D-154; the signal table is written only by sweeps, and a fired handler's effects reach the table at the next round's sweep.",
+   "note": "Moved by D-154 (log.md:6049), whose Rationale at log.md:6067 says it supersedes D-016's per-event re-decode."
+  },
+  {
+   "id": "L6b-016",
+   "file": "design/log.md",
+   "line": 1248,
+   "kind": "decl",
+   "claim": "D-033: `local_types(::C)` is a plain concrete nominal declaration on both tiers",
+   "evidence": "rg -w local_types src → no match; src/assembly.jl:16 LEAF_FAMILY has no local_types; log.md:6438 (D-165) deletes local_types with its satellites",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-033: `local_types` is deleted by D-165; stage membership derives over `output_types` (now `y_types`) alone.",
+   "note": "Moved by D-165 (log.md:6385, ruling at 6438)."
+  },
+  {
+   "id": "L6b-020",
+   "file": "design/log.md",
+   "line": 1251,
+   "kind": "decl",
+   "claim": "D-033: each event carries a `localize` flag (true = Tier 2, default false = Tier 1)",
+   "evidence": "src/declare.jl:545 StateEvent{G,H} holds guard and handler only; src/declare.jl:525-528 the guard's return type (Bool or Float64) declares the policy",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-033: the per-event `localize` flag is replaced by D-179; a `Bool` guard is non-localized and a real-valued guard is localized.",
+   "note": "Moved by D-179 (log.md:7149), whose Rejected list names the `localize` keyword (log.md:7172)."
+  },
+  {
+   "id": "L6b-025",
+   "file": "design/log.md",
+   "line": 1293,
+   "kind": "decl",
+   "claim": "D-034: intermediates declared via strict `local_types`, as table cells, non-connectable, snapshot-visible, presentation-filtered",
+   "evidence": "rg -w local_types src → no match; log.md:6438 (D-165) deletes local_types and retires get_local",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-034: the `local_types` intermediates clause is superseded by D-165; an intermediate is inspected by promoting it to an output.",
+   "note": "Moved by D-165. D-055 (log.md:1869) had already amended D-034's observation exception."
+  },
+  {
+   "id": "L6b-028",
+   "file": "design/log.md",
+   "line": 1355,
+   "kind": "law",
+   "claim": "D-036: stage returns are NamedTuples of port values",
+   "evidence": "src/declare.jl:637-640 (a stage returns the port's value itself under a bare `y_types`); test/fixtures.jl:46 bare return; src/declare.jl:830 is_bare",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-036: under D-437 a stage over a bare `y_types` returns the one port's value itself, not a NamedTuple.",
+   "note": "Moved by D-437 (log.md:18128), the bare-contract entry."
+  },
+  {
+   "id": "L6b-035",
+   "file": "design/log.md",
+   "line": 1610,
+   "kind": "law",
+   "claim": "D-045: a GUI widget is live iff root-slot resolution holds and the slot is unclaimed",
+   "evidence": "src/devices.jl:524 `live = producer_path == \"\" && face in faces` (faces = this device's claim); src/devices.jl:470",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-045: under D-370 a widget is live iff its port's feed chain ends in a root input inside the GUI's own claim.",
+   "note": "Moved by D-370 (log.md:15691), last bullet."
+  },
+  {
+   "id": "L6b-053",
+   "file": "design/log.md",
+   "line": 3861,
+   "kind": "law",
+   "claim": "D-112: `workspace` arity is one of the four tier-consistency markers",
+   "evidence": "src/declare.jl:879 `_declares_workspace` asks `ws_init(c, Type{Float64})` on both tiers; src/assembly.jl:724-773 classify_tier casts no workspace vote; probe:94 discrete allocator receives Float64",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-112: under D-263 the workspace allocator takes the scalar on both tiers, so its arity no longer marks the tier; the markers are the stores, the update laws and `state_events`.",
+   "note": "Moved by D-263 (log.md:11294), which gives `init_workspace(::C, ::Type{T})` the same arity on both tiers."
+  },
+  {
+   "id": "L6b-060",
+   "file": "design/log.md",
+   "line": 6053,
+   "kind": "law",
+   "claim": "D-154: once-per-event-per-boundary firing is unchanged",
+   "evidence": "src/model.jl:751 `eligible = edge && events.count[i] < budget`; src/deployment.jl:546 firing_budget (default 4) per-event firings per boundary",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-154: once-per-boundary firing gives way to D-181's per-event `firing_budget`.",
+   "note": "Moved by D-181 (log.md:7207). D-020 already carries this annotation (log.md:921-923); D-154 does not."
+  },
+  {
+   "id": "L6b-085",
+   "file": "design/log.md",
+   "line": 7824,
+   "kind": "law",
+   "claim": "D-195: the two tiers' declaration name families are disjoint by construction",
+   "evidence": "src/declare.jl:653,685 one pair `y_state`/`y_direct` serves both tiers; src/declare.jl:901-905 LEGAL_BUNDLE keys both tiers under :y_state/:y_direct",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-195: under D-220 one pair of output-stage names serves both tiers; the tiers' bundle letters and update laws stay disjoint.",
+   "note": "Moved by D-220 (log.md:8908): `h_x`/`h_s` → `output_state`, one pair of names for both tiers."
+  },
+  {
+   "id": "L6b-086",
+   "file": "design/log.md",
+   "line": 7825,
+   "kind": "law",
+   "claim": "D-195: a discrete leaf declaring `h_x` (or continuous `h_s`) is `DeclarationOnWrongTier`",
+   "evidence": "src/assembly.jl:724-732 votes cast by x_deriv/s_update/stores/m_init/state_events only, none by y_state/y_direct; src/declare.jl:920 a wrong-letter bundle read is BundleFieldError :wrong_tier",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-195: since D-220 the output stages share names across tiers, so the wrong-tier stage case is gone; a wrong-letter bundle field is `BundleFieldError` with reason `:wrong_tier`.",
+   "note": "Moved by D-220."
+  },
+  {
+   "id": "L6b-087",
+   "file": "design/log.md",
+   "line": 10276,
+   "kind": "law",
+   "claim": "D-249: `TierSignatureMismatch` owns all three signature violations §8.5 names",
+   "evidence": "rg -w TierSignatureMismatch src → no match; log.md:11302 (D-263) retires it with all three arms",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-249: `TierSignatureMismatch` retires under D-263; every contract declaration now takes the component alone on both tiers.",
+   "note": "Stage M lead. Moved by D-263 (log.md:11272)."
+  },
+  {
+   "id": "L6b-093",
+   "file": "design/log.md",
+   "line": 10279,
+   "kind": "law",
+   "claim": "D-249: `DeclarationOnWrongTier` keeps the `init_workspace` arity arm",
+   "evidence": "src/diagnostics.jl:639 DeclarationOnWrongTier reasons :tier_form|:pinned_entry|:continuous_only|:no_manifold, no arity arm; src/declare.jl:879",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-249: the `init_workspace` arity arm goes with D-263, under which the allocator takes the scalar on both tiers.",
+   "note": "Moved by D-263 (log.md:11294)."
+  },
+  {
+   "id": "L6b-098",
+   "file": "design/log.md",
+   "line": 10286,
+   "kind": "law",
+   "claim": "D-249: `StopFaceInvalid`'s binding site is the constructor, `run!` or `replay!`",
+   "evidence": "rg StopFaceInvalid src → no match; src/declare.jl:370 stop_reason / StopFlag ports carry stop requests",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-249: the `stop_on` keyword and `StopFaceInvalid` retire under D-316; stop requests are `StopFlag` ports, ignored through `ignore_stop_requests`.",
+   "note": "Stage M lead. Moved by D-316 (log.md:14382, retirement at 14440)."
+  },
+  {
+   "id": "L6b-118",
+   "file": "design/log.md",
+   "line": 11298,
+   "kind": "decl",
+   "claim": "D-263: a stateless leaf declares its store empty, `init_x(::C) = (;)` or `init_s(::C) = (;)`",
+   "evidence": "probe:96 `x_init(::C) = (;)` → EmptyStore, message 'a stateless primitive writes `x_init(::C) = nothing`'; src/assembly.jl:688; src/declare.jl:75",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-263: under D-438 the stateless spelling is `nothing`, and `(;)` is refused as `EmptyStore`.",
+   "note": "Moved by D-438 (log.md:18270-18273), which keeps D-263's mandatory marker."
+  },
+  {
+   "id": "L6b-155",
+   "file": "design/log.md",
+   "line": 12706,
+   "kind": "law",
+   "claim": "D-279: an assembly's boundary declarations take the letter of the contract side they declare",
+   "evidence": "src/declare.jl:308,328 the boundary declarations are `input_wires`/`output_wires`; probe:105 Group fields",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Annotate D-279: D-303 names the connection declarations for the wires they return, `input_wires` and `output_wires`.",
+   "note": "Moved by D-303 (log.md:13735), which says it replaces D-279's ground for the `u_connections` name."
+  },
+  {
+   "id": "L6b-234",
+   "file": "design/log.md",
+   "line": 21205,
+   "kind": "law",
+   "claim": "D-479: under a proposal p a step over distance r takes r/N with N = ⌈r / min(p, h_max)⌉",
+   "evidence": "src/model.jl:877-881 `cap = max(min(proposal, h_max), h_min)`, N = max(1, min(ceil((r - slack)/cap), floor_steps)), floor_steps = ⌊r/h_min⌋",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Under a proposal `p`, a step over the distance `r` takes `r / N`, with `N = ⌈r / max(min(p, h_max), h_min)⌉`, at least 1 and capped at `⌊r / h_min⌋`.",
+   "note": "The floor comes from D-460 (log.md:19727), an earlier entry, so nothing later moves it. D-479 is a notation entry and its formula drops the h_min clamp and cap; it differs only when p < h_min or near the floor."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L6b-001",
+   "file": "design/log.md",
+   "line": 518,
+   "kind": "law",
+   "claim": "D-003: taxonomy is continuous primitive, periodic discrete, and assemblies",
+   "evidence": "src/assembly.jl:13; src/declare.jl:784"
+  },
+  {
+   "id": "L6b-002",
+   "file": "design/log.md",
+   "line": 519,
+   "kind": "law",
+   "claim": "D-003: modes factor as an internal m store or as commanded inputs",
+   "evidence": "src/declare.jl:127; src/declare.jl:185"
+  },
+  {
+   "id": "L6b-003",
+   "file": "design/log.md",
+   "line": 534,
+   "kind": "law",
+   "claim": "D-004: signal values are immutable (mutable types are not leaves)",
+   "evidence": "src/leaves.jl:18"
+  },
+  {
+   "id": "L6b-004",
+   "file": "design/log.md",
+   "line": 534,
+   "kind": "mech",
+   "claim": "D-004: the signal table is typed",
+   "evidence": "src/store.jl:29"
+  },
+  {
+   "id": "L6b-005",
+   "file": "design/log.md",
+   "line": 614,
+   "kind": "law",
+   "claim": "D-008: a function-valued environment signal is an opaque immutable leaf",
+   "evidence": "src/leaves.jl:18"
+  },
+  {
+   "id": "L6b-006",
+   "file": "design/log.md",
+   "line": 614,
+   "kind": "mech",
+   "claim": "D-008: a handle is stored whole and never walked",
+   "evidence": "src/leaves.jl:105"
+  },
+  {
+   "id": "L6b-007",
+   "file": "design/log.md",
+   "line": 763,
+   "kind": "mech",
+   "claim": "D-016: uniform interface via the no-feedthrough state decoder (now y_state)",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6b-009",
+   "file": "design/log.md",
+   "line": 765,
+   "kind": "law",
+   "claim": "D-016: guards and handlers read the fresh boundary table",
+   "evidence": "src/model.jl:737; src/model.jl:746"
+  },
+  {
+   "id": "L6b-011",
+   "file": "design/log.md",
+   "line": 766,
+   "kind": "law",
+   "claim": "D-016: projection is the sole function taking the raw state positionally",
+   "evidence": "src/declare.jl:599"
+  },
+  {
+   "id": "L6b-012",
+   "file": "design/log.md",
+   "line": 1245,
+   "kind": "decl",
+   "claim": "D-033: store declarations are by value, type derived",
+   "evidence": "src/declare.jl:75"
+  },
+  {
+   "id": "L6b-013",
+   "file": "design/log.md",
+   "line": 1246,
+   "kind": "decl",
+   "claim": "D-033: input entries are a NamedTuple of types written at Float64",
+   "evidence": "src/declare.jl:185"
+  },
+  {
+   "id": "L6b-014",
+   "file": "design/log.md",
+   "line": 1247,
+   "kind": "law",
+   "claim": "D-033: wiring check is producer face <: entry",
+   "evidence": "src/leaves.jl:381"
+  },
+  {
+   "id": "L6b-015",
+   "file": "design/log.md",
+   "line": 1248,
+   "kind": "decl",
+   "claim": "D-033: output types are plain concrete nominal declarations on both tiers",
+   "evidence": "src/declare.jl:223"
+  },
+  {
+   "id": "L6b-017",
+   "file": "design/log.md",
+   "line": 1249,
+   "kind": "mech",
+   "claim": "D-033: per-activation cell types come from the framework leaf walk",
+   "evidence": "src/leaves.jl:303"
+  },
+  {
+   "id": "L6b-018",
+   "file": "design/log.md",
+   "line": 1250,
+   "kind": "decl",
+   "claim": "D-033: workspace is registered by allocation",
+   "evidence": "src/declare.jl:150"
+  },
+  {
+   "id": "L6b-019",
+   "file": "design/log.md",
+   "line": 1250,
+   "kind": "decl",
+   "claim": "D-033: events are declared ordered",
+   "evidence": "src/declare.jl:571"
+  },
+  {
+   "id": "L6b-021",
+   "file": "design/log.md",
+   "line": 1251,
+   "kind": "mech",
+   "claim": "D-033: stage membership is derived, no stage tags",
+   "evidence": "src/declare.jl:768"
+  },
+  {
+   "id": "L6b-022",
+   "file": "design/log.md",
+   "line": 1252,
+   "kind": "mech",
+   "claim": "D-033: inputless stage first, the remainder is stage 2",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6b-023",
+   "file": "design/log.md",
+   "line": 1292,
+   "kind": "law",
+   "claim": "D-034: declared ports are public",
+   "evidence": "src/declare.jl:223"
+  },
+  {
+   "id": "L6b-024",
+   "file": "design/log.md",
+   "line": 1292,
+   "kind": "law",
+   "claim": "D-034: absent output declaration means no outputs",
+   "evidence": "src/declare.jl:223"
+  },
+  {
+   "id": "L6b-026",
+   "file": "design/log.md",
+   "line": 1295,
+   "kind": "law",
+   "claim": "D-034: returns must be branch-shape-stable (conformance check)",
+   "evidence": "src/executor.jl:434"
+  },
+  {
+   "id": "L6b-027",
+   "file": "design/log.md",
+   "line": 1295,
+   "kind": "law",
+   "claim": "D-034: an undeclared stage-return field is a build error",
+   "evidence": "src/build.jl:131"
+  },
+  {
+   "id": "L6b-029",
+   "file": "design/log.md",
+   "line": 1356,
+   "kind": "mech",
+   "claim": "D-036: aggregate y is gathered per call, never stored",
+   "evidence": "src/executor.jl:136"
+  },
+  {
+   "id": "L6b-030",
+   "file": "design/log.md",
+   "line": 1357,
+   "kind": "law",
+   "claim": "D-036: a custom struct is one port value",
+   "evidence": "src/leaves.jl:22"
+  },
+  {
+   "id": "L6b-031",
+   "file": "design/log.md",
+   "line": 1357,
+   "kind": "law",
+   "claim": "D-036: a port is atomic in wiring",
+   "evidence": "src/declare.jl:266"
+  },
+  {
+   "id": "L6b-032",
+   "file": "design/log.md",
+   "line": 1476,
+   "kind": "law",
+   "claim": "D-040: paths are slash strings relative to the declaring assembly",
+   "evidence": "src/declare.jl:266; src/assembly.jl:77"
+  },
+  {
+   "id": "L6b-033",
+   "file": "design/log.md",
+   "line": 1477,
+   "kind": "law",
+   "claim": "D-040: one path form across declarations, diagnostics, devices and logs",
+   "evidence": "src/diagnostics.jl:637; src/devices.jl:477"
+  },
+  {
+   "id": "L6b-034",
+   "file": "design/log.md",
+   "line": 1610,
+   "kind": "law",
+   "claim": "D-045: liveness derives from transitive root-input resolution",
+   "evidence": "src/devices.jl:524"
+  },
+  {
+   "id": "L6b-036",
+   "file": "design/log.md",
+   "line": 1614,
+   "kind": "mech",
+   "claim": "D-045: mappings are declarative binding data with per-axis conditioning",
+   "evidence": "src/bindings.jl:36"
+  },
+  {
+   "id": "L6b-037",
+   "file": "design/log.md",
+   "line": 1615,
+   "kind": "mech",
+   "claim": "D-045: mappings run on the device task",
+   "evidence": "src/bindings.jl:113"
+  },
+  {
+   "id": "L6b-038",
+   "file": "design/log.md",
+   "line": 1616,
+   "kind": "mech",
+   "claim": "D-045: edge logic is device-held counters plus model-state accumulators",
+   "evidence": "src/bindings.jl:118"
+  },
+  {
+   "id": "L6b-039",
+   "file": "design/log.md",
+   "line": 1617,
+   "kind": "law",
+   "claim": "D-045: unexported ports are unpokeable",
+   "evidence": "src/conditions.jl:635"
+  },
+  {
+   "id": "L6b-040",
+   "file": "design/log.md",
+   "line": 1897,
+   "kind": "law",
+   "claim": "D-056: cross-tier coupling routes through table cells",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6b-041",
+   "file": "design/log.md",
+   "line": 2694,
+   "kind": "law",
+   "claim": "D-078: input entries are face constraints checked by producer <: entry",
+   "evidence": "src/leaves.jl:381"
+  },
+  {
+   "id": "L6b-042",
+   "file": "design/log.md",
+   "line": 2695,
+   "kind": "law",
+   "claim": "D-078: the check runs at nominal faces",
+   "evidence": "src/build.jl:890"
+  },
+  {
+   "id": "L6b-043",
+   "file": "design/log.md",
+   "line": 2695,
+   "kind": "law",
+   "claim": "D-078: exact equality is the concrete degenerate",
+   "evidence": "src/leaves.jl:381"
+  },
+  {
+   "id": "L6b-044",
+   "file": "design/log.md",
+   "line": 3071,
+   "kind": "law",
+   "claim": "D-090: handler returns are NamedTuples keyed x, m",
+   "evidence": "src/executor.jl:400"
+  },
+  {
+   "id": "L6b-045",
+   "file": "design/log.md",
+   "line": 3072,
+   "kind": "law",
+   "claim": "D-090: a key is present only if the store exists",
+   "evidence": "src/build.jl:1325"
+  },
+  {
+   "id": "L6b-046",
+   "file": "design/log.md",
+   "line": 3073,
+   "kind": "law",
+   "claim": "D-090: a key is present only if the handler updates it",
+   "evidence": "src/executor.jl:402"
+  },
+  {
+   "id": "L6b-047",
+   "file": "design/log.md",
+   "line": 3073,
+   "kind": "ex",
+   "claim": "D-090: pure FSM returns (; m = …), reset map (; x = …)",
+   "evidence": "src/library.jl:1645; src/library.jl:964"
+  },
+  {
+   "id": "L6b-048",
+   "file": "design/log.md",
+   "line": 3183,
+   "kind": "law",
+   "claim": "D-094: state leaves are real scalars and SArrays at the common eltype",
+   "evidence": "src/assembly.jl:676"
+  },
+  {
+   "id": "L6b-049",
+   "file": "design/log.md",
+   "line": 3184,
+   "kind": "law",
+   "claim": "D-094: no domain wrapper types as state leaves",
+   "evidence": "src/assembly.jl:679"
+  },
+  {
+   "id": "L6b-050",
+   "file": "design/log.md",
+   "line": 3859,
+   "kind": "law",
+   "claim": "D-112: events are a continuous-tier marker",
+   "evidence": "src/assembly.jl:731"
+  },
+  {
+   "id": "L6b-051",
+   "file": "design/log.md",
+   "line": 3860,
+   "kind": "law",
+   "claim": "D-112: stage names (the update laws) mark the tier",
+   "evidence": "src/assembly.jl:726"
+  },
+  {
+   "id": "L6b-052",
+   "file": "design/log.md",
+   "line": 3860,
+   "kind": "law",
+   "claim": "D-112: the store family marks the tier",
+   "evidence": "src/assembly.jl:728"
+  },
+  {
+   "id": "L6b-054",
+   "file": "design/log.md",
+   "line": 3862,
+   "kind": "law",
+   "claim": "D-112: the event system is continuous-side only",
+   "evidence": "src/declare.jl:566"
+  },
+  {
+   "id": "L6b-055",
+   "file": "design/log.md",
+   "line": 6049,
+   "kind": "mech",
+   "claim": "D-154: per-event re-decode removed; the next round's sweep decodes",
+   "evidence": "src/model.jl:773; src/model.jl:775"
+  },
+  {
+   "id": "L6b-056",
+   "file": "design/log.md",
+   "line": 6050,
+   "kind": "law",
+   "claim": "D-154: the signal table is written only by sweeps",
+   "evidence": "src/executor.jl:400"
+  },
+  {
+   "id": "L6b-057",
+   "file": "design/log.md",
+   "line": 6050,
+   "kind": "law",
+   "claim": "D-154: a component fires at most one event per round",
+   "evidence": "src/model.jl:763"
+  },
+  {
+   "id": "L6b-058",
+   "file": "design/log.md",
+   "line": 6051,
+   "kind": "law",
+   "claim": "D-154: declaration order picks among eligible events",
+   "evidence": "src/model.jl:750"
+  },
+  {
+   "id": "L6b-059",
+   "file": "design/log.md",
+   "line": 6052,
+   "kind": "mech",
+   "claim": "D-154: guards are evaluated every round",
+   "evidence": "src/model.jl:746"
+  },
+  {
+   "id": "L6b-061",
+   "file": "design/log.md",
+   "line": 6053,
+   "kind": "law",
+   "claim": "D-154: the quiescence iteration is unchanged",
+   "evidence": "src/model.jl:772"
+  },
+  {
+   "id": "L6b-062",
+   "file": "design/log.md",
+   "line": 6055,
+   "kind": "law",
+   "claim": "D-154: a handler runs against the world its guard fired on",
+   "evidence": "src/model.jl:773"
+  },
+  {
+   "id": "L6b-063",
+   "file": "design/log.md",
+   "line": 6059,
+   "kind": "law",
+   "claim": "D-154: a blocked event is re-decided next round",
+   "evidence": "src/model.jl:769"
+  },
+  {
+   "id": "L6b-064",
+   "file": "design/log.md",
+   "line": 6061,
+   "kind": "law",
+   "claim": "D-154: cross-component handler order is unobservable",
+   "evidence": "src/executor.jl:391"
+  },
+  {
+   "id": "L6b-065",
+   "file": "design/log.md",
+   "line": 6751,
+   "kind": "decl",
+   "claim": "D-170: the child declaration is strictly child port to child port (now local_wires)",
+   "evidence": "src/declare.jl:266"
+  },
+  {
+   "id": "L6b-066",
+   "file": "design/log.md",
+   "line": 6752,
+   "kind": "law",
+   "claim": "D-170: the child declaration is the mandatory-even-empty class marker",
+   "evidence": "src/assembly.jl:60"
+  },
+  {
+   "id": "L6b-067",
+   "file": "design/log.md",
+   "line": 6753,
+   "kind": "decl",
+   "claim": "D-170: input declaration is face => path or tuple of paths (now input_wires)",
+   "evidence": "src/declare.jl:295"
+  },
+  {
+   "id": "L6b-068",
+   "file": "design/log.md",
+   "line": 6754,
+   "kind": "decl",
+   "claim": "D-170: output declaration is source path => face (now output_wires)",
+   "evidence": "src/declare.jl:315"
+  },
+  {
+   "id": "L6b-069",
+   "file": "design/log.md",
+   "line": 6755,
+   "kind": "law",
+   "claim": "D-170: direction is declared by the method, endpoints only cross-check",
+   "evidence": "src/declare.jl:254"
+  },
+  {
+   "id": "L6b-070",
+   "file": "design/log.md",
+   "line": 6757,
+   "kind": "law",
+   "claim": "D-170: the mixed-entry class is inexpressible",
+   "evidence": "src/declare.jl:254"
+  },
+  {
+   "id": "L6b-071",
+   "file": "design/log.md",
+   "line": 6757,
+   "kind": "law",
+   "claim": "D-170: face-name uniqueness spans both boundary declarations",
+   "evidence": "probe:101"
+  },
+  {
+   "id": "L6b-072",
+   "file": "design/log.md",
+   "line": 6758,
+   "kind": "law",
+   "claim": "D-170: every arrow points along the signal flow",
+   "evidence": "src/declare.jl:266"
+  },
+  {
+   "id": "L6b-073",
+   "file": "design/log.md",
+   "line": 6760,
+   "kind": "law",
+   "claim": "D-170: every right side is fed exactly once",
+   "evidence": "probe:103"
+  },
+  {
+   "id": "L6b-074",
+   "file": "design/log.md",
+   "line": 6832,
+   "kind": "law",
+   "claim": "D-172: a port is one cell with one producer",
+   "evidence": "probe:103"
+  },
+  {
+   "id": "L6b-075",
+   "file": "design/log.md",
+   "line": 6833,
+   "kind": "mech",
+   "claim": "D-172: faces coincide with ports on a leaf and alias them on an assembly",
+   "evidence": "src/assembly.jl:435"
+  },
+  {
+   "id": "L6b-076",
+   "file": "design/log.md",
+   "line": 6834,
+   "kind": "law",
+   "claim": "D-172: faces across nesting levels may alias one port",
+   "evidence": "src/devices.jl:524"
+  },
+  {
+   "id": "L6b-077",
+   "file": "design/log.md",
+   "line": 6836,
+   "kind": "law",
+   "claim": "D-172: wiring and periphery address child faces kind-blind",
+   "evidence": "src/assembly.jl:435"
+  },
+  {
+   "id": "L6b-078",
+   "file": "design/log.md",
+   "line": 7815,
+   "kind": "decl",
+   "claim": "D-195: the discrete state has its own letter s",
+   "evidence": "src/declare.jl:103"
+  },
+  {
+   "id": "L6b-079",
+   "file": "design/log.md",
+   "line": 7819,
+   "kind": "decl",
+   "claim": "D-195: init_x → init_s on the discrete tier (now s_init)",
+   "evidence": "src/declare.jl:103"
+  },
+  {
+   "id": "L6b-080",
+   "file": "design/log.md",
+   "line": 7820,
+   "kind": "decl",
+   "claim": "D-195: y_x → y_s on the discrete tier",
+   "evidence": "src/declare.jl:905"
+  },
+  {
+   "id": "L6b-081",
+   "file": "design/log.md",
+   "line": 7820,
+   "kind": "decl",
+   "claim": "D-195: discrete bundle field x → s",
+   "evidence": "src/declare.jl:904"
+  },
+  {
+   "id": "L6b-082",
+   "file": "design/log.md",
+   "line": 7821,
+   "kind": "decl",
+   "claim": "D-195: continuous keeps x; m and Δt keep their meanings",
+   "evidence": "src/declare.jl:901"
+  },
+  {
+   "id": "L6b-083",
+   "file": "design/log.md",
+   "line": 7819,
+   "kind": "decl",
+   "claim": "D-195: h_x/h_xu → h_s/h_su (old vocabulary, renamed on by D-220)",
+   "evidence": "src/declare.jl:653"
+  },
+  {
+   "id": "L6b-084",
+   "file": "design/log.md",
+   "line": 7823,
+   "kind": "law",
+   "claim": "D-195: bundle-name sets are closed per function",
+   "evidence": "src/declare.jl:900"
+  },
+  {
+   "id": "L6b-088",
+   "file": "design/log.md",
+   "line": 10277,
+   "kind": "law",
+   "claim": "D-249: DeclarationOnWrongTier keeps the update laws",
+   "evidence": "src/assembly.jl:763"
+  },
+  {
+   "id": "L6b-089",
+   "file": "design/log.md",
+   "line": 10278,
+   "kind": "law",
+   "claim": "D-249: DeclarationOnWrongTier keeps the stores",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "L6b-090",
+   "file": "design/log.md",
+   "line": 10278,
+   "kind": "law",
+   "claim": "D-249: DeclarationOnWrongTier keeps state_events",
+   "evidence": "src/assembly.jl:731"
+  },
+  {
+   "id": "L6b-091",
+   "file": "design/log.md",
+   "line": 10278,
+   "kind": "law",
+   "claim": "D-249: DeclarationOnWrongTier keeps the mode store",
+   "evidence": "probe:95"
+  },
+  {
+   "id": "L6b-092",
+   "file": "design/log.md",
+   "line": 10278,
+   "kind": "law",
+   "claim": "D-249: DeclarationOnWrongTier keeps the projection",
+   "evidence": "src/build.jl:1154"
+  },
+  {
+   "id": "L6b-094",
+   "file": "design/log.md",
+   "line": 10280,
+   "kind": "law",
+   "claim": "D-249: a runtime ConformanceFailure carries no simulation time",
+   "evidence": "src/diagnostics.jl:1109"
+  },
+  {
+   "id": "L6b-095",
+   "file": "design/log.md",
+   "line": 10281,
+   "kind": "mech",
+   "claim": "D-249: the StepError carrier holds the time and the replay index",
+   "evidence": "src/diagnostics.jl:247"
+  },
+  {
+   "id": "L6b-096",
+   "file": "design/log.md",
+   "line": 10282,
+   "kind": "law",
+   "claim": "D-249: a handler's occurrence names its event at probe and run time",
+   "evidence": "src/executor.jl:434"
+  },
+  {
+   "id": "L6b-097",
+   "file": "design/log.md",
+   "line": 10284,
+   "kind": "law",
+   "claim": "D-249: FaceNameCollision carries the path and names, no per-entry declaration",
+   "evidence": "src/diagnostics.jl:677"
+  },
+  {
+   "id": "L6b-099",
+   "file": "design/log.md",
+   "line": 11276,
+   "kind": "decl",
+   "claim": "D-263: every contract declaration takes the component alone on both tiers",
+   "evidence": "src/declare.jl:185"
+  },
+  {
+   "id": "L6b-100",
+   "file": "design/log.md",
+   "line": 11277,
+   "kind": "decl",
+   "claim": "D-263: contracts are written at nominal Float64",
+   "evidence": "src/declare.jl:185"
+  },
+  {
+   "id": "L6b-101",
+   "file": "design/log.md",
+   "line": 11277,
+   "kind": "mech",
+   "claim": "D-263: the framework retypes the contracts",
+   "evidence": "src/declare.jl:795"
+  },
+  {
+   "id": "L6b-102",
+   "file": "design/log.md",
+   "line": 11278,
+   "kind": "law",
+   "claim": "D-263: the tier is never spelled in a signature",
+   "evidence": "src/declare.jl:781"
+  },
+  {
+   "id": "L6b-103",
+   "file": "design/log.md",
+   "line": 11280,
+   "kind": "mech",
+   "claim": "D-263: continuous contracts are walked by the leaf walk",
+   "evidence": "src/declare.jl:799"
+  },
+  {
+   "id": "L6b-104",
+   "file": "design/log.md",
+   "line": 11283,
+   "kind": "mech",
+   "claim": "D-263: Pinned{P} pins at every activation and is stripped at nominal",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "L6b-105",
+   "file": "design/log.md",
+   "line": 11284,
+   "kind": "mech",
+   "claim": "D-263: discrete contracts pin wholesale",
+   "evidence": "src/declare.jl:798"
+  },
+  {
+   "id": "L6b-106",
+   "file": "design/log.md",
+   "line": 11285,
+   "kind": "law",
+   "claim": "D-263: a Pinned entry on a discrete leaf is DeclarationOnWrongTier",
+   "evidence": "probe:87"
+  },
+  {
+   "id": "L6b-107",
+   "file": "design/log.md",
+   "line": 11287,
+   "kind": "law",
+   "claim": "D-263: an unpinned entry is tolerant, a Pinned one demands a frozen arrival",
+   "evidence": "src/build.jl:897"
+  },
+  {
+   "id": "L6b-108",
+   "file": "design/log.md",
+   "line": 11288,
+   "kind": "mech",
+   "claim": "D-263: wire clauses decided at the marker scalar by retyping",
+   "evidence": "src/build.jl:884"
+  },
+  {
+   "id": "L6b-109",
+   "file": "design/log.md",
+   "line": 11290,
+   "kind": "mech",
+   "claim": "D-263: the type walk substitutes Float64 in type-parameter positions",
+   "evidence": "src/leaves.jl:285"
+  },
+  {
+   "id": "L6b-110",
+   "file": "design/log.md",
+   "line": 11291,
+   "kind": "mech",
+   "claim": "D-263: the walk yields P at Pinned{P}",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "L6b-111",
+   "file": "design/log.md",
+   "line": 11291,
+   "kind": "law",
+   "claim": "D-263: the walk does not enter a mutable type's parameters",
+   "evidence": "src/leaves.jl:284"
+  },
+  {
+   "id": "L6b-112",
+   "file": "design/log.md",
+   "line": 11292,
+   "kind": "mech",
+   "claim": "D-263: a handle's data references never walk",
+   "evidence": "src/leaves.jl:105"
+  },
+  {
+   "id": "L6b-113",
+   "file": "design/log.md",
+   "line": 11292,
+   "kind": "mech",
+   "claim": "D-263: a handle with a scalar parameter walks like any type",
+   "evidence": "src/leaves.jl:284"
+  },
+  {
+   "id": "L6b-114",
+   "file": "design/log.md",
+   "line": 11293,
+   "kind": "mech",
+   "claim": "D-263: Pinned freezes a handle built from build-time data",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "L6b-115",
+   "file": "design/log.md",
+   "line": 11294,
+   "kind": "decl",
+   "claim": "D-263: the workspace allocator takes ::Type{T} on both tiers",
+   "evidence": "src/declare.jl:879"
+  },
+  {
+   "id": "L6b-116",
+   "file": "design/log.md",
+   "line": 11295,
+   "kind": "mech",
+   "claim": "D-263: a discrete allocator receives Float64 at every activation",
+   "evidence": "probe:94"
+  },
+  {
+   "id": "L6b-117",
+   "file": "design/log.md",
+   "line": 11297,
+   "kind": "law",
+   "claim": "D-263: every leaf declares exactly one of the two stores",
+   "evidence": "probe:88; probe:100"
+  },
+  {
+   "id": "L6b-119",
+   "file": "design/log.md",
+   "line": 11299,
+   "kind": "law",
+   "claim": "D-263: the store is the tier marker, mandatory even when empty",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "L6b-120",
+   "file": "design/log.md",
+   "line": 11300,
+   "kind": "law",
+   "claim": "D-263: StoreWithoutUpdate applies to a non-empty store only",
+   "evidence": "src/assembly.jl:739"
+  },
+  {
+   "id": "L6b-121",
+   "file": "design/log.md",
+   "line": 11302,
+   "kind": "law",
+   "claim": "D-263: TierSignatureMismatch retires",
+   "evidence": "rg -w TierSignatureMismatch src: no match"
+  },
+  {
+   "id": "L6b-122",
+   "file": "design/log.md",
+   "line": 11302,
+   "kind": "law",
+   "claim": "D-263: TierUnreadable names a primitive declaring neither store",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "L6b-123",
+   "file": "design/log.md",
+   "line": 11303,
+   "kind": "law",
+   "claim": "D-263: empty store with no outputs is StatelessWithoutOutputs",
+   "evidence": "probe:89"
+  },
+  {
+   "id": "L6b-124",
+   "file": "design/log.md",
+   "line": 11628,
+   "kind": "law",
+   "claim": "D-267: a bundle-filling declaration is named letter then qualifier",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "L6b-125",
+   "file": "design/log.md",
+   "line": 11629,
+   "kind": "law",
+   "claim": "D-267: a declaration defining no bundle field keeps its noun phrase",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "L6b-126",
+   "file": "design/log.md",
+   "line": 11632,
+   "kind": "decl",
+   "claim": "D-267: init_x → x_init",
+   "evidence": "src/declare.jl:75"
+  },
+  {
+   "id": "L6b-127",
+   "file": "design/log.md",
+   "line": 11632,
+   "kind": "decl",
+   "claim": "D-267: init_s → s_init",
+   "evidence": "src/declare.jl:103"
+  },
+  {
+   "id": "L6b-128",
+   "file": "design/log.md",
+   "line": 11632,
+   "kind": "decl",
+   "claim": "D-267: init_m → m_init",
+   "evidence": "src/declare.jl:127"
+  },
+  {
+   "id": "L6b-129",
+   "file": "design/log.md",
+   "line": 11633,
+   "kind": "decl",
+   "claim": "D-267: init_workspace → ws_init",
+   "evidence": "src/declare.jl:150"
+  },
+  {
+   "id": "L6b-130",
+   "file": "design/log.md",
+   "line": 11633,
+   "kind": "decl",
+   "claim": "D-267: input_types → u_types",
+   "evidence": "src/declare.jl:185"
+  },
+  {
+   "id": "L6b-131",
+   "file": "design/log.md",
+   "line": 11633,
+   "kind": "decl",
+   "claim": "D-267: output_types → y_types",
+   "evidence": "src/declare.jl:223"
+  },
+  {
+   "id": "L6b-132",
+   "file": "design/log.md",
+   "line": 11634,
+   "kind": "decl",
+   "claim": "D-267: state_derivative → x_derivative (shortened to x_deriv by D-279)",
+   "evidence": "src/declare.jl:715"
+  },
+  {
+   "id": "L6b-133",
+   "file": "design/log.md",
+   "line": 11634,
+   "kind": "decl",
+   "claim": "D-267: state_update → s_update",
+   "evidence": "src/declare.jl:740"
+  },
+  {
+   "id": "L6b-134",
+   "file": "design/log.md",
+   "line": 11635,
+   "kind": "decl",
+   "claim": "D-267: state_projection → x_projection",
+   "evidence": "src/declare.jl:599"
+  },
+  {
+   "id": "L6b-135",
+   "file": "design/log.md",
+   "line": 11635,
+   "kind": "decl",
+   "claim": "D-267: output_state → y_state",
+   "evidence": "src/declare.jl:653"
+  },
+  {
+   "id": "L6b-136",
+   "file": "design/log.md",
+   "line": 11636,
+   "kind": "decl",
+   "claim": "D-267: output_direct → y_direct",
+   "evidence": "src/declare.jl:685"
+  },
+  {
+   "id": "L6b-137",
+   "file": "design/log.md",
+   "line": 11636,
+   "kind": "law",
+   "claim": "D-267: arities, signatures, bundle sets and semantics unchanged",
+   "evidence": "src/declare.jl:900"
+  },
+  {
+   "id": "L6b-138",
+   "file": "design/log.md",
+   "line": 11638,
+   "kind": "decl",
+   "claim": "D-267: state_events stays",
+   "evidence": "src/declare.jl:571"
+  },
+  {
+   "id": "L6b-139",
+   "file": "design/log.md",
+   "line": 11638,
+   "kind": "decl",
+   "claim": "D-267: sample_times stays",
+   "evidence": "src/declare.jl:514"
+  },
+  {
+   "id": "L6b-140",
+   "file": "design/log.md",
+   "line": 11638,
+   "kind": "decl",
+   "claim": "D-267: child_connections stays (renamed on by D-279, D-303, D-314)",
+   "evidence": "src/declare.jl:286"
+  },
+  {
+   "id": "L6b-141",
+   "file": "design/log.md",
+   "line": 11639,
+   "kind": "decl",
+   "claim": "D-267: input/output_connections stay (renamed on by D-279, D-303)",
+   "evidence": "src/declare.jl:308"
+  },
+  {
+   "id": "L6b-142",
+   "file": "design/log.md",
+   "line": 11639,
+   "kind": "decl",
+   "claim": "D-267: probe_value stays",
+   "evidence": "src/declare.jl:933"
+  },
+  {
+   "id": "L6b-143",
+   "file": "design/log.md",
+   "line": 11640,
+   "kind": "decl",
+   "claim": "D-267: binding and device contracts stay",
+   "evidence": "src/bindings.jl:113"
+  },
+  {
+   "id": "L6b-144",
+   "file": "design/log.md",
+   "line": 11640,
+   "kind": "decl",
+   "claim": "D-267: every bundle field stays",
+   "evidence": "src/declare.jl:900"
+  },
+  {
+   "id": "L6b-145",
+   "file": "design/log.md",
+   "line": 11640,
+   "kind": "decl",
+   "claim": "D-267: every get_ selector stays",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "L6b-146",
+   "file": "design/log.md",
+   "line": 11641,
+   "kind": "decl",
+   "claim": "D-267: every diagnostic kind name stays",
+   "evidence": "src/diagnostics.jl:636"
+  },
+  {
+   "id": "L6b-147",
+   "file": "design/log.md",
+   "line": 11645,
+   "kind": "law",
+   "claim": "D-267: no aliases or shims for the old names",
+   "evidence": "rg -w init_x|input_types|output_state src: no match"
+  },
+  {
+   "id": "L6b-148",
+   "file": "design/log.md",
+   "line": 12701,
+   "kind": "decl",
+   "claim": "D-279: input_connections → u_connections (renamed on by D-303)",
+   "evidence": "src/declare.jl:308"
+  },
+  {
+   "id": "L6b-149",
+   "file": "design/log.md",
+   "line": 12701,
+   "kind": "decl",
+   "claim": "D-279: output_connections → y_connections (renamed on by D-303)",
+   "evidence": "src/declare.jl:328"
+  },
+  {
+   "id": "L6b-150",
+   "file": "design/log.md",
+   "line": 12702,
+   "kind": "decl",
+   "claim": "D-279: child_connections → inner_connections (renamed on by D-303, D-314)",
+   "evidence": "src/declare.jl:286"
+  },
+  {
+   "id": "L6b-151",
+   "file": "design/log.md",
+   "line": 12702,
+   "kind": "decl",
+   "claim": "D-279: x_derivative → x_deriv",
+   "evidence": "src/declare.jl:715"
+  },
+  {
+   "id": "L6b-152",
+   "file": "design/log.md",
+   "line": 12703,
+   "kind": "decl",
+   "claim": "D-279: the condition leaf's inputs keyword → u (constructor now set, D-405)",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "L6b-153",
+   "file": "design/log.md",
+   "line": 12703,
+   "kind": "law",
+   "claim": "D-279: signatures, entry spellings and semantics unchanged",
+   "evidence": "src/declare.jl:308"
+  },
+  {
+   "id": "L6b-154",
+   "file": "design/log.md",
+   "line": 12705,
+   "kind": "law",
+   "claim": "D-279: a leaf declaration is still named by its bundle field",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "L6b-156",
+   "file": "design/log.md",
+   "line": 12708,
+   "kind": "decl",
+   "claim": "D-279: x_projection stays",
+   "evidence": "src/declare.jl:599"
+  },
+  {
+   "id": "L6b-157",
+   "file": "design/log.md",
+   "line": 12708,
+   "kind": "decl",
+   "claim": "D-279: state_events stays",
+   "evidence": "src/declare.jl:571"
+  },
+  {
+   "id": "L6b-158",
+   "file": "design/log.md",
+   "line": 12708,
+   "kind": "decl",
+   "claim": "D-279: sample_times stays",
+   "evidence": "src/declare.jl:514"
+  },
+  {
+   "id": "L6b-159",
+   "file": "design/log.md",
+   "line": 12709,
+   "kind": "decl",
+   "claim": "D-279: Group's wires/inputs/outputs keywords stay (renamed on by D-303)",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "L6b-160",
+   "file": "design/log.md",
+   "line": 12709,
+   "kind": "decl",
+   "claim": "D-279: input_faces/output_faces stay",
+   "evidence": "src/assembly.jl:435"
+  },
+  {
+   "id": "L6b-161",
+   "file": "design/log.md",
+   "line": 12710,
+   "kind": "decl",
+   "claim": "D-279: input_passthrough/output_passthrough stay",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "L6b-162",
+   "file": "design/log.md",
+   "line": 12710,
+   "kind": "decl",
+   "claim": "D-279: every get_ selector stays",
+   "evidence": "src/readers.jl:188"
+  },
+  {
+   "id": "L6b-163",
+   "file": "design/log.md",
+   "line": 12711,
+   "kind": "decl",
+   "claim": "D-279: every diagnostic kind name stays",
+   "evidence": "src/diagnostics.jl:636"
+  },
+  {
+   "id": "L6b-164",
+   "file": "design/log.md",
+   "line": 12714,
+   "kind": "law",
+   "claim": "D-279: no aliases or shims",
+   "evidence": "rg -w u_connections|x_derivative src: no match"
+  },
+  {
+   "id": "L6b-165",
+   "file": "design/log.md",
+   "line": 13739,
+   "kind": "decl",
+   "claim": "D-303: inner_connections → inner_wires (renamed on to local_wires by D-314)",
+   "evidence": "src/declare.jl:286"
+  },
+  {
+   "id": "L6b-166",
+   "file": "design/log.md",
+   "line": 13739,
+   "kind": "decl",
+   "claim": "D-303: u_connections → input_wires",
+   "evidence": "src/declare.jl:308"
+  },
+  {
+   "id": "L6b-167",
+   "file": "design/log.md",
+   "line": 13740,
+   "kind": "decl",
+   "claim": "D-303: y_connections → output_wires",
+   "evidence": "src/declare.jl:328"
+  },
+  {
+   "id": "L6b-168",
+   "file": "design/log.md",
+   "line": 13740,
+   "kind": "law",
+   "claim": "D-303: signatures, entry spellings and semantics unchanged",
+   "evidence": "src/declare.jl:308"
+  },
+  {
+   "id": "L6b-169",
+   "file": "design/log.md",
+   "line": 13742,
+   "kind": "decl",
+   "claim": "D-303: Group wires → inner_wires (now local_wires per D-314)",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "L6b-170",
+   "file": "design/log.md",
+   "line": 13742,
+   "kind": "decl",
+   "claim": "D-303: Group inputs → input_wires",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "L6b-171",
+   "file": "design/log.md",
+   "line": 13743,
+   "kind": "decl",
+   "claim": "D-303: Group outputs → output_wires",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "L6b-172",
+   "file": "design/log.md",
+   "line": 13743,
+   "kind": "decl",
+   "claim": "D-303: Group rates → sample_times",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "L6b-173",
+   "file": "design/log.md",
+   "line": 13746,
+   "kind": "decl",
+   "claim": "D-303: the condition leaf's u keyword stays (constructor now set)",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "L6b-174",
+   "file": "design/log.md",
+   "line": 13747,
+   "kind": "law",
+   "claim": "D-303: root input faces come from the boundary declaration or u_types by class",
+   "evidence": "src/diagnostics.jl:685"
+  },
+  {
+   "id": "L6b-175",
+   "file": "design/log.md",
+   "line": 13748,
+   "kind": "mech",
+   "claim": "D-303: nothing downstream tells the two root-face sources apart",
+   "evidence": "src/structure.jl:247"
+  },
+  {
+   "id": "L6b-176",
+   "file": "design/log.md",
+   "line": 13751,
+   "kind": "decl",
+   "claim": "D-303: u_types and y_types stay",
+   "evidence": "src/declare.jl:185"
+  },
+  {
+   "id": "L6b-177",
+   "file": "design/log.md",
+   "line": 13751,
+   "kind": "decl",
+   "claim": "D-303: input_faces/output_faces stay",
+   "evidence": "src/assembly.jl:435"
+  },
+  {
+   "id": "L6b-178",
+   "file": "design/log.md",
+   "line": 13752,
+   "kind": "decl",
+   "claim": "D-303: input_passthrough/output_passthrough stay",
+   "evidence": "src/assembly.jl:543"
+  },
+  {
+   "id": "L6b-179",
+   "file": "design/log.md",
+   "line": 13752,
+   "kind": "decl",
+   "claim": "D-303: x_deriv stays",
+   "evidence": "src/declare.jl:715"
+  },
+  {
+   "id": "L6b-180",
+   "file": "design/log.md",
+   "line": 13753,
+   "kind": "decl",
+   "claim": "D-303: every diagnostic kind name stays",
+   "evidence": "src/diagnostics.jl:636"
+  },
+  {
+   "id": "L6b-181",
+   "file": "design/log.md",
+   "line": 13754,
+   "kind": "law",
+   "claim": "D-303: no aliases or shims",
+   "evidence": "rg -w inner_connections|y_connections src: no match"
+  },
+  {
+   "id": "L6b-182",
+   "file": "design/log.md",
+   "line": 13923,
+   "kind": "law",
+   "claim": "D-308: a continuous component's Ints, enums and Bools belong in modes",
+   "evidence": "probe:98"
+  },
+  {
+   "id": "L6b-183",
+   "file": "design/log.md",
+   "line": 13924,
+   "kind": "law",
+   "claim": "D-308: a workspace is not snapshotted",
+   "evidence": "src/checkpoint.jl:74"
+  },
+  {
+   "id": "L6b-184",
+   "file": "design/log.md",
+   "line": 13924,
+   "kind": "law",
+   "claim": "D-308: a workspace is not replayed",
+   "evidence": "src/checkpoint.jl:118"
+  },
+  {
+   "id": "L6b-185",
+   "file": "design/log.md",
+   "line": 14218,
+   "kind": "decl",
+   "claim": "D-314: the class marker is local_wires",
+   "evidence": "src/assembly.jl:15"
+  },
+  {
+   "id": "L6b-186",
+   "file": "design/log.md",
+   "line": 14219,
+   "kind": "decl",
+   "claim": "D-314: input_wires and output_wires stand",
+   "evidence": "src/declare.jl:308"
+  },
+  {
+   "id": "L6b-187",
+   "file": "design/log.md",
+   "line": 14220,
+   "kind": "law",
+   "claim": "D-314: signatures, entry spellings and semantics unchanged",
+   "evidence": "src/declare.jl:286"
+  },
+  {
+   "id": "L6b-188",
+   "file": "design/log.md",
+   "line": 14220,
+   "kind": "decl",
+   "claim": "D-314: Group's field and keyword follow the declaration",
+   "evidence": "probe:105"
+  },
+  {
+   "id": "L6b-189",
+   "file": "design/log.md",
+   "line": 14221,
+   "kind": "law",
+   "claim": "D-314: no aliases or shims",
+   "evidence": "rg -w inner_wires src: no match"
+  },
+  {
+   "id": "L6b-190",
+   "file": "design/log.md",
+   "line": 15234,
+   "kind": "law",
+   "claim": "D-345: during a run m changes only through handlers at boundaries",
+   "evidence": "src/declare.jl:117"
+  },
+  {
+   "id": "L6b-191",
+   "file": "design/log.md",
+   "line": 15235,
+   "kind": "law",
+   "claim": "D-345: outside a run a stopped-sim service may set m",
+   "evidence": "src/declare.jl:118; src/diagnostics.jl:1282"
+  },
+  {
+   "id": "L6b-192",
+   "file": "design/log.md",
+   "line": 15430,
+   "kind": "law",
+   "claim": "D-362: m is continuous-only",
+   "evidence": "src/assembly.jl:730"
+  },
+  {
+   "id": "L6b-193",
+   "file": "design/log.md",
+   "line": 15431,
+   "kind": "law",
+   "claim": "D-362: m_init on a discrete leaf is DeclarationOnWrongTier",
+   "evidence": "probe:95"
+  },
+  {
+   "id": "L6b-194",
+   "file": "design/log.md",
+   "line": 15432,
+   "kind": "law",
+   "claim": "D-362: a leaf carrying both tiers' stores is refused",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "L6b-195",
+   "file": "design/log.md",
+   "line": 15438,
+   "kind": "law",
+   "claim": "D-362: no s view in the flow",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "L6b-196",
+   "file": "design/log.md",
+   "line": 15438,
+   "kind": "law",
+   "claim": "D-362: no discrete-tier write into x",
+   "evidence": "src/executor.jl:181"
+  },
+  {
+   "id": "L6b-197",
+   "file": "design/log.md",
+   "line": 18256,
+   "kind": "decl",
+   "claim": "D-438: a store returns a NamedTuple or one bare leaf",
+   "evidence": "src/declare.jl:75"
+  },
+  {
+   "id": "L6b-198",
+   "file": "design/log.md",
+   "line": 18258,
+   "kind": "law",
+   "claim": "D-438: a bare leaf's field is the letter x, s or m",
+   "evidence": "src/declare.jl:812"
+  },
+  {
+   "id": "L6b-199",
+   "file": "design/log.md",
+   "line": 18259,
+   "kind": "mech",
+   "claim": "D-438: the bundle carries the bare leaf itself",
+   "evidence": "test/fixtures.jl:46"
+  },
+  {
+   "id": "L6b-200",
+   "file": "design/log.md",
+   "line": 18263,
+   "kind": "law",
+   "claim": "D-438: a bare store is anything not a NamedTuple (nor nothing)",
+   "evidence": "src/declare.jl:830"
+  },
+  {
+   "id": "L6b-201",
+   "file": "design/log.md",
+   "line": 18265,
+   "kind": "law",
+   "claim": "D-438: a bare x is a real or an SArray of reals",
+   "evidence": "src/assembly.jl:676"
+  },
+  {
+   "id": "L6b-202",
+   "file": "design/log.md",
+   "line": 18265,
+   "kind": "law",
+   "claim": "D-438: a bare s or m is isbits or a Symbol",
+   "evidence": "src/assembly.jl:713"
+  },
+  {
+   "id": "L6b-203",
+   "file": "design/log.md",
+   "line": 18266,
+   "kind": "law",
+   "claim": "D-438: IllegalStateLeaf/IllegalStoreField name the field x, s or m",
+   "evidence": "probe:99; src/diagnostics.jl:973"
+  },
+  {
+   "id": "L6b-204",
+   "file": "design/log.md",
+   "line": 18267,
+   "kind": "law",
+   "claim": "D-438: StoreNotNamedTuple stays retired",
+   "evidence": "rg StoreNotNamedTuple src: no match"
+  },
+  {
+   "id": "L6b-205",
+   "file": "design/log.md",
+   "line": 18268,
+   "kind": "law",
+   "claim": "D-438: shape is decided per declaration independently",
+   "evidence": "src/declare.jl:830; test/fixtures.jl:58"
+  },
+  {
+   "id": "L6b-206",
+   "file": "design/log.md",
+   "line": 18270,
+   "kind": "law",
+   "claim": "D-438: nothing is the stateless spelling and the fallback",
+   "evidence": "src/declare.jl:75"
+  },
+  {
+   "id": "L6b-207",
+   "file": "design/log.md",
+   "line": 18271,
+   "kind": "mech",
+   "claim": "D-438: nothing is the bundle law's presence test",
+   "evidence": "src/declare.jl:860"
+  },
+  {
+   "id": "L6b-208",
+   "file": "design/log.md",
+   "line": 18271,
+   "kind": "law",
+   "claim": "D-438: (;) is refused as EmptyStore",
+   "evidence": "probe:96"
+  },
+  {
+   "id": "L6b-209",
+   "file": "design/log.md",
+   "line": 18272,
+   "kind": "law",
+   "claim": "D-438: the EmptyStore message names nothing",
+   "evidence": "probe:96; probe:97"
+  },
+  {
+   "id": "L6b-210",
+   "file": "design/log.md",
+   "line": 18272,
+   "kind": "law",
+   "claim": "D-438: D-263's mandatory store marker stands",
+   "evidence": "probe:88"
+  },
+  {
+   "id": "L6b-211",
+   "file": "design/log.md",
+   "line": 18274,
+   "kind": "law",
+   "claim": "D-438: x_deriv, x_projection, handler x return the bare x leaf",
+   "evidence": "test/fixtures.jl:46; test/fixtures.jl:63; src/executor.jl:402"
+  },
+  {
+   "id": "L6b-212",
+   "file": "design/log.md",
+   "line": 18275,
+   "kind": "law",
+   "claim": "D-438: s_update returns the bare s leaf",
+   "evidence": "test/fixtures.jl:53"
+  },
+  {
+   "id": "L6b-213",
+   "file": "design/log.md",
+   "line": 18276,
+   "kind": "law",
+   "claim": "D-438: handler m key or condition m payload replaces a bare m whole",
+   "evidence": "src/declare.jl:536; test/test_conditions.jl:674"
+  },
+  {
+   "id": "L6b-214",
+   "file": "design/log.md",
+   "line": 18283,
+   "kind": "law",
+   "claim": "D-438: the letter default applies to bare only; a named store may use it",
+   "evidence": "src/declare.jl:830"
+  },
+  {
+   "id": "L6b-215",
+   "file": "design/log.md",
+   "line": 18280,
+   "kind": "mech",
+   "claim": "D-438: diagnostics' field payload and field lists carry the letter",
+   "evidence": "probe:99; src/build.jl:180"
+  },
+  {
+   "id": "L6b-216",
+   "file": "design/log.md",
+   "line": 18285,
+   "kind": "law",
+   "claim": "D-438: readers accept a headless leaf where the store is bare",
+   "evidence": "test/test_readers.jl:601"
+  },
+  {
+   "id": "L6b-217",
+   "file": "design/log.md",
+   "line": 18286,
+   "kind": "mech",
+   "claim": "D-438: a headless leaf takes the letter as its head",
+   "evidence": "src/readers.jl:430"
+  },
+  {
+   "id": "L6b-218",
+   "file": "design/log.md",
+   "line": 18289,
+   "kind": "ex",
+   "claim": "D-438: get_state(path, \"[2]\") reads one SArray component",
+   "evidence": "test/test_readers.jl:595"
+  },
+  {
+   "id": "L6b-219",
+   "file": "design/log.md",
+   "line": 18289,
+   "kind": "ex",
+   "claim": "D-438: get_state(path, \".P\") reads a field of a bare isbits s",
+   "evidence": "test/test_readers.jl:608"
+  },
+  {
+   "id": "L6b-220",
+   "file": "design/log.md",
+   "line": 18290,
+   "kind": "decl",
+   "claim": "D-438: the store selectors' leaf defaults to the empty address",
+   "evidence": "src/readers.jl:188; probe:116"
+  },
+  {
+   "id": "L6b-221",
+   "file": "design/log.md",
+   "line": 18292,
+   "kind": "law",
+   "claim": "D-438: headless vs named store is ReadResolution :store_shape with fields",
+   "evidence": "test/test_readers.jl:621"
+  },
+  {
+   "id": "L6b-222",
+   "file": "design/log.md",
+   "line": 18293,
+   "kind": "law",
+   "claim": "D-438: headless vs stateless is :store_shape with no fields",
+   "evidence": "test/test_readers.jl:624"
+  },
+  {
+   "id": "L6b-223",
+   "file": "design/log.md",
+   "line": 18294,
+   "kind": "law",
+   "claim": "D-438: named head vs bare store is :undeclared, candidate the letter",
+   "evidence": "test/test_readers.jl:622"
+  },
+  {
+   "id": "L6b-224",
+   "file": "design/log.md",
+   "line": 18296,
+   "kind": "law",
+   "claim": "D-438: a bare payload set(x = 1.0) sets the field x, checked at resolution",
+   "evidence": "test/test_conditions.jl:686"
+  },
+  {
+   "id": "L6b-225",
+   "file": "design/log.md",
+   "line": 18297,
+   "kind": "law",
+   "claim": "D-438: bare payload vs named store is ConditionResolution :store_shape, field nothing",
+   "evidence": "test/test_conditions.jl:698"
+  },
+  {
+   "id": "L6b-226",
+   "file": "design/log.md",
+   "line": 18300,
+   "kind": "law",
+   "claim": "D-438: named payload vs bare store is :undeclared_field, candidate the letter",
+   "evidence": "test/test_conditions.jl:699"
+  },
+  {
+   "id": "L6b-227",
+   "file": "design/log.md",
+   "line": 18302,
+   "kind": "mech",
+   "claim": "D-438: the reserved empty name retires from the bookkeeping",
+   "evidence": "test/test_readers.jl:586"
+  },
+  {
+   "id": "L6b-228",
+   "file": "design/log.md",
+   "line": 18304,
+   "kind": "mech",
+   "claim": "D-438: a headless address parses with no head",
+   "evidence": "test/test_readers.jl:586"
+  },
+  {
+   "id": "L6b-229",
+   "file": "design/log.md",
+   "line": 18306,
+   "kind": "law",
+   "claim": "D-438: an assembly face is never bare",
+   "evidence": "src/declare.jl:295"
+  },
+  {
+   "id": "L6b-230",
+   "file": "design/log.md",
+   "line": 21202,
+   "kind": "law",
+   "claim": "D-479: the gate reads (n − Φ₀) % D₀ == 0",
+   "evidence": "src/executor.jl:519"
+  },
+  {
+   "id": "L6b-231",
+   "file": "design/log.md",
+   "line": 21203,
+   "kind": "decl",
+   "claim": "D-479: tick stays the argument name of sweep_1, sweep_2 and ticks",
+   "evidence": "src/model.jl:707; src/model.jl:663"
+  },
+  {
+   "id": "L6b-232",
+   "file": "design/log.md",
+   "line": 21204,
+   "kind": "law",
+   "claim": "D-479: a span l takes N = ⌈l / h_max⌉ steps",
+   "evidence": "src/frame.jl:132"
+  },
+  {
+   "id": "L6b-233",
+   "file": "design/log.md",
+   "line": 21204,
+   "kind": "law",
+   "claim": "D-479: each span step has length l / N",
+   "evidence": "src/frame.jl:106"
+  },
+  {
+   "id": "L6b-235",
+   "file": "design/log.md",
+   "line": 21207,
+   "kind": "law",
+   "claim": "D-479: the admissible set is gcd(pool)/Q for integer Q ≥ 1",
+   "evidence": "src/structure.jl:859; src/deployment.jl:282"
+  },
+  {
+   "id": "L6b-236",
+   "file": "design/log.md",
+   "line": 21208,
+   "kind": "law",
+   "claim": "D-479: leave-one-out factor Qₚ = gcd(pool ∖ p)/gcd(pool)",
+   "evidence": "src/structure.jl:866"
+  },
+  {
+   "id": "L6b-237",
+   "file": "design/log.md",
+   "line": 21210,
+   "kind": "law",
+   "claim": "D-479: hyperperiod H = lcm D₀(i)",
+   "evidence": "src/show.jl:177"
+  },
+  {
+   "id": "L6b-238",
+   "file": "design/log.md",
+   "line": 21211,
+   "kind": "law",
+   "claim": "D-479: Δt_unit = gcd(Δt_frame, Δt_base)",
+   "evidence": "src/deployment.jl:153"
+  },
+  {
+   "id": "L6b-239",
+   "file": "design/log.md",
+   "line": 21212,
+   "kind": "law",
+   "claim": "D-479: Δt_unit is Δt_frame when no discrete component exists",
+   "evidence": "src/deployment.jl:153"
+  },
+  {
+   "id": "L6b-240",
+   "file": "design/log.md",
+   "line": 21212,
+   "kind": "law",
+   "claim": "D-479: the loop derives Δt_unit and no deployment keyword sets it",
+   "evidence": "src/deployment.jl:555"
+  }
+ ],
+ "counts": {
+  "law": 131,
+  "mech": 33,
+  "decl": 73,
+  "ex": 4,
+  "ptr": 24,
+  "why": 12,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ },
+ "notes": "Read-only audit of the 30 ratified log entries in slice L6b (Status and Position only, lines of W at cb398676). Probe: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6b/probe.jl, run once. All 30 Status lines read 'ratified'. Every D-nnn citation in the Positions resolves. The superseded entries cited (D-152→D-154, D-173→D-195, D-167→D-263, D-435→D-438) each end at a ratified entry. Every § cited (§3.1–§3.4, §4.3, §5.2, §6.1, §7.1, §7.3, §8.1, §8.2, §8.5, §8.6, §9.5, §12.7, §14.1, §14.3, §14.4) exists in spec.md.\n\nStage M leads: most 'names missing' leads (h_x, h_s, init_*, input_types, output_types, local_types, *_connections, inner_wires, state_*, output_*, x_derivative, get_, fragment, localize, producer_face, exports, connections) are old vocabulary under log_rules rule 2. They were renamed forward by D-220, D-267, D-279, D-303, D-314 and D-405 (fragment → set, and its `u` keyword survives, probe:106). They are ok, except where the old name carries a rule the code no longer follows: local_types (L6b-016, L6b-025, D-165), localize (L6b-020, D-179), auto-publication (L6b-008, D-252). StopFaceInvalid → L6b-098 (drift, D-316). TierSignatureMismatch at D-249 → L6b-087 (drift, D-263); at D-263 it is ok as the retirement (L6b-121). StoreNotNamedTuple → ok, stated retired (L6b-204). Δt_unit → ok: the code names it `unit` in src/deployment.jl:153 and spells it Δt_unit in comments and src/show.jl.\n\nPattern: many early ratified entries (D-016, D-033, D-034, D-036, D-045, D-112, D-154, D-195, D-249, D-263, D-279) carry clauses that later entries moved, with no superseded status or annotation on them. D-020 shows the annotation form (log.md:921). Each drift row's fix is phrased as such an annotation, because the log is not rewritten. The one deviation, L6b-234, is D-479's proposal step-count formula: it leaves out D-460's h_min clamp and cap, so it is incomplete rather than contradicted. D-123's glossary claims (146 entries, ten groups) are about docs, not code. They are counted as ptr and not checked."
+}

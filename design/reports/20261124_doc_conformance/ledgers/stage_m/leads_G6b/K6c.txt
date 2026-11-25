@@ -1,0 +1,16 @@
+names missing: `A_d` at design/companions/linear_systems.md:383
+names missing: `A_d` at design/companions/linear_systems.md:407
+names missing: `B_d` at design/companions/linear_systems.md:383
+names missing: `Discrete` at design/companions/linear_systems.md:433
+names missing: `Discretized` at design/companions/linear_systems.md:434
+names missing: `LinearSystem` at design/companions/linear_systems.md:8
+names missing: `LinearSystem` at design/companions/linear_systems.md:14
+names missing: `LinearSystem` at design/companions/linear_systems.md:262
+names missing: `LinearSystem` at design/companions/linear_systems.md:263
+names missing: `_i` at design/companions/linear_systems.md:55
+names missing: `a_i` at design/companions/linear_systems.md:55
+names missing: `b_i` at design/companions/linear_systems.md:55
+names missing: `b_n` at design/companions/linear_systems.md:54
+names missing: `b_n` at design/companions/linear_systems.md:55
+names missing: `c2d` at design/companions/linear_systems.md:433
+names missing: `sI` at design/companions/linear_systems.md:302

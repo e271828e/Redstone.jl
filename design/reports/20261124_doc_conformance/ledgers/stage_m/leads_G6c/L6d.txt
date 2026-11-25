@@ -1,0 +1,59 @@
+# The entries of this slice, at log.md lines (heading to the line before the next heading)
+D-147: 5711-5783
+D-245: 10044-10083
+D-252: 10447-10495
+D-258: 10858-10889
+D-285: 12969-13030
+D-287: 13075-13111
+D-288: 13112-13175
+D-292: 13384-13419
+D-297: 13528-13571
+D-341: 15069-15110
+D-342: 15111-15146
+D-343: 15147-15186
+D-347: 15291-15315
+D-348: 15316-15343
+D-447: 18816-18868
+D-453: 19247-19292
+D-037: 1378-1412
+D-043: 1545-1563
+D-051: 1765-1785
+D-065: 2194-2233
+D-084: 2888-2910
+D-085: 2911-2941
+D-143: 5461-5531
+D-163: 6321-6348
+D-168: 6660-6705
+D-185: 7363-7445
+D-186: 7446-7507
+D-205: 8209-8256
+D-207: 8290-8348
+D-208: 8349-8378
+
+# Stage M leads
+names missing: `Abstract` at log.md:19257 (D-453)
+names missing: `Dataflow` at log.md:10864 (D-258)
+names missing: `Merged` at log.md:2198 (D-065)
+names missing: `RootSlotTypeConflict` at log.md:6666 (D-168)
+names missing: `child_connections` at log.md:8298 (D-207)
+names missing: `connections` at log.md:2918 (D-085)
+names missing: `h_x` at log.md:5727 (D-147)
+names missing: `h_xu` at log.md:5479 (D-143)
+names missing: `h_xu` at log.md:5728 (D-147)
+names missing: `h_z` at log.md:5726 (D-147)
+names missing: `h_zu` at log.md:5727 (D-147)
+names missing: `input_connections` at log.md:8298 (D-207)
+names missing: `input_connections` at log.md:8356 (D-208)
+names missing: `input_types` at log.md:8358 (D-208)
+names missing: `output_connections` at log.md:8299 (D-207)
+names missing: `output_state` at log.md:10453 (D-252)
+names missing: `output_types` at log.md:2892 (D-084)
+names missing: `output_types` at log.md:5468 (D-143)
+names missing: `stop_on` at log.md:12985 (D-285)
+names missing: `sweep_hx` at log.md:5729 (D-147)
+names missing: `sweep_hx` at log.md:5732 (D-147)
+names missing: `sweep_hxu` at log.md:5729 (D-147)
+names missing: `sweep_hxu` at log.md:5730 (D-147)
+names missing: `sweep_hxu` at log.md:5732 (D-147)
+names missing: `wr_ext` at log.md:5470 (D-143)
+names test-only: `ballocated` at log.md:5730 (D-147)

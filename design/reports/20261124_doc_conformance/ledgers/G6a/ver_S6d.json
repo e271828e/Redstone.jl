@@ -1,0 +1,66 @@
+{
+ "judgments": [
+  {
+   "id": "S6d-001",
+   "conforms": true,
+   "evidence": "src/declare.jl:653 (y_state), 685 (y_direct), 715 (x_deriv), 740 (s_update) are the four generic functions; src/declare.jl:836 update_of maps the continuous tier to x_deriv and the discrete tier to s_update, so the symbol-to-declaration table matches one to one."
+  },
+  {
+   "id": "S6d-010",
+   "conforms": true,
+   "evidence": "src/build.jl:1105-1118 compares each component's declared ports with its stage-1 and stage-2 products and pushes DeclaredNotProduced for the rest. Probe P010 (probe.jl:14-20): y_types (a, b) with y_state returning only a gives [(DeclaredNotProduced, [:b])]."
+  },
+  {
+   "id": "S6d-020",
+   "conforms": true,
+   "evidence": "src/declare.jl:903 LEGAL_BUNDLE (:x_deriv, CONTINUOUS) => (:x, :m, :y, :u, :t, :ws); src/declare.jl:856-879 bundle_names. Probe P020 (probe.jl:23-32): a component with x, m, u and y sees x_deriv bundle keys (:x, :m, :u, :y, :t)."
+  },
+  {
+   "id": "S6d-031",
+   "conforms": true,
+   "evidence": "src/model.jl:734-784 event_phase! runs round 1's sweep, then loops guards, fires and re-sweeps (_round!) until a round fires nothing (any_fired || break). test/test_events.jl:300-313 shows a three-event cascade settling within one boundary, independent of h."
+  },
+  {
+   "id": "S6d-040",
+   "conforms": true,
+   "evidence": "src/model.jl:752-753 edge = !events.last[i] && events.now[i]; eligible = edge && events.count[i] < budget. The extra one-per-component cap (model.jl:764) is the qualification the spec states in its next paragraph (spec.md:1471-1474), and the dropped edge after the budget runs out (model.jl:772) matches spec.md:1476-1478.",
+   "note": "Read alone, the 'iff' at spec.md:1465-1468 leaves out the one-event-per-component cap, but the paragraph right after it states that cap, so the section as a whole matches the code."
+  },
+  {
+   "id": "S6d-049",
+   "conforms": true,
+   "evidence": "src/model.jl:664-665 runs ticks(0) at ESTABLISH; src/executor.jl:513-520 gates on (tick - Φ) % D == 0, which admits only Φ = 0 at index 0; executor.jl:525-526 admits every output stage at establishment. Probe P049 (probe.jl:35-40): TickCounters at Relative(2,0) and Relative(2,1) give c0.n = 1 and c1.n = 0 after init!, and both ports read 0, published from the initial state."
+  },
+  {
+   "id": "S6d-059",
+   "conforms": true,
+   "evidence": "src/executor.jl:394-412 shows that only the handler's return (via _latch!) writes x and m from a bundle that carries u. x_projection takes x alone (src/build.jl:1164-1165). x_deriv returns a derivative, and output stages return port values (src/declare.jl:900-908). So an input can reach continuous state only through an event."
+  },
+  {
+   "id": "S6d-068",
+   "conforms": true,
+   "evidence": "src/build.jl:205-216 adds a producer edge for every input face of any component that defines y_direct, whichever function reads the input. Probe P068 (probe.jl:43-52): input v, read only by x_deriv, closed through a Gain onto the component's stage-2 port 'out', is refused as AlgebraicCycle."
+  },
+  {
+   "id": "S6d-077",
+   "conforms": true,
+   "evidence": "src/structure.jl:644-647 resolves each input_wires entry through _fanout/resolve_dest against the level's own children, and src/diagnostics.jl:533-536 refuses a deeper path (PathResolution :reaches_past). Probe P077 (probe.jl:55-62): 'in' => 'g/k/e' is refused with PathResolution :reaches_past, and 'in' => 'g/u' builds."
+  },
+  {
+   "id": "S6d-087",
+   "conforms": true,
+   "evidence": "src/structure.jl:20-75 resolve_source and resolve_dest resolve an endpoint only to an immediate child's port or face and follow a sub-assembly's recorded face rows (draft.out_faces, _draft_routes), so every crossing carries a declared face at each level. Probe P077 shows the reach-past refusal that keeps the face graph total."
+  },
+  {
+   "id": "S6d-096",
+   "conforms": true,
+   "evidence": "src/leaves.jl:372-375 _accepts_wire calls _accepts(P, V, T, true) at a wire, and leaves.jl:355 lets the lift enter an opaque leaf only at_wire, which admits a frozen handle. test/test_build.jl:764-772 checks this. Probe P096 (probe.jl:65-69): PinnedOffsetSource and DiscreteOffsetSource each build, the src cell stays OffsetField{Float64}, and the consumer's h is a Dual at a Dual activation."
+  },
+  {
+   "id": "S6d-105",
+   "conforms": true,
+   "evidence": "src/structure.jl:681-685: only at the root (path empty) does an input_wires face join draft.root_inputs and claim its consumers with producer (\"\", face), the no-component terminus. Probe P105 (probe.jl:72-78): a Group root's 'in' face and a primitive root's own 'e' input are both fed by init! set(u=...) and give 6.0."
+  }
+ ],
+ "notes": "All 12 claims in S6d match the code at W (cb398676). The probe script is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S6d_v/probe.jl. It ran three times, and the final run produced every result cited above. One borderline wording: in S6d-040, the 'iff' firing rule at spec.md:1465 does not mention the one-event-per-component cap, but spec.md:1471 states it right after, so I judged it as conforming. No tracked file was changed."
+}

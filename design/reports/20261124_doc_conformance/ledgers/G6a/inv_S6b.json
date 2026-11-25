@@ -1,0 +1,1963 @@
+{
+ "rows": [
+  {
+   "id": "S6b-140",
+   "file": "design/spec.md",
+   "line": 665,
+   "kind": "law",
+   "claim": "The bit-for-bit replay promise holds only against the identical build running identical compiled code",
+   "evidence": "no code or test compares builds; replay! re-runs the same loop (src/sim.jl:1406)",
+   "verdict": "unverifiable",
+   "note": "A property of the compiler and the build, not decidable from src/ in this slice."
+  },
+  {
+   "id": "S6b-141",
+   "file": "design/spec.md",
+   "line": 667,
+   "kind": "law",
+   "claim": "The same build compiled at another optimization level agrees only to round-off",
+   "evidence": "no probe run at a second optimization level",
+   "verdict": "unverifiable",
+   "note": "Needs two julia runs at different -O levels with a trajectory comparison; not attempted."
+  },
+  {
+   "id": "S6b-158",
+   "file": "design/spec.md",
+   "line": 709,
+   "kind": "decl",
+   "claim": "Each continuous state leaf is a real scalar or an SArray",
+   "evidence": "src/assembly.jl:674-679 accepts only Float64 or an SArray of Float64; any other eltype is IllegalStateLeaf (:eltype), Integer/Enum is :mode_value, a NamedTuple is :nested",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "each a `Float64` scalar or an `SArray` of `Float64`",
+   "note": "Another real type such as Float32 is refused. §7.1 line 2208 repeats the same loose wording (outside this slice)."
+  },
+  {
+   "id": "S6b-231",
+   "file": "design/spec.md",
+   "line": 828,
+   "kind": "law",
+   "claim": "Relative entries compose down the tree with periods multiplying and phases adding",
+   "evidence": "probe:193-194: scope i = Relative(2,1), child z = Relative(3,1) compiles to period 6, phase 3, not 2. src/declare.jl:420 gives phase Φ₀(s) + Φ·D₀(s)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Relative entries compose down the tree, periods multiplying and each phase adding after scaling by its scope's period (Φ₀ = Φ₀(s) + Φ·D₀(s)).",
+   "note": "The phase is scaled by the scope's period before adding, so the plain sum is wrong."
+  },
+  {
+   "id": "S6b-239",
+   "file": "design/spec.md",
+   "line": 862,
+   "kind": "law",
+   "claim": "Guard-driven handlers are the sole writers of continuous state",
+   "evidence": "src/declare.jl:595-598 and src/model.jl:654: x_projection also replaces the whole continuous state at every boundary, and §7.1 line 2220 names both handler and projection as write-backs",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "guard-driven handlers, beside the state-driven projection, are the only writers of continuous state",
+   "note": "The point (no time-driven reset of x) still stands, since projection reads the state alone."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S6b-001",
+   "file": "design/spec.md",
+   "line": 445,
+   "kind": "law",
+   "claim": "Events have two detection policies, non-localized and localized",
+   "evidence": "src/declare.jl:534-541; probe:42"
+  },
+  {
+   "id": "S6b-002",
+   "file": "design/spec.md",
+   "line": 446,
+   "kind": "mech",
+   "claim": "Both policies share one declaration, a guard plus a handler",
+   "evidence": "src/declare.jl:545"
+  },
+  {
+   "id": "S6b-003",
+   "file": "design/spec.md",
+   "line": 447,
+   "kind": "law",
+   "claim": "Only detection differs between the policies",
+   "evidence": "src/model.jl:734 (one event phase); src/frame.jl:224 (only the trigger reads localized)"
+  },
+  {
+   "id": "S6b-004",
+   "file": "design/spec.md",
+   "line": 453,
+   "kind": "law",
+   "claim": "A guard defines a predicate",
+   "evidence": "src/declare.jl:602"
+  },
+  {
+   "id": "S6b-005",
+   "file": "design/spec.md",
+   "line": 454,
+   "kind": "law",
+   "claim": "The predicate has a Bool form or a sign-of-continuous-function form",
+   "evidence": "src/declare.jl:602-603; GuardForm refusal src/declare.jl:541"
+  },
+  {
+   "id": "S6b-006",
+   "file": "design/spec.md",
+   "line": 455,
+   "kind": "law",
+   "claim": "The sign form holds when sigma >= 0",
+   "evidence": "src/declare.jl:603"
+  },
+  {
+   "id": "S6b-007",
+   "file": "design/spec.md",
+   "line": 458,
+   "kind": "law",
+   "claim": "An event fires on a not-holding to holding transition",
+   "evidence": "src/model.jl:750"
+  },
+  {
+   "id": "S6b-008",
+   "file": "design/spec.md",
+   "line": 459,
+   "kind": "law",
+   "claim": "Edge semantics is uniform across both forms",
+   "evidence": "src/executor.jl:375; src/model.jl:750"
+  },
+  {
+   "id": "S6b-009",
+   "file": "design/spec.md",
+   "line": 460,
+   "kind": "mech",
+   "claim": "The prior is each event's predicate sample stored at the previous boundary",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S6b-010",
+   "file": "design/spec.md",
+   "line": 462,
+   "kind": "law",
+   "claim": "The opposite direction is a second event with the negated guard",
+   "evidence": "src/declare.jl:545 (no direction field)"
+  },
+  {
+   "id": "S6b-011",
+   "file": "design/spec.md",
+   "line": 464,
+   "kind": "law",
+   "claim": "No per-event direction keyword is built",
+   "evidence": "probe:45 fieldnames(StateEvent) = (:guard, :handler)"
+  },
+  {
+   "id": "S6b-012",
+   "file": "design/spec.md",
+   "line": 467,
+   "kind": "law",
+   "claim": "A Boolean predicate is non-localized",
+   "evidence": "probe:42 (bool fires at 0.5, no t* boundary)"
+  },
+  {
+   "id": "S6b-013",
+   "file": "design/spec.md",
+   "line": 468,
+   "kind": "law",
+   "claim": "A sign-form predicate is localized",
+   "evidence": "probe:42 (t* boundary at 0.35000007)"
+  },
+  {
+   "id": "S6b-014",
+   "file": "design/spec.md",
+   "line": 473,
+   "kind": "mech",
+   "claim": "Non-localized detection checks each guard for an edge at boundaries only",
+   "evidence": "src/model.jl:746-750; src/frame.jl:224"
+  },
+  {
+   "id": "S6b-015",
+   "file": "design/spec.md",
+   "line": 474,
+   "kind": "law",
+   "claim": "Non-localized detection does no root-finding",
+   "evidence": "src/frame.jl:224 (only localized[i] triggers)"
+  },
+  {
+   "id": "S6b-016",
+   "file": "design/spec.md",
+   "line": 475,
+   "kind": "law",
+   "claim": "Non-localized detection rejects no step",
+   "evidence": "src/frame.jl:156 (bare step path)"
+  },
+  {
+   "id": "S6b-017",
+   "file": "design/spec.md",
+   "line": 475,
+   "kind": "law",
+   "claim": "The handler fires at the first boundary that observes the edge",
+   "evidence": "probe:42 (bool tf = 0.5, the step end)"
+  },
+  {
+   "id": "S6b-018",
+   "file": "design/spec.md",
+   "line": 476,
+   "kind": "law",
+   "claim": "That boundary can be a localized event time earlier in the step",
+   "evidence": "src/frame.jl:318 runs the full event phase at t*"
+  },
+  {
+   "id": "S6b-019",
+   "file": "design/spec.md",
+   "line": 479,
+   "kind": "mech",
+   "claim": "Localized detection finds the crossing instant by root-finding",
+   "evidence": "src/frame.jl:361 (ITP bracketing)"
+  },
+  {
+   "id": "S6b-020",
+   "file": "design/spec.md",
+   "line": 484,
+   "kind": "law",
+   "claim": "The policy is part of the model, fixed by the guard's return type",
+   "evidence": "src/declare.jl:534-541"
+  },
+  {
+   "id": "S6b-021",
+   "file": "design/spec.md",
+   "line": 485,
+   "kind": "law",
+   "claim": "The policy never depends on pacing",
+   "evidence": "src/frame.jl:224 (no pacer input); pacer waits only at frame top src/sim.jl:2109"
+  },
+  {
+   "id": "S6b-022",
+   "file": "design/spec.md",
+   "line": 489,
+   "kind": "law",
+   "claim": "Non-localized detection is exact for guards over modes, root inputs and held discrete outputs",
+   "evidence": "src/sim.jl:2021 (inputs at frame top); src/model.jl:773 (modes); src/model.jl:656 (ticks)"
+  },
+  {
+   "id": "S6b-023",
+   "file": "design/spec.md",
+   "line": 490,
+   "kind": "law",
+   "claim": "Modes, root inputs and held discrete outputs change only at boundaries",
+   "evidence": "src/model.jl:773 (handlers); src/sim.jl:2021 (drain); src/model.jl:656 (ticks)"
+  },
+  {
+   "id": "S6b-024",
+   "file": "design/spec.md",
+   "line": 492,
+   "kind": "law",
+   "claim": "A boundary check misses no crossing of such a predicate",
+   "evidence": "src/model.jl:773, src/sim.jl:2021, src/model.jl:656"
+  },
+  {
+   "id": "S6b-025",
+   "file": "design/spec.md",
+   "line": 492,
+   "kind": "law",
+   "claim": "A guard on an input fed by state or time can cross inside a step",
+   "evidence": "src/frame.jl:216-217 (arrival sweep re-reads the guards on interior state)"
+  },
+  {
+   "id": "S6b-026",
+   "file": "design/spec.md",
+   "line": 497,
+   "kind": "law",
+   "claim": "The discrete tier's ticks are time events with scheduled instants",
+   "evidence": "src/frame.jl:121; src/frame.jl:175"
+  },
+  {
+   "id": "S6b-027",
+   "file": "design/spec.md",
+   "line": 498,
+   "kind": "decl",
+   "claim": "Ticks are declared by sample_times",
+   "evidence": "src/declare.jl:514"
+  },
+  {
+   "id": "S6b-028",
+   "file": "design/spec.md",
+   "line": 499,
+   "kind": "law",
+   "claim": "Tick instants are known in advance and scheduled",
+   "evidence": "src/frame.jl:121,127 (next due instant by integer comparison)"
+  },
+  {
+   "id": "S6b-029",
+   "file": "design/spec.md",
+   "line": 500,
+   "kind": "decl",
+   "claim": "Everything declared through StateEvent(guard, handler) is a state event",
+   "evidence": "src/declare.jl:545"
+  },
+  {
+   "id": "S6b-030",
+   "file": "design/spec.md",
+   "line": 500,
+   "kind": "law",
+   "claim": "A state event's instant is detected by boundary check or localization",
+   "evidence": "src/model.jl:746; src/frame.jl:216"
+  },
+  {
+   "id": "S6b-031",
+   "file": "design/spec.md",
+   "line": 502,
+   "kind": "law",
+   "claim": "A guard over an input is still a state event",
+   "evidence": "src/declare.jl:907 (guard bundle carries u)"
+  },
+  {
+   "id": "S6b-032",
+   "file": "design/spec.md",
+   "line": 505,
+   "kind": "mech",
+   "claim": "Both policies read an edge by comparing the predicate samples at boundaries",
+   "evidence": "src/model.jl:750; src/frame.jl:224"
+  },
+  {
+   "id": "S6b-033",
+   "file": "design/spec.md",
+   "line": 506,
+   "kind": "law",
+   "claim": "An even number of crossings in one step shows no edge and nothing fires under either policy",
+   "evidence": "probe:100 (both guard forms, n = 0)"
+  },
+  {
+   "id": "S6b-034",
+   "file": "design/spec.md",
+   "line": 512,
+   "kind": "law",
+   "claim": "A localized event adds a boundary inside a step",
+   "evidence": "src/frame.jl:318; probe:42"
+  },
+  {
+   "id": "S6b-035",
+   "file": "design/spec.md",
+   "line": 513,
+   "kind": "law",
+   "claim": "It triggers when its prior did not hold and its predicate holds at the step's end",
+   "evidence": "src/frame.jl:224-226"
+  },
+  {
+   "id": "S6b-036",
+   "file": "design/spec.md",
+   "line": 514,
+   "kind": "mech",
+   "claim": "Root-finding locates t*",
+   "evidence": "src/frame.jl:289-292"
+  },
+  {
+   "id": "S6b-037",
+   "file": "design/spec.md",
+   "line": 515,
+   "kind": "law",
+   "claim": "The location tolerance is relative to the frame period",
+   "evidence": "src/frame.jl:367 (localization_tol times Dt_frame)"
+  },
+  {
+   "id": "S6b-038",
+   "file": "design/spec.md",
+   "line": 516,
+   "kind": "law",
+   "claim": "The deployment sets the tolerance",
+   "evidence": "src/deployment.jl:546"
+  },
+  {
+   "id": "S6b-039",
+   "file": "design/spec.md",
+   "line": 516,
+   "kind": "law",
+   "claim": "The predicate holds at t*",
+   "evidence": "src/frame.jl:394 (returns the observed holding endpoint)"
+  },
+  {
+   "id": "S6b-040",
+   "file": "design/spec.md",
+   "line": 517,
+   "kind": "law",
+   "claim": "t* lies strictly after the step's start",
+   "evidence": "src/frame.jl:295 (nextfloat of the segment start)"
+  },
+  {
+   "id": "S6b-041",
+   "file": "design/spec.md",
+   "line": 518,
+   "kind": "law",
+   "claim": "A crossing exactly at the step's end is that step's ordinary boundary",
+   "evidence": "src/frame.jl:296-304"
+  },
+  {
+   "id": "S6b-042",
+   "file": "design/spec.md",
+   "line": 519,
+   "kind": "law",
+   "claim": "The event fires there as a non-localized event would",
+   "evidence": "src/frame.jl:303-304; test/test_localization.jl:78"
+  },
+  {
+   "id": "S6b-043",
+   "file": "design/spec.md",
+   "line": 522,
+   "kind": "mech",
+   "claim": "The state at t* is the continuous extension evaluated there",
+   "evidence": "src/frame.jl:316"
+  },
+  {
+   "id": "S6b-044",
+   "file": "design/spec.md",
+   "line": 523,
+   "kind": "mech",
+   "claim": "The interpolant is built from values and derivatives at both step ends",
+   "evidence": "src/stepper.jl:362-373 (cubic Hermite)"
+  },
+  {
+   "id": "S6b-045",
+   "file": "design/spec.md",
+   "line": 524,
+   "kind": "mech",
+   "claim": "Root-finding evaluations read the raw interpolated state",
+   "evidence": "src/frame.jl:340-346 (no projection in _trial!)"
+  },
+  {
+   "id": "S6b-046",
+   "file": "design/spec.md",
+   "line": 526,
+   "kind": "law",
+   "claim": "Projection applies only at the t* boundary itself",
+   "evidence": "src/model.jl:654; src/frame.jl:318"
+  },
+  {
+   "id": "S6b-047",
+   "file": "design/spec.md",
+   "line": 527,
+   "kind": "law",
+   "claim": "A projection that moves the state back across the guard cancels the firing",
+   "evidence": "probe:86 (modes n = 0)"
+  },
+  {
+   "id": "S6b-048",
+   "file": "design/spec.md",
+   "line": 528,
+   "kind": "law",
+   "claim": "The run still publishes that boundary",
+   "evidence": "probe:85 (t* = 0.35000007 in the log)"
+  },
+  {
+   "id": "S6b-049",
+   "file": "design/spec.md",
+   "line": 531,
+   "kind": "law",
+   "claim": "t* is a boundary of its own",
+   "evidence": "src/frame.jl:318-324; probe:42"
+  },
+  {
+   "id": "S6b-050",
+   "file": "design/spec.md",
+   "line": 531,
+   "kind": "mech",
+   "claim": "The full event iteration runs at t*",
+   "evidence": "src/frame.jl:318; src/model.jl:734"
+  },
+  {
+   "id": "S6b-051",
+   "file": "design/spec.md",
+   "line": 532,
+   "kind": "mech",
+   "claim": "Rounds of sweep, guard checks and handlers repeat until none fires",
+   "evidence": "src/model.jl:745-776"
+  },
+  {
+   "id": "S6b-052",
+   "file": "design/spec.md",
+   "line": 534,
+   "kind": "law",
+   "claim": "The iteration at t* has a fresh firing budget",
+   "evidence": "src/model.jl:742"
+  },
+  {
+   "id": "S6b-053",
+   "file": "design/spec.md",
+   "line": 534,
+   "kind": "mech",
+   "claim": "The firing budget caps how often each event fires per boundary",
+   "evidence": "src/model.jl:751"
+  },
+  {
+   "id": "S6b-054",
+   "file": "design/spec.md",
+   "line": 535,
+   "kind": "law",
+   "claim": "No discrete component ticks at t*",
+   "evidence": "src/frame.jl:318 (empty due set)"
+  },
+  {
+   "id": "S6b-055",
+   "file": "design/spec.md",
+   "line": 536,
+   "kind": "law",
+   "claim": "No root input changes at t*",
+   "evidence": "src/sim.jl:2021 (drain only at frame top)"
+  },
+  {
+   "id": "S6b-056",
+   "file": "design/spec.md",
+   "line": 538,
+   "kind": "law",
+   "claim": "Integration resumes from the settled state at t*",
+   "evidence": "src/frame.jl:330"
+  },
+  {
+   "id": "S6b-057",
+   "file": "design/spec.md",
+   "line": 538,
+   "kind": "law",
+   "claim": "A fixed-step method finishes the step to the same end",
+   "evidence": "src/frame.jl:330"
+  },
+  {
+   "id": "S6b-058",
+   "file": "design/spec.md",
+   "line": 540,
+   "kind": "mech",
+   "claim": "That integration is the remainder step from t* to the step's end",
+   "evidence": "src/frame.jl:330"
+  },
+  {
+   "id": "S6b-059",
+   "file": "design/spec.md",
+   "line": 541,
+   "kind": "law",
+   "claim": "An adaptive method ends the step at t*",
+   "evidence": "src/frame.jl:328"
+  },
+  {
+   "id": "S6b-060",
+   "file": "design/spec.md",
+   "line": 542,
+   "kind": "law",
+   "claim": "The adaptive method chooses the next step from t*",
+   "evidence": "src/frame.jl:153-154"
+  },
+  {
+   "id": "S6b-061",
+   "file": "design/spec.md",
+   "line": 543,
+   "kind": "law",
+   "claim": "With several triggered events the earliest crossing is the boundary",
+   "evidence": "src/frame.jl:288-292"
+  },
+  {
+   "id": "S6b-062",
+   "file": "design/spec.md",
+   "line": 544,
+   "kind": "law",
+   "claim": "Later crossings are located again on the integration after it",
+   "evidence": "src/frame.jl:224,330 (re-trigger on the remainder)"
+  },
+  {
+   "id": "S6b-063",
+   "file": "design/spec.md",
+   "line": 548,
+   "kind": "law",
+   "claim": "A frame allows a bounded number of localizations",
+   "evidence": "src/frame.jl:234; probe:68"
+  },
+  {
+   "id": "S6b-064",
+   "file": "design/spec.md",
+   "line": 548,
+   "kind": "law",
+   "claim": "The count runs across all the frame's steps",
+   "evidence": "src/frame.jl:124,325"
+  },
+  {
+   "id": "S6b-065",
+   "file": "design/spec.md",
+   "line": 549,
+   "kind": "decl",
+   "claim": "The bound is the deployment's localization budget",
+   "evidence": "src/deployment.jl:547"
+  },
+  {
+   "id": "S6b-066",
+   "file": "design/spec.md",
+   "line": 550,
+   "kind": "law",
+   "claim": "Past the budget, crossings fire at the boundary ending their step",
+   "evidence": "probe:68 (times 0, 0.2, 0.4, 1.0; n = 3)"
+  },
+  {
+   "id": "S6b-067",
+   "file": "design/spec.md",
+   "line": 551,
+   "kind": "law",
+   "claim": "They fire as non-localized events would",
+   "evidence": "src/frame.jl:230-246"
+  },
+  {
+   "id": "S6b-068",
+   "file": "design/spec.md",
+   "line": 555,
+   "kind": "law",
+   "claim": "An edge caused by an input change has no crossing to locate",
+   "evidence": "src/frame.jl:259-274"
+  },
+  {
+   "id": "S6b-069",
+   "file": "design/spec.md",
+   "line": 556,
+   "kind": "law",
+   "claim": "Root inputs change only at frame tops",
+   "evidence": "src/sim.jl:2021"
+  },
+  {
+   "id": "S6b-070",
+   "file": "design/spec.md",
+   "line": 557,
+   "kind": "law",
+   "claim": "An input-caused edge holding at step start and end fires at the step-end boundary",
+   "evidence": "src/frame.jl:266-273; test/test_localization.jl:63-72"
+  },
+  {
+   "id": "S6b-071",
+   "file": "design/spec.md",
+   "line": 570,
+   "kind": "law",
+   "claim": "A component declares an initial value for each store",
+   "evidence": "src/assembly.jl:690 (x_init, s_init, m_init)"
+  },
+  {
+   "id": "S6b-072",
+   "file": "design/spec.md",
+   "line": 572,
+   "kind": "law",
+   "claim": "A run starts from the declared values",
+   "evidence": "probe:164 (unset m fields keep defaults)"
+  },
+  {
+   "id": "S6b-073",
+   "file": "design/spec.md",
+   "line": 574,
+   "kind": "law",
+   "claim": "An applied condition overrides them leaf by leaf",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "S6b-074",
+   "file": "design/spec.md",
+   "line": 575,
+   "kind": "law",
+   "claim": "A condition sets state, discrete state, modes and root inputs",
+   "evidence": "src/conditions.jl:150-152"
+  },
+  {
+   "id": "S6b-075",
+   "file": "design/spec.md",
+   "line": 576,
+   "kind": "law",
+   "claim": "A condition never sets an output",
+   "evidence": "probe:162-163 (ConditionResolution :undeclared_field); src/conditions.jl:653-657"
+  },
+  {
+   "id": "S6b-076",
+   "file": "design/spec.md",
+   "line": 576,
+   "kind": "law",
+   "claim": "The first sweep computes every output from the initial state",
+   "evidence": "src/model.jl:702"
+  },
+  {
+   "id": "S6b-077",
+   "file": "design/spec.md",
+   "line": 580,
+   "kind": "law",
+   "claim": "Root inputs have no declared initial value",
+   "evidence": "src/conditions.jl:696-698"
+  },
+  {
+   "id": "S6b-078",
+   "file": "design/spec.md",
+   "line": 581,
+   "kind": "law",
+   "claim": "A run starts only when the condition gives every root input a value",
+   "evidence": "probe:167 (UninitializedInputs); src/conditions.jl:700-707"
+  },
+  {
+   "id": "S6b-079",
+   "file": "design/spec.md",
+   "line": 582,
+   "kind": "law",
+   "claim": "No placeholder ever fills a missing root input",
+   "evidence": "src/conditions.jl:696-698"
+  },
+  {
+   "id": "S6b-080",
+   "file": "design/spec.md",
+   "line": 583,
+   "kind": "law",
+   "claim": "The initial state passes through boundary zero",
+   "evidence": "src/model.jl:336"
+  },
+  {
+   "id": "S6b-081",
+   "file": "design/spec.md",
+   "line": 584,
+   "kind": "mech",
+   "claim": "Boundary zero is the initialization boundary at t0",
+   "evidence": "src/model.jl:331,336"
+  },
+  {
+   "id": "S6b-082",
+   "file": "design/spec.md",
+   "line": 585,
+   "kind": "law",
+   "claim": "Boundary zero is an ordinary boundary with no integration before it",
+   "evidence": "src/model.jl:702 (run_boundary! over ESTABLISH)"
+  },
+  {
+   "id": "S6b-083",
+   "file": "design/spec.md",
+   "line": 585,
+   "kind": "law",
+   "claim": "A converged trim starts a run the same way",
+   "evidence": "src/trim.jl:564-565,730"
+  },
+  {
+   "id": "S6b-084",
+   "file": "design/spec.md",
+   "line": 586,
+   "kind": "mech",
+   "claim": "Trim commits its solution as a condition through boundary zero",
+   "evidence": "src/trim.jl:564 (init!), 730"
+  },
+  {
+   "id": "S6b-085",
+   "file": "design/spec.md",
+   "line": 589,
+   "kind": "law",
+   "claim": "A run may resume from a checkpoint",
+   "evidence": "src/model.jl:1310"
+  },
+  {
+   "id": "S6b-086",
+   "file": "design/spec.md",
+   "line": 589,
+   "kind": "mech",
+   "claim": "A checkpoint is the model's saved state at a frame top",
+   "evidence": "src/model.jl:1196,1203 (CheckpointMidFrame off a frame top)"
+  },
+  {
+   "id": "S6b-087",
+   "file": "design/spec.md",
+   "line": 590,
+   "kind": "law",
+   "claim": "Resume starts from the checkpoint's state and clock",
+   "evidence": "src/model.jl:1338"
+  },
+  {
+   "id": "S6b-088",
+   "file": "design/spec.md",
+   "line": 591,
+   "kind": "law",
+   "claim": "Resume runs no boundary zero",
+   "evidence": "src/model.jl:1326-1340"
+  },
+  {
+   "id": "S6b-089",
+   "file": "design/spec.md",
+   "line": 595,
+   "kind": "law",
+   "claim": "Every completed boundary publishes one snapshot",
+   "evidence": "src/sim.jl:2041; src/frame.jl:170"
+  },
+  {
+   "id": "S6b-090",
+   "file": "design/spec.md",
+   "line": 596,
+   "kind": "law",
+   "claim": "The snapshot is immutable",
+   "evidence": "src/dataplane.jl:518-526"
+  },
+  {
+   "id": "S6b-091",
+   "file": "design/spec.md",
+   "line": 597,
+   "kind": "mech",
+   "claim": "A snapshot holds the settled signal table",
+   "evidence": "src/dataplane.jl:521"
+  },
+  {
+   "id": "S6b-092",
+   "file": "design/spec.md",
+   "line": 599,
+   "kind": "law",
+   "claim": "The table covers every declared port and root input",
+   "evidence": "src/dataplane.jl:521-522"
+  },
+  {
+   "id": "S6b-093",
+   "file": "design/spec.md",
+   "line": 600,
+   "kind": "law",
+   "claim": "The snapshot carries the boundary's time",
+   "evidence": "src/dataplane.jl:534,545"
+  },
+  {
+   "id": "S6b-094",
+   "file": "design/spec.md",
+   "line": 601,
+   "kind": "law",
+   "claim": "Boundary zero publishes a snapshot",
+   "evidence": "src/model.jl:341"
+  },
+  {
+   "id": "S6b-095",
+   "file": "design/spec.md",
+   "line": 601,
+   "kind": "law",
+   "claim": "Every later frame top and step end publishes one",
+   "evidence": "src/frame.jl:170"
+  },
+  {
+   "id": "S6b-096",
+   "file": "design/spec.md",
+   "line": 602,
+   "kind": "law",
+   "claim": "Every localized event time publishes one",
+   "evidence": "src/frame.jl:318-324; probe:42"
+  },
+  {
+   "id": "S6b-097",
+   "file": "design/spec.md",
+   "line": 604,
+   "kind": "law",
+   "claim": "The sequence of snapshots is the observable trajectory",
+   "evidence": "src/dataplane.jl:514-526"
+  },
+  {
+   "id": "S6b-098",
+   "file": "design/spec.md",
+   "line": 604,
+   "kind": "law",
+   "claim": "A state or mode field is observable only through a port that publishes it",
+   "evidence": "src/dataplane.jl:514 (snapshot carries no state)"
+  },
+  {
+   "id": "S6b-099",
+   "file": "design/spec.md",
+   "line": 608,
+   "kind": "law",
+   "claim": "Intermediate values are never published",
+   "evidence": "src/frame.jl:170 (publication only after run_boundary!)"
+  },
+  {
+   "id": "S6b-100",
+   "file": "design/spec.md",
+   "line": 609,
+   "kind": "law",
+   "claim": "Integration evaluations within a step are not published",
+   "evidence": "src/frame.jl:156-157"
+  },
+  {
+   "id": "S6b-101",
+   "file": "design/spec.md",
+   "line": 609,
+   "kind": "law",
+   "claim": "Root-finding evaluations are not published",
+   "evidence": "src/frame.jl:340-346"
+  },
+  {
+   "id": "S6b-102",
+   "file": "design/spec.md",
+   "line": 610,
+   "kind": "law",
+   "claim": "Every event round before the last is not published",
+   "evidence": "src/model.jl:746-776"
+  },
+  {
+   "id": "S6b-103",
+   "file": "design/spec.md",
+   "line": 615,
+   "kind": "law",
+   "claim": "A run that does not fail ends at a completed boundary",
+   "evidence": "src/sim.jl:2105"
+  },
+  {
+   "id": "S6b-104",
+   "file": "design/spec.md",
+   "line": 615,
+   "kind": "law",
+   "claim": "There are three non-failing ways to end",
+   "evidence": "src/sim.jl:44-126 (EndTimeReached, ModelRequestedStop, ControlRequestedStop; LoopError is the failure)"
+  },
+  {
+   "id": "S6b-105",
+   "file": "design/spec.md",
+   "line": 618,
+   "kind": "law",
+   "claim": "An end time stops the run at the first frame top at or after it",
+   "evidence": "src/model.jl:572-575; probe:49"
+  },
+  {
+   "id": "S6b-106",
+   "file": "design/spec.md",
+   "line": 618,
+   "kind": "law",
+   "claim": "The last frame is never shortened",
+   "evidence": "src/frame.jl:127"
+  },
+  {
+   "id": "S6b-107",
+   "file": "design/spec.md",
+   "line": 619,
+   "kind": "law",
+   "claim": "The final time can pass the end time by up to one frame period",
+   "evidence": "probe:49 (t_end 0.7, frame 0.5, final 1.0)"
+  },
+  {
+   "id": "S6b-108",
+   "file": "design/spec.md",
+   "line": 621,
+   "kind": "law",
+   "claim": "A stop request is an output port of a framework type",
+   "evidence": "src/leaves.jl:262-264 (StopFlag)"
+  },
+  {
+   "id": "S6b-109",
+   "file": "design/spec.md",
+   "line": 622,
+   "kind": "law",
+   "claim": "Its value can request a stop",
+   "evidence": "src/library.jl:441"
+  },
+  {
+   "id": "S6b-110",
+   "file": "design/spec.md",
+   "line": 623,
+   "kind": "law",
+   "claim": "A request ends the run when its value requests a stop",
+   "evidence": "probe:55-56"
+  },
+  {
+   "id": "S6b-111",
+   "file": "design/spec.md",
+   "line": 623,
+   "kind": "law",
+   "claim": "The advancing call can ignore a request",
+   "evidence": "src/sim.jl:433-457"
+  },
+  {
+   "id": "S6b-112",
+   "file": "design/spec.md",
+   "line": 624,
+   "kind": "law",
+   "claim": "Stop requests are read after every published boundary",
+   "evidence": "src/sim.jl:2041-2043"
+  },
+  {
+   "id": "S6b-113",
+   "file": "design/spec.md",
+   "line": 625,
+   "kind": "law",
+   "claim": "Boundary zero is included in the reads",
+   "evidence": "src/sim.jl:2094-2095"
+  },
+  {
+   "id": "S6b-114",
+   "file": "design/spec.md",
+   "line": 625,
+   "kind": "law",
+   "claim": "Localized event times are included in the reads",
+   "evidence": "probe:55 (run ends at t* 0.35000007)"
+  },
+  {
+   "id": "S6b-115",
+   "file": "design/spec.md",
+   "line": 626,
+   "kind": "law",
+   "claim": "The first honored request ends the run at that boundary",
+   "evidence": "probe:56 (termination at 0.35000007)"
+  },
+  {
+   "id": "S6b-116",
+   "file": "design/spec.md",
+   "line": 626,
+   "kind": "law",
+   "claim": "That boundary's snapshot is the final state",
+   "evidence": "probe:55 (last log time is t*)"
+  },
+  {
+   "id": "S6b-117",
+   "file": "design/spec.md",
+   "line": 627,
+   "kind": "law",
+   "claim": "There is no rollback",
+   "evidence": "src/frame.jl:324"
+  },
+  {
+   "id": "S6b-118",
+   "file": "design/spec.md",
+   "line": 628,
+   "kind": "law",
+   "claim": "An external stop comes from an operator, device, calling code or interrupt",
+   "evidence": "src/sim.jl:2328; src/devices.jl:253; src/sim.jl:2187-2189"
+  },
+  {
+   "id": "S6b-119",
+   "file": "design/spec.md",
+   "line": 629,
+   "kind": "law",
+   "claim": "It takes effect at the top of the next frame",
+   "evidence": "src/sim.jl:2103-2104"
+  },
+  {
+   "id": "S6b-120",
+   "file": "design/spec.md",
+   "line": 631,
+   "kind": "law",
+   "claim": "The frame in progress completes and publishes first",
+   "evidence": "src/sim.jl:2103 (stop word read only at frame top)"
+  },
+  {
+   "id": "S6b-121",
+   "file": "design/spec.md",
+   "line": 632,
+   "kind": "law",
+   "claim": "A stopped run's trajectory is a prefix of the unstopped one",
+   "evidence": "src/sim.jl:2103"
+  },
+  {
+   "id": "S6b-122",
+   "file": "design/spec.md",
+   "line": 637,
+   "kind": "law",
+   "claim": "Five things fix a trajectory under identical compiled code",
+   "evidence": "src/deployment.jl:538-551; src/model.jl:92"
+  },
+  {
+   "id": "S6b-123",
+   "file": "design/spec.md",
+   "line": 638,
+   "kind": "law",
+   "claim": "The root-input values applied at each frame top fix it",
+   "evidence": "src/sim.jl:2021-2023"
+  },
+  {
+   "id": "S6b-124",
+   "file": "design/spec.md",
+   "line": 642,
+   "kind": "decl",
+   "claim": "Deployment parameter, the frame period",
+   "evidence": "src/deployment.jl:540"
+  },
+  {
+   "id": "S6b-125",
+   "file": "design/spec.md",
+   "line": 643,
+   "kind": "decl",
+   "claim": "Deployment parameter, the base tick period",
+   "evidence": "src/deployment.jl:541"
+  },
+  {
+   "id": "S6b-126",
+   "file": "design/spec.md",
+   "line": 644,
+   "kind": "decl",
+   "claim": "Deployment parameter, the step bound h_max",
+   "evidence": "src/deployment.jl:542"
+  },
+  {
+   "id": "S6b-127",
+   "file": "design/spec.md",
+   "line": 644,
+   "kind": "decl",
+   "claim": "Deployment parameter, the step floor h_min",
+   "evidence": "src/deployment.jl:543"
+  },
+  {
+   "id": "S6b-128",
+   "file": "design/spec.md",
+   "line": 645,
+   "kind": "decl",
+   "claim": "Deployment parameter, the integration method with its tolerances",
+   "evidence": "src/deployment.jl:544"
+  },
+  {
+   "id": "S6b-129",
+   "file": "design/spec.md",
+   "line": 645,
+   "kind": "decl",
+   "claim": "Deployment parameter, the attempt budget",
+   "evidence": "src/deployment.jl:548"
+  },
+  {
+   "id": "S6b-130",
+   "file": "design/spec.md",
+   "line": 645,
+   "kind": "decl",
+   "claim": "Deployment parameters, the localization tolerance and budget",
+   "evidence": "src/deployment.jl:546-547"
+  },
+  {
+   "id": "S6b-131",
+   "file": "design/spec.md",
+   "line": 646,
+   "kind": "decl",
+   "claim": "Deployment parameter, the firing budget",
+   "evidence": "src/deployment.jl:545"
+  },
+  {
+   "id": "S6b-132",
+   "file": "design/spec.md",
+   "line": 648,
+   "kind": "law",
+   "claim": "The time quantities count by their exact values",
+   "evidence": "src/deployment.jl:540-542 (Rational{Int}); :619-622"
+  },
+  {
+   "id": "S6b-133",
+   "file": "design/spec.md",
+   "line": 649,
+   "kind": "law",
+   "claim": "Two periods that round to one Float64 are different parameters",
+   "evidence": "src/deployment.jl:608-616 comment and ==, which compares Rationals"
+  },
+  {
+   "id": "S6b-134",
+   "file": "design/spec.md",
+   "line": 652,
+   "kind": "law",
+   "claim": "Nothing else changes a trajectory under that code",
+   "evidence": "src/model.jl:91-92 (chunk_size never changes it); probe:177"
+  },
+  {
+   "id": "S6b-135",
+   "file": "design/spec.md",
+   "line": 656,
+   "kind": "law",
+   "claim": "Pacing and pauses leave a trajectory bit-identical",
+   "evidence": "src/sim.jl:2098-2110 (waits sit outside the frame)"
+  },
+  {
+   "id": "S6b-136",
+   "file": "design/spec.md",
+   "line": 658,
+   "kind": "law",
+   "claim": "Logging and attached readers leave it bit-identical",
+   "evidence": "src/dataplane.jl:605-614 (the log retains published snapshots, no extra copies)"
+  },
+  {
+   "id": "S6b-137",
+   "file": "design/spec.md",
+   "line": 659,
+   "kind": "mech",
+   "claim": "Build caching reuses artifacts built once per scalar type",
+   "evidence": "src/build.jl:969 (activation); src/trim.jl:621"
+  },
+  {
+   "id": "S6b-138",
+   "file": "design/spec.md",
+   "line": 661,
+   "kind": "law",
+   "claim": "Splitting a run across several calls leaves it bit-identical",
+   "evidence": "probe:177 (4+5 frames equals 9 frames, with a localized event)"
+  },
+  {
+   "id": "S6b-139",
+   "file": "design/spec.md",
+   "line": 663,
+   "kind": "law",
+   "claim": "Replay re-runs the ordinary loop and reproduces a run bit for bit",
+   "evidence": "src/sim.jl:1406 (same _run_body! and frame loop)"
+  },
+  {
+   "id": "S6b-142",
+   "file": "design/spec.md",
+   "line": 672,
+   "kind": "law",
+   "claim": "The formalism excludes DAEs, SDEs and an unconditional per-step hook",
+   "evidence": "src/declare.jl:749-751 (the declaration family has none)"
+  },
+  {
+   "id": "S6b-143",
+   "file": "design/spec.md",
+   "line": 674,
+   "kind": "law",
+   "claim": "No DAEs or algebraic constraints",
+   "evidence": "src/declare.jl:749-751"
+  },
+  {
+   "id": "S6b-144",
+   "file": "design/spec.md",
+   "line": 675,
+   "kind": "mech",
+   "claim": "Projection is an optional per-component hook",
+   "evidence": "src/declare.jl:599"
+  },
+  {
+   "id": "S6b-145",
+   "file": "design/spec.md",
+   "line": 676,
+   "kind": "decl",
+   "claim": "The hook is x_projection(x), returning the new x",
+   "evidence": "src/declare.jl:580-599"
+  },
+  {
+   "id": "S6b-146",
+   "file": "design/spec.md",
+   "line": 677,
+   "kind": "law",
+   "claim": "No SDEs or stochastic integrators",
+   "evidence": "src/deployment.jl:357,368,413 (only RK4, Heun, BS3)"
+  },
+  {
+   "id": "S6b-147",
+   "file": "design/spec.md",
+   "line": 678,
+   "kind": "mech",
+   "claim": "Noise is an ordinary discrete process driven by a random generator",
+   "evidence": "src/library.jl:822,857-863 (GaussianWhiteNoise)"
+  },
+  {
+   "id": "S6b-148",
+   "file": "design/spec.md",
+   "line": 682,
+   "kind": "law",
+   "claim": "Deterministic replay is a framework guarantee",
+   "evidence": "src/sim.jl:1406"
+  },
+  {
+   "id": "S6b-149",
+   "file": "design/spec.md",
+   "line": 683,
+   "kind": "law",
+   "claim": "RNG state lives in the discrete state s",
+   "evidence": "src/library.jl:857,863 (counter in s)"
+  },
+  {
+   "id": "S6b-150",
+   "file": "design/spec.md",
+   "line": 685,
+   "kind": "law",
+   "claim": "No RNG state lives in ambient globals",
+   "evidence": "src/library.jl:838-852 (seed on the component, pure function of seed and s)"
+  },
+  {
+   "id": "S6b-151",
+   "file": "design/spec.md",
+   "line": 685,
+   "kind": "law",
+   "claim": "The same seed gives a bit-identical trajectory",
+   "evidence": "src/library.jl:846-852"
+  },
+  {
+   "id": "S6b-152",
+   "file": "design/spec.md",
+   "line": 687,
+   "kind": "law",
+   "claim": "No unconditional per-step hook exists",
+   "evidence": "src/declare.jl:749-751"
+  },
+  {
+   "id": "S6b-153",
+   "file": "design/spec.md",
+   "line": 690,
+   "kind": "law",
+   "claim": "A level-triggered reset becomes an edge-triggered event",
+   "evidence": "src/model.jl:750"
+  },
+  {
+   "id": "S6b-154",
+   "file": "design/spec.md",
+   "line": 698,
+   "kind": "law",
+   "claim": "Components fall in three categories",
+   "evidence": "src/assembly.jl:58-70 (assembly or primitive); src/assembly.jl:724-750 (two tiers)"
+  },
+  {
+   "id": "S6b-155",
+   "file": "design/spec.md",
+   "line": 699,
+   "kind": "law",
+   "claim": "Two categories are primitives, continuous and discrete",
+   "evidence": "src/assembly.jl:724-750"
+  },
+  {
+   "id": "S6b-156",
+   "file": "design/spec.md",
+   "line": 699,
+   "kind": "law",
+   "claim": "One category is the assembly",
+   "evidence": "src/assembly.jl:60-63"
+  },
+  {
+   "id": "S6b-157",
+   "file": "design/spec.md",
+   "line": 709,
+   "kind": "decl",
+   "claim": "Continuous state x is one leaf or a NamedTuple of leaves",
+   "evidence": "src/assembly.jl:674; probe:157 (nested refused)"
+  },
+  {
+   "id": "S6b-159",
+   "file": "design/spec.md",
+   "line": 711,
+   "kind": "law",
+   "claim": "Modes are piecewise-constant isbits or Symbol values",
+   "evidence": "src/assembly.jl:710-717"
+  },
+  {
+   "id": "S6b-160",
+   "file": "design/spec.md",
+   "line": 712,
+   "kind": "law",
+   "claim": "Modes parametrize the flow",
+   "evidence": "src/declare.jl:903 (x_deriv bundle carries m)"
+  },
+  {
+   "id": "S6b-161",
+   "file": "design/spec.md",
+   "line": 712,
+   "kind": "law",
+   "claim": "During a run modes change only through event handlers",
+   "evidence": "src/model.jl:773 (_fire!, the only run-time writer)"
+  },
+  {
+   "id": "S6b-162",
+   "file": "design/spec.md",
+   "line": 713,
+   "kind": "law",
+   "claim": "Mode changes land at boundaries",
+   "evidence": "src/model.jl:734-777"
+  },
+  {
+   "id": "S6b-163",
+   "file": "design/spec.md",
+   "line": 714,
+   "kind": "law",
+   "claim": "Before a run a condition may set modes",
+   "evidence": "src/conditions.jl:150-153; probe:164"
+  },
+  {
+   "id": "S6b-164",
+   "file": "design/spec.md",
+   "line": 715,
+   "kind": "decl",
+   "claim": "The flow is x_deriv of x, m, u and t",
+   "evidence": "src/declare.jl:903"
+  },
+  {
+   "id": "S6b-165",
+   "file": "design/spec.md",
+   "line": 716,
+   "kind": "decl",
+   "claim": "A continuous component has two output stages",
+   "evidence": "src/declare.jl:901-902"
+  },
+  {
+   "id": "S6b-166",
+   "file": "design/spec.md",
+   "line": 717,
+   "kind": "decl",
+   "claim": "An event is a guard plus a handler",
+   "evidence": "src/declare.jl:545"
+  },
+  {
+   "id": "S6b-167",
+   "file": "design/spec.md",
+   "line": 718,
+   "kind": "law",
+   "claim": "A handler may update m and reset its own x",
+   "evidence": "src/declare.jl:538-539; probe:42-43"
+  },
+  {
+   "id": "S6b-168",
+   "file": "design/spec.md",
+   "line": 719,
+   "kind": "law",
+   "claim": "Guard and handler read the fresh boundary signal table",
+   "evidence": "src/model.jl:737,746,775; src/declare.jl:907-908"
+  },
+  {
+   "id": "S6b-169",
+   "file": "design/spec.md",
+   "line": 721,
+   "kind": "decl",
+   "claim": "Projection is an optional x_projection hook",
+   "evidence": "src/declare.jl:599"
+  },
+  {
+   "id": "S6b-170",
+   "file": "design/spec.md",
+   "line": 724,
+   "kind": "law",
+   "claim": "Any facet may be empty",
+   "evidence": "probe:115 (x_init nothing); src/assembly.jl:739-746"
+  },
+  {
+   "id": "S6b-171",
+   "file": "design/spec.md",
+   "line": 725,
+   "kind": "law",
+   "claim": "A component with no continuous state, only modes, events and mode outputs, works as an FSM",
+   "evidence": "probe:115 (mode flips to :on at the frame top)"
+  },
+  {
+   "id": "S6b-172",
+   "file": "design/spec.md",
+   "line": 726,
+   "kind": "law",
+   "claim": "One primitive supports internal modes and an external FSM",
+   "evidence": "probe:42-43 (internal modes); probe:115 (FSM component)"
+  },
+  {
+   "id": "S6b-173",
+   "file": "design/spec.md",
+   "line": 729,
+   "kind": "law",
+   "claim": "Internal modes enable reset maps",
+   "evidence": "src/declare.jl:538 (handler returns x); probe:85"
+  },
+  {
+   "id": "S6b-174",
+   "file": "design/spec.md",
+   "line": 731,
+   "kind": "law",
+   "claim": "An external FSM feeds modes through a port",
+   "evidence": "probe:115 (mode-valued port on)"
+  },
+  {
+   "id": "S6b-175",
+   "file": "design/spec.md",
+   "line": 735,
+   "kind": "law",
+   "claim": "A commanded mode change is an ordinary input",
+   "evidence": "probe:115 (u drives the guard)"
+  },
+  {
+   "id": "S6b-176",
+   "file": "design/spec.md",
+   "line": 736,
+   "kind": "law",
+   "claim": "A component detecting its own transition uses an event",
+   "evidence": "src/model.jl:750"
+  },
+  {
+   "id": "S6b-177",
+   "file": "design/spec.md",
+   "line": 739,
+   "kind": "law",
+   "claim": "A state reset commanded through an input lands through an event whose guard reads the input",
+   "evidence": "src/declare.jl:538 (handlers are the x writers); src/declare.jl:907"
+  },
+  {
+   "id": "S6b-178",
+   "file": "design/spec.md",
+   "line": 742,
+   "kind": "law",
+   "claim": "A flow branch on a continuous quantity switches inside a step with no declared event",
+   "evidence": "src/model.jl:652 (events checked only at boundaries)"
+  },
+  {
+   "id": "S6b-179",
+   "file": "design/spec.md",
+   "line": 745,
+   "kind": "law",
+   "claim": "Nothing localizes or records such a switch",
+   "evidence": "src/frame.jl:224 (only declared events trigger)"
+  },
+  {
+   "id": "S6b-180",
+   "file": "design/spec.md",
+   "line": 746,
+   "kind": "law",
+   "claim": "The switch can be spelled as a mode moved by an event",
+   "evidence": "src/declare.jl:538"
+  },
+  {
+   "id": "S6b-181",
+   "file": "design/spec.md",
+   "line": 747,
+   "kind": "law",
+   "claim": "A mode-derived output changes only when its component's events fire",
+   "evidence": "src/model.jl:773"
+  },
+  {
+   "id": "S6b-182",
+   "file": "design/spec.md",
+   "line": 754,
+   "kind": "decl",
+   "claim": "Discrete state s is one leaf or NamedTuple of isbits or Symbol leaves",
+   "evidence": "src/assembly.jl:710-717; probe:157 (String refused)"
+  },
+  {
+   "id": "S6b-183",
+   "file": "design/spec.md",
+   "line": 756,
+   "kind": "decl",
+   "claim": "The update is s_update of s, u and t",
+   "evidence": "src/declare.jl:906"
+  },
+  {
+   "id": "S6b-184",
+   "file": "design/spec.md",
+   "line": 756,
+   "kind": "law",
+   "claim": "The update runs at a declared rate",
+   "evidence": "probe:193-194 (period 6, phase 3)"
+  },
+  {
+   "id": "S6b-185",
+   "file": "design/spec.md",
+   "line": 757,
+   "kind": "decl",
+   "claim": "A discrete component has two output stages",
+   "evidence": "src/declare.jl:904-905"
+  },
+  {
+   "id": "S6b-186",
+   "file": "design/spec.md",
+   "line": 757,
+   "kind": "law",
+   "claim": "Discrete feedthrough applies at update instants",
+   "evidence": "probe:129,131 (y_direct output moves only at the tick)"
+  },
+  {
+   "id": "S6b-187",
+   "file": "design/spec.md",
+   "line": 758,
+   "kind": "law",
+   "claim": "A proportional path is direct feedthrough",
+   "evidence": "src/declare.jl:905 (y_direct reads u)"
+  },
+  {
+   "id": "S6b-188",
+   "file": "design/spec.md",
+   "line": 759,
+   "kind": "law",
+   "claim": "A state-only output is not feedthrough",
+   "evidence": "src/declare.jl:904 (y_state reads no u)"
+  },
+  {
+   "id": "S6b-189",
+   "file": "design/spec.md",
+   "line": 761,
+   "kind": "law",
+   "claim": "A discrete component has no events",
+   "evidence": "probe:157 (DeclarationOnWrongTier)"
+  },
+  {
+   "id": "S6b-190",
+   "file": "design/spec.md",
+   "line": 761,
+   "kind": "law",
+   "claim": "A discrete component has no projection",
+   "evidence": "probe:157 (:continuous_only)"
+  },
+  {
+   "id": "S6b-191",
+   "file": "design/spec.md",
+   "line": 762,
+   "kind": "law",
+   "claim": "Discrete state changes only at ticks",
+   "evidence": "src/model.jl:656"
+  },
+  {
+   "id": "S6b-192",
+   "file": "design/spec.md",
+   "line": 766,
+   "kind": "law",
+   "claim": "Every discrete period is an integer multiple of the base tick period",
+   "evidence": "probe:194 (period 6 on base 1)"
+  },
+  {
+   "id": "S6b-193",
+   "file": "design/spec.md",
+   "line": 768,
+   "kind": "law",
+   "claim": "The base tick period has no required ratio to the integration step",
+   "evidence": "src/frame.jl:132"
+  },
+  {
+   "id": "S6b-194",
+   "file": "design/spec.md",
+   "line": 769,
+   "kind": "law",
+   "claim": "A step ends wherever a component is due",
+   "evidence": "src/frame.jl:127-131"
+  },
+  {
+   "id": "S6b-195",
+   "file": "design/spec.md",
+   "line": 770,
+   "kind": "law",
+   "claim": "The step splits where the due instant falls inside it",
+   "evidence": "src/frame.jl:127,162"
+  },
+  {
+   "id": "S6b-196",
+   "file": "design/spec.md",
+   "line": 770,
+   "kind": "law",
+   "claim": "Every tick falls on a boundary",
+   "evidence": "src/frame.jl:162-163"
+  },
+  {
+   "id": "S6b-197",
+   "file": "design/spec.md",
+   "line": 771,
+   "kind": "law",
+   "claim": "Ticks fall at boundary zero or a later step end",
+   "evidence": "src/model.jl:702-703; src/frame.jl:162-163"
+  },
+  {
+   "id": "S6b-198",
+   "file": "design/spec.md",
+   "line": 773,
+   "kind": "law",
+   "claim": "A component ticks at its phase plus whole multiples of its period",
+   "evidence": "probe:193 (ticks at base 3, 9)"
+  },
+  {
+   "id": "S6b-199",
+   "file": "design/spec.md",
+   "line": 775,
+   "kind": "law",
+   "claim": "It ticks at no other boundary",
+   "evidence": "src/model.jl:656"
+  },
+  {
+   "id": "S6b-200",
+   "file": "design/spec.md",
+   "line": 776,
+   "kind": "law",
+   "claim": "No component ticks at a localized event time",
+   "evidence": "src/frame.jl:318"
+  },
+  {
+   "id": "S6b-201",
+   "file": "design/spec.md",
+   "line": 778,
+   "kind": "law",
+   "claim": "The enclosing assembly declares the rate",
+   "evidence": "src/declare.jl:514"
+  },
+  {
+   "id": "S6b-202",
+   "file": "design/spec.md",
+   "line": 781,
+   "kind": "law",
+   "claim": "A tick's update consumes the samples of the boundary it runs at",
+   "evidence": "src/model.jl:652-657 (updates after quiescence)"
+  },
+  {
+   "id": "S6b-203",
+   "file": "design/spec.md",
+   "line": 782,
+   "kind": "law",
+   "claim": "It produces the state the next tick reads",
+   "evidence": "src/model.jl:656"
+  },
+  {
+   "id": "S6b-204",
+   "file": "design/spec.md",
+   "line": 785,
+   "kind": "law",
+   "claim": "Each tier carries its own state letter",
+   "evidence": "src/declare.jl:900-906"
+  },
+  {
+   "id": "S6b-205",
+   "file": "design/spec.md",
+   "line": 786,
+   "kind": "law",
+   "claim": "x is the flow argument and s the jump argument",
+   "evidence": "src/declare.jl:903,906"
+  },
+  {
+   "id": "S6b-206",
+   "file": "design/spec.md",
+   "line": 788,
+   "kind": "mech",
+   "claim": "x lives in the flat buffer",
+   "evidence": "src/model.jl:1186 (copy(exec.xbuf))"
+  },
+  {
+   "id": "S6b-207",
+   "file": "design/spec.md",
+   "line": 788,
+   "kind": "mech",
+   "claim": "s is latched in a store between ticks",
+   "evidence": "src/model.jl:1184"
+  },
+  {
+   "id": "S6b-208",
+   "file": "design/spec.md",
+   "line": 790,
+   "kind": "law",
+   "claim": "A primitive is strictly one tier",
+   "evidence": "src/assembly.jl:724-760 (TierUnreadable and DeclarationOnWrongTier refusals)"
+  },
+  {
+   "id": "S6b-209",
+   "file": "design/spec.md",
+   "line": 790,
+   "kind": "law",
+   "claim": "No component reads another's state",
+   "evidence": "src/declare.jl:900-908 (bundles carry own letters only)"
+  },
+  {
+   "id": "S6b-210",
+   "file": "design/spec.md",
+   "line": 791,
+   "kind": "law",
+   "claim": "Discrete s influences continuous dynamics only through signals",
+   "evidence": "src/declare.jl:900-908"
+  },
+  {
+   "id": "S6b-211",
+   "file": "design/spec.md",
+   "line": 793,
+   "kind": "law",
+   "claim": "Discrete outputs are held zero-order between ticks",
+   "evidence": "probe:129 (0.0 held at frame 1), probe:131"
+  },
+  {
+   "id": "S6b-212",
+   "file": "design/spec.md",
+   "line": 795,
+   "kind": "law",
+   "claim": "A stateless discrete primitive computes outputs only at ticks and boundary zero",
+   "evidence": "probe:129,131"
+  },
+  {
+   "id": "S6b-213",
+   "file": "design/spec.md",
+   "line": 797,
+   "kind": "law",
+   "claim": "It holds them in between",
+   "evidence": "probe:129"
+  },
+  {
+   "id": "S6b-214",
+   "file": "design/spec.md",
+   "line": 798,
+   "kind": "law",
+   "claim": "A stateless continuous primitive recomputes at every sweep",
+   "evidence": "probe:129 (c = 2.0 at frame 1)"
+  },
+  {
+   "id": "S6b-215",
+   "file": "design/spec.md",
+   "line": 799,
+   "kind": "law",
+   "claim": "The tier of a stateless primitive changes its values",
+   "evidence": "probe:129 (c 2.0, d 0.0 under the same input)"
+  },
+  {
+   "id": "S6b-216",
+   "file": "design/spec.md",
+   "line": 802,
+   "kind": "law",
+   "claim": "m is continuous-only",
+   "evidence": "src/assembly.jl:730"
+  },
+  {
+   "id": "S6b-217",
+   "file": "design/spec.md",
+   "line": 803,
+   "kind": "law",
+   "claim": "A discrete component has no mode store",
+   "evidence": "probe:157 (m_init on discrete refused)"
+  },
+  {
+   "id": "S6b-218",
+   "file": "design/spec.md",
+   "line": 803,
+   "kind": "law",
+   "claim": "FSM enums, flags and counters are ordinary s fields",
+   "evidence": "src/assembly.jl:710-717"
+  },
+  {
+   "id": "S6b-219",
+   "file": "design/spec.md",
+   "line": 812,
+   "kind": "law",
+   "claim": "An assembly is built from child components",
+   "evidence": "src/assembly.jl:58-63"
+  },
+  {
+   "id": "S6b-220",
+   "file": "design/spec.md",
+   "line": 813,
+   "kind": "law",
+   "claim": "It holds children, local wires and boundary faces",
+   "evidence": "src/assembly.jl:58-63; src/declare.jl:749-751"
+  },
+  {
+   "id": "S6b-221",
+   "file": "design/spec.md",
+   "line": 814,
+   "kind": "law",
+   "claim": "An assembly has no dynamics of its own",
+   "evidence": "src/assembly.jl:60-62 (ClassMixed refuses leaf declarations)"
+  },
+  {
+   "id": "S6b-222",
+   "file": "design/spec.md",
+   "line": 818,
+   "kind": "mech",
+   "claim": "Assemblies are flattened away for ordering",
+   "evidence": "src/structure.jl:435"
+  },
+  {
+   "id": "S6b-223",
+   "file": "design/spec.md",
+   "line": 819,
+   "kind": "law",
+   "claim": "They remain as the navigation hierarchy and paths",
+   "evidence": "probe:194 (path i/z)"
+  },
+  {
+   "id": "S6b-224",
+   "file": "design/spec.md",
+   "line": 820,
+   "kind": "law",
+   "claim": "They serve as declaration-level rate scopes",
+   "evidence": "src/declare.jl:514; probe:194"
+  },
+  {
+   "id": "S6b-225",
+   "file": "design/spec.md",
+   "line": 824,
+   "kind": "law",
+   "claim": "The relative form ticks the child every D-th scope tick",
+   "evidence": "src/declare.jl:412-414"
+  },
+  {
+   "id": "S6b-226",
+   "file": "design/spec.md",
+   "line": 825,
+   "kind": "law",
+   "claim": "Relative starts from a chosen phase",
+   "evidence": "src/declare.jl:435-437"
+  },
+  {
+   "id": "S6b-227",
+   "file": "design/spec.md",
+   "line": 825,
+   "kind": "law",
+   "claim": "The absolute form gives a period and an offset in seconds",
+   "evidence": "src/declare.jl:473-476"
+  },
+  {
+   "id": "S6b-228",
+   "file": "design/spec.md",
+   "line": 826,
+   "kind": "law",
+   "claim": "The absolute form detaches the child from the scope's ticks",
+   "evidence": "src/declare.jl:455-459"
+  },
+  {
+   "id": "S6b-229",
+   "file": "design/spec.md",
+   "line": 827,
+   "kind": "law",
+   "claim": "Relative entries compose down the tree",
+   "evidence": "probe:194"
+  },
+  {
+   "id": "S6b-230",
+   "file": "design/spec.md",
+   "line": 828,
+   "kind": "law",
+   "claim": "Composed relative periods multiply",
+   "evidence": "probe:194 (2 times 3 = 6)"
+  },
+  {
+   "id": "S6b-232",
+   "file": "design/spec.md",
+   "line": 828,
+   "kind": "law",
+   "claim": "Each discrete component ends with one period and one phase on the base grid",
+   "evidence": "probe:194 (one ScheduleEntry, period 6, phase 3)"
+  },
+  {
+   "id": "S6b-233",
+   "file": "design/spec.md",
+   "line": 835,
+   "kind": "law",
+   "claim": "Every primitive belongs to exactly one tier",
+   "evidence": "src/assembly.jl:724-760"
+  },
+  {
+   "id": "S6b-234",
+   "file": "design/spec.md",
+   "line": 840,
+   "kind": "law",
+   "claim": "The continuous component already carries modes, guards and handlers",
+   "evidence": "src/declare.jl:545; probe:42-43"
+  },
+  {
+   "id": "S6b-235",
+   "file": "design/spec.md",
+   "line": 842,
+   "kind": "law",
+   "claim": "The tiers differ as sweep-driven versus tick-driven execution",
+   "evidence": "src/model.jl:652-657; probe:129,131"
+  },
+  {
+   "id": "S6b-236",
+   "file": "design/spec.md",
+   "line": 843,
+   "mech": "x",
+   "kind": "mech",
+   "claim": "A sweep is one pass through the execution order",
+   "evidence": "src/model.jl:726-731 (_round!)"
+  },
+  {
+   "id": "S6b-237",
+   "file": "design/spec.md",
+   "line": 844,
+   "kind": "mech",
+   "claim": "A tick is an instant when a discrete component's stages and update run",
+   "evidence": "src/model.jl:656"
+  },
+  {
+   "id": "S6b-238",
+   "file": "design/spec.md",
+   "line": 861,
+   "kind": "law",
+   "claim": "An update writes only its own s",
+   "evidence": "src/declare.jl:906 (s_update returns the s store)"
+  },
+  {
+   "id": "S6b-240",
+   "file": "design/spec.md",
+   "line": 863,
+   "kind": "law",
+   "claim": "A periodic reset is scheduled, so it is not an event",
+   "evidence": "src/frame.jl:121,175 (due instants are a schedule apart from events)"
+  },
+  {
+   "id": "S6b-241",
+   "file": "design/spec.md",
+   "line": 870,
+   "kind": "law",
+   "claim": "No tick-triggered handler is built",
+   "evidence": "src/declare.jl:545; probe:45 (StateEvent has guard and handler only)"
+  }
+ ],
+ "counts": {
+  "law": 176,
+  "mech": 24,
+  "decl": 16,
+  "ex": 0,
+  "ptr": 9,
+  "why": 24,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

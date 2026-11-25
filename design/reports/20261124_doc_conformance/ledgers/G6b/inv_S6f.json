@@ -1,0 +1,946 @@
+{
+ "rows": [
+  {
+   "id": "S6f-007",
+   "file": "design/spec.md",
+   "line": 2172,
+   "kind": "mech",
+   "claim": "A checkpoint holds x, s, m, the signal table, each event's prior and the clock with its origin (a complete list)",
+   "evidence": "src/checkpoint.jl:68-77 (ModelState fields x, s, m, table, prior, stepper, t, t₀, deployment, layout); src/model.jl:1186-1189; spec.md:10636-10638 lists the stepper's carried state, the deployment and the fingerprint",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "D-452 added the stepper's carried state, D-319 the deployment and fingerprint. The intro list stops short of what §12.6 and the code hold.",
+   "fix": "It holds `x`, `s` and `m`, the signal table with its root-input levels and held discrete outputs, each event's prior, the stepper's carried state, and the clock with its origin, beside the deployment and the layout fingerprint that a restore compares ([§12.6][s12-6], [D-274][d-274], [D-452][d-452])."
+  },
+  {
+   "id": "S6f-030",
+   "file": "design/spec.md",
+   "line": 2212,
+   "kind": "mech",
+   "claim": "The layout has compile-time offsets into one contiguous Vector{T}",
+   "evidence": "src/executor.jl:63-66 (`x_off::Int` is a field of the entry, a runtime value); src/leaves.jl:123-129,148-152 (leaf indices are static only relative to `offset`)",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "Only the offsets of leaves inside one component's slice are compile-time, as constants relative to the slice. The slice's base offset is an Int stored in each executor entry.",
+   "fix": "The layout fixes each component's slice of one contiguous `Vector{T}` that the framework owns, the buffer, with leaf offsets static inside the slice."
+  }
+ ],
+ "ok": [
+  {
+   "id": "S6f-001",
+   "file": "design/spec.md",
+   "line": 2166,
+   "kind": "mech",
+   "claim": "Continuous state is a flat framework-owned buffer",
+   "evidence": "src/checkpoint.jl:68 (x::Vector{T}); src/model.jl:1186"
+  },
+  {
+   "id": "S6f-002",
+   "file": "design/spec.md",
+   "line": 2167,
+   "kind": "law",
+   "claim": "The continuous path is generic over its scalar type",
+   "evidence": "probe:E (workspace at ProbeDual), probe:F (x_init retyped to Dual)"
+  },
+  {
+   "id": "S6f-003",
+   "file": "design/spec.md",
+   "line": 2167,
+   "kind": "mech",
+   "claim": "Discrete state and modes live in stores",
+   "evidence": "src/executor.jl:415 (sstore[] = s⁺), src/executor.jl:432,454 (mstore)"
+  },
+  {
+   "id": "S6f-004",
+   "file": "design/spec.md",
+   "line": 2168,
+   "kind": "mech",
+   "claim": "Scratch lives in a workspace",
+   "evidence": "src/build.jl:1052-1060"
+  },
+  {
+   "id": "S6f-005",
+   "file": "design/spec.md",
+   "line": 2172,
+   "kind": "mech",
+   "claim": "A checkpoint holds x, s and m",
+   "evidence": "src/model.jl:1186-1189"
+  },
+  {
+   "id": "S6f-006",
+   "file": "design/spec.md",
+   "line": 2172,
+   "kind": "mech",
+   "claim": "The signal table is held whole, with root-input levels and held discrete outputs",
+   "evidence": "src/model.jl:1187 (capture_stores); src/checkpoint.jl:131-132"
+  },
+  {
+   "id": "S6f-008",
+   "file": "design/spec.md",
+   "line": 2173,
+   "kind": "mech",
+   "claim": "A checkpoint holds each event's prior",
+   "evidence": "src/model.jl:1187 (copy(exec.events.prior))"
+  },
+  {
+   "id": "S6f-009",
+   "file": "design/spec.md",
+   "line": 2174,
+   "kind": "mech",
+   "claim": "A checkpoint holds the clock with its origin",
+   "evidence": "src/model.jl:1188 (clock.t, clock.t₀)"
+  },
+  {
+   "id": "S6f-010",
+   "file": "design/spec.md",
+   "line": 2176,
+   "kind": "law",
+   "claim": "Workspace is not part of the state",
+   "evidence": "probe:E (no ws field in ModelState); src/checkpoint.jl:68-77"
+  },
+  {
+   "id": "S6f-011",
+   "file": "design/spec.md",
+   "line": 2176,
+   "kind": "law",
+   "claim": "Restore then continue gives the trajectory of never stopping",
+   "evidence": "test/test_lifecycle.jl:848 (resume identity, bitwise)"
+  },
+  {
+   "id": "S6f-012",
+   "file": "design/spec.md",
+   "line": 2177,
+   "kind": "law",
+   "claim": "A restore runs no boundary again",
+   "evidence": "src/checkpoint.jl:131-150 (_restore_state! copies, nothing runs)"
+  },
+  {
+   "id": "S6f-013",
+   "file": "design/spec.md",
+   "line": 2177,
+   "kind": "law",
+   "claim": "A restore fires no event again",
+   "evidence": "test/test_events.jl:277-290; src/checkpoint.jl:~139 (priors and last restored)"
+  },
+  {
+   "id": "S6f-014",
+   "file": "design/spec.md",
+   "line": 2192,
+   "kind": "decl",
+   "claim": "A component declares its state by value through x_init",
+   "evidence": "src/declare.jl:55-70; src/assembly.jl:663"
+  },
+  {
+   "id": "S6f-015",
+   "file": "design/spec.md",
+   "line": 2193,
+   "kind": "decl",
+   "claim": "The declaration is a NamedTuple with one named field per leaf",
+   "evidence": "probe:A mixed (builds); src/assembly.jl:663-682"
+  },
+  {
+   "id": "S6f-016",
+   "file": "design/spec.md",
+   "line": 2194,
+   "kind": "decl",
+   "claim": "Or a bare store, one leaf whose field is x",
+   "evidence": "probe:A bareSV (builds); probe:default_name (x, s, m); src/declare.jl:56-58"
+  },
+  {
+   "id": "S6f-017",
+   "file": "design/spec.md",
+   "line": 2195,
+   "kind": "law",
+   "claim": "Leaves are real scalars and SArrays, nothing else",
+   "evidence": "probe:A (Int, Bool, enum, Float32, nested, struct, String refused)"
+  },
+  {
+   "id": "S6f-018",
+   "file": "design/spec.md",
+   "line": 2197,
+   "kind": "law",
+   "claim": "A real off the common eltype is refused as IllegalStateLeaf :eltype",
+   "evidence": "probe:A Float32 and SVec32; src/assembly.jl:679"
+  },
+  {
+   "id": "S6f-019",
+   "file": "design/spec.md",
+   "line": 2197,
+   "kind": "law",
+   "claim": "Int, Bool and enum are refused as state leaves",
+   "evidence": "probe:A Int, Bool, enum (:mode_value); src/assembly.jl:678"
+  },
+  {
+   "id": "S6f-020",
+   "file": "design/spec.md",
+   "line": 2198,
+   "kind": "law",
+   "claim": "Ints, Bools and enums are admitted in modes",
+   "evidence": "probe:C-m bareBool (builds); src/assembly.jl:710-715"
+  },
+  {
+   "id": "S6f-021",
+   "file": "design/spec.md",
+   "line": 2198,
+   "kind": "law",
+   "claim": "A domain wrapper type is refused as a state leaf",
+   "evidence": "probe:A struct and String (:wrapper)"
+  },
+  {
+   "id": "S6f-022",
+   "file": "design/spec.md",
+   "line": 2200,
+   "kind": "ex",
+   "claim": "RQuat, a rotation quaternion type (lead: names missing)",
+   "evidence": "Domain wrapper type of FlightPhysics, outside this repo; spec.md:2976 says so; placeholder"
+  },
+  {
+   "id": "S6f-023",
+   "file": "design/spec.md",
+   "line": 2200,
+   "kind": "ex",
+   "claim": "RQuat's `normalization` keyword (lead: names missing)",
+   "evidence": "FlightPhysics API, outside this repo; spec.md:4220 uses it the same way; placeholder"
+  },
+  {
+   "id": "S6f-024",
+   "file": "design/spec.md",
+   "line": 2201,
+   "kind": "ex",
+   "claim": "Ranged, a clamped scalar (lead: names missing)",
+   "evidence": "Domain wrapper type outside this repo; spec.md:3212 calls it a domain type; placeholder"
+  },
+  {
+   "id": "S6f-025",
+   "file": "design/spec.md",
+   "line": 2201,
+   "kind": "decl",
+   "claim": "An attitude state is an SVector{4,T}",
+   "evidence": "probe:A bareSV (SVector state builds)"
+  },
+  {
+   "id": "S6f-026",
+   "file": "design/spec.md",
+   "line": 2204,
+   "kind": "law",
+   "claim": "Each field is one leaf, never a NamedTuple of leaves",
+   "evidence": "probe:A nested (IllegalStateLeaf :nested); src/assembly.jl:677"
+  },
+  {
+   "id": "S6f-027",
+   "file": "design/spec.md",
+   "line": 2205,
+   "kind": "mech",
+   "claim": "Condition algebra and readers address a field as one leaf",
+   "evidence": "src/conditions.jl:441; src/leaves.jl:76-90 (leaf_names)"
+  },
+  {
+   "id": "S6f-028",
+   "file": "design/spec.md",
+   "line": 2206,
+   "kind": "decl",
+   "claim": "A bare store's leaf is addressed by the field x",
+   "evidence": "probe:default_name; probe:A bareInt (diagnostic names field x)"
+  },
+  {
+   "id": "S6f-029",
+   "file": "design/spec.md",
+   "line": 2212,
+   "kind": "mech",
+   "claim": "The framework computes the flat layout at build time",
+   "evidence": "src/build.jl:1610 (x_offs fixed at build); src/leaves.jl:42-44"
+  },
+  {
+   "id": "S6f-031",
+   "file": "design/spec.md",
+   "line": 2213,
+   "kind": "mech",
+   "claim": "The buffer is one contiguous Vector{T} the framework owns",
+   "evidence": "src/checkpoint.jl:68; src/checkpoint.jl:131 (exec.xbuf)"
+  },
+  {
+   "id": "S6f-032",
+   "file": "design/spec.md",
+   "line": 2215,
+   "kind": "mech",
+   "claim": "The typed state value is rebuilt at each evaluation",
+   "evidence": "src/executor.jl:263 (reconstruct per call); src/leaves.jl:123-129"
+  },
+  {
+   "id": "S6f-033",
+   "file": "design/spec.md",
+   "line": 2216,
+   "kind": "mech",
+   "claim": "The value's type X is derived from x_init",
+   "evidence": "src/build.jl:1610 (typeof(decls[ci].x)); src/model.jl:1141"
+  },
+  {
+   "id": "S6f-034",
+   "file": "design/spec.md",
+   "line": 2217,
+   "kind": "mech",
+   "claim": "The value is passed to every function receiving state",
+   "evidence": "src/declare.jl:901-908 (x in every continuous bundle)"
+  },
+  {
+   "id": "S6f-035",
+   "file": "design/spec.md",
+   "line": 2219,
+   "kind": "mech",
+   "claim": "x_deriv returns an Ẋ value scatter-stored into the flat ẋ buffer",
+   "evidence": "src/executor.jl:172-178"
+  },
+  {
+   "id": "S6f-036",
+   "file": "design/spec.md",
+   "line": 2220,
+   "kind": "mech",
+   "claim": "A handler's x key carries a new X written back",
+   "evidence": "src/executor.jl:402"
+  },
+  {
+   "id": "S6f-037",
+   "file": "design/spec.md",
+   "line": 2221,
+   "kind": "mech",
+   "claim": "x_projection carries a new X written back",
+   "evidence": "src/executor.jl:259-266"
+  },
+  {
+   "id": "S6f-038",
+   "file": "design/spec.md",
+   "line": 2222,
+   "kind": "law",
+   "claim": "Projection's write-back happens at two boundary positions",
+   "evidence": "src/executor.jl:362 (projection sweep) and src/executor.jl:459-462 (handler then projection)"
+  },
+  {
+   "id": "S6f-039",
+   "file": "design/spec.md",
+   "line": 2228,
+   "kind": "law",
+   "claim": "The buffer is unchanged within a sweep",
+   "evidence": "src/executor.jl:172-178 (sweep writes ẋ only); xbuf writes at executor.jl:262,402,460 are boundary-only"
+  },
+  {
+   "id": "S6f-040",
+   "file": "design/spec.md",
+   "line": 2230,
+   "kind": "mech",
+   "claim": "The flat vector exists beside typed values for integrators, trim and linearization",
+   "evidence": "src/linearize.jl:325 (copyto!(seeded_exec.xbuf, ...)); src/checkpoint.jl:68"
+  },
+  {
+   "id": "S6f-041",
+   "file": "design/spec.md",
+   "line": 2237,
+   "kind": "law",
+   "claim": "No state cells in the signal table beyond declared ports",
+   "evidence": "src/build.jl:442,466 (cells placed for ports and root inputs only)"
+  },
+  {
+   "id": "S6f-042",
+   "file": "design/spec.md",
+   "line": 2246,
+   "kind": "law",
+   "claim": "reconstruct(flatten(x)) == x holds",
+   "evidence": "probe:D"
+  },
+  {
+   "id": "S6f-043",
+   "file": "design/spec.md",
+   "line": 2247,
+   "kind": "mech",
+   "claim": "No constructor bypass, no reinterpret in the view path",
+   "evidence": "src/leaves.jl:111-118 (ordinary constructor call); rg reinterpret src/leaves.jl src/store.jl empty"
+  },
+  {
+   "id": "S6f-044",
+   "file": "design/spec.md",
+   "line": 2249,
+   "kind": "law",
+   "claim": "Invariant-carrying leaves are excluded from the vocabulary",
+   "evidence": "probe:A struct (:wrapper)"
+  },
+  {
+   "id": "S6f-045",
+   "file": "design/spec.md",
+   "line": 2254,
+   "kind": "mech",
+   "claim": "Handlers build returned values through ordinary constructors",
+   "evidence": "src/executor.jl:402 (flatten_state! takes the handler's built value)"
+  },
+  {
+   "id": "S6f-046",
+   "file": "design/spec.md",
+   "line": 2255,
+   "kind": "mech",
+   "claim": "The condition apply converts authored values through ordinary convert",
+   "evidence": "src/conditions.jl:598-600"
+  },
+  {
+   "id": "S6f-047",
+   "file": "design/spec.md",
+   "line": 2256,
+   "kind": "law",
+   "claim": "Constructors run on write paths, never on views",
+   "evidence": "src/leaves.jl:111-118 (a view builds only SArray and NamedTuple leaves)"
+  },
+  {
+   "id": "S6f-048",
+   "file": "design/spec.md",
+   "line": 2259,
+   "kind": "law",
+   "claim": "Ẋ has exactly X's shape at the activation scalar",
+   "evidence": "probe:E BadDer1-3; src/leaves.jl:409-432"
+  },
+  {
+   "id": "S6f-049",
+   "file": "design/spec.md",
+   "line": 2260,
+   "kind": "law",
+   "claim": "A scalar leaf's derivative is a T",
+   "evidence": "probe:E BadDer2, BadDer3 (ConformanceFailure :field_type)"
+  },
+  {
+   "id": "S6f-050",
+   "file": "design/spec.md",
+   "line": 2260,
+   "kind": "law",
+   "claim": "An SArray leaf's derivative is the same SArray at T",
+   "evidence": "probe:E BadDer1; probe:F const deriv"
+  },
+  {
+   "id": "S6f-051",
+   "file": "design/spec.md",
+   "line": 2264,
+   "kind": "law",
+   "claim": "Derivative completeness is structural",
+   "evidence": "src/leaves.jl:414-418 (key set must equal the state's, :field_set)"
+  },
+  {
+   "id": "S6f-052",
+   "file": "design/spec.md",
+   "line": 2270,
+   "kind": "law",
+   "claim": "The continuous evaluation path is generic over T <: Real",
+   "evidence": "probe:E, probe:F (Dual activation builds)"
+  },
+  {
+   "id": "S6f-053",
+   "file": "design/spec.md",
+   "line": 2271,
+   "kind": "mech",
+   "claim": "The state buffer is generic over T",
+   "evidence": "src/checkpoint.jl:68 (ModelState{T}, x::Vector{T})"
+  },
+  {
+   "id": "S6f-054",
+   "file": "design/spec.md",
+   "line": 2272,
+   "kind": "mech",
+   "claim": "The pack/unpack machinery is generic over T",
+   "evidence": "src/leaves.jl:123-129,148-156 (AbstractVector buffer)"
+  },
+  {
+   "id": "S6f-055",
+   "file": "design/spec.md",
+   "line": 2275,
+   "kind": "mech",
+   "claim": "Linearization gets exact Jacobians from ForwardDiff duals",
+   "evidence": "src/linearize.jl:1-17; src/build.jl:733"
+  },
+  {
+   "id": "S6f-056",
+   "file": "design/spec.md",
+   "line": 2277,
+   "kind": "mech",
+   "claim": "Trim solvers take exact derivatives by dual numbers",
+   "evidence": "src/trim.jl:497-499 (docstring); src/trim.jl:476-481"
+  },
+  {
+   "id": "S6f-057",
+   "file": "design/spec.md",
+   "line": 2278,
+   "kind": "mech",
+   "claim": "The feedthrough tracer is a set-propagation scalar",
+   "evidence": "src/tracer.jl:24-34"
+  },
+  {
+   "id": "S6f-058",
+   "file": "design/spec.md",
+   "line": 2278,
+   "kind": "mech",
+   "claim": "The tracer classifies a rejected cycle",
+   "evidence": "src/tracer.jl:1-8"
+  },
+  {
+   "id": "S6f-059",
+   "file": "design/spec.md",
+   "line": 2280,
+   "kind": "law",
+   "claim": "One sweep at T = Dual fails loudly on Float64-pinning",
+   "evidence": "src/build.jl:540-542,798; src/leaves.jl:~203 (_pin_hint, refusal with hint)"
+  },
+  {
+   "id": "S6f-060",
+   "file": "design/spec.md",
+   "line": 2285,
+   "kind": "law",
+   "claim": "Trim searches for a point where residuals hold within tolerance",
+   "evidence": "src/trim.jl:497-499"
+  },
+  {
+   "id": "S6f-061",
+   "file": "design/spec.md",
+   "line": 2286,
+   "kind": "mech",
+   "claim": "Each candidate is evaluated by one sweep",
+   "evidence": "src/trim.jl:476-481 (raw write, sweep and read cycles)"
+  },
+  {
+   "id": "S6f-062",
+   "file": "design/spec.md",
+   "line": 2287,
+   "kind": "law",
+   "claim": "Modes and the discrete tier are held during trim",
+   "evidence": "src/trim.jl:505-510; src/trim.jl:476-481 (frozen cells from the nominal set)"
+  },
+  {
+   "id": "S6f-063",
+   "file": "design/spec.md",
+   "line": 2289,
+   "kind": "mech",
+   "claim": "Linearization gives Jacobians of (x,u) to (ẋ,y) at an operating point",
+   "evidence": "src/linearize.jl:132-144 (A, B, C, D over x, u, y labels)"
+  },
+  {
+   "id": "S6f-064",
+   "file": "design/spec.md",
+   "line": 2290,
+   "kind": "law",
+   "claim": "Everything not seeded is held constant",
+   "evidence": "src/linearize.jl:325 (zero partials throughout)"
+  },
+  {
+   "id": "S6f-065",
+   "file": "design/spec.md",
+   "line": 2300,
+   "kind": "ex",
+   "claim": "FrameTransform, a FlightPhysics payload type (lead: names missing)",
+   "evidence": "FlightPhysics type, outside this repo; spec.md:4198 introduces it the same way; placeholder"
+  },
+  {
+   "id": "S6f-066",
+   "file": "design/spec.md",
+   "line": 2302,
+   "kind": "law",
+   "claim": "Pinned parameters and definitions stay Float64",
+   "evidence": "src/leaves.jl:150-152 (retype_entry strips Pinned to P); probe:F"
+  },
+  {
+   "id": "S6f-067",
+   "file": "design/spec.md",
+   "line": 2304,
+   "kind": "law",
+   "claim": "The discrete side is exempt from the scalar",
+   "evidence": "probe:F (discrete s store stays Float64 at ProbeDual); src/build.jl:1049"
+  },
+  {
+   "id": "S6f-068",
+   "file": "design/spec.md",
+   "line": 2305,
+   "kind": "law",
+   "claim": "Linearization and trim differentiate continuous dynamics only",
+   "evidence": "src/trim.jl:476-481; src/linearize.jl:10-14"
+  },
+  {
+   "id": "S6f-069",
+   "file": "design/spec.md",
+   "line": 2308,
+   "kind": "mech",
+   "claim": "A frozen discrete cell is a constant with zero partials",
+   "evidence": "src/trim.jl:477-479; src/build.jl:1049-1050"
+  },
+  {
+   "id": "S6f-070",
+   "file": "design/spec.md",
+   "line": 2311,
+   "kind": "ptr",
+   "claim": "frozen_discrete_walkthrough.md exists",
+   "evidence": "design/companions/frozen_discrete_walkthrough.md"
+  },
+  {
+   "id": "S6f-071",
+   "file": "design/spec.md",
+   "line": 2313,
+   "kind": "law",
+   "claim": "At a non-nominal scalar only continuous dynamics run",
+   "evidence": "src/build.jl:1049-1050 (_frozen), src/build.jl:1573-1575"
+  },
+  {
+   "id": "S6f-072",
+   "file": "design/spec.md",
+   "line": 2314,
+   "kind": "law",
+   "claim": "Discrete cells hold their nominal values at a non-nominal scalar",
+   "evidence": "src/trim.jl:477-479; probe:F (store type stays Float64)"
+  },
+  {
+   "id": "S6f-073",
+   "file": "design/spec.md",
+   "line": 2315,
+   "kind": "law",
+   "claim": "No guard or handler runs at a non-nominal scalar",
+   "evidence": "src/build.jl:1573-1575 (event system compiled at nominal only)"
+  },
+  {
+   "id": "S6f-074",
+   "file": "design/spec.md",
+   "line": 2318,
+   "kind": "law",
+   "claim": "Participation is per leaf",
+   "evidence": "src/leaves.jl:150-170 (retype per Float64 position, Pinned per entry)"
+  },
+  {
+   "id": "S6f-075",
+   "file": "design/spec.md",
+   "line": 2319,
+   "kind": "law",
+   "claim": "On the continuous tier a leaf follows the activation scalar in contract and state type",
+   "evidence": "probe:F (state type at Dual); src/leaves.jl:158-170"
+  },
+  {
+   "id": "S6f-076",
+   "file": "design/spec.md",
+   "line": 2321,
+   "kind": "law",
+   "claim": "A contract leaf declared pinned does not follow the scalar",
+   "evidence": "src/leaves.jl:150-152"
+  },
+  {
+   "id": "S6f-077",
+   "file": "design/spec.md",
+   "line": 2322,
+   "kind": "law",
+   "claim": "The discrete side pins wholesale",
+   "evidence": "probe:F; src/build.jl:1059 (discrete ws at Float64)"
+  },
+  {
+   "id": "S6f-078",
+   "file": "design/spec.md",
+   "line": 2325,
+   "kind": "law",
+   "claim": "Partials enter only through seeded directions",
+   "evidence": "src/linearize.jl:325; src/trim.jl:478-479"
+  },
+  {
+   "id": "S6f-079",
+   "file": "design/spec.md",
+   "line": 2326,
+   "kind": "law",
+   "claim": "Declared initial values enter as zero-partial constants",
+   "evidence": "src/leaves.jl:182-185 (retype_value, T(l))"
+  },
+  {
+   "id": "S6f-080",
+   "file": "design/spec.md",
+   "line": 2328,
+   "kind": "law",
+   "claim": "A pinned leaf carries no partials at any scalar",
+   "evidence": "src/leaves.jl:150-152,195-199 (pinned leaf refuses a Dual)"
+  },
+  {
+   "id": "S6f-081",
+   "file": "design/spec.md",
+   "line": 2329,
+   "kind": "law",
+   "claim": "Jacobian entries through a pinned leaf are exactly zero",
+   "evidence": "src/leaves.jl:150-152 (the leaf is Float64, so holds no partial)"
+  },
+  {
+   "id": "S6f-082",
+   "file": "design/spec.md",
+   "line": 2330,
+   "kind": "law",
+   "claim": "A plain Float64 where the scalar is expected embeds as a zero-partial constant",
+   "evidence": "src/leaves.jl:~197 (`V === Float64 && P === T`); probe:F const deriv"
+  },
+  {
+   "id": "S6f-083",
+   "file": "design/spec.md",
+   "line": 2345,
+   "kind": "law",
+   "claim": "Discrete state and modes are isbits or Symbol values",
+   "evidence": "probe:C (Int, enum, Bool, SArray, Symbol build; String, Vector refused)"
+  },
+  {
+   "id": "S6f-084",
+   "file": "design/spec.md",
+   "line": 2346,
+   "kind": "decl",
+   "claim": "Held field by field under a NamedTuple or whole as a bare store, field s or m",
+   "evidence": "probe:default_name; probe:C bareSymbol, probe:C-m bareBool; src/declare.jl:89,114"
+  },
+  {
+   "id": "S6f-085",
+   "file": "design/spec.md",
+   "line": 2348,
+   "kind": "mech",
+   "claim": "A checkpoint copies the stores wholesale",
+   "evidence": "src/model.jl:1152,1186; src/checkpoint.jl:127-130"
+  },
+  {
+   "id": "S6f-086",
+   "file": "design/spec.md",
+   "line": 2356,
+   "kind": "mech",
+   "claim": "s and m live in typed stores apart from the buffer",
+   "evidence": "src/executor.jl:63-64 (sstore, mstore beside xbuf)"
+  },
+  {
+   "id": "S6f-087",
+   "file": "design/spec.md",
+   "line": 2358,
+   "kind": "mech",
+   "claim": "The framework overwrites a store when an update or handler returns a new value",
+   "evidence": "src/executor.jl:415,432,454"
+  },
+  {
+   "id": "S6f-088",
+   "file": "design/spec.md",
+   "line": 2362,
+   "kind": "law",
+   "claim": "The s and m stores never touch the buffer",
+   "evidence": "src/executor.jl:415,454 (Ref stores); src/model.jl:1186-1187"
+  },
+  {
+   "id": "S6f-089",
+   "file": "design/spec.md",
+   "line": 2365,
+   "kind": "law",
+   "claim": "Every store field is isbits or a Symbol",
+   "evidence": "src/assembly.jl:710-715; probe:C String, Vector, HoldsVec refused as IllegalStoreField"
+  },
+  {
+   "id": "S6f-090",
+   "file": "design/spec.md",
+   "line": 2366,
+   "kind": "law",
+   "claim": "A bare store is held to the same rule whole",
+   "evidence": "probe:C bareString (refused, field s), bareSymbol (builds)"
+  },
+  {
+   "id": "S6f-091",
+   "file": "design/spec.md",
+   "line": 2368,
+   "kind": "law",
+   "claim": "Enums, integers, Bools, SArrays and nested isbits structs qualify",
+   "evidence": "probe:C enum, Int, Bool, SVec, nestedStruct (all build)"
+  },
+  {
+   "id": "S6f-092",
+   "file": "design/spec.md",
+   "line": 2369,
+   "kind": "law",
+   "claim": "A String, an array, or a struct holding either does not qualify",
+   "evidence": "probe:C String, Vector, HoldsVec (IllegalStoreField)"
+  },
+  {
+   "id": "S6f-093",
+   "file": "design/spec.md",
+   "line": 2371,
+   "kind": "law",
+   "claim": "A Symbol is admitted as a store value",
+   "evidence": "probe:C Symbol; src/assembly.jl:713"
+  },
+  {
+   "id": "S6f-094",
+   "file": "design/spec.md",
+   "line": 2373,
+   "kind": "mech",
+   "claim": "The table admits a Symbol as an opaque leaf",
+   "evidence": "src/leaves.jl:19-20,31-32"
+  },
+  {
+   "id": "S6f-095",
+   "file": "design/spec.md",
+   "line": 2373,
+   "kind": "mech",
+   "claim": "An opaque leaf is a non-isbits immutable the walk stores whole",
+   "evidence": "src/leaves.jl:19-20,5-8"
+  },
+  {
+   "id": "S6f-096",
+   "file": "design/spec.md",
+   "line": 2374,
+   "kind": "law",
+   "claim": "A struct nesting a Symbol does not qualify",
+   "evidence": "probe:C HoldsSym, NTofSym (IllegalStoreField)"
+  },
+  {
+   "id": "S6f-097",
+   "file": "design/spec.md",
+   "line": 2379,
+   "kind": "law",
+   "claim": "No store needs the frozen-reference latitude",
+   "evidence": "src/assembly.jl:713 (isbits or Symbol only); probe:C HoldsVec"
+  },
+  {
+   "id": "S6f-098",
+   "file": "design/spec.md",
+   "line": 2381,
+   "kind": "mech",
+   "claim": "Checkpoint of the discrete side is copying store values",
+   "evidence": "src/model.jl:1152,1186; src/checkpoint.jl:127-130"
+  },
+  {
+   "id": "S6f-099",
+   "file": "design/spec.md",
+   "line": 2382,
+   "kind": "mech",
+   "claim": "Replay of the discrete side restores store values",
+   "evidence": "src/checkpoint.jl:127-130 (_restore_stores!, the path replay! uses)"
+  },
+  {
+   "id": "S6f-100",
+   "file": "design/spec.md",
+   "line": 2384,
+   "kind": "law",
+   "claim": "A stored value has one fixed layout per component",
+   "evidence": "src/declare.jl:93-94 (type stays as written at every activation); probe:F"
+  },
+  {
+   "id": "S6f-101",
+   "file": "design/spec.md",
+   "line": 2392,
+   "kind": "mech",
+   "claim": "The workspace is component-declared and framework-instantiated",
+   "evidence": "src/build.jl:1052-1060"
+  },
+  {
+   "id": "S6f-102",
+   "file": "design/spec.md",
+   "line": 2393,
+   "kind": "mech",
+   "claim": "The workspace arrives as the ws field of the bundle",
+   "evidence": "src/declare.jl:873,893"
+  },
+  {
+   "id": "S6f-103",
+   "file": "design/spec.md",
+   "line": 2394,
+   "kind": "law",
+   "claim": "ws is in every bundle-receiving function of the declaring component",
+   "evidence": "src/declare.jl:901-908"
+  },
+  {
+   "id": "S6f-104",
+   "file": "design/spec.md",
+   "line": 2395,
+   "kind": "law",
+   "claim": "x_projection receives no workspace",
+   "evidence": "src/executor.jl:263 (two-argument call); probe:E (no three-argument method)"
+  },
+  {
+   "id": "S6f-105",
+   "file": "design/spec.md",
+   "line": 2397,
+   "kind": "law",
+   "claim": "A workspace is not snapshotted",
+   "evidence": "probe:E (ModelState fields); src/checkpoint.jl:68-77"
+  },
+  {
+   "id": "S6f-106",
+   "file": "design/spec.md",
+   "line": 2397,
+   "kind": "law",
+   "claim": "A workspace is not replayed",
+   "evidence": "src/checkpoint.jl:127-150 (restore writes x, stores, table, priors, clock only)"
+  },
+  {
+   "id": "S6f-107",
+   "file": "design/spec.md",
+   "line": 2398,
+   "kind": "law",
+   "claim": "A workspace is never a condition target",
+   "evidence": "src/conditions.jl:651-661 (an undeclared field with role :workspace)"
+  },
+  {
+   "id": "S6f-108",
+   "file": "design/spec.md",
+   "line": 2401,
+   "kind": "law",
+   "claim": "The framework never inspects or mutates a workspace",
+   "evidence": "src/executor.jl:137 (handed through unread); src/conditions.jl:659 reads the keys of a fresh one only to name a diagnostic role"
+  },
+  {
+   "id": "S6f-109",
+   "file": "design/spec.md",
+   "line": 2409,
+   "kind": "mech",
+   "claim": "A workspace is allocated per activation",
+   "evidence": "src/build.jl:1049-1060 (_workspaces(structure, T))"
+  },
+  {
+   "id": "S6f-110",
+   "file": "design/spec.md",
+   "line": 2410,
+   "kind": "law",
+   "claim": "Continuous workspace at the activation scalar",
+   "evidence": "probe:E (:cont => ProbeDual)"
+  },
+  {
+   "id": "S6f-111",
+   "file": "design/spec.md",
+   "line": 2411,
+   "kind": "law",
+   "claim": "Discrete workspace at Float64",
+   "evidence": "probe:E (:disc => Float64 at every activation)"
+  },
+  {
+   "id": "S6f-112",
+   "file": "design/spec.md",
+   "line": 2412,
+   "kind": "mech",
+   "claim": "Its sizes come from the instance",
+   "evidence": "src/build.jl:1057-1059 (ws_init called on the instance)"
+  },
+  {
+   "id": "S6f-113",
+   "file": "design/spec.md",
+   "line": 2423,
+   "kind": "ex",
+   "claim": "In-place math in the workspace, isbits snapshot as new state",
+   "evidence": "test/fixtures.jl:341-359 (Smoother)"
+  },
+  {
+   "id": "S6f-114",
+   "file": "design/spec.md",
+   "line": 2426,
+   "kind": "ex",
+   "claim": "A Xoshiro generator in the workspace, draw-determining values in s",
+   "evidence": "Illustration of the idiom; no API named beyond Base's Xoshiro"
+  },
+  {
+   "id": "S6f-115",
+   "file": "design/spec.md",
+   "line": 2440,
+   "kind": "ex",
+   "claim": "A stateless component computes derivatives as outputs, wired into a state-holding component",
+   "evidence": "Expressible with the declared stages; src/declare.jl:901-908, test/fixtures.jl:41-43 (state-holding Plant style)"
+  }
+ ],
+ "counts": {
+  "law": 50,
+  "mech": 52,
+  "decl": 8,
+  "ex": 6,
+  "ptr": 12,
+  "why": 38,
+  "cite": 0,
+  "docstring": 0,
+  "map": 0,
+  "surface": 0
+ }
+}

@@ -1,0 +1,58 @@
+{
+ "group": "G6a",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "cb398676",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "S6a",
+   "kind": "spec",
+   "range": [
+    1,
+    442
+   ],
+   "desc": "title, Part I, §1 introduction, §2.1 to §2.2",
+   "map": "674-732 (src/frame.jl), 907-1025 (src/model.jl), 1325-1347 (src/stepper.jl), 1205-1324 (src/sim.jl)"
+  },
+  {
+   "key": "S6b",
+   "kind": "spec",
+   "range": [
+    443,
+    876
+   ],
+   "desc": "§2.3 to §2.5, §3 component taxonomy",
+   "map": "674-732 (src/frame.jl), 329-365 (src/declare.jl), 38-93 (src/assembly.jl)"
+  },
+  {
+   "key": "S6c",
+   "kind": "spec",
+   "range": [
+    877,
+    1289
+   ],
+   "desc": "§4 ports and signals, §5.1 to §5.2",
+   "map": "1348-1386 (src/store.jl), 105-186 (src/build.jl), 733-758 (src/leaves.jl), 907-1025 (src/model.jl)"
+  },
+  {
+   "key": "S6d",
+   "kind": "spec",
+   "range": [
+    1290,
+    1754
+   ],
+   "desc": "§5.3 to §5.5, §6.1 connections and hierarchy",
+   "map": "105-186 (src/build.jl), 1387-1461 (src/structure.jl), 1485-1498 (src/tracer.jl), 38-93 (src/assembly.jl)"
+  },
+  {
+   "key": "S6e",
+   "kind": "spec",
+   "range": [
+    1755,
+    2162
+   ],
+   "desc": "§6.2 aggregation, §6.3 rates down the hierarchy",
+   "map": "38-93 (src/assembly.jl), 1387-1461 (src/structure.jl), 759-849 (src/library.jl)"
+  }
+ ]
+}

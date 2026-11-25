@@ -1,0 +1,69 @@
+{
+ "judgments": [
+  {
+   "id": "CV6c-001",
+   "conforms": true,
+   "evidence": "src/library.jl:1580-1583 forwards kw... to TransferFunction, whose sentinels resolve in transfer_coefficients (src/library.jl:1195-1208) to zeros = () and gain = 1.0, u0 = 0.0 at src/library.jl:1282. Probe (CV6c_v/probe.jl, '== CV6c-001'): num/den builds; poles only gives num (1.0,); zeros/poles/gain = 2 gives num (2.0, 2.0); u0 = 4 gives x0 = 2.0 = G(0) u0 state."
+  },
+  {
+   "id": "CV6c-006",
+   "conforms": false,
+   "evidence": "design/code_map.md:848 Spec line omits citations the code carries in this range: §3.1 (src/library.jl:2165), §5.3 (src/library.jl:2074), §10.6 (src/library.jl:1589, 1648, 1744, 1916, 2074, 2165), §13.8 (src/library.jl:2570, 2931), D-362 (src/library.jl:1648). The rest of the file also cites sections the line omits: §2.4, §2.5, §4.3, §7.1-§7.3, §8.2, §9.4, §9.7, §11.3, §14.10, D-033, D-082, D-263, D-276, D-308 (rg over src/library.jl). §8.1 is on the line but no comment in src/library.jl cites it.",
+   "class": "deviation",
+   "fix": "Spec: §2.3, §3.1, §5.3, §5.4, §5.5, §6.2, §6.3, §8.1, §8.7, §10.4, §10.6, §13.5, §13.7, §13.8, D-141, D-179, D-231, D-311, D-312, D-313, D-316, D-362, D-383, D-384, D-385, D-437, D-438.",
+   "clear": false,
+   "note": "No pending bullet covers code_map Spec lines. The citations date back at least to a12a8e86. The fix covers only this slice's range. Whether the line must list every citation in the file, which would add the other sections above, is a rule question, so clear is false."
+  },
+  {
+   "id": "CV6c-013",
+   "conforms": true,
+   "evidence": "src/library.jl:1711-1714 throws ArgumentError on a values count other than N + 1 and on times[k] < times[k+1] failing. Probe '== CV6c-013': descending times, equal times, N values and N+2 values each give ArgumentError."
+  },
+  {
+   "id": "CV6c-073",
+   "conforms": true,
+   "evidence": "Int8 modes at src/library.jl:1841, 2011, 2140, 2244. Per-component events are generated at src/library.jl:1911, 2069, 2161, 2273. The strict fall uses prevfloat at src/library.jl:2146 and 2257. Probe '== CV6c-073 / 081 / 034': every vector form has SVector{3, Int8} modes and per-component event names, and every scalar form has Int8.",
+   "note": "The code admits any SArray, so an SMatrix LimitedIntegrator builds 4 copies of each event (probe 'LI over SMatrix events'). The map's 'static vectors' is narrower than the code but not false. The docstrings say SArray."
+  },
+  {
+   "id": "CV6c-081",
+   "conforms": true,
+   "evidence": "src/library.jl:1911-1913 names the copies Symbol(:hit_upper_, i) for i in 1:N, then hit_lower_i, leave_upper_i, leave_lower_i. Probe 'LI events' over an SVector{3} gives (:hit_upper_1, :hit_upper_2, :hit_upper_3, :hit_lower_1, ..., :leave_lower_3), matching docstring lines 1797-1799, where N is the component count."
+  },
+  {
+   "id": "CV6c-024",
+   "conforms": true,
+   "evidence": "src/library.jl:2005 reads function LimitedDoubleIntegrator(; lower, upper, q0 = zero(lower), v0 = zero(lower), localized::Bool = true), matching the docstring at 1930. Probe '== CV6c-024' gives defaults (0.0, 0.0) for scalars and zero SVectors for vectors."
+  },
+  {
+   "id": "CV6c-034",
+   "conforms": true,
+   "evidence": "src/library.jl:2246 y_types = Pinned{channel_type(V, Bool)}, with channel_type at src/library.jl:1731-1732. The per-component names are at src/library.jl:2273. Probe: Comparator y_types is Pinned{Bool} for a scalar and Pinned{SVector{3, Bool}} for a vector. The scalar events are (:switch_on, :switch_off), and the vector events are switch_on_1..3 then switch_off_1..3."
+  },
+  {
+   "id": "CV6c-043",
+   "conforms": false,
+   "evidence": "shape_type is called only by PID and DiscretePID (src/library.jl:2551, 2687). FirstOrderLag calls only check_time_constant (src/library.jl:1006). The trackers call fixed_parameters, check_tracking, check_output_limits and check_time_constant (src/library.jl:2909-2914, 3035-3040). channel_type is also used by Comparator (src/library.jl:2246). Commit 51d658c1 shows the appositive 'shared with the trackers and FirstOrderLag' was added for check_time_constant alone. As written at code_map.md:814-816, it reads as qualifying the whole helper list. The tracker entry (code_map.md:817-822) names the helpers it shares with the PID but leaves out check_time_constant.",
+   "class": "deviation",
+   "fix": "PID entry: \"... the roster `PID_PARAMETERS`, the helper `shape_type`, the helpers `fixed_parameters`, `check_tracking`, `check_output_limits` and `check_time_constant`, shared with the trackers, the last also with `FirstOrderLag`, and `channel_type` (D-313, D-383, D-384, D-385).\" Tracker entry: \"... and `fixed_parameters`, `check_tracking`, `check_output_limits` and `check_time_constant` shared with the PID (D-383, D-384, D-385).\"",
+   "clear": false,
+   "note": "The facts the map meant are right. The fault is wording that misleads. Several phrasings fit, and the shared fact could live in one entry or both."
+  },
+  {
+   "id": "CV6c-045",
+   "conforms": true,
+   "evidence": "src/library.jl:2409-2413 check_time_constant with zero_legal = false requires value .> 0 unless AsPort(). PID calls it for τd and Tt at src/library.jl:2548-2549. Probe '== CV6c-045' gives ArgumentError for τd = 0, τd < 0, Tt = 0 and τd = SVector(0.1, 0.0). The default and the given Tt = Inf build, and τd = AsPort() builds."
+  },
+  {
+   "id": "CV6c-054",
+   "conforms": true,
+   "evidence": "src/build.jl:537 says a discrete consumer pins by tier, and src/linearize.jl:228 says the discrete tier is held. Probe '== CV6c-054': linearizing a root DiscretePID with Kp = AsPort() refuses each root input as unseedable by tier ('consumer controller is on the discrete tier, which the pass holds, so the cell carries no partials at any activation', src/diagnostics.jl:2216). The continuous PID twin gives D = [2.0 -2.0 2.5], with Kp coupling."
+  },
+  {
+   "id": "CV6c-064",
+   "conforms": true,
+   "evidence": "LQRTracker's y_direct (src/library.jl:2920-2924) reads z_ref, the trims, K_fbk, K_fwd, u_min and u_max. x_deriv (src/library.jl:2926-2929) alone reads K_int, Tt and v. Probe '== CV6c-064' over cycles through each port: z_ref, x_trim, u_trim, z_trim, u_min, u_max, K_fwd and K_fbk give :real. v (tracking), K_int and Tt give :artificial, with dead hop ('controller', :K_int, :u)."
+  }
+ ],
+ "notes": "Probe script: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV6c_v/probe.jl. It was run three times from W at cb398676, and I changed no tracked file. On the first CV6c-064 pass, K_fwd and K_fbk came out :artificial. That came from my own feedback Fn building a Float64 SMatrix, which drops the tracer's dependency set: the dead hop was ('feedback', :u, :y). It was not the controller. A feedback generic in the scalar (section 'matrix ports, feedback generic in the scalar') gives :real for both, which is the result I used. The PID parameter-port classification was also checked for comparison. Ki and Tt come out artificial and the rest real, matching §5.4's prose at src/library.jl:2521-2523."
+}

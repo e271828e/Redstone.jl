@@ -1,0 +1,16 @@
+names missing: `alt_target` at design/companions/event_visibility_walkthrough.md:120
+names missing: `avionics.u.bus_voltage` at design/companions/event_visibility_walkthrough.md:118
+names missing: `bus_voltage` at design/companions/event_visibility_walkthrough.md:140
+names missing: `handler_cap` at design/companions/event_visibility_walkthrough.md:134
+names missing: `i_max` at design/companions/event_visibility_walkthrough.md:120
+names missing: `i_max` at design/companions/event_visibility_walkthrough.md:126
+names missing: `u.bus_voltage` at design/companions/event_visibility_walkthrough.md:134
+names missing: `u.bus_voltage` at design/companions/event_visibility_walkthrough.md:142
+names missing: `v_at_capture` at design/companions/event_visibility_walkthrough.md:135
+names missing: `f_ode!` at design/companions/fused_evaluation_lineage.md:48
+names missing: `mdlDerivatives` at design/companions/fused_evaluation_lineage.md:43
+names missing: `mdlOutputs` at design/companions/fused_evaluation_lineage.md:43
+names test-only: `alt` at design/companions/event_visibility_walkthrough.md:120
+names test-only: `alt` at design/companions/event_visibility_walkthrough.md:126
+names test-only: `tripped` at design/companions/event_visibility_walkthrough.md:140
+names test-only: `der` at design/companions/fused_evaluation_lineage.md:45

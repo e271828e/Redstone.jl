@@ -1,0 +1,451 @@
+{
+ "rows": [
+  {
+   "id": "CV6a-011",
+   "file": "src/store.jl",
+   "line": 149,
+   "kind": "map",
+   "claim": "code_map.md:1353 and the comment at store.jl:147 say capture_stores makes one boundary's fresh copy 'one allocation per boundary'",
+   "evidence": "probe: capture_stores of a 2-eltype bundle allocates 160 B in steady state, one fresh `copy` per eltype buffer (src/store.jl:149 maps `copy` over every store); a 1-eltype bundle makes one copy",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "code_map.md: 'capture_stores, one boundary's fresh copy of a bundle, one buffer copy per element type, one capture per boundary (§9.8)'; same wording in the store.jl:147 comment.",
+   "note": "Loose phrase rather than wrong count if 'one allocation' means one capture event; a verifier may rule it style."
+  },
+  {
+   "id": "CV6a-015",
+   "file": "src/store.jl",
+   "line": 237,
+   "kind": "map",
+   "claim": "code_map.md's src/store.jl entry (1348-1386) omits activation_scalar",
+   "evidence": "rg -c activation_scalar design/code_map.md gives 0; defined at src/store.jl:237 with a docstring and called by the executor (executor.jl:176, 262, 403, 461)",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add a bullet to the store.jl entry: '`activation_scalar`, the scalar an executor runs at, read off its `Clock`'s type parameter (§9.4).'"
+  },
+  {
+   "id": "CV6a-017",
+   "file": "src/leaves.jl",
+   "line": 11,
+   "kind": "cite",
+   "claim": "Comment 'Shared by both candidates ... C2 then reuses it for cells; C1 uses it only for state' points at the two cell-store candidates of the pre-D-162 bench",
+   "evidence": "design/log.md:6283 D-162 ratified C2 and the code has one representation; no C1 exists in src/ (rg 'C1|C2' src/leaves.jl src/store.jl hits only these comments)",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Replace with 'Shared by the continuous state buffer (§7.1) and the cell stores (D-162): both flatten and reconstruct through this one walk.'"
+  },
+  {
+   "id": "CV6a-019",
+   "file": "src/leaves.jl",
+   "line": 28,
+   "kind": "docstring",
+   "claim": "nleaves docstring: 'Number of activation-scalar leaves a value of type P occupies in a flat buffer'",
+   "evidence": "probe: nleaves(Pose) = 5 for a struct of Float64, SVector{2,Float64}, Int, Bool; nleaves(Int)=1, nleaves(enum)=1, nleaves(opaque handle)=1 (src/leaves.jl:31-34). It counts every leaf of any eltype, not only activation-scalar ones",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "'Number of leaves a value of type `P` occupies in a flat buffer, of whatever eltype: a real, an enum or an opaque handle counts one each.'"
+  },
+  {
+   "id": "CV6a-020",
+   "file": "src/leaves.jl",
+   "line": 28,
+   "kind": "map",
+   "claim": "code_map.md's src/leaves.jl entry (733-758) lists the leaf walk's functions",
+   "evidence": "rg -c in design/code_map.md gives 0 for nleaves, leaf_eltypes, retype_value, _pin_hint, _leaf_values, _atom, _opaque, _is_marker, _reconstruct_expr, _flatten_expr; leaf_types appears once in the store.jl entry only. Defined at leaves.jl:31, 59, 314, 364, 319-327, 23, 18, 243, 118, 146",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the leaves.jl entry: `nleaves` and `leaf_eltypes` (the distinct eltypes in first-appearance order, which fix the bundle's buffer order), `leaf_types`, `retype_value` (the value counterpart of `retype`), `_pin_hint` (the hint on a Dual at a pinned leaf, §8.2), and `_atom`/`_opaque` (what the walk stores whole)."
+  },
+  {
+   "id": "CV6a-033",
+   "file": "src/leaves.jl",
+   "line": 329,
+   "kind": "cite",
+   "claim": "Section header and docstring cite embed-accept as '(D-166, decided on the type per D-238)'; code_map.md's leaves entry and its Spec line also name D-166 for `_accepts`",
+   "evidence": "lead; design/log.md:6484 D-166 is 'Mandate Type{T} output signatures', Status superseded -> D-263 (index line 193); D-238 (log.md:9776) states the relation the code implements",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Cite D-238 for the relation (D-166 only as its origin, 'first stated per leaf in D-166, superseded by D-263'); in code_map.md write '(D-238)' in place of '(D-166)' for `_accepts`.",
+   "note": "D-166's Position text does state per-leaf embed-accept, so the cite is historical, not wrong in substance. The log annotation at log.md:9634 records the supersession."
+  },
+  {
+   "id": "CV6a-051",
+   "file": "src/bindings.jl",
+   "line": 199,
+   "kind": "map",
+   "claim": "code_map.md's src/bindings.jl entry (94-104) lists the binding's runtime half",
+   "evidence": "map_output (bindings.jl:199, with a docstring, an author-facing name in docs/src/api.md and Appendix B 15232) is absent from the entry, as are TableBinding's is_input and claims methods (bindings.jl:93-94) and _TABLE_ENTRY_VOCABULARY (59); rg -c map_output design/code_map.md gives 0",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the bindings.jl entry: '`map_output`, the output side's convention function with no method shipped (§11.6)', and 'TableBinding's `is_input` and `claims` (its face set)'."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV6a-001",
+   "file": "src/store.jl",
+   "line": 2,
+   "kind": "cite",
+   "claim": "D-162, §9.7 cited for per-eltype cell stores",
+   "evidence": "design/spec.md:6093 'Cell storage' in §9.7 states per-eltype blocks; log.md:6283 D-162"
+  },
+  {
+   "id": "CV6a-002",
+   "file": "src/store.jl",
+   "line": 3,
+   "kind": "cite",
+   "claim": "§7.1 leaf walk, §8.2 leaf walk, D-263 pinning",
+   "evidence": "spec §7.1 (2184) leaf walk; §8.2 walk clause (spec 3029); D-263 log.md:11272 Pinned marker"
+  },
+  {
+   "id": "CV6a-003",
+   "file": "src/store.jl",
+   "line": 29,
+   "kind": "docstring",
+   "claim": "StoreBundle: one CellStore per eltype keyed by name, one concrete type per model, static selection",
+   "evidence": "src/store.jl:48 getfield by key; executor.jl:532 Chunk{E,S,X} single store param; probe: keys are Symbol('Core.Float64')"
+  },
+  {
+   "id": "CV6a-004",
+   "file": "src/store.jl",
+   "line": 36,
+   "kind": "cite",
+   "claim": "§9.4 for a service's own seeding tag",
+   "evidence": "spec.md:5799 in §9.4 treats Dual tag and seeding width"
+  },
+  {
+   "id": "CV6a-005",
+   "file": "src/store.jl",
+   "line": 44,
+   "kind": "map",
+   "claim": "STOP_FLAG_KEY is the StopFlag buffer's key, fixed once (§13.5, D-316); code_map entry matches",
+   "evidence": "probe: STOP_FLAG_KEY == _cell_key(StopFlag); code_map.md:1357; sim.jl:589 reads it"
+  },
+  {
+   "id": "CV6a-006",
+   "file": "src/store.jl",
+   "line": 76,
+   "kind": "cite",
+   "claim": "D-437 for the bare side being one address with no group",
+   "evidence": "log.md:18128 D-437; probe: gather_input(addr) returns the cell value, scatter_group! bare arm writes it"
+  },
+  {
+   "id": "CV6a-007",
+   "file": "src/store.jl",
+   "line": 102,
+   "kind": "cite",
+   "claim": "§9.5 always-on check decided at generation, D-235",
+   "evidence": "spec §9.5 (5810); log.md:9595 D-235; probe: field_set and field_type refusals thrown from generated bodies"
+  },
+  {
+   "id": "CV6a-008",
+   "file": "src/store.jl",
+   "line": 107,
+   "kind": "surface",
+   "claim": "scatter_group! raises ConformanceFailure reasons :field_set and :field_type with shape :ports",
+   "evidence": "spec Appendix C 15715-15727 lists reasons and shape :ports; probe: (:field_set,:ports) and (:field_type, field :c)"
+  },
+  {
+   "id": "CV6a-009",
+   "file": "src/store.jl",
+   "line": 133,
+   "kind": "map",
+   "claim": "scatter_group!'s CellAddr method writes a bare port's value under the same check, failure on the port y (D-437)",
+   "evidence": "probe: bare Int at a Float64 cell gives ConformanceFailure reason :field_type, field :y, shape :ports; code_map.md:1356"
+  },
+  {
+   "id": "CV6a-010",
+   "file": "src/store.jl",
+   "line": 147,
+   "kind": "cite",
+   "claim": "§9.8's scope carved publication and logging out",
+   "evidence": "spec §9.8 (6363) states publication's snapshot allocation sits with logging"
+  },
+  {
+   "id": "CV6a-012",
+   "file": "src/store.jl",
+   "line": 151,
+   "kind": "docstring",
+   "claim": "Clock docstring: mutable cell, t in model scalar, t₀ exact Rational, origin=t₀·scale and unit·scale in Int128, clock from index; cites §5.2, §10.4, §12.6, D-260, D-317, D-456, D-457",
+   "evidence": "probe: Clock init (0.0,0//1,0,0,1); after _set_origin!(1//4,1//100): (0.25,1//4,25,1,100) Int128; Dual clock holds 0.25; log D-260 (11007) takes t0=0.25 on Dual"
+  },
+  {
+   "id": "CV6a-013",
+   "file": "src/store.jl",
+   "line": 184,
+   "kind": "map",
+   "claim": "code_map Clock bullets: _set_origin!, _grid_integers, _instant, _origin_clock match",
+   "evidence": "probe: _set_origin! writes boundary-zero clock via _instant; _instant(c,3)=0.28, fractional form 0.255; _origin_clock(1//3)=0.333.. and Float64 method identity; code_map.md:1360-1385"
+  },
+  {
+   "id": "CV6a-014",
+   "file": "src/store.jl",
+   "line": 212,
+   "kind": "map",
+   "claim": "_nearest divides once within 2^53 and past it uses _rounded_quotient",
+   "evidence": "src/store.jl:211-214; probe: _nearest(2^80+1, 2^60) == 2^20 exactly; code_map.md:1376"
+  },
+  {
+   "id": "CV6a-016",
+   "file": "src/leaves.jl",
+   "line": 3,
+   "kind": "cite",
+   "claim": "§4.1, §8.2 for the enum leaf; §4.3, §4.4, D-237 for the opaque leaf",
+   "evidence": "spec.md:887 §4.1 vocabulary lists enums; 2974 §8.2 enum leaves; §4.4 environment-access handle; log.md:9713 D-237"
+  },
+  {
+   "id": "CV6a-018",
+   "file": "src/leaves.jl",
+   "line": 13,
+   "kind": "cite",
+   "claim": "D-237 opaque leaf; D-243 Symbol an opaque leaf",
+   "evidence": "log.md:9713, 9974; probe: leaf_types(Symbol)=[Symbol], leaf_types(handle)=[handle]"
+  },
+  {
+   "id": "CV6a-021",
+   "file": "src/leaves.jl",
+   "line": 36,
+   "kind": "docstring",
+   "claim": "leaf_types: eltype of each leaf in flat order, opaque leaf is its own eltype",
+   "evidence": "probe: leaf_types(Pose)=[Float64,Float64,Float64,Int64,Bool]; leaf_types(H)=[H]"
+  },
+  {
+   "id": "CV6a-022",
+   "file": "src/leaves.jl",
+   "line": 51,
+   "kind": "docstring",
+   "claim": "leaf_eltypes: distinct eltypes in first-appearance order; K a pure function of P",
+   "evidence": "probe: leaf_eltypes(Pose)=[Float64,Int64,Bool]; src/leaves.jl:59 unique(leaf_types)"
+  },
+  {
+   "id": "CV6a-023",
+   "file": "src/leaves.jl",
+   "line": 61,
+   "kind": "docstring",
+   "claim": "leaf_names spelling 'q','v[2]','m[1,2]','pose.x'; called by the §13.4 nonfinite sweep at throw time",
+   "evidence": "probe: names q, v[1..3], m[1,1],m[2,1],m[1,2],m[2,2], pose.a; src/model.jl:947 _nonfinite calls it"
+  },
+  {
+   "id": "CV6a-024",
+   "file": "src/leaves.jl",
+   "line": 91,
+   "kind": "docstring",
+   "claim": "mutable_position: dotted name and type of first mutable type the walk meets, else nothing; place!'s refusal",
+   "evidence": "probe: String gives ('',String); Pose gives nothing; build.jl:415 place! uses it"
+  },
+  {
+   "id": "CV6a-025",
+   "file": "src/leaves.jl",
+   "line": 217,
+   "kind": "docstring",
+   "claim": "reconstruct materializes P from consecutive buffer entries from offset+1",
+   "evidence": "probe: reconstruct(NT{a,b::SVector2},[1,2,3,4],1) = (a=2.0,b=[3.0,4.0])"
+  },
+  {
+   "id": "CV6a-026",
+   "file": "src/leaves.jl",
+   "line": 236,
+   "kind": "cite",
+   "claim": "D-263 pins a mutable type's parameters and Pinned entries; D-265 strips at top alone",
+   "evidence": "log.md:11272, 11499; probe: retype(D,Vector{Float64}) unchanged; retype_entry(D,Pinned{Float64})=Float64"
+  },
+  {
+   "id": "CV6a-027",
+   "file": "src/leaves.jl",
+   "line": 253,
+   "kind": "docstring",
+   "claim": "StopFlag enum NO_STOP/STOP_REQUESTED; nested or root-input use is IllegalPortType; input port ordinary",
+   "evidence": "leaves.jl:270; build.jl:430 :stop_flag_nested, build.jl:452 :stop_flag_at_root; ModelRequestedStop sim.jl:76; ignore_stop_requests sim.jl:1248"
+  },
+  {
+   "id": "CV6a-028",
+   "file": "src/leaves.jl",
+   "line": 251,
+   "kind": "surface",
+   "claim": "StopFlag, its values and the two IllegalPortType reasons are covered by the spec",
+   "evidence": "spec.md:11786 enum definition, 11824-11834 reasons :stop_flag_nested/:stop_flag_at_root; Appendix B 15391; docs/src/api.md:178"
+  },
+  {
+   "id": "CV6a-029",
+   "file": "src/leaves.jl",
+   "line": 272,
+   "kind": "docstring",
+   "claim": "retype replaces every Float64 position by T, idempotent, mutable parameters pinned",
+   "evidence": "probe: retype(D,SVector{2,Float64}) lifts; idempotent true; Tuple{Float64,Int} -> Tuple{Dual,Int}; Vararg handled; Vector{Float64} unchanged"
+  },
+  {
+   "id": "CV6a-030",
+   "file": "src/leaves.jl",
+   "line": 295,
+   "kind": "docstring",
+   "claim": "retype_entry: Pinned{P} at top yields P, other entry is retype",
+   "evidence": "probe: Pinned{Float64}->Float64, Float64->Dual, tuple entry passes through as written"
+  },
+  {
+   "id": "CV6a-031",
+   "file": "src/leaves.jl",
+   "line": 305,
+   "kind": "cite",
+   "claim": "§8.2 for IllegalPortType :not_a_type on a value where a type goes",
+   "evidence": "assembly.jl:783 reason :not_a_type; spec.md:2954 'an entry that is no type at all'"
+  },
+  {
+   "id": "CV6a-032",
+   "file": "src/leaves.jl",
+   "line": 309,
+   "kind": "docstring",
+   "claim": "retype_value converts Float64 leaves to T, other leaves pass through",
+   "evidence": "probe: retype_value(Float32, Pose(1.0,[2,3],4,true)) keeps Int 4 and Bool, Float64 leaves become Float32"
+  },
+  {
+   "id": "CV6a-034",
+   "file": "src/leaves.jl",
+   "line": 346,
+   "kind": "docstring",
+   "claim": "_accepts: lift V's Float64 positions to T where P has T and compare to P; opaque leaf identity alone at a store; at_wire lets lift enter",
+   "evidence": "probe: Float64->Dual true, pinned Float64 at Dual arrival false, opaque identity true; log.md:9776 D-238"
+  },
+  {
+   "id": "CV6a-035",
+   "file": "src/leaves.jl",
+   "line": 363,
+   "kind": "cite",
+   "claim": "_pin_hint cites §8.2, D-263",
+   "evidence": "spec §8.2 (2974-2998) pinned leaves; log.md:11272"
+  },
+  {
+   "id": "CV6a-036",
+   "file": "src/leaves.jl",
+   "line": 368,
+   "kind": "docstring",
+   "claim": "_accepts_wire: concrete entry via _accepts with frozen opaque admitted; abstract entry V<:P or retype(T,V)<:P",
+   "evidence": "src/leaves.jl:380-381; probe: _accepts_wire(Real,Float64,Dual) true; log D-236, D-264"
+  },
+  {
+   "id": "CV6a-037",
+   "file": "src/leaves.jl",
+   "line": 383,
+   "kind": "docstring",
+   "claim": "flatten! stores leaves from offset+1 and returns nothing",
+   "evidence": "probe: flatten! returned nothing; src/leaves.jl:388-395"
+  },
+  {
+   "id": "CV6a-038",
+   "file": "src/leaves.jl",
+   "line": 397,
+   "kind": "docstring",
+   "claim": "flatten_state!: key sets equal, fields pair by name, bare state is one arrival, shape :x_init/:state, event only on handler",
+   "evidence": "probe: reordered fields write by name; field_set, field_type, return_type refusals; bare XT takes any return; callers executor.jl:176,262,402,460"
+  },
+  {
+   "id": "CV6a-039",
+   "file": "src/leaves.jl",
+   "line": 409,
+   "kind": "surface",
+   "claim": "flatten_state! raises ConformanceFailure with :return_type, :field_set, :field_type and shapes :x_init/:state",
+   "evidence": "spec Appendix C 15724-15727; probe prints all three reasons; bare mismatch gives field :x (D-438)"
+  },
+  {
+   "id": "CV6a-040",
+   "file": "src/leaves.jl",
+   "line": 441,
+   "kind": "map",
+   "claim": "code_map: bare arm of flatten_state! decided at generation, failure on field x (D-438)",
+   "evidence": "probe: bare XT with a NamedTuple or wrong return gives :field_type, field :x; code_map.md:752-753"
+  },
+  {
+   "id": "CV6a-041",
+   "file": "src/bindings.jl",
+   "line": 1,
+   "kind": "cite",
+   "claim": "§11.6, §11.4, §11.2, §14.4, D-406 for the binding runtime half",
+   "evidence": "spec §11.6 (8910), §11.4 (8488), §11.2 (7957), §14.4 (13206); log.md:16701 D-406"
+  },
+  {
+   "id": "CV6a-042",
+   "file": "src/bindings.jl",
+   "line": 25,
+   "kind": "surface",
+   "claim": "Lead: TableBinding signature lists no name for the slurped keywords",
+   "evidence": "`entries...` is a slurped kw whose names the caller chooses (docstring_rules.md item 5); placeholder, not a missing keyword"
+  },
+  {
+   "id": "CV6a-043",
+   "file": "src/bindings.jl",
+   "line": 25,
+   "kind": "docstring",
+   "claim": "TableBinding docstring: entry fields face/deadzone/expo, ranges, clamp and pass-through, one throw reports every bad entry, non-numeric gives MethodError",
+   "evidence": "probe: multi-entry bad table gives six reasons in one throw; deadzone='q' gives MethodError; claims returns faces; bindings.jl:59-91"
+  },
+  {
+   "id": "CV6a-044",
+   "file": "src/bindings.jl",
+   "line": 61,
+   "kind": "surface",
+   "claim": "TableBinding ArgumentInvalid reasons :entry_shape, :no_face, :face_name, :vocabulary, :deadzone, :expo, with entry key",
+   "evidence": "spec Appendix C 15979-15983; probe: call=:TableBinding, argument :foo and vocabulary [:face,:deadzone,:expo] on :vocabulary"
+  },
+  {
+   "id": "CV6a-045",
+   "file": "src/bindings.jl",
+   "line": 93,
+   "kind": "surface",
+   "claim": "TableBinding is_input true and claims is the face set",
+   "evidence": "spec Appendix B 15231, 15238; probe: claims = [elevator, throttle, b], is_output false"
+  },
+  {
+   "id": "CV6a-046",
+   "file": "src/bindings.jl",
+   "line": 101,
+   "kind": "docstring",
+   "claim": "map_input returns face=>value pairs in datum order, conditioned, zero allocation, sparse datum ok",
+   "evidence": "probe: tuple of pairs in field order; allocations 0 for 2-field and 40-field datum; return type concrete NTuple{40,Pair{String,Float64}}; empty datum gives ()"
+  },
+  {
+   "id": "CV6a-047",
+   "file": "src/bindings.jl",
+   "line": 132,
+   "kind": "surface",
+   "claim": "A datum field naming no channel throws ErrorException (reaches the framework as DeviceCrash)",
+   "evidence": "probe: ErrorException with channel list; documented in the map_input docstring only, which is a sufficient cover"
+  },
+  {
+   "id": "CV6a-048",
+   "file": "src/bindings.jl",
+   "line": 154,
+   "kind": "docstring",
+   "claim": "_compile_binding_reads checks reads and compiles them for a table source at the root, collecting every violation",
+   "evidence": "bindings.jl:165-177; sim.jl:2526 called in attach!; readers.jl:665-670 _compile_reads throws all diags; readers.jl:696 :store_selector refused"
+  },
+  {
+   "id": "CV6a-049",
+   "file": "src/bindings.jl",
+   "line": 165,
+   "kind": "surface",
+   "claim": "BindingContractMismatch reasons :reads_not_namedtuple and :reads_not_selectors with observed type",
+   "evidence": "spec Appendix C 15808-15811; bindings.jl:166-174"
+  },
+  {
+   "id": "CV6a-050",
+   "file": "src/bindings.jl",
+   "line": 182,
+   "kind": "docstring",
+   "claim": "map_output: convention function, receives gather's labeled NamedTuple, framework never calls it and ships no method",
+   "evidence": "probe: length(methods(map_output)) == 0; rg shows no framework caller; Appendix B 15232"
+  },
+  {
+   "id": "CV6a-052",
+   "file": "src/bindings.jl",
+   "line": 209,
+   "kind": "map",
+   "claim": "_condition: clamp to [-1,1], deadzone rescale, expo blend, pass-through when neither declared",
+   "evidence": "probe: stick 0.55 with dz 0.1, expo 0.5 gives 0.3125; 5.0 gives 1.0; expo 1 at 0.5 gives 0.125; Int 3 on a bare entry passes through"
+  }
+ ],
+ "counts": {
+  "cite": 14,
+  "docstring": 20,
+  "map": 10,
+  "surface": 8
+ }
+}

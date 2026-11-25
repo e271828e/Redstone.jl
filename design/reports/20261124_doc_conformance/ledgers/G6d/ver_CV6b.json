@@ -1,0 +1,129 @@
+{
+ "judgments": [
+  {
+   "id": "CV6b-050",
+   "conforms": false,
+   "evidence": "src/Redstone.jl:35-36 includes library.jl and then precompile.jl, and src/precompile.jl:19-24 builds its workload from Library.Step, Library.DiscretePID, Library.FirstOrderLag, Library.SumJunction, Library.TransferFunction and Library.LimitedIntegrator. So precompile.jl depends on the library, and the library is not the last include. code_map.md:33, in the Redstone.jl entry, already lists 'library, precompile'.",
+   "class": "drift",
+   "fix": "Nothing in the package depends on it but the precompile workload, so `src/Redstone.jl` includes it last but for `precompile.jl`.",
+   "clear": true,
+   "note": "Commit a88b8795 added the precompile workload over the library's components and the include after library.jl."
+  },
+  {
+   "id": "CV6b-001",
+   "conforms": true,
+   "evidence": "src/library.jl:116-117 names the inputs ntuple(i -> Symbol(:in, i), N), so `in1` to `inN` is a range and `inN` stands for the last one. Probe P2c gives (in1, in2, in3) for N = 3."
+  },
+  {
+   "id": "CV6b-010",
+   "conforms": true,
+   "evidence": "src/library.jl:89 `const And{N} = Junction{Bool, Bool, N, typeof(&)}`. :106 builds it with `&`. Probe P2c shows the fold `&`, Bool inputs in1..in3 and true & false & true = false."
+  },
+  {
+   "id": "CV6b-009",
+   "conforms": false,
+   "evidence": "src/library.jl:118 `y_types(::Junction{In, Out}) where {In, Out} = Out` is a bare output contract, so its face is `y` (D-437). Probe P1e shows that SumJunction's y_types is the bare Float64, and test fixtures wire 'force/y'. spec.md:1773 still says 'one output, `out`', and :1793 and :1805 say \"wr_sum/out\".",
+   "class": "drift",
+   "fix": "spec.md:1773 'and one output, `y`'; :1793 '\"wr_sum/y\"  => \"dynamics/wr_ext\",'; :1805 '`\"wr_sum/y\"` is an ordinary port.'",
+   "clear": true,
+   "note": "Commit 4d79875c made the library's single-port outputs bare, and D-437 (ratified) gives a bare output the face `y`. D-437 says the addresses move in the inventory and the companions, but the §6.2 example was never swept."
+  },
+  {
+   "id": "CV6b-012",
+   "conforms": false,
+   "evidence": "src/library.jl:116-117 and :193 give the inputs and outputs names at every arity. Probe P1a-P1c: Junction{Float64,Float64,1} u_types is (in1 = Float64,), Pack{Float64,1} is (in1 = Float64,) and Unpack{Float64,1} y_types is (out1 = Float64,). P1d shows that a one-input Junction builds. So a component with one input or one output can keep that side named, which contradicts 'only a side with two or more ports stays named'. The Fn docstring (src/library.jl:139-140) says the same thing: Fn is 'the one-input Junction with its input bare'.",
+   "class": "deviation",
+   "fix": "... a side with two or more ports stays named, as do `Fields`'s outputs at any count, since the fields name them, and the inputs of a `Junction` and the outputs of `Unpack` at any count, `in1` and `out1` at one (§13.5, §13.7, D-437).",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV6b-023",
+   "conforms": true,
+   "evidence": "src/library.jl:191-194 has x_init nothing, u_types SVector{N, V}, y_types out1..outN typed V and y_direct NamedTuple(Tuple(u)). Probe P2a and P2b: SVector{3,Float64} in, (out1, out2, out3) Float64 out, values 1.0, 2.0, 3.0, x_init nothing."
+  },
+  {
+   "id": "CV6b-017",
+   "conforms": true,
+   "evidence": "src/library.jl:324-325. spec.md:12287-12288 (§13.7) says 'A constant is never seeded, so it carries zero partials', and D-312 says the same. §11.3 (spec.md:8395-8399, 'No declaration constant could own that value') backs the docstring's 'A source set from outside is a root input'. D-437 backs the face `y` (src/library.jl:350 bare Pinned{V})."
+  },
+  {
+   "id": "CV6b-018",
+   "conforms": false,
+   "evidence": "src/library.jl:457-459 cites '§7.1's \"few KB comfortable\"'. The phrase sits at spec.md:2931, under §8.2 The declaration inventory, #### Workspace idioms. §7.1 (spec.md:2184-2267) says nothing about SArray compile cost or a size ceiling. The sentence was already under §8.2 when the comment landed in commit 4a818b2d.",
+   "class": "deviation",
+   "fix": "# every stage that touches it and gains nothing over a plain array; §8.2's\n# \"few KB comfortable\" at `Float64`.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV6b-033",
+   "conforms": true,
+   "evidence": "src/library.jl:465-470: as_static(v::AbstractArray) returns SArray{Tuple{size(v)...}}(v) and calls @warn with maxlog = 1 when length(v) > STATIC_WARN_LENGTH. Probe P3a-P3e: a Vector gives an SVector, a Diagonal an SMatrix and an MVector an SVector, while a scalar keeps its type. The lengths 512, 513 and 514 produce exactly one warning, at 513."
+  },
+  {
+   "id": "CV6b-019",
+   "conforms": false,
+   "evidence": "src/library.jl:466-468. Probe P3f prints the warning text ending '(§7.1)'. The spec puts the SArray compile and size claim in §8.2 (spec.md:2926-2932, 'codegen catastrophe lives in its operations', 'a few KB comfortable'). §7.1 does not have it.",
+   "class": "deviation",
+   "fix": "End the @warn text with \"(§8.2)\" in place of \"(§7.1)\".",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "CV6b-022",
+   "conforms": false,
+   "evidence": "src/library.jl:535-547: Delay(; K::Int, v0 = 0.0, taps::Bool = false), with y_types bare V for taps = false and (y = V, taps = SVector{K, V}) for taps = true. Probe P4b shows (y = Float64, taps = SVector{2, Float64}). The same companion records the taps output at library_inventory.md:430-439, but its table row at :330 still reads 'Delay(; K, v0)' with 'one output'.",
+   "class": "drift",
+   "fix": "| `Delay(; K, v0, taps)` | shipped | the tier's `z⁻ᴷ` in a ring store, `K` ticks of the component's own period ([§6.3][s6-3]), the one output `y`, or with `taps = true` the outputs `y` and `taps`, the last `K` inputs; `K = 1` the `UnitDelay` in keyword spelling |",
+   "clear": true,
+   "note": "Commit f9b4ccf9 'Add the taps output on Delay ...' (increment 89)."
+  },
+  {
+   "id": "CV6b-029",
+   "conforms": true,
+   "evidence": "src/library.jl:867-869 and :899-900: y_types is Pinned{V}, and y_state calls c.f(ForwardDiff.value(t)) with no state and no input. The D-312 annotation of 2026-10-06 (log.md) says a block whose output depends on neither its continuous state nor a walking input is never seeded, carries zero partials and pins. §11.3 backs the docstring's root-input sentence, and D-437 the face `y`. Probe P8c shows that f saw only Float64 time under a LinearizeDual build and linearize."
+  },
+  {
+   "id": "CV6b-044",
+   "conforms": true,
+   "evidence": "src/library.jl:896-900: Source(f) = Source{Float64}(f), y_types Pinned{V} and f(ForwardDiff.value(t)). Probe P8a gives Source{Float64, typeof(sin)}. P8c: f got Float64 time under both activations. P8d: Source(t -> 1) is refused at build as ConformanceFailure. P8e: an f that returns Int after t = 0.25 throws StepError{ConformanceFailure} during run!."
+  },
+  {
+   "id": "CV6b-032",
+   "conforms": true,
+   "evidence": "src/library.jl:964 and :1875 each define a reset_handler method for their own component, Integrator and LimitedIntegrator. It is not a shared helper, and the discrete pair resets in s_update. code_map.md:8-10 has an entry name constructs, not list every method, and it names per-component handlers nowhere (step_handler, hit_upper_handler and the others are absent too). The helpers it names, reset_ports, signal and reset_guard (src/library.jl:450-453), are the shared ones."
+  },
+  {
+   "id": "CV6b-034",
+   "conforms": true,
+   "evidence": "src/library.jl:1041-1045 defines port_type, as_vector and as_port. code_map.md:8-10 makes no completeness claim. Its AbstractLinearSystem bullet covers port_type's role, 'over scalar or SVector ports by its matrix shapes', and the helpers it does name (static_system, realize, coefficients_from_roots, transfer_coefficients, held, realization, initial_state) exist at :1152, :1172, :1195 and :1346-1349."
+  },
+  {
+   "id": "CV6b-036",
+   "conforms": false,
+   "evidence": "src/library.jl:1166-1186: coefficients_from_roots pairs each complex root with a conjugate within 1e-12·|root| before the expansion and refuses a root with no partner. Its comment says the check on the expanded coefficients' imaginary parts was dropped because it refused exact sets of ten conjugate pairs. Probe P5b refuses an unpaired root with '... has no conjugate'. P5c accepts ten conjugate pairs on a circle.",
+   "class": "drift",
+   "fix": "Roots real or complex; a complex root with no conjugate partner, to a tolerance relative to the root, is refused, and the real coefficients then meet the existing refusals.",
+   "clear": true,
+   "note": "Commit deb0bb38 'Fix increment 89's review findings: pair conjugate roots before the expansion ...'."
+  },
+  {
+   "id": "CV6b-037",
+   "conforms": true,
+   "evidence": "src/library.jl:1195-1210 (transfer_coefficients) and :1172-1180. Probe P5d and P5h: mixing the spellings is an ArgumentError, continuous and discrete. P5b and P5i: an unpaired root is an ArgumentError. P5e: more zeros than poles is an ArgumentError. DiscreteTransferFunction at :1406-1408 defers to TransferFunction's refusals, and it calls the same helper (:1442).",
+   "note": "The docstrings state these refusals correctly but do not say that a non-real gain is refused (src/library.jl:1203, probe P5f). A `zeros` or `gain` given without `poles` is also refused (P5g), which the signature lines imply by leaving `poles` without a default."
+  },
+  {
+   "id": "CV6b-053",
+   "conforms": true,
+   "evidence": "src/library.jl:1363-1365: the keyword method takes A, B, C, D and s0 and passes 's0' to static_system. Probe P6a accepts s0. P6b: x0 is a MethodError, an unsupported keyword. P6c and P6d: a wrong-length s0 and an empty A are the StateSpace refusals, ArgumentErrors that name `s0`."
+  },
+  {
+   "id": "CV6b-062",
+   "conforms": true,
+   "evidence": "src/library.jl:2068-2070 builds the names Symbol(:hit_upper_, i) and so on, in order hit_upper, hit_lower, leave_upper, leave_lower. Probe P7a, for a 2-vector LimitedDoubleIntegrator, gives (hit_upper_1, hit_upper_2, hit_lower_1, hit_lower_2, leave_upper_1, leave_upper_2, leave_lower_1, leave_lower_2), so `hit_upper_N` and `*_i` are placeholders for one pattern. LimitedIntegrator is the same (P7b)."
+  }
+ ],
+ "notes": "I created one file, the probe script /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/CV6b_v/probe.jl, and ran it twice from the pinned worktree; the second run is the one cited. I edited no tracked file. Probe tags (P1a..P8e) are cited in place of line numbers. Two cases are judgment calls. In CV6b-018 and CV6b-019, the §7.1 cite was wrong from the start (commit 4a818b2d, when the sentence was already under §8.2), so I class them as deviation rather than drift. In CV6b-037, the docstrings are accurate as far as they go but do not mention the non-real `gain` refusal."
+}

@@ -1,0 +1,55 @@
+PROBE[107_discrete] Tuple{DataType, Symbol, Vector{Pair{String, String}}}[(AlgebraicCycle, :real, ["a/u" => "sel/in1", "sel/y" => "a/v", "sel/y" => "b/v", "b/u" => "sel/in2"])]
+PROBE[107_discrete_delay] true
+PROBE[107_continuous] Tuple{DataType, Symbol, Vector{Pair{String, String}}}[(AlgebraicCycle, :artificial, ["a/u" => "sel/in1", "sel/y" => "a/v", "sel/y" => "b/v", "b/u" => "sel/in2"])]
+PROBE[107_continuous_delay] true
+PROBE[116_plain] 4.7603801584721985
+PROBE[117_track_Tt1] 1.9191056160529016
+PROBE[118_119_emul_Tt1.0] 0.6515562460013166
+PROBE[118_119_emul_Tt0.1] 0.0029055047600015094
+PROBE[118_119_emul_Tt0.0] 37.10541437366318
+PROBE[hold_track_Tt1.0] 0.6566114136214645
+PROBE[hold_track_Tt0.1] 0.004224135502768844
+PROBE[hold_track_Tt0.0] 0.0006611610287513003
+PROBE[121] (v = 0.502720890255383, uraw = 2.4259918216404612, uraw_minus_v = 1.9232709313850782, Tt_Ki_e = 1.4380041244968262, sel = 0.49810517585761327)
+PROBE[115_Tt1.0] (maxdiff = 0.017118918450542697, peak_track = 6.143167965613259, peak_plain = 6.138327022165606)
+PROBE[115_Tt0.1] (maxdiff = 0.1587765237205523, peak_track = 6.17710815894945, peak_plain = 6.138327022165606)
+PROBE[115_emul_Tt1.0] (maxdiff = 0.017118918450542697, peak = 6.138327022165606)
+PROBE[115_emul_Tt0.1] (maxdiff = 0.1587765237205523, peak = 6.138327022165606)
+PROBE[122_Tt0_standby_err] (max = 4.993836294202805, last = 0.0006361918326878713, at50 = 4.993836294202805, at51 = -0.006097882229081586, at52 = -0.006032173012601616)
+PROBE[122_Tt01_standby_err] (max = 4.914719331742291, last = 0.0039376957705299365)
+PROBE[045_051_holdtrue_tracktrue] (u_raw = [0.5, 2.8], u = [0.5, 1.0], e = [0.5, 0.25], deriv = [4.75, -0.6499999999999999], deriv_minus_e = [4.25, -0.8999999999999999])
+PROBE[045_051_notengaged_ch1_holdtrue_tracktrue] [4.75, -0.6499999999999999]
+PROBE[045_051_holdfalse_tracktrue] (u_raw = [0.5, 2.8], u = [0.5, 1.0], e = [0.5, 0.25], deriv = [5.25, 8.85], deriv_minus_e = [4.75, 8.6])
+PROBE[045_051_holdtrue_trackfalse] (u_raw = [0.5, 2.8], u = [0.5, 1.0], e = [0.5, 0.25], deriv = [0.0, -0.6499999999999999], deriv_minus_e = [-0.5, -0.8999999999999999])
+PROBE[045_051_notengaged_ch1_holdtrue_trackfalse] [0.0, -0.6499999999999999]
+PROBE[055_cont] (u_raw = [0.49999999999999967, 26.8], u = [0.49999999999999967, 1.0], deriv = [2.5, 1.25], Kint_e = [2.5, 1.25])
+PROBE[055_disc] (u_raw = [0.49999999999999967, 26.8], q = [0.025, 0.0125], Δt_Kint_e = [0.025, 0.0125])
+PROBE[064_tracker] (x = SVector{2, Float64}, z = SVector{2, Float64}, z_ref = SVector{2, Float64}, K_int = SMatrix{2, 2, Float64, 4}, Tt = SVector{2, Float64})
+PROBE[064_pid] (r = Float64, y = Float64, Ki = Float64)
+PROBE[084_s_init] (q = [0.0, 0.0], saturated = Int8[0, 0])
+PROBE[084_y_types] (u = SVector{2, Float64}, u_raw = SVector{2, Float64}, saturated = SVector{2, Int8})
+PROBE[093] (ydirect_same = true, q_same = true, new_code = Int8[0, 1], y_state = (saturated = Int8[0, 1],))
+PROBE[036] (jump_at_98_101 = [0.007929390657953657, 0.007864260984424037, 0.013509084902277702, 0.012831987728046989], max_jump_after_55 = 0.030358466327172026)
+PROBE[011_Kfwd] ([1.0 -1.0; 2.0 4.0], [1.0 -1.0; 2.0 4.0])
+PROBE[011_plain_settles] [0.9999999999999973, 0.5000000000000027]
+PROBE[026_with_w] (plant = [0.9999999989216822, 0.5000000067884705], q = [-0.2000000077921768, 0.10000002452753548])
+PROBE[132_A] ([-1.0 1.0; -2.0 -4.0], [-1.0 1.0; -2.0 -4.0])
+PROBE[026_lin_same] true
+PROBE[002] (care_residual = 3.1031676915590914e-16, eig = ComplexF64[-1.982283902918635 - 0.6553239441454407im, -1.982283902918635 + 0.6553239441454407im])
+PROBE[074_freezefalse] [-0.9 1.0; -2.0 -4.0]
+PROBE[074_freezetrue] [-1.0 1.0; -2.0 -4.0]
+PROBE[V_delayedKi_Tt1.0] 0.6515562460013166
+PROBE[V_series_emul_Tt1.0] [0.6515562460013166, 0.636955057868792, 0.6303341261796448, 0.6246466507222922, 0.6198455542645244]
+PROBE[V_delayedKi_Tt0.1] 0.0029055047600015094
+PROBE[V_series_emul_Tt0.1] [0.0029055047600015094, 0.007524701457029881, 0.016285661418612984, 0.02487630458749479, 0.03317786267551526]
+PROBE[V115_Tt0.5] 0.03394466633725335
+PROBE[V115_Tt1.0] 0.017118918450542697
+PROBE[V115_Tt2.0] 0.008596475460920239
+PROBE[V115_Tt5.0] 0.0034475536566898057
+PROBE[V115_Tt10.0] 0.0017252780138110602
+PROBE[080_none] (peak = 8.330144252194604, settled = 38.5)
+PROBE[080_hold] (peak = 6.10327144261961, settled = 32.5)
+PROBE[080_track2] (peak = 6.134772760337187, settled = 25.8)
+PROBE[080_track05] (peak = 7.2733898353188815, settled = 55.2)
+PROBE[080_both2] (peak = 5.201786808296736, settled = 26.9)
+PROBE[080_both05] (peak = 5.088311380124174, settled = 22.0)

@@ -1,0 +1,630 @@
+{
+ "rows": [
+  {
+   "id": "CV6b-009",
+   "file": "src/library.jl",
+   "line": 118,
+   "kind": "surface",
+   "claim": "spec.md §6.2 (lines 1773, 1793, 1805) says the junction has one output, `out`, wired as \"wr_sum/out\"",
+   "evidence": "src/library.jl:118 (y_types(::Junction) = Out, bare, so the face is `y`); docstring line 56 says \"sum/y\"; D-437 (log.md:18128) makes a bare output's face `y`; probe:19-20",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "spec.md:1773 'and one output, `y`'; spec.md:1793 '\"wr_sum/y\" => \"dynamics/wr_ext\"'; spec.md:1805 '`\"wr_sum/y\"` is an ordinary port'.",
+   "note": "D-437 says only the inventory and the companions move, but §6.2 still carries the pre-D-437 name. Line 1822 ('the assembly exports its `out` port') is a different claim and was not checked."
+  },
+  {
+   "id": "CV6b-012",
+   "file": "src/library.jl",
+   "line": 190,
+   "kind": "map",
+   "claim": "code_map.md:837-842 says every component with one input or one output declares that contract bare, and only a side with two or more ports stays named (apart from Fields's outputs)",
+   "evidence": "src/library.jl:117 (SumJunction{V,1} u_types is (in1 = V,)) and :193 (Unpack{V,1} y_types is (out1 = V,)); probe:17,19. The docstrings at :25 and :185 state the numbered names.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Add to the code_map.md sentence: 'the one-input `Junction` and the one-output `Unpack` at `N = 1` keep their numbered names `in1` and `out1`, since the arity is a parameter'.",
+   "note": "Imprecise on a reachable path: a one-wide Junction or Unpack is legal and its ports are named."
+  },
+  {
+   "id": "CV6b-017",
+   "file": "src/library.jl",
+   "line": 324,
+   "kind": "cite",
+   "claim": "`# Design: §11.3, §13.7, D-437.` above Constant, whose comment says 'A constant is never seeded, which is why it carries zero partials'",
+   "evidence": "spec.md §11.3 (lines 8235-8487) treats root inputs, claims and the frozen roster; rg finds no `Constant`, seeding or pin of a library source in it. The pin is treated in §13.7 (spec.md:12288) and D-312 / D-411 (log.md:14072, 16907).",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Replace §11.3 with §9.4 or drop it, keeping §13.7, D-312, D-411.",
+   "note": "The docstring sentence 'A source set from outside is a root input' links to the glossary, so §11.3 is at most a weak fit for that one sentence."
+  },
+  {
+   "id": "CV6b-018",
+   "file": "src/library.jl",
+   "line": 459,
+   "kind": "cite",
+   "claim": "Comment cites '§7.1's \"few KB comfortable\"' for the element count past which an array keyword's SArray compiles slowly",
+   "evidence": "spec.md §7.1 (2184-2267) has no size ceiling. 'a few KB comfortable and tens of KB defensible' is at spec.md:2931, under §8.2 'Workspace idioms'. companions/library_inventory.md:142 repeats the §7.1 cite.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Cite §8.2 for the ceiling at library.jl:459, library.jl:468 and library_inventory.md:142.",
+   "note": ""
+  },
+  {
+   "id": "CV6b-019",
+   "file": "src/library.jl",
+   "line": 468,
+   "kind": "cite",
+   "claim": "The user-visible `@warn` text ends '(§7.1)' for the SArray compile-time claim",
+   "evidence": "src/library.jl:468; probe:65 prints the warning with '(§7.1)'. The ceiling lives in §8.2 (spec.md:2931), not §7.1.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Change the message to '(§8.2)'.",
+   "note": "Same defect as the comment at :459; the message reaches users, so it is listed apart."
+  },
+  {
+   "id": "CV6b-022",
+   "file": "src/library.jl",
+   "line": 536,
+   "kind": "surface",
+   "claim": "companions/library_inventory.md:330 lists `Delay(; K, v0)` with 'one output'",
+   "evidence": "src/library.jl:539 (keyword `taps::Bool = false`), :546-548 (taps = true gives outputs (y, taps)); probe:35; the same companion documents the taps form at lines 432-439.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Row 330: '`Delay(; K, v0, taps = false)` ... `K` ticks of the component's own period (§6.3), the one output `y`, or `(y, taps)` with `taps = true`, `K = 1` the `UnitDelay` in keyword spelling'.",
+   "note": "Row 330 predates increment 89 (line 432 records the shipping)."
+  },
+  {
+   "id": "CV6b-029",
+   "file": "src/library.jl",
+   "line": 867,
+   "kind": "cite",
+   "claim": "`# Design: §11.3, D-312, D-437.` above Source, whose comment says the output depends on neither state nor an input that follows the scalar, hence zero partials",
+   "evidence": "§11.3 (spec.md:8235-8487) does not treat library sources or the pin; the rule is D-312 / D-411 (log.md:14072, 16907) and §13.7 (spec.md:12288). Tests cite §9.5 for the same refusal (test_library.jl:1096).",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Replace §11.3 with §9.5 (conformance) and keep D-312, adding D-411.",
+   "note": "Same remark as CV6b-017."
+  },
+  {
+   "id": "CV6b-032",
+   "file": "src/library.jl",
+   "line": 964,
+   "kind": "map",
+   "claim": "code_map.md:759-849 names the helpers of the reset form (`reset_ports`, `signal`, `reset_guard`) but not `reset_handler`",
+   "evidence": "src/library.jl:964 defines `reset_handler(c::Integrator, _)`, used at :965 as the reset event's handler; rg finds no `reset_handler` in design/code_map.md.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add `reset_handler` to the Integrator bullet: 'over the helpers `reset_ports`, `signal`, ..., and the event's handler `reset_handler` and guard `reset_guard`'.",
+   "note": "Internal helper, owes only code_map.md."
+  },
+  {
+   "id": "CV6b-034",
+   "file": "src/library.jl",
+   "line": 1041,
+   "kind": "map",
+   "claim": "code_map.md lists the linear systems' helpers as `static_system`, `realize`, `coefficients_from_roots`, `transfer_coefficients` and the accessors, and omits the port helpers",
+   "evidence": "src/library.jl:1041-1045 define `port_type`, `as_vector`, `as_port`, which every stage of both abstract parents reads (:1048-1056, :1329-1337); rg finds none in design/code_map.md.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "Add to the `AbstractLinearSystem` bullet: 'its stages read the ports through `port_type`, `as_vector` and `as_port`, a width of one being a `Float64`'.",
+   "note": ""
+  },
+  {
+   "id": "CV6b-036",
+   "file": "src/library.jl",
+   "line": 1172,
+   "kind": "surface",
+   "claim": "companions/library_inventory.md:440-443 says a root set is refused when 'a product whose imaginary part is not zero to rounding' results, which conjugate pairs pass",
+   "evidence": "src/library.jl:1172-1189 pairs each complex root with its conjugate by a tolerance relative to the root before the expansion, and the comment above it says the earlier check on expanded coefficients misread rounding (ten-pair sets refused); probe:82-83.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "Zero-Pole bullet: 'Roots real or complex; each complex root must have a conjugate partner within `1e-12` relative to the root, which the pairing pass checks before the expansion, and the real coefficients then meet the existing refusals.'",
+   "note": "The code comment records the move. No log entry was searched for."
+  },
+  {
+   "id": "CV6b-037",
+   "file": "src/library.jl",
+   "line": 1195,
+   "kind": "docstring",
+   "claim": "The TransferFunction and DiscreteTransferFunction docstrings (:1241, :1445) state the refusals of the root spelling as mixing the spellings, roots not closed under conjugation and more zeros than poles",
+   "evidence": "src/library.jl:1198-1206 also refuses (as ArgumentError) a call with neither spelling complete (`num` without `den`, nothing given), `zeros` or `gain` without `poles`, and a non-real `gain`; probe:77,79,80,81,84. Test:1921 pins the 'without `poles`' one.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "After 'and more zeros than poles' add: 'so is a call that gives neither spelling whole, `zeros` or `gain` without `poles`, and a `gain` that is not real.'",
+   "note": "The retained ArgumentError is the same kind, so the gap is in the listed cases only."
+  },
+  {
+   "id": "CV6b-050",
+   "file": "src/Redstone.jl",
+   "line": 35,
+   "kind": "map",
+   "claim": "code_map.md:845-846 says nothing in the package depends on library.jl, so src/Redstone.jl includes it last",
+   "evidence": "src/Redstone.jl:35-36 includes library.jl and then precompile.jl, and src/precompile.jl:19-21 calls `Library.Step`, `Library.DiscretePID`, `Library.FirstOrderLag`; code_map.md:1032 says precompile.jl is included 'after the library it uses'.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "'Nothing in the package but the precompile workload depends on it, so `src/Redstone.jl` includes it after the core and before `precompile.jl`.'",
+   "note": "Two code_map entries disagree on the order."
+  }
+ ],
+ "ok": [
+  {
+   "id": "CV6b-001",
+   "file": "src/library.jl",
+   "line": 25,
+   "kind": "docstring",
+   "claim": "lead `inN` in the Junction docstring is a placeholder for `in1` to `inN`",
+   "evidence": "placeholder; inputs generated at src/library.jl:117",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-002",
+   "file": "src/library.jl",
+   "line": 26,
+   "kind": "docstring",
+   "claim": "lead `inN` (second mention) is the same placeholder",
+   "evidence": "src/library.jl:117",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-003",
+   "file": "src/library.jl",
+   "line": 42,
+   "kind": "docstring",
+   "claim": "Junction publishes y = f(in1..inN), the fold in positional order, stateless, input typed In, output typed Out",
+   "evidence": "src/library.jl:115-119; probe:19",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-004",
+   "file": "src/library.jl",
+   "line": 57,
+   "kind": "docstring",
+   "claim": "lead `inN` in SumJunction docstring is a placeholder",
+   "evidence": "src/library.jl:117",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-005",
+   "file": "src/library.jl",
+   "line": 60,
+   "kind": "docstring",
+   "claim": "SumJunction{V,N} is the Junction at + with inputs and output typed V",
+   "evidence": "src/library.jl:60,94",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-006",
+   "file": "src/library.jl",
+   "line": 69,
+   "kind": "docstring",
+   "claim": "lead `inN` in Or docstring is a placeholder",
+   "evidence": "src/library.jl:117",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-007",
+   "file": "src/library.jl",
+   "line": 75,
+   "kind": "docstring",
+   "claim": "Or{N} is the Junction at | over Bool",
+   "evidence": "src/library.jl:75,95",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-008",
+   "file": "src/library.jl",
+   "line": 84,
+   "kind": "docstring",
+   "claim": "lead `inN` in And docstring is a placeholder",
+   "evidence": "src/library.jl:117",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-010",
+   "file": "src/library.jl",
+   "line": 89,
+   "kind": "docstring",
+   "claim": "And{N} is the Junction at & over Bool",
+   "evidence": "src/library.jl:89,96",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-011",
+   "file": "src/library.jl",
+   "line": 103,
+   "kind": "docstring",
+   "claim": "lead `inN` in Pack docstring is a placeholder",
+   "evidence": "src/library.jl:117",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-013",
+   "file": "src/library.jl",
+   "line": 108,
+   "kind": "docstring",
+   "claim": "Pack{V,N} is a Junction with inputs typed V and output SVector{N,V}, folded by `pack`",
+   "evidence": "src/library.jl:91,108,97; probe:20",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-014",
+   "file": "src/library.jl",
+   "line": 159,
+   "kind": "docstring",
+   "claim": "Fn{U,Y}(f) and Fn{U}(f): one input u typed U, one output y typed Y, y = f(u), types never read off f, a type f held as Type{T}",
+   "evidence": "src/library.jl:160-170; probe:21-22; test_library.jl:955-957",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-015",
+   "file": "src/library.jl",
+   "line": 159,
+   "kind": "docstring",
+   "claim": "A value of another type than Y is refused as ConformanceFailure at build, and a pinned Y with an f that keeps partials is refused under a Dual activation",
+   "evidence": "test_library.jl:972, test_library.jl:1000; probe:118 shows the later-frame StepError{ConformanceFailure} for the same mechanism on Source",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-016",
+   "file": "src/library.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "lead `outN` in the Unpack docstring is a placeholder for out1..outN",
+   "evidence": "generated by unpack_names, src/library.jl:174",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-020",
+   "file": "src/library.jl",
+   "line": 185,
+   "kind": "docstring",
+   "claim": "lead `out1` (test-only) is the first of the generated out1..outN",
+   "evidence": "src/library.jl:174; probe:17",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-021",
+   "file": "src/library.jl",
+   "line": 186,
+   "kind": "docstring",
+   "claim": "lead `outi` is a placeholder for out_i = u[i]",
+   "evidence": "src/library.jl:193-194",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-023",
+   "file": "src/library.jl",
+   "line": 190,
+   "kind": "docstring",
+   "claim": "Unpack{V,N}: input u an SVector{N,V}, outputs out1..outN typed V, outi = u[i], stateless",
+   "evidence": "src/library.jl:191-194; probe:17-18",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-024",
+   "file": "src/library.jl",
+   "line": 221,
+   "kind": "docstring",
+   "claim": "Fields{V}: outputs take the field names and types of V, one level, and any other V (Float64, SArray, Tuple, abstract, empty) is refused as ArgumentError",
+   "evidence": "src/library.jl:222-233; probe:25-28; test_library.jl:1066",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-025",
+   "file": "src/library.jl",
+   "line": 259,
+   "kind": "docstring",
+   "claim": "Switch{V}: inputs in1, in2 typed V and select Bool, y = in1 while select holds; AlgebraicCycle on a memoryless select loop",
+   "evidence": "src/library.jl:261-263; test_library.jl:947-949",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-026",
+   "file": "src/library.jl",
+   "line": 308,
+   "kind": "docstring",
+   "claim": "Select{V,K}: one input per instance of K named after it plus select::K, output y typed V; abstract K or an instance named select is ArgumentError",
+   "evidence": "src/library.jl:309-319; probe:24; test_library.jl:1036-1037",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-027",
+   "file": "src/library.jl",
+   "line": 346,
+   "kind": "docstring",
+   "claim": "Constant(value): no inputs, no state, y pinned at V, published from stage 1",
+   "evidence": "src/library.jl:349-351",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-028",
+   "file": "src/library.jl",
+   "line": 377,
+   "kind": "docstring",
+   "claim": "UnitDelay(s0): y = s from stage 1, s0 first, s+ = u, one type V",
+   "evidence": "src/library.jl:380-384; test_library.jl:1138",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-030",
+   "file": "src/library.jl",
+   "line": 405,
+   "kind": "docstring",
+   "claim": "Freeze{V}: output u with partials dropped, pinned at V; V other than Float64 or an SArray of Float64 is a TypeError",
+   "evidence": "src/library.jl:405-409; probe:29-30; test_library.jl:1555",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-031",
+   "file": "src/library.jl",
+   "line": 434,
+   "kind": "docstring",
+   "claim": "StopRequest(; reason = \"\"): Bool input u, StopFlag output y (STOP_REQUESTED while u holds), stop_reason reports reason",
+   "evidence": "src/library.jl:434-442; probe:31; test_library.jl:1572",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-033",
+   "file": "src/library.jl",
+   "line": 465,
+   "kind": "docstring",
+   "claim": "code_map: as_static makes the SArray of its size of an array keyword of any kind and warns once past STATIC_WARN_LENGTH",
+   "evidence": "src/library.jl:461-471; probe:65-67",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-035",
+   "file": "src/library.jl",
+   "line": 477,
+   "kind": "docstring",
+   "claim": "Inventory: two array lengths are Julia's DimensionMismatch",
+   "evidence": "src/library.jl:477-483; probe:68",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-038",
+   "file": "src/library.jl",
+   "line": 536,
+   "kind": "docstring",
+   "claim": "Delay(; K, v0, taps): K >= 1 else ArgumentError, v0 broadcast to V, taps adds output taps newest first with taps[K] = y",
+   "evidence": "src/library.jl:539-552; probe:33-35,41-43",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-039",
+   "file": "src/library.jl",
+   "line": 598,
+   "kind": "docstring",
+   "claim": "DiscreteIntegrator: s+ = s + Dt u, y = s stage 1, reset form adds Bool input and writes s0 at the level",
+   "evidence": "src/library.jl:601-610; probe:56",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-040",
+   "file": "src/library.jl",
+   "line": 655,
+   "kind": "docstring",
+   "claim": "DiscreteLimitedIntegrator: outputs (out, saturation::Int8 code 1/-1/0), clamp update, lower not below upper is ArgumentError",
+   "evidence": "src/library.jl:660-673; probe:45,47,58",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-041",
+   "file": "src/library.jl",
+   "line": 713,
+   "kind": "docstring",
+   "claim": "RateLimiter(; rising, falling = rising, s0): y = s + clamp(u - s, -falling Dt, rising Dt), non-positive rates ArgumentError",
+   "evidence": "src/library.jl:718-728; probe:48-49",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-042",
+   "file": "src/library.jl",
+   "line": 767,
+   "kind": "docstring",
+   "claim": "Backlash(; width, s0): y = clamp(s, u - w/2, u + w/2), non-positive width ArgumentError",
+   "evidence": "src/library.jl:771-780; probe:50",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-043",
+   "file": "src/library.jl",
+   "line": 822,
+   "kind": "docstring",
+   "claim": "GaussianWhiteNoise: exactly one of sigma and psd (ArgumentError otherwise), sigma^2 = Q/Dt, store k reads N+1 after N ticks past t0",
+   "evidence": "src/library.jl:828-863; probe:60-63; test_library.jl:1413-1414",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-044",
+   "file": "src/library.jl",
+   "line": 893,
+   "kind": "docstring",
+   "claim": "Source{V}(f), Source(f) = Source{Float64}(f): y = f(t) pinned at V, f gets Float64 time, wrong type refused as ConformanceFailure then StepError later",
+   "evidence": "src/library.jl:894-900; probe:23,118; test_library.jl:1096-1101",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-045",
+   "file": "src/library.jl",
+   "line": 952,
+   "kind": "docstring",
+   "claim": "Integrator(; x0, reset): x-dot = u, reset adds Bool input, one non-localized state event reset",
+   "evidence": "src/library.jl:955-965; probe:53-55",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-046",
+   "file": "src/library.jl",
+   "line": 1001,
+   "kind": "docstring",
+   "claim": "FirstOrderLag(; tau, x0): x-dot = (u - x)/tau, tau not positive in every component is ArgumentError, scalar case equals TransferFunction(num=(1,), den=(tau,1), u0=x0)",
+   "evidence": "src/library.jl:1005-1014; probe:51-52,85",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-047",
+   "file": "src/library.jl",
+   "line": 1037,
+   "kind": "docstring",
+   "claim": "AbstractLinearSystem{FT}: FT false when D is zero (stage 1), true otherwise (stage 2), ports u and y",
+   "evidence": "src/library.jl:1041-1056; probe:93,111",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-048",
+   "file": "src/library.jl",
+   "line": 1111,
+   "kind": "docstring",
+   "claim": "StateSpace keywords A,B,C,D,x0: SVector state, scalar or SVector ports, ArgumentError for misfit shapes, wrong x0 length, empty A",
+   "evidence": "src/library.jl:1115-1141; probe:70,72,73,112",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-049",
+   "file": "src/library.jl",
+   "line": 1152,
+   "kind": "docstring",
+   "claim": "realize(num, den): controllable canonical form (; A,B,C,D) as SMatrix of Float64, monic, direct term split",
+   "evidence": "src/library.jl:1152-1164; probe:108",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-051",
+   "file": "src/library.jl",
+   "line": 1273,
+   "kind": "docstring",
+   "claim": "TransferFunction: starts at rest or at the steady state G(0) u0, four refusals, feedthrough class by degree",
+   "evidence": "src/library.jl:1281-1295; probe:85,89,93; test_library.jl:1884-1890",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-052",
+   "file": "src/library.jl",
+   "line": 1326,
+   "kind": "docstring",
+   "claim": "AbstractDiscreteLinearSystem{FT}: stages over held and realization(c, Dt), s_init from initial_state",
+   "evidence": "src/library.jl:1328-1338,1400-1403; probe:113",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-053",
+   "file": "src/library.jl",
+   "line": 1385,
+   "kind": "docstring",
+   "claim": "DiscreteStateSpace: keywords as StateSpace with s0 for x0, x0 not accepted",
+   "evidence": "src/library.jl:1391-1397; probe:74-76",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-054",
+   "file": "src/library.jl",
+   "line": 1455,
+   "kind": "docstring",
+   "claim": "DiscreteTransferFunction: steady state G(1) u0, pole at z = 1 refused within 1e-12 of the magnitude sum, (1,-0.7,-0.3) refused",
+   "evidence": "src/library.jl:1460-1475; probe:98,102-103",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-055",
+   "file": "src/library.jl",
+   "line": 1525,
+   "kind": "docstring",
+   "claim": "DiscretizedStateSpace(continuous) and keyword form both accepted, keywords as StateSpace",
+   "evidence": "src/library.jl:1525-1529; probe:106-107",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-056",
+   "file": "src/library.jl",
+   "line": 546,
+   "kind": "map",
+   "claim": "code_map: Delay{V,K,Taps} taps form names the output side (y, taps) and reads the ring backwards from the cursor",
+   "evidence": "src/library.jl:547-551; probe:41-43",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-057",
+   "file": "src/library.jl",
+   "line": 665,
+   "kind": "map",
+   "claim": "code_map: DiscreteLimitedIntegrator carries the helper saturation_code; reset form is the level reset in s_update",
+   "evidence": "src/library.jl:665,671-673,609-610",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-058",
+   "file": "src/library.jl",
+   "line": 838,
+   "kind": "map",
+   "claim": "code_map: GaussianWhiteNoise with helpers splitmix and gaussian",
+   "evidence": "src/library.jl:838-856",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-059",
+   "file": "src/library.jl",
+   "line": 1128,
+   "kind": "map",
+   "claim": "code_map: static_system helper, coefficients_from_roots and transfer_coefficients, held/realization/initial_state accessors",
+   "evidence": "src/library.jl:1128,1172,1195,1400-1403",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-060",
+   "file": "src/library.jl",
+   "line": 14,
+   "kind": "cite",
+   "claim": "Design comments of the whole range cite §2.3, §2.5, §3.1, §4.3, §5.3, §5.5, §6.2, §6.3, §7.2, §7.3, §8.2, §8.7, §9.4, §9.7, §10.6, §13.5, §13.7, §14.10 and D-033, D-082, D-141, D-179, D-231, D-263, D-276, D-308, D-311, D-312, D-313, D-316, D-437, D-438, commit 9c75324",
+   "evidence": "headings and entry titles checked against spec.md and log.md outlines; each treats its topic except the three cite rows above; commit 9c75324 exists",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-061",
+   "file": "src/library.jl",
+   "line": 1798,
+   "kind": "docstring",
+   "claim": "lead `hit_upper_N` / `hit_upper_1` (test-only), `hit_lower_i`, `leave_lower_i`, `leave_upper_i` in the LimitedIntegrator docstring are event-name patterns (hit_upper_1..hit_upper_N, then _i)",
+   "evidence": "placeholder, src/library.jl:1798-1799 (outside slice lines 1-1531)",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-062",
+   "file": "src/library.jl",
+   "line": 1975,
+   "kind": "docstring",
+   "claim": "leads `hit_upper_N`, `hit_upper_1`, `hit_lower_i`, `leave_upper_i`, `leave_lower_i` in the LimitedDoubleIntegrator docstring are the same event-name patterns",
+   "evidence": "placeholder, src/library.jl:1975-1976 (outside slice)",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-063",
+   "file": "src/library.jl",
+   "line": 2111,
+   "kind": "docstring",
+   "claim": "leads `switch_on_N`, `switch_on_1` (test-only), `switch_off_i` in the Relay docstring are event-name patterns",
+   "evidence": "placeholder, src/library.jl:2111 (outside slice)",
+   "verdict": "ok"
+  },
+  {
+   "id": "CV6b-064",
+   "file": "src/library.jl",
+   "line": 2203,
+   "kind": "docstring",
+   "claim": "leads `switch_on_N`, `switch_on_1` (test-only), `switch_off_i` in the Comparator docstring are event-name patterns",
+   "evidence": "placeholder, src/library.jl:2203-2204 (outside slice)",
+   "verdict": "ok"
+  }
+ ],
+ "counts": {
+  "law": 150,
+  "mech": 105,
+  "decl": 70,
+  "ex": 12,
+  "ptr": 10,
+  "why": 24,
+  "cite": 46,
+  "map": 40,
+  "docstring": 0,
+  "surface": 0
+ }
+}

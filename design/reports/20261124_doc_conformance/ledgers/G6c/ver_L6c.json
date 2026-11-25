@@ -1,0 +1,213 @@
+{
+ "judgments": [
+  {
+   "id": "L6c-001",
+   "conforms": true,
+   "evidence": "src/build.jl:263-277 builds one AlgebraicCycle per cluster at build; probe.jl:22 prints (:diag, [AlgebraicCycle]) for a two-BareScale loop"
+  },
+  {
+   "id": "L6c-010",
+   "conforms": true,
+   "evidence": "src/tracer.jl:185-205 _trace_direct evaluates one member alone, its in-cluster faces seeded with tags and its other faces from the acyclic prefix's products (tracer.jl:238-257)"
+  },
+  {
+   "id": "L6c-019",
+   "conforms": true,
+   "evidence": "src/declare.jl:900-908 LEGAL_BUNDLE gives y_state, y_direct, x_deriv, s_update, guard and handler each a bundle; src/executor.jl:168,174,186,397 call each as fn(comp, make_bundle(...)). The entry's h_xu/f/h_zu/g are pre-D-220 names, which log rule 2 keeps.",
+   "note": "Names in the entry are the vocabulary of their day (D-220 rename); substance matches."
+  },
+  {
+   "id": "L6c-023",
+   "conforms": false,
+   "evidence": "src/declare.jl:642-643: 'A component exposes a state or mode field by returning it here' (y_state); nothing auto-publishes a store field",
+   "class": "drift",
+   "fix": "No rewrite (log rule 1): the annotation at design/log.md:1332 already records that D-252 removed auto-publication and that a component exposes a state or mode field by returning it from y_state.",
+   "clear": true
+  },
+  {
+   "id": "L6c-026",
+   "conforms": false,
+   "evidence": "src/deployment.jl:555 Deployment(build; Δt_frame, ...) binds the deployment; src/model.jl:113 Model(deployment); src/sim.jl:358 Simulation(model) takes only join_timeout",
+   "class": "drift",
+   "fix": "No rewrite (log rule 1): the annotation at design/log.md:1723 already records D-254, deployment binding at the Deployment constructor.",
+   "clear": true
+  },
+  {
+   "id": "L6c-030",
+   "conforms": true,
+   "evidence": "src/declare.jl:900-908 one NamedTuple bundle per family; src/executor.jl:168 entry.fn(entry.comp, make_bundle(...)); the positional exception is x_projection(c, x), src/declare.jl:585-599 (D-220's name for project)"
+  },
+  {
+   "id": "L6c-039",
+   "conforms": true,
+   "evidence": "src/executor.jl:348 _unrolled and :542 @generated _walk(entries::Tuple, ...) unroll the entry tuple at compile time"
+  },
+  {
+   "id": "L6c-041",
+   "conforms": false,
+   "evidence": "src/executor.jl:236-242 make_handler_bundle gathers u when the handler runs, inside _fire_entry! (executor.jl:394-398); no round-start materialization exists. src/model.jl:746-776: the table is written only by the _round! sweeps between rounds",
+   "class": "drift",
+   "fix": "No rewrite (log rule 1): the annotation at design/log.md:3405 already records that D-154 removed the round-start materialization; the handler's u is gathered at handler entry from a table that only sweeps write, so the round-start-u semantics holds by construction.",
+   "clear": true
+  },
+  {
+   "id": "L6c-042",
+   "conforms": false,
+   "evidence": "src/executor.jl:394-399 a firing runs handler then x_projection only; no per-event re-decode. src/model.jl:773-775 the next sweep runs only after the whole fire walk",
+   "class": "drift",
+   "fix": "No rewrite (log rule 1): the annotation at design/log.md:3405 already records that D-154 removed the per-event re-decode.",
+   "clear": true
+  },
+  {
+   "id": "L6c-044",
+   "conforms": false,
+   "evidence": "src/model.jl:760-763 a component fires at most one event per round (comp_fired), so no same-component successor runs within a round; handler returns do latch per event, src/executor.jl:397,402-410",
+   "class": "drift",
+   "fix": "Annotation: since D-154 a component fires at most one event per round, so its next event sees refreshed own ports through the next round's sweep; handler returns still latch per event.",
+   "clear": true
+  },
+  {
+   "id": "L6c-051",
+   "conforms": true,
+   "evidence": "src/dataplane.jl:633-638 log_max bounds `live`, the retained middle; src/dataplane.jl:689-700 thinning holds it; probe.jl:33 prints live=4, logged=6 (the two endpoints outside the bound, as D-137's Rationale at log.md:4995 states)"
+  },
+  {
+   "id": "L6c-052",
+   "conforms": false,
+   "evidence": "src/sim.jl:358 Simulation(model; join_timeout) has no log_max; src/sim.jl:834,964,1063,1080,1334 init!, overlay!, both restore! methods and replay! take log_max; probe.jl:34 Simulation(...; log_max = 4) is a MethodError",
+   "class": "drift",
+   "fix": "No rewrite (log rule 1): the annotation at design/log.md:5009 already moves log_max to init!, restore! and replay!; it could add overlay!, which also takes it (src/sim.jl:964).",
+   "clear": true
+  },
+  {
+   "id": "L6c-053",
+   "conforms": true,
+   "evidence": "No field-emitting component ships in src/ (rg 'atmospheric_field|Atmosphere' src examples finds nothing; src/library.jl:42-3028 lists no field emitter); spec.md:17193 places SimpleAtmosphere in FlightPhysics, so the obligation has no instance in this repo",
+   "note": "Vacuous here: the obligation binds a shipped field emitter, and none ships."
+  },
+  {
+   "id": "L6c-055",
+   "conforms": true,
+   "evidence": "No field-emitting component ships in src/library.jl, so there is no swept output stage to check; test fixtures OffsetAtT etc. (test/fixtures.jl:1490-1527) are test-only",
+   "note": "Vacuous here, as L6c-053."
+  },
+  {
+   "id": "L6c-057",
+   "conforms": false,
+   "evidence": "src/declare.jl:676-679 y_direct returns a NamedTuple 'or the port's value itself under a bare y_types'; test/fixtures.jl:90 y_direct(::BareScale, (; u)) = -2.0 * u",
+   "class": "drift",
+   "fix": "Annotation on D-194: under a bare y_types a stage returns the one port's value, one cell, never a NamedTuple (D-437); a named y_types still returns its port NamedTuple alone.",
+   "clear": true
+  },
+  {
+   "id": "L6c-065",
+   "conforms": true,
+   "evidence": "src/executor.jl:539-540 a Chunk is called with no argument or the tick alone, and its walk reads and writes only the store and buffers"
+  },
+  {
+   "id": "L6c-074",
+   "conforms": true,
+   "evidence": "src/executor.jl:397 the handler's return goes to _latch!, which writes x into the flat buffer and merges m into the mode store (executor.jl:402-410)"
+  },
+  {
+   "id": "L6c-082",
+   "conforms": false,
+   "evidence": "src/leaves.jl:352-355 identity applies at a store only (`_opaque(P) && !at_wire && return false`); probe.jl:38-39 _accepts(OffsetField{Dual}, OffsetField{Float64}, Dual) is false at a store and true at a wire",
+   "class": "drift",
+   "fix": "No rewrite (log rule 1): the annotation at design/log.md:9757 already limits the identity rule to a store and the producer's own check, a frozen opaque arrival at a wire being admitted as the producer's cell (D-264).",
+   "clear": true
+  },
+  {
+   "id": "L6c-083",
+   "conforms": false,
+   "evidence": "src/leaves.jl:347-359 `at_wire` lets the lift enter an opaque leaf's parameters; src/leaves.jl:376-377 _accepts_wire passes true; probe.jl:39 prints true",
+   "class": "drift",
+   "fix": "No rewrite (log rule 1): the annotation at design/log.md:9757 already records D-264; at a wire the lift enters a frozen opaque arrival.",
+   "clear": true
+  },
+  {
+   "id": "L6c-085",
+   "conforms": true,
+   "evidence": "src/build.jl:455-462 refuses a root input with an opaque leaf as IllegalPortType :handle_at_root; probe.jl:42 build(OffsetQuery()) gives that diagnostic"
+  },
+  {
+   "id": "L6c-095",
+   "conforms": true,
+   "evidence": "src/readers.jl:188,213,243,269,293 every selector takes (path, leaf) or (leaf) only; probe.jl:45 get_output(\"a\", \"b\", 1) is a MethodError"
+  },
+  {
+   "id": "L6c-104",
+   "conforms": true,
+   "evidence": "src/readers.jl:456-460 an index step needs a StaticArray with one index or ndims indices; probe.jl:48-51 vector [1,2] is :index_arity, matrix [1,2] and [3] resolve, Tuple [1] is :not_indexable"
+  },
+  {
+   "id": "L6c-113",
+   "conforms": true,
+   "evidence": "src/structure.jl:107-116 an endpoint naming no face is UnknownPort; probe.jl:59,65 \"src/pose[1]\" and \"src/pose.a\" both give UnknownPort"
+  },
+  {
+   "id": "L6c-122",
+   "conforms": true,
+   "evidence": "src/sim.jl:580-595 _stop_hit scans the just-published snapshot after every publication (settled!, sim.jl:2041-2043), skipping ignored entries; probe.jl:73 stops at t=0.3, the first boundary where the request holds"
+  },
+  {
+   "id": "L6c-131",
+   "conforms": true,
+   "evidence": "src/build.jl:441-445 places only output ports and root inputs, so a StopFlag input below the root is never checked; probe.jl:88 a FlagSink fed by StopRequest builds, and probe.jl:90 the same at the root is :stop_flag_at_root"
+  },
+  {
+   "id": "L6c-140",
+   "conforms": true,
+   "evidence": "src/build.jl:495-509 the roster is allocated after placement and each Requester is written at its cell's offset + 1"
+  },
+  {
+   "id": "L6c-144",
+   "conforms": false,
+   "evidence": "src/library.jl:438-441 u_types(::StopRequest) = Bool, y_types = StopFlag, both bare; probe.jl:93 faces are ([\"u\"], [\"y\"]), and probe.jl:78 the requester's port is :y",
+   "class": "drift",
+   "fix": "Annotation on D-316: since D-436 and D-437 StopRequest declares bare contracts, a Bool input `u` and a StopFlag output `y`; the 2026-11-12 annotation's 'the spelling and the rest stand' should not cover the port names.",
+   "clear": true
+  },
+  {
+   "id": "L6c-150",
+   "conforms": true,
+   "evidence": "src/sim.jl:1336 replay!, :1562 run!, :2221 step! each take ignore_stop_requests = (); probe.jl:75 a list and probe.jl:77 :all are honoured"
+  },
+  {
+   "id": "L6c-159",
+   "conforms": true,
+   "evidence": "src/sim.jl:589-593 the first unignored STOP_REQUESTED in roster order wins; src/sim.jl:76-82 ModelRequestedStop(path, port, reason); probe.jl:73 gives ModelRequestedStop(\"a/stop\", :y, \"a at level\") with both holding, probe.jl:75 \"b/stop\" once a is ignored"
+  },
+  {
+   "id": "L6c-168",
+   "conforms": true,
+   "evidence": "src/leaves.jl:18-19 a concrete immutable non-isbits type is an opaque leaf, so non-isbits port values are admitted"
+  },
+  {
+   "id": "L6c-177",
+   "conforms": true,
+   "evidence": "No wire-level projection exists in src/structure.jl (endpoints resolve whole faces, structure.jl:107-116); src/library.jl:221 Fields is an ordinary component, which spec.md:1010-1015 keeps distinct from the guarded connector"
+  },
+  {
+   "id": "L6c-186",
+   "conforms": true,
+   "evidence": "probe.jl:94 input_faces/output_faces(BareScale()) are [\"u\"], [\"y\"]; src/assembly.jl:435,460"
+  },
+  {
+   "id": "L6c-195",
+   "conforms": true,
+   "evidence": "probe.jl:98 build(BareScale()).structure.root_inputs == [:u]; probe.jl:100 init! with set(u = (u = 1.5,)) gives port -3.0"
+  },
+  {
+   "id": "L6c-204",
+   "conforms": true,
+   "evidence": "probe.jl:117 at a primitive root with bare contracts, get_input(\".v[2]\") reads 0.2 and get_face(\"[1,2]\") reads 7.0; test/test_readers.jl:679-684 does the same at a mount"
+  },
+  {
+   "id": "L6c-213",
+   "conforms": true,
+   "evidence": "src/diagnostics.jl:85-86 _at_port renders path/name; probe.jl:122 a TwoProducers message prints `plant/a/y` and `plant/b/y`, probe.jl:124 `plant/integrator/y`"
+  }
+ ],
+ "notes": "I checked all 35 claims against W at cb398676. I modified no tracked file. The probe is /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6c_v/probe.jl and ran once with no failures. 13 claims do not conform, and all 13 are drift. Nine already carry an annotation in their own entry: L6c-023 (D-252), 026 (D-254), 041 and 042 (D-154), 052 (D-261), 082 and 083 (D-264). Under log rule 1 their fix is that annotation, so they need no edit, except one possible addition to the 052 annotation: overlay! also takes log_max. Three need a new annotation. L6c-057: D-194 has none for the bare-return form of D-437. L6c-044: D-100's annotation does not say that a component fires one event per round. L6c-144: D-316's StopRequest port names `request` and `flag` are now the bare faces `u` and `y`, and its 2026-11-12 annotation says 'the rest stand', which is misleading. L6c-053 and 055 are vacuous here: no field-emitting component ships in src, and SimpleAtmosphere belongs to FlightPhysics. L6c-019 and 030 use the names from before the D-220 rename, which log rule 2 keeps, so I judged them on substance."
+}

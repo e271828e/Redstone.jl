@@ -1,0 +1,1126 @@
+{
+ "rows": [
+  {
+   "id": "K6d-051",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 214,
+   "kind": "law",
+   "claim": "tracking adds v as the reference while a channel is limited or not engaged, own u while free",
+   "evidence": "src/library.jl:2349-2351; probe:103",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "Holds only with hold = true. Without a hold, correction_reference returns v in every channel (probe:103: v always). The sentence sits under the two-axis bullets.",
+   "fix": "tracking adds the input `v`, an `SVector{NU, Float64}`, as the correction's reference: always without a hold, and with a hold while a channel is limited or not engaged, with the fallback to the own `u` while it is free."
+  },
+  {
+   "id": "K6d-080",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 287,
+   "kind": "mech",
+   "claim": "that companion's cascade table ranks tracking alone as the weakest variant and hold with tracking as the best",
+   "evidence": "design/companions/pid_anti_windup.md:303-308",
+   "verdict": "finding",
+   "class": "deviation",
+   "note": "The cascade rows put tracking the velocity at Tt = 2 (6.14 peak, 25.8 s) ahead of none (8.33, 38.5 s) and hold (6.10, 32.5 s) on settling time. Tracking at Tt = 0.5 (55.2 s) is worst only there. Hold with tracking is best. D-383 words it the same way, so a verifier may fix both.",
+   "fix": "that companion's cascade table ranks hold with tracking as the best variant and ungated tracking as the one a short Tt degrades."
+  },
+  {
+   "id": "K6d-130",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 387,
+   "kind": "law",
+   "claim": "K_fwd needs the inverse alone",
+   "evidence": "design/companions/lqr_tracker.md:112; probe:40",
+   "verdict": "finding",
+   "class": "drift",
+   "note": "K_fwd = M22 + K M12 (line 112) needs the designed gain K as well as the inverse. D-383 words it the same way.",
+   "fix": "K_fwd needs the inverse and the designed gain K, and it stays outside the tracker with the rest"
+  },
+  {
+   "id": "K6d-115",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 363,
+   "kind": "law",
+   "claim": "the engaged sibling tracking its own one-tick-old output differs from a plain PID by 0.021 on a response of about 6",
+   "evidence": "none: the probe's gains and plant are not recorded",
+   "verdict": "unverifiable",
+   "note": "Historical probe of 2026-10-14 against tree 53f35d0 with an emulation. Gains and reference are unstated, so the number cannot be rebuilt."
+  },
+  {
+   "id": "K6d-116",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 364,
+   "kind": "law",
+   "claim": "switchover bump 4.76 with plain siblings",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Historical probe, setup unstated, not reproducible from the record."
+  },
+  {
+   "id": "K6d-117",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 365,
+   "kind": "law",
+   "claim": "switchover bump 1.92 with tracking always, Tt = 1",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Historical probe, setup unstated."
+  },
+  {
+   "id": "K6d-118",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 366,
+   "kind": "law",
+   "claim": "switchover bump 0.70 with Ki zero while not in command, Tt = 1",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Historical probe, setup unstated."
+  },
+  {
+   "id": "K6d-119",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 367,
+   "kind": "law",
+   "claim": "switchover bump 0.002 with Ki zero while not in command, Tt = 0.1",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Historical probe, setup unstated."
+  },
+  {
+   "id": "K6d-121",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 370,
+   "kind": "law",
+   "claim": "u_raw = v + Tt Ki e in standby is most of the 1.92 bump",
+   "evidence": "none",
+   "verdict": "unverifiable",
+   "note": "Depends on the unreproducible 1.92 measurement. The steady-state formula itself is ok (K6d-120)."
+  }
+ ],
+ "ok": [
+  {
+   "id": "K6d-001",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 12,
+   "kind": "why",
+   "claim": "lead `LQR`: FlightPhysics's model, prior art, not a Redstone name",
+   "evidence": "prior art"
+  },
+  {
+   "id": "K6d-002",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 35,
+   "kind": "law",
+   "claim": "K comes from a Riccati equation and A - BK is asymptotically stable",
+   "evidence": "probe:36"
+  },
+  {
+   "id": "K6d-003",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 57,
+   "kind": "law",
+   "claim": "the matrix is (nx+nz)x(nx+nu), square only when nz = nu",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "K6d-004",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 62,
+   "kind": "law",
+   "claim": "the square matrix is invertible when A and S = D - C A^-1 B are",
+   "evidence": "probe:31"
+  },
+  {
+   "id": "K6d-005",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 65,
+   "kind": "law",
+   "claim": "the inverse's blocks are M22 = S^-1 and M12 = -A^-1 B M22",
+   "evidence": "probe:31"
+  },
+  {
+   "id": "K6d-006",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 67,
+   "kind": "law",
+   "claim": "du* = M22 dz* and dx* = M12 dz* solve the equilibrium",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "K6d-007",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 72,
+   "kind": "law",
+   "claim": "the sign of M12 follows from 0 = A dx* + B du*",
+   "evidence": "probe:30"
+  },
+  {
+   "id": "K6d-008",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 82,
+   "kind": "law",
+   "claim": "errors obey d/dt dx~ = A dx~ + B du~ and dz~ = C dx~ + D du~",
+   "evidence": "probe:47"
+  },
+  {
+   "id": "K6d-009",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 97,
+   "kind": "law",
+   "claim": "closed loop stable so dx~, du~ go to 0 and steady dz = dz*",
+   "evidence": "probe:40"
+  },
+  {
+   "id": "K6d-010",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 106,
+   "kind": "law",
+   "claim": "du = (M22 + K M12) dz* - K dx",
+   "evidence": "probe:40"
+  },
+  {
+   "id": "K6d-011",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 112,
+   "kind": "law",
+   "claim": "K_fwd = M22 + K M12 and K_fbk = K",
+   "evidence": "probe:40"
+  },
+  {
+   "id": "K6d-012",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 113,
+   "kind": "mech",
+   "claim": "u = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) is the tracker's law",
+   "evidence": "src/library.jl:2923"
+  },
+  {
+   "id": "K6d-013",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 116,
+   "kind": "law",
+   "claim": "the result holds for a constant reference on the linear model",
+   "evidence": "probe:40"
+  },
+  {
+   "id": "K6d-014",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 117,
+   "kind": "ex",
+   "claim": "lead `ż_ref`: local math symbol for reference rate",
+   "evidence": "probe:47"
+  },
+  {
+   "id": "K6d-015",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 117,
+   "kind": "law",
+   "claim": "a moving reference adds -M12 z_ref-dot to the error dynamics",
+   "evidence": "probe:47"
+  },
+  {
+   "id": "K6d-016",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 124,
+   "kind": "ex",
+   "claim": "lead `z_i`: local math symbol, integrated command subset",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-017",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 128,
+   "kind": "law",
+   "claim": "integrator state obeys xi-dot = C_i dx~ + D_i du~",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-018",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 131,
+   "kind": "ex",
+   "claim": "leads `C_i`, `D_i`, `z_i`: local math symbols, rows of C and D for z_i",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-019",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 132,
+   "kind": "ex",
+   "claim": "leads `_i`, `z_i`: local math symbol dz~_i = z_i - z_i*",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-020",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 136,
+   "kind": "law",
+   "claim": "augmented plant A_aug = [A 0; C_i 0], B_aug = [B; D_i] in error coordinates",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-021",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 143,
+   "kind": "ex",
+   "claim": "lead `Δz_i`: local math symbol of the integrator row's forcing term",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-022",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 143,
+   "kind": "law",
+   "claim": "in dx, du the integrator row carries -dz_i* as forcing",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-023",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 148,
+   "kind": "law",
+   "claim": "LQR on (A_aug, B_aug) gives du~ = -K_x dx~ - K_xi xi",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-024",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 151,
+   "kind": "law",
+   "claim": "closed loop stable so in steady state xi-dot = 0, i.e. z_i = z_i*",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K6d-025",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 152,
+   "kind": "ex",
+   "claim": "lead `z_i`: local math symbol, steady state z_i = z_i*",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K6d-026",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 153,
+   "kind": "law",
+   "claim": "a constant disturbance w leaves the closed-loop matrix alone and z_i = z_i*",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K6d-027",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 161,
+   "kind": "law",
+   "claim": "with w, dx~ and xi settle away from zero and xi balances w",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "K6d-028",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 169,
+   "kind": "law",
+   "claim": "integral law du = (M22 + K_x M12) dz* - K_x dx - K_xi xi",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-029",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 174,
+   "kind": "law",
+   "claim": "K_fwd = M22 + K_x M12 and K_fbk = K_x with integral action",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-030",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 176,
+   "kind": "mech",
+   "claim": "the tracker integrates K_int (z_ref - z) in output units, not xi",
+   "evidence": "src/library.jl:2926"
+  },
+  {
+   "id": "K6d-031",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 182,
+   "kind": "decl",
+   "claim": "K_int is n_u x n_z, zero columns for commands not integrated, K_xi for those that are",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-032",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 184,
+   "kind": "ex",
+   "claim": "lead `z_i`: local math symbol in q-dot = K_xi (z_i* - z_i)",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-033",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 184,
+   "kind": "law",
+   "claim": "q = -K_xi xi with xi-dot = z_i - z_i* gives q-dot = K_xi (z_i* - z_i)",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "K6d-034",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 185,
+   "kind": "mech",
+   "claim": "the integrator is n_u wide, one channel per control input",
+   "evidence": "src/library.jl:2920"
+  },
+  {
+   "id": "K6d-035",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 186,
+   "kind": "mech",
+   "claim": "saturation is handled per input channel",
+   "evidence": "src/library.jl:2343"
+  },
+  {
+   "id": "K6d-036",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 187,
+   "kind": "mech",
+   "claim": "a scheduled K_int changes only future accumulation, never jumps the command",
+   "evidence": "src/library.jl:2926"
+  },
+  {
+   "id": "K6d-037",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 194,
+   "kind": "decl",
+   "claim": "AbstractLQRTracker{NX, NU, NZ, Hold, Track, Fixed} is the supertype",
+   "evidence": "src/library.jl:2735"
+  },
+  {
+   "id": "K6d-038",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 195,
+   "kind": "decl",
+   "claim": "LQRTracker is on the continuous tier, DiscreteLQRTracker on the discrete one",
+   "evidence": "src/library.jl:2902"
+  },
+  {
+   "id": "K6d-039",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 195,
+   "kind": "mech",
+   "claim": "the two trackers mirror AbstractPID over one supertype",
+   "evidence": "src/library.jl:2735"
+  },
+  {
+   "id": "K6d-040",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 199,
+   "kind": "mech",
+   "claim": "u_raw = u_trim + K_fwd (z_ref - z_trim) - K_fbk (x - x_trim) + q",
+   "evidence": "src/library.jl:2923"
+  },
+  {
+   "id": "K6d-041",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 200,
+   "kind": "mech",
+   "claim": "u = clamp(u_raw, u_min, u_max)",
+   "evidence": "src/library.jl:2924"
+  },
+  {
+   "id": "K6d-042",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 201,
+   "kind": "mech",
+   "claim": "continuous q-dot = gate(K_int (z_ref - z)) + (ref - u_raw) / Tt",
+   "evidence": "src/library.jl:2928"
+  },
+  {
+   "id": "K6d-043",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 202,
+   "kind": "mech",
+   "claim": "discrete q+ = q + dt gate(K_int (z_ref - z)) + beta (ref - u_raw)",
+   "evidence": "src/library.jl:3059"
+  },
+  {
+   "id": "K6d-044",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 205,
+   "kind": "mech",
+   "claim": "beta = 1 - exp(-dt/Tt)",
+   "evidence": "src/library.jl:3058"
+  },
+  {
+   "id": "K6d-045",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 206,
+   "kind": "mech",
+   "claim": "the integrator input is n_u wide and the gate and reference apply channel by channel",
+   "evidence": "src/library.jl:2343"
+  },
+  {
+   "id": "K6d-046",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 210,
+   "kind": "decl",
+   "claim": "hold adds inputs saturation (SVector{NU, Int8}) and engaged (SVector{NU, Bool})",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "K6d-047",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 211,
+   "kind": "law",
+   "claim": "a channel whose code agrees with the sign of its integrator input is gated",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "K6d-048",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 213,
+   "kind": "law",
+   "claim": "a channel not engaged has its integrator input zeroed whatever its code",
+   "evidence": "probe:102"
+  },
+  {
+   "id": "K6d-049",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 214,
+   "kind": "decl",
+   "claim": "tracking adds input v, an SVector{NU, Float64}",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "K6d-050",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 214,
+   "kind": "law",
+   "claim": "with a hold, v is the reference while limited or not engaged, own u while free",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "K6d-052",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 216,
+   "kind": "law",
+   "claim": "a channel not engaged with v converges to it at rate 1/Tt",
+   "evidence": "probe:110"
+  },
+  {
+   "id": "K6d-053",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 218,
+   "kind": "law",
+   "claim": "a channel not engaged without v freezes",
+   "evidence": "probe:104"
+  },
+  {
+   "id": "K6d-054",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 220,
+   "kind": "mech",
+   "claim": "own windup goes through the correction against the own fresh u with Tt",
+   "evidence": "src/library.jl:2349"
+  },
+  {
+   "id": "K6d-055",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 221,
+   "kind": "law",
+   "claim": "Tt = Inf switches the correction off",
+   "evidence": "probe:112"
+  },
+  {
+   "id": "K6d-056",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 221,
+   "kind": "law",
+   "claim": "Tt = 0 is the clamping scheme on the discrete tier",
+   "evidence": "probe:110"
+  },
+  {
+   "id": "K6d-057",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 222,
+   "kind": "decl",
+   "claim": "signal ports x SVector{NX, Float64}, z and z_ref SVector{NZ, Float64}",
+   "evidence": "probe:80"
+  },
+  {
+   "id": "K6d-058",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 225,
+   "kind": "decl",
+   "claim": "outputs u and u_raw are stage 2 at SVector{NU, Float64}",
+   "evidence": "src/library.jl:2755"
+  },
+  {
+   "id": "K6d-059",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 226,
+   "kind": "decl",
+   "claim": "the discrete tracker adds saturated from stage 1",
+   "evidence": "src/library.jl:3050"
+  },
+  {
+   "id": "K6d-060",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 229,
+   "kind": "decl",
+   "claim": "nine parameters in the roster K_fbk, K_fwd, K_int, x_trim, u_trim, z_trim, Tt, u_min, u_max",
+   "evidence": "src/library.jl:2713"
+  },
+  {
+   "id": "K6d-061",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 229,
+   "kind": "decl",
+   "claim": "K_fbk is NU x NX, K_fwd and K_int NU x NZ",
+   "evidence": "src/library.jl:2740"
+  },
+  {
+   "id": "K6d-062",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 230,
+   "kind": "decl",
+   "claim": "Tt, u_min and u_max are per channel, broadcast to SVector{NU} from a scalar",
+   "evidence": "probe:85"
+  },
+  {
+   "id": "K6d-063",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 231,
+   "kind": "decl",
+   "claim": "any parameter may be an input port in place of a field by AsPort()",
+   "evidence": "probe:86"
+  },
+  {
+   "id": "K6d-064",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 233,
+   "kind": "mech",
+   "claim": "AsPort() follows the PID's rule",
+   "evidence": "src/library.jl:2400"
+  },
+  {
+   "id": "K6d-065",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 233,
+   "kind": "mech",
+   "claim": "the matrices are static with their length parameters",
+   "evidence": "src/library.jl:2740"
+  },
+  {
+   "id": "K6d-066",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 237,
+   "kind": "law",
+   "claim": "u is stage 2, so every input is a feedthrough edge whether y_direct reads it or not",
+   "evidence": "test/test_library.jl:3472"
+  },
+  {
+   "id": "K6d-067",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 238,
+   "kind": "law",
+   "claim": "x and z assembled from plant outputs from state close no loop",
+   "evidence": "probe:130"
+  },
+  {
+   "id": "K6d-068",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 241,
+   "kind": "law",
+   "claim": "a v or z_ref wired through a memoryless function of the own u closes a loop",
+   "evidence": "test/test_library.jl:3472"
+  },
+  {
+   "id": "K6d-069",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 242,
+   "kind": "law",
+   "claim": "the refusal is the PID's, an AlgebraicCycle",
+   "evidence": "test/test_library.jl:3472"
+  },
+  {
+   "id": "K6d-070",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 246,
+   "kind": "why",
+   "claim": "lead `LQR`: FlightPhysics's model, prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "K6d-071",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 251,
+   "kind": "mech",
+   "claim": "parameters are instance data and a scheduled one is a port",
+   "evidence": "src/library.jl:2752"
+  },
+  {
+   "id": "K6d-072",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 253,
+   "kind": "mech",
+   "claim": "a scheduled port is fed by an upstream component publishing SMatrix values",
+   "evidence": "probe:86"
+  },
+  {
+   "id": "K6d-073",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 254,
+   "kind": "mech",
+   "claim": "a linearization sees the coupling through the schedule",
+   "evidence": "src/library.jl:2758"
+  },
+  {
+   "id": "K6d-074",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 256,
+   "kind": "mech",
+   "claim": "routing the port through Freeze drops the schedule's coupling",
+   "evidence": "src/library.jl:394"
+  },
+  {
+   "id": "K6d-075",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 259,
+   "kind": "mech",
+   "claim": "the hold's engaged input with the tracking reference replaces the reset and the bump",
+   "evidence": "probe:102"
+  },
+  {
+   "id": "K6d-076",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 262,
+   "kind": "law",
+   "claim": "a tracker not in command follows the selected command through v, no reset",
+   "evidence": "probe:110"
+  },
+  {
+   "id": "K6d-077",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 266,
+   "kind": "mech",
+   "claim": "the own clamp is handled by back-calculation against the fresh u",
+   "evidence": "src/library.jl:2349"
+  },
+  {
+   "id": "K6d-078",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 267,
+   "kind": "mech",
+   "claim": "the halt survives as the hold's gate against an external code",
+   "evidence": "src/library.jl:2343"
+  },
+  {
+   "id": "K6d-079",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 268,
+   "kind": "mech",
+   "claim": "a saturation output is kept on the discrete tier",
+   "evidence": "src/library.jl:3050"
+  },
+  {
+   "id": "K6d-081",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 289,
+   "kind": "law",
+   "claim": "outer u to inner z_ref and inner u to outer v is an algebraic cycle on the discrete tier",
+   "evidence": "probe:210"
+  },
+  {
+   "id": "K6d-082",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 291,
+   "kind": "law",
+   "claim": "the cascade cycle is classified real on the discrete tier",
+   "evidence": "probe:210"
+  },
+  {
+   "id": "K6d-083",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 291,
+   "kind": "law",
+   "claim": "a UnitDelay breaks the cycle",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "K6d-084",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 295,
+   "kind": "mech",
+   "claim": "on the discrete tier the code lives in the store",
+   "evidence": "src/library.jl:3046"
+  },
+  {
+   "id": "K6d-085",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 296,
+   "kind": "mech",
+   "claim": "s_update writes the code from u_raw against the limits",
+   "evidence": "src/library.jl:3060"
+  },
+  {
+   "id": "K6d-086",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 297,
+   "kind": "mech",
+   "claim": "saturation_code produces the Int8 code",
+   "evidence": "src/library.jl:665"
+  },
+  {
+   "id": "K6d-087",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 297,
+   "kind": "mech",
+   "claim": "y_state publishes it as saturated at the next tick",
+   "evidence": "src/library.jl:3050"
+  },
+  {
+   "id": "K6d-088",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 299,
+   "kind": "law",
+   "claim": "a root's input and output faces share one name space",
+   "evidence": "probe:220"
+  },
+  {
+   "id": "K6d-089",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 300,
+   "kind": "law",
+   "claim": "one name on both faces would refuse the tracker alone as a root",
+   "evidence": "probe:220"
+  },
+  {
+   "id": "K6d-090",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 301,
+   "kind": "law",
+   "claim": "the code flips only on a tick boundary",
+   "evidence": "src/library.jl:3060"
+  },
+  {
+   "id": "K6d-091",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 302,
+   "kind": "law",
+   "claim": "stage-1 publication breaks the cascade cycle structurally",
+   "evidence": "probe:230"
+  },
+  {
+   "id": "K6d-092",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 303,
+   "kind": "law",
+   "claim": "the code is one tick stale, so the outer integrator takes one extra step",
+   "evidence": "test/test_library.jl:3454"
+  },
+  {
+   "id": "K6d-093",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 304,
+   "kind": "mech",
+   "claim": "the tracker never reads its own code",
+   "evidence": "src/library.jl:3051"
+  },
+  {
+   "id": "K6d-094",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 305,
+   "kind": "mech",
+   "claim": "DiscretePID publishes the same code",
+   "evidence": "src/library.jl:2694"
+  },
+  {
+   "id": "K6d-095",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 308,
+   "kind": "law",
+   "claim": "the continuous tracker publishes no code",
+   "evidence": "probe:81"
+  },
+  {
+   "id": "K6d-096",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 309,
+   "kind": "mech",
+   "claim": "the LimitedIntegrator pattern costs 4N events",
+   "evidence": "src/library.jl:1851"
+  },
+  {
+   "id": "K6d-097",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 312,
+   "kind": "mech",
+   "claim": "the continuous tracker closes the loop so linearize recovers the designed closed loop",
+   "evidence": "probe:132"
+  },
+  {
+   "id": "K6d-098",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 312,
+   "kind": "law",
+   "claim": "guards may read y",
+   "evidence": "design/spec.md:1159"
+  },
+  {
+   "id": "K6d-099",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 317,
+   "kind": "why",
+   "claim": "lead `BKCAL_OUT`: Foundation Fieldbus name, prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "K6d-100",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 318,
+   "kind": "why",
+   "claim": "lead `BKCAL_IN`: Foundation Fieldbus name, prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "K6d-101",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 320,
+   "kind": "why",
+   "claim": "lead `int8`: PX4's status type, prior art (Redstone's is `Int8`)",
+   "evidence": "prior art"
+  },
+  {
+   "id": "K6d-102",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 323,
+   "kind": "why",
+   "claim": "lead `AC_PID`: ArduPilot class, prior art",
+   "evidence": "prior art"
+  },
+  {
+   "id": "K6d-103",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 328,
+   "kind": "mech",
+   "claim": "an outer PID over one channel takes its code through Unpack{Int8, NU}, one Int8 per component",
+   "evidence": "probe:222"
+  },
+  {
+   "id": "K6d-104",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 340,
+   "kind": "ex",
+   "claim": "sibling controllers feed a Switch, whose output goes to the plant and every sibling's v",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "K6d-105",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 342,
+   "kind": "mech",
+   "claim": "the Switch reads both inputs in y_direct",
+   "evidence": "src/library.jl:263"
+  },
+  {
+   "id": "K6d-106",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 343,
+   "kind": "law",
+   "claim": "the Switch's output depends structurally on each input",
+   "evidence": "src/library.jl:263"
+  },
+  {
+   "id": "K6d-107",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 344,
+   "kind": "law",
+   "claim": "sibling 1's u to the Switch to sibling 1's v is a cycle",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "K6d-108",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 345,
+   "kind": "mech",
+   "claim": "a UnitDelay on the Switch output, fanned to every v, is the remedy",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "K6d-109",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 346,
+   "kind": "law",
+   "claim": "a sibling in standby follows the selected command one tick old",
+   "evidence": "src/library.jl:2351"
+  },
+  {
+   "id": "K6d-110",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 347,
+   "kind": "law",
+   "claim": "an engaged sibling sees its own one-tick-old output as v, used as reference only while the code is nonzero",
+   "evidence": "src/library.jl:2351"
+  },
+  {
+   "id": "K6d-111",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 359,
+   "kind": "law",
+   "claim": "discrete siblings, v from the Switch output: AlgebraicCycle, real",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "K6d-112",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 360,
+   "kind": "law",
+   "claim": "the same through a UnitDelay builds",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "K6d-113",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 361,
+   "kind": "law",
+   "claim": "continuous siblings, v from the Switch output: AlgebraicCycle, artificial",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "K6d-114",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 362,
+   "kind": "law",
+   "claim": "the same through a UnitDelay builds",
+   "evidence": "probe:200"
+  },
+  {
+   "id": "K6d-120",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 369,
+   "kind": "law",
+   "claim": "tracking without the error gated off leaves u_raw = v + Tt Ki e in standby",
+   "evidence": "src/library.jl:2457"
+  },
+  {
+   "id": "K6d-122",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 373,
+   "kind": "law",
+   "claim": "on the discrete tier Tt = 0 follows exactly",
+   "evidence": "probe:110"
+  },
+  {
+   "id": "K6d-123",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 374,
+   "kind": "law",
+   "claim": "Tt = Inf follows nothing",
+   "evidence": "probe:112"
+  },
+  {
+   "id": "K6d-124",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 375,
+   "kind": "law",
+   "claim": "a fixed infinite Tt is refused with tracking = true",
+   "evidence": "probe:84"
+  },
+  {
+   "id": "K6d-125",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 377,
+   "kind": "law",
+   "claim": "with hold and tracking the engaged sibling falls back to its own u, ruling out self-tracking at beta = 1",
+   "evidence": "src/library.jl:2351"
+  },
+  {
+   "id": "K6d-126",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 382,
+   "kind": "mech",
+   "claim": "trim! finds the trim point",
+   "evidence": "src/trim.jl:560"
+  },
+  {
+   "id": "K6d-127",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 383,
+   "kind": "mech",
+   "claim": "linearize returns the Linearization",
+   "evidence": "src/linearize.jl:266"
+  },
+  {
+   "id": "K6d-128",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 384,
+   "kind": "decl",
+   "claim": "x0, u0, y0 are plain vectors in the taps' order with label tuples beside them",
+   "evidence": "probe:132"
+  },
+  {
+   "id": "K6d-129",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 385,
+   "kind": "decl",
+   "claim": "Linearization has A, B, C and D",
+   "evidence": "src/linearize.jl:137"
+  },
+  {
+   "id": "K6d-131",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 392,
+   "kind": "mech",
+   "claim": "labeled gives the form that reads each array by name",
+   "evidence": "src/linearize.jl:151"
+  },
+  {
+   "id": "K6d-132",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 395,
+   "kind": "law",
+   "claim": "the continuous tracker closing the loop on a StateSpace plant linearizes to A - B K_fbk",
+   "evidence": "probe:132"
+  },
+  {
+   "id": "K6d-133",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 396,
+   "kind": "law",
+   "claim": "without integral action and with the feedforward, a z_ref step settles with zero error",
+   "evidence": "probe:130"
+  },
+  {
+   "id": "K6d-134",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 397,
+   "kind": "law",
+   "claim": "with K_int from the augmented design the closed loop agrees with the augmented one",
+   "evidence": "probe:140"
+  },
+  {
+   "id": "K6d-135",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 411,
+   "kind": "law",
+   "claim": "the integral path is an n_z to n_u matrix map",
+   "evidence": "src/library.jl:2926"
+  },
+  {
+   "id": "K6d-136",
+   "file": "design/companions/lqr_tracker.md",
+   "line": 412,
+   "kind": "law",
+   "claim": "the vector PID's Ki is componentwise",
+   "evidence": "src/library.jl:2705"
+  }
+ ],
+ "counts": {
+  "law": 70,
+  "mech": 38,
+  "decl": 14,
+  "ex": 8,
+  "ptr": 26,
+  "why": 58
+ }
+}

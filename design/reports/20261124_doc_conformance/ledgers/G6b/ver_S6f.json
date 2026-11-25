@@ -1,0 +1,84 @@
+{
+ "judgments": [
+  {
+   "id": "S6f-001",
+   "conforms": true,
+   "evidence": "src/build.jl:1417 `xbuf::Vector{T}  # continuous state, the flat buffer (§7.1)`, allocated by the build at src/build.jl:1482 `xbuf = zeros(T, n_x)`; probe.jl:86 prints Vector{Float64}."
+  },
+  {
+   "id": "S6f-007",
+   "conforms": false,
+   "evidence": "src/checkpoint.jl:74-85 ModelState holds x, s, m, table, prior, stepper, t, t₀, deployment, layout; src/model.jl:1184-1187 fills `stepper` from checkpoint_stepper(exec.stepper); src/checkpoint.jl:129 restore_stepper!. probe.jl:94 prints those fields. The §7 list leaves out the stepper's carried state, which a restore needs to continue an adaptive run bitwise (test/test_adaptive.jl:116). §12.6 at spec.md:10637 lists it. Commit e7dacf9e added the field to ModelState (D-452, D-461).",
+   "class": "drift",
+   "fix": "It holds `x`, `s` and `m`, the signal table with its root-input levels and held discrete outputs, each event's [prior](#g-prior), the stepper's carried state, and the clock with its origin ([§12.6][s12-6], [D-274][d-274], [D-452][d-452]).",
+   "clear": true,
+   "note": "The Checkpoint also carries the run's frame index and boundary ordinal (src/checkpoint.jl:106-110), plus the deployment and fingerprint, which serve as checks rather than state. The sentence could name the counters too, but §12.6 already places them beside the state."
+  },
+  {
+   "id": "S6f-011",
+   "conforms": true,
+   "evidence": "test/test_lifecycle.jl:848-866 (resume identity, bitwise), test/test_adaptive.jl:107-138 (BS3 through rejected attempts), test/test_events.jl:279-297 (priors survive, no re-fire). probe.jl:104 BS3 restore-and-continue gives `===` state: true."
+  },
+  {
+   "id": "S6f-020",
+   "conforms": true,
+   "evidence": "src/assembly.jl:676-680 refuses Int/Enum/Bool in x_init with reason :mode_value; src/assembly.jl:710-712 admits any isbits mode field. probe.jl:68 builds m_init (count = 0, on = false, gear = lo); probe.jl:70 refuses x_init (n = 0, b = true) as [(:n, :mode_value), (:b, :mode_value)]."
+  },
+  {
+   "id": "S6f-030",
+   "conforms": false,
+   "evidence": "The layout's offsets are build-time values held at run time, not compile-time constants. src/build.jl:1480 `x_offs = [first(r) - 1 for r in layout.xblocks]`, stored as a runtime field at src/executor.jl:77 `x_off::Int` and passed as an argument at src/executor.jl:130 `reconstruct($XT, xbuf, entry.x_off)`. Only the leaf offsets inside one component's block are fixed at compile time, by the @generated reconstruct/flatten! (src/leaves.jl:223, src/leaves.jl:388). The buffer is one contiguous Vector{T} (src/build.jl:1417). No log entry uses the term \"compile-time offset\".",
+   "class": "deviation",
+   "fix": "It computes a flat layout at build time. The layout gives each component a block in one contiguous `Vector{T}` that the framework owns, the [buffer](#g-buffer), at a base offset fixed at build time, and each leaf an offset within its block fixed at compile time.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "S6f-033",
+   "conforms": true,
+   "evidence": "src/build.jl:42 `Decls(retype_value(T, invoke_declaration(x_init, comp)), ...)`, so the view type is typeof(decl.x) (src/build.jl:1530 `StageEntry{typeof(decl.x),...}`). probe.jl:87 shows state(sim, \"c\") and x_init(Plant()) share @NamedTuple{q::SVector{2, Float64}}."
+  },
+  {
+   "id": "S6f-042",
+   "conforms": true,
+   "evidence": "src/leaves.jl:223 reconstruct and src/leaves.jl:388 flatten! are generated plain constructions. probe.jl:16 round-trip of (a = -0.0, b = SVector(NaN, 1.5, -2.0), c = SMatrix) is `===`: true; probe.jl:20 the same at Dual: true.",
+   "note": "The claim holds bitwise (`===`). Read literally, `==` is false when a leaf is NaN, by IEEE (probe.jl:17 prints false). The doc could write `===` to say bit-faithful, but the substance agrees."
+  },
+  {
+   "id": "S6f-051",
+   "conforms": true,
+   "evidence": "src/leaves.jl:414 flatten_state! compares the returned key set with the state's (`Set(Vs) == Set(state_fields)`) at generation time and throws ConformanceFailure :field_set otherwise; src/executor.jl:176 routes every x_deriv return through it. probe.jl:78 an x_deriv missing field `b` gives [(ConformanceFailure, :field_set)]."
+  },
+  {
+   "id": "S6f-060",
+   "conforms": true,
+   "evidence": "src/trim.jl:293 `_within(r, tol) = all(i -> abs(r[i]) ≤ tol[i], ...)` is the per-residual test, used at src/trim.jl:309 and again for trim!'s own verdict. src/trim.jl:575-578 setup runs the establishment round and one rhs sweep; the iterations sweep only the continuous chain at the seeded activation, with no events or discrete updates (docstring src/trim.jl:497-503)."
+  },
+  {
+   "id": "S6f-071",
+   "conforms": true,
+   "evidence": "src/build.jl:1583 `if T === Float64` compiles guards and handlers at the nominal activation only; src/build.jl:1517 `frozen(ci) = _frozen(components[ci].tier, T)` drops discrete entries elsewhere, so their cells keep the probe's nominal products (src/build.jl:1502-1510, src/model.jl:695-697). Projection still runs at every activation (src/build.jl:1607-1613), and it is continuous machinery."
+  },
+  {
+   "id": "S6f-080",
+   "conforms": true,
+   "evidence": "src/leaves.jl:302 `retype_entry(::Type{T}, ::Type{Pinned{P}}) where {T,P} = P` keeps a pinned entry at its declared Float64 type at every activation, so it cannot carry partials. test/test_library.jl:978-985 a strip at a pinned Fn gives a zero Jacobian column; test/test_library.jl:990-1002 an f that keeps partials there is refused as ConformanceFailure :field_type at the first Dual."
+  },
+  {
+   "id": "S6f-089",
+   "conforms": true,
+   "evidence": "src/assembly.jl:706-716 check_stores: `isbits(value) || value isa Symbol` or IllegalStoreField, on s_init and m_init. probe.jl:65 a String field is refused; probe.jl:66 Symbol, Int and a nested isbits NamedTuple build; probe.jl:67 a struct nesting a Symbol is refused."
+  },
+  {
+   "id": "S6f-098",
+   "conforms": true,
+   "evidence": "src/model.jl:1184-1185 checkpoint copies each store's value (`st[]`) into ModelState.s and .m; src/checkpoint.jl:136-144 restore writes them back (`exec.sstores[ci][] = model_state.s[ci]`). The held discrete cells come with the table copy (src/model.jl:1186 capture_stores)."
+  },
+  {
+   "id": "S6f-107",
+   "conforms": true,
+   "evidence": "src/conditions.jl:169 `function set(; x = (;), s = (;), m = (;), u = (;))` takes no ws key, so no condition can address a workspace; probe.jl:91 set(ws = (a = 1.0,)) throws MethodError."
+  }
+ ],
+ "notes": "Checked 14 claims against W at cb398676. Two do not conform. S6f-007 is drift: the §7 intro's list of what a checkpoint holds leaves out the stepper's carried state, which ModelState has carried since commit e7dacf9e (D-452, D-461) and which §12.6 lists. S6f-030 is a deviation: the layout's per-component base offsets are build-time Ints stored on each entry, and only the leaf offsets within a block are fixed at compile time. On S6f-042, the claim holds bitwise; `==` fails only for a NaN leaf, by IEEE. I ran the probe script three times: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S6f_v/probe.jl. I edited no tracked file and made no commits."
+}

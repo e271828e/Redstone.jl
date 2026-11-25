@@ -1,0 +1,150 @@
+{
+ "judgments": [
+  {
+   "id": "K6c-003",
+   "conforms": true,
+   "evidence": "src/library.jl:1286 refuses length(num) > length(den) as improper; probe.jl:16-17 (num=(1,1,1) over (1,1) refused, (1,2)/(1,5) builds as TransferFunction{1, true, 2, 2, 1}).",
+   "note": "The doc states the mathematical condition, which is true. The constructor checks it by length, not by true degree, so probe.jl:15 shows num=(0,0,1) over den=(1,1), of degree 0, is also refused. That is a nuance of the refusal, not a contradiction of line 52."
+  },
+  {
+   "id": "K6c-017",
+   "conforms": true,
+   "evidence": "src/declare.jl:768 has_stage(fn, comp) = !isempty(methods(fn, Tuple{typeof(comp),Any})); src/library.jl:1054-1055 dispatch on AbstractLinearSystem{false}/{true}; probe.jl:20-23 has_stage false on the missing arm, lag TF loop builds, lead-lag loop AlgebraicCycle."
+  },
+  {
+   "id": "K6c-019",
+   "conforms": true,
+   "evidence": "src/library.jl:1054-1058 y_state(c::AbstractLinearSystem{false}, (; x)) and y_direct(c::AbstractLinearSystem{true}, (; x, u)) on the supertype.",
+   "note": "Section 3 writes the bodies in math notation (C x, C x + D u). The code wraps them in as_port/as_vector, which section 4 describes. As a schematic the arms match. Section 6's Julia block is judged separately under K6c-045."
+  },
+  {
+   "id": "K6c-022",
+   "conforms": false,
+   "evidence": "src/library.jl:1041 port_type(width), with 1048-1049 applied to each port on its own; probe.jl:27 NU=1, NY=2 gives (Float64, SVector{2, Float64}); probe.jl:29 NU=2, NY=1 gives (SVector{2, Float64}, Float64); test/test_library.jl:1798-1799.",
+   "class": "deviation",
+   "fix": "Each port's width decides its type: `u` is a scalar when `NU` is one and an `SVector{NU}` otherwise, and `y` likewise by `NY`, decided from the matrix shapes at construction.",
+   "clear": true,
+   "note": "The per-port rule has been in the code since the first StateSpace commit dd552d5a (port_type per port). The StateSpace docstring at src/library.jl:1080-1081 already states it correctly."
+  },
+  {
+   "id": "K6c-028",
+   "conforms": true,
+   "evidence": "probe.jl:36 shows a whole-state tap on a one-state StateSpace (get_state(\"c\"), \"x\", :x) refused as TapResolution, because the leaf is SVector{1, Float64}, and get_state(\"c\", \"[1]\") linearizes to A = [-2.0]; test/test_library.jl:1787-1792.",
+   "note": "This is a historical sentence. When it was written (01dc9c8f) the state field was `q`. The sweep that renamed it `x` (D-438) updated the rest of the paragraph but left `:q`. Today :q names no field (ReadResolution at probe.jl:36). An optional rewording is 'the scalar linearization's whole-state tap was refused'."
+  },
+  {
+   "id": "K6c-038",
+   "conforms": true,
+   "evidence": "src/library.jl:1289-1290 refuses a nonzero u0 when last(den) is zero, and 1293 solves -(A \\ forced) only for nonzero u0; probe.jl:40-41 den=(1,0) with u0=1 refused, with u0=0 builds; probe.jl:42-43 a static \\ on a singular matrix returns Inf/[-Inf, NaN] without throwing."
+  },
+  {
+   "id": "K6c-045",
+   "conforms": false,
+   "evidence": "src/library.jl:1050-1058 x_deriv is A * x + B * as_vector(u), y_state is as_port(realization(c).C * x), and y_direct is as_port(C * x + D * as_vector(u)). The section 6 block omits as_vector and as_port. The realization accessors at 1142 and 1296 match the block.",
+   "class": "deviation",
+   "fix": "x_deriv(c::AbstractLinearSystem, (; x, u))        = (s = realization(c); s.A * x + s.B * as_vector(u))\ny_state(c::AbstractLinearSystem{false}, (; x))    = as_port(realization(c).C * x)\ny_direct(c::AbstractLinearSystem{true}, (; x, u)) = (s = realization(c); as_port(s.C * x + s.D * as_vector(u)))",
+   "clear": true,
+   "note": "Section 9's discrete block already writes the edges with as_vector/as_port, so only section 6's block is stale."
+  },
+  {
+   "id": "K6c-048",
+   "conforms": true,
+   "evidence": "src/build.jl:1205-1208 throws ProducedByTwoStages when stage 2 returns a port stage 1 returned; probe.jl:53 a component whose y_state and y_direct both return the bare y is refused at build as 'ProducedByTwoStages: `c`: `y` by `y_state` and by `y_direct`'."
+  },
+  {
+   "id": "K6c-059",
+   "conforms": true,
+   "evidence": "src/library.jl:1111 struct StateSpace and 1273 struct TransferFunction, both <: AbstractLinearSystem{FT}.",
+   "note": "Section 9 adds the four discrete components (src/library.jl:1385, 1455, 1525, 1567 area). Section 8's decision covers the continuous pair only."
+  },
+  {
+   "id": "K6c-064",
+   "conforms": false,
+   "evidence": "probe.jl:60 at Δt_frame = 1//100 gives port(tf) === port(l) === 0.8646647163964266, with tf state [0.4323323581982133] (half the lag's 0.8646647163964266).",
+   "class": "drift",
+   "fix": "outputs equal to the last bit, `0.8646647163964266`; the realized state `0.4323…`, half the lag's",
+   "clear": false,
+   "note": "The equality to the last bit and the half-state still hold. Only the last digit moved, from ...265 (RK4 at 05716053, also cited in brief_increment_64 and brief_increment_65) to ...266. src/stepper.jl was rewritten after 05716053 (e7dacf9e RK4 under the seam protocol, 4868f309 equal steps under h_max). I did not establish which commit moved the bit. Whether to restate the table at cb398676 or keep it dated to 0571605 is a choice for the user."
+  },
+  {
+   "id": "K6c-069",
+   "conforms": true,
+   "evidence": "probe.jl:64 gives \"3.0\" at init and \"3.0\" after step!(t_plus = 1.0); test/test_library.jl:1872-1876."
+  },
+  {
+   "id": "K6c-072",
+   "conforms": false,
+   "evidence": "probe.jl:101 with a reconstructed prototype (AbstractLinearSystem subtypes whose fields are abstract SMatrix{N, N, Float64}): step! over 0.1 s after warm-up allocates 15,936 B for the scalar case and 19,296 B for the two-by-two case.",
+   "class": "drift",
+   "fix": "| `step!` over `0.1 s` after warm-up, abstract `SMatrix{N, N, Float64}` fields | scalar 15,936 B, two-by-two 19,296 B |",
+   "clear": false,
+   "note": "The prototype no longer exists in the code, and my reconstruction may differ from the one at 0571605. The framework's per-frame cost has also changed since then (see K6c-073). The row's point, abstract fields allocating well above the parametrized ones, still holds."
+  },
+  {
+   "id": "K6c-073",
+   "conforms": false,
+   "evidence": "probe.jl:101 gives step! over 0.1 s: StateSpace scalar 8,800 B, StateSpace 2x2 8,960 B, scalar FirstOrderLag 8,800 B, vector lag 8,960 B.",
+   "class": "drift",
+   "fix": "| the same with length parameters, and with `Matrix` fields converted in the body | scalar 8,800 B, two-by-two 8,960 B, equal to the scalar and vector lags |",
+   "clear": false,
+   "note": "The equality to the lags holds, but the absolute figures differ from the 0571605 ones. The Matrix-field variant is not in the code and was not re-probed. The per-frame cost is the publication (test/test_localization.jl:392-405); its size changed in later commits, which I did not single out."
+  },
+  {
+   "id": "K6c-074",
+   "conforms": false,
+   "evidence": "probe.jl:101 gives step! over 0.1 s: TF lag form 8,800 B, TF lead-lag 8,800 B, scalar lag 8,800 B.",
+   "class": "drift",
+   "fix": "| `step!` over `0.1 s`, the transfer functions through `AbstractLinearSystem{FT}` | lag form and lead-lag 8,800 B, equal to the scalar lag |",
+   "clear": false,
+   "note": "The equality holds. Only the figure moved, as for K6c-073."
+  },
+  {
+   "id": "K6c-082",
+   "conforms": true,
+   "evidence": "src/library.jl:1394 DiscreteStateSpace{..., !iszero(D), ...}; 1402-1403 held(c::DiscreteStateSpace) = c and realization(c::DiscreteStateSpace, _) = c; probe.jl:119 gives FT false for D=0 and true for D=1."
+  },
+  {
+   "id": "K6c-088",
+   "conforms": true,
+   "evidence": "src/declare.jl:492-493 sample_times returns the assembly's map of immediate child name to Relative/Absolute, and 504 'The rates belong to the assembly type'; spec §8.7 (design/spec.md:4428-4432) rules that the declaration belongs to the assembly type, not the child instance, and rejects instance wrappers (D-042).",
+   "note": "No hook lets a leaf instance declare its own period. One reading needs care: the sample_times docstring (src/declare.jl:505-506) lets an assembly read a deployment-preference rate off its own instance. That is the parent's instance, not the child's, so the claim stands."
+  },
+  {
+   "id": "K6c-092",
+   "conforms": true,
+   "evidence": "src/library.jl:1525-1527 the DiscretizedStateSpace field continuous::StateSpace; 1529 held(c) = c.continuous; 1532-1537 realization(c, Δt) takes exp of the augmented matrix built by vcat/hcat; probe.jl:121 A_d = exp(-0.1), B_d = 1 - exp(-0.1)."
+  },
+  {
+   "id": "K6c-101",
+   "conforms": true,
+   "evidence": "src/declare.jl:146-147 'The contents at each call are unspecified, and the framework never reads or writes them'; ws_init(c, ::Type{T}) takes no Δt (src/declare.jl:131); design/spec.md:2399 'must carry no information between calls (D-183)'."
+  },
+  {
+   "id": "K6c-103",
+   "conforms": false,
+   "evidence": "design/spec.md:4232-4237 is the IMUSampler y_direct, which divides ϑ_c and υ_c by Δt. It sits under '### 8.6 Paths, wiring and faces' (heading at design/spec.md:3912), not under §8.7 (heading at design/spec.md:4333). spec.md:868 also says '§8.6 works the IMU in full'.",
+   "class": "deviation",
+   "fix": "the IMU sampler of [§8.6][s8-6] divides by it every tick for the same reason.",
+   "clear": true,
+   "note": "The pointer has been wrong since it was written in 10364763. At that commit the sampler was also in §8.6 (docs/design/spec.md:3364, with §8.7 at 3447). The fault is in the pointer, not the code. Re-run linkify.jl to add the s8-6 link definition."
+  },
+  {
+   "id": "K6c-105",
+   "conforms": true,
+   "evidence": "probe.jl:114 and probe.jl:127, on Julia 1.13.3: a static exp allocates 0 B at every size probed. Augmented hold matrices at Δt = 0.01 take about 80 ns at 4x4 and 145 ns at 5x5; random 4x4/5x5 matrices take about 100 and 257-377 ns.",
+   "note": "The measurement is tied to the machine and to Julia 1.13.1, and W runs 1.13.3. The zero allocation and the order of magnitude reproduce. The exact 41 ns and 125 ns do not: my 4x4 figure is about twice the doc's. Other sessions may have been loading the CPU during the probe."
+  },
+  {
+   "id": "K6c-106",
+   "conforms": true,
+   "evidence": "probe.jl:106 gives boundary! of a discrete hold 0 B; probe.jl:108 gives one frame of step! 1,024 B; probe.jl:101 gives about 880 B per frame over 0.1 s; test/test_localization.jl:392-405 pins that the frame loop allocates its publications and nothing else.",
+   "note": "Publications are per frame, not per discrete tick. In this deployment tick and frame coincide. 'Hundreds of bytes' holds."
+  },
+  {
+   "id": "K6c-113",
+   "conforms": true,
+   "evidence": "src/library.jl:1559-1561, the DiscretizedTransferFunction docstring: 'The hold keeps the feedthrough class and matches the step response at the samples. A design that wants Tustin's frequency response discretizes externally and uses DiscreteTransferFunction.'"
+  }
+ ],
+ "notes": "I edited nothing. My only file is the probe script, /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K6c_v/probe.jl, run against W at cb398676 with --project=test on Julia 1.13.3. Six claims do not conform. Two are deviations with clear fixes. K6c-022: the port types follow each width on its own. K6c-045: section 6's block is missing as_vector/as_port. K6c-103 is a wrong pointer: the IMU sampler is in §8.6, not §8.7. The section 8 table rows dated to 0571605 have stale figures: K6c-064 is now 0.8646647163964266 rather than ...265, and K6c-072/073/074 allocate 8,800/8,960 B rather than 8,208/8,368 B. Their equalities still hold, so the user should decide whether to restate the table at the current tree or keep it dated. I marked K6c-105's timing as conforming within machine noise, since the zero allocation and the order of magnitude hold but the exact nanoseconds do not. The K6c-072 abstract-field prototype is my own reconstruction, not the original."
+}

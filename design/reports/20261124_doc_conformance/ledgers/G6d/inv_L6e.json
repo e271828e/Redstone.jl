@@ -1,0 +1,1563 @@
+{
+ "rows": [
+  {
+   "id": "L6e-025",
+   "file": "design/log.md",
+   "line": 2479,
+   "kind": "law",
+   "claim": "D-072: linearization's default operating point is `capture(sim)`.",
+   "evidence": "src/linearize.jl:265-277: with `about = nothing` the operating point is `checkpoint(model)`, taken only while the status is `:consistent`. No `capture` function exists in src/. Lead `capture` at log.md:2480.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "its default operating point is the checkpoint of the model as it stands, `checkpoint(model)`",
+   "note": "Moved by D-274, which the 2026-10-20 annotation on D-072 records (log.md:2492-2494)."
+  },
+  {
+   "id": "L6e-026",
+   "file": "design/log.md",
+   "line": 2480,
+   "kind": "mech",
+   "claim": "D-072: `capture` is the full-store gather and returns `(condition, t)`.",
+   "evidence": "No `capture` exists in src/ (rg). The checkpoint `linearize` reads is a state value, not a condition (src/linearize.jl:312-314, 325-326).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "the operating point is a checkpoint of the stores and the clock, and no condition is produced from it",
+   "note": "D-273 retired `capture` as a condition producer, and D-274 made the checkpoint the default. The annotation at log.md:2492 records this."
+  },
+  {
+   "id": "L6e-027",
+   "file": "design/log.md",
+   "line": 2482,
+   "kind": "mech",
+   "claim": "D-072: linearization returns labeled data.",
+   "evidence": "src/linearize.jl:110-148, 371-375: `Linearization` holds plain Vector/Matrix arrays and label tuples. `labeled` (linearize.jl:151-168, ComponentArrays extension) gives the labeled form.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "It returns plain arrays in the order of the taps, with the label tuples beside them, and `labeled` returns the labeled form.",
+   "note": "Moved by D-475. The 2026-11-21 annotation on D-072 (log.md:2496-2498) records it."
+  },
+  {
+   "id": "L6e-031",
+   "file": "design/log.md",
+   "line": 2649,
+   "kind": "decl",
+   "claim": "D-077: the discrete workspace allocator takes the component alone, `workspace(::C)`.",
+   "evidence": "src/declare.jl:131-150: `ws_init(c, ::Type{T})` takes the scalar on both tiers. src/build.jl:1055-1060 passes `Float64` to a discrete allocator. probe:127 shows the discrete allocator got T=Float64.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`workspace(::C, ::Type{T})` on both tiers, a discrete allocator always receiving `Float64`",
+   "note": "D-263 (log.md:11294-11296) gives `init_workspace` the scalar on both tiers. D-220 and D-267 renamed `workspace` to `init_workspace` and then to `ws_init`, which is old vocabulary and not the finding."
+  },
+  {
+   "id": "L6e-037",
+   "file": "design/log.md",
+   "line": 2725,
+   "kind": "decl",
+   "claim": "D-079: `local_types(::C)` is a plain declaration on both tiers.",
+   "evidence": "No `local_types` exists in src/. DECLARATION_FAMILY (src/declare.jl:747-751) has no local-types declaration. Intermediates are declared ports. Lead `local_types` at log.md:2725.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`output_types(::C)` plain on both tiers, an intermediate being an ordinary declared port",
+   "note": "D-165 deleted `local_types`, and D-194 (ratified; D-165 is superseded by D-194) made intermediates declared ports. Annotations at log.md:1264 and 1876 record the deletion on D-032 and D-055 but not on D-079."
+  },
+  {
+   "id": "L6e-040",
+   "file": "design/log.md",
+   "line": 2727,
+   "kind": "law",
+   "claim": "D-079: on continuous producers, `Real` type parameters follow the activation scalar.",
+   "evidence": "src/leaves.jl:281-293: `retype` replaces only `Float64` positions. probe:102: `retype(ProbeDual, Complex{Float32})` stays `ComplexF32`, and an `Int` parameter stays `Int`.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`Float64` leaves and `Float64` type parameters follow the activation scalar",
+   "note": "D-263 (log.md:11290) states that the type walk substitutes `Float64` in type-parameter positions. The phrase may have meant Float64-valued parameters. Read literally, a Float32 or Int parameter does not follow."
+  },
+  {
+   "id": "L6e-054",
+   "file": "design/log.md",
+   "line": 7286,
+   "kind": "law",
+   "claim": "D-183: the framework never inspects or mutates a workspace.",
+   "evidence": "src/conditions.jl:655-665: `_undeclared` calls `ws_init(comp, ...)` directly, outside `invoke_declaration`, and then `haskey` on the result to tag a refused condition field with role `:workspace`. probe:134-142: with `ws_init` returning a `Matrix`, `init!(sim, at(\"w\", set(x = (bogus = 1.0,))))` throws `MethodError: no method matching haskey(::Matrix{Float64}, ::Symbol)` instead of `ConditionResolution`.",
+   "verdict": "finding",
+   "class": "defect",
+   "fix": "In `_undeclared`, drop the `:workspace` role arm, or read it only when the allocated workspace is a `NamedTuple` and call `ws_init` through `invoke_declaration`, so that a non-NamedTuple workspace cannot turn the refusal into a MethodError.",
+   "note": "The live workspace is never touched. The inspection is of a fresh allocation, on the refusal path only. D-306's exclusion of the workspace as a condition target otherwise holds (probe:132-133, role :workspace)."
+  },
+  {
+   "id": "L6e-088",
+   "file": "design/log.md",
+   "line": 12790,
+   "kind": "law",
+   "claim": "D-280: the repository's test suite builds a `Dual` activation of every component.",
+   "evidence": "test/test_build.jl:2276-2315: the sweep covers only concrete suite types with a zero-argument constructor. It skips the 63 argument-taking fixtures (`@test length(skipped) == 63`) and any parametric `UnionAll`. Library components are covered by per-test builds in test_library.jl (for example :1304), not by the sweep.",
+   "verdict": "finding",
+   "class": "deviation",
+   "fix": "The repository's test suite builds a `Dual` activation of every zero-argument component it defines, with `build(world; activations = (Float64, ProbeDual))`; an argument-taking fixture is skipped and counted.",
+   "note": "design/rules/code_rules.md:213-215 records the zero-argument scope as process policy, but no spec or log entry narrows D-280."
+  },
+  {
+   "id": "L6e-101",
+   "file": "design/log.md",
+   "line": 12880,
+   "kind": "decl",
+   "claim": "D-283: the explicit `Δt_base` keyword takes a `Rational`, `Period` or `Hz` value.",
+   "evidence": "src/deployment.jl:15-27 and 264-265: `Δt_base` is an integer or a `Rational` of any integer type. A float is `DeploymentInvalid :inexact` (probe:159). `Period` and `Hz` do not exist in src/.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "the explicit keyword (an integer or a `Rational`)",
+   "note": "D-469 retired `Period` and `Hz`. The 2026-11-20 annotation on D-283 (log.md:12920-12921) records it."
+  },
+  {
+   "id": "L6e-102",
+   "file": "design/log.md",
+   "line": 12880,
+   "kind": "law",
+   "claim": "D-283: with the explicit keyword, `N_base` is derived and validated as an integer ≥ 1.",
+   "evidence": "src/deployment.jl:466-468 and 555: `Deployment` has no `N_base`. probe:160: `Deployment(...; N_base = 1)` is a MethodError. Lead `N_base` at log.md:12880.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "the explicit keyword, which derives no count",
+   "note": "D-443 (log.md:18614) retired `N_base` as keyword, field and parameter. The 2026-11-10 annotation on D-283 (log.md:12913-12915) records it."
+  },
+  {
+   "id": "L6e-103",
+   "file": "design/log.md",
+   "line": 12881,
+   "kind": "law",
+   "claim": "D-283: the second `Δt_base` source is the `N_base·h` product.",
+   "evidence": "src/deployment.jl:266-268: an absent keyword takes `Δt_frame` (`Δt_r = Δt_frame_r`, the default path). Lead `N_base` at log.md:12881.",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "`Δt_frame`, the default when the keyword is absent",
+   "note": "Moved by D-443 (log.md:18612). The annotation at log.md:12913 records it."
+  },
+  {
+   "id": "L6e-105",
+   "file": "design/log.md",
+   "line": 12883,
+   "kind": "law",
+   "claim": "D-283: if any unanchored discrete component exists, the deployment must declare `Δt_base`, and the refusal is constructive.",
+   "evidence": "probe:152: `Deployment(unanchored_build; Δt_frame = 1//10)` binds `Δt_base = 1//10` with no refusal (src/deployment.jl:266-268). Only `:derive` with unanchored components is refused, as `:unanchored` (deployment.jl:253-258).",
+   "verdict": "finding",
+   "class": "drift",
+   "fix": "If any unanchored discrete component exists, derivation is refused; an absent keyword takes `Δt_frame`.",
+   "note": "D-443 defaults `Δt_base` to `Δt_frame` (log.md:18612). The annotation on D-283 names the new default but does not retire this bullet explicitly."
+  }
+ ],
+ "ok": [
+  {
+   "id": "L6e-001",
+   "file": "design/log.md",
+   "line": 641,
+   "kind": "law",
+   "claim": "D-010: continuous state is a structured immutable value",
+   "evidence": "probe:57"
+  },
+  {
+   "id": "L6e-002",
+   "file": "design/log.md",
+   "line": 642,
+   "kind": "mech",
+   "claim": "D-010: over a framework-owned flat Vector{T}",
+   "evidence": "probe:56"
+  },
+  {
+   "id": "L6e-003",
+   "file": "design/log.md",
+   "line": 657,
+   "kind": "law",
+   "claim": "D-011: the continuous path is eltype-generic",
+   "evidence": "src/build.jl:1030"
+  },
+  {
+   "id": "L6e-004",
+   "file": "design/log.md",
+   "line": 657,
+   "kind": "mech",
+   "claim": "D-011: genericity is scoped by class (walked vs pinned)",
+   "evidence": "src/leaves.jl:231"
+  },
+  {
+   "id": "L6e-005",
+   "file": "design/log.md",
+   "line": 702,
+   "kind": "mech",
+   "claim": "D-013: discrete state is an immutable value held in a cell",
+   "evidence": "src/model.jl:1029"
+  },
+  {
+   "id": "L6e-006",
+   "file": "design/log.md",
+   "line": 702,
+   "kind": "decl",
+   "claim": "D-013: workspace idiom exists",
+   "evidence": "src/declare.jl:150"
+  },
+  {
+   "id": "L6e-007",
+   "file": "design/log.md",
+   "line": 702,
+   "kind": "mech",
+   "claim": "D-013: snapshot idiom exists",
+   "evidence": "src/dataplane.jl:581"
+  },
+  {
+   "id": "L6e-008",
+   "file": "design/log.md",
+   "line": 1212,
+   "kind": "decl",
+   "claim": "D-032: declarations are well-known plain functions returning plain values",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "L6e-009",
+   "file": "design/log.md",
+   "line": 1213,
+   "kind": "decl",
+   "claim": "D-032: stage functions are ordinary methods",
+   "evidence": "test/fixtures.jl:27"
+  },
+  {
+   "id": "L6e-010",
+   "file": "design/log.md",
+   "line": 1214,
+   "kind": "mech",
+   "claim": "D-032: declarations define, probe evaluation checks",
+   "evidence": "src/build.jl:1672"
+  },
+  {
+   "id": "L6e-011",
+   "file": "design/log.md",
+   "line": 1215,
+   "kind": "mech",
+   "claim": "D-032: the build probe runs with real values",
+   "evidence": "src/build.jl:1077"
+  },
+  {
+   "id": "L6e-012",
+   "file": "design/log.md",
+   "line": 1215,
+   "kind": "mech",
+   "claim": "D-032: always-on conformance is free",
+   "evidence": "src/leaves.jl:409"
+  },
+  {
+   "id": "L6e-013",
+   "file": "design/log.md",
+   "line": 1215,
+   "kind": "law",
+   "claim": "D-032: macros are never essential (none exist)",
+   "evidence": "probe:107"
+  },
+  {
+   "id": "L6e-014",
+   "file": "design/log.md",
+   "line": 2470,
+   "kind": "decl",
+   "claim": "D-072: three selector lists (now x/u/y taps)",
+   "evidence": "src/linearize.jl:37"
+  },
+  {
+   "id": "L6e-015",
+   "file": "design/log.md",
+   "line": 2471,
+   "kind": "decl",
+   "claim": "D-072: each entry's NamedTuple key is the label",
+   "evidence": "src/linearize.jl:374"
+  },
+  {
+   "id": "L6e-016",
+   "file": "design/log.md",
+   "line": 2472,
+   "kind": "law",
+   "claim": "D-072: taps are validated against the schema",
+   "evidence": "src/linearize.jl:431"
+  },
+  {
+   "id": "L6e-017",
+   "file": "design/log.md",
+   "line": 2473,
+   "kind": "mech",
+   "claim": "D-072: taps compile to offsets",
+   "evidence": "src/readers.jl:572"
+  },
+  {
+   "id": "L6e-018",
+   "file": "design/log.md",
+   "line": 2473,
+   "kind": "decl",
+   "claim": "D-072: tap sets relocate via at",
+   "evidence": "src/linearize.jl:84"
+  },
+  {
+   "id": "L6e-019",
+   "file": "design/log.md",
+   "line": 2475,
+   "kind": "law",
+   "claim": "D-072: get_*_ss/assign_*_ss! shuttle deleted (leads _ss, _ss!, get_, assign_)",
+   "evidence": "src/linearize.jl:70"
+  },
+  {
+   "id": "L6e-020",
+   "file": "design/log.md",
+   "line": 2476,
+   "kind": "mech",
+   "claim": "D-072: one chunked Dual pass on per-call scratch at the operating point",
+   "evidence": "src/linearize.jl:357"
+  },
+  {
+   "id": "L6e-021",
+   "file": "design/log.md",
+   "line": 2477,
+   "kind": "mech",
+   "claim": "D-072: exact A/B/C/D and ẋ₀/y₀ come out together",
+   "evidence": "probe:257"
+  },
+  {
+   "id": "L6e-022",
+   "file": "design/log.md",
+   "line": 2478,
+   "kind": "law",
+   "claim": "D-072: unseeded states stay constant",
+   "evidence": "src/linearize.jl:360"
+  },
+  {
+   "id": "L6e-023",
+   "file": "design/log.md",
+   "line": 2478,
+   "kind": "law",
+   "claim": "D-072: discrete tier is frozen-exact",
+   "evidence": "src/linearize.jl:347"
+  },
+  {
+   "id": "L6e-024",
+   "file": "design/log.md",
+   "line": 2479,
+   "kind": "law",
+   "claim": "D-072: linearization is a pure query, no commit or boundary zero",
+   "evidence": "probe:258"
+  },
+  {
+   "id": "L6e-028",
+   "file": "design/log.md",
+   "line": 2482,
+   "kind": "mech",
+   "claim": "D-072: subsystem/delete_vars are FlightPhysics label slicing (prior art; leads)",
+   "evidence": "src/linearize.jl:151"
+  },
+  {
+   "id": "L6e-029",
+   "file": "design/log.md",
+   "line": 2484,
+   "kind": "decl",
+   "claim": "D-072: LinearizedSS is a FlightPhysics component, not Redstone API (prior art; lead)",
+   "evidence": "src/library.jl:1"
+  },
+  {
+   "id": "L6e-030",
+   "file": "design/log.md",
+   "line": 2648,
+   "kind": "decl",
+   "claim": "D-077: continuous allocator takes (c, ::Type{T}) (now ws_init)",
+   "evidence": "src/declare.jl:131"
+  },
+  {
+   "id": "L6e-032",
+   "file": "design/log.md",
+   "line": 2649,
+   "kind": "mech",
+   "claim": "D-077: the method is the allocator",
+   "evidence": "src/build.jl:1059"
+  },
+  {
+   "id": "L6e-033",
+   "file": "design/log.md",
+   "line": 2650,
+   "kind": "mech",
+   "claim": "D-077: allocator called per activation",
+   "evidence": "probe:127"
+  },
+  {
+   "id": "L6e-034",
+   "file": "design/log.md",
+   "line": 2650,
+   "kind": "mech",
+   "claim": "D-077: allocator called per scratch-store set",
+   "evidence": "src/build.jl:1474"
+  },
+  {
+   "id": "L6e-035",
+   "file": "design/log.md",
+   "line": 2724,
+   "kind": "decl",
+   "claim": "D-079: concrete nominal declarations",
+   "evidence": "src/declare.jl:185"
+  },
+  {
+   "id": "L6e-036",
+   "file": "design/log.md",
+   "line": 2725,
+   "kind": "decl",
+   "claim": "D-079: output_types (now y_types) takes the component alone on both tiers",
+   "evidence": "src/declare.jl:223"
+  },
+  {
+   "id": "L6e-038",
+   "file": "design/log.md",
+   "line": 2725,
+   "kind": "mech",
+   "claim": "D-079: per-activation cell types come from the framework leaf walk",
+   "evidence": "src/leaves.jl:231"
+  },
+  {
+   "id": "L6e-039",
+   "file": "design/log.md",
+   "line": 2726,
+   "kind": "law",
+   "claim": "D-079: Float64 leaves follow the activation scalar",
+   "evidence": "src/leaves.jl:281"
+  },
+  {
+   "id": "L6e-041",
+   "file": "design/log.md",
+   "line": 2727,
+   "kind": "law",
+   "claim": "D-079: Int/Bool/enum leaves pin",
+   "evidence": "probe:102"
+  },
+  {
+   "id": "L6e-042",
+   "file": "design/log.md",
+   "line": 2728,
+   "kind": "law",
+   "claim": "D-079: reference-typed (mutable) types pin",
+   "evidence": "probe:103"
+  },
+  {
+   "id": "L6e-043",
+   "file": "design/log.md",
+   "line": 2728,
+   "kind": "law",
+   "claim": "D-079: non-type (value) parameters pin",
+   "evidence": "src/leaves.jl:293"
+  },
+  {
+   "id": "L6e-044",
+   "file": "design/log.md",
+   "line": 2729,
+   "kind": "law",
+   "claim": "D-079: constructibility at the walked type is enforced at the Dual probe",
+   "evidence": "src/leaves.jl:314"
+  },
+  {
+   "id": "L6e-045",
+   "file": "design/log.md",
+   "line": 3834,
+   "kind": "law",
+   "claim": "D-111: x_projection joins the always-on check",
+   "evidence": "src/executor.jl:262"
+  },
+  {
+   "id": "L6e-046",
+   "file": "design/log.md",
+   "line": 3835,
+   "kind": "law",
+   "claim": "D-111: checked complete against X's shape at the activation T",
+   "evidence": "src/leaves.jl:409"
+  },
+  {
+   "id": "L6e-047",
+   "file": "design/log.md",
+   "line": 3836,
+   "kind": "law",
+   "claim": "D-111: same predicate as a handler's x key",
+   "evidence": "src/executor.jl:402"
+  },
+  {
+   "id": "L6e-048",
+   "file": "design/log.md",
+   "line": 3837,
+   "kind": "mech",
+   "claim": "D-111: projection written back wholesale at both schedule positions",
+   "evidence": "src/executor.jl:362"
+  },
+  {
+   "id": "L6e-049",
+   "file": "design/log.md",
+   "line": 6287,
+   "kind": "mech",
+   "claim": "D-162: per-eltype homogeneous cell stores",
+   "evidence": "probe:58"
+  },
+  {
+   "id": "L6e-050",
+   "file": "design/log.md",
+   "line": 6288,
+   "kind": "mech",
+   "claim": "D-162: cells flattened into one contiguous buffer per eltype",
+   "evidence": "src/store.jl:15"
+  },
+  {
+   "id": "L6e-051",
+   "file": "design/log.md",
+   "line": 6289,
+   "kind": "mech",
+   "claim": "D-162: build-time offsets carried in entry fields",
+   "evidence": "src/store.jl:11"
+  },
+  {
+   "id": "L6e-052",
+   "file": "design/log.md",
+   "line": 6289,
+   "kind": "mech",
+   "claim": "D-162: port type is the address token's parameter",
+   "evidence": "probe:60"
+  },
+  {
+   "id": "L6e-053",
+   "file": "design/log.md",
+   "line": 7286,
+   "kind": "law",
+   "claim": "D-183: workspace poisoning retired",
+   "evidence": "src/build.jl:1055"
+  },
+  {
+   "id": "L6e-055",
+   "file": "design/log.md",
+   "line": 7287,
+   "kind": "decl",
+   "claim": "D-183: workspace is opt-in",
+   "evidence": "src/declare.jl:146"
+  },
+  {
+   "id": "L6e-056",
+   "file": "design/log.md",
+   "line": 7289,
+   "kind": "law",
+   "claim": "D-183: contents at call entry unspecified beyond allocator structure",
+   "evidence": "src/declare.jl:146"
+  },
+  {
+   "id": "L6e-057",
+   "file": "design/log.md",
+   "line": 7290,
+   "kind": "law",
+   "claim": "D-183: no information carried between calls (contract only)",
+   "evidence": "src/declare.jl:146"
+  },
+  {
+   "id": "L6e-058",
+   "file": "design/log.md",
+   "line": 7621,
+   "kind": "law",
+   "claim": "D-190: no derivative_type declaration (lead)",
+   "evidence": "probe:106"
+  },
+  {
+   "id": "L6e-059",
+   "file": "design/log.md",
+   "line": 7621,
+   "kind": "law",
+   "claim": "D-190: Ẋ has X's shape at the activation scalar",
+   "evidence": "src/build.jl:1672"
+  },
+  {
+   "id": "L6e-060",
+   "file": "design/log.md",
+   "line": 8447,
+   "kind": "law",
+   "claim": "D-211: at most one container field is name-transparent",
+   "evidence": "src/declare.jl:331"
+  },
+  {
+   "id": "L6e-061",
+   "file": "design/log.md",
+   "line": 8449,
+   "kind": "decl",
+   "claim": "D-211: transparent_container(::T) = :field (MyType placeholder; lead)",
+   "evidence": "src/declare.jl:355"
+  },
+  {
+   "id": "L6e-062",
+   "file": "design/log.md",
+   "line": 8450,
+   "kind": "decl",
+   "claim": "D-211: default nothing",
+   "evidence": "probe:64"
+  },
+  {
+   "id": "L6e-063",
+   "file": "design/log.md",
+   "line": 8450,
+   "kind": "law",
+   "claim": "D-211: elements become children under bare keys",
+   "evidence": "probe:68"
+  },
+  {
+   "id": "L6e-064",
+   "file": "design/log.md",
+   "line": 8452,
+   "kind": "law",
+   "claim": "D-211: bare keys hold in wiring, sample_times keys and read paths",
+   "evidence": "probe:279"
+  },
+  {
+   "id": "L6e-065",
+   "file": "design/log.md",
+   "line": 8454,
+   "kind": "law",
+   "claim": "D-211: a bare-key collision with a sibling is a build error naming both",
+   "evidence": "probe:70"
+  },
+  {
+   "id": "L6e-066",
+   "file": "design/log.md",
+   "line": 8455,
+   "kind": "decl",
+   "claim": "D-211: Group declares children transparent",
+   "evidence": "src/assembly.jl:982"
+  },
+  {
+   "id": "L6e-067",
+   "file": "design/log.md",
+   "line": 8458,
+   "kind": "law",
+   "claim": "D-211: undeclared containers keep their key segment",
+   "evidence": "probe:77"
+  },
+  {
+   "id": "L6e-068",
+   "file": "design/log.md",
+   "line": 8459,
+   "kind": "law",
+   "claim": "D-211: D-207's one-level reading unchanged",
+   "evidence": "src/assembly.jl:283"
+  },
+  {
+   "id": "L6e-069",
+   "file": "design/log.md",
+   "line": 9599,
+   "kind": "law",
+   "claim": "D-235: one relation (embed-accept) at the probe and every table write",
+   "evidence": "src/store.jl:117"
+  },
+  {
+   "id": "L6e-070",
+   "file": "design/log.md",
+   "line": 9601,
+   "kind": "law",
+   "claim": "D-235: return held to the cell type the probe fixed",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "L6e-071",
+   "file": "design/log.md",
+   "line": 9602,
+   "kind": "mech",
+   "claim": "D-235: decided when the write method is generated",
+   "evidence": "src/store.jl:107"
+  },
+  {
+   "id": "L6e-072",
+   "file": "design/log.md",
+   "line": 9604,
+   "kind": "law",
+   "claim": "D-235: stage returns and x_deriv (lead state_derivative) take it",
+   "evidence": "src/executor.jl:176"
+  },
+  {
+   "id": "L6e-073",
+   "file": "design/log.md",
+   "line": 9605,
+   "kind": "law",
+   "claim": "D-235: x_projection (lead state_projection) and handler x take it",
+   "evidence": "src/executor.jl:402"
+  },
+  {
+   "id": "L6e-074",
+   "file": "design/log.md",
+   "line": 9606,
+   "kind": "mech",
+   "claim": "D-235: probe's state checks use the same relation",
+   "evidence": "src/build.jl:1222"
+  },
+  {
+   "id": "L6e-075",
+   "file": "design/log.md",
+   "line": 9607,
+   "kind": "mech",
+   "claim": "D-235: conformant return generates straight stores, else a ConformanceFailure throw",
+   "evidence": "src/leaves.jl:421"
+  },
+  {
+   "id": "L6e-076",
+   "file": "design/log.md",
+   "line": 9608,
+   "kind": "law",
+   "claim": "D-235: at runtime ConformanceFailure is a StepError species",
+   "evidence": "probe:89"
+  },
+  {
+   "id": "L6e-077",
+   "file": "design/log.md",
+   "line": 9780,
+   "kind": "law",
+   "claim": "D-238: lift V's Float64 to T where P has T, compare by identity",
+   "evidence": "src/leaves.jl:352"
+  },
+  {
+   "id": "L6e-078",
+   "file": "design/log.md",
+   "line": 9782,
+   "kind": "mech",
+   "claim": "D-238: always-on check and concrete wire arm share the form",
+   "evidence": "src/leaves.jl:381"
+  },
+  {
+   "id": "L6e-079",
+   "file": "design/log.md",
+   "line": 10897,
+   "kind": "mech",
+   "claim": "D-259: structure step takes the root instance and makes Structure",
+   "evidence": "src/build.jl:782"
+  },
+  {
+   "id": "L6e-080",
+   "file": "design/log.md",
+   "line": 10898,
+   "kind": "mech",
+   "claim": "D-259: nominal eval makes Dataflow (now Outputs, D-261), Events and the nominal activation (lead)",
+   "evidence": "src/build.jl:1001"
+  },
+  {
+   "id": "L6e-081",
+   "file": "design/log.md",
+   "line": 10899,
+   "kind": "mech",
+   "claim": "D-259: activation takes Structure, Outputs and nominal, makes Activation{T} (lead)",
+   "evidence": "src/build.jl:1030"
+  },
+  {
+   "id": "L6e-082",
+   "file": "design/log.md",
+   "line": 10904,
+   "kind": "law",
+   "claim": "D-259: each step is a barrier",
+   "evidence": "src/build.jl:792"
+  },
+  {
+   "id": "L6e-083",
+   "file": "design/log.md",
+   "line": 10905,
+   "kind": "law",
+   "claim": "D-259: no user stage code before the structure step completes",
+   "evidence": "src/assembly.jl:724"
+  },
+  {
+   "id": "L6e-084",
+   "file": "design/log.md",
+   "line": 10906,
+   "kind": "law",
+   "claim": "D-259: the nominal evaluation's Outputs/Events are names only",
+   "evidence": "src/build.jl:576"
+  },
+  {
+   "id": "L6e-085",
+   "file": "design/log.md",
+   "line": 10906,
+   "kind": "law",
+   "claim": "D-259: only activation re-runs per scalar",
+   "evidence": "src/build.jl:1030"
+  },
+  {
+   "id": "L6e-086",
+   "file": "design/log.md",
+   "line": 11438,
+   "kind": "law",
+   "claim": "D-264: a wire admits a frozen opaque leaf at an unpinned entry",
+   "evidence": "probe:100"
+  },
+  {
+   "id": "L6e-087",
+   "file": "design/log.md",
+   "line": 11440,
+   "kind": "law",
+   "claim": "D-264: the opaque identity rule governs stores only, never wires",
+   "evidence": "src/leaves.jl:355"
+  },
+  {
+   "id": "L6e-089",
+   "file": "design/log.md",
+   "line": 12791,
+   "kind": "decl",
+   "claim": "D-280: the sweep uses build(...; activations = (Float64, ProbeDual))",
+   "evidence": "test/test_build.jl:2293"
+  },
+  {
+   "id": "L6e-090",
+   "file": "design/log.md",
+   "line": 12867,
+   "kind": "mech",
+   "claim": "D-283: every rate compiles into an anchor-relative triple",
+   "evidence": "src/structure.jl:382"
+  },
+  {
+   "id": "L6e-091",
+   "file": "design/log.md",
+   "line": 12868,
+   "kind": "mech",
+   "claim": "D-283: deployment binds Δt_base against anchors by exact arithmetic",
+   "evidence": "src/deployment.jl:276"
+  },
+  {
+   "id": "L6e-092",
+   "file": "design/log.md",
+   "line": 12871,
+   "kind": "mech",
+   "claim": "D-283: sample_times fold down the tree into triples",
+   "evidence": "src/structure.jl:134"
+  },
+  {
+   "id": "L6e-093",
+   "file": "design/log.md",
+   "line": 12872,
+   "kind": "law",
+   "claim": "D-283: root seeds (A₀, 1, 0)",
+   "evidence": "src/structure.jl:442"
+  },
+  {
+   "id": "L6e-094",
+   "file": "design/log.md",
+   "line": 12872,
+   "kind": "law",
+   "claim": "D-283: anchor 0 is the symbolic base grid",
+   "evidence": "src/structure.jl:139"
+  },
+  {
+   "id": "L6e-095",
+   "file": "design/log.md",
+   "line": 12873,
+   "kind": "law",
+   "claim": "D-283: Relative steps to (a, K·mₛ, cₛ + φ·mₛ)",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "L6e-096",
+   "file": "design/log.md",
+   "line": 12874,
+   "kind": "law",
+   "claim": "D-283: Absolute severs and re-seeds (Aₖ, 1, 0)",
+   "evidence": "src/structure.jl:418"
+  },
+  {
+   "id": "L6e-097",
+   "file": "design/log.md",
+   "line": 12874,
+   "kind": "law",
+   "claim": "D-283: a nested anchor seeds again",
+   "evidence": "src/structure.jl:409"
+  },
+  {
+   "id": "L6e-098",
+   "file": "design/log.md",
+   "line": 12876,
+   "kind": "mech",
+   "claim": "D-283: anchor table plus component table with rate chain",
+   "evidence": "src/structure.jl:145"
+  },
+  {
+   "id": "L6e-099",
+   "file": "design/log.md",
+   "line": 12877,
+   "kind": "mech",
+   "claim": "D-283: final divisors wait for Δt_base",
+   "evidence": "src/deployment.jl:276"
+  },
+  {
+   "id": "L6e-100",
+   "file": "design/log.md",
+   "line": 12879,
+   "kind": "law",
+   "claim": "D-283: Δt_base binds from exactly one of three sources",
+   "evidence": "src/deployment.jl:249"
+  },
+  {
+   "id": "L6e-104",
+   "file": "design/log.md",
+   "line": 12882,
+   "kind": "law",
+   "claim": "D-283: derivation at the pool's GCD",
+   "evidence": "probe:155"
+  },
+  {
+   "id": "L6e-106",
+   "file": "design/log.md",
+   "line": 12885,
+   "kind": "law",
+   "claim": "D-283: derivation only when every discrete component is anchored",
+   "evidence": "probe:151"
+  },
+  {
+   "id": "L6e-107",
+   "file": "design/log.md",
+   "line": 12886,
+   "kind": "law",
+   "claim": "D-283: derivation only as Δt_base = :derive, never the default",
+   "evidence": "src/deployment.jl:253"
+  },
+  {
+   "id": "L6e-108",
+   "file": "design/log.md",
+   "line": 12888,
+   "kind": "law",
+   "claim": "D-283: pool is every anchor period plus every nonzero offset",
+   "evidence": "probe:154"
+  },
+  {
+   "id": "L6e-109",
+   "file": "design/log.md",
+   "line": 12889,
+   "kind": "law",
+   "claim": "D-283: Δt_base admissible iff it divides the pool's GCD",
+   "evidence": "src/deployment.jl:279"
+  },
+  {
+   "id": "L6e-110",
+   "file": "design/log.md",
+   "line": 12891,
+   "kind": "law",
+   "claim": "D-283: inexact anchor counts are DeploymentInvalid naming scope and key",
+   "evidence": "probe:158"
+  },
+  {
+   "id": "L6e-111",
+   "file": "design/log.md",
+   "line": 12893,
+   "kind": "mech",
+   "claim": "D-283: one multiply-add per component gives (D, Φ, Δt)",
+   "evidence": "src/deployment.jl:302"
+  },
+  {
+   "id": "L6e-112",
+   "file": "design/log.md",
+   "line": 13351,
+   "kind": "law",
+   "claim": "D-291: one (D, Φ) pair per discrete component",
+   "evidence": "src/deployment.jl:36"
+  },
+  {
+   "id": "L6e-113",
+   "file": "design/log.md",
+   "line": 13352,
+   "kind": "law",
+   "claim": "D-291: D = K·Dₛ, Φ = Φₛ + φ·Dₛ",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "L6e-114",
+   "file": "design/log.md",
+   "line": 13353,
+   "kind": "law",
+   "claim": "D-291: residue 0 ≤ Φ < D kept with no normalization",
+   "evidence": "src/structure.jl:396"
+  },
+  {
+   "id": "L6e-115",
+   "file": "design/log.md",
+   "line": 13355,
+   "kind": "law",
+   "claim": "D-291: gate is (tick − Φ) % D == 0",
+   "evidence": "src/executor.jl:516"
+  },
+  {
+   "id": "L6e-116",
+   "file": "design/log.md",
+   "line": 13356,
+   "kind": "law",
+   "claim": "D-291: at boundary zero the gate at 0 admits Φ = 0, nothing else implements it",
+   "evidence": "src/executor.jl:512"
+  },
+  {
+   "id": "L6e-117",
+   "file": "design/log.md",
+   "line": 13357,
+   "kind": "law",
+   "claim": "D-291: the due set governs s_update calls alone (D-205)",
+   "evidence": "src/executor.jl:519"
+  },
+  {
+   "id": "L6e-118",
+   "file": "design/log.md",
+   "line": 13359,
+   "kind": "law",
+   "claim": "D-291: K = 1 admits no stagger",
+   "evidence": "probe:165"
+  },
+  {
+   "id": "L6e-119",
+   "file": "design/log.md",
+   "line": 13360,
+   "kind": "law",
+   "claim": "D-291: a relative phase never refines the base grid",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "L6e-120",
+   "file": "design/log.md",
+   "line": 13361,
+   "kind": "law",
+   "claim": "D-291: Δt stays D·Δt_base",
+   "evidence": "probe:164"
+  },
+  {
+   "id": "L6e-121",
+   "file": "design/log.md",
+   "line": 13366,
+   "kind": "law",
+   "claim": "D-291: never-cache-Δt holds, Δt is in the discrete bundle",
+   "evidence": "src/declare.jl:904"
+  },
+  {
+   "id": "L6e-122",
+   "file": "design/log.md",
+   "line": 13367,
+   "kind": "law",
+   "claim": "D-291: absolute pinning from outside a subtree's contract is rejected",
+   "evidence": "src/structure.jl:345"
+  },
+  {
+   "id": "L6e-123",
+   "file": "design/log.md",
+   "line": 13470,
+   "kind": "law",
+   "claim": "D-295: walk clause binds continuous consumers only",
+   "evidence": "src/build.jl:880"
+  },
+  {
+   "id": "L6e-124",
+   "file": "design/log.md",
+   "line": 13471,
+   "kind": "law",
+   "claim": "D-295: discrete consumers take the bound check only",
+   "evidence": "src/build.jl:872"
+  },
+  {
+   "id": "L6e-125",
+   "file": "design/log.md",
+   "line": 13473,
+   "kind": "law",
+   "claim": "D-295: continuous → discrete wires are legal",
+   "evidence": "probe:173"
+  },
+  {
+   "id": "L6e-126",
+   "file": "design/log.md",
+   "line": 13475,
+   "kind": "law",
+   "claim": "D-295: the genericity obligation binds unpinned entries only",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "L6e-127",
+   "file": "design/log.md",
+   "line": 13477,
+   "kind": "mech",
+   "claim": "D-295: obligation checked by the Dual probe",
+   "evidence": "src/build.jl:1030"
+  },
+  {
+   "id": "L6e-128",
+   "file": "design/log.md",
+   "line": 13477,
+   "kind": "law",
+   "claim": "D-295: a Pinned entry imposes no obligation",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "L6e-129",
+   "file": "design/log.md",
+   "line": 13479,
+   "kind": "law",
+   "claim": "D-295: a root input's type is its entry at Float64",
+   "evidence": "src/build.jl:927"
+  },
+  {
+   "id": "L6e-130",
+   "file": "design/log.md",
+   "line": 13480,
+   "kind": "law",
+   "claim": "D-295: root-input cells follow the entry retyped at T",
+   "evidence": "src/build.jl:522"
+  },
+  {
+   "id": "L6e-131",
+   "file": "design/log.md",
+   "line": 13481,
+   "kind": "law",
+   "claim": "D-295: an unpinned root input is a lawful B tap",
+   "evidence": "src/precompile.jl:66"
+  },
+  {
+   "id": "L6e-132",
+   "file": "design/log.md",
+   "line": 13482,
+   "kind": "law",
+   "claim": "D-295: a Pinned root input is unseedable",
+   "evidence": "probe:184"
+  },
+  {
+   "id": "L6e-133",
+   "file": "design/log.md",
+   "line": 13483,
+   "kind": "law",
+   "claim": "D-295: stores take no marker; Pinned has no place in a store",
+   "evidence": "probe:229"
+  },
+  {
+   "id": "L6e-134",
+   "file": "design/log.md",
+   "line": 13483,
+   "kind": "law",
+   "claim": "D-295: the x_init-derived type walks",
+   "evidence": "src/leaves.jl:231"
+  },
+  {
+   "id": "L6e-135",
+   "file": "design/log.md",
+   "line": 13484,
+   "kind": "law",
+   "claim": "D-295: m_init and s_init pin wholesale",
+   "evidence": "src/build.jl:1708"
+  },
+  {
+   "id": "L6e-136",
+   "file": "design/log.md",
+   "line": 13809,
+   "kind": "law",
+   "claim": "D-304: x_init is flat, each field one leaf",
+   "evidence": "probe:210"
+  },
+  {
+   "id": "L6e-137",
+   "file": "design/log.md",
+   "line": 13811,
+   "kind": "law",
+   "claim": "D-304: the closed-vocabulary check refuses nesting",
+   "evidence": "probe:210"
+  },
+  {
+   "id": "L6e-138",
+   "file": "design/log.md",
+   "line": 13816,
+   "kind": "law",
+   "claim": "D-304: a struct nesting a Symbol is no s/m field",
+   "evidence": "probe:217"
+  },
+  {
+   "id": "L6e-139",
+   "file": "design/log.md",
+   "line": 13817,
+   "kind": "mech",
+   "claim": "D-304: one exact predicate per field, no recursion",
+   "evidence": "src/assembly.jl:713"
+  },
+  {
+   "id": "L6e-140",
+   "file": "design/log.md",
+   "line": 13819,
+   "kind": "law",
+   "claim": "D-304: no arithmetic on s and m stores",
+   "evidence": "src/build.jl:1708"
+  },
+  {
+   "id": "L6e-141",
+   "file": "design/log.md",
+   "line": 13821,
+   "kind": "law",
+   "claim": "D-304: type stability under Dual is not a conformance predicate",
+   "evidence": "src/build.jl:1672"
+  },
+  {
+   "id": "L6e-142",
+   "file": "design/log.md",
+   "line": 13823,
+   "kind": "law",
+   "claim": "D-304: differentiation participation is never probe-inferred",
+   "evidence": "src/leaves.jl:302"
+  },
+  {
+   "id": "L6e-143",
+   "file": "design/log.md",
+   "line": 13872,
+   "kind": "law",
+   "claim": "D-306: a workspace is never a condition target",
+   "evidence": "probe:132"
+  },
+  {
+   "id": "L6e-144",
+   "file": "design/log.md",
+   "line": 13874,
+   "kind": "law",
+   "claim": "D-306: a plan configured at allocation is valid from allocation on",
+   "evidence": "src/build.jl:1474"
+  },
+  {
+   "id": "L6e-145",
+   "file": "design/log.md",
+   "line": 13894,
+   "kind": "law",
+   "claim": "D-307: no ::Float64 argument annotations on continuous math",
+   "evidence": "src/library.jl:1633"
+  },
+  {
+   "id": "L6e-146",
+   "file": "design/log.md",
+   "line": 13895,
+   "kind": "law",
+   "claim": "D-307: no Float64-pinned intermediates",
+   "evidence": "test/test_library.jl:1304"
+  },
+  {
+   "id": "L6e-147",
+   "file": "design/log.md",
+   "line": 13896,
+   "kind": "law",
+   "claim": "D-307: no ::SomeType{Float64} return annotations (placeholder; lead)",
+   "evidence": "src/library.jl:1633"
+  },
+  {
+   "id": "L6e-148",
+   "file": "design/log.md",
+   "line": 13896,
+   "kind": "law",
+   "claim": "D-307: table data pinned, query coordinate walked",
+   "evidence": "src/leaves.jl:231"
+  },
+  {
+   "id": "L6e-149",
+   "file": "design/log.md",
+   "line": 14956,
+   "kind": "law",
+   "claim": "D-321: re-emitting a frozen handle needs a pinned output",
+   "evidence": "probe:202"
+  },
+  {
+   "id": "L6e-150",
+   "file": "design/log.md",
+   "line": 14957,
+   "kind": "mech",
+   "claim": "D-321: the store identity rule refuses the handle at an unpinned output",
+   "evidence": "src/leaves.jl:355"
+  },
+  {
+   "id": "L6e-151",
+   "file": "design/log.md",
+   "line": 14959,
+   "kind": "law",
+   "claim": "D-321: a pin at a promoting input fails at the first nominal build, at the wire",
+   "evidence": "probe:193"
+  },
+  {
+   "id": "L6e-152",
+   "file": "design/log.md",
+   "line": 14985,
+   "kind": "law",
+   "claim": "D-322: an unconnected input is never bubbled up",
+   "evidence": "probe:232"
+  },
+  {
+   "id": "L6e-153",
+   "file": "design/log.md",
+   "line": 14987,
+   "kind": "law",
+   "claim": "D-322: unconnected and two-producers checks are decided at the root build",
+   "evidence": "src/structure.jl:448"
+  },
+  {
+   "id": "L6e-154",
+   "file": "design/log.md",
+   "line": 14988,
+   "kind": "law",
+   "claim": "D-322: neither is validated by a separate per-level build",
+   "evidence": "src/structure.jl:703"
+  },
+  {
+   "id": "L6e-155",
+   "file": "design/log.md",
+   "line": 15008,
+   "kind": "law",
+   "claim": "D-323: no aggregation mechanism, no multi-connection ports",
+   "evidence": "probe:233"
+  },
+  {
+   "id": "L6e-156",
+   "file": "design/log.md",
+   "line": 15009,
+   "kind": "law",
+   "claim": "D-323: no declared fold ops and no identity elements",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "L6e-157",
+   "file": "design/log.md",
+   "line": 15010,
+   "kind": "law",
+   "claim": "D-323: fold machinery retired, zero-contributor total included",
+   "evidence": "src/library.jl:346"
+  },
+  {
+   "id": "L6e-158",
+   "file": "design/log.md",
+   "line": 15012,
+   "kind": "mech",
+   "claim": "D-323: a junction's fold is stage-2 code at the site",
+   "evidence": "src/library.jl:119"
+  },
+  {
+   "id": "L6e-159",
+   "file": "design/log.md",
+   "line": 15014,
+   "kind": "law",
+   "claim": "D-323: every contribution to a total is a declared wire",
+   "evidence": "src/structure.jl:703"
+  },
+  {
+   "id": "L6e-160",
+   "file": "design/log.md",
+   "line": 15040,
+   "kind": "law",
+   "claim": "D-324: an unfed input is UnconnectedInput at the root build",
+   "evidence": "probe:232"
+  },
+  {
+   "id": "L6e-161",
+   "file": "design/log.md",
+   "line": 15042,
+   "kind": "law",
+   "claim": "D-324: no declaration gives an input a default",
+   "evidence": "src/declare.jl:747"
+  },
+  {
+   "id": "L6e-162",
+   "file": "design/log.md",
+   "line": 16976,
+   "kind": "mech",
+   "claim": "D-414: service walk follows declared children",
+   "evidence": "src/structure.jl:1116"
+  },
+  {
+   "id": "L6e-163",
+   "file": "design/log.md",
+   "line": 16976,
+   "kind": "law",
+   "claim": "D-414: refuses an unknown segment with the siblings",
+   "evidence": "src/structure.jl:1137"
+  },
+  {
+   "id": "L6e-164",
+   "file": "design/log.md",
+   "line": 16977,
+   "kind": "law",
+   "claim": "D-414: no refusal past a generically held child",
+   "evidence": "src/structure.jl:1106"
+  },
+  {
+   "id": "L6e-165",
+   "file": "design/log.md",
+   "line": 16978,
+   "kind": "mech",
+   "claim": "D-414: every service client resolves under that one walk",
+   "evidence": "src/conditions.jl:352"
+  },
+  {
+   "id": "L6e-166",
+   "file": "design/log.md",
+   "line": 16982,
+   "kind": "law",
+   "claim": "D-414: :past_generic retired from PathResolution (lead)",
+   "evidence": "src/diagnostics.jl:513"
+  },
+  {
+   "id": "L6e-167",
+   "file": "design/log.md",
+   "line": 16983,
+   "kind": "law",
+   "claim": "D-414: a deep path resolves wherever the structure has it",
+   "evidence": "src/structure.jl:1106"
+  },
+  {
+   "id": "L6e-168",
+   "file": "design/log.md",
+   "line": 16984,
+   "kind": "mech",
+   "claim": "D-414: at walks each prefix from the level reached",
+   "evidence": "src/readers.jl:739"
+  },
+  {
+   "id": "L6e-169",
+   "file": "design/log.md",
+   "line": 16986,
+   "kind": "mech",
+   "claim": "D-414: at rebases every entry and selector below",
+   "evidence": "src/readers.jl:757"
+  },
+  {
+   "id": "L6e-170",
+   "file": "design/log.md",
+   "line": 16988,
+   "kind": "law",
+   "claim": "D-414: wiring's one-level rule untouched, separate code",
+   "evidence": "src/structure.jl:20"
+  },
+  {
+   "id": "L6e-171",
+   "file": "design/log.md",
+   "line": 16990,
+   "kind": "law",
+   "claim": "D-414: no client enforces a generic-holding rule",
+   "evidence": "src/structure.jl:1106"
+  },
+  {
+   "id": "L6e-172",
+   "file": "design/log.md",
+   "line": 16992,
+   "kind": "law",
+   "claim": "D-414: locality law is guidance, not a framework check",
+   "evidence": "src/structure.jl:1116"
+  },
+  {
+   "id": "L6e-173",
+   "file": "design/log.md",
+   "line": 16995,
+   "kind": "decl",
+   "claim": "D-414: get_face remains the read",
+   "evidence": "src/readers.jl:147"
+  },
+  {
+   "id": "L6e-174",
+   "file": "design/log.md",
+   "line": 18394,
+   "kind": "law",
+   "claim": "D-440: port/state/modes refuse an unknown path as PathResolution :unknown_child",
+   "evidence": "probe:239"
+  },
+  {
+   "id": "L6e-175",
+   "file": "design/log.md",
+   "line": 18396,
+   "kind": "law",
+   "claim": "D-440: the longest known prefix is the level",
+   "evidence": "src/build.jl:391"
+  },
+  {
+   "id": "L6e-176",
+   "file": "design/log.md",
+   "line": 18397,
+   "kind": "law",
+   "claim": "D-440: that level's children are the did-you-mean",
+   "evidence": "probe:240"
+  },
+  {
+   "id": "L6e-177",
+   "file": "design/log.md",
+   "line": 18400,
+   "kind": "law",
+   "claim": "D-440: an unknown port name is ArgumentError listing the ports",
+   "evidence": "probe:246"
+  },
+  {
+   "id": "L6e-178",
+   "file": "design/log.md",
+   "line": 18402,
+   "kind": "law",
+   "claim": "D-440: state/modes return nothing where no store of the kind",
+   "evidence": "probe:270"
+  },
+  {
+   "id": "L6e-179",
+   "file": "design/log.md",
+   "line": 21115,
+   "kind": "decl",
+   "claim": "D-478: tick period and phase are written D and Φ",
+   "evidence": "src/declare.jl:435"
+  },
+  {
+   "id": "L6e-180",
+   "file": "design/log.md",
+   "line": 21124,
+   "kind": "decl",
+   "claim": "D-478: the seconds pair is Δt and τ",
+   "evidence": "src/declare.jl:473"
+  },
+  {
+   "id": "L6e-181",
+   "file": "design/log.md",
+   "line": 21126,
+   "kind": "law",
+   "claim": "D-478: printed output writes the subscript",
+   "evidence": "probe:169"
+  },
+  {
+   "id": "L6e-182",
+   "file": "design/log.md",
+   "line": 21127,
+   "kind": "law",
+   "claim": "D-478: a bare D or Φ is a field name only",
+   "evidence": "src/structure.jl:135"
+  },
+  {
+   "id": "L6e-183",
+   "file": "design/log.md",
+   "line": 21128,
+   "kind": "law",
+   "claim": "D-478: D ≥ 1 and 0 ≤ Φ < D",
+   "evidence": "src/structure.jl:396"
+  },
+  {
+   "id": "L6e-184",
+   "file": "design/log.md",
+   "line": 21129,
+   "kind": "law",
+   "claim": "D-478: Dₖ(i) = Dⱼ(i)·Dₖ(j), Φₖ(i) = Φₖ(j) + Φⱼ(i)·Dₖ(j)",
+   "evidence": "src/structure.jl:398"
+  },
+  {
+   "id": "L6e-185",
+   "file": "design/log.md",
+   "line": 21131,
+   "kind": "law",
+   "claim": "D-478: Δt(i) = Dⱼ(i)·Δt(j)",
+   "evidence": "src/deployment.jl:304"
+  },
+  {
+   "id": "L6e-186",
+   "file": "design/log.md",
+   "line": 21132,
+   "kind": "decl",
+   "claim": "D-478: Relative takes (D, Φ) and its fields are D, Φ",
+   "evidence": "probe:166"
+  },
+  {
+   "id": "L6e-187",
+   "file": "design/log.md",
+   "line": 21135,
+   "kind": "decl",
+   "claim": "D-478: the fold's triple is (a, Dₐ, Φₐ)",
+   "evidence": "src/structure.jl:135"
+  }
+ ],
+ "counts": {
+  "law": 121,
+  "mech": 43,
+  "decl": 23,
+  "ex": 0,
+  "ptr": 9,
+  "why": 12,
+  "cite": 46,
+  "surface": 0,
+  "map": 0,
+  "docstring": 0
+ },
+ "notes": "I checked the Status line and the Position section of all 30 entries in my slice against W at cb398676. All 30 are ratified, and none carries a superseded chain. All 15 D-nnn citations in the Positions resolve to existing entries with link definitions: D-053, D-061, D-085, D-125, D-130, D-166, D-184, D-205, D-207, D-235, D-236, D-237, D-253 and D-437, with D-207 cited twice. D-166, which D-235 cites, is superseded by D-263, and D-263 is ratified. All 31 § and Appendix citations resolve to spec headings.\n\nI ran the probe twice: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/L6e/probe.jl. Lines from 262 on are the second run's additions.\n\nResults: 12 findings, 0 unverifiable. 10 are drift, and each names the later entry that moved the rule: D-274, D-273, D-475, D-263 (twice), D-165/D-194, D-469 and D-443 (three times). Most of these moves are already recorded in annotations on the entries themselves. Two are not drift:\n- D-280 is a deviation. The Dual sweep covers only zero-argument fixtures and skips 63 argument-taking ones. Only code_rules.md:213 records that scope.\n- D-183 is a defect. On its refusal path, conditions.jl:659-665 calls ws_init and then haskey on the result. With a workspace that is not a NamedTuple, a refused condition throws MethodError instead of ConditionResolution (probe:142).\n\nEvery lead ends in a row:\n- Dataflow, output_types, state_derivative and state_projection: ok. They were renamed by D-261 and D-267.\n- MyType and SomeType: ok. They are placeholders.\n- subsystem, delete_vars and LinearizedSS: ok. They are FlightPhysics prior art (spec.md:14506-14509).\n- get_*_ss and assign_*_ss!: ok. The entry itself deletes them.\n- derivative_type and past_generic: ok. Both are absent, as the entries rule.\n- capture, local_types and N_base (two leads): findings.\n\nReadings worth a verifier's eye:\n- D-079's \"Real type parameters\" may have meant Float64-valued parameters. Read literally, the code differs.\n- D-440's \"a snapshot\" applies to `port` only. state(::Snapshot) and modes(::Snapshot) do not exist (probe:254), and spec Appendix B lists port(snapshot) alone.\n- D-322's \"not validated level by level\": the root build's single walk catches a doubled feed at the level of the input_wires entry (structure.jl:653-668). I read that as within the root build and marked it ok.\n- D-259's \"products are names only\": I read it as the Outputs and Events, which spec.md:5011 matches.\n- ws_init ran 3 times for build(Float64, ProbeDual): once each in _nominal, probe_events and _activate. That is consistent with \"per activation\"."
+}

@@ -1,0 +1,122 @@
+{
+ "judgments": [
+  {
+   "id": "K6b-001",
+   "conforms": true,
+   "evidence": "src/library.jl:170 `y_direct(c::Fn, (; u)) = c.f(u)`: a stage body is an ordinary Julia method, so an expression like 2u + 3 is one line of a consumer's y_direct."
+  },
+  {
+   "id": "K6b-011",
+   "conforms": true,
+   "evidence": "src/library.jl:384 `s_update(::UnitDelay, (; u)) = u` makes it a discrete store, and the UnitDelay docstring (src/library.jl:372-375) says that breaking a loop with it is a modelling decision that moves the signal onto the discrete tier. spec.md §5.5 (line 1613) says the same: 'A unit delay is a modeling decision'."
+  },
+  {
+   "id": "K6b-012",
+   "conforms": false,
+   "evidence": "Probe lines 4-7: under a Dual activation, retype_entry gives Constant's y as Float64 (pinned, src/library.jl:350), Comparator's y as Bool (Pinned{Bool}), Freeze's y as Float64, and only FirstOrderLag's y walks to Dual. The discrete tier is exempt (src/library.jl:1509 'The discrete tier never follows the scalar of an activation'). In the glossary (spec.md:16851) walked, pinned and exempt are separate classes, so 'every library component walks' is false. Every component does run under Dual, though, since each passes the build's Dual probe.",
+   "class": "deviation",
+   "fix": "*Activation and pinning.* Every library component runs under `Dual` for linearization and trim, its walked entries following the scalar and its pinned ones declared, the discrete tier exempt.",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6b-019",
+   "conforms": false,
+   "evidence": "design/companions/library_inventory.md rows 241, 244, 298, 299, 331 and 354 carry the status 'not admitted'. An rg over the tables counts 33 'shipped' and 6 'not admitted' rows, and no 'candidate' or 'example first' row remains. Commit 2266e976 introduced not-admitted rows and 11753e8a added more. f9b4ccf9 ('closing the library's candidates') retired the last candidates. No code site is involved: the doc's status list is out of step with its own tables.",
+   "class": "drift",
+   "fix": "Status is one of *shipped*, *not admitted* (weighed and kept out), *candidate* (listed, built when wanted), or *example first* (built as an example model, promoted only if one form proves standard).",
+   "clear": false
+  },
+  {
+   "id": "K6b-022",
+   "conforms": false,
+   "evidence": "Probe lines 8-14. SumJunction gives in1..in3 and Unpack gives out1..out3, as the doc says. Other sides with several ports use other names: Switch (src/library.jl:261) is (in1, in2, select); PID is (r, y); its outputs are (u, u_raw); LimitedIntegrator's outputs are (out, saturation); Integrator(reset = true) is (u, reset); and Select's inputs take the enum's instance names. 'A side with several ports names them in1…inN' holds only for ports that are alike.",
+   "class": "deviation",
+   "fix": "a side with several ports alike names them `in1…inN`, as the junctions do, and `out1…outN` where a component splits one port into `N` ports alike; other ports take the names of what they carry.",
+   "clear": false,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6b-027",
+   "conforms": true,
+   "evidence": "src/library.jl:1005 `FirstOrderLag(; τ, x0 = 0.0)`, :771 `Backlash(; width, s0 = 0.0)`, and Relay, Step, Delay, PID and GaussianWhiteNoise all take their required parameters as keywords with no default. The positional cases (Constant, UnitDelay, Source, Fn, Junction) each have one required parameter, which line 148 of the doc already carves out."
+  },
+  {
+   "id": "K6b-039",
+   "conforms": false,
+   "evidence": "Probe line 1: `Constant(value = 1.0)` throws MethodError. Constant has no keyword form, and its docstring (src/library.jl:330) shows `Constant(value)`. In the doc, 'Its docstring shows the keyword form, and its tests call it' follows the Constant sentence, so it reads as if about Constant. The sentence was written (64d83500) about the keyword-constructed component whose struct keeps its positional constructor, but its current place makes the claim false for Constant.",
+   "class": "deviation",
+   "fix": "The struct keeps its positional constructor, while its docstring shows the keyword form and its tests call it. A component with one required parameter, such as `Constant(value)`, takes it positionally.",
+   "clear": true,
+   "backing_entry": ""
+  },
+  {
+   "id": "K6b-038",
+   "conforms": true,
+   "evidence": "src/leaves.jl:282-285: retype rebuilds `P.name.wrapper{retype.(P.parameters)...}` and returns a parameterless type unchanged. Probe lines 15-16: retype(Dual, Flat) is Flat (its Float64 field stays pinned), while Par{Float64} becomes Par{Dual}."
+  },
+  {
+   "id": "K6b-050",
+   "conforms": true,
+   "evidence": "Switch defines no state_events method (src/library.jl:259-262), so the default in src/declare.jl:571 `state_events(::Any) = (;)` applies. Probe line 17 gives NamedTuple(). The docstring (src/library.jl:247) says the jump lands where select flips."
+  },
+  {
+   "id": "K6b-060",
+   "conforms": true,
+   "evidence": "src/library.jl:231 `y_types(::Fields{V}) = NamedTuple{fieldnames(V)}(fieldtypes(V))`. Probe lines 18-19: Fields{Pose{Float64}} gives (pos = SVector{2,Float64}, heading = Float64, flag = Bool), with the struct field taken whole as one level, and the NamedTuple form gives its names."
+  },
+  {
+   "id": "K6b-070",
+   "conforms": true,
+   "evidence": "src/library.jl:1722 `advance_guard(c::Sequence{V, true}, (; t, m)) = m < length(c.times) ? t - c.times[m + 1] : -one(t)`. Probe lines 20-22 show the guard re-armed at m = 1 (-0.5) and parked at -1 after the last breakpoint. The non-localized form (:1723) is the Bool predicate `t >= times[m + 1]`, the same guard in its other form."
+  },
+  {
+   "id": "K6b-080",
+   "conforms": true,
+   "evidence": "src/library.jl:1276 `realization::StateSpace{N, 1, 1, ...}`, built at construction (:1281-1296). Probe lines 24-27: the realization is a StateSpace, the ports are (Float64, Float64), u0 = 3 starts it at x0 = [1.5] (the steady state), and an `x0` keyword throws MethodError."
+  },
+  {
+   "id": "K6b-090",
+   "conforms": true,
+   "evidence": "src/library.jl:1875-1879: reset_handler returns `(x = clamp.(x0, lower, upper), m = saturation_code.(x0, lower, upper))`, and state_events for R = true appends one `reset` event to the four limit events. Probe lines 29-31 show events (hit_upper, hit_lower, leave_upper, leave_lower, reset), x0 = 2 landing (x = 1.0, m = 1), and x0 = 0.5 landing (x = 0.5, m = 0)."
+  },
+  {
+   "id": "K6b-102",
+   "conforms": true,
+   "evidence": "src/library.jl:2233 `Comparator(; threshold = nothing, lower = nothing, upper = nothing, localized::Bool = true)`. Probe lines 32-34: the threshold-alone and both-limits forms each give Pinned{Bool}, and threshold together with lower is refused."
+  },
+  {
+   "id": "K6b-112",
+   "conforms": true,
+   "evidence": "src/library.jl:1385 and 1455: DiscreteStateSpace and DiscreteTransferFunction <: AbstractDiscreteLinearSystem{FT}. :1331 s_update stands in for x_deriv (probe lines 35-37: no x_deriv method, s_update from :1331). The docstring at :1366-1369 says the period is bound at deployment, so the component cannot check it."
+  },
+  {
+   "id": "K6b-122",
+   "conforms": true,
+   "evidence": "src/library.jl:2677 DiscretePID <: AbstractPID{V, Hold, Track, Fixed}. AbstractPID (:2374) carries signal_ports, u_types and parameters. The gate (gated_error, :2343) and the reference rule (correction_reference) are defined on its parent AbstractAntiWindupController, which DiscretePID reaches through AbstractPID (probe lines 38-39).",
+   "note": "The gate and the reference rule live one level up, on AbstractAntiWindupController, which the LQR trackers share too. So 'through AbstractPID' is true by inheritance but does not say which parent holds them."
+  },
+  {
+   "id": "K6b-132",
+   "conforms": true,
+   "evidence": "src/library.jl:2707: s_update stores `saturated = saturation_code.(y.u_raw, u_min, u_max)` at the tick, and :2695 `y_state(::DiscretePID, (; s)) = (saturated = s.saturated,)` publishes it from stage 1. Probe lines 40-42 show y_types with saturated::Int8 and the code stored from u_raw = 5 above u_max = 1 as 1."
+  },
+  {
+   "id": "K6b-100",
+   "conforms": false,
+   "evidence": "src/library.jl:1172-1189 coefficients_from_roots pairs each complex root with its conjugate, within 1e-12 of the root's magnitude, before the expansion, and refuses a root with no partner ('has no conjugate'). Its comment says that checking the expanded coefficients' imaginary parts was dropped because it misread rounding on long products. Probe lines 43-46: an unpaired root is refused, a ring of 10 conjugate pairs passes, and a pair off by 1e-9 is refused as unpaired. Commit deb0bb38 ('pair conjugate roots before the expansion') records the change.",
+   "class": "drift",
+   "fix": "Roots real or complex; a complex root with no conjugate partner, to a tolerance relative to the root, is refused, and the real coefficients then meet the existing refusals.",
+   "clear": true
+  },
+  {
+   "id": "K6b-101",
+   "conforms": false,
+   "evidence": "The shipped components go beyond the first two tranches: Comparator (src/library.jl:2229) and Sequence (:1703) came in increment 86, Fn (:159), Select (:308) and Fields (:221) in increment 88, Backlash (:767) as a loose commit, and Delay's taps in increment 89. No candidate row remains. The same paragraph (doc line 460) and commit f9b4ccf9 ('closing the library's candidates') record that increment 89 closed the list.",
+   "class": "drift",
+   "fix": "The shipped rows are the first two tranches and the candidates that followed, each when wanted, until increment 89 closed the list.",
+   "clear": false
+  }
+ ],
+ "notes": "I judged all 19 ids for slice K6b. 13 conform and 6 do not: K6b-012, K6b-022 and K6b-039 are deviations with no backing entry, and K6b-019, K6b-100 and K6b-101 are drift, recorded by commits 2266e976/11753e8a, deb0bb38 and f9b4ccf9. I ran the probe script once: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/K6b_v/probe.jl. The probe line numbers cited are lines of its output. I edited no tracked file and made no commit. I took the source line numbers from rg over W at cb398676. Two judgments depend on how a sentence is read. For K6b-012 I read 'walks' in the glossary's sense of walked, pinned or exempt; read loosely as 'runs under Dual', it would conform. For K6b-039 the stray 'Its docstring' sentence now reads as if about Constant. K6b-122 conforms by inheritance; the note under it says which parent holds the gate and the reference rule."
+}

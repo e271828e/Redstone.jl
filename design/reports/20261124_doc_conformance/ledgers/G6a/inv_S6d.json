@@ -1,0 +1,885 @@
+{
+ "rows": [],
+ "ok": [
+  {
+   "id": "S6d-001",
+   "file": "design/spec.md",
+   "line": 1296,
+   "kind": "decl",
+   "claim": "API names x_deriv, s_update, y_state, y_direct are the symbols' declarations",
+   "evidence": "src/declare.jl:653,685,715,740"
+  },
+  {
+   "id": "S6d-002",
+   "file": "design/spec.md",
+   "line": 1305,
+   "kind": "mech",
+   "claim": "y_state is y=h(x), y_direct is y=h(x,u): bundle of y_state has no u",
+   "evidence": "src/declare.jl:865"
+  },
+  {
+   "id": "S6d-003",
+   "file": "design/spec.md",
+   "line": 1319,
+   "kind": "law",
+   "claim": "a stage-2 (y_direct) port is the feedthrough case; stage-1 adds no graph edge",
+   "evidence": "src/build.jl:213"
+  },
+  {
+   "id": "S6d-004",
+   "file": "design/spec.md",
+   "line": 1321,
+   "kind": "law",
+   "claim": "modes count as state for the split: y_state bundle carries m",
+   "evidence": "src/declare.jl:861"
+  },
+  {
+   "id": "S6d-005",
+   "file": "design/spec.md",
+   "line": 1325,
+   "kind": "decl",
+   "claim": "update law named by tier (x_deriv vs s_update), output stages shared by both tiers",
+   "evidence": "src/declare.jl:836"
+  },
+  {
+   "id": "S6d-006",
+   "file": "design/spec.md",
+   "line": 1327,
+   "kind": "law",
+   "claim": "a stateful primitive's declarations must agree on one tier",
+   "evidence": "src/assembly.jl:763,790"
+  },
+  {
+   "id": "S6d-007",
+   "file": "design/spec.md",
+   "line": 1334,
+   "kind": "law",
+   "claim": "y_state bundle carries no u",
+   "evidence": "src/declare.jl:865"
+  },
+  {
+   "id": "S6d-008",
+   "file": "design/spec.md",
+   "line": 1337,
+   "kind": "law",
+   "claim": "stage-1 ports add no feedthrough edge (loops break)",
+   "evidence": "src/build.jl:213"
+  },
+  {
+   "id": "S6d-009",
+   "file": "design/spec.md",
+   "line": 1340,
+   "kind": "mech",
+   "claim": "stage 1 exists only when the component has state-derived ports; else absent",
+   "evidence": "src/build.jl:207"
+  },
+  {
+   "id": "S6d-010",
+   "file": "design/spec.md",
+   "line": 1343,
+   "kind": "law",
+   "claim": "every declared output is produced by stage 1 or stage 2, else DeclaredNotProduced",
+   "evidence": "src/build.jl:1113"
+  },
+  {
+   "id": "S6d-011",
+   "file": "design/spec.md",
+   "line": 1346,
+   "kind": "ex",
+   "claim": "y_state(c,b) = (; q = b.x.q) is a valid one-method exposure",
+   "evidence": "src/declare.jl:865"
+  },
+  {
+   "id": "S6d-012",
+   "file": "design/spec.md",
+   "line": 1349,
+   "kind": "decl",
+   "claim": "y_direct receives all wired inputs (u) plus the stage-1 hand-down",
+   "evidence": "src/declare.jl:866-869"
+  },
+  {
+   "id": "S6d-013",
+   "file": "design/spec.md",
+   "line": 1352,
+   "kind": "decl",
+   "claim": "hand-down is y_x on the continuous tier, y_s on the discrete tier",
+   "evidence": "src/declare.jl:869"
+  },
+  {
+   "id": "S6d-014",
+   "file": "design/spec.md",
+   "line": 1354,
+   "kind": "mech",
+   "claim": "stage 2 also receives the state views (x/m or s)",
+   "evidence": "src/declare.jl:860-863"
+  },
+  {
+   "id": "S6d-015",
+   "file": "design/spec.md",
+   "line": 1356,
+   "kind": "law",
+   "claim": "every stage-2 output is presumed dependent on every wired input",
+   "evidence": "src/build.jl:207-215"
+  },
+  {
+   "id": "S6d-016",
+   "file": "design/spec.md",
+   "line": 1359,
+   "kind": "mech",
+   "claim": "x_deriv and s_update run after the sweep against the complete table",
+   "evidence": "src/model.jl:617-621"
+  },
+  {
+   "id": "S6d-017",
+   "file": "design/spec.md",
+   "line": 1362,
+   "kind": "mech",
+   "claim": "update bundle carries y, the component's own stage-2 ports included",
+   "evidence": "src/declare.jl:870-871"
+  },
+  {
+   "id": "S6d-018",
+   "file": "design/spec.md",
+   "line": 1364,
+   "kind": "mech",
+   "claim": "fused idiom: x_deriv/s_update can copy published y",
+   "evidence": "src/declare.jl:870"
+  },
+  {
+   "id": "S6d-019",
+   "file": "design/spec.md",
+   "line": 1368,
+   "kind": "law",
+   "claim": "state types are immutable so output stages cannot mutate state",
+   "evidence": "src/assembly.jl:710"
+  },
+  {
+   "id": "S6d-020",
+   "file": "design/spec.md",
+   "line": 1376,
+   "kind": "mech",
+   "claim": "f receives x,m,y,u,t: update bundle fields x,m,u,y,t",
+   "evidence": "src/declare.jl:858-876"
+  },
+  {
+   "id": "S6d-021",
+   "file": "design/spec.md",
+   "line": 1393,
+   "kind": "ex",
+   "claim": "accelerometer reads f_c_c; name exists in §8.6 IMU example",
+   "evidence": "spec.md:4213"
+  },
+  {
+   "id": "S6d-022",
+   "file": "design/spec.md",
+   "line": 1399,
+   "kind": "law",
+   "claim": "execution runs stage 1 in any order, stage 2 topologically, then x_deriv",
+   "evidence": "src/model.jl:617-621"
+  },
+  {
+   "id": "S6d-023",
+   "file": "design/spec.md",
+   "line": 1405,
+   "kind": "mech",
+   "claim": "evaluating the RHS runs sweep_1, sweep_2, then rhs",
+   "evidence": "src/model.jl:617-621"
+  },
+  {
+   "id": "S6d-024",
+   "file": "design/spec.md",
+   "line": 1409,
+   "kind": "mech",
+   "claim": "a step's first evaluation may run the flow alone over a fresh table",
+   "evidence": "src/model.jl:630-635"
+  },
+  {
+   "id": "S6d-025",
+   "file": "design/spec.md",
+   "line": 1412,
+   "kind": "law",
+   "claim": "no discrete stage runs inside a step (interior sweep, also in localization)",
+   "evidence": "src/frame.jl:223-258"
+  },
+  {
+   "id": "S6d-026",
+   "file": "design/spec.md",
+   "line": 1414,
+   "kind": "law",
+   "claim": "discrete cells hold across the step",
+   "evidence": "src/model.jl:617-621"
+  },
+  {
+   "id": "S6d-027",
+   "file": "design/spec.md",
+   "line": 1418,
+   "kind": "mech",
+   "claim": "boundary: integrate, project, boundary sweep, all guards once, fire eligible",
+   "evidence": "src/model.jl:652-657,738-775"
+  },
+  {
+   "id": "S6d-028",
+   "file": "design/spec.md",
+   "line": 1424,
+   "kind": "mech",
+   "claim": "handlers see a fresh y and the state itself",
+   "evidence": "src/model.jl:738-745"
+  },
+  {
+   "id": "S6d-029",
+   "file": "design/spec.md",
+   "line": 1426,
+   "kind": "ex",
+   "claim": "reset map (; x = (; x..., ω = 0.0)) as a handler return",
+   "evidence": "src/executor.jl:403-407"
+  },
+  {
+   "id": "S6d-030",
+   "file": "design/spec.md",
+   "line": 1428,
+   "kind": "mech",
+   "claim": "each firing is handler then x_projection",
+   "evidence": "src/executor.jl:392-395"
+  },
+  {
+   "id": "S6d-031",
+   "file": "design/spec.md",
+   "line": 1429,
+   "kind": "law",
+   "claim": "sweep-guards-handlers iterates to quiescence, same-boundary firing",
+   "evidence": "src/model.jl:744-775"
+  },
+  {
+   "id": "S6d-032",
+   "file": "design/spec.md",
+   "line": 1435,
+   "kind": "mech",
+   "claim": "boundary sequence ends with due updates then publish",
+   "evidence": "src/model.jl:652-657"
+  },
+  {
+   "id": "S6d-033",
+   "file": "design/spec.md",
+   "line": 1437,
+   "kind": "mech",
+   "claim": "due discrete output stages run inside every round's sweep",
+   "evidence": "src/model.jl:693-700"
+  },
+  {
+   "id": "S6d-034",
+   "file": "design/spec.md",
+   "line": 1439,
+   "kind": "law",
+   "claim": "every due update runs only after quiescence, writing its own s",
+   "evidence": "src/model.jl:655-656"
+  },
+  {
+   "id": "S6d-035",
+   "file": "design/spec.md",
+   "line": 1443,
+   "kind": "law",
+   "claim": "a tick never triggers an event: ticks run after the event phase",
+   "evidence": "src/model.jl:655-656"
+  },
+  {
+   "id": "S6d-036",
+   "file": "design/spec.md",
+   "line": 1447,
+   "kind": "mech",
+   "claim": "a model with no continuous state integrates empty each step end",
+   "evidence": "src/model.jl:818-821"
+  },
+  {
+   "id": "S6d-037",
+   "file": "design/spec.md",
+   "line": 1451,
+   "kind": "law",
+   "claim": "x_projection runs after integration and after a handler x-reset",
+   "evidence": "src/model.jl:654; src/executor.jl:395"
+  },
+  {
+   "id": "S6d-038",
+   "file": "design/spec.md",
+   "line": 1458,
+   "kind": "law",
+   "claim": "the table is written only by sweeps",
+   "evidence": "src/model.jl:738-775"
+  },
+  {
+   "id": "S6d-039",
+   "file": "design/spec.md",
+   "line": 1461,
+   "kind": "law",
+   "claim": "handler sees its guard's round: own y, foreign u, x/m from that sweep",
+   "evidence": "src/model.jl:744-775"
+  },
+  {
+   "id": "S6d-040",
+   "file": "design/spec.md",
+   "line": 1465,
+   "kind": "law",
+   "claim": "firing rule: fires iff holds now, last sample not holding, budget unspent",
+   "evidence": "src/model.jl:750-751"
+  },
+  {
+   "id": "S6d-041",
+   "file": "design/spec.md",
+   "line": 1468,
+   "kind": "law",
+   "claim": "a persistent predicate fires once",
+   "evidence": "src/model.jl:769"
+  },
+  {
+   "id": "S6d-042",
+   "file": "design/spec.md",
+   "line": 1469,
+   "kind": "law",
+   "claim": "a falsified-then-enabled predicate fires again within the boundary",
+   "evidence": "src/model.jl:769,751"
+  },
+  {
+   "id": "S6d-043",
+   "file": "design/spec.md",
+   "line": 1472,
+   "kind": "law",
+   "claim": "each component fires at most one event per round, first in order",
+   "evidence": "src/model.jl:760-763"
+  },
+  {
+   "id": "S6d-044",
+   "file": "design/spec.md",
+   "line": 1474,
+   "kind": "law",
+   "claim": "a blocked event keeps its edge into the next round",
+   "evidence": "src/model.jl:769"
+  },
+  {
+   "id": "S6d-045",
+   "file": "design/spec.md",
+   "line": 1478,
+   "kind": "law",
+   "claim": "spent budget drops further edges, other events continue",
+   "evidence": "src/model.jl:751-757,769"
+  },
+  {
+   "id": "S6d-046",
+   "file": "design/spec.md",
+   "line": 1481,
+   "kind": "law",
+   "claim": "at quiescence each event's final sample becomes its prior",
+   "evidence": "src/model.jl:777"
+  },
+  {
+   "id": "S6d-047",
+   "file": "design/spec.md",
+   "line": 1487,
+   "kind": "mech",
+   "claim": "initialization runs one ordinary boundary at t0 with empty integration",
+   "evidence": "src/model.jl:664,702"
+  },
+  {
+   "id": "S6d-048",
+   "file": "design/spec.md",
+   "line": 1489,
+   "kind": "law",
+   "claim": "boundary zero publishes every discrete output stage, due or not",
+   "evidence": "src/model.jl:664,702"
+  },
+  {
+   "id": "S6d-049",
+   "file": "design/spec.md",
+   "line": 1490,
+   "kind": "law",
+   "claim": "only phase-zero components run their update at boundary zero",
+   "evidence": "src/model.jl:664,702"
+  },
+  {
+   "id": "S6d-050",
+   "file": "design/spec.md",
+   "line": 1492,
+   "kind": "law",
+   "claim": "every prior starts not holding",
+   "evidence": "src/model.jl:332"
+  },
+  {
+   "id": "S6d-051",
+   "file": "design/spec.md",
+   "line": 1494,
+   "kind": "law",
+   "claim": "restoring a checkpoint runs no boundary zero and keeps priors",
+   "evidence": "src/sim.jl:1034; src/model.jl:1186"
+  },
+  {
+   "id": "S6d-052",
+   "file": "design/spec.md",
+   "line": 1506,
+   "kind": "mech",
+   "claim": "scheduled gains travel as inputs; the graph carries gain dependence",
+   "evidence": "src/build.jl:207-215"
+  },
+  {
+   "id": "S6d-053",
+   "file": "design/spec.md",
+   "line": 1511,
+   "kind": "mech",
+   "claim": "trace records inputs and replay re-drives the loop from it",
+   "evidence": "src/sim.jl:732-734"
+  },
+  {
+   "id": "S6d-054",
+   "file": "design/spec.md",
+   "line": 1514,
+   "kind": "mech",
+   "claim": "linearization holds unseeded root inputs constant, differentiates a scheduled gain",
+   "evidence": "src/linearize.jl:226-228"
+  },
+  {
+   "id": "S6d-055",
+   "file": "design/spec.md",
+   "line": 1519,
+   "kind": "law",
+   "claim": "commanded reset of a discrete component is a same-tick input in the output stage",
+   "evidence": "probe:170"
+  },
+  {
+   "id": "S6d-056",
+   "file": "design/spec.md",
+   "line": 1526,
+   "kind": "ex",
+   "claim": "PI y_direct/s_update example runs as written",
+   "evidence": "probe:170"
+  },
+  {
+   "id": "S6d-057",
+   "file": "design/spec.md",
+   "line": 1533,
+   "kind": "law",
+   "claim": "honoring reset only in s_update gives a stale output at engagement, lands next tick",
+   "evidence": "probe:170"
+  },
+  {
+   "id": "S6d-058",
+   "file": "design/spec.md",
+   "line": 1537,
+   "kind": "law",
+   "claim": "no diagnostic catches the stale-output spelling (PIlate builds clean)",
+   "evidence": "probe:170"
+  },
+  {
+   "id": "S6d-059",
+   "file": "design/spec.md",
+   "line": 1541,
+   "kind": "law",
+   "claim": "only handlers write x, so a continuous reset is an event",
+   "evidence": "src/executor.jl:403-407"
+  },
+  {
+   "id": "S6d-060",
+   "file": "design/spec.md",
+   "line": 1544,
+   "kind": "mech",
+   "claim": "reset is edge-triggered on a Bool input (Integrator reset)",
+   "evidence": "src/library.jl:444-454"
+  },
+  {
+   "id": "S6d-061",
+   "file": "design/spec.md",
+   "line": 1553,
+   "kind": "law",
+   "claim": "artificial loop: port-level acyclic yet no evaluation order",
+   "evidence": "probe:129"
+  },
+  {
+   "id": "S6d-062",
+   "file": "design/spec.md",
+   "line": 1559,
+   "kind": "law",
+   "claim": "the two-stage split removes the rigid-body loop (stage-1 skip)",
+   "evidence": "probe:146"
+  },
+  {
+   "id": "S6d-063",
+   "file": "design/spec.md",
+   "line": 1563,
+   "kind": "law",
+   "claim": "reality of a cycle is decided hop by hop",
+   "evidence": "src/tracer.jl:358-374"
+  },
+  {
+   "id": "S6d-064",
+   "file": "design/spec.md",
+   "line": 1565,
+   "kind": "law",
+   "claim": "a hop holds iff the member's stage-2 routes the face to the port",
+   "evidence": "src/tracer.jl:351-357"
+  },
+  {
+   "id": "S6d-065",
+   "file": "design/spec.md",
+   "line": 1568,
+   "kind": "law",
+   "claim": "real iff a cycle survives over holding hops, artificial otherwise",
+   "evidence": "src/tracer.jl:374; probe:121,129"
+  },
+  {
+   "id": "S6d-066",
+   "file": "design/spec.md",
+   "line": 1580,
+   "kind": "mech",
+   "claim": "re-factoring: an input used only in a fallback is a false dependency",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "S6d-067",
+   "file": "design/spec.md",
+   "line": 1590,
+   "kind": "law",
+   "claim": "component split makes shared intermediates declared public ports",
+   "evidence": "src/build.jl:200-203"
+  },
+  {
+   "id": "S6d-068",
+   "file": "design/spec.md",
+   "line": 1597,
+   "kind": "law",
+   "claim": "an x_deriv-only input still adds a feedthrough edge when stage-2 outputs exist",
+   "evidence": "probe:139"
+  },
+  {
+   "id": "S6d-069",
+   "file": "design/spec.md",
+   "line": 1599,
+   "kind": "mech",
+   "claim": "integrator-shaped components have no stage-2 outputs, so no edge",
+   "evidence": "probe:146"
+  },
+  {
+   "id": "S6d-070",
+   "file": "design/spec.md",
+   "line": 1604,
+   "kind": "law",
+   "claim": "an algebraic loop is a build error",
+   "evidence": "probe:121"
+  },
+  {
+   "id": "S6d-071",
+   "file": "design/spec.md",
+   "line": 1614,
+   "kind": "mech",
+   "claim": "UnitDelay moves the signal onto the discrete tier",
+   "evidence": "probe:149"
+  },
+  {
+   "id": "S6d-072",
+   "file": "design/spec.md",
+   "line": 1616,
+   "kind": "law",
+   "claim": "no implicit delay or per-step loop solving exists: loop stays an error",
+   "evidence": "src/build.jl:234"
+  },
+  {
+   "id": "S6d-073",
+   "file": "design/spec.md",
+   "line": 1623,
+   "kind": "mech",
+   "claim": "tracer classifies a rejected cycle real or artificial",
+   "evidence": "src/tracer.jl:374; probe:121,129"
+  },
+  {
+   "id": "S6d-074",
+   "file": "design/spec.md",
+   "line": 1627,
+   "kind": "law",
+   "claim": "tracing is diagnostic only; ordering comes from the structural split",
+   "evidence": "src/tracer.jl:1-5; src/build.jl:197-240"
+  },
+  {
+   "id": "S6d-075",
+   "file": "design/spec.md",
+   "line": 1656,
+   "kind": "decl",
+   "claim": "assembly has three wiring declarations local_wires, input_wires, output_wires",
+   "evidence": "src/structure.jl:609-611"
+  },
+  {
+   "id": "S6d-076",
+   "file": "design/spec.md",
+   "line": 1657,
+   "kind": "decl",
+   "claim": "local_wires pair wires one child's face to another's",
+   "evidence": "src/structure.jl:626-637"
+  },
+  {
+   "id": "S6d-077",
+   "file": "design/spec.md",
+   "line": 1658,
+   "kind": "decl",
+   "claim": "input_wires entry routes a face to an immediate child's face",
+   "evidence": "src/structure.jl:645-662"
+  },
+  {
+   "id": "S6d-078",
+   "file": "design/spec.md",
+   "line": 1659,
+   "kind": "decl",
+   "claim": "output_wires entry sources a face from an immediate child's face",
+   "evidence": "src/structure.jl:690-695"
+  },
+  {
+   "id": "S6d-079",
+   "file": "design/spec.md",
+   "line": 1664,
+   "kind": "law",
+   "claim": "every endpoint names an immediate child and one face",
+   "evidence": "probe:32,37,41"
+  },
+  {
+   "id": "S6d-080",
+   "file": "design/spec.md",
+   "line": 1666,
+   "kind": "law",
+   "claim": "bare contract endpoint names its default face u or y",
+   "evidence": "probe:64"
+  },
+  {
+   "id": "S6d-081",
+   "file": "design/spec.md",
+   "line": 1668,
+   "kind": "law",
+   "claim": "one-level rule covers all three declarations",
+   "evidence": "probe:32,37,41"
+  },
+  {
+   "id": "S6d-082",
+   "file": "design/spec.md",
+   "line": 1669,
+   "kind": "law",
+   "claim": "container elements count as immediate children",
+   "evidence": "probe:104,108"
+  },
+  {
+   "id": "S6d-083",
+   "file": "design/spec.md",
+   "line": 1672,
+   "kind": "law",
+   "claim": "a deeper path is a build error (PathResolution :reaches_past)",
+   "evidence": "probe:32,37,41"
+  },
+  {
+   "id": "S6d-084",
+   "file": "design/spec.md",
+   "line": 1675,
+   "kind": "law",
+   "claim": "condition fragments follow locality as guidance with no check",
+   "evidence": "src/conditions.jl:626; design/log.md:2223"
+  },
+  {
+   "id": "S6d-085",
+   "file": "design/spec.md",
+   "line": 1686,
+   "kind": "ex",
+   "claim": "Cessna172/Systems/Ldg trn fan-out sketch builds (names are placeholders)",
+   "evidence": "probe:27"
+  },
+  {
+   "id": "S6d-086",
+   "file": "design/spec.md",
+   "line": 1688,
+   "kind": "law",
+   "claim": "fan-out at the diverging level via a tuple of child faces",
+   "evidence": "probe:27"
+  },
+  {
+   "id": "S6d-087",
+   "file": "design/spec.md",
+   "line": 1697,
+   "kind": "mech",
+   "claim": "only faces cross an assembly boundary (face graph total)",
+   "evidence": "src/structure.jl:20-95"
+  },
+  {
+   "id": "S6d-088",
+   "file": "design/spec.md",
+   "line": 1706,
+   "kind": "mech",
+   "claim": "condition `at` prefix stopping at a face resolves through level-row wires",
+   "evidence": "src/conditions.jl:626"
+  },
+  {
+   "id": "S6d-089",
+   "file": "design/spec.md",
+   "line": 1711,
+   "kind": "mech",
+   "claim": "§8.8 computes entries from one authored list (input_passthrough)",
+   "evidence": "src/assembly.jl:500-520"
+  },
+  {
+   "id": "S6d-090",
+   "file": "design/spec.md",
+   "line": 1714,
+   "kind": "law",
+   "claim": "bound law at Float64: producer type <: entry, equal for concrete",
+   "evidence": "src/leaves.jl:380; probe:109,110"
+  },
+  {
+   "id": "S6d-091",
+   "file": "design/spec.md",
+   "line": 1717,
+   "kind": "law",
+   "claim": "bound law refusal is WireTypeMismatch",
+   "evidence": "src/build.jl:891; probe:109"
+  },
+  {
+   "id": "S6d-092",
+   "file": "design/spec.md",
+   "line": 1719,
+   "kind": "law",
+   "claim": "walk clause applies to a continuous consumer only",
+   "evidence": "src/build.jl:896"
+  },
+  {
+   "id": "S6d-093",
+   "file": "design/spec.md",
+   "line": 1721,
+   "kind": "law",
+   "claim": "walking producer requires an unpinned entry (WalkingFaceAtFrozenEntry)",
+   "evidence": "src/build.jl:897-903; probe:111"
+  },
+  {
+   "id": "S6d-094",
+   "file": "design/spec.md",
+   "line": 1723,
+   "kind": "law",
+   "claim": "pinned producer satisfies either entry",
+   "evidence": "probe:99"
+  },
+  {
+   "id": "S6d-095",
+   "file": "design/spec.md",
+   "line": 1724,
+   "kind": "law",
+   "claim": "continuous producer into a discrete consumer takes the bound law alone",
+   "evidence": "src/build.jl:896; probe:112"
+  },
+  {
+   "id": "S6d-096",
+   "file": "design/spec.md",
+   "line": 1727,
+   "kind": "law",
+   "claim": "an opaque handle passes as the producer's cell (frozen producer)",
+   "evidence": "probe:113,114"
+  },
+  {
+   "id": "S6d-097",
+   "file": "design/spec.md",
+   "line": 1729,
+   "kind": "law",
+   "claim": "a discrete producer of a handle is admitted the same way",
+   "evidence": "probe:113"
+  },
+  {
+   "id": "S6d-098",
+   "file": "design/spec.md",
+   "line": 1731,
+   "kind": "law",
+   "claim": "a walking handle into a pinned handle entry is refused",
+   "evidence": "probe:114"
+  },
+  {
+   "id": "S6d-099",
+   "file": "design/spec.md",
+   "line": 1733,
+   "kind": "law",
+   "claim": "fan-out is free: one producer feeds many consumers",
+   "evidence": "probe:47"
+  },
+  {
+   "id": "S6d-100",
+   "file": "design/spec.md",
+   "line": 1737,
+   "kind": "law",
+   "claim": "every input takes exactly one connection (TwoProducers)",
+   "evidence": "probe:43,45"
+  },
+  {
+   "id": "S6d-101",
+   "file": "design/spec.md",
+   "line": 1740,
+   "kind": "law",
+   "claim": "the one-connection rule spans levels",
+   "evidence": "probe:50; src/structure.jl:650-672"
+  },
+  {
+   "id": "S6d-102",
+   "file": "design/spec.md",
+   "line": 1745,
+   "kind": "law",
+   "claim": "no auto-bubbling of unconnected inputs",
+   "evidence": "probe:61"
+  },
+  {
+   "id": "S6d-103",
+   "file": "design/spec.md",
+   "line": 1746,
+   "kind": "law",
+   "claim": "an unconnected input is a build error (UnconnectedInput)",
+   "evidence": "probe:53"
+  },
+  {
+   "id": "S6d-104",
+   "file": "design/spec.md",
+   "line": 1748,
+   "kind": "law",
+   "claim": "every feed chain ends at a producer or a root input",
+   "evidence": "probe:61; src/structure.jl:446-456"
+  },
+  {
+   "id": "S6d-105",
+   "file": "design/spec.md",
+   "line": 1750,
+   "kind": "law",
+   "claim": "a root input is the root component's own input face fed by no component",
+   "evidence": "src/structure.jl:675-680; probe:27"
+  },
+  {
+   "id": "S6d-106",
+   "file": "design/spec.md",
+   "line": 1753,
+   "kind": "law",
+   "claim": "unconnected outputs are legal, silently, with no build warning",
+   "evidence": "probe:55"
+  },
+  {
+   "id": "S6d-107",
+   "file": "design/spec.md",
+   "line": 1393,
+   "kind": "ex",
+   "claim": "lead f_c_c: exists in the strapdown IMU example (spec.md:4213)",
+   "evidence": "spec.md:4213"
+  },
+  {
+   "id": "S6d-108",
+   "file": "design/spec.md",
+   "line": 1546,
+   "kind": "ex",
+   "claim": "lead wow/frc/strut.wow: illustrative Flight.jl gear names, a placeholder",
+   "evidence": "placeholder; Integrator face `reset` at src/library.jl:451"
+  },
+  {
+   "id": "S6d-109",
+   "file": "design/spec.md",
+   "line": 1678,
+   "kind": "ex",
+   "claim": "lead Cessna172, Systems, Ldg, nose, trn, ldg, systems: sketch placeholders",
+   "evidence": "probe:27"
+  }
+ ],
+ "counts": {
+  "law": 66,
+  "mech": 27,
+  "decl": 8,
+  "ex": 8,
+  "ptr": 38,
+  "why": 64
+ }
+}

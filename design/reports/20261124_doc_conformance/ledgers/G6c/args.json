@@ -1,0 +1,39 @@
+{
+ "group": "G6c",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "cb398676",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "K6e",
+   "kind": "companion",
+   "file": "design/companions/pid_anti_windup.md, whole",
+   "lines": 624,
+   "map": "759-849 (src/library.jl), 907-1025 (src/model.jl)"
+  },
+  {
+   "key": "L6a",
+   "kind": "log",
+   "n": 30,
+   "map": "329-365 (src/declare.jl), 38-93 (src/assembly.jl), 105-186 (src/build.jl), 1387-1461 (src/structure.jl), 1348-1386 (src/store.jl), 733-758 (src/leaves.jl), 674-732 (src/frame.jl), 759-849 (src/library.jl)"
+  },
+  {
+   "key": "L6b",
+   "kind": "log",
+   "n": 30,
+   "map": "329-365 (src/declare.jl), 38-93 (src/assembly.jl), 105-186 (src/build.jl), 1387-1461 (src/structure.jl), 1348-1386 (src/store.jl), 733-758 (src/leaves.jl), 674-732 (src/frame.jl), 759-849 (src/library.jl)"
+  },
+  {
+   "key": "L6c",
+   "kind": "log",
+   "n": 30,
+   "map": "329-365 (src/declare.jl), 38-93 (src/assembly.jl), 105-186 (src/build.jl), 1387-1461 (src/structure.jl), 1348-1386 (src/store.jl), 733-758 (src/leaves.jl), 674-732 (src/frame.jl), 759-849 (src/library.jl)"
+  },
+  {
+   "key": "L6d",
+   "kind": "log",
+   "n": 30,
+   "map": "329-365 (src/declare.jl), 38-93 (src/assembly.jl), 105-186 (src/build.jl), 1387-1461 (src/structure.jl), 1348-1386 (src/store.jl), 733-758 (src/leaves.jl), 674-732 (src/frame.jl), 759-849 (src/library.jl)"
+  }
+ ]
+}

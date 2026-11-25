@@ -1,0 +1,95 @@
+{
+ "judgments": [
+  {
+   "id": "S6e-001",
+   "conforms": true,
+   "evidence": "src/structure.jl and src/diagnostics.jl:418 TwoProducers ('every input takes exactly one connection'); probe.jl P3 double-wiring s/in2 is refused as TwoProducers. Aggregation is the ordinary Junction component, src/library.jl:42-119, with no framework fold machinery."
+  },
+  {
+   "id": "S6e-005",
+   "conforms": false,
+   "evidence": "src/library.jl:24 and :118, y_types(::Junction{In, Out}) = Out, which is bare, so the face is `y`. probe.jl P1 shows `s/out` refused as UnknownPort, 'its faces are in1, in2, in3, y'.",
+   "class": "drift",
+   "fix": "A junction is an ordinary stateless component with N inputs of one type, `in1` to `inN`, and one output, `y`.",
+   "clear": true,
+   "note": "Moved by commit 4d79875c, which declared the library's single-port blocks bare. D-437 names the bare output face `y`. §13.7 (spec.md:12195) already says the face is y."
+  },
+  {
+   "id": "S6e-011",
+   "conforms": false,
+   "evidence": "src/library.jl:118 bare output face `y`; probe.jl P1 `\"s/out\" => ...` gives UnknownPort, and `s/y` builds.",
+   "class": "drift",
+   "fix": "    \"wr_sum/y\"    => \"dynamics/wr_ext\",",
+   "clear": true,
+   "note": "Same move as S6e-005 (commit 4d79875c, D-437)."
+  },
+  {
+   "id": "S6e-012",
+   "conforms": true,
+   "evidence": "probe.jl P2: SumJunction{Float64,4} with three wires gives UnconnectedInput '`s/in4` declared Float64 is fed by nothing' (src/diagnostics.jl:402-416)."
+  },
+  {
+   "id": "S6e-014",
+   "conforms": false,
+   "evidence": "probe.jl P4: a SumJunction{Float64,2} with a third contributor kept on `in3` is refused as UnknownPort ('`s/in3` names no `in3` on `s`'), not as an unconnected input or a double-wired slot. A too-high arity gives UnconnectedInput (P2), and a doubled slot gives TwoProducers (P3).",
+   "class": "deviation",
+   "fix": "A stale arity surfaces as one or the other, or as an unknown port when a contributor is wired past the last slot.",
+   "clear": true,
+   "note": "The loudness the doc promises holds. Only the list of diagnostics is short by UnknownPort. No log entry records the narrower list."
+  },
+  {
+   "id": "S6e-016",
+   "conforms": false,
+   "evidence": "src/library.jl:118 bare output `y`; probe.jl P1 and P6b: `s/out` names no port.",
+   "class": "drift",
+   "fix": "- The aggregate is a first-class signal. `\"wr_sum/y\"` is an ordinary port.",
+   "clear": true,
+   "note": "Same move as S6e-005 (commit 4d79875c, D-437)."
+  },
+  {
+   "id": "S6e-022",
+   "conforms": false,
+   "evidence": "probe.jl P6: output_wires (\"s/y\" => \"wrench\") builds, while P6b (\"s/out\" => \"wrench\") is UnknownPort. src/library.jl:118.",
+   "class": "drift",
+   "fix": "The junction is a component inside the assembly, and the assembly exports its `y` port ([§8.6][s8-6]).",
+   "clear": true,
+   "note": "Same move as S6e-005 (commit 4d79875c, D-437)."
+  },
+  {
+   "id": "S6e-025",
+   "conforms": true,
+   "evidence": "probe.jl P5: build of SumJunction{Float64,0} is refused (BundleFieldError, y_direct destructures `u` but the empty u_types declares none). src/library.jl:116-119."
+  },
+  {
+   "id": "S6e-034",
+   "conforms": true,
+   "evidence": "src/frame.jl:165 (non-due frame top or step end) and src/frame.jl:318 (t* boundary) call run_boundary!(model, nothing). Only a due instant passes a tick index (frame.jl:163, model.jl:652-664)."
+  },
+  {
+   "id": "S6e-043",
+   "conforms": true,
+   "evidence": "src/model.jl:663 run_ticks!(::Model, ::Nothing) = nothing, and model.jl:705-706 _round!(exec, ::Nothing) runs the sweep ungated by any tick. frame.jl:165 passes nothing at a non-due frame top or step end."
+  },
+  {
+   "id": "S6e-052",
+   "conforms": true,
+   "evidence": "src/build.jl:993-1001 'runs the whole nominal probe chain once'; probe.jl P7 counts one y_state call during build()."
+  },
+  {
+   "id": "S6e-061",
+   "conforms": true,
+   "evidence": "src/structure.jl:337-340 records :multiplier for D < 1 and :phase outside 0 ≤ Φ < D. probe.jl P8: Relative(0), Relative(2,2) and Relative(2,-1) are RatesViolation, and Relative(3,2) builds."
+  },
+  {
+   "id": "S6e-070",
+   "conforms": true,
+   "evidence": "src/structure.jl:307-311 seeds the root at (A₀, 1, 0), and anchor 0 is the base grid. src/deployment.jl:278 D_anchors, Φ_anchors = [1], [0] for anchor 0. probe.jl P9 rows on anchor 0 have Δt = D·Δt_base."
+  },
+  {
+   "id": "S6e-085",
+   "conforms": true,
+   "evidence": "src/structure.jl:847 _grid_report reads only structure.anchors. src/deployment.jl:241-247 builds the pool from anchors alone. probe.jl P9: Relative(5,2) and Relative(2,1) leave Δt_base = Δt_frame = 1//10, the grid report is empty, and the rows are (5,2) and (2,1)."
+  }
+ ],
+ "notes": "I checked all 14 claims against W at cb398676 with one probe script, run twice: /Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance/probes/S6e_v/probe.jl. Before the second run I fixed a wrong-tier declaration in the probe's Counted component. I edited no tracked file. Four claims fail as drift, and all four share one cause. The §6.2 example still calls the junction's output `out`, but the code names it `y` (src/library.jl:118). Commit 4d79875c made that change and D-437 records it. Those claims are S6e-005, -011, -016 and -022. §6.2 has two more `out` spellings that I did not judge: the wire at spec.md:1793 is the S6e-011 fix itself, and spec.md:4720 is outside this slice. S6e-014 is a deviation: an arity left too small, with the extra contributor wired to a slot that does not exist, fails as UnknownPort. That is a third error the doc does not list. The other nine claims match the code."
+}

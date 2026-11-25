@@ -1,0 +1,31 @@
+{
+ "S6f": {
+  "spec": [
+   [
+    2163,
+    2470
+   ]
+  ]
+ },
+ "K6a": {
+  "files": [
+   "design/companions/event_visibility_walkthrough.md",
+   "design/companions/fused_evaluation_lineage.md"
+  ]
+ },
+ "K6b": {
+  "files": [
+   "design/companions/library_inventory.md"
+  ]
+ },
+ "K6c": {
+  "files": [
+   "design/companions/linear_systems.md"
+  ]
+ },
+ "K6d": {
+  "files": [
+   "design/companions/lqr_tracker.md"
+  ]
+ }
+}

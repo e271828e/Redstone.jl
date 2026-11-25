@@ -1,0 +1,35 @@
+{
+ "group": "G6d",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "cb398676",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "L6e",
+   "kind": "log",
+   "n": 30,
+   "map": "329-365 (src/declare.jl), 38-93 (src/assembly.jl), 105-186 (src/build.jl), 1387-1461 (src/structure.jl), 1348-1386 (src/store.jl), 733-758 (src/leaves.jl), 674-732 (src/frame.jl), 759-849 (src/library.jl)"
+  },
+  {
+   "key": "CV6a",
+   "kind": "coverage",
+   "files": "src/store.jl, src/leaves.jl and src/bindings.jl whole",
+   "docs": "design/spec.md §1 to §7 (lines 1-2470) and §8.2 (rg -n '^### 8.2' design/spec.md)",
+   "map": "1348-1386 (src/store.jl), 733-758 (src/leaves.jl), 94-104 (src/bindings.jl)"
+  },
+  {
+   "key": "CV6b",
+   "kind": "coverage",
+   "files": "src/library.jl lines 1-1531",
+   "docs": "design/spec.md §1 to §7 (lines 1-2470), §13.7 (the component library section) and the library companions in design/companions/",
+   "map": "759-849 (src/library.jl)"
+  },
+  {
+   "key": "CV6c",
+   "kind": "coverage",
+   "files": "src/library.jl lines 1532-3063",
+   "docs": "design/spec.md §1 to §7 (lines 1-2470), §13.7 (the component library section) and the library companions in design/companions/",
+   "map": "759-849 (src/library.jl)"
+  }
+ ]
+}

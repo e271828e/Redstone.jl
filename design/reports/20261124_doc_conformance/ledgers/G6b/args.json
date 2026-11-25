@@ -1,0 +1,46 @@
+{
+ "group": "G6b",
+ "W": "/Users/miguel/.julia/dev/Redstone.jl-worktrees/doc_conformance",
+ "tip": "cb398676",
+ "R": "/Users/miguel/.julia/dev/Redstone.jl/design/reports/20261124_doc_conformance",
+ "slices": [
+  {
+   "key": "S6f",
+   "kind": "spec",
+   "range": [
+    2163,
+    2470
+   ],
+   "desc": "§7 state and data representation",
+   "map": "1348-1386 (src/store.jl), 733-758 (src/leaves.jl), 329-365 (src/declare.jl), 907-1025 (src/model.jl)"
+  },
+  {
+   "key": "K6a",
+   "kind": "companion",
+   "file": "design/companions/event_visibility_walkthrough.md and design/companions/fused_evaluation_lineage.md, both whole",
+   "lines": 297,
+   "map": "674-732 (src/frame.jl), 627-673 (src/executor.jl), 105-186 (src/build.jl)"
+  },
+  {
+   "key": "K6b",
+   "kind": "companion",
+   "file": "design/companions/library_inventory.md, whole",
+   "lines": 505,
+   "map": "759-849 (src/library.jl), 907-1025 (src/model.jl)"
+  },
+  {
+   "key": "K6c",
+   "kind": "companion",
+   "file": "design/companions/linear_systems.md, whole",
+   "lines": 453,
+   "map": "759-849 (src/library.jl), 907-1025 (src/model.jl), 850-906 (src/linearize.jl)"
+  },
+  {
+   "key": "K6d",
+   "kind": "companion",
+   "file": "design/companions/lqr_tracker.md, whole",
+   "lines": 428,
+   "map": "759-849 (src/library.jl), 907-1025 (src/model.jl)"
+  }
+ ]
+}
