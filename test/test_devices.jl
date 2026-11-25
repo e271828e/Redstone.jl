@@ -745,7 +745,7 @@ function test_devices()
 
     @testset "the pacing keywords and verbs validate, and every lifecycle state admits the verbs (§12.1, D-269)" begin
         sim = Simulation(fed(Exploder(), "arm"); Δt_frame = 1//10)
-        @test (pace(sim), margin(sim)) == (Inf, 0.002)   # the control plane's defaults
+        @test (pace(sim), margin(sim)) == (Inf, 0.003)   # the control plane's defaults
         @test lifecycle(sim) === :built && knob_round(sim) == (2.0, 0.01)
         init!(sim, set(u = (in = false,)))
         @test lifecycle(sim) === :initialized && knob_round(sim) == (2.0, 0.01)

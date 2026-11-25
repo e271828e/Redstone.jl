@@ -1245,7 +1245,7 @@ end
 # range checks follow the entry pass.
 """
     replay!(sim::Simulation, trc::Trace; to_boundary = nothing, to_time = nothing,
-            pace = Inf, margin = 0.002, t_end = Inf, ignore_stop_requests = (),
+            pace = Inf, margin = 0.003, t_end = Inf, ignore_stop_requests = (),
             trace = true, log = true, log_every = 1, log_max = 65536,
             restore = true) -> Nothing
 
@@ -1332,7 +1332,7 @@ Every refusal comes before any write.
 - `restore`: `false` to attach the recording without restoring its header.
 """
 function replay!(sim::Simulation, trc::Trace; to_boundary = nothing,
-                 to_time = nothing, pace = Inf, margin = 0.002, t_end = Inf,
+                 to_time = nothing, pace = Inf, margin = 0.003, t_end = Inf,
                  ignore_stop_requests = (),
                  trace = true, log = true, log_every = 1, log_max = 65536,
                  restore = true)
@@ -1484,7 +1484,7 @@ end
 # after an anchor runs at once. The two knobs are written to the control plane
 # at entry (§12.1, D-269).
 """
-    run!(sim::Simulation; pace = Inf, margin = 0.002, t_end = Inf,
+    run!(sim::Simulation; pace = Inf, margin = 0.003, t_end = Inf,
          ignore_stop_requests = ()) -> Nothing
 
 Advance the simulation [frame](@ref g-frame) by frame until a termination source
@@ -1559,7 +1559,7 @@ requester as `StopRequestInvalid`.
 - `ignore_stop_requests`: the stop requests this advance does not honour, `:all`
   or an iterable of the requesting [components](@ref g-component)' paths.
 """
-function run!(sim::Simulation; pace = Inf, margin = 0.002, t_end = Inf,
+function run!(sim::Simulation; pace = Inf, margin = 0.003, t_end = Inf,
               ignore_stop_requests = ())
     _assert_advanceable(sim, :run!)
     p, margin_seconds = _pace_value(pace, :run!), _margin_value(margin, :run!)   # D-269

@@ -49,7 +49,7 @@ per-run reset.
 
 `pace` and `margin` are §10.7's two knobs (D-269): the pace `p`, `Inf` being
 pacer-off rather than a limit value, and the wait's coarse/spin split in
-seconds, 2 ms by default. `pace!(sim, p)` and `margin!(sim, m)` write them
+seconds, 3 ms by default. `pace!(sim, p)` and `margin!(sim, m)` write them
 from any task in any lifecycle state, and `run!` and `replay!` write their
 keywords at entry. The loop reads them at frame top alone, `pace` for the
 anchor and both in the wait, so a change issued while a frame runs or waits
@@ -71,7 +71,7 @@ mutable struct Control
     join_timeout::Float64
 end
 Control(join_timeout::Float64) =
-    Control(nothing, true, false, Inf, 0.002, Threads.Condition(), 0, false, join_timeout)
+    Control(nothing, true, false, Inf, 0.003, Threads.Condition(), 0, false, join_timeout)
 
 # The stop word's one write path (§12.1, D-203): first CAS from empty wins —
 # the same arbitration as the loop reacting to the first holding stop request —
