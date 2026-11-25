@@ -37,8 +37,7 @@ among those survival sites. The state-declaration conversion below turns each
 The pass also parametrizes FlightPhysics' payload and value types, the walked
 class of [§7.2][s7-2], about 25 structs. These are the quaternion/attitude family,
 `Wrench`, `FrameTransform`, `MassProperties`, `KinData`, `AirData`, geodesy
-value types, `TerrainData` and continuous output structs. What actually needs
-genericity covers roughly half of Flight.jl's type inventory. `Quaternion`
+value types, `TerrainData` and continuous output structs. `Quaternion`
 becomes `Quaternion{N,T} <: AbstractVector{T}`. By invariance, `Float64`
 instances still match every existing `AbstractVector{Float64}` method, so
 existing behavior is untouched. Flight.jl's parameters and definitions, the
@@ -63,7 +62,7 @@ periphery-facing half of the `KinData` successor.
 
 **The supervisor seam.** The supervisor sitting above the compensators
 (section 2 of `flight_case_studies.md`) contributes three respellings. Compensator gains become input
-ports fed by scheduler components (about 7 for the C172X). Every
+ports fed by scheduler components. Every
 mode-transition latch is respelled as a same-tick reset. The gear's
 level-triggered reset becomes an edge event, and that last one lands on the
 *library* side.

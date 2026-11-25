@@ -6297,7 +6297,7 @@ section 4).
   `checkpoint`, `restore!`, `trim!` and `linearize` while the package
   precompiles, which adds about 12 s to its precompilation, 30 MB to its
   image and 0.08 s to loading it. On that loop a cold process pays under 0.1 s, and a first
-  `trim!` or `linearize` about 0.3 s and 0.1 s more. A component package's
+  `trim!` about 0.25 s more, under Julia 1.13. A component package's
   workload does the same for its types. That turns the time to first
   execution from a session tax into a CI artifact.
 - The optimization level is a knob for an iteration session. `-O0` about
