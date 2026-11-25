@@ -26,7 +26,9 @@ full-surface sweep under the four-class naming convention (§8.1, D-144):
 every API name is exported, renamed or left unexported. It also settles
 which fields are public, since `Model`'s docstring lists every field, `exec`
 and `frame_diag` included, while `Deployment` and `Schedule` list none and
-tests read `deployment.h`. It comes after the library has added its names;
+tests read `deployment.h`, and no doc lists the fields of `KindCounts`, which
+`WriterStatus` exposes (CV11a-004 of
+`design/reports/20261124_doc_conformance/ledgers/user_rows.md`). It comes after the library has added its names;
 the examples are a package of their own and add none.
 
 Two things wait on it. The descriptor writer's `@ref` pass targets exported

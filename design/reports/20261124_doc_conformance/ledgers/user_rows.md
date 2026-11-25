@@ -62,7 +62,8 @@ the verifier's probe.
 - **K8-027 and K8-046, wording.** The migration outline's counts: "roughly
   half of Flight.jl's type inventory" needs genericity (the verifier counts
   about a quarter of FlightPhysics' structs), and "about 7" scheduler
-  components (the verifier counts about 10).
+  components (the verifier counts about 10). Settled, `479ceea1`: both
+  estimates deleted.
 - **S8b-182, wording.** §8.2's `Pinned` hint names `F`; the message names the
   leaf. D-286 backs the doc's text, and L8b-070 repeats it in the log.
   Settled, `a991af00`.
@@ -102,11 +103,11 @@ the verifier's probe.
 - **S9c-154, wording.** The `Pinned` hint again; rule it with S8b-182.
   Settled, `a991af00`.
 - **S9d-057, wording.** §9.7's compile-cost figures no longer match the
-  measurements.
+  measurements. Settled, `479ceea1`.
 - **S9b-300, defect.** §9.3 says everything the probe writes is garbage
   after the build, but `init!` of a model at a non-nominal scalar leans on
   it. Proposed: establish the frozen discrete cells from a nominal round, as
-  the services' seeded half does.
+  the services' seeded half does. CV9a-049 waits on it.
 - **S9d, a thin inventory.** Its mid-tier inventory missed 3 of 9 sampled
   rows. A high-tier re-inventory of §9.7 and §9.8 is in G4b's args as S9d2.
 - **CV9a-049, wording.** §9.3's probe-scoped values: `compile` seeds every
@@ -172,7 +173,8 @@ the verifier's probe.
 - **S11c-089, defect.** `BindingContractMismatch` messages do not name the
   `is_input` and `is_output` traits, as §11.6 says every violation report
   does. Proposed: name both traits in the `:neither_side`, `:claims_missing`
-  and `:reads_missing` messages.
+  and `:reads_missing` messages. C2-073 waits on it: Appendix C and §11.6
+  promise the trait, the method and the direction.
 - **S11b-032 and S11c-107, gap.** The greedy standard GUI binding is owed by
   `pending.md`; no action.
 - **K11-002, wording.** The flight case studies say gain trajectories show
@@ -200,7 +202,8 @@ the verifier's probe.
   no action.
 - **CV11a-004, wording.** `KindCounts` is named only as "the per-kind
   counter record" in §11.8 and the `WriterStatus` docstring; its fields and
-  their order go undescribed.
+  their order go undescribed. Waits on the exported-name audit, which settles
+  which fields are public; `design/increments/roadmap_api_audit.md` lists it.
 
 ## G6, §1 to §7
 
@@ -210,7 +213,9 @@ the verifier's probe.
 - **S6c-001 and S6c-004, code or doc.** §4.3 and D-237 refuse a mutable type
   anywhere in a port value. The leaf walk exempts a mutable `Real` such as
   `BigFloat`, and never enters an opaque leaf. Either the code drops the
-  `Real` exemption, or §4.3 names both exemptions.
+  `Real` exemption, or §4.3 names both exemptions. K9b-041 waits on it: the
+  handle-walk companion and §8.2 say the mutable-parameter rule refuses a
+  `Matrix{Dual}` grid copy, and the probe built one without error.
 - **K6c-064, K6c-072 to K6c-074, K6d-115, K6d-118, K6d-119, measured
   figures.** The verifiers re-measured the linear-systems and LQR
   companions' tables: the last-bit lag output (…266, not …265), the
