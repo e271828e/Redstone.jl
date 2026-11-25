@@ -222,8 +222,10 @@ the verifier's probe.
   of continuous state; `x_projection` writes `x` back at every boundary too.
   D-141 backs the doc's text. Settled, `a991af00`.
 - **S6c-001 and S6c-004, code or doc.** §4.3 and D-237 refuse a mutable type
-  anywhere in a port value. The leaf walk exempts a mutable `Real` such as
-  `BigFloat`, and never enters an opaque leaf. K9b-041 waits on it: the
+  anywhere in a port value. The leaf walk exempts every `Real`, a mutable one
+  such as `BigInt` or a user's own included, and never enters an opaque leaf.
+  `BigFloat`, which the comment in leaves.jl and the ledger rows name as the
+  mutable one, is immutable on Julia 1.13. K9b-041 waits on it: the
   handle-walk companion and §8.2 say the mutable-parameter rule refuses a
   `Matrix{Dual}` grid copy, and the probe built one without error.
 - **K6c-064, K6c-072 to K6c-074, K6d-115, K6d-118, K6d-119, measured
