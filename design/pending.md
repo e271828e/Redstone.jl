@@ -20,8 +20,9 @@ item changes what the spec says, the spec edit is part of the item.
 - **The docs conformance audit.** The spec, the log, the docstrings, the
   companions and the rest of the docs are checked against the code, which
   is the source of truth, in both directions, and what drifted is fixed.
-  Stage reached: the §14 trial and groups G1 to G5 have run and their clear
-  fixes have landed. G6 (§1 to §7) is next, on the schedule the notes give.
+  Stage reached: the §14 trial and groups G1 to G6 have run and their clear
+  fixes have landed. G7 (the appendices and the user-facing docs) is next,
+  on the schedule the notes give.
   The state, the rulings, the group plan and the tools are in
   `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
   brief is `00_brief.md` beside it, and the rows that wait on the user are
