@@ -144,8 +144,8 @@ end
     end
 end
 
-# One boundary's capture: fresh buffers, one allocation per boundary — the
-# framework side of §9.8's scope, which carved publication and logging out.
+# One boundary's capture: a fresh buffer per eltype store — the framework side
+# of §9.8's scope, which carved publication and logging out.
 capture_stores(bundle::StoreBundle) = StoreBundle(map(cs -> CellStore(copy(cs.buffer)), bundle.stores))
 
 """

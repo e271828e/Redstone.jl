@@ -6,9 +6,8 @@
 # stored whole with its references — the field handle. The walk never looks
 # inside either.
 #
-# Shared by both candidates: the continuous state buffer is flat by decision
-# (§7.1), so *some* flatten/reconstruct machinery is needed either way. C2 then
-# reuses it for cells; C1 uses it only for state.
+# The continuous state buffer is flat by decision (§7.1), and the per-eltype
+# cell stores (D-162) reuse the same flatten/reconstruct machinery for cells.
 
 # D-237's opaque leaf: a concrete immutable type that is not isbits — a
 # handle, a struct holding a `Ref` — stored whole. A `Symbol` is one by ruling
@@ -25,8 +24,9 @@ _atom(::Type{P}) where {P} = P <: Real || P <: Enum || _opaque(P)
 """
     nleaves(P)
 
-Number of activation-scalar leaves a value of type `P` occupies in a flat
-buffer. Layout-time only — never on an evaluation path.
+Number of leaves a value of type `P` occupies in a flat buffer, one per real,
+enum or opaque leaf, whatever its eltype. Layout-time only — never on an
+evaluation path.
 """
 nleaves(::Type{<:Real}) = 1  # COV_EXCL_LINE
 nleaves(::Type{<:Enum}) = 1  # COV_EXCL_LINE

@@ -456,7 +456,7 @@ reset_guard(_, (; u)) = u.reset
 # --- the keyword shape (§13.7, D-313) -------------------------------------------
 
 # The element count past which an array keyword's `SArray` compiles slowly in
-# every stage that touches it and gains nothing over a plain array; §7.1's
+# every stage that touches it and gains nothing over a plain array; §8.2's
 # "few KB comfortable" at `Float64`.
 const STATIC_WARN_LENGTH = 512
 

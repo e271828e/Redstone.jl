@@ -212,8 +212,9 @@ reference rule apply to it channel by channel, over the same two axes
   whose code agrees with the sign of its integrator input is gated; a
   channel not engaged has its integrator input zeroed whatever its code;
 - **tracking** adds the input `v`, an `SVector{NU, Float64}`, as the
-  correction's reference while a channel is limited or not engaged, with the
-  fallback to the own `u` while it is free. A channel not engaged with `v`
+  correction's reference. Without the hold, `v` is the reference in every
+  channel. With it, `v` is the reference while a channel is limited or not
+  engaged, with the fallback to the own `u` while it is free. A channel not engaged with `v`
   converges to it at rate `1/Tt`, so engagement is bumpless; without `v` it
   freezes.
 

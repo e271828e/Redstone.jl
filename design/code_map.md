@@ -96,6 +96,8 @@ D-212, D-231, D-251, D-263, D-265, D-289, D-437, D-438, D-472, D-473.
 - `TableBinding`.
 - `map_input`, generated over the datum's keys with one `_map_channel` call
   each, and the conditioning helper `_condition`.
+- The output side's convention name `map_output`, declared for the loop idiom
+  with no method.
 - The binding reads' contract checks, and `_compile_binding_reads`, which
   resolves the reads through readers.jl's `_compile_reads` for a table source
   at the root (D-406).
@@ -839,11 +841,13 @@ The standard component library, the submodule `Redstone.Library`:
   `Junction`'s output, both sides of `Fn` and the inputs of `Fields`, `Unpack`, `LimitedIntegrator`,
   `LimitedDoubleIntegrator` and `DiscreteLimitedIntegrator` included; a side
   with two or more ports stays named, as do `Fields`'s outputs at any count,
-  since the fields name them (§13.5, §13.7, D-437).
+  since the fields name them, and the inputs of a `Junction` and the outputs
+  of `Unpack` at any count, `in1` and `out1` at one (§13.5, §13.7, D-437).
 
 It reaches the parent through its import list alone, as a user's component
-file does (D-313). Nothing in the package depends on it, so `src/Redstone.jl`
-includes it last.
+file does (D-313). Nothing in the package depends on it but the precompile
+workload, so `src/Redstone.jl` includes it just before `precompile.jl`, the
+last file.
 
 Spec: §2.3, §5.4, §5.5, §6.2, §6.3, §8.1, §8.7, §10.4, §13.5, §13.7, D-141, D-179, D-231, D-311, D-312, D-313, D-316, D-383, D-384, D-385, D-437, D-438.
 
@@ -1350,8 +1354,8 @@ Spec: §10.2, §10.4, §12.6, §14.10, D-017, D-274, D-442, D-452, D-461.
 - Per-eltype cell stores `CellStore` and `CellAddr`. A handle type is its own
   eltype, as `leaf_types` in leaves.jl decides (D-237).
 - The `StoreBundle`.
-- `capture_stores`, one boundary's fresh copy of a bundle, one allocation per
-  boundary (§9.8).
+- `capture_stores`, one boundary's fresh copy of a bundle, a fresh buffer per
+  eltype store (§9.8).
 - Gather `gather_cell`/`gather_group` and the checked scatter
   `scatter_cell!`/`scatter_group!`. The scatter's check is §9.5's always-on
   check, decided at generation (D-235). A bare side is one cell: `gather_input`
@@ -1363,6 +1367,8 @@ Spec: §10.2, §10.4, §12.6, §14.10, D-017, D-274, D-442, D-452, D-461.
 - The `Clock` of `t` and `t₀`, the frame and boundary counters being the
   run's (D-260, D-317):
   - its `t` is in the model's scalar;
+  - `activation_scalar`, the scalar an executor runs at, read off its clock
+    (§9.4);
   - its origin `t₀` is a `Rational{Int}`, exact, beside `origin`, `unit` and
     `scale`, the origin and `Δt_unit` over one denominator in
     `Int128`, which `_set_origin!` writes where the origin is set and

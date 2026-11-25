@@ -825,7 +825,8 @@ forms. The relative form ticks the child once every `Dₛ` ticks of the
 enclosing scope, starting from a chosen phase. The absolute form gives a
 period and an offset in seconds, and it detaches the child from the scope's
 ticks ([§8.7][s8-7], [D-185][d-185], [D-186][d-186]). Relative entries compose down
-the tree, periods multiplying and phases adding. Each discrete component
+the tree, periods multiplying and phases composing affinely. A child's phase,
+scaled by its scope's period, adds to the scope's phase. Each discrete component
 therefore ends with one period and one phase on the base grid
 ([§6.3][s6-3], [D-291][d-291]).
 
@@ -886,8 +887,8 @@ granularity; and [§4.4][s4-4] function-valued signals for environment access.
 **[Ports](#g-port) exchange immutable values** ([D-004][d-004]). The values are typically isbits structs
 (floats, `SVector`s, enums, nested immutables). The framework owns a [signal table](#g-signal-table),
 with one concretely typed [cell](#g-cell) per output port in the flattened model. A
-producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages every
-primitive provides, on either [tier](#g-tier), continuous or discrete) returns a NamedTuple
+producer's output [stage function](#g-stage-function) (`y_state`/`y_direct`, the two output stages a
+primitive may define, on either [tier](#g-tier), continuous or discrete) returns a NamedTuple
 of fresh values. The framework writes each of those values into its cell, and
 consumers read cells.
 
@@ -1115,7 +1116,7 @@ its component's boundary). That is structural substitutability ([§8.2][s8-2],
 
 ## 5. Evaluation order and feedthrough
 
-This chapter fixes two output stages per primitive, what each stage may see, and
+This chapter fixes the two output stages a primitive may define, what each stage may see, and
 how those signatures alone yield a static execution order. The build derives
 that order from declared feedthrough and rejects algebraic loops by naming the
 cycle. [§5.1][s5-1] states the ordering problem; [§5.2][s5-2] the two output stages, their
@@ -1136,7 +1137,8 @@ while the model runs ([§9.7][s9-7]). A cyclic graph is the subject of
 
 ### 5.2 Two-stage outputs: signatures, bundles and the hand-off laws
 
-**Every primitive provides exactly two output stages** ([D-006][d-006]). [Feedthrough](#g-feedthrough) (an
+**A primitive has at most two output stages**, `y_state` and `y_direct`, and
+defines the ones it needs ([D-006][d-006]). [Feedthrough](#g-feedthrough) (an
 instantaneous input→output dependence) is declared structurally, by function
 signature. There are no dependency annotations anywhere in the design ([D-006][d-006],
 [D-341][d-341]). `y_state` is stage 1 and `y_direct` is stage 2.
@@ -1770,7 +1772,7 @@ There is no framework aggregation mechanism. There are no multi-connection
 input port takes exactly one connection, everywhere ([§6.1][s6-1]).
 
 A junction is an ordinary stateless component with N inputs of one type,
-`in1` to `inN`, and one output, `out`. It computes a fold its instance holds.
+`in1` to `inN`, and one output, `y`. It computes a fold its instance holds.
 Its arity and its port types are type parameters, and the fold is instance
 data ([D-311][d-311]). A [summing junction](#g-summing-junction) folds with
 `+`. The library of [§13.7][s13-7] supplies the junction, its summing form and
@@ -1790,7 +1792,7 @@ local_wires(::Systems) = (
     "aero/wrench" => "wr_sum/in1",
     "pwp/wrench"  => "wr_sum/in2",
     "ldg/wrench"  => "wr_sum/in3",
-    "wr_sum/out"  => "dynamics/wr_ext",
+    "wr_sum/y"    => "dynamics/wr_ext",
 )
 ```
 
@@ -1799,10 +1801,11 @@ local_wires(::Systems) = (
 - Every bookkeeping mistake at the junction is loud under the declaration layer.
   A contributor the junction counts but nobody wires is an unconnected-input
   error naming `in4`. A double-wired slot violates single-connection. A stale
-  arity surfaces as one or the other. The bookkeeping is ceremony, never
+  arity surfaces as one or the other, or as an unknown port when a
+  contributor is wired past the last slot. The bookkeeping is ceremony, never
   silence. A contributor's output that nobody wires stays legal and silent, as
   any unconnected output does ([D-084][d-084]).
-- The aggregate is a first-class signal. `"wr_sum/out"` is an ordinary port.
+- The aggregate is a first-class signal. `"wr_sum/y"` is an ordinary port.
   It is loggable, GUI-visible, and fanned out to a second consumer (a
   component monitoring structural loads) for one wire.
 - Aggregation logic is arbitrary stage-2 code, such as mass-properties
@@ -1819,7 +1822,7 @@ local_wires(::Systems) = (
 
 **Each assembly that owns contributors aggregates them with an internal
 junction and exports the total** ([D-037][d-037]). The junction is a component
-inside the assembly, and the assembly exports its `out` port ([§8.6][s8-6]).
+inside the assembly, and the assembly exports its `y` port ([§8.6][s8-6]).
 
 The [§6.1][s6-1] connection rules force this shape. A child is opaque to wiring
 at every boundary, so every assembly that owns contributors must export its
@@ -2171,7 +2174,8 @@ A run's full state reaches beyond these homes, and a
 [checkpoint](#g-checkpoint) (the model's state at a frame top as one value)
 captures it whole. It holds `x`, `s` and `m`, the signal table with its
 root-input levels and held discrete outputs, each event's
-[prior](#g-prior), and the clock with its origin ([§12.6][s12-6], [D-274][d-274]). A
+[prior](#g-prior), the stepper's carried state, and the clock with its origin
+([§12.6][s12-6], [D-274][d-274], [D-452][d-452]). A
 prior is an event's predicate sample from the previous boundary ([§2.3][s2-3]).
 Workspace is not part of the state. Restoring a checkpoint and continuing
 gives the trajectory of never stopping, with no boundary run again and no
@@ -2209,9 +2213,10 @@ from the value.
 
 The framework does three things with the declaration.
 
-- It computes a flat layout at build time. The layout has compile-time offsets
-  into one contiguous `Vector{T}` that the framework owns, the
-  [buffer](#g-buffer).
+- It computes a flat layout at build time. The layout gives each component a
+  block in one contiguous `Vector{T}` that the framework owns, the
+  [buffer](#g-buffer). A block's base offset is fixed at build time, and each
+  leaf's offset within its block at compile time.
 - It reconstructs the typed immutable state value for a component at each
   evaluation. The value's type, `X`, is derived from `x_init`. The framework
   passes that value to every function receiving state [views](#g-view) (zero-copy

@@ -66,7 +66,7 @@ q̇     = Ki e + (u - u_raw) / Tt
 ```
 
 Unsaturated, the correction is zero. Saturated, it drives `q` so that
-`u_raw` settles at `u + Tt·e`, just past the limit, and the output comes off
+`u_raw` settles at `u + Tt·Ki·e`, just past the limit, and the output comes off
 the limit the moment the error reverses. Smooth everywhere, since `clamp`
 is continuous and its kinks are second-order downstream, and one parameter
 with a rule, `Tt = √(Ti Td)` or `Tt = Ti`. Simulink writes the gain as `Kb`.
@@ -121,7 +121,7 @@ no equivalent, since its clamping knows only the block's own limits.
 transient, saturated or not, and turns the outer integrator into a leaky
 one partly slaved to the inner loop. Raising `Tt` weakens the coupling, but
 during a saturation episode the excess the integrator accumulates is
-`Tt·e`, and an episode shorter than `Tt` winds up almost freely. So `Tt`
+`Tt·Ki·e`, and an episode shorter than `Tt` winds up almost freely. So `Tt`
 must sit above the inner loop's time constant and below the typical episode,
 a window that a cascade without a large timescale ratio does not have.
 Gating the tracking term with the code removes the coupling and frees `Tt`
@@ -321,7 +321,9 @@ linearize as the plain PID, `A = [0 0; 0 -1/τd]`, `B = [Ki -Ki; 0 1/τd]`,
 `C = [1 Kd/τd]`, `D = [Kp (-Kp - Kd/τd)]`, since the correction is
 identically zero inside the limits and the gate passes the error; the
 ungated tracking variant adds the tracking pole, `A₁₁ = -1/Tt`, with
-`∂q̇/∂v = 1/Tt`.
+`∂q̇/∂v = 1/Tt`. Its correction's `-u_raw/Tt` also sets
+`A₁₂ = -Kd/(τd Tt)` and the first row of `B` to
+`[(Ki - Kp/Tt) (-Ki + (Kp + Kd/τd)/Tt)]`.
 
 ## 8. What the episode says about the framework
 
@@ -344,8 +346,8 @@ hold variant a one-liner.
 
 ## 9. The discrete tier
 
-`DiscretePID{Hold, Track}` is the PID of section 7 with `s = (q, yf)` in
-place of `x`. Same seven fields, same ports, same two axes, same law. A
+`DiscretePID{Hold, Track}` is the PID of section 7 with `s = (q, yf, saturated)` in
+place of `x`, the code `saturated` being section 11's addition. Same seven fields, same ports, same two axes, same law. A
 user moves a controller onto the discrete tier by changing a name, and the
 anti-windup reasoning of sections 3 and 4 carries over unchanged. The
 velocity form stays uncarried (section 6).
@@ -414,8 +416,9 @@ continuous `PID` reparents in one line.
 **Two smaller points.** The hold wires from either tier, a continuous
 `LimitedIntegrator`'s code read at the tick or a `DiscreteLimitedIntegrator`
 on the same tier, whose stage-1 `saturation` breaks the loop back into the
-PID's stage-2 `u`. And `s_init` is `(q = zero(V), yf = zero(V))` with no
-keywords, as the continuous PID's `x_init` is; both share the start-up
+PID's stage-2 `u`. And `s_init` is
+`(q = zero(V), yf = zero(V), saturated = zero(saturation_type(V)))` with no
+keywords, as the continuous PID's `x_init` is `(q = zero(V), yf = zero(V))`; both share the start-up
 kick from `yf` starting at zero rather than at the first measurement, a
 not-carried item common to the pair.
 

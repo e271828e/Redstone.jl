@@ -145,9 +145,9 @@ convention is one for every component because only broadcasting pairs the PID's
 scalar defaults with a vector `Kp`, where promotion throws. A keyword given
 as `AsPort()` is a port of the component, not a field, and takes no part in the
 shape. The struct keeps
-its positional constructor. A component with one required parameter, such as
-`Constant(value)`, takes it positionally. Its docstring shows the keyword
-form, and its tests call it.
+its positional constructor, while its docstring shows the keyword form and its
+tests call it. A component with one required parameter, such as
+`Constant(value)`, takes it positionally.
 
 A component's signal types carry the scalar as a type parameter. The walk
 substitutes type parameters and never fields ([§8.2][s8-2], [D-238][d-238]), so a `Float64`
@@ -327,7 +327,7 @@ and slip modes is a mechanics package's.
 | `DiscreteStateSpace` and `DiscreteTransferFunction`, the pair in `z` | shipped | the continuous pair mirrored over `AbstractDiscreteLinearSystem{FT}`, `s_update` for `x_deriv`; the period is the scope's and the component cannot check it; `linear_systems.md`, section 9 |
 | `DiscretizedStateSpace` and `DiscretizedTransferFunction`, from a continuous system | shipped | the zero-order hold taken per tick at the bundle's `Δt`, so the class and the initial condition are the continuous ones; `linear_systems.md`, section 9 |
 | `DiscreteLimitedIntegrator{V, R}` | shipped | tier semantics by contrast: the continuous component's mode and four events are one `clamp` in `s_update`, with no mode store and no localization |
-| `Delay(; K, v0)` | shipped | the tier's `z⁻ᴷ` in a ring store, `K` ticks of the component's own period ([§6.3][s6-3]), one output, `K = 1` the `UnitDelay` in keyword spelling |
+| `Delay(; K, v0, taps)` | shipped | the tier's `z⁻ᴷ` in a ring store, `K` ticks of the component's own period ([§6.3][s6-3]), the one output `y`, or with `taps = true` the outputs `y` and `taps`, the last `K` inputs; `K = 1` the `UnitDelay` in keyword spelling |
 | a trapezoidal or backward-Euler integrator, and Tustin on the discretized pair | not admitted | all three feedthrough, which costs the loop break `DiscreteIntegrator` exists for; a Tustin design arrives discretized, through the pair in `z`; `linear_systems.md`, section 9.2 |
 
 **`DiscreteIntegrator`.** `reset = true` adds the `Bool` input `reset`, a level
@@ -440,9 +440,9 @@ row:
 - Zero-Pole, shipped on 2026-11-06 as increment 89: a `zeros`, `poles`,
   `gain` keyword path into `TransferFunction`,
   `DiscreteTransferFunction` and `DiscretizedTransferFunction`, exclusive
-  with `num` and `den`. Roots real or complex; a product whose imaginary part
-  is not zero to rounding is refused, which conjugate pairs pass, and the
-  real coefficients then meet the existing refusals.
+  with `num` and `den`. Roots real or complex; a complex root with no conjugate
+  partner, to a tolerance relative to the root, is refused, and the real
+  coefficients then meet the existing refusals.
 
 ## 4. The order of work
 

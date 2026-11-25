@@ -40,8 +40,8 @@ NamedTuple bundle of views ([§5.2][s5-2]). Two of its fields are **gathers** �
 compiled loops that load cell values into a NamedTuple — and they
 partition the table by ownership:
 
-- **`y` gathers the component's *own* cells** (its published ports and
-  locals);
+- **`y` gathers the component's *own* cells** (its output ports, of both
+  stages);
 - **`u` gathers *foreign* cells** (other components' ports, routed through
   the wiring).
 
@@ -69,7 +69,7 @@ function: it returns `(; x, m)` as immutable values, and the *framework*
 latches them into the component's state stores immediately after the return,
 before `x_projection`. Latching writes *stores*, not cells;
 `x_projection` normalizes
-those stores; the next sweep's `y_state` reads those stores like any other
+the continuous state store; the next sweep's `y_state` reads those stores like any other
 stage-1 act ([§5.3][s5-3]). Nothing — no user code, no framework step — writes
 the table between the sweep that opened a round and the sweep that opens the
 next.

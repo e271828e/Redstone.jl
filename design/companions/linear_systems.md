@@ -123,9 +123,9 @@ junction builds; the same loop with `D = 1` is refused as an
 ## 4. Ports and storage
 
 Wires name whole ports, so the input is one port and the output one port.
-When `NU` and `NY` are both one the ports are scalars, otherwise they are
-`SVector{NU}` and `SVector{NY}`, decided from the matrix shapes at
-construction. The matrices are stored at full shape in every case, and the
+Each port's width decides its type. `u` is a scalar when `NU` is one and an
+`SVector{NU}` otherwise, and `y` likewise by `NY`, decided from the matrix
+shapes at construction. The matrices are stored at full shape in every case, and the
 bodies always do matrix products. The scalar case converts at the edges, a
 scalar input lifted to an `SVector{1}` by `as_vector` and a one-element
 result read out by `as_port`, with `port_type` naming the port for each
@@ -218,9 +218,9 @@ abstract type AbstractLinearSystem{FT} <: AbstractComponent end
 realization(c::StateSpace) = c
 realization(c::TransferFunction) = c.realization
 
-x_deriv(c::AbstractLinearSystem, (; x, u))        = (s = realization(c); s.A * x + s.B * u)
-y_state(c::AbstractLinearSystem{false}, (; x))    = realization(c).C * x
-y_direct(c::AbstractLinearSystem{true}, (; x, u)) = (s = realization(c); s.C * x + s.D * u)
+x_deriv(c::AbstractLinearSystem, (; x, u))        = (s = realization(c); s.A * x + s.B * as_vector(u))
+y_state(c::AbstractLinearSystem{false}, (; x))    = as_port(realization(c).C * x)
+y_direct(c::AbstractLinearSystem{true}, (; x, u)) = (s = realization(c); as_port(s.C * x + s.D * as_vector(u)))
 ```
 
 Nothing is forwarded and no `Group` wraps a leaf, so the transfer function
@@ -397,7 +397,7 @@ workspace may carry nothing between calls. The store could hold the
 matrices as isbits fields, but then a value that is not state is logged
 every tick and multiplied every tick, against [§7.3][s7-3]'s rule that no
 arithmetic is done on a store. The body is where the design put `Δt`, and
-the IMU sampler of [§8.7][s8-7] divides by it every tick for the same reason.
+the IMU sampler of [§8.6][s8-6] divides by it every tick for the same reason.
 The cost is small: on Julia 1.13.1 a static `exp` allocates nothing at
 every size probed, about 41 ns at 4×4 and 125 ns at 5×5, against the
 hundreds of bytes a tick's publication already allocates. The exponential
@@ -449,5 +449,5 @@ section 7 discussed, so none of the four new names collides.
 [s7-2]: ../spec.md#72-numeric-genericity-eltype
 [s7-3]: ../spec.md#73-discrete-state-modes-and-workspace
 [s8-3]: ../spec.md#83-visibility-the-contract-is-the-interface
-[s8-7]: ../spec.md#87-rate-scopes
+[s8-6]: ../spec.md#86-paths-wiring-and-faces
 [s9-3]: ../spec.md#93-probing-and-input-synthesis
