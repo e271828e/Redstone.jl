@@ -361,11 +361,11 @@ fed zero while not in command, since the shipped tracking variant has no
 | the same through a `UnitDelay` | builds |
 | continuous siblings, `v` from the `Switch` output | `AlgebraicCycle`, classification `:artificial` |
 | the same through a `UnitDelay` | builds |
-| the engaged sibling tracking its own one-tick-old output, against a plain PID, over 4 s | plant outputs within `0.021` on a response of about `6` |
+| the engaged sibling tracking its own one-tick-old output, against a plain PID, over 4 s, `Tt = 1` | plant outputs within about `0.02` on a response of about `6` |
 | switchover after 2 s with the other sibling in command, plain siblings | bump `4.76` |
 | the same, tracking always, `Tt = 1` | bump `1.92` |
-| the same, `Ki` zero while not in command, `Tt = 1` | bump `0.70` |
-| the same, `Ki` zero while not in command, `Tt = 0.1` | bump `0.002` |
+| the same, `Ki` zero while not in command, `Tt = 1` | bump about `0.7` |
+| the same, `Ki` zero while not in command, `Tt = 0.1` | bump of a few thousandths |
 
 Two lessons beyond the classifications. Tracking without the error gated
 off leaves `u_raw = v + Tt Ki e` in standby, which is most of the `1.92`.

@@ -550,8 +550,8 @@ converges to `v` at rate `1/Tt`, so at engagement the output equals the
 selected command and the transfer is bumpless. The error is gated off on
 purpose: with it left in, `u_raw` settles at `v + Tt Ki e`, a bias the
 switchover then pays. The probe in `lqr_tracker.md` section 7 measured
-both, a bump of `1.92` with the error left in against `0.002` with it gated
-off and `Tt = 0.1`. A standby PID also chases a moving target with lag
+both, a bump of `1.92` with the error left in against a few thousandths with
+it gated off and `Tt = 0.1`. A standby PID also chases a moving target with lag
 `Tt`, since `v` and its own proportional term both move while another PID
 flies the plant, so the standby `Tt` is short. On the discrete tier `Tt = 0`
 follows one tick behind, which is the FlightPhysics reset applied every tick.

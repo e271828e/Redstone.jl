@@ -387,10 +387,11 @@ Every tracking time constant `Tt` is one period, 0.02 s, the tracker's
 included. A controller not in command follows the selected command with a lag
 that grows with `Tt` and with the rate at which its own law moves, so a
 short `Tt` keeps the tracker, the altitude loop and the airspeed loop
-within about 0.015 rad of the command once a maneuver's fast part is over,
-and within a few hundredths during it. The pitch-rate
+within about 0.015 of the command once a maneuver's fast part is over,
+and within a few hundredths during it, past the first tenth of a second
+after a reference step. The pitch-rate
 and attitude loops, whose references move with the measured state, sit a
-few hundredths of a radian off whatever `Tt` is. A controller in command
+few hundredths of a radian off however short `Tt` is. A controller in command
 back-calculates against its limits, and at one period each tick closes
 `1 − e⁻¹`, about two thirds, of a limited integrator's excess.
 

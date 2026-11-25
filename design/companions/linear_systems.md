@@ -295,7 +295,7 @@ against the tree at 0571605 and probed at `h = 1//100`:
 | the same, built under `(Float64, LinearizeDual)` | builds |
 | scalar `StateSpace`, `D = 0`, in a unit-feedback loop through a difference junction | builds |
 | the same loop with `D = 1` | `AlgebraicCycle`, classification `:real` |
-| `TransferFunction(num = (1,), den = (0.5, 1))` beside `FirstOrderLag(τ = 0.5)`, both from a unit constant, at `t = 1` | outputs equal to the last bit, `0.8646647163964265`; the realized state `0.4323…`, half the lag's |
+| `TransferFunction(num = (1,), den = (0.5, 1))` beside `FirstOrderLag(τ = 0.5)`, both from a unit constant, at `t = 1` | outputs equal to the last bit, `0.8646647…`; the realized state `0.4323…`, half the lag's |
 | the strictly proper transfer function in the unit-feedback loop; the lead-lag in the same loop | builds; `AlgebraicCycle`, classification `:real` |
 | generic two-stage forwarding; an inner `y_direct` for every class; `y_direct` as the only producer of a `D = 0` component | `UserCodeFraming`; `ProducedByTwoStages` on the bare port; builds, and the loop is refused |
 | `TransferFunction(num = (1, 2), den = (1, 5))` | type `{1, true, …}`; linearizes to `A = -5`, `B = 1`, `C = -3`, `D = 1` |
@@ -303,9 +303,9 @@ against the tree at 0571605 and probed at `h = 1//100`:
 | `TransferFunction(num = (1,), den = (0.5, 1), u0 = 3)` fed `3` | output `3.0` at start and after one second |
 | `den = (1, 0)` with `u0 = 1` | refused at construction; with `u0 = 0` it builds |
 | `num` longer than `den` | refused at construction |
-| `step!` over `0.1 s` after warm-up, abstract `SMatrix{N, N, Float64}` fields | scalar 19,088 B, two-by-two 25,328 B |
-| the same with length parameters, and with `Matrix` fields converted in the body | scalar 8,208 B, two-by-two 8,368 B, equal to the scalar and vector lags |
-| `step!` over `0.1 s`, the transfer functions through `AbstractLinearSystem{FT}` | lag form and lead-lag 8,208 B, equal to the scalar lag |
+| `step!` over `0.1 s` after warm-up, abstract `SMatrix{N, N, Float64}` fields | scalar and two-by-two about twice the bytes of the lags, or more |
+| the same with length parameters, and with `Matrix` fields converted in the body | scalar and two-by-two equal to the scalar and vector lags |
+| `step!` over `0.1 s`, the transfer functions through `AbstractLinearSystem{FT}` | lag form and lead-lag equal to the scalar lag |
 
 ## 9. The discrete tier
 
