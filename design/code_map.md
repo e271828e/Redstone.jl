@@ -744,7 +744,10 @@ D-455, D-460, D-461.
     sits over `retype`, which replaces each `Float64` position by the scalar
     and pins a mutable type's parameters (D-263). An entry that is no type
     passes through it as written, for the walk's refusal in assembly.jl (§8.2).
+  - `retype_value` is the value counterpart of `retype`, over `_leaf_values`.
   - `_holds_marker` finds a marker below the top.
+- The shape walk `nleaves`, `leaf_types` and `leaf_eltypes`, the last fixing the
+  order of a cell's per-eltype offsets.
 - `StopFlag`, the stop-request enum, beside `Pinned` (D-316).
 - `leaf_names`' dotted spelling of a flat position, a matrix leaf by its
   indices.
@@ -813,16 +816,18 @@ The standard component library, the submodule `Redstone.Library`:
   `gated_error` and `correction_reference`, over
   `AbstractPID{V, Hold, Track, Fixed}` over `Float64` and static vectors,
   carrying `signal_ports`, `u_types`, `y_types` and `parameters`, over `PID` and
-  `DiscretePID`, with the marker `AsPort`, the roster `PID_PARAMETERS` and the
-  helpers `shape_type`, `fixed_parameters`, `check_tracking`,
-  `check_output_limits`, `check_time_constant`, shared with the trackers and
-  `FirstOrderLag`, and `channel_type` (D-313, D-383, D-384, D-385).
+  `DiscretePID`, with the marker `AsPort`, the roster `PID_PARAMETERS`, the
+  helper `shape_type`, the helpers `fixed_parameters`, `check_tracking`,
+  `check_output_limits` and `check_time_constant`, shared with the trackers,
+  the last also with `FirstOrderLag`, and `channel_type`, shared with
+  `Comparator` (D-313, D-383, D-384, D-385).
 - `AbstractLQRTracker{NX, NU, NZ, Hold, Track, Fixed}`, an
   `AbstractAntiWindupController`, carrying `signal_ports`, `u_types`, `y_types`
   and `parameters`, over `LQRTracker` and `DiscreteLQRTracker`, with the roster
   `LQR_PARAMETERS`, the helpers `parameter_types`, `tracker_sizes` and
-  `check_shapes`, and `fixed_parameters`, `check_tracking` and
-  `check_output_limits` shared with the PID (D-383, D-384, D-385).
+  `check_shapes`, and `fixed_parameters`, `check_tracking`,
+  `check_output_limits` and `check_time_constant` shared with the PID (D-383,
+  D-384, D-385).
 - `AbstractLinearSystem{FT}`, which carries the continuous linear systems'
   stages over their `realization` (D-313, D-437), over `StateSpace` with the
   helper `static_system`, over scalar or `SVector` ports by its matrix shapes,
@@ -1471,8 +1476,8 @@ D-478.
 
 - The input trace:
   - the mutable `Trace`, holding its header, two lists that grow in
-    place, namely the writers' schemas and one sparse record per drained
-    batch, and the length a replay reads its bound off, which is also the
+    place, namely the writers' schemas and one sparse `TraceBatch` per drained
+    batch, compared as a value, and the length a replay reads its bound off, which is also the
     ordinal each record carries and which the drain advances at its top
     (D-255, D-260);
   - the header is a `Checkpoint`, nominal by type (D-317, D-319),
@@ -1480,11 +1485,15 @@ D-478.
     and `restore!` and `replay!` open their run with the checkpoint they
     restore. It is `nothing` only between
     `init!`'s opening of the run and that publication (D-274).
+- `_record!`, the conversion at the drain, called from dataplane.jl's `_drain!`
+  (§11.5, D-176).
 - `trace(sim)`, defined in sim.jl, which hands back a detached value, the
   checkpoint copied.
 - Replay's up-front entry pass, run by `_compile_feed` in sim.jl. It validates
   the header, the schemas and the records. Both stages, `_check_checkpoint!`
-  with `_check_schemas!` and then `_compile_records!`, collect (D-217). The
+  with `_check_schemas!` and then `_compile_records!`, collect (D-217).
+  `_compile_records!` builds each writer's scatter through `_replay_writer` and
+  `_apply_thunk` into `ReplayRecord`s. The
   pass builds the `ReplayFeed` the drain reads.
 
 Spec: §11.5, §12.6, §12.7, §14.5, D-029, D-038, D-101, D-176, D-217, D-218,

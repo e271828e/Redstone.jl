@@ -86,7 +86,7 @@ _named(prefix, name::Symbol, sep::AbstractString = ".") = string(prefix, sep, na
 _at_port(path::AbstractString, name::Symbol) =
     isempty(path) ? "`$name`" : "`$(_named(path, name, "/"))`"
 
-# --- the carrier (§13.1, §13.2, D-058) ----------------------------------------
+# --- the carrier (§13.1, §13.2, D-222) ----------------------------------------
 
 """
 The one carrier: a fail-fast site throws it holding a single diagnostic, a
@@ -201,7 +201,7 @@ end
 
 # --- the runtime carrier (§13.4, D-059) ---------------------------------------
 
-# Appendix C's time payloads are plain `Float64` (D-214): a diagnostic is
+# Appendix C's time payloads are plain `Float64` (§13.4): a diagnostic is
 # reportage, never a value the model differentiates through. Under a `Dual`
 # activation the clock and the snapshot's stamp are `Dual`s, which `Float64` has
 # no method for, so the seconds are read off the value — recursively, so a

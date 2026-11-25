@@ -28,7 +28,8 @@ which fields are public, since `Model`'s docstring lists every field, `exec`
 and `frame_diag` included, while `Deployment` and `Schedule` list none and
 tests read `deployment.h`, and no doc lists the fields of `KindCounts`, which
 `WriterStatus` exposes (CV11a-004 of
-`design/reports/20261124_doc_conformance/ledgers/user_rows.md`). It comes after the library has added its names;
+`design/reports/20261124_doc_conformance/ledgers/user_rows.md`), nor those of
+`TraceBatch`, the record of `Trace.batches` (CV7a-038 there). It comes after the library has added its names;
 the examples are a package of their own and add none.
 
 Two things wait on it. The descriptor writer's `@ref` pass targets exported

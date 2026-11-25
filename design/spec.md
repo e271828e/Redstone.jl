@@ -134,7 +134,7 @@ deliberately. [§3][s3] and [§4][s4]
 introduce the two objects every later part manipulates. [§3][s3] gives the component
 taxonomy, with two primitive tiers and the assembly that composes them. [§4][s4] gives
 the port, the addressable unit through which components exchange immutable
-values. [§5][s5] is the central chapter. It fixes two output stages per
+values. [§5][s5] is the central chapter. It fixes at most two output stages per
 primitive, what each stage may see, and how those signatures alone yield a
 static execution order. It also fixes the boundary sequence, the rule by which
 events fire, and boundary zero. [§6][s6] lifts composition from a single
@@ -2493,8 +2493,8 @@ near-final in shape but still illustrative in spelling.
 
 A [component](#g-component) is authored in ordinary Julia. Its
 [stage functions](#g-stage-function) are ordinary multiple-dispatch methods.
-They are `y_state` and `y_direct`, the two output stages every primitive
-provides on either [tier](#g-tier) (the continuous or discrete side of the
+They are `y_state` and `y_direct`, the two output stages a primitive
+may define on either [tier](#g-tier) (the continuous or discrete side of the
 hybrid formalism). The methods follow the `GUI.draw!` precedent, the
 per-component panel extensions in FlightCore's style ([§11.7][s11-7]). A
 component's structural facts are declared through a small set of well-known
@@ -5352,7 +5352,10 @@ divisor is `D₀ = Dₐ·D₀(A₁)`, with
 #### Rendering
 
 **Each artifact renders itself through `show`**, with no accessors
-([D-257][d-257]):
+([D-257][d-257]). Each artifact has two `show` methods. The one-line form, its
+type name over its counts or parameters in parentheses, is what a container or
+`repr` prints. The REPL form, under `MIME"text/plain"`, prints the tables below.
+A `Deployment`'s one-line form gives its time quantities and its algorithm.
 
 - `show(::Structure)` prints the anchor table with the `A₀` row and the
   component table with the [rate-scope](#g-rate-scope) rows (an assembly's
@@ -5386,8 +5389,10 @@ divisor is `D₀ = Dₐ·D₀(A₁)`, with
   `N to M, as proposed`. `N` is the fixed-step count, and `M` is
   `⌊Δt_frame / h_min⌋`, raised to `N` where it falls below ([D-460][d-460]).
 - **`show(::Deployment)` prints the three time quantities exact**, as the
-  deployment holds and compares them ([D-454][d-454]). Two deployments that
-  compare unequal never print alike.
+  deployment holds and compares them ([D-454][d-454]). It prints `h_min` exact
+  where one is set, then the algorithm. The REPL heading adds `firing_budget`,
+  `localization_tol`, `localization_budget` and `attempt_budget`. Two
+  deployments that compare unequal never print alike.
 - **`show(::Deployment)` prints the schedule under the symbols above**, in
   a block of its own under `schedule:` ([D-471][d-471]). The anchor
   table gives each anchor's `Δt`, `τ`, `D₀` and `Φ₀`, and its `A₀` row
@@ -6558,8 +6563,9 @@ the `Model` asks `propose` for a proposal. A
 fixed-step method proposes nothing, and the `Model` takes the span in equal
 steps no longer than `h_max` ([§10.5][s10-5], [D-449][d-449]). **A proposal
 is clamped into `[h_min, h_max]`, and the distance to the next mandatory
-instant is taken in equal steps no longer than it** ([§10.5][s10-5],
-[D-460][d-460]). Their count is capped at `⌊r / h_min⌋`, with `r` the
+instant is taken in equal steps** ([§10.5][s10-5],
+[D-460][d-460]). The steps are as few as keep each no longer than the clamped
+proposal. Their count is capped at `⌊r / h_min⌋`, with `r` the
 distance, so that division never cuts a step below `h_min`. Near `h_min` the
 cap can make a step longer than its proposal. The `Model` owns both bounds,
 so a backend never reads `h_min`. A step that
@@ -9642,11 +9648,19 @@ value has, so a renderer presents each value under its record's writer ([D-228][
 
 Presentation is where `maxlog`, the cap Julia's logging macros put on repeats,
 lives. A status renderer prints a given writer × kind up to 25 cumulative
-occurrences and then switches to count-only display ("`MalformedDatum` from
-`UDPInput#3`: 1 482 occurrences"). **That threshold is presentation policy, not
-channel policy** ([D-136][d-136], [D-369][d-369]). Counts keep accumulating regardless, nothing
-recorded depends on it, and the choice belongs to whoever renders. The channel's
-own bound, above, is the one that is normative.
+occurrences and then switches to count-only display
+(`MalformedDatum: 1482 occurrences`, under its writer's heading). **That
+threshold is presentation policy, not channel policy** ([D-136][d-136],
+[D-369][d-369]). Counts keep accumulating regardless, nothing recorded depends
+on it, and the choice belongs to whoever renders. The channel's own bound,
+above, is the one that is normative.
+
+`show(::FrameworkStatus)` is the framework's own renderer. Its one-line form
+gives the writer count, the cumulative occurrences and the pace. Its REPL form
+prints one block per writer, under a heading with the writer's task state and
+raw heartbeat where its record carries them, or `no occurrences`. Each kind in
+the block has a count line, then the retained occurrences within the cap, then
+the count suppressed at this boundary. The pacer's line comes last.
 
 #### The run's end
 
@@ -16284,6 +16298,13 @@ framework. Its contents at call entry are unspecified ([§7.3][s7-3]).
 
 ### D.2 Signals and data homes
 
+<a id="g-bare-contract"></a>**bare contract** — a `u_types` or `y_types` declared as
+one type instead of a `NamedTuple`, as `y_types(::Integrator{V}) where {V} = V`.
+Its [port](#g-port)'s [face](#g-face) is the default one, `u` or `y`, which a
+wire addresses as any face, the [bundle](#g-bundle) carries its value itself,
+and a reader may address it headless, the default face supplied
+([§5.2][s5-2], [§8.2][s8-2], [§8.6][s8-6], [§14.4][s14-4], [D-437][d-437]).
+
 <a id="g-bare-store"></a>**bare store** — a [store](#g-store) declared as one leaf instead of a
 `NamedTuple`, as `x_init(c::Integrator) = c.x0`. Its field is the
 declaration's letter, `x`, `s` or `m`, which the framework addresses as any
@@ -16291,13 +16312,6 @@ field; a [leaf address](#g-leaf-address) into it may be headless, empty or
 beginning at its first step, and a [condition](#g-condition) may set it with
 a bare payload, the letter supplied ([§8.2][s8-2], [§14.1][s14-1],
 [§14.4][s14-4], [D-438][d-438]).
-
-<a id="g-bare-contract"></a>**bare contract** — a `u_types` or `y_types` declared as
-one type instead of a `NamedTuple`, as `y_types(::Integrator{V}) where {V} = V`.
-Its [port](#g-port)'s [face](#g-face) is the default one, `u` or `y`, which a
-wire addresses as any face, the [bundle](#g-bundle) carries its value itself,
-and a reader may address it headless, the default face supplied
-([§5.2][s5-2], [§8.2][s8-2], [§8.6][s8-6], [§14.4][s14-4], [D-437][d-437]).
 
 <a id="g-buffer"></a>**buffer** — the framework-owned contiguous `Vector{T}` backing all continuous
 state, laid out at build time, and the `ẋ` vectors the integrator fills. A
@@ -17295,24 +17309,18 @@ collection at a step barrier, and its type parameter tells which.
 `cause` and carries the cause's type as its parameter. Diagnostics
 themselves are plain values ([§13.2][s13-2], [§13.4][s13-4]).
 
-<a id="g-descriptor"></a>**descriptor** — a serialized projection of a `Build`,
-a `Deployment` or a failed build under a published, versioned format, for a
-client outside the process. `descriptor` renders it as plain data beside `show`'s rendering
-to text. The artifact stays the truth, and a descriptor is one consumer's
-reading of it ([§13.9][s13-9], [D-432][d-432]).
-
-<a id="g-kind-marker"></a>**kind marker** — the small object beside a [primitive](#g-primitive)
-[face's](#g-face) printed type in a [descriptor](#g-descriptor), telling a client with no Julia what the
-type is: boolean, enum, symbol, integer, float, number, vector, struct or
-opaque, each with the fields it needs ([§13.9][s13-9]). Not a diagnostic's
-[kind](#g-kind).
-
 <a id="g-collect-the-checks-fail-the-evaluations-fast"></a>**collect the checks,
 fail the evaluations fast** — the reporting policy. Declarative passes over
 collected structure return their full violation list, while the first user-code
 exception aborts the phase. The [build's](#g-build) steps are barriers, and a diagnostic
 [kind's](#g-kind) policy field spells the collecting case `collected` ([§13.1][s13-1],
 [Appendix C][sC]).
+
+<a id="g-descriptor"></a>**descriptor** — a serialized projection of a `Build`,
+a `Deployment` or a failed build under a published, versioned format, for a
+client outside the process. `descriptor` renders it as plain data beside `show`'s rendering
+to text. The artifact stays the truth, and a descriptor is one consumer's
+reading of it ([§13.9][s13-9], [D-432][d-432]).
 
 <a id="g-did-you-mean"></a>**did-you-mean** — the required shape of any name-shaped failure: the
 offending name plus the list-in-hand it should have matched, carried as
@@ -17341,6 +17349,12 @@ enumerated set, with [payload](#g-payload) fields, owning section, severity, whe
 raised and under which policy ([Appendix C][sC]). Tests match on kind plus
 payload, never on message text ([§13.2][s13-2]). Not a [component](#g-component)
 [class](#g-class) or a [function family](#g-function-family).
+
+<a id="g-kind-marker"></a>**kind marker** — the small object beside a [primitive](#g-primitive)
+[face's](#g-face) printed type in a [descriptor](#g-descriptor), telling a client with no Julia what the
+type is: boolean, enum, symbol, integer, float, number, vector, struct or
+opaque, each with the fields it needs ([§13.9][s13-9]). Not a diagnostic's
+[kind](#g-kind).
 
 <a id="g-payload"></a>**payload** — the structured data a diagnostic carries beside its [kind](#g-kind):
 paths and names (never instances or [component](#g-component) types),
