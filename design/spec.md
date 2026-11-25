@@ -7769,10 +7769,11 @@ warnings. By the invariant, it is the same execution with the waits deleted.
 ([D-021][d-021]). Non-realtime OSes guarantee only a lower bound on sleep. The
 thread becomes runnable no earlier than requested. The wake-up is best-effort,
 subject to timer granularity, scheduler load and macOS timer coalescing, with
-no hard upper bound. Measured on the dev machine, idle, against 2 ms requests
-(2026-07), Julia `sleep` overshoots by about 1.4 ms median, and
-`Libc.systemsleep` by about 0.5 ms. Behind the `sleep` figure are libuv's
-millisecond-granularity timers. Sub-ms requests are accepted and rounded up.
+no hard upper bound. Measured on the dev machine, idle, under Julia 1.13
+(2026-11), Julia `sleep` overshoots a 2 ms request by about 1.4 ms and a
+request of 10 ms or more by about 2.1 ms, both medians. `Libc.systemsleep`
+overshoots a 2 ms request by about 0.5 ms. Behind the `sleep` figures are
+libuv's millisecond-granularity timers. Sub-ms requests are accepted and rounded up.
 Spikes under load are unbounded. The pacer therefore sleeps toward
 `deadline − margin` and spins the remainder:
 
@@ -7789,16 +7790,16 @@ end
 resolution floor is absorbed into the calibration ([D-294][d-294]). A margin below the
 primitive's granularity defeats the spin phase's purpose.
 
-**The default `margin` is 2 ms** ([D-133][d-133]), the value the measurements
-above imply. It covers libuv's millisecond timer granularity and `sleep`'s
-median overshoot of about 1.4 ms. Anything larger merely spends more core in
-the spin phase. The knob spans the whole design space ([D-021][d-021]):
+**The default `margin` is 3 ms** ([D-480][d-480]), the value the measurements above
+imply. A paced frame sleeps most of its budget, so the overshoot the margin
+has to cover is the long request's, about 2.1 ms. Anything larger merely
+spends more core in the spin phase. The knob spans the whole design space ([D-021][d-021]):
 
 - `margin = 0` is pure sleep, the cheapest in CPU. Frame spacing is bursty,
   but the absolute schedule still delivers the exact *average* rate through
   debt repayment. The spin phase buys regularity, never rate correctness.
-- `margin = 2 ms` is the hybrid default. It sleeps about 90% of a 20 ms budget
-  and lands within µs of the deadline at a few percent of one core.
+- `margin = 3 ms` is the hybrid default. It sleeps about 85% of a 20 ms budget
+  and lands within µs of the deadline at about 5% of one core.
 - `margin = ∞` is pure busy-wait, FlightCore's behavior, with maximum frame
   regularity at one pinned core. The "best attempt at real time" mode is the
   knob's endpoint, not a separate mechanism.
@@ -9803,7 +9804,7 @@ the control plane for the same reason `pace` does. It tunes the wait, never the
 arithmetic, so retuning the coarse/spin split mid-run is safe by construction.
 `run!` and `replay!` take both as keywords and write them when called. Both are
 declared by the advance, as `t_end` is. `pace` defaults to `Inf` and `margin` to
-2 ms ([Appendix B][sB], [D-133][d-133]). A deviceless run is the harness and CI
+3 ms ([Appendix B][sB], [D-480][d-480]). A deviceless run is the harness and CI
 mode, and real time is `pace = 1` away ([D-269][d-269]). `step!` takes neither and never waits on the pacer. A
 stepping session is the harness mode ([§12.6][s12-6]), and its frames are bit-identical
 to `run!`'s by [§10.7][s10-7]'s invariant. `pace` is a positive real, `Inf` admitted, and
@@ -15388,14 +15389,14 @@ Authoring list above carries it.
 
 #### Running
 
-- `run!(sim; pace = Inf, margin = 0.002, t_end = Inf, ignore_stop_requests = ())`.
+- `run!(sim; pace = Inf, margin = 0.003, t_end = Inf, ignore_stop_requests = ())`.
   `run!` blocks until the run ends. Deviceless, it is fully synchronous on
   the [calling task](#g-calling-task) ([§11.1][s11-1], [§12.6][s12-6]).
 
   | keyword | default | meaning | owning section |
   |---|---|---|---|
   | `pace` | `Inf` | the run's [pacing](#g-pacing) rate; `Inf` is pacer-off, `1` real time | [§10.7][s10-7] |
-  | `margin` | `0.002` | the single pacing knob, in seconds | [§10.7][s10-7] |
+  | `margin` | `0.003` | the single pacing knob, in seconds | [§10.7][s10-7] |
   | `t_end` | `Inf` | the run's end time, declared for this advance, validated per call | [§12.6][s12-6], [§13.5][s13-5] |
   | `ignore_stop_requests` | `()` | the requesters this advance ignores, `:all` or paths in the [requester roster](#g-requester-roster) | [§13.5][s13-5] |
 
@@ -15445,7 +15446,7 @@ Authoring list above carries it.
 - `trace(sim) → trc`. Retrieves the input trace, on by default
   ([§11.5][s11-5]).
 - `replay!(sim2, trc; to_boundary = nothing, to_time = nothing, pace = Inf,
-  margin = 0.002, t_end = Inf, ignore_stop_requests = (), trace = true,
+  margin = 0.003, t_end = Inf, ignore_stop_requests = (), trace = true,
   log = true, log_every = 1, log_max = 65536, restore = true)`. Re-drives a
   fresh `Simulation(root)` bit-identically through the ordinary loop,
   taking `init!`'s four recording keywords as well ([D-261][d-261]). Replay
@@ -17877,6 +17878,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-477]: log.md#d-477--refuse-a-wire-declaration-that-returns-no-collection-of-pairs
 [d-478]: log.md#d-478--write-a-tick-count-as-d-or-φ-subscripted-by-the-lattice-it-counts-in
 [d-479]: log.md#d-479--give-each-count-length-and-index-of-the-timing-passages-its-own-letter
+[d-480]: log.md#d-480--raise-the-default-margin-to-3-ms-calibrated-at-the-sleep-a-paced-frame-makes
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
