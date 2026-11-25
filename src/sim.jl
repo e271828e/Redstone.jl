@@ -1770,6 +1770,10 @@ function _run_body!(sim::Simulation, policy::StopPolicy, ignore_mask::Vector{Boo
             end
         end
         @atomic :release control.running = false   # once, after the record and the status
+        # Presented last: the record and the terminal flag are already written,
+        # so a throw out of the logging backend, a forced interrupt among
+        # them, cuts only the presentation (§12.4).
+        _present_residue(residue)
         Base.sigatomic_end()
     end
     logged_cause === nothing ||
@@ -1947,10 +1951,11 @@ the way out, a report from a device's exit path, the tail's own
 `DeviceJoinTimeout` — into the accounts, so the per-run record is complete
 and nothing leaks into the next run's status. The terminal snapshot is
 already out, so no snapshot can carry this residue: it is collected into the
-returned `ResidueRecord`s — the termination record's `residue` field — and
-presented through the logging backend, the record's renderer (D-201, D-203).
-The terminal status's account is therefore complete up to its own frame top,
-and the tail's remainder is loud *and* recorded, still never published.
+returned `ResidueRecord`s — the termination record's `residue` field — which
+the caller presents through the logging backend, the record's renderer, once
+the record is written (D-201, D-203). The terminal status's account is
+therefore complete up to its own frame top, and the tail's remainder is loud
+*and* recorded, still never published.
 """
 function _sweep_tail!(sim::Simulation, roster)
     plane = sim.plane
@@ -1969,21 +1974,29 @@ end
 
 # One writer's take: a quiet account contributes no record; a noisy one hands
 # its pending vector over — the account re-arms the shared empty, so the
-# record's vector is never written again — and is rendered entry by entry.
+# record's vector is never written again.
 function _residue!(residue::Vector{ResidueRecord}, who::String, account::WriterAccount)
     isempty(account.recent) && _total(account.suppressed) == 0 && return nothing
-    record = ResidueRecord(who, account.recent, account.suppressed)
-    push!(residue, record)
-    for occurrence in record.recent
-        @warn "$(nameof(typeof(occurrence))) from $who, past the final snapshot's " *
-              "account: $(message(occurrence))"
-    end
-    suppressed_count = _total(record.suppressed)
-    suppressed_count > 0 &&
-        @warn "$suppressed_count more suppressed occurrence(s) from $who past the final " *
-              "snapshot's account (§11.8)"
+    push!(residue, ResidueRecord(who, account.recent, account.suppressed))
     account.recent = EMPTY_RECENT
     account.suppressed = KindCounts()
+    nothing
+end
+
+# The residue through the logging backend, the record's renderer (D-201,
+# D-203). It prints, so the callers reach it only once the termination record
+# and the terminal flag are written (§12.4).
+function _present_residue(residue::Vector{ResidueRecord})
+    for record in residue
+        for occurrence in record.recent
+            @warn "$(nameof(typeof(occurrence))) from $(record.writer), past the final " *
+                  "snapshot's account: $(message(occurrence))"
+        end
+        suppressed_count = _total(record.suppressed)
+        suppressed_count > 0 &&
+            @warn "$suppressed_count more suppressed occurrence(s) from $(record.writer) past " *
+                  "the final snapshot's account (§11.8)"
+    end
     nothing
 end
 
@@ -2285,18 +2298,22 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
     finally
         Base.sigatomic_begin()                # masked bookkeeping, as `run!`'s (§12.4, D-268)
         _discard_late_staging!(sim, roster)   # §12.7: ahead of the flip, as in `_run_body!`
+        residue = ResidueRecord[]
         if cause !== nothing                  # §13.6, the stepped entry: same tail,
             _finish!(sim)                     # deviceless — waits woken, accounts swept
+            residue = _sweep_tail!(sim, roster)
             # the model's catch already wrote its status, which reads `errored` (D-317)
-            sim.run.termination = _record(sim, policy, LoopError(cause), _sweep_tail!(sim, roster))
+            sim.run.termination = _record(sim, policy, LoopError(cause), residue)
         else
             _settle_mode!(sim)                # §12.7's flip, at the halt (D-218)
             if source !== nothing             # a §13.5 source fired inside the call:
                 _finish!(sim)                 # the deviceless §12.4 tail, then terminal
-                sim.run.termination = _record(sim, policy, source, _sweep_tail!(sim, roster))
+                residue = _sweep_tail!(sim, roster)
+                sim.run.termination = _record(sim, policy, source, residue)
             end                               # otherwise the run stays open: `initialized`
         end
         @atomic :release control.running = false   # once, after the record and the status
+        _present_residue(residue)             # last, as in `_run_body!` (§12.4)
         Base.sigatomic_end()
     end
     advanced

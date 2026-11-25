@@ -68,6 +68,16 @@ Stubborn() = Stubborn(Channel{Int}(1), Symbol[])
 shutdown!(dev::Stubborn) = (push!(dev.log, :shutdown); nothing)
 loop(dev::Stubborn, handle) = (take!(dev.release); push!(dev.log, :woke); nothing)
 
+# A logging backend that raises from the run's-end residue. It stands in for a
+# forced interrupt landing in the residue's presentation, which no test can
+# place there (§12.4).
+struct RaisingBackend <: Base.CoreLogging.AbstractLogger end
+Base.CoreLogging.min_enabled_level(::RaisingBackend) = Base.CoreLogging.Debug
+Base.CoreLogging.shouldlog(::RaisingBackend, args...) = true
+Base.CoreLogging.catch_exceptions(::RaisingBackend) = false
+Base.CoreLogging.handle_message(::RaisingBackend, level, text, args...; kw...) =
+    occursin("past the final snapshot", string(text)) && throw(InterruptException())
+
 # The obligation met: a blocking wait made interruptible by unblock! (§12.4(3)).
 mutable struct Blocked <: AbstractDevice
     ch::Channel{Int}
@@ -962,6 +972,42 @@ function test_devices()
         # process teardown.
         put!(dev.release, 1)
         @test timedwait(() -> dev.log == [:woke, :shutdown], 10.0) === :ok
+    end
+
+    @testset "a throw out of the residue's presentation finds the run terminal and its record written (§12.4)" begin
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10, join_timeout = 0.2)
+        dev = Stubborn()
+        attach!(sim, dev, Enumerated())
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
+        guard = Timer(_ -> put!(dev.release, 1), 30.0)
+        # The abandoned join is the residue, and the backend raises from its
+        # warning, inside the masked bookkeeping.
+        @test_throws InterruptException Base.CoreLogging.with_logger(RaisingBackend()) do
+            run!(sim; t_end = 0.3)
+        end
+        close(guard)
+        @test lifecycle(sim) === :stopped
+        record = termination(sim)
+        @test record.source isa EndTimeReached
+        writer_residue = only(residue for residue in record.residue if residue.writer == "loop")
+        @test any(d -> d isa DeviceJoinTimeout, writer_residue.recent)
+        put!(dev.release, 1)
+        @test timedwait(() -> dev.log == [:woke, :shutdown], 10.0) === :ok
+
+        # The stepped entry writes its record ahead of the presentation too.
+        # Boundary zero exhausts the firing budget, and a stop issued before
+        # the first frame top leaves that report for the run's-end sweep.
+        stepped = Simulation(Group((; chat = Chatterer(), trig = Trigger(0.5));
+                                   input_wires = ("in" => "trig/sig",)); Δt_frame = 1//10)
+        init!(stepped, set(u = (in = 1.0,)))
+        stop!(stepped)
+        @test_throws InterruptException Base.CoreLogging.with_logger(RaisingBackend()) do
+            step!(stepped; frames = 1)
+        end
+        @test lifecycle(stepped) === :stopped
+        record = termination(stepped)
+        @test record.source isa ControlRequestedStop
+        @test any(d -> d isa FiringBudget, only(record.residue).recent)
     end
 
     @testset "an interrupt during the tail collapses the joins, the device named (§12.4, D-268)" begin
