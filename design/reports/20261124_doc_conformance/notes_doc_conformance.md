@@ -121,12 +121,13 @@ the tools.
   already fixed, and 6 of the 10 rows where doc or code could move took the
   doc's fix, `cdf92a7f`. `ledgers/user_rows.md` marks each. S8c-047
   took the code's fix, `7a300b9d`, S9b-112 the doc's, `21c08c17`, and CV2-041
-  changes nothing. Left of that class: CV10-263, whose code change is on
-  branch `fix-successor-pairing`; C2-073, CV9a-049, K9b-041 and CV11a-004, each tied
+  changes nothing. CV10-263 took the code's, `06a2e8fa`. Left of that
+  class: C2-073, CV9a-049, K9b-041 and CV11a-004, each tied
   to another open row or to the API audit. The figures S9d-057, K8-027 and
   K8-046 are settled, `479ceea1`, under the user's rule for figures: keep one only
   if an argument depends on it, rounded and with the Julia version, and
-  delete an estimate nobody can derive.
+  delete an estimate nobody can derive. The companions' measured figures
+  followed, `df6f03f8`.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

@@ -136,8 +136,8 @@ the verifier's probe.
   the cursor is written and read misses one store. Settled, `a991af00`.
 - **CV10-263, wording.** A named discrete store whose `s_update` returns the
   right field names with a wrong value type reports `:field_set`; Appendix C
-  does not say so. Ruled 2026-11-25: the code pairs a successor by name
-  (D-151), its reasons naming the fields.
+  does not say so. Settled in the code, `06a2e8fa`: a successor pairs
+  by name (D-151), and the reasons name the fields.
 - **K10b-043, wording.** The limited-integrator companion's trial count for
   the minmax projection: about ITP's worst case, 21 or 22, not bisection's.
   Settled, `a991af00`.
@@ -222,7 +222,8 @@ the verifier's probe.
   allocation bytes of `step!` over 0.1 s (8,800 B where the doc says 8,208),
   and the tracker's switchover bumps (0.65 and 0.003, not 0.70 and 0.002).
   The figures depend on the machine and on how the setup is rebuilt.
-  Proposed: take the re-measured values, noting the Julia version.
+  Proposed: take the re-measured values, noting the Julia version. Settled,
+  `df6f03f8`: rounded, the tables being dated probes.
 - **K6d-122, wording.** The LQR companion says `Tt = 0` follows exactly on
   the discrete tier; `u_raw` lands on the tick's `v` one tick later. Settled,
   `a991af00`.
@@ -270,6 +271,7 @@ the verifier's probe.
 - **K7a-296 and K7a-297, measured figures.** The longitudinal aircraft
   companion's loop errors during the maneuver: about 0.015 once the fast
   part is over, and a few hundredths of a radian however short `Tt` is.
+  Settled, `df6f03f8`.
 - **K7b-084, K7b-085, K7b-158 and K7b-175, wording.** The store-at-rest
   walkthrough: a checkpoint's stores are also reachable component by
   component; `state(model, path)` is the one path-addressed read at rest;
