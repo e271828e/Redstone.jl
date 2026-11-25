@@ -211,9 +211,10 @@ probe.
   differences through `about`, and the walkthrough's section 9 describes it.
   Both mutants tried (a flipped readback sign, swapped seed slots) turn it
   red. Its fixture moves only A[2,1] with the point, because B, C and D are
-  constant there. The walkthrough's next paragraph, on pinned `xbuf` and a
-  second `linearize` compiling nothing new, is unchecked. It belongs to
-  §14's companion and was out of the fixer's passage.
+  constant there. The walkthrough's next paragraph, out of the fixer's
+  passage, was checked on 2026-11-25. No test pinned its claim that a second
+  `linearize` compiles nothing new, and the sentence now says what the tests
+  pin, that a width already materialized adds no activation.
 - The full gate passed on `3adc38a5`, 10905 of 10905, in 10 min.
 
 The worktree `doc_conformance` is on branch `audit-citations`. The

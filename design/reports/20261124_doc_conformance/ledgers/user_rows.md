@@ -122,6 +122,7 @@ the verifier's probe.
   the services' seeded half does. CV9a-049 waits on it.
 - **S9d, a thin inventory.** Its mid-tier inventory missed 3 of 9 sampled
   rows. A high-tier re-inventory of §9.7 and §9.8 is in G4b's args as S9d2.
+  Settled: S9d2 ran with G4b and missed none of its 10 sampled rows.
 - **CV9a-049, wording.** §9.3's probe-scoped values: `compile` seeds every
   fresh table from the probe's values. Rule it with S9b-300.
 - **CV9a-050, wording.** Appendix C and D-431 say a misshapen return throws

@@ -646,9 +646,8 @@ Two checks the tests make, independently of the mechanism:
   of the framework.
 
 And two invariants the tests pin: the sim's `lifecycle`, `latest` snapshot
-and `xbuf` are identical before and after the call, and a second `linearize`
-at the same width compiles nothing new, the activation being cached on the
-build.
+and state are identical before and after the call, and a `linearize` at a
+width the build already holds an activation for adds none.
 
 ## 10. The surface, mapped onto the sections above
 
