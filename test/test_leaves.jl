@@ -66,6 +66,11 @@ end
 # One round trip at a nonzero offset into an oversized buffer: the value comes
 # back identical, and only the `nleaves` entries it owns were written. `E` is
 # the buffer's eltype: a cell carrying an opaque leaf needs one that holds it.
+# A user's mutable `Real`: a port of this type would change under its readers.
+mutable struct MutableReal <: Real
+    value::Float64
+end
+
 function roundtrip(v, off; E = Float64)
     n = nleaves(typeof(v))
     buffer = Vector{E}(fill(NaN, off + n + 3))
@@ -175,6 +180,14 @@ function leaves_shape()
         @test mutable_position(SMatrix{2,2,Matrix{Float64},4}) == ("[1,1]", Matrix{Float64})
         @test mutable_position(HeightField) === nothing
         @test mutable_position(Float64) === nothing
+
+        # A mutable `Real` is a mutable type like any other, whether Julia's or
+        # a user's. An immutable `Real` is a leaf the walk never looks inside,
+        # so the `BigInt`s of a `Rational{BigInt}` are not positions it visits.
+        @test mutable_position(BigInt) == ("", BigInt)
+        @test mutable_position(MutableReal) == ("", MutableReal)
+        @test mutable_position(SVector{2,BigInt}) == ("[1]", BigInt)
+        @test mutable_position(Rational{BigInt}) === nothing
     end
 end
 

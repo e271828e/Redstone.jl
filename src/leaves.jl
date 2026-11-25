@@ -97,9 +97,9 @@ meets, or `nothing`. Layout-time only — `place!`'s refusal (D-237).
 mutable_position(::Type{P}) where {P} = _mutable_position(P, "")
 
 function _mutable_position(::Type{P}, prefix) where {P}
-    P <: Real && return nothing                  # `BigFloat` is a mutable `Real`, and a leaf
     P === Symbol && return nothing               # an opaque leaf by ruling (D-243)
-    ismutabletype(P) && return (prefix, P)
+    ismutabletype(P) && return (prefix, P)       # a mutable `Real` too, such as `BigInt`
+    P <: Real && return nothing                  # a leaf: the walk never looks inside one
     P <: StaticArray &&
         return _mutable_position(eltype(P), string(prefix, "[", join(ones(Int, ndims(P)), ","), "]"))
     _opaque(P) && return nothing                 # the walk never looks inside a handle
