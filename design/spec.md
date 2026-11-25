@@ -1185,7 +1185,7 @@ The views come from the sources below.
 - Own published signals. `y` is gathered from the component's own [cells](#g-cell)
   (concretely typed table entries, one per output port) in the [signal table](#g-signal-table).
   Those cells are the declared [ports](#g-port) ([§8.2][s8-2]).
-- Inputs. `u` is gathered from foreign cells through the wiring, by name.
+- Inputs. `u` is gathered through the wiring, by name.
 - The clock. `t`, and on the discrete tier `Δt`, the component's own tick
   period. `Δt` is the same in both output stages and in the update, and the
   component's phase never changes it ([§6.3][s6-3], [§8.7][s8-7],
@@ -3626,8 +3626,8 @@ The list gives each with its failure site under this layer. Each was traced
 under inference-by-evaluation too, and in every case the failure surfaced inside
 *correct* code, later, or never. [D-032][d-032] carries the traces.
 
-1. A typo'd wire (`:throtle`) is a build error at the connection, "no input
-   `throtle`; did you mean `throttle`?"
+1. A typo'd wire (`:throtle`) is a build error at the connection,
+   "`eng/throtle` names no `throtle` on `eng` — its faces are throttle, mixture, P".
 2. A forgotten wire, such as `fuel_available` read only by a
    [guard](#g-guard) (the declared function defining an event's predicate),
    fails as the [§6.1][s6-1] unconnected-input error at build.
@@ -11276,7 +11276,8 @@ Two rendering rules are doctrine, not style ([D-058][d-058]).
   a `Bool`, and a NamedTuple field diff.
 - The second rule is that the didactic style is policy. Every diagnostic states
   the fix or the lists-in-hand, not just the violation. Examples are "return
-  `zero(x.ω)`, not `0`" and "no input `throtle`; did you mean `throttle`?", or the
+  `zero(x.ω)`, not `0`" and "`eng/throtle` names no `throtle` on `eng` — its
+  faces are throttle, mixture, P", or the
   child's face list shown alongside the unknown name given to `except`.
 
 A user-code exception is wrapped in a framing diagnostic, `UserCodeFraming`, with
@@ -11898,8 +11899,9 @@ nothing. A run that starts later ends where it started, advancing no frame.
 
 **The sources are consulted in a fixed order** ([D-203][d-203]). The loop checks a pending
 control stop at frame top, then `t_end`, then the stop requests at each
-publication. When two sources hold at one boundary, the termination record names
-the first in that order ([D-203][d-203]).
+publication. A boundary's publication precedes the frame top that follows it, so
+a request holding at a boundary is recorded over a control stop or a `t_end` met
+there ([D-268][d-268], [D-413][d-413]).
 
 Authors are taught that stop requests are sampled at completed boundaries, and
 that a stop that must be localized needs a sign-form event. Both shapes of the
@@ -12496,8 +12498,9 @@ every hop survives.
 #### Caveats and hints the diagnostic carries
 
 The diagnostic carries the tracer's caveats rather than assuming them away.
-**The trace speaks for the branch taken at the probe point**, the
-diagnostic-only doctrine ([D-012][d-012], [D-343][d-343]). **Discrete members
+**The trace speaks for the branches its evaluations took**, the
+diagnostic-only doctrine ([D-012][d-012], [D-245][d-245], [D-343][d-343],
+[D-349][d-349]). **Discrete members
 trace structurally**, because the discrete tier's plain, wholesale-pinning
 declarations admit no tracer scalar ([D-012][d-012]). **The remedy hint is
 offered only for continuous members** ([D-140][d-140], [D-343][d-343]),
@@ -13561,7 +13564,7 @@ under `about`, applied to its own scratch ([§14.10][s14-10]). That is one group
 one mechanism and one kind. Each compares the resolved plan's root-input
 coverage against the root inputs the `Build`'s structure lists
 (`structure.root_inputs`) before writing anything. A
-shortfall is one collected, declaration-ordered diagnostic
+shortfall is one declaration-ordered diagnostic
 (`UninitializedInputs`, [Appendix C][sC]) naming every uncovered face. Coverage is a
 *plan-level fact*, because both operands are resolution-time data. The check is
 therefore one comparison, and it runs before any evaluation, not merely before
@@ -15492,7 +15495,7 @@ The policies:
   collects over its own unit and throws that list at once ([§13.1][s13-1],
   [D-431][d-431]). A service's violations are
   collected wherever the owning section says so (the condition algebra,
-  [§14.1][s14-1]; the pre-write check, [§14.6][s14-6]).
+  [§14.1][s14-1]).
 - **fail-fast**. The first occurrence throws on its own, and nothing else is
   gathered. At build the first user-code failure aborts the phase
   ([§13.1][s13-1]). At a service call the first violation is the throw. At
@@ -15876,7 +15879,7 @@ activation):
   label names the read and the `attach!` call names the device
   ([D-406][d-406]).
 - **`UninitializedInputs`** ([§14.6][s14-6]). Error · service, pre-write ·
-  collected. The operation that applied the condition (`init!`, `trim!` or
+  fail-fast. The operation that applied the condition (`init!`, `trim!` or
   `linearize`), every uncovered root face, in declaration order.
 - **`TapResolution`** ([§14.10][s14-10]). Error · service · collected. The
   tap set's own refusals, raised beside the reads' `ReadResolution` values.
@@ -16005,7 +16008,7 @@ activation):
   not exact, or whose run the clock's integers cannot carry, is `:range`
   ([D-457][d-457]). `restore!` refuses a state whose origin fails the same
   check as `:range` on `t0`, collected beside the mismatches
-  ([D-457][d-457]). `Model` at a scalar other than
+  ([D-457][d-457]). `Model(deployment, T)` at a scalar other than
   `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not,
   raises it with reason `:scalar`, alone
   and before the keywords are read ([D-320][d-320]).
@@ -17247,8 +17250,8 @@ labeled `NamedTuple` of selectors its `reads` returns ([§11.6][s11-6]).
 establishing a complete world over virgin [stores](#g-store) (`init!`, trim setup, trim
 commit, linearization's operating [condition](#g-condition) under `about`) cover every [root
 input](#g-root-input). Conditions themselves are legitimately
-partial. A shortfall is `UninitializedInputs`, collected and
-declaration-ordered, leaving the simulation untouched ([§14.6][s14-6]).
+partial. A shortfall is one declaration-ordered
+`UninitializedInputs`, leaving the simulation untouched ([§14.6][s14-6]).
 
 <a id="g-selector"></a>**selector (read-selector family)** — the closed set of deferred reads
 `get_state`/`get_deriv`/`get_output`/`get_input`/`get_face`, each naming one

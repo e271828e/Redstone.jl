@@ -41,7 +41,7 @@ stepped.
 
 `T` is `Float64` or a concrete `ForwardDiff.Dual` over `Float64`, nested or not,
 into which a `Float64` embeds exactly. Any other `T` is refused as
-`ArgumentInvalid` with reason `:scalar`, before anything is compiled.
+`ArgumentInvalid` with reason `:scalar`, before the model compiles anything.
 
 A model carries the [`Deployment`](@ref) and the [executor](@ref g-executor)
 built from it at `T`, with its [buffers](@ref g-buffer). It runs nothing in real

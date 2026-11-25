@@ -45,7 +45,7 @@ partition the table by ownership:
 - **`u` gathers *foreign* cells** (other components' ports, routed through
   the wiring).
 
-No cell is in both sets. The partition is still worth knowing — it is why a
+The partition is still worth knowing — it is why a
 component can never see another's state — but it no longer carries a
 freshness distinction: within a round, `y` and `u` alike read the table that
 round's sweep left, because that is the only table there is.

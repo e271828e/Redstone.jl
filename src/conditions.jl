@@ -691,7 +691,7 @@ of conditions, which are legitimately partial: an application establishing a
 complete world over virgin stores covers every root input. Coverage is a
 plan-level fact — both operands are resolution-time data — so the check is one
 comparison and runs before any evaluation, not merely before any write. A
-shortfall is one collected, declaration-ordered `UninitializedInputs` naming
+shortfall is one declaration-ordered `UninitializedInputs` naming
 every uncovered face (D-068).
 
 The services path contains no call to `probe_value`: a root input gets a
