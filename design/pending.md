@@ -21,12 +21,27 @@ item changes what the spec says, the spec edit is part of the item.
   companions and the rest of the docs are checked against the code, which
   is the source of truth, in both directions, and what drifted is fixed.
   Stage reached: the sweep is done, every group from the §14 trial to G7
-  run and its clear fixes landed. Left: the user's rulings, a small sweep
-  of items seen but not fixed, and the log clustering.
+  run and its clear fixes landed, and all but six of the rows put to the
+  user are settled or wait elsewhere.
   The state, the rulings, the group plan and the tools are in
   `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
   brief is `00_brief.md` beside it, and the rows that wait on the user are
-  in its `ledgers/user_rows.md`.
+  in its `ledgers/user_rows.md`. Left, in order:
+  - The six rows for the user, each with a recommendation in the notes and
+    a probe or a ledger row behind it: S9b-300 with CV9a-049; S6c-001 and
+    S6c-004 with K9b-041; S10d-054; S13c-031; S12b-236; and CV2-023, whose
+    row carries a caution.
+  - A ruling on the four SD3 rows, whether the glossary marks the GUI
+    behaviour the cockpit still owes as owed.
+  - The small sweep of the items the notes list as seen and not yet fixed,
+    about 25, each re-checked first, since two have landed since.
+  - The log clustering, Stage F step 4 of the brief: the 326 findings of
+    `ledgers/log_findings.tsv` grouped by topic, one superseding entry
+    drafted per group, for the user's approval. It settles CV2-026 and
+    CV6a-033, which wait on the CIT-D166 finding.
+  - The closing: the final report the brief asks for, the
+    `doc_conformance` worktree removed, and this bullet retired. CV11a-004
+    and CV7a-038 stay on the API audit's roadmap.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, in an arc of five increments.
   Stage reached: increments 1 and 2 are pushed, and increment 3 is next.
