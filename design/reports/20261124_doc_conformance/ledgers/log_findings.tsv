@@ -321,3 +321,7 @@ SD4-138	D-058
 CV7b-028	D-438
 CV7a-003	D-476
 CV7a-024	D-454
+CV2-056	design/log.md:8101	law	deviation	The recorded source of a boundary where two sources hold is the first of control stop, t_end, stop faces	A request holding at a boundary is recorded over a control stop or a t_end met there, since the publication precedes the frame top that follows	src/sim.jl:2090-2140; probe G1b/CV2	D-203; spec §13.5 moved in cdf92a7f	G1b user ruling 2026-11-25
+K11-002	design/log.md:3047	law	deviation	Gain trajectories are observable in log/trace/replay	Observable in log and replay; the trace holds only the drained inputs	src/trace.jl:1-19; probe K11	D-089; spec §5.3 moved in a991af00	G5b
+C2-139	design/log.md:5853	law	deviation	UninitializedInputs is collected	Fail-fast in D-222's sense: one diagnostic naming every uncovered face	src/conditions.jl:705	D-149; Appendix C and §14.6 moved in cdf92a7f	G1b user ruling 2026-11-25
+S13c-213	design/log.md:15169	law	deviation	The classifier's trace speaks only for the branch taken at the probe point	It speaks for the branches its evaluations took; a sampled member is evaluated at sampled states too	src/tracer.jl:333-340	D-343; spec §13.8 moved in cdf92a7f	G1a user ruling 2026-11-25

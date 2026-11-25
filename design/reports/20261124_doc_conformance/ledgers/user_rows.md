@@ -9,12 +9,13 @@ the verifier's probe.
 
 - **S13b-205, wording.** §13.5's fixed order of stop sources is false at one
   boundary: requests are read at the publication, before the next frame top.
-  Recommended: the verifier's text. Same topic as G1b's CV2-056.
+  Recommended: the verifier's text. Same topic as G1b's CV2-056. Settled,
+  `cdf92a7f`.
 - **S13c-213, wording.** §13.8's "evaluated once": a member whose global trace
   meets an undecidable branch is re-run at sampled states. Recommended: the
-  verifier's text.
+  verifier's text. Settled, `a991af00`.
 - **S13c-219, wording.** §13.8's "no layouts": `_classify` builds the nominal
-  cell layout. Recommended: drop "no layouts".
+  cell layout. Recommended: drop "no layouts". Settled, `a991af00`.
 - **S13a-040 with L13-017, defect.** Three tests assert message text against
   §13.2 and D-058. Recommended: move them into the rendering testset.
 - **S13c-031, defect.** A hanging `unblock!` is not bounded by the join
@@ -26,17 +27,21 @@ the verifier's probe.
 ## G1b
 
 - **CV2-056, wording.** Same as S13b-205, seen from `src/sim.jl:2090`.
+  Settled, `cdf92a7f`.
 - **C1-047, wording.** Appendix C's "Declaration and wiring" group holds kinds
   that the cell layout and the probe raise, not the structure step alone.
+  Settled, `a991af00`.
 - **C2-073, wording.** A binding kind's payload is the binding type and a
-  `reason`, not the trait, method and direction.
+  `reason`, not the trait, method and direction. Rule it with S11c-089: §11.6
+  states what that defect asks of the code.
 - **C2-139, wording.** `UninitializedInputs` is listed as collected; the code
-  raises one fail-fast diagnostic naming every uncovered face.
+  raises one fail-fast diagnostic naming every uncovered face. Settled,
+  `cdf92a7f`.
 - **CV1-011 and CV1-025, citations.** diagnostics.jl:89 cites D-058 for the
   carrier, which D-222 replaced. :204 cites D-214 for plain `Float64` time
   payloads, which D-214 does not treat.
 - **CV1-034, wording.** §13.4 omits `StepError`'s reproduction recipe for the
-  `restore!` host and the interrupt's resuming door.
+  `restore!` host and the interrupt's resuming door. Settled, `a991af00`.
 - **CV2-041, wording.** `ignore_stop_requests` reads each element through
   `string`, so a Symbol names a path. The spec and docstring say paths.
 - **CV1-147, defect.** BS3's `:range` refusal renders through
@@ -59,10 +64,13 @@ the verifier's probe.
   components (the verifier counts about 10).
 - **S8b-182, wording.** §8.2's `Pinned` hint names `F`; the message names the
   leaf. D-286 backs the doc's text, and L8b-070 repeats it in the log.
+  Settled, `a991af00`.
 - **S8c-047, wording.** §8.2 lists `x_projection` among the continuous-only
   declarations checked in the structure step; the verifier's text names
-  `m_init` and `state_events` instead.
+  `m_init` and `state_events` instead. Ruled 2026-11-25: the code moves the
+  check to the structure step.
 - **S8c-106, wording.** §8.4's typo'd-wire message differs from the code's.
+  Settled, `cdf92a7f`.
 - **S8c-174, defect.** Two transparent containers on one type are said to be
   a declaration error; `_check_transparent` accepts a return naming several
   fields. Proposed: refuse it with a collected diagnostic. The doc-side option is CV8-048:
@@ -78,18 +86,19 @@ the verifier's probe.
 - **S9a-029, S9a-039 and S9a-051, wording.** §9.1: materialization runs the
   `*_init` bodies and an activation, not "no user code"; the structure walk's
   five steps run in another order; the did-you-mean list holds the endpoint's
-  faces, inputs and outputs alike.
+  faces, inputs and outputs alike. Settled, `a991af00`.
 - **S9b-112, wording.** §9.2: the refusal covers any value that is not an
   algorithm token, not an algorithm the seam does not know.
 - **S9c-055, wording.** §9.4: after pre-materialization each lookup still
   takes the build's lock. D-135 backs the doc's text. (S9c-067 landed as
-  G3b's CV9a-017.)
+  G3b's CV9a-017.) Settled, `a991af00`.
 - **S9c-062, wording.** §9.4's reason the bare `Dual` is refused. D-099
-  backs the doc's text.
+  backs the doc's text. Settled, `a991af00`.
 - **S9c-139 and S9c-186, wording.** §9.5: struct-valued ports embed leaf by
   leaf, and the handler key check reuses the did-you-mean shape, not the
-  `FieldError` machinery. D-287 backs the doc's text.
+  `FieldError` machinery. D-287 backs the doc's text. Settled, `a991af00`.
 - **S9c-154, wording.** The `Pinned` hint again; rule it with S8b-182.
+  Settled, `a991af00`.
 - **S9d-057, wording.** §9.7's compile-cost figures no longer match the
   measurements.
 - **S9b-300, defect.** §9.3 says everything the probe writes is garbage
@@ -101,34 +110,39 @@ the verifier's probe.
 - **CV9a-049, wording.** §9.3's probe-scoped values: `compile` seeds every
   fresh table from the probe's values. Rule it with S9b-300.
 - **CV9a-050, wording.** Appendix C and D-431 say a misshapen return throws
-  alone; that holds for the port check only.
+  alone; that holds for the port check only. Settled, `a991af00`.
 - **CV9b-049, wording.** The scalar refusal is not always alone and before
-  the keywords are read. D-320 backs the doc's text.
+  the keywords are read. D-320 backs the doc's text. Settled, `cdf92a7f`.
 - **K9b-014, K9b-027, K9b-041 and K9b-052, wording.** The two walkthroughs:
   a loop closed through B is schedulable only through `y_state`; pinning the
   deck's output would also need a stripping stage; the grid copy is kept off
   by the shape rule, not D-263; `Freeze` cannot take a handle, its `V` being
-  bounded at the type.
+  bounded at the type. Settled, `a991af00`, except K9b-041, which waits on
+  S6c-001 and S6c-004.
 
 ## G4, §10
 
 - **S10b-224, wording.** §10.4's chattering example: the code keeps a
   latching predicate ungated on the mode, and gating it would chatter.
+  Settled, `a991af00`.
 - **S10d-054, defect.** §10.7 says `margin = 2 ms` sleeps about 90% of a
   20 ms budget and lands within µs of the deadline. The coarse phase now
   overshoots more. Proposed: recalibrate the default to about 3 ms, after a
   measurement on the dev machine.
 - **CV10-221, wording.** The `ExecutionCursor` docstring's account of when
-  the cursor is written and read misses one store.
+  the cursor is written and read misses one store. Settled, `a991af00`.
 - **CV10-263, wording.** A named discrete store whose `s_update` returns the
   right field names with a wrong value type reports `:field_set`; Appendix C
   does not say so.
 - **K10b-043, wording.** The limited-integrator companion's trial count for
   the minmax projection: about ITP's worst case, 21 or 22, not bisection's.
+  Settled, `a991af00`.
 - **S9d2-042, wording.** §9.7 says `rhs` takes no index; it has a one-arg
-  form that walks the same entries. D-147 backs the doc's text.
+  form that walks the same entries. D-147 backs the doc's text. Settled,
+  `a991af00`.
 - **S9d2-074, wording.** §9.7 says `-O0` trajectories differ from `-O2`'s;
   the code shows they can, not that they must. D-289 backs the doc's text.
+  Settled, `a991af00`.
 - **S9d2-107, gap.** The scheduled `GC.gc(false)` at frame boundaries is
   owed by `pending.md`; no action.
 - **S10a-064, bold ruling.** §10.2's bold span says the distance is taken in
@@ -142,14 +156,16 @@ the verifier's probe.
   `RosterEntry` sketch has the wrong fields, and it says `run!` bakes widget
   liveness and specializes the drain; the GUI's loop bakes liveness through
   `port_views`, and the drain is compiled at the attach points and the door.
+  Settled, `a991af00`.
 - **K11b-027, wording.** `attach!`'s order is identity, then face names,
-  then claims; the walkthrough puts face names first. D-216 backs it.
+  then claims; the walkthrough puts face names first. D-216 backs it. Settled,
+  `a991af00`.
 - **K11b-082, wording.** The walkthrough says the drain is a known tuple with
   no dynamic dispatch; it iterates a vector of thunks, one dispatch each.
-  D-374 makes the tuple a freedom, not an obligation.
+  D-374 makes the tuple a freedom, not an obligation. Settled, `a991af00`.
 - **S11a-185, wording.** §11.1 says pre-materialized workers synchronize on
   nothing; each activation lookup takes the build's lock. Rule it with
-  S9c-055.
+  S9c-055. Settled, `a991af00`.
 - **S11c-089, defect.** `BindingContractMismatch` messages do not name the
   `is_input` and `is_output` traits, as §11.6 says every violation report
   does. Proposed: name both traits in the `:neither_side`, `:claims_missing`
@@ -158,19 +174,21 @@ the verifier's probe.
   `pending.md`; no action.
 - **K11-002, wording.** The flight case studies say gain trajectories show
   in the log, the trace and replay; the trace holds only the drained writes,
-  and replay recomputes the gains from it.
+  and replay recomputes the gains from it. Settled, `a991af00`.
 - **S12a-010, wording.** §12.1 bounds a control change's delay by one frame
-  budget; that holds only while the run keeps pace. D-269 backs it.
+  budget; that holds only while the run keeps pace. D-269 backs it. Settled,
+  `a991af00`.
 - **S12a-020, wording.** §12.2 says the explicit `yield()` covers only frames
   without a coarse-phase sleep; the loop yields at every frame top with
-  devices attached. D-027 backs it.
+  devices attached. D-027 backs it. Settled, `a991af00`.
 - **S12b-117, wording.** §12.4's init-bracket block calls a bare
   `shutdown!`; the bracket calls the guarded `_shutdown!`, which warns on a
-  throw and forwards an interrupt.
+  throw and forwards an interrupt. Settled, `a991af00`.
 - **S12c-129, wording.** §12.6: `step!` returns the full count when the stop
-  falls in the last requested frame, not fewer.
+  falls in the last requested frame, not fewer. Settled, `a991af00`.
 - **S12d-058, wording.** §12.7's replay checks: a checkpoint mismatch
-  reports the recorded value beside the target's, not a did-you-mean.
+  reports the recorded value beside the target's, not a did-you-mean. Settled,
+  `a991af00`.
 - **S12b-236, defect.** §12.4 says a forced interrupt outside a frame is a
   stop like a deferred one. A raw interrupt in `_run_body!`'s or `step!`'s
   masked bookkeeping can cut it short. Proposed: make that bookkeeping
@@ -185,7 +203,7 @@ the verifier's probe.
 
 - **S6b-239, wording.** §2 says guard-driven handlers are the sole writers
   of continuous state; `x_projection` writes `x` back at every boundary too.
-  D-141 backs the doc's text.
+  D-141 backs the doc's text. Settled, `a991af00`.
 - **S6c-001 and S6c-004, code or doc.** §4.3 and D-237 refuse a mutable type
   anywhere in a port value. The leaf walk exempts a mutable `Real` such as
   `BigFloat`, and never enters an opaque leaf. Either the code drops the
@@ -198,17 +216,19 @@ the verifier's probe.
   The figures depend on the machine and on how the setup is rebuilt.
   Proposed: take the re-measured values, noting the Julia version.
 - **K6d-122, wording.** The LQR companion says `Tt = 0` follows exactly on
-  the discrete tier; `u_raw` lands on the tick's `v` one tick later.
+  the discrete tier; `u_raw` lands on the tick's `v` one tick later. Settled,
+  `a991af00`.
 - **K6a-013, wording.** The event-visibility walkthrough says no cell is in
   both the `y` and the `u` set; a component wiring its own stage-1 port to
-  its own input has one.
+  its own input has one. Settled, `cdf92a7f`.
 - **K6b-012, K6b-019, K6b-022 and K6b-101, wording.** The library inventory:
   what walks under `Dual` (pinned and discrete entries do not follow the
   scalar), a fourth status "not admitted", port names beyond `in1…inN`, and
-  shipped rows beyond the first two tranches.
+  shipped rows beyond the first two tranches. Settled, `a991af00`.
 - **K6e-058, K6e-081 and K6e-087, wording.** The PID companion: the hold
   beats ungated tracking on peak but settles later; the shared methods are
-  not "eleven"; the list of vector components is incomplete.
+  not "eleven"; the list of vector components is incomplete. Settled,
+  `a991af00`.
 - **CV6a-020, CV6c-006 and CV6c-043, code_map.md.** The leaves.jl entry
   omits the shape walk; the library.jl entry's Spec line and its PID helper
   list are off. Internal, but the new text is not fixed one way.
@@ -226,12 +246,13 @@ the verifier's probe.
 - **SA-025 and SA-051, wording.** Appendix A: the shipped instance of a
   commanded reset is `Integrator(; reset = true)`, not weight-on-wheels
   (D-141 backs the doc); and the build never compares instances of a type,
-  so a value-dependent contract goes unnoticed for that reason.
+  so a value-dependent contract goes unnoticed for that reason. Settled,
+  `a991af00`.
 - **SB-289, wording.** Appendix B says `LevenbergMarquardt()` takes no
-  keywords; it takes `maxiter` and `λ₀`.
+  keywords; it takes `maxiter` and `λ₀`. Settled, `a991af00`.
 - **SD1-129 and SD3-166, wording.** The glossary's cell entry omits the root
   inputs' cells; its claim-enforcement entry omits the harness's
-  `OutOfClaimEntry` on an unknown face.
+  `OutOfClaimEntry` on an unknown face. Settled, `a991af00`.
 - **SD1-001, defect.** Appendix D says its entries are alphabetical within
   each group; several groups are not. Proposed: reorder them, or drop the
   claim.
@@ -245,9 +266,11 @@ the verifier's probe.
   walkthrough: a checkpoint's stores are also reachable component by
   component; `state(model, path)` is the one path-addressed read at rest;
   `overlay!` raises the discontinuity notice where `init!` resets the
-  stepper; the implementation offers two bundles, not one flag.
+  stepper; the implementation offers two bundles, not one flag. Settled,
+  `a991af00`.
 - **SD4-138, wording.** The glossary says a payload carries paths and names
-  as strings; names are symbols. D-058 backs the doc's text.
+  as strings; names are symbols. D-058 backs the doc's text. Settled,
+  `a991af00`.
 - **CV7a-003, CV7a-024, CV7a-028, CV7a-038 and CV7a-057, undocumented
   surface.** The artifacts' one-line `show` forms, the `Deployment` REPL
   heading's extra fields, `show(::FrameworkStatus)`, the public `TraceBatch`

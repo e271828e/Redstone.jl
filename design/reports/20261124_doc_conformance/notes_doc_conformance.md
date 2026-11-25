@@ -114,6 +114,16 @@ the tools.
   `ledgers/user_rows.md`; a small sweep of the "seen, not yet fixed" items
   above; and the clustering of `ledgers/log_findings.tsv` into superseding
   entries for the user's approval, as the brief's Stage F step 4 says.
+- **The wording rows, ruled on 2026-11-25.** The user's rule for a row whose
+  fact is settled and whose sentence is open: delete the false words if the
+  passage still makes its point; else qualify or replace with the fewest
+  words; else rewrite. 53 rows are settled under it, `a991af00`, one of them
+  already fixed, and 6 of the 10 rows where doc or code could move took the
+  doc's fix, `cdf92a7f`. `ledgers/user_rows.md` marks each. Left of that
+  class: S8c-047, whose code change is accepted; CV10-263, CV2-041 and
+  S9b-112, in discussion; C2-073, CV9a-049, K9b-041 and CV11a-004, each tied
+  to another open row or to the API audit; and the figures S9d-057, K8-027
+  and K8-046.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five
