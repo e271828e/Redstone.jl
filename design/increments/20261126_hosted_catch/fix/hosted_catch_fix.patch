@@ -1,0 +1,521 @@
+diff --git a/design/code_map.md b/design/code_map.md
+index d1f790ea..ea9daebb 100644
+--- a/design/code_map.md
++++ b/design/code_map.md
+@@ -684,7 +684,7 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
+   `:loop`, which writes `:inconsistent` and builds the `StepError` for every
+   throw, an interrupt included (D-441). The claim's gate and the refusal of a `k`
+   past `_last_frame(model)`, the lesser of the `Lattice`'s `max_frame` and
+-  the clock's resolution from the origin, precede the `try`, so that
++  the clock's resolution from the origin, precede the stretch, so that
+   refusal leaves the model `:consistent` (D-318, D-445, D-450).
+ - `_frame_steps!`, the frame as two nested loops (D-445, D-449). The outer
+   one runs over the mandatory instants, the frame tops and the due instants,
+@@ -1552,15 +1552,18 @@ Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245, D-437.
+   D-458), and `_verdict!`, which takes the caller's
+   commit, both shared with the simulation's method in sim.jl (D-319). The
+   guess evaluation, each seeded evaluation and `_verdict!`'s committed-state
+-  evaluation are stretches hosted by model.jl's `_hosted` on the model that
++  evaluation are stretches hosted by model.jl's `_hosted` on the scratch that
+   runs them, host `:trim`, pointer 0, phase `:evaluation`, the guess
+-  evaluation's round at round 1 (§13.4).
++  evaluation's round at round 1 (§13.4). The committed-state evaluation runs
++  on the nominal scratch, which the solve's packing carries, after the
++  commit's `checkpoint(model)` is restored onto it, so a throw there leaves the
++  commit in place and the model `:consistent` (D-482).
+ - The misuse fallback on a `Model`, and `ArgumentInvalid`'s `:non_nominal` on
+   a `Model` at another scalar (D-319).
+ - `TrimReport`, with its `committed_checks` (D-262).
+ 
+ Spec: §9.6, §13.1, §14.5–§14.9, D-070, D-158, D-213, D-224, D-253, D-262,
+-D-277, D-317, D-318, D-319, D-458.
++D-277, D-317, D-318, D-319, D-458, D-482.
+ 
+ ### `test/fixtures.jl`
+ 
+diff --git a/design/log.md b/design/log.md
+index 510b247e..ad3e1e9e 100644
+--- a/design/log.md
++++ b/design/log.md
+@@ -9162,7 +9162,8 @@ raises out of its `init!`. The throw propagates, the simulation is left
+ Annotation (2026-11-26): amended by [D-482][d-482]. A `StepError` out of `trim!` has
+ two more sources, both with host `:trim` and neither caught by `trim!`. A
+ throw inside an evaluation of the search leaves the simulation as it was. A
+-throw inside the evaluation of the committed state leaves it `built`.
++throw inside the evaluation of the committed state leaves the commit in
++place and the simulation `initialized`.
+ 
+ **Spec.** [§14.8][s14-8]
+ 
+@@ -21411,22 +21412,26 @@ accepted for a service.
+ 
+ **Status.** ratified
+ 
+-**Position.** Model code runs only inside a hosted stretch. One catch on
+-the `Model` wraps what a stretch throws in a `StepError`, from the cursor of
+-the model that ran it, and writes that model's status, whether the model is
+-the user's or a service's scratch.
++**Position.** The frame, the doors and the services run model code only
++inside a hosted stretch. One catch on the `Model` wraps what a stretch
++throws in a `StepError`, from the cursor of the model that ran it, and
++writes that model's status, whether the model is the user's or a service's
++scratch.
+ 
+ - The stretches are the frame, boundary zero under `init!`, the settling
+   `overlay!` runs, the restore, the nominal half of `init!` at a non-nominal
+-  scalar ([D-481][d-481]), and the evaluations `trim!` and `linearize` run.
++  scalar ([D-481][d-481]), and the evaluations `trim!` and `linearize` run. A
++  primitive a caller runs bare ([D-317][d-317]) hosts nothing.
+ - The host names the call that reproduces the failure. The evaluations of
+   `trim!` report `:trim` and those of `linearize` report `:linearize`. The
+   nominal half of `init!` reports `:boundary_zero`.
+ - The status follows the host as [D-441][d-441] rules, `:inconsistent` for `:loop`
+   and `:built` for every other. A service's stretch on a scratch writes the
+   scratch's status, so the user's model is untouched. `trim!` evaluates the
+-  committed state on the user's model, and a throw there leaves it `:built`.
+-- A stretch holds the calls that run model code and no others. The
++  committed state on a scratch too, with the commit's checkpoint restored
++  onto it, so a throw there leaves the commit in place and the user's model
++  `:consistent`.
++- A service's stretch holds the calls that run model code and no others. The
+   application of a condition, the reads and the problem's own functions run
+   outside every stretch, and what they throw arrives as it is.
+ - Stretches do not nest. The nominal half of `init!` is a stretch on its
+@@ -21471,12 +21476,21 @@ An interrupt inside a stretch cuts a model in the middle of a sweep, and
+ interrupt, wrapped inside an evaluation and bare inside its own code or the
+ backend's. The doors show the same two: an interrupt arrives bare while
+ `init!` applies its plan and wrapped inside boundary zero. The user's model
+-is untouched in both, the committed-state evaluation excepted.
+-
+-A throw at the committed-state evaluation takes the commit's disposition
+-([D-224][d-224]). `trim!` is the door there. The model returns to `:built` and no
+-report is returned, so no caller holds a converged verdict over a model
+-whose derivative does not evaluate.
++is untouched in both.
++
++The committed state is evaluated on a scratch, as every other evaluation of
++`trim!` is. The commit's checkpoint is restored onto the nominal scratch, as
++`linearize`'s default form restores its operating point, and one evaluation
++runs there. A throw there leaves the commit in place, the user's model
++`:consistent` and the simulation `initialized`. No report is returned, so no
++caller holds a converged verdict over a committed state whose derivative
++does not evaluate. The status says what is true. Boundary zero completed and
++published, and the evaluation writes only the derivative buffer. A throw
++there had that lifecycle when the evaluation ran bare, and a throw from
++`residuals` at the same point has it too. `trim!` then writes the user's
++model through `init!` alone, and the status follows from the host with no
++exception. The cost is one checkpoint, one restore and one evaluation in
++each converged call, about 1.6 KB of a call's 100 KB.
+ 
+ A frame, an `init!` and a service's evaluation allocate what they did
+ before. The host calls its stretch with the model as the argument, since a
+@@ -21508,10 +21522,15 @@ closure over the seeded scratch cost 272 B in each pass of `linearize`.
+   catch, its cursor copied into the model's ([D-481][d-481]):* the copy exists only
+   because the catch read the wrong model's cursor, and a hosted stretch
+   cannot sit inside another.
+-- *The committed-state evaluation left bare:* a raw throw out of a door.
+-- *The committed-state evaluation hosted with the status kept
+-  `:consistent`:* the status would no longer follow from the host, and the
+-  model's first frame would throw at the same point.
++- *Superseded position — the committed state evaluated on the user's model,
++  a throw there writing `:built`:* the status was untrue. Boundary zero had
++  completed and published, yet the simulation read `built` while it held an
++  open run, a taken trace header and a logged snapshot, and `MissingInit`
++  said that boundary zero had not completed. The first frame would throw at
++  the same point, but `:consistent` says that the stores are a settled
++  boundary, not that the next frame succeeds. Stating the odd state in the
++  spec, or dropping the log on that throw, would mend a status the
++  evaluation had no cause to write.
+ - *The frame keeping a catch of its own:* its lines are the host's once the
+   status follows from the host, and the frame allocates nothing either way.
+ - *One evaluation count across a whole `trim!` call:* a counter carried
+diff --git a/design/spec.md b/design/spec.md
+index f9bdd4ee..7c5f6f5b 100644
+--- a/design/spec.md
++++ b/design/spec.md
+@@ -11569,18 +11569,20 @@ per [component](#g-component)** (the unit of modeling, a primitive or an assembl
+ ([D-059][d-059]). The loop wraps each frame in a `try` of its own, which decides the
+ failure's disposition (below) and builds no carrier ([D-317][d-317]).
+ 
+-**Model code runs only inside a hosted stretch** ([D-482][d-482]). A stretch is a run
+-of calls into model code that one catch on the `Model` wraps. The stretches
+-are the frame, boundary zero, the settling `overlay!` runs, the restore, the
+-nominal half of `init!` at a non-nominal scalar ([§9.3][s9-3]), and the evaluations
+-`trim!` and `linearize` run ([§14.8][s14-8], [§14.10][s14-10]). The catch reads the cursor of
+-the model that ran the stretch and writes that model's status. Who made the
++**The frame, the doors and the services run model code only inside a hosted
++stretch** ([D-482][d-482]). A stretch is a run of calls into model code that one
++catch on the `Model` wraps. The stretches are the frame, boundary zero, the
++settling `overlay!` runs, the restore, the nominal half of `init!` at a
++non-nominal scalar ([§9.3][s9-3]), and the evaluations `trim!` and `linearize` run
++([§14.8][s14-8], [§14.10][s14-10]). A primitive a caller runs bare, such as `evaluate!` or
++`boundary!`, hosts nothing ([D-317][d-317]). The catch reads the cursor of the
++model that ran the stretch and writes that model's status. Who made the
+ model has no bearing. A service's [scratch](#g-scratch) model (one whose
+ contents are never authoritative) is a `Model` like any other there.
+-Stretches do not nest. A stretch holds the calls that run model code and no
+-others. A service applies its condition, makes its reads and calls the
+-problem's own functions outside every stretch, as `init!` applies its
+-condition before boundary zero.
++Stretches do not nest. A service's stretch holds the calls that run model
++code and no others. A service applies its condition, makes its reads and
++calls the problem's own functions outside every stretch, as `init!` applies
++its condition before boundary zero.
+ 
+ Where execution stood does not need to be *caught* into existence. The [executor](#g-executor)
+ (the compiled form of the stage [execution order](#g-execution-order)) maintains an [execution cursor](#g-execution-cursor),
+@@ -14230,11 +14232,14 @@ A throw inside the commit's boundary zero is the commit's own. **The throw
+ propagates out of `trim!` as the
+ commit's `StepError`** ([D-224][d-224]), and the simulation is left `built`
+ ([§13.4][s13-4], [D-223][d-223]). After the commit, `trim!` evaluates the
+-derivative of the committed state on the simulation's own model. **A throw
+-inside that evaluation carries the host `:trim` and leaves the simulation
+-`built`**, as a throw inside the commit does ([D-482][d-482]). The problem's own
+-functions are not model code. A throw from `condition`, `residuals` or
+-`checks` propagates as it is.
++derivative of the committed state on a scratch, with the commit's checkpoint
++restored onto it as `linearize`'s default form restores its operating point
++([§14.10][s14-10]). **A throw inside that evaluation carries the host `:trim` and
++leaves the commit in place** ([D-482][d-482]). The simulation stays `initialized`
++and its model `:consistent`, since boundary zero completed and the evaluation
++writes nothing of theirs. The problem's own functions are not model code. A
++throw from `condition`, `residuals` or `checks` propagates as it is, and at
++the committed state it also leaves the commit in place.
+ 
+ An *empty* problem is none of them either. **`TrimProblem(guess = (;), …)` is legal**,
+ not `TrimProblemInvalid` ([D-156][d-156]). With zero decision variables the solver is
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index 3dd4a847..db923081 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -246,7 +246,9 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
+     cursor::CursorFrame
+     t::Float64       # `_seconds(clock.t)` at the catch: the boundary time in a boundary
+                      # phase, the stage or trial time mid-integration
+-    boundary::Int    # the frame-entry boundary index: replay!(…; to_boundary = boundary)
++    boundary::Int    # the pointer: under :loop the frame-entry boundary index,
++                     # replay!(…; to_boundary = boundary); under any other host the
++                     # boundary the stretch's model stands at
+     host::Symbol     # the catch that took the throw: :boundary_zero under init!,
+                      # :overlay under overlay!, :restore under a restore,
+                      # :trim and :linearize inside a service's evaluation,
+@@ -313,9 +315,9 @@ function _host_lines(carrier::StepError)
+         "trim!(sim2, problem; baseline, t0) with the same arguments runs it again") :
+     host === :linearize ? (
+         "$phase of linearize at boundary $boundary",
+-        "linearize(sim2, tap_set) at the same operating point reproduces it",
++        "linearize(sim2, tap_set; about, t0) at the same operating point reproduces it",
+         "an interrupt cut the linearization, so nothing reproduces it; " *
+-        "linearize(sim2, tap_set) at the same operating point runs it again") :
++        "linearize(sim2, tap_set; about, t0) at the same operating point runs it again") :
+     ("$phase of the frame from boundary $boundary",
+      "replay!(sim2, trc; to_boundary = $boundary) then step!(sim2) reproduces it",
+      "an interrupt cut the frame, so nothing reproduces it; " *
+diff --git a/src/linearize.jl b/src/linearize.jl
+index 19dbd864..01c5f823 100644
+--- a/src/linearize.jl
++++ b/src/linearize.jl
+@@ -263,9 +263,9 @@ model at a scalar type other than `Float64` are refused as `ArgumentInvalid`.
+ 
+ A throw of model code inside an evaluation, an `InterruptException` included,
+ arrives as a `StepError` with host `:linearize`, naming the
+-[component](@ref g-component) and the evaluation. Its `boundary` is the one the
+-operating point stands at, the checkpoint's frame or 0 under `about`. It leaves
+-the model as it was.
++[component](@ref g-component), the function and the round or evaluation where it
++stood. Its `boundary` is the one the operating point stands at, the
++checkpoint's frame or 0 under `about`. It leaves the model as it was.
+ 
+ # Keywords
+ 
+diff --git a/src/model.jl b/src/model.jl
+index 1ca7dfae..630d0b46 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -3,8 +3,9 @@
+ # hooks, the doors, evaluation, the boundaries, the stepper seam's framework
+ # side, the reads, the one `StepError` constructor and the checkpoint's
+ # model-level half, with its two doors `checkpoint(model)` and `restore!(model,
+-# model_state)`. Every door that writes the model's status lives here; the one
+-# other writer is `frame!`'s catch site (frame.jl).
++# model_state)`. Every write of a model's status lives here, the doors' and the
++# one host's, `_hosted`, which the frame (frame.jl) and the services' evaluations
++# (trim.jl, linearize.jl) call as well.
+ 
+ # Design: §9.1, §9.2, §9.4, §9.5, §9.7, §11.8, §12.1, §12.6, §14.3, Appendix C,
+ # D-254, D-256, D-317, D-318, D-320.
+@@ -1125,8 +1126,8 @@ end
+ # are the frame (frame.jl) as `:loop`, `init!`'s boundary zero and its nominal
+ # half as `:boundary_zero`, `overlay!`'s settling as `:overlay`, the inner
+ # restore as `:restore`, and the services' evaluations (trim.jl, linearize.jl)
+-# as `:trim` and `:linearize`. A stretch holds the calls that run model code and
+-# nothing else. Two never nest, since `_wrap_step` refuses a `StepError`.
++# as `:trim` and `:linearize`. A service's stretch holds the calls that run model
++# code and nothing else. Two never nest, since `_wrap_step` refuses a `StepError`.
+ @inline function _hosted(f, model::Model, entry_boundary::Int, host::Symbol)
+     cursor = model.exec.cursor
+     cursor.comp = 0; cursor.fn = :none
+diff --git a/src/sim.jl b/src/sim.jl
+index 63f815ff..6657c456 100644
+--- a/src/sim.jl
++++ b/src/sim.jl
+@@ -1122,8 +1122,11 @@ refused as `ArgumentInvalid`.
+ 
+ A throw of model code inside an evaluation of the search arrives as a
+ `StepError` with host `:trim`, and leaves the simulation as it was. A throw
+-inside the commit, or in the evaluation of the committed state, leaves it
+-`built`, and no report is returned.
++inside the commit leaves it `built`. One inside the evaluation of the committed
++state arrives as a `StepError` with host `:trim`, and leaves the commit in place
++and the simulation `initialized`. No report is returned for any of the three. A
++throw from the problem's own functions propagates as it is, and at the
++committed state it leaves the commit in place.
+ """
+ function trim!(sim::Simulation, problem::TrimProblem; baseline,
+                t0 = 0, backend = LevenbergMarquardt())
+diff --git a/src/trim.jl b/src/trim.jl
+index a7dfada7..7c536e4b 100644
+--- a/src/trim.jl
++++ b/src/trim.jl
+@@ -12,9 +12,10 @@
+ # the search happens on scratch models the invocation instantiates and
+ # discards (§9.2's one-owner rule, §14.8's scratch-store paragraph), so a solve
+ # that does not converge leaves the simulation bit-for-bit untouched — "never
+-# initialized" included. Each evaluation is a stretch hosted on the scratch
+-# model that runs it (model.jl's `_hosted`), so a throw of model code there is
+-# a `StepError` with host `:trim` and leaves the simulation untouched too.
++# initialized" included. Each evaluation, the committed state's included, is a
++# stretch hosted on the scratch model that runs it (model.jl's `_hosted`), so a
++# throw of model code there is a `StepError` with host `:trim` and writes
++# nothing of the simulation's.
+ #
+ # The seeded-half machinery — `_scratch`, `_establish_frozen!` — is model.jl's,
+ # shared with linearize.jl, which runs the same two-half scratch world (D-213)
+@@ -157,9 +158,11 @@ catch. A solve that does not converge returns one too. A malformed problem is a
+ different case, and `trim!` refuses it at setup.
+ 
+ The `converged` verdict alone decides the commit. A converged solve commits
+-unless [boundary zero](@ref g-boundary-zero) throws. A throw of model code, in
+-the search or in the commit, arrives as a `StepError` with no report, so
+-`committed_residuals` also tells whether the commit happened.
++unless [boundary zero](@ref g-boundary-zero) throws. A throw of model code
++arrives as a `StepError` with no report, from the search, from the commit or
++from the evaluation of the committed state, and the third leaves the commit in
++place. A report that is returned tells by its `committed_residuals` whether the
++commit happened.
+ 
+ A non-empty `fired_events` means the committed [stores](@ref g-store) sit past
+ the [events](@ref g-state-event)' handlers rather than at the reported solution.
+@@ -492,8 +495,10 @@ end
+ # hosted on the model that runs it with host `:trim` and pointer 0, its phase
+ # `:evaluation` and its index that model's evaluation ordinal, the guess
+ # evaluation's establishment round at round 1 as boundary zero's (§13.4). The
+-# condition's application, the reads and the problem's own functions stay
+-# outside, so their throws pass as they are.
++# committed-state one runs on the nominal scratch, the commit's checkpoint
++# restored onto it, so `trim!` writes the model through the commit alone
++# (D-482). The condition's application, the reads and the problem's own
++# functions stay outside, so their throws pass as they are.
+ """
+     trim!(model::Model{Float64}, problem::TrimProblem; baseline, t0 = 0,
+           backend = LevenbergMarquardt()) -> TrimReport
+@@ -555,12 +560,14 @@ as `ArgumentInvalid`, before any check. So is a second argument that is not a
+ 
+ A throw of model code inside an evaluation of the search, an
+ `InterruptException` included, arrives as a `StepError` with host `:trim` and
+-`boundary` 0, naming the [component](@ref g-component) and the evaluation. It
+-leaves the model as it was. A throw inside the commit arrives as `init!`'s
+-`StepError`, with host `:boundary_zero`, and one inside the evaluation of the
+-committed state as a `StepError` with host `:trim`. Each writes the model's
+-status back to `:built`, and no report is returned. A throw from the problem's
+-own functions propagates as it is.
++`boundary` 0, naming the [component](@ref g-component), the function and the
++round or evaluation where it stood. It leaves the model as it was. A throw
++inside the commit arrives as `init!`'s `StepError`, with host `:boundary_zero`,
++and writes the model's status back to `:built`. One inside the evaluation of the
++committed state arrives as a `StepError` with host `:trim`, and leaves the commit
++in place and the model `:consistent`. No report is returned for any of the
++three. A throw from the problem's own functions propagates as it is, and at the
++committed state it leaves the commit in place.
+ 
+ # Keywords
+ 
+@@ -593,7 +600,8 @@ trim!(::Model{T}, ::TrimProblem; kw...) where {T} = throw(DiagnosticError(
+ 
+ # The solve, from the setup checks through the verdict's evaluation, on scratch
+ # models alone; the commit is the caller's (D-319). The bypassed zero-decision
+-# problem and the solved one return the same packing, what `_verdict!` reads.
++# problem and the solved one return the same packing, what `_verdict!` reads,
++# the nominal scratch included, on which it evaluates the committed state.
+ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t0::Rational{Int},
+                         backend)
+     build = model.deployment.build
+@@ -636,7 +644,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
+         # one evaluation, and the ordinary box test decides (§14.8).
+         r = Float64[NamedTuple{residual_names}(r0)[k] for k in residual_names]
+         return (; solution = guess, r, tol, status = :bypassed, n_evaluations = 1,
+-                n_iterations = 0, saturated = Tuple{Symbol,Symbol}[], reader)
++                n_iterations = 0, saturated = Tuple{Symbol,Symbol}[], reader, nominal)
+     end
+ 
+     # --- the seeded half ---------------------------------------------------------
+@@ -706,7 +714,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
+     eval!(r, nothing, out.d)
+     (; solution = NamedTuple{decision_names}(Tuple(out.d)), r, tol, status = out.status,
+        n_evaluations = out.n_evaluations, n_iterations = out.n_iterations,
+-       saturated = _saturated(decision_names, out.d, lower, upper), reader)
++       saturated = _saturated(decision_names, out.d, lower, upper), reader, nominal)
+ end
+ 
+ # --- the pieces the service is built out of --------------------------------------
+@@ -742,9 +750,11 @@ end
+ # problem and the bypassed zero-decision one, which differ in how they got their
+ # residual vector and in nothing after it (§14.8). `commit!` takes the committed
+ # condition into the caller's own `init!`, the model's or the simulation's, and
+-# the committed world is read off `model.exec` either way (D-319).
++# the fired events are read off `model.exec` either way (D-319). The committed
++# state is evaluated on the nominal scratch, so `trim!` writes the model
++# through the commit alone (D-482).
+ function _verdict!(model::Model, problem::TrimProblem, baseline, solved::NamedTuple, commit!)
+-    (; solution, r, tol, status, n_evaluations, n_iterations, saturated, reader) = solved
++    (; solution, r, tol, status, n_evaluations, n_iterations, saturated, reader, nominal) = solved
+     residual_names = keys(problem.tolerances)
+     residuals = NamedTuple{residual_names}(Tuple(r))
+     converged = _within(r, tol)
+@@ -762,17 +772,18 @@ function _verdict!(model::Model, problem::TrimProblem, baseline, solved::NamedTu
+                                  if events.count[i] > 0]
+     isempty(fired) || @warn logline(TrimCommitEvents(events = fired))
+ 
+-    # The committed-state residuals, nearly free: that boundary's sweep has just
+-    # run, so the declared reads need only gather from it — with one `rhs` for
+-    # the derivative reads, `ẋbuf` being integrator scratch and this a service
+-    # evaluation (§14.4, §14.8). It is a stretch hosted on the committed model,
+-    # so a throw there writes its status back to `:built`, as a throw inside the
+-    # commit does (§13.4, D-441).
+-    _hosted(model, 0, :trim) do model
+-        _phase!(model.exec.cursor, :evaluation, 1)
+-        model.exec.bodies.rhs()
+-    end
+-    gathered = gather_reads(reader, model.exec)
++    # The committed-state residuals: the committed state taken to the nominal
++    # scratch by its checkpoint, as `linearize`'s default form takes its
++    # operating point, and one evaluation there for the derivative reads,
++    # `ẋbuf` being integrator scratch (§14.4, §14.8). The restore overwrites
++    # every cell the setup wrote. The evaluation is a stretch hosted on the
++    # scratch at boundary 0, where the commit stands, and the scratch's second,
++    # its guess derivative being the first. A throw there leaves the commit in
++    # place and the model `:consistent` (§13.4, D-482).
++    _restore_state!(nominal.exec, checkpoint(model))
++    _phase!(nominal.exec.cursor, :evaluation, 1)
++    _hosted(evaluate!, nominal, 0, :trim)
++    gathered = gather_reads(reader, nominal.exec)
+     committed = NamedTuple{residual_names}(problem.residuals(gathered, solution))
+     out_of_tolerance = Tuple{Symbol,Float64,Float64}[
+         (k, Float64(committed[k]), tol[i]) for (i, k) in enumerate(residual_names)
+diff --git a/test/test_failures.jl b/test/test_failures.jl
+index 67a145b3..297578f7 100644
+--- a/test/test_failures.jl
++++ b/test/test_failures.jl
+@@ -682,7 +682,7 @@ function failures_runtime()
+                                                          0.2, 2, :linearize, Tripped()))
+         @test startswith(linearize_rendered,
+                          "StepError: in `c` y_state, evaluation 2 of linearize at boundary 2 (t = 0.2):")
+-        @test occursin("linearize(sim2, tap_set) at the same operating point reproduces it",
++        @test occursin("linearize(sim2, tap_set; about, t0) at the same operating point reproduces it",
+                        linearize_rendered)
+         cut_trim = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 3), 0.0, 0,
+                                                :trim, InterruptException()))
+@@ -692,7 +692,7 @@ function failures_runtime()
+         cut_linearize = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 1), 0.2, 2,
+                                                     :linearize, InterruptException()))
+         @test occursin("an interrupt cut the linearization, so nothing reproduces it; " *
+-                       "linearize(sim2, tap_set) at the same operating point runs it again",
++                       "linearize(sim2, tap_set; about, t0) at the same operating point runs it again",
+                        cut_linearize)
+         for rendered in (trim_rendered, linearize_rendered, cut_trim, cut_linearize)
+             @test !occursin("of the frame", rendered) && !occursin("replay!", rendered)
+diff --git a/test/test_trim.jl b/test/test_trim.jl
+index 1f94bb3b..47c92ce6 100644
+--- a/test/test_trim.jl
++++ b/test/test_trim.jl
+@@ -126,7 +126,8 @@ pendulum_problem() = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper
+ # step from 1 lands near -3, so the second seeded evaluation fails. `CutLag` is
+ # cut there by an interrupt instead. `FlipLag` solves at once at 1, and its
+ # projection moves the committed state to -1, where the committed-state
+-# evaluation fails.
++# evaluation fails. `Kick` solves at once at 1 too, and its handler fires at the
++# commit and moves the state to 5, where only the residuals fail.
+ struct RootLag <: AbstractComponent end
+ x_init(::RootLag) = (v = 1.0,)
+ u_types(::RootLag) = (u = Float64,)
+@@ -148,6 +149,15 @@ y_state(::FlipLag, (; x)) = (v = x.v,)
+ x_deriv(::FlipLag, (; x)) = (v = sqrt(x.v) - 1,)
+ x_projection(::FlipLag, x) = (v = -abs(x.v),)
+ 
++struct Kick <: AbstractComponent end
++x_init(::Kick) = (v = 3.0,)
++y_types(::Kick) = (v = Float64,)
++y_state(::Kick, (; x)) = (v = x.v,)
++x_deriv(::Kick, (; x)) = (v = x.v - 1,)
++kick_guard(::Kick, (; x)) = x.v < 2
++kick_handler(::Kick, (; x)) = (x = (v = 5.0,),)
++state_events(::Kick) = (kick = StateEvent(kick_guard, kick_handler),)
++
+ root_problem(guess; residuals = (r, d) -> (rate = r.v̇,),
+              condition = d -> at("c", set(x = (v = d.v,)))) =
+     TrimProblem(; guess = (v = guess,), lower = (v = -Inf,), upper = (v = Inf,),
+@@ -187,16 +197,18 @@ function test_trim()
+         end
+     end
+ 
+-    @testset "a throw in the committed-state evaluation is a `StepError` under host `:trim`, the model back at `:built` (§13.4, §14.8, D-441)" begin
++    @testset "a throw in the committed-state evaluation is a `StepError` under host `:trim`, the commit in place (§13.4, §14.8, D-482)" begin
++        # The evaluation runs on the nominal scratch, its second after the
++        # guess derivative, so the model stays `:consistent` at the commit.
+         model = Model(single(FlipLag()); Δt_frame = 1//10)
+         err = failure(() -> trim!(model, root_problem(1.0); baseline = set(), t0 = 1//4))
+         @test err isa StepError{DomainError}
+         @test err.host === :trim && err.boundary == 0 && err.t == 0.25
+-        @test err.cursor == CursorFrame("c", :x_deriv, :evaluation, 1)
+-        @test model.status === :built && state(model, "c") === (v = -1.0,)   # committed, then cut
++        @test err.cursor == CursorFrame("c", :x_deriv, :evaluation, 2)
++        @test model.status === :consistent && state(model, "c") === (v = -1.0,)   # committed, then cut
+         sim = Simulation(single(FlipLag()); Δt_frame = 1//10)
+         @test failure(() -> trim!(sim, root_problem(1.0); baseline = set())) isa StepError{DomainError}
+-        @test lifecycle(sim) === :built
++        @test lifecycle(sim) === :initialized && state(sim, "c") === (v = -1.0,)
+     end
+ 
+     @testset "a throw from the problem's own functions passes as it is (§14.8)" begin
+@@ -206,7 +218,10 @@ function test_trim()
+                  (root_problem(1.0; condition = d -> d.v isa Float64 ? at("c", set(x = (v = d.v,))) :
+                                                      error("no Dual arm")), ErrorException),
+                  (root_problem(1.0; condition = d -> at("nowhere", set(x = (v = d.v,)))),
+-                  DiagnosticError))
++                  DiagnosticError),
++                 # refused only at the second seeded evaluation, near -3
++                 (root_problem(1.0; condition = d -> d.v < 0 ? error("no negative v") :
++                                                     at("c", set(x = (v = d.v,)))), ErrorException))
+         for (problem, kind) in cases
+             model = Model(fed(RootLag(), :u); Δt_frame = 1//10)
+             init!(model, root_base(0.5))
+@@ -214,6 +229,19 @@ function test_trim()
+             @test err isa kind && !(err isa StepError)
+             @test model.status === :consistent
+         end
++        # Residuals that fail at the committed state alone pass as they are,
++        # the commit in place.
++        kick_problem = root_problem(1.0; residuals = (r, d) -> r.v̇ > 2 ? error("past the kick") :
++                                                               (rate = r.v̇,))
++        model = Model(single(Kick()); Δt_frame = 1//10)
++        err = @test_logs (:warn, r"^TrimCommitEvents") failure(() ->
++            trim!(model, kick_problem; baseline = set()))
++        @test err isa ErrorException
++        @test model.status === :consistent && state(model, "c") === (v = 5.0,)
++        sim = Simulation(single(Kick()); Δt_frame = 1//10)
++        @test (@test_logs (:warn, r"^TrimCommitEvents") failure(() ->
++            trim!(sim, kick_problem; baseline = set()))) isa ErrorException
++        @test lifecycle(sim) === :initialized && state(sim, "c") === (v = 5.0,)
+     end
+ 
+     @testset "a one-step linear problem solves, commits and reads back (§14.7, §14.8)" begin

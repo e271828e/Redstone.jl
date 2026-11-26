@@ -1,0 +1,53 @@
+baseline: green
+H1 the host writes :built for every host                   RED
+H2 no cursor reset in the host                             RED
+H3 no freshness write in the host                          GREEN (survived)
+F1 init!'s nominal half unhosted                           RED
+F2 init!'s nominal half under host :trim                   RED
+F3 init!'s nominal half: bare round, no :round phase       RED
+P1 the establishment round writes no :round phase          RED
+T9 trim setup: bare round, no :round phase                 RED
+T10 trim setup: no :evaluation phase before the rhs        RED
+N6 linearize about: bare round, no :round phase            RED
+O1 overlay under host :boundary_zero                       RED
+R1 restore under host :overlay                             RED
+L0 frame under host :overlay                               RED
+T1 trim setup unhosted                                     RED
+T2 trim setup: round outside the stretch                   RED
+T3 trim seeded evaluation unhosted                         RED
+T4 trim seeded: no :evaluation phase                       RED
+T5 trim seeded: phase reset per evaluation                 RED
+T6 trim seeded under host :linearize                       RED
+T7 the residuals inside the seeded stretch                 RED
+T8 the guess residuals inside the setup stretch            RED
+V1 committed-state evaluation unhosted                     RED
+V2 committed-state evaluation: no :evaluation phase        RED
+N1 linearize about round unhosted                          RED
+N2 linearize passes unhosted                               RED
+N3 linearize pointer always 0                              RED
+N4 linearize phase reset per pass                          RED
+N5 linearize passes under host :trim                       RED
+D1 no :evaluation arm in _phase_text                       RED
+D2 no :trim arm in _host_lines                             RED
+D3 no :linearize arm in _host_lines                        RED
+R01 frame unhosted                                         RED
+R02 init! boundary zero unhosted                           RED
+R03 overlay settling unhosted                              RED
+R04 restore unhosted                                       RED
+R05 interrupts bypass the host                             RED
+R06 interrupts bypass the services' hosts                  RED
+R07 committed-state throw keeps :consistent                RED
+R08 trim setup hosted on the user's model                  RED
+R09 trim seeded hosted on the user's model                 RED
+R10 linearize passes hosted on the user's model            RED
+R11 linearize: no :evaluation phase before the passes      RED
+R12 init!'s nominal half at pointer 1                      RED
+R13 the host resets the phase on entry                     RED
+R14 committed-state evaluation at pointer 1                RED
+R15 overlay settles with the ESTABLISH due set             RED
+R16 restore's settled! outside the stretch                 RED
+R17 committed-state evaluation hosted on a scratch         RED
+R18 linearize about round pointer from the frame           RED
+R19 trim seeded evaluation counted from 0                  RED
+R20 the seeded condition inside the seeded stretch         GREEN (survived)
+R22 the committed residuals inside the committed-state stretch GREEN (survived)

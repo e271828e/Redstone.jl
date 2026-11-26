@@ -1,0 +1,14 @@
+baseline: green
+X1 the seeded apply! inside the seeded stretch                   RED
+X2 the committed residuals inside the committed-state stretch    RED
+X3 the committed evaluation hosted on the user's model           RED
+X4 the committed evaluation unhosted                             RED
+X5 the old shape: rhs on the user's model, hosted there          RED
+X6 no restore: the scratch evaluated as the setup left it        RED
+X7 the reads gathered off the user's model                       RED
+X8 the committed evaluation at pointer 1                         RED
+X9 the committed evaluation under host :linearize                RED
+X10 no phase write before the committed evaluation               GREEN (survived)
+X11 the committed evaluation counted from 0                      RED
+X12 the linearize recipe without about and t0                    RED
+X13 the linearize interrupt line without about and t0            RED

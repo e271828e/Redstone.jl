@@ -12,19 +12,19 @@ implementation.
 
 ## 1. State
 
-- Stage reached: the record is committed with the prototype's patch. The
-  code commit, the cold review, its fixes and the reviewer's check of them
-  follow, then the user's diff check of the arc.
-- The docs commit is `c1ece565`: D-482, its annotations on D-132, D-223,
-  D-224, D-317, D-441 and D-481, and the sentences of §13.4, §14.8, §14.10
-  and Appendix C.
-- Prototype worktree:
-  `/Users/miguel/.julia/dev/Redstone.jl-worktrees/hosted_catch` (branch
-  `hosted-catch-proto`, from `73e2bf13`), nothing committed there.
-- Prototyper's notes, logs and probes:
-  `/Users/miguel/.julia/dev/Redstone.jl-worktrees/hosted_catch_probes/`. The
-  probes, the mutant script and its two result files are copied to
-  `probes/` beside this file, and the patch is `hosted_catch.patch`.
+- Stage reached: the reviewer's check of the fixes passed. The user's review
+  of the rulings of section 3 and diff check of the arc are next, then the
+  push. Section 3.3.1 is the ruling to read first.
+- The scratch stays until the push, under
+  `/Users/miguel/.julia/dev/Redstone.jl-worktrees/`: the worktrees
+  `hosted_catch` (branch `hosted-catch-proto`), `hosted_catch_fix` (branch
+  `hosted-catch-fix`), `hosted_catch_review` and `hosted_catch_review_pre`,
+  nothing committed in any, and the notes folders `hosted_catch_probes`,
+  `hosted_catch_fix_notes` and `hosted_catch_review_notes`, which hold the
+  agents' notes and the gate logs.
+- What the record rests on is beside this file: `hosted_catch.patch` and
+  `probes/` from the prototyper, `review/` from the reviewer, and `fix/`
+  from the fixer, with its patch.
 
 ## 2. The user's rulings
 
@@ -147,17 +147,18 @@ day.
    halves now share one primitive for it, `_establishment_round!(model)`.
    The count: `trim!`'s setup derivative is evaluation 1 on the nominal
    scratch, the search's evaluations run from 1 on the seeded scratch, and
-   the committed-state evaluation is evaluation 1 on the user's model. A
-   single count across the call was rejected. It needs a counter carried
-   between the scratch models and into the verdict. So "evaluation 1 of
-   trim!" can name three evaluations, told apart by the function, the
-   model's status afterwards and the deterministic reproduction.
+   the committed-state evaluation is evaluation 2 on the nominal scratch,
+   since ruling 3.3.1 moved it there. A single count across the call was
+   rejected. It needs a counter carried between the scratch models. So
+   "evaluation 1 of trim!" can name the setup's derivative or the first
+   search evaluation, both at the guess.
 6. **The rendering lines** for the two hosts are the prototyper's, in
    `_host_lines` of `src/diagnostics.jl`. The location reads "<phase> of
    trim! at boundary N", so a round renders as "event round 1 of trim! at
    boundary 0". The boundary is kept for `trim!`, where it is always 0, so
    both services read alike.
-7. **A fifth site, the committed-state evaluation.** After the commit,
+7. **A fifth site, the committed-state evaluation.** Revised by ruling
+   3.3.1, and kept here as it was first ruled. After the commit,
    `_verdict!` evaluates `x_deriv` on the user's own model, outside any
    catch. A projection or a handler at the commit can move the state to a
    point where it throws, which the `FlipLag` fixture does. It is hosted
@@ -169,8 +170,8 @@ day.
    it bare, a raw throw out of a door, and hosting it with the status kept
    `:consistent`, which needs the status argument of reading 2 and marks as
    consistent a model whose first frame would throw at the same point.
-   **This one changes what `trim!` does to the user's model and is the
-   ruling most worth the user's eye.**
+   The review showed what that state looks like, and ruling 3.3.1 replaced
+   this one.
 8. **The frame joins the helper.** Its allocation is 0 B before and after
    (section 6).
 9. **No caller assumes that a `StepError` out of `trim!` means the commit
@@ -185,13 +186,64 @@ day.
 11. **`linearize`'s default-form restore stays unhosted.** It copies a
     state onto the nominal scratch and runs no model code.
 
+### 3.3 After the cold review
+
+1. **The committed state is evaluated on a scratch.** This revises reading
+   3.2.7. The review probed a simulation after a throw at the committed-state
+   evaluation as first built. Its lifecycle read `built`, yet it held an
+   open run, a taken trace header and one logged snapshot, which `logged`,
+   `latest`, `series` and `show` exposed, and `MissingInit` said that
+   boundary zero had not completed, which was false
+   (`review/p1_commit_state.jl`). The status was untrue. Boundary zero had
+   completed and published, and the evaluation writes only the derivative
+   buffer. So `trim!` now takes the committed state to a `Float64` scratch
+   by the checkpoint, as `linearize`'s default form does, and evaluates it
+   there in a stretch under `:trim`. A throw there leaves the commit in
+   place, the model `:consistent` and the simulation `initialized`, with no
+   report. That is the lifecycle such a throw had before the increment, now
+   framed, and it is what a throw from `residuals` at the same point leaves.
+   `trim!` then touches the user's model through `init!` alone, the status
+   follows from the host with no exception, and D-482 loses its one. The
+   cost is one checkpoint, one restore and one sweep in each converged
+   call, 1584 B measured. Rejected: keeping the evaluation on the user's
+   model and stating the odd state in the spec, and dropping the log on that
+   throw. The scratch is the nominal one the solve built, which the restore
+   overwrites whole, where a fresh one would cost 20432 B
+   (`fix/cp_cost.jl`). **This is the ruling most worth the user's eye.** It
+   settles what `trim!` leaves behind when the committed state does not
+   evaluate, and it was made twice.
+2. **The claim is about the framework's entry points.** "Model code runs
+   only inside a hosted stretch" left no room for the raw primitives a
+   caller runs bare, which D-317 makes public. The sentence now speaks of
+   the frame, the doors and the services, and says that a primitive run
+   bare hosts nothing.
+3. **A service's stretch is the tight one.** "A stretch holds the calls
+   that run model code and no others" was false of the frame, which holds
+   its hooks and the stepper's code, and of the restore, which holds the
+   copy. D-441 rules those, wrapping whatever throws. The sentence is
+   scoped to a service's stretch.
+4. The `linearize` reproduction line names `about` and `t0`, as `trim!`'s
+   names its keywords.
+5. One more survivor is accepted. The phase write before the
+   committed-state evaluation changes nothing a test can see, since the
+   setup's stretch leaves the nominal scratch's cursor at the same phase and
+   ordinal. The line stays, so the ordinal does not rest on what an earlier
+   stretch left.
+
 ## 4. The commits
 
-On master, none pushed: `73e2bf13` (this file opened, and the confirmation
-of the projection recorded in `pending.md` and the audit's notes) and
-`c1ece565` (D-482, its annotations and the spec's sentences). The code
-commit and the review's commits follow, and this section takes their hashes
-at the closing.
+On master, none pushed:
+
+- `73e2bf13`: this file opened, and the confirmation of the projection
+  recorded in `pending.md` and the audit's notes.
+- `c1ece565`: D-482, its annotations on D-132, D-223, D-224, D-317, D-441
+  and D-481, and the sentences of §13.4, §14.8, §14.10 and Appendix C.
+- `e3fb897c`: the record as it stood before the code, with the prototype's
+  patch and probes.
+- `ed33035e`: the code and its tests.
+- `59a06198`: the review's fixes, code and docs together.
+- The closing commit: this file, the reviews' and the fixer's probes, and
+  the `pending.md` bullet.
 
 ## 5. The shape built
 
@@ -204,8 +256,9 @@ at the closing.
 - `src/frame.jl`: `run_frame!` calls the helper with `k - 1` and `:loop`.
 - `src/trim.jl`: three stretches, all `:trim` with pointer 0. The setup's
   round and derivative on the nominal scratch, each `evaluate!` of the
-  seeded scratch inside `eval!`, and the committed-state derivative on the
-  user's model in `_verdict!`.
+  seeded scratch inside `eval!`, and the committed-state evaluation in
+  `_verdict!`, on the nominal scratch with the commit's checkpoint restored
+  onto it. `_solve_problem` returns that scratch in both packings.
 - `src/linearize.jl`: the `about` round and each pass, both `:linearize`,
   the pointer the checkpoint's frame or 0.
 - `src/executor.jl`: the cursor's comments name the `:evaluation` phase.
@@ -229,7 +282,7 @@ the helper wraps the whole frame.
 | `frame!`, per frame, on three models | 0 B each | 0 B each |
 | `init!(plan)` at `Float64`, the two models of last night's review | 368 B, 752 B | 368 B, 752 B |
 | `trim!`, one evaluation inside the solve | 0 B | 0 B |
-| `trim!`, a whole converged call | 101632 B | 101472 B |
+| `trim!`, a whole converged call | 101632 B | 101472 B, and 102992 B with the review's fix |
 | `linearize`, a whole call, width 8 and width 1 | 59536 B, 58736 B | 59536 B, 58736 B |
 | one hosted `evaluate!` on a seeded scratch | 0 B bare | 0 B |
 
@@ -253,7 +306,14 @@ Each with the mutant that turns it red, all run by the prototyper
   `_round!`; no `:evaluation` phase; the phase reset at every evaluation.
 - The user's model is untouched by a throw in the search, for a model at
   `:consistent`, a fresh one at `:built` and an initialized simulation. A
-  throw at the committed-state evaluation leaves it `:built`.
+  throw at the committed-state evaluation is a `StepError` under `:trim`
+  that leaves the commit in place, the model `:consistent` and the
+  simulation `initialized`. Mutants, the fixer's (`fix/mutants_fix.jl`): the
+  evaluation on the user's model; unhosted; no restore; the reads off the
+  user's model.
+- A throw from `condition` inside the search and from `residuals` at the
+  committed state arrive bare, the review's two missing tests. Mutants: the
+  seeded `apply!` inside the stretch; the committed residuals inside it.
 - The problem's own functions stay outside. A throwing `residuals` and a
   `condition` with no `Dual` method arrive as they are, and a refused
   condition stays a `DiagnosticError`. Mutants: the residuals inside each
@@ -284,6 +344,24 @@ read only by a bare `evaluate!(model)`, which had no pin before either.
   the middle of an attempt, since it runs unhosted. It was so before.
 - `code_map.md`'s build.jl entry still lists §6.3 on its Spec line, as the
   frozen-init notes say.
+- The raw primitives a caller may run bare host nothing, as D-317 rules:
+  `evaluate!`, `integrate!`, `boundary!`, `offtick_boundary!`,
+  `boundary_zero!` and the bodies `phase_bodies` returns. The spec now says
+  so. Two other runs of authored code sit outside every stretch and carry
+  the `UserCodeFraming` carrier of their own: the activation's probe at a
+  new scalar, and `ws_init` when a scratch is materialized.
+- `MissingInit` says that boundary zero has not completed. That is false of
+  a simulation left `built` by a throw inside `overlay!` or a restore. So is
+  the list in `trace`'s docstring, which names `init!` alone. Both were so
+  before.
+- A restore does not reset the cursor's phase, so its `StepError` can carry
+  the phase the last stretch left. It was so before.
+- The committed-state evaluation runs `evaluate!`, the sweep and the
+  derivative. The restore copies the whole table, so the derivative alone
+  would give the same values, and the reviewer's mutant of that survives.
+  The sweep is kept, as `linearize`'s default form runs it after the same
+  restore. §14.8 still calls the committed-state residuals nearly free,
+  which now means a checkpoint, a restore and one evaluation, 1584 B.
 
 ## 9. The cold review's charter
 
@@ -296,3 +374,37 @@ runs model code is still outside every stretch, in the services or
 elsewhere; whether anything that is not model code sits inside one; what a
 simulation looks like after a throw at the committed-state evaluation; and
 whether D-482 and the spec's sentences say what the code does.
+
+## 10. The reviews
+
+One cold review by a high-tier agent, then its check of the fix. The gate
+passed at each stage on Julia 1.13.3, the floor: 11067 of 11067 on the
+prototype, twice, 11067 on `ed33035e` and 11075 on `59a06198`, the eight
+more being the fix's assertions. The examples' runner passed 179 of 179 each
+time. The reviewer reproduced the allocation figures of section 6 exactly.
+
+The review found no defect in the code. It ran the prototyper's 30 mutants
+and 21 of its own. Its findings, all closed in `59a06198`:
+
+- Two missing tests, each shown by a surviving mutant: `condition` throwing
+  inside the search, and `residuals` throwing at the committed state.
+- "A stretch holds the calls that run model code and no others", false of
+  the frame and the restore (ruling 3.3.3), and the headline claim with no
+  room for the bare primitives (ruling 3.3.2).
+- What a simulation looked like after a throw at the committed-state
+  evaluation, which led to ruling 3.3.1.
+- Sentences that listed where a throw leaves `built` and missed the
+  committed state, moot after ruling 3.3.1. Three stale comments, on who
+  writes the status, on the frame's `try` and on the pointer. Two docstrings
+  that called a round an evaluation. The `linearize` line without its
+  keywords.
+
+The check of the fix found nothing new. On five problems the committed
+residuals, the checks, the fired events and the model's state are identical
+before and after the fix (`review/p5_committed.jl`): a plain one, one with
+an event fired at the commit, one with a projection and an event, the
+zero-decision one, and a simulation's claimed model after three frames. The
+restore overwrites all a reader can see on the scratch, and mutants that
+skip the table or the clock go red. The fixer's 13 mutants and three more of
+the reviewer's ran: 13 red, and three survivors, each accepted with its
+reason in sections 3.3.5, 7 and 8.
