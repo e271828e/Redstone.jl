@@ -17,18 +17,6 @@ item changes what the spec says, the spec edit is part of the item.
   `design/pending.md` holds its state and work order, its
   `design/roadmap.md` the staging. This repo owes it nothing before the
   release, and the later stages after.
-- **The docs conformance audit.** The spec, the log, the docstrings, the
-  companions and the rest of the docs are checked against the code, which
-  is the source of truth, in both directions, and what drifted is fixed.
-  Stage reached: the sweep is done, every group from the §14 trial to G7
-  run and its clear fixes landed, and every row put to the user is ruled
-  and applied. The state, the rulings, the group plan and the tools are in
-  `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
-  brief is `00_brief.md` beside it, and the user's rows and their rulings
-  are in its `ledgers/user_rows.md`. Left, in order:
-  - The closing: the final report the brief asks for, the
-    `doc_conformance` worktree removed, and this bullet retired. CV11a-004
-    and CV7a-038 stay on the API audit's roadmap.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, in an arc of five increments.
   Stage reached: increments 1 and 2 are pushed, and increment 3 is next.

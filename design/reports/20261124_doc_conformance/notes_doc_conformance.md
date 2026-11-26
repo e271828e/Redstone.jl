@@ -240,8 +240,10 @@ the tools.
   the ring at every accepted report, which the CAS handoff needs.
   The follow-ups landed: the D-166 citation sweep, which settles CV2-026
   and CV6a-033, and §11.8's worst case restated as sixteen copies of a ring
-  of at most sixteen, with an annotation on D-136. What is left is the
-  closing.
+  of at most sixteen, with an annotation on D-136.
+- **Closed, 2026-11-26.** The final report is `02_final_report.md`, and
+  the audit's `pending.md` bullet is retired. The `doc_conformance`
+  worktree and the `audit-*` branches were already gone.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five
