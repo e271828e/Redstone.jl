@@ -63,14 +63,14 @@ struct Framed
     s::Float64
 end
 
-# One round trip at a nonzero offset into an oversized buffer: the value comes
-# back identical, and only the `nleaves` entries it owns were written. `E` is
-# the buffer's eltype: a cell carrying an opaque leaf needs one that holds it.
 # A user's mutable `Real`: a port of this type would change under its readers.
 mutable struct MutableReal <: Real
     value::Float64
 end
 
+# One round trip at a nonzero offset into an oversized buffer: the value comes
+# back identical, and only the `nleaves` entries it owns were written. `E` is
+# the buffer's eltype: a cell carrying an opaque leaf needs one that holds it.
 function roundtrip(v, off; E = Float64)
     n = nleaves(typeof(v))
     buffer = Vector{E}(fill(NaN, off + n + 3))

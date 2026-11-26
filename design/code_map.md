@@ -1269,8 +1269,8 @@ D-449, D-454, D-460, D-466, D-468, D-471, D-476, D-478.
     `ResidueRecord`s, dataplane.jl's (§13.5, D-203), and folds the model's
     diagnostic cell into the loop's account beside the loop's own cell
     (§11.8, D-317). `_present_residue` prints them, and the bookkeeping of
-    `_run_body!` and `step!` calls it only once the termination record and
-    the terminal flag are written (§12.4);
+    `_run_body!` and `step!` calls it only once the termination record,
+    where the run ended, and the running flag are written (§12.4);
   - `_discard_late_staging!`, a replaying advance's last take of the staging
     cells at its halt, ahead of the sweep and the mode's flip, which `step!`
     calls too (§12.7, D-451).

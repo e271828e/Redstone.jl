@@ -986,15 +986,17 @@ function test_devices()
             run!(sim; t_end = 0.3)
         end
         close(guard)
+        put!(dev.release, 1)                     # ahead of the assertions, so a failure parks nothing
+        @test timedwait(() -> dev.log == [:woke, :shutdown], 10.0) === :ok
         @test lifecycle(sim) === :stopped
         record = termination(sim)
-        @test record.source isa EndTimeReached
-        writer_residue = only(residue for residue in record.residue if residue.writer == "loop")
-        @test any(d -> d isa DeviceJoinTimeout, writer_residue.recent)
-        put!(dev.release, 1)
-        @test timedwait(() -> dev.log == [:woke, :shutdown], 10.0) === :ok
+        @test record !== nothing && record.source isa EndTimeReached
+        @test record !== nothing &&
+              any(d -> d isa DeviceJoinTimeout,
+                  only(residue for residue in record.residue if residue.writer == "loop").recent)
+    end
 
-        # The stepped entry writes its record ahead of the presentation too.
+    @testset "a stepped run writes its record ahead of the residue's presentation too (§12.4)" begin
         # Boundary zero exhausts the firing budget, and a stop issued before
         # the first frame top leaves that report for the run's-end sweep.
         stepped = Simulation(Group((; chat = Chatterer(), trig = Trigger(0.5));
@@ -1006,8 +1008,20 @@ function test_devices()
         end
         @test lifecycle(stepped) === :stopped
         record = termination(stepped)
-        @test record.source isa ControlRequestedStop
-        @test any(d -> d isa FiringBudget, only(record.residue).recent)
+        @test record !== nothing && record.source isa ControlRequestedStop
+        @test record !== nothing && any(d -> d isa FiringBudget, only(record.residue).recent)
+
+        # A stepped run that ends on a loop error presents its residue as well.
+        # The first frame top folds boundary zero's report into the loop's
+        # account, and the frame then throws before any snapshot carries it.
+        errored = Simulation(Group((; chat = Chatterer(), trig = Trigger(0.5), wire = Tripwire(0.05));
+                                   input_wires = ("in" => "trig/sig", "arm" => "wire/arm"));
+                             Δt_frame = 1//10)
+        init!(errored, set(u = (in = 1.0, arm = true)))
+        err = @test_logs (:warn, r"FiringBudget from loop, past the final snapshot's account") #=
+            =# match_mode=:any failure(() -> step!(errored; frames = 1))
+        @test err isa StepError && lifecycle(errored) === :errored
+        @test any(d -> d isa FiringBudget, only(termination(errored).residue).recent)
     end
 
     @testset "an interrupt during the tail collapses the joins, the device named (§12.4, D-268)" begin

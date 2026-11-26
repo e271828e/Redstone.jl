@@ -10333,10 +10333,10 @@ forced throw is a stop like a deferred one. The run's frame index advances
 inside the frame's `try`, so a throw landing before it leaves the counter and
 the clock agreeing ([§12.6][s12-6]). Landing in the tail's bookkeeping, the
 forced throw propagates out of the call raw. The bookkeeping writes the
-termination record and the terminal lifecycle state before the logging
-backend presents anything, so a throw during the presentation finds the
-simulation terminal. Only a throw inside those few writes can cut them short
-and leave the lifecycle `running`.
+termination record, where the run ended, and takes the lifecycle out of
+`running` before the logging backend presents anything. A throw during the
+presentation therefore finds both written. Only a throw inside those few
+writes can cut them short and leave the lifecycle `running`.
 
 **A second interrupt during the tail collapses the remaining joins
 immediately** ([D-132][d-132], [D-394][d-394]). That is (5)'s abandonment path taken at once,

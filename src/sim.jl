@@ -1770,9 +1770,11 @@ function _run_body!(sim::Simulation, policy::StopPolicy, ignore_mask::Vector{Boo
             end
         end
         @atomic :release control.running = false   # once, after the record and the status
-        # Presented last: the record and the terminal flag are already written,
-        # so a throw out of the logging backend, a forced interrupt among
-        # them, cuts only the presentation (§12.4).
+        # Presented last: the record, where the run ended, and the flag are
+        # already written, so a throw out of the logging backend, a forced
+        # interrupt among them, cuts only the presentation (§12.4). Still
+        # masked, so a deferred interrupt raises after the warnings, not in
+        # place of them.
         _present_residue(residue)
         Base.sigatomic_end()
     end
@@ -1984,8 +1986,8 @@ function _residue!(residue::Vector{ResidueRecord}, who::String, account::WriterA
 end
 
 # The residue through the logging backend, the record's renderer (D-201,
-# D-203). It prints, so the callers reach it only once the termination record
-# and the terminal flag are written (§12.4).
+# D-203). It prints, so the callers reach it only once the termination record,
+# where the run ended, and the running flag are written (§12.4).
 function _present_residue(residue::Vector{ResidueRecord})
     for record in residue
         for occurrence in record.recent
@@ -2298,7 +2300,7 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
     finally
         Base.sigatomic_begin()                # masked bookkeeping, as `run!`'s (§12.4, D-268)
         _discard_late_staging!(sim, roster)   # §12.7: ahead of the flip, as in `_run_body!`
-        residue = ResidueRecord[]
+        residue = nothing                     # an open run sweeps nothing
         if cause !== nothing                  # §13.6, the stepped entry: same tail,
             _finish!(sim)                     # deviceless — waits woken, accounts swept
             residue = _sweep_tail!(sim, roster)
@@ -2313,7 +2315,7 @@ function step!(sim::Simulation; frames = nothing, t_plus = nothing,
             end                               # otherwise the run stays open: `initialized`
         end
         @atomic :release control.running = false   # once, after the record and the status
-        _present_residue(residue)             # last, as in `_run_body!` (§12.4)
+        residue === nothing || _present_residue(residue)   # last, as in `_run_body!` (§12.4)
         Base.sigatomic_end()
     end
     advanced

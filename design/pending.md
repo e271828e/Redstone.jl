@@ -153,12 +153,13 @@ breaking user code, and each may benefit from user feedback first.
     settled with the floor when this item lands. Evidence:
     `design/increments/20261105_interrupt_status/probe_pause_wait_t1.jl`.
   - **A forced throw inside the tail's bookkeeping.** A forced throw that
-    lands in the few writes between the bookkeeping's mask and the terminal
-    flag leaves the lifecycle `running` with no record, every service
-    refusing (§12.4, D-268). The presentation of the residue, the one slow
-    step there, now follows those writes. No test can place a throw in what
-    is left. Whether the tail's retrying `try` closes it is settled when
-    this item lands. Evidence:
+    lands in the few writes between the bookkeeping's mask and the store
+    that clears the running flag leaves the lifecycle `running`, possibly
+    with no record, every service refusing (§12.4, D-268). The presentation
+    of the residue, the one step there that prints, now follows those
+    writes. No test can place a throw in what is left. Whether a retrying
+    `try` around the bookkeeping closes it is settled when this item lands.
+    Evidence:
     `design/reports/20261124_doc_conformance/probes/user_rows/s12b236_masked_bookkeeping.jl`.
 - **`Dual` allocation coverage for the library** (§9.8, §13.7). The
   allocation testsets in `test_library.jl` measure phase bodies at `Float64`
