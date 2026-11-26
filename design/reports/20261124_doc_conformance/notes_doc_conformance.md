@@ -243,7 +243,14 @@ the tools.
   of at most sixteen, with an annotation on D-136.
 - **Closed, 2026-11-26.** The final report is `02_final_report.md`, and
   the audit's `pending.md` bullet is retired. The `doc_conformance`
-  worktree and the `audit-*` branches were already gone.
+  worktree and the `audit-*` branches were already gone. The six rows' scratch
+  was cleared the same day, the push being done: the worktrees `six_rows`,
+  `s12b_review`, `frozen_init`, `frozen_init_land` and `frozen_init_review`,
+  their notes folders and logs, and the branches `six-rows` and
+  `frozen-init`, every commit of which has its equivalent on master.
+  `frozen_init` held the prototype's uncommitted edits, which the reviewed
+  `frozen_init.patch` supersedes. The probes the records cite are committed
+  in `probes/user_rows/s12b236_review/` and the increment's folders.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five
