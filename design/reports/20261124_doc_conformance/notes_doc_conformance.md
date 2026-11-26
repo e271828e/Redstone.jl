@@ -176,12 +176,14 @@ the tools.
   cold reviews ran, one on S12b-236 and one on the increment, and their
   probes are in `probes/user_rows/s12b236_review/` and the increment's
   `review/` folder.
-  - Two things wait on the user's confirmation, each a shape other than the
-    one ruled. S12b-236 presents the residue after the record and the flag,
-    inside the mask, not after it. S9b-300's nominal half projects, where
-    the ruling said no projection
+  - One thing waits on the user's confirmation, a shape other than the one
+    ruled. S12b-236 presents the residue after the record and the flag,
+    inside the mask, not after it. The other is confirmed: S9b-300's
+    nominal half projects, where the ruling said no projection
     (`design/increments/20261126_frozen_init/notes_frozen_init.md`,
-    section 3).
+    section 3), and the user agreed on 2026-11-26
+    (`design/increments/20261126_hosted_catch/notes_hosted_catch.md`,
+    section 2).
   - For the log clustering. D-480 changes the default `margin`, so the
     annotations the ledger proposes in rows L10-072 and L12-048 say 2 ms
     where the default is now 3 ms. The rows S6c-001 and S6c-004 against
@@ -193,7 +195,8 @@ the tools.
     marker; one reached a commit on a branch tonight and the cold review
     found it. No test covers the warning that counts a residue's suppressed
     occurrences. `trim!` and `linearize` run their nominal round outside any
-    `try`.
+    `try`, which the increment of
+    `design/increments/20261126_hosted_catch/notes_hosted_catch.md` takes.
   - The scratch stays until the push, as `increment_rules.md` says: the
     worktrees `six_rows`, `s12b_review`, `frozen_init`, `frozen_init_land`
     and `frozen_init_review` under `../Redstone.jl-worktrees/`, their notes

@@ -131,8 +131,9 @@ the verifier's probe.
   non-nominal scalar establishes the frozen cells as a service does (D-213).
   The readings are in
   `design/increments/20261126_frozen_init/notes_frozen_init.md`. Settled,
-  `55bc376e` to `8e66ad01`, with one ruling of the coordinator's that waits
-  on the user: the nominal half projects, where the user ruled no projection.
+  `55bc376e` to `8e66ad01`, with one ruling of the coordinator's: the
+  nominal half projects, where the user ruled no projection. The user
+  confirmed it on 2026-11-26.
 - **S9d, a thin inventory.** Its mid-tier inventory missed 3 of 9 sampled
   rows. A high-tier re-inventory of §9.7 and §9.8 is in G4b's args as S9d2.
   Settled: S9d2 ran with G4b and missed none of its 10 sampled rows.

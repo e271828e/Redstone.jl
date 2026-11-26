@@ -17,20 +17,28 @@ item changes what the spec says, the spec edit is part of the item.
   `design/pending.md` holds its state and work order, its
   `design/roadmap.md` the staging. This repo owes it nothing before the
   release, and the later stages after.
+- **One hosted catch for model code** (§13.4, §14.8, §14.10). `trim!` and
+  `linearize` run their scratch evaluations outside any catch, so a stage
+  that throws there arrives bare, where `init!` raises a `StepError` that
+  names the component. One helper on `Model` comes to host every stretch of
+  model code, the doors', the frame's and the services', and D-481's cursor
+  copy goes. The item is the docs audit's "seen and not fixed" one on the
+  nominal round, widened. Stage reached: the prototype is being built. The
+  rulings and the state are in
+  `design/increments/20261126_hosted_catch/notes_hosted_catch.md`.
 - **The docs conformance audit.** The spec, the log, the docstrings, the
   companions and the rest of the docs are checked against the code, which
   is the source of truth, in both directions, and what drifted is fixed.
   Stage reached: the sweep is done, every group from the §14 trial to G7
   run and its clear fixes landed, and every row put to the user is ruled
-  and applied. Two of the last six landed in a shape other than the one
-  ruled and wait on the user's confirmation, as the notes say.
+  and applied. One of the last six, S12b-236, landed in a shape other than
+  the one ruled and waits on the user's confirmation, as the notes say.
   The state, the rulings, the group plan and the tools are in
   `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
   brief is `00_brief.md` beside it, and the rows that wait on the user are
   in its `ledgers/user_rows.md`. Left, in order:
-  - The user's confirmation of two shapes: S12b-236's presentation inside
-    the mask, and the projection in S9b-300's nominal half
-    (`design/increments/20261126_frozen_init/notes_frozen_init.md`).
+  - The user's confirmation of one shape, S12b-236's presentation inside
+    the mask.
   - A ruling on the four SD3 rows, whether the glossary marks the GUI
     behaviour the cockpit still owes as owed.
   - The small sweep of the items the notes list as seen and not yet fixed,
