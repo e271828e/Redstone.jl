@@ -1,0 +1,541 @@
+diff --git a/design/code_map.md b/design/code_map.md
+index 4b8a0ac3..24a81c08 100644
+--- a/design/code_map.md
++++ b/design/code_map.md
+@@ -935,7 +935,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
+ - The seeded-half scratch world trim.jl and linearize.jl share (§14.8,
+   D-213, D-317): `_scratch`, the model's buffer set at another scalar, which
+   dies with the call, and `_establish_frozen!`, the frozen copy over the
+-  `Outputs`' port list.
++  `Outputs`' port list. Its model method is `init!`'s nominal half at a
++  non-nominal scalar, with `_drop_partials`, a value rebuilt at its nominal
++  cell type with each `Dual` leaf at its value (§9.4, D-481).
+ - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
+   no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returns whether it
+   wrote a value, which raises the discontinuity notice and denies the frame's
+@@ -967,7 +969,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
+     cannot carry by `_clock_integers`, the checked clock formula at the run's
+     two ends (D-457), does the writes, asks the stepper to
+     reset its carried state, `reset_stepper!` (D-452), runs boundary zero
+-    under §13.4's catch and settles it through the hooks (§14.5, D-223);
++    under §13.4's catch, at a non-nominal scalar after the frozen cells'
++    nominal projection and round (D-481), and settles it through the hooks
++    (§14.5, D-223);
+   - `overlay!`, in the same two methods, whose condition method resolves with
+     the stores as the merge bases, `_store_values`, and whose plan method
+     raises the discontinuity notice and runs the continuing settling under
+@@ -1027,10 +1031,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
+   collecting `CheckpointMidFrame` into the same list, and an `ArgumentInvalid`
+   on `t0` where a state's origin fails `_clock_integers` (D-457).
+ 
+-Spec: §6.3, §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
++Spec: §6.3, §9.2, §9.4, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+ §13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
+ D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447,
+-D-449, D-450, D-452, D-454, D-460.
++D-449, D-450, D-452, D-454, D-460, D-481.
+ 
+ ### `src/precompile.jl`
+ 
+diff --git a/design/log.md b/design/log.md
+index 60be77c7..d01632f4 100644
+--- a/design/log.md
++++ b/design/log.md
+@@ -479,6 +479,7 @@ were derived.
+ | [D-478][d-478] | Write a tick count as `D` or `Φ`, subscripted by the lattice it counts in | ratified |
+ | [D-479][d-479] | Give each count, length and index of the timing passages its own letter | ratified |
+ | [D-480][d-480] | Raise the default `margin` to 3 ms, calibrated at the sleep a paced frame makes | ratified |
++| [D-481][d-481] | Establish the frozen cells at `init!` on a model at a non-nominal scalar | ratified |
+ 
+ ### D-001 — Hybrid causal formalism with two-tier events and projection
+ 
+@@ -8553,6 +8554,10 @@ no projection, events or `g` — copied as zero-partial constants; the probe's
+ synthesized products never reach a service evaluation. Iterations remain raw
+ write → sweep → read cycles at the seeded activation ([§14.5][s14-5]).
+ 
++Annotation (2026-11-26): amended by [D-481][d-481]. `init!` on a model at a
++non-nominal scalar establishes its frozen cells the same way, from a nominal
++scratch that takes the model's authored state.
++
+ **Spec.** [§14.8][s14-8]
+ 
+ **Rationale.** Surfaced while briefing the prototype's trim increment: the prototype
+@@ -14598,6 +14603,10 @@ rested on the fusion, which the split removed. [D-320][d-320] lands the refusal
+ `Model` door as a positive list, `Float64` and `ForwardDiff.Dual`, and still no
+ `AbstractFloat` heuristic exists.
+ 
++Annotation (2026-11-26): amended by [D-481][d-481]. `init!` on a model at another
++scalar establishes its frozen discrete cells before boundary zero, as a
++service does, so the model holds no probe value once it is `:consistent`.
++
+ Supersedes [D-254][d-254]'s "`Simulation` materializes a deployment at `T`" clause;
+ [D-255][d-255]'s clause keeping the lifecycle on `Control`; [D-256][d-256]'s five-field
+ roster and its placement of the loop's diagnostic cell on the plane alone;
+@@ -21300,6 +21309,74 @@ S10d-054, and the measurements are
+   0.5 ms but an 18 ms one by about 3.8 ms here, and [D-027][d-027] rules the yielding
+   `sleep`.
+ 
++### D-481 — Establish the frozen cells at `init!` on a model at a non-nominal scalar
++
++**Status.** ratified
++
++**Position.** `init!` on a model at a non-nominal scalar establishes its
++frozen discrete cells as a service does ([D-213][d-213]): a nominal scratch takes the
++model's authored state with partials dropped, projects it as boundary zero
++does, runs one establishment round, and its frozen cells are copied. No cell
++of a `:consistent` model holds a probe value, at any scalar.
++
++**Spec.** [§9.3][s9-3], [§9.4][s9-4], [§14.5][s14-5]
++
++**Rationale.** [D-213][d-213] closed this failure for `trim!` and `linearize`. Their
++seeded scratch takes its frozen cells from a nominal half on which one
++establishment round ran. [D-317][d-317] then made a `Model` at another scalar public,
++a scratch a user writes, evaluates and steps, and its `init!` never took the
++step. A frozen component's stages never run at that scalar ([§9.4][s9-4]), so after
++`init!` its cells held the build probe's products, and the status read
++`:consistent` with no diagnostic. A discrete command feeding a continuous lag
++read 0 at a `Dual` where the `Float64` model read the authored 2. That is
++[D-213][d-213]'s fabricated zero, reached through the model's own door.
++
++The nominal half takes its values from the model, not from the condition.
++After the declared defaults and the plan are written, the model's stores
++hold the complete authored world. The scratch copies `x` and the root-input
++cells with their partials dropped, `s` and `m` as they are, since a store's
++type is the same at every activation, and the clock. The plan-taking `init!`
++is covered too, and no condition tree is walked twice.
++
++The nominal half runs what the model itself runs at boundary zero at that
++scalar. That is projection, then [D-205][d-205]'s sweep with every discrete output
++stage admitted, with no events and no `s_update`. [D-213][d-213]'s round projects
++nothing, since a service's seeded half runs no boundary. The model runs
++boundary zero and projects its own `x` there, so the scratch projects too,
++and a frozen cell agrees with the model's projected state. Where boundary
++zero fires an event, a `Dual` model's frozen cells can therefore differ from
++the `Float64` model's after the same `init!`. That is the difference [D-317][d-317]
++already rules, since a model at another scalar has no events. A model with
++no frozen component builds no scratch. The projection and the round run
++inside `init!`'s catch, so a throw there arrives as a `StepError` with host
++`:boundary_zero`, its cursor the one the scratch stood at ([§13.4][s13-4]).
++
++Only `init!` changes. `restore!` copies the whole table of a state taken at
++the same scalar, and refuses a `Float64` state as `CheckpointMismatch`, so it
++inherits what `init!` established. `overlay!` runs an off-tick boundary,
++which moves no discrete cell on a `Float64` model either. `apply!` stays the
++raw write [D-213][d-213] keeps raw. `trim!` keeps its own nominal half, which also
++serves the guess evaluation and the zero-decision bypass. `linearize`'s
++`about` form runs the round alone on its nominal half, and its default form
++takes the frozen cells from the restored operating point. The cost is one
++nominal executor, one projection and one sweep per `init!`, as [D-213][d-213]
++accepted for a service.
++
++**Rejected.**
++- *Leaving establishment to the caller:* a `:consistent` model would hold
++  fabricated values, and a user's own service could not establish them,
++  since the helper is private.
++- *A full nominal boundary zero:* its cells would come after events the
++  `Dual` model never fires, so they would describe a state the model does
++  not hold.
++- *Resolving the condition again at `Float64`:* it walks each condition tree
++  twice, and the plan-taking `init!` holds no condition to resolve, while the
++  model's stores already hold the authored world.
++- *Refusing `init!` at a non-nominal scalar:* [D-317][d-317] made the model at another
++  scalar public, to be written, evaluated and stepped, and `init!` is its one
++  door into `:consistent`. A state to restore comes from `checkpoint`, which
++  requires that status first.
++
+ <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
+ [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
+ [d-002]: #d-002--adopt-the-causal-port-based-paradigm
+@@ -21755,6 +21832,7 @@ S10d-054, and the measurements are
+ [d-478]: #d-478--write-a-tick-count-as-d-or-φ-subscripted-by-the-lattice-it-counts-in
+ [d-479]: #d-479--give-each-count-length-and-index-of-the-timing-passages-its-own-letter
+ [d-480]: #d-480--raise-the-default-margin-to-3-ms-calibrated-at-the-sleep-a-paced-frame-makes
++[d-481]: #d-481--establish-the-frozen-cells-at-init-on-a-model-at-a-non-nominal-scalar
+ [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
+ [s10-2]: spec.md#102-the-stepper-seam
+ [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
+diff --git a/design/spec.md b/design/spec.md
+index 17ed99de..fb714f3e 100644
+--- a/design/spec.md
++++ b/design/spec.md
+@@ -5606,8 +5606,10 @@ branch) ([§8.3][s8-3]). The [§4.3][s4-3] write-side granularity rule keeps roo
+ predominantly scalar, so the surface is small.
+ 
+ **Probe values are strictly probe-scoped** ([D-051][d-051]). Everything the
+-probe writes is garbage once the build finishes. Probe values never double as
+-initial root-input values, because that would smuggle in the default semantics
++probe writes is garbage once the build finishes. A fresh
++[signal table](#g-signal-table) (the cells holding every produced signal) holds
++the probe's values until `init!` or a restore writes it. Probe values never
++double as initial root-input values, because that would smuggle in the default semantics
+ that [D-051][d-051] rejects.
+ 
+ The same doctrine covers the clock. **`t` is probe-scoped `0.0`**
+@@ -5715,8 +5717,12 @@ Neither depends on `T`, by construction.
+ ([D-052][d-052]). A `Dual` activation, as linearization and gradient trim use,
+ evaluates the model at a frozen instant.
+ 
+-- Discrete stages are gated off and hold `Float64` values. This is the
+-  frozen-constant semantics of [§8.2][s8-2].
++- Discrete stages are gated off and hold `Float64` values. `init!`, `trim!`
++  and `linearize` under `about` take those values from an establishment
++  round at `Float64` over the authored state, never from the probe
++  ([§14.5][s14-5], [§14.8][s14-8]). `linearize`'s default form takes them from the
++  state it restores ([§14.10][s14-10]). This is the frozen-constant semantics of
++  [§8.2][s8-2].
+ - [Guards](#g-guard) and handlers never run, because event localization runs
+   as `Float64` [sweeps](#g-sweep) by design ([§9.5][s9-5], [D-052][d-052]).
+ - Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and
+@@ -13480,6 +13486,9 @@ boundary, the ordinary macro-sequence with an empty integrate) means for trim.
+   authored world fully evaluated. No published [cell](#g-cell) holds a synthesized
+   [probe value](#g-probe-value) (a fabricated value a build-time probe runs on). That is the
+   probe-value barrier of [§14.6][s14-6] extended from the [root inputs](#g-root-input) to the whole table.
++  At a non-nominal scalar, **`init!` establishes the frozen discrete cells
++  from a projection and one such sweep on a `Float64` copy of the authored
++  state** ([§9.4][s9-4], [D-481][d-481]).
+ - Events run. A condition can land a guard [predicate](#g-predicate), a `Bool`-valued form or
+   the sign of a continuous function, in [holding](#g-edge-semantics) territory (firing on not-holding
+   → holding transitions, never bare sign changes). An authored stall flag, or a
+@@ -17879,6 +17888,7 @@ worked C172 cruise problem of [§14.7][s14-7].
+ [d-478]: log.md#d-478--write-a-tick-count-as-d-or-φ-subscripted-by-the-lattice-it-counts-in
+ [d-479]: log.md#d-479--give-each-count-length-and-index-of-the-timing-passages-its-own-letter
+ [d-480]: log.md#d-480--raise-the-default-margin-to-3-ms-calibrated-at-the-sleep-a-paced-frame-makes
++[d-481]: log.md#d-481--establish-the-frozen-cells-at-init-on-a-model-at-a-non-nominal-scalar
+ [s1]: #1-introduction
+ [s10]: #10-time-and-execution
+ [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
+diff --git a/src/build.jl b/src/build.jl
+index 5f71c62e..d4f13265 100644
+--- a/src/build.jl
++++ b/src/build.jl
+@@ -560,7 +560,7 @@ One activation: the typed products at a concrete scalar `T` (§9.1) —
+ declarations retyped at `T`, the probe chain run over exactly the function
+ set this activation can execute (§9.4), cells laid out. Immutable once
+ constructed; the probe products are what a cell holds until first written
+-(§6.3).
++(§9.3).
+ """
+ struct Activation{T}
+     decls::Vector{Decls}
+@@ -1060,9 +1060,11 @@ _workspace(entry::ComponentEntry, ::Type{T}) where {T} =
+     end
+ 
+ # A discrete component's stages never run at a non-nominal activation: its
+-# cells are frozen `Float64` constants with zero partials, holding what the
+-# probe wrote, which is exactly what a tick at `t₀⁻` would have produced
+-# (§6.3, §7.2; `frozen_discrete_walkthrough.md`).
++# cells are frozen `Float64` constants with zero partials. `init!`, `trim!` and
++# `linearize` under `about` establish them by a round at `Float64` over the
++# authored state, and `linearize`'s default form takes them from the state it
++# restores (§7.2, §9.4, §14.8, D-213, D-274, D-481;
++# `frozen_discrete_walkthrough.md`).
+ _frozen(tier::Tier, ::Type{T}) where {T} = tier === DISCRETE && T !== Float64
+ 
+ """
+@@ -1082,10 +1084,11 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
+     products = NamedTuple[s1 for s1 in stage1]
+ 
+     # A frozen component's stages never run at this activation, so its complete
+-    # product is the *nominal* activation's, carried across (§9.4): its cells
+-    # hold what a tick at `t₀⁻` computed from real nominal inputs — pinned
+-    # `Float64` constants, which downstream continuous consumers embed as
+-    # zero-partials. The dependence through it is temporal, not instantaneous
++    # product is the *nominal* activation's, carried across (§9.4). It seeds
++    # the cells until `init!`, a service or a restore writes them (D-213,
++    # D-481). They are pinned `Float64` constants, which
++    # downstream continuous consumers embed as zero-partials. The dependence
++    # through it is temporal, not instantaneous
+     # (`frozen_discrete_walkthrough.md`), so nothing here needs to gather the
+     # `Dual` cell its pinned input declaration would otherwise have to refuse.
+     for (ci, entry) in enumerate(structure.components)
+@@ -1490,8 +1493,9 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
+         NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple((input_addr(ci, face) for face in keys(keyed_ins(decl)))...))
+ 
+     # A cell holds what the build probe populated until a sweep first writes it
+-    # (§6.3): this is the table's pre-`init!` content, and a frozen
+-    # component's pinned cells are this seed for the whole run (§9.4). It is
++    # (§9.3): this is the table's pre-`init!` content, and a frozen
++    # component's pinned cells keep this seed until `init!` or a service
++    # establishes them (§9.4, D-481). It is
+     # also what leaves no handle cell unassigned: an opaque-leaf buffer starts
+     # `undef`, every handle port is a component product this seed writes, and a
+     # handle at a root input is refused at layout (D-237).
+diff --git a/src/model.jl b/src/model.jl
+index c999bc03..2559ab93 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -137,7 +137,8 @@ Model(root::AbstractComponent, ::Type{T} = Float64; kw...) where {T} =
+ 
+ # --- the seeded-half scratch world (§14.8, D-213) ------------------------------
+ # Shared by the two stopped-sim services, trim.jl and linearize.jl, which run
+-# the same two-half scratch world, with and without a commit.
++# the same two-half scratch world, with and without a commit, and by `init!` at
++# a non-nominal scalar, which runs its nominal half alone (D-481).
+ 
+ # One scratch model: the same buffer set the model owns, at whatever scalar,
+ # from the same cached activation and the same deployment — and it dies with
+@@ -164,6 +165,54 @@ function _establish_frozen!(seeded_exec::Executor, act::Activation{T},
+     nothing
+ end
+ 
++# `init!`'s nominal half at a non-nominal scalar (§9.4, D-213, D-481): a
++# `Float64` scratch takes the model's authored state, `x` and the root inputs
++# with their partials dropped, `s` and `m` as they are, since a store's type is
++# the same at every activation, and the clock. It then runs what the model runs
++# at boundary zero, projection and one establishment round, with no events and
++# no `s_update`, and the frozen cells are copied back. A model with no frozen
++# component builds no scratch. The scratch has its own cursor, so a throw there
++# copies it into the model's, which `init!`'s catch reads (§13.4).
++function _establish_frozen!(model::Model{T}, origin::Rational{Int}) where {T}
++    build = model.deployment.build
++    any(entry -> _frozen(entry.tier, T), build.structure.components) || return nothing
++    exec = model.exec
++    exec.cursor.comp = 0; exec.cursor.fn = :none   # no stale frame for a throw before the round
++    nominal_exec = _scratch(model, Float64).exec
++    nominal_exec.xbuf .= _drop_partials.(exec.xbuf)
++    for ci in eachindex(exec.sstores)
++        exec.sstores[ci] === nothing || (nominal_exec.sstores[ci][] = exec.sstores[ci][])
++        exec.mstores[ci] === nothing || (nominal_exec.mstores[ci][] = exec.mstores[ci][])
++    end
++    for face in build.structure.root_inputs
++        addr = nominal_exec.act.layout.addr[("", face)]
++        value = gather_cell(exec.store, exec.act.layout.addr[("", face)])
++        scatter_cell!(nominal_exec.store, addr, _drop_partials(_port_type(addr), value))
++    end
++    _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
++    cursor, nominal_cursor = exec.cursor, nominal_exec.cursor
++    try
++        # the phases boundary zero's own projection and round stand at (§13.4)
++        _phase!(nominal_cursor, :project)
++        _projects!(nominal_exec.events, nominal_exec.xbuf)
++        _phase!(nominal_cursor, :round, 1)
++        _round!(nominal_exec, ESTABLISH)  # every discrete output stage, due or not
++    catch
++        for field in fieldnames(ExecutionCursor)
++            setfield!(cursor, field, getfield(nominal_cursor, field))
++        end
++        rethrow()
++    end
++    _establish_frozen!(exec, exec.act, nominal_exec, build)
++end
++
++# A value at the nominal cell type `P`, each `Dual` leaf taken at its value at
++# every depth and every other leaf as it is.
++_drop_partials(::Type{P}, value) where {P} =
++    reconstruct(P, Any[_drop_partials(leaf) for leaf in _leaf_values(value)], 0)
++_drop_partials(leaf::ForwardDiff.Dual) = _drop_partials(ForwardDiff.value(leaf))
++_drop_partials(leaf) = leaf
++
+ # Design: §10.2, §10.3, §10.4, §11.2, D-317, D-445, D-447, D-452.
+ # A subtype is a struct with concrete fields, built once per advance. §11.2's
+ # rule that every boundary publishes before integration resumes is a contract
+@@ -261,14 +310,15 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
+     (@atomic :acquire model.claimed) && throw(DiagnosticError(ArgumentInvalid(
+         call = call, reason = :claimed, argument = :model)))
+ 
+-# Design: §13.4, §14.3, §14.5, §14.6, D-223, D-317.
++# Design: §9.4, §13.4, §14.3, §14.5, §14.6, D-223, D-317, D-481.
+ # The model's door into `:consistent`. The plan method, `init!(model,
+ # plan::ConditionPlan; t0, hooks)`, does the writes alone, so the simulation's
+ # `init!` can resolve before it touches its run. It hosts §13.4's catch around
+ # boundary zero (D-223), where a throw takes the one `StepError` constructor
+-# with the frame from the cursor. Nothing reads the return of `settled!(hooks)`
+-# here. An interrupt has no stop path in a service, so the catch wraps it like
+-# any throw (D-441).
++# with the frame from the cursor. At a non-nominal scalar the catch also covers
++# the nominal projection and round that establish the frozen cells (D-481).
++# Nothing reads the return of `settled!(hooks)` here. An interrupt has no stop
++# path in a service, so the catch wraps it like any throw (D-441).
+ """
+     init!(model::Model, condition = set(); t0 = 0,
+           hooks::FrameHooks = NoHooks()) -> Nothing
+@@ -280,7 +330,10 @@ defaults, and run [boundary zero](@ref g-boundary-zero) at `t0`.
+ overrides and sets the clock to `t0`. It sets every event [prior](@ref g-prior)
+ to not [holding](@ref g-edge-semantics). It then runs boundary zero, which
+ settles through `settled!(hooks)`, and the model's status becomes `:consistent`.
+-A `Model` at a `Dual` has no events.
++A `Model` at a `Dual` has no events, and its discrete
++[components](@ref g-component) never run there. Its boundary zero first
++evaluates their outputs once at `Float64`, from the state `init!` set and
++projected, and the model holds those values.
+ 
+ The condition is built with [`set`](@ref) and its combinators.
+ [Root inputs](@ref g-root-input) have no declared default, so the condition must
+@@ -333,6 +386,7 @@ function init!(model::Model{T}, plan::ConditionPlan; t0 = 0,
+     # the stepper's carried state as bound, so the run is a function of the condition (D-452)
+     reset_stepper!(exec.stepper)
+     try
++        _establish_frozen!(model, origin)   # a non-nominal scalar's frozen cells (D-481)
+         boundary_zero!(model)
+     catch err
+         @atomic :release model.status = :built
+@@ -693,8 +747,8 @@ canonical residue admits exactly `Φ₀ = 0` (§6.3): that evaluation is
+ establishment, not a scheduled sample, and an offset component's first
+ *consumed* sample stays its `Φ₀·Δt_base` tick's. A component frozen at a
+ non-nominal activation has no entries here at all (§9.4's executable set), so
+-its pinned cells keep the carried nominal products — at boundary zero as
+-everywhere.
++its pinned cells keep what `init!`'s nominal half established just before
++(D-481).
+ 
+ Never called bare: the model's `init!` (above) hosts it, the one door
+ that runs it (D-274), wrapping a throw as §13.4's catch does (D-223, D-317).
+diff --git a/test/test_discrete.jl b/test/test_discrete.jl
+index 193a2310..d31339c7 100644
+--- a/test/test_discrete.jl
++++ b/test/test_discrete.jl
+@@ -75,8 +75,8 @@ function discrete_frozen_activation()
+         # a lawful arrival, embedded as a zero-partial. `ctl`'s stages are outside
+         # this activation's executable set, so they do not run at all — boundary
+         # zero's wide gate included (D-205 admits entries, and a frozen component
+-        # has none) — and its cell holds the nominal products §9.4 carried across,
+-        # pinned for the whole run.
++        # has none). `init!` establishes its cell once at `Float64` from the
++        # authored `s` (D-481), and the cell holds that value for the whole run.
+         dual_model = Model(sampled_loop(), D8; Δt_frame = 1//50)
+         @test isempty(walked(dual_model.exec.bodies.ticks))
+         @test length(walked(dual_model.exec.bodies.sweep_1)) == 1          # plant only; ctl frozen
+@@ -85,7 +85,134 @@ function discrete_frozen_activation()
+         init!(dual_model, set(u = (ref = 0.0,)))
+         frames!(dual_model, 2)                                # `run!` to 0.04
+         @test state(dual_model, "plant").q isa SVector{2,D8}
+-        @test port(dual_model, "ctl", :u) == 0.0              # held, never recomputed
++        @test port(dual_model, "ctl", :u) == 0.0              # established from `acc = 0`, then held
++    end
++end
++
++# --- `init!` at a non-nominal scalar (§9.4, §14.5, D-481) ----------------------
++# A frozen component's stages never run at a `Dual`, so its cells hold what
++# `init!`'s nominal half established from the model's authored state.
++
++# A hold feeding a relaxation `ẋ = u - x` from `x = 1`: the root input `r` only
++# the hold reads, so its tier pins it at `Float64`.
++frozen_pair() = Group((; zoh = ZOH(), lag = BareAccumulator());
++                      local_wires = ("zoh/out" => "lag/u",), input_wires = ("r" => "zoh/in",))
++
++# Two holds, each reading a walking value through a continuous stage: the state
++# of `lag`, and the root input `e` through `neg`. A root input that only a
++# discrete component reads is pinned, and a `Dual` value at it is refused.
++walking_holds() = Group((; lag = BareAccumulator(), hold = ZOH(), neg = Negator(), echo = ZOH());
++                        local_wires = ("lag/y" => "hold/in", "neg/y" => "echo/in"),
++                        input_wires = ("r" => "lag/u", "e" => "neg/u"))
++
++"A continuous pass-through that throws `Exploded` on an input past 1."
++struct Fuse <: AbstractComponent end
++x_init(::Fuse) = nothing
++u_types(::Fuse) = (u = Float64,)
++y_types(::Fuse) = (y = Float64,)
++y_direct(::Fuse, (; u)) = u.u > 1 ? throw(Exploded()) : (y = u.u,)
++
++# The fuse reads the hold, so it throws only once the hold holds the root input.
++fused_hold() = Group((; zoh = ZOH(), fuse = Fuse());
++                     local_wires = ("zoh/out" => "fuse/u",), input_wires = ("r" => "zoh/in",))
++
++# A hold behind a continuous stage-2 reader, which boundary zero evaluates from
++# the cell the nominal half has just established.
++negated_hold() = Group((; zoh = ZOH(), neg = Negator());
++                       local_wires = ("zoh/out" => "neg/u",), input_wires = ("r" => "zoh/in",))
++
++# An offset hold, not due at `t₀` (`Φ₀ = 1`), beside one that is: boundary zero
++# publishes both all the same (D-205).
++offset_holds() = Group((; zoh = ZOH(), base = ZOH()); sample_times = (; zoh = Relative(2, 1)),
++                       input_wires = ("r" => ("zoh/in", "base/in"),))
++
++# A hold reading a rotor's cosine, which boundary zero projects onto the unit
++# circle before any output stage runs.
++rotor_hold() = Group((; rot = Rotor(), zoh = ZOH()); local_wires = ("rot/c" => "zoh/in",))
++
++# A hold reading a state whose projection throws `Detonated` at `q ≥ 0.5`.
++primed_hold() = Group((; p = Primer(0.5), zoh = ZOH()); local_wires = ("p/q" => "zoh/in",))
++
++function discrete_frozen_init()
++    nested = ForwardDiff.Dual{Nothing,ForwardDiff.Dual{Nothing,Float64,1},1}
++    @testset "at a `Dual`, `init!` establishes a frozen cell as the `Float64` model's boundary zero does (§9.4, §14.5, D-481)" begin
++        for T in (Float64, D8, nested)
++            model = Model(frozen_pair(), T; Δt_frame = 1//10)
++            @test port(model, "zoh", :out) === 0.0            # the probe's product, before `init!`
++            init!(model, set(u = (r = 2.0,)))
++            @test port(model, "zoh", :out) === 2.0
++            T === nested && continue
++            evaluate!(model)
++            @test ForwardDiff.value(model.exec.ẋbuf[1]) ≈ 1.0   # 2 - 1, never 0 - 1
++            frames!(model, 10)
++            @test ForwardDiff.value(state(model, "lag")) ≈ 2 - exp(-1) rtol = 1e-6
++        end
++        # Boundary zero's own sweep reads the established cell, so a continuous
++        # reader of it publishes from the authored value.
++        model = Model(negated_hold(), D8; Δt_frame = 1//10)
++        init!(model, set(u = (r = 2.0,)))
++        @test ForwardDiff.value(port(model, "neg", :y)) == -2.0
++        # A hold not due at `t₀` is established all the same, as at `Float64`.
++        for T in (Float64, D8)
++            model = Model(offset_holds(), T; Δt_frame = 1//10)
++            init!(model, set(u = (r = 2.0,)))
++            @test port(model, "zoh", :out) === 2.0 && port(model, "base", :out) === 2.0
++        end
++        # A model with no discrete component has nothing to establish.
++        model = Model(fed(BareAccumulator()), D8; Δt_frame = 1//10)
++        init!(model, set(u = (in = 2.0,)))
++        @test model.status === :consistent
++        @test ForwardDiff.value(port(model, "c", :y)) == 1.0
++    end
++
++    @testset "the nominal round takes each walking value alone, and leaves the model's partials (§9.4, D-481)" begin
++        directions = ForwardDiff.Partials(ntuple(Float64, 8))
++        model = Model(walking_holds(), D8; Δt_frame = 1//10)
++        init!(model, combine(at("lag", set(x = D8(3.0, directions))),
++                             set(u = (r = D8(2.0, directions), e = D8(5.0, directions)))))
++        @test port(model, "hold", :out) === 3.0
++        @test port(model, "echo", :out) === -5.0
++        @test state(model, "lag") === D8(3.0, directions)
++        @test port(model, "neg", :y) === D8(-5.0, -directions)
++    end
++
++    @testset "the nominal round reads the authored `s`, `m` and clock (§9.4, §14.5, D-481)" begin
++        sampled = Model(sampled_loop(), D8; Δt_frame = 1//50)
++        init!(sampled, combine(at("ctl", set(s = (acc = 2.0,))), set(u = (ref = 0.0,))))
++        @test port(sampled, "ctl", :u) === 2.0
++        geared = Model(Group((; gm = GearMode(), hold = ZOH()); local_wires = ("gm/y" => "hold/in",)),
++                       D8; Δt_frame = 1//10)
++        init!(geared, at("gm", set(m = (gear = down,))))
++        @test port(geared, "hold", :out) === 1.0
++        stamp_model = Model(single(ClockStamp()), D8; Δt_frame = 1//10)
++        init!(stamp_model; t0 = 1//4)
++        @test port(stamp_model, "c", :stamp) === 0.25
++    end
++
++    @testset "the nominal half projects `x` as boundary zero does, so a frozen cell agrees with the projected state (§9.4, §14.5, D-481)" begin
++        # Authored off the unit circle at `(2, 0)`, the rotor projects to `(1, 0)`.
++        off_circle = at("rot", set(x = (r = SVector(2.0, 0.0),)))
++        for T in (Float64, D8)
++            model = Model(rotor_hold(), T; Δt_frame = 1//10)
++            init!(model, off_circle)
++            @test port(model, "zoh", :out) === 1.0
++            @test ForwardDiff.value(port(model, "rot", :c)) == port(model, "zoh", :out)
++        end
++    end
++
++    @testset "a throw in the nominal half is boundary zero's `StepError`, framed as at `Float64` (§13.4, §14.5, D-481)" begin
++        cases = ((fused_hold, set(u = (r = 2.0,)), Exploded,
++                  CursorFrame("fuse", :y_direct, :round, 1)),
++                 (primed_hold, at("p", set(x = (q = 1.0,))), Detonated,
++                  CursorFrame("p", :x_projection, :project, 0)))
++        for (world, condition, cause, frame) in cases, T in (Float64, D8)
++            model = Model(world(), T; Δt_frame = 1//10)
++            err = failure(() -> init!(model, condition; t0 = 1//4))
++            @test model.status === :built
++            @test err isa StepError{cause}
++            @test err.host === :boundary_zero && err.boundary == 0 && err.t == 0.25
++            @test err.cursor == frame
++        end
+     end
+ end
+ 
+@@ -1006,6 +1133,7 @@ end
+ function test_discrete()
+     discrete_one_rate()
+     discrete_frozen_activation()
++    discrete_frozen_init()
+     discrete_rate_fold()
+     discrete_deployment()
+ end

@@ -169,38 +169,37 @@ the tools.
   commit and the gate at the tip of the code commits and again for the
   increment.
 
+- **The six rows are applied, 2026-11-26.** Thirteen commits on master,
+  `51830b28` to `8e66ad01`, none pushed, and `ledgers/user_rows.md` names
+  each row's. The gate passed on the tree of steps 3 and 4, 10949 of 10949,
+  and on step 5's, 10991 of 10991, and the examples' runner on both. Two
+  cold reviews ran, one on S12b-236 and one on the increment, and their
+  probes are in `probes/user_rows/s12b236_review/` and the increment's
+  `review/` folder.
+  - Two things wait on the user's confirmation, each a shape other than the
+    one ruled. S12b-236 presents the residue after the record and the flag,
+    inside the mask, not after it. S9b-300's nominal half projects, where
+    the ruling said no projection
+    (`design/increments/20261126_frozen_init/notes_frozen_init.md`,
+    section 3).
+  - For the log clustering. D-480 changes the default `margin`, so the
+    annotations the ledger proposes in rows L10-072 and L12-048 say 2 ms
+    where the default is now 3 ms. The rows S6c-001 and S6c-004 against
+    D-237 and CV9a-049 against D-051 stand as they are: D-237's Position
+    says "anywhere" where the spec now says "the walk meets", and D-051's
+    says "never initial slot values" where §9.3 now says a fresh table holds
+    them until `init!` or a restore writes it.
+  - Seen and not fixed. No tool of the battery catches a merge-conflict
+    marker; one reached a commit on a branch tonight and the cold review
+    found it. No test covers the warning that counts a residue's suppressed
+    occurrences. `trim!` and `linearize` run their nominal round outside any
+    `try`.
+  - The scratch stays until the push, as `increment_rules.md` says: the
+    worktrees `six_rows`, `s12b_review`, `frozen_init`, `frozen_init_land`
+    and `frozen_init_review` under `../Redstone.jl-worktrees/`, their notes
+    folders beside them, and the branches `six-rows` and `frozen-init`.
+
   The small sweep and the log clustering follow.
-- **Where the application stands, 2026-11-26, for a session taking over.**
-  Nothing is pushed. Steps 1 and 2 are on master, `51830b28` and
-  `d6a0ffae`. The rest waits on two cold reviews and is cherry-picked onto
-  master in branch order once they report.
-  - The branch `six-rows`, worktree `../Redstone.jl-worktrees/six_rows`,
-    holds steps 3 and 4 as six commits over `d6a0ffae`: the tracer's
-    conversion, S12b-236's doc half, D-480, the mutable `Real`, S12b-236's
-    code, and the margin's default. The gate passed at its tip `1235a9e8`,
-    10946 of 10946, and the examples' runner 179 of 179. A cold review of
-    S12b-236 runs in `../Redstone.jl-worktrees/s12b_review`.
-  - S12b-236 took a shape other than the one put to the user. The residue
-    is presented after the record and the terminal flag are written, still
-    inside the mask, not after it. A presentation after `sigatomic_end`
-    is skipped on every path where an exception leaves the `finally`, and a
-    `try` around the mask's end leaks the mask on 1.13 (`code_rules.md`).
-  - The branch `frozen-init`, worktree
-    `../Redstone.jl-worktrees/frozen_init_land`, holds step 5 as two
-    commits over `six-rows`: D-481 with its spec sentences, and the code.
-    The prototype ran in `../Redstone.jl-worktrees/frozen_init`, its probes,
-    mutants and patch beside it in `frozen_init_notes/`, and its gate
-    passed, 10960 of 10960. A cold review runs in
-    `../Redstone.jl-worktrees/frozen_init_review`. The gate has not run on
-    `frozen-init` itself, over the six commits below it.
-  - Left after the reviews: the fixes, the gate on `frozen-init`, the
-    cherry-picks, the increment's record in its notes file with the patch,
-    the hashes in `ledgers/user_rows.md`, the `pending.md` sub-bullet
-    retired, and the worktrees and branches removed.
-  - Known and owed to step 5's fix: two test comments still describe the old
-    behaviour, `test_discrete.jl` near 74 and `test_build.jl` near 1469, and
-    §9.4's new sentence says "from the nominal activation", whose products
-    are the probe's.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

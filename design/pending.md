@@ -21,17 +21,16 @@ item changes what the spec says, the spec edit is part of the item.
   companions and the rest of the docs are checked against the code, which
   is the source of truth, in both directions, and what drifted is fixed.
   Stage reached: the sweep is done, every group from the §14 trial to G7
-  run and its clear fixes landed, and every row put to the user is ruled.
-  The last six were ruled on 2026-11-26 and are being applied.
+  run and its clear fixes landed, and every row put to the user is ruled
+  and applied. Two of the last six landed in a shape other than the one
+  ruled and wait on the user's confirmation, as the notes say.
   The state, the rulings, the group plan and the tools are in
   `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
   brief is `00_brief.md` beside it, and the rows that wait on the user are
   in its `ledgers/user_rows.md`. Left, in order:
-  - The six rows ruled on 2026-11-26, applied in the five steps the notes
-    list: the doc rows S13c-031, S6c-001 and K9b-041; the code rows CV2-023,
-    S6c-004 and S12b-236; S10d-054's default, docs first; and S9b-300 with
-    CV9a-049 as the increment
-    `design/increments/20261126_frozen_init/notes_frozen_init.md`.
+  - The user's confirmation of two shapes: S12b-236's presentation inside
+    the mask, and the projection in S9b-300's nominal half
+    (`design/increments/20261126_frozen_init/notes_frozen_init.md`).
   - A ruling on the four SD3 rows, whether the glossary marks the GUI
     behaviour the cockpit still owes as owed.
   - The small sweep of the items the notes list as seen and not yet fixed,

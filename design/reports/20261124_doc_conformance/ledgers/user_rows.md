@@ -23,7 +23,7 @@ the verifier's probe.
 - **S13c-031, defect.** A hanging `unblock!` is not bounded by the join
   timeout. Ruled 2026-11-26: the doc moves. The join timeout bounds the
   device's task alone. A hook on the calling task, `init!`, `unblock!` or a
-  direct-release `shutdown!`, is the author's to bound.
+  direct-release `shutdown!`, is the author's to bound. Settled, `d6a0ffae`.
 - **S13d-133, defect.** The descriptor writes no `function` for
   `BundleFieldError`. Recommended: add the `_function` method and a test, after
   checking the schema allows it. Settled, `dc884b91`.
@@ -69,7 +69,7 @@ the verifier's probe.
   tag keeps its hops alive. One verdict moves. A route gated on `Float64` of a
   state value, closed at the probe state, reads artificial where the sampled
   fallback read real, as a direct branch on state already reads
-  (`probes/user_rows/cv2023_verdicts.jl`).
+  (`probes/user_rows/cv2023_verdicts.jl`). Settled, `b57ad9b4`.
 - **CV2-026, held.** A D-166 citation in tracer.jl, left to the CIT-D166
   finding.
 - **CV2-030, unmarked rule.** The fixer added §13.8's 64-face limit on
@@ -130,14 +130,17 @@ the verifier's probe.
   it. CV9a-049 waits on it. Ruled 2026-11-26: the code moves. `init!` at a
   non-nominal scalar establishes the frozen cells as a service does (D-213).
   The readings are in
-  `design/increments/20261126_frozen_init/notes_frozen_init.md`.
+  `design/increments/20261126_frozen_init/notes_frozen_init.md`. Settled,
+  `55bc376e` to `8e66ad01`, with one ruling of the coordinator's that waits
+  on the user: the nominal half projects, where the user ruled no projection.
 - **S9d, a thin inventory.** Its mid-tier inventory missed 3 of 9 sampled
   rows. A high-tier re-inventory of §9.7 and §9.8 is in G4b's args as S9d2.
   Settled: S9d2 ran with G4b and missed none of its 10 sampled rows.
 - **CV9a-049, wording.** §9.3's probe-scoped values: `compile` seeds every
   fresh table from the probe's values. Rule it with S9b-300. Ruled
   2026-11-26: one sentence in §9.3, that a fresh table holds the probe's
-  values until `init!` writes it, landing with S9b-300.
+  values until `init!` writes it, landing with S9b-300. Settled, `55bc376e`
+  and `8e66ad01`, as "until `init!` or a restore writes it".
 - **CV9a-050, wording.** Appendix C and D-431 say a misshapen return throws
   alone; that holds for the port check only. Settled, `a991af00`.
 - **CV9b-049, wording.** The scalar refusal is not always alone and before
@@ -150,7 +153,7 @@ the verifier's probe.
   S6c-001 and S6c-004. K9b-041 ruled 2026-11-26: the doc moves. Nothing
   refuses a `Matrix{T}` grid, so §8.2 loses the sentence that says the
   mutable-parameter rule does, and the companion says the concrete
-  `Matrix{Float64}` keeps the copy off the table.
+  `Matrix{Float64}` keeps the copy off the table. Settled, `d6a0ffae`.
 
 ## G4, §10
 
@@ -162,7 +165,8 @@ the verifier's probe.
   overshoots more. Ruled 2026-11-26: the default becomes 3 ms, by an entry
   amending D-133. `sleep`'s overshoot grows with the request, and D-133's
   arithmetic took the figure of a 2 ms request where a 20 ms frame sleeps
-  18 ms (`probes/user_rows/s10d054_overshoot.jl`).
+  18 ms (`probes/user_rows/s10d054_overshoot.jl`). Settled, `8580c0f9`
+  (D-480) and `154408fd`.
 - **CV10-221, wording.** The `ExecutionCursor` docstring's account of when
   the cursor is written and read misses one store. Settled, `a991af00`.
 - **CV10-263, wording.** A named discrete store whose `s_update` returns the
@@ -234,7 +238,13 @@ the verifier's probe.
   (`probes/user_rows/s12b236_masked_bookkeeping.jl`, a logger standing in for
   the forced throw). The sweep collects under the mask and presents after it.
   §12.4's sentence narrows to what then holds, and the 1.14 item of
-  `pending.md` takes the remainder.
+  `pending.md` takes the remainder. Settled, `479f35ef`, `885eaff9` and
+  `b456c367`, in another shape: the residue is presented after the record
+  and the flag are written, still inside the mask, so that it prints on
+  every exit path and a deferred interrupt raises after it. The cold review
+  confirmed the fix with real forced SIGINTs
+  (`probes/user_rows/s12b236_review/probe_sigint.jl`). The shape waits on
+  the user's confirmation.
 - **K11-001, gap.** The flat state vector's uses are owed by `pending.md`;
   no action.
 - **CV11a-004, wording.** `KindCounts` is named only as "the per-kind
@@ -259,7 +269,7 @@ the verifier's probe.
   (D-237's rejection of walking into references). The code moves for the
   `Real` exemption: a mutable `Real` is refused like any mutable type, since
   no entry backs the exemption and a user's mutable `Real` changed under a
-  published snapshot.
+  published snapshot. Settled, `d6a0ffae` and `796f2b35`.
 - **K6c-064, K6c-072 to K6c-074, K6d-115, K6d-118, K6d-119, measured
   figures.** The verifiers re-measured the linear-systems and LQR
   companions' tables: the last-bit lag output (…266, not …265), the
