@@ -5079,6 +5079,15 @@ constraint sits as a type on the one constructor that owns a loop. A `Model`
 at another scalar is a service's scratch, written to, evaluated and stepped
 frame by frame with no ticks and no events.
 
+Across frames, such a model integrates the continuous dynamics with every
+discrete output held at the value `init!` established ([§9.4][s9-4],
+[D-481][d-481]). Its continuous state is the nominal model's until a tick
+changes a discrete output on the nominal model, or an event fires there.
+From then on it describes the held system, and no diagnostic reports the
+difference. The partials it carries are the sensitivities of that
+trajectory to the seeded directions. [§14.10][s14-10] records the extension
+that would differentiate through the ticks.
+
 **A `Simulation` claims its `Model`** ([D-318][d-318]). The constructor claims the
 model once, and refuses as `ArgumentInvalid` a model already claimed by a
 simulation or one whose status is not `:built`, before anything is
@@ -5727,6 +5736,10 @@ evaluates the model at a frozen instant.
   as `Float64` [sweeps](#g-sweep) by design ([§9.5][s9-5], [D-052][d-052]).
 - Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and
   `x_projection` ever see a `Dual`. So only they are probed at it.
+
+A model at a `Dual` that is stepped across frames executes the same set at
+every instant. Its discrete side stays held for the whole run
+([§9.2][s9-2]).
 
 Probing the discrete stages, `s_update` or the guards at `Dual` would check
 code against a number type it cannot receive.
@@ -14607,6 +14620,11 @@ extension is additive along existing [seams](#g-seam).
 - **A distinct `s`-tap list sits beside the `x` list**, labeling the step
   map's state blocks $\partial(x^+, s^+)/\partial(x, s)$ ([D-197][d-197]). The
   `x` list keeps its continuous meaning unchanged.
+
+The continuous block of $\Phi$ is built already. A `Model` at a `Dual`,
+stepped across one period with the discrete outputs held, carries
+$\partial x^+/\partial x$ and the partials to the seeded root inputs
+([§9.2][s9-2]). The extension adds the blocks through $s$.
 
 The honest limit is that $\Phi$ is differentiable only where the event pattern
 is locally constant. Exactness across a firing needs saltation corrections (the
