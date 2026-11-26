@@ -52,6 +52,7 @@ const FILES = [SPEC,
                "companions/linear_systems.md",
                "companions/store_at_rest_walkthrough.md",
                "companions/fused_evaluation_lineage.md",
+               "companions/dual_model_uses.md",
                "increments/roadmap_api_audit.md",
                "increments/roadmap_publication_garbage.md"]
 

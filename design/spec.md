@@ -5085,8 +5085,9 @@ discrete output held at the value `init!` established ([§9.4][s9-4],
 changes a discrete output on the nominal model, or an event fires there.
 From then on it describes the held system, and no diagnostic reports the
 difference. The partials it carries are the sensitivities of that
-trajectory to the seeded directions. [§14.10][s14-10] records the extension
-that would differentiate through the ticks.
+trajectory to the seeded directions. `companions/dual_model_uses.md` works
+several uses of them and shows the limit. [§14.10][s14-10] records the
+extension that would differentiate through the ticks.
 
 **A `Simulation` claims its `Model`** ([D-318][d-318]). The constructor claims the
 model once, and refuses as `ArgumentInvalid` a model already claimed by a
