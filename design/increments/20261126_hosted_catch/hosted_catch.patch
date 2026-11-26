@@ -1,0 +1,962 @@
+diff --git a/design/code_map.md b/design/code_map.md
+index 24a81c08..d1f790ea 100644
+--- a/design/code_map.md
++++ b/design/code_map.md
+@@ -592,7 +592,10 @@ D-256, D-261, D-268, D-270, D-315.
+ - §12.7's replay trio `CheckpointMismatch`, `ReplaySchemaMismatch` and
+   `ReplayUnknownFace` (D-255, D-274).
+ - `CheckpointMidFrame` (D-274).
+-- `StepError`'s `host` and its rendered recipe (§13.4, D-274).
++- `StepError`'s `host` and its rendered lines, each host's location, recipe
++  and interrupt line in `_host_lines`, `:trim` and `:linearize` among them, and
++  `_phase_text`'s `:evaluation`, a service's bare evaluation by its ordinal
++  (§13.4, D-274).
+ - `CheckpointMismatch`'s store and clock arms, and `ArgumentInvalid`'s
+   `restore` arm.
+ - `StopRequestInvalid`, the refusal of an `ignore_stop_requests` path (§13.5,
+@@ -677,9 +680,9 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
+ 
+ - The model's `frame!(model, k, hooks)` (D-317): the top
+   hook, whose `true` raises the stepper's discontinuity notice (D-452), then
+-  `_frame_steps!`, inside §13.4's one `try`, whose catch writes
+-  `:inconsistent` and builds the `StepError` with `_wrap_step` for every throw,
+-  an interrupt included (D-441). The claim's gate and the refusal of a `k`
++  `_frame_steps!`, one stretch hosted by model.jl's `_hosted` with host
++  `:loop`, which writes `:inconsistent` and builds the `StepError` for every
++  throw, an interrupt included (D-441). The claim's gate and the refusal of a `k`
+   past `_last_frame(model)`, the lesser of the `Lattice`'s `max_frame` and
+   the clock's resolution from the origin, precede the `try`, so that
+   refusal leaves the model `:consistent` (D-318, D-445, D-450).
+@@ -872,7 +875,10 @@ Spec: §2.3, §5.4, §5.5, §6.2, §6.3, §8.1, §8.7, §10.4, §13.5, §13.7, D
+ - `linearize` on a `Model{Float64}`, over D-213's two-half scratch world in
+   passes of `width` directions, the seeds written at the resolved taps' own
+   sites. Each half is a scratch `Model`, built by model.jl's `_scratch`
+-  (D-317, D-319).
++  (D-317, D-319). The `about` form's round and each pass are stretches hosted
++  on their scratch by model.jl's `_hosted`, host `:linearize`, the round at
++  round 1 and each pass at phase `:evaluation`, the pointer the checkpoint's
++  frame or 0 (§13.4).
+ - `_check_linearize_call`, the keyword refusals, and `_linearize`, the query
+   over a chosen operating point, which the simulation's method in sim.jl
+   shares (D-319).
+@@ -936,8 +942,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
+   D-213, D-317): `_scratch`, the model's buffer set at another scalar, which
+   dies with the call, and `_establish_frozen!`, the frozen copy over the
+   `Outputs`' port list. Its model method is `init!`'s nominal half at a
+-  non-nominal scalar, with `_drop_partials`, a value rebuilt at its nominal
+-  cell type with each `Dual` leaf at its value (§9.4, D-481).
++  non-nominal scalar, a stretch hosted on its scratch with host
++  `:boundary_zero` before `init!`'s own, with `_drop_partials`, a value rebuilt
++  at its nominal cell type with each `Dual` leaf at its value (§9.4, §13.4,
++  D-481).
+ - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
+   no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returns whether it
+   wrote a value, which raises the discontinuity notice and denies the frame's
+@@ -968,21 +976,21 @@ soon as nothing in it names a `Simulation` in a signature, and below
+     forms `_exact_origin` takes, refusing one whose run the clock's integers
+     cannot carry by `_clock_integers`, the checked clock formula at the run's
+     two ends (D-457), does the writes, asks the stepper to
+-    reset its carried state, `reset_stepper!` (D-452), runs boundary zero
+-    under §13.4's catch, at a non-nominal scalar after the frozen cells'
+-    nominal projection and round (D-481), and settles it through the hooks
+-    (§14.5, D-223);
++    reset its carried state, `reset_stepper!` (D-452), runs boundary zero as
++    a stretch hosted by `_hosted`, at a non-nominal scalar after the frozen
++    cells' nominal projection and round (D-481), and settles it through the
++    hooks (§14.5, D-223);
+   - `overlay!`, in the same two methods, whose condition method resolves with
+     the stores as the merge bases, `_store_values`, and whose plan method
+-    raises the discontinuity notice and runs the continuing settling under
+-    the same catch with host `:overlay` (§12.6, §14.1, D-429, D-452);
++    raises the discontinuity notice and runs the continuing settling as a
++    stretch hosted with host `:overlay` (§12.6, §14.1, D-429, D-452);
+   - `apply!` on a model, gated under `NoHooks` before the inner
+     `_apply_plan!`, which `init!` and the simulation's forwarding method call;
+   - `restore!(model, model_state; hooks)`, whose fingerprint check
+     `_check_checkpoint!` and grid check `_check_grid!` precede the ungated
+     inner `_restore_state!`, which
+-    the simulation's door body calls and which hosts §13.4's catch around the
+-    copy and the settling, writing `:built` under host `:restore` (D-441), with
++    the simulation's door body calls and which hosts the copy and the settling
++    as one stretch, writing `:built` under host `:restore` (D-441), with
+     the scalar fallback on a state at another scalar (D-274, D-319).
+   `frame!` (frame.jl) and `trim!` (trim.jl) are the other two gated doors.
+   The stepping primitives `evaluate!`, `integrate!`, `boundary!`,
+@@ -996,8 +1004,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
+   `event_phase!` returns, or its due set is not empty (D-452). `boundary!`,
+   `offtick_boundary!` and `boundary_zero!` are thin wrappers over it, and
+   `overlay!`'s continuing settling is its empty due set (D-429). Beside it
+-  `_round!` and the §10.6 event phase `event_phase!`, with its `FiringBudget`
+-  degradation into the model's diagnostic cell.
++  `_round!`, `_establishment_round!`, the round at boundary zero's phase that
++  the nominal halves of `init!`, `trim!` and `linearize`'s `about` form run
++  (D-205, D-213, D-481), and the §10.6 event phase `event_phase!`, with its
++  `FiringBudget` degradation into the model's diagnostic cell.
+ - The seam's framework side (§10.2, D-452): `integrate_step!`, the attempt
+   loop, which the frame loop calls with the step's offered length, the
+   instant no attempt may pass, its frame index and the freshness flag, and
+@@ -1018,9 +1028,15 @@ soon as nothing in it names a `Simulation` in a signature, and below
+ - `warnings(::Model)` (D-250), and the reads `port`, `state` and `modes` on
+   the model, which refuse an unknown path through `_component_index` and
+   `refuse_path` (D-440).
+-- The one `StepError` constructor `_wrap_step`, which the model's `frame!`,
+-  `init!`, `overlay!` and the inner restore call, and the species rule `_species` with the runtime bundle-field
+-  match (§13.2, §13.4, D-059, D-221, D-248).
++- The one host of model code `_hosted`, which runs a stretch on the model it
++  is given, a service's scratch included, and on a throw writes that model's
++  status by the host and rethrows the `StepError`. Its callers are the
++  model's `frame!` (`:loop`), `init!` and its nominal half (`:boundary_zero`),
++  `overlay!` (`:overlay`), the inner restore (`:restore`) and the services'
++  evaluations in trim.jl (`:trim`) and linearize.jl (`:linearize`). Beside it
++  the one `StepError` constructor `_wrap_step`, its one caller `_hosted`, and
++  the species rule `_species` with the runtime bundle-field match (§13.2,
++  §13.4, D-059, D-221, D-248, D-441).
+ - The checkpoint's model-level half: `_fingerprint`, and `checkpoint(model)`
+   over the rest gate `_assert_at_rest`, the status and the clock on a grid
+   top, which `overlay!` and the simulation's doors share, with its two
+@@ -1534,7 +1550,11 @@ Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245, D-437.
+ - `_solve_problem`, the solve through the verdict's evaluation, with both
+   halves' clocks set at `t0` through store.jl's `_set_origin!` (§14.8,
+   D-458), and `_verdict!`, which takes the caller's
+-  commit, both shared with the simulation's method in sim.jl (D-319).
++  commit, both shared with the simulation's method in sim.jl (D-319). The
++  guess evaluation, each seeded evaluation and `_verdict!`'s committed-state
++  evaluation are stretches hosted by model.jl's `_hosted` on the model that
++  runs them, host `:trim`, pointer 0, phase `:evaluation`, the guess
++  evaluation's round at round 1 (§13.4).
+ - The misuse fallback on a `Model`, and `ArgumentInvalid`'s `:non_nominal` on
+   a `Model` at another scalar (D-319).
+ - `TrimReport`, with its `committed_checks` (D-262).
+diff --git a/src/diagnostics.jl b/src/diagnostics.jl
+index 3fbdadd1..3dd4a847 100644
+--- a/src/diagnostics.jl
++++ b/src/diagnostics.jl
+@@ -240,7 +240,7 @@ diagnostic's kind when the cause is one, the exception model code threw
+ otherwise. A *species* is a `StepError` whose `cause` is a typed diagnostic,
+ which is what lets a runtime check throw its kind and reach the one catch site
+ as a plain thrower. `host` tells a boundary-zero throw from frame one's, since
+-the two share pointer 0.
++the two share pointer 0, and a service's from both.
+ """
+ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
+     cursor::CursorFrame
+@@ -249,6 +249,7 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
+     boundary::Int    # the frame-entry boundary index: replay!(…; to_boundary = boundary)
+     host::Symbol     # the catch that took the throw: :boundary_zero under init!,
+                      # :overlay under overlay!, :restore under a restore,
++                     # :trim and :linearize inside a service's evaluation,
+                      # :loop inside a frame
+     cause::C
+ end
+@@ -272,7 +273,54 @@ _phase_text(cursor::CursorFrame) =
+     cursor.phase === :project    ? "projection" :
+     cursor.phase === :round      ? "event round $(cursor.index)" :
+     cursor.phase === :ticks      ? "tick updates" :
+-    cursor.phase === :drain      ? "drain" : string(cursor.phase)
++    cursor.phase === :drain      ? "drain" :
++    cursor.phase === :evaluation ? "evaluation $(cursor.index)" : string(cursor.phase)
++
++# Each host's three lines, in one place (§13.2, §13.4): where the throw stood,
++# the call that reproduces it, and the line an interrupt takes in its place.
++# Nothing reproduces an interrupt, so that line names the call that resumes
++# from the pointer or runs the cut sequence again (D-441). A frame's throw takes
++# the halt then `step!` at every pointer, 0 included: the halt restores the
++# header and runs no boundary zero, so frame one's record is still ahead. A
++# boundary-zero throw leaves no trace, so `init!` reproduces it, and an
++# overlay's leaves no header, so `overlay!` on the same stopped state does
++# (D-274, D-429). A restore runs no phase of a frame, so its line names the
++# boundary alone, and `restore!` of the same checkpoint reproduces it. A
++# service runs no frame and is a function of its arguments, so its line names
++# the service and the boundary its scratch stood at, and the same call
++# reproduces it.
++function _host_lines(carrier::StepError)
++    host, boundary, phase = carrier.host, carrier.boundary, _phase_text(carrier.cursor)
++    host === :boundary_zero ? (
++        "$phase of the frame from boundary $boundary",
++        "init!(sim2, condition) under the same condition reproduces it",
++        "an interrupt cut boundary zero, so nothing reproduces it; " *
++        "init!(sim2, condition) under the same condition runs it again") :
++    host === :overlay ? (
++        "$phase of the frame from boundary $boundary",
++        "overlay!(sim2, condition) on the same stopped state reproduces it",
++        "an interrupt cut the settling, so nothing reproduces it; " *
++        "overlay!(sim2, condition) on the same stopped state runs it again") :
++    host === :restore ? (
++        "restoring boundary $boundary",
++        "restore!(sim2, cp) of the same checkpoint reproduces it",
++        "an interrupt cut the restore, so nothing reproduces it; " *
++        "restore!(sim2, cp) of the same checkpoint resumes from boundary $boundary") :
++    host === :trim ? (
++        "$phase of trim! at boundary $boundary",
++        "trim!(sim2, problem; baseline, t0) with the same arguments reproduces it",
++        "an interrupt cut the trim, so nothing reproduces it; " *
++        "trim!(sim2, problem; baseline, t0) with the same arguments runs it again") :
++    host === :linearize ? (
++        "$phase of linearize at boundary $boundary",
++        "linearize(sim2, tap_set) at the same operating point reproduces it",
++        "an interrupt cut the linearization, so nothing reproduces it; " *
++        "linearize(sim2, tap_set) at the same operating point runs it again") :
++    ("$phase of the frame from boundary $boundary",
++     "replay!(sim2, trc; to_boundary = $boundary) then step!(sim2) reproduces it",
++     "an interrupt cut the frame, so nothing reproduces it; " *
++     "replay!(sim2, trc; to_boundary = $boundary) resumes from the boundary it started at")
++end
+ 
+ # §13.2's doctrine: the didactic frame first, the raw throw second. The frame
+ # line names the path, the function, the phase, the time and the pointer, and
+@@ -288,44 +336,9 @@ function Base.showerror(io::IO, carrier::StepError)
+         cursor.fn === :none || print(io, " ", cursor.fn)
+         print(io, ", ")
+     end
+-    # A restore runs no phase of a frame, so its line names the boundary alone.
+-    carrier.host === :restore ?
+-        print(io, "restoring boundary ", carrier.boundary, " (t = ", carrier.t, "):\n  ") :
+-        print(io, _phase_text(cursor), " of the frame from boundary ", carrier.boundary,
+-              " (t = ", carrier.t, "):\n  ")
+-    # The recipe follows the host (§13.4, D-274, D-429). A boundary-zero throw
+-    # leaves no trace, so `init!` reproduces it, and an overlay's leaves no
+-    # header, so `overlay!` on the same stopped state does. A restore's
+-    # reproduces under `restore!` of the same checkpoint. A frame's throw
+-    # takes the halt then `step!` at every pointer, 0 included: the halt
+-    # restores the header and runs no boundary zero, so frame one's record is
+-    # still ahead. An interrupt cut the frame or the door and nothing
+-    # reproduces it, so the line names the door that resumes from the pointer
+-    # or runs the cut sequence again (D-441).
+-    if carrier.cause isa InterruptException
+-        carrier.host === :boundary_zero ?
+-            print(io, "an interrupt cut boundary zero, so nothing reproduces it; ",
+-                  "init!(sim2, condition) under the same condition runs it again") :
+-        carrier.host === :overlay ?
+-            print(io, "an interrupt cut the settling, so nothing reproduces it; ",
+-                  "overlay!(sim2, condition) on the same stopped state runs it again") :
+-        carrier.host === :restore ?
+-            print(io, "an interrupt cut the restore, so nothing reproduces it; ",
+-                  "restore!(sim2, cp) of the same checkpoint resumes from boundary ",
+-                  carrier.boundary) :
+-            print(io, "an interrupt cut the frame, so nothing reproduces it; ",
+-                  "replay!(sim2, trc; to_boundary = ", carrier.boundary,
+-                  ") resumes from the boundary it started at")
+-    else
+-        carrier.host === :boundary_zero ?
+-            print(io, "init!(sim2, condition) under the same condition reproduces it") :
+-        carrier.host === :overlay ?
+-            print(io, "overlay!(sim2, condition) on the same stopped state reproduces it") :
+-        carrier.host === :restore ?
+-            print(io, "restore!(sim2, cp) of the same checkpoint reproduces it") :
+-            print(io, "replay!(sim2, trc; to_boundary = ", carrier.boundary,
+-                  ") then step!(sim2) reproduces it")
+-    end
++    location, recipe, interrupted = _host_lines(carrier)
++    print(io, location, " (t = ", carrier.t, "):\n  ",
++          carrier.cause isa InterruptException ? interrupted : recipe)
+     print(io, "\n  cause: ")
+     carrier.cause isa Diagnostic ? print(io, logline(carrier.cause)) :
+                                    showerror(io, carrier.cause)
+diff --git a/src/executor.jl b/src/executor.jl
+index a5fe91f8..6fece8fb 100644
+--- a/src/executor.jl
++++ b/src/executor.jl
+@@ -18,8 +18,10 @@ mutable struct ExecutionCursor
+     comp::Int        # the component's index in the flat, 0 = none
+     fn::Symbol       # :y_state | :y_direct | :x_deriv | :s_update |
+                      # :guard | :handler | :x_projection | :none
+-    phase::Symbol    # :drain | :integrate | :arrival | :validation | :trial | :project | :round | :ticks
+-    index::Int       # the RK stage, the event round, the trial ordinal; 0 where none applies
++    phase::Symbol    # :drain | :integrate | :arrival | :validation | :trial | :project | :round | :ticks |
++                     # :evaluation, a service's bare evaluation
++    index::Int       # the RK stage, the event round, the trial ordinal, the evaluation ordinal;
++                     # 0 where none applies
+     attempt::Int     # the step's attempt ordinal, from 1 inside `:integrate`; 0 elsewhere
+ end
+ ExecutionCursor() = ExecutionCursor(0, :none, :drain, 0, 0)
+diff --git a/src/frame.jl b/src/frame.jl
+index 5bf26ccb..b41951f6 100644
+--- a/src/frame.jl
++++ b/src/frame.jl
+@@ -29,10 +29,11 @@
+ # nearest its instant (D-456). A model with no
+ # localized events, every non-nominal activation included since its events
+ # compiled out, takes the bare step: no arrival machinery, no extra sweep. The
+-# whole frame is §13.4's one `try`, and the `StepError` is the one
+-# constructor's. Its catch wraps every throw, an interrupt included, since the
+-# status says whether the stores are a settled boundary and the cause says what
+-# cut the frame. The index bound and the claim's gate precede it.
++# whole frame is one stretch hosted with host `:loop` (§13.4, model.jl's
++# `_hosted`), and the `StepError` is the one constructor's. Its host wraps every
++# throw, an interrupt included, since the status says whether the stores are a
++# settled boundary and the cause says what cut the frame. The index bound and
++# the claim's gate precede it.
+ """
+     frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
+ 
+@@ -84,17 +85,11 @@ function run_frame!(model::Model, k::Int, hooks::FrameHooks, continued::Bool)
+     k ≤ last_frame ||
+         throw(DiagnosticError(ArgumentInvalid(call = :frame!, reason = :range, argument = :k,
+                                               value = k, related = last_frame)))
+-    try
+-        cursor = model.exec.cursor
+-        cursor.comp = 0; cursor.fn = :none   # no stale frame for a top-side throw (§13.4)
+-        _phase!(cursor, :drain)
++    _hosted(model, k - 1, :loop) do model
++        _phase!(model.exec.cursor, :drain)
+         wrote = frame_top!(hooks)
+         wrote && discontinuity!(model.exec.stepper)
+-        return _frame_steps!(model, k, hooks, continued && !wrote)
+-    catch err
+-        model.fresh = false
+-        @atomic :release model.status = :inconsistent
+-        rethrow(_wrap_step(model, k - 1, :loop, err))   # the model's backtrace kept
++        _frame_steps!(model, k, hooks, continued && !wrote)
+     end
+ end
+ 
+diff --git a/src/linearize.jl b/src/linearize.jl
+index 8ae48274..19dbd864 100644
+--- a/src/linearize.jl
++++ b/src/linearize.jl
+@@ -9,8 +9,10 @@
+ # discrete cells and a seeded half at the service's own `Dual` scalar
+ # (trim.jl). What this file adds is the tap resolution with its five refusals,
+ # the passes of `width` directions, and the split of values from partials.
+-# Nothing here writes the model: both executors are locals and die with the
+-# call, which is what makes linearization a pure query.
++# Nothing here writes the model: both halves are scratch models, locals that die
++# with the call, which is what makes linearization a pure query. Each call that
++# runs model code is a stretch hosted on the scratch that runs it (model.jl's
++# `_hosted`), so a throw there is a `StepError` with host `:linearize`.
+ #
+ # The service takes the `Model{Float64}` that holds the operating point
+ # (D-319). The simulation's method is sim.jl's: it gates on the lifecycle and
+@@ -184,15 +186,19 @@ end
+ # D-272, D-274, D-319, D-406, D-428.
+ # A pure query on scratch buffers. On a simulation the default operating point
+ # is `checkpoint(sim)`, through sim.jl's method. The nominal half is a
+-# `Float64` scratch executor: by default the checkpoint restored, whose held cells are the frozen
++# `Float64` scratch model: by default the checkpoint restored, whose held cells are the frozen
+ # tier's (D-274); under `about`, the condition applied and checked total over
+ # the root inputs (§14.6), then one establishment round (D-213). The seeded half,
+-# at `Dual{LinearizeTag,Float64,width}`, is a scratch executor with the
++# at `Dual{LinearizeTag,Float64,width}`, is a scratch model with the
+ # operating point written as zero-partial constants and the frozen discrete
+ # cells copied from the nominal half (D-213). The seeds are one direction per
+ # `x` tap and per `u` tap, `x` first, each written at its resolved site, the
+-# state's `xbuf` slot or the root input's cell (D-272). Both executors die with
+-# the call, with no commit and no boundary zero. `t0` is admitted only beside
++# state's `xbuf` slot or the root input's cell (D-272). Both halves die with
++# the call, with no commit and no boundary zero. The `about` form's round, at
++# round 1 as boundary zero's, and each pass, at phase `:evaluation`, are
++# stretches hosted on their scratch with host `:linearize` and the pointer the
++# boundary the operating point stands at,
++# the checkpoint's frame or 0 under `about` (§13.4). `t0` is admitted only beside
+ # `about`, never silently ignored (Appendix B). The query is a read, so a model
+ # a simulation has claimed still answers it (D-319). The tap set's refusals:
+ # no discrete store in `x` (D-197), no unseedable root input in `u` (D-168,
+@@ -255,6 +261,12 @@ A `t0` without `about`, a `t0` that is not an exact time as [`init!`](@ref)
+ takes one, a `width` below 1, a second argument that is not a tap set, and a
+ model at a scalar type other than `Float64` are refused as `ArgumentInvalid`.
+ 
++A throw of model code inside an evaluation, an `InterruptException` included,
++arrives as a `StepError` with host `:linearize`, naming the
++[component](@ref g-component) and the evaluation. Its `boundary` is the one the
++operating point stands at, the checkpoint's frame or 0 under `about`. It leaves
++the model as it was.
++
+ # Keywords
+ 
+ - `about`: a condition placing the operating point, or `nothing` for
+@@ -306,21 +318,29 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
+     (x_entries, u_entries, y_entries) = _resolve_taps(tap_set, build, T)
+ 
+     # --- the nominal half (D-213) ------------------------------------------------
+-    nominal_exec = _scratch(model, Float64).exec
++    nominal = _scratch(model, Float64)
++    nominal_exec = nominal.exec
+     if about === nothing
+         _restore_state!(nominal_exec, operating_point)   # the held cells are the frozen tier's (D-274)
++        # the boundary the operating point stands at, which the passes' throws name (§13.4)
++        entry_boundary = _frames_to(operating_point.deployment, operating_point.t, operating_point.t₀)
+     else
+         origin = _origin(:linearize, something(t0, 0), model.deployment)
+         _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
+         plan = resolve_condition(about, build, Float64)
+         assert_total(plan, build.structure, :linearize)   # (§14.6): before any evaluation
+         apply!(nominal_exec, plan)
+-        _round!(nominal_exec, ESTABLISH)             # every discrete output stage, due or not
++        entry_boundary = 0
++        # the establishing round, a stretch hosted on the nominal scratch (§13.4)
++        _hosted(nominal, entry_boundary, :linearize) do nominal
++            _establishment_round!(nominal)
++        end
+     end
+ 
+     # --- the seeded half ---------------------------------------------------------
+     act = activation(build, T)
+-    seeded_exec = _scratch(model, T).exec
++    seeded = _scratch(model, T)
++    seeded_exec = seeded.exec
+     if about === nothing
+         copyto!(seeded_exec.xbuf, operating_point.x)   # zero partials throughout
+         _restore_stores!(seeded_exec, operating_point)
+@@ -354,12 +374,13 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
+     ẋ₀, y₀ = Vector{Float64}(undef, n_x), Vector{Float64}(undef, n_y)
+     A, B = zeros(n_x, n_x), zeros(n_x, n_u)
+     C, D = zeros(n_y, n_x), zeros(n_y, n_u)
++    _phase!(seeded_exec.cursor, :evaluation)   # `evaluate!` counts the passes from 1
+     for group in (N == 0 ? (1:0,) : Iterators.partition(1:N, width))
+         for (k, site) in enumerate(sites)
+             pos = k in group ? k - first(group) + 1 : 0
+             _seed_site!(seeded_exec, site, _seed(T, site_values[k], pos))
+         end
+-        evaluate!(seeded_exec)
++        _hosted(evaluate!, seeded, entry_boundary, :linearize)
+         for (i, (_, entry)) in enumerate(x_entries)
+             ẋ₀[i] = _readback!(A, B, i, _read(entry, seeded_exec), group, n_x)
+         end
+diff --git a/src/model.jl b/src/model.jl
+index 2559ab93..1ca7dfae 100644
+--- a/src/model.jl
++++ b/src/model.jl
+@@ -171,14 +171,16 @@ end
+ # the same at every activation, and the clock. It then runs what the model runs
+ # at boundary zero, projection and one establishment round, with no events and
+ # no `s_update`, and the frozen cells are copied back. A model with no frozen
+-# component builds no scratch. The scratch has its own cursor, so a throw there
+-# copies it into the model's, which `init!`'s catch reads (§13.4).
++# component builds no scratch. The projection and the round are a stretch hosted
++# on the scratch, which `init!` runs before its own, so a throw there is
++# boundary zero's `StepError` from the scratch's cursor, the model already
++# `:built` (§13.4).
+ function _establish_frozen!(model::Model{T}, origin::Rational{Int}) where {T}
+     build = model.deployment.build
+     any(entry -> _frozen(entry.tier, T), build.structure.components) || return nothing
+     exec = model.exec
+-    exec.cursor.comp = 0; exec.cursor.fn = :none   # no stale frame for a throw before the round
+-    nominal_exec = _scratch(model, Float64).exec
++    nominal = _scratch(model, Float64)
++    nominal_exec = nominal.exec
+     nominal_exec.xbuf .= _drop_partials.(exec.xbuf)
+     for ci in eachindex(exec.sstores)
+         exec.sstores[ci] === nothing || (nominal_exec.sstores[ci][] = exec.sstores[ci][])
+@@ -190,18 +192,11 @@ function _establish_frozen!(model::Model{T}, origin::Rational{Int}) where {T}
+         scatter_cell!(nominal_exec.store, addr, _drop_partials(_port_type(addr), value))
+     end
+     _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
+-    cursor, nominal_cursor = exec.cursor, nominal_exec.cursor
+-    try
++    _hosted(nominal, 0, :boundary_zero) do nominal
+         # the phases boundary zero's own projection and round stand at (§13.4)
+-        _phase!(nominal_cursor, :project)
+-        _projects!(nominal_exec.events, nominal_exec.xbuf)
+-        _phase!(nominal_cursor, :round, 1)
+-        _round!(nominal_exec, ESTABLISH)  # every discrete output stage, due or not
+-    catch
+-        for field in fieldnames(ExecutionCursor)
+-            setfield!(cursor, field, getfield(nominal_cursor, field))
+-        end
+-        rethrow()
++        _phase!(nominal.exec.cursor, :project)
++        _projects!(nominal.exec.events, nominal.exec.xbuf)
++        _establishment_round!(nominal)
+     end
+     _establish_frozen!(exec, exec.act, nominal_exec, build)
+ end
+@@ -313,12 +308,13 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
+ # Design: §9.4, §13.4, §14.3, §14.5, §14.6, D-223, D-317, D-481.
+ # The model's door into `:consistent`. The plan method, `init!(model,
+ # plan::ConditionPlan; t0, hooks)`, does the writes alone, so the simulation's
+-# `init!` can resolve before it touches its run. It hosts §13.4's catch around
+-# boundary zero (D-223), where a throw takes the one `StepError` constructor
+-# with the frame from the cursor. At a non-nominal scalar the catch also covers
+-# the nominal projection and round that establish the frozen cells (D-481).
+-# Nothing reads the return of `settled!(hooks)` here. An interrupt has no stop
+-# path in a service, so the catch wraps it like any throw (D-441).
++# `init!` can resolve before it touches its run. Boundary zero is a stretch
++# hosted on the model (§13.4, D-223), where a throw takes the one `StepError`
++# constructor with the frame from the cursor. At a non-nominal scalar the
++# nominal projection and round that establish the frozen cells run first, as a
++# stretch hosted on their scratch under the same host (D-481). Nothing reads the
++# return of `settled!(hooks)` here. An interrupt has no stop path in a service,
++# so the host wraps it like any throw (D-441).
+ """
+     init!(model::Model, condition = set(); t0 = 0,
+           hooks::FrameHooks = NoHooks()) -> Nothing
+@@ -385,13 +381,8 @@ function init!(model::Model{T}, plan::ConditionPlan; t0 = 0,
+     fill!(exec.events.prior, false)   # every prior not-holding (§10.6)
+     # the stepper's carried state as bound, so the run is a function of the condition (D-452)
+     reset_stepper!(exec.stepper)
+-    try
+-        _establish_frozen!(model, origin)   # a non-nominal scalar's frozen cells (D-481)
+-        boundary_zero!(model)
+-    catch err
+-        @atomic :release model.status = :built
+-        rethrow(_wrap_step(model, 0, :boundary_zero, err))
+-    end
++    _establish_frozen!(model, origin)   # a non-nominal scalar's frozen cells, hosted on its scratch (D-481)
++    _hosted(boundary_zero!, model, 0, :boundary_zero)
+     settled!(hooks)                   # the boundary-zero snapshot (§11.2, §14.5)
+     @atomic :release model.status = :consistent   # boundary zero completed (D-317)
+     nothing
+@@ -526,12 +517,7 @@ function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks
+     @atomic :release model.status = :built   # the door's first write (D-441)
+     _apply_plan!(model, plan)
+     discontinuity!(model.exec.stepper)       # the overlaid state is a discontinuity (D-452)
+-    try
+-        run_boundary!(model, nothing)
+-    catch err
+-        @atomic :release model.status = :built
+-        rethrow(_wrap_step(model, k, :overlay, err))
+-    end
++    _hosted(offtick_boundary!, model, k, :overlay)   # the settling: the empty due set
+     settled!(hooks)                   # the overlay boundary's snapshot (§11.2, §12.6)
+     @atomic :release model.status = :consistent
+     nothing
+@@ -766,6 +752,13 @@ that runs it (D-274), wrapping a throw as §13.4's catch does (D-223, D-317).
+     (exec.bodies.sweep_1(tick); exec.bodies.sweep_2(tick); nothing)
+ @inline _round!(model::Model, tick) = _round!(model.exec, tick)
+ 
++# The establishment round outside boundary zero (§14.5, §14.8, D-205, D-213,
++# D-481): every discrete output stage, due or not, standing where boundary
++# zero's first round stands. The nominal halves of `init!`, `trim!` and
++# `linearize`'s `about` form run it, each inside its own stretch.
++@inline _establishment_round!(model::Model) =
++    (_phase!(model.exec.cursor, :round, 1); _round!(model, ESTABLISH); nothing)
++
+ """
+ The event phase (§10.6): [sweep → guards → handlers] iterated to quiescence,
+ the fixed point where a round of handlers fires nothing. The first round always
+@@ -1120,14 +1113,38 @@ function _component_index(model::Model, call::Symbol, path::String)
+     findfirst(entry -> entry.path == path, model.deployment.build.structure.components)
+ end
+ 
++# The one host of a stretch of model code (§13.4, D-441). `f(model)` runs the
++# stretch on `model`, the model whose executor runs the code, a service's
++# scratch included. `f` takes the model rather than closing over it, so a
++# caller whose model's type is not inferred, a service's scratch, can pass a
++# named function and build no closure per call. A throw out of it, an interrupt included, writes that model's status
++# by the host, `:inconsistent` inside a frame and `:built` everywhere else,
++# disarms its freshness flag, and is rethrown as the `StepError` built from that
++# model's own cursor, the backtrace kept. The stretch starts with no component
++# named, so a throw before the first dispatch names no stale one. The callers
++# are the frame (frame.jl) as `:loop`, `init!`'s boundary zero and its nominal
++# half as `:boundary_zero`, `overlay!`'s settling as `:overlay`, the inner
++# restore as `:restore`, and the services' evaluations (trim.jl, linearize.jl)
++# as `:trim` and `:linearize`. A stretch holds the calls that run model code and
++# nothing else. Two never nest, since `_wrap_step` refuses a `StepError`.
++@inline function _hosted(f, model::Model, entry_boundary::Int, host::Symbol)
++    cursor = model.exec.cursor
++    cursor.comp = 0; cursor.fn = :none
++    try
++        f(model)
++    catch err
++        model.fresh = false
++        @atomic :release model.status = host === :loop ? :inconsistent : :built
++        rethrow(_wrap_step(model, entry_boundary, host, err))
++    end
++end
++
+ # The one `StepError` constructor (§13.4, D-059): the frame from the cursor, the
+ # clock at the failure, the frame-entry boundary as the replay pointer, the host
+ # its caller names, and the cause under the species rule below. Nothing inside
+ # the sequence throws a `StepError`, so one arriving here is an invariant firing,
+-# not a re-wrap. Its callers are the model's catch sites (D-317): `frame!`
+-# (frame.jl) as `:loop`, the model's `init!` and `overlay!` (above) around
+-# their settling as `:boundary_zero` and `:overlay` (D-223, D-429), and the
+-# inner restore (below) as `:restore`. It stays the only constructor.
++# not a re-wrap. Its one caller is `_hosted` (above). It stays the only
++# constructor.
+ function _wrap_step(model::Model, entry_boundary::Int, host::Symbol, err)
+     err isa StepError && throw(InternalInvariant(
+         "a StepError reached the catch site (§13.4), which is its only constructor — " *
+@@ -1378,21 +1395,16 @@ restore!(::Model{T}, ::ModelState{S}; kw...) where {T,S} =
+ # The inner restore, ungated, which the door above and the simulation's door
+ # body call (D-318, D-319), in `init!`'s shape: the state copied back, the
+ # restored boundary settled through `settled!(hooks)`, whose return nothing
+-# reads here, and the status written `:consistent` last. Both sit under §13.4's
+-# catch with host `:restore`, an interrupt included, which returns the model to
++# reads here, and the status written `:consistent` last. Both are a stretch
++# hosted with host `:restore`, an interrupt included, which returns the model to
+ # `:built` as a throw inside `init!`'s or `overlay!`'s settling does. The pointer
+ # is the frame the state stands at, on the grid the door has checked.
+ function _restore_state!(model::Model, model_state::ModelState; hooks::FrameHooks = NoHooks())
+     k = _frames_to(model_state.deployment, model_state.t, model_state.t₀)
+-    cursor = model.exec.cursor
+-    cursor.comp = 0; cursor.fn = :none   # no stale frame: a restore runs no component
+     @atomic :release model.status = :built   # the door's first write (D-441)
+-    try
++    _hosted(model, k, :restore) do model      # a restore runs no component
+         _restore_state!(model.exec, model_state)
+         settled!(hooks)               # the restored boundary's snapshot (§11.2, §12.6)
+-    catch err
+-        @atomic :release model.status = :built
+-        rethrow(_wrap_step(model, k, :restore, err))
+     end
+     @atomic :release model.status = :consistent
+     nothing
+diff --git a/src/sim.jl b/src/sim.jl
+index fd126726..63f815ff 100644
+--- a/src/sim.jl
++++ b/src/sim.jl
+@@ -1119,6 +1119,11 @@ happened. The keywords mean what they mean on the model's method.
+ `trim!` is legal where `init!` is. It is refused as `ServiceLifecycle` while
+ `running`, and once `errored`. A second argument that is not a `TrimProblem` is
+ refused as `ArgumentInvalid`.
++
++A throw of model code inside an evaluation of the search arrives as a
++`StepError` with host `:trim`, and leaves the simulation as it was. A throw
++inside the commit, or in the evaluation of the committed state, leaves it
++`built`, and no report is returned.
+ """
+ function trim!(sim::Simulation, problem::TrimProblem; baseline,
+                t0 = 0, backend = LevenbergMarquardt())
+@@ -1155,6 +1160,9 @@ refused as `CheckpointMidFrame` with the clock off a frame top. The `about` form
+ is legal where [`init!`](@ref) is. A second argument that is not a tap set from
+ [`taps`](@ref) is refused as `ArgumentInvalid`, and so are a `width` below 1 and
+ a `t0` without `about`.
++
++A throw of model code inside an evaluation arrives as a `StepError` with host
++`:linearize`, and leaves the simulation as it was.
+ """
+ function linearize(sim::Simulation, tap_set::Taps; about = nothing,
+                    t0 = nothing, width::Int = LINEARIZE_WIDTH)
+diff --git a/src/trim.jl b/src/trim.jl
+index 258bbfed..a7dfada7 100644
+--- a/src/trim.jl
++++ b/src/trim.jl
+@@ -8,11 +8,13 @@
+ # (§14.4, D-066) — and the read side is the compiled reader (readers.jl). What
+ # trim adds is the loop between them, the vectorization at its edges, and the
+ # discipline the whole section is about: **the simulation's stores have
+-# exactly one writer, the commit through boundary zero**. Every evaluation
+-# happens on scratch executors the invocation instantiates and discards
+-# (§9.2's one-owner rule, §14.8's scratch-store paragraph), so a solve that
+-# does not converge leaves the simulation bit-for-bit untouched — "never
+-# initialized" included.
++# exactly one writer, the commit through boundary zero**. Every evaluation of
++# the search happens on scratch models the invocation instantiates and
++# discards (§9.2's one-owner rule, §14.8's scratch-store paragraph), so a solve
++# that does not converge leaves the simulation bit-for-bit untouched — "never
++# initialized" included. Each evaluation is a stretch hosted on the scratch
++# model that runs it (model.jl's `_hosted`), so a throw of model code there is
++# a `StepError` with host `:trim` and leaves the simulation untouched too.
+ #
+ # The seeded-half machinery — `_scratch`, `_establish_frozen!` — is model.jl's,
+ # shared with linearize.jl, which runs the same two-half scratch world (D-213)
+@@ -155,9 +157,9 @@ catch. A solve that does not converge returns one too. A malformed problem is a
+ different case, and `trim!` refuses it at setup.
+ 
+ The `converged` verdict alone decides the commit. A converged solve commits
+-unless [boundary zero](@ref g-boundary-zero) throws, which arrives as a
+-`StepError` with no report, so `committed_residuals` also tells whether the
+-commit happened.
++unless [boundary zero](@ref g-boundary-zero) throws. A throw of model code, in
++the search or in the commit, arrives as a `StepError` with no report, so
++`committed_residuals` also tells whether the commit happened.
+ 
+ A non-empty `fired_events` means the committed [stores](@ref g-store) sit past
+ the [events](@ref g-state-event)' handlers rather than at the reported solution.
+@@ -485,7 +487,13 @@ end
+ # same composite over the same baseline as setup, so its totality is setup's and
+ # the check is structurally unfailable through this path. The zero-decision
+ # problem is free (§14.8). The commit is the model's own `init!`, so the claim
+-# is checked first (D-318, D-319).
++# is checked first (D-318, D-319). Every call that runs model code, the guess
++# evaluation, each seeded evaluation and the committed-state one, is a stretch
++# hosted on the model that runs it with host `:trim` and pointer 0, its phase
++# `:evaluation` and its index that model's evaluation ordinal, the guess
++# evaluation's establishment round at round 1 as boundary zero's (§13.4). The
++# condition's application, the reads and the problem's own functions stay
++# outside, so their throws pass as they are.
+ """
+     trim!(model::Model{Float64}, problem::TrimProblem; baseline, t0 = 0,
+           backend = LevenbergMarquardt()) -> TrimReport
+@@ -545,6 +553,15 @@ as `UninitializedInputs`. A model a [`Simulation`](@ref) has claimed is refused
+ as `ArgumentInvalid`, before any check. So is a second argument that is not a
+ `TrimProblem`, and a model at a scalar type other than `Float64`.
+ 
++A throw of model code inside an evaluation of the search, an
++`InterruptException` included, arrives as a `StepError` with host `:trim` and
++`boundary` 0, naming the [component](@ref g-component) and the evaluation. It
++leaves the model as it was. A throw inside the commit arrives as `init!`'s
++`StepError`, with host `:boundary_zero`, and one inside the evaluation of the
++committed state as a `StepError` with host `:trim`. Each writes the model's
++status back to `:built`, and no report is returned. A throw from the problem's
++own functions propagates as it is.
++
+ # Keywords
+ 
+ - `baseline`: the required baseline the problem's condition is layered over, at
+@@ -593,13 +610,19 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
+     tol = Float64[tolerances[k] for k in residual_names]
+ 
+     # --- the nominal half (D-213) ------------------------------------------------
+-    nominal_exec = _scratch(model, Float64).exec
++    nominal = _scratch(model, Float64)
++    nominal_exec = nominal.exec
+     _set_origin!(nominal_exec.clock, t0, model.deployment.lattice.unit)   # the search's time is the commit's (§14.8)
+     plan = resolve_condition(override(baseline, problem.condition(guess)), build, Float64)
+     assert_total(plan, build.structure, :trim!)    # (§14.6): pre-evaluation, all-or-nothing
+     apply!(nominal_exec, plan)
+-    _round!(nominal_exec, ESTABLISH)          # every discrete output stage, due or not
+-    nominal_exec.bodies.rhs()
++    # The guess evaluation, a stretch hosted on the nominal scratch: its first
++    # evaluation, at the boundary the scratch's clock stands at (§13.4).
++    _hosted(nominal, 0, :trim) do nominal
++        _establishment_round!(nominal)
++        _phase!(nominal.exec.cursor, :evaluation, 1)   # the derivative, the first evaluation
++        nominal.exec.bodies.rhs()
++    end
+     gathered = gather_reads(reader, nominal_exec)
+     r0 = problem.residuals(gathered, guess)
+     c0 = problem.checks(gathered, guess)
+@@ -619,9 +642,11 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
+     # --- the seeded half ---------------------------------------------------------
+     T = ForwardDiff.Dual{TrimTag,Float64,N}
+     act = activation(build, T)                # the cached activation (§9.4)
+-    seeded_exec = _scratch(model, T).exec
++    seeded = _scratch(model, T)
++    seeded_exec = seeded.exec
+     _set_origin!(seeded_exec.clock, t0, model.deployment.lattice.unit)
+     _establish_frozen!(seeded_exec, act, nominal_exec, model.deployment.build)
++    _phase!(seeded_exec.cursor, :evaluation)   # `evaluate!` counts the seeded evaluations from 1
+     # The names enter the closure as types: captured as a `Tuple` of `Symbol`s,
+     # they would leave every `NamedTuple` `eval!` builds to runtime dispatch.
+     decision_keys, residual_keys = Val(decision_names), Val(residual_names)
+@@ -645,7 +670,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
+     function eval!(r::Vector{Float64}, J, d::Vector{Float64})
+         decisions = _seeded(decision_keys, d, T)
+         apply!(seeded_exec, seeded_plan, override(baseline, problem.condition(decisions)))
+-        evaluate!(seeded_exec)
++        _hosted(evaluate!, seeded, 0, :trim)
+         raw = problem.residuals(gather_reads(seeded_reader, seeded_exec), decisions)
+         if !checked[]
+             checked[] = true
+@@ -740,8 +765,13 @@ function _verdict!(model::Model, problem::TrimProblem, baseline, solved::NamedTu
+     # The committed-state residuals, nearly free: that boundary's sweep has just
+     # run, so the declared reads need only gather from it — with one `rhs` for
+     # the derivative reads, `ẋbuf` being integrator scratch and this a service
+-    # evaluation (§14.4, §14.8).
+-    model.exec.bodies.rhs()
++    # evaluation (§14.4, §14.8). It is a stretch hosted on the committed model,
++    # so a throw there writes its status back to `:built`, as a throw inside the
++    # commit does (§13.4, D-441).
++    _hosted(model, 0, :trim) do model
++        _phase!(model.exec.cursor, :evaluation, 1)
++        model.exec.bodies.rhs()
++    end
+     gathered = gather_reads(reader, model.exec)
+     committed = NamedTuple{residual_names}(problem.residuals(gathered, solution))
+     out_of_tolerance = Tuple{Symbol,Float64,Float64}[
+diff --git a/test/test_failures.jl b/test/test_failures.jl
+index 02834968..67a145b3 100644
+--- a/test/test_failures.jl
++++ b/test/test_failures.jl
+@@ -670,6 +670,33 @@ function failures_runtime()
+                        "overlay!(sim2, condition) on the same stopped state runs it again",
+                        cut_overlay)
+         @test !occursin("replay!", cut_zero) && !occursin("replay!", cut_overlay)
++        # A service runs no frame: its line names the service, the evaluation and
++        # the boundary its scratch stood at, and the same call reproduces it.
++        trim_rendered = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 3),
++                                                    0.25, 0, :trim, Tripped()))
++        @test startswith(trim_rendered,
++                         "StepError: in `c` x_deriv, evaluation 3 of trim! at boundary 0 (t = 0.25):")
++        @test occursin("trim!(sim2, problem; baseline, t0) with the same arguments reproduces it",
++                       trim_rendered)
++        linearize_rendered = sprint(showerror, StepError(CursorFrame("c", :y_state, :evaluation, 2),
++                                                         0.2, 2, :linearize, Tripped()))
++        @test startswith(linearize_rendered,
++                         "StepError: in `c` y_state, evaluation 2 of linearize at boundary 2 (t = 0.2):")
++        @test occursin("linearize(sim2, tap_set) at the same operating point reproduces it",
++                       linearize_rendered)
++        cut_trim = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 3), 0.0, 0,
++                                               :trim, InterruptException()))
++        @test occursin("an interrupt cut the trim, so nothing reproduces it; " *
++                       "trim!(sim2, problem; baseline, t0) with the same arguments runs it again",
++                       cut_trim)
++        cut_linearize = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 1), 0.2, 2,
++                                                    :linearize, InterruptException()))
++        @test occursin("an interrupt cut the linearization, so nothing reproduces it; " *
++                       "linearize(sim2, tap_set) at the same operating point runs it again",
++                       cut_linearize)
++        for rendered in (trim_rendered, linearize_rendered, cut_trim, cut_linearize)
++            @test !occursin("of the frame", rendered) && !occursin("replay!", rendered)
++        end
+ 
+         # A `Diagnostic` cause renders as its logline: the kind name leads, and the
+         # leaf the sweep named is in the line.
+diff --git a/test/test_linearize.jl b/test/test_linearize.jl
+index 70a5518f..f54c456e 100644
+--- a/test/test_linearize.jl
++++ b/test/test_linearize.jl
+@@ -103,7 +103,63 @@ same_linearization(left, right) =
+ rig_lin_pend() = Group((; rig = lin_pend()); input_wires = ("torque" => "rig/τ", "gust" => "rig/d"),
+                        output_wires = ("rig/θ" => "angle", "rig/u_eff" => "drive"))
+ 
++# The throws of model code inside a linearization (§13.4, §14.10). `FloorLag`'s
++# output is refused below -10 and its derivative is not a real number below 0,
++# so an `about` point at -20 fails the round and one at -1 the first pass.
++# `ShyState` is cut by an interrupt once its own state is seeded, which with
++# `width = 1` and `shy` the second `x` tap is the second pass.
++struct FloorLag <: AbstractComponent end
++x_init(::FloorLag) = (v = 1.0,)
++u_types(::FloorLag) = (u = Float64,)
++y_types(::FloorLag) = (v = Float64,)
++y_state(::FloorLag, (; x)) = (v = x.v ≥ -10 ? x.v : throw(DomainError(x.v, "below the floor")),)
++x_deriv(::FloorLag, (; x, u)) = (v = sqrt(x.v) - u.u,)
++
++struct ShyState <: AbstractComponent end
++x_init(::ShyState) = (w = 1.0,)
++y_types(::ShyState) = (w = Float64,)
++y_state(::ShyState, (; x)) = (w = x.w,)
++x_deriv(::ShyState, (; x)) = (w = shy_rate(x.w),)
++shy_rate(w::Float64) = -w
++shy_rate(w::ForwardDiff.Dual) = iszero(ForwardDiff.partials(w)) ? -w : throw(InterruptException())
++
++shy_world() = Group((; lag = FloorLag(), shy = ShyState()); input_wires = ("in" => "lag/u",))
++shy_taps() = taps(x = (v = get_state("lag", :v), w = get_state("shy", :w)), u = (;), y = (;))
++
+ function test_linearize()
++    @testset "a throw of model code in the round or a pass is a `StepError` under host `:linearize` (§13.4, §14.10)" begin
++        at_lag(v) = combine(set(u = (in = 0.0,)), at("lag", set(x = (v = v,))))
++        for (v, frame) in ((-20.0, CursorFrame("lag", :y_state, :round, 1)),
++                           (-1.0, CursorFrame("lag", :x_deriv, :evaluation, 1)))
++            model = Model(shy_world(); Δt_frame = 1//10)
++            err = failure(() -> linearize(model, shy_taps(); about = at_lag(v), t0 = 1//4))
++            @test err isa StepError{DomainError}
++            @test err.host === :linearize && err.boundary == 0 && err.t == 0.25
++            @test err.cursor == frame
++            @test model.status === :built
++        end
++        # The default form names the checkpoint's frame, counts the passes, and
++        # leaves the model as it was.
++        model = Model(shy_world(); Δt_frame = 1//10)
++        init!(model, at_lag(1.0))
++        frames!(model, 2)
++        before = checkpoint(model)
++        err = failure(() -> linearize(model, shy_taps(); width = 1))
++        @test err isa StepError{InterruptException}
++        @test err.host === :linearize && err.boundary == 2 && err.t == 0.2
++        @test err.cursor == CursorFrame("shy", :x_deriv, :evaluation, 2)
++        @test model.status === :consistent
++        after = checkpoint(model)
++        @test after.x == before.x && after.t == before.t && same_table(after.table, before.table)
++        sim = Simulation(shy_world(); Δt_frame = 1//10)
++        init!(sim, at_lag(1.0))
++        @test failure(() -> linearize(sim, shy_taps(); width = 1)) isa StepError{InterruptException}
++        @test lifecycle(sim) === :initialized
++        # At a width holding both taps the one pass seeds `shy`.
++        @test failure(() -> linearize(model, shy_taps())).cursor ==
++              CursorFrame("shy", :x_deriv, :evaluation, 1)
++    end
++
+     @testset "the pendulum linearizes to its closed form, exact to round-off (§14.10)" begin
+         sim = Simulation(lin_pend(); Δt_frame = 1//10)
+         init!(sim, lin_point())
+diff --git a/test/test_trim.jl b/test/test_trim.jl
+index 96de4b72..1f94bb3b 100644
+--- a/test/test_trim.jl
++++ b/test/test_trim.jl
+@@ -119,7 +119,103 @@ pendulum_problem() = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper
+                                  reads = reads(ω̇ = get_deriv("", :ω)),
+                                  residuals = torque_only, tolerances = (torque = 1e-9,))
+ 
++# The throws of model code inside a trim (§13.4, §14.8). `RootLag`'s output is
++# refused below -10 and its derivative is not a real number below 0, so a
++# guess at -20 fails the guess evaluation's round and one at -1 its derivative.
++# Under the baseline `in = -1` its residual `√v + 1` has no root, and the first
++# step from 1 lands near -3, so the second seeded evaluation fails. `CutLag` is
++# cut there by an interrupt instead. `FlipLag` solves at once at 1, and its
++# projection moves the committed state to -1, where the committed-state
++# evaluation fails.
++struct RootLag <: AbstractComponent end
++x_init(::RootLag) = (v = 1.0,)
++u_types(::RootLag) = (u = Float64,)
++y_types(::RootLag) = (v = Float64,)
++y_state(::RootLag, (; x)) = (v = x.v ≥ -10 ? x.v : throw(DomainError(x.v, "below the floor")),)
++x_deriv(::RootLag, (; x, u)) = (v = sqrt(x.v) - u.u,)
++
++struct CutLag <: AbstractComponent end
++x_init(::CutLag) = (v = 1.0,)
++u_types(::CutLag) = (u = Float64,)
++y_types(::CutLag) = (v = Float64,)
++y_state(::CutLag, (; x)) = (v = x.v,)
++x_deriv(::CutLag, (; x, u)) = x.v < 0 ? throw(InterruptException()) : (v = sqrt(x.v) - u.u,)
++
++struct FlipLag <: AbstractComponent end
++x_init(::FlipLag) = (v = 1.0,)
++y_types(::FlipLag) = (v = Float64,)
++y_state(::FlipLag, (; x)) = (v = x.v,)
++x_deriv(::FlipLag, (; x)) = (v = sqrt(x.v) - 1,)
++x_projection(::FlipLag, x) = (v = -abs(x.v),)
++
++root_problem(guess; residuals = (r, d) -> (rate = r.v̇,),
++             condition = d -> at("c", set(x = (v = d.v,)))) =
++    TrimProblem(; guess = (v = guess,), lower = (v = -Inf,), upper = (v = Inf,),
++                condition, reads = reads(v̇ = get_deriv("c", :v)), residuals,
++                tolerances = (rate = 1e-9,))
++root_base(u) = set(u = (in = u,))
++
+ function test_trim()
++    @testset "a throw of model code in each evaluation of the search is a `StepError` under host `:trim` (§13.4, §14.8)" begin
++        cases = ((RootLag(), 0.0, -20.0, DomainError, CursorFrame("c", :y_state, :round, 1)),
++                 (RootLag(), 0.0, -1.0, DomainError, CursorFrame("c", :x_deriv, :evaluation, 1)),
++                 (RootLag(), -1.0, 1.0, DomainError, CursorFrame("c", :x_deriv, :evaluation, 2)),
++                 (CutLag(), -1.0, 1.0, InterruptException, CursorFrame("c", :x_deriv, :evaluation, 2)))
++        for (comp, u, guess, cause, frame) in cases
++            # A model at rest stays as it was: the search writes only scratch.
++            model = Model(fed(comp, :u); Δt_frame = 1//10)
++            init!(model, root_base(0.5))
++            frames!(model, 2)
++            before = checkpoint(model)
++            err = failure(() -> trim!(model, root_problem(guess); baseline = root_base(u), t0 = 1//4))
++            @test err isa StepError{cause}
++            @test err.host === :trim && err.boundary == 0 && err.t == 0.25
++            @test err.cursor == frame
++            @test model.status === :consistent
++            after = checkpoint(model)
++            @test after.x == before.x && after.t == before.t && same_table(after.table, before.table)
++            # …and a fresh one stays `:built`, a simulation `initialized`.
++            fresh = Model(fed(comp, :u); Δt_frame = 1//10)
++            @test failure(() -> trim!(fresh, root_problem(guess); baseline = root_base(u))) isa
++                  StepError{cause}
++            @test fresh.status === :built
++            sim = Simulation(fed(comp, :u); Δt_frame = 1//10)
++            init!(sim, root_base(0.5))
++            @test failure(() -> trim!(sim, root_problem(guess); baseline = root_base(u))) isa
++                  StepError{cause}
++            @test lifecycle(sim) === :initialized && state(sim, "c") === (v = 1.0,)
++        end
++    end
++
++    @testset "a throw in the committed-state evaluation is a `StepError` under host `:trim`, the model back at `:built` (§13.4, §14.8, D-441)" begin
++        model = Model(single(FlipLag()); Δt_frame = 1//10)
++        err = failure(() -> trim!(model, root_problem(1.0); baseline = set(), t0 = 1//4))
++        @test err isa StepError{DomainError}
++        @test err.host === :trim && err.boundary == 0 && err.t == 0.25
++        @test err.cursor == CursorFrame("c", :x_deriv, :evaluation, 1)
++        @test model.status === :built && state(model, "c") === (v = -1.0,)   # committed, then cut
++        sim = Simulation(single(FlipLag()); Δt_frame = 1//10)
++        @test failure(() -> trim!(sim, root_problem(1.0); baseline = set())) isa StepError{DomainError}
++        @test lifecycle(sim) === :built
++    end
++
++    @testset "a throw from the problem's own functions passes as it is (§14.8)" begin
++        no_dual(r, d) = r.v̇ isa Float64 ? (rate = r.v̇,) : error("no Dual arm")
++        cases = ((root_problem(1.0; residuals = (r, d) -> error("at the guess")), ErrorException),
++                 (root_problem(1.0; residuals = no_dual), ErrorException),
++                 (root_problem(1.0; condition = d -> d.v isa Float64 ? at("c", set(x = (v = d.v,))) :
++                                                     error("no Dual arm")), ErrorException),
++                 (root_problem(1.0; condition = d -> at("nowhere", set(x = (v = d.v,)))),
++                  DiagnosticError))
++        for (problem, kind) in cases
++            model = Model(fed(RootLag(), :u); Δt_frame = 1//10)
++            init!(model, root_base(0.5))
++            err = failure(() -> trim!(model, problem; baseline = root_base(-1.0)))
++            @test err isa kind && !(err isa StepError)
++            @test model.status === :consistent
++        end
++    end
++
+     @testset "a one-step linear problem solves, commits and reads back (§14.7, §14.8)" begin
+         sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
+         report = trim!(sim, u_problem(); baseline = pend_base(), t0 = 0.25)

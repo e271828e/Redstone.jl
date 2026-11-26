@@ -1,0 +1,11 @@
+baseline: green
+F1 init!'s nominal half unhosted                           RED
+F2 init!'s nominal half under host :trim                   RED
+F3 init!'s nominal half: bare round, no :round phase       RED
+P1 the establishment round writes no :round phase          RED
+T9 trim setup: bare round, no :round phase                 RED
+T10 trim setup: no :evaluation phase before the rhs        RED
+N6 linearize about: bare round, no :round phase            RED
+T1 trim setup unhosted                                     RED
+T2 trim setup: round outside the stretch                   RED
+N1 linearize about round unhosted                          RED
