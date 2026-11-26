@@ -9162,7 +9162,8 @@ raises out of its `init!`. The throw propagates, the simulation is left
 Annotation (2026-11-26): amended by [D-482][d-482]. A `StepError` out of `trim!` has
 two more sources, both with host `:trim` and neither caught by `trim!`. A
 throw inside an evaluation of the search leaves the simulation as it was. A
-throw inside the evaluation of the committed state leaves it `built`.
+throw inside the evaluation of the committed state leaves the commit in
+place and the simulation `initialized`.
 
 **Spec.** [§14.8][s14-8]
 
@@ -18495,7 +18496,8 @@ whatever threw, and every catch site wraps what reaches it, an
 Annotation (2026-11-26): amended by [D-482][d-482]. The catch sites are one host,
 which writes the status of the model its stretch runs on. The evaluations
 of `trim!` and `linearize` are stretches too, with hosts `:trim` and
-`:linearize`, and a throw inside one writes `:built` as a door's does.
+`:linearize`, and a throw inside one writes `:built` on its scratch, as a
+door's does on its model.
 
 **Spec.** [§12.4][s12-4], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
 
@@ -21411,22 +21413,26 @@ accepted for a service.
 
 **Status.** ratified
 
-**Position.** Model code runs only inside a hosted stretch. One catch on
-the `Model` wraps what a stretch throws in a `StepError`, from the cursor of
-the model that ran it, and writes that model's status, whether the model is
-the user's or a service's scratch.
+**Position.** The frame, the doors and the services run model code only
+inside a hosted stretch. One catch on the `Model` wraps what a stretch
+throws in a `StepError`, from the cursor of the model that ran it, and
+writes that model's status, whether the model is the user's or a service's
+scratch.
 
 - The stretches are the frame, boundary zero under `init!`, the settling
   `overlay!` runs, the restore, the nominal half of `init!` at a non-nominal
-  scalar ([D-481][d-481]), and the evaluations `trim!` and `linearize` run.
+  scalar ([D-481][d-481]), and the evaluations `trim!` and `linearize` run. A
+  primitive a caller runs bare ([D-317][d-317]) hosts nothing.
 - The host names the call that reproduces the failure. The evaluations of
   `trim!` report `:trim` and those of `linearize` report `:linearize`. The
   nominal half of `init!` reports `:boundary_zero`.
 - The status follows the host as [D-441][d-441] rules, `:inconsistent` for `:loop`
   and `:built` for every other. A service's stretch on a scratch writes the
   scratch's status, so the user's model is untouched. `trim!` evaluates the
-  committed state on the user's model, and a throw there leaves it `:built`.
-- A stretch holds the calls that run model code and no others. The
+  committed state on a scratch too, with the commit's checkpoint restored
+  onto it, so a throw there leaves the commit in place and the user's model
+  `:consistent`.
+- A service's stretch holds the calls that run model code and no others. The
   application of a condition, the reads and the problem's own functions run
   outside every stretch, and what they throw arrives as it is.
 - Stretches do not nest. The nominal half of `init!` is a stretch on its
@@ -21471,12 +21477,21 @@ An interrupt inside a stretch cuts a model in the middle of a sweep, and
 interrupt, wrapped inside an evaluation and bare inside its own code or the
 backend's. The doors show the same two: an interrupt arrives bare while
 `init!` applies its plan and wrapped inside boundary zero. The user's model
-is untouched in both, the committed-state evaluation excepted.
+is untouched in both.
 
-A throw at the committed-state evaluation takes the commit's disposition
-([D-224][d-224]). `trim!` is the door there. The model returns to `:built` and no
-report is returned, so no caller holds a converged verdict over a model
-whose derivative does not evaluate.
+The committed state is evaluated on a scratch, as every other evaluation of
+`trim!` is. The commit's checkpoint is restored onto the nominal scratch, as
+`linearize`'s default form restores its operating point, and one evaluation
+runs there. A throw there leaves the commit in place, the user's model
+`:consistent` and the simulation `initialized`. No report is returned, so no
+caller holds a converged verdict over a committed state whose derivative
+does not evaluate. The status says what is true. Boundary zero completed and
+published, and the evaluation writes only the derivative buffer. A throw
+there had that lifecycle when the evaluation ran bare, and a throw from
+`residuals` at the same point has it too. `trim!` then writes the user's
+model through `init!` alone, and the status follows from the host with no
+exception. The cost is one checkpoint, one restore and one evaluation in
+each converged call, about 1.6 KB of a call's 100 KB.
 
 A frame, an `init!` and a service's evaluation allocate what they did
 before. The host calls its stretch with the model as the argument, since a
@@ -21508,10 +21523,15 @@ closure over the seeded scratch cost 272 B in each pass of `linearize`.
   catch, its cursor copied into the model's ([D-481][d-481]):* the copy exists only
   because the catch read the wrong model's cursor, and a hosted stretch
   cannot sit inside another.
-- *The committed-state evaluation left bare:* a raw throw out of a door.
-- *The committed-state evaluation hosted with the status kept
-  `:consistent`:* the status would no longer follow from the host, and the
-  model's first frame would throw at the same point.
+- *Superseded position — the committed state evaluated on the user's model,
+  a throw there writing `:built`:* the status was untrue. Boundary zero had
+  completed and published, yet the simulation read `built` while it held an
+  open run, a taken trace header and a logged snapshot, and `MissingInit`
+  said that boundary zero had not completed. The first frame would throw at
+  the same point, but `:consistent` says that the stores are a settled
+  boundary, not that the next frame succeeds. Stating the odd state in the
+  spec, or dropping the log on that throw, would mend a status the
+  evaluation had no cause to write.
 - *The frame keeping a catch of its own:* its lines are the host's once the
   status follows from the host, and the frame allocates nothing either way.
 - *One evaluation count across a whole `trim!` call:* a counter carried

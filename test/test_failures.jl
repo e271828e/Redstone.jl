@@ -682,7 +682,7 @@ function failures_runtime()
                                                          0.2, 2, :linearize, Tripped()))
         @test startswith(linearize_rendered,
                          "StepError: in `c` y_state, evaluation 2 of linearize at boundary 2 (t = 0.2):")
-        @test occursin("linearize(sim2, tap_set) at the same operating point reproduces it",
+        @test occursin("linearize(sim2, tap_set; about, t0) at the same operating point reproduces it",
                        linearize_rendered)
         cut_trim = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 3), 0.0, 0,
                                                :trim, InterruptException()))
@@ -692,7 +692,7 @@ function failures_runtime()
         cut_linearize = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 1), 0.2, 2,
                                                     :linearize, InterruptException()))
         @test occursin("an interrupt cut the linearization, so nothing reproduces it; " *
-                       "linearize(sim2, tap_set) at the same operating point runs it again",
+                       "linearize(sim2, tap_set; about, t0) at the same operating point runs it again",
                        cut_linearize)
         for rendered in (trim_rendered, linearize_rendered, cut_trim, cut_linearize)
             @test !occursin("of the frame", rendered) && !occursin("replay!", rendered)

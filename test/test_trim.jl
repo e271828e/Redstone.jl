@@ -126,7 +126,8 @@ pendulum_problem() = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper 
 # step from 1 lands near -3, so the second seeded evaluation fails. `CutLag` is
 # cut there by an interrupt instead. `FlipLag` solves at once at 1, and its
 # projection moves the committed state to -1, where the committed-state
-# evaluation fails.
+# evaluation fails. `Kick` solves at once at 1 too, and its handler fires at the
+# commit and moves the state to 5, where only the residuals fail.
 struct RootLag <: AbstractComponent end
 x_init(::RootLag) = (v = 1.0,)
 u_types(::RootLag) = (u = Float64,)
@@ -147,6 +148,15 @@ y_types(::FlipLag) = (v = Float64,)
 y_state(::FlipLag, (; x)) = (v = x.v,)
 x_deriv(::FlipLag, (; x)) = (v = sqrt(x.v) - 1,)
 x_projection(::FlipLag, x) = (v = -abs(x.v),)
+
+struct Kick <: AbstractComponent end
+x_init(::Kick) = (v = 3.0,)
+y_types(::Kick) = (v = Float64,)
+y_state(::Kick, (; x)) = (v = x.v,)
+x_deriv(::Kick, (; x)) = (v = x.v - 1,)
+kick_guard(::Kick, (; x)) = x.v < 2
+kick_handler(::Kick, (; x)) = (x = (v = 5.0,),)
+state_events(::Kick) = (kick = StateEvent(kick_guard, kick_handler),)
 
 root_problem(guess; residuals = (r, d) -> (rate = r.v̇,),
              condition = d -> at("c", set(x = (v = d.v,)))) =
@@ -187,16 +197,18 @@ function test_trim()
         end
     end
 
-    @testset "a throw in the committed-state evaluation is a `StepError` under host `:trim`, the model back at `:built` (§13.4, §14.8, D-441)" begin
+    @testset "a throw in the committed-state evaluation is a `StepError` under host `:trim`, the commit in place (§13.4, §14.8, D-482)" begin
+        # The evaluation runs on the nominal scratch, its second after the
+        # guess derivative, so the model stays `:consistent` at the commit.
         model = Model(single(FlipLag()); Δt_frame = 1//10)
         err = failure(() -> trim!(model, root_problem(1.0); baseline = set(), t0 = 1//4))
         @test err isa StepError{DomainError}
         @test err.host === :trim && err.boundary == 0 && err.t == 0.25
-        @test err.cursor == CursorFrame("c", :x_deriv, :evaluation, 1)
-        @test model.status === :built && state(model, "c") === (v = -1.0,)   # committed, then cut
+        @test err.cursor == CursorFrame("c", :x_deriv, :evaluation, 2)
+        @test model.status === :consistent && state(model, "c") === (v = -1.0,)   # committed, then cut
         sim = Simulation(single(FlipLag()); Δt_frame = 1//10)
         @test failure(() -> trim!(sim, root_problem(1.0); baseline = set())) isa StepError{DomainError}
-        @test lifecycle(sim) === :built
+        @test lifecycle(sim) === :initialized && state(sim, "c") === (v = -1.0,)
     end
 
     @testset "a throw from the problem's own functions passes as it is (§14.8)" begin
@@ -206,7 +218,10 @@ function test_trim()
                  (root_problem(1.0; condition = d -> d.v isa Float64 ? at("c", set(x = (v = d.v,))) :
                                                      error("no Dual arm")), ErrorException),
                  (root_problem(1.0; condition = d -> at("nowhere", set(x = (v = d.v,)))),
-                  DiagnosticError))
+                  DiagnosticError),
+                 # refused only at the second seeded evaluation, near -3
+                 (root_problem(1.0; condition = d -> d.v < 0 ? error("no negative v") :
+                                                     at("c", set(x = (v = d.v,)))), ErrorException))
         for (problem, kind) in cases
             model = Model(fed(RootLag(), :u); Δt_frame = 1//10)
             init!(model, root_base(0.5))
@@ -214,6 +229,19 @@ function test_trim()
             @test err isa kind && !(err isa StepError)
             @test model.status === :consistent
         end
+        # Residuals that fail at the committed state alone pass as they are,
+        # the commit in place.
+        kick_problem = root_problem(1.0; residuals = (r, d) -> r.v̇ > 2 ? error("past the kick") :
+                                                               (rate = r.v̇,))
+        model = Model(single(Kick()); Δt_frame = 1//10)
+        err = @test_logs (:warn, r"^TrimCommitEvents") failure(() ->
+            trim!(model, kick_problem; baseline = set()))
+        @test err isa ErrorException
+        @test model.status === :consistent && state(model, "c") === (v = 5.0,)
+        sim = Simulation(single(Kick()); Δt_frame = 1//10)
+        @test (@test_logs (:warn, r"^TrimCommitEvents") failure(() ->
+            trim!(sim, kick_problem; baseline = set()))) isa ErrorException
+        @test lifecycle(sim) === :initialized && state(sim, "c") === (v = 5.0,)
     end
 
     @testset "a one-step linear problem solves, commits and reads back (§14.7, §14.8)" begin

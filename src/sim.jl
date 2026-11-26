@@ -1122,8 +1122,11 @@ refused as `ArgumentInvalid`.
 
 A throw of model code inside an evaluation of the search arrives as a
 `StepError` with host `:trim`, and leaves the simulation as it was. A throw
-inside the commit, or in the evaluation of the committed state, leaves it
-`built`, and no report is returned.
+inside the commit leaves it `built`. One inside the evaluation of the committed
+state arrives as a `StepError` with host `:trim`, and leaves the commit in place
+and the simulation `initialized`. No report is returned for any of the three. A
+throw from the problem's own functions propagates as it is, and at the
+committed state it leaves the commit in place.
 """
 function trim!(sim::Simulation, problem::TrimProblem; baseline,
                t0 = 0, backend = LevenbergMarquardt())

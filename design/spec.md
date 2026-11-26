@@ -11569,18 +11569,20 @@ per [component](#g-component)** (the unit of modeling, a primitive or an assembl
 ([D-059][d-059]). The loop wraps each frame in a `try` of its own, which decides the
 failure's disposition (below) and builds no carrier ([D-317][d-317]).
 
-**Model code runs only inside a hosted stretch** ([D-482][d-482]). A stretch is a run
-of calls into model code that one catch on the `Model` wraps. The stretches
-are the frame, boundary zero, the settling `overlay!` runs, the restore, the
-nominal half of `init!` at a non-nominal scalar ([§9.3][s9-3]), and the evaluations
-`trim!` and `linearize` run ([§14.8][s14-8], [§14.10][s14-10]). The catch reads the cursor of
-the model that ran the stretch and writes that model's status. Who made the
+**The frame, the doors and the services run model code only inside a hosted
+stretch** ([D-482][d-482]). A stretch is a run of calls into model code that one
+catch on the `Model` wraps. The stretches are the frame, boundary zero, the
+settling `overlay!` runs, the restore, the nominal half of `init!` at a
+non-nominal scalar ([§9.3][s9-3]), and the evaluations `trim!` and `linearize` run
+([§14.8][s14-8], [§14.10][s14-10]). A primitive a caller runs bare, such as `evaluate!` or
+`boundary!`, hosts nothing ([D-317][d-317]). The catch reads the cursor of the
+model that ran the stretch and writes that model's status. Who made the
 model has no bearing. A service's [scratch](#g-scratch) model (one whose
 contents are never authoritative) is a `Model` like any other there.
-Stretches do not nest. A stretch holds the calls that run model code and no
-others. A service applies its condition, makes its reads and calls the
-problem's own functions outside every stretch, as `init!` applies its
-condition before boundary zero.
+Stretches do not nest. A service's stretch holds the calls that run model
+code and no others. A service applies its condition, makes its reads and
+calls the problem's own functions outside every stretch, as `init!` applies
+its condition before boundary zero.
 
 Where execution stood does not need to be *caught* into existence. The [executor](#g-executor)
 (the compiled form of the stage [execution order](#g-execution-order)) maintains an [execution cursor](#g-execution-cursor),
@@ -14230,11 +14232,14 @@ A throw inside the commit's boundary zero is the commit's own. **The throw
 propagates out of `trim!` as the
 commit's `StepError`** ([D-224][d-224]), and the simulation is left `built`
 ([§13.4][s13-4], [D-223][d-223]). After the commit, `trim!` evaluates the
-derivative of the committed state on the simulation's own model. **A throw
-inside that evaluation carries the host `:trim` and leaves the simulation
-`built`**, as a throw inside the commit does ([D-482][d-482]). The problem's own
-functions are not model code. A throw from `condition`, `residuals` or
-`checks` propagates as it is.
+derivative of the committed state on a scratch, with the commit's checkpoint
+restored onto it as `linearize`'s default form restores its operating point
+([§14.10][s14-10]). **A throw inside that evaluation carries the host `:trim` and
+leaves the commit in place** ([D-482][d-482]). The simulation stays `initialized`
+and its model `:consistent`, since boundary zero completed and the evaluation
+writes nothing of theirs. The problem's own functions are not model code. A
+throw from `condition`, `residuals` or `checks` propagates as it is, and at
+the committed state it also leaves the commit in place.
 
 An *empty* problem is none of them either. **`TrimProblem(guess = (;), …)` is legal**,
 not `TrimProblemInvalid` ([D-156][d-156]). With zero decision variables the solver is
@@ -16137,7 +16142,8 @@ activation):
   the boundary phase: the frame-top drain, an integration stage, the arrival
   sweep, the θ = 0 validation, a localization trial, projection, an event
   round, the ticks or a service's evaluation, with the stage, trial, round or
-  evaluation ordinal), the clock at the failure, frame-entry boundary index (the replay pointer), the host of
+  evaluation ordinal), the clock at the failure, frame-entry boundary index (the replay pointer,
+  or under a service the boundary its scratch stands at), the host of
   the catch (`:loop`, `:boundary_zero`, `:overlay`, `:restore`, `:trim` or `:linearize`), and the `cause`, a species'
   diagnostic or the original exception, its type the parameter.
 - **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.

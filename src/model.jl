@@ -3,8 +3,9 @@
 # hooks, the doors, evaluation, the boundaries, the stepper seam's framework
 # side, the reads, the one `StepError` constructor and the checkpoint's
 # model-level half, with its two doors `checkpoint(model)` and `restore!(model,
-# model_state)`. Every door that writes the model's status lives here; the one
-# other writer is `frame!`'s catch site (frame.jl).
+# model_state)`. Every write of a model's status lives here, the doors' and the
+# one host's, `_hosted`, which the frame (frame.jl) and the services' evaluations
+# (trim.jl, linearize.jl) call as well.
 
 # Design: §9.1, §9.2, §9.4, §9.5, §9.7, §11.8, §12.1, §12.6, §14.3, Appendix C,
 # D-254, D-256, D-317, D-318, D-320.
@@ -1125,8 +1126,8 @@ end
 # are the frame (frame.jl) as `:loop`, `init!`'s boundary zero and its nominal
 # half as `:boundary_zero`, `overlay!`'s settling as `:overlay`, the inner
 # restore as `:restore`, and the services' evaluations (trim.jl, linearize.jl)
-# as `:trim` and `:linearize`. A stretch holds the calls that run model code and
-# nothing else. Two never nest, since `_wrap_step` refuses a `StepError`.
+# as `:trim` and `:linearize`. A service's stretch holds the calls that run model
+# code and nothing else. Two never nest, since `_wrap_step` refuses a `StepError`.
 @inline function _hosted(f, model::Model, entry_boundary::Int, host::Symbol)
     cursor = model.exec.cursor
     cursor.comp = 0; cursor.fn = :none

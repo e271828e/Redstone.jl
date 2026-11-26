@@ -263,9 +263,9 @@ model at a scalar type other than `Float64` are refused as `ArgumentInvalid`.
 
 A throw of model code inside an evaluation, an `InterruptException` included,
 arrives as a `StepError` with host `:linearize`, naming the
-[component](@ref g-component) and the evaluation. Its `boundary` is the one the
-operating point stands at, the checkpoint's frame or 0 under `about`. It leaves
-the model as it was.
+[component](@ref g-component), the function and the round or evaluation where it
+stood. Its `boundary` is the one the operating point stands at, the
+checkpoint's frame or 0 under `about`. It leaves the model as it was.
 
 # Keywords
 

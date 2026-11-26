@@ -684,7 +684,7 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
   `:loop`, which writes `:inconsistent` and builds the `StepError` for every
   throw, an interrupt included (D-441). The claim's gate and the refusal of a `k`
   past `_last_frame(model)`, the lesser of the `Lattice`'s `max_frame` and
-  the clock's resolution from the origin, precede the `try`, so that
+  the clock's resolution from the origin, precede the stretch, so that
   refusal leaves the model `:consistent` (D-318, D-445, D-450).
 - `_frame_steps!`, the frame as two nested loops (D-445, D-449). The outer
   one runs over the mandatory instants, the frame tops and the due instants,
@@ -1552,15 +1552,18 @@ Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245, D-437.
   D-458), and `_verdict!`, which takes the caller's
   commit, both shared with the simulation's method in sim.jl (D-319). The
   guess evaluation, each seeded evaluation and `_verdict!`'s committed-state
-  evaluation are stretches hosted by model.jl's `_hosted` on the model that
+  evaluation are stretches hosted by model.jl's `_hosted` on the scratch that
   runs them, host `:trim`, pointer 0, phase `:evaluation`, the guess
-  evaluation's round at round 1 (§13.4).
+  evaluation's round at round 1 (§13.4). The committed-state evaluation runs
+  on the nominal scratch, which the solve's packing carries, after the
+  commit's `checkpoint(model)` is restored onto it, so a throw there leaves the
+  commit in place and the model `:consistent` (D-482).
 - The misuse fallback on a `Model`, and `ArgumentInvalid`'s `:non_nominal` on
   a `Model` at another scalar (D-319).
 - `TrimReport`, with its `committed_checks` (D-262).
 
 Spec: §9.6, §13.1, §14.5–§14.9, D-070, D-158, D-213, D-224, D-253, D-262,
-D-277, D-317, D-318, D-319, D-458.
+D-277, D-317, D-318, D-319, D-458, D-482.
 
 ### `test/fixtures.jl`
 

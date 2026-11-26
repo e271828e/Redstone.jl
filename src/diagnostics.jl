@@ -234,8 +234,9 @@ Base.:(==)(a::CursorFrame, b::CursorFrame) =
 
 """
 §13.4's runtime carrier, `DiagnosticError`'s counterpart: the cursor's frame, the
-clock at the failure, the frame-entry boundary index — the replay pointer — the
-host of the catch, and the cause. The parameter is the cause's type (D-225): the
+clock at the failure, the boundary index, the host of the catch, and the cause.
+The index is the frame-entry boundary, the replay pointer, under a frame or a
+door, and the boundary the scratch stands at under a service. The parameter is the cause's type (D-225): the
 diagnostic's kind when the cause is one, the exception model code threw
 otherwise. A *species* is a `StepError` whose `cause` is a typed diagnostic,
 which is what lets a runtime check throw its kind and reach the one catch site
@@ -246,7 +247,9 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
     cursor::CursorFrame
     t::Float64       # `_seconds(clock.t)` at the catch: the boundary time in a boundary
                      # phase, the stage or trial time mid-integration
-    boundary::Int    # the frame-entry boundary index: replay!(…; to_boundary = boundary)
+    boundary::Int    # the pointer: under :loop the frame-entry boundary index,
+                     # replay!(…; to_boundary = boundary); under any other host the
+                     # boundary the stretch's model stands at
     host::Symbol     # the catch that took the throw: :boundary_zero under init!,
                      # :overlay under overlay!, :restore under a restore,
                      # :trim and :linearize inside a service's evaluation,
@@ -313,9 +316,9 @@ function _host_lines(carrier::StepError)
         "trim!(sim2, problem; baseline, t0) with the same arguments runs it again") :
     host === :linearize ? (
         "$phase of linearize at boundary $boundary",
-        "linearize(sim2, tap_set) at the same operating point reproduces it",
+        "linearize(sim2, tap_set; about, t0) at the same operating point reproduces it",
         "an interrupt cut the linearization, so nothing reproduces it; " *
-        "linearize(sim2, tap_set) at the same operating point runs it again") :
+        "linearize(sim2, tap_set; about, t0) at the same operating point runs it again") :
     ("$phase of the frame from boundary $boundary",
      "replay!(sim2, trc; to_boundary = $boundary) then step!(sim2) reproduces it",
      "an interrupt cut the frame, so nothing reproduces it; " *
