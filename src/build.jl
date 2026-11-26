@@ -560,7 +560,7 @@ One activation: the typed products at a concrete scalar `T` (§9.1) —
 declarations retyped at `T`, the probe chain run over exactly the function
 set this activation can execute (§9.4), cells laid out. Immutable once
 constructed; the probe products are what a cell holds until first written
-(§6.3).
+(§9.3).
 """
 struct Activation{T}
     decls::Vector{Decls}
@@ -1060,9 +1060,9 @@ _workspace(entry::ComponentEntry, ::Type{T}) where {T} =
     end
 
 # A discrete component's stages never run at a non-nominal activation: its
-# cells are frozen `Float64` constants with zero partials, holding what the
-# probe wrote, which is exactly what a tick at `t₀⁻` would have produced
-# (§6.3, §7.2; `frozen_discrete_walkthrough.md`).
+# cells are frozen `Float64` constants with zero partials, which `init!` and
+# each service establish from the nominal activation (§7.2, §9.4, D-213, D-481;
+# `frozen_discrete_walkthrough.md`).
 _frozen(tier::Tier, ::Type{T}) where {T} = tier === DISCRETE && T !== Float64
 
 """
@@ -1082,10 +1082,11 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
     products = NamedTuple[s1 for s1 in stage1]
 
     # A frozen component's stages never run at this activation, so its complete
-    # product is the *nominal* activation's, carried across (§9.4): its cells
-    # hold what a tick at `t₀⁻` computed from real nominal inputs — pinned
-    # `Float64` constants, which downstream continuous consumers embed as
-    # zero-partials. The dependence through it is temporal, not instantaneous
+    # product is the *nominal* activation's, carried across (§9.4). It seeds
+    # the cells until `init!` or a service establishes them from the authored
+    # state (D-213, D-481). They are pinned `Float64` constants, which
+    # downstream continuous consumers embed as zero-partials. The dependence
+    # through it is temporal, not instantaneous
     # (`frozen_discrete_walkthrough.md`), so nothing here needs to gather the
     # `Dual` cell its pinned input declaration would otherwise have to refuse.
     for (ci, entry) in enumerate(structure.components)
@@ -1490,8 +1491,9 @@ function compile(build::Build, act::Activation{T}, schedule; chunk_size::Int = 1
         NamedTuple{tuple(keys(keyed_ins(decl))...)}(tuple((input_addr(ci, face) for face in keys(keyed_ins(decl)))...))
 
     # A cell holds what the build probe populated until a sweep first writes it
-    # (§6.3): this is the table's pre-`init!` content, and a frozen
-    # component's pinned cells are this seed for the whole run (§9.4). It is
+    # (§9.3): this is the table's pre-`init!` content, and a frozen
+    # component's pinned cells keep this seed until `init!` or a service
+    # establishes them (§9.4, D-481). It is
     # also what leaves no handle cell unassigned: an opaque-leaf buffer starts
     # `undef`, every handle port is a component product this seed writes, and a
     # handle at a root input is refused at layout (D-237).

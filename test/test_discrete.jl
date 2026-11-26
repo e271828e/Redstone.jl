@@ -89,6 +89,93 @@ function discrete_frozen_activation()
     end
 end
 
+# --- `init!` at a non-nominal scalar (§9.4, §14.5, D-481) ----------------------
+# A frozen component's stages never run at a `Dual`, so its cells hold what
+# `init!`'s nominal round established from the model's authored state.
+
+# A hold feeding a relaxation `ẋ = u - x` from `x = 1`: the root input `r` only
+# the hold reads, so its tier pins it at `Float64`.
+frozen_pair() = Group((; zoh = ZOH(), lag = BareAccumulator());
+                      local_wires = ("zoh/out" => "lag/u",), input_wires = ("r" => "zoh/in",))
+
+# Two holds, each reading a walking value through a continuous stage: the state
+# of `lag`, and the root input `e` through `neg`. A root input that only a
+# discrete component reads is pinned, and a `Dual` value at it is refused.
+walking_holds() = Group((; lag = BareAccumulator(), hold = ZOH(), neg = Negator(), echo = ZOH());
+                        local_wires = ("lag/y" => "hold/in", "neg/y" => "echo/in"),
+                        input_wires = ("r" => "lag/u", "e" => "neg/u"))
+
+"A continuous pass-through that throws `Exploded` on an input past 1."
+struct Fuse <: AbstractComponent end
+x_init(::Fuse) = nothing
+u_types(::Fuse) = (u = Float64,)
+y_types(::Fuse) = (y = Float64,)
+y_direct(::Fuse, (; u)) = u.u > 1 ? throw(Exploded()) : (y = u.u,)
+
+# The fuse reads the hold, so it throws only once the hold holds the root input.
+fused_hold() = Group((; zoh = ZOH(), fuse = Fuse());
+                     local_wires = ("zoh/out" => "fuse/u",), input_wires = ("r" => "zoh/in",))
+
+function discrete_frozen_init()
+    nested = ForwardDiff.Dual{Nothing,ForwardDiff.Dual{Nothing,Float64,1},1}
+    @testset "at a `Dual`, `init!` establishes a frozen cell as the `Float64` model's boundary zero does (§9.4, §14.5, D-481)" begin
+        for T in (Float64, D8, nested)
+            model = Model(frozen_pair(), T; Δt_frame = 1//10)
+            @test port(model, "zoh", :out) === 0.0            # the probe's product, before `init!`
+            init!(model, set(u = (r = 2.0,)))
+            @test port(model, "zoh", :out) === 2.0
+            T === nested && continue
+            evaluate!(model)
+            @test ForwardDiff.value(model.exec.ẋbuf[1]) ≈ 1.0   # 2 - 1, never 0 - 1
+            frames!(model, 10)
+            @test ForwardDiff.value(state(model, "lag")) ≈ 2 - exp(-1) rtol = 1e-6
+        end
+        # A model with no discrete component has nothing to establish.
+        model = Model(fed(BareAccumulator()), D8; Δt_frame = 1//10)
+        init!(model, set(u = (in = 2.0,)))
+        @test model.status === :consistent
+        @test ForwardDiff.value(port(model, "c", :y)) == 1.0
+    end
+
+    @testset "the nominal round takes each walking value alone, and leaves the model's partials (§9.4, D-481)" begin
+        directions = ForwardDiff.Partials(ntuple(Float64, 8))
+        model = Model(walking_holds(), D8; Δt_frame = 1//10)
+        init!(model, combine(at("lag", set(x = D8(3.0, directions))),
+                             set(u = (r = D8(2.0, directions), e = D8(5.0, directions)))))
+        @test port(model, "hold", :out) === 3.0
+        @test port(model, "echo", :out) === -5.0
+        @test state(model, "lag") === D8(3.0, directions)
+        @test port(model, "neg", :y) === D8(-5.0, -directions)
+    end
+
+    @testset "the nominal round reads the authored `s`, `m` and clock (§9.4, §14.5, D-481)" begin
+        sampled = Model(sampled_loop(), D8; Δt_frame = 1//50)
+        init!(sampled, combine(at("ctl", set(s = (acc = 2.0,))), set(u = (ref = 0.0,))))
+        @test port(sampled, "ctl", :u) === 2.0
+        geared = Model(Group((; gm = GearMode(), hold = ZOH()); local_wires = ("gm/y" => "hold/in",)),
+                       D8; Δt_frame = 1//10)
+        init!(geared, at("gm", set(m = (gear = down,))))
+        @test port(geared, "hold", :out) === 1.0
+        stamp_model = Model(single(ClockStamp()), D8; Δt_frame = 1//10)
+        init!(stamp_model; t0 = 1//4)
+        @test port(stamp_model, "c", :stamp) === 0.25
+    end
+
+    @testset "a throw in the nominal round is boundary zero's `StepError`, framed as at `Float64` (§13.4, §14.5, D-481)" begin
+        errors = map((Float64, D8)) do T
+            model = Model(fused_hold(), T; Δt_frame = 1//10)
+            err = failure(() -> init!(model, set(u = (r = 2.0,)); t0 = 1//4))
+            @test model.status === :built
+            err
+        end
+        for err in errors
+            @test err isa StepError{Exploded}
+            @test err.host === :boundary_zero && err.boundary == 0 && err.t == 0.25
+            @test err.cursor == CursorFrame("fuse", :y_direct, :round, 1)
+        end
+    end
+end
+
 # --- the rate fold and the schedule it produces (§8.7, §9.1, §9.2) ------------
 
 # An undeclared container's twin of the `Group` in the fold above: the same two children
@@ -1006,6 +1093,7 @@ end
 function test_discrete()
     discrete_one_rate()
     discrete_frozen_activation()
+    discrete_frozen_init()
     discrete_rate_fold()
     discrete_deployment()
 end

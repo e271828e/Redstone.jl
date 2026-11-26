@@ -137,7 +137,8 @@ Model(root::AbstractComponent, ::Type{T} = Float64; kw...) where {T} =
 
 # --- the seeded-half scratch world (§14.8, D-213) ------------------------------
 # Shared by the two stopped-sim services, trim.jl and linearize.jl, which run
-# the same two-half scratch world, with and without a commit.
+# the same two-half scratch world, with and without a commit, and by `init!` at
+# a non-nominal scalar, which runs its nominal half alone (D-481).
 
 # One scratch model: the same buffer set the model owns, at whatever scalar,
 # from the same cached activation and the same deployment — and it dies with
@@ -163,6 +164,50 @@ function _establish_frozen!(seeded_exec::Executor, act::Activation{T},
     end
     nothing
 end
+
+# `init!`'s nominal half at a non-nominal scalar (§9.4, D-213, D-481): a
+# `Float64` scratch takes the model's authored state, `x` and the root inputs
+# with their partials dropped, `s` and `m` as they are, since a store's type is
+# the same at every activation, and the clock. One establishment round runs on
+# it, with no projection, no events and no `s_update`, and the frozen cells are
+# copied back. A model with no frozen component builds no scratch. The scratch
+# has its own cursor, so a throw in the round copies it into the model's, which
+# `init!`'s catch reads (§13.4).
+function _establish_frozen!(model::Model{T}, origin::Rational{Int}) where {T}
+    build = model.deployment.build
+    any(entry -> _frozen(entry.tier, T), build.structure.components) || return nothing
+    exec = model.exec
+    nominal_exec = _scratch(model, Float64).exec
+    nominal_exec.xbuf .= _drop_partials.(exec.xbuf)
+    for ci in eachindex(exec.sstores)
+        exec.sstores[ci] === nothing || (nominal_exec.sstores[ci][] = exec.sstores[ci][])
+        exec.mstores[ci] === nothing || (nominal_exec.mstores[ci][] = exec.mstores[ci][])
+    end
+    for face in build.structure.root_inputs
+        addr = nominal_exec.act.layout.addr[("", face)]
+        value = gather_cell(exec.store, exec.act.layout.addr[("", face)])
+        scatter_cell!(nominal_exec.store, addr, _drop_partials(_port_type(addr), value))
+    end
+    _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
+    cursor, nominal_cursor = exec.cursor, nominal_exec.cursor
+    _phase!(nominal_cursor, :round, 1)    # where boundary zero's own round stands (§13.4)
+    try
+        _round!(nominal_exec, ESTABLISH)  # every discrete output stage, due or not
+    catch
+        for field in fieldnames(ExecutionCursor)
+            setfield!(cursor, field, getfield(nominal_cursor, field))
+        end
+        rethrow()
+    end
+    _establish_frozen!(exec, exec.act, nominal_exec, build)
+end
+
+# A value at the nominal cell type `P`, each `Dual` leaf taken at its value at
+# every depth and every other leaf as it is.
+_drop_partials(::Type{P}, value) where {P} =
+    reconstruct(P, Any[_drop_partials(leaf) for leaf in _leaf_values(value)], 0)
+_drop_partials(leaf::ForwardDiff.Dual) = _drop_partials(ForwardDiff.value(leaf))
+_drop_partials(leaf) = leaf
 
 # Design: §10.2, §10.3, §10.4, §11.2, D-317, D-445, D-447, D-452.
 # A subtype is a struct with concrete fields, built once per advance. §11.2's
@@ -261,14 +306,15 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
     (@atomic :acquire model.claimed) && throw(DiagnosticError(ArgumentInvalid(
         call = call, reason = :claimed, argument = :model)))
 
-# Design: §13.4, §14.3, §14.5, §14.6, D-223, D-317.
+# Design: §9.4, §13.4, §14.3, §14.5, §14.6, D-223, D-317, D-481.
 # The model's door into `:consistent`. The plan method, `init!(model,
 # plan::ConditionPlan; t0, hooks)`, does the writes alone, so the simulation's
 # `init!` can resolve before it touches its run. It hosts §13.4's catch around
 # boundary zero (D-223), where a throw takes the one `StepError` constructor
-# with the frame from the cursor. Nothing reads the return of `settled!(hooks)`
-# here. An interrupt has no stop path in a service, so the catch wraps it like
-# any throw (D-441).
+# with the frame from the cursor. At a non-nominal scalar the catch also covers
+# the nominal round that establishes the frozen cells (D-481). Nothing reads the
+# return of `settled!(hooks)` here. An interrupt has no stop path in a service,
+# so the catch wraps it like any throw (D-441).
 """
     init!(model::Model, condition = set(); t0 = 0,
           hooks::FrameHooks = NoHooks()) -> Nothing
@@ -280,7 +326,10 @@ defaults, and run [boundary zero](@ref g-boundary-zero) at `t0`.
 overrides and sets the clock to `t0`. It sets every event [prior](@ref g-prior)
 to not [holding](@ref g-edge-semantics). It then runs boundary zero, which
 settles through `settled!(hooks)`, and the model's status becomes `:consistent`.
-A `Model` at a `Dual` has no events.
+A `Model` at a `Dual` has no events, and its discrete
+[components](@ref g-component) never run there. Its boundary zero first
+evaluates their outputs once at `Float64`, from the state `init!` set, and the
+model holds those values.
 
 The condition is built with [`set`](@ref) and its combinators.
 [Root inputs](@ref g-root-input) have no declared default, so the condition must
@@ -333,6 +382,7 @@ function init!(model::Model{T}, plan::ConditionPlan; t0 = 0,
     # the stepper's carried state as bound, so the run is a function of the condition (D-452)
     reset_stepper!(exec.stepper)
     try
+        _establish_frozen!(model, origin)   # a non-nominal scalar's frozen cells (D-481)
         boundary_zero!(model)
     catch err
         @atomic :release model.status = :built
@@ -693,8 +743,8 @@ canonical residue admits exactly `Φ₀ = 0` (§6.3): that evaluation is
 establishment, not a scheduled sample, and an offset component's first
 *consumed* sample stays its `Φ₀·Δt_base` tick's. A component frozen at a
 non-nominal activation has no entries here at all (§9.4's executable set), so
-its pinned cells keep the carried nominal products — at boundary zero as
-everywhere.
+its pinned cells keep what `init!`'s nominal round established just before
+(D-481).
 
 Never called bare: the model's `init!` (above) hosts it, the one door
 that runs it (D-274), wrapping a throw as §13.4's catch does (D-223, D-317).

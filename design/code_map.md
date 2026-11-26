@@ -935,7 +935,9 @@ soon as nothing in it names a `Simulation` in a signature, and below
 - The seeded-half scratch world trim.jl and linearize.jl share (§14.8,
   D-213, D-317): `_scratch`, the model's buffer set at another scalar, which
   dies with the call, and `_establish_frozen!`, the frozen copy over the
-  `Outputs`' port list.
+  `Outputs`' port list. Its model method is `init!`'s nominal half at a
+  non-nominal scalar, with `_drop_partials`, a value rebuilt at its nominal
+  cell type with each `Dual` leaf at its value (§9.4, D-481).
 - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
   no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returns whether it
   wrote a value, which raises the discontinuity notice and denies the frame's
@@ -967,7 +969,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
     cannot carry by `_clock_integers`, the checked clock formula at the run's
     two ends (D-457), does the writes, asks the stepper to
     reset its carried state, `reset_stepper!` (D-452), runs boundary zero
-    under §13.4's catch and settles it through the hooks (§14.5, D-223);
+    under §13.4's catch, at a non-nominal scalar after the frozen cells'
+    nominal round (D-481), and settles it through the hooks (§14.5, D-223);
   - `overlay!`, in the same two methods, whose condition method resolves with
     the stores as the merge bases, `_store_values`, and whose plan method
     raises the discontinuity notice and runs the continuing settling under
@@ -1027,10 +1030,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
   collecting `CheckpointMidFrame` into the same list, and an `ArgumentInvalid`
   on `t0` where a state's origin fails `_clock_integers` (D-457).
 
-Spec: §6.3, §9.2, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
+Spec: §6.3, §9.2, §9.4, §9.5, §10.2–§10.6, §11.2, §11.8, §12.4, §12.6, §13.2,
 §13.4, §13.5, §14.1, §14.5, §14.8, D-059, D-157, D-185, D-213, D-221, D-223, D-248,
 D-250, D-254, D-260, D-274, D-317, D-318, D-319, D-320, D-429, D-445, D-447,
-D-449, D-450, D-452, D-454, D-460.
+D-449, D-450, D-452, D-454, D-460, D-481.
 
 ### `src/precompile.jl`
 
