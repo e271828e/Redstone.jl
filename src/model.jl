@@ -168,15 +168,16 @@ end
 # `init!`'s nominal half at a non-nominal scalar (§9.4, D-213, D-481): a
 # `Float64` scratch takes the model's authored state, `x` and the root inputs
 # with their partials dropped, `s` and `m` as they are, since a store's type is
-# the same at every activation, and the clock. One establishment round runs on
-# it, with no projection, no events and no `s_update`, and the frozen cells are
-# copied back. A model with no frozen component builds no scratch. The scratch
-# has its own cursor, so a throw in the round copies it into the model's, which
-# `init!`'s catch reads (§13.4).
+# the same at every activation, and the clock. It then runs what the model runs
+# at boundary zero, projection and one establishment round, with no events and
+# no `s_update`, and the frozen cells are copied back. A model with no frozen
+# component builds no scratch. The scratch has its own cursor, so a throw there
+# copies it into the model's, which `init!`'s catch reads (§13.4).
 function _establish_frozen!(model::Model{T}, origin::Rational{Int}) where {T}
     build = model.deployment.build
     any(entry -> _frozen(entry.tier, T), build.structure.components) || return nothing
     exec = model.exec
+    exec.cursor.comp = 0; exec.cursor.fn = :none   # no stale frame for a throw before the round
     nominal_exec = _scratch(model, Float64).exec
     nominal_exec.xbuf .= _drop_partials.(exec.xbuf)
     for ci in eachindex(exec.sstores)
@@ -190,8 +191,11 @@ function _establish_frozen!(model::Model{T}, origin::Rational{Int}) where {T}
     end
     _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
     cursor, nominal_cursor = exec.cursor, nominal_exec.cursor
-    _phase!(nominal_cursor, :round, 1)    # where boundary zero's own round stands (§13.4)
     try
+        # the phases boundary zero's own projection and round stand at (§13.4)
+        _phase!(nominal_cursor, :project)
+        _projects!(nominal_exec.events, nominal_exec.xbuf)
+        _phase!(nominal_cursor, :round, 1)
         _round!(nominal_exec, ESTABLISH)  # every discrete output stage, due or not
     catch
         for field in fieldnames(ExecutionCursor)
@@ -312,9 +316,9 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
 # `init!` can resolve before it touches its run. It hosts §13.4's catch around
 # boundary zero (D-223), where a throw takes the one `StepError` constructor
 # with the frame from the cursor. At a non-nominal scalar the catch also covers
-# the nominal round that establishes the frozen cells (D-481). Nothing reads the
-# return of `settled!(hooks)` here. An interrupt has no stop path in a service,
-# so the catch wraps it like any throw (D-441).
+# the nominal projection and round that establish the frozen cells (D-481).
+# Nothing reads the return of `settled!(hooks)` here. An interrupt has no stop
+# path in a service, so the catch wraps it like any throw (D-441).
 """
     init!(model::Model, condition = set(); t0 = 0,
           hooks::FrameHooks = NoHooks()) -> Nothing
@@ -328,8 +332,8 @@ to not [holding](@ref g-edge-semantics). It then runs boundary zero, which
 settles through `settled!(hooks)`, and the model's status becomes `:consistent`.
 A `Model` at a `Dual` has no events, and its discrete
 [components](@ref g-component) never run there. Its boundary zero first
-evaluates their outputs once at `Float64`, from the state `init!` set, and the
-model holds those values.
+evaluates their outputs once at `Float64`, from the state `init!` set and
+projected, and the model holds those values.
 
 The condition is built with [`set`](@ref) and its combinators.
 [Root inputs](@ref g-root-input) have no declared default, so the condition must
@@ -743,7 +747,7 @@ canonical residue admits exactly `Φ₀ = 0` (§6.3): that evaluation is
 establishment, not a scheduled sample, and an offset component's first
 *consumed* sample stays its `Φ₀·Δt_base` tick's. A component frozen at a
 non-nominal activation has no entries here at all (§9.4's executable set), so
-its pinned cells keep what `init!`'s nominal round established just before
+its pinned cells keep what `init!`'s nominal half established just before
 (D-481).
 
 Never called bare: the model's `init!` (above) hosts it, the one door

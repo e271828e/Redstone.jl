@@ -1060,8 +1060,10 @@ _workspace(entry::ComponentEntry, ::Type{T}) where {T} =
     end
 
 # A discrete component's stages never run at a non-nominal activation: its
-# cells are frozen `Float64` constants with zero partials, which `init!` and
-# each service establish from the nominal activation (§7.2, §9.4, D-213, D-481;
+# cells are frozen `Float64` constants with zero partials. `init!`, `trim!` and
+# `linearize` under `about` establish them by a round at `Float64` over the
+# authored state, and `linearize`'s default form takes them from the state it
+# restores (§7.2, §9.4, §14.8, D-213, D-274, D-481;
 # `frozen_discrete_walkthrough.md`).
 _frozen(tier::Tier, ::Type{T}) where {T} = tier === DISCRETE && T !== Float64
 
@@ -1083,8 +1085,8 @@ function probe_stage2(structure::Structure, decls::Vector{Decls},
 
     # A frozen component's stages never run at this activation, so its complete
     # product is the *nominal* activation's, carried across (§9.4). It seeds
-    # the cells until `init!` or a service establishes them from the authored
-    # state (D-213, D-481). They are pinned `Float64` constants, which
+    # the cells until `init!`, a service or a restore writes them (D-213,
+    # D-481). They are pinned `Float64` constants, which
     # downstream continuous consumers embed as zero-partials. The dependence
     # through it is temporal, not instantaneous
     # (`frozen_discrete_walkthrough.md`), so nothing here needs to gather the

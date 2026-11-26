@@ -970,7 +970,8 @@ soon as nothing in it names a `Simulation` in a signature, and below
     two ends (D-457), does the writes, asks the stepper to
     reset its carried state, `reset_stepper!` (D-452), runs boundary zero
     under §13.4's catch, at a non-nominal scalar after the frozen cells'
-    nominal round (D-481), and settles it through the hooks (§14.5, D-223);
+    nominal projection and round (D-481), and settles it through the hooks
+    (§14.5, D-223);
   - `overlay!`, in the same two methods, whose condition method resolves with
     the stores as the merge bases, `_store_values`, and whose plan method
     raises the discontinuity notice and runs the continuing settling under

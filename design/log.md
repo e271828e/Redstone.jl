@@ -14605,7 +14605,7 @@ rested on the fusion, which the split removed. [D-320][d-320] lands the refusal 
 
 Annotation (2026-11-26): amended by [D-481][d-481]. `init!` on a model at another
 scalar establishes its frozen discrete cells before boundary zero, as a
-service does, so its scratch holds no probe value once it is `:consistent`.
+service does, so the model holds no probe value once it is `:consistent`.
 
 Supersedes [D-254][d-254]'s "`Simulation` materializes a deployment at `T`" clause;
 [D-255][d-255]'s clause keeping the lifecycle on `Control`; [D-256][d-256]'s five-field
@@ -21308,16 +21308,16 @@ S10d-054, and the measurements are
 - *`Libc.systemsleep` in the coarse phase:* it overshoots a 2 ms request by
   0.5 ms but an 18 ms one by about 3.8 ms here, and [D-027][d-027] rules the yielding
   `sleep`.
-||||||| base
+
 ### D-481 — Establish the frozen cells at `init!` on a model at a non-nominal scalar
 
 **Status.** ratified
 
 **Position.** `init!` on a model at a non-nominal scalar establishes its
 frozen discrete cells as a service does ([D-213][d-213]): a nominal scratch takes the
-model's authored state with partials dropped, runs one establishment round,
-and its frozen cells are copied. No cell of a `:consistent` model holds a
-probe value, at any scalar.
+model's authored state with partials dropped, projects it as boundary zero
+does, runs one establishment round, and its frozen cells are copied. No cell
+of a `:consistent` model holds a probe value, at any scalar.
 
 **Spec.** [§9.3][s9-3], [§9.4][s9-4], [§14.5][s14-5]
 
@@ -21338,31 +21338,37 @@ cells with their partials dropped, `s` and `m` as they are, since a store's
 type is the same at every activation, and the clock. The plan-taking `init!`
 is covered too, and no condition tree is walked twice.
 
-The round is [D-213][d-213]'s as it stands, [D-205][d-205]'s sweep with every discrete output
-stage admitted, with no projection, no events and no `s_update`. Where
-boundary zero fires an event or projects, a `Dual` model's frozen cells can
-therefore differ from the `Float64` model's after the same `init!`. That is
-the difference [D-317][d-317] already rules, since a model at another scalar has no
-events. A model with no frozen component builds no scratch. The round runs
+The nominal half runs what the model itself runs at boundary zero at that
+scalar. That is projection, then [D-205][d-205]'s sweep with every discrete output
+stage admitted, with no events and no `s_update`. [D-213][d-213]'s round projects
+nothing, since a service's seeded half runs no boundary. The model runs
+boundary zero and projects its own `x` there, so the scratch projects too,
+and a frozen cell agrees with the model's projected state. Where boundary
+zero fires an event, a `Dual` model's frozen cells can therefore differ from
+the `Float64` model's after the same `init!`. That is the difference [D-317][d-317]
+already rules, since a model at another scalar has no events. A model with
+no frozen component builds no scratch. The projection and the round run
 inside `init!`'s catch, so a throw there arrives as a `StepError` with host
-`:boundary_zero`, its cursor the one the round stood at ([§13.4][s13-4]).
+`:boundary_zero`, its cursor the one the scratch stood at ([§13.4][s13-4]).
 
 Only `init!` changes. `restore!` copies the whole table of a state taken at
 the same scalar, and refuses a `Float64` state as `CheckpointMismatch`, so it
 inherits what `init!` established. `overlay!` runs an off-tick boundary,
 which moves no discrete cell on a `Float64` model either. `apply!` stays the
-raw write [D-213][d-213] keeps raw. `trim!` and `linearize` keep their own nominal
-half, which also serves the guess evaluation and the zero-decision bypass.
-The cost is one nominal executor and one sweep per `init!`, as [D-213][d-213] accepted
-for a service.
+raw write [D-213][d-213] keeps raw. `trim!` keeps its own nominal half, which also
+serves the guess evaluation and the zero-decision bypass. `linearize`'s
+`about` form runs the round alone on its nominal half, and its default form
+takes the frozen cells from the restored operating point. The cost is one
+nominal executor, one projection and one sweep per `init!`, as [D-213][d-213]
+accepted for a service.
 
 **Rejected.**
 - *Leaving establishment to the caller:* a `:consistent` model would hold
   fabricated values, and a user's own service could not establish them,
   since the helper is private.
-- *A full nominal boundary zero:* its cells would come after events and
-  projection the `Dual` model never runs, so they would describe a state the
-  model does not hold.
+- *A full nominal boundary zero:* its cells would come after events the
+  `Dual` model never fires, so they would describe a state the model does
+  not hold.
 - *Resolving the condition again at `Float64`:* it walks each condition tree
   twice, and the plan-taking `init!` holds no condition to resolve, while the
   model's stores already hold the authored world.

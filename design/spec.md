@@ -5608,8 +5608,8 @@ predominantly scalar, so the surface is small.
 **Probe values are strictly probe-scoped** ([D-051][d-051]). Everything the
 probe writes is garbage once the build finishes. A fresh
 [signal table](#g-signal-table) (the cells holding every produced signal) holds
-the probe's values until `init!` writes it. Probe values never double as
-initial root-input values, because that would smuggle in the default semantics
+the probe's values until `init!` or a restore writes it. Probe values never
+double as initial root-input values, because that would smuggle in the default semantics
 that [D-051][d-051] rejects.
 
 The same doctrine covers the clock. **`t` is probe-scoped `0.0`**
@@ -5717,10 +5717,12 @@ Neither depends on `T`, by construction.
 ([D-052][d-052]). A `Dual` activation, as linearization and gradient trim use,
 evaluates the model at a frozen instant.
 
-- Discrete stages are gated off and hold `Float64` values. `init!` and each
-  service take those values from the nominal activation, never from the
-  probe ([§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10]). This is the
-  frozen-constant semantics of [§8.2][s8-2].
+- Discrete stages are gated off and hold `Float64` values. `init!`, `trim!`
+  and `linearize` under `about` take those values from an establishment
+  round at `Float64` over the authored state, never from the probe
+  ([§14.5][s14-5], [§14.8][s14-8]). `linearize`'s default form takes them from the
+  state it restores ([§14.10][s14-10]). This is the frozen-constant semantics of
+  [§8.2][s8-2].
 - [Guards](#g-guard) and handlers never run, because event localization runs
   as `Float64` [sweeps](#g-sweep) by design ([§9.5][s9-5], [D-052][d-052]).
 - Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and
@@ -13485,8 +13487,8 @@ boundary, the ordinary macro-sequence with an empty integrate) means for trim.
   [probe value](#g-probe-value) (a fabricated value a build-time probe runs on). That is the
   probe-value barrier of [§14.6][s14-6] extended from the [root inputs](#g-root-input) to the whole table.
   At a non-nominal scalar, **`init!` establishes the frozen discrete cells
-  from one such sweep on a `Float64` copy of the authored state**
-  ([§9.4][s9-4], [D-481][d-481]).
+  from a projection and one such sweep on a `Float64` copy of the authored
+  state** ([§9.4][s9-4], [D-481][d-481]).
 - Events run. A condition can land a guard [predicate](#g-predicate), a `Bool`-valued form or
   the sign of a continuous function, in [holding](#g-edge-semantics) territory (firing on not-holding
   → holding transitions, never bare sign changes). An authored stall flag, or a

@@ -75,8 +75,8 @@ function discrete_frozen_activation()
         # a lawful arrival, embedded as a zero-partial. `ctl`'s stages are outside
         # this activation's executable set, so they do not run at all — boundary
         # zero's wide gate included (D-205 admits entries, and a frozen component
-        # has none) — and its cell holds the nominal products §9.4 carried across,
-        # pinned for the whole run.
+        # has none). `init!` establishes its cell once at `Float64` from the
+        # authored `s` (D-481), and the cell holds that value for the whole run.
         dual_model = Model(sampled_loop(), D8; Δt_frame = 1//50)
         @test isempty(walked(dual_model.exec.bodies.ticks))
         @test length(walked(dual_model.exec.bodies.sweep_1)) == 1          # plant only; ctl frozen
@@ -85,13 +85,13 @@ function discrete_frozen_activation()
         init!(dual_model, set(u = (ref = 0.0,)))
         frames!(dual_model, 2)                                # `run!` to 0.04
         @test state(dual_model, "plant").q isa SVector{2,D8}
-        @test port(dual_model, "ctl", :u) == 0.0              # held, never recomputed
+        @test port(dual_model, "ctl", :u) == 0.0              # established from `acc = 0`, then held
     end
 end
 
 # --- `init!` at a non-nominal scalar (§9.4, §14.5, D-481) ----------------------
 # A frozen component's stages never run at a `Dual`, so its cells hold what
-# `init!`'s nominal round established from the model's authored state.
+# `init!`'s nominal half established from the model's authored state.
 
 # A hold feeding a relaxation `ẋ = u - x` from `x = 1`: the root input `r` only
 # the hold reads, so its tier pins it at `Float64`.
@@ -116,6 +116,23 @@ y_direct(::Fuse, (; u)) = u.u > 1 ? throw(Exploded()) : (y = u.u,)
 fused_hold() = Group((; zoh = ZOH(), fuse = Fuse());
                      local_wires = ("zoh/out" => "fuse/u",), input_wires = ("r" => "zoh/in",))
 
+# A hold behind a continuous stage-2 reader, which boundary zero evaluates from
+# the cell the nominal half has just established.
+negated_hold() = Group((; zoh = ZOH(), neg = Negator());
+                       local_wires = ("zoh/out" => "neg/u",), input_wires = ("r" => "zoh/in",))
+
+# An offset hold, not due at `t₀` (`Φ₀ = 1`), beside one that is: boundary zero
+# publishes both all the same (D-205).
+offset_holds() = Group((; zoh = ZOH(), base = ZOH()); sample_times = (; zoh = Relative(2, 1)),
+                       input_wires = ("r" => ("zoh/in", "base/in"),))
+
+# A hold reading a rotor's cosine, which boundary zero projects onto the unit
+# circle before any output stage runs.
+rotor_hold() = Group((; rot = Rotor(), zoh = ZOH()); local_wires = ("rot/c" => "zoh/in",))
+
+# A hold reading a state whose projection throws `Detonated` at `q ≥ 0.5`.
+primed_hold() = Group((; p = Primer(0.5), zoh = ZOH()); local_wires = ("p/q" => "zoh/in",))
+
 function discrete_frozen_init()
     nested = ForwardDiff.Dual{Nothing,ForwardDiff.Dual{Nothing,Float64,1},1}
     @testset "at a `Dual`, `init!` establishes a frozen cell as the `Float64` model's boundary zero does (§9.4, §14.5, D-481)" begin
@@ -129,6 +146,17 @@ function discrete_frozen_init()
             @test ForwardDiff.value(model.exec.ẋbuf[1]) ≈ 1.0   # 2 - 1, never 0 - 1
             frames!(model, 10)
             @test ForwardDiff.value(state(model, "lag")) ≈ 2 - exp(-1) rtol = 1e-6
+        end
+        # Boundary zero's own sweep reads the established cell, so a continuous
+        # reader of it publishes from the authored value.
+        model = Model(negated_hold(), D8; Δt_frame = 1//10)
+        init!(model, set(u = (r = 2.0,)))
+        @test ForwardDiff.value(port(model, "neg", :y)) == -2.0
+        # A hold not due at `t₀` is established all the same, as at `Float64`.
+        for T in (Float64, D8)
+            model = Model(offset_holds(), T; Δt_frame = 1//10)
+            init!(model, set(u = (r = 2.0,)))
+            @test port(model, "zoh", :out) === 2.0 && port(model, "base", :out) === 2.0
         end
         # A model with no discrete component has nothing to establish.
         model = Model(fed(BareAccumulator()), D8; Δt_frame = 1//10)
@@ -161,17 +189,29 @@ function discrete_frozen_init()
         @test port(stamp_model, "c", :stamp) === 0.25
     end
 
-    @testset "a throw in the nominal round is boundary zero's `StepError`, framed as at `Float64` (§13.4, §14.5, D-481)" begin
-        errors = map((Float64, D8)) do T
-            model = Model(fused_hold(), T; Δt_frame = 1//10)
-            err = failure(() -> init!(model, set(u = (r = 2.0,)); t0 = 1//4))
-            @test model.status === :built
-            err
+    @testset "the nominal half projects `x` as boundary zero does, so a frozen cell agrees with the projected state (§9.4, §14.5, D-481)" begin
+        # Authored off the unit circle at `(2, 0)`, the rotor projects to `(1, 0)`.
+        off_circle = at("rot", set(x = (r = SVector(2.0, 0.0),)))
+        for T in (Float64, D8)
+            model = Model(rotor_hold(), T; Δt_frame = 1//10)
+            init!(model, off_circle)
+            @test port(model, "zoh", :out) === 1.0
+            @test ForwardDiff.value(port(model, "rot", :c)) == port(model, "zoh", :out)
         end
-        for err in errors
-            @test err isa StepError{Exploded}
+    end
+
+    @testset "a throw in the nominal half is boundary zero's `StepError`, framed as at `Float64` (§13.4, §14.5, D-481)" begin
+        cases = ((fused_hold, set(u = (r = 2.0,)), Exploded,
+                  CursorFrame("fuse", :y_direct, :round, 1)),
+                 (primed_hold, at("p", set(x = (q = 1.0,))), Detonated,
+                  CursorFrame("p", :x_projection, :project, 0)))
+        for (world, condition, cause, frame) in cases, T in (Float64, D8)
+            model = Model(world(), T; Δt_frame = 1//10)
+            err = failure(() -> init!(model, condition; t0 = 1//4))
+            @test model.status === :built
+            @test err isa StepError{cause}
             @test err.host === :boundary_zero && err.boundary == 0 && err.t == 0.25
-            @test err.cursor == CursorFrame("fuse", :y_direct, :round, 1)
+            @test err.cursor == frame
         end
     end
 end
