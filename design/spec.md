@@ -5606,7 +5606,9 @@ branch) ([§8.3][s8-3]). The [§4.3][s4-3] write-side granularity rule keeps roo
 predominantly scalar, so the surface is small.
 
 **Probe values are strictly probe-scoped** ([D-051][d-051]). Everything the
-probe writes is garbage once the build finishes. Probe values never double as
+probe writes is garbage once the build finishes. A fresh
+[signal table](#g-signal-table) (the cells holding every produced signal) holds
+the probe's values until `init!` writes it. Probe values never double as
 initial root-input values, because that would smuggle in the default semantics
 that [D-051][d-051] rejects.
 
@@ -5715,7 +5717,9 @@ Neither depends on `T`, by construction.
 ([D-052][d-052]). A `Dual` activation, as linearization and gradient trim use,
 evaluates the model at a frozen instant.
 
-- Discrete stages are gated off and hold `Float64` values. This is the
+- Discrete stages are gated off and hold `Float64` values. `init!` and each
+  service take those values from the nominal activation, never from the
+  probe ([§14.5][s14-5], [§14.8][s14-8], [§14.10][s14-10]). This is the
   frozen-constant semantics of [§8.2][s8-2].
 - [Guards](#g-guard) and handlers never run, because event localization runs
   as `Float64` [sweeps](#g-sweep) by design ([§9.5][s9-5], [D-052][d-052]).
@@ -13480,6 +13484,9 @@ boundary, the ordinary macro-sequence with an empty integrate) means for trim.
   authored world fully evaluated. No published [cell](#g-cell) holds a synthesized
   [probe value](#g-probe-value) (a fabricated value a build-time probe runs on). That is the
   probe-value barrier of [§14.6][s14-6] extended from the [root inputs](#g-root-input) to the whole table.
+  At a non-nominal scalar, **`init!` establishes the frozen discrete cells
+  from one such sweep on a `Float64` copy of the authored state**
+  ([§9.4][s9-4], [D-481][d-481]).
 - Events run. A condition can land a guard [predicate](#g-predicate), a `Bool`-valued form or
   the sign of a continuous function, in [holding](#g-edge-semantics) territory (firing on not-holding
   → holding transitions, never bare sign changes). An authored stall flag, or a
@@ -17879,6 +17886,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-478]: log.md#d-478--write-a-tick-count-as-d-or-φ-subscripted-by-the-lattice-it-counts-in
 [d-479]: log.md#d-479--give-each-count-length-and-index-of-the-timing-passages-its-own-letter
 [d-480]: log.md#d-480--raise-the-default-margin-to-3-ms-calibrated-at-the-sleep-a-paced-frame-makes
+[d-481]: log.md#d-481--establish-the-frozen-cells-at-init-on-a-model-at-a-non-nominal-scalar
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop

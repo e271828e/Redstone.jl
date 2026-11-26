@@ -479,6 +479,7 @@ were derived.
 | [D-478][d-478] | Write a tick count as `D` or `Φ`, subscripted by the lattice it counts in | ratified |
 | [D-479][d-479] | Give each count, length and index of the timing passages its own letter | ratified |
 | [D-480][d-480] | Raise the default `margin` to 3 ms, calibrated at the sleep a paced frame makes | ratified |
+| [D-481][d-481] | Establish the frozen cells at `init!` on a model at a non-nominal scalar | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -8553,6 +8554,10 @@ no projection, events or `g` — copied as zero-partial constants; the probe's
 synthesized products never reach a service evaluation. Iterations remain raw
 write → sweep → read cycles at the seeded activation ([§14.5][s14-5]).
 
+Annotation (2026-11-26): amended by [D-481][d-481]. `init!` on a model at a
+non-nominal scalar establishes its frozen cells the same way, from a nominal
+scratch that takes the model's authored state.
+
 **Spec.** [§14.8][s14-8]
 
 **Rationale.** Surfaced while briefing the prototype's trim increment: the prototype
@@ -14597,6 +14602,10 @@ Annotation (2026-10-10): amended by [D-320][d-320]. The door heuristic rejected 
 rested on the fusion, which the split removed. [D-320][d-320] lands the refusal at the
 `Model` door as a positive list, `Float64` and `ForwardDiff.Dual`, and still no
 `AbstractFloat` heuristic exists.
+
+Annotation (2026-11-26): amended by [D-481][d-481]. `init!` on a model at another
+scalar establishes its frozen discrete cells before boundary zero, as a
+service does, so its scratch holds no probe value once it is `:consistent`.
 
 Supersedes [D-254][d-254]'s "`Simulation` materializes a deployment at `T`" clause;
 [D-255][d-255]'s clause keeping the lifecycle on `Control`; [D-256][d-256]'s five-field
@@ -21299,6 +21308,68 @@ S10d-054, and the measurements are
 - *`Libc.systemsleep` in the coarse phase:* it overshoots a 2 ms request by
   0.5 ms but an 18 ms one by about 3.8 ms here, and [D-027][d-027] rules the yielding
   `sleep`.
+||||||| base
+### D-481 — Establish the frozen cells at `init!` on a model at a non-nominal scalar
+
+**Status.** ratified
+
+**Position.** `init!` on a model at a non-nominal scalar establishes its
+frozen discrete cells as a service does ([D-213][d-213]): a nominal scratch takes the
+model's authored state with partials dropped, runs one establishment round,
+and its frozen cells are copied. No cell of a `:consistent` model holds a
+probe value, at any scalar.
+
+**Spec.** [§9.3][s9-3], [§9.4][s9-4], [§14.5][s14-5]
+
+**Rationale.** [D-213][d-213] closed this failure for `trim!` and `linearize`. Their
+seeded scratch takes its frozen cells from a nominal half on which one
+establishment round ran. [D-317][d-317] then made a `Model` at another scalar public,
+a scratch a user writes, evaluates and steps, and its `init!` never took the
+step. A frozen component's stages never run at that scalar ([§9.4][s9-4]), so after
+`init!` its cells held the build probe's products, and the status read
+`:consistent` with no diagnostic. A discrete command feeding a continuous lag
+read 0 at a `Dual` where the `Float64` model read the authored 2. That is
+[D-213][d-213]'s fabricated zero, reached through the model's own door.
+
+The nominal half takes its values from the model, not from the condition.
+After the declared defaults and the plan are written, the model's stores
+hold the complete authored world. The scratch copies `x` and the root-input
+cells with their partials dropped, `s` and `m` as they are, since a store's
+type is the same at every activation, and the clock. The plan-taking `init!`
+is covered too, and no condition tree is walked twice.
+
+The round is [D-213][d-213]'s as it stands, [D-205][d-205]'s sweep with every discrete output
+stage admitted, with no projection, no events and no `s_update`. Where
+boundary zero fires an event or projects, a `Dual` model's frozen cells can
+therefore differ from the `Float64` model's after the same `init!`. That is
+the difference [D-317][d-317] already rules, since a model at another scalar has no
+events. A model with no frozen component builds no scratch. The round runs
+inside `init!`'s catch, so a throw there arrives as a `StepError` with host
+`:boundary_zero`, its cursor the one the round stood at ([§13.4][s13-4]).
+
+Only `init!` changes. `restore!` copies the whole table of a state taken at
+the same scalar, and refuses a `Float64` state as `CheckpointMismatch`, so it
+inherits what `init!` established. `overlay!` runs an off-tick boundary,
+which moves no discrete cell on a `Float64` model either. `apply!` stays the
+raw write [D-213][d-213] keeps raw. `trim!` and `linearize` keep their own nominal
+half, which also serves the guess evaluation and the zero-decision bypass.
+The cost is one nominal executor and one sweep per `init!`, as [D-213][d-213] accepted
+for a service.
+
+**Rejected.**
+- *Leaving establishment to the caller:* a `:consistent` model would hold
+  fabricated values, and a user's own service could not establish them,
+  since the helper is private.
+- *A full nominal boundary zero:* its cells would come after events and
+  projection the `Dual` model never runs, so they would describe a state the
+  model does not hold.
+- *Resolving the condition again at `Float64`:* it walks each condition tree
+  twice, and the plan-taking `init!` holds no condition to resolve, while the
+  model's stores already hold the authored world.
+- *Refusing `init!` at a non-nominal scalar:* [D-317][d-317] made the model at another
+  scalar public, to be written, evaluated and stepped, and `init!` is its one
+  door into `:consistent`. A state to restore comes from `checkpoint`, which
+  requires that status first.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -21755,6 +21826,7 @@ S10d-054, and the measurements are
 [d-478]: #d-478--write-a-tick-count-as-d-or-φ-subscripted-by-the-lattice-it-counts-in
 [d-479]: #d-479--give-each-count-length-and-index-of-the-timing-passages-its-own-letter
 [d-480]: #d-480--raise-the-default-margin-to-3-ms-calibrated-at-the-sleep-a-paced-frame-makes
+[d-481]: #d-481--establish-the-frozen-cells-at-init-on-a-model-at-a-non-nominal-scalar
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property
