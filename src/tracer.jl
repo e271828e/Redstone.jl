@@ -166,7 +166,7 @@ so one `rng` gives one reproducible draw per evaluation.
 _sample(rng, ::Type{T}, v, bit::UInt64) where {T} =
     _map_leaves(T, v, l -> l isa Float64 || l isa Tracer ? T(randn(rng), bit) : l)
 
-"""The union of the tags a value's `Tracer` leaves carry; a `Float64` port has none (D-166)."""
+"""The union of the tags a value's `Tracer` leaves carry; a `Float64` port has none (D-263)."""
 function _depset(v)
     deps = UInt64(0)
     for leaf in _leaf_values(v)

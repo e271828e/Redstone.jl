@@ -71,7 +71,8 @@ the verifier's probe.
   fallback read real, as a direct branch on state already reads
   (`probes/user_rows/cv2023_verdicts.jl`). Settled, `b57ad9b4`.
 - **CV2-026, held.** A D-166 citation in tracer.jl, left to the CIT-D166
-  finding.
+  finding. Settled with CIT-D166: the code's D-166 citations re-point to
+  D-238, D-235, D-263 or D-099, whichever carries the ruling.
 - **CV2-030, unmarked rule.** The fixer added §13.8's 64-face limit on
   per-member tracing as an unmarked sentence: no entry rules it, and none was
   rejected. Like the trial's two sentences, it stays unmarked unless you want an
@@ -302,7 +303,9 @@ the verifier's probe.
 - **CV6b-019, a runtime string.** A user-visible `@warn` in library.jl cites
   §7.1 for a claim §7.1 does not make. Changing it changes a message. Settled,
   `ea8f9ee8`.
-- **CV6a-033, held.** A D-166 citation in leaves.jl, left to CIT-D166.
+- **CV6a-033, held.** A D-166 citation in leaves.jl, left to CIT-D166. Settled
+  with CIT-D166: the code's D-166 citations re-point to D-238, D-235, D-263 or
+  D-099, whichever carries the ruling.
 - **S6c-002, a bold ruling reworded.** §5.2's ruling now reads "a primitive has
   at most two output stages", where it said every primitive provides two. The
   code requires neither stage. D-006 backs the old text and is in the log

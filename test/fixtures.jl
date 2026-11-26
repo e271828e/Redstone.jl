@@ -216,7 +216,7 @@ s_update(::UnreturnedCounter, (; s)) = (n = s.n + 1,)
 """
 A `Pinned` declaration of a walking state field, returned from stage 1:
 exact at the nominal activation, and a refusal at every other one — stripping
-the partials would be a stop-gradient the author never wrote (§5.3, D-166).
+the partials would be a stop-gradient the author never wrote (§5.3, D-263).
 """
 struct PinnedState <: AbstractComponent end
 
@@ -399,7 +399,7 @@ end
 A mode-carrying source: modes are continuous-only, read here and written by
 nothing — a component may legitimately declare modes no event of its own
 transitions (§8.2). The branch returning a literal is the constant-branch
-idiom (D-166).
+idiom (D-238).
 """
 struct ModedSource <: AbstractComponent end
 
@@ -1591,7 +1591,7 @@ s_update(::GearSelector, (; s)) = (n = s.n + 1,)
 """
 A struct port with an enum leaf beside a walking one, returned from literals:
 the constant-branch idiom at a mixed-leaf port, which embeds leaf by leaf at
-a non-nominal activation (D-166).
+a non-nominal activation (D-238).
 """
 struct GearState{T}
     h::T

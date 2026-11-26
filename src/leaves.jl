@@ -326,7 +326,7 @@ _leaf_values(value::Tuple) = isbits(value) ? Iterators.flatten(map(_leaf_values,
 _leaf_values(value) = isbits(value) ? Iterators.flatten(map(_leaf_values,
     ntuple(i -> getfield(value, i), fieldcount(typeof(value))))) : (value,)
 
-# --- embed-accept (D-166, decided on the type per D-238) ----------------------
+# --- embed-accept (D-238) ----------------------
 # The relation is decided on the type, not leaf by leaf: `V` is accepted at `P`
 # when lifting `V`'s `Float64` positions to `T` exactly where `P` has `T` yields
 # `P` itself, compared by identity. Deciding it walks the two parameter lists in

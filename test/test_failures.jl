@@ -165,7 +165,7 @@ detonated_reset_handler(::DetonatedOnReset, (; x)) = (x = (q = 2.0,),)
 state_events(::DetonatedOnReset) = (reset = StateEvent(detonated_reset_guard, detonated_reset_handler),)
 
 # The lawful late `Float64`: the constant branch under a `Dual` activation, which
-# the write embeds as a zero-partial rather than refusing (§9.5, D-166).
+# the write embeds as a zero-partial rather than refusing (§9.5, D-235).
 struct DecayingBranch <: AbstractComponent end
 x_init(::DecayingBranch) = (a = 1.0,)
 y_types(::DecayingBranch) = (q = Float64,)
@@ -1002,7 +1002,7 @@ function failures_conformance()
         @test lifecycle(sim) === :errored
     end
 
-    @testset "the constant branch embeds as a zero-partial at the write (§9.5, D-166)" begin
+    @testset "the constant branch embeds as a zero-partial at the write (§9.5, D-235)" begin
         dual_model = Model(single(DecayingBranch()), D8; Δt_frame = 1//100)
         init!(dual_model)
         frames!(dual_model, 20)                 # `run!` to 0.2; `a` decays under 0.5 mid-run

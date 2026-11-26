@@ -138,7 +138,7 @@ function test_readers()
             @test v.face === v.y                     # the exported face is its producer's cell
 
             # The leaf types are the activation's, so a `Dual` world reads `Dual`s
-            # and the frozen discrete store stays pinned (§9.4, D-166).
+            # and the frozen discrete store stays pinned (§9.4, D-263).
             @test v.q isa SVector{2,T} && v.q̇ isa SVector{2,T} && v.y isa T
             @test v.acc isa Float64
 

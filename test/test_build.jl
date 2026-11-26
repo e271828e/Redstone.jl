@@ -454,7 +454,7 @@ function build_port_classes()
         @test d.ports == [:q]
     end
 
-    @testset "a pinned declaration of a walking field is refused at the stage-1 port check (§9.5, D-166)" begin
+    @testset "a pinned declaration of a walking field is refused at the stage-1 port check (§9.5, D-263)" begin
         # At the nominal activation the type test is exact; at the walking one
         # the returned port no longer embeds, and taking it stripped would be a
         # stop-gradient the author never wrote.
@@ -1996,7 +1996,7 @@ function build_barrier()
     end
 end
 
-# --- the activation seam (§9.4, D-166) ----------------------------------------
+# --- the activation seam (§9.4, D-238, D-263) ----------------------------------------
 # Shared fixture: the embed-accept and activation sections both build a
 # `PinnedGetsDual`.
 
@@ -2007,7 +2007,7 @@ x_init(::PinnedGetsDual) = nothing
 y_types(::PinnedGetsDual) = (frozen = Pinned{Float64},)
 y_state(::PinnedGetsDual, (; t)) = (frozen = t,)
 
-# The constant-branch idiom (D-166): a literal `Float64` returned into a
+# The constant-branch idiom (D-238): a literal `Float64` returned into a
 # walking port is a lawful arrival, embedded as a zero-partial.
 struct ConstantBranch <: AbstractComponent end
 x_init(::ConstantBranch) = nothing
@@ -2016,7 +2016,7 @@ y_types(::ConstantBranch) = (out = Float64, vec = SVector{2,Float64})
 y_direct(::ConstantBranch, (; u)) = (out = u.in > 0 ? u.in : 0.0, vec = SVector(0.0, 1.0))
 
 function build_embed_accept()
-    @testset "a mixed-leaf port embeds leaf by leaf (§4.1, §9.4, D-166)" begin
+    @testset "a mixed-leaf port embeds leaf by leaf (§4.1, §9.4, D-238)" begin
         # The enum leaf is pinned and passes through; the `Float64` beside it
         # lifts to the activation scalar as a zero-partial.
         gear_state_build = build(Group((; c = GearStateSource())))
@@ -2025,7 +2025,7 @@ function build_embed_accept()
         @test v isa GearState{D8} && v.gear === down && ForwardDiff.value(v.h) == 1.0
     end
 
-    @testset "embed-accept keeps the constant branch legal (D-166)" begin
+    @testset "embed-accept keeps the constant branch legal (D-238)" begin
         # Both ports return literal `Float64`s at a `Dual` activation — the scalar
         # through a branch not taken, the `SVector` wholesale.
         dual_model = Model(Group((; c = ConstantBranch()); input_wires = ("in" => "c/in",)),
@@ -2117,7 +2117,7 @@ function build_activations()
         @test haskey(build(pair(); activations = (Float64, ProbeDual)).activations, ProbeDual)
 
         # §9.4's opt-in exhaustive mode: the listed activations materialize at
-        # build time, which is where CI catches a lurking pinned leaf. D-166's
+        # build time, which is where CI catches a lurking pinned leaf. D-099's
         # CI pin is spelled with `ProbeDual`; `D8` stands in for a trim's or a
         # user's own activation elsewhere in the suite.
         err = failure(() -> build(single(PinnedGetsDual());
@@ -2234,7 +2234,7 @@ function build_specializations()
     end
 end
 
-# --- every component at `ProbeDual` (§9.4, D-166) -----------------------------
+# --- every component at `ProbeDual` (§9.4, D-099) -----------------------------
 # The CI policy: every component the suite defines gets a `Dual` activation. The
 # sweep reads the types off the live module, never off the files, so a fixture
 # a test file rebinds is swept as the suite sees it.
@@ -2257,7 +2257,7 @@ carried_diagnostics(err::DiagnosticError{Vector{Diagnostic}}) = diagnostics(err)
 carried_diagnostics(err::DiagnosticError) = [diagnostic(err)]
 
 function build_dual_sweep()
-    @testset "every component gets a `Dual` activation in CI (§9.4, D-166)" begin
+    @testset "every component gets a `Dual` activation in CI (§9.4, D-099)" begin
         suite = @__MODULE__
         component_types = DataType[]
         for name in sort(names(suite; all = true))

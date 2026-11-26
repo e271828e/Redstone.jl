@@ -182,7 +182,7 @@ Spec: §11.2, §11.4, §11.6, §14.4.
     by the declared shape, a `NamedTuple` group otherwise (D-437).
 
 Spec: §5.3, §5.5, §6.3, §13.8, §6.1, §7.1, §7.3, §8.2, §9.1–§9.4, §9.7, §10.4, §13.2,
-§13.5, D-012, D-051, D-166, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
+§13.5, D-012, D-051, D-179, D-208, D-210, D-229, D-235, D-236, D-237,
 D-248, D-250, D-252, D-253, D-256, D-261, D-263, D-289, D-315, D-316, D-437,
 D-438, D-465, D-468.
 
@@ -754,14 +754,14 @@ D-455, D-460, D-461.
 - `StopFlag`, the stop-request enum, beside `Pinned` (D-316).
 - `leaf_names`' dotted spelling of a flat position, a matrix leaf by its
   indices.
-- Embed-accept's relation `_accepts` (D-166). The relation is decided on the
-  type (D-238). At a store it accepts an opaque leaf by identity (D-237). At a
-  wire it admits an opaque leaf as the producer's cell (D-264).
+- Embed-accept's relation `_accepts`, decided on the type (D-238). At a store
+  it accepts an opaque leaf by identity (D-237). At a wire it admits an opaque
+  leaf as the producer's cell (D-264).
 - The wire relation `_accepts_wire`, with its abstract arm (D-236).
 - The checked state write `flatten_state!` (D-235), with its bare arm decided
   at generation for a bare `XT`, its failure on the field `x` (D-438).
 
-Spec: §4.1, §4.3, §4.4, §6.1, §7.1, §7.2, §8.2, §9.5, §13.4, §13.5, D-166,
+Spec: §4.1, §4.3, §4.4, §6.1, §7.1, §7.2, §8.2, §9.5, §13.4, §13.5,
 D-235, D-236, D-237, D-238, D-243, D-263, D-264, D-265, D-276, D-316, D-438.
 
 ### `src/library.jl`
