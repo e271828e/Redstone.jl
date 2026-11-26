@@ -347,7 +347,7 @@ hold variant a one-liner.
 ## 9. The discrete tier
 
 `DiscretePID{Hold, Track}` is the PID of section 7 with `s = (q, yf, saturated)` in
-place of `x`, the code `saturated` being section 11's addition. Same seven fields, same ports, same two axes, same law. A
+place of `x`, the code `saturated` being section 11's addition. Same seven fields, the same ports plus `saturated`, the same two axes, the same law. A
 user moves a controller onto the discrete tier by changing a name, and the
 anti-windup reasoning of sections 3 and 4 carries over unchanged. The
 velocity form stays uncarried (section 6).
@@ -403,8 +403,9 @@ fully exact step would also scale the integral's drive by `Tt β`, which is
 `Inf · 0` at the default and needs a branch for nothing the plain `Δt`
 does not already give.
 
-**The law is shared, not the type.** The port sets, the gate and the
-reference rule are identical in both PIDs. With `parameters`, which fetches the
+**The law is shared, not the type.** The inputs, the gate and the
+reference rule are identical in both PIDs, and the outputs differ by
+`saturated` alone. With `parameters`, which fetches the
 nine parameters, they earn a supertype in the `AbstractLinearSystem` style,
 `AbstractPID{V, Hold, Track, Fixed}`, which carries them or inherits them from
 `AbstractAntiWindupController` (section 10). The
@@ -443,7 +444,7 @@ is dotted, since `SVector * SVector` is a shape error.
 
 **Every parameter a `V`.** The components are `PID{V, Hold, Track, Fixed}` and
 `DiscretePID{V, Hold, Track, Fixed}` over `AbstractPID{V, Hold, Track, Fixed}`,
-`V` first as in `LimitedIntegrator{V, L}`. Each parameter of the roster
+`V` first as in `LimitedIntegrator{V, L, R}`. Each parameter of the roster
 `PID_PARAMETERS = (:Kp, :Ki, :Kd, :τd, :Tt, :u_min, :u_max, :b, :c)` is a
 `V`, and the stores start at `zero(V)`. The keywords given as values
 broadcast to one shape by `GaussianWhiteNoise`'s idiom. The shape is the sum

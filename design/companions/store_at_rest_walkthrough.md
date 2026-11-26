@@ -310,7 +310,7 @@ trajectory opens with the post-settling checkpoint as its header. `init!`
 resets the stepper through `reset_stepper!`, and `overlay!` raises its
 discontinuity notice.
 
-| | `init!(model, cond, t₀)` | `overlay!(sim, cond)` |
+| | `init!(model, cond; t0)` | `overlay!(sim, cond)` |
 |---|---|---|
 | base for the fields `cond` leaves unset | the declared defaults ([D-063][d-063]) | the stopped run's stores |
 | clock and sampling lattice | `t₀` sets the origin; every component's phase re-anchored | kept |

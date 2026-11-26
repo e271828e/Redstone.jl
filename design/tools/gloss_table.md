@@ -165,7 +165,7 @@ the `mandatory instant` row was counted then, when D-449 added the entry.
 | device | g-device | 35 | B | any attached participant in the periphery |
 | diagnostic cell | g-diagnostic-cell | 9 | A | the single-writer ring each writer owns for diagnostics and heartbeat |
 | door | g-door | 5 | A | an entry point that builds a run |
-| drain | g-drain | 20 | A | the frame-top swap that publishes staged device writes into the root inputs |
+| drain | g-drain | 20 | A | the frame-top swap that applies staged writes to the root inputs |
 | framework status | g-framework-status | 5 | A | the frozen diagnostics value each snapshot carries beside the table |
 | greedy claim | g-greedy-claim | 3 | A | the unclaimed complement, computed by the framework instead of returned |
 | harness cell | g-harness-cell | 4 | A | the always-present staging cell of the harness writer |
@@ -202,7 +202,7 @@ the `mandatory instant` row was counted then, when D-449 added the entry.
 | recorders | g-recorders | 2 | B | the trace and the log jointly |
 | replay | g-replay | 23 | B | the ordinary loop re-driven from the trace |
 | run metadata | g-run-metadata | 1 | B | the trace header's `Deployment` and `t₀`, carrying no stop policy |
-| trace | g-trace | 27 | B | the primary record: drained, device-tagged batches per frame |
+| trace | g-trace | 27 | B | the primary record: drained, writer-tagged batches per frame |
 | trace header | g-trace-header | 10 | B | the trace's fixed preamble: the checkpoint the run's door writes once |
 | trace record | g-trace-record | 0 | — | the retained form of a drained batch |
 | what-if replay | g-what-if-replay | 2 | A | replaying a trace against the same structure with changed parameters |

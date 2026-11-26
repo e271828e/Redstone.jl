@@ -210,6 +210,16 @@ the tools.
   Appendices A and D, with "front end", the inspector's bridge and the
   client's half in its place. §11.4's worked example keeps its 60 Hz GUI,
   a hypothetical sparse writer. `ledgers/user_rows.md` holds both rulings.
+- **The small sweep, 2026-11-26.** Every "seen, not yet fixed" item above
+  was re-checked on master. Four had landed: the limited integrator's 21 or
+  22 trials, §2's and §8.1's two output stages, the store-at-rest
+  walkthrough's `_settle!` flag, and `trim!`'s and `linearize`'s nominal
+  round, now under the hosted catch. The doc fixes landed as one commit,
+  among them the drain gloss, "staged writes" in place of "staged device
+  writes" at its ten sites, since the harness cell drains too. Two items
+  are code or tooling and went to the user: a battery check for
+  merge-conflict markers, and a test of the residue's suppressed-count
+  warning.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

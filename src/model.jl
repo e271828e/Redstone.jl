@@ -1026,7 +1026,7 @@ warnings(model::Model) = vcat(warnings(model.deployment.build), warnings(model.d
 # §8.6's canonical strings, and an assembly's own path addresses its faces —
 # which resolve to the cells they derive from.
 
-# Design: §7.3, D-317, D-440.
+# Design: §7.3, Appendix B, D-317, D-440.
 """
     port(model::Model, path::String, name::Union{Nothing,Symbol} = nothing) -> Any
     port(sim::Simulation, path::String, name::Union{Nothing,Symbol} = nothing) -> Any
@@ -1054,7 +1054,7 @@ published [snapshot](@ref g-snapshot) instead, use `port(snapshot, path, name)`.
 port(model::Model, path::String, name::Union{Nothing,Symbol} = nothing) =
     gather_cell(model.exec.store, port_addr(model.exec.act.layout, path, name))
 
-# Design: §7.3, D-317, D-440.
+# Design: §7.3, Appendix B, D-317, D-440.
 """
     state(model::Model, path::String) -> Any
     state(sim::Simulation, path::String) -> Any
@@ -1084,7 +1084,7 @@ function state(model::Model{T}, path::String) where {T}
     reconstruct(typeof(_decls(ci).x), model.exec.xbuf, x_offset)
 end
 
-# Design: §7.3, D-317, D-440.
+# Design: §7.3, Appendix B, D-317, D-440.
 """
     modes(model::Model, path::String) -> Any
     modes(sim::Simulation, path::String) -> Any

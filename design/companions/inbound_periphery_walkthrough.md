@@ -173,7 +173,7 @@ frame top.
 periphery's proposals become the frame's root-input constants, and everything after
 it — the sweep, the boundaries, the published snapshot — is a pure function
 of the drained batches. That purity is what makes the **input trace** (the
-per-frame sequence of device-tagged drained batches, plus the header's
+per-frame sequence of writer-tagged drained batches, plus the header's
 initial state and root-input values and the per-writer schemas beside it) a
 complete record: replay
 feeds the same batches to the same drain and gets a bit-identical trajectory.

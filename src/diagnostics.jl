@@ -555,7 +555,7 @@ function message(d::PathResolution)
      "segment where the child is a container element, and nothing further (§6.1, §13.3)")
 end
 
-"§8.2: a declared store with no update — `x_init` without `x_deriv`, `s_init` without `s_update`."
+"§8.2: a declared store, `x_init` or `s_init`, on a primitive that defines neither `x_deriv` nor `s_update`."
 Base.@kwdef struct StoreWithoutUpdate <: Diagnostic
     path::String
     store::Symbol                            # :x_init | :s_init

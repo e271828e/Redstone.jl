@@ -211,7 +211,7 @@ end
 # `totals` is monotone between resets, so log decimation loses *which*
 # boundary an occurrence fell on, never *how many*. `task_state` is read off the
 # run's `Task` handle at publication (D-193); `:done` without a live task covers
-# a failed `init!` and a returned inline body. The records render inside their
+# a failed `init!`. The records render inside their
 # `FrameworkStatus`'s `show` (show.jl), each kind in full up to `STATUS_MAXLOG`
 # cumulative occurrences and count-only past it (§11.8).
 """
@@ -572,7 +572,9 @@ task.
 
 A path naming no component is refused as `PathResolution`, and a name the
 component has no port of as an `ArgumentError` listing its ports, as on the live
-table.
+table. A name left out at a component whose output
+[contract](@ref g-contract) is named, or at an assembly, is an `ArgumentError`
+too, which tells the caller to name the port.
 
 A snapshot carries no state, only ports. For a port's live value, see
 `port(sim, path, name)` and `port(model, path, name)`, and for snapshots

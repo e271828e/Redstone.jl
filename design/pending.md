@@ -26,8 +26,9 @@ item changes what the spec says, the spec edit is part of the item.
   `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
   brief is `00_brief.md` beside it, and the user's rows and their rulings
   are in its `ledgers/user_rows.md`. Left, in order:
-  - The small sweep of the items the notes list as seen and not yet fixed,
-    about 25, each re-checked first, since two have landed since.
+  - The small sweep's two items left for the user, a battery check for
+    merge-conflict markers and a test of the residue's suppressed-count
+    warning. Its doc fixes have landed.
   - The log clustering, Stage F step 4 of the brief: the 326 findings of
     `ledgers/log_findings.tsv` grouped by topic, one superseding entry
     drafted per group, for the user's approval. It settles CV2-026 and

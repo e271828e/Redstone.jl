@@ -37,13 +37,14 @@ meaningful no matter what later sweeps do.
 
 Every user function is called as `fn(comp, args)`, where `args` is a
 NamedTuple bundle of views ([§5.2][s5-2]). Two of its fields are **gathers** — small
-compiled loops that load cell values into a NamedTuple — and they
-partition the table by ownership:
+compiled loops that load cell values into a NamedTuple — and, but for a
+self-wire, they partition the table by ownership:
 
 - **`y` gathers the component's *own* cells** (its output ports, of both
   stages);
 - **`u` gathers *foreign* cells** (other components' ports, routed through
-  the wiring).
+  the wiring), or the component's own port where it wires that port to its
+  own input.
 
 The partition is still worth knowing — it is why a
 component can never see another's state — but it no longer carries a

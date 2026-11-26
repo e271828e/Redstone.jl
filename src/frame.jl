@@ -2,9 +2,10 @@
 # to the next, through every boundary in between. The frame tops and the due
 # instants, the base ticks at which some discrete component is due, are the
 # mandatory instants, on two lattices in no required ratio (D-445). A span runs
-# from one mandatory instant to the next, and the method takes it in the fewest
-# equal steps the deployment's `h_max` allows (D-449), so a due instant inside
-# the frame ends a span and every step end is a boundary. With localized events
+# from one mandatory instant to the next. A fixed-step method takes it in the
+# fewest equal steps the deployment's `h_max` allows (D-449), an adaptive one in
+# the steps its controller proposes. A due instant inside the frame therefore
+# ends a span, and every step end is a boundary. With localized events
 # each step is carried through `integrate → arrival sweep → trigger → θ = 0
 # validation → bracket → root-find → t* → remainder step`, iterated under the
 # frame's `localization_budget` (D-446). A sign-form guard's crossing is

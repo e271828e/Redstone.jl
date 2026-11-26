@@ -432,8 +432,8 @@ command as their tracking input, and each outer controller of the cascade reads
 the measured variable of the loop inside it (`pid_anti_windup.md`, section 11).
 Every `Tt` is one period, 0.02 s. A controller not in command lags the selected
 command by an amount that grows with `Tt` and with the rate at which its own
-law moves, and a controller in command pulls a limited integrator back within a
-tick. The switch is therefore bumpless in steady flight. During a maneuver the
+law moves, and a controller in command closes about two thirds of a limited
+integrator's excess each tick. The switch is therefore bumpless in steady flight. During a maneuver the
 standby lags the command by a few hundredths of a radian, and the switch jumps
 by that lag. Every discrete component runs at 50 Hz.
 

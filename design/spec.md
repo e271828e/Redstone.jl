@@ -2964,7 +2964,7 @@ undeclared or written `(;)`.
 On a continuous consumer the declaration is [walked](#g-walked), which means
 that every `Float64` position follows the scalar and a `Pinned` leaf stays
 `Float64`. On a discrete consumer it pins wholesale. A `Pinned` entry there
-says nothing and is `DeclarationOnWrongTier` ([§8.5][s8-5], [D-263][d-263]).
+says nothing and is `DeclarationOnWrongTier` ([D-263][d-263]).
 
 **Entries are [face](#g-face) bounds, not cell types, and the reading is permissive**
 ([D-263][d-263], [D-078][d-078]). A face is the name a port wears on its component's
@@ -5735,7 +5735,8 @@ evaluates the model at a frozen instant.
 - [Guards](#g-guard) and handlers never run, because event localization runs
   as `Float64` [sweeps](#g-sweep) by design ([§9.5][s9-5], [D-052][d-052]).
 - Only the continuous output stages (`y_state`/`y_direct`), `x_deriv` and
-  `x_projection` ever see a `Dual`. So only they are probed at it.
+  `x_projection` ever see a `Dual` ([D-111][d-111]). So only they are probed
+  at it.
 
 A model at a `Dual` that is stepped across frames executes the same set at
 every instant. Its discrete side stays held for the whole run
@@ -7901,7 +7902,7 @@ consequence for execution modes.
 
 The replacement's unit of account is the [frame](#g-frame) (one fixed period of the run, [§10.1][s10-1]). Each
 frame is one iteration of the loop. The loop runs the [drain](#g-drain) (the frame-top swap
-that applies staged device writes to the root inputs), then integrates to each
+that applies staged writes to the root inputs), then integrates to each
 boundary in turn, every step end and every [`t*`](#g-t) (an event's crossing
 instant inside a step) included. At each boundary it runs the
 [boundary sequence](#g-boundary-sequence) and publishes ([§10.1][s10-1]). A frame is what `step!` counts, and
@@ -8312,7 +8313,7 @@ the released faces ([D-370][d-370]). A front end's widgets for a released root i
 live only once a front end attached after the release claims it, because a claim is
 taken at attach and never recomputed ([§11.7][s11-7], [D-174][d-174], [D-370][d-370]). Exclusivity replaces any cross-device conflict
 *policy* ([D-044][d-044]), such as attachment-order precedence at the [drain](#g-drain) (the
-frame-top swap that applies staged device writes to the root inputs). Per-device
+frame-top swap that applies staged writes to the root inputs). Per-device
 [staging cells](#g-staging-cell) (where each device's pending batch waits between drains), the
 compare-and-swap (CAS) merge and the atomicswap drain all stay. They serve
 atomicity and [coalescing](#g-coalescing) (keeping one pending batch per device), not
@@ -8527,7 +8528,7 @@ compare-and-swap, or CAS, merge that keeps one pending set of writes per device)
 under which a device writes into its staging cell. It then fixes the doctrine
 for staged values, the mappings that produce them, the shape the staging cell
 holds, the sites of the staging diagnostics, and the [drain](#g-drain) (the frame-top swap
-that applies staged device writes to the root inputs) that empties it. A worked
+that applies staged writes to the root inputs) that empties it. A worked
 example closes the section.
 
 #### The coalescing policy
@@ -8790,8 +8791,9 @@ Each batch is tagged by the [device](#g-device) or the
 [harness writer](#g-harness-writer) that staged it. A device is any attached
 participant in the periphery, and a batch is its staged set of writes. The
 harness writer is the framework-owned write path `stage!(sim, …)`. A frame is
-one iteration of the loop, from drain to publication.
-The drain is the frame-top swap that applies staged device writes to the root
+one iteration of the loop, its drain followed by the boundaries it integrates
+to, each one published.
+The drain is the frame-top swap that applies staged writes to the root
 inputs. The trace extends the determinism ([§10.7][s10-7]) end-to-end. [Replay](#g-replay) re-runs the
 ordinary loop on a recorded input trace. Replaying a recorded interactive
 session reproduces the trajectory bit-identically ([§2.4][s2-4]), with staging fed from
@@ -8874,7 +8876,8 @@ step bound `h_max`, the step [floor](#g-floor) `h_min`, the algorithm with its t
 the attempt budget ([§10.2][s10-2], [D-460][d-460]), `localization_tol`, `localization_budget` ([§10.4][s10-4]) and
 `firing_budget` ([§10.6][s10-6], [D-254][d-254]). The fingerprint is the store layout and the
 root-input faces the [`Build`](#g-build) (the artifact `build(world)` produces) fixes. It
-also holds what a copy by position relies on, namely each component's `x` type,
+also holds what a copy by position relies on, namely each component's `x`, `s`
+and `m` types,
 every cell's address with its type, and the event list in the order of the
 priors. Both are taken at the same instant as the state. The deployment holds no
 policy ([D-255][d-255]). `t_end` and `ignore_stop_requests` are keywords of each advance
@@ -8966,7 +8969,7 @@ caller may still hold the handle `attach!` returned. Its two write primitives,
 reads. A report would land in a [diagnostic cell](#g-diagnostic-cell) that no [frame](#g-frame) top folds. A batch
 is a device's staged set of writes. A staging cell is the per-device holding
 place where a pending batch waits between drains. The drain is the frame-top
-swap that applies staged device writes to the root inputs. A diagnostic cell is
+swap that applies staged writes to the root inputs. A diagnostic cell is
 each writer's bounded ring of diagnostics and its [heartbeat](#g-heartbeat). A frame is one
 iteration of the loop. Silence is the hidden-bug class this section tolerates
 nowhere. The read primitives stay legal, since they read the simulation's shared
@@ -9013,7 +9016,8 @@ task = Threads.@spawn try
 catch e
     report!(entry, DeviceCrash(e, entry.should_abort))   # §12.4(6): sim continues, device absent
 finally
-    shutdown!(dev)                           # any exit path: OS resources released
+    _shutdown!(entry)                        # any exit path: OS resources released,
+                                             # a throw out of shutdown! warned
                                              # no dead-marking: task_state shows the end,
                                              # claims stay, §11.3
 end
@@ -9423,7 +9427,7 @@ snapshot value** ([D-026][d-026]). It peeks its own staging cell only. Another d
 pending write is invisible by design. Its applied value arrives via the snapshot
 one [frame](#g-frame) (one iteration of the loop) later, and cross-device peek is rejected
 ([D-026][d-026]). While paused, staged edits display indefinitely and apply at the
-un-pause [drain](#g-drain) (the frame-top swap that applies staged device writes to the root
+un-pause [drain](#g-drain) (the frame-top swap that applies staged writes to the root
 inputs). Fan-out is consistent for free. Widgets on ports resolving to the same
 root input peek the same pending value.
 
@@ -9576,7 +9580,7 @@ the two rules of [§11.1][s11-1] exist to eliminate. So the channel gets the mec
 rostered device, one for the harness writer and one for the loop itself ([D-200][d-200]).
 The [`Model`](#g-model) (the deployment and its executor at one scalar) owns one more. Its
 frame writes the chattering and firing-budget reports there. The [drain](#g-drain) (the
-frame-top swap that applies staged device writes to the root inputs) folds that
+frame-top swap that applies staged writes to the root inputs) folds that
 diagnostic cell into the loop's account beside the loop's own ([D-317][d-317]).
 
 A device's diagnostic cell, the loop's and the `Model`'s each have a single
@@ -9858,7 +9862,7 @@ diagnosable.
 scheduling window for the co-resident tasks of [devices](#g-device) (the
 attached participants in the periphery). The design already spends that slot
 twice, as the staging slot ([§10.7][s10-7]) and as what the
-[drain](#g-drain) (the frame-top swap that applies staged device writes) takes
+[drain](#g-drain) (the frame-top swap that applies staged writes) takes
 ([§11.4][s11-4]).
 
 A `systemsleep` variant for dedicated-thread hard real-time deployments is a
@@ -9977,7 +9981,7 @@ expected and correct. A waiter may observe a *newer* snapshot than the increment
 that woke it. Newest wins.
 
 The device side is `wait_next_snapshot(handle)`, which blocks until
-`counter > last_seen && running` under the canonical predicate-loop idiom. That
+`counter > last_seen || !running` under the canonical predicate-loop idiom. That
 idiom handles waiters at different paces, boundaries skipped while transmitting,
 and shutdown, all with no per-frame reset. Shutdown works because [§12.4][s12-4] wakes
 all waiters and each predicate then routes its owner out ([D-028][d-028]).
@@ -10802,8 +10806,9 @@ This section specifies [replay](#g-replay), re-running the ordinary loop on a re
 its run continued live. A trace is the primary record of a session, a fixed
 [trace header](#g-trace-header) plus the [batches](#g-batch) drained at each [frame](#g-frame). A batch is a [device](#g-device)'s
 staged set of writes, and a device is any attached participant in the periphery.
-A frame is one iteration of the loop, from drain to publication. The [drain](#g-drain) is
-the frame-top swap that applies staged device writes to the [root inputs](#g-root-input). The
+A frame is one iteration of the loop, its drain followed by the boundaries it integrates
+to, each one published. The [drain](#g-drain) is
+the frame-top swap that applies staged writes to the [root inputs](#g-root-input). The
 root inputs are the root component's own inputs, the only thing the periphery
 may write. `replay!` is the entry point the trace exists for ([§11.5][s11-5]):
 
@@ -11311,7 +11316,7 @@ warnings, and the failure descriptor consumes it ([§13.9][s13-9],
 
 Two rendering rules are doctrine, not style ([D-058][d-058]).
 
-- The first rule is *strings, never instances*. Diagnostics carry paths and names,
+- The first rule is *paths and names, never instances*. Diagnostics carry paths and names,
   never [component](#g-component) instances and never component types. This is the
   lesson of FlightCore's `compact_backtrace`. Expected and observed *[port](#g-port)* types are
   the one payload exception, and they are small. Examples are a `Float64` against
@@ -11642,7 +11647,7 @@ pointer is the boundary its model stands at. That is 0 for `trim!` and for
 `linearize` under `about`, and the checkpoint's frame for `linearize`'s
 default form. A `StepError`
 renders under the doctrine of [§13.2][s13-2]. The cursor frame and the reproduction come
-first, the cause second, and names are strings.
+first, the cause second, and it carries paths and names, never instances.
 
 Conformance failure ([§9.5][s9-5]) needs no separate path. At the table-write
 point it throws as every fail-fast site does, a `DiagnosticError` holding the
@@ -15688,9 +15693,9 @@ collection ([§9.2][s9-2], [D-250][d-250]).
   against the closed vocabulary (scalar / `SArray` at the common eltype):
   `:mode_value`, `:eltype`, `:nested` or `:wrapper`.
 - **`StoreWithoutUpdate`** ([§8.2][s8-2]). Error · build · collected.
-  Component path, the `x_init` or `s_init` store, the missing update (no
-  `x_deriv` for the one, no `s_update` for the other). A
-  declared store only; a state declaration of `nothing` owes no update ([D-263][d-263]).
+  Component path and the `x_init` or `s_init` store, on a primitive that
+  defines neither `x_deriv` nor `s_update`. A store beside the other tier's
+  update is `DeclarationOnWrongTier`. A declared store only; a state declaration of `nothing` owes no update ([D-263][d-263]).
 - **`EventHalfMissing`** ([§8.2][s8-2]). Error · build · collected. Component
   path, event name, reason (guard half missing / handler half missing / the
   entry is not a `StateEvent`), the component's type for a missing half or
@@ -15765,7 +15770,7 @@ collection ([§9.2][s9-2], [D-250][d-250]).
 - **`ChildNameCollision`** ([§8.5][s8-5]). Error · build · collected as
   `ContainerMixed` is. Assembly path, the colliding child name, a `reason`,
   `:sample_times_sugar` (a bare container key against the `sample_times` sugar,
-  [D-211][d-211]), `:sibling_field` (a bare key against a sibling field,
+  [D-215][d-215]), `:sibling_field` (a bare key against a sibling field,
   [D-212][d-212]) or `:two_children` (two children with one name), and the
   declarations. Those are
   both children for two with one name, and the one element for a bare key,
@@ -16170,7 +16175,8 @@ activation):
   renormalization). Harness writer only. A device's out-of-surface entry
   is `OutOfClaimEntry`.
 - **`OutOfClaimEntry`** ([§11.3][s11-3]). Warning · runtime · rate-limited.
-  Face name, the discarded value, the writer's claim set, and the incumbent's
+  Face name, the discarded value, the writer's surface (a device's claim set,
+  the harness writer's unclaimed complement), and the incumbent's
   device id when the face is claimed elsewhere.
 - **`ThreadBudget`** ([§12.2][s12-2]). Warning · runtime, at `run!` or
   `replay!` · rate-limited. Thread count, device-task count.
@@ -16941,8 +16947,8 @@ consumer on its producers' returns. Other [activations](#g-activation) re-run it
 
 <a id="g-probe-value"></a>**probe value / input synthesis** — the fabricated values a build-time [probe](#g-probe)
 runs on. `probe_value(::Type)` synthesizes them at the one kind of terminal
-with no producer, [root inputs](#g-root-input) (`zero(T)`/`false`/first enum/`T()`,
-overridable). From there they flow the probe chain as the probed stages' own
+with no producer, [root inputs](#g-root-input) (`zero(T)` for a number or a
+static array, `false`, the first enum value or `T()`, overridable). From there they flow the probe chain as the probed stages' own
 returns ([§13.1][s13-1]). They are strictly probe-scoped, never an initial
 root-input value, and a structural barrier keeps the two apart ([§9.3][s9-3],
 [§14.6][s14-6]).
