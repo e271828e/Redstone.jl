@@ -17,16 +17,6 @@ item changes what the spec says, the spec edit is part of the item.
   `design/pending.md` holds its state and work order, its
   `design/roadmap.md` the staging. This repo owes it nothing before the
   release, and the later stages after.
-- **One hosted catch for model code** (§13.4, §14.8, §14.10). `trim!` and
-  `linearize` run their scratch evaluations outside any catch, so a stage
-  that throws there arrives bare, where `init!` raises a `StepError` that
-  names the component. One helper on `Model` comes to host every stretch of
-  model code, the doors', the frame's and the services', and D-481's cursor
-  copy goes. The item is the docs audit's "seen and not fixed" one on the
-  nominal round, widened. Stage reached: built as D-482, reviewed and
-  fixed, its rulings approved by the user, and pushed. Left: the scratch
-  that `design/increments/20261126_hosted_catch/notes_hosted_catch.md`
-  lists is cleared, and this bullet retired.
 - **The docs conformance audit.** The spec, the log, the docstrings, the
   companions and the rest of the docs are checked against the code, which
   is the source of truth, in both directions, and what drifted is fixed.

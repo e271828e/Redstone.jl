@@ -12,10 +12,10 @@ implementation.
 
 ## 1. State
 
-- Stage reached: pushed. The user approved the rulings of section 3 on
-  2026-11-26 and asked for the push. Clearing the scratch below is what is
-  left.
-- The scratch stays until the push, under
+- Stage reached: closed. The user approved the rulings of section 3 on
+  2026-11-26 and asked for the push, and the scratch below was cleared after
+  it.
+- The scratch, removed after the push, was under
   `/Users/miguel/.julia/dev/Redstone.jl-worktrees/`: the worktrees
   `hosted_catch` (branch `hosted-catch-proto`), `hosted_catch_fix` (branch
   `hosted-catch-fix`), `hosted_catch_review` and `hosted_catch_review_pre`,
