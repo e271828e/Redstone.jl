@@ -103,7 +103,63 @@ same_linearization(left, right) =
 rig_lin_pend() = Group((; rig = lin_pend()); input_wires = ("torque" => "rig/τ", "gust" => "rig/d"),
                        output_wires = ("rig/θ" => "angle", "rig/u_eff" => "drive"))
 
+# The throws of model code inside a linearization (§13.4, §14.10). `FloorLag`'s
+# output is refused below -10 and its derivative is not a real number below 0,
+# so an `about` point at -20 fails the round and one at -1 the first pass.
+# `ShyState` is cut by an interrupt once its own state is seeded, which with
+# `width = 1` and `shy` the second `x` tap is the second pass.
+struct FloorLag <: AbstractComponent end
+x_init(::FloorLag) = (v = 1.0,)
+u_types(::FloorLag) = (u = Float64,)
+y_types(::FloorLag) = (v = Float64,)
+y_state(::FloorLag, (; x)) = (v = x.v ≥ -10 ? x.v : throw(DomainError(x.v, "below the floor")),)
+x_deriv(::FloorLag, (; x, u)) = (v = sqrt(x.v) - u.u,)
+
+struct ShyState <: AbstractComponent end
+x_init(::ShyState) = (w = 1.0,)
+y_types(::ShyState) = (w = Float64,)
+y_state(::ShyState, (; x)) = (w = x.w,)
+x_deriv(::ShyState, (; x)) = (w = shy_rate(x.w),)
+shy_rate(w::Float64) = -w
+shy_rate(w::ForwardDiff.Dual) = iszero(ForwardDiff.partials(w)) ? -w : throw(InterruptException())
+
+shy_world() = Group((; lag = FloorLag(), shy = ShyState()); input_wires = ("in" => "lag/u",))
+shy_taps() = taps(x = (v = get_state("lag", :v), w = get_state("shy", :w)), u = (;), y = (;))
+
 function test_linearize()
+    @testset "a throw of model code in the round or a pass is a `StepError` under host `:linearize` (§13.4, §14.10)" begin
+        at_lag(v) = combine(set(u = (in = 0.0,)), at("lag", set(x = (v = v,))))
+        for (v, frame) in ((-20.0, CursorFrame("lag", :y_state, :round, 1)),
+                           (-1.0, CursorFrame("lag", :x_deriv, :evaluation, 1)))
+            model = Model(shy_world(); Δt_frame = 1//10)
+            err = failure(() -> linearize(model, shy_taps(); about = at_lag(v), t0 = 1//4))
+            @test err isa StepError{DomainError}
+            @test err.host === :linearize && err.boundary == 0 && err.t == 0.25
+            @test err.cursor == frame
+            @test model.status === :built
+        end
+        # The default form names the checkpoint's frame, counts the passes, and
+        # leaves the model as it was.
+        model = Model(shy_world(); Δt_frame = 1//10)
+        init!(model, at_lag(1.0))
+        frames!(model, 2)
+        before = checkpoint(model)
+        err = failure(() -> linearize(model, shy_taps(); width = 1))
+        @test err isa StepError{InterruptException}
+        @test err.host === :linearize && err.boundary == 2 && err.t == 0.2
+        @test err.cursor == CursorFrame("shy", :x_deriv, :evaluation, 2)
+        @test model.status === :consistent
+        after = checkpoint(model)
+        @test after.x == before.x && after.t == before.t && same_table(after.table, before.table)
+        sim = Simulation(shy_world(); Δt_frame = 1//10)
+        init!(sim, at_lag(1.0))
+        @test failure(() -> linearize(sim, shy_taps(); width = 1)) isa StepError{InterruptException}
+        @test lifecycle(sim) === :initialized
+        # At a width holding both taps the one pass seeds `shy`.
+        @test failure(() -> linearize(model, shy_taps())).cursor ==
+              CursorFrame("shy", :x_deriv, :evaluation, 1)
+    end
+
     @testset "the pendulum linearizes to its closed form, exact to round-off (§14.10)" begin
         sim = Simulation(lin_pend(); Δt_frame = 1//10)
         init!(sim, lin_point())

@@ -670,6 +670,33 @@ function failures_runtime()
                        "overlay!(sim2, condition) on the same stopped state runs it again",
                        cut_overlay)
         @test !occursin("replay!", cut_zero) && !occursin("replay!", cut_overlay)
+        # A service runs no frame: its line names the service, the evaluation and
+        # the boundary its scratch stood at, and the same call reproduces it.
+        trim_rendered = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 3),
+                                                    0.25, 0, :trim, Tripped()))
+        @test startswith(trim_rendered,
+                         "StepError: in `c` x_deriv, evaluation 3 of trim! at boundary 0 (t = 0.25):")
+        @test occursin("trim!(sim2, problem; baseline, t0) with the same arguments reproduces it",
+                       trim_rendered)
+        linearize_rendered = sprint(showerror, StepError(CursorFrame("c", :y_state, :evaluation, 2),
+                                                         0.2, 2, :linearize, Tripped()))
+        @test startswith(linearize_rendered,
+                         "StepError: in `c` y_state, evaluation 2 of linearize at boundary 2 (t = 0.2):")
+        @test occursin("linearize(sim2, tap_set) at the same operating point reproduces it",
+                       linearize_rendered)
+        cut_trim = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 3), 0.0, 0,
+                                               :trim, InterruptException()))
+        @test occursin("an interrupt cut the trim, so nothing reproduces it; " *
+                       "trim!(sim2, problem; baseline, t0) with the same arguments runs it again",
+                       cut_trim)
+        cut_linearize = sprint(showerror, StepError(CursorFrame("c", :x_deriv, :evaluation, 1), 0.2, 2,
+                                                    :linearize, InterruptException()))
+        @test occursin("an interrupt cut the linearization, so nothing reproduces it; " *
+                       "linearize(sim2, tap_set) at the same operating point runs it again",
+                       cut_linearize)
+        for rendered in (trim_rendered, linearize_rendered, cut_trim, cut_linearize)
+            @test !occursin("of the frame", rendered) && !occursin("replay!", rendered)
+        end
 
         # A `Diagnostic` cause renders as its logline: the kind name leads, and the
         # leaf the sweep named is in the line.

@@ -9,8 +9,10 @@
 # discrete cells and a seeded half at the service's own `Dual` scalar
 # (trim.jl). What this file adds is the tap resolution with its five refusals,
 # the passes of `width` directions, and the split of values from partials.
-# Nothing here writes the model: both executors are locals and die with the
-# call, which is what makes linearization a pure query.
+# Nothing here writes the model: both halves are scratch models, locals that die
+# with the call, which is what makes linearization a pure query. Each call that
+# runs model code is a stretch hosted on the scratch that runs it (model.jl's
+# `_hosted`), so a throw there is a `StepError` with host `:linearize`.
 #
 # The service takes the `Model{Float64}` that holds the operating point
 # (D-319). The simulation's method is sim.jl's: it gates on the lifecycle and
@@ -184,15 +186,19 @@ end
 # D-272, D-274, D-319, D-406, D-428.
 # A pure query on scratch buffers. On a simulation the default operating point
 # is `checkpoint(sim)`, through sim.jl's method. The nominal half is a
-# `Float64` scratch executor: by default the checkpoint restored, whose held cells are the frozen
+# `Float64` scratch model: by default the checkpoint restored, whose held cells are the frozen
 # tier's (D-274); under `about`, the condition applied and checked total over
 # the root inputs (§14.6), then one establishment round (D-213). The seeded half,
-# at `Dual{LinearizeTag,Float64,width}`, is a scratch executor with the
+# at `Dual{LinearizeTag,Float64,width}`, is a scratch model with the
 # operating point written as zero-partial constants and the frozen discrete
 # cells copied from the nominal half (D-213). The seeds are one direction per
 # `x` tap and per `u` tap, `x` first, each written at its resolved site, the
-# state's `xbuf` slot or the root input's cell (D-272). Both executors die with
-# the call, with no commit and no boundary zero. `t0` is admitted only beside
+# state's `xbuf` slot or the root input's cell (D-272). Both halves die with
+# the call, with no commit and no boundary zero. The `about` form's round, at
+# round 1 as boundary zero's, and each pass, at phase `:evaluation`, are
+# stretches hosted on their scratch with host `:linearize` and the pointer the
+# boundary the operating point stands at,
+# the checkpoint's frame or 0 under `about` (§13.4). `t0` is admitted only beside
 # `about`, never silently ignored (Appendix B). The query is a read, so a model
 # a simulation has claimed still answers it (D-319). The tap set's refusals:
 # no discrete store in `x` (D-197), no unseedable root input in `u` (D-168,
@@ -255,6 +261,12 @@ A `t0` without `about`, a `t0` that is not an exact time as [`init!`](@ref)
 takes one, a `width` below 1, a second argument that is not a tap set, and a
 model at a scalar type other than `Float64` are refused as `ArgumentInvalid`.
 
+A throw of model code inside an evaluation, an `InterruptException` included,
+arrives as a `StepError` with host `:linearize`, naming the
+[component](@ref g-component) and the evaluation. Its `boundary` is the one the
+operating point stands at, the checkpoint's frame or 0 under `about`. It leaves
+the model as it was.
+
 # Keywords
 
 - `about`: a condition placing the operating point, or `nothing` for
@@ -306,21 +318,29 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
     (x_entries, u_entries, y_entries) = _resolve_taps(tap_set, build, T)
 
     # --- the nominal half (D-213) ------------------------------------------------
-    nominal_exec = _scratch(model, Float64).exec
+    nominal = _scratch(model, Float64)
+    nominal_exec = nominal.exec
     if about === nothing
         _restore_state!(nominal_exec, operating_point)   # the held cells are the frozen tier's (D-274)
+        # the boundary the operating point stands at, which the passes' throws name (§13.4)
+        entry_boundary = _frames_to(operating_point.deployment, operating_point.t, operating_point.t₀)
     else
         origin = _origin(:linearize, something(t0, 0), model.deployment)
         _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
         plan = resolve_condition(about, build, Float64)
         assert_total(plan, build.structure, :linearize)   # (§14.6): before any evaluation
         apply!(nominal_exec, plan)
-        _round!(nominal_exec, ESTABLISH)             # every discrete output stage, due or not
+        entry_boundary = 0
+        # the establishing round, a stretch hosted on the nominal scratch (§13.4)
+        _hosted(nominal, entry_boundary, :linearize) do nominal
+            _establishment_round!(nominal)
+        end
     end
 
     # --- the seeded half ---------------------------------------------------------
     act = activation(build, T)
-    seeded_exec = _scratch(model, T).exec
+    seeded = _scratch(model, T)
+    seeded_exec = seeded.exec
     if about === nothing
         copyto!(seeded_exec.xbuf, operating_point.x)   # zero partials throughout
         _restore_stores!(seeded_exec, operating_point)
@@ -354,12 +374,13 @@ function _linearize(model::Model{Float64}, tap_set::Taps, operating_point, about
     ẋ₀, y₀ = Vector{Float64}(undef, n_x), Vector{Float64}(undef, n_y)
     A, B = zeros(n_x, n_x), zeros(n_x, n_u)
     C, D = zeros(n_y, n_x), zeros(n_y, n_u)
+    _phase!(seeded_exec.cursor, :evaluation)   # `evaluate!` counts the passes from 1
     for group in (N == 0 ? (1:0,) : Iterators.partition(1:N, width))
         for (k, site) in enumerate(sites)
             pos = k in group ? k - first(group) + 1 : 0
             _seed_site!(seeded_exec, site, _seed(T, site_values[k], pos))
         end
-        evaluate!(seeded_exec)
+        _hosted(evaluate!, seeded, entry_boundary, :linearize)
         for (i, (_, entry)) in enumerate(x_entries)
             ẋ₀[i] = _readback!(A, B, i, _read(entry, seeded_exec), group, n_x)
         end

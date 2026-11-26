@@ -1119,6 +1119,11 @@ happened. The keywords mean what they mean on the model's method.
 `trim!` is legal where `init!` is. It is refused as `ServiceLifecycle` while
 `running`, and once `errored`. A second argument that is not a `TrimProblem` is
 refused as `ArgumentInvalid`.
+
+A throw of model code inside an evaluation of the search arrives as a
+`StepError` with host `:trim`, and leaves the simulation as it was. A throw
+inside the commit, or in the evaluation of the committed state, leaves it
+`built`, and no report is returned.
 """
 function trim!(sim::Simulation, problem::TrimProblem; baseline,
                t0 = 0, backend = LevenbergMarquardt())
@@ -1155,6 +1160,9 @@ refused as `CheckpointMidFrame` with the clock off a frame top. The `about` form
 is legal where [`init!`](@ref) is. A second argument that is not a tap set from
 [`taps`](@ref) is refused as `ArgumentInvalid`, and so are a `width` below 1 and
 a `t0` without `about`.
+
+A throw of model code inside an evaluation arrives as a `StepError` with host
+`:linearize`, and leaves the simulation as it was.
 """
 function linearize(sim::Simulation, tap_set::Taps; about = nothing,
                    t0 = nothing, width::Int = LINEARIZE_WIDTH)

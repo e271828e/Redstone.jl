@@ -592,7 +592,10 @@ D-256, D-261, D-268, D-270, D-315.
 - §12.7's replay trio `CheckpointMismatch`, `ReplaySchemaMismatch` and
   `ReplayUnknownFace` (D-255, D-274).
 - `CheckpointMidFrame` (D-274).
-- `StepError`'s `host` and its rendered recipe (§13.4, D-274).
+- `StepError`'s `host` and its rendered lines, each host's location, recipe
+  and interrupt line in `_host_lines`, `:trim` and `:linearize` among them, and
+  `_phase_text`'s `:evaluation`, a service's bare evaluation by its ordinal
+  (§13.4, D-274).
 - `CheckpointMismatch`'s store and clock arms, and `ArgumentInvalid`'s
   `restore` arm.
 - `StopRequestInvalid`, the refusal of an `ignore_stop_requests` path (§13.5,
@@ -677,9 +680,9 @@ D-249, D-255, D-261, D-289, D-317, D-437, D-438, D-452.
 
 - The model's `frame!(model, k, hooks)` (D-317): the top
   hook, whose `true` raises the stepper's discontinuity notice (D-452), then
-  `_frame_steps!`, inside §13.4's one `try`, whose catch writes
-  `:inconsistent` and builds the `StepError` with `_wrap_step` for every throw,
-  an interrupt included (D-441). The claim's gate and the refusal of a `k`
+  `_frame_steps!`, one stretch hosted by model.jl's `_hosted` with host
+  `:loop`, which writes `:inconsistent` and builds the `StepError` for every
+  throw, an interrupt included (D-441). The claim's gate and the refusal of a `k`
   past `_last_frame(model)`, the lesser of the `Lattice`'s `max_frame` and
   the clock's resolution from the origin, precede the `try`, so that
   refusal leaves the model `:consistent` (D-318, D-445, D-450).
@@ -872,7 +875,10 @@ Spec: §2.3, §5.4, §5.5, §6.2, §6.3, §8.1, §8.7, §10.4, §13.5, §13.7, D
 - `linearize` on a `Model{Float64}`, over D-213's two-half scratch world in
   passes of `width` directions, the seeds written at the resolved taps' own
   sites. Each half is a scratch `Model`, built by model.jl's `_scratch`
-  (D-317, D-319).
+  (D-317, D-319). The `about` form's round and each pass are stretches hosted
+  on their scratch by model.jl's `_hosted`, host `:linearize`, the round at
+  round 1 and each pass at phase `:evaluation`, the pointer the checkpoint's
+  frame or 0 (§13.4).
 - `_check_linearize_call`, the keyword refusals, and `_linearize`, the query
   over a chosen operating point, which the simulation's method in sim.jl
   shares (D-319).
@@ -936,8 +942,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
   D-213, D-317): `_scratch`, the model's buffer set at another scalar, which
   dies with the call, and `_establish_frozen!`, the frozen copy over the
   `Outputs`' port list. Its model method is `init!`'s nominal half at a
-  non-nominal scalar, with `_drop_partials`, a value rebuilt at its nominal
-  cell type with each `Dual` leaf at its value (§9.4, D-481).
+  non-nominal scalar, a stretch hosted on its scratch with host
+  `:boundary_zero` before `init!`'s own, with `_drop_partials`, a value rebuilt
+  at its nominal cell type with each `Dual` leaf at its value (§9.4, §13.4,
+  D-481).
 - The frame's hooks `FrameHooks`, with `frame_top!` and `settled!`, and the
   no-op `NoHooks` (§11.2, §13.5, D-317). `frame_top!` returns whether it
   wrote a value, which raises the discontinuity notice and denies the frame's
@@ -968,21 +976,21 @@ soon as nothing in it names a `Simulation` in a signature, and below
     forms `_exact_origin` takes, refusing one whose run the clock's integers
     cannot carry by `_clock_integers`, the checked clock formula at the run's
     two ends (D-457), does the writes, asks the stepper to
-    reset its carried state, `reset_stepper!` (D-452), runs boundary zero
-    under §13.4's catch, at a non-nominal scalar after the frozen cells'
-    nominal projection and round (D-481), and settles it through the hooks
-    (§14.5, D-223);
+    reset its carried state, `reset_stepper!` (D-452), runs boundary zero as
+    a stretch hosted by `_hosted`, at a non-nominal scalar after the frozen
+    cells' nominal projection and round (D-481), and settles it through the
+    hooks (§14.5, D-223);
   - `overlay!`, in the same two methods, whose condition method resolves with
     the stores as the merge bases, `_store_values`, and whose plan method
-    raises the discontinuity notice and runs the continuing settling under
-    the same catch with host `:overlay` (§12.6, §14.1, D-429, D-452);
+    raises the discontinuity notice and runs the continuing settling as a
+    stretch hosted with host `:overlay` (§12.6, §14.1, D-429, D-452);
   - `apply!` on a model, gated under `NoHooks` before the inner
     `_apply_plan!`, which `init!` and the simulation's forwarding method call;
   - `restore!(model, model_state; hooks)`, whose fingerprint check
     `_check_checkpoint!` and grid check `_check_grid!` precede the ungated
     inner `_restore_state!`, which
-    the simulation's door body calls and which hosts §13.4's catch around the
-    copy and the settling, writing `:built` under host `:restore` (D-441), with
+    the simulation's door body calls and which hosts the copy and the settling
+    as one stretch, writing `:built` under host `:restore` (D-441), with
     the scalar fallback on a state at another scalar (D-274, D-319).
   `frame!` (frame.jl) and `trim!` (trim.jl) are the other two gated doors.
   The stepping primitives `evaluate!`, `integrate!`, `boundary!`,
@@ -996,8 +1004,10 @@ soon as nothing in it names a `Simulation` in a signature, and below
   `event_phase!` returns, or its due set is not empty (D-452). `boundary!`,
   `offtick_boundary!` and `boundary_zero!` are thin wrappers over it, and
   `overlay!`'s continuing settling is its empty due set (D-429). Beside it
-  `_round!` and the §10.6 event phase `event_phase!`, with its `FiringBudget`
-  degradation into the model's diagnostic cell.
+  `_round!`, `_establishment_round!`, the round at boundary zero's phase that
+  the nominal halves of `init!`, `trim!` and `linearize`'s `about` form run
+  (D-205, D-213, D-481), and the §10.6 event phase `event_phase!`, with its
+  `FiringBudget` degradation into the model's diagnostic cell.
 - The seam's framework side (§10.2, D-452): `integrate_step!`, the attempt
   loop, which the frame loop calls with the step's offered length, the
   instant no attempt may pass, its frame index and the freshness flag, and
@@ -1018,9 +1028,15 @@ soon as nothing in it names a `Simulation` in a signature, and below
 - `warnings(::Model)` (D-250), and the reads `port`, `state` and `modes` on
   the model, which refuse an unknown path through `_component_index` and
   `refuse_path` (D-440).
-- The one `StepError` constructor `_wrap_step`, which the model's `frame!`,
-  `init!`, `overlay!` and the inner restore call, and the species rule `_species` with the runtime bundle-field
-  match (§13.2, §13.4, D-059, D-221, D-248).
+- The one host of model code `_hosted`, which runs a stretch on the model it
+  is given, a service's scratch included, and on a throw writes that model's
+  status by the host and rethrows the `StepError`. Its callers are the
+  model's `frame!` (`:loop`), `init!` and its nominal half (`:boundary_zero`),
+  `overlay!` (`:overlay`), the inner restore (`:restore`) and the services'
+  evaluations in trim.jl (`:trim`) and linearize.jl (`:linearize`). Beside it
+  the one `StepError` constructor `_wrap_step`, its one caller `_hosted`, and
+  the species rule `_species` with the runtime bundle-field match (§13.2,
+  §13.4, D-059, D-221, D-248, D-441).
 - The checkpoint's model-level half: `_fingerprint`, and `checkpoint(model)`
   over the rest gate `_assert_at_rest`, the status and the clock on a grid
   top, which `overlay!` and the simulation's doors share, with its two
@@ -1534,7 +1550,11 @@ Spec: §5.4, §13.8, §9.3, D-012, D-140, D-245, D-437.
 - `_solve_problem`, the solve through the verdict's evaluation, with both
   halves' clocks set at `t0` through store.jl's `_set_origin!` (§14.8,
   D-458), and `_verdict!`, which takes the caller's
-  commit, both shared with the simulation's method in sim.jl (D-319).
+  commit, both shared with the simulation's method in sim.jl (D-319). The
+  guess evaluation, each seeded evaluation and `_verdict!`'s committed-state
+  evaluation are stretches hosted by model.jl's `_hosted` on the model that
+  runs them, host `:trim`, pointer 0, phase `:evaluation`, the guess
+  evaluation's round at round 1 (§13.4).
 - The misuse fallback on a `Model`, and `ArgumentInvalid`'s `:non_nominal` on
   a `Model` at another scalar (D-319).
 - `TrimReport`, with its `committed_checks` (D-262).

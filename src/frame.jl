@@ -29,10 +29,11 @@
 # nearest its instant (D-456). A model with no
 # localized events, every non-nominal activation included since its events
 # compiled out, takes the bare step: no arrival machinery, no extra sweep. The
-# whole frame is §13.4's one `try`, and the `StepError` is the one
-# constructor's. Its catch wraps every throw, an interrupt included, since the
-# status says whether the stores are a settled boundary and the cause says what
-# cut the frame. The index bound and the claim's gate precede it.
+# whole frame is one stretch hosted with host `:loop` (§13.4, model.jl's
+# `_hosted`), and the `StepError` is the one constructor's. Its host wraps every
+# throw, an interrupt included, since the status says whether the stores are a
+# settled boundary and the cause says what cut the frame. The index bound and
+# the claim's gate precede it.
 """
     frame!(model::Model, k::Int, hooks::FrameHooks = NoHooks()) -> Bool
 
@@ -84,17 +85,11 @@ function run_frame!(model::Model, k::Int, hooks::FrameHooks, continued::Bool)
     k ≤ last_frame ||
         throw(DiagnosticError(ArgumentInvalid(call = :frame!, reason = :range, argument = :k,
                                               value = k, related = last_frame)))
-    try
-        cursor = model.exec.cursor
-        cursor.comp = 0; cursor.fn = :none   # no stale frame for a top-side throw (§13.4)
-        _phase!(cursor, :drain)
+    _hosted(model, k - 1, :loop) do model
+        _phase!(model.exec.cursor, :drain)
         wrote = frame_top!(hooks)
         wrote && discontinuity!(model.exec.stepper)
-        return _frame_steps!(model, k, hooks, continued && !wrote)
-    catch err
-        model.fresh = false
-        @atomic :release model.status = :inconsistent
-        rethrow(_wrap_step(model, k - 1, :loop, err))   # the model's backtrace kept
+        _frame_steps!(model, k, hooks, continued && !wrote)
     end
 end
 

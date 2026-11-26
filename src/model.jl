@@ -171,14 +171,16 @@ end
 # the same at every activation, and the clock. It then runs what the model runs
 # at boundary zero, projection and one establishment round, with no events and
 # no `s_update`, and the frozen cells are copied back. A model with no frozen
-# component builds no scratch. The scratch has its own cursor, so a throw there
-# copies it into the model's, which `init!`'s catch reads (§13.4).
+# component builds no scratch. The projection and the round are a stretch hosted
+# on the scratch, which `init!` runs before its own, so a throw there is
+# boundary zero's `StepError` from the scratch's cursor, the model already
+# `:built` (§13.4).
 function _establish_frozen!(model::Model{T}, origin::Rational{Int}) where {T}
     build = model.deployment.build
     any(entry -> _frozen(entry.tier, T), build.structure.components) || return nothing
     exec = model.exec
-    exec.cursor.comp = 0; exec.cursor.fn = :none   # no stale frame for a throw before the round
-    nominal_exec = _scratch(model, Float64).exec
+    nominal = _scratch(model, Float64)
+    nominal_exec = nominal.exec
     nominal_exec.xbuf .= _drop_partials.(exec.xbuf)
     for ci in eachindex(exec.sstores)
         exec.sstores[ci] === nothing || (nominal_exec.sstores[ci][] = exec.sstores[ci][])
@@ -190,18 +192,11 @@ function _establish_frozen!(model::Model{T}, origin::Rational{Int}) where {T}
         scatter_cell!(nominal_exec.store, addr, _drop_partials(_port_type(addr), value))
     end
     _set_origin!(nominal_exec.clock, origin, model.deployment.lattice.unit)
-    cursor, nominal_cursor = exec.cursor, nominal_exec.cursor
-    try
+    _hosted(nominal, 0, :boundary_zero) do nominal
         # the phases boundary zero's own projection and round stand at (§13.4)
-        _phase!(nominal_cursor, :project)
-        _projects!(nominal_exec.events, nominal_exec.xbuf)
-        _phase!(nominal_cursor, :round, 1)
-        _round!(nominal_exec, ESTABLISH)  # every discrete output stage, due or not
-    catch
-        for field in fieldnames(ExecutionCursor)
-            setfield!(cursor, field, getfield(nominal_cursor, field))
-        end
-        rethrow()
+        _phase!(nominal.exec.cursor, :project)
+        _projects!(nominal.exec.events, nominal.exec.xbuf)
+        _establishment_round!(nominal)
     end
     _establish_frozen!(exec, exec.act, nominal_exec, build)
 end
@@ -313,12 +308,13 @@ _claimed_gate(model::Model, ::FrameHooks, call::Symbol) =
 # Design: §9.4, §13.4, §14.3, §14.5, §14.6, D-223, D-317, D-481.
 # The model's door into `:consistent`. The plan method, `init!(model,
 # plan::ConditionPlan; t0, hooks)`, does the writes alone, so the simulation's
-# `init!` can resolve before it touches its run. It hosts §13.4's catch around
-# boundary zero (D-223), where a throw takes the one `StepError` constructor
-# with the frame from the cursor. At a non-nominal scalar the catch also covers
-# the nominal projection and round that establish the frozen cells (D-481).
-# Nothing reads the return of `settled!(hooks)` here. An interrupt has no stop
-# path in a service, so the catch wraps it like any throw (D-441).
+# `init!` can resolve before it touches its run. Boundary zero is a stretch
+# hosted on the model (§13.4, D-223), where a throw takes the one `StepError`
+# constructor with the frame from the cursor. At a non-nominal scalar the
+# nominal projection and round that establish the frozen cells run first, as a
+# stretch hosted on their scratch under the same host (D-481). Nothing reads the
+# return of `settled!(hooks)` here. An interrupt has no stop path in a service,
+# so the host wraps it like any throw (D-441).
 """
     init!(model::Model, condition = set(); t0 = 0,
           hooks::FrameHooks = NoHooks()) -> Nothing
@@ -385,13 +381,8 @@ function init!(model::Model{T}, plan::ConditionPlan; t0 = 0,
     fill!(exec.events.prior, false)   # every prior not-holding (§10.6)
     # the stepper's carried state as bound, so the run is a function of the condition (D-452)
     reset_stepper!(exec.stepper)
-    try
-        _establish_frozen!(model, origin)   # a non-nominal scalar's frozen cells (D-481)
-        boundary_zero!(model)
-    catch err
-        @atomic :release model.status = :built
-        rethrow(_wrap_step(model, 0, :boundary_zero, err))
-    end
+    _establish_frozen!(model, origin)   # a non-nominal scalar's frozen cells, hosted on its scratch (D-481)
+    _hosted(boundary_zero!, model, 0, :boundary_zero)
     settled!(hooks)                   # the boundary-zero snapshot (§11.2, §14.5)
     @atomic :release model.status = :consistent   # boundary zero completed (D-317)
     nothing
@@ -526,12 +517,7 @@ function overlay!(model::Model, plan::ConditionPlan; hooks::FrameHooks = NoHooks
     @atomic :release model.status = :built   # the door's first write (D-441)
     _apply_plan!(model, plan)
     discontinuity!(model.exec.stepper)       # the overlaid state is a discontinuity (D-452)
-    try
-        run_boundary!(model, nothing)
-    catch err
-        @atomic :release model.status = :built
-        rethrow(_wrap_step(model, k, :overlay, err))
-    end
+    _hosted(offtick_boundary!, model, k, :overlay)   # the settling: the empty due set
     settled!(hooks)                   # the overlay boundary's snapshot (§11.2, §12.6)
     @atomic :release model.status = :consistent
     nothing
@@ -765,6 +751,13 @@ that runs it (D-274), wrapping a throw as §13.4's catch does (D-223, D-317).
 @inline _round!(exec::Executor, tick::Establish) =
     (exec.bodies.sweep_1(tick); exec.bodies.sweep_2(tick); nothing)
 @inline _round!(model::Model, tick) = _round!(model.exec, tick)
+
+# The establishment round outside boundary zero (§14.5, §14.8, D-205, D-213,
+# D-481): every discrete output stage, due or not, standing where boundary
+# zero's first round stands. The nominal halves of `init!`, `trim!` and
+# `linearize`'s `about` form run it, each inside its own stretch.
+@inline _establishment_round!(model::Model) =
+    (_phase!(model.exec.cursor, :round, 1); _round!(model, ESTABLISH); nothing)
 
 """
 The event phase (§10.6): [sweep → guards → handlers] iterated to quiescence,
@@ -1120,14 +1113,38 @@ function _component_index(model::Model, call::Symbol, path::String)
     findfirst(entry -> entry.path == path, model.deployment.build.structure.components)
 end
 
+# The one host of a stretch of model code (§13.4, D-441). `f(model)` runs the
+# stretch on `model`, the model whose executor runs the code, a service's
+# scratch included. `f` takes the model rather than closing over it, so a
+# caller whose model's type is not inferred, a service's scratch, can pass a
+# named function and build no closure per call. A throw out of it, an interrupt included, writes that model's status
+# by the host, `:inconsistent` inside a frame and `:built` everywhere else,
+# disarms its freshness flag, and is rethrown as the `StepError` built from that
+# model's own cursor, the backtrace kept. The stretch starts with no component
+# named, so a throw before the first dispatch names no stale one. The callers
+# are the frame (frame.jl) as `:loop`, `init!`'s boundary zero and its nominal
+# half as `:boundary_zero`, `overlay!`'s settling as `:overlay`, the inner
+# restore as `:restore`, and the services' evaluations (trim.jl, linearize.jl)
+# as `:trim` and `:linearize`. A stretch holds the calls that run model code and
+# nothing else. Two never nest, since `_wrap_step` refuses a `StepError`.
+@inline function _hosted(f, model::Model, entry_boundary::Int, host::Symbol)
+    cursor = model.exec.cursor
+    cursor.comp = 0; cursor.fn = :none
+    try
+        f(model)
+    catch err
+        model.fresh = false
+        @atomic :release model.status = host === :loop ? :inconsistent : :built
+        rethrow(_wrap_step(model, entry_boundary, host, err))
+    end
+end
+
 # The one `StepError` constructor (§13.4, D-059): the frame from the cursor, the
 # clock at the failure, the frame-entry boundary as the replay pointer, the host
 # its caller names, and the cause under the species rule below. Nothing inside
 # the sequence throws a `StepError`, so one arriving here is an invariant firing,
-# not a re-wrap. Its callers are the model's catch sites (D-317): `frame!`
-# (frame.jl) as `:loop`, the model's `init!` and `overlay!` (above) around
-# their settling as `:boundary_zero` and `:overlay` (D-223, D-429), and the
-# inner restore (below) as `:restore`. It stays the only constructor.
+# not a re-wrap. Its one caller is `_hosted` (above). It stays the only
+# constructor.
 function _wrap_step(model::Model, entry_boundary::Int, host::Symbol, err)
     err isa StepError && throw(InternalInvariant(
         "a StepError reached the catch site (§13.4), which is its only constructor — " *
@@ -1378,21 +1395,16 @@ restore!(::Model{T}, ::ModelState{S}; kw...) where {T,S} =
 # The inner restore, ungated, which the door above and the simulation's door
 # body call (D-318, D-319), in `init!`'s shape: the state copied back, the
 # restored boundary settled through `settled!(hooks)`, whose return nothing
-# reads here, and the status written `:consistent` last. Both sit under §13.4's
-# catch with host `:restore`, an interrupt included, which returns the model to
+# reads here, and the status written `:consistent` last. Both are a stretch
+# hosted with host `:restore`, an interrupt included, which returns the model to
 # `:built` as a throw inside `init!`'s or `overlay!`'s settling does. The pointer
 # is the frame the state stands at, on the grid the door has checked.
 function _restore_state!(model::Model, model_state::ModelState; hooks::FrameHooks = NoHooks())
     k = _frames_to(model_state.deployment, model_state.t, model_state.t₀)
-    cursor = model.exec.cursor
-    cursor.comp = 0; cursor.fn = :none   # no stale frame: a restore runs no component
     @atomic :release model.status = :built   # the door's first write (D-441)
-    try
+    _hosted(model, k, :restore) do model      # a restore runs no component
         _restore_state!(model.exec, model_state)
         settled!(hooks)               # the restored boundary's snapshot (§11.2, §12.6)
-    catch err
-        @atomic :release model.status = :built
-        rethrow(_wrap_step(model, k, :restore, err))
     end
     @atomic :release model.status = :consistent
     nothing

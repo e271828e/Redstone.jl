@@ -240,7 +240,7 @@ diagnostic's kind when the cause is one, the exception model code threw
 otherwise. A *species* is a `StepError` whose `cause` is a typed diagnostic,
 which is what lets a runtime check throw its kind and reach the one catch site
 as a plain thrower. `host` tells a boundary-zero throw from frame one's, since
-the two share pointer 0.
+the two share pointer 0, and a service's from both.
 """
 struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
     cursor::CursorFrame
@@ -249,6 +249,7 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
     boundary::Int    # the frame-entry boundary index: replay!(…; to_boundary = boundary)
     host::Symbol     # the catch that took the throw: :boundary_zero under init!,
                      # :overlay under overlay!, :restore under a restore,
+                     # :trim and :linearize inside a service's evaluation,
                      # :loop inside a frame
     cause::C
 end
@@ -272,7 +273,54 @@ _phase_text(cursor::CursorFrame) =
     cursor.phase === :project    ? "projection" :
     cursor.phase === :round      ? "event round $(cursor.index)" :
     cursor.phase === :ticks      ? "tick updates" :
-    cursor.phase === :drain      ? "drain" : string(cursor.phase)
+    cursor.phase === :drain      ? "drain" :
+    cursor.phase === :evaluation ? "evaluation $(cursor.index)" : string(cursor.phase)
+
+# Each host's three lines, in one place (§13.2, §13.4): where the throw stood,
+# the call that reproduces it, and the line an interrupt takes in its place.
+# Nothing reproduces an interrupt, so that line names the call that resumes
+# from the pointer or runs the cut sequence again (D-441). A frame's throw takes
+# the halt then `step!` at every pointer, 0 included: the halt restores the
+# header and runs no boundary zero, so frame one's record is still ahead. A
+# boundary-zero throw leaves no trace, so `init!` reproduces it, and an
+# overlay's leaves no header, so `overlay!` on the same stopped state does
+# (D-274, D-429). A restore runs no phase of a frame, so its line names the
+# boundary alone, and `restore!` of the same checkpoint reproduces it. A
+# service runs no frame and is a function of its arguments, so its line names
+# the service and the boundary its scratch stood at, and the same call
+# reproduces it.
+function _host_lines(carrier::StepError)
+    host, boundary, phase = carrier.host, carrier.boundary, _phase_text(carrier.cursor)
+    host === :boundary_zero ? (
+        "$phase of the frame from boundary $boundary",
+        "init!(sim2, condition) under the same condition reproduces it",
+        "an interrupt cut boundary zero, so nothing reproduces it; " *
+        "init!(sim2, condition) under the same condition runs it again") :
+    host === :overlay ? (
+        "$phase of the frame from boundary $boundary",
+        "overlay!(sim2, condition) on the same stopped state reproduces it",
+        "an interrupt cut the settling, so nothing reproduces it; " *
+        "overlay!(sim2, condition) on the same stopped state runs it again") :
+    host === :restore ? (
+        "restoring boundary $boundary",
+        "restore!(sim2, cp) of the same checkpoint reproduces it",
+        "an interrupt cut the restore, so nothing reproduces it; " *
+        "restore!(sim2, cp) of the same checkpoint resumes from boundary $boundary") :
+    host === :trim ? (
+        "$phase of trim! at boundary $boundary",
+        "trim!(sim2, problem; baseline, t0) with the same arguments reproduces it",
+        "an interrupt cut the trim, so nothing reproduces it; " *
+        "trim!(sim2, problem; baseline, t0) with the same arguments runs it again") :
+    host === :linearize ? (
+        "$phase of linearize at boundary $boundary",
+        "linearize(sim2, tap_set) at the same operating point reproduces it",
+        "an interrupt cut the linearization, so nothing reproduces it; " *
+        "linearize(sim2, tap_set) at the same operating point runs it again") :
+    ("$phase of the frame from boundary $boundary",
+     "replay!(sim2, trc; to_boundary = $boundary) then step!(sim2) reproduces it",
+     "an interrupt cut the frame, so nothing reproduces it; " *
+     "replay!(sim2, trc; to_boundary = $boundary) resumes from the boundary it started at")
+end
 
 # §13.2's doctrine: the didactic frame first, the raw throw second. The frame
 # line names the path, the function, the phase, the time and the pointer, and
@@ -288,44 +336,9 @@ function Base.showerror(io::IO, carrier::StepError)
         cursor.fn === :none || print(io, " ", cursor.fn)
         print(io, ", ")
     end
-    # A restore runs no phase of a frame, so its line names the boundary alone.
-    carrier.host === :restore ?
-        print(io, "restoring boundary ", carrier.boundary, " (t = ", carrier.t, "):\n  ") :
-        print(io, _phase_text(cursor), " of the frame from boundary ", carrier.boundary,
-              " (t = ", carrier.t, "):\n  ")
-    # The recipe follows the host (§13.4, D-274, D-429). A boundary-zero throw
-    # leaves no trace, so `init!` reproduces it, and an overlay's leaves no
-    # header, so `overlay!` on the same stopped state does. A restore's
-    # reproduces under `restore!` of the same checkpoint. A frame's throw
-    # takes the halt then `step!` at every pointer, 0 included: the halt
-    # restores the header and runs no boundary zero, so frame one's record is
-    # still ahead. An interrupt cut the frame or the door and nothing
-    # reproduces it, so the line names the door that resumes from the pointer
-    # or runs the cut sequence again (D-441).
-    if carrier.cause isa InterruptException
-        carrier.host === :boundary_zero ?
-            print(io, "an interrupt cut boundary zero, so nothing reproduces it; ",
-                  "init!(sim2, condition) under the same condition runs it again") :
-        carrier.host === :overlay ?
-            print(io, "an interrupt cut the settling, so nothing reproduces it; ",
-                  "overlay!(sim2, condition) on the same stopped state runs it again") :
-        carrier.host === :restore ?
-            print(io, "an interrupt cut the restore, so nothing reproduces it; ",
-                  "restore!(sim2, cp) of the same checkpoint resumes from boundary ",
-                  carrier.boundary) :
-            print(io, "an interrupt cut the frame, so nothing reproduces it; ",
-                  "replay!(sim2, trc; to_boundary = ", carrier.boundary,
-                  ") resumes from the boundary it started at")
-    else
-        carrier.host === :boundary_zero ?
-            print(io, "init!(sim2, condition) under the same condition reproduces it") :
-        carrier.host === :overlay ?
-            print(io, "overlay!(sim2, condition) on the same stopped state reproduces it") :
-        carrier.host === :restore ?
-            print(io, "restore!(sim2, cp) of the same checkpoint reproduces it") :
-            print(io, "replay!(sim2, trc; to_boundary = ", carrier.boundary,
-                  ") then step!(sim2) reproduces it")
-    end
+    location, recipe, interrupted = _host_lines(carrier)
+    print(io, location, " (t = ", carrier.t, "):\n  ",
+          carrier.cause isa InterruptException ? interrupted : recipe)
     print(io, "\n  cause: ")
     carrier.cause isa Diagnostic ? print(io, logline(carrier.cause)) :
                                    showerror(io, carrier.cause)

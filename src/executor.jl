@@ -18,8 +18,10 @@ mutable struct ExecutionCursor
     comp::Int        # the component's index in the flat, 0 = none
     fn::Symbol       # :y_state | :y_direct | :x_deriv | :s_update |
                      # :guard | :handler | :x_projection | :none
-    phase::Symbol    # :drain | :integrate | :arrival | :validation | :trial | :project | :round | :ticks
-    index::Int       # the RK stage, the event round, the trial ordinal; 0 where none applies
+    phase::Symbol    # :drain | :integrate | :arrival | :validation | :trial | :project | :round | :ticks |
+                     # :evaluation, a service's bare evaluation
+    index::Int       # the RK stage, the event round, the trial ordinal, the evaluation ordinal;
+                     # 0 where none applies
     attempt::Int     # the step's attempt ordinal, from 1 inside `:integrate`; 0 elsewhere
 end
 ExecutionCursor() = ExecutionCursor(0, :none, :drain, 0, 0)

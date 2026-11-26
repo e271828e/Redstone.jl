@@ -119,7 +119,103 @@ pendulum_problem() = TrimProblem(guess = (u = 0.0,), lower = (u = -Inf,), upper 
                                  reads = reads(ω̇ = get_deriv("", :ω)),
                                  residuals = torque_only, tolerances = (torque = 1e-9,))
 
+# The throws of model code inside a trim (§13.4, §14.8). `RootLag`'s output is
+# refused below -10 and its derivative is not a real number below 0, so a
+# guess at -20 fails the guess evaluation's round and one at -1 its derivative.
+# Under the baseline `in = -1` its residual `√v + 1` has no root, and the first
+# step from 1 lands near -3, so the second seeded evaluation fails. `CutLag` is
+# cut there by an interrupt instead. `FlipLag` solves at once at 1, and its
+# projection moves the committed state to -1, where the committed-state
+# evaluation fails.
+struct RootLag <: AbstractComponent end
+x_init(::RootLag) = (v = 1.0,)
+u_types(::RootLag) = (u = Float64,)
+y_types(::RootLag) = (v = Float64,)
+y_state(::RootLag, (; x)) = (v = x.v ≥ -10 ? x.v : throw(DomainError(x.v, "below the floor")),)
+x_deriv(::RootLag, (; x, u)) = (v = sqrt(x.v) - u.u,)
+
+struct CutLag <: AbstractComponent end
+x_init(::CutLag) = (v = 1.0,)
+u_types(::CutLag) = (u = Float64,)
+y_types(::CutLag) = (v = Float64,)
+y_state(::CutLag, (; x)) = (v = x.v,)
+x_deriv(::CutLag, (; x, u)) = x.v < 0 ? throw(InterruptException()) : (v = sqrt(x.v) - u.u,)
+
+struct FlipLag <: AbstractComponent end
+x_init(::FlipLag) = (v = 1.0,)
+y_types(::FlipLag) = (v = Float64,)
+y_state(::FlipLag, (; x)) = (v = x.v,)
+x_deriv(::FlipLag, (; x)) = (v = sqrt(x.v) - 1,)
+x_projection(::FlipLag, x) = (v = -abs(x.v),)
+
+root_problem(guess; residuals = (r, d) -> (rate = r.v̇,),
+             condition = d -> at("c", set(x = (v = d.v,)))) =
+    TrimProblem(; guess = (v = guess,), lower = (v = -Inf,), upper = (v = Inf,),
+                condition, reads = reads(v̇ = get_deriv("c", :v)), residuals,
+                tolerances = (rate = 1e-9,))
+root_base(u) = set(u = (in = u,))
+
 function test_trim()
+    @testset "a throw of model code in each evaluation of the search is a `StepError` under host `:trim` (§13.4, §14.8)" begin
+        cases = ((RootLag(), 0.0, -20.0, DomainError, CursorFrame("c", :y_state, :round, 1)),
+                 (RootLag(), 0.0, -1.0, DomainError, CursorFrame("c", :x_deriv, :evaluation, 1)),
+                 (RootLag(), -1.0, 1.0, DomainError, CursorFrame("c", :x_deriv, :evaluation, 2)),
+                 (CutLag(), -1.0, 1.0, InterruptException, CursorFrame("c", :x_deriv, :evaluation, 2)))
+        for (comp, u, guess, cause, frame) in cases
+            # A model at rest stays as it was: the search writes only scratch.
+            model = Model(fed(comp, :u); Δt_frame = 1//10)
+            init!(model, root_base(0.5))
+            frames!(model, 2)
+            before = checkpoint(model)
+            err = failure(() -> trim!(model, root_problem(guess); baseline = root_base(u), t0 = 1//4))
+            @test err isa StepError{cause}
+            @test err.host === :trim && err.boundary == 0 && err.t == 0.25
+            @test err.cursor == frame
+            @test model.status === :consistent
+            after = checkpoint(model)
+            @test after.x == before.x && after.t == before.t && same_table(after.table, before.table)
+            # …and a fresh one stays `:built`, a simulation `initialized`.
+            fresh = Model(fed(comp, :u); Δt_frame = 1//10)
+            @test failure(() -> trim!(fresh, root_problem(guess); baseline = root_base(u))) isa
+                  StepError{cause}
+            @test fresh.status === :built
+            sim = Simulation(fed(comp, :u); Δt_frame = 1//10)
+            init!(sim, root_base(0.5))
+            @test failure(() -> trim!(sim, root_problem(guess); baseline = root_base(u))) isa
+                  StepError{cause}
+            @test lifecycle(sim) === :initialized && state(sim, "c") === (v = 1.0,)
+        end
+    end
+
+    @testset "a throw in the committed-state evaluation is a `StepError` under host `:trim`, the model back at `:built` (§13.4, §14.8, D-441)" begin
+        model = Model(single(FlipLag()); Δt_frame = 1//10)
+        err = failure(() -> trim!(model, root_problem(1.0); baseline = set(), t0 = 1//4))
+        @test err isa StepError{DomainError}
+        @test err.host === :trim && err.boundary == 0 && err.t == 0.25
+        @test err.cursor == CursorFrame("c", :x_deriv, :evaluation, 1)
+        @test model.status === :built && state(model, "c") === (v = -1.0,)   # committed, then cut
+        sim = Simulation(single(FlipLag()); Δt_frame = 1//10)
+        @test failure(() -> trim!(sim, root_problem(1.0); baseline = set())) isa StepError{DomainError}
+        @test lifecycle(sim) === :built
+    end
+
+    @testset "a throw from the problem's own functions passes as it is (§14.8)" begin
+        no_dual(r, d) = r.v̇ isa Float64 ? (rate = r.v̇,) : error("no Dual arm")
+        cases = ((root_problem(1.0; residuals = (r, d) -> error("at the guess")), ErrorException),
+                 (root_problem(1.0; residuals = no_dual), ErrorException),
+                 (root_problem(1.0; condition = d -> d.v isa Float64 ? at("c", set(x = (v = d.v,))) :
+                                                     error("no Dual arm")), ErrorException),
+                 (root_problem(1.0; condition = d -> at("nowhere", set(x = (v = d.v,)))),
+                  DiagnosticError))
+        for (problem, kind) in cases
+            model = Model(fed(RootLag(), :u); Δt_frame = 1//10)
+            init!(model, root_base(0.5))
+            err = failure(() -> trim!(model, problem; baseline = root_base(-1.0)))
+            @test err isa kind && !(err isa StepError)
+            @test model.status === :consistent
+        end
+    end
+
     @testset "a one-step linear problem solves, commits and reads back (§14.7, §14.8)" begin
         sim = Simulation(fed(Pendulum(), :u); Δt_frame = 1//10)
         report = trim!(sim, u_problem(); baseline = pend_base(), t0 = 0.25)

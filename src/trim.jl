@@ -8,11 +8,13 @@
 # (§14.4, D-066) — and the read side is the compiled reader (readers.jl). What
 # trim adds is the loop between them, the vectorization at its edges, and the
 # discipline the whole section is about: **the simulation's stores have
-# exactly one writer, the commit through boundary zero**. Every evaluation
-# happens on scratch executors the invocation instantiates and discards
-# (§9.2's one-owner rule, §14.8's scratch-store paragraph), so a solve that
-# does not converge leaves the simulation bit-for-bit untouched — "never
-# initialized" included.
+# exactly one writer, the commit through boundary zero**. Every evaluation of
+# the search happens on scratch models the invocation instantiates and
+# discards (§9.2's one-owner rule, §14.8's scratch-store paragraph), so a solve
+# that does not converge leaves the simulation bit-for-bit untouched — "never
+# initialized" included. Each evaluation is a stretch hosted on the scratch
+# model that runs it (model.jl's `_hosted`), so a throw of model code there is
+# a `StepError` with host `:trim` and leaves the simulation untouched too.
 #
 # The seeded-half machinery — `_scratch`, `_establish_frozen!` — is model.jl's,
 # shared with linearize.jl, which runs the same two-half scratch world (D-213)
@@ -155,9 +157,9 @@ catch. A solve that does not converge returns one too. A malformed problem is a
 different case, and `trim!` refuses it at setup.
 
 The `converged` verdict alone decides the commit. A converged solve commits
-unless [boundary zero](@ref g-boundary-zero) throws, which arrives as a
-`StepError` with no report, so `committed_residuals` also tells whether the
-commit happened.
+unless [boundary zero](@ref g-boundary-zero) throws. A throw of model code, in
+the search or in the commit, arrives as a `StepError` with no report, so
+`committed_residuals` also tells whether the commit happened.
 
 A non-empty `fired_events` means the committed [stores](@ref g-store) sit past
 the [events](@ref g-state-event)' handlers rather than at the reported solution.
@@ -485,7 +487,13 @@ end
 # same composite over the same baseline as setup, so its totality is setup's and
 # the check is structurally unfailable through this path. The zero-decision
 # problem is free (§14.8). The commit is the model's own `init!`, so the claim
-# is checked first (D-318, D-319).
+# is checked first (D-318, D-319). Every call that runs model code, the guess
+# evaluation, each seeded evaluation and the committed-state one, is a stretch
+# hosted on the model that runs it with host `:trim` and pointer 0, its phase
+# `:evaluation` and its index that model's evaluation ordinal, the guess
+# evaluation's establishment round at round 1 as boundary zero's (§13.4). The
+# condition's application, the reads and the problem's own functions stay
+# outside, so their throws pass as they are.
 """
     trim!(model::Model{Float64}, problem::TrimProblem; baseline, t0 = 0,
           backend = LevenbergMarquardt()) -> TrimReport
@@ -545,6 +553,15 @@ as `UninitializedInputs`. A model a [`Simulation`](@ref) has claimed is refused
 as `ArgumentInvalid`, before any check. So is a second argument that is not a
 `TrimProblem`, and a model at a scalar type other than `Float64`.
 
+A throw of model code inside an evaluation of the search, an
+`InterruptException` included, arrives as a `StepError` with host `:trim` and
+`boundary` 0, naming the [component](@ref g-component) and the evaluation. It
+leaves the model as it was. A throw inside the commit arrives as `init!`'s
+`StepError`, with host `:boundary_zero`, and one inside the evaluation of the
+committed state as a `StepError` with host `:trim`. Each writes the model's
+status back to `:built`, and no report is returned. A throw from the problem's
+own functions propagates as it is.
+
 # Keywords
 
 - `baseline`: the required baseline the problem's condition is layered over, at
@@ -593,13 +610,19 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
     tol = Float64[tolerances[k] for k in residual_names]
 
     # --- the nominal half (D-213) ------------------------------------------------
-    nominal_exec = _scratch(model, Float64).exec
+    nominal = _scratch(model, Float64)
+    nominal_exec = nominal.exec
     _set_origin!(nominal_exec.clock, t0, model.deployment.lattice.unit)   # the search's time is the commit's (§14.8)
     plan = resolve_condition(override(baseline, problem.condition(guess)), build, Float64)
     assert_total(plan, build.structure, :trim!)    # (§14.6): pre-evaluation, all-or-nothing
     apply!(nominal_exec, plan)
-    _round!(nominal_exec, ESTABLISH)          # every discrete output stage, due or not
-    nominal_exec.bodies.rhs()
+    # The guess evaluation, a stretch hosted on the nominal scratch: its first
+    # evaluation, at the boundary the scratch's clock stands at (§13.4).
+    _hosted(nominal, 0, :trim) do nominal
+        _establishment_round!(nominal)
+        _phase!(nominal.exec.cursor, :evaluation, 1)   # the derivative, the first evaluation
+        nominal.exec.bodies.rhs()
+    end
     gathered = gather_reads(reader, nominal_exec)
     r0 = problem.residuals(gathered, guess)
     c0 = problem.checks(gathered, guess)
@@ -619,9 +642,11 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
     # --- the seeded half ---------------------------------------------------------
     T = ForwardDiff.Dual{TrimTag,Float64,N}
     act = activation(build, T)                # the cached activation (§9.4)
-    seeded_exec = _scratch(model, T).exec
+    seeded = _scratch(model, T)
+    seeded_exec = seeded.exec
     _set_origin!(seeded_exec.clock, t0, model.deployment.lattice.unit)
     _establish_frozen!(seeded_exec, act, nominal_exec, model.deployment.build)
+    _phase!(seeded_exec.cursor, :evaluation)   # `evaluate!` counts the seeded evaluations from 1
     # The names enter the closure as types: captured as a `Tuple` of `Symbol`s,
     # they would leave every `NamedTuple` `eval!` builds to runtime dispatch.
     decision_keys, residual_keys = Val(decision_names), Val(residual_names)
@@ -645,7 +670,7 @@ function _solve_problem(model::Model{Float64}, problem::TrimProblem; baseline, t
     function eval!(r::Vector{Float64}, J, d::Vector{Float64})
         decisions = _seeded(decision_keys, d, T)
         apply!(seeded_exec, seeded_plan, override(baseline, problem.condition(decisions)))
-        evaluate!(seeded_exec)
+        _hosted(evaluate!, seeded, 0, :trim)
         raw = problem.residuals(gather_reads(seeded_reader, seeded_exec), decisions)
         if !checked[]
             checked[] = true
@@ -740,8 +765,13 @@ function _verdict!(model::Model, problem::TrimProblem, baseline, solved::NamedTu
     # The committed-state residuals, nearly free: that boundary's sweep has just
     # run, so the declared reads need only gather from it — with one `rhs` for
     # the derivative reads, `ẋbuf` being integrator scratch and this a service
-    # evaluation (§14.4, §14.8).
-    model.exec.bodies.rhs()
+    # evaluation (§14.4, §14.8). It is a stretch hosted on the committed model,
+    # so a throw there writes its status back to `:built`, as a throw inside the
+    # commit does (§13.4, D-441).
+    _hosted(model, 0, :trim) do model
+        _phase!(model.exec.cursor, :evaluation, 1)
+        model.exec.bodies.rhs()
+    end
     gathered = gather_reads(reader, model.exec)
     committed = NamedTuple{residual_names}(problem.residuals(gathered, solution))
     out_of_tolerance = Tuple{Symbol,Float64,Float64}[
