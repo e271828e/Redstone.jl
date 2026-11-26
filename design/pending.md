@@ -22,16 +22,10 @@ item changes what the spec says, the spec edit is part of the item.
   is the source of truth, in both directions, and what drifted is fixed.
   Stage reached: the sweep is done, every group from the §14 trial to G7
   run and its clear fixes landed, and every row put to the user is ruled
-  and applied. One of the last six, S12b-236, landed in a shape other than
-  the one ruled and waits on the user's confirmation, as the notes say.
-  The state, the rulings, the group plan and the tools are in
+  and applied. The state, the rulings, the group plan and the tools are in
   `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
-  brief is `00_brief.md` beside it, and the rows that wait on the user are
-  in its `ledgers/user_rows.md`. Left, in order:
-  - The user's confirmation of one shape, S12b-236's presentation inside
-    the mask.
-  - A ruling on the four SD3 rows, whether the glossary marks the GUI
-    behaviour the cockpit still owes as owed.
+  brief is `00_brief.md` beside it, and the user's rows and their rulings
+  are in its `ledgers/user_rows.md`. Left, in order:
   - The small sweep of the items the notes list as seen and not yet fixed,
     about 25, each re-checked first, since two have landed since.
   - The log clustering, Stage F step 4 of the brief: the 326 findings of
@@ -84,11 +78,12 @@ item changes what the spec says, the spec edit is part of the item.
 - **The inspector, stages 2 to 4**: the bridge, an ordinary device serving
   the handle over a socket; the live inspector, values on the diagram; and
   the cockpit, panels over the bridge. What the spec owes, each ruled when
-  its stage reaches it: the handle's control verbs and the log-tail view
-  (stage 2); and §11.7's panel convention amended from a drawing method to
-  a panel description, with the GUI package's half of D-270's convention
-  assigned to the client, and a ruling on §11.7's "assembly panels compose
-  children by path", a constraint on that half with no entry (stage 4).
+  its stage reaches it: the handle's control verbs and the log-tail view,
+  and §11.6's front-end passages checked against the bridge's ruled design,
+  its binding and its exit, since a closed tab ends no bridge loop (stage
+  2); and a ruling on how §11.7's client half spells a panel, as a
+  description, and on §11.7's "assembly panels compose children by path",
+  a constraint on that half with no entry (stage 4).
 - **The user guide and the API reference.** The reference is the Documenter
   build under `docs/`, deployed from master and already live over the
   current docstrings. The guide grows from the tutorial and the companions.

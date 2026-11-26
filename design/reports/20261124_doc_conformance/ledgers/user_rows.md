@@ -244,8 +244,9 @@ the verifier's probe.
   and the flag are written, still inside the mask, so that it prints on
   every exit path and a deferred interrupt raises after it. The cold review
   confirmed the fix with real forced SIGINTs
-  (`probes/user_rows/s12b236_review/probe_sigint.jl`). The shape waits on
-  the user's confirmation.
+  (`probes/user_rows/s12b236_review/probe_sigint.jl`). The user confirmed
+  the shape on 2026-11-26: presenting after the mask would lose the
+  warnings to a deferred interrupt raised at `sigatomic_end`.
 - **K11-001, gap.** The flat state vector's uses are owed by `pending.md`;
   no action.
 - **CV11a-004, wording.** `KindCounts` is named only as "the per-kind
@@ -325,7 +326,14 @@ the verifier's probe.
   Settled, `608662ac`: reordered.
 - **SD3-071, SD3-111, SD3-143 and SD3-144, gap.** The glossary states GUI
   behaviour the inspector's cockpit still owes; `pending.md` records it. The
-  verifier proposes marking each as owed.
+  verifier proposes marking each as owed. Ruled 2026-11-26: no owed marks.
+  D-310 keeps §11.7's semantics for the browser client, so SD3-111, SD3-143
+  and SD3-144 stand. What went stale is the parked in-process GUI as a
+  device, its standard binding, thread, window, drawing method and package.
+  The spec retires those references for "front end", the inspector's
+  bridge and the client's half, SD3-071 among them, and `pending.md`'s
+  inspector item checks §11.6's front-end passages against the bridge's
+  ruled design at stage 2.
 - **K7a-296 and K7a-297, measured figures.** The longitudinal aircraft
   companion's loop errors during the maneuver: about 0.015 once the fast
   part is over, and a few hundredths of a radian however short `Tt` is.

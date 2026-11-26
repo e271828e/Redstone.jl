@@ -911,7 +911,7 @@ references** ([D-344][d-344]). Signals may reference bulk data
 The signal requirement has four consequences.
 
 - There is no aliasing, ever. Nothing can be mutated under a consumer's feet.
-- Concurrent reads from the GUI and logging threads are safe by construction.
+- Concurrent reads from devices and logging tasks are safe by construction.
 - Isbits payloads allocate nothing, because NamedTuples of isbits are isbits.
 - Each cell has a definite freshness, tied to its producer's position in the
   [execution order](#g-execution-order), the order in which the stage
@@ -1090,7 +1090,7 @@ with its cell.
   [§7.2][s7-2] and [§7.3][s7-3] state where they live.
 - **A field object must hold no mutable cache**, such as a memoizing
   interpolator or a lazy loader ([§4.1][s4-1], [D-344][d-344]). Concurrent
-  consumers and the GUI thread would race on it. The remedy is to restructure
+  consumers, devices among them, would race on it. The remedy is to restructure
   the interpolant to be pure. The rule is the author's, because the build does
   not look inside a field handle ([D-237][d-237]).
 
@@ -2495,10 +2495,9 @@ A [component](#g-component) is authored in ordinary Julia. Its
 [stage functions](#g-stage-function) are ordinary multiple-dispatch methods.
 They are `y_state` and `y_direct`, the two output stages a primitive
 may define on either [tier](#g-tier) (the continuous or discrete side of the
-hybrid formalism). The methods follow the `GUI.draw!` precedent, the
-per-component panel extensions in FlightCore's style ([§11.7][s11-7]). A
-component's structural facts are declared through a small set of well-known
-functions returning plain values, defined alongside those methods.
+hybrid formalism). A component's structural facts are declared through a
+small set of well-known functions returning plain values, defined alongside
+those methods.
 
 Five questions about that layer are settled here, one per subsection. What
 does it rule out, and what does it still admit (macros)? Which of declaration
@@ -8309,8 +8308,8 @@ in service reads ([§11.2][s11-2]/[§13.5][s13-5]/[§14.4][s14-4]).
 ([D-044][d-044]). A device [claims](#g-claim) its root inputs (stakes them as faces it may write) at
 attach, and claiming an already-claimed root input is an attach-time error.
 Detaching releases the claims, and the harness writer (described below) takes
-the released faces ([D-370][d-370]). The GUI's widgets for a released root input go
-live only once a GUI attached after the release claims it, because a claim is
+the released faces ([D-370][d-370]). A front end's widgets for a released root input go
+live only once a front end attached after the release claims it, because a claim is
 taken at attach and never recomputed ([§11.7][s11-7], [D-174][d-174], [D-370][d-370]). Exclusivity replaces any cross-device conflict
 *policy* ([D-044][d-044]), such as attachment-order precedence at the [drain](#g-drain) (the
 frame-top swap that applies staged device writes to the root inputs). Per-device
@@ -8331,8 +8330,8 @@ never inspects. Such a device therefore claims the binding's enumerated allowed
 set, the faces the binding table lists, whether or not any given batch touches
 them. The claim is registered at attach exactly as a joystick's is. A broad
 claim costs liveness. Every enumerated face is claimed for the device's whole
-attachment, so the [derived-liveness](#g-derived-liveness) rule (GUI widget liveness, baked once at run
-start, [§11.7][s11-7]) renders the GUI's widgets read-only even on faces the peer never
+attachment, so the [derived-liveness](#g-derived-liveness) rule (widget liveness, baked once at run
+start, [§11.7][s11-7]) renders a front end's widgets read-only even on faces the peer never
 writes. Narrow the binding to narrow the claim. The enumeration *is* the
 interface.
 
@@ -8358,9 +8357,9 @@ site, on the writer's own task. The drain performs no checks at all.
   root's input faces is refused at attach (`AttachUnknownFace`, [D-216][d-216]).
 - A *computed* claim is computed by the framework at attach, when the binding
   declares `is_greedy(b) = true` ([§11.6][s11-6]). It is all root-input faces minus the
-  union of the rostered claims, the unclaimed complement at that instant. This
-  is the standard GUI binding's claim ([§11.6][s11-6]), everything unclaimed, without
-  configuration. It is disjoint from every incumbent claim by construction, so
+  union of the rostered claims, the unclaimed complement at that instant. It
+  suits an interactive front end that takes everything unclaimed, without
+  configuration ([§11.6][s11-6]). It is disjoint from every incumbent claim by construction, so
   exclusivity validates trivially and nothing downstream can tell the two
   sources apart. A complement that comes out empty is legal and useless.
   `attach!` records an `EmptyGreedyClaim` warning for it ([§11.6][s11-6]).
@@ -8369,9 +8368,9 @@ There is one claim mechanism with two claim sources. The source is exhausted at
 the attach point. Past it, validation, roster-entry storage, the compilation of
 shape, shim, merge and scatter ([§11.4][s11-4]), the drain, the trace ([§11.5][s11-5]) and
 detach-releases-claims treat a computed claim exactly as a returned one ([D-174][d-174]).
-The GUI is therefore not an exception but an ordinary enumerated writer whose
-enumeration the framework performed. Attaching the [greedy claimant](#g-greedy-claim) (the device
-holding the computed claim) last is the idiom ([D-192][d-192]). Its computed claim is
+The [greedy claimant](#g-greedy-claim) (the device holding the computed claim) is
+therefore not an exception but an ordinary enumerated writer whose enumeration
+the framework performed. Attaching it last is the idiom ([D-192][d-192]). Its computed claim is
 taken at the attach point and never recomputed, so attachment order is decisive
 by design.
 
@@ -8660,7 +8659,8 @@ the same disease [D-074][d-074] and the handler return law refuse ([D-104][d-104
 A device with a [greedy claim](#g-greedy-claim) (the unclaimed complement, computed by the
 framework) needs no special treatment here ([D-174][d-174]). Its claim was computed at
 the attach point, and by the time shapes are compiled it is an ordinary claim
-set ([§11.3][s11-3]). The GUI's staging cell is compiled exactly as a joystick's.
+set ([§11.3][s11-3]). The greedy claimant's staging cell is compiled exactly as a
+joystick's.
 
 The harness cell gets the same treatment ([D-174][d-174], [D-370][d-370]). Under the [roster freeze](#g-the-freeze)
 (attach and detach as [stopped-sim](#g-stopped-sim) operations) its derived surface, the unclaimed
@@ -8688,8 +8688,8 @@ facts of the run. Every check therefore runs in `stage!`'s normalization, on the
 writer's own task. A device's out-of-claim face has no position in the schema
 and is rejected with `OutOfClaimEntry`. Staging is an earlier, better-attributed
 site than the drain for that rejection, and the kind and [payload](#g-payload) (the structured
-data a diagnostic carries beside its kind) are the same either way. The GUI is
-included, its claim being an ordinary one. A *harness* write to a claimed face
+data a diagnostic carries beside its kind) are the same either way. A greedy
+claimant is included, its claim being an ordinary one. A *harness* write to a claimed face
 is rejected the same way, with `ClaimedFaceEntry` naming the incumbent device
 ([D-174][d-174], [D-370][d-370]). And a value that cannot convert to its root input's declared
 type is discarded with `EntryTypeMismatch` ([Appendix C][sC], [D-105][d-105]), at the same
@@ -8944,8 +8944,9 @@ With no lock, the protocol the taxonomy encoded has no referent ([D-025][d-025])
 that exchanges data with it). A device may be input-only or output-only, and
 those are degenerate uses, not framework classes ([D-025][d-025]). A bidirectional
 network peer is *one* device with one socket and one lifecycle, not two
-framework devices sharing state. The GUI is an ordinary device, the paradigm
-one, and it uses every capability of the handle below. Its one genuine
+framework devices sharing state. An interactive front end is an ordinary device
+too, and it uses every capability of the handle below. The inspector's bridge,
+which serves the browser cockpit, is one. A front end's one genuine
 peculiarity, read-modify-write widgets, is not taxonomic ([§11.7][s11-7]).
 
 #### The device handle
@@ -9108,15 +9109,14 @@ timestamps ride *inside* the handle primitives, which store them in the device's
 own diagnostic cell ([§11.8][s11-8]), so the framework observes activity without owning
 the loop.
 
-FlightCore's device hook **`should_close` dissolves** ([D-102][d-102], [D-373][d-373]). A window ✕
-or peer EOT is the loop body returning, which is [§12.4][s12-4](6)'s case. The wrapper's
+FlightCore's device hook **`should_close` dissolves** ([D-102][d-102], [D-373][d-373]). A peer's EOT,
+or any other end a device reaches by itself, is the loop body returning, which is [§12.4][s12-4](6)'s case. The wrapper's
 exit path releases the device's OS resources and consults `should_abort`.
 Nothing marks the device dead beyond its record. The task has ended,
 `task_state` ([§11.8][s11-8]) says so at the next publication, and its heartbeat goes
 stale ([§12.2][s12-2]). A device's [claim](#g-claim) is the set of [faces](#g-face) (the names ports wear on
 their component's boundary) it *may* write. Claims and the roster entry persist
-to run end (the freeze, [§11.3][s11-3], [D-106][d-106], [D-374][d-374]). The GUI implements the same
-authoring contract.
+to run end (the freeze, [§11.3][s11-3], [D-106][d-106], [D-374][d-374]).
 
 #### The failure policy
 
@@ -9285,20 +9285,20 @@ the warning lives in that state's status and surfaces through the status record
 reading of "you asked for what is left and nothing was left".
 
 **Several interactive front ends may be rostered at once** ([D-174][d-174], [D-370][d-370]). A web
-console can claim the autopilot faces beside a local GUI claiming the stick
-faces. With explicit claims they are simply two enumerated devices, partitioning
+console can claim the autopilot faces beside a second front end claiming the
+flap and gear faces. With explicit claims they are simply two enumerated devices, partitioning
 the surface rather than sharing it.
 
-The standard GUI binding is a greedy one. It declares `is_input` and
-`is_greedy`, stakes the computed claim (everything unclaimed at the moment it
-attaches), and defines no `claims` of its own. It declares no `reads` either,
-because its read path is the handle's primitive read. The compiled output gather
-therefore has nothing to do for it. The same GUI device type is equally
-attachable under a binding that returns explicit claims. Greediness is the
-binding's declaration, not the device's nature. Every other interactive front
-end anyone might want (a web console, a remote panel) has both spellings
-available. It can attach with the greedy binding where the GUI would have been,
-or with explicit claims beside other front ends.
+A front end that takes whatever no other device writes attaches under a greedy
+binding. Such a binding declares `is_input` and `is_greedy`, stakes the
+computed claim (everything unclaimed at the moment it attaches), and defines no
+`claims` of its own. It declares no `reads` either, because its read path is
+the handle's primitive read. The compiled output gather therefore has nothing
+to do for it. The inspector's bridge attaches this way. Greediness is the
+binding's declaration, not the device's nature. The same device type is equally
+attachable under a binding that returns explicit claims. Every interactive
+front end therefore has both spellings available. It can attach greedy, or with
+explicit claims beside other front ends.
 
 #### The empty enumeration
 
@@ -9350,10 +9350,10 @@ framework's half of the panel convention.
 
 #### Port resolution and derived liveness
 
-Panels remain extensions per [component](#g-component) (the unit of modeling, a primitive or an
-assembly) in FlightCore's style, such as `GUI.draw!(ctx, ::LowPassFilter)`. They
-are discovered by walking the [assembly](#g-assembly) (whose component-typed
-fields are its children). However, **widgets name the component's own ports,
+A panel is defined per [component](#g-component) (the unit of modeling, a primitive or an
+assembly) and found by walking the [assembly](#g-assembly) (whose component-typed
+fields are its children). How a panel is spelled is the client's half of the
+panel convention, deferred below. However, **widgets name the component's own ports,
 never root inputs** ([D-026][d-026]). The build-time wiring answers one question
 statically and exactly. *Is this port transitively driven by a root input, and
 which one?* Every input port has exactly one source ([§6.1][s6-1]), so the resolution is
@@ -9379,9 +9379,8 @@ wiring decision made where configurations are made. Command-plus-manual-override
 is a mux component with a root-wired select. That is explicit structure, not two
 writers racing (the same race as the drag phase in the worked example of [§11.4][s11-4],
 ruled out the same way). This places one obligation on a front end. Read-only
-rendering is first-class, not an error state, because the author of
-`input_slider!` (an illustrative widget function) cannot know at authoring time
-whether it will be live ([D-026][d-026]).
+rendering is first-class, not an error state, because a widget's author cannot
+know at authoring time whether it will be live ([D-026][d-026]).
 
 Liveness is a [derived property](#g-derived-liveness) (the rule computing a widget's liveness from
 wiring and claims), and resolution is transitive ([D-045][d-045]). A widget is live iff
@@ -9463,7 +9462,7 @@ status panel.
 #### The framework's half of the panel convention
 
 The panel convention has two halves. **The framework's half is fixed here, and
-the GUI package's half is deferred** ([D-270][d-270]). A panel reaches the framework
+the client's half is deferred** ([D-270][d-270], [D-310][d-310]). A panel reaches the framework
 through three values, a port view, the device handle and a snapshot. The port
 view is this section's baked verdict, one per declared port of every component,
 input and output. The handle supplies the two reads the peek composes and the
@@ -9521,15 +9520,15 @@ from the snapshot's status ([§11.8][s11-8], [D-270][d-270]). It returns the
 harness's record for a root input no device claims, and `nothing` for a port no
 root input drives. On that record, `orphaned` is a task that returned or crashed, and
 `stale` is the silent heartbeat ([§12.2][s12-2]). The record tells an exited loop from a
-crashed one, and the label may. The label text is the GUI package's.
+crashed one, and the label may. The label text is the client's.
 
 #### What stays deferred
 
-The GUI package's half stays deferred, and `pending.md` (the record of what the
-implementation still owes) tracks it. The built-in GUI's parking ([D-310][d-310]) assigns
-it to the browser client over the bridge. The bridge is the link to the
-simulation, and [D-310][d-310] leaves the bridge's design open. That half covers what the
-client receives beside the three values, how a panel scopes to a child
+The client's half stays deferred, and `pending.md` (the record of what the
+implementation still owes) tracks it. The built-in GUI's parking ([D-310][d-310]) made
+the client the browser cockpit, which reaches the simulation over the bridge.
+[D-310][d-310] leaves the bridge's design open. That half covers what the client
+receives beside the three values, how a panel scopes to a child
 component, and the widgets. Its constraints are fixed here. Panels name their
 own ports by face-name string. Resolution to root inputs and the liveness
 verdict are baked at run start, never performed at render. Liveness and peek
@@ -10073,7 +10072,7 @@ device task or the loop itself ends first.
    run ended). The logging backend presents the diagnostic, with the terminal
    snapshot preceding the join ([D-201][d-201], [D-203][d-203]).
 6. Device-initiated paths. A device exits voluntarily when its loop body
-   returns, at a window ✕ or a peer EOT. No `should_close` hook exists ([§11.6][s11-6]).
+   returns, at a peer's EOT, for instance. No `should_close` hook exists ([§11.6][s11-6]).
    With [`should_abort`](#g-should_abort) (the per-attachment failure policy, an `attach!` keyword)
    set, the wrapper's exit path also requests a sim stop. Otherwise the sim
    continues with the device's *task* absent. Its [staging cell](#g-staging-cell) (where the
@@ -10126,8 +10125,8 @@ That terminal snapshot is retained in the [log](#g-log) (the retained
 sequence of published snapshots) unconditionally, under any `log_every` and
 any `log_max` ([§11.2][s11-2], [D-368][d-368]).
 
-The `join_timeout` default of five seconds is generous for front-end window
-teardown and socket closes. It is short enough that an abandoned join reads as a
+The `join_timeout` default of five seconds is generous for socket closes and a
+device's other teardown. It is short enough that an abandoned join reads as a
 diagnosed timeout rather than a hang.
 
 **The cap is a per-simulation setting, not an implementation constant** ([D-198][d-198]).
@@ -14916,7 +14915,7 @@ For component authors:
 - **No mutable cache in a field handle** ([§4.4][s4-4], [§4.1][s4-1];
   [D-344][d-344]). A [field handle](#g-field-handle) must hold no mutable
   cache, such as a memoizing interpolator or a lazy loader. Concurrent
-  consumers and the GUI thread would race on it. The remedy is to
+  consumers, devices among them, would race on it. The remedy is to
   restructure the interpolant to be pure. The rule is the author's, because
   the build does not look inside a field handle. The bulk data a handle
   references stays read-only for the duration of the run.
@@ -15004,8 +15003,8 @@ For periphery authors and consumers:
   Tolerating nothing kills a live link on its first truncated datagram.
 - **[Derived liveness](#g-derived-liveness)** ([§11.7][s11-7];
   [D-045][d-045]). A widget is
-  live iff its [port](#g-port)'s feed chain terminates in a root input inside the GUI's
-  own [claim](#g-claim) in the run's frozen partition. There is no per-port
+  live iff its [port](#g-port)'s feed chain terminates in a root input inside the front
+  end's own [claim](#g-claim) in the run's frozen partition. There is no per-port
   marking, and unexported ports are unpokeable.
 - **The two observation sides** ([§11.2][s11-2], [§13.5][s13-5],
   [§14.2][s14-2], [§14.7][s14-7]; [D-414][d-414], [D-065][d-065]). A deep
@@ -17015,7 +17014,7 @@ and every [device](#g-device) runs on a spawned task ([§11.1][s11-1]).
 attach, either returned by its [binding's](#g-binding) `claims` or computed as the
 unclaimed complement under `is_greedy`, and released at detach. Claiming an
 already-claimed face is an attach-time error (`ClaimConflict`), and a broad
-claim costs GUI liveness ([§11.3][s11-3], [D-378][d-378]).
+claim costs widget liveness ([§11.3][s11-3], [D-378][d-378]).
 
 <a id="g-coalescing"></a>**coalescing** — the CAS merge keeping one pending [batch](#g-batch) per [device](#g-device).
 Untouched [faces](#g-face) survive, and re-staged faces take the newest level (the
@@ -17029,15 +17028,15 @@ lands at the next one. A run's outcome belongs to the [`Run`](#g-run), not to
 it. It is structurally not staging, since a paused loop [drains](#g-drain) nothing.
 
 <a id="g-derived-liveness"></a>**derived liveness** — the rule that a GUI widget is live iff its [port's](#g-port)
-feed chain terminates in a [root input](#g-root-input) inside the GUI's own [claim](#g-claim) in the
+feed chain terminates in a [root input](#g-root-input) inside the front end's own [claim](#g-claim) in the
 run's frozen surface partition. It is baked once at run start, with no
 per-port "GUI-controlled" marking anywhere ([§11.7][s11-7]).
 
 <a id="g-device"></a>**device** — any attached participant in the [periphery](#g-periphery): a subtype of
 `AbstractDevice` under one authoring contract (a mandatory `loop`, and
 optional `init!`, `shutdown!` and `unblock!` hooks) and one handle. Input-only and
-output-only are degenerate uses, and the GUI is an ordinary device
-([§11.6][s11-6]).
+output-only are degenerate uses, and an interactive front end is an ordinary
+device ([§11.6][s11-6]).
 
 <a id="g-diagnostic-cell"></a>**diagnostic cell** — the per-writer cell each
 rostered [device](#g-device), the [harness writer](#g-harness-writer), the loop itself and the `Model` own for
@@ -17067,8 +17066,8 @@ counters copied in (`totals`) and the liveness timestamp ([§11.8][s11-8],
 <a id="g-greedy-claim"></a>**greedy claim** — the [claim](#g-claim) a [binding](#g-binding) declaring `is_greedy` receives: the
 unclaimed complement computed by the framework at attach instead of returned
 by `claims`, ordinary in every respect afterwards. An empty remainder is
-legal and reported (`EmptyGreedyClaim`), and the standard GUI binding is its
-instance ([§11.3][s11-3], [§11.6][s11-6]).
+legal and reported (`EmptyGreedyClaim`). An interactive front end attached
+last is its usual holder ([§11.3][s11-3], [§11.6][s11-6]).
 
 <a id="g-harness-cell"></a>**harness cell** — the always-present [staging cell](#g-staging-cell) of the [harness writer](#g-harness-writer),
 written by `stage!(sim, "face" => value, …)` from any task, the [calling task](#g-calling-task) included.

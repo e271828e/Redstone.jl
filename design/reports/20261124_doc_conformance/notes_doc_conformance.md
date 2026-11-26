@@ -203,6 +203,13 @@ the tools.
     folders beside them, and the branches `six-rows` and `frozen-init`.
 
   The small sweep and the log clustering follow.
+- **The last two rulings, 2026-11-26.** The user confirmed S12b-236's
+  shape. On the SD3 rows the user ruled no owed marks and asked instead
+  that the spec retire its references to the parked in-process GUI: 22
+  edits across §4.1, §4.4, §8.1, §11.3, §11.4, §11.6, §11.7, §12.4 and
+  Appendices A and D, with "front end", the inspector's bridge and the
+  client's half in its place. §11.4's worked example keeps its 60 Hz GUI,
+  a hypothetical sparse writer. `ledgers/user_rows.md` holds both rulings.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five
