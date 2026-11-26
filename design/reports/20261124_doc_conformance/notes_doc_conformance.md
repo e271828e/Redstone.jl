@@ -219,7 +219,9 @@ the tools.
   writes" at its ten sites, since the harness cell drains too. Two items
   are code or tooling and went to the user: a battery check for
   merge-conflict markers, and a test of the residue's suppressed-count
-  warning.
+  warning. The user dropped the first, since one marker in the project's
+  life reached a commit and the review caught it. The test landed in
+  `test_diagnostics.jl`, and a mutant that drops the warning turns it red.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

@@ -42,6 +42,20 @@ function loop(dev::LateReporter, handle)
     nothing
 end
 
+# A flood at the stop: it waits out the run, then reports past the ring's bound.
+# The wait returns only once the loop has published its last snapshot, so every
+# report lands past the final account, in the run's-end sweep.
+struct FloodAtStop <: AbstractDevice end
+function loop(::FloodAtStop, handle)
+    while running(handle)
+        wait_next_snapshot(handle)
+    end
+    for k in 1:DIAG_RING+3
+        report!(handle, MalformedDatum("late $k"))
+    end
+    nothing
+end
+
 # A snapshot consumer that stays in its loop: the liveness testset's device.
 mutable struct Ticker <: AbstractDevice
     n::Int
@@ -178,6 +192,27 @@ function diagnostics_channel()
         init!(sim, set(u = (a = 0.0, b = 0.0)))
         step!(sim; frames = 2)
         @test writer_status(latest(sim), "device 1 (LateReporter)").totals.malformed == 0
+    end
+
+    @testset "the run's-end sweep presents what the ring refused as a count (§11.8, §12.4)" begin
+        sim = Simulation(two_root_inputs(); Δt_frame = 1//10)
+        attach!(sim, FloodAtStop(), NoClaim())
+        init!(sim, set(u = (a = 0.0, b = 0.0)))
+        logs, _ = Test.collect_test_logs() do
+            run!(sim; t_end = 0.3)
+        end
+        writer = "device 1 (FloodAtStop)"
+        messages = [string(l.message) for l in logs]
+        # The ring keeps the earliest DIAG_RING occurrences, each presented in
+        # full, and the three it refused are presented as one count.
+        @test count(m -> startswith(m, "MalformedDatum from $writer, past the final"),
+                    messages) == DIAG_RING
+        @test count(m -> startswith(m, "3 more suppressed occurrence(s) from $writer"),
+                    messages) == 1
+        # The record holds what the backend presented (D-203).
+        residue = only(r for r in termination(sim).residue if r.writer == writer)
+        @test length(residue.recent) == DIAG_RING
+        @test residue.suppressed.malformed == 3 && _total(residue.suppressed) == 3
     end
 
     @testset "the cell is kind-generic: mixed rings, per-kind suppression (§11.8, §13.2)" begin
