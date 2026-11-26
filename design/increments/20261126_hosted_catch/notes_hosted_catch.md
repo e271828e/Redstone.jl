@@ -12,9 +12,9 @@ implementation.
 
 ## 1. State
 
-- Stage reached: the reviewer's check of the fixes passed. The user's review
-  of the rulings of section 3 and diff check of the arc are next, then the
-  push. Section 3.3.1 is the ruling to read first.
+- Stage reached: pushed. The user approved the rulings of section 3 on
+  2026-11-26 and asked for the push. Clearing the scratch below is what is
+  left.
 - The scratch stays until the push, under
   `/Users/miguel/.julia/dev/Redstone.jl-worktrees/`: the worktrees
   `hosted_catch` (branch `hosted-catch-proto`), `hosted_catch_fix` (branch
@@ -90,8 +90,11 @@ All of 2026-11-26.
 
 ## 3. The coordinator's rulings, the user being away
 
-Each waits on the user's review. D-482 states them as its Position, so a
-ruling the user overturns moves the entry too.
+D-482 states them as its Position. The user approved them on 2026-11-26,
+after an explanation of ruling 3.3.1 from the start. They name five, the
+ones the coordinator's summary listed: 3.3.1, 3.1.2, 3.1.1, 3.2.5 and
+3.3.2. The rest of section 3 is either part of the shape they approved or
+replaced by 3.3.1.
 
 ### 3.1 The three points the user left open
 

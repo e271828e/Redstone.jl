@@ -24,11 +24,9 @@ item changes what the spec says, the spec edit is part of the item.
   model code, the doors', the frame's and the services', and D-481's cursor
   copy goes. The item is the docs audit's "seen and not fixed" one on the
   nominal round, widened. Stage reached: built as D-482, reviewed and
-  fixed, the gate green, nothing pushed. The user was away for the run, so
-  the coordinator's rulings wait on the user's review, section 3 of
-  `design/increments/20261126_hosted_catch/notes_hosted_catch.md`, and its
-  3.3.1 first. The diff check of the arc and the push follow, then the
-  scratch the notes list is cleared.
+  fixed, its rulings approved by the user, and pushed. Left: the scratch
+  that `design/increments/20261126_hosted_catch/notes_hosted_catch.md`
+  lists is cleared, and this bullet retired.
 - **The docs conformance audit.** The spec, the log, the docstrings, the
   companions and the rest of the docs are checked against the code, which
   is the source of truth, in both directions, and what drifted is fixed.
