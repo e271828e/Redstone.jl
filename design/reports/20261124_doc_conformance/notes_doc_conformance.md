@@ -238,6 +238,10 @@ the tools.
   (`discard_reports` stays), CIT-D166 is a sweep of the code's D-166
   citations, and L9a-092 and L9a-093 move §11.8 and D-136: the writer copies
   the ring at every accepted report, which the CAS handoff needs.
+  The follow-ups landed: the D-166 citation sweep, which settles CV2-026
+  and CV6a-033, and §11.8's worst case restated as sixteen copies of a ring
+  of at most sixteen, with an annotation on D-136. What is left is the
+  closing.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

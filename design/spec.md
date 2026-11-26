@@ -9725,11 +9725,14 @@ the counter layout a type rather than a lookup.
 On a noisy frame the diagnostic values are allocated at emission, on the
 writer's own task. A drained non-empty ring is frozen into the snapshot and can
 never be written again, so the writer allocates a fresh ring lazily at its next
-emission. That cost, too, lands on the writer's task, and it is the same
-GC-over-reuse trade [§11.2][s11-2] makes when it rejects preallocated snapshot buffers.
-The rate limit is therefore an allocation bound as well. One ring of sixteen
-values per diagnostic cell per frame is the worst case, and everything past it
-is an integer increment. The zero-allocation invariant, scoped to the stepping
+emission. Each accepted emission copies the ring it extends, because the cell
+hands its batch to the drain by compare-and-swap, and a batch the drain may
+have taken is never written. That cost, too, lands on the writer's task, and it
+is the same GC-over-reuse trade [§11.2][s11-2] makes when it rejects preallocated snapshot
+buffers. The rate limit is therefore an allocation bound as well. The worst
+case per diagnostic cell per frame is sixteen accepted emissions, each copying a
+ring of at most sixteen values, and everything past them is an integer
+increment. The zero-allocation invariant, scoped to the stepping
 loop ([§9.8][s9-8], [D-305][d-305]), is untouched. The diagnostic cells sit on the framework side
 of that scope with publication and logging.
 

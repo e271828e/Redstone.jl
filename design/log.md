@@ -5004,6 +5004,12 @@ Annotation (2026-10-13): amended by [D-200][d-200] (the harness writer's cell), 
 read at publication) and [D-241][d-241] (one small vector of records per publication).
 The zero-allocation invariant is scoped to the stepping loop ([D-305][d-305]).
 
+Annotation (2026-11-26): each accepted emission copies the ring it extends,
+because the cell hands its batch to the drain by compare-and-swap and a batch
+the drain may have taken is never written. The worst case per writer per frame
+is sixteen such copies of a ring of at most sixteen values, not one ring
+([§11.8][s11-8]).
+
 **Rejected.**
 - *A shared queue or buffer under a lock:* cross-task contention on the loop's
   own frame path and no single-writer ownership to reason from — the arbitrary

@@ -26,9 +26,6 @@ item changes what the spec says, the spec edit is part of the item.
   `design/reports/20261124_doc_conformance/notes_doc_conformance.md`; the
   brief is `00_brief.md` beside it, and the user's rows and their rulings
   are in its `ledgers/user_rows.md`. Left, in order:
-  - The log clustering's last follow-up: §11.8's allocation bound with an
-    annotation on D-136. The annotations and the D-166 citation sweep have
-    landed.
   - The closing: the final report the brief asks for, the
     `doc_conformance` worktree removed, and this bullet retired. CV11a-004
     and CV7a-038 stay on the API audit's roadmap.
