@@ -1,0 +1,42 @@
+id	entry	outcome	evidence	draft
+L13-010	D-058	none	D-058's own 2026-10-19 annotation already says the one carrier is DiagnosticError{P}, replacing BuildError (D-222).	
+L13-014	D-058	none	The same annotation says warnings ride no shared stream and cites D-250.	
+L13-017	D-058	outside	Defect in test code. test_failures.jl:906 is gone. test/test_trace.jl:947-954 discard_reports still renders ReplayDiscardedStaging via message(d) and filters logged text.	Defect in test code. Make test_trace.jl's discard_reports match ReplayDiscardedStaging by kind and payload, not by rendered text. No log edit.
+SD4-138	D-058	none	Spec now says 'paths and names, never instances' (spec.md:11319, 17461), no 'strings'. D-058's 'as strings' is loose wording of its day. Its rule (no instances) stands.	
+L12-015	D-059	annotate	No annotation on D-059. D-223, D-429, D-441 and D-482 (log.md:21412) add catch sites: :boundary_zero, :overlay, :restore, plus the services' hosted stretches, all through one StepError constructor.	Annotation (2026-11-26): amended by D-223, D-429, D-441 and D-482. The one StepError constructor serves several catch sites. These are the frame (host :loop), boundary zero, the overlay settling and the restore door, plus the stretches of the services' evaluations.
+L9a-023	D-060	none	Annotation 2026-10-08 says publication is a StopFlag output port (D-316).	
+L9a-024	D-060	none	Annotations 2026-10-08 and 2026-10-19 say the policy is ignore_stop_requests and the stop_on faces are stop requests since D-316.	
+L9a-025	D-060	none	Annotation 2026-10-19 says the policy binds per advance, not at Simulation construction (D-255).	
+L13-018	D-061	none	Annotations 2026-10-19 (log.md:2085-2095) record the one-level public resolve and the service walk (D-414).	
+L13-019	D-061	none	The third annotation says D-414 retires the past-generic diagnostic.	
+L13-020	D-061	none	The annotations record the one-level wiring rule, the service walk refusing only an unknown segment, and the inspection case (D-414).	
+L13-024	D-062	none	Annotation 2026-10-19 says predicate selection is `select` of input_passthrough and output_passthrough (D-251), not a faces method.	
+L8a-044	D-063	none	Annotation 2026-10-20 retires the warm-restart clause (D-273).	
+L14-001	D-064	none	Vocabulary of its day. D-204 renamed merge to combine and D-405 retired 'fragment function'. Both say the log keeps its day's vocabulary and cite D-064. The pull composition holds.	
+L13-030	D-065	none	Misattributed. The claim is D-159's (log.md:6219), not D-065's. D-065 says nothing on severity. D-159 may need a check of its own.	
+L13-037	D-065	none	Misattributed. The claim is D-159's. D-159 already carries a 2026-10-19 annotation (D-250) that drops the two-stream partition. D-065 is untouched.	
+L6d-015	D-065	none	Rename Merged to Combined by D-204 (keeps log vocabulary, cites D-065). Override as fourth node was admitted in D-068.	
+L6d-017	D-065	none	Rename merge to combine by D-204, which cites D-065.	
+L6d-024	D-065	none	D-065's 2026-10-20 annotation records D-414 retiring :past_generic and makes locality law authoring guidance. Spec §14.2 agrees.	
+L9a-033	D-066	none	Getter to Authored is an implementation name from the lens unification, not a design term, and the entry's argument is untouched. No entry or rule asks for an annotation.	
+L9a-040	D-066	annotate	Position lists `capture` among the gather twin's consumers. D-273 retires capture's condition form and D-274 replaces it with checkpoint. D-066 carries no note of it. Code: readers serve trim cost reads and linearize's gather.	Annotation (2026-11-26): `capture` retires (D-273). The compiled readers serve trim's cost reads and the linearization gather, and a checkpoint copies the stores wholesale (D-274).
+L10-028	D-067	none	Annotation 2026-10-02 already records D-205 and D-291: the due set is Phi=0, governs the s_update calls only, and every discrete output stage publishes.	
+L10-033	D-067	annotate	Position says `capture` returns condition and time separately. D-273 retires it and says init! sets t0 before boundary zero. D-067's annotation covers only the due set.	Annotation (2026-11-26): `capture` retires (D-273). `init!` takes t0 as its argument and sets the origin before boundary zero, and a checkpoint carries the clock past the initial instant (D-274).
+L14-004	D-068	none	UninitializedSlots to UninitializedInputs is D-206's rename (slot to root input), which applies forward. Batching, declaration order and all-or-nothing hold.	
+S14b-001	D-068	none	Spec §14.4 now says coverage is compared against the structure's root inputs. D-068's `input_faces` names the same data, in the vocabulary of its day (D-206).	
+L14-031	D-070	none	BuildError to DiagnosticError is D-222's rename and D-058's annotation covers it. Throwing at setup still holds, as does the no-throw TrimReport.	
+C14-009	D-070	none	Spec §14.8 (spec.md:13998-14004) now states that the guess is projected into the box. It extends D-070's 'bounds by step projection' and does not contradict it.	
+L14-038	D-071	none	Annotation 2026-10-20 says no source ships a design_world and it is the rig this design records.	
+L6e-025	D-072	none	Annotation 2026-10-20 says the default operating point is the checkpoint (D-274) and capture no longer produces a condition (D-273).	
+L6e-026	D-072	none	Same annotation. The checkpoint is the full-store gather and capture's condition form is retired (D-273, D-274). The claim names no further change.	
+L6e-027	D-072	none	Annotation 2026-11-21 says linearize returns plain arrays and slicing needs labeled (D-475).	
+L8a-045	D-073	annotate	Position cites sketch_io.jl, which is deleted (fd finds only design/prototypes/sketch_decoder.jl). No entry or spec passage records it.	Annotation (2026-11-26): `sketch_io.jl` is removed. `sketch_decoder.jl` remains under design/prototypes/.
+L8a-046	D-073	annotate	Position cites condition_demo.jl, which is deleted. test/test_conditions.jl exercises the §14 algebra. No entry records the removal.	Annotation (2026-11-26): `condition_demo.jl` is removed. test/test_conditions.jl exercises the §14 algebra and the §14.9 mounting.
+L8a-048	D-073	none	Annotation 2026-10-12 says the junction's type parameter is the nominal type (D-311).	
+L7-003	D-076	annotate	D-076's annotation (2026-09-25) covers only input_types/output_types. local_types is deleted. D-055's and D-079's sibling annotations cite D-165 and D-194.	Annotation (2026-11-26): `local_types` is deleted (D-165, D-194). Stage membership derives from the stages' returns.
+L7-005	D-076	annotate	By-value family is now x_init/s_init/m_init (D-267, src/declare.jl:75,103,127). The rename touches the entry's naming argument. Fold into one annotation with L7-004.	Annotation (2026-11-26): the by-value declarations are `x_init`/`s_init`/`m_init`, named by the bundle field each one fills (D-267).
+L7-004	D-076	annotate	D-267 replaces the three naming conventions with one rule: bundle field, then qualifier. D-076's 'self-classifying by convention' is the argument it touches. The existing annotation covers only the _types pair. Use as the master annotation for L7-003/005/007.	Annotation (2026-11-26): amended by D-267. One rule names the inventory. Each declaration takes the bundle field it fills and then a qualifier: `x_init`/`s_init`/`m_init` by value, `u_types`/`y_types` by type, `ws_init` by allocation. `local_types` is deleted (D-165, D-194).
+L7-007	D-076	annotate	Allocation declaration is ws_init(c, T) (src/declare.jl:131,150). workspace became init_workspace in D-220 and ws_init in D-267. Fold into L7-004's annotation.	Annotation (2026-11-26): the by-allocation declaration is `ws_init` (D-220, D-267).
+L6e-031	D-077	none	D-077's 2026-09-24 annotation says the allocator takes the scalar on both tiers (D-263). The rename to ws_init is D-267's and applies forward (rule 2).	
+L6e-037	D-079	annotate	Position says local_types is plain on both tiers. It is deleted (D-165, D-194, per D-055's annotation). D-079 has no annotation.	Annotation (2026-11-26): amended by D-165 and D-194. `local_types` is deleted, and `output_types` (`y_types` since D-267) is the one plain contract declaration on both tiers.
+L6e-040	D-079	annotate	src/leaves.jl:281-293 substitutes only Float64 in type-parameter positions, so other Real types such as Int pin. D-263 (log.md:11315) states this. D-079 has no annotation.	Annotation (2026-11-26): amended by D-263. The walk substitutes `Float64` in type-parameter positions, so a type parameter at any other `Real` type, `Int` included, pins.

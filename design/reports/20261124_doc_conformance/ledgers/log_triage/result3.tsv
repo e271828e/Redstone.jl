@@ -1,0 +1,42 @@
+id	entry	outcome	evidence	draft
+L10-040	D-081	none	D-081 annotation (2026-11-11) already records D-445: tick eligibility keys to due instants, the frame keeps drain and pacer deadlines.	
+L10-042	D-081	none	Same 2026-11-11 annotation: every integration step end is a boundary too (D-445).	
+L6a-068	D-082	none	Annotation (2026-10-02) records D-274: every checkpoint carries the prior; src/checkpoint.jl:123-124 restore copies it back.	
+L6a-069	D-082	none	Same annotation: re-run from a condition rebuilds at boundary zero, restore! copies the prior back (D-274); sim.jl restore runs no boundary zero.	
+L11a-071	D-083	none	Annotation (2026-10-13) already says no local cells remain (D-165, D-194), so the clause is historical.	
+L6d-027	D-084	none	output_types renamed to y_types by D-267 (rule 2 vocabulary of its day); the argument (no unconnected-output warning) holds.	
+L6d-033	D-085	none	`connections` split by D-170 and renamed by D-279, D-303, D-314; rule 2 rename. Position (container is transparent grouping) still holds, declare.jl:342.	
+K11-002	D-089	annotate	Spec §5.3 (spec.md:1511-1514) now says trajectories are observable in log and replay and the trace is the recorded inputs; D-089 Position still says log/trace/replay and carries no annotation.	Annotation (2026-11-26): the trace holds only the drained inputs, so gain trajectories are observable in the log and in replay, which re-drives the ordinary loop from the trace; §5.3.
+L7-009	D-092	annotate	D-214 (log.md:8596) rules severity is `error` or `warning`; src/diagnostics.jl:55-59 agrees. D-092 has no annotation.	Annotation (2026-11-26): amended by D-214. Severity takes two values, `error` and `warning`. The former severity column splits into severity, raised (`build`, `service`, `runtime`) and policy; Appendix C.
+L7-010	D-092	annotate	`service` is a value of D-214's raised column, not a severity; no kind returns :service. Same annotation as L7-009 covers it.	Annotation (2026-11-26): amended by D-214. Severity takes two values, `error` and `warning`. The former severity column splits into severity, raised (`build`, `service`, `runtime`) and policy; Appendix C.
+L7-011	D-092	annotate	The six-value count of D-159 is folded by D-214 to two. Same single annotation on D-092 covers it.	Annotation (2026-11-26): amended by D-214. Severity takes two values, `error` and `warning`. The former severity column splits into severity, raised (`build`, `service`, `runtime`) and policy; Appendix C.
+L11a-083	D-095	none	Annotation (2026-10-20) records that get_local retired with local_types (D-165) and the family has five members.	
+L11a-084	D-095	none	Same annotation: get_slot is spelled get_input since D-206 (rename).	
+L11a-085	D-095	none	Same annotation: get_local retired with local_types (D-165), so the pairing is gone.	
+L14-041	D-098	none	D-095's annotation (2026-10-20) states the table selectors are get_output, get_input, get_face (get_local retired D-165, get_slot renamed D-206); D-098 defers to D-095's family. readers.jl:243,269,293.	
+L14-043	D-098	none	D-098 annotation (2026-10-20) already says `capture` reads `checkpoint` here (D-273, D-274).	
+S9c-062	D-099	annotate	Spec 5793 now says only that bare Dual cannot key an activation or be walked to; the zero(T) claim is dropped. Probe: zero(Dual) answers a tagless Dual{Nothing,Int64,0}. D-099 Rationale still claims otherwise.	Annotation (2026-11-26): a bare `Dual` does answer `zero(T)`, as a tagless `Dual{Nothing,Int64,0}` at no scalar a model holds. §9.4 now says only that it cannot key an activation or be walked to.
+L6c-041	D-100	none	D-100 annotation (2026-10-02) records that D-154 removed round-start materialization; round-start-u semantics holds by construction.	
+L6c-042	D-100	none	Same annotation: the per-event re-decode is gone (D-154).	
+L6c-044	D-100	none	D-100 annotation points to D-154, whose Position states one event per component per round and handler returns latching; executor.jl:397,402-410.	
+L6a-071	D-101	none	D-101 annotation (design/log.md:3449-3452) records D-274 and the single substitution; sim.jl:1216-1221 agrees.	
+L11a-093	D-102	none	D-102 annotation (2026-10-13) records D-366: only `loop` is mandatory, other hooks have no-op defaults.	
+L11a-099	D-103	none	D-103 annotation (2026-10-13) records D-177 (traits) and D-146 (faces/selectors renamed claims/reads).	
+L11a-100	D-103	none	D-103 annotation (2026-10-14) records that map_input/map_output are loop conventions (D-177, D-382).	
+L11a-104	D-103	none	Annotation (2026-10-13): D-177 declares sides by Bool traits in place of method presence.	
+L11a-105	D-103	none	Same annotation covers the method-presence replacement; D-177 (log.md:7056) states the `which` check against the fallback.	
+L11a-111	D-104	none	D-104 annotation (log.md:3576-3578) records the values-plus-mask carrier since D-202.	
+L11a-121	D-105	none	`report` renamed `report!` by D-160 (rule 2 rename).	
+L11a-124	D-105	annotate	The 2026-10-15 annotation naming the two non-DeviceCrash raises sits on D-102, not D-105. D-105 Position still says any other exception is DeviceCrash; devices.jl:650-675 agrees with the annotation.	Annotation (2026-11-26): two raises are not a `DeviceCrash`, the operator interrupt (D-132) and the raise a device's `unblock!` provokes (D-402).
+L9a-044	D-107	none	D-107 annotation (2026-10-13) records D-176: every writer's batch is sparse-converted at the drain.	
+L9a-046	D-107	none	Same annotation: D-176's one sparse record format replaces the density rule.	
+L11a-131	D-108	none	D-108 annotation (2026-10-20) records D-273/D-274: capture is checkpoint.	
+L11a-136	D-108	none	Same annotation covers the rename; sim.jl:1163-1170 behaviour holds.	
+L6b-053	D-112	annotate	D-112 has no annotation. Stage-name marker retired by D-220; init_workspace has one arity on both tiers (D-263, log.md:10341, 11297); assembly.jl:724-731 votes lack ws_init. Spec 3489-3516 states the set.	Annotation (2026-11-26): the tier-consistency set no longer holds stage names or `workspace` arity. D-220 retired the stage-name marker, and D-263 gives `init_workspace` one arity on both tiers. The markers are the update laws, the stores and `events`; §5.3, §8.2.
+L8a-062	D-113	none	Rename (faces to input_passthrough/output_passthrough, D-171, D-209); D-251 (log.md:10425) states the current exclusivity with `select` and UnknownFaceSelection reasons; assembly.jl:610-622.	
+L10-044	D-114	none	D-114 annotation (2026-10-15) records D-230: the wait counter is separate and no longer mirrors the snapshot index.	
+L12-048	D-114	annotate	Row is misfiled: the claim sits in D-198 (log.md:7945; D-133 Position 4679 and its Rejected item share it). D-269 makes `margin` a knob (control.jl:66, sim.jl:1334,1562); neither entry's annotations say so. D-480 annotated only the default.	Annotation (2026-11-26): amended by D-269. `margin` is a knob, set by `margin!(sim, m)` and by the `margin` keyword of `run!` and `replay!`. Debt forgiveness and heartbeat staleness stay fixed constants with no user knob. Place on D-198 and, with its own wording, on D-133.
+L14-044	D-118	none	D-118 annotation (2026-10-20) records that the field set closes at nine since D-262.	
+L11a-138	D-122	none	D-122 annotation (2026-11-11) records D-448: boundary-detected renamed non-localized.	
+L14-050	D-124	none	get_slot became get_input by D-206 (rename); D-095 annotation (2026-10-20) records it and the five-member family.	
+L14-051	D-124	none	init_x/output_types renamed by D-267 and init_x split into x_init/s_init by D-195; D-197 records that trim's get_state reads span both tiers (readers.jl:992-1013).

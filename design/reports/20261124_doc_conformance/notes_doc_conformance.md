@@ -222,6 +222,22 @@ the tools.
   warning. The user dropped the first, since one marker in the project's
   life reached a commit and the review caught it. The test landed in
   `test_diagnostics.jl`, and a mutant that drops the warning turns it red.
+- **The log clustering, 2026-11-26.** Eight mid-tier agents triaged the 326
+  rows of `ledgers/log_findings.tsv` by entry, under
+  `ledgers/log_triage/brief.md`, about 835k tokens in four minutes. The
+  merged result is `ledgers/log_triage.tsv`: 238 `none`, 83 `annotate`, 4
+  `outside`, 1 `supersede`. Every dated annotation a `none` row cites was
+  checked to exist. The user ruled no new entry: the one `supersede` row
+  (L9a-182, the tracer's name lists) became an annotation on D-253, and
+  L13-030 moved to an annotation on D-159. The annotations that only record
+  D-437's port renames were dropped (D-143, D-311, D-312, D-316, D-411), as
+  was D-319's clause on where the grid helpers live. 48 annotations landed,
+  one per entry, listed in `ledgers/log_annotations.md`. The ledger's log
+  line numbers had drifted, so many rows sat one entry early; the agents'
+  entries were used. Of the `outside` rows, L13-017 was already ruled
+  (`discard_reports` stays), CIT-D166 is a sweep of the code's D-166
+  citations, and L9a-092 and L9a-093 move §11.8 and D-136: the writer copies
+  the ring at every accepted report, which the CAS handoff needs.
 - **The schedule the user set on 2026-11-24.** Pause after G5 until the
   usage window resets at 01:51 CET on 2026-11-25; launch G6 then, as four
   runs (`probes/coord/g6.py` writes them at the new pin); launch G7 five

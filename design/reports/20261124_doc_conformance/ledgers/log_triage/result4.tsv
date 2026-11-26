@@ -1,0 +1,46 @@
+id	entry	outcome	evidence	draft
+L11a-150	D-127	annotate	D-127 annotations stop at N_base (2026-10-15); D-443 retires N_base, D-449 adds h_max; spec 12.7 (spec.md:11043-11052) lists the compared set; no D-127 line says so	Annotation (2026-11-26): the deployment block is the `Deployment` itself, whose compared parameters are `Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm, the localization, firing and attempt budgets and the schedule; `h` and `N_base` no longer appear (§12.7, D-254, D-443, D-449, D-460).
+L11a-151	D-127	none	Annotation 2026-10-13 records that the header holds no t_end/stop_on pair (D-255).	
+L11a-153	D-127	annotate	Same drift as L11a-150: the six-parameter compared set is now the nine plus schedule of §12.7 (spec.md:11043-11052); one annotation covers both rows.	Annotation (2026-11-26): the deployment block is the `Deployment` itself, whose compared parameters are `Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm, the localization, firing and attempt budgets and the schedule; `h` and `N_base` no longer appear (§12.7, D-254, D-443, D-449, D-460).
+L11a-154	D-127	none	Annotation 2026-10-15 records event_budget as localization_budget (D-181); rename only.	
+L11a-155	D-127	none	Annotation 2026-10-15 records ReplayHeaderMismatch is CheckpointMismatch (Appendix C).	
+L11a-164	D-130	none	Annotation 2026-10-19 (second) records D-414 dropping the service walk's refusal.	
+L11a-166	D-130	none	Same D-414 annotation covers service resolution following the structure's children.	
+L11a-168	D-130	none	Annotation 2026-10-19 (first) records D-406/D-407: device reads resolve service-side, inspection is snapshot and log.	
+L11a-170	D-130	none	Same first annotation records ReadBindingUnresolved retiring (D-406).	
+L10-055	D-132	none	Annotation 2026-10-15 records stop_on becoming ignore_stop_requests (D-316), a rename plus reframing; Position's source list otherwise stands.	
+L10-062	D-133	none	Annotation 2026-10-02 records event_budget as localization_budget (D-181).	
+L10-068	D-133	none	Annotation 2026-10-15 records join_timeout keyword defaulting to 5 s (D-198).	
+L10-072	D-133	annotate	Annotations cover the 3 ms default (D-480) but nothing says margin is now a user knob; D-269 and spec 10.7 (spec.md:9824) state margin!/run!/replay! keyword.	Annotation (2026-11-26): `margin` is a user knob since D-269, set by `margin!` and the `margin` keyword of `run!` and `replay!` (§10.7).
+L11a-172	D-133	none	Text is D-134. Annotation 2026-10-13 records is_greedy replacing the interactive marker (D-174).	
+L11a-174	D-133	none	Text is D-134. Same annotation records declared sides (D-177) and D-174.	
+L9a-067	D-134	annotate	Text is D-135. Spec 9.4 (spec.md:5798-5806) and D-253 give decls, probe products, layout; no D-135 line records dropping plans and flag.	Annotation (2026-11-26): an activation-cache entry holds the declarations retyped at its scalar, the probe products and the cell layout, not compiled plans or a validated flag (§9.4, D-253); pre-materializing leaves no worker writing to the Build (§11.1), but each lookup still takes the build's lock briefly (D-281).
+S9c-055	D-135	annotate	D-135 Rationale says pre-materialized Build has no synchronization on any path; spec 9.4/11.1 now say no worker writes, and code locks on every lookup (src/build.jl:969-975).	Annotation (2026-11-26): an activation-cache entry holds the declarations retyped at its scalar, the probe products and the cell layout, not compiled plans or a validated flag (§9.4, D-253); pre-materializing leaves no worker writing to the Build (§11.1), but each lookup still takes the build's lock briefly (D-281).
+CV9a-017	D-135	annotate	Position lists layouts, compiled plans, validated flag; Activation{T} holds decls, products, layout (src/build.jl:565); spec 9.4 states the current set.	Annotation (2026-11-26): an activation-cache entry holds the declarations retyped at its scalar, the probe products and the cell layout, not compiled plans or a validated flag (§9.4, D-253); pre-materializing leaves no worker writing to the Build (§11.1), but each lookup still takes the build's lock briefly (D-281).
+S11a-185	D-135	annotate	Spec 11.1 (spec.md:7966-7969) now says pre-materializing leaves no worker writing; D-135 still claims no synchronization on any path while the lock stays on lookups.	Annotation (2026-11-26): an activation-cache entry holds the declarations retyped at its scalar, the probe products and the cell layout, not compiled plans or a validated flag (§9.4, D-253); pre-materializing leaves no worker writing to the Build (§11.1), but each lookup still takes the build's lock briefly (D-281).
+L9a-080	D-136	none	Annotation 2026-10-13 records D-240: heartbeat read at publication.	
+L9a-089	D-136	none	Annotation 2026-10-13 records D-241: one small vector of records per publication.	
+L9a-092	D-136	outside	Spec 11.8 (spec.md:9726-9731) and D-136 agree on one fresh ring per frame; DiagBatch append copies the ring per accepted emission (src/dataplane.jl:100-103, 138-146). Code defect, log and spec agree.	Code defect: append in place to a ring allocated once per frame, or settle with the user and amend spec 11.8 and D-136.
+L9a-093	D-136	outside	Same deviation: spec 11.8 bounds the worst case at one ring of sixteen per cell per frame; code copies the ring per accepted emission, up to sixteen copies.	Code defect: same fix as L9a-092; one change settles both rows.
+L6c-052	D-136	none	Text is D-137. Annotation 2026-10-13 already moves log_max to init!, restore!, replay! ("the doors that build a run"), which covers overlay!.	
+S6b-239	D-141	none	Spec now says handlers alone reset continuous state (spec.md:863); D-141 says resets are events, which agrees.	
+L6a-083	D-141	none	init_x renamed x_init (D-267); rule 2 vocabulary, argument untouched.	
+SA-025	D-141	none	Spec no longer claims a shipped weight-on-wheels instance; the gear and PIVector await migration, and Integrator(; reset = true) is shipped (library_inventory.md:238). Forward-looking wording of its day.	
+L6d-039	D-142	annotate	Text is D-143. Its 2026-10-12 annotation says (out = Pinned{V},); now y_types(::Constant{V}) = Pinned{V}, face y (src/library.jl:350, D-437, spec.md:12369).	Annotation (2026-11-26): `Constant{V}` declares a bare `y_types`, `Pinned{V}`, so its one port has the face `y` (D-437, §13.7), and its stage is `y_state`; the tier argument holds for any stateless output stage.
+L11b-001	D-143	none	Text is D-144. Helper renamed again to input_passthrough/output_passthrough by D-171; rule 2, rename applies forward.	
+L11b-002	D-143	none	Text is D-144. D-251 adds select; the keyword list was right at its date (rule 2, rule 1).	
+L11b-003	D-143	none	Text is D-144. faces(b) renamed claims(b) by D-146; rule 2 vocabulary.	
+L6d-045	D-143	annotate	Annotation 2026-10-12 maps h_xu to y_direct, but Constant's stage is y_state (src/library.jl:351, spec.md:12370); the new annotation corrects it.	Annotation (2026-11-26): `Constant{V}` declares a bare `y_types`, `Pinned{V}`, so its one port has the face `y` (D-437, §13.7), and its stage is `y_state`; the tier argument holds for any stateless output stage.
+L11b-004	D-144	none	Text is D-144 class list. Chain of renames D-170, D-220, D-279, D-303, D-314; annotation 2026-09-25 restates class 1 from D-267; rule 2.	
+L11b-006	D-144	none	Leaf declaration renames D-165, D-173, D-195, D-220, D-267; rule 2 vocabulary.	
+L11b-008	D-144	none	Stage renames D-220, D-267, D-279; rule 2 vocabulary.	
+L11b-010	D-144	none	get_local retired by D-165, get_slot became get_input (D-206); recorded on D-095, rule 2.	
+L8a-073	D-145	annotate	Text is D-146. Sides are declared by is_input/is_output traits since D-177, with a conformance check at attach (spec.md:9172, 9231); no D-146 line says so.	Annotation (2026-11-26): sides are declared by the `is_input` and `is_output` traits since D-177, and attach cross-checks method presence against them (§11.6).
+S9d2-042	D-147	none	D-147 says rhs is unchanged; spec now says rhs gates nothing and takes both arities, which does not contradict it.	
+L6d-055	D-147	none	Behaviour holds; h_z/h_x renamed output_state (D-220), y_state (D-267), sweep_1 (D-196); annotation 2026-10-02 records D-196.	
+L6d-056	D-147	none	Behaviour holds; renames D-220, D-267, D-196; annotation 2026-10-02 records D-196.	
+L6d-057	D-147	none	Annotation 2026-10-02 records sweep_hx/sweep_hxu as sweep_1/sweep_2 (D-196).	
+L6d-058	D-147	none	Same D-196 annotation covers the @ballocated(sweep_hxu()) wording.	
+L6d-059	D-147	none	Same D-196 annotation covers the boundary variants' names.	
+L6d-064	D-147	none	Annotation 2026-11-11 records D-445: due set is the gate's image at a due instant, empty elsewhere.	
+L6d-066	D-147	none	Annotation 2026-10-02 records boundary zero amended by D-185, D-205 and D-291.

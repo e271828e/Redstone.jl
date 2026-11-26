@@ -1,0 +1,42 @@
+id	entry	outcome	evidence	draft
+S6c-002	D-006	none	Spec 1139 now says "at most two output stages"; D-006 says "two-stage" and its annotation says "two output stages are a leaf's". Entry reads right.	
+S13c-183	D-012	none	D-012 does not claim that misses are only untaken branches. The spec sentence (spec 12522) was fixed to add the value-severing blind spot, citing D-012 and D-349.	
+L6b-008	D-016	none	D-016 annotation (2026-10-02) already records D-252 removing selective auto-publication.	
+L6b-010	D-016	none	D-016 annotation already records D-154 removing the per-event re-decode.	
+L6a-035	D-020	none	D-020 annotation (2026-10-02) records D-154 removing the per-event re-decode.	
+L6a-036	D-020	none	D-020 annotation records D-181's per-event firing_budget replacing once-per-boundary firing.	
+L11a-002	D-024	none	D-024 annotation (2026-10-13) records D-104's one CAS-merge policy, so no writer overwrites.	
+L11a-004	D-024	none	Annotation and spec 8544-8550 agree: the retry is bounded only for a device cell, and the harness cell is the D-200 exception. Handle stage! docstring says "any task" while §11.4 says a device cell has one writer. Code/spec tension, not a log item.	
+L11a-020	D-025	none	D-025 annotation (2026-10-13) records D-310: every device runs on a spawned task, so main-thread affinity is gone.	
+L11a-023	D-026	none	D-026 annotation (2026-10-13) records resolution baked at run start per D-270.	
+L11a-027	D-026	none	Entry's staging-on-interaction ruling stands. D-310 parked the GUI and keeps §11.7 semantics. Code owed per pending (inspector). Nothing for the log.	
+S12a-020	D-027	none	Spec §10.7 now says an explicit yield() at every frame top covers frames where the sleep does not run. D-027's parenthetical is consistent. src/sim.jl:2107.	
+SD3-100	D-028	annotate	Position gives predicate `counter > last_seen && running`. Spec 9984 and 17114 give `counter > last_seen || !running`. src/devices.jl:439 matches the spec. No annotation or later entry says so.	Annotation (2026-11-26): the waiter's predicate loop exits when `counter > last_seen || !running`, so a stop releases it, §12.3.
+L6b-013	D-033	annotate	Position says input_types is a NamedTuple of types. D-437 (D-436 superseded) admits a bare contract, one type with the default face u or y. D-033 annotation names only D-165 and D-179. Rename to u_types is rule 2 and is left alone.	Annotation (2026-11-26): D-437 admits a bare contract, one type in place of the NamedTuple whose one port takes the default face `u` or `y`, §4.3.
+L6b-016	D-033	none	D-033 already says the cell types come from the framework leaf walk. D-079 was reversed by D-166 and the walk restored by D-263, so the net position matches the code. Annotation records the local_types deletion.	
+L6b-020	D-033	none	D-033 annotation (2026-10-02) already records that an event carries no localize flag (D-179).	
+L6b-025	D-034	none	D-034 annotation (2026-10-02) records D-194 retiring the strict local_types clause.	
+L6c-023	D-035	none	D-035 annotation (2026-10-02) records D-252 removing auto-publication; the returned-from-y_state exposure is stated.	
+L6b-028	D-036	none	D-036 annotation (2026-10-29) records D-436's bare return.	
+L11a-038	D-038	none	D-038 annotation (2026-10-13) records that no private cells remain (D-165, D-194).	
+L8a-010	D-041	none	D-041 annotation (2026-10-02) records the split by direction (D-170, D-279). u_connections/y_connections and input_wires/output_wires are later renames (rule 2).	
+L8a-011	D-041	none	D-041 annotation records that endpoint derivation became a cross-check on the declared direction. Code matches (FaceDirectionConflict).	
+L8a-018	D-042	none	D-042 annotation (2026-10-02) records D-254/D-256: Δt_base and h fixed at Deployment.	
+L6d-007	D-043	none	faces became passthrough in D-144, and D-251 split it into input_/output_passthrough with select. A rename plus a helper split leave the entry's argument untouched (rule 2).	
+L11a-056	D-044	none	D-044 annotation (2026-10-13) records D-174: the GUI is an enumerated writer and the harness writer is the one derived surface.	
+L6b-035	D-045	none	D-045 annotation (2026-10-13) records D-174's reading: slot inside the GUI's own claim, OutOfClaimEntry otherwise.	
+L8a-020	D-046	none	D-046 annotation (2026-11 per log.md:1676-1678) already records the empty-name invariant (D-436).	
+L11a-061	D-047	none	Entry's ruling stands. D-310 parked the GUI and keeps the staging-on-interaction semantics. Widget code is owed per pending. Nothing for the log.	
+L11a-062	D-047	none	Value and edge widgets are owed per pending (cockpit panels). The entry's ruling is unchanged.	
+L6c-026	D-048	none	D-048 annotation (2026-10-02) records D-254: deployment binding at the Deployment constructor.	
+L9a-005	D-049	none	Spec 5129 and 16306 still count the face table in the Build's derived contract, answered by function (D-315). "Inspectable face table" still reads true.	
+S9b-280	D-051	none	Spec 5583 now says four kinds of type. D-051 does not state the count.	
+CV9a-049	D-051	none	Spec §9.3 (5617-5622) now says probe values never double as initial root-input values and a fresh table holds them until init!. D-051's "never initial slot values" agrees. The src citation of §6.3 is a code matter.	
+L6a-058	D-053	none	D-053 annotation (2026-10-02) records D-249: the payload carries no time and the StepError carrier holds it.	
+L8a-030	D-055	none	D-055 annotation (2026-10-02) records D-165/D-194: local_types deleted, an intermediate is an ordinary declared port.	
+L8a-031	D-055	none	Same annotation covers it; every return field is a y_types port (D-194).	
+L8a-032	D-055	none	Same annotation covers it: local_types and its default are deleted.	
+L8a-034	D-055	none	Same annotation covers it: an intermediate is a declared port, and the workspace stays distinct.	
+L8a-036	D-055	none	Same annotation covers it: local_types is deleted.	
+L8a-037	D-055	none	Same annotation covers it: local_types is deleted, so nothing is walked.	
+L13-003	D-057	none	exports became input_wires/output_wires (D-170/D-279), a rename of the day (rule 2). The abort-on-user-code-exception policy still holds.

@@ -1131,6 +1131,9 @@ shutdown-interruptible via the predicate.
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-11-26): the waiter's predicate loop exits when
+`counter > last_seen || !running`, so a stop releases it, [§12.3][s12-3].
+
 **Rejected.**
 - *`Event`-based per-frame gate:* recurring signal on a latch — the reset has
   no correct placement under asynchronous waiters; cf. FlightCore's `io_start`
@@ -1268,6 +1271,9 @@ Annotation (2026-10-02): amended by [D-165][d-165] and [D-179][d-179]. `local_ty
 and an event carries no `localize` flag, since the guard's return type declares
 its detection policy. The three declaration conventions and derived stage
 membership stand.
+
+Annotation (2026-11-26): [D-437][d-437] admits a bare contract, one type in place of the
+NamedTuple whose one port takes the default face `u` or `y`, [§4.3][s4-3].
 
 **Rejected.**
 - *Superseded position — `outputs(::C, ::Type{T})` on continuous components
@@ -2005,6 +2011,11 @@ boundary phase, one plain store per dispatch.
 
 **Rationale.** Recorded only through the rejections below.
 
+Annotation (2026-11-26): amended by [D-223][d-223], [D-429][d-429], [D-441][d-441] and [D-482][d-482]. The one
+`StepError` constructor serves several catch sites. These are the frame (host
+`:loop`), boundary zero, the overlay settling and the restore door, plus the
+stretches of the services' evaluations.
+
 **Rejected.**
 - *Per-call try/catch:* exception frames in the hot path to gather what a
   cursor store provides.
@@ -2254,6 +2265,10 @@ Annotation (2026-10-02): the codegen cost grows with the shape's writes. The
 Position's 10 to 50 ms holds up to 32 writes. It measures 0.09 s at 64 writes
 and 0.2 s at 128 (`design/reports/20261002_tuple_walks/`).
 
+Annotation (2026-11-26): `capture` retires ([D-273][d-273]). The compiled readers serve
+trim's cost reads and the linearization gather, and a checkpoint copies the
+stores wholesale ([D-274][d-274]).
+
 **Rejected.**
 - *A single always-specialized form:* per-shape codegen tax on scripted
   one-shot conditions.
@@ -2288,6 +2303,10 @@ snapshot.
 Annotation (2026-10-02): amended by [D-185][d-185], [D-205][d-205] and [D-291][d-291]. At
 boundary zero the due set is the `Φ = 0` components, which governs the
 `s_update` calls alone; every discrete output stage publishes, due or not.
+
+Annotation (2026-11-26): `capture` retires ([D-273][d-273]). `init!` takes `t0` as its
+argument and sets the origin before boundary zero, and a checkpoint carries the
+clock past the initial instant ([D-274][d-274]).
 
 **Rejected.**
 - *Condition-authoritative boundary zero:* no events/updates: delays the
@@ -2529,6 +2548,10 @@ Annotation (2026-10-12): [D-311][d-311] makes the junction's type parameter the
 nominal type, as in `SumJunction{Wrench{Float64}, 3}`, never an
 unparametrized constructor, and [§6.2][s6-2] writes it so.
 
+Annotation (2026-11-26): `sketch_io.jl` and `condition_demo.jl` are removed.
+`sketch_decoder.jl` remains under `design/prototypes/`, and
+`test/test_conditions.jl` exercises the [§14][s14] algebra and the [§14.9][s14-9] mounting.
+
 **Rejected.**
 - *Split-form sketch files and separate `navsensors.jl`/`imu.md` notes:*
   retired, content absorbed into [§3.4][s3-4] and [§8.6][s8-6].
@@ -2638,6 +2661,11 @@ signature.
 
 Annotation (2026-09-25): `input_types`/`output_types` are `u_types`/`y_types`, the family being named by the bundle field it defines ([D-267][d-267]); the `_types` suffix and the separation from `input_faces` stand.
 
+Annotation (2026-11-26): amended by [D-267][d-267]. One rule names the inventory. Each
+declaration takes the bundle field it fills and then a qualifier:
+`x_init`/`s_init`/`m_init` by value, `u_types`/`y_types` by type, `ws_init` by
+allocation. `local_types` is deleted ([D-165][d-165], [D-194][d-194]).
+
 **Rejected.**
 - *`*_ports`:* the methods type ports, not just enumerate them.
 - *`*_schema`:* vaguer than what it replaces.
@@ -2746,6 +2774,11 @@ exact because promotion is airtight and there is no lossy `Dual → Float64` cas
 zero); differentiation participation = per-invocation seeding, never typing;
 deliberate `value()` stripping = stop-gradient, deliberate-lie class,
 schema-visible freezing a recorded [§14.10][s14-10] door.
+
+Annotation (2026-11-26): amended by [D-165][d-165], [D-194][d-194] and [D-263][d-263]. `local_types` is
+deleted, and `output_types` (`y_types` since [D-267][d-267]) is the one plain contract
+declaration on both tiers. The walk substitutes `Float64` in type-parameter
+positions, so a type parameter at any other `Real` type, `Int` included, pins.
 
 **Rejected.**
 - *Superseded position — the `T`-signature on the output side ([D-033][d-033]/[D-055][d-055],
@@ -3058,6 +3091,10 @@ stopped-sim service outputs; commanded resets are same-tick inputs consumed in
 the *output stage* with `g` storing the matching `z⁺` ([Appendix A][sA] entry; reset
 honored only in `g` = one-tick-late outputs, legal where that is meant).
 
+Annotation (2026-11-26): the trace holds only the drained inputs, so gain
+trajectories are observable in the log and in replay, which re-drives the
+ordinary loop from the trace; [§5.3][s5-3].
+
 **Rejected.**
 - *Writable parameter store / `Ref`-mutable component parameters:* invisible to
   log, trace, replay and the feedthrough graph — [D-031][d-031]'s raw-poke rejection
@@ -3119,6 +3156,10 @@ for post-build validation against the `Build`; six since [D-159][d-159]).
 
 **Rationale.** [D-058][d-058]'s missing deliverable and the acceptance-test contract —
 adding a kind is a decision-log entry.
+
+Annotation (2026-11-26): amended by [D-214][d-214]. Severity takes two values, `error`
+and `warning`. The former severity column splits into severity, raised (`build`,
+`service`, `runtime`) and policy; [Appendix C][sC].
 
 **Rejected.**
 - *Illustrative prose enumeration ("roughly one per rule"):* [D-058][d-058] makes tests
@@ -3377,6 +3418,10 @@ bare `Dual` `UnionAll` cannot key one, be walked to, or answer `zero(T)`; the
 width is arbitrary (CI pins genericity, not a Jacobian — [§14.10][s14-10] chunks at its
 own widths).
 
+Annotation (2026-11-26): a bare `Dual` does answer `zero(T)`, as a tagless
+`Dual{Nothing,Int64,0}` at no scalar a model holds. [§9.4][s9-4] now says only that it
+cannot key an activation or be walked to.
+
 **Rejected.**
 - *Bare `Dual` in the invariant:* [§9.4][s9-4] contradicted its own caching paragraph
   twelve lines down.
@@ -3616,6 +3661,9 @@ unconvertible to the slot's declared type, checked at staging for every writer.
 
 Annotation (2026-10-13): the rate limit is the diagnostic cell's bound, and 25
 is a renderer's number ([D-136][d-136]).
+
+Annotation (2026-11-26): two raises are not a `DeviceCrash`, the operator
+interrupt ([D-132][d-132]) and the raise a device's `unblock!` provokes ([D-402][d-402]).
 
 **Rejected.**
 - *A marked exception type (`InputMappingError` successor):* vestigial under
@@ -3871,6 +3919,11 @@ the event system is continuous-side only.
 `events` — and the tier the leaf's other declarations announce): one rule, one
 kind, keeping the kind list flat (user's call — the exception list is long
 already); [D-075][d-075] amended.
+
+Annotation (2026-11-26): the tier-consistency set no longer holds stage names or
+`workspace` arity. [D-220][d-220] retired the stage-name marker, and [D-263][d-263] gives
+`init_workspace` one arity on both tiers. The markers are the update laws, the
+stores and `events`; [§5.3][s5-3], [§8.2][s8-2].
 
 **Rejected.**
 - *A separate `EventOnWrongTier` beside `StageOnWrongTier`:* additive and
@@ -4408,6 +4461,11 @@ compared, not applied. The simulation's own state and clock stand, and its
 origin must equal the header's `t₀`, or the call is refused as
 `CheckpointMismatch`. `to_time` reads the header's `t₀` under either form.
 
+Annotation (2026-11-26): the deployment block is the `Deployment` itself, whose
+compared parameters are `Δt_frame`, `Δt_base`, `h_max`, `h_min`, the algorithm,
+the localization, firing and attempt budgets and the schedule; `h` and `N_base`
+no longer appear ([§12.7][s12-7], [D-254][d-254], [D-443][d-443], [D-449][d-449], [D-460][d-460]).
+
 **Rejected.**
 - *Validating the whole block uniformly:* freezes `t_end`/`stop_on`, which
   [§12.7][s12-7] explicitly leaves overridable, and a recorded `stop_on` termination
@@ -4742,6 +4800,9 @@ it is positive and finite, where this entry asked that it be positive.
 Annotation (2026-11-26): amended by [D-480][d-480]. The default `margin` is 3 ms,
 calibrated at the overshoot of the sleep a paced frame makes.
 
+Annotation (2026-11-26): `margin` is a user knob since [D-269][d-269], set by `margin!`
+and the `margin` keyword of `run!` and `replay!` ([§10.7][s10-7]).
+
 **Rejected.**
 - *An absolute-in-`t` localization tolerance:* breaks scale-freedom across `h`
   — one number is slack at `h = 1` and unreachable at `h = 10⁻⁴`.
@@ -4871,6 +4932,12 @@ duplicated work). Recommended idiom for [§11.1][s11-1]'s parallel sweeps,
 recorded at both sites: pre-materialize with the existing `build(world;
 activations = …)` keyword and the shared artifact is fully immutable, with no
 synchronization on any path.
+
+Annotation (2026-11-26): an activation-cache entry holds the declarations
+retyped at its scalar, the probe products and the cell layout, not compiled
+plans or a validated flag ([§9.4][s9-4], [D-253][d-253]); pre-materializing leaves no worker
+writing to the Build ([§11.1][s11-1]), but each lookup still takes the build's lock
+briefly ([D-281][d-281]).
 
 **Rejected.**
 - *Cached shared buffers:* [D-070][d-070]'s aliasing — warn-but-assign reborn — and it
@@ -5702,6 +5769,10 @@ declaration names what it returns, not the role it plays. The renames stand
 on this entry's other grounds, [§11.3][s11-3]'s claim vocabulary and [§14.7][s14-7]'s shared
 `reads`, and each new name also names the set it returns.
 
+Annotation (2026-11-26): sides are declared by the `is_input` and `is_output`
+traits since [D-177][d-177], and attach cross-checks method presence against them
+([§11.6][s11-6]).
+
 **Rejected.**
 - *Keeping `selectors(b)`:* defensible status quo — content-accurate and
   unambiguous — but it names the material rather than the role, and forgoes the
@@ -5884,6 +5955,10 @@ Annotation (2026-10-20): the list lags the governing principle. Linearization's
 operating condition under `about`, applied to its own fresh scratch, is a fourth
 such application, and [§14.6][s14-6] and [§14.10][s14-10] name it.
 
+Annotation (2026-11-26): a shortfall is one fail-fast diagnostic naming every
+uncovered root face in declaration order, not a collected batch, [§14.6][s14-6] and
+[Appendix C][sC].
+
 **Rejected.**
 - *`probe_value`-filling the scratch slots:* the [§14.6][s14-6] ban stands — it would
   silently manufacture a world instead of diagnosing the incomplete one — a
@@ -5971,6 +6046,13 @@ and per-field type mismatches, `ConformanceFailure`'s diff and
 `TrimProblemInvalid`'s payload as they stand; trim-side checks stay at setup,
 conformance stays always-on at the table-write point. A permutation is a
 non-event.
+
+Annotation (2026-11-26): amended by [D-235][d-235]. At the stage-return seam the
+framework pairs fields by name, in the write generated over the return type,
+with no type-level reorder. The check is decided per field at that write against
+the cell types, with no whole-type `isa` ([§9.5][s9-5]). Trim reads the bounds in the
+guess's field order by name, and only the residuals are reordered at the type
+level, `NamedTuple{keys(tolerances)}(r)` ([§14.7][s14-7]).
 
 **Rejected.**
 - *Key-set check plus positional packing:* the prior reading, and finding 7 — a
@@ -6242,6 +6324,10 @@ service warning is not a stream but a synchronous per-call annotation.
 Annotation (2026-10-19): superseded in part by [D-250][d-250]. [§13.2][s13-2]'s two-stream
 partition is gone; a service warning lives on the artifact the call returns.
 
+Annotation (2026-11-26): superseded in part by [D-214][d-214]. Severity takes two values,
+`error` and `warning`, and `service` is a value of the raised column, the stage
+an occurrence surfaces in ([Appendix C][sC]).
+
 **Rejected.**
 - *Demoting `TrimCommitEvents`/`TrimCommitResiduals` to report-only data:*
   silently reverses [D-126][d-126]/[D-155][d-155]'s made-visible-rather-than-silent doctrine and
@@ -6286,6 +6372,10 @@ class-(1) exemption question for markers (`interactive`) and predicate
 traits (`needs_calling_task`).
 
 **Rationale.** Round-5 vocabulary findings 2.2–2.4.
+
+Annotation (2026-11-26): the `interactive(b)` marker is retired by [D-174][d-174] and
+`needs_calling_task` is withdrawn by [D-310][d-310], so the class-(1) exemption question
+lapses for both.
 
 **Rejected.**
 - *Renaming any of them now:* each needs the whole-surface view the audit
@@ -7802,6 +7892,10 @@ through engine-ordered work vectors (`DWork` written in `mdlOutputs`, read in
 sweep-precedes-`f` argument), and block diagrams publish every intermediate as
 a subsystem-scoped signal. No private inter-method channel exists there.
 
+Annotation (2026-11-26): under a bare `y_types` a stage returns the one port's
+value, one cell, never a `NamedTuple` ([D-437][d-437]). A named `y_types` still returns
+its port `NamedTuple` alone.
+
 **Rejected.**
 - *Keep `w` (the [D-165][d-165] position):* the threading cost above; a whole second
   dataflow vocabulary (return law, hop law, bundle-presence rule,
@@ -7965,6 +8059,10 @@ Annotation (2026-10-15): amended by [D-256][d-256] and [D-317][d-317]. [D-256][d
 `Simulation(model::Model{Float64}; join_timeout = 5.0)`. The Rationale's
 "Deployment contexts" are contexts of use, not the `Deployment`. [§12.4][s12-4] says
 "Usage contexts".
+
+Annotation (2026-11-26): amended by [D-269][d-269]. `margin` is a knob, set by
+`margin!(sim, m)` and by the `margin` keyword of `run!` and `replay!`. Debt
+forgiveness and heartbeat staleness stay fixed constants with no user knob.
 
 **Rejected.**
 - *Superseded position — the join timeout as an operational constant with no
@@ -8159,6 +8257,11 @@ home for the fact, stands.
 Annotation (2026-10-19): amended by [D-233][d-233]. The final boundary time is always
 present, a value of the deployment's scalar and never `nothing`, so the
 record has no absent-time arm.
+
+Annotation (2026-11-26): the first source in that order is the first met in
+time. A boundary's publication precedes the frame top that follows it, so a
+request holding at a boundary is recorded over a control stop or `t_end` met
+there ([§13.5][s13-5], [D-268][d-268]).
 
 **Rejected.**
 - *Superseded position — presentation-only disposal ([D-201][d-201]):* honest but
@@ -8580,6 +8683,10 @@ nominal store set and one sweep per invocation, noise against the solve. Both
 halves die with the call, so the one-writer invariant is untouched, and the
 zero-decision probe falls out as the nominal half alone.
 
+Annotation (2026-11-26): under linearize's default form the nominal half is the
+restored checkpoint, whose held cells are the frozen tier's, with no condition
+applied and no establishment round, [D-274][d-274], [§14.10][s14-10].
+
 **Rejected.**
 - *Probe products as the frozen constants — the implicit prior position:* wrong
   numbers for any discrete producer upstream of the continuous dynamics, and
@@ -8738,6 +8845,9 @@ retires. The read refusal at attach is `ReadResolution`, which carries the
 read's label and not the device; the `attach!` call names the device and the
 binding.
 
+Annotation (2026-11-26): `StopFaceInvalid` is retired by [D-316][d-316].
+`StopRequestInvalid` is collected over the given requester paths, [Appendix C][sC].
+
 **Rejected.**
 - *Making the three service checks fail-fast to match the column:* throws
   away violations the pass already has, against [§13.1][s13-1]'s reasoning.
@@ -8801,6 +8911,9 @@ trace that `restore!` opens starts at the checkpoint's frame ([D-274][d-274]).
 
 Annotation (2026-10-15): `ReplayHeaderMismatch` is `CheckpointMismatch`
 ([Appendix C][sC]).
+
+Annotation (2026-11-26): the header records no stop policy, and a run's
+effective bound is reported by its termination record, [D-255][d-255].
 
 **Rejected.**
 - *A mutable termination slot in the header, rewritten at every advance:* one
@@ -9005,6 +9118,9 @@ leaf now declares and the update laws alone ([D-263][d-263]).
 
 Annotation (2026-09-25): the words moved from prefix to qualifier when the family was renamed by the bundle field it defines, `x_derivative`, `s_update`, `y_state`, `y_direct`, `x_projection` and `ws_init` ([D-267][d-267]); the shadowing ground and the tier-neutral output stages stand.
 
+Annotation (2026-11-26): the deferred parametrization of `StepError` on its
+cause's type landed as [D-225][d-225], `StepError{C}`.
+
 **Rejected.**
 - *Keeping the letters and adding a shadowing diagnostic instead:* the
   diagnostic cannot distinguish a user's own `f` from a forgotten import, which
@@ -9143,6 +9259,13 @@ boundary zero, so a throw inside boundary zero comes under `init!` alone.
 Annotation (2026-11-26): amended by [D-482][d-482]. Boundary zero's catch is the one
 host every stretch of model code runs under, and the services' evaluations
 take the rule this entry gave boundary zero.
+
+Annotation (2026-11-26): amended by [D-274][d-274] and [D-441][d-441]. A throw inside boundary
+zero leaves no trace and no header, so its reproduction is `init!` under the
+same condition, and a frame-one failure at pointer 0 reproduces as the halt at 0
+followed by `step!`. An interrupt inside boundary zero is wrapped like any
+throw, a `StepError{InterruptException}` with host `:boundary_zero`, and the
+lifecycle moves to `built`.
 
 **Rejected.**
 - *Raw propagation, closing only the lifecycle hole:* forgoes the frame and
@@ -9363,6 +9486,9 @@ only. `DeviceJoinTimeout` keeps its device id: it names the abandoned device,
 and the loop writes it. The one cost is a value shown apart from its record,
 which is a renderer's concern: a renderer presents each value under its
 record's writer.
+
+Annotation (2026-11-26): `EmptyGreedyClaim`, which [D-250][d-250] moved into the roster
+entry's own cell, names its device, the cell's writer ([§11.6][s11-6], [Appendix C][sC]).
 
 **Rejected.**
 - *A `writer` field on the five kinds:* the wrapper, the staging shim, the
@@ -10408,6 +10534,10 @@ build. Outside a build there is no artifact, and a log line is the honest
 fallback. Logging each artifact warning once at return keeps the interactive
 experience unchanged while the artifact keeps the record.
 
+Annotation (2026-11-26): a trim report is the exception to the artifact rule. It
+holds the facts its warnings report, and `trim!` logs `TrimCommitEvents`,
+`TrimCommitResiduals` and `TrimCommitChecks` beside it ([§13.2][s13-2]).
+
 **Rejected.**
 - *The logger as the home:* a CI run, a test and a second session read the
   artifact, never the log; a warning that lives only in a log line is lost
@@ -10455,6 +10585,10 @@ a child" sugar; the two-producers and obligation checks already state every
 violation it would catch, so it adds a spelling and no check. The feed-list
 test exists because the spec's sketch is the only statement of the idiom,
 and a sketch that the helpers cannot run is a claim without a check.
+
+Annotation (2026-11-26): an `only` that passes the unknown-names check keeps
+every face it names, so only `except` or `select` can keep nothing and raise
+`EmptyFaceSelection` ([§8.8][s8-8]).
 
 **Rejected.**
 - *Composable selectors (an `except` and a `select` together):* two filters
@@ -10579,6 +10713,13 @@ deployments. The `Dataflow` name stays although the prose calls the order
 "execution order" ([D-258][d-258]): the artifact carries the edges and the name sets
 as well as the order, and a graph is what "dataflow" names.
 
+Annotation (2026-11-26): amended by [D-261][d-261]. `Dataflow` is `Outputs` and carries
+no feedthrough edges. Where they are shown, they are derived from the
+`Structure`'s connections and the producers' stage-2 names. The tracer runs
+inside the nominal evaluation's failure path, before `Outputs` exists, so it
+takes its name lists from the `Structure` and the nominal evaluation's own
+declarations and stage-1 products, never from an activation (`src/tracer.jl`).
+
 **Rejected.**
 - *Keeping `Flat` and the `Activation` as the only carriers:* structural
   consumers stay coupled to a scalar type, and Stratum B has no product to
@@ -10642,6 +10783,9 @@ Annotation (2026-11-20): amended by [D-466][d-466]. The `Deployment` carries no 
 report. The report is a function of the structure's anchors, derived where
 it is used, and `show(::Structure)` prints it. The refusal's message, the
 derivation line and `GridUtilization` stay the deployment's.
+
+Annotation (2026-11-26): the `Schedule` holds its component rows and rate-scope
+rows. The `D`, `Φ`, `Δt` vectors are derived from the rows at `compile` ([D-261][d-261]).
 
 **Rejected.**
 - *Binding inside the `Simulation` constructor, as today:* the products
@@ -10722,6 +10866,13 @@ run is allowed because it is the interactive session's ordinary shape, with
 `UnboundedRun` as its advisory and the operator interrupt as its escape
 ([§13.5][s13-5]); the advisory lives in the loop's cell because `run!` mutates state.
 
+Annotation (2026-11-26): amended by [D-260][d-260], [D-274][d-274] and [D-317][d-317]. `Trace` has no
+scalar parameter, and its header is a `Checkpoint`. The `schemas`, `batches` and
+length stand. The register retires: the replay feed is the run's `feed`, with
+its own cursor. The stop policy is built and validated by each advance and
+passed to the loop as that advance's argument, and its one lasting home is the
+termination record.
+
 **Rejected.**
 - *Constructor defaults for `t_end` and `stop_on` ([D-091][d-091]):* two homes for
   one fact, with a precedence rule to reconcile them.
@@ -10800,6 +10951,14 @@ loop cell. `chunk_size` follows its field to the `Model` constructors.
 Annotation (2026-11-10): amended by [D-442][d-442] and [D-443][d-443]. The deployment's
 grid parameters are `Δt_frame` and `Δt_base`, and the step rides the
 algorithm instance; `N_base` retired.
+
+Annotation (2026-11-26): amended by [D-260][d-260], [D-261][d-261], [D-316][d-316] and [D-317][d-317]. The
+deployment holds the `Schedule`'s rows, and the executor derives the
+per-component `D`, `Φ` and `Δt` vectors from them at `compile`. `t_end` and the
+stop requests do not go to the run: the stop policy is each advance's argument,
+and its one lasting home is the termination record. `join_timeout` is a keyword
+of `Simulation` and its convenience forms, and `trace`, `log`, `log_every` and
+`log_max` are keywords of `init!`, `overlay!`, `restore!` and `replay!`.
 
 **Rejected.**
 - *Leaving the fields flat:* every reader of a grid parameter or a buffer
@@ -11039,6 +11198,9 @@ Annotation (2026-11-12): amended by [D-457][d-457]. The origin is held exact, a
 `Rational{Int}`, and `t0` takes the exact forms a period takes and a float at
 its exact value. The rest stands.
 
+Annotation (2026-11-26): `init!`, `overlay!`, `restore!` and `replay!` construct
+a run and rebind `sim.run`, and nothing else rebinds it ([§12.6][s12-6], [D-274][d-274], [D-429][d-429]).
+
 **Rejected.**
 - *A run per advance, owning its policy:* the log and the trace span
   advances, so consecutive runs would share them and own neither; and an
@@ -11196,6 +11358,10 @@ derived from the structure's anchors where it is used.
 
 Annotation (2026-11-24): an `Anchor` row's pair is written `(Δt(a), τ(a))`
 ([D-478][d-478]).
+
+Annotation (2026-11-26): [D-317][d-317] supersedes the clause typing a `t*` stop hit.
+`frame!` returns a `Bool`, `true` when `settled!` found an honoured stop
+request, and the loop reads the requester again off the published snapshot.
 
 **Rejected.**
 - *The recording flags as a sixth `Simulation` field:* a parameter nothing
@@ -12086,6 +12252,10 @@ pass, tens of microseconds per second over a cockpit, and a parametric
 ports join the table so a generated panel is one loop over the component's
 faces with no branch on kind; they roughly double a table of a few hundred
 entries.
+
+Annotation (2026-11-26): `incumbent_status` returns the harness writer's record
+for a root input no device claims, and `nothing` only for a port no root input
+drives ([§11.7][s11-7]).
 
 **Rejected.**
 - *A snapshot-only widget, no peek:* blind while paused and before `run!`,
@@ -13045,6 +13215,10 @@ Annotation (2026-10-08): under [D-316][d-316] a plausibility check meaning "stop
 the run" publishes a `StopFlag` port, which `StopRequest` spells, and no
 keyword names it.
 
+Annotation (2026-11-26): the shape a return is held to follows its declaration,
+a `NamedTuple` under a named `y_types` and the one port's value under a bare
+one, and the probe checks it so ([D-437][d-437], [§9.3][s9-3]).
+
 **Rejected.**
 - *Doing nothing beyond [§13.5][s13-5]'s termination mapping:* it covers the
   termination half and covers it well, but leaves the non-terminating assert
@@ -13124,6 +13298,10 @@ The constructor rule has no prior entry; [§9.5][s9-5] states it.
 
 A value does not say which branch produced it, and the diff and replay
 suffice (as recorded in [D-053][d-053]).
+
+Annotation (2026-11-26): the store embeds a struct-valued port leaf by leaf and
+rebuilds the declared type from the arrival's leaves, so no cross-eltype
+constructor is called and no diagnostic names both types ([D-238][d-238]).
 
 **Rejected.**
 - *Positional pair `(x⁺, m⁺)`:* reintroduces the padding [D-074][d-074] bans on
@@ -14913,6 +15091,11 @@ The `Model` block of [Appendix B][sB] places the stepping primitives outside
 the API and outside the claim's gate, and `apply!` outside the API but inside the
 gate, since [D-318][d-318] refuses it on a claimed model.
 
+Annotation (2026-11-26): amended by [D-452][d-452] and [D-457][d-457]. A `ModelState` holds a
+tenth field, the stepper's carried state, `nothing` for a fixed-step method
+([§12.6][s12-6]). The origin is held exact, so the default of `t0` is the integer `0`,
+not `0.0` ([§14.5][s14-5], [Appendix B][sB]).
+
 **Rejected.**
 - *A parametric `Checkpoint{T}`:* a cursor is a nominal trajectory's, and a
   model at another scalar has none to carry.
@@ -15214,6 +15397,10 @@ cost, the two exits and the earned "rare" were recorded in [D-140][d-140]'s
 Rationale, and the trace's reach in its Rejected list. The closed remedies
 were recorded in [D-005][d-005]'s Rejected list. The structural answer for unwalked
 faces was recorded in [D-245][d-245]'s Rationale.
+
+Annotation (2026-11-26): the trace speaks for the branches its evaluations took,
+a sampled member being evaluated at sampled states too, not only the branch at
+the probe point. The author still selects the remedy ([§13.8][s13-8]).
 
 **Rejected.** None beyond the source entries' lists.
 
@@ -17706,6 +17893,11 @@ and the body gains the events, the deployment's parameters, the schedule
 and the grid report. The format stays at version 1.0 and changes freely
 until the first release, and the second bullet's bump rules bind from then.
 
+Annotation (2026-11-26): amended by [D-434][d-434]. The kinds are `build`, `deployment`
+and `failure`, and the failure kind is live. Faces come from each instance's own
+declarations, read as written, with a `Pinned` entry unwrapped and flagged, and
+the reader takes no tier and no scalar ([§13.9][s13-9]).
+
 **Rejected.**
 - *Reading the descriptor as [D-257][d-257]'s rejected accessor:* an accessor binds
   the artifact's fields; the descriptor binds a format.
@@ -18682,6 +18874,10 @@ Annotation (2026-11-11): superseded in part by [D-449][d-449]. The third time
 quantity is the step bound `h_max` on the `Deployment`, no longer a step
 inside the algorithm value. The first three bullets stand.
 
+Annotation (2026-11-26): [D-449][d-449] supersedes the fourth bullet whole, the narrower
+form [D-444][d-444] left standing included. Nothing relates `h_max` to `Δt_frame` or
+`Δt_base`, and no `:not_harmonic` refusal exists ([§9.2][s9-2], [§10.5][s10-5]).
+
 **Rejected.**
 - *The frame on the `Simulation`:* the frame moves the trajectory, and a
   value outside the recorded deployment would let replay accept a run at a
@@ -19246,6 +19442,10 @@ it, which answers both objections of the alternative rejected below. The
 refusal of a proposal that is not a number stands. Projection raises no
 notice. The seam keeps its seven calls.
 
+Annotation (2026-11-26): refined by [D-460][d-460]. The `Model` asks no proposal after
+the rejection that spends the step's attempt budget, since its next attempt is
+the floor's ([§10.2][s10-2]).
+
 **Rejected.**
 - *The attempt writing the state buffer, the `Model` putting the start back
   on rejection:* it saves one copy per accepted step, but the check would
@@ -19366,6 +19566,10 @@ the `Lattice` (rejected below). The floats the loop reads are converted at the
 site, by the conversion the binding applied before, so the stored value has
 one home. A printed deployment shows what it compares, so two deployments
 that compare unequal never print alike.
+
+Annotation (2026-11-26): amended by [D-467][d-467]. The descriptor's deployment body
+carries `dt_frame`, `dt_base` and `h_max` exact ([§13.9][s13-9]). The checkpoint and the
+trace header still hold the `Deployment` as a value.
 
 **Rejected.**
 - *The `Float64` values compared, as before:* the hole above, a replay
@@ -21281,6 +21485,9 @@ is one `Δt_unit`.
 An `Absolute` entry's instants need no index, since the `Relative` row
 beside it states its instants in words. An index `j` there would sit beside
 the node `i` of [D-478][d-478] in `t₀ + τ(i) + j·Δt(i)`.
+
+Annotation (2026-11-26): the step count under a proposal is capped at
+`⌊r / h_min⌋` and is at least 1, as [D-460][d-460] rules ([§10.5][s10-5]).
 
 **Rejected.**
 - *`L` for the span length:* a length is a real number, and uppercase marks
