@@ -480,6 +480,7 @@ were derived.
 | [D-479][d-479] | Give each count, length and index of the timing passages its own letter | ratified |
 | [D-480][d-480] | Raise the default `margin` to 3 ms, calibrated at the sleep a paced frame makes | ratified |
 | [D-481][d-481] | Establish the frozen cells at `init!` on a model at a non-nominal scalar | ratified |
+| [D-482][d-482] | Host every stretch of model code under one catch on the `Model`, the services' included | ratified |
 
 ### D-001 — Hybrid causal formalism with two-tier events and projection
 
@@ -4654,6 +4655,11 @@ like any throw, and a forced throw that cuts a frame ends the run `errored`
 on escalation reclassifying the run are superseded for that case. A single
 Ctrl-C never reaches the catch, so the Position stands, and a second
 interrupt during the tail still only shortens it.
+
+Annotation (2026-11-26): amended by [D-482][d-482]. The Rationale's clause that an
+interrupt during a long `trim!` unwinds an ordinary call holds only outside
+the service's evaluations. An interrupt inside one is wrapped like any
+throw, with the simulation untouched.
 
 ### D-133 — Split spec-invoked numeric constants into deployment parameters vs owning-section defaults
 
@@ -9134,6 +9140,10 @@ and the stores half-transitioned, and `step!` advanced on them.
 Annotation (2026-10-15): since [D-274][d-274] `init!` is the only door that runs
 boundary zero, so a throw inside boundary zero comes under `init!` alone.
 
+Annotation (2026-11-26): amended by [D-482][d-482]. Boundary zero's catch is the one
+host every stretch of model code runs under, and the services' evaluations
+take the rule this entry gave boundary zero.
+
 **Rejected.**
 - *Raw propagation, closing only the lifecycle hole:* forgoes the frame and
   keeps two shapes for one failure.
@@ -9148,6 +9158,11 @@ boundary zero, so a throw inside boundary zero comes under `init!` alone.
 **Position.** `trim!` does not catch the `StepError` a commit-time throw
 raises out of its `init!`. The throw propagates, the simulation is left
 `built` under [D-223][d-223], and no `TrimReport` is returned for that solve.
+
+Annotation (2026-11-26): amended by [D-482][d-482]. A `StepError` out of `trim!` has
+two more sources, both with host `:trim` and neither caught by `trim!`. A
+throw inside an evaluation of the search leaves the simulation as it was. A
+throw inside the evaluation of the committed state leaves it `built`.
 
 **Spec.** [§14.8][s14-8]
 
@@ -14607,6 +14622,10 @@ Annotation (2026-11-26): amended by [D-481][d-481]. `init!` on a model at anothe
 scalar establishes its frozen discrete cells before boundary zero, as a
 service does, so the model holds no probe value once it is `:consistent`.
 
+Annotation (2026-11-26): amended by [D-482][d-482]. The catch `frame!` and `init!`
+host is one host on the `Model`, which the other doors and the services'
+evaluations run under too, each on the model that runs the code.
+
 Supersedes [D-254][d-254]'s "`Simulation` materializes a deployment at `T`" clause;
 [D-255][d-255]'s clause keeping the lifecycle on `Control`; [D-256][d-256]'s five-field
 roster and its placement of the loop's diagnostic cell on the plane alone;
@@ -18473,6 +18492,11 @@ whatever threw, and every catch site wraps what reaches it, an
 - A bare value thrown by model code moves the status like any throw. Only
   the carrier is lost.
 
+Annotation (2026-11-26): amended by [D-482][d-482]. The catch sites are one host,
+which writes the status of the model its stretch runs on. The evaluations
+of `trim!` and `linearize` are stretches too, with hosts `:trim` and
+`:linearize`, and a throw inside one writes `:built` as a door's does.
+
 **Spec.** [§12.4][s12-4], [§12.6][s12-6], [§13.4][s13-4], [Appendix B][sB], [Appendix C][sC], [Appendix D][sD]
 
 **Rationale.** The docstring audit of 2026-11-05 found that an interrupt
@@ -21319,6 +21343,12 @@ model's authored state with partials dropped, projects it as boundary zero
 does, runs one establishment round, and its frozen cells are copied. No cell
 of a `:consistent` model holds a probe value, at any scalar.
 
+Annotation (2026-11-26): amended by [D-482][d-482]. The Rationale's sentence that the
+projection and the round run inside `init!`'s catch is superseded. They run
+as a stretch hosted on the scratch, before boundary zero's and under the
+same host. A throw there is still a `StepError` with host `:boundary_zero`,
+framed from the scratch's cursor, with the model `:built`.
+
 **Spec.** [§9.3][s9-3], [§9.4][s9-4], [§14.5][s14-5]
 
 **Rationale.** [D-213][d-213] closed this failure for `trim!` and `linearize`. Their
@@ -21376,6 +21406,117 @@ accepted for a service.
   scalar public, to be written, evaluated and stepped, and `init!` is its one
   door into `:consistent`. A state to restore comes from `checkpoint`, which
   requires that status first.
+
+### D-482 — Host every stretch of model code under one catch on the `Model`, the services' included
+
+**Status.** ratified
+
+**Position.** Model code runs only inside a hosted stretch. One catch on
+the `Model` wraps what a stretch throws in a `StepError`, from the cursor of
+the model that ran it, and writes that model's status, whether the model is
+the user's or a service's scratch.
+
+- The stretches are the frame, boundary zero under `init!`, the settling
+  `overlay!` runs, the restore, the nominal half of `init!` at a non-nominal
+  scalar ([D-481][d-481]), and the evaluations `trim!` and `linearize` run.
+- The host names the call that reproduces the failure. The evaluations of
+  `trim!` report `:trim` and those of `linearize` report `:linearize`. The
+  nominal half of `init!` reports `:boundary_zero`.
+- The status follows the host as [D-441][d-441] rules, `:inconsistent` for `:loop`
+  and `:built` for every other. A service's stretch on a scratch writes the
+  scratch's status, so the user's model is untouched. `trim!` evaluates the
+  committed state on the user's model, and a throw there leaves it `:built`.
+- A stretch holds the calls that run model code and no others. The
+  application of a condition, the reads and the problem's own functions run
+  outside every stretch, and what they throw arrives as it is.
+- Stretches do not nest. The nominal half of `init!` is a stretch on its
+  scratch, run before boundary zero's.
+- An interrupt inside a service's stretch is wrapped like any throw ([D-441][d-441]).
+- The pointer is the boundary the stretch's model stands at.
+- The cursor gains a phase, the evaluation, for a service's evaluation
+  outside any boundary. Its ordinal counts the evaluations on the stretch's
+  model. The establishment round stands at round 1 wherever it runs.
+
+**Spec.** [§13.4][s13-4], [§14.8][s14-8], [§14.10][s14-10], [Appendix C][sC]
+
+**Rationale.** `trim!` and `linearize` took the executor of each scratch
+model and ran its sweeps outside any catch. A stage that threw there arrived
+bare, where `init!` on the same condition raised a `StepError` naming the
+component and the function. [D-223][d-223] rejected that shape for boundary zero,
+because it forgoes the frame and keeps two shapes for one failure. The solve
+is also where a domain error is most likely, since the solver moves the
+state to points the author never tried. Five sites ran so: `trim!`'s setup
+round with the derivative at the guess, each evaluation of its search, the
+derivative it evaluates on the committed state, `linearize`'s round under
+`about`, and each of its passes.
+
+The catch was already split by layer and not by owner. The methods that
+hosted one, `frame!`, `init!`, `overlay!` and the restore, treated every
+model alike, and three of the four catches were the same lines. The
+primitives under them have no catch and are meant to run inside a host. The
+services ran those primitives with no host. The nominal half of [D-481][d-481] did
+the same, and copied its scratch's cursor into the model's to get back under
+`init!`'s catch. One host that takes the model running the code removes the
+copy and gives the services their frame. Each caller keeps the two facts it
+owns, the pointer and the host.
+
+The host is the caller's to name because the reproduction is. A stretch
+inside a service cannot know which call the user made, and the rendered line
+must name that call. So `trim!` and `linearize` pass their own names, and
+the nominal half of `init!` passes boundary zero's, which keeps what [D-481][d-481]
+ruled.
+
+An interrupt inside a stretch cuts a model in the middle of a sweep, and
+[D-441][d-441] wraps that at every catch. A service then shows two shapes for an
+interrupt, wrapped inside an evaluation and bare inside its own code or the
+backend's. The doors show the same two: an interrupt arrives bare while
+`init!` applies its plan and wrapped inside boundary zero. The user's model
+is untouched in both, the committed-state evaluation excepted.
+
+A throw at the committed-state evaluation takes the commit's disposition
+([D-224][d-224]). `trim!` is the door there. The model returns to `:built` and no
+report is returned, so no caller holds a converged verdict over a model
+whose derivative does not evaluate.
+
+A frame, an `init!` and a service's evaluation allocate what they did
+before. The host calls its stretch with the model as the argument, since a
+closure over the seeded scratch cost 272 B in each pass of `linearize`.
+
+**Rejected.**
+- *Superseded position — a throw inside a service's evaluation propagates
+  bare:* it forgoes the frame and keeps two shapes for one failure, [D-223][d-223]'s
+  reasons, and `init!` already framed the same round on a scratch ([D-481][d-481]).
+- *A guard for the services beside the doors' catches:* a third mechanism
+  for one problem, beside the doors' own catches and the cursor copy.
+- *One mechanism for a scratch's code and another for the user's model's:*
+  who made a `Model` has no bearing on how a throw inside it is handled.
+  The split it would draw is not the one in the code, which is by layer.
+- *The catch inside the primitives:* a door must catch more than the
+  primitives run, the hooks and the stepper's own code among it, so it would
+  keep a catch of its own, and two layers cannot nest, since the constructor
+  refuses a `StepError`. A primitive also knows neither the pointer nor the
+  host, and `evaluate!` would carry a `try` on every integration stage.
+- *One catch around a whole service:* it would wrap the problem's own
+  functions and the service's refusals, which are not model code, under a
+  cursor that has no word for them.
+- *Superseded position — an interrupt during a solve always unwinds as an
+  ordinary call ([D-132][d-132]):* the host would need a second policy for the
+  services' stretches, and the doors already show both shapes.
+- *A host named after the stretch, an establishment or an evaluation:* the
+  rendered line could not name the call that reproduces the failure.
+- *Superseded position — the nominal half of `init!` inside `init!`'s own
+  catch, its cursor copied into the model's ([D-481][d-481]):* the copy exists only
+  because the catch read the wrong model's cursor, and a hosted stretch
+  cannot sit inside another.
+- *The committed-state evaluation left bare:* a raw throw out of a door.
+- *The committed-state evaluation hosted with the status kept
+  `:consistent`:* the status would no longer follow from the host, and the
+  model's first frame would throw at the same point.
+- *The frame keeping a catch of its own:* its lines are the host's once the
+  status follows from the host, and the frame allocates nothing either way.
+- *One evaluation count across a whole `trim!` call:* a counter carried
+  between the scratch models and into the verdict, for an ordinal the
+  per-model count already makes exact.
 
 <!-- citation link definitions — generated by tools/linkify.jl; do not edit -->
 [d-001]: #d-001--hybrid-causal-formalism-with-two-tier-events-and-projection
@@ -21833,6 +21974,7 @@ accepted for a service.
 [d-479]: #d-479--give-each-count-length-and-index-of-the-timing-passages-its-own-letter
 [d-480]: #d-480--raise-the-default-margin-to-3-ms-calibrated-at-the-sleep-a-paced-frame-makes
 [d-481]: #d-481--establish-the-frozen-cells-at-init-on-a-model-at-a-non-nominal-scalar
+[d-482]: #d-482--host-every-stretch-of-model-code-under-one-catch-on-the-model-the-services-included
 [s10-1]: spec.md#101-loop-ownership-the-framework-owns-the-simulation-loop
 [s10-2]: spec.md#102-the-stepper-seam
 [s10-3]: spec.md#103-signal-table-consistency-is-a-boundary-property

@@ -11544,7 +11544,8 @@ the service walk.
 ### 13.4 Runtime failures: one catch site, an execution cursor
 
 A runtime failure of model code is a throw inside a [frame](#g-frame) (one iteration of the
-loop), inside [boundary zero](#g-boundary-zero), or inside the settling `overlay!` runs.
+loop), inside [boundary zero](#g-boundary-zero), inside the settling `overlay!` runs, inside a
+restore, or inside an evaluation a service runs.
 Boundary zero is the initialization [boundary](#g-boundary) (a
 published consistency point), and it runs the ordinary [boundary macro-sequence](#g-boundary-sequence)
 with an empty integrate. The framework catches the failure at one site, records
@@ -11568,6 +11569,19 @@ per [component](#g-component)** (the unit of modeling, a primitive or an assembl
 ([D-059][d-059]). The loop wraps each frame in a `try` of its own, which decides the
 failure's disposition (below) and builds no carrier ([D-317][d-317]).
 
+**Model code runs only inside a hosted stretch** ([D-482][d-482]). A stretch is a run
+of calls into model code that one catch on the `Model` wraps. The stretches
+are the frame, boundary zero, the settling `overlay!` runs, the restore, the
+nominal half of `init!` at a non-nominal scalar ([§9.3][s9-3]), and the evaluations
+`trim!` and `linearize` run ([§14.8][s14-8], [§14.10][s14-10]). The catch reads the cursor of
+the model that ran the stretch and writes that model's status. Who made the
+model has no bearing. A service's [scratch](#g-scratch) model (one whose
+contents are never authoritative) is a `Model` like any other there.
+Stretches do not nest. A stretch holds the calls that run model code and no
+others. A service applies its condition, makes its reads and calls the
+problem's own functions outside every stretch, as `init!` applies its
+condition before boundary zero.
+
 Where execution stood does not need to be *caught* into existence. The [executor](#g-executor)
 (the compiled form of the stage [execution order](#g-execution-order)) maintains an [execution cursor](#g-execution-cursor),
 a plain mutable field of the executor recording where execution stands in the
@@ -11580,7 +11594,9 @@ execution order) carries. The second is which function is running, one of
 event's predicate), a handler, or `x_projection`. The third is the boundary phase,
 one of the frame-top drain, integration stage *k*, the arrival [sweep](#g-sweep) (one pass
 through the execution order), the θ = 0 validation, a localization trial,
-projection, event round *r*, or the ticks. **Inside integration the cursor also
+projection, event round *r*, or the ticks. A service's evaluation outside any
+boundary stands at a phase of its own, evaluation *n*, where *n* counts the
+evaluations on the stretch's model ([D-482][d-482]). **Inside integration the cursor also
 records the [attempt](#g-attempt) (one try at a step, which the backend accepts or
 rejects), by its ordinal in the step** ([§10.2][s10-2], [D-452][d-452]). A
 rendered frame names the attempt past the first, so a step its backend accepted
@@ -11613,11 +11629,17 @@ pointer** ([D-128][d-128]). Replay is the ordinary loop re-driven from a recorde
 The trace is the primary record of a session. The pointer names the frame-top
 boundary at which the failing frame began. That frame top is a later frame top or
 boundary zero, and it is always a legal replay halt ([§12.7][s12-7]). The host names the
-catch that took the throw. It is `:loop` for a throw inside a frame,
+call whose stretch took the throw. It is `:loop` for a throw inside a frame,
 `:boundary_zero` for a throw inside the boundary zero that `init!` runs, and
 `:overlay` for a throw inside the settling that `overlay!` runs ([§12.6][s12-6],
 [D-429][d-429]), and `:restore` for a throw inside the copy or the settling that
-`restore!` runs ([D-441][d-441]). A `StepError`
+`restore!` runs ([D-441][d-441]). **A throw inside an evaluation that `trim!` or
+`linearize` runs carries the host `:trim` or `:linearize`** ([D-482][d-482]). The host
+is thus the call that reproduces the failure, and the nominal half of
+`init!` reports `:boundary_zero`. A service's stretch has no frame, so its
+pointer is the boundary its model stands at. That is 0 for `trim!` and for
+`linearize` under `about`, and the checkpoint's frame for `linearize`'s
+default form. A `StepError`
 renders under the doctrine of [§13.2][s13-2]. The cursor frame and the reproduction come
 first, the cause second, and names are strings.
 
@@ -11656,7 +11678,8 @@ struct StepError{C <: Union{Diagnostic, Exception}} <: Exception
     t::Float64     # the clock at the failure
     boundary::Int  # the frame-entry boundary index: the replay pointer
     host::Symbol   # :boundary_zero under init!, :overlay under overlay!,
-                   # :restore under restore!, :loop inside a frame
+                   # :restore under restore!, :trim under trim!,
+                   # :linearize under linearize, :loop inside a frame
     cause::C
 end
 ```
@@ -11722,6 +11745,13 @@ lifecycle to `built` ([§12.6][s12-6]). A throw inside a frame writes
 `:inconsistent`. An `InterruptException` inside a door is not model code
 failing, and it has no stop path to take in a service. The door's catch wraps
 it like the frame's, and the carrier names where it landed.
+
+The status written is that of the model the stretch runs on ([D-482][d-482]). A
+service's stretch on a scratch model writes the scratch's status, so a throw
+there leaves the simulation as it was. The nominal half of `init!` at a
+non-nominal scalar is such a stretch too, run before boundary zero's. A
+throw there is boundary zero's `StepError`, framed from the scratch's
+cursor, and the model is `:built`, which `init!` writes first.
 
 A throw inside boundary zero leaves no trace and no [checkpoint](#g-checkpoint) (the `Model`'s
 state at a frame top as one value). The run `init!` opened stays behind, empty and
@@ -14045,10 +14075,13 @@ including "never initialized". Flight.jl's warn-but-assign, where the Cessna 172
 trim warns on a failed optimization and assigns its result anyway, is
 structurally impossible.
 
-The same structure covers an interrupt. Ctrl-C during a long solve unwinds an
-ordinary Julia call operating on per-invocation scratch stores. No commit has
+The same structure covers an interrupt. Ctrl-C during a long solve cuts a
+call operating on per-invocation scratch stores. No commit has
 happened, and the simulation is bit-for-bit untouched, exactly as a
-non-converged solve leaves it. The services need no counterpart to the loop's
+non-converged solve leaves it. **An interrupt that lands inside an evaluation
+arrives wrapped, as a `StepError` with host `:trim`** ([D-482][d-482], [§13.4][s13-4]). One
+that lands in the service's own code or in the backend's arrives bare. The
+services need no counterpart to the loop's
 boundary masking ([§12.4][s12-4]). An interrupt inside the commit's boundary
 zero moves the simulation to `built` and propagates out of `trim!` as the
 commit's `StepError`, like any throw there ([§13.4][s13-4], [D-223][d-223], [D-441][d-441]).
@@ -14188,11 +14221,20 @@ the path walk's `PathResolution` ([§14.4][s14-4], [D-406][d-406]). An unknown
 `reads` [selector](#g-selector) (one of the closed family of deferred reads)
 is refused that way. A permuted spelling is none of these ([§14.7][s14-7]).
 
-A throw inside the commit's boundary zero is a third case, and neither of
-those. It is model code failing. **The throw propagates out of `trim!` as the
-commit's `StepError`**, and no report is returned for that solve
-([D-224][d-224]). The simulation is left `built` ([§13.4][s13-4],
-[D-223][d-223]).
+A throw of model code is a third case, and neither of those. It arrives as a
+`StepError`, and no report is returned for that solve. **A throw inside an
+evaluation of the search carries the host `:trim` and leaves the simulation
+as it was** ([D-482][d-482], [§13.4][s13-4]). The search's evaluations are the setup's round
+with the derivative at the guess, and every evaluation the solver asks for.
+A throw inside the commit's boundary zero is the commit's own. **The throw
+propagates out of `trim!` as the
+commit's `StepError`** ([D-224][d-224]), and the simulation is left `built`
+([§13.4][s13-4], [D-223][d-223]). After the commit, `trim!` evaluates the
+derivative of the committed state on the simulation's own model. **A throw
+inside that evaluation carries the host `:trim` and leaves the simulation
+`built`**, as a throw inside the commit does ([D-482][d-482]). The problem's own
+functions are not model code. A throw from `condition`, `residuals` or
+`checks` propagates as it is.
 
 An *empty* problem is none of them either. **`TrimProblem(guess = (;), …)` is legal**,
 not `TrimProblemInvalid` ([D-156][d-156]). With zero decision variables the solver is
@@ -14444,6 +14486,13 @@ ordinary [macro-sequence](#g-boundary-sequence) with an empty integrate). It wor
 never authoritative), and nothing it computes becomes authoritative.
 Flight.jl's restore-the-trim dance, the re-`assign!` after the `FiniteDiff`
 package dirtied the model, has no successor.
+
+**A throw of model code inside the query arrives as a `StepError` with host
+`:linearize`** ([D-482][d-482], [§13.4][s13-4]). The query's evaluations are the round it runs
+under `about` and each seeded pass. They run on scratch models, so the model
+is left as it was. The pointer is the checkpoint's frame in the default form
+and 0 under `about`. An interrupt inside an evaluation is wrapped the same
+way.
 
 **The default operating point is the [checkpoint](#g-checkpoint)** of the simulation or the [`Model`](#g-model) (a
 deployment materialized at one scalar type) as it stands ([D-274][d-274], [D-319][d-319]). A
@@ -16087,8 +16136,9 @@ activation):
   Cursor frame (the component by its path, the function, and
   the boundary phase: the frame-top drain, an integration stage, the arrival
   sweep, the θ = 0 validation, a localization trial, projection, an event
-  round or the ticks, with the stage, trial or round ordinal), the clock at the failure, frame-entry boundary index (the replay pointer), the host of
-  the catch (`:loop`, `:boundary_zero`, `:overlay` or `:restore`), and the `cause`, a species'
+  round, the ticks or a service's evaluation, with the stage, trial, round or
+  evaluation ordinal), the clock at the failure, frame-entry boundary index (the replay pointer), the host of
+  the catch (`:loop`, `:boundary_zero`, `:overlay`, `:restore`, `:trim` or `:linearize`), and the `cause`, a species'
   diagnostic or the original exception, its type the parameter.
 - **`NonfiniteState`** ([§13.4][s13-4]). Error · runtime · fail-fast.
   Component path, the offending state leaf (a bare leaf by its letter,
@@ -17908,6 +17958,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-479]: log.md#d-479--give-each-count-length-and-index-of-the-timing-passages-its-own-letter
 [d-480]: log.md#d-480--raise-the-default-margin-to-3-ms-calibrated-at-the-sleep-a-paced-frame-makes
 [d-481]: log.md#d-481--establish-the-frozen-cells-at-init-on-a-model-at-a-non-nominal-scalar
+[d-482]: log.md#d-482--host-every-stretch-of-model-code-under-one-catch-on-the-model-the-services-included
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
