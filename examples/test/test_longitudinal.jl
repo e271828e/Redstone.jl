@@ -363,10 +363,29 @@ on_grid(t, rate) = isapprox(rate * t, round(rate * t); atol = 1e-6)
 
     @testset "chapter 5: the autopilot rests at the trim (§14.5)" begin
         resting = fly_autopilot(solution; h_step = 0.0, noise_psd = quiet, t_end = 60.0)
-        # The probe's largest drift: 2.3e-10 m, 3.9e-11 m/s and 3.7e-12 rad.
+        # The probe's largest drift: 2.4e-10 m, 4.0e-11 m/s and 3.7e-12 rad.
         @test all(h -> abs(h - 1000) <= 1e-6, logged_port(resting, "plant", :h))
         @test all(V -> abs(V - 50) <= 1e-6, logged_port(resting, "plant", :V))
         @test all(θ -> abs(θ - solution.θ) <= 1e-6, logged_port(resting, "plant", :θ))
+    end
+
+    @testset "chapters 5 to 7: with every noise off, each model's measurements equal the plant's outputs at their sensors' ticks (§3.2, §7.3)" begin
+        # Each model passes `noise_psd` down to its sensing: one that drops it measures with the
+        # default densities.
+        for (model, initial, prefix) in ((autopilot(solution; noise_psd = quiet), cruise(solution), ""),
+                                         (piloted(solution; noise_psd = quiet), hand_flown(solution), ""),
+                                         (approach(solution; noise_psd = quiet), at("vehicle", hand_flown(solution)),
+                                          "vehicle/"))
+            noiseless = Simulation(model; loop_deployment...)
+            init!(noiseless, initial)
+            run!(noiseless; t_end = 1.0)
+            times = logged_times(noiseless)
+            for (face, port, rate) in ((:q_meas, :q, 200), (:θ_meas, :θ, 50), (:h_meas, :h, 10), (:V_meas, :V, 10))
+                ticks = on_grid.(times, rate)
+                @test logged_face(noiseless, "$(prefix)sensing", face)[ticks] ==
+                      logged_port(noiseless, "$(prefix)plant", port)[ticks]
+            end
+        end
     end
 
     climb = fly_autopilot(solution)
@@ -376,7 +395,8 @@ on_grid(t, rate) = isapprox(rate * t, round(rate * t); atol = 1e-6)
             @test isempty(build(model).structure.anchors)
         end
         # The schedule's divisors, in base ticks: the IMU's 1, the INS's 4 and the air data's 20,
-        # the latch at the air data's, and the delays and limiters at the base tick.
+        # the latch at the air data's, and the delays and limiters at the base tick. `autopilot` has
+        # no `selection`, and `approach` holds `piloted` as `vehicle`.
         divisors = Dict("sensing/imu/q_noise" => 1, "sensing/imu/q_meas" => 1,
                         "sensing/ins/θ_noise" => 4, "sensing/ins/θ_meas" => 4,
                         "sensing/air_data/h_noise" => 20, "sensing/air_data/h_meas" => 20,
@@ -384,9 +404,13 @@ on_grid(t, rate) = isapprox(rate * t, round(rate * t); atol = 1e-6)
                         "cascade/q_ctl" => 1, "cascade/θ_ctl" => 4, "cascade/h_ctl" => 20, "cascade/V_ctl" => 20,
                         "selection/latch" => 20, "selection/command_δe" => 1, "selection/command_δt" => 1,
                         "actuators/δe_limiter" => 1, "actuators/δt_limiter" => 1)
-        rows = Simulation(piloted(solution); loop_deployment...).model.deployment.schedule.rows
-        @test Dict(row.path => row.D for row in rows) == divisors
-        @test all(row -> row.anchor == 0 && row.Φ == 0, rows)
+        without_selection = filter(entry -> !startswith(entry.first, "selection/"), divisors)
+        for (model, expected) in ((autopilot(solution), without_selection), (piloted(solution), divisors),
+                                  (approach(solution), Dict("vehicle/" * path => D for (path, D) in divisors)))
+            rows = Simulation(model; loop_deployment...).model.deployment.schedule.rows
+            @test Dict(row.path => row.D for row in rows) == expected
+            @test all(row -> row.anchor == 0 && row.Φ == 0, rows)
+        end
         # The deployment gives the seconds: the same divisors at a base tick of 10 ms.
         slower = Simulation(piloted(solution); Δt_frame = 1//400, Δt_base = 1//100).model.deployment.schedule.rows
         @test Dict(row.path => row.D for row in slower) == divisors
@@ -423,18 +447,25 @@ on_grid(t, rate) = isapprox(rate * t, round(rate * t); atol = 1e-6)
         # 0.001998 rad/s, 0.0005018 rad, 0.1322 m and 0.02004 m/s.
         sensors = ((:q_meas, :q, 200, 50, 0.002), (:θ_meas, :θ, 50, 10, 5e-4),
                    (:h_meas, :h, 10, nothing, sqrt(1.8e-3 / 0.1)), (:V_meas, :V, 10, nothing, 0.02))
-        noises = map(sensors) do (face, port, rate, coarser, σ)
+        for (face, port, rate, coarser, σ) in sensors
             measured = logged_face(climb, "sensing", face)
             changes = change_times(climb, measured)
             @test all(t -> on_grid(t, rate), changes)
             coarser === nothing || @test !all(t -> on_grid(t, coarser), changes)
             noise = (measured .- logged_port(climb, "plant", port))[on_grid.(times, rate)]
             @test isapprox(std(noise), σ; rtol = 0.1)
-            noise
         end
-        # The air data's two noises share their ticks and draw from distinct seeds: the probe's
-        # correlation, -0.043.
-        @test abs(cor(noises[3], noises[4])) < 0.15
+        # The four noises draw from distinct seeds: each leaf's draws, read at its sensor's ticks, are
+        # uncorrelated by draw with every other's. The probe's largest correlation over the six
+        # pairs: -0.057, the IMU's against the altitude's.
+        draws = map((("imu/q_noise", 200), ("ins/θ_noise", 50), ("air_data/h_noise", 10),
+                     ("air_data/V_noise", 10))) do (leaf, rate)
+            logged_port(climb, "sensing/$leaf", "")[on_grid.(times, rate)]
+        end
+        for i in 1:4, j in (i + 1):4
+            n = min(length(draws[i]), length(draws[j]))
+            @test abs(cor(draws[i][1:n], draws[j][1:n])) < 0.15
+        end
     end
 
     @testset "chapter 6: the tracking wires without the delays close an algebraic loop per switch (§5.4, §13.8)" begin

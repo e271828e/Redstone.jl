@@ -162,12 +162,14 @@ end
 """
 The sensors' multipliers, the period of each sensor in ticks of the scope that
 holds `sensing` and `cascade`: the IMU, which measures the pitch rate, the
-fastest; the INS, which measures the pitch angle, four times slower; and the
-air data system, which measures the altitude and the airspeed, twenty times
-slower. `sensing` gives each sensor its multiplier and `cascade` gives it to
-each controller the sensor feeds, so a controller ticks with its sensor. The
-model states no seconds: the deployment's `Δt_base` sets the tick, and at
-`Δt_base = 1//200` the three run at 200 Hz, 50 Hz and 10 Hz.
+fastest; the INS, which measures the pitch angle, four times slower; and the air
+data system, which measures the altitude and the airspeed, twenty times slower.
+`sensing` gives each sensor its multiplier and `cascade` gives it to each
+controller the sensor feeds, so a controller ticks with its sensor. Each
+multiplier divides the air data system's, so that a tick of `selection`'s latch
+is a tick of every controller. The model states no seconds: the deployment's
+`Δt_base` sets the tick, and at `Δt_base = 1//200` the three run at 200 Hz, 50
+Hz and 10 Hz.
 """
 const sensor_multipliers = (imu = 1, ins = 4, air_data = 20)
 

@@ -298,11 +298,11 @@ flag `engaged`, and the two commands it publishes as `δe` and `δt`.
 
 The chain works across the three rates. On the 50 m step the attitude loop
 never reaches its limits. With those limits cut to ±0.05 rad/s it stays
-limited for 1.76 s at the three rates, and for 1.92 s with every loop at
-50 Hz and the air data still at 10 Hz, and nothing winds or stalls. With no
-hold it stays limited for 2.14 s. The figure counts the samples on the
-limit, and the sensors' noise knocks the command off the limit and back.
-With every noise off the three read 2.20, 2.24 and 2.98 s.
+limited for 1.76 s at the three rates, and for 1.92 s with every loop, the
+IMU and the INS at 50 Hz and the air data still at 10 Hz, and nothing winds
+or stalls. With no hold it stays limited for 2.14 s. The figure counts the
+samples on the limit, and the sensors' noise knocks the command off the
+limit and back. With every noise off the three read 2.20, 2.24 and 2.98 s.
 
 `cascade(standby = true)` adds the tracking axis, with the tracking
 reference of `pid_anti_windup.md` section 11, so that a cascade not in
@@ -376,7 +376,7 @@ discrete component reads it at its next tick.
 
 Under `autopilot`, a 50 m step in the altitude reference, written in the
 initial condition, is within 1 m by 24.3 s and peaks at 1050.06 m. The
-airspeed strays from 50 m/s by up to 3.92 m/s, at 3.74 s. After 75 s the
+airspeed strays from 50 m/s by up to 3.92 m/s, at 3.73 s. After 75 s the
 altitude stays within 0.080 m of the reference and the airspeed within
 0.024 m/s.
 
