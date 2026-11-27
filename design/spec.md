@@ -12655,10 +12655,12 @@ embeds the build body whole under `build`, so one definition of the build
 body serves both places and a file always opens on its own. **A minor bump
 only adds fields, and a major bump may break readers** ([D-432][d-432]). A reader
 ignores fields it does not know and refuses a major version it does not
-know. **The format stays at version 1.0 and changes freely until the first
-release** ([D-467][d-467]). Version 1.0 is the format as of that release, and
-the two bump rules bind from then. Until then the schema requires each
-section the format gains, and a reader keeps no path for an older file.
+know. **The format stays at version 1.0 and changes freely until
+`RedstoneInspector.jl`'s first release** ([D-483][d-483]). Version 1.0 is the format
+as of that release, and the two bump rules bind from then. The released page
+is the first reader that a commit to the core cannot keep in step. Until
+then the schema requires each section the format gains, and a reader keeps
+no path for an older file.
 
 **The descriptor carries every fact `show` prints of a `Build` or a
 `Deployment`, or the facts from which a client derives it exactly, and no
@@ -17973,6 +17975,7 @@ worked C172 cruise problem of [§14.7][s14-7].
 [d-480]: log.md#d-480--raise-the-default-margin-to-3-ms-calibrated-at-the-sleep-a-paced-frame-makes
 [d-481]: log.md#d-481--establish-the-frozen-cells-at-init-on-a-model-at-a-non-nominal-scalar
 [d-482]: log.md#d-482--host-every-stretch-of-model-code-under-one-catch-on-the-model-the-services-included
+[d-483]: log.md#d-483--bind-the-formats-bump-rules-from-the-inspectors-first-release
 [s1]: #1-introduction
 [s10]: #10-time-and-execution
 [s10-1]: #101-loop-ownership-the-framework-owns-the-simulation-loop
