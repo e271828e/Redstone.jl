@@ -1,0 +1,29 @@
+== ins_multiplier_5: Longitudinal                                                                                                                                                                 |  188     6    194  36.7s
+    chapter 5: each sensor samples and holds at its rate, each noise of its declared density and its own seed (§3.2, §7.3)
+    chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude and airspeed loops at 10 Hz (§6.3)
+    chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+    chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at one multiplier of the base tick (§6.3, §8.7)
+== theta_ctl_at_imu: Longitudinal                                                                                                                                                                 |  191     3    194  36.0s
+    chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude and airspeed loops at 10 Hz (§6.3)
+    chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at one multiplier of the base tick (§6.3, §8.7)
+== latch_default: Longitudinal                                                                                                                                                                 |  186     8    194  35.1s
+    chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at one multiplier of the base tick (§6.3, §8.7)
+== q_ctl_entry_omitted: Longitudinal  |  194    194  34.3s
+== measurement_noiseless: Longitudinal                                                                                                                                                                 |  187     7    194  35.3s
+    chapter 5: each sensor samples and holds at its rate, each noise of its declared density and its own seed (§3.2, §7.3)
+    chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§2.3, §13.5, D-316)
+    chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== q_ctl_Kp: Longitudinal                                                                                                                                                                 |  192     2    194  35.4s
+    chapter 5: the autopilot holds the altitude step (§13.7)
+    chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§2.3, §13.5, D-316)
+== q_ctl_anchored_400: Longitudinal                                                                                                                                                                 |   99      2    101  23.5s
+    Longitudinal
+    chapter 5: the autopilot rests at the trim (§14.5)
+== test_no_dt_base: Longitudinal                                                                                                                                                                 |  170    24    194  1m47.2s
+    chapter 5: each sensor samples and holds at its rate, each noise of its declared density and its own seed (§3.2, §7.3)
+    chapter 5: the autopilot holds the altitude step (§13.7)
+    chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude and airspeed loops at 10 Hz (§6.3)
+    chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§2.3, §13.5, D-316)
+    chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)

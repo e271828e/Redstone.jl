@@ -1,0 +1,80 @@
+== Δt_base = 1//200, (imu = 1, ins = 4, air_data = 20): (200.0, 50.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=4 sensing/air_data/h_meas=20 cascade/h_ctl=20 cascade/θ_ctl=4 cascade/q_ctl=1 selection/latch=20
+  [h only] ch5 late_h=0.0775052  late_V=0.0187194  peak=1050.06  V_exc=3.91822  t_V_exc=3.735  within_1m=24.36
+  [h only] limited at ±0.05: hold 1.86 s, no hold 2.7 s
+  [h only] ch6 gap_δe=0.00427722  gap_δt=0.0155959  gap_hθ=0.00862696  gap_θq=0.0201513  gap_hθm=0.00840512  gap_θqm=0.0201513  t_latch=30.2  jump_δe=0.00109192  jump_δt=0.00862939  jump_act=0.000103909  jitter=0.00167226  recapture=0.056709  h_max=1016.74  h_min=988.025
+  [h only] ch7 writes=6667 t_stop=726.644  tracking=0.246891  V_lo=49.9776  V_hi=50.0223  γ_stop=-0.0302807  limited=false
+  [all] ch5 late_h=0.0795103  late_V=0.0235104  peak=1050.06  V_exc=3.92435  t_V_exc=3.735  within_1m=24.335
+  [all] limited at ±0.05: hold 1.76 s, no hold 2.14 s
+  [all] ch6 gap_δe=0.00479424  gap_δt=0.0255279  gap_hθ=0.00857864  gap_θq=0.0213264  gap_hθm=0.00931194  gap_θqm=0.0226847  t_latch=30.2  jump_δe=0.000627529  jump_δt=0.0105867  jump_act=5.97172e-05  jitter=0.00235746  recapture=0.0596354  h_max=1016.74  h_min=988.025
+  [all] ch7 writes=6667 t_stop=726.647  tracking=0.246192  V_lo=49.9689  V_hi=50.0286  γ_stop=-0.030258  limited=false
+== Δt_base = 1//100, (imu = 1, ins = 2, air_data = 10): (100.0, 50.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=2 sensing/air_data/h_meas=10 cascade/h_ctl=10 cascade/θ_ctl=2 cascade/q_ctl=1 selection/latch=10
+  [h only] ch5 late_h=0.0774911  late_V=0.0187136  peak=1050.06  V_exc=3.91247  t_V_exc=3.735  within_1m=24.36
+  [h only] limited at ±0.05: hold 1.84 s, no hold 2.7 s
+  [h only] ch6 gap_δe=0.00427526  gap_δt=0.0155978  gap_hθ=0.00862625  gap_θq=0.0201502  gap_hθm=0.00840432  gap_θqm=0.0201502  t_latch=30.2  jump_δe=0.0010933  jump_δt=0.00862586  jump_act=0.000104042  jitter=0.00167078  recapture=0.0566807  h_max=1016.74  h_min=988.025
+  [h only] ch7 writes=6667 t_stop=726.644  tracking=0.246827  V_lo=49.9776  V_hi=50.0222  γ_stop=-0.0302819  limited=false
+  [all] ch5 late_h=0.0791902  late_V=0.0236017  peak=1050.07  V_exc=3.91814  t_V_exc=3.73  within_1m=24.34
+  [all] limited at ±0.05: hold 1.76 s, no hold 2.14 s
+  [all] ch6 gap_δe=0.00473073  gap_δt=0.0255273  gap_hθ=0.00857793  gap_θq=0.019673  gap_hθm=0.00931114  gap_θqm=0.0222309  t_latch=30.2  jump_δe=0.000569796  jump_δt=0.0105832  jump_act=5.42232e-05  jitter=0.00214391  recapture=0.0653461  h_max=1016.74  h_min=988.025
+  [all] ch7 writes=6667 t_stop=726.645  tracking=0.243308  V_lo=49.968  V_hi=50.0286  γ_stop=-0.0301892  limited=false
+== Δt_base = 1//100, (imu = 1, ins = 5, air_data = 10): (100.0, 20.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=5 sensing/air_data/h_meas=10 cascade/h_ctl=10 cascade/θ_ctl=5 cascade/q_ctl=1 selection/latch=10
+  [h only] ch5 late_h=0.0773037  late_V=0.0188113  peak=1050.06  V_exc=3.93298  t_V_exc=3.72  within_1m=24.19
+  [h only] limited at ±0.05: hold 2.0 s, no hold 2.85 s
+  [h only] ch6 gap_δe=0.00453323  gap_δt=0.0155978  gap_hθ=0.00862625  gap_θq=0.0198319  gap_hθm=0.00802167  gap_θqm=0.0198319  t_latch=30.2  jump_δe=0.00123653  jump_δt=0.00862586  jump_act=0.000117671  jitter=0.00170191  recapture=0.0570933  h_max=1016.74  h_min=988.025
+  [h only] ch7 writes=6667 t_stop=726.645  tracking=0.247383  V_lo=49.9776  V_hi=50.0223  γ_stop=-0.0302975  limited=false
+  [all] ch5 late_h=0.0889911  late_V=0.025534  peak=1050.07  V_exc=3.9397  t_V_exc=3.72  within_1m=24.15
+  [all] limited at ±0.05: hold 2.05 s, no hold 2.75 s
+  [all] ch6 gap_δe=0.00488546  gap_δt=0.0255273  gap_hθ=0.00913073  gap_θq=0.0201523  gap_hθm=0.00893642  gap_θqm=0.0227101  t_latch=30.2  jump_δe=0.000503543  jump_δt=0.0105832  jump_act=4.79184e-05  jitter=0.00225332  recapture=0.0661043  h_max=1016.74  h_min=988.025
+  [all] ch7 writes=6667 t_stop=726.647  tracking=0.226692  V_lo=49.9694  V_hi=50.0256  γ_stop=-0.0302297  limited=false
+== Δt_base = 1//50, (imu = 1, ins = 5, air_data = 10): (50.0, 10.0, 5.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=5 sensing/air_data/h_meas=10 cascade/h_ctl=10 cascade/θ_ctl=5 cascade/q_ctl=1 selection/latch=10
+  [h only] ch5 late_h=0.0882193  late_V=0.0187893  peak=1050.09  V_exc=4.15066  t_V_exc=3.735  within_1m=23.705
+  [h only] limited at ±0.05: hold 2.5 s, no hold 3.4 s
+  [h only] ch6 gap_δe=0.00305692  gap_δt=0.0308313  gap_hθ=0.0115141  gap_θq=0.0125627  gap_hθm=0.0105167  gap_θqm=0.0125328  t_latch=30.4  jump_δe=0.000678399  jump_δt=0.0175339  jump_act=6.45581e-05  jitter=0.00132813  recapture=0.0853555  h_max=1016.74  h_min=988.025
+  [h only] ch7 writes=3334 t_stop=726.695  tracking=0.397044  V_lo=49.9791  V_hi=50.0194  γ_stop=-0.0290083  limited=false
+  [all] ch5 late_h=0.0920072  late_V=0.0198624  peak=1050.09  V_exc=4.15667  t_V_exc=3.735  within_1m=23.715
+  [all] limited at ±0.05: hold 2.6 s, no hold 3.4 s
+  [all] ch6 gap_δe=0.003263  gap_δt=0.0382713  gap_hθ=0.0117706  gap_θq=0.0141502  gap_hθm=0.0103935  gap_θqm=0.0149478  t_latch=30.4  jump_δe=0.000353296  jump_δt=0.0159007  jump_act=3.36205e-05  jitter=0.00176609  recapture=0.0890641  h_max=1016.74  h_min=988.025
+  [all] ch7 writes=3334 t_stop=726.693  tracking=0.411705  V_lo=49.9745  V_hi=50.0268  γ_stop=-0.0290684  limited=false
+== Δt_base = 1//50, (imu = 1, ins = 5, air_data = 25): (50.0, 10.0, 2.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=5 sensing/air_data/h_meas=25 cascade/h_ctl=25 cascade/θ_ctl=5 cascade/q_ctl=1 selection/latch=25
+  [h only] ch5 late_h=0.0887001  late_V=0.0211243  peak=1050.07  V_exc=4.68934  t_V_exc=3.85  within_1m=23.915
+  [h only] limited at ±0.05: hold 2.3 s, no hold 3.4 s
+  [h only] ch6 gap_δe=0.00306832  gap_δt=0.0762311  gap_hθ=0.0227867  gap_θq=0.0124907  gap_hθm=0.0221786  gap_θqm=0.0124907  t_latch=31  jump_δe=0.00119754  jump_δt=0.0465621  jump_act=0.000113961  jitter=0.000665127  recapture=0.0708943  h_max=1016.74  h_min=988.025
+  [h only] ch7 writes=1334 t_stop=726.653  tracking=0.835356  V_lo=49.9746  V_hi=50.0262  γ_stop=-0.0308388  limited=false
+  [all] ch5 late_h=0.100463  late_V=0.0246928  peak=1050.07  V_exc=4.68561  t_V_exc=3.85  within_1m=23.91
+  [all] limited at ±0.05: hold 2.3 s, no hold 3.5 s
+  [all] ch6 gap_δe=0.00362668  gap_δt=0.0769715  gap_hθ=0.0226535  gap_θq=0.0144374  gap_hθm=0.0217893  gap_θqm=0.0161752  t_latch=31  jump_δe=0.00160879  jump_δt=0.0508007  jump_act=0.000153097  jitter=0.000960883  recapture=0.0726723  h_max=1016.74  h_min=988.025
+  [all] ch7 writes=1334 t_stop=726.653  tracking=0.843539  V_lo=49.9724  V_hi=50.0313  γ_stop=-0.0308982  limited=false
+== Δt_base = 1//400, (imu = 1, ins = 8, air_data = 40): (400.0, 50.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=8 sensing/air_data/h_meas=40 cascade/h_ctl=40 cascade/θ_ctl=8 cascade/q_ctl=1 selection/latch=40
+  [h only] ch5 late_h=0.0775123  late_V=0.0187224  peak=1050.06  V_exc=3.92131  t_V_exc=3.735  within_1m=24.3575
+  [h only] limited at ±0.05: hold 3.72 s, no hold 5.4 s
+  [h only] ch6 gap_δe=0.00427816  gap_δt=0.0155949  gap_hθ=0.00866423  gap_θq=0.0201518  gap_hθm=0.00840551  gap_θqm=0.0201518  t_latch=30.2  jump_δe=0.00109125  jump_δt=0.00863116  jump_act=5.3221e-05  jitter=0.00167319  recapture=0.0567231  h_max=1016.74  h_min=988.025
+  [h only] ch7 writes=6667 t_stop=726.644  tracking=0.246924  V_lo=49.9776  V_hi=50.0223  γ_stop=-0.0302801  limited=false
+  [all] ch5 late_h=0.0752137  late_V=0.0222078  peak=1050.06  V_exc=3.92821  t_V_exc=3.735  within_1m=24.325
+  [all] limited at ±0.05: hold 3.52 s, no hold 4.24 s
+  [all] ch6 gap_δe=0.00437593  gap_δt=0.0255283  gap_hθ=0.00861591  gap_θq=0.0196458  gap_hθm=0.00931234  gap_θqm=0.0232267  t_latch=30.2  jump_δe=0.00120229  jump_δt=0.0105885  jump_act=5.86362e-05  jitter=0.00312369  recapture=0.0544651  h_max=1016.74  h_min=988.025
+  [all] ch7 writes=6667 t_stop=726.645  tracking=0.258791  V_lo=49.9684  V_hi=50.0318  γ_stop=-0.0302558  limited=false
+== Δt_base = 1//200, (imu = 1, ins = 2, air_data = 20): (200.0, 100.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=2 sensing/air_data/h_meas=20 cascade/h_ctl=20 cascade/θ_ctl=2 cascade/q_ctl=1 selection/latch=20
+  [h only] ch5 late_h=0.0775626  late_V=0.0186865  peak=1050.06  V_exc=3.91161  t_V_exc=3.74  within_1m=24.41
+  [h only] limited at ±0.05: hold 1.83 s, no hold 2.71 s
+  [h only] ch6 gap_δe=0.00423623  gap_δt=0.0155959  gap_hθ=0.00862696  gap_θq=0.0202386  gap_hθm=0.00855307  gap_θqm=0.0202386  t_latch=30.2  jump_δe=0.00107115  jump_δt=0.00862939  jump_act=0.000101934  jitter=0.00166157  recapture=0.0565799  h_max=1016.74  h_min=988.025
+  [h only] ch7 writes=6667 t_stop=726.644  tracking=0.246739  V_lo=49.9776  V_hi=50.0222  γ_stop=-0.0302758  limited=false
+  [all] ch5 late_h=0.0805131  late_V=0.0237074  peak=1050.07  V_exc=3.91657  t_V_exc=3.74  within_1m=24.405
+  [all] limited at ±0.05: hold 1.65 s, no hold 1.74 s
+  [all] ch6 gap_δe=0.00518766  gap_δt=0.0255279  gap_hθ=0.00874812  gap_θq=0.0243433  gap_hθm=0.00965148  gap_θqm=0.0238516  t_latch=30.2  jump_δe=0.000762259  jump_δt=0.0105867  jump_act=7.25385e-05  jitter=0.00291575  recapture=0.0566201  h_max=1016.74  h_min=988.025
+  [all] ch7 writes=6667 t_stop=726.645  tracking=0.237878  V_lo=49.9703  V_hi=50.0267  γ_stop=-0.0304939  limited=false
+== Δt_base = 1//200, (imu = 1, ins = 4, air_data = 40): (200.0, 50.0, 5.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=4 sensing/air_data/h_meas=40 cascade/h_ctl=40 cascade/θ_ctl=4 cascade/q_ctl=1 selection/latch=40
+  [h only] ch5 late_h=0.0893264  late_V=0.0193382  peak=1050.09  V_exc=4.10881  t_V_exc=3.775  within_1m=24.115
+  [h only] limited at ±0.05: hold 2.0 s, no hold 2.88 s
+  [h only] ch6 gap_δe=0.00306687  gap_δt=0.0308066  gap_hθ=0.0115128  gap_θq=0.0144457  gap_hθm=0.0113576  gap_θqm=0.0144457  t_latch=30.4  jump_δe=0.00061942  jump_δt=0.0175538  jump_act=5.89455e-05  jitter=0.00127951  recapture=0.0864196  h_max=1016.74  h_min=988.025
+  [h only] ch7 writes=3334 t_stop=726.693  tracking=0.394611  V_lo=49.9796  V_hi=50.0184  γ_stop=-0.0290764  limited=false
+  [all] ch5 late_h=0.094579  late_V=0.0220482  peak=1050.09  V_exc=4.11305  t_V_exc=3.775  within_1m=24.115
+  [all] limited at ±0.05: hold 2.02 s, no hold 2.26 s
+  [all] ch6 gap_δe=0.00323825  gap_δt=0.0383338  gap_hθ=0.0112901  gap_θq=0.0156756  gap_hθm=0.0120234  gap_θqm=0.015926  t_latch=30.4  jump_δe=0.00134333  jump_δt=0.0159207  jump_act=0.000127834  jitter=0.0020713  recapture=0.0918141  h_max=1016.74  h_min=988.025
+  [all] ch7 writes=3334 t_stop=726.694  tracking=0.386003  V_lo=49.9749  V_hi=50.023  γ_stop=-0.0291202  limited=false

@@ -1,0 +1,4 @@
+hold, three rates                    all noise 1.760 s   no noise 2.200 s
+hold, loops 50 Hz, air data 10 Hz    all noise 1.920 s   no noise 2.240 s
+no hold, three rates                 all noise 2.140 s   no noise 2.980 s
+approach, full resolution: t_stop=726.647  tracking=0.257437  V_lo=49.9689  V_hi=50.0286  γ_stop=-0.030258  limited=false

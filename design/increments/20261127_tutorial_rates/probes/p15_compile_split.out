@@ -1,0 +1,10 @@
+-- pass 1
+build approach (Float64, ProbeDual): 2.486155 seconds (7.07 M allocations: 372.845 MiB, 0.69% gc time, 99.22% compilation time)
+Simulation autopilot V1: 0.674241 seconds (1.05 M allocations: 56.117 MiB, 2.05% gc time, 96.67% compilation time)
+init!: 0.753082 seconds (1.96 M allocations: 105.652 MiB, 0.48% gc time, 99.92% compilation time)
+run! 120 s: 0.433280 seconds (1.31 M allocations: 104.797 MiB, 2.46% gc time, 91.91% compilation time)
+-- pass 2
+build approach (Float64, ProbeDual): 0.006981 seconds (98.33 k allocations: 4.304 MiB)
+Simulation autopilot V1: 0.004310 seconds (61.90 k allocations: 2.619 MiB)
+init!: 0.000158 seconds (1.16 k allocations: 582.734 KiB)
+run! 120 s: 0.035822 seconds (432.01 k allocations: 55.664 MiB, 28.26% gc time)

@@ -1,0 +1,20 @@
+ch5 rest drift h 2.33e-10 V 3.95e-11 θ 3.69e-12
+ch5 climb late_h=0.0795103  late_V=0.0235104  peak=1050.06  V_exc=3.92435  t_V_exc=3.735  within_1m=24.335  V_exc full=3.924354994576852
+ch5 h_ctl changes 1192 on own grid true all on 10 Hz true all on 50 Hz true
+ch5 V_ctl changes 1177 on own grid true all on 10 Hz true all on 50 Hz true
+ch5 θ_ctl changes 6000 on own grid true all on 10 Hz false all on 50 Hz true
+ch5 q_ctl changes 24000 on own grid true all on 10 Hz false all on 50 Hz false
+ch5 q_meas changes 24000 own grid true coarser false  std 0.00199818  declared 0.002  ratio 0.9991  n=24001
+ch5 θ_meas changes 6000 own grid true coarser false  std 0.00050177  declared 0.0005  ratio 1.0035  n=6001
+ch5 h_meas changes 1200 own grid true coarser -  std 0.132185  declared 0.134164  ratio 0.9852  n=1201
+ch5 V_meas changes 1200 own grid true coarser -  std 0.020039  declared 0.02  ratio 1.0019  n=1201
+ch5 h and V noise correlation -0.0430
+ch6 gap_δe=0.00479424  gap_δt=0.0255279  gap_hθ=0.00857864  gap_θq=0.0213264  gap_hθm=0.00931194  gap_θqm=0.0226847  t_latch=30.2  jump_δe=0.000627529  jump_δt=0.0105867  jump_act=5.97172e-05  jitter=0.00235746  recapture=0.0596354  h_max=1016.74  h_min=988.025
+ch6 sweep gap_δe   min 0.00478 max 0.00479
+ch6 sweep gap_δt   min 0.02550 max 0.02553
+ch6 sweep gap_hθm  min 0.00928 max 0.00931
+ch6 sweep gap_θqm  min 0.02266 max 0.02268
+ch6 sweep gap_hθ   min 0.00855 max 0.00858
+ch6 sweep gap_θq   min 0.02130 max 0.02133
+ch7 writes 6667 t_stop=726.647  tracking=0.246192  V_lo=49.9689  V_hi=50.0286  γ_stop=-0.030258  limited=false t_stop full=726.6468115372288 h_stop=-2.1548550704214575e-13
+ch8 second t 559.9669062397531

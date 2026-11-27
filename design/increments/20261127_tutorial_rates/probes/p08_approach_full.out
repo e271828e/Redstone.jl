@@ -1,0 +1,4 @@
+full resolution, writes 6667: t_stop=726.647  tracking=0.253689  V_lo=49.9689  V_hi=50.0286  γ_stop=-0.030258  limited=false  snapshots 145331
+autopilot warnings: Redstone.Diagnostic[]
+piloted warnings: Redstone.Diagnostic[]
+approach warnings: Redstone.Diagnostic[]

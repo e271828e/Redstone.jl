@@ -1,0 +1,12 @@
+delays base   Tt=0     limited 1.42 s late_h 0.0795 | gaps δe 0.0050 δt 0.0255 hθm 0.0093 θqm 0.0229 latch 30.20 jumps 0.00005 0.01054 act 4.85e-06 jitter 0.0024 recap 0.0597
+delays base   Tt=0.005 limited 1.44 s late_h 0.0795 | gaps δe 0.0047 δt 0.0255 hθm 0.0093 θqm 0.0229 latch 30.20 jumps 0.00022 0.01054 act 2.10e-05 jitter 0.0024 recap 0.0597
+delays base   Tt=0.01  limited 1.58 s late_h 0.0795 | gaps δe 0.0047 δt 0.0255 hθm 0.0093 θqm 0.0230 latch 30.20 jumps 0.00037 0.01054 act 3.49e-05 jitter 0.0024 recap 0.0597
+delays base   Tt=0.02  limited 1.76 s late_h 0.0795 | gaps δe 0.0048 δt 0.0255 hθm 0.0093 θqm 0.0227 latch 30.20 jumps 0.00063 0.01059 act 5.97e-05 jitter 0.0024 recap 0.0596
+delays base   Tt=0.05  limited 2.08 s late_h 0.0795 | gaps δe 0.0044 δt 0.0265 hθm 0.0091 θqm 0.0187 latch 30.20 jumps 0.00088 0.01152 act 8.39e-05 jitter 0.0024 recap 0.0596
+delays base   Tt=0.1   limited 2.70 s late_h 0.0795 | gaps δe 0.0033 δt 0.0307 hθm 0.0094 θqm 0.0154 latch 30.20 jumps 0.00041 0.01424 act 3.86e-05 jitter 0.0024 recap 0.0594
+delays sensor Tt=0     limited 1.42 s late_h 0.0795 | gaps δe 0.0050 δt 0.0255 hθm 0.0093 θqm 0.0229 latch 30.20 jumps 0.00005 0.01054 act 4.85e-06 jitter 0.0024 recap 0.0597
+delays sensor Tt=0.005 limited 1.44 s late_h 0.0795 | gaps δe 0.0047 δt 0.0255 hθm 0.0093 θqm 0.0229 latch 30.20 jumps 0.00022 0.01054 act 2.10e-05 jitter 0.0024 recap 0.0597
+delays sensor Tt=0.01  limited 1.58 s late_h 0.0795 | gaps δe 0.0047 δt 0.0255 hθm 0.0093 θqm 0.0230 latch 30.20 jumps 0.00037 0.01054 act 3.49e-05 jitter 0.0024 recap 0.0597
+delays sensor Tt=0.02  limited 1.76 s late_h 0.0795 | gaps δe 0.0048 δt 0.0255 hθm 0.0093 θqm 0.0227 latch 30.20 jumps 0.00063 0.01059 act 5.97e-05 jitter 0.0024 recap 0.0596
+delays sensor Tt=0.05  limited 2.08 s late_h 0.0795 | gaps δe 0.0044 δt 0.0265 hθm 0.0091 θqm 0.0187 latch 30.20 jumps 0.00088 0.01152 act 8.39e-05 jitter 0.0024 recap 0.0596
+delays sensor Tt=0.1   limited 2.70 s late_h 0.0795 | gaps δe 0.0033 δt 0.0307 hθm 0.0094 θqm 0.0154 latch 30.20 jumps 0.00041 0.01424 act 3.86e-05 jitter 0.0024 recap 0.0594

@@ -1,0 +1,13 @@
+q σ=0       psd=0         late_h 0.0775 late_V 0.0187 peak 1050.061 | gaps δe 0.0043 δt 0.0156 hθm 0.0084 θqm 0.0202 jumps 0.00109 0.00863 act 1.04e-04 jitter 0.0017 recap 0.0567
+q σ=0.001   psd=5e-09     late_h 0.0801 late_V 0.0197 peak 1050.065 | gaps δe 0.0045 δt 0.0156 hθm 0.0084 θqm 0.0207 jumps 0.00096 0.00863 act 9.10e-05 jitter 0.0019 recap 0.0585
+q σ=0.002   psd=2e-08     late_h 0.0826 late_V 0.0206 peak 1050.070 | gaps δe 0.0047 δt 0.0156 hθm 0.0084 θqm 0.0219 jumps 0.00082 0.00863 act 7.81e-05 jitter 0.0024 recap 0.0605
+q σ=0.005   psd=1.25e-07  late_h 0.0904 late_V 0.0235 peak 1050.083 | gaps δe 0.0054 δt 0.0156 hθm 0.0084 θqm 0.0297 jumps 0.00041 0.00863 act 3.94e-05 jitter 0.0052 recap 0.0673
+θ σ=0       psd=0         late_h 0.0775 late_V 0.0187 peak 1050.061 | gaps δe 0.0043 δt 0.0156 hθm 0.0084 θqm 0.0202 jumps 0.00109 0.00863 act 1.04e-04 jitter 0.0017 recap 0.0567
+θ σ=0.0002  psd=8e-10     late_h 0.0754 late_V 0.0182 peak 1050.061 | gaps δe 0.0043 δt 0.0156 hθm 0.0088 θqm 0.0201 jumps 0.00101 0.00863 act 9.66e-05 jitter 0.0016 recap 0.0574
+θ σ=0.0005  psd=5e-09     late_h 0.0724 late_V 0.0177 peak 1050.062 | gaps δe 0.0043 δt 0.0156 hθm 0.0093 θqm 0.0200 jumps 0.00090 0.00863 act 8.55e-05 jitter 0.0017 recap 0.0584
+θ σ=0.001   psd=2e-08     late_h 0.0678 late_V 0.0171 peak 1050.064 | gaps δe 0.0044 δt 0.0156 hθm 0.0102 θqm 0.0199 jumps 0.00071 0.00863 act 6.71e-05 jitter 0.0020 recap 0.0603
+V σ=0       psd=0         late_h 0.0775 late_V 0.0187 peak 1050.061 | gaps δe 0.0043 δt 0.0156 hθm 0.0084 θqm 0.0202 jumps 0.00109 0.00863 act 1.04e-04 jitter 0.0017 recap 0.0567
+V σ=0.01    psd=1e-05     late_h 0.0785 late_V 0.0207 peak 1050.061 | gaps δe 0.0043 δt 0.0193 hθm 0.0084 θqm 0.0202 jumps 0.00109 0.00961 act 1.04e-04 jitter 0.0017 recap 0.0555
+V σ=0.02    psd=4e-05     late_h 0.0795 late_V 0.0228 peak 1050.061 | gaps δe 0.0043 δt 0.0255 hθm 0.0084 θqm 0.0202 jumps 0.00109 0.01059 act 1.04e-04 jitter 0.0017 recap 0.0544
+V σ=0.03    psd=9e-05     late_h 0.0806 late_V 0.0249 peak 1050.060 | gaps δe 0.0043 δt 0.0317 hθm 0.0084 θqm 0.0202 jumps 0.00109 0.01157 act 1.04e-04 jitter 0.0017 recap 0.0532
+V σ=0.05    psd=0.00025   late_h 0.0829 late_V 0.0293 peak 1050.060 | gaps δe 0.0043 δt 0.0441 hθm 0.0084 θqm 0.0202 jumps 0.00109 0.01352 act 1.04e-04 jitter 0.0017 recap 0.0510

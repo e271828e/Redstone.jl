@@ -1,0 +1,6 @@
+gap_δe   offset 0: 0.00479  min 0.00479 max 0.00479
+gap_δt   offset 0: 0.02553  min 0.02551 max 0.02553
+gap_hθm  offset 0: 0.00931  min 0.00930 max 0.00931
+gap_θqm  offset 0: 0.02268  min 0.02267 max 0.02268
+jump_δe  offset 0: 0.00063  min 0.00063 max 0.00063
+jump_δt  offset 0: 0.01059  min 0.01052 max 0.01059

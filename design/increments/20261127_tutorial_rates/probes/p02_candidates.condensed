@@ -1,0 +1,80 @@
+== Δt_base = 1//200, (imu = 1, ins = 4, air_data = 20): (200.0, 50.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=4 sensing/air_data/h_meas=20 cascade/h_ctl=20 cascade/θ_ctl=4 cascade/q_ctl=1 selection/latch=20
+  [h only] late_h 0.0775052 late_V 0.0187194 peak 1050.06 Vexc 3.91822@3.735 1m 24.36
+  [h only] at ±0.05: hold 1.86 s, no hold 2.7 s
+  [h only] gaps δe 0.00427722 δt 0.0155959 hθm 0.00840512 θqm 0.0201513 latch 30.2 jumps 0.00109192 0.00862939 act 0.000103909 jitter 0.00167226 recap 0.056709
+  [h only] 6667 stop 726.644 track 0.246891 V 49.9776..50.0223 γ -0.0302807 lim false
+  [all] late_h 0.0795103 late_V 0.0235104 peak 1050.06 Vexc 3.92435@3.735 1m 24.335
+  [all] at ±0.05: hold 1.76 s, no hold 2.14 s
+  [all] gaps δe 0.00479424 δt 0.0255279 hθm 0.00931194 θqm 0.0226847 latch 30.2 jumps 0.000627529 0.0105867 act 5.97172e-05 jitter 0.00235746 recap 0.0596354
+  [all] 6667 stop 726.647 track 0.246192 V 49.9689..50.0286 γ -0.030258 lim false
+== Δt_base = 1//100, (imu = 1, ins = 2, air_data = 10): (100.0, 50.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=2 sensing/air_data/h_meas=10 cascade/h_ctl=10 cascade/θ_ctl=2 cascade/q_ctl=1 selection/latch=10
+  [h only] late_h 0.0774911 late_V 0.0187136 peak 1050.06 Vexc 3.91247@3.735 1m 24.36
+  [h only] at ±0.05: hold 1.84 s, no hold 2.7 s
+  [h only] gaps δe 0.00427526 δt 0.0155978 hθm 0.00840432 θqm 0.0201502 latch 30.2 jumps 0.0010933 0.00862586 act 0.000104042 jitter 0.00167078 recap 0.0566807
+  [h only] 6667 stop 726.644 track 0.246827 V 49.9776..50.0222 γ -0.0302819 lim false
+  [all] late_h 0.0791902 late_V 0.0236017 peak 1050.07 Vexc 3.91814@3.73 1m 24.34
+  [all] at ±0.05: hold 1.76 s, no hold 2.14 s
+  [all] gaps δe 0.00473073 δt 0.0255273 hθm 0.00931114 θqm 0.0222309 latch 30.2 jumps 0.000569796 0.0105832 act 5.42232e-05 jitter 0.00214391 recap 0.0653461
+  [all] 6667 stop 726.645 track 0.243308 V 49.968..50.0286 γ -0.0301892 lim false
+== Δt_base = 1//100, (imu = 1, ins = 5, air_data = 10): (100.0, 20.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=5 sensing/air_data/h_meas=10 cascade/h_ctl=10 cascade/θ_ctl=5 cascade/q_ctl=1 selection/latch=10
+  [h only] late_h 0.0773037 late_V 0.0188113 peak 1050.06 Vexc 3.93298@3.72 1m 24.19
+  [h only] at ±0.05: hold 2.0 s, no hold 2.85 s
+  [h only] gaps δe 0.00453323 δt 0.0155978 hθm 0.00802167 θqm 0.0198319 latch 30.2 jumps 0.00123653 0.00862586 act 0.000117671 jitter 0.00170191 recap 0.0570933
+  [h only] 6667 stop 726.645 track 0.247383 V 49.9776..50.0223 γ -0.0302975 lim false
+  [all] late_h 0.0889911 late_V 0.025534 peak 1050.07 Vexc 3.9397@3.72 1m 24.15
+  [all] at ±0.05: hold 2.05 s, no hold 2.75 s
+  [all] gaps δe 0.00488546 δt 0.0255273 hθm 0.00893642 θqm 0.0227101 latch 30.2 jumps 0.000503543 0.0105832 act 4.79184e-05 jitter 0.00225332 recap 0.0661043
+  [all] 6667 stop 726.647 track 0.226692 V 49.9694..50.0256 γ -0.0302297 lim false
+== Δt_base = 1//50, (imu = 1, ins = 5, air_data = 10): (50.0, 10.0, 5.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=5 sensing/air_data/h_meas=10 cascade/h_ctl=10 cascade/θ_ctl=5 cascade/q_ctl=1 selection/latch=10
+  [h only] late_h 0.0882193 late_V 0.0187893 peak 1050.09 Vexc 4.15066@3.735 1m 23.705
+  [h only] at ±0.05: hold 2.5 s, no hold 3.4 s
+  [h only] gaps δe 0.00305692 δt 0.0308313 hθm 0.0105167 θqm 0.0125328 latch 30.4 jumps 0.000678399 0.0175339 act 6.45581e-05 jitter 0.00132813 recap 0.0853555
+  [h only] 3334 stop 726.695 track 0.397044 V 49.9791..50.0194 γ -0.0290083 lim false
+  [all] late_h 0.0920072 late_V 0.0198624 peak 1050.09 Vexc 4.15667@3.735 1m 23.715
+  [all] at ±0.05: hold 2.6 s, no hold 3.4 s
+  [all] gaps δe 0.003263 δt 0.0382713 hθm 0.0103935 θqm 0.0149478 latch 30.4 jumps 0.000353296 0.0159007 act 3.36205e-05 jitter 0.00176609 recap 0.0890641
+  [all] 3334 stop 726.693 track 0.411705 V 49.9745..50.0268 γ -0.0290684 lim false
+== Δt_base = 1//50, (imu = 1, ins = 5, air_data = 25): (50.0, 10.0, 2.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=5 sensing/air_data/h_meas=25 cascade/h_ctl=25 cascade/θ_ctl=5 cascade/q_ctl=1 selection/latch=25
+  [h only] late_h 0.0887001 late_V 0.0211243 peak 1050.07 Vexc 4.68934@3.85 1m 23.915
+  [h only] at ±0.05: hold 2.3 s, no hold 3.4 s
+  [h only] gaps δe 0.00306832 δt 0.0762311 hθm 0.0221786 θqm 0.0124907 latch 31 jumps 0.00119754 0.0465621 act 0.000113961 jitter 0.000665127 recap 0.0708943
+  [h only] 1334 stop 726.653 track 0.835356 V 49.9746..50.0262 γ -0.0308388 lim false
+  [all] late_h 0.100463 late_V 0.0246928 peak 1050.07 Vexc 4.68561@3.85 1m 23.91
+  [all] at ±0.05: hold 2.3 s, no hold 3.5 s
+  [all] gaps δe 0.00362668 δt 0.0769715 hθm 0.0217893 θqm 0.0161752 latch 31 jumps 0.00160879 0.0508007 act 0.000153097 jitter 0.000960883 recap 0.0726723
+  [all] 1334 stop 726.653 track 0.843539 V 49.9724..50.0313 γ -0.0308982 lim false
+== Δt_base = 1//400, (imu = 1, ins = 8, air_data = 40): (400.0, 50.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=8 sensing/air_data/h_meas=40 cascade/h_ctl=40 cascade/θ_ctl=8 cascade/q_ctl=1 selection/latch=40
+  [h only] late_h 0.0775123 late_V 0.0187224 peak 1050.06 Vexc 3.92131@3.735 1m 24.3575
+  [h only] at ±0.05: hold 3.72 s, no hold 5.4 s
+  [h only] gaps δe 0.00427816 δt 0.0155949 hθm 0.00840551 θqm 0.0201518 latch 30.2 jumps 0.00109125 0.00863116 act 5.3221e-05 jitter 0.00167319 recap 0.0567231
+  [h only] 6667 stop 726.644 track 0.246924 V 49.9776..50.0223 γ -0.0302801 lim false
+  [all] late_h 0.0752137 late_V 0.0222078 peak 1050.06 Vexc 3.92821@3.735 1m 24.325
+  [all] at ±0.05: hold 3.52 s, no hold 4.24 s
+  [all] gaps δe 0.00437593 δt 0.0255283 hθm 0.00931234 θqm 0.0232267 latch 30.2 jumps 0.00120229 0.0105885 act 5.86362e-05 jitter 0.00312369 recap 0.0544651
+  [all] 6667 stop 726.645 track 0.258791 V 49.9684..50.0318 γ -0.0302558 lim false
+== Δt_base = 1//200, (imu = 1, ins = 2, air_data = 20): (200.0, 100.0, 10.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=2 sensing/air_data/h_meas=20 cascade/h_ctl=20 cascade/θ_ctl=2 cascade/q_ctl=1 selection/latch=20
+  [h only] late_h 0.0775626 late_V 0.0186865 peak 1050.06 Vexc 3.91161@3.74 1m 24.41
+  [h only] at ±0.05: hold 1.83 s, no hold 2.71 s
+  [h only] gaps δe 0.00423623 δt 0.0155959 hθm 0.00855307 θqm 0.0202386 latch 30.2 jumps 0.00107115 0.00862939 act 0.000101934 jitter 0.00166157 recap 0.0565799
+  [h only] 6667 stop 726.644 track 0.246739 V 49.9776..50.0222 γ -0.0302758 lim false
+  [all] late_h 0.0805131 late_V 0.0237074 peak 1050.07 Vexc 3.91657@3.74 1m 24.405
+  [all] at ±0.05: hold 1.65 s, no hold 1.74 s
+  [all] gaps δe 0.00518766 δt 0.0255279 hθm 0.00965148 θqm 0.0238516 latch 30.2 jumps 0.000762259 0.0105867 act 7.25385e-05 jitter 0.00291575 recap 0.0566201
+  [all] 6667 stop 726.645 track 0.237878 V 49.9703..50.0267 γ -0.0304939 lim false
+== Δt_base = 1//200, (imu = 1, ins = 4, air_data = 40): (200.0, 50.0, 5.0) Hz
+  D: sensing/imu/q_meas=1 sensing/ins/θ_meas=4 sensing/air_data/h_meas=40 cascade/h_ctl=40 cascade/θ_ctl=4 cascade/q_ctl=1 selection/latch=40
+  [h only] late_h 0.0893264 late_V 0.0193382 peak 1050.09 Vexc 4.10881@3.775 1m 24.115
+  [h only] at ±0.05: hold 2.0 s, no hold 2.88 s
+  [h only] gaps δe 0.00306687 δt 0.0308066 hθm 0.0113576 θqm 0.0144457 latch 30.4 jumps 0.00061942 0.0175538 act 5.89455e-05 jitter 0.00127951 recap 0.0864196
+  [h only] 3334 stop 726.693 track 0.394611 V 49.9796..50.0184 γ -0.0290764 lim false
+  [all] late_h 0.094579 late_V 0.0220482 peak 1050.09 Vexc 4.11305@3.775 1m 24.115
+  [all] at ±0.05: hold 2.02 s, no hold 2.26 s
+  [all] gaps δe 0.00323825 δt 0.0383338 hθm 0.0120234 θqm 0.015926 latch 30.4 jumps 0.00134333 0.0159207 act 0.000127834 jitter 0.0020713 recap 0.0918141
+  [all] 3334 stop 726.694 track 0.386003 V 49.9749..50.023 γ -0.0291202 lim false

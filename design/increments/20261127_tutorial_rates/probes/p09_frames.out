@@ -1,0 +1,66 @@
+==== A
+1. snapshots over 60 s: 12001; q_ctl changes 12000, all on 200 Hz true; snapshots off the 200 Hz grid 0; plant q changes 12000
+3. rest drift h 2.33e-10
+3. ch5 late 0.0795 0.0235 peak 1050.0633 Vexc 3.9244
+3. q_meas on grid true std/σ 0.9991
+3. θ_meas on grid true std/σ 1.0035
+3. h_meas on grid true std/σ 0.9852
+3. V_meas on grid true std/σ 1.0019
+3. q_ctl own grid true not only coarser true
+3. θ_ctl own grid true not only coarser true
+3. h_ctl own grid true
+3. ch6 gaps 0.0048 0.0255 0.0093 0.0227 latch 30.2000 jumps 0.00063 0.01059 act 5.97e-05 jitter 0.0024 recap 0.0596
+4. staged indices 1002 1402 (search from 1002) engage 6002
+4. q_ctl departs at 30.205
+4. θ_ctl departs at 30.22
+4. h_ctl departs at 30.3
+4. snapshots in (30.2, 30.205): Float64[]
+3. ch7 writes 6667 t_stop 726.6468115372288 tracking 0.2462 V 49.969..50.029
+5. approach wall 2.15 s; snapshots 65538; median stride after 60 s 0.0100 s
+3. ch8 second 559.9669062397531
+7. phase bodies allocations ((0, 0), (0, 0), (0, 0), (0, 0)); warnings Redstone.Diagnostic[]
+==== V1
+1. snapshots over 60 s: 24001; q_ctl changes 12000, all on 200 Hz true; snapshots off the 200 Hz grid 12000; plant q changes 24000
+3. rest drift h 2.36e-10
+3. ch5 late 0.0795 0.0235 peak 1050.0633 Vexc 3.9244
+3. q_meas on grid true std/σ 0.9991
+3. θ_meas on grid true std/σ 1.0035
+3. h_meas on grid true std/σ 0.9852
+3. V_meas on grid true std/σ 1.0019
+3. q_ctl own grid true not only coarser true
+3. θ_ctl own grid true not only coarser true
+3. h_ctl own grid true
+3. ch6 gaps 0.0048 0.0255 0.0093 0.0227 latch 30.2000 jumps 0.00063 0.01059 act 3.06e-05 jitter 0.0024 recap 0.0596
+4. staged indices 2002 1002 (search from 1002) engage 12002
+4. q_ctl departs at 30.205
+4. θ_ctl departs at 30.22
+4. h_ctl departs at 30.3
+4. snapshots in (30.2, 30.205): [30.2025]
+3. ch7 writes 6667 t_stop 726.6468115368581 tracking 0.2462 V 49.969..50.029
+5. approach wall 0.24 s; snapshots 65538; median stride after 60 s 0.0100 s
+3. ch8 second 559.9669062395417
+7. phase bodies allocations ((0, 0), (0, 0), (0, 0), (0, 0)); warnings Redstone.Diagnostic[]
+==== V2
+1. snapshots over 60 s: 24001; q_ctl changes 12000, all on 200 Hz true; snapshots off the 200 Hz grid 12000; plant q changes 24000
+3. rest drift h 2.36e-10
+3. ch5 late 0.0795 0.0235 peak 1050.0633 Vexc 3.9244
+3. q_meas on grid true std/σ 0.9991
+3. θ_meas on grid true std/σ 1.0035
+3. h_meas on grid true std/σ 0.9852
+3. V_meas on grid true std/σ 1.0019
+3. q_ctl own grid true not only coarser true
+3. θ_ctl own grid true not only coarser true
+3. h_ctl own grid true
+3. ch6 gaps 0.0048 0.0255 0.0093 0.0227 latch 30.2000 jumps 0.00063 0.01059 act 3.06e-05 jitter 0.0024 recap 0.0596
+4. staged indices 2002 1002 (search from 1002) engage 12002
+4. q_ctl departs at 30.205
+4. θ_ctl departs at 30.22
+4. h_ctl departs at 30.3
+4. snapshots in (30.2, 30.205): [30.2025]
+3. ch7 writes 6667 t_stop 726.6468115368581 tracking 0.2462 V 49.969..50.029
+5. approach wall 0.30 s; snapshots 65538; median stride after 60 s 0.0100 s
+3. ch8 second 559.9669062395417
+7. phase bodies allocations ((0, 0), (0, 0), (0, 0), (0, 0)); warnings Redstone.Diagnostic[]
+2. V1 vs V2: common 48001 bit-identical true largest gap 0.0
+2. A vs V2: common 24001 bit-identical false largest gap 1.6606190911261365e-7
+6. V1 without Δt_base: q_ctl 400.0 Hz, θ_ctl 100.0 Hz, h_ctl 20.0 Hz; warnings Redstone.Diagnostic[]

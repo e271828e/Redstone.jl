@@ -1,0 +1,11 @@
+== q_ctl_Kp: Longitudinal                                                                                                                                                                 |  191     2    193  33.0s
+    chapter 5: the autopilot holds the altitude step (§13.7)
+    chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§2.3, §13.5, D-316)
+== V_meas_reads_plant_h: Longitudinal                                                                                                                                                                 |  178    15    193  33.4s
+    chapter 5: the autopilot holds the altitude step (§13.7)
+    chapter 5: the autopilot rests at the trim (§14.5)
+    chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude and airspeed loops at 10 Hz (§6.3)
+    chapter 6: once engaged the autopilot recaptures the reference altitude (§13.7)
+    chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§2.3, §13.5, D-316)
+    chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)

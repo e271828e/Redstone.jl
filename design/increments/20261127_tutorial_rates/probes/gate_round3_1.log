@@ -1,0 +1,73 @@
+      Status `~/.julia/dev/Redstone.jl-worktrees/tutorial_1b/examples/test/Project.toml`
+  [6e4b80f9] BenchmarkTools v1.8.0
+  [653472ee] Redstone v0.1.0 `.`
+  [28cf5f55] RedstoneExamples v0.1.0 `examples`
+  [10745b16] Statistics v1.11.5
+  [37e2e46d] LinearAlgebra v1.13.0
+  [8dfed614] Test v1.11.0
+      Status `~/.julia/dev/Redstone.jl-worktrees/tutorial_1b/Manifest.toml`
+  [6e4b80f9] BenchmarkTools v1.8.0
+  [bbf7d656] CommonSubexpressions v0.3.1
+  [34da2185] Compat v4.18.1
+⌃ [187b0558] ConstructionBase v1.6.0
+⌃ [aaaaaaaa] ControlSystemsBase v1.25.3
+  [163ba53b] DiffResults v1.1.0
+⌃ [b552c78f] DiffRules v1.16.0
+⌅ [ffbed154] DocStringExtensions v0.9.5
+⌃ [f6369f11] ForwardDiff v1.4.6
+  [e91730f6] Hungarian v0.7.0
+⌃ [92d709cd] IrrationalConstants v0.2.6
+  [692b3bcd] JLLWrappers v1.8.0
+⌃ [682c06a0] JSON v1.10.0
+⌃ [7a12625a] LinearMaps v3.11.4
+⌃ [2ab3a3ac] LogExpFunctions v1.0.2
+  [1914dd2f] MacroTools v0.5.16
+⌅ [99c1a7ee] MatrixEquations v2.7.0
+⌅ [48965c70] MatrixPencils v1.9.1
+⌃ [77ba4419] NaNMath v1.1.4
+  [bac558e1] OrderedCollections v2.0.3
+⌃ [69de0a69] Parsers v3.0.0
+⌃ [f27b6e38] Polynomials v4.1.4
+⌃ [aea7be01] PrecompileTools v1.3.4
+⌃ [21216c6a] Preferences v1.6.0
+  [3cdcf5f2] RecipesBase v1.4.0
+  [653472ee] Redstone v0.1.0 `.`
+  [28cf5f55] RedstoneExamples v0.1.0 `examples`
+⌃ [efcf1570] Setfield v1.1.3
+⌃ [276daf66] SpecialFunctions v2.9.0
+⌃ [90137ffa] StaticArrays v1.9.22
+⌃ [1e83bf80] StaticArraysCore v1.4.4
+  [10745b16] Statistics v1.11.5
+⌃ [ec057cc2] StructUtils v2.9.2
+  [efe28fd5] OpenSpecFun_jll v0.5.6+0
+  [56f22d72] Artifacts v1.11.0
+  [2a0f44e3] Base64 v1.11.0
+  [ade2ca70] Dates v1.11.0
+  [9fa8497b] Future v1.11.0
+  [b77e0a4c] InteractiveUtils v1.11.0
+  [ac6e5ff7] JuliaSyntaxHighlighting v1.12.0
+  [8f399da3] Libdl v1.11.0
+  [37e2e46d] LinearAlgebra v1.13.0
+  [56ddb016] Logging v1.11.0
+  [d6f4376e] Markdown v1.11.0
+  [de0858da] Printf v1.11.0
+  [9abbd945] Profile v1.11.0
+  [9a3f8284] Random v1.11.0
+  [ea8e919c] SHA v1.0.0
+  [9e88b42a] Serialization v1.11.0
+  [2f01184e] SparseArrays v1.13.0
+  [f489334b] StyledStrings v1.11.0
+  [fa267f1f] TOML v1.0.3
+  [8dfed614] Test v1.11.0
+  [cf7118a7] UUIDs v1.11.0
+  [4ec0a83e] Unicode v1.11.0
+  [e66e0078] CompilerSupportLibraries_jll v1.5.5+2
+  [4536629a] OpenBLAS_jll v0.3.30+0
+  [05823500] OpenLibm_jll v0.8.7+0
+  [bea87d4a] SuiteSparse_jll v7.10.1+0
+  [8e850b90] libblastrampoline_jll v5.15.0+0
+        Info Packages marked with ⌃ and ⌅ have new versions available. Those with ⌃ may be upgradable, but those with ⌅ are restricted by compatibility constraints from upgrading.
+     Testing Running tests...
+Test Summary: | Pass  Total   Time
+Longitudinal  |  194    194  33.7s
+     Testing RedstoneExamples tests passed 

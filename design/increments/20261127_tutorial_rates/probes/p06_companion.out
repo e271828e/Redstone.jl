@@ -1,0 +1,8 @@
+limited, three rates: 1.76
+limited, every loop at 200 Hz: 1.25
+limited, every loop at 50 Hz (the base tick 1//200, multipliers 4, 4, 4): 1.42
+limited, no hold, three rates: 2.14
+air data at 50 Hz, loops at 10 Hz    late_h 0.1693 late_V 0.0509 peak 1050.141
+air data and its loops at 50 Hz      late_h 0.0589 late_V 0.0191 peak 1050.059
+air data and its loops at 10 Hz      late_h 0.0795 late_V 0.0235 peak 1050.063
+knob copies at defaults: late_h=0.0795103  late_V=0.0235104  peak=1050.06  V_exc=3.92435  t_V_exc=3.735  within_1m=24.335
