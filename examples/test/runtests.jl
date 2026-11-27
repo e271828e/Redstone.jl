@@ -4,7 +4,7 @@
 # with names, `longitudinal`, only those.
 
 using Test, LinearAlgebra, BenchmarkTools
-using Statistics: std
+using Statistics: std, cor
 using Redstone, RedstoneExamples
 import Redstone: Build, ProbeDual, Simulation, build, init!, run!, step!, stage!, trim!, linearize, state, modes,
     series, reads, get_output, get_face, get_input, get_state, taps, termination, lifecycle, phase_bodies, set, at, combine,

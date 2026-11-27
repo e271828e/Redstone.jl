@@ -160,46 +160,88 @@ function pitch_hold(; discrete = false)
 end
 
 """
-    Altimeter()
+The sensors' multipliers, the period of each sensor in ticks of the scope that
+holds `sensing` and `cascade`: the IMU, which measures the pitch rate, the
+fastest; the INS, which measures the pitch angle, four times slower; and the
+air data system, which measures the altitude and the airspeed, twenty times
+slower. `sensing` gives each sensor its multiplier and `cascade` gives it to
+each controller the sensor feeds, so a controller ticks with its sensor. The
+model states no seconds: the deployment's `Δt_base` sets the tick, and at
+`Δt_base = 1//200` the three run at 200 Hz, 50 Hz and 10 Hz.
+"""
+const sensor_multipliers = (imu = 1, ins = 4, air_data = 20)
 
-The altimeter's measurement: the altitude `h` plus the sensor's error `noise`,
+"""
+The two-sided density of each measurement's noise, the default of the
+`noise_psd` keyword of `sensing` and of the chapters' loops: the pitch rate `q`
+in rad² s⁻¹, the pitch angle `θ` in rad² s, the altitude `h` in m² s and the
+airspeed `V` in m² s⁻¹. Each noise ticks at its sensor's rate, so the deviation
+per sample is `sqrt(psd / Δt)` at the sensor's period `Δt`: at `Δt_base = 1//200`,
+0.002 rad/s, 0.0005 rad, 0.134 m and 0.02 m/s.
+"""
+const sensor_noise_psd = (q = 2.0e-8, θ = 5.0e-9, h = 1.8e-3, V = 4.0e-5)
+
+"""
+    Measurement()
+
+A sensor's measurement: the measured `signal` plus the sensor's error `noise`,
 published as the bare output `y`. A stateless discrete leaf, so it computes its
-output only at its ticks and holds it in between (§3.2): placed at the loop's
-rate, the whole measurement is sampled and held there, as a sensor configured
-to the loop's rate delivers it.
+output only at its ticks and holds it in between (§3.2): beside a noise at the
+sensor's rate, the whole measurement is sampled and held there, as a sensor
+delivers it.
 """
-struct Altimeter <: AbstractComponent end
+struct Measurement <: AbstractComponent end
 
-s_init(::Altimeter) = nothing
-u_types(::Altimeter) = (h = Float64, noise = Float64)
-y_types(::Altimeter) = Float64
-y_direct(::Altimeter, (; u)) = u.h + u.noise
+s_init(::Measurement) = nothing
+u_types(::Measurement) = (signal = Float64, noise = Float64)
+y_types(::Measurement) = Float64
+y_direct(::Measurement, (; u)) = u.signal + u.noise
 
 """
-    sensing(; noise_psd = 1.8e-3)
+    sensing(; noise_psd = sensor_noise_psd)
 
-The altimeter at 10 Hz, the altitude loop's rate: the altitude `h` plus
-Gaussian white noise of two-sided density `noise_psd`, in m² s, seeded at 7,
-published as `h_meas`. The default is 0.134 m per sample at 10 Hz, the same
-density as 0.3 m per sample at 50 Hz, so the sensor's band ends at the loop's
-Nyquist frequency and the loop reads no aliased noise.
+The three sensors, each a group of its noises and its measurements: the IMU
+measures the pitch rate `q`, the INS the pitch angle `θ`, and the air data
+system the altitude `h` and the airspeed `V`, each published with the suffix
+`_meas`. Each sensor ticks at its multiplier of `sensor_multipliers`, and its
+children take its rate. A measurement adds Gaussian white noise of the
+two-sided density given in `noise_psd` for it, seeded at 3, 5, 7 and 11 in that
+order, and holds the sum between its sensor's ticks, so each measurement is
+already band-limited to its sensor's rate.
 """
-sensing(; noise_psd = 1.8e-3) =
-    Group((; noise = GaussianWhiteNoise(seed = 7, psd = noise_psd), altimeter = Altimeter());
-          input_wires = ("h" => "altimeter/h",),
-          local_wires = ("noise/y" => "altimeter/noise",),
-          output_wires = ("altimeter/y" => "h_meas",),
-          sample_times = (noise = Absolute(1//10), altimeter = Absolute(1//10)))
+function sensing(; noise_psd = sensor_noise_psd)
+    imu = Group((; q_noise = GaussianWhiteNoise(seed = 3, psd = noise_psd.q), q_meas = Measurement());
+                input_wires = ("q" => "q_meas/signal",),
+                local_wires = ("q_noise/y" => "q_meas/noise",),
+                output_wires = ("q_meas/y" => "q_meas",))
+    ins = Group((; θ_noise = GaussianWhiteNoise(seed = 5, psd = noise_psd.θ), θ_meas = Measurement());
+                input_wires = ("θ" => "θ_meas/signal",),
+                local_wires = ("θ_noise/y" => "θ_meas/noise",),
+                output_wires = ("θ_meas/y" => "θ_meas",))
+    air_data = Group((; h_noise = GaussianWhiteNoise(seed = 7, psd = noise_psd.h), h_meas = Measurement(),
+                        V_noise = GaussianWhiteNoise(seed = 11, psd = noise_psd.V), V_meas = Measurement());
+                     input_wires = ("h" => "h_meas/signal", "V" => "V_meas/signal"),
+                     local_wires = ("h_noise/y" => "h_meas/noise", "V_noise/y" => "V_meas/noise"),
+                     output_wires = ("h_meas/y" => "h_meas", "V_meas/y" => "V_meas"))
+    Group((; imu, ins, air_data);
+          input_wires = ("q" => "imu/q", "θ" => "ins/θ", "h" => "air_data/h", "V" => "air_data/V"),
+          output_wires = ("imu/q_meas" => "q_meas", "ins/θ_meas" => "θ_meas",
+                          "air_data/h_meas" => "h_meas", "air_data/V_meas" => "V_meas"),
+          sample_times = (imu = Relative(sensor_multipliers.imu), ins = Relative(sensor_multipliers.ins),
+                          air_data = Relative(sensor_multipliers.air_data)))
+end
 
 """
     cascade(; standby = false)
 
 The autopilot: four `DiscretePID` controllers that fly pitch rate through the
 elevator, pitch attitude through pitch rate, altitude through pitch attitude
-and airspeed through the throttle, the pitch loops at 50 Hz and the altitude
-and airspeed loops at 10 Hz. It takes the references `h_ref` and `V_ref`, the
-measurements `h_meas`, `θ`, `q` and `V` and the flag `engaged`, and publishes
-`δe` and `δt`.
+and airspeed through the throttle, each at the rate of the sensor that feeds
+it: the pitch-rate loop at the IMU's, the attitude loop at the INS's, and the
+altitude and airspeed loops at the air data system's, by
+`sensor_multipliers`. It takes the references `h_ref` and `V_ref`, the
+measurements `h_meas`, `θ_meas`, `q_meas` and `V_meas` and the flag `engaged`,
+and publishes `δe` and `δt`.
 
 Each controller holds on the `saturated` code of the controller inside it, and
 the two innermost read a constant zero code. While `engaged` holds and its
@@ -213,7 +255,6 @@ then also takes. Every `Tt` is 0.02 s. The gains and the limits are
 `longitudinal_aircraft.md` section 4.
 """
 function cascade(; standby = false)
-    fast, slow = Absolute(1//50), Absolute(1//10)
     pid(; gains...) = DiscretePID(; gains..., Tt = 0.02, hold = true, tracking = standby)
     # with standby, the outer controllers also read the inner measurements, and two faces join
     θ_readers, q_readers = standby ? (("θ_ctl/y", "h_ctl/v"), ("q_ctl/y", "θ_ctl/v")) : ("θ_ctl/y", "q_ctl/y")
@@ -224,54 +265,57 @@ function cascade(; standby = false)
              V_ctl = pid(Kp = 0.2, Ki = 0.05, u_min = 0.0, u_max = 1.0),
              free = Constant(Int8(0)));
           # outermost first, each controller's hold on the one inside it
-          input_wires = ("h_ref" => "h_ctl/r", "h_meas" => "h_ctl/y", "θ" => θ_readers, "q" => q_readers,
-                         "V_ref" => "V_ctl/r", "V" => "V_ctl/y",
+          input_wires = ("h_ref" => "h_ctl/r", "h_meas" => "h_ctl/y", "θ_meas" => θ_readers, "q_meas" => q_readers,
+                         "V_ref" => "V_ctl/r", "V_meas" => "V_ctl/y",
                          "engaged" => ("h_ctl/engaged", "θ_ctl/engaged", "q_ctl/engaged", "V_ctl/engaged"),
                          tracking_wires...),
           local_wires = ("h_ctl/u" => "θ_ctl/r", "θ_ctl/u" => "q_ctl/r",
                          "θ_ctl/saturated" => "h_ctl/saturation", "q_ctl/saturated" => "θ_ctl/saturation",
                          "free/y" => "q_ctl/saturation", "free/y" => "V_ctl/saturation"),
           output_wires = ("q_ctl/u" => "δe", "V_ctl/u" => "δt"),
-          sample_times = (h_ctl = slow, θ_ctl = fast, q_ctl = fast, V_ctl = slow))
+          sample_times = (h_ctl = Relative(sensor_multipliers.air_data), θ_ctl = Relative(sensor_multipliers.ins),
+                          q_ctl = Relative(sensor_multipliers.imu), V_ctl = Relative(sensor_multipliers.air_data)))
 end
 
 """
     actuators(solution)
 
-The elevator and throttle actuators, each a `RateLimiter` at 50 Hz then a
-`FirstOrderLag`: the elevator at 1 rad/s and 50 ms, the throttle at 0.5 /s
-and 0.5 s, both starting at the trim triple `solution`. It takes `δe_cmd` and
-`δt_cmd` and publishes `δe` and `δt`.
+The elevator and throttle actuators, each a `RateLimiter` at the base tick
+then a `FirstOrderLag`: the elevator at 1 rad/s and 50 ms, the throttle at
+0.5 /s and 0.5 s, both starting at the trim triple `solution`. It takes
+`δe_cmd` and `δt_cmd` and publishes `δe` and `δt`.
 """
 actuators(solution) =
     Group((; δe_limiter = RateLimiter(rising = 1.0, s0 = solution.δe), δe_lag = FirstOrderLag(τ = 0.05, x0 = solution.δe),
              δt_limiter = RateLimiter(rising = 0.5, s0 = solution.δt), δt_lag = FirstOrderLag(τ = 0.5, x0 = solution.δt));
           input_wires = ("δe_cmd" => "δe_limiter/u", "δt_cmd" => "δt_limiter/u"),
           local_wires = ("δe_limiter/y" => "δe_lag/u", "δt_limiter/y" => "δt_lag/u"),
-          output_wires = ("δe_lag/y" => "δe", "δt_lag/y" => "δt"),
-          sample_times = (δe_limiter = Absolute(1//50), δt_limiter = Absolute(1//50)))
+          output_wires = ("δe_lag/y" => "δe", "δt_lag/y" => "δt"))
 
 """
     feedback_wires()
 
-The wires every loop of chapters 5 to 7 shares at its root: the plant's
-altitude through the sensing, its pitch angle, pitch rate and airspeed to the
-cascade, and the actuators to the plant.
+The wires every loop of chapters 5 to 7 shares at its root: the plant's pitch
+rate, pitch angle, altitude and airspeed to the sensing, the four measurements
+to the cascade, and the actuators to the plant.
 """
-feedback_wires() = ("plant/h" => "sensing/h", "sensing/h_meas" => "cascade/h_meas",
-                    "plant/θ" => "cascade/θ", "plant/q" => "cascade/q", "plant/V" => "cascade/V",
+feedback_wires() = ("plant/q" => "sensing/q", "plant/θ" => "sensing/θ",
+                    "plant/h" => "sensing/h", "plant/V" => "sensing/V",
+                    "sensing/q_meas" => "cascade/q_meas", "sensing/θ_meas" => "cascade/θ_meas",
+                    "sensing/h_meas" => "cascade/h_meas", "sensing/V_meas" => "cascade/V_meas",
                     "actuators/δe" => "plant/δe", "actuators/δt" => "plant/δt")
 
 """
-    autopilot(solution; noise_psd = 1.8e-3)
+    autopilot(solution; noise_psd = sensor_noise_psd)
 
 Chapter 5's loop: the aircraft under the cascade, with the actuators and the
 sensing, a `Group` of groups (§8.5) under the root inputs `h_ref` and
 `V_ref`. `solution` is the trim triple `(θ, δe, δt)` of `level_flight()`. The
-cascade is always engaged here, through a `Constant`, and has no standby.
-`cruise(solution)` is its initial condition.
+cascade is always engaged here, through a `Constant`, and has no standby. The
+root declares no rates: `sensing` and `cascade` tick on its grid, whose tick is
+the deployment's `Δt_base`. `cruise(solution)` is its initial condition.
 """
-autopilot(solution; noise_psd = 1.8e-3) =
+autopilot(solution; noise_psd = sensor_noise_psd) =
     Group((; plant = Longitudinal(), sensing = sensing(; noise_psd), cascade = cascade(),
              actuators = actuators(solution), engaged = Constant(true));
           input_wires = ("h_ref" => "cascade/h_ref", "V_ref" => "cascade/V_ref"),
@@ -299,13 +343,13 @@ cruise(solution) = combine(set(u = (h_ref = 1000.0, V_ref = 50.0)),
 
 The engage switch: a `Switch` per control, which selects the cascade's command
 `δe_auto` or `δt_auto` while the latched `engage` holds and the pilot's
-`δe_pilot` or `δt_pilot` otherwise, and a `UnitDelay` at 50 Hz per control
-that holds the selected command one tick old, starting at the trim triple
-`solution`. The `UnitDelay` `latch` holds `engage` at 10 Hz, the cascade's
-slowest rate, so that one staged `engage` reaches the switches and every
-controller at the same tick, one tick of the latch after it is read. It
-publishes the selected commands as `δe` and `δt`, the delayed ones as
-`δe_prev` and `δt_prev`, and the latched flag as `engaged`.
+`δe_pilot` or `δt_pilot` otherwise, and a `UnitDelay` per control at the base
+tick that holds the selected command one tick old, starting at the trim triple
+`solution`. The `UnitDelay` `latch` holds `engage` at the air data system's
+multiplier, the cascade's slowest rate, so that one staged `engage` reaches the
+switches and every controller at the same tick, one tick of the latch after it
+is read. It publishes the selected commands as `δe` and `δt`, the delayed ones
+as `δe_prev` and `δt_prev`, and the latched flag as `engaged`.
 """
 selection(solution) =
     Group((; latch = UnitDelay(false), select_δe = Switch{Float64}(), select_δt = Switch{Float64}(),
@@ -316,10 +360,10 @@ selection(solution) =
                          "select_δe/y" => "command_δe/u", "select_δt/y" => "command_δt/u"),
           output_wires = ("select_δe/y" => "δe", "select_δt/y" => "δt",
                           "command_δe/y" => "δe_prev", "command_δt/y" => "δt_prev", "latch/y" => "engaged"),
-          sample_times = (latch = Absolute(1//10), command_δe = Absolute(1//50), command_δt = Absolute(1//50)))
+          sample_times = (latch = Relative(sensor_multipliers.air_data),))
 
 """
-    piloted(solution; noise_psd = 1.8e-3)
+    piloted(solution; noise_psd = sensor_noise_psd)
 
 Chapter 6's loop: `autopilot`'s with the engage switch between the cascade and
 the actuators, under the root inputs `h_ref`, `V_ref`, `δe_pilot`, `δt_pilot`
@@ -330,7 +374,7 @@ command follows the pilot and its engagement is bumpless (`pid_anti_windup.md`,
 section 11). Without the delays the tracking wires close an algebraic loop
 through the switches. `hand_flown(solution)` is its initial condition.
 """
-piloted(solution; noise_psd = 1.8e-3) =
+piloted(solution; noise_psd = sensor_noise_psd) =
     Group((; plant = Longitudinal(), sensing = sensing(; noise_psd), cascade = cascade(standby = true),
              selection = selection(solution), actuators = actuators(solution));
           input_wires = ("h_ref" => "cascade/h_ref", "V_ref" => "cascade/V_ref",
@@ -353,7 +397,7 @@ hand_flown(solution) = combine(cruise(solution),
                                set(u = (δe_pilot = solution.δe, δt_pilot = solution.δt, engage = false)))
 
 """
-    approach(solution; noise_psd = 1.8e-3)
+    approach(solution; noise_psd = sensor_noise_psd)
 
 Chapter 7's model: `piloted`'s as the child `vehicle`, with the ground and a
 stop request, under the same five root inputs. A `GroundContact` reads the
@@ -364,7 +408,7 @@ termination record (§13.5). The run flies the approach by staging a descending
 `longitudinal_aircraft.md` section 5, and there is no flare.
 `at("vehicle", hand_flown(solution))` is its initial condition.
 """
-approach(solution; noise_psd = 1.8e-3) =
+approach(solution; noise_psd = sensor_noise_psd) =
     Group((; vehicle = piloted(solution; noise_psd), gear = GroundContact(), stop = StopRequest(reason = "touchdown"));
           input_wires = g -> input_passthrough(g, "vehicle"; prefix = ""),
           local_wires = ("vehicle/h" => "gear/h", "gear/contact" => "stop/u"))
