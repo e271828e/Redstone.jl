@@ -168,8 +168,8 @@ data system, which measures the altitude and the airspeed, twenty times slower.
 controller the sensor feeds, so a controller ticks with its sensor. Each
 multiplier divides the air data system's, so that a tick of `selection`'s latch
 is a tick of every controller. The model states no seconds: the deployment's
-`Δt_base` sets the tick, and at `Δt_base = 1//200` the three run at 200 Hz, 50
-Hz and 10 Hz.
+`Δt_base` sets the tick, and at `Δt_base = 1//200` the three run at 200 Hz,
+50 Hz and 10 Hz.
 """
 const sensor_multipliers = (imu = 1, ins = 4, air_data = 20)
 
@@ -178,8 +178,8 @@ The two-sided density of each measurement's noise, the default of the
 `noise_psd` keyword of `sensing` and of the chapters' loops: the pitch rate `q`
 in rad² s⁻¹, the pitch angle `θ` in rad² s, the altitude `h` in m² s and the
 airspeed `V` in m² s⁻¹. Each noise ticks at its sensor's rate, so the deviation
-per sample is `sqrt(psd / Δt)` at the sensor's period `Δt`: at `Δt_base = 1//200`,
-0.002 rad/s, 0.0005 rad, 0.134 m and 0.02 m/s.
+per sample is `sqrt(psd / Δt)` at the sensor's period `Δt`: at
+`Δt_base = 1//200`, 0.002 rad/s, 0.0005 rad, 0.134 m and 0.02 m/s.
 """
 const sensor_noise_psd = (q = 2.0e-8, θ = 5.0e-9, h = 1.8e-3, V = 4.0e-5)
 
