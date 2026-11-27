@@ -1,14 +1,16 @@
 # Roadmap: the tutorial
 
 The live roadmap for the tutorial, settled in discussion on 2026-11-17 and
-amended on 2026-11-18 and 2026-11-19. It
+amended on 2026-11-18, 2026-11-19 and 2026-11-27. It
 states the tutorial's aim and arc, names the rulings the discussion
-settled, stages the work in five increments, lists the decisions each
+settled, stages the work in six increments, lists the decisions each
 increment still needs, and holds the draft rules the pages are written to.
 The rulings of 2026-11-18 on increment 1's prototype amend the arc and R5,
 R6 and R10 below in place, and those of 2026-11-19 on increment 2's
 prototype amend rows 1 and 3 of the arc, R2, R12 and the rules for the
-pages. Its
+pages. Those of 2026-11-27 on the example's rates and sensing, R25 to
+R28, will amend R4 and row 5 of the arc once the rework rules its numbers.
+Its
 `pending.md` bullet carries the state of the
 work; this file carries the plan. The probes behind the rulings are
 `20261117_tutorial/notes_tutorial.md`, with their scripts beside it. A
@@ -258,6 +260,60 @@ plain code can compute another way, that comparison is the check: chapter
 damping beside it, the first unclear without its derivation and the second
 an agreement the parameters happen to give.
 
+## Ruled on 2026-11-27
+
+The user's rulings on the example's rates and its sensing, made in a
+session on `RedstoneInspector.jl`'s release. The inspector drew
+`autopilot`'s cascade in five rate colors for two rates, one color per
+anchor, which is what raised them. They rule a rework of increment 1's
+functions. The rework's own readings go to its notes.
+
+**R25. The example's rates are `Relative`.** From chapter 5 on the model
+declares no `Absolute` entry. Today every discrete component has one:
+`autopilot` declares eight anchors and `closed_loop` ten. That teaches
+the form the spec's §8.7 rejects as the default, where an anchor is for a
+rate that is a fact about the modeled system. Two `Absolute` entries of
+one period tick together because the numbers agree. A `Relative` entry
+locks a child to its scope by construction. `pitch_hold` keeps its
+`Absolute(1//50)`: chapter 4 has one device at one rate, and teaches the
+form there. Rejected: retiming the model in the inspector's fixture
+script alone, which would picture a model the tutorial does not build.
+
+**R26. The sensing measures everything the cascade reads.** Today only
+`h` passes through `sensing`, and `θ`, `q` and `V` reach the cascade from
+the plant, which is arbitrary. The sensing holds three sensors, each with
+its own noise: an IMU for `q`, the fastest; an INS for `θ`, a few times
+slower; and an air data system for `h` and `V`, slower still. Each
+controller of the cascade runs at the rate of the sensor that feeds it.
+The cascade then runs at three rates, where R4 has two.
+
+**R27. The root declares no `sample_times`.** `sensing` and `cascade`
+take the default and share the root's grid, so a sensor and its
+controller tick together by construction. The model states no seconds.
+The tick's length is the deployment's `Δt_base`, which by the spec's §9.2
+is `Δt_frame` when the keyword is absent. The pages therefore pass
+`Δt_base` from chapter 5 on and say why: the model states how the rates
+relate, and the deployment how long a tick is. Rejected: `Absolute` on
+both assemblies at one period, to show the form. They would be two clocks
+that agree by arithmetic, the inspector would color three rates as six,
+and an entry written twice to match is the habit R25 ends. Rejected: one
+anchor on a parent of both, which states seconds in the model on one
+clock, at the cost of a level of hierarchy and of a root that no longer
+shows the loop.
+
+**R28. One constant holds the multipliers, and each entry is written
+out.** `sensing` and `cascade` both read the sensors' multipliers from
+one constant of the examples module. Three root functions build both
+assemblies, and a constructor parameter passed to each could differ.
+Every child that follows a sensor has its entry, the IMU and `q_ctl`
+included, although their multiplier is 1 and an omitted key means
+`Relative(1)`. The omitted key would fix that pair at 1 whatever the
+constant says. `sensing` spells its three entries as the cascade spells
+its four, so each controller reads beside its sensor. The root, and the
+children inside each sensor, still show the default. Rejected: `map` over
+the constant for the sensing's entries, shorter but unlike the cascade's
+form.
+
 ## Open decisions
 
 Each names the increment that needs it ruled. Increment 1's three are
@@ -267,6 +323,13 @@ staged by the run, as L2, and `approach` in place of `descent()` as L3.
 Increment 2's two are ruled above: the plotting package and the build's
 time budget as R21, and where the pages sit as R22.
 
+- **The base tick and the three multipliers**, and the gains at the new
+  rates, `q_ctl`'s above all. R11's probes apply. The rework of R25 to
+  R28.
+- **The rates of `selection` and of the actuators.** The latch, the two
+  command delays and the two limiters are `Absolute` today. The rework of
+  R25 to R28.
+- **The sensors' names and noise densities.** The rework of R25 to R28.
 - **How chapter 5 shows the inspector's diagram.** Increment 3.
 - **What chapter 4 shows of the margins from `A` and `B`**, and which of
   it the testset pins. Increment 1 pins the pitch loop's eigenvalues and
@@ -294,6 +357,16 @@ order or side by side.
    for two rates and the approach under the autopilot, and its prototype
    may still change the arc. Needs nothing.
 
+1b. **The example's rates and sensing.** Added on 2026-11-27 by R25 to
+   R28. A rework of increment 1's functions: `sensing` gains its three
+   sensors, the rates become `Relative` under one constant, and the root
+   functions' wires follow, with the testset's pins and the numbers of
+   `longitudinal_aircraft.md`. `pitch_hold` and today's `closed_loop`
+   stay untouched. It retunes a second time, since `q_ctl` moves to the
+   IMU's rate and the cascade to three rates. It runs before
+   `RedstoneInspector.jl`'s release, whose README pictures this model.
+   Needs 1.
+
 2. **The scaffold and chapters 1 to 3.** The docs environment with
    `RedstoneExamples` and the plotting package, the `@example` setup, the
    plot conventions and the pages of chapters 1 to 3. These chapters use
@@ -302,8 +375,8 @@ order or side by side.
    pilot: the user judges the voice and the page shape on three chapters
    before six more are written. Needs nothing.
 
-3. **Chapters 4 to 8.** Five pages over increment 1's functions, in
-   increment 2's shape. Needs 1 and 2.
+3. **Chapters 4 to 8.** Five pages over the functions of increments 1
+   and 1b, in increment 2's shape. Needs 1, 1b and 2.
 
 4. **The tracker.** Chapter 9's model, which replaces today's
    `closed_loop` and composes increment 1's groups with a new
@@ -329,7 +402,7 @@ order or side by side.
 - CairoMakie adds load and build time to the docs workflow. R21's figures
   are one machine's, and the CI's are estimates until the first push.
 - Chapter 5's diagram depends on the inspector's stage 1 and on a bump of
-  its pin to a revision that has increment 1's model.
+  its pin to a revision that has increment 1b's model.
 - Between increments 1 and 4 the package holds today's `closed_loop`
   beside the new functions, so some wiring exists twice for a while.
 - Friction found in the writing may ask for API changes. R17 bounds it.

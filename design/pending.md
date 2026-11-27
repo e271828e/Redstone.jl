@@ -12,14 +12,24 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
+- **The tutorial's increment 1b: the example's rates and sensing.** A
+  rework of `examples/src/longitudinal.jl`: the rates become `Relative`
+  and the sensing measures everything the cascade reads. The rulings and
+  the open decisions are R25 to R28 of
+  `design/increments/roadmap_tutorial.md`. It stands first because
+  `RedstoneInspector.jl`'s release takes its README's pictures from this
+  model, at a pin bump that follows the rework. Stage reached: ruled on
+  2026-11-27, not started.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`. Its
   `design/pending.md` holds its state and work order, its
-  `design/roadmap.md` the staging. This repo owes it nothing before the
-  release, and the later stages after.
+  `design/roadmap.md` the staging. Before the release this repo owes it
+  increment 1b above and nothing else, and the later stages after.
 - **The tutorial and the README.** The tutorial builds the longitudinal
-  aircraft from scratch in nine chapters, in an arc of five increments.
-  Stage reached: increments 1 and 2 are pushed, and increment 3 is next.
+  aircraft from scratch in nine chapters, in an arc of six increments.
+  Stage reached: increments 1 and 2 are pushed. Increment 3 is next here,
+  after increment 1b and the inspector's release, whose diagram chapter 5
+  shows.
   The plan, the arc's rulings, the open decisions and the rules for the
   pages are `design/increments/roadmap_tutorial.md`; the increments'
   records are
