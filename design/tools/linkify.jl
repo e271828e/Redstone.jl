@@ -81,7 +81,8 @@ const ROSTER = ["log.md",
                 "companions/lqr_tracker.md",
                 "companions/linear_systems.md",
                 "companions/fused_evaluation_lineage.md",
-                "companions/dual_model_uses.md"]
+                "companions/dual_model_uses.md",
+                "companions/time_quantities.md"]
 
 # Companions that cite their own numbered sections (the walkthroughs). Only
 # here is a bare `§N` ambiguous between the file and the spec.
