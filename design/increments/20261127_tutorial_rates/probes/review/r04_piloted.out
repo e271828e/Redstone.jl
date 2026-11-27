@@ -1,0 +1,20 @@
+snapshots: pull 2002 (t 5.0025)  release 2802  engage 12002 (t 30.0025)
+by hand: h from 988.02 to 1016.74
+standby gaps: δe [8,30) 0.00479   δt [5,30) 0.02553
+outer gaps: h_ctl-θ_meas 0.00931   θ_ctl-q_meas 0.02268
+latched engaged first true at 30.2000
+jumps at the switch: δe 0.000628  δt 0.010587  (δt/0.0025 = 4.23 ticks)
+δt limiter: largest step per base tick 0.002500; after the switch it equals the selected command from 30.2200 s
+actuator elevator: moves -3.060e-05 in the 2.5 ms after the switch (unengaged flight: 0.000e+00; difference -3.060e-05); over 5 ms -5.972e-05
+elevator command, largest change between two of its ticks over [80,90): 0.00236; frame to frame 0.00236
+recapture over [80,90): 0.0596
+latched: q_ctl first departs from the unengaged flight at 30.20500
+latched: θ_ctl first departs from the unengaged flight at 30.22000
+latched: h_ctl first departs from the unengaged flight at 30.30000
+latched: V_ctl first departs from the unengaged flight at 30.30000
+no latch: engage read back true from 30.00250; the selected elevator leaves the pilot's at 30.00250
+held switches: plant identical: true
+held switches: q_ctl departs at 30.01000, so reads the engage at 30.00500
+held switches: θ_ctl departs at 30.04000, so reads the engage at 30.02000
+held switches: h_ctl departs at 30.20000, so reads the engage at 30.10000
+held switches: V_ctl departs at 30.20000, so reads the engage at 30.10000

@@ -1,0 +1,27 @@
+== PRISTINE: Longitudinal  |  215    215  33.8s  restored=True
+== O04_q_seed_as_theta: Longitudinal                                                                                                                                                                 |  212     3    215  34.9s  restored=True
+    line 467: chapter 5: each sensor samples and holds at its rate, each noise of its declared density and its own
+    line 567: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§
+    line 599: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O05_theta_seed_as_h: Longitudinal                                                                                                                                                                 |  212     3    215  34.7s  restored=True
+    line 467: chapter 5: each sensor samples and holds at its rate, each noise of its declared density and its own
+    line 567: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§
+    line 599: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O07_piloted_drops_noise_psd: Longitudinal                                                                                                                                                                 |  207     8    215  35.0s  restored=True
+    line 385: chapters 5 to 7: with every noise off, each model's measurements equal the plant's outputs at their 
+== O08_approach_drops_noise_psd: Longitudinal                                                                                                                                                                 |  211     4    215  34.7s  restored=True
+    line 385: chapters 5 to 7: with every noise off, each model's measurements equal the plant's outputs at their 
+== O15_autopilot_cascade_halved: Longitudinal                                                                                                                                                                 |  213     2    215  34.8s  restored=True
+    line 411: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at one multi
+    line 441: chapter 5: the autopilot holds the altitude step (§13.7)
+== O16_autopilot_sensing_cascade_halved: Longitudinal                                                                                                                                                                 |  206     9    215  34.8s  restored=True
+    line 385: chapters 5 to 7: with every noise off, each model's measurements equal the plant's outputs at their 
+    line 411: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at one multi
+    line 441: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 456: chapter 5: each sensor samples and holds at its rate, each noise of its declared density and its own
+== O17_approach_vehicle_halved: Longitudinal                                                                                                                                                                 |  207     8    215  34.1s  restored=True
+    line 385: chapters 5 to 7: with every noise off, each model's measurements equal the plant's outputs at their 
+    line 411: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at one multi
+    line 564: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§
+    line 567: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops the run (§
+    line 599: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)

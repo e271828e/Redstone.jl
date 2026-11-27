@@ -1,0 +1,55 @@
+== none restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    PASS T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    PASS T3 divisors on autopilot, piloted and approach
+== O04_q_seed_as_theta restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    PASS T1 noise_psd reaches every model's sensing
+    FAIL T2 every pair of noises uncorrelated by draw
+    PASS T3 divisors on autopilot, piloted and approach
+== O05_theta_seed_as_h restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    PASS T1 noise_psd reaches every model's sensing
+    FAIL T2 every pair of noises uncorrelated by draw
+    PASS T3 divisors on autopilot, piloted and approach
+== O06_q_seed_13 restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    PASS T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    PASS T3 divisors on autopilot, piloted and approach
+== O07_piloted_drops_noise_psd restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    FAIL T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    PASS T3 divisors on autopilot, piloted and approach
+== O08_approach_drops_noise_psd restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    FAIL T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    PASS T3 divisors on autopilot, piloted and approach
+== O15_autopilot_cascade_halved restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    PASS T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    FAIL T3 divisors on autopilot, piloted and approach
+== O16_autopilot_sensing_cascade_halved restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    FAIL T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    FAIL T3 divisors on autopilot, piloted and approach
+== O17_approach_vehicle_halved restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    FAIL T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    FAIL T3 divisors on autopilot, piloted and approach
+== O18_measurement_sign restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    PASS T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    PASS T3 divisors on autopilot, piloted and approach
+== R19_q_ctl_entry_omitted restored=True
+    RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review_probes/mtree2/examples/src/RedstoneExamples.jl
+    PASS T1 noise_psd reaches every model's sensing
+    PASS T2 every pair of noises uncorrelated by draw
+    PASS T3 divisors on autopilot, piloted and approach

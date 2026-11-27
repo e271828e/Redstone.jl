@@ -18,9 +18,11 @@ item changes what the spec says, the spec edit is part of the item.
   the open decisions are R25 to R28 of
   `design/increments/roadmap_tutorial.md`. It stands first because
   `RedstoneInspector.jl`'s release takes its README's pictures from this
-  model, at a pin bump that follows the rework. Stage reached: prototyped
-  and ruled on 2026-11-27, the record and the docs committed; the code,
-  the cold review and the user's diff of the arc are next. Its notes are
+  model, at a pin bump that follows the rework. Stage reached: built,
+  reviewed and fixed on 2026-11-27, with nothing pushed. The user's review
+  of the record, with the decisions its section 10 lists as taken in the
+  user's absence, the user's diff of the arc, the push and the scratch's
+  clearing are next. Its notes are
   `design/increments/20261127_tutorial_rates/notes_tutorial_rates.md`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`. Its
@@ -94,6 +96,19 @@ breaking user code, and each may benefit from user feedback first.
   `show(::Schedule)` prints and every discrete bundle receives. The exact
   value is `D·Δt_base` as a rational, which `show(::Deployment)` prints
   (D-471).
+- **§9.2's sentence on declaring `Δt_base` reads against its default**
+  (§9.2, D-283, D-443). §9.2 names `Δt_frame` as the base tick's source
+  when the keyword is absent, which is D-443's ruling and what the code
+  does. Further down, a bold sentence still states D-283's rule, that a
+  deployment must declare `Δt_base` if any unanchored component exists.
+  Either the sentence narrows to what survives, that derivation is refused
+  while an unanchored component exists, or the default is withdrawn for a
+  model with unanchored components. The second would end the silent case
+  the tutorial's increment 1b recorded as friction: a deployment that
+  leaves the keyword out runs every `Relative` rate at the frame's grid,
+  with no warning. Found by that increment's cold review
+  (`design/increments/20261127_tutorial_rates/notes_tutorial_rates.md`,
+  sections 6 and 11).
 - **A framework throw inside a step is framed as a component's** (§13.4).
   A `StepError`'s message names the cursor as the catch found it, so a
   throw from the framework's own step code reads as the last stage entered;

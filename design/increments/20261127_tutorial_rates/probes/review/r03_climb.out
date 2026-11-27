@@ -1,0 +1,16 @@
+q: σ draws 0.00199818  σ(meas-plant at ticks) 0.00199818  expected 0.002  n=24001  off-grid changes noise 0 meas 0  max|meas-plant-noise| at ticks 2.78e-17
+θ: σ draws 0.0005017698  σ(meas-plant at ticks) 0.0005017698  expected 0.0005  n=6001  off-grid changes noise 0 meas 0  max|meas-plant-noise| at ticks 2.70e-17
+h: σ draws 0.1321847  σ(meas-plant at ticks) 0.1321847  expected 0.1341641  n=1201  off-grid changes noise 0 meas 0  max|meas-plant-noise| at ticks 1.14e-13
+V: σ draws 0.02003897  σ(meas-plant at ticks) 0.02003897  expected 0.02  n=1201  off-grid changes noise 0 meas 0  max|meas-plant-noise| at ticks 3.55e-15
+cor by draw index h,V: -0.0430   (n = 1201)
+cor by draw index q,θ: 0.0090   (n = 6001)
+cor by draw index q,h: -0.0574   (n = 1201)
+cor by draw index q,V: -0.0206   (n = 1201)
+cor by draw index θ,h: 0.0012   (n = 1201)
+cor by draw index θ,V: -0.0073   (n = 1201)
+snapshots 48001, off the 200 Hz grid 24000
+shipped: late h 0.0795  late V 0.0235  peak 1050.063  excursion 3.9244 at 3.7325 s  within 1 m from 24.3350 s
+air data 50 Hz, its loops 10 Hz    late h 0.1693  late V 0.0509  peak 1050.141
+air data and loops 50 Hz           late h 0.0589  late V 0.0191  peak 1050.059
+air data and loops 10 Hz           late h 0.0795  late V 0.0235  peak 1050.063
+rest drift: h 2.36e-10  V 3.98e-11  θ 3.74e-12

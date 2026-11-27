@@ -1,0 +1,209 @@
+== R01_V_meas_from_plant_h: Longitudinal                                                                                                                                                                 |  179    15    194  33.6s  restored=True
+    line 367: chapter 5: the autopilot rests at the trim (§14.5)
+    line 368: chapter 5: the autopilot rests at the trim (§14.5)
+    line 369: chapter 5: the autopilot rests at the trim (§14.5)
+    line 403: chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude a
+    line 414: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 415: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 487: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 517: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 522: chapter 6: once engaged the autopilot recaptures the reference altitude (§13.7)
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 537: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 546: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 549: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== R01b_V_meas_from_h_meas: Longitudinal                                                                                                                                                                 |  179    15    194  33.9s  restored=True
+    line 367: chapter 5: the autopilot rests at the trim (§14.5)
+    line 368: chapter 5: the autopilot rests at the trim (§14.5)
+    line 369: chapter 5: the autopilot rests at the trim (§14.5)
+    line 403: chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude a
+    line 414: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 415: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 487: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 517: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 522: chapter 6: once engaged the autopilot recaptures the reference altitude (§13.7)
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 537: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 546: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 549: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== R02_latch_anchored: Longitudinal                                                                                                                                                                 |  190     4    194  34.2s  restored=True
+    line 376: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 389: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+== R03_ins_multiplier_5: Longitudinal                                                                                                                                                                 |  188     6    194  34.9s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 404: chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude a
+    line 429: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== R04_theta_ctl_at_imu: Longitudinal                                                                                                                                                                 |  191     3    194  34.7s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 404: chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude a
+== R05_ins_sensor_at_imu: Longitudinal                                                                                                                                                                 |  188     6    194  35.0s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 429: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== R06_imu_sensor_at_ins: Longitudinal                                                                                                                                                                 |  188     6    194  35.2s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 430: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== R07_latch_default: Longitudinal                                                                                                                                                                 |  186     8    194  35.7s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 496: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 502: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 513: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+== R08_delay_at_air_data: Longitudinal                                                                                                                                                                 |  192     2    194  35.9s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+== R09_slower_no_dt_base: Longitudinal                                                                                                                                                                 |  193     1    194  34.6s  restored=True
+    line 393: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+== R10_test_no_dt_base: Longitudinal                                                                                                                                                                 |  170    24    194  37.1s  restored=True
+    line 404: chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude a
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 429: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 494: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 496: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 502: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 513: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 537: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 546: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== R11_q_ctl_Kp: Longitudinal                                                                                                                                                                 |  192     2    194  35.3s  restored=True
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+== R12_Tt_tenfold: Longitudinal                                                                                                                                                                 |  191     3    194  34.9s  restored=True
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 487: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 517: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+== R13_q_psd_from_theta: Longitudinal                                                                                                                                                                 |  192     2    194  34.8s  restored=True
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== R14_V_psd_raised: Longitudinal                                                                                                                                                                 |  192     2    194  34.4s  restored=True
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 487: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+== R15_measurement_noiseless: Longitudinal                                                                                                                                                                 |  187     7    194  36.3s  restored=True
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 437: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== R16_V_seed_as_h: Longitudinal                                                                                                                                                                 |  193     1    194  35.3s  restored=True
+    line 437: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+== R17_h_ctl_tracks_q: Longitudinal                                                                                                                                                                 |  193     1    194  35.4s  restored=True
+    line 493: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+== R18_q_ctl_anchored_400: Longitudinal                                                                                                                                                                 |   99      2    101  23.5s  restored=True
+    line 122: ?
+    line 364: chapter 5: the autopilot rests at the trim (§14.5)
+== R19_q_ctl_entry_omitted: Longitudinal  |  194    194  34.5s  restored=True
+== O01_plant_q_theta_swapped: Longitudinal                                                                                                                                                                 |  179    15    194  34.8s  restored=True
+    line 367: chapter 5: the autopilot rests at the trim (§14.5)
+    line 368: chapter 5: the autopilot rests at the trim (§14.5)
+    line 369: chapter 5: the autopilot rests at the trim (§14.5)
+    line 414: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 415: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 416: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 522: chapter 6: once engaged the autopilot recaptures the reference altitude (§13.7)
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 537: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 546: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 549: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O02_meas_q_theta_swapped: Longitudinal                                                                                                                                                                 |  179    15    194  34.5s  restored=True
+    line 367: chapter 5: the autopilot rests at the trim (§14.5)
+    line 368: chapter 5: the autopilot rests at the trim (§14.5)
+    line 369: chapter 5: the autopilot rests at the trim (§14.5)
+    line 414: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 415: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 416: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 493: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 494: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 522: chapter 6: once engaged the autopilot recaptures the reference altitude (§13.7)
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 537: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 546: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 549: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O03_air_data_noises_swapped: Longitudinal                                                                                                                                                                 |  187     7    194  36.0s  restored=True
+    line 415: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 487: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O04_q_seed_as_theta: Longitudinal                                                                                                                                                                 |  192     2    194  34.9s  restored=True
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O05_theta_seed_as_h: Longitudinal                                                                                                                                                                 |  192     2    194  35.7s  restored=True
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O06_q_seed_13: Longitudinal                                                                                                                                                                 |  192     2    194  35.5s  restored=True
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O07_piloted_drops_noise_psd: Longitudinal  |  194    194  34.9s  restored=True
+== O08_approach_drops_noise_psd: Longitudinal  |  194    194  33.3s  restored=True
+== O09_autopilot_drops_noise_psd: Longitudinal                                                                                                                                                                 |  191     3    194  34.3s  restored=True
+    line 367: chapter 5: the autopilot rests at the trim (§14.5)
+    line 368: chapter 5: the autopilot rests at the trim (§14.5)
+    line 369: chapter 5: the autopilot rests at the trim (§14.5)
+== O10_q_psd_from_constant: Longitudinal                                                                                                                                                                 |  191     3    194  33.9s  restored=True
+    line 367: chapter 5: the autopilot rests at the trim (§14.5)
+    line 368: chapter 5: the autopilot rests at the trim (§14.5)
+    line 369: chapter 5: the autopilot rests at the trim (§14.5)
+== O11_V_psd_from_constant: Longitudinal                                                                                                                                                                 |  191     3    194  33.9s  restored=True
+    line 367: chapter 5: the autopilot rests at the trim (§14.5)
+    line 368: chapter 5: the autopilot rests at the trim (§14.5)
+    line 369: chapter 5: the autopilot rests at the trim (§14.5)
+== O12_V_ctl_at_ins: Longitudinal                                                                                                                                                                 |  191     3    194  34.0s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 404: chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude a
+== O13_h_ctl_at_ins: Longitudinal                                                                                                                                                                 |  185     9    194  34.0s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 393: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 404: chapter 5: the pitch-rate loop ticks at 200 Hz, the attitude loop at 50 Hz, the altitude a
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 537: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 546: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O14_latch_at_ins: Longitudinal                                                                                                                                                                 |  186     8    194  33.9s  restored=True
+    line 388: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 392: chapters 5 to 7: the models declare no anchor, and each sensor and its controllers tick at
+    line 496: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 502: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 513: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+== O15_autopilot_cascade_halved: Longitudinal                                                                                                                                                                 |  193     1    194  33.8s  restored=True
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+== O16_autopilot_sensing_cascade_halved: Longitudinal                                                                                                                                                                 |  189     5    194  34.2s  restored=True
+    line 417: chapter 5: the autopilot holds the altitude step (§13.7)
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+    line 437: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a
+== O17_approach_vehicle_halved: Longitudinal                                                                                                                                                                 |  191     3    194  33.4s  restored=True
+    line 533: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O18_measurement_sign: Longitudinal                                                                                                                                                                 |  192     2    194  33.9s  restored=True
+    line 536: chapter 7: the approach flies chapter 6's flight, then descends to a touchdown that stops 
+    line 568: chapter 8: a checkpoint at the top of the descent flies a second approach (§12.6)
+== O19_theta_ctl_tracks_theta: Longitudinal                                                                                                                                                                 |  193     1    194  33.8s  restored=True
+    line 494: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+== O20_theta_psd_raised: Longitudinal                                                                                                                                                                 |  193     1    194  33.9s  restored=True
+    line 432: chapter 5: each sensor samples and holds at its rate, each noise of its declared density a

@@ -1,0 +1,8 @@
+== P01_δe_track_from_δt_prev: Longitudinal                                                                                                                                                                 |  190     4    194  35.7s  restored=True
+    line 455: chapter 6: the tracking wires without the delays close an algebraic loop per switch (§5.4,
+    line 457: chapter 6: the tracking wires without the delays close an algebraic loop per switch (§5.4,
+    line 486: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+    line 516: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+== P02_q_ctl_Tt_2s: Longitudinal                                                                                                                                                                 |  193     1    194  34.8s  restored=True
+    line 486: chapter 6: the standby cascade tracks the pilot and the engage is bumpless (D-385)
+== P03_q_ctl_Tt_0p2: Longitudinal  |  194    194  34.2s  restored=True

@@ -396,10 +396,12 @@ recaptures 1000 m and holds it within 0.060 m over `[80, 90)` s.
 
 The testset pins the eigenvalues, the DC gain, the refusal and the step of
 the pitch hold. Under `autopilot` it pins the rest at the trim, that no
-model from there on holds an anchor, the schedule's multipliers, the three
-rates as the log shows them, the hold after 75 s, the peak, the airspeed
-excursion, and each sensor's grid and noise. Under `piloted` it pins the
-refused loop, the staged
+model from there on holds an anchor, the schedule's multipliers in each
+of them, the three rates as the log shows them, the hold after 75 s, the
+peak, the airspeed excursion, each sensor's grid and noise, and that the
+four noises are pairwise uncorrelated. With the noise off, each model's
+measurements equal the plant's outputs at their sensors' ticks. Under
+`piloted` it pins the refused loop, the staged
 writes, the standby gaps of the innermost and the outer loops, the instant
 the latch moves the switches, the jumps and the recapture.
 

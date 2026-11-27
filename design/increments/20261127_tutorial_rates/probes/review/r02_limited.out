@@ -1,0 +1,5 @@
+hold, three rates                                       noise on 1.760 s (ticks 1.760)   off 2.200 s (ticks 2.200)
+hold, loops 50 Hz, IMU+INS 50 Hz, air data 10 Hz        noise on 1.920 s (ticks 1.920)   off 2.240 s (ticks 2.240)
+hold, loops 50 Hz, IMU 200 Hz, INS 50, air data 10 Hz   noise on 1.880 s (ticks 1.880)   off 2.240 s (ticks 2.240)
+no hold, three rates                                    noise on 2.140 s (ticks 2.140)   off 2.980 s (ticks 2.980)
+shipped limits: max |θ_ctl u| = 0.4910 (limit 0.5)

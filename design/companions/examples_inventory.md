@@ -240,14 +240,15 @@ airspeed at half the phugoid's period.
 The pitch hold's closed loop has the pinned eigenvalues and a unit DC
 gain, the discrete one refuses the linearization, and the two tiers stay
 within a pinned gap through a step. The autopilot rests at the trim with
-no step and no noise. It declares no anchor, and neither do the two models
-after it. Each controller ticks with its sensor at that sensor's multiplier
+no step and no noise. With the noise off, its measurements and those of
+the two models after it equal the plant's outputs at their sensors' ticks.
+It declares no anchor, and neither do those two models. Each controller ticks with its sensor at that sensor's multiplier
 of the base tick, at three rates, and the log shows the pitch-rate loop
 holding between base ticks. It holds a step in the altitude reference
 within a tolerance, with its peak below a bound and its airspeed excursion
 at a pinned value. Each sensor's measurements change only at its ticks,
-each noise has its declared deviation, to 10%, and the air data's two
-noises are uncorrelated. The piloted loop
+each noise has its declared deviation, to 10%, and the four noises are
+pairwise uncorrelated. The piloted loop
 without its delays is refused with one real cycle per switch. Its staged
 commands land on pinned snapshots. The standby cascade stays within pinned
 gaps of the pilot's commands, and its outer loops within pinned gaps of

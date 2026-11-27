@@ -1,0 +1,10 @@
+RedstoneExamples from /Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review/examples/src/RedstoneExamples.jl
+PASS T1 noise_psd reaches every model's sensing
+   cor 1,2 = 0.0090
+   cor 1,3 = -0.0574
+   cor 1,4 = -0.0206
+   cor 2,3 = 0.0012
+   cor 2,4 = -0.0073
+   cor 3,4 = -0.0430
+PASS T2 every pair of noises uncorrelated by draw
+PASS T3 divisors on autopilot, piloted and approach

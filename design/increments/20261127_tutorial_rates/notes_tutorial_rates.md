@@ -31,6 +31,13 @@ L1 to L25 stand unless a ruling below says otherwise.
   prototyper's.
 - The prototyper ended at 326k tokens of its 450k stop. It answers only
   the session that launched it.
+- Landed since, all local and none pushed: the record as `03b45543`, the
+  docs as `f71d9455`, the code as `675c1ac8`, the review's fixes as
+  `b5583dd5`, and a rewrap of two docstring lines as `9d5b6710`. The
+  examples' gate on the real tree reads 215 of 215 at `9d5b6710`. The
+  cold review and its delta check are section 11. What is left is the
+  user's review of this record and of section 10, the user's diff of the
+  arc, the push, and then the scratch of section 12.
 
 ## 2. What the prototype builds
 
@@ -187,31 +194,34 @@ worktree's diff. The coordinator's, taken while the user was away.
 
 The frame is 1/400 s and the base tick 1/200 s, with the default
 densities. Chapters 1 to 4 and the legacy testsets are unchanged. A mutant
-named here was run by the prototyper and turned its pin red, unless marked.
+named here was run and turned its pin red, unless marked. The cold review
+reread the column pin by pin, since the prototyper's runner reported
+failing testsets, and section 11 names the rows it corrected.
 
 | Chapter | Pin | Probed | Tolerance | Mutant |
 |---|---|---|---|---|
 | all | every model builds under `(Float64, ProbeDual)` | true | exact | unchanged |
-| 5 | rest at the trim, every noise off, over 60 s | 2.4e-10 m | ≤ 1e-6 | `V_meas` wired from the plant's `h` |
+| 5 | rest at the trim, every noise off, over 60 s | 2.4e-10 m | ≤ 1e-6 | `V_meas` wired from `h_meas`; `autopilot` dropping `noise_psd` |
+| 5 to 7, review | with every noise off, each measurement equals the plant's output at its sensor's ticks, in the three models | true | exact | `piloted` or `approach` dropping `noise_psd` |
 | 5 to 7, new | `autopilot`, `piloted` and `approach` hold no anchor | true | exact | the latch anchored |
-| 5 to 7, new | the schedule's 17 divisors, every row with no anchor and no phase | true | exact | the INS's multiplier at 5; `θ_ctl` at the IMU's; a sensor at another's; the latch at the default; a delay at the air data's |
+| 5 to 7, new | the schedule's divisors in the three models, 17 with `selection` and 14 without, every row with no anchor and no phase | true | exact | a root that gives `cascade` or `vehicle` a `Relative(2)`; the INS's multiplier at 5; `θ_ctl` at the IMU's; a sensor at another's; the latch at the default; a delay at the air data's |
 | 5, new | at `Δt_base = 1//100` the same divisors, and `h_ctl`'s period 0.2 s | true | exact | a test that passes no `Δt_base`; not run |
 | 5, new | 24000 of the climb's 48001 snapshots lie off the 200 Hz grid, and `q_ctl` changes only on it | true | exact | the test's deployment without `Δt_base` |
 | 5, moved | each loop changes on its own grid and not only on the next coarser one, at 200, 50 and 10 Hz | true | exact | `θ_ctl` at the IMU's; the INS's multiplier at 5 |
-| 5, moved | late errors after 75 s | 0.0795 m, 0.0235 m/s | ≤ 0.12, ≤ 0.035 | `q_ctl`'s `Kp`; `Tt` tenfold |
+| 5, moved | late errors after 75 s | 0.0795 m, 0.0235 m/s | ≤ 0.12, ≤ 0.035 | `V_meas` wired from `h_meas`; `q_meas` and `θ_meas` swapped into the cascade |
 | 5 | peak altitude | 1050.063 | < 1050.2 | unchanged |
-| 5, moved | airspeed excursion | 3.9244 m/s | 0.02 | `q_ctl`'s `Kp` |
+| 5, moved | airspeed excursion | 3.9244 m/s | 0.02 | `q_ctl`'s `Kp`; `Tt` tenfold |
 | 5, new | each measurement changes on its sensor's grid and not only on the coarser one | true | exact | a sensor at another's multiplier |
 | 5, new | each noise's deviation per sample | 0.001998, 0.0005018, 0.1322, 0.02004 | rtol 0.1 | `q`'s density from `θ`'s; `V`'s raised; a noiseless `Measurement` |
-| 5, new | the air data's two noises are uncorrelated | −0.043 | below 0.15 | `V`'s seed as `h`'s; only this pin kills it |
+| 5, review | the four noises are uncorrelated, pair by pair | at most 0.057, the IMU's against the altitude's | below 0.15 | a seed shared by two noises |
 | 6 | refusal with the delays bypassed | two real `AlgebraicCycle` | exact | unchanged |
 | 6, moved | pull, release and engage snapshots | 2002, 2802, 12002 | exact | unchanged |
-| 6, moved | standby gaps, δe over [8, 30) and δt over [5, 30) | 0.0048, 0.0255 | ≤ 0.008, ≤ 0.035 | `Tt` tenfold; `V`'s density raised |
-| 6, moved | outer gaps against `θ_meas` and `q_meas` | 0.0093, 0.0227 | ≤ 0.015, ≤ 0.03 | `h_ctl` tracking `q`; only this pin kills it |
+| 6, moved | standby gaps, δe over [8, 30) and δt over [5, 30) | 0.0048, 0.0255 | ≤ 0.008, ≤ 0.035 | δe: `δe_track` wired from `δt_prev`, or `q_ctl`'s `Tt` at 2 s; δt: `Tt` tenfold, or `V`'s density raised |
+| 6, moved | outer gaps against `θ_meas` and `q_meas` | 0.0093, 0.0227 | ≤ 0.015, ≤ 0.03 | `h_ctl` tracking `q`; `θ_ctl` tracking `θ_meas` |
 | 6 | the latched `engaged` first true | 30.2 s | exact | the latch at the default |
 | 6, moved | the controllers equal the unengaged flight's over [0, 30.20125) | identical | exact | the latch at the default |
-| 6, moved | jumps at the switch, δe and δt | 0.00063, 0.0106 | ≤ 0.005, ≤ 0.015 | `V`'s density raised; `Tt` tenfold |
-| 6 | recapture of 1000 m over [80, 90) | 0.060 m | ≤ 0.12 | `V_meas` wired from the plant's `h` |
+| 6, moved | jumps at the switch, δe and δt | 0.00063, 0.0106 | ≤ 0.005, ≤ 0.015 | δe: `δe_track` wired from `δt_prev`; δt: `Tt` tenfold |
+| 6 | recapture of 1000 m over [80, 90) | 0.060 m | ≤ 0.12 | `V_meas` wired from `h_meas` |
 | 7, moved | touchdown, after 6667 writes | 726.6468115368581 s | 1e-3 | `q_ctl`'s `Kp`; a noiseless `Measurement` |
 | 7 | altitude at the stop, tracking over [160, t − 1) | −2.2e-13, 0.246 m | ≤ 1e-6, ≤ 0.35 | unchanged |
 | 8 | replay of the whole flight | identical | exact | unchanged |
@@ -287,7 +297,7 @@ one rate and 1.84 s at two.
 | Air data and its loops at 10 Hz, as shipped | 0.0795 | 0.0235 | 1050.063 |
 
 **Further figures for the companion.** The altitude is within 1 m by
-24.3 s, and the airspeed excursion falls at 3.735 s. By hand the altitude
+24.3 s, and the airspeed excursion falls at 3.7325 s. By hand the altitude
 runs from 988.0 to 1016.7 m. The elevator command's largest change between
 two ticks over [80, 90) s is 0.0024 rad, and behind its actuator the
 elevator jumps by 3.1e-5 rad at the engage, read across one 2.5 ms
@@ -347,9 +357,10 @@ The docs commit, which lands before the code:
 - `../../pending.md`: the bullet's stage, and at the push the bullet
   retired and the tutorial's bullet updated.
 
-With the code commit, in the other repo: one line in
+Not done, in the other repo: one line in
 `RedstoneInspector.jl/design/pending.md` that the next bump of its pin
-meets new paths under `sensing` and new faces on `cascade`.
+meets new paths under `sensing` and new faces on `cascade`. Section 10
+says why.
 
 ## 8. Out of scope
 
@@ -393,3 +404,100 @@ review. Nothing is pushed.
   the record first, so the user's review of it is still owed.
 - The folder's name, `20261127_tutorial_rates`, and the prefix B for this
   increment's rulings, which keeps them apart from increment 1's L.
+- The companion `../../companions/time_quantities.md` landed as
+  `86a5955b`, on the proposal the user agreed to, before the user read its
+  text. It joined three rosters, `check_refs.jl`, `check_rows.jl` and
+  `linkify.jl`, and not `sweep_rows.jl`, which lists no recent companion.
+  The pointer from §9.2 is not added: the coordinator had said it would
+  show the sentence first. The sentence proposed, after the paragraph on
+  `h_max`: "`time_quantities.md` works the choice between a shorter frame
+  and a bound."
+- `RedstoneInspector.jl` is untouched. Another session had unpushed
+  commits there on the day, and its `design/pending.md` already says that
+  its README's pictures wait for a pin bump after this increment. At that
+  bump its fixtures meet the paths `sensing/imu`, `sensing/ins` and
+  `sensing/air_data` with their `<x>_noise` and `<x>_meas` children, the
+  faces `q_meas`, `θ_meas`, `h_meas` and `V_meas` on `sensing` and on
+  `cascade`, and a schedule with no anchor.
+- The adjudication of the cold review, section 11, and the rejection of
+  four of its nits.
+- The review found a contradiction inside §9.2, outside this increment. It
+  is recorded as a bullet of `../../pending.md` for the user's ruling, and
+  the spec is unchanged.
+
+## 11. The review's record
+
+One cold reviewer, a high-tier agent, on Julia 1.13.3 in the worktree
+`/Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review`, with
+its probes in `tutorial_1b_review_probes/` beside it and its notes in
+`tutorial_1b_review_notes.md`. Its gate at `675c1ac8` read 194 of 194.
+
+**No defect.** The code matches R25 to R28 and B1 to B9. Every figure the
+companion quotes in the changed passages agreed with the reviewer's own
+probes, the two of F3 and F4 excepted. Forty alignments of the pilot's
+writes over a full 10 Hz period move each pin of chapter 6 by at most
+2.3e-4, and each window's maximum sits mid-window.
+
+**Fixed in `b5583dd5`**, by a separate fixer, with the gate at 215 of 215.
+
+- F1, a missing test. Nothing checked that `noise_psd` reaches the sensing
+  in `piloted` or `approach`: either function dropping the keyword passed
+  every test. A new testset checks, with every noise off, that each
+  model's four measurements equal the plant's outputs at their sensors'
+  ticks.
+- F2, a missing test. The divisors pin read `piloted`'s schedule alone, so
+  a `Relative(2)` on `autopilot`'s or `approach`'s root died only on a
+  figure that happened to shift. The pin now reads all three models.
+- F5, a stronger test. A seed shared by two noises died only on the
+  touchdowns, which react to any change of realization. The check on the
+  air data's pair became one on all six pairs of noises, read by draw.
+- F3. The airspeed excursion falls at 3.73 s. The companion's 3.74 s was
+  the figure at a frame of `1//200`, rounded up.
+- F4. The limited time of 1.92 s needs the IMU and the INS at 50 Hz beside
+  the loops, as the prototyper's probe ran it. With the IMU left at 200 Hz
+  it reads 1.88 s. The companion's sentence now names all three.
+- F7, a stale drift figure in a test comment.
+- B13's sentence in `sensor_multipliers`' docstring.
+
+**Fixed in this file.** F6: section 4's mutant column was read per
+testset. Five rows named a mutant that turns another pin of the same
+testset red. They are the late errors, the standby gaps, the jumps, the
+rest and the recapture, and they now carry the reviewer's results by line.
+
+**Rejected.** A name line on the two constants' docstrings, since the
+file's constant `g` has none. A test line of 124 characters, since no rule
+bounds it. The name `ins`, which `code_rules.md` reserves for a row's
+faces and which is here B5's ruled name for a sensor. `const` on the
+test's two globals.
+
+**Survivors.** B10's, accepted. And `q_ctl`'s own `Tt` at 0.2 s: nothing
+claims that loop's own tracking lag, the elevator's gap stays under its
+bound, and `Tt` tenfold on all four controllers is red.
+
+**The delta check**, by the same reviewer at `9d5b6710`. Every fix is
+closed as proposed, and B13's sentence is true of the code. Each new test
+turns red under the mutants it was written for, on the line of the new
+pin, and stays green under a fresh seed and under B10's survivor. It found
+two stale summaries the fix left behind, in the inventory and in the
+companion's section 4, and the commit that carries this section corrects
+both.
+
+**Not checked by the review.** The examples' CI on Linux. The candidates'
+table and the frame-against-bound table of section 5, beyond the shipped
+configuration. The prototyper's probes as sources.
+
+## 12. The scratch
+
+Kept until the push, by step 8 of the pipeline. What the record rests on
+is already here: the prototyper's probes and the fixer's mutant runner
+under `probes/`, and the reviewer's scripts with their outputs under
+`probes/review/`. The reviewer's per-mutant logs are left behind.
+
+- `/Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b`, the
+  prototype's worktree, with `tutorial_1b_probes/` and
+  `tutorial_1b_notes.md` beside it.
+- `/Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_review`, the
+  reviewer's worktree, with `tutorial_1b_review_probes/` and
+  `tutorial_1b_review_notes.md` beside it, and its two mutant copies.
+- `/Users/miguel/.julia/dev/Redstone.jl-worktrees/tutorial_1b_fix`, the
+  fixer's copy.

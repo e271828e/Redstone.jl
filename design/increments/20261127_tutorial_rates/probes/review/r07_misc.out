@@ -1,0 +1,14 @@
+h_ctl over [30.2, 726.6): u in [-0.0182, 0.0559], limits [-0.26, 0.26], on a limit 0
+h_ctl over [60.0, 726.6): u in [-0.0182, 0.0198], limits [-0.26, 0.26], on a limit 0
+h_ctl over [160.0, 725.6): u in [-0.0153, -0.0047], limits [-0.26, 0.26], on a limit 0
+θ_ctl over [30.2, 726.6): u in [-0.0373, 0.0220], limits [-0.50, 0.50], on a limit 0
+θ_ctl over [60.0, 726.6): u in [-0.0314, 0.0204], limits [-0.50, 0.50], on a limit 0
+θ_ctl over [160.0, 725.6): u in [-0.0124, 0.0132], limits [-0.50, 0.50], on a limit 0
+q_ctl over [30.2, 726.6): u in [0.0199, 0.0382], limits [-0.50, 0.50], on a limit 0
+q_ctl over [60.0, 726.6): u in [0.0211, 0.0348], limits [-0.50, 0.50], on a limit 0
+q_ctl over [160.0, 725.6): u in [0.0214, 0.0285], limits [-0.50, 0.50], on a limit 0
+V_ctl over [30.2, 726.6): u in [0.1852, 0.4202], limits [0.00, 1.00], on a limit 0
+V_ctl over [60.0, 726.6): u in [0.1852, 0.3820], limits [0.00, 1.00], on a limit 0
+V_ctl over [160.0, 725.6): u in [0.2379, 0.2709], limits [0.00, 1.00], on a limit 0
+closed_loop anchors: 10
+piloted at Δt_frame = 1//400 alone: h_ctl Δt = 0.05, warnings 0
