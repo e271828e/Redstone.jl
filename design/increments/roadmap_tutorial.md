@@ -9,7 +9,8 @@ The rulings of 2026-11-18 on increment 1's prototype amend the arc and R5,
 R6 and R10 below in place, and those of 2026-11-19 on increment 2's
 prototype amend rows 1 and 3 of the arc, R2, R12 and the rules for the
 pages. Those of 2026-11-27 on the example's rates and sensing, R25 to
-R28, will amend R4 and row 5 of the arc once the rework rules its numbers.
+R28, amend R4 and row 5 of the arc in place, with the numbers the rework
+ruled.
 Its
 `pending.md` bullet carries the state of the
 work; this file carries the plan. The probes behind the rulings are
@@ -44,7 +45,7 @@ a chapter imports its end state.
 | 2 | Trim | the level-flight problem | equilibrium, three unknowns | conditions, `TrimProblem`, the report | the solver within 1% of the hand estimate |
 | 3 | Linearize | the tap set | modes as eigenvalues | taps, exact Jacobians, `h_max`, fixed against adaptive steps | the Jacobian against finite differences, the eigenvalues against chapter 1's period |
 | 4 | A first loop | pitch hold, continuous then discrete | one PID on pitch attitude | `Group`, wires, root inputs, sample time, the base tick | margins from `A` and `B`, the gap between the tiers |
-| 5 | The autopilot | the cascade, actuators, sensing | cascade, actuator, sensor noise | hierarchy, faces, the library, two rates, the inspector's diagram | the altitude step |
+| 5 | The autopilot | the cascade, actuators, sensing | cascade, actuator, sensor noise | hierarchy, faces, the library, three rates as `Relative` multipliers, the base tick, the inspector's diagram | the altitude step |
 | 6 | Hands on and off | the engage switch, the tracking wires | bumpless engage | `stage!`, the loop error, `UnitDelay` | a bumpless engage |
 | 7 | Approach and touchdown | the ground and a stop request | a descent to the ground | localized event, `StopRequest`, the termination record, a boundary computed by `input_passthrough` through a function of the `Group` | `h = 0` at the stop |
 | 8 | The flight, again | nothing new in the model | none | trace and replay, checkpoint and restore | a bit-identical replay of the whole flight, a second approach from a checkpoint |
@@ -79,9 +80,12 @@ diagnostic. The linearization pays off through the PID here, with gains
 checked against `A` and `B` in code, so the payoff does not wait for the
 tracker.
 
-**R4. The cascade runs at two rates.** The altitude and airspeed loops run
-at 10 Hz and the inner loops at 50 Hz. Today every discrete component runs
-at 50 Hz, so the example shows one rate only.
+**R4. The cascade runs at three rates.** Each controller runs at the rate
+of the sensor that feeds it, by R26. At the base tick the pages pass, 5 ms,
+the pitch-rate loop runs at 200 Hz, the attitude loop at 50 Hz and the
+altitude and airspeed loops at 10 Hz. Before increment 1 every discrete
+component ran at 50 Hz, and the example showed one rate only. Increment 1
+built two rates, 50 and 10 Hz, and increment 1b the three.
 
 **R5. An engage switch replaces the switch between two autopilots in the
 main path.** Chapter 6 selects between the pilot's commands and the
@@ -141,7 +145,7 @@ frame arrives in chapter 1, since the first run cannot be written without
 it. The algorithm, `h_max` and `h_min` arrive in chapter 3, where the
 plant is still continuous and the linearization has just given the two
 time scales. The base tick arrives in chapter 4 with the first discrete
-component, and chapter 5's two rates extend it. Rejected: a chapter of
+component, and chapter 5's three rates extend it. Rejected: a chapter of
 its own, which presents four quantities before the reader needs any; and
 the algorithm in the approach's chapter, since a tick where a component is
 due ends a step, so under a 50 Hz autopilot an adaptive method has little
@@ -321,15 +325,12 @@ ruled in its notes, `20261118_tutorial_example/notes_tutorial_example.md`:
 the names of the chapter-end functions as L1, the approach's reference,
 staged by the run, as L2, and `approach` in place of `descent()` as L3.
 Increment 2's two are ruled above: the plotting package and the build's
-time budget as R21, and where the pages sit as R22.
+time budget as R21, and where the pages sit as R22. Increment 1b's three
+are ruled in its notes, `20261127_tutorial_rates/notes_tutorial_rates.md`:
+the base tick, the multipliers and the frame as B1, with the gains kept as
+B2; the rates of `selection` and of the actuators as B4; and the sensors'
+names and noise densities as B5 and B7.
 
-- **The base tick and the three multipliers**, and the gains at the new
-  rates, `q_ctl`'s above all. R11's probes apply. The rework of R25 to
-  R28.
-- **The rates of `selection` and of the actuators.** The latch, the two
-  command delays and the two limiters are `Absolute` today. The rework of
-  R25 to R28.
-- **The sensors' names and noise densities.** The rework of R25 to R28.
 - **How chapter 5 shows the inspector's diagram.** Increment 3.
 - **What chapter 4 shows of the margins from `A` and `B`**, and which of
   it the testset pins. Increment 1 pins the pitch loop's eigenvalues and
@@ -362,10 +363,11 @@ order or side by side.
    sensors, the rates become `Relative` under one constant, and the root
    functions' wires follow, with the testset's pins and the numbers of
    `longitudinal_aircraft.md`. `pitch_hold` and today's `closed_loop`
-   stay untouched. It retunes a second time, since `q_ctl` moves to the
-   IMU's rate and the cascade to three rates. It runs before
-   `RedstoneInspector.jl`'s release, whose README pictures this model.
-   Needs 1.
+   stay untouched. It expected a second retuning, since `q_ctl` moves to
+   the IMU's rate and the cascade to three rates, and needed none. It runs
+   before `RedstoneInspector.jl`'s release, whose README pictures this
+   model. Its record is
+   `20261127_tutorial_rates/notes_tutorial_rates.md`. Needs 1.
 
 2. **The scaffold and chapters 1 to 3.** The docs environment with
    `RedstoneExamples` and the plotting package, the `@example` setup, the

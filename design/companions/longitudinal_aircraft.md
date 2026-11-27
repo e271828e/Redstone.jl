@@ -183,15 +183,24 @@ example's file. `pitch_hold` is one PID on the pitch angle. `autopilot` is
 the cascade with its actuators and its sensing. `piloted` puts an engage
 switch between the cascade and the actuators. All three are built from
 library components ([§13.7][s13-7]) and one leaf of the example's own,
-`Altimeter`. From `autopilot` on the model is a `Group` of groups beside
+`Measurement`. From `autopilot` on the model is a `Group` of groups beside
 the plant. Each group exports the signals
 that cross its boundary as faces and keeps the rest inside, so the root level
 reads as the loop's block diagram and each group as one of its boxes.
-The plant steps at 5 ms. The pitch loops and the actuators' limiters run
-at 50 Hz, and the altitude loop, the airspeed loop and the altimeter at
-10 Hz ([§6.3][s6-3]), each group declaring its own rates. The last part of this
-section is `closed_loop`, the older model with two controllers, which the
-tutorial's optional last chapter flies.
+
+From `autopilot` on the model also states no seconds ([§8.7][s8-7]). One
+constant, `sensor_multipliers`, holds each sensor's period in base ticks,
+1 for the IMU, 4 for the INS and 20 for the air data system. `sensing`
+gives each sensor its multiplier as a `Relative` entry, and `cascade` gives
+the same multiplier to each controller that sensor feeds, so a controller
+ticks with its sensor. The roots declare no rates, and the deployment's
+base tick sets every one ([§6.3][s6-3], [§9.2][s9-2]). The testset deploys
+these models at a frame of 2.5 ms and a base tick of 5 ms. The plant then
+steps at 2.5 ms, the IMU and the pitch-rate loop run at 200 Hz, the INS and
+the attitude loop at 50 Hz, and the air data system with the altitude and
+airspeed loops at 10 Hz. The rates this section quotes are those. The last
+part of this section is `closed_loop`, the older model with two
+controllers, which the tutorial's optional last chapter flies.
 
 **The pitch hold**, `pitch_hold`. One PID reads the pitch angle `θ` and
 commands the elevator, with `Kp = −2.0` and `Ki = −1.0`, under the root
@@ -216,7 +225,8 @@ tier holds the integral term and the reference the controller reads, so
 each of the two taps comes back as a `TapResolution`. The loop is
 therefore designed in continuous time and deployed in discrete time.
 
-From the trim with the reference 0.05 rad above it, at 0.0699 rad, the
+From the trim with the reference 0.05 rad above it, at 0.0699 rad, and
+with the plant stepping at 5 ms, the
 pitch angle peaks at 0.0799 rad under the continuous controller and at
 0.0820 rad under the discrete one. The two responses stay within
 0.0021 rad of each other.
@@ -224,37 +234,51 @@ pitch angle peaks at 0.0799 rad under the continuous controller and at
 **The actuators**, `actuators`. Each control passes through a discrete
 `RateLimiter` and a continuous `FirstOrderLag`: the elevator at 1 rad/s and
 50 ms, the throttle at 0.5 /s and 0.5 s. Their initial values are the trim's.
-The group takes `δe_cmd` and `δt_cmd` and publishes `δe` and `δt`.
+The limiters declare no rate and tick at the base tick. The group takes
+`δe_cmd` and `δt_cmd` and publishes `δe` and `δt`.
 
-**The sensing**, `sensing`. The altitude loop reads a measurement, the
-plant's altitude plus Gaussian white noise, so the plots show a sensor and
-not a state. The sensor is configured to the rate of the loop it feeds.
-`Altimeter`, a stateless discrete leaf at 10 Hz ([§3.2][s3-2]), adds the noise to
-the altitude and holds the sum between its ticks, and the group publishes
-it as `h_meas`. The `GaussianWhiteNoise` ticks at 10 Hz too and takes its
-strength as a two-sided density, `noise_psd = 1.8e-3 m² s`. That is
-0.134 m per sample at 10 Hz and the same density as 0.3 m per sample at
-50 Hz, so the sensor's band ends at the loop's Nyquist frequency. A 50 Hz
-sensor read by the 10 Hz loop is decimated with no anti-aliasing. The loop
-then holds one 0.3 m sample for five of the sensor's periods, and the late
-altitude error more than doubles. On the 50 m step described below, with
-the late errors read once the transient is over:
+**The sensing**, `sensing`. The cascade reads measurements, each a variable
+of the plant plus Gaussian white noise, so the plots show sensors and not
+states. There are three sensors, each a group: the IMU measures the pitch
+rate `q`, the INS the pitch angle `θ`, and the air data system the altitude
+`h` and the airspeed `V`. A sensor is configured to the rate of the loop it
+feeds. Its group takes its multiplier, and the children inside take the
+group's rate. `Measurement`, a stateless discrete leaf ([§3.2][s3-2]), adds
+a noise to the measured signal and holds the sum between its ticks, and the
+group publishes it with the suffix `_meas`. Each `GaussianWhiteNoise` ticks
+with its sensor, has its own seed, and takes its strength as a two-sided
+density through the keyword `noise_psd`:
 
-| Sensor and rates | Late altitude error (m) | Late airspeed error (m/s) | Peak (m) |
+| Measurement | Density | Per sample |
+|---|---|---|
+| `q` | 2.0e-8 rad² s⁻¹ | 0.002 rad/s at 200 Hz |
+| `θ` | 5.0e-9 rad² s | 0.0005 rad at 50 Hz |
+| `h` | 1.8e-3 m² s | 0.134 m at 10 Hz |
+| `V` | 4.0e-5 m² s⁻¹ | 0.02 m/s at 10 Hz |
+
+The altitude's density is that of 0.3 m per sample at 50 Hz, so the
+sensor's band ends at its loop's Nyquist frequency. An air data system at
+50 Hz read by loops at 10 Hz is decimated with no anti-aliasing. The
+altitude loop then holds one 0.3 m sample for five of the sensor's periods,
+and the late altitude error more than doubles. On the 50 m step described
+below, with the late errors read once the transient is over:
+
+| Air data and its loops | Late altitude error (m) | Late airspeed error (m/s) | Peak (m) |
 |---|---|---|---|
-| 50 Hz sensor, loops at two rates | 0.1646 | 0.0392 | 1050.152 |
-| 50 Hz sensor, every loop at 50 Hz | 0.0641 | 0.0150 | 1050.064 |
-| 10 Hz altimeter, loops at two rates | 0.0775 | 0.0187 | 1050.061 |
+| air data at 50 Hz, its loops at 10 Hz | 0.1693 | 0.0509 | 1050.141 |
+| air data and its loops at 50 Hz | 0.0589 | 0.0191 | 1050.059 |
+| air data and its loops at 10 Hz | 0.0795 | 0.0235 | 1050.063 |
 
 **The cascade**, `cascade`. Four `DiscretePID`s, each with the hold
-axis (`pid_anti_windup.md`, section 4):
+axis (`pid_anti_windup.md`, section 4), and each at the rate of the sensor
+it reads:
 
 | Loop | Rate | Reads | Commands | `Kp`, `Ki` | Limits |
 |---|---|---|---|---|---|
-| pitch rate | 50 Hz | `q` | elevator | −0.2, −0.4 | ±0.5 rad |
-| pitch attitude | 50 Hz | `θ` | pitch rate | 2.0, 0.5 | ±0.5 rad/s |
-| altitude | 10 Hz | `h` with sensor noise | pitch attitude | 0.01, 0.001 | ±0.26 rad |
-| airspeed | 10 Hz | `V` | throttle | 0.2, 0.05 | 0 to 1 |
+| pitch rate | 200 Hz | `q_meas` | elevator | −0.2, −0.4 | ±0.5 rad |
+| pitch attitude | 50 Hz | `θ_meas` | pitch rate | 2.0, 0.5 | ±0.5 rad/s |
+| altitude | 10 Hz | `h_meas` | pitch attitude | 0.01, 0.001 | ±0.26 rad |
+| airspeed | 10 Hz | `V_meas` | throttle | 0.2, 0.05 | 0 to 1 |
 
 The signs follow `Cmδe < 0`: a positive elevator pitches down, so the
 innermost gains are negative. The inner loop's crossover sits near the
@@ -272,10 +296,13 @@ and back-calculate against their own limits. The chain stays inside the
 group: what crosses its boundary is the references, the measurements, the
 flag `engaged`, and the two commands it publishes as `δe` and `δt`.
 
-The chain works across the two rates. On the 50 m step the attitude loop
+The chain works across the three rates. On the 50 m step the attitude loop
 never reaches its limits. With those limits cut to ±0.05 rad/s it stays
-limited for 1.84 s at the two rates and 2.02 s with every loop at 50 Hz,
-and nothing winds or stalls. With no hold it stays limited for 2.68 s.
+limited for 1.76 s at the three rates, and for 1.92 s with every loop at
+50 Hz and the air data still at 10 Hz, and nothing winds or stalls. With no
+hold it stays limited for 2.14 s. The figure counts the samples on the
+limit, and the sensors' noise knocks the command off the limit and back.
+With every noise off the three read 2.20, 2.24 and 2.98 s.
 
 `cascade(standby = true)` adds the tracking axis, with the tracking
 reference of `pid_anti_windup.md` section 11, so that a cascade not in
@@ -283,7 +310,8 @@ command follows the command in force. The two innermost controllers track
 the inputs `δe_track` and `δt_track`, which the group then also takes.
 Each outer controller tracks the measured variable of the loop inside it,
 pitch attitude for the altitude loop and pitch rate for the attitude loop.
-Every `Tt` is 0.02 s. `autopilot` builds the cascade without its standby
+Every `Tt` is 0.02 s, a time constant in seconds whatever the controller's
+period. `autopilot` builds the cascade without its standby
 and holds `engaged` true through a `Constant`.
 
 **The initial conditions.** `cruise(solution)` is `autopilot`'s. It writes
@@ -318,7 +346,7 @@ cascade's command while the autopilot is engaged and the pilot's
 otherwise. The pilot's commands `δe_pilot` and `δt_pilot` and the flag
 `engage` are root inputs of `piloted`. The selected commands leave the
 group twice, as they are for the actuators and one tick old through a
-`UnitDelay` at 50 Hz as `δe_prev` and `δt_prev`, which the cascade's
+`UnitDelay` at the base tick as `δe_prev` and `δt_prev`, which the cascade's
 `δe_track` and `δt_track` read. The cascade runs all the time. While the
 pilot flies it tracks the pilot's commands, so at the engage every
 integrator holds nearly the value that reproduces the current command.
@@ -328,10 +356,13 @@ diagnostics, both real ([§13.8][s13-8]): the pitch-rate loop with the elevator'
 switch, and the airspeed loop with the throttle's.
 
 The flag is latched. One staged `engage` would otherwise reach the
-continuous switches at the next frame, the pitch loops at their next
-50 Hz tick and the outer loops at their next 10 Hz tick. Staged at 30 s,
-those are 30.005, 30.02 and 30.1 s. So `selection` holds `engage` in a
-`UnitDelay` at 10 Hz, the cascade's slowest rate. The switches read the
+continuous switches at the next frame, the pitch-rate loop at its next
+200 Hz tick, the attitude loop at its next 50 Hz tick and the outer loops
+at their next 10 Hz tick. Staged at 30 s, those are 30.0025, 30.005, 30.02
+and 30.1 s. So `selection` holds `engage` in a `UnitDelay` at the air data
+system's multiplier, the cascade's slowest rate. Each multiplier divides
+that one, so a tick of the latch is a tick of every controller. The
+switches read the
 latch, and it leaves the group as the face `engaged` for the cascade, so
 the switches and all four controllers act at the same tick. The cost is a
 delay of up to two ticks of the slowest rate: an `engage` staged at 30 s
@@ -344,27 +375,31 @@ nominal time. A staged batch applies at the top of the next frame, and a
 discrete component reads it at its next tick.
 
 Under `autopilot`, a 50 m step in the altitude reference, written in the
-initial condition, is within 1 m by 24.4 s and peaks at 1050.06 m. The
-airspeed strays from 50 m/s by up to 3.90 m/s, at 3.73 s. After 75 s the
-altitude stays within 0.078 m of the reference and the airspeed within
-0.019 m/s.
+initial condition, is within 1 m by 24.3 s and peaks at 1050.06 m. The
+airspeed strays from 50 m/s by up to 3.92 m/s, at 3.74 s. After 75 s the
+altitude stays within 0.080 m of the reference and the airspeed within
+0.024 m/s.
 
 Under `piloted` the pilot holds the trim, pulls the elevator 0.02 rad
 over `[5, 7)` s and engages the autopilot at 30 s. By hand the altitude
 runs between 988.0 and 1016.7 m. Meanwhile the standby cascade stays
-within 0.0043 rad of the pilot's elevator over `[8, 30)` s, and within
-0.0156 of the throttle over `[5, 30)` s, whose loop ticks at 10 Hz. At
+within 0.0048 rad of the pilot's elevator over `[8, 30)` s, and within
+0.0255 of the throttle over `[5, 30)` s, whose loop ticks at 10 Hz and
+reads the airspeed's noise through its `Kp`. At
 30.2 s, when the latch engages the cascade, the selected elevator command
-jumps by 0.0011 rad and the throttle command by 0.0086, under the 0.01
-its rate limiter passes per tick. Behind its actuator the elevator jumps
-by 1.0e-4 rad. For scale, the elevator command's largest frame-to-frame
-change over `[80, 90)` s is 0.0017 rad. The autopilot then
-recaptures 1000 m and holds it within 0.057 m over `[80, 90)` s.
+jumps by 0.00063 rad and the throttle command by 0.0106, which its rate
+limiter passes in five ticks of 0.0025. Behind its actuator the elevator
+moves by 3.1e-5 rad in the 2.5 ms after the switch. For scale, the
+elevator command's largest change between two of its ticks
+over `[80, 90)` s is 0.0024 rad. The autopilot then
+recaptures 1000 m and holds it within 0.060 m over `[80, 90)` s.
 
 The testset pins the eigenvalues, the DC gain, the refusal and the step of
-the pitch hold. Under `autopilot` it pins the rest at the trim, the two
-rates, the hold after 75 s, the peak, the airspeed excursion and the
-sensor's noise. Under `piloted` it pins the refused loop, the staged
+the pitch hold. Under `autopilot` it pins the rest at the trim, that no
+model from there on holds an anchor, the schedule's multipliers, the three
+rates as the log shows them, the hold after 75 s, the peak, the airspeed
+excursion, and each sensor's grid and noise. Under `piloted` it pins the
+refused loop, the staged
 writes, the standby gaps of the innermost and the outer loops, the instant
 the latch moves the switches, the jumps and the recapture.
 
@@ -373,8 +408,10 @@ chapter flies the cascade beside an LQR tracker, with a switch between the
 two. This model predates the functions above and wires its own groups,
 `sensing`, `pid_controller`, `lqr_controller`, `selection` and `actuators`
 beside the plant, under the root inputs `h_ref`, `V_ref` and `mode`.
-Everything discrete in it runs at 50 Hz. Its `pid_controller` is the
-cascade above with its standby, and what crosses that group's boundary is
+Everything discrete in it runs at 50 Hz, each component on an anchor of
+its own. Its `pid_controller` is the cascade above with its standby, at
+that one rate and reading `θ`, `q` and `V` from the plant, and what crosses
+that group's boundary is
 the references, the measurements, the mode, the delayed commands it
 tracks, and its two commands. Its `sensing` is a 50 Hz sensor, noise of
 0.3 m per sample summed by the `altimeter` junction. `trimmed(solution)`
@@ -476,7 +513,7 @@ sink rate of 1.5 m/s at 50 m/s, a glide angle of
 `sin γ = −1.5 / 50 = −0.03`. The reference is a root input, so the run
 stages the descent and the model carries no ramp. The cascade follows the
 descending reference within 0.26 m from 160 s to the last second, and the
-airspeed stays between 49.978 and 50.022 m/s over the same span. No loop
+airspeed stays between 49.969 and 50.029 m/s over the same span. No loop
 saturates. There is no flare: the aircraft meets the ground at
 `γ = −0.0303`, after 726.6 s.
 
@@ -517,3 +554,5 @@ against its deployment, so one taken on `piloted` alone is refused here as
 [s2-3]: ../spec.md#23-events-two-detection-policies
 [s3-2]: ../spec.md#32-periodic-discrete-component
 [s6-3]: ../spec.md#63-rates-down-the-hierarchy
+[s8-7]: ../spec.md#87-rate-scopes
+[s9-2]: ../spec.md#92-the-build-and-deployment-artifacts

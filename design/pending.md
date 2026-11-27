@@ -18,8 +18,10 @@ item changes what the spec says, the spec edit is part of the item.
   the open decisions are R25 to R28 of
   `design/increments/roadmap_tutorial.md`. It stands first because
   `RedstoneInspector.jl`'s release takes its README's pictures from this
-  model, at a pin bump that follows the rework. Stage reached: ruled on
-  2026-11-27, not started.
+  model, at a pin bump that follows the rework. Stage reached: prototyped
+  and ruled on 2026-11-27, the record and the docs committed; the code,
+  the cold review and the user's diff of the arc are next. Its notes are
+  `design/increments/20261127_tutorial_rates/notes_tutorial_rates.md`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`. Its
   `design/pending.md` holds its state and work order, its

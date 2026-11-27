@@ -178,8 +178,10 @@ functions the tutorial's chapters call:
 
 - `GroundContact(; h_ground = 0.0)`, the leaf whose localized guard fires
   at touchdown and whose `Bool` output feeds a `StopRequest`;
-- `Altimeter()`, the stateless discrete leaf that adds the sensor's noise
-  to the altitude and holds the sum at its rate;
+- `Measurement()`, the stateless discrete leaf that adds a sensor's noise
+  to the measured signal and holds the sum at its sensor's rate;
+- the constants `sensor_multipliers`, each sensor's period in base ticks,
+  and `sensor_noise_psd`, the default density of each measurement's noise;
 - `aircraft()`, the plant alone under the root inputs `δe` and `δt`;
 - `level_flight(; V, h)`, the trim problem of level flight, and
   `longitudinal_taps()`, the tap set of the five states, the two inputs
@@ -238,11 +240,14 @@ airspeed at half the phugoid's period.
 The pitch hold's closed loop has the pinned eigenvalues and a unit DC
 gain, the discrete one refuses the linearization, and the two tiers stay
 within a pinned gap through a step. The autopilot rests at the trim with
-no step and no noise, ticks its outer loops at 10 Hz and its pitch loops
-at 50 Hz, and holds a step in the altitude reference within a tolerance,
-with its peak below a bound and its airspeed excursion at a pinned value.
-The altimeter's output changes only at its
-ticks, and its noise has the declared density, to 10%. The piloted loop
+no step and no noise. It declares no anchor, and neither do the two models
+after it. Each controller ticks with its sensor at that sensor's multiplier
+of the base tick, at three rates, and the log shows the pitch-rate loop
+holding between base ticks. It holds a step in the altitude reference
+within a tolerance, with its peak below a bound and its airspeed excursion
+at a pinned value. Each sensor's measurements change only at its ticks,
+each noise has its declared deviation, to 10%, and the air data's two
+noises are uncorrelated. The piloted loop
 without its delays is refused with one real cycle per switch. Its staged
 commands land on pinned snapshots. The standby cascade stays within pinned
 gaps of the pilot's commands, and its outer loops within pinned gaps of
