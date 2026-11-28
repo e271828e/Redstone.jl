@@ -5212,6 +5212,8 @@ frame tops and the due instants) in the fewest equal steps it allows
 bound resolved, the lesser of `h_max` and `Δt_frame`** ([D-449][d-449]). A
 bound at or above the frame splits no span, so an absent bound, a bound at
 the frame and one above it are one trajectory and compare as one value.
+`companions/time_quantities.md` works the choice between a shorter frame and
+a bound.
 
 **`h_min` is an optional exact time, the floor of a proposing method's step,
 which that method requires** ([§10.2][s10-2], [D-460][d-460]). It takes the
