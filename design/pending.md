@@ -12,32 +12,20 @@ The bullets stand in working order, the first one next. The first release
 is an item of the list, and the items after it are ordered too. Where an
 item changes what the spec says, the spec edit is part of the item.
 
-- **The tutorial's increment 1b: the example's rates and sensing.** A
-  rework of `examples/src/longitudinal.jl`: the rates become `Relative`
-  and the sensing measures everything the cascade reads. The rulings and
-  the open decisions are R25 to R28 of
-  `design/increments/roadmap_tutorial.md`. It stands first because
-  `RedstoneInspector.jl`'s release takes its README's pictures from this
-  model, at a pin bump that follows the rework. Stage reached: built,
-  reviewed and fixed on 2026-11-27, with nothing pushed. The user's review
-  of the record, with the decisions its section 10 lists as taken in the
-  user's absence, the user's diff of the arc, the push and the scratch's
-  clearing are next. Its notes are
-  `design/increments/20261127_tutorial_rates/notes_tutorial_rates.md`.
 - **The inspector, stage 1**: the static inspector over the descriptor,
   built in the separate repo `RedstoneInspector.jl`. Its
   `design/pending.md` holds its state and work order, its
-  `design/roadmap.md` the staging. Before the release this repo owes it
-  increment 1b above and nothing else, and the later stages after.
+  `design/roadmap.md` the staging. This repo owes it nothing before the
+  release, and the later stages after.
 - **The tutorial and the README.** The tutorial builds the longitudinal
   aircraft from scratch in nine chapters, in an arc of six increments.
-  Stage reached: increments 1 and 2 are pushed. Increment 3 is next here,
-  after increment 1b and the inspector's release, whose diagram chapter 5
-  shows.
+  Stage reached: increments 1, 1b and 2 are pushed. Increment 3 is next
+  here, after the inspector's release, whose diagram chapter 5 shows.
   The plan, the arc's rulings, the open decisions and the rules for the
   pages are `design/increments/roadmap_tutorial.md`; the increments'
   records are
-  `design/increments/20261118_tutorial_example/notes_tutorial_example.md`
+  `design/increments/20261118_tutorial_example/notes_tutorial_example.md`,
+  `design/increments/20261127_tutorial_rates/notes_tutorial_rates.md`
   and
   `design/increments/20261119_tutorial_pages/notes_tutorial_pages.md`. The
   README keeps its quick start, shows three of the chapters condensed with
